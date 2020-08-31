@@ -1,0 +1,131 @@
+<docs>
+	<members name="SqlBulkCopyColumnOrderHint">
+		<SqlBulkCopyColumnOrderHint>
+			<summary>
+				Defines the sort order for a column in a
+				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopy" />
+				instance's destination table, according to the clustered index on the table.
+			</summary>
+			<remarks>
+				<format type="text/markdown"><![CDATA[
+
+## Remarks
+Column order hints define the sort order of the column in the destination table.
+
+SqlBulkCopy's performance is improved if the data being imported is sorted according to the clustered index on the table, if any. 
+If the data is sorted in an order that differs from the order of a clustered index key or if there is no clustered index on the table, the order hint is ignored.
+
+Order hints can be specified for any number of columns in the destination table. By default, the bulk insert operation assumes the data is 
+unordered if no hints are provided.
+
+The column names supplied must be valid column names in the destination table. The order in which hints can be specified is arbitrary. 
+A single column name cannot be specified more than once. 
+
+If the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnMappings> collection is not empty, order hints can only be provided for valid 
+destination columns which have been mapped.
+
+If a <xref:Microsoft.Data.SqlClient.SortOrder> of Unspecified is given, an <xref:System.ArgumentException> will be thrown.
+
+## Examples
+The following example bulk copies data from a source table in the **AdventureWorks** sample database to a destination table in the same database. 
+A SqlBulkCopyColumnOrderHint object is used to define the sort order for the ProductNumber destination column.
+
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup).
+This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a
+Transact-SQL `INSERT … SELECT` statement to copy the data.
+
+[!code-csharp[SqlBulkCopy.ColumnOrderHint#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnOrderHint.cs#1)]
+]]></format>
+			</remarks>
+		</SqlBulkCopyColumnOrderHint>
+
+		<ctor name="columnStringAndsortOrderSortOrder">
+			<param name="column">
+                The name of the destination column within the destination table.
+			</param>
+			<param name="sortOrder">
+                The sort order of the corresponding destination column.
+			</param>
+			<summary>
+				Creates a new column order hint for the specified destination column.
+			</summary>
+			<remarks>
+				<format type="text/markdown"><![CDATA[
+
+## Examples
+The following example bulk copies data from a source table in the **AdventureWorks** sample database to a destination table in the same database. 
+A SqlBulkCopyColumnOrderHint object is used to define the sort order for the ProductNumber destination column.
+
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup).
+This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a
+Transact-SQL `INSERT … SELECT` statement to copy the data.
+
+[!code-csharp[SqlBulkCopy.ColumnOrderHint#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnOrderHint.cs#1)]
+]]></format>
+			</remarks>
+		</ctor>
+
+		<Column>
+			<summary>
+                Name of the destination column in the destination table for which the hint is being provided.
+			</summary>
+			<value>
+                The string value of the 
+				<see cref="P:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint.Column" />
+				property.
+			</value>
+			<remarks>
+				<format type="text/markdown"><![CDATA[
+
+## Remarks
+
+An <xref:System.ArgumentException> will be thrown if a null or empty string is given.
+
+## Examples
+The following example bulk copies data from a source table in the **AdventureWorks** sample database to a destination table in the same database.
+A SqlBulkCopyColumnOrderHint object is used to define the sort order for the ProductNumber destination column.
+
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup).
+This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a
+Transact-SQL `INSERT … SELECT` statement to copy the data.
+
+[!code-csharp[SqlBulkCopy.ColumnOrderHintColumn#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnOrderHintColumn.cs#1)]
+]]></format>
+			</remarks>
+		    <exception cref="T:System.ArgumentException">The value is null or empty.</exception>
+		</Column>
+
+		<SortOrder>
+			<summary>
+                The sort order of the destination column in the destination table.
+			</summary>
+			<value>
+                The SortOrder value of the
+                <see cref="P:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint.SortOrder" />
+                property.
+			</value>
+			<remarks>
+				<format type="text/markdown"><![CDATA[
+
+## Remarks
+An <xref:System.ArgumentException> will be thrown if a <xref:Microsoft.Data.SqlClient.SortOrder> of Unspecified is given.
+
+## Examples
+The following example bulk copies data from a source table in the **AdventureWorks** sample database to a destination table in the same database.
+A SqlBulkCopyColumnOrderHint object is used to define the sort order for the ProductNumber destination column.
+
+> [!IMPORTANT]
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup).
+This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a
+Transact-SQL `INSERT … SELECT` statement to copy the data.
+
+[!code-csharp[SqlBulkCopy.ColumnOrderHintSortOrder#1](~/../sqlclient/doc/samples/SqlBulkCopy_ColumnOrderHintSortOrder.cs#1)]
+]]></format>
+			</remarks>
+			<exception cref="T:System.ArgumentException">The sort order cannot be unspecified for a column order hint.</exception>
+		</SortOrder>
+	</members>
+</docs>
