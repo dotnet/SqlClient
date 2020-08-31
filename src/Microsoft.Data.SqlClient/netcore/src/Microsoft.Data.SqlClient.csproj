@@ -28,6 +28,9 @@
   <PropertyGroup Condition="'$(TargetGroup)' == 'netcoreapp' AND '$(TargetFramework)' != 'netcoreapp2.1'">
     <DefineConstants>$(DefineConstants);NETCORE3</DefineConstants>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetGroup)' == 'netstandard' AND '$(TargetFramework)' != 'netstandard2.0'">
+    <DefineConstants>$(DefineConstants);NETSTANDARD21</DefineConstants>
+  </PropertyGroup>
   <PropertyGroup>
     <DebugType>portable</DebugType>
     <DebugSymbols>true</DebugSymbols>

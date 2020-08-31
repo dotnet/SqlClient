@@ -53,17 +53,12 @@ namespace Microsoft.Data.SqlClient
         private long _stasisConnectionsCounter = 0;
         private long _reclaimedConnectionsCounter = 0;
 
-        protected override void OnEventCommand(EventCommandEventArgs command)
+        public SqlClientEventSource()
         {
-            if (command.Command != EventCommand.Enable)
-            {
-                return;
-            }
-
             _activeHardConnections = _activeHardConnections ??
                 new EventCounter("active-hard-connections", this)
                 {
-#if NETCORE3
+#if NETCORE3 || NETSTANDARD21
                     DisplayName = "Actual active connections are made to servers",
                     DisplayUnits = "count"
 #endif
@@ -72,7 +67,7 @@ namespace Microsoft.Data.SqlClient
             _hardConnectsPerSecond = _hardConnectsPerSecond ??
                 new EventCounter("hard-connects", this)
                 {
-#if NETCORE3
+#if NETCORE3 || NETSTANDARD21
                     DisplayName = "Actual connections are made to servers",
                     DisplayUnits = "count / sec"
 #endif
@@ -81,7 +76,7 @@ namespace Microsoft.Data.SqlClient
             _hardDisconnectsPerSecond = _hardDisconnectsPerSecond ??
                 new EventCounter("hard-disconnects", this)
                 {
-#if NETCORE3
+#if NETCORE3 || NETSTANDARD21
                     DisplayName = "Actual disconnections are made to servers",
                     DisplayUnits = "count / sec"
 #endif
@@ -90,7 +85,7 @@ namespace Microsoft.Data.SqlClient
             _activeSoftConnections = _activeSoftConnections ??
                 new EventCounter("active-soft-connects", this)
                 {
-#if NETCORE3
+#if NETCORE3 || NETSTANDARD21
                     DisplayName = "Active connections got from connection pool",
                     DisplayUnits = "count"
 #endif
@@ -99,7 +94,7 @@ namespace Microsoft.Data.SqlClient
             _softConnects = _softConnects ??
                 new EventCounter("soft-connects", this)
                 {
-#if NETCORE3
+#if NETCORE3 || NETSTANDARD21
                     DisplayName = "Connections got from connection pool",
                     DisplayUnits = "count / sec"
 #endif
@@ -108,7 +103,7 @@ namespace Microsoft.Data.SqlClient
             _softDisconnects = _softDisconnects ??
                 new EventCounter("soft-disconnects", this)
                 {
-#if NETCORE3
+#if NETCORE3 || NETSTANDARD21
                     DisplayName = "Connections returned to the connection pool",
                     DisplayUnits = "count / sec"
 #endif
@@ -117,7 +112,7 @@ namespace Microsoft.Data.SqlClient
             _numberOfNonPooledConnections = _numberOfNonPooledConnections ??
                 new EventCounter("number-of-non-pooled-connections", this)
                 {
-#if NETCORE3
+#if NETCORE3 || NETSTANDARD21
                     DisplayName = "Number of connections are not using connection pooling",
                     DisplayUnits = "count / sec"
 #endif
@@ -126,7 +121,7 @@ namespace Microsoft.Data.SqlClient
             _numberOfPooledConnections = _numberOfPooledConnections ??
                 new EventCounter("number-of-pooled-connections", this)
                 {
-#if NETCORE3
+#if NETCORE3 || NETSTANDARD21
                     DisplayName = "Number of connections are managed by connection pooler",
                     DisplayUnits = "count / sec"
 #endif
@@ -135,7 +130,7 @@ namespace Microsoft.Data.SqlClient
             _numberOfActiveConnectionPoolGroups = _numberOfActiveConnectionPoolGroups ??
                 new EventCounter("number-of-active-connection-pool-groups", this)
                 {
-#if NETCORE3
+#if NETCORE3 || NETSTANDARD21
                     DisplayName = "Number of active unique connection strings",
                     DisplayUnits = "count"
 #endif
@@ -144,7 +139,7 @@ namespace Microsoft.Data.SqlClient
             _numberOfInactiveConnectionPoolGroups = _numberOfInactiveConnectionPoolGroups ??
                 new EventCounter("number-of-inactive-connection-pool-groups", this)
                 {
-#if NETCORE3
+#if NETCORE3 || NETSTANDARD21
                     DisplayName = "Number of unique connection strings waiting for pruning",
                     DisplayUnits = "count"
 #endif
@@ -153,7 +148,7 @@ namespace Microsoft.Data.SqlClient
             _numberOfActiveConnectionPools = _numberOfActiveConnectionPools ??
                 new EventCounter("number-of-active-connection-pools", this)
                 {
-#if NETCORE3
+#if NETCORE3 || NETSTANDARD21
                     DisplayName = "Number of active connection pools",
                     DisplayUnits = "count"
 #endif
@@ -162,7 +157,7 @@ namespace Microsoft.Data.SqlClient
             _numberOfInactiveConnectionPools = _numberOfInactiveConnectionPools ??
                 new EventCounter("number-of-inactive-connection-pools", this)
                 {
-#if NETCORE3
+#if NETCORE3 || NETSTANDARD21
                     DisplayName = "Number of inactive connection pools",
                     DisplayUnits = "count"
 #endif
@@ -171,7 +166,7 @@ namespace Microsoft.Data.SqlClient
             _numberOfActiveConnections = _numberOfActiveConnections ??
                 new EventCounter("number-of-active-connections", this)
                 {
-#if NETCORE3
+#if NETCORE3 || NETSTANDARD21
                     DisplayName = "Number of active connections",
                     DisplayUnits = "count"
 #endif
@@ -180,7 +175,7 @@ namespace Microsoft.Data.SqlClient
             _numberOfFreeConnections = _numberOfFreeConnections ??
                 new EventCounter("number-of-free-connections", this)
                 {
-#if NETCORE3
+#if NETCORE3 || NETSTANDARD21
                     DisplayName = "Number of free-ready connections",
                     DisplayUnits = "count"
 #endif
@@ -189,7 +184,7 @@ namespace Microsoft.Data.SqlClient
             _numberOfStasisConnections = _numberOfStasisConnections ??
                 new EventCounter("number-of-stasis-connections", this)
                 {
-#if NETCORE3
+#if NETCORE3 || NETSTANDARD21
                     DisplayName = "Number of connections currently waiting to be ready",
                     DisplayUnits = "count"
 #endif
@@ -198,7 +193,7 @@ namespace Microsoft.Data.SqlClient
             _numberOfReclaimedConnections = _numberOfReclaimedConnections ??
                 new EventCounter("number-of-reclaimed-connections", this)
                 {
-#if NETCORE3
+#if NETCORE3 || NETSTANDARD21
                     DisplayName = "Number of reclaimed connections from GC",
                     DisplayUnits = "count"
 #endif
