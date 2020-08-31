@@ -26,7 +26,7 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(browserHostName), "browserHostName should not be null, empty, or whitespace");
             Debug.Assert(!string.IsNullOrWhiteSpace(instanceName), "instanceName should not be null, empty, or whitespace");
-            long scopeID = SqlClientEventSource.Log.SNIScopeEnterEvent("<sc.SNI.SSRP.GetPortByInstanceName |SNI|SCOPE>");
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("<sc.SNI.SSRP.GetPortByInstanceName |SNI|SCOPE>");
             try
             {
                 byte[] instanceInfoRequest = CreateInstanceInfoRequest(instanceName);
@@ -37,7 +37,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
                 catch (SocketException se)
                 {
-                    SqlClientEventSource.Log.SNITraceEvent("<sc.SNI.SSRP.GetPortByInstanceName |SNI|ERR> SocketException Message = {0}", se.Message);
+                    SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.SSRP.GetPortByInstanceName |SNI|ERR> SocketException Message = {0}", se.Message);
                     throw new Exception(SQLMessage.SqlServerBrowserNotAccessible(), se);
                 }
 
@@ -61,7 +61,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             finally
             {
-                SqlClientEventSource.Log.SNIScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.TrySNIScopeLeaveEvent(scopeID);
             }
         }
 
@@ -73,7 +73,7 @@ namespace Microsoft.Data.SqlClient.SNI
         private static byte[] CreateInstanceInfoRequest(string instanceName)
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(instanceName), "instanceName should not be null, empty, or whitespace");
-            long scopeID = SqlClientEventSource.Log.SNIScopeEnterEvent("<sc.SNI.SSRP.CreateInstanceInfoRequest |SNI|SCOPE>");
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("<sc.SNI.SSRP.CreateInstanceInfoRequest |SNI|SCOPE>");
             try
             {
                 const byte ClntUcastInst = 0x04;
@@ -88,7 +88,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             finally
             {
-                SqlClientEventSource.Log.SNIScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.TrySNIScopeLeaveEvent(scopeID);
             }
         }
 

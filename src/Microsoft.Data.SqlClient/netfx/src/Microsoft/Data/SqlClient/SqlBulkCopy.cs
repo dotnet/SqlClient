@@ -632,8 +632,8 @@ namespace Microsoft.Data.SqlClient
         private Task<BulkCopySimpleResultSet> CreateAndExecuteInitialQueryAsync(out BulkCopySimpleResultSet result)
         {
             string TDSCommand = CreateInitialQuery();
-            SqlClientEventSource.Log.TraceEvent("<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|INFO> Initial Query: '{0}'", TDSCommand);
-            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|Info|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
+            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|INFO> Initial Query: '{0}'", TDSCommand);
+            SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlBulkCopy.CreateAndExecuteInitialQueryAsync|Info|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
             Task executeTask = _parser.TdsExecuteSQLBatch(TDSCommand, this.BulkCopyTimeout, null, _stateObj, sync: !_isAsyncBulkCopy, callerHasConnectionLock: true);
 
             if (executeTask == null)
@@ -956,7 +956,7 @@ namespace Microsoft.Data.SqlClient
         //
         private Task SubmitUpdateBulkCommand(string TDSCommand)
         {
-            SqlClientEventSource.Log.CorrelationTraceEvent("<sc.SqlBulkCopy.SubmitUpdateBulkCommand|Info|Correlation> ObjectID{0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
+            SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlBulkCopy.SubmitUpdateBulkCommand|Info|Correlation> ObjectID{0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
             Task executeTask = _parser.TdsExecuteSQLBatch(TDSCommand, this.BulkCopyTimeout, null, _stateObj, sync: !_isAsyncBulkCopy, callerHasConnectionLock: true);
 
             if (executeTask == null)
@@ -2586,7 +2586,7 @@ namespace Microsoft.Data.SqlClient
                             // it's also the user's chance to cause an exception ...
                             _stateObj.BcpLock = true;
                             abortOperation = FireRowsCopiedEvent(_rowsCopied);
-                            SqlClientEventSource.Log.TraceEvent("<sc.SqlBulkCopy.WriteToServerInternal|{0}>", "INFO");
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlBulkCopy.WriteToServerInternal|INFO>");
 
                             // just in case some pathological person closes the target connection ...
                             if (ConnectionState.Open != _connection.State)
@@ -2975,18 +2975,18 @@ namespace Microsoft.Data.SqlClient
                 {
                     tdsReliabilitySection.Start();
 #endif //DEBUG
-                    if ((cleanupParser) && (_parser != null) && (_stateObj != null))
-                    {
-                        _parser._asyncWrite = false;
-                        Task task = _parser.WriteBulkCopyDone(_stateObj);
-                        Debug.Assert(task == null, "Write should not pend when error occurs");
-                        RunParser();
-                    }
+                if ((cleanupParser) && (_parser != null) && (_stateObj != null))
+                {
+                    _parser._asyncWrite = false;
+                    Task task = _parser.WriteBulkCopyDone(_stateObj);
+                    Debug.Assert(task == null, "Write should not pend when error occurs");
+                    RunParser();
+                }
 
-                    if (_stateObj != null)
-                    {
-                        CleanUpStateObject();
-                    }
+                if (_stateObj != null)
+                {
+                    CleanUpStateObject();
+                }
 #if DEBUG
                 }
                 finally

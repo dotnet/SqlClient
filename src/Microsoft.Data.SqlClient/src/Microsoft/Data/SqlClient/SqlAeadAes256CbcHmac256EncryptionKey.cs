@@ -7,7 +7,7 @@ using System.Text;
 namespace Microsoft.Data.SqlClient
 {
     /// <summary>
-    /// Encryption key class containing 4 keys. This class is used by SqlAeadAes256CbcHmac256Algorithm and SqlAes256CbcAlgorithm
+    /// Encryption key class containing 4 keys. This class is used by SqlAeadAes256CbcHmac256Algorithm
     /// 1) root key - Main key that is used to derive the keys used in the encryption algorithm
     /// 2) encryption key - A derived key that is used to encrypt the plain text and generate cipher text
     /// 3) mac_key - A derived key that is used to compute HMAC of the cipher text

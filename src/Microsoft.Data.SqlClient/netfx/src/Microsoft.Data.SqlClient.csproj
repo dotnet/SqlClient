@@ -91,6 +91,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientEventSource.cs">
       <Link>Microsoft\Data\SqlClient\SqlClientEventSource.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientEventSource.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\SqlClientEventSource.Windows.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientLogger.cs">
       <Link>Microsoft\Data\SqlClient\SqlClientLogger.cs</Link>
     </Compile>
@@ -198,12 +201,6 @@
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlAeadAes256CbcHmac256Factory.cs">
       <Link>Microsoft\Data\SqlClient\SqlAeadAes256CbcHmac256Factory.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlAes256CbcAlgorithm.cs">
-      <Link>Microsoft\Data\SqlClient\SqlAes256CbcAlgorithm.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlAes256CbcFactory.cs">
-      <Link>Microsoft\Data\SqlClient\SqlAes256CbcFactory.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlAuthenticationParameters.cs">
       <Link>Microsoft\Data\SqlClient\SqlAuthenticationParameters.cs</Link>
@@ -321,10 +318,16 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionCspProvider.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlCommand.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlCommandBuilder.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SqlCommand.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Microsoft\Data\SqlClient\SqlCommandBuilder.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlCommandSet.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlConnection.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SqlConnection.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionFactory.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionPoolGroupProviderInfo.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionPoolKey.cs" />
@@ -332,7 +335,9 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionStringBuilder.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionTimeoutErrorInternal.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlCredential.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlDataAdapter.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SqlDataAdapter.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlDataReader.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDataReaderSmi.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.cs" />
@@ -402,7 +407,9 @@
     <Compile Include="Microsoft\Data\ProviderBase\DbBuffer.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionClosed.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionFactory.cs" />
-    <Compile Include="Microsoft\Data\ProviderBase\SqlConnectionHelper.cs" />
+    <Compile Include="Microsoft\Data\ProviderBase\SqlConnectionHelper.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionInternal.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPool.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolGroup.cs" />
