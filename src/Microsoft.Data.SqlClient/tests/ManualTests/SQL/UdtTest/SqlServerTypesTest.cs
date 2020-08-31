@@ -19,7 +19,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void GetSchemaTableTest()
         {
-            string db = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString).InitialCatalog;
             using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand cmd = new SqlCommand("select hierarchyid::Parse('/1/') as col0", conn))
             {
@@ -33,7 +32,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     DataTestUtility.AssertEqualsWithDescription("col0", columnName, "Unexpected column name.");
 
                     string dataTypeName = (string)schemaTable.Rows[0][schemaTable.Columns["DataTypeName"]];
-                    DataTestUtility.AssertEqualsWithDescription($"{db}.sys.hierarchyid".ToUpper(), dataTypeName.ToUpper(), "Unexpected data type name.");
+                    DataTestUtility.AssertEqualsWithDescription("Northwind.sys.hierarchyid", dataTypeName, "Unexpected data type name.");
 
                     string udtAssemblyName = (string)schemaTable.Rows[0][schemaTable.Columns["UdtAssemblyQualifiedName"]];
                     Assert.True(udtAssemblyName?.StartsWith("Microsoft.SqlServer.Types.SqlHierarchyId"), "Unexpected UDT assembly name: " + udtAssemblyName);

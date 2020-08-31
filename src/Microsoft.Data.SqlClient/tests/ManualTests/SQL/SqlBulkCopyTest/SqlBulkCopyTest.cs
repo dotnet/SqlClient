@@ -9,13 +9,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class SqlBulkCopyTest
     {
-        private string _connStr = null;
-        private static bool IsAzureServer() => !DataTestUtility.IsNotAzureServer();
+        private string srcConstr = null;
+        private string dstConstr = null;
+        private static bool IsAzureServer() => DataTestUtility.IsAzureSqlServer(new SqlConnectionStringBuilder((DataTestUtility.TCPConnectionString)).DataSource);
         private static bool AreConnectionStringsSetup() => DataTestUtility.AreConnStringsSetup();
 
         public SqlBulkCopyTest()
         {
-            _connStr = DataTestUtility.TCPConnectionString;
+            srcConstr = DataTestUtility.TCPConnectionString;
+            dstConstr = (new SqlConnectionStringBuilder(srcConstr) { InitialCatalog = "tempdb" }).ConnectionString;
         }
 
         public string AddGuid(string stringin)
@@ -33,254 +35,254 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void CopyAllFromReaderTest()
         {
-            CopyAllFromReader.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_CopyAllFromReader"));
+            CopyAllFromReader.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_CopyAllFromReader"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void CopyAllFromReader1Test()
         {
-            CopyAllFromReader1.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_CopyAllFromReader1"));
+            CopyAllFromReader1.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_CopyAllFromReader1"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void CopyMultipleReadersTest()
         {
-            CopyMultipleReaders.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_CopyMultipleReaders"));
+            CopyMultipleReaders.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_CopyMultipleReaders"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void CopySomeFromReaderTest()
         {
-            CopySomeFromReader.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_CopySomeFromReader"));
+            CopySomeFromReader.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_CopySomeFromReader"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void CopySomeFromDataTableTest()
         {
-            CopySomeFromDataTable.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_CopySomeFromDataTable"));
+            CopySomeFromDataTable.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_CopySomeFromDataTable"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void CopySomeFromRowArrayTest()
         {
-            CopySomeFromRowArray.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_CopySomeFromRowArray"));
+            CopySomeFromRowArray.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_CopySomeFromRowArray"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void CopyWithEventTest()
         {
-            CopyWithEvent.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_CopyWithEvent"));
+            CopyWithEvent.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_CopyWithEvent"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void CopyWithEvent1Test()
         {
-            CopyWithEvent1.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_CopyWithEvent1"));
+            CopyWithEvent1.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_CopyWithEvent1"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void InvalidAccessFromEventTest()
         {
-            InvalidAccessFromEvent.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_InvalidAccessFromEvent"));
+            InvalidAccessFromEvent.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_InvalidAccessFromEvent"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Bug84548Test()
         {
-            Bug84548.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_Bug84548"));
+            Bug84548.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_Bug84548"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void MissingTargetTableTest()
         {
-            MissingTargetTable.Test(_connStr, _connStr, AddGuid("@SqlBulkCopyTest_MissingTargetTable"));
+            MissingTargetTable.Test(srcConstr, dstConstr, AddGuid("@SqlBulkCopyTest_MissingTargetTable"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void MissingTargetColumnTest()
         {
-            MissingTargetColumn.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_MissingTargetColumn"));
+            MissingTargetColumn.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_MissingTargetColumn"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Bug85007Test()
         {
-            Bug85007.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_Bug85007"));
+            Bug85007.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_Bug85007"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void CheckConstraintsTest()
         {
-            CheckConstraints.Test(_connStr, AddGuid("SqlBulkCopyTest_Extensionsrc"), AddGuid("SqlBulkCopyTest_Extensiondst"));
+            CheckConstraints.Test(dstConstr, AddGuid("SqlBulkCopyTest_Extensionsrc"), AddGuid("SqlBulkCopyTest_Extensiondst"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void TransactionTest()
         {
-            Transaction.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_Transaction0"));
+            Transaction.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_Transaction0"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Transaction1Test()
         {
-            Transaction1.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_Transaction1"));
+            Transaction1.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_Transaction1"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Transaction2Test()
         {
-            Transaction2.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_Transaction2"));
+            Transaction2.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_Transaction2"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Transaction3Test()
         {
-            Transaction3.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_Transaction3"));
+            Transaction3.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_Transaction3"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Transaction4Test()
         {
-            Transaction4.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_Transaction4"));
+            Transaction4.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_Transaction4"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void CopyVariantsTest()
         {
-            CopyVariants.Test(_connStr, AddGuid("SqlBulkCopyTest_Variants"));
+            CopyVariants.Test(dstConstr, AddGuid("SqlBulkCopyTest_Variants"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Bug98182Test()
         {
-            Bug98182.Test(_connStr, AddGuid("@SqlBulkCopyTest_Bug98182 "));
+            Bug98182.Test(dstConstr, AddGuid("@SqlBulkCopyTest_Bug98182 "));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void FireTriggerTest()
         {
-            FireTrigger.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_FireTrigger"));
+            FireTrigger.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_FireTrigger"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void ErrorOnRowsMarkedAsDeletedTest()
         {
-            ErrorOnRowsMarkedAsDeleted.Test(_connStr, AddGuid("SqlBulkCopyTest_ErrorOnRowsMarkedAsDeleted"));
+            ErrorOnRowsMarkedAsDeleted.Test(dstConstr, AddGuid("SqlBulkCopyTest_ErrorOnRowsMarkedAsDeleted"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void SpecialCharacterNamesTest()
         {
-            SpecialCharacterNames.Test(_connStr, _connStr, AddGuid("@SqlBulkCopyTest_SpecialCharacterNames"));
+            SpecialCharacterNames.Test(srcConstr, dstConstr, AddGuid("@SqlBulkCopyTest_SpecialCharacterNames"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Bug903514Test()
         {
-            Bug903514.Test(_connStr, AddGuid("SqlBulkCopyTest_Bug903514"));
+            Bug903514.Test(dstConstr, AddGuid("SqlBulkCopyTest_Bug903514"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void ColumnCollationTest()
         {
-            ColumnCollation.Test(_connStr, AddGuid("SqlBulkCopyTest_ColumnCollation"));
+            ColumnCollation.Test(dstConstr, AddGuid("SqlBulkCopyTest_ColumnCollation"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void CopyAllFromReaderAsyncTest()
         {
-            CopyAllFromReaderAsync.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_AsyncTest1")); //Async + Reader
+            CopyAllFromReaderAsync.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_AsyncTest1")); //Async + Reader
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void CopySomeFromRowArrayAsyncTest()
         {
-            CopySomeFromRowArrayAsync.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_AsyncTest2")); //Async + Some Rows
+            CopySomeFromRowArrayAsync.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_AsyncTest2")); //Async + Some Rows
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void CopySomeFromDataTableAsyncTest()
         {
-            CopySomeFromDataTableAsync.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_AsyncTest3")); //Async + Some Table
+            CopySomeFromDataTableAsync.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_AsyncTest3")); //Async + Some Table
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void CopyWithEventAsyncTest()
         {
-            CopyWithEventAsync.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_AsyncTest4")); //Async + Rows + Notification
+            CopyWithEventAsync.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_AsyncTest4")); //Async + Rows + Notification
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void CopyAllFromReaderCancelAsyncTest()
         {
-            CopyAllFromReaderCancelAsync.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_AsyncTest5")); //Async + Reader + cancellation token
+            CopyAllFromReaderCancelAsync.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_AsyncTest5")); //Async + Reader + cancellation token
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void CopyAllFromReaderConnectionClosedAsyncTest()
         {
-            CopyAllFromReaderConnectionClosedAsync.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_AsyncTest6")); //Async + Reader + Connection closed
+            CopyAllFromReaderConnectionClosedAsync.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_AsyncTest6")); //Async + Reader + Connection closed
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void CopyAllFromReaderConnectionClosedOnEventAsyncTest()
         {
-            CopyAllFromReaderConnectionClosedOnEventAsync.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_AsyncTest7")); //Async + Reader + Connection closed during the event
+            CopyAllFromReaderConnectionClosedOnEventAsync.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_AsyncTest7")); //Async + Reader + Connection closed during the event
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void TransactionTestAsyncTest()
         {
-            TransactionTestAsync.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_TransactionTestAsync")); //Async + Transaction rollback
+            TransactionTestAsync.Test(srcConstr, dstConstr, AddGuid("SqlBulkCopyTest_TransactionTestAsync")); //Async + Transaction rollback
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void CopyWidenNullInexactNumericsTest()
         {
-            CopyWidenNullInexactNumerics.Test(_connStr, _connStr);
+            CopyWidenNullInexactNumerics.Test(srcConstr, dstConstr);
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void DestinationTableNameWithSpecialCharTest()
         {
-            DestinationTableNameWithSpecialChar.Test(_connStr, AddGuid("SqlBulkCopyTest_DestinationTableNameWithSpecialChar"));
+            DestinationTableNameWithSpecialChar.Test(srcConstr, AddGuid("SqlBulkCopyTest_DestinationTableNameWithSpecialChar"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void OrderHintTest()
         {
-            OrderHint.Test(_connStr, AddGuid("SqlBulkCopyTest_OrderHint"), AddGuid("SqlBulkCopyTest_OrderHint2"));
+            OrderHint.Test(srcConstr, AddGuid("SqlBulkCopyTest_OrderHint"), AddGuid("SqlBulkCopyTest_OrderHint2"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void OrderHintAsyncTest()
         {
-            OrderHintAsync.Test(_connStr, AddGuid("SqlBulkCopyTest_OrderHintAsync"), AddGuid("SqlBulkCopyTest_OrderHintAsync2"));
+            OrderHintAsync.Test(srcConstr, AddGuid("SqlBulkCopyTest_OrderHintAsync"), AddGuid("SqlBulkCopyTest_OrderHintAsync2"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void OrderHintMissingTargetColumnTest()
         {
-            OrderHintMissingTargetColumn.Test(_connStr, AddGuid("SqlBulkCopyTest_OrderHintMissingTargetColumn"));
+            OrderHintMissingTargetColumn.Test(srcConstr, AddGuid("SqlBulkCopyTest_OrderHintMissingTargetColumn"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void OrderHintDuplicateColumnTest()
         {
-            OrderHintDuplicateColumn.Test(_connStr, AddGuid("SqlBulkCopyTest_OrderHintDuplicateColumn"));
+            OrderHintDuplicateColumn.Test(srcConstr, AddGuid("SqlBulkCopyTest_OrderHintDuplicateColumn"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void OrderHintTransactionTest()
         {
-            OrderHintTransaction.Test(_connStr, AddGuid("SqlBulkCopyTest_OrderHintTransaction"));
+            OrderHintTransaction.Test(srcConstr, AddGuid("SqlBulkCopyTest_OrderHintTransaction"));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [ActiveIssue(12219)]
         public void OrderHintIdentityColumnTest()
         {
-            OrderHintIdentityColumn.Test(_connStr, AddGuid("SqlBulkCopyTest_OrderHintIdentityColumn"));
+            OrderHintIdentityColumn.Test(srcConstr, AddGuid("SqlBulkCopyTest_OrderHintIdentityColumn"));
         }
     }
 }
