@@ -11,16 +11,17 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
-    public class SqlBulkCopyTruncation : IClassFixture<PlatformSpecificTestContext>
+    [PlatformSpecific(TestPlatforms.Windows)]
+    public class SqlBulkCopyTruncation : IClassFixture<SQLSetupStrategyCertStoreProvider>
     {
-        private SQLSetupStrategy _fixture;
+        private SQLSetupStrategyCertStoreProvider _fixture;
 
         private readonly Dictionary<string, string> tableNames = new Dictionary<string, string>();
 
-        public SqlBulkCopyTruncation(PlatformSpecificTestContext context)
+        public SqlBulkCopyTruncation(SQLSetupStrategyCertStoreProvider fixture)
         {
-            _fixture = context.Fixture;
-            tableNames = _fixture.sqlBulkTruncationTableNames;
+            _fixture = fixture;
+            tableNames = fixture.sqlBulkTruncationTableNames;
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]

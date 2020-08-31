@@ -64,22 +64,22 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns></returns>
         public uint StartReceive()
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("<sc.SNI.SNIMarsConnection.StartReceive |SNI|INFO|SCOPE> StartReceive");
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnterEvent("<sc.SNI.SNIMarsConnection.StartReceive |SNI|INFO|SCOPE> StartReceive");
             try
             {
                 SNIPacket packet = null;
 
                 if (ReceiveAsync(ref packet) == TdsEnums.SNI_SUCCESS_IO_PENDING)
                 {
-                    SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.SNIMarsConnection.StartReceive |SNI|INFO|Trace> Success IO pending.");
+                    SqlClientEventSource.Log.SNITraceEvent("<sc.SNI.SNIMarsConnection.StartReceive |SNI|INFO|Trace> Success IO pending.");
                     return TdsEnums.SNI_SUCCESS_IO_PENDING;
                 }
-                SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.SNIMarsConnection.StartReceive |SNI|ERR> Connection not useable.");
+                SqlClientEventSource.Log.SNITraceEvent("<sc.SNI.SNIMarsConnection.StartReceive |SNI|ERR> Connection not useable.");
                 return SNICommon.ReportSNIError(SNIProviders.SMUX_PROV, 0, SNICommon.ConnNotUsableError, string.Empty);
             }
             finally
             {
-                SqlClientEventSource.Log.TrySNIScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.SNIScopeLeaveEvent(scopeID);
             }
         }
 
@@ -90,7 +90,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error code</returns>
         public uint Send(SNIPacket packet)
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("<sc.SNI.SNIMarsConnection.Send |SNI|INFO|SCOPE> Send");
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnterEvent("<sc.SNI.SNIMarsConnection.Send |SNI|INFO|SCOPE> Send");
             try
             {
                 lock (this)
@@ -100,7 +100,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             finally
             {
-                SqlClientEventSource.Log.TrySNIScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.SNIScopeLeaveEvent(scopeID);
             }
         }
 
@@ -112,7 +112,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error code</returns>
         public uint SendAsync(SNIPacket packet, SNIAsyncCallback callback)
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("<sc.SNI.SNIMarsConnection.SendAsync |SNI|INFO|SCOPE> SendAsync");
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnterEvent("<sc.SNI.SNIMarsConnection.SendAsync |SNI|INFO|SCOPE> SendAsync");
             try
             {
                 lock (this)
@@ -122,7 +122,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             finally
             {
-                SqlClientEventSource.Log.TrySNIScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.SNIScopeLeaveEvent(scopeID);
             }
         }
 
@@ -133,7 +133,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error code</returns>
         public uint ReceiveAsync(ref SNIPacket packet)
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("<sc.SNI.SNIMarsConnection.SendAsync |SNI|INFO|SCOPE> SendAsync");
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnterEvent("<sc.SNI.SNIMarsConnection.SendAsync |SNI|INFO|SCOPE> SendAsync");
             try
             {
                 if (packet != null)
@@ -149,7 +149,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             finally
             {
-                SqlClientEventSource.Log.TrySNIScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.SNIScopeLeaveEvent(scopeID);
             }
         }
 
@@ -159,7 +159,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error status</returns>
         public uint CheckConnection()
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("<sc.SNI.SNIMarsConnection.CheckConnection |SNI|INFO|SCOPE>");
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnterEvent("<sc.SNI.SNIMarsConnection.CheckConnection |SNI|INFO|SCOPE>");
             try
             {
                 lock (this)
@@ -169,7 +169,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             finally
             {
-                SqlClientEventSource.Log.TrySNIScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.SNIScopeLeaveEvent(scopeID);
             }
         }
 
@@ -181,7 +181,7 @@ namespace Microsoft.Data.SqlClient.SNI
             Debug.Assert(Monitor.IsEntered(this), "HandleReceiveError was called without being locked.");
             if (!Monitor.IsEntered(this))
             {
-                SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.SNIMarsConnection.HandleReceiveError |SNI|ERR> HandleReceiveError was called without being locked.");
+                SqlClientEventSource.Log.SNITraceEvent("<sc.SNI.SNIMarsConnection.HandleReceiveError |SNI|ERR> HandleReceiveError was called without being locked.");
             }
             foreach (SNIMarsHandle handle in _sessions.Values)
             {
@@ -211,7 +211,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="sniErrorCode">SNI error code</param>
         public void HandleReceiveComplete(SNIPacket packet, uint sniErrorCode)
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("<sc.SNI.SNIMarsConnection.HandleReceiveComplete |SNI|INFO|SCOPE>");
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnterEvent("<sc.SNI.SNIMarsConnection.HandleReceiveComplete |SNI|INFO|SCOPE>");
             try
             {
                 SNISMUXHeader currentHeader = null;
@@ -223,7 +223,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     lock (this)
                     {
                         HandleReceiveError(packet);
-                        SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.SNIMarsConnection.HandleReceiveComplete |SNI|ERR> not successful.");
+                        SqlClientEventSource.Log.SNITraceEvent("<sc.SNI.SNIMarsConnection.HandleReceiveComplete |SNI|ERR> not successful.");
                         return;
                     }
                 }
@@ -249,7 +249,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
                                     if (sniErrorCode == TdsEnums.SNI_SUCCESS_IO_PENDING)
                                     {
-                                        SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.SNIMarsConnection.HandleReceiveComplete |SNI|ERR> not successful.");
+                                        SqlClientEventSource.Log.SNITraceEvent("<sc.SNI.SNIMarsConnection.HandleReceiveComplete |SNI|ERR> not successful.");
                                         return;
                                     }
 
@@ -351,7 +351,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             finally
             {
-                SqlClientEventSource.Log.TrySNIScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.SNIScopeLeaveEvent(scopeID);
             }
         }
 
@@ -360,14 +360,14 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         public uint EnableSsl(uint options)
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("<sc.SNI.SNIMarsConnection.EnableSsl |SNI|INFO|SCOPE>");
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnterEvent("<sc.SNI.SNIMarsConnection.EnableSsl |SNI|INFO|SCOPE>");
             try
             {
                 return _lowerHandle.EnableSsl(options);
             }
             finally
             {
-                SqlClientEventSource.Log.TrySNIScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.SNIScopeLeaveEvent(scopeID);
             }
         }
 
@@ -376,14 +376,14 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         public void DisableSsl()
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("<sc.SNI.SNIMarsConnection.EnableSsl |SNI|INFO|SCOPE>");
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnterEvent("<sc.SNI.SNIMarsConnection.EnableSsl |SNI|INFO|SCOPE>");
             try
             {
                 _lowerHandle.DisableSsl();
             }
             finally
             {
-                SqlClientEventSource.Log.TrySNIScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.SNIScopeLeaveEvent(scopeID);
             }
         }
 
@@ -403,14 +403,14 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         public void KillConnection()
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("<sc.SNI.SNIMarsConnection.KillConnection |SNI|INFO|SCOPE>");
+            long scopeID = SqlClientEventSource.Log.SNIScopeEnterEvent("<sc.SNI.SNIMarsConnection.KillConnection |SNI|INFO|SCOPE>");
             try
             {
                 _lowerHandle.KillConnection();
             }
             finally
             {
-                SqlClientEventSource.Log.TrySNIScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.SNIScopeLeaveEvent(scopeID);
             }
         }
 #endif

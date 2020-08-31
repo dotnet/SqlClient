@@ -21,8 +21,9 @@ namespace Microsoft.Data.SqlClient
         {
             _encryptionAlgoFactoryList = new ConcurrentDictionary<string, SqlClientEncryptionAlgorithmFactory>(concurrencyLevel: 4 * Environment.ProcessorCount /* default value in ConcurrentDictionary*/, capacity: 2);
 
-            // Add wellknown algorithm
+            // Add wellknown algorithms
             _encryptionAlgoFactoryList.TryAdd(SqlAeadAes256CbcHmac256Algorithm.AlgorithmName, new SqlAeadAes256CbcHmac256Factory());
+            _encryptionAlgoFactoryList.TryAdd(SqlAes256CbcAlgorithm.AlgorithmName, new SqlAes256CbcFactory());
         }
 
         internal static SqlClientEncryptionAlgorithmFactoryList GetInstance()

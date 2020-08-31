@@ -8,12 +8,10 @@ using System.Threading;
 namespace Microsoft.Data.SqlClient
 {
     [EventSource(Name = "Microsoft.Data.SqlClient.EventSource")]
-    internal partial class SqlClientEventSource : EventSource
+    internal class SqlClientEventSource : EventSource
     {
         // Defines the singleton instance for the Resources ETW provider
         internal static readonly SqlClientEventSource Log = new SqlClientEventSource();
-
-        private const string NullStr = "null";
 
         #region Event IDs
         // Initialized static Scope IDs
@@ -270,30 +268,8 @@ namespace Microsoft.Data.SqlClient
         //Never use event writer directly as they are not checking for enabled/disabled situations. Always use overloads.
 
         #region Trace
-
-        #region Traces without if statements
         [NonEvent]
-        internal void TraceEvent<T0, T1>(string message, T0 args0, T1 args1)
-        {
-            Trace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr));
-        }
-
-        [NonEvent]
-        internal void TraceEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
-        {
-            Trace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr));
-        }
-
-        [NonEvent]
-        internal void TraceEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
-        {
-            Trace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr));
-        }
-        #endregion
-
-        #region Traces with if statements
-        [NonEvent]
-        internal void TryTraceEvent(string message)
+        internal void TraceEvent(string message)
         {
             if (Log.IsTraceEnabled())
             {
@@ -302,56 +278,54 @@ namespace Microsoft.Data.SqlClient
         }
 
         [NonEvent]
-        internal void TryTraceEvent<T0>(string message, T0 args0)
+        internal void TraceEvent<T0>(string message, T0 args0)
         {
             if (Log.IsTraceEnabled())
             {
-                Trace(string.Format(message, args0?.ToString() ?? NullStr));
+                Trace(string.Format(message, args0?.ToString() ?? "Null"));
             }
         }
 
         [NonEvent]
-        internal void TryTraceEvent<T0, T1>(string message, T0 args0, T1 args1)
+        internal void TraceEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
             if (Log.IsTraceEnabled())
             {
-                Trace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr));
+                Trace(string.Format(message, args0?.ToString() ?? "Null", args1?.ToString() ?? "Null"));
             }
         }
 
         [NonEvent]
-        internal void TryTraceEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
+        internal void TraceEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
         {
             if (Log.IsTraceEnabled())
             {
-                Trace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr));
+                Trace(string.Format(message, args0, args1, args2));
             }
         }
 
         [NonEvent]
-        internal void TryTraceEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
+        internal void TraceEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
         {
             if (Log.IsTraceEnabled())
             {
-                Trace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr));
+                Trace(string.Format(message, args0, args1, args2, args3));
             }
         }
 
         [NonEvent]
-        internal void TryTraceEvent<T0, T1, T2, T3, T4, T5>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4, T5 args5)
+        internal void TraceEvent<T0, T1, T2, T3, T4, T5>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4, T5 args5)
         {
             if (Log.IsTraceEnabled())
             {
-                Trace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr, args4?.ToString() ?? NullStr, args5?.ToString() ?? NullStr));
+                Trace(string.Format(message, args0, args1, args2, args3, args4, args5));
             }
         }
-        #endregion
-
         #endregion
 
         #region Scope
         [NonEvent]
-        internal long TryScopeEnterEvent(string message)
+        internal long ScopeEnterEvent(string message)
         {
             if (Log.IsScopeEnabled())
             {
@@ -361,47 +335,47 @@ namespace Microsoft.Data.SqlClient
         }
 
         [NonEvent]
-        internal long TryScopeEnterEvent<T0>(string message, T0 args0)
+        internal long ScopeEnterEvent<T0>(string message, T0 args0)
         {
             if (Log.IsScopeEnabled())
             {
-                return ScopeEnter(string.Format(message, args0?.ToString() ?? NullStr));
+                return ScopeEnter(string.Format(message, args0));
             }
             return 0;
         }
 
         [NonEvent]
-        internal long TryScopeEnterEvent<T0, T1>(string message, T0 args0, T1 args1)
+        internal long ScopeEnterEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
             if (Log.IsScopeEnabled())
             {
-                return ScopeEnter(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr));
+                return ScopeEnter(string.Format(message, args0, args1));
             }
             return 0;
         }
 
         [NonEvent]
-        internal long TryScopeEnterEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
+        internal long ScopeEnterEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
         {
             if (Log.IsScopeEnabled())
             {
-                return ScopeEnter(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr));
+                return ScopeEnter(string.Format(message, args0, args1, args2));
             }
             return 0;
         }
 
         [NonEvent]
-        internal long TryScopeEnterEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
+        internal long ScopeEnterEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
         {
             if (Log.IsScopeEnabled())
             {
-                return ScopeEnter(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr));
+                return ScopeEnter(string.Format(message, args0, args1, args2, args3));
             }
             return 0;
         }
 
         [NonEvent]
-        internal void TryScopeLeaveEvent(long scopeId)
+        internal void ScopeLeaveEvent(long scopeId)
         {
             if (Log.IsScopeEnabled())
             {
@@ -411,18 +385,8 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Notification Trace
-
-        #region Notification Traces without if statements
         [NonEvent]
-        internal void NotificationTraceEvent<T0, T1>(string message, T0 args0, T1 args1)
-        {
-            NotificationTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr));
-        }
-        #endregion
-
-        #region Notification Traces with if statements
-        [NonEvent]
-        internal void TryNotificationTraceEvent(string message)
+        internal void NotificationTraceEvent(string message)
         {
             if (Log.IsNotificationTraceEnabled())
             {
@@ -431,87 +395,85 @@ namespace Microsoft.Data.SqlClient
         }
 
         [NonEvent]
-        internal void TryNotificationTraceEvent<T0>(string message, T0 args0)
+        internal void NotificationTraceEvent<T0>(string message, T0 args0)
         {
             if (Log.IsNotificationTraceEnabled())
             {
-                NotificationTrace(string.Format(message, args0?.ToString() ?? NullStr));
+                NotificationTrace(string.Format(message, args0));
             }
         }
 
         [NonEvent]
-        internal void TryNotificationTraceEvent<T0, T1>(string message, T0 args0, T1 args1)
+        internal void NotificationTraceEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
             if (Log.IsNotificationTraceEnabled())
             {
-                NotificationTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr));
+                NotificationTrace(string.Format(message, args0, args1));
             }
         }
 
         [NonEvent]
-        internal void TryNotificationTraceEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
+        internal void NotificationTraceEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
         {
             if (Log.IsNotificationTraceEnabled())
             {
-                NotificationTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr));
+                NotificationTrace(string.Format(message, args0, args1, args2));
             }
         }
 
         [NonEvent]
-        internal void TryNotificationTraceEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
+        internal void NotificationTraceEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
         {
             if (Log.IsNotificationTraceEnabled())
             {
-                NotificationTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr));
+                NotificationTrace(string.Format(message, args0, args1, args2, args3));
             }
         }
-        #endregion
-
         #endregion
 
         #region Notification Scope
         [NonEvent]
-        internal long TryNotificationScopeEnterEvent<T0>(string message, T0 args0)
+        internal long NotificationScopeEnterEvent<T0>(string message, T0 args0)
         {
             if (Log.IsNotificationScopeEnabled())
             {
-                return NotificationScopeEnter(string.Format(message, args0?.ToString() ?? NullStr));
+                return NotificationScopeEnter(string.Format(message, args0));
             }
             return 0;
         }
 
         [NonEvent]
-        internal long TryNotificationScopeEnterEvent<T0, T1>(string message, T0 args0, T1 args1)
+        internal long NotificationScopeEnterEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
             if (Log.IsNotificationScopeEnabled())
             {
-                return NotificationScopeEnter(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr));
+                return NotificationScopeEnter(string.Format(message, args0, args1));
             }
             return 0;
         }
 
         [NonEvent]
-        internal long TryNotificationScopeEnterEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
+        internal long NotificationScopeEnterEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
         {
             if (Log.IsNotificationScopeEnabled())
             {
-                return NotificationScopeEnter(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr));
+                return NotificationScopeEnter(string.Format(message, args0, args1, args2));
             }
             return 0;
         }
 
         [NonEvent]
-        internal long TryNotificationScopeEnterEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
+        internal long NotificationScopeEnterEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
         {
             if (Log.IsNotificationScopeEnabled())
             {
-                return NotificationScopeEnter(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr));
+                return NotificationScopeEnter(string.Format(message, args0, args1, args2, args3));
             }
             return 0;
         }
 
         [NonEvent]
-        internal void TryNotificationScopeLeaveEvent(long scopeId)
+        internal void NotificationScopeLeaveEvent(long scopeId)
         {
             if (Log.IsNotificationScopeEnabled())
             {
@@ -522,55 +484,55 @@ namespace Microsoft.Data.SqlClient
 
         #region Pooler Trace
         [NonEvent]
-        internal void TryPoolerTraceEvent<T0>(string message, T0 args0)
+        internal void PoolerTraceEvent<T0>(string message, T0 args0)
         {
             if (Log.IsPoolerTraceEnabled())
             {
-                PoolerTrace(string.Format(message, args0?.ToString() ?? NullStr));
+                PoolerTrace(string.Format(message, args0));
             }
         }
 
         [NonEvent]
-        internal void TryPoolerTraceEvent<T0, T1>(string message, T0 args0, T1 args1)
+        internal void PoolerTraceEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
             if (Log.IsPoolerTraceEnabled())
             {
-                PoolerTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr));
+                PoolerTrace(string.Format(message, args0, args1));
             }
         }
 
         [NonEvent]
-        internal void TryPoolerTraceEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
+        internal void PoolerTraceEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
         {
             if (Log.IsPoolerTraceEnabled())
             {
-                PoolerTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr));
+                PoolerTrace(string.Format(message, args0, args1, args2));
             }
         }
 
         [NonEvent]
-        internal void TryPoolerTraceEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
+        internal void PoolerTraceEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
         {
             if (Log.IsPoolerTraceEnabled())
             {
-                PoolerTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr));
+                PoolerTrace(string.Format(message, args0, args1, args2, args3));
             }
         }
         #endregion
 
         #region Pooler Scope
         [NonEvent]
-        internal long TryPoolerScopeEnterEvent<T0>(string message, T0 args0)
+        internal long PoolerScopeEnterEvent<T0>(string message, T0 args0)
         {
             if (Log.IsPoolerScopeEnabled())
             {
-                return PoolerScopeEnter(string.Format(message, args0?.ToString() ?? NullStr));
+                return PoolerScopeEnter(string.Format(message, args0));
             }
             return 0;
         }
 
         [NonEvent]
-        internal void TryPoolerScopeLeaveEvent(long scopeId)
+        internal void PoolerScopeLeaveEvent(long scopeId)
         {
             if (Log.IsPoolerScopeEnabled())
             {
@@ -580,36 +542,8 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region AdvancedTrace
-
-        #region AdvancedTraces without if statements
         [NonEvent]
-        internal void AdvancedTraceEvent<T0>(string message, T0 args0)
-        {
-            AdvancedTrace(string.Format(message, args0?.ToString() ?? NullStr));
-        }
-
-        [NonEvent]
-        internal void AdvancedTraceEvent<T0, T1>(string message, T0 args0, T1 args1)
-        {
-            AdvancedTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr));
-        }
-
-        [NonEvent]
-        internal void AdvancedTraceEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
-        {
-            AdvancedTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr));
-        }
-
-        [NonEvent]
-        internal void AdvancedTraceEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
-        {
-            AdvancedTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr));
-        }
-        #endregion
-
-        #region AdvancedTraces with if statements
-        [NonEvent]
-        internal void TryAdvancedTraceEvent(string message)
+        internal void AdvancedTraceEvent(string message)
         {
             if (Log.IsAdvancedTraceOn())
             {
@@ -618,71 +552,71 @@ namespace Microsoft.Data.SqlClient
         }
 
         [NonEvent]
-        internal void TryAdvancedTraceEvent<T0>(string message, T0 args0)
+        internal void AdvancedTraceEvent<T0>(string message, T0 args0)
         {
             if (Log.IsAdvancedTraceOn())
             {
-                AdvancedTrace(string.Format(message, args0?.ToString() ?? NullStr));
+                AdvancedTrace(string.Format(message, args0));
             }
         }
 
         [NonEvent]
-        internal void TryAdvancedTraceEvent<T0, T1>(string message, T0 args0, T1 args1)
+        internal void AdvancedTraceEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
             if (Log.IsAdvancedTraceOn())
             {
-                AdvancedTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr));
+                AdvancedTrace(string.Format(message, args0, args1));
             }
         }
 
         [NonEvent]
-        internal void TryAdvancedTraceEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
+        internal void AdvancedTraceEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
         {
             if (Log.IsAdvancedTraceOn())
             {
-                AdvancedTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr));
+                AdvancedTrace(string.Format(message, args0, args1, args2));
             }
         }
 
         [NonEvent]
-        internal void TryAdvancedTraceEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
+        internal void AdvancedTraceEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
         {
             if (Log.IsAdvancedTraceOn())
             {
-                AdvancedTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr));
+                AdvancedTrace(string.Format(message, args0, args1, args2, args3));
             }
         }
 
         [NonEvent]
-        internal void TryAdvancedTraceEvent<T0, T1, T2, T3, T4, T5>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4, T5 args5)
+        internal void AdvancedTraceEvent<T0, T1, T2, T3, T4, T5>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4, T5 args5)
         {
             if (Log.IsAdvancedTraceOn())
             {
-                AdvancedTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr, args4?.ToString() ?? NullStr, args5?.ToString() ?? NullStr));
+                AdvancedTrace(string.Format(message, args0, args1, args2, args3, args4, args5));
             }
         }
 
         [NonEvent]
-        internal void TryAdvancedTraceEvent<T0, T1, T2, T3, T4, T5, T6, T7>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4, T5 args5, T6 args6, T7 args7)
+        internal void AdvancedTraceEvent<T0, T1, T2, T3, T4, T5, T6, T7>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4, T5 args5, T6 args6, T7 args7)
         {
             if (Log.IsAdvancedTraceOn())
             {
-                AdvancedTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr, args4?.ToString() ?? NullStr, args5?.ToString() ?? NullStr, args6?.ToString() ?? NullStr, args7?.ToString() ?? NullStr));
+                AdvancedTrace(string.Format(message, args0, args1, args2, args3, args4, args5, args6, args7));
             }
         }
 
         [NonEvent]
-        internal long TryAdvancedScopeEnterEvent<T0>(string message, T0 args0)
+        internal long AdvancedScopeEnterEvent<T0>(string message, T0 args0)
         {
             if (Log.IsAdvancedTraceOn())
             {
-                return AdvancedScopeEnter(string.Format(message, args0?.ToString() ?? NullStr));
+                return AdvancedScopeEnter(string.Format(message, args0));
             }
             return 0;
         }
 
         [NonEvent]
-        internal void TryAdvanceScopeLeave(long scopeId)
+        internal void AdvanceScopeLeave(long scopeId)
         {
             if (Log.IsAdvancedTraceOn())
             {
@@ -691,66 +625,67 @@ namespace Microsoft.Data.SqlClient
         }
 
         [NonEvent]
-        internal void TryAdvancedTraceBinEvent<T0, T1>(string message, T0 args0, T1 args1)
+        internal void AdvancedTraceBinEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
             if (Log.IsAdvancedTraceOn())
             {
-                AdvancedTraceBin(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr));
+                AdvancedTraceBin(string.Format(message, args0, args1));
             }
         }
 
         [NonEvent]
-        internal void TryAdvancedTraceErrorEvent<T0, T1, T2, T3, T4>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4)
+        internal void AdvancedTraceErrorEvent<T0, T1, T2, T3, T4>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4)
         {
             if (Log.IsAdvancedTraceOn())
             {
-                AdvancedTraceError(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr, args4?.ToString() ?? NullStr));
+                AdvancedTraceError(string.Format(message, args0, args1, args2, args3, args4));
             }
         }
-        #endregion
-
         #endregion
 
         #region Correlation Trace
         [NonEvent]
-        internal void TryCorrelationTraceEvent<T0>(string message, T0 args0)
+        internal void CorrelationTraceEvent<T0>(string message, T0 args0)
         {
             if (Log.IsCorrelationEnabled())
             {
-                CorrelationTrace(string.Format(message, args0?.ToString() ?? NullStr));
+                CorrelationTrace(string.Format(message, args0?.ToString() ?? "Null"));
             }
         }
 
         [NonEvent]
-        internal void TryCorrelationTraceEvent<T0, T1>(string message, T0 args0, T1 args1)
+        internal void CorrelationTraceEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
             if (Log.IsCorrelationEnabled())
             {
-                CorrelationTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr));
+                CorrelationTrace(string.Format(message, args0?.ToString() ?? "Null", args1?.ToString() ?? "Null"));
             }
         }
 
         [NonEvent]
-        internal void TryCorrelationTraceEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
+        internal void CorrelationTraceEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
         {
             if (Log.IsCorrelationEnabled())
             {
-                CorrelationTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr));
+                CorrelationTrace(string.Format(message, args0?.ToString() ?? "Null", args1?.ToString() ?? "Null", args2?.ToString() ?? "Null"));
             }
         }
         #endregion
 
-        #region State Dump without if statements
+        #region State Dump
         [NonEvent]
         internal void StateDumpEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
-            StateDump(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr));
+            if (Log.IsStateDumpEnabled())
+            {
+                StateDump(string.Format(message, args0, args1));
+            }
         }
         #endregion
 
         #region SNI Trace
         [NonEvent]
-        internal void TrySNITraceEvent(string message)
+        internal void SNITraceEvent(string message)
         {
             if (Log.IsSNITraceEnabled())
             {
@@ -759,54 +694,54 @@ namespace Microsoft.Data.SqlClient
         }
 
         [NonEvent]
-        internal void TrySNITraceEvent<T0>(string message, T0 args0)
+        internal void SNITraceEvent<T0>(string message, T0 args0)
         {
             if (Log.IsSNITraceEnabled())
             {
-                SNITrace(string.Format(message, args0?.ToString() ?? NullStr));
+                SNITrace(string.Format(message, args0));
             }
         }
 
         [NonEvent]
-        internal void TrySNITraceEvent<T0, T1>(string message, T0 args0, T1 args1)
+        internal void SNITraceEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
             if (Log.IsSNITraceEnabled())
             {
-                SNITrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr));
+                SNITrace(string.Format(message, args0, args1));
             }
         }
 
         [NonEvent]
-        internal void TrySNITraceEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
+        internal void SNITraceEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
         {
             if (Log.IsSNITraceEnabled())
             {
-                SNITrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr));
+                SNITrace(string.Format(message, args0, args1, args2));
             }
         }
 
         [NonEvent]
-        internal void TrySNITraceEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
+        internal void SNITraceEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
         {
             if (Log.IsSNITraceEnabled())
             {
-                SNITrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr));
+                SNITrace(string.Format(message, args0, args1, args2, args3));
             }
         }
 
         [NonEvent]
-        internal void TrySNITraceEvent<T0, T1, T2, T3, T4>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4)
+        internal void SNITraceEvent<T0, T1, T2, T3, T4>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4)
         {
             if (Log.IsSNITraceEnabled())
             {
-                SNITrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr, args4?.ToString() ?? NullStr));
+                SNITrace(string.Format(message, args0, args1, args2, args3, args4));
             }
         }
         #endregion
 
         #region SNI Scope
         [NonEvent]
-        internal long TrySNIScopeEnterEvent(string message)
+        internal long SNIScopeEnterEvent(string message)
         {
             if (Log.IsSNIScopeEnabled())
             {
@@ -816,47 +751,47 @@ namespace Microsoft.Data.SqlClient
         }
 
         [NonEvent]
-        internal long TrySNIScopeEnterEvent<T0>(string message, T0 args0)
+        internal long SNIScopeEnterEvent<T0>(string message, T0 args0)
         {
             if (Log.IsSNIScopeEnabled())
             {
-                return SNIScopeEnter(string.Format(message, args0?.ToString() ?? NullStr));
+                return SNIScopeEnter(string.Format(message, args0));
             }
             return 0;
         }
 
         [NonEvent]
-        internal long TrySNIScopeEnterEvent<T0, T1>(string message, T0 args0, T1 args1)
+        internal long SNIScopeEnterEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
             if (Log.IsSNIScopeEnabled())
             {
-                return SNIScopeEnter(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr));
+                return SNIScopeEnter(string.Format(message, args0, args1));
             }
             return 0;
         }
 
         [NonEvent]
-        internal long TrySNIScopeEnterEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
+        internal long SNIScopeEnterEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
         {
             if (Log.IsSNIScopeEnabled())
             {
-                return SNIScopeEnter(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr));
+                return SNIScopeEnter(string.Format(message, args0, args1, args2));
             }
             return 0;
         }
 
         [NonEvent]
-        internal long TrySNIScopeEnterEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
+        internal long SNIScopeEnterEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
         {
             if (Log.IsSNIScopeEnabled())
             {
-                return SNIScopeEnter(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr));
+                return SNIScopeEnter(string.Format(message, args0, args1, args2, args3));
             }
             return 0;
         }
 
         [NonEvent]
-        internal void TrySNIScopeLeaveEvent(long scopeId)
+        internal void SNIScopeLeaveEvent(long scopeId)
         {
             if (Log.IsSNIScopeEnabled())
             {

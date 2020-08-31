@@ -5,55 +5,56 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Text;
 using Microsoft.Win32.SafeHandles;
 
 internal static partial class Interop
 {
     internal static partial class NetSecurityNative
     {
-        [DllImport(Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_ReleaseGssBuffer")]
+        [DllImport(Interop.Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_ReleaseGssBuffer")]
         internal static extern void ReleaseGssBuffer(
             IntPtr bufferPtr,
             ulong length);
 
-        [DllImport(Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_DisplayMinorStatus")]
+        [DllImport(Interop.Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_DisplayMinorStatus")]
         internal static extern Status DisplayMinorStatus(
             out Status minorStatus,
             Status statusValue,
             ref GssBuffer buffer);
 
-        [DllImport(Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_DisplayMajorStatus")]
+        [DllImport(Interop.Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_DisplayMajorStatus")]
         internal static extern Status DisplayMajorStatus(
             out Status minorStatus,
             Status statusValue,
             ref GssBuffer buffer);
 
-        [DllImport(Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_ImportUserName", CharSet = CharSet.Unicode)]
+        [DllImport(Interop.Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_ImportUserName")]
         internal static extern Status ImportUserName(
             out Status minorStatus,
             string inputName,
             int inputNameByteCount,
             out SafeGssNameHandle outputName);
 
-        [DllImport(Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_ImportPrincipalName", CharSet = CharSet.Unicode)]
+        [DllImport(Interop.Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_ImportPrincipalName")]
         internal static extern Status ImportPrincipalName(
             out Status minorStatus,
             string inputName,
             int inputNameByteCount,
             out SafeGssNameHandle outputName);
 
-        [DllImport(Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_ReleaseName")]
+        [DllImport(Interop.Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_ReleaseName")]
         internal static extern Status ReleaseName(
             out Status minorStatus,
             ref IntPtr inputName);
 
-        [DllImport(Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_InitiateCredSpNego")]
+        [DllImport(Interop.Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_InitiateCredSpNego")]
         internal static extern Status InitiateCredSpNego(
             out Status minorStatus,
             SafeGssNameHandle desiredName,
             out SafeGssCredHandle outputCredHandle);
 
-        [DllImport(Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_InitiateCredWithPassword", CharSet = CharSet.Unicode)]
+        [DllImport(Interop.Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_InitiateCredWithPassword")]
         internal static extern Status InitiateCredWithPassword(
             out Status minorStatus,
             bool isNtlm,
@@ -62,12 +63,12 @@ internal static partial class Interop
             int passwordLen,
             out SafeGssCredHandle outputCredHandle);
 
-        [DllImport(Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_ReleaseCred")]
+        [DllImport(Interop.Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_ReleaseCred")]
         internal static extern Status ReleaseCred(
             out Status minorStatus,
             ref IntPtr credHandle);
 
-        [DllImport(Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_InitSecContext")]
+        [DllImport(Interop.Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_InitSecContext")]
         internal static extern Status InitSecContext(
             out Status minorStatus,
             SafeGssCredHandle initiatorCredHandle,
@@ -81,10 +82,68 @@ internal static partial class Interop
             out uint retFlags,
             out int isNtlmUsed);
 
-        [DllImport(Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_DeleteSecContext")]
+        [DllImport(Interop.Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_AcceptSecContext")]
+        internal static extern Status AcceptSecContext(
+            out Status minorStatus,
+            ref SafeGssContextHandle acceptContextHandle,
+            byte[] inputBytes,
+            int inputLength,
+            ref GssBuffer token);
+
+        [DllImport(Interop.Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_DeleteSecContext")]
         internal static extern Status DeleteSecContext(
             out Status minorStatus,
             ref IntPtr contextHandle);
+
+        [DllImport(Interop.Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_Wrap")]
+        private static extern Status Wrap(
+            out Status minorStatus,
+            SafeGssContextHandle contextHandle,
+            bool isEncrypt,
+            byte[] inputBytes,
+            int offset,
+            int count,
+            ref GssBuffer outBuffer);
+
+        [DllImport(Interop.Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_Unwrap")]
+        private static extern Status Unwrap(
+            out Status minorStatus,
+            SafeGssContextHandle contextHandle,
+            byte[] inputBytes,
+            int offset,
+            int count,
+            ref GssBuffer outBuffer);
+
+        internal static Status WrapBuffer(
+            out Status minorStatus,
+            SafeGssContextHandle contextHandle,
+            bool isEncrypt,
+            byte[] inputBytes,
+            int offset,
+            int count,
+            ref GssBuffer outBuffer)
+        {
+            Debug.Assert(inputBytes != null, "inputBytes must be valid value");
+            Debug.Assert(offset >= 0 && offset <= inputBytes.Length, "offset must be valid");
+            Debug.Assert(count >= 0 && count <= (inputBytes.Length - offset), "count must be valid");
+
+            return Wrap(out minorStatus, contextHandle, isEncrypt, inputBytes, offset, count, ref outBuffer);
+        }
+
+        internal static Status UnwrapBuffer(
+            out Status minorStatus,
+            SafeGssContextHandle contextHandle,
+            byte[] inputBytes,
+            int offset,
+            int count,
+            ref GssBuffer outBuffer)
+        {
+            Debug.Assert(inputBytes != null, "inputBytes must be valid value");
+            Debug.Assert(offset >= 0 && offset <= inputBytes.Length, "offset must be valid");
+            Debug.Assert(count >= 0 && count <= inputBytes.Length, "count must be valid");
+
+            return Unwrap(out minorStatus, contextHandle, inputBytes, offset, count, ref outBuffer);
+        }
 
         internal enum Status : uint
         {

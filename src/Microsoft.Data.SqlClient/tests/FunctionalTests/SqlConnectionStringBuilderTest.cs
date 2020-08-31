@@ -38,7 +38,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("Encrypt = true")]
         [InlineData("Enlist = false")]
         [InlineData("Initial Catalog = Northwind; Failover Partner = randomserver.sys.local")]
-        [InlineData("Initial Catalog = tempdb")]
+        [InlineData("Initial Catalog = Northwind")]
         [InlineData("Integrated Security = true")]
         [InlineData("Trusted_Connection = false")]
         [InlineData("Max Pool Size = 50")]
@@ -52,10 +52,8 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("PersistSecurityInfo = true")]
         [InlineData("Pooling = no")]
         [InlineData("Pooling = false")]
-#if netcoreapp // PoolBlockingPeriod is not supported in .NET Standard
         [InlineData("PoolBlockingPeriod = Auto")]
         [InlineData("PoolBlockingperiod = NeverBlock")]
-#endif
         [InlineData("Replication = true")]
         [InlineData("Transaction Binding = Explicit Unbind")]
         [InlineData("Trust Server Certificate = true")]
