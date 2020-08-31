@@ -10,8 +10,6 @@ using System.Configuration;
 
 namespace Microsoft.Data.SqlClient
 {
-
-
     /// <summary>
     /// Authentication provider manager.
     /// </summary>
@@ -20,23 +18,34 @@ namespace Microsoft.Data.SqlClient
         private const string ActiveDirectoryPassword = "active directory password";
         private const string ActiveDirectoryIntegrated = "active directory integrated";
         private const string ActiveDirectoryInteractive = "active directory interactive";
+        private const string ActiveDirectoryServicePrincipal = "active directory service principal";
+        private const string ActiveDirectoryDeviceCodeFlow = "active directory device code flow";
 
         static SqlAuthenticationProviderManager()
         {
-            var activeDirectoryAuthNativeProvider = new ActiveDirectoryNativeAuthenticationProvider();
+            var activeDirectoryAuthProvider = new ActiveDirectoryAuthenticationProvider();
             SqlAuthenticationProviderConfigurationSection configurationSection = null;
             try
             {
-                configurationSection = (SqlAuthenticationProviderConfigurationSection)ConfigurationManager.GetSection(SqlAuthenticationProviderConfigurationSection.Name);
+                // New configuration section "SqlClientAuthenticationProviders" for Microsoft.Data.SqlClient accepted to avoid conflicts with older one.
+                configurationSection = FetchConfigurationSection<SqlClientAuthenticationProviderConfigurationSection>(SqlClientAuthenticationProviderConfigurationSection.Name);
+                if (null == configurationSection)
+                {
+                    // If configuration section is not yet found, try with old Configuration Section name for backwards compatibility
+                    configurationSection = FetchConfigurationSection<SqlAuthenticationProviderConfigurationSection>(SqlAuthenticationProviderConfigurationSection.Name);
+                }
             }
-            catch (ConfigurationErrorsException)
+            catch (ConfigurationErrorsException e)
             {
                 // Don't throw an error for invalid config files
+                SqlClientEventSource.Log.TryTraceEvent("Unable to load custom SqlAuthenticationProviders or SqlClientAuthenticationProviders. ConfigurationManager failed to load due to configuration errors: {0}", e);
             }
             Instance = new SqlAuthenticationProviderManager(configurationSection);
-            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryIntegrated, activeDirectoryAuthNativeProvider);
-            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, activeDirectoryAuthNativeProvider);
-            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive, activeDirectoryAuthNativeProvider);
+            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryIntegrated, activeDirectoryAuthProvider);
+            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, activeDirectoryAuthProvider);
+            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive, activeDirectoryAuthProvider);
+            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal, activeDirectoryAuthProvider);
+            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, activeDirectoryAuthProvider);
         }
         public static readonly SqlAuthenticationProviderManager Instance;
 
@@ -59,7 +68,7 @@ namespace Microsoft.Data.SqlClient
 
             if (configSection == null)
             {
-                _sqlAuthLogger.LogInfo(_typeName, methodName, "No SqlAuthProviders configuration section found.");
+                _sqlAuthLogger.LogInfo(_typeName, methodName, "Neither SqlClientAuthenticationProviders nor SqlAuthenticationProviders configuration section found.");
                 return;
             }
 
@@ -161,6 +170,24 @@ namespace Microsoft.Data.SqlClient
             return true;
         }
 
+        private static T FetchConfigurationSection<T>(string name)
+        {
+            Type t = typeof(T);
+            object section = ConfigurationManager.GetSection(name);
+            if (null != section)
+            {
+                if (section is ConfigurationSection configSection && configSection.GetType() == t)
+                {
+                    return (T)section;
+                }
+                else
+                {
+                    SqlClientEventSource.Log.TraceEvent("Found a custom {0} configuration but it is not of type {1}.", name, t.FullName);
+                }
+            }
+            return default;
+        }
+
         private static SqlAuthenticationMethod AuthenticationEnumFromString(string authentication)
         {
             switch (authentication.ToLowerInvariant())
@@ -171,6 +198,10 @@ namespace Microsoft.Data.SqlClient
                     return SqlAuthenticationMethod.ActiveDirectoryPassword;
                 case ActiveDirectoryInteractive:
                     return SqlAuthenticationMethod.ActiveDirectoryInteractive;
+                case ActiveDirectoryServicePrincipal:
+                    return SqlAuthenticationMethod.ActiveDirectoryServicePrincipal;
+                case ActiveDirectoryDeviceCodeFlow:
+                    return SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow;
                 default:
                     throw SQL.UnsupportedAuthentication(authentication);
             }
@@ -204,11 +235,17 @@ namespace Microsoft.Data.SqlClient
         public string InitializerType => base["initializerType"] as string;
     }
 
+    /// <summary>
+    /// The configuration section definition for reading app.config.
+    /// </summary>
+    internal class SqlClientAuthenticationProviderConfigurationSection : SqlAuthenticationProviderConfigurationSection
+    {
+        public new const string Name = "SqlClientAuthenticationProviders";
+    }
 
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationInitializer.xml' path='docs/members[@name="SqlAuthenticationInitializer"]/SqlAuthenticationInitializer/*'/>
     public abstract class SqlAuthenticationInitializer
     {
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationInitializer.xml' path='docs/members[@name="SqlAuthenticationInitializer"]/Initialize/*'/>
         public abstract void Initialize();
     }

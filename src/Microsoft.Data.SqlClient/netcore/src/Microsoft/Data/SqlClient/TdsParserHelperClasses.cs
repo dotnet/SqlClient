@@ -12,6 +12,7 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Globalization;
 using System.Security;
+using System.Security.Authentication;
 using System.Text;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlTypes;
@@ -541,14 +542,17 @@ namespace Microsoft.Data.SqlClient
     internal sealed partial class _SqlMetaDataSet
     {
         internal ushort id;             // for altrow-columns only
-        internal int[] indexMap;
-        internal int visibleColumns;
+
         internal DataTable schemaTable;
         private readonly _SqlMetaData[] _metaDataArray;
         internal ReadOnlyCollection<DbColumn> dbColumnSchema;
 
+        private int _hiddenColumnCount;
+        private int[] _visibleColumnMap;
+
         internal _SqlMetaDataSet(int count)
         {
+            _hiddenColumnCount = -1;
             _metaDataArray = new _SqlMetaData[count];
             for (int i = 0; i < _metaDataArray.Length; ++i)
             {
@@ -558,11 +562,10 @@ namespace Microsoft.Data.SqlClient
 
         private _SqlMetaDataSet(_SqlMetaDataSet original)
         {
-            this.id = original.id;
-            // although indexMap is not immutable, in practice it is initialized once and then passed around
-            this.indexMap = original.indexMap;
-            this.visibleColumns = original.visibleColumns;
-            this.dbColumnSchema = original.dbColumnSchema;
+            id = original.id;
+            _hiddenColumnCount = original._hiddenColumnCount;
+            _visibleColumnMap = original._visibleColumnMap;
+            dbColumnSchema = original.dbColumnSchema;
             if (original._metaDataArray == null)
             {
                 _metaDataArray = null;
@@ -585,6 +588,18 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        internal int VisibleColumnCount
+        {
+            get
+            {
+                if (_hiddenColumnCount == -1)
+                {
+                    SetupHiddenColumns();
+                }
+                return Length - _hiddenColumnCount;
+            }
+        }
+
         internal _SqlMetaData this[int index]
         {
             get
@@ -598,9 +613,53 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        public object Clone()
+        public int GetVisibleColumnIndex(int index)
+        {
+            if (_hiddenColumnCount == -1)
+            {
+                SetupHiddenColumns();
+            }
+            if (_visibleColumnMap is null)
+            {
+                return index;
+            }
+            else
+            {
+                return _visibleColumnMap[index];
+            }
+        }
+
+        public _SqlMetaDataSet Clone()
         {
             return new _SqlMetaDataSet(this);
+        }
+
+        private void SetupHiddenColumns()
+        {
+            int hiddenColumnCount = 0;
+            for (int index = 0; index < Length; index++)
+            {
+                if (_metaDataArray[index].IsHidden)
+                {
+                    hiddenColumnCount += 1;
+                }
+            }
+
+            if (hiddenColumnCount > 0)
+            {
+                int[] visibleColumnMap = new int[Length - hiddenColumnCount];
+                int mapIndex = 0;
+                for (int metaDataIndex = 0; metaDataIndex < Length; metaDataIndex++)
+                {
+                    if (!_metaDataArray[metaDataIndex].IsHidden)
+                    {
+                        visibleColumnMap[mapIndex] = metaDataIndex;
+                        mapIndex += 1;
+                    }
+                }
+                _visibleColumnMap = visibleColumnMap;
+            }
+            _hiddenColumnCount = hiddenColumnCount;
         }
     }
 
@@ -648,10 +707,10 @@ namespace Microsoft.Data.SqlClient
         public object Clone()
         {
             _SqlMetaDataSetCollection result = new _SqlMetaDataSetCollection();
-            result.metaDataSet = metaDataSet == null ? null : (_SqlMetaDataSet)metaDataSet.Clone();
+            result.metaDataSet = metaDataSet == null ? null : metaDataSet.Clone();
             foreach (_SqlMetaDataSet set in _altMetaDataSetArray)
             {
-                result._altMetaDataSetArray.Add((_SqlMetaDataSet)set.Clone());
+                result._altMetaDataSetArray.Add(set.Clone());
             }
             return result;
         }
@@ -906,7 +965,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (null != _multipartName)
             {
-                string[] parts = MultipartIdentifier.ParseMultipartIdentifier(_multipartName, "[\"", "]\"", SR.SQL_TDSParserTableName, false);
+                string[] parts = MultipartIdentifier.ParseMultipartIdentifier(_multipartName, "[\"", "]\"", Strings.SQL_TDSParserTableName, false);
                 _serverName = parts[0];
                 _catalogName = parts[1];
                 _schemaName = parts[2];
@@ -916,5 +975,65 @@ namespace Microsoft.Data.SqlClient
         }
 
         internal static readonly MultiPartTableName Null = new MultiPartTableName(new string[] { null, null, null, null });
+    }
+
+    internal static class SslProtocolsHelper
+    {
+        private static string ToFriendlyName(this SslProtocols protocol)
+        {
+            string name;
+
+            /* The SslProtocols.Tls13 is supported by netcoreapp3.1 and later
+             * This driver does not support this version yet!
+            if ((protocol & SslProtocols.Tls13) == SslProtocols.Tls13)
+            {
+                name = "TLS 1.3";
+            }*/
+            if((protocol & SslProtocols.Tls12) == SslProtocols.Tls12)
+            {
+                name = "TLS 1.2";
+            }
+            else if ((protocol & SslProtocols.Tls11) == SslProtocols.Tls11)
+            {
+                name = "TLS 1.1";
+            }
+            else if ((protocol & SslProtocols.Tls) == SslProtocols.Tls)
+            {
+                name = "TLS 1.0";
+            }
+#pragma warning disable CS0618 // Type or member is obsolete: SSL is depricated
+            else if ((protocol & SslProtocols.Ssl3) == SslProtocols.Ssl3)
+            {
+                name = "SSL 3.0";
+            }
+            else if ((protocol & SslProtocols.Ssl2) == SslProtocols.Ssl2)
+#pragma warning restore CS0618 // Type or member is obsolete: SSL is depricated
+            {
+                name = "SSL 2.0";
+            }
+            else
+            {
+                name = protocol.ToString();
+            }
+
+            return name;
+        }
+
+        /// <summary>
+        /// check the negotiated secure protocol if it's under TLS 1.2
+        /// </summary>
+        /// <param name="protocol"></param>
+        /// <returns>Localized warning message</returns>
+        public static string GetProtocolWarning(this SslProtocols protocol)
+        {
+            string message = string.Empty;
+#pragma warning disable CS0618 // Type or member is obsolete : SSL is depricated
+            if ((protocol & (SslProtocols.Ssl2 | SslProtocols.Ssl3 | SslProtocols.Tls | SslProtocols.Tls11)) != SslProtocols.None)
+#pragma warning restore CS0618 // Type or member is obsolete : SSL is depricated
+            {
+                message = StringsHelper.Format(Strings.SEC_ProtocolWarning, protocol.ToFriendlyName());
+            }
+            return message;
+        }
     }
 }

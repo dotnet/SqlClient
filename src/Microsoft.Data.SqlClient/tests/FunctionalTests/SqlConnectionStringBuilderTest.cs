@@ -37,8 +37,8 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("Enclave Attestation Url = http://dymmyurl")]
         [InlineData("Encrypt = true")]
         [InlineData("Enlist = false")]
-        [InlineData("Failover Partner = randomserver.sys.local")]
-        [InlineData("Initial Catalog = Northwind")]
+        [InlineData("Initial Catalog = Northwind; Failover Partner = randomserver.sys.local")]
+        [InlineData("Initial Catalog = tempdb")]
         [InlineData("Integrated Security = true")]
         [InlineData("Trusted_Connection = false")]
         [InlineData("Max Pool Size = 50")]
@@ -52,8 +52,10 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("PersistSecurityInfo = true")]
         [InlineData("Pooling = no")]
         [InlineData("Pooling = false")]
+#if netcoreapp // PoolBlockingPeriod is not supported in .NET Standard
         [InlineData("PoolBlockingPeriod = Auto")]
         [InlineData("PoolBlockingperiod = NeverBlock")]
+#endif
         [InlineData("Replication = true")]
         [InlineData("Transaction Binding = Explicit Unbind")]
         [InlineData("Trust Server Certificate = true")]
@@ -73,7 +75,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("Authentication = ActiveDirectoryIntegrated ")]
         [InlineData("Authentication = Active Directory Interactive ")]
         [InlineData("Authentication = ActiveDirectoryInteractive ")]
-        [InlineData("Context Connection = true")]
+        [InlineData("Context Connection = false")]
         [InlineData("Network Library = dbmssocn")]
         [InlineData("Network = dbnmpntw")]
         [InlineData("Net = dbmsrpcn")]
@@ -147,7 +149,10 @@ namespace Microsoft.Data.SqlClient.Tests
                 Assert.Equal(valueBuilder1, valueBuilder2);
                 Assert.True(builder2.ContainsKey(key));
             }
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                Assert.NotNull(connection);
+            }
         }
-
     }
 }

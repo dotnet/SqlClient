@@ -40,7 +40,7 @@ namespace System.Net.Security
                 if (result != Interop.SECURITY_STATUS.OK)
                 {
                     if (NetEventSource.IsEnabled)
-                        NetEventSource.Error(null, System.SRHelper.Format(SR.net_log_operation_failed_with_error, nameof(Interop.SspiCli.SspiEncodeStringsAsAuthIdentity), $"0x{(int)result:X}"));
+                        NetEventSource.Error(null, System.StringsHelper.Format(Strings.net_log_operation_failed_with_error, nameof(Interop.SspiCli.SspiEncodeStringsAsAuthIdentity), $"0x{(int)result:X}"));
                     throw new Win32Exception((int)result);
                 }
 

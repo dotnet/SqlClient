@@ -53,6 +53,7 @@ namespace Microsoft.Data.SqlClient
         // header constants
         public const int HEADER_LEN = 8;
         public const int HEADER_LEN_FIELD_OFFSET = 2;
+        public const int SPID_OFFSET = 4;
         public const int YUKON_HEADER_LEN = 12; //Yukon headers also include a MARS session id
         public const int MARS_ID_OFFSET = 8;
         public const int HEADERTYPE_QNOTIFICATION = 1;
@@ -133,7 +134,7 @@ namespace Microsoft.Data.SqlClient
         public const byte SQLDEBUG_CMD = 0x60;
         public const byte SQLLOGINACK = 0xad;
         public const byte SQLFEATUREEXTACK = 0xae;    // TDS 7.4 - feature ack
-        public const byte SQLSESSIONSTATE = 0xe4;    // TDS 7.4 - connection resiliency session state  
+        public const byte SQLSESSIONSTATE = 0xe4;    // TDS 7.4 - connection resiliency session state
         public const byte SQLENVCHANGE = 0xe3;    // Environment change notification
         public const byte SQLSECLEVEL = 0xed;    // Security level token ???
         public const byte SQLROWCRC = 0x39;    // ROWCRC datastream???
@@ -209,11 +210,12 @@ namespace Microsoft.Data.SqlClient
         public const byte FEATUREEXT_FEDAUTH = 0x02;
         public const byte FEATUREEXT_TCE = 0x04;
         public const byte FEATUREEXT_GLOBALTRANSACTIONS = 0x05;
-        // 0x06 is for x_eFeatureExtensionId_LoginToken 
-        // 0x07 is for x_eFeatureExtensionId_ClientSideTelemetry 
+        // 0x06 is for x_eFeatureExtensionId_LoginToken
+        // 0x07 is for x_eFeatureExtensionId_ClientSideTelemetry
         public const byte FEATUREEXT_AZURESQLSUPPORT = 0x08;
         public const byte FEATUREEXT_DATACLASSIFICATION = 0x09;
         public const byte FEATUREEXT_UTF8SUPPORT = 0x0A;
+        public const byte FEATUREEXT_SQLDNSCACHING = 0x0B;
 
         [Flags]
         public enum FeatureExtension : uint
@@ -226,6 +228,7 @@ namespace Microsoft.Data.SqlClient
             AzureSQLSupport = 1 << (TdsEnums.FEATUREEXT_AZURESQLSUPPORT - 1),
             DataClassification = 1 << (TdsEnums.FEATUREEXT_DATACLASSIFICATION - 1),
             UTF8Support = 1 << (TdsEnums.FEATUREEXT_UTF8SUPPORT - 1),
+            SQLDNSCaching = 1 << (TdsEnums.FEATUREEXT_SQLDNSCACHING - 1)
         }
 
         public const uint UTF8_IN_TDSCOLLATION = 0x4000000;
@@ -246,12 +249,16 @@ namespace Microsoft.Data.SqlClient
         public const byte MSALWORKFLOW_ACTIVEDIRECTORYPASSWORD = 0x01;
         public const byte MSALWORKFLOW_ACTIVEDIRECTORYINTEGRATED = 0x02;
         public const byte MSALWORKFLOW_ACTIVEDIRECTORYINTERACTIVE = 0x03;
+        public const byte MSALWORKFLOW_ACTIVEDIRECTORYSERVICEPRINCIPAL = 0x01; // Using the Password byte as that is the closest we have
+        public const byte MSALWORKFLOW_ACTIVEDIRECTORYDEVICECODEFLOW = 0x03; // Using the Interactive byte as that is the closest we have
 
         public enum ActiveDirectoryWorkflow : byte
         {
             Password = MSALWORKFLOW_ACTIVEDIRECTORYPASSWORD,
             Integrated = MSALWORKFLOW_ACTIVEDIRECTORYINTEGRATED,
             Interactive = MSALWORKFLOW_ACTIVEDIRECTORYINTERACTIVE,
+            ServicePrincipal = MSALWORKFLOW_ACTIVEDIRECTORYSERVICEPRINCIPAL,
+            DeviceCodeFlow = MSALWORKFLOW_ACTIVEDIRECTORYDEVICECODEFLOW,
         }
 
         // The string used for username in the error message when Authentication = Active Directory Integrated with FedAuth is used, if authentication fails.
@@ -265,7 +272,7 @@ namespace Microsoft.Data.SqlClient
         public const byte MAX_NIC_SIZE = 6;               // The size of a MAC or client address
         public const byte SQLVARIANT_SIZE = 2;               // size of the fixed portion of a sql variant (type, cbPropBytes)
         public const byte VERSION_SIZE = 4;               // size of the tds version (4 unsigned bytes)
-        public const int CLIENT_PROG_VER = 0x06000000;      // Client interface version       
+        public const int CLIENT_PROG_VER = 0x06000000;      // Client interface version
         public const int YUKON_LOG_REC_FIXED_LEN = 0x5e;
         // misc
         public const int TEXT_TIME_STAMP_LEN = 8;
@@ -603,8 +610,8 @@ namespace Microsoft.Data.SqlClient
         // Login data validation Rules
         //
         internal const ushort MAXLEN_HOSTNAME = 128; // the client machine name
-        internal const ushort MAXLEN_USERNAME = 128; // the client user id
-        internal const ushort MAXLEN_PASSWORD = 128; // the password supplied by the client
+        internal const ushort MAXLEN_CLIENTID = 128;
+        internal const ushort MAXLEN_CLIENTSECRET = 128;
         internal const ushort MAXLEN_APPNAME = 128; // the client application name
         internal const ushort MAXLEN_SERVERNAME = 128; // the server name
         internal const ushort MAXLEN_CLIENTINTERFACE = 128; // the interface library name
@@ -929,7 +936,8 @@ namespace Microsoft.Data.SqlClient
 
         // Data Classification constants
         internal const byte DATA_CLASSIFICATION_NOT_ENABLED = 0x00;
-        internal const byte MAX_SUPPORTED_DATA_CLASSIFICATION_VERSION = 0x01;
+        internal const byte DATA_CLASSIFICATION_VERSION_WITHOUT_RANK_SUPPORT = 0x01;
+        internal const byte DATA_CLASSIFICATION_VERSION_MAX_SUPPORTED = 0x02;
 
         // Needed for UapAot, since we cannot use Enum.GetName() on SniContext.
         // Enum.GetName() uses reflection, which is blocked on UapAot for internal types
@@ -979,7 +987,6 @@ namespace Microsoft.Data.SqlClient
         internal const long MAX_TCE_CIPHERTEXT_SIZE = 2147483648; // max size of encrypted blob- currently 2GB.
         internal const byte CustomCipherAlgorithmId = 0; // Id used for custom encryption algorithm.
 
-        internal const int AES_256_CBC = 1;
         internal const int AEAD_AES_256_CBC_HMAC_SHA256 = 2;
         internal const string ENCLAVE_TYPE_VBS = "VBS";
         internal const string ENCLAVE_TYPE_SGX = "SGX";
@@ -1121,7 +1128,13 @@ namespace Microsoft.Data.SqlClient
         ActiveDirectoryIntegrated,
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryInteractive/*'/>
-        ActiveDirectoryInteractive
+        ActiveDirectoryInteractive,
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryServicePrincipal/*'/>
+        ActiveDirectoryServicePrincipal,
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryDeviceCodeFlow/*'/>
+        ActiveDirectoryDeviceCodeFlow,
     }
     // This enum indicates the state of TransparentNetworkIPResolution
     // The first attempt when TNIR is on should be sequential. If the first attempt failes next attempts should be parallel.
@@ -1134,7 +1147,7 @@ namespace Microsoft.Data.SqlClient
 
     internal class ActiveDirectoryAuthentication
     {
-        internal const string AdoClientId = "4d079b4c-cab7-4b7c-a115-8fd51b6f8239";
+        internal const string AdoClientId = "2fd908ad-0664-4344-b9be-cd3e8b574c38";
         internal const string MSALGetAccessTokenFunctionName = "AcquireToken";
     }
 

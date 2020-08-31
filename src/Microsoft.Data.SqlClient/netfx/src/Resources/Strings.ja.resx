@@ -2499,6 +2499,9 @@
   <data name="SQL_InteractiveWithPassword" xml:space="preserve">
     <value>'Authentication=Active Directory Interactive' と接続文字列キーワード 'Password'、'PWD' を一緒に使用することはできません。</value>
   </data>
+  <data name="SQL_DeviceFlowWithUsernamePassword" xml:space="preserve">
+    <value>'Authentication=Active Directory Device Code Flow' と接続文字列キーワード 'User ID'、'UID'、'Password'、'PWD' を一緒に使用することはできません。</value>
+  </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>Credential プロパティが設定されている場合は、'Authentication=Active Directory Integrated' を使用できません。</value>
   </data>
@@ -4529,5 +4532,47 @@
   </data>
   <data name="SQLUDT_InvalidSize" xml:space="preserve">
     <value>UDT のサイズは {1} より小さくなければなりません。サイズ: {0}</value>
+  </data>
+  <data name="SEC_ProtocolWarning" xml:space="preserve">
+    <value>セキュリティ警告: ネゴシエートされた {0} はセキュリティで保護されていないプロトコルであり、下位互換性でのみサポートされます。推奨されるプロトコル バージョンは、TLS 1.2 以降です。</value>
+  </data>
+  <data name="net_invalid_enum" xml:space="preserve">
+    <value>指定された値は '{0}' 列挙で有効ではありません。</value>
+  </data>
+  <data name="SQL_BulkLoadInvalidOrderHint" xml:space="preserve">
+    <value>指定された列の順序のヒントが無効です。</value>
+  </data>
+  <data name="SQL_BulkLoadOrderHintDuplicateColumn" xml:space="preserve">
+    <value>列 '{0}' が 2 回以上指定されました。</value>
+  </data>
+  <data name="SQL_BulkLoadOrderHintInvalidColumn" xml:space="preserve">
+    <value>並べ替えられた列 '{0}' は対象のテーブルで無効です。</value>
+  </data>
+  <data name="SQL_BulkLoadUnspecifiedSortOrder" xml:space="preserve">
+    <value>列の順序のヒントに未指定の並べ替え順序を含めることができません。</value>
+  </data>
+  <data name="SQL_UnsupportedAuthenticationSpecified" xml:space="preserve">
+    <value>このコンテキストでサポートされていない認証が指定されています: {0}</value>
+  </data>
+  <data name="SQL_Timeout_Active_Directory_Interactive_Authentication" xml:space="preserve">
+    <value>Active Directory 対話型認証がタイムアウトになりました。ユーザーが認証要求に応答するのに時間がかかりすぎました。</value>
+  </data>
+  <data name="SQL_SettingInteractiveWithCredential" xml:space="preserve">
+    <value>Credential プロパティが設定されている場合は、'Authentication=Active Directory Interactive' を使用できません。</value>
+  </data>
+  <data name="SQL_SettingCredentialWithInteractive" xml:space="preserve">
+    <value>接続文字列で 'Authentication=Active Directory Interactive' が指定されている場合は、Credential プロパティを設定できません。</value>
+  </data>
+  <data name="SqlConnection_ServerProcessId" xml:space="preserve">
+    <value>アクティブな接続のサーバー プロセス ID (SPID)。</value>
+  </data>
+  <data name="SQL_Timeout_Active_Directory_DeviceFlow_Authentication" xml:space="preserve">
+    <value>Active Directory デバイス コード フロー認証がタイムアウトになりました。ユーザーが認証要求に応答するのに時間がかかりすぎました。</value>
+  </data>
+  <data name="SQL_SettingCredentialWithDeviceFlow" xml:space="preserve">
+    <value>接続文字列で 'Authentication=Active Directory Device Code Flow' が指定されている場合は、Credential プロパティを設定できません。</value>
+  </data>
+  <data name="SQL_SettingDeviceFlowWithCredential" xml:space="preserve">
+    <value>Credential プロパティが設定されている場合は、'Authentication=Active Directory Device Code Flow' を使用できません。</value>
   </data>
 </root>

@@ -2499,6 +2499,9 @@
   <data name="SQL_InteractiveWithPassword" xml:space="preserve">
     <value>无法对 "Password" 或 "PWD" 连接字符串关键字使用 "Authentication=Active Directory Interactive"。</value>
   </data>
+  <data name="SQL_DeviceFlowWithUsernamePassword" xml:space="preserve">
+    <value>无法结合使用 "Authentication=Active Directory Device Code Flow" 与 "User ID"、"UID"、"Password" 或 "PWD" 连接字符串关键字。</value>
+  </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>如果设置了 Credential 属性，则无法使用“Authentication=Active Directory Integrated”。</value>
   </data>
@@ -4529,5 +4532,47 @@
   </data>
   <data name="SQLUDT_InvalidSize" xml:space="preserve">
     <value>UDT 大小必须小于 {1}，大小为 {0}</value>
+  </data>
+  <data name="SEC_ProtocolWarning" xml:space="preserve">
+    <value>安全警告:协商的 {0} 是非安全协议，只有在为了实现向后兼容性才受支持。建议的协议版本为 TLS 1.2 及更高版本。</value>
+  </data>
+  <data name="net_invalid_enum" xml:space="preserve">
+    <value>指定的值在“{0}”枚举中无效。</value>
+  </data>
+  <data name="SQL_BulkLoadInvalidOrderHint" xml:space="preserve">
+    <value>给定的列排序顺序提示无效。</value>
+  </data>
+  <data name="SQL_BulkLoadOrderHintDuplicateColumn" xml:space="preserve">
+    <value>列“{0}”被指定了多次。</value>
+  </data>
+  <data name="SQL_BulkLoadOrderHintInvalidColumn" xml:space="preserve">
+    <value>已排序的列“{0}”在目标表中无效。</value>
+  </data>
+  <data name="SQL_BulkLoadUnspecifiedSortOrder" xml:space="preserve">
+    <value>列排序顺序提示不得包含未指定的排序顺序。</value>
+  </data>
+  <data name="SQL_UnsupportedAuthenticationSpecified" xml:space="preserve">
+    <value>在此上下文中指定的身份验证不受支持: {0}</value>
+  </data>
+  <data name="SQL_Timeout_Active_Directory_Interactive_Authentication" xml:space="preserve">
+    <value>Active Directory 交互式身份验证超时。用户响应身份验证请求的时间过长。</value>
+  </data>
+  <data name="SQL_SettingInteractiveWithCredential" xml:space="preserve">
+    <value>如果设置了 Credential 属性，则无法使用 "Authentication=Active Directory Interactive"。</value>
+  </data>
+  <data name="SQL_SettingCredentialWithInteractive" xml:space="preserve">
+    <value>如果在连接字符串中指定了 "Authentication=Active Directory Interactive"，则无法设置 Credential 属性。</value>
+  </data>
+  <data name="SqlConnection_ServerProcessId" xml:space="preserve">
+    <value>活动连接的服务器进程 ID (SPID)。</value>
+  </data>
+  <data name="SQL_Timeout_Active_Directory_DeviceFlow_Authentication" xml:space="preserve">
+    <value>Active Directory 设备代码流身份验证超时。用户响应身份验证请求的时间过长。</value>
+  </data>
+  <data name="SQL_SettingCredentialWithDeviceFlow" xml:space="preserve">
+    <value>如果在连接字符串中指定了 "Authentication=Active Directory Device Code Flow"，则无法设置 Credential 属性。</value>
+  </data>
+  <data name="SQL_SettingDeviceFlowWithCredential" xml:space="preserve">
+    <value>如果设置了 Credential 属性，则无法使用 "Authentication=Active Directory Device Code Flow"。</value>
   </data>
 </root>

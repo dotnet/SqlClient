@@ -234,13 +234,9 @@ namespace Microsoft.Data.SqlClient
         internal readonly SqlTceCipherInfoTable? cekTable; // table of "column encryption keys" used for this metadataset
 
         internal _SqlMetaDataSet(int count, SqlTceCipherInfoTable? cipherTable)
+            : this(count)
         {
             cekTable = cipherTable;
-            _metaDataArray = new _SqlMetaData[count];
-            for (int i = 0; i < _metaDataArray.Length; ++i)
-            {
-                _metaDataArray[i] = new _SqlMetaData(i);
-            }
         }
     }
 

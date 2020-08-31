@@ -332,8 +332,8 @@ namespace Microsoft.Data.SqlClient
             ValidateValueLength(_dataSource, TdsEnums.MAXLEN_SERVERNAME, KEY.Data_Source);
             ValidateValueLength(_failoverPartner, TdsEnums.MAXLEN_SERVERNAME, KEY.FailoverPartner);
             ValidateValueLength(_initialCatalog, TdsEnums.MAXLEN_DATABASE, KEY.Initial_Catalog);
-            ValidateValueLength(_password, TdsEnums.MAXLEN_PASSWORD, KEY.Password);
-            ValidateValueLength(_userID, TdsEnums.MAXLEN_USERNAME, KEY.User_ID);
+            ValidateValueLength(_password, TdsEnums.MAXLEN_CLIENTSECRET, KEY.Password);
+            ValidateValueLength(_userID, TdsEnums.MAXLEN_CLIENTID, KEY.User_ID);
             if (null != _workstationId)
             {
                 ValidateValueLength(_workstationId, TdsEnums.MAXLEN_HOSTNAME, KEY.Workstation_Id);
@@ -453,19 +453,19 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.AuthenticationAndIntegratedSecurity();
             }
 
-            if (Authentication == SqlClient.SqlAuthenticationMethod.ActiveDirectoryIntegrated && (HasUserIdKeyword || HasPasswordKeyword))
+            if (Authentication == SqlClient.SqlAuthenticationMethod.ActiveDirectoryIntegrated && HasPasswordKeyword)
             {
-                throw SQL.IntegratedWithUserIDAndPassword();
-            }
-
-            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive && !HasUserIdKeyword)
-            {
-                throw SQL.InteractiveWithoutUserID();
+                throw SQL.IntegratedWithPassword();
             }
 
             if (Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive && HasPasswordKeyword)
             {
                 throw SQL.InteractiveWithPassword();
+            }
+
+            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow && (HasUserIdKeyword || HasPasswordKeyword))
+            {
+                throw SQL.DeviceFlowWithUsernamePassword();
             }
         }
 

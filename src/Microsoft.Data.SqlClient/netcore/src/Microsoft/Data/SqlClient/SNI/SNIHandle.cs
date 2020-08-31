@@ -91,6 +91,10 @@ namespace Microsoft.Data.SqlClient.SNI
 
         public abstract void ReturnPacket(SNIPacket packet);
 
+        /// <summary>
+        /// Gets a value that indicates the security protocol used to authenticate this connection.
+        /// </summary>
+        public virtual int ProtocolVersion { get; } = 0;
 #if DEBUG
         /// <summary>
         /// Test handle for killing underlying connection

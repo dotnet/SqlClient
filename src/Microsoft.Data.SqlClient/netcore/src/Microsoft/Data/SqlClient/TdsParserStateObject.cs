@@ -89,6 +89,8 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal int _inBytesPacket;
 
+        internal int _spid;                                 // SPID of the current connection
+
         // Packet state variables
         internal byte _outputMessageType;                   // tds header type
         internal byte _messageStatus;                       // tds header status
@@ -540,8 +542,8 @@ namespace Microsoft.Data.SqlClient
                     return false;
                 }
 
-                SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParserStateObject.NullBitmap.Initialize|INFO|ADV> {0}, NBCROW bitmap received, column count = {1}", stateObj.ObjectID, columnsCount);
-                SqlClientEventSource.Log.AdvancedTraceBinEvent("<sc.TdsParserStateObject.NullBitmap.Initialize|INFO|ADV> NBCROW bitmap data: ", _nullBitmap, (ushort)_nullBitmap.Length);
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParserStateObject.NullBitmap.Initialize|INFO|ADV> {0}, NBCROW bitmap received, column count = {1}", stateObj.ObjectID, columnsCount);
+                SqlClientEventSource.Log.TryAdvancedTraceBinEvent("<sc.TdsParserStateObject.NullBitmap.Initialize|INFO|ADV> NBCROW bitmap data: ", _nullBitmap, (ushort)_nullBitmap.Length);
                 return true;
             }
 
@@ -762,7 +764,9 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal abstract void CreatePhysicalSNIHandle(string serverName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[] spnBuffer, bool flushCache, bool async, bool fParallel, bool isIntegratedSecurity = false);
+        internal abstract void CreatePhysicalSNIHandle(string serverName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[] spnBuffer, bool flushCache, bool async, bool fParallel, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo, bool isIntegratedSecurity = false);
+
+        internal abstract void AssignPendingDNSInfo(string userProtocol, string DNSCacheKey, ref SQLDNSInfo pendingDNSInfo);
 
         internal abstract uint SniGetConnectionId(ref Guid clientConnectionId);
 
@@ -774,7 +778,7 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract uint EnableSsl(ref uint info);
 
-        internal abstract uint WaitForSSLHandShakeToComplete();
+        internal abstract uint WaitForSSLHandShakeToComplete(out int protocolVersion);
 
         internal abstract void Dispose();
 
@@ -869,7 +873,7 @@ namespace Microsoft.Data.SqlClient
         internal int DecrementPendingCallbacks(bool release)
         {
             int remaining = Interlocked.Decrement(ref _pendingCallbacks);
-            SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> {0}, after decrementing _pendingCallbacks: {1}", ObjectID, _pendingCallbacks);
+            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> {0}, after decrementing _pendingCallbacks: {1}", ObjectID, _pendingCallbacks);
             FreeGcHandle(remaining, release);
             // NOTE: TdsParserSessionPool may call DecrementPendingCallbacks on a TdsParserStateObject which is already disposed
             // This is not dangerous (since the stateObj is no longer in use), but we need to add a workaround in the assert for it
@@ -922,6 +926,7 @@ namespace Microsoft.Data.SqlClient
         internal int IncrementPendingCallbacks()
         {
             int remaining = Interlocked.Increment(ref _pendingCallbacks);
+            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParserStateObject.IncrementPendingCallbacks|ADV> {0}, after incrementing _pendingCallbacks: {1}", ObjectID, _pendingCallbacks);
             Debug.Assert(0 < remaining && remaining <= 3, $"_pendingCallbacks values is invalid after incrementing: {remaining}");
             return remaining;
         }
@@ -1016,6 +1021,8 @@ namespace Microsoft.Data.SqlClient
                                   (int)_partialHeaderBuffer[TdsEnums.HEADER_LEN_FIELD_OFFSET + 1]) - _inputHeaderLen;
 
                         _messageStatus = _partialHeaderBuffer[1];
+                        _spid = _partialHeaderBuffer[TdsEnums.SPID_OFFSET] << 8 |
+                                  _partialHeaderBuffer[TdsEnums.SPID_OFFSET + 1];
                     }
                     else
                     {
@@ -1049,8 +1056,10 @@ namespace Microsoft.Data.SqlClient
             {
                 // normal header processing...
                 _messageStatus = _inBuff[_inBytesUsed + 1];
-                _inBytesPacket = ((int)_inBuff[_inBytesUsed + TdsEnums.HEADER_LEN_FIELD_OFFSET] << 8 |
-                                              (int)_inBuff[_inBytesUsed + TdsEnums.HEADER_LEN_FIELD_OFFSET + 1]) - _inputHeaderLen;
+                _inBytesPacket = (_inBuff[_inBytesUsed + TdsEnums.HEADER_LEN_FIELD_OFFSET] << 8 |
+                                              _inBuff[_inBytesUsed + TdsEnums.HEADER_LEN_FIELD_OFFSET + 1]) - _inputHeaderLen;
+                _spid = _inBuff[_inBytesUsed + TdsEnums.SPID_OFFSET] << 8 |
+                                              _inBuff[_inBytesUsed + TdsEnums.SPID_OFFSET + 1];
                 _inBytesUsed += _inputHeaderLen;
 
                 AssertValidState();
@@ -1228,7 +1237,7 @@ namespace Microsoft.Data.SqlClient
                         int remainingData = _inBytesRead - _inBytesUsed;
                         if ((temp.Length < _inBytesUsed + remainingData) || (_inBuff.Length < remainingData))
                         {
-                            string errormessage = SRHelper.GetString(SR.SQL_InvalidInternalPacketSize) + ' ' + temp.Length + ", " + _inBytesUsed + ", " + remainingData + ", " + _inBuff.Length;
+                            string errormessage = StringsHelper.GetString(Strings.SQL_InvalidInternalPacketSize) + ' ' + temp.Length + ", " + _inBytesUsed + ", " + remainingData + ", " + _inBuff.Length;
                             throw SQL.InvalidInternalPacketSize(errormessage);
                         }
                         Buffer.BlockCopy(temp, _inBytesUsed, _inBuff, 0, remainingData);
@@ -1394,36 +1403,28 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
 
-            byte[] buffer;
-            int offset;
+            Span<byte> buffer = stackalloc byte[2];
             if (((_inBytesUsed + 2) > _inBytesRead) || (_inBytesPacket < 2))
             {
                 // If the char isn't fully in the buffer, or if it isn't fully in the packet,
                 // then use ReadByteArray since the logic is there to take care of that.
-
-                if (!TryReadByteArray(_bTmp, 2))
+                if (!TryReadByteArray(buffer, 2))
                 {
                     value = '\0';
                     return false;
                 }
-
-                buffer = _bTmp;
-                offset = 0;
             }
             else
             {
                 // The entire char is in the packet and in the buffer, so just return it
                 // and take care of the counters.
-
-                buffer = _inBuff;
-                offset = _inBytesUsed;
-
+                buffer = _inBuff.AsSpan(_inBytesUsed, 2);
                 _inBytesUsed += 2;
                 _inBytesPacket -= 2;
             }
 
             AssertValidState();
-            value = (char)((buffer[offset + 1] << 8) + buffer[offset]);
+            value = (char)((buffer[1] << 8) + buffer[0]);
             return true;
         }
 
@@ -1431,70 +1432,58 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
 
-            byte[] buffer;
-            int offset;
+            Span<byte> buffer = stackalloc byte[2];
             if (((_inBytesUsed + 2) > _inBytesRead) || (_inBytesPacket < 2))
             {
                 // If the int16 isn't fully in the buffer, or if it isn't fully in the packet,
                 // then use ReadByteArray since the logic is there to take care of that.
-
-                if (!TryReadByteArray(_bTmp, 2))
+                if (!TryReadByteArray(buffer, 2))
                 {
                     value = default;
                     return false;
                 }
-
-                buffer = _bTmp;
-                offset = 0;
             }
             else
             {
                 // The entire int16 is in the packet and in the buffer, so just return it
                 // and take care of the counters.
-
-                buffer = _inBuff;
-                offset = _inBytesUsed;
-
+                buffer = _inBuff.AsSpan(_inBytesUsed,2);
                 _inBytesUsed += 2;
                 _inBytesPacket -= 2;
             }
 
             AssertValidState();
-            value = (short)((buffer[offset + 1] << 8) + buffer[offset]);
+            value = (short)((buffer[1] << 8) + buffer[0]);
             return true;
         }
 
         internal bool TryReadInt32(out int value)
         {
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
+            Span<byte> buffer = stackalloc byte[4];
             if (((_inBytesUsed + 4) > _inBytesRead) || (_inBytesPacket < 4))
             {
                 // If the int isn't fully in the buffer, or if it isn't fully in the packet,
                 // then use ReadByteArray since the logic is there to take care of that.
-
-                if (!TryReadByteArray(_bTmp, 4))
+                if (!TryReadByteArray(buffer, 4))
                 {
                     value = 0;
                     return false;
                 }
-
-                AssertValidState();
-                value = BitConverter.ToInt32(_bTmp, 0);
-                return true;
             }
             else
             {
                 // The entire int is in the packet and in the buffer, so just return it
                 // and take care of the counters.
-
-                value = BitConverter.ToInt32(_inBuff, _inBytesUsed);
-
+                buffer = _inBuff.AsSpan(_inBytesUsed, 4);
                 _inBytesUsed += 4;
                 _inBytesPacket -= 4;
-
-                AssertValidState();
-                return true;
             }
+
+            AssertValidState();
+            value = (buffer[3] << 24) + (buffer[2] <<16) + (buffer[1] << 8) + buffer[0];
+            return true;
+
         }
 
         // This method is safe to call when doing async without snapshot
@@ -1550,36 +1539,28 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
 
-            byte[] buffer;
-            int offset;
+            Span<byte> buffer = stackalloc byte[2];
             if (((_inBytesUsed + 2) > _inBytesRead) || (_inBytesPacket < 2))
             {
                 // If the uint16 isn't fully in the buffer, or if it isn't fully in the packet,
                 // then use ReadByteArray since the logic is there to take care of that.
-
-                if (!TryReadByteArray(_bTmp, 2))
+                if (!TryReadByteArray(buffer, 2))
                 {
                     value = default;
                     return false;
                 }
-
-                buffer = _bTmp;
-                offset = 0;
             }
             else
             {
                 // The entire uint16 is in the packet and in the buffer, so just return it
                 // and take care of the counters.
-
-                buffer = _inBuff;
-                offset = _inBytesUsed;
-
+                buffer = _inBuff.AsSpan(_inBytesUsed, 2);
                 _inBytesUsed += 2;
                 _inBytesPacket -= 2;
             }
 
             AssertValidState();
-            value = (ushort)((buffer[offset + 1] << 8) + buffer[offset]);
+            value = (ushort)((buffer[1] << 8) + buffer[0]);
             return true;
         }
 
@@ -1909,7 +1890,7 @@ namespace Microsoft.Data.SqlClient
 
         // Reads the requested number of bytes from a plp data stream, or the entire data if
         // requested length is -1 or larger than the actual length of data. First call to this method
-        //  should be preceded by a call to ReadPlpLength or ReadDataLength.
+        //  should be preceeded by a call to ReadPlpLength or ReadDataLength.
         // Returns the actual bytes read.
         // NOTE: This method must be retriable WITHOUT replaying a snapshot
         // Every time you call this method increment the offset and decrease len by the value of totalBytesRead
@@ -2525,6 +2506,7 @@ namespace Microsoft.Data.SqlClient
                     if ((error != TdsEnums.SNI_SUCCESS) && (error != TdsEnums.SNI_WAIT_TIMEOUT))
                     {
                         // Connection is dead
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.IsConnectionAlive|Info> received error {0} on idle connection", (int)error);
                         isAlive = false;
                         if (throwOnException)
                         {
@@ -2696,7 +2678,7 @@ namespace Microsoft.Data.SqlClient
                     if (_inBuff.Length < dataSize)
                     {
                         Debug.Assert(true, "Unexpected dataSize on Read");
-                        throw SQL.InvalidInternalPacketSize(SRHelper.GetString(SR.SqlMisc_InvalidArraySizeMessage));
+                        throw SQL.InvalidInternalPacketSize(StringsHelper.GetString(Strings.SqlMisc_InvalidArraySizeMessage));
                     }
 
                     _lastSuccessfulIOTimer._value = DateTime.UtcNow.Ticks;
@@ -2840,7 +2822,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (_executionContext != null)
                         {
-                            ExecutionContext.Run(_executionContext, (state) => ReadAsyncCallbackCaptureException(source), null);
+                            ExecutionContext.Run(_executionContext, state => ReadAsyncCallbackCaptureException((TaskCompletionSource<object>)state), source);
                         }
                         else
                         {
@@ -2913,6 +2895,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (sniError != TdsEnums.SNI_SUCCESS)
                 {
+                    SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.WriteAsyncCallback|Info> write async returned error code {0}", (int)sniError);
                     try
                     {
                         AddError(_parser.ProcessSNIError(this));
@@ -3006,7 +2989,7 @@ namespace Microsoft.Data.SqlClient
             // It is guaranteed both secure password and secure change password should fit into the first packet
             // Given current TDS format and implementation it is not possible that one of secure string is the last item and exactly fill up the output buffer
             //  if this ever happens and it is correct situation, the packet needs to be written out after _outBytesUsed is update
-            Debug.Assert((_outBytesUsed + lengthInBytes) < _outBuff.Length, "Passwords cannot be splited into two different packet or the last item which fully fill up _outBuff!!!");
+            Debug.Assert((_outBytesUsed + lengthInBytes) < _outBuff.Length, "Passwords cannot be split into two different packet or the last item which fully fill up _outBuff!!!");
 
             _outBytesUsed += lengthInBytes;
         }
@@ -3402,6 +3385,7 @@ namespace Microsoft.Data.SqlClient
 
                         if (error != TdsEnums.SNI_SUCCESS)
                         {
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.WritePacket|Info> write async returned error code {0}", (int)error);
                             AddError(_parser.ProcessSNIError(this));
                             ThrowExceptionAndWarning();
                         }
@@ -3436,6 +3420,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
+                    SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.WritePacket|Info> write async returned error code {0}", (int)sniError);
                     AddError(_parser.ProcessSNIError(this));
                     ThrowExceptionAndWarning(callerHasConnectionLock);
                 }
@@ -3465,7 +3450,7 @@ namespace Microsoft.Data.SqlClient
 
                 try
                 {
-                    // Dev11 #344723: SqlClient stress hang System_Data!Tcp::ReadSync via a call to SqlDataReader::Close
+                    // Dev11 #344723: SqlClient stress test suspends System_Data!Tcp::ReadSync via a call to SqlDataReader::Close
                     // Set _attentionSending to true before sending attention and reset after setting _attentionSent
                     // This prevents a race condition between receiving the attention ACK and setting _attentionSent
                     _attentionSending = true;
@@ -3493,6 +3478,7 @@ namespace Microsoft.Data.SqlClient
                             uint sniError;
                             _parser._asyncWrite = false; // stop async write 
                             SNIWritePacket(attnPacket, out sniError, canAccumulate: false, callerHasConnectionLock: false);
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.SendAttention|INFO> Send Attention ASync.");
                         }
                         finally
                         {
@@ -3514,6 +3500,8 @@ namespace Microsoft.Data.SqlClient
                     _attentionSending = false;
                 }
 
+                SqlClientEventSource.Log.TryAdvancedTraceBinEvent("<sc.TdsParser.WritePacket|INFO|ADV>  Packet sent", _outBuff, (ushort)_outBytesUsed);
+                SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.SendAttention|INFO> Attention sent to the server.");
 
                 AssertValidState();
             }
@@ -3611,8 +3599,8 @@ namespace Microsoft.Data.SqlClient
                 statistics.RequestNetworkServerTimer();
             }
         }
-        [Conditional("DEBUG")]
 
+        [Conditional("DEBUG")]
         private void AssertValidState()
         {
             if (_inBytesUsed < 0 || _inBytesRead < 0)

@@ -9,6 +9,6 @@ namespace System.Data
     internal static partial class LocalDBAPI
     {
         private static IntPtr LoadProcAddress() =>
-            throw new PlatformNotSupportedException(SR.LocalDBNotSupported); // No Registry support on UAP
+            throw new PlatformNotSupportedException(Strings.LocalDBNotSupported); // No Registry support on UAP
     }
 }
