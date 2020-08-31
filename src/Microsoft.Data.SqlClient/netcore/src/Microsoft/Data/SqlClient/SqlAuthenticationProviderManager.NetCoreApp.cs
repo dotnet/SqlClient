@@ -20,18 +20,12 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                // New configuration section "SqlClientAuthenticationProviders" for Microsoft.Data.SqlClient accepted to avoid conflicts with older one.
-                configurationSection = FetchConfigurationSection<SqlClientAuthenticationProviderConfigurationSection>(SqlClientAuthenticationProviderConfigurationSection.Name);
-                if (null == configurationSection)
-                {
-                    // If configuration section is not yet found, try with old Configuration Section name for backwards compatibility
-                    configurationSection = FetchConfigurationSection<SqlAuthenticationProviderConfigurationSection>(SqlAuthenticationProviderConfigurationSection.Name);
-                }
+                configurationSection = (SqlAuthenticationProviderConfigurationSection)ConfigurationManager.GetSection(SqlAuthenticationProviderConfigurationSection.Name);
             }
             catch (ConfigurationErrorsException e)
             {
                 // Don't throw an error for invalid config files
-                SqlClientEventSource.Log.TraceEvent("Unable to load custom SqlAuthenticationProviders or SqlClientAuthenticationProviders. ConfigurationManager failed to load due to configuration errors: {0}", e);
+                SqlClientEventSource.Log.TraceEvent("Unable to load custom SqlAuthenticationProviders. ConfigurationManager failed to load due to configuration errors: {0}", e);
             }
 
             Instance = new SqlAuthenticationProviderManager(configurationSection);
@@ -55,7 +49,7 @@ namespace Microsoft.Data.SqlClient
 
             if (configSection == null)
             {
-                _sqlAuthLogger.LogInfo(_typeName, methodName, "Neither SqlClientAuthenticationProviders nor SqlAuthenticationProviders configuration section found.");
+                _sqlAuthLogger.LogInfo(_typeName, methodName, "No SqlAuthProviders configuration section found.");
                 return;
             }
 
@@ -111,24 +105,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private static T FetchConfigurationSection<T>(string name)
-        {
-            Type t = typeof(T);
-            object section = ConfigurationManager.GetSection(name);
-            if (null != section)
-            {
-                if (section is ConfigurationSection configSection && configSection.GetType() == t)
-                {
-                    return (T)section;
-                }
-                else
-                {
-                    SqlClientEventSource.Log.TraceEvent("Found a custom {0} configuration but it is not of type {1}.", name, t.FullName);
-                }
-            }
-            return default;
-        }
-
         private static SqlAuthenticationMethod AuthenticationEnumFromString(string authentication)
         {
             switch (authentication.ToLowerInvariant())
@@ -166,14 +142,6 @@ namespace Microsoft.Data.SqlClient
             /// </summary>
             [ConfigurationProperty("initializerType")]
             public string InitializerType => base["initializerType"] as string;
-        }
-
-        /// <summary>
-        /// The configuration section definition for reading app.config.
-        /// </summary>
-        internal class SqlClientAuthenticationProviderConfigurationSection : SqlAuthenticationProviderConfigurationSection
-        {
-            public new const string Name = "SqlClientAuthenticationProviders";
         }
     }
 }
