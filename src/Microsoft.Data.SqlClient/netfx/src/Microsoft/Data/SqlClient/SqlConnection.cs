@@ -336,6 +336,7 @@ namespace Microsoft.Data.SqlClient
             // else
             //      credential == null:  we should not set "Credential" as this will do additional validation check and
             //      checking pool groups which is not necessary. All necessary operation is already done by calling "ConnectionString = connectionString"
+            CacheConnectionStringProperties();
         }
 
         private SqlConnection(SqlConnection connection)
@@ -3230,3 +3231,5 @@ namespace Microsoft.Data.SqlClient
         internal byte[] rgbData;
     }
 } // Microsoft.Data.SqlClient namespace
+
+
