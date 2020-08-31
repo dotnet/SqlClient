@@ -710,6 +710,21 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        //TODO Fix docs
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ConnectionTimeout/*' />
+        [
+        DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlConnection_ConnectionTimeout),
+        ]
+        public int CommandTimeout
+        {
+            get
+            {
+                SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
+                return ((null != constr) ? constr.CommandTimeout : SqlConnectionString.DEFAULT.Command_Timeout);
+            }
+        }
+
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Database/*' />
         [
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),

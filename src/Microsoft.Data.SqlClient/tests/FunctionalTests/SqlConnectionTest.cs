@@ -24,6 +24,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
             Assert.Equal(string.Empty, cn.ConnectionString);
             Assert.Equal(15, cn.ConnectionTimeout);
+
             Assert.Null(cn.Container);
             Assert.Equal(string.Empty, cn.Database);
             Assert.Equal(string.Empty, cn.DataSource);
@@ -43,6 +44,7 @@ namespace Microsoft.Data.SqlClient.Tests
             SqlConnection cn = new SqlConnection(connectionString);
             Assert.Equal(connectionString, cn.ConnectionString);
             Assert.Equal(15, cn.ConnectionTimeout);
+            Assert.Equal(30, cn.CommandTimeout);
             Assert.Null(cn.Container);
             Assert.Equal("dotNet", cn.Database);
             Assert.Equal("SQLSRV", cn.DataSource);
@@ -56,6 +58,7 @@ namespace Microsoft.Data.SqlClient.Tests
             cn = new SqlConnection((string)null);
             Assert.Equal(string.Empty, cn.ConnectionString);
             Assert.Equal(15, cn.ConnectionTimeout);
+            Assert.Equal(30, cn.CommandTimeout);
             Assert.Null(cn.Container);
             Assert.Equal(string.Empty, cn.Database);
             Assert.Equal(string.Empty, cn.DataSource);

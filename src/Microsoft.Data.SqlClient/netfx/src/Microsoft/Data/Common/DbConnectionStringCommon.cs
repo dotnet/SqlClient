@@ -1012,6 +1012,7 @@ namespace Microsoft.Data.Common
         internal const bool AsynchronousProcessing = false;
         internal const string AttachDBFilename = "";
         internal const int ConnectTimeout = 15;
+        internal const int CommandTimeout = 30;
         internal const bool ConnectionReset = true;
         internal const bool ContextConnection = false;
         internal const string CurrentLanguage = "";
@@ -1094,6 +1095,7 @@ namespace Microsoft.Data.Common
         internal const string AsynchronousProcessing = "Asynchronous Processing";
         internal const string AttachDBFilename = "AttachDbFilename";
         internal const string ConnectTimeout = "Connect Timeout";
+        internal const string CommandTimeout = "Command Timeout";
         internal const string ConnectionReset = "Connection Reset";
         internal const string ContextConnection = "Context Connection";
         internal const string CurrentLanguage = "Current Language";
@@ -1153,6 +1155,8 @@ namespace Microsoft.Data.Common
         //internal const string ConnectTimeout         = CONNECTIONTIMEOUT+","+TIMEOUT;
         internal const string CONNECTIONTIMEOUT = "connection timeout";
         internal const string TIMEOUT = "timeout";
+
+        internal const string COMMANDTIMEOUT = "command timeout";
 
         //internal const string ConnectRetryCount = CONNECTRETRYCOUNT;
         internal const string CONNECTRETRYCOUNT = "connectretrycount";
