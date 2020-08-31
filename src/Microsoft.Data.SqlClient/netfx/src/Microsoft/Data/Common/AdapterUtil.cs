@@ -101,7 +101,7 @@ namespace Microsoft.Data.Common
             Debug.Assert(null != e, "TraceException: null Exception");
             if (null != e)
             {
-                SqlClientEventSource.Log.TryTraceEvent(trace, e);
+                SqlClientEventSource.Log.TraceEvent(trace, e);
             }
         }
 

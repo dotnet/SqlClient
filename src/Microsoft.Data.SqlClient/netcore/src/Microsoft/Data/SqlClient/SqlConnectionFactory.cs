@@ -182,7 +182,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         connectionTimeout *= 10;
                     }
-                    SqlClientEventSource.Log.TryTraceEvent("<sc.SqlConnectionFactory.CreateConnectionPoolGroupOptions>Set connection pool CreateTimeout={0} when {1} is in use.", connectionTimeout, opt.Authentication);
+                    SqlClientEventSource.Log.TraceEvent("<sc.SqlConnectionFactory.CreateConnectionPoolGroupOptions>Set connection pool CreateTimeout={0} when {1} is in use.", connectionTimeout, opt.Authentication);
                 }
                 poolingOptions = new DbConnectionPoolGroupOptions(
                                                 opt.IntegratedSecurity,

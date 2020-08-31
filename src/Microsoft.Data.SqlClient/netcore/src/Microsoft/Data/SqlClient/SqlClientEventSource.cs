@@ -8,7 +8,7 @@ using System.Threading;
 namespace Microsoft.Data.SqlClient
 {
     [EventSource(Name = "Microsoft.Data.SqlClient.EventSource")]
-    internal partial class SqlClientEventSource : EventSource
+    internal class SqlClientEventSource : EventSource
     {
         // Defines the singleton instance for the Resources ETW provider
         internal static readonly SqlClientEventSource Log = new SqlClientEventSource();
@@ -46,17 +46,17 @@ namespace Microsoft.Data.SqlClient
         private const int ScopeExitId = 5;
 
         /// <summary>
-        /// Defines EventId for NotificationScopeEnter() events
+        /// Defines EventId for notificationScopeEnter() events
         /// </summary>
         private const int NotificationScopeEnterId = 6;
 
         /// <summary>
-        /// Defines EventId for NotificationScopeLeave() events
+        /// Defines EventId for notificationScopeLeave() events
         /// </summary>
         private const int NotificationScopeExitId = 7;
 
         /// <summary>
-        /// Defines EventId for NotificationScopeTrace() events
+        /// Defines EventId for notificationScopeTrace() events
         /// </summary>
         private const int NotificationTraceId = 8;
 
