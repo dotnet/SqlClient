@@ -149,10 +149,6 @@ namespace Microsoft.Data.SqlClient
             {
                 return SqlAeadAes256CbcHmac256Algorithm.AlgorithmName;
             }
-            else if (TdsEnums.AES_256_CBC == cipherAlgorithmId)
-            {
-                return SqlAes256CbcAlgorithm.AlgorithmName;
-            }
             else
             {
                 throw SQL.UnknownColumnEncryptionAlgorithmId(cipherAlgorithmId, GetRegisteredCipherAlgorithmIds());

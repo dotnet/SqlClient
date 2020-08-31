@@ -150,12 +150,6 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlAeadAes256CbcHmac256Factory.cs">
       <Link>Microsoft\Data\SqlClient\SqlAeadAes256CbcHmac256Factory.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlAes256CbcAlgorithm.cs">
-      <Link>Microsoft\Data\SqlClient\SqlAes256CbcAlgorithm.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlAes256CbcFactory.cs">
-      <Link>Microsoft\Data\SqlClient\SqlAes256CbcFactory.cs</Link>
-    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlAuthenticationParameters.cs">
       <Link>Microsoft\Data\SqlClient\SqlAuthenticationParameters.cs</Link>
     </Compile>
@@ -478,9 +472,6 @@
     </Compile>
     <Compile Include="$(CommonPath)\Interop\Windows\kernel32\Interop.DeviceIoControl.cs">
       <Link>Common\Interop\Windows\kernel32\Interop.DeviceIoControl.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\kernel32\Interop.FileOperations.cs">
-      <Link>Common\Interop\Windows\kernel32\Interop.FileOperations.cs</Link>
     </Compile>
     <Compile Include="$(CommonPath)\Interop\Windows\kernel32\Interop.IoControlTransferType.cs">
       <Link>Common\Interop\Windows\Kernel32\Interop.IoControlTransferType.cs</Link>

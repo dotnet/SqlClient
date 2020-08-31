@@ -55,6 +55,7 @@
     <MicrosoftNETTestSdkVersion>15.9.0</MicrosoftNETTestSdkVersion>
     <MicrosoftWindowsCompatibilityVersion>3.1.0</MicrosoftWindowsCompatibilityVersion>
     <NewtonsoftJsonVersion>12.0.3</NewtonsoftJsonVersion>
+    <SystemRuntimeInteropServicesRuntimeInformationVersion>4.3.0</SystemRuntimeInteropServicesRuntimeInformationVersion>
     <SystemLinqExpressionsVersion>4.3.0</SystemLinqExpressionsVersion>
     <SystemDataOdbcVersion21>4.5.0</SystemDataOdbcVersion21>
     <SystemDataOdbcVersion>4.6.0</SystemDataOdbcVersion>
@@ -63,6 +64,7 @@
     <XunitVersion>2.4.1</XunitVersion>
     <MicrosoftDotNetRemoteExecutorVersion>5.0.0-beta.20206.4</MicrosoftDotNetRemoteExecutorVersion>
     <MicrosoftNETCoreRuntimeCoreCLRVersion>2.0.8</MicrosoftNETCoreRuntimeCoreCLRVersion>
+    <MicrosoftSqlServerSqlManagementObjectsVersion>161.41011.9</MicrosoftSqlServerSqlManagementObjectsVersion>
   </PropertyGroup>
   <PropertyGroup>
     <TestAKVProviderVersion>$(NugetPackageVersion)</TestAKVProviderVersion>

@@ -13,9 +13,6 @@
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform).$(AssemblyName)</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
   </PropertyGroup>
-  <Target Name="CopyConfig" BeforeTargets="Compile">
-    <Copy SourceFiles="config.default.json" DestinationFiles="config.json" Condition="!Exists('config.json')" />
-  </Target>
   <!-- Azure Key Vault provider is not compatible with .NET Framework 4.6 and can only be used with .NET Framework 4.6.1 and above. -->
   <ItemGroup Condition="$(TargetFramework) != 'net46'">
     <Compile Include="DataCommon\SqlClientCustomTokenCredential.cs" />
@@ -207,10 +204,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>data.xml</Link>
     </Content>
-    <Content Include="config.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>config.json</Link>
-    </Content>
     <Content Include="ProviderAgnostic\MultipleResultsTest\MultipleResultsTest.bsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>MultipleResultsTest.bsl</Link>
@@ -265,6 +258,7 @@
     <ProjectReference Include="$(TestsPath)tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj" />
     <ProjectReference Include="$(TestsPath)tools\TDS\TDS.Servers\TDS.Servers.csproj" />
     <ProjectReference Include="$(TestsPath)tools\TDS\TDS\TDS.csproj" />
+    <ProjectReference Include="$(TestsPath)tools\Microsoft.Data.SqlClient.TestUtilities\Microsoft.Data.SqlClient.TestUtilities.csproj" />
     <ProjectReference Include="SQL\UdtTest\UDTs\Address\Address.csproj">
       <Name>Address</Name>
     </ProjectReference>
@@ -276,9 +270,6 @@
     </ProjectReference>
     <ProjectReference Include="SQL\UdtTest\UDTs\Utf8String\Utf8String.csproj">
       <Name>Utf8String</Name>
-    </ProjectReference>
-    <ProjectReference Include="$(TestsPath)tools\CoreFx.Private.TestUtilities\CoreFx.Private.TestUtilities.csproj">
-      <Name>CoreFx.Private.TestUtilities</Name>
     </ProjectReference>
     <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp' AND $(ReferenceType)=='Project'" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
     <ProjectReference Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
@@ -297,7 +288,6 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNETTestSdkVersion)" />
     <PackageReference Include="System.Linq.Expressions" Version="$(SystemLinqExpressionsVersion)" />
     <PackageReference Include="System.Net.Sockets" Version="$(SystemNetSocketsVersion)" />
-    <PackageReference Include="Newtonsoft.Json" Version="$(NewtonsoftJsonVersion)" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="$(SystemIdentityModelTokensJwtVersion)" />
     <PackageReference Condition="'$(TargetGroup)'=='netcoreapp' AND $(OS)=='Unix'" Include="Microsoft.Windows.Compatibility" Version="$(MicrosoftWindowsCompatibilityVersion)" />
     <PackageReference Condition="'$(TargetGroup)' == 'netcoreapp'" Include="Microsoft.DotNet.RemoteExecutor" Version="$(MicrosoftDotnetRemoteExecutorVersion)" />
