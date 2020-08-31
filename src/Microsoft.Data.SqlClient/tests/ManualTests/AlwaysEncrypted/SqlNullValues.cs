@@ -11,16 +11,17 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
-    public class SqlNullValuesTests : IClassFixture<PlatformSpecificTestContext>, IDisposable
+    [PlatformSpecific(TestPlatforms.Windows)]
+    public class SqlNullValuesTests : IClassFixture<SQLSetupStrategyCertStoreProvider>, IDisposable
     {
-        private SQLSetupStrategy fixture;
+        private SQLSetupStrategyCertStoreProvider fixture;
         private readonly string tableName;
         private string UdfName = DatabaseHelper.GenerateUniqueName("SqlNullValuesRetVal");
         private string UdfNameNotNull = DatabaseHelper.GenerateUniqueName("SqlNullValuesRetValNotNull");
 
-        public SqlNullValuesTests(PlatformSpecificTestContext context)
+        public SqlNullValuesTests(SQLSetupStrategyCertStoreProvider fixture)
         {
-            fixture = context.Fixture;
+            this.fixture = fixture;
             tableName = fixture.SqlNullValuesTable.Name;
             // Disable the cache to avoid false failures.
             SqlConnection.ColumnEncryptionQueryMetadataCacheEnabled = false;
@@ -32,7 +33,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 {
                     sqlConnection.Open();
 
-                    using (SqlCommand cmd = new SqlCommand(string.Format("INSERT INTO [{0}] (c1) VALUES (@c1)", tableName), sqlConnection, null, SqlCommandColumnEncryptionSetting.Enabled))
+                    using (SqlCommand cmd = new SqlCommand(String.Format("INSERT INTO [{0}] (c1) VALUES (@c1)", tableName), sqlConnection, null, SqlCommandColumnEncryptionSetting.Enabled))
                     {
                         SqlParameter param = cmd.Parameters.Add("@c1", SqlDbType.Int);
                         param.Value = DBNull.Value;
@@ -78,7 +79,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 SqlParameter param;
 
                 // Create a command similarly
-                using (SqlCommand cmd = new SqlCommand(string.Format("SELECT c1 FROM [{0}] ORDER BY c2 ASC", tableName),
+                using (SqlCommand cmd = new SqlCommand(String.Format("SELECT c1 FROM [{0}] ORDER BY c2 ASC", tableName),
                     sqlConn, null, commandSetting))
                 {
                     using (SqlDataReader reader = cmd.ExecuteReader())
