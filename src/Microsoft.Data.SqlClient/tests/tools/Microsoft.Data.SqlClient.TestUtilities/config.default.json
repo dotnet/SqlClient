@@ -16,5 +16,6 @@
     "SupportsIntegratedSecurity": true,
     "SupportsLocalDb": false,
     "SupportsFileStream": false,
-    "UseManagedSNIOnWindows": false
+    "UseManagedSNIOnWindows": false,
+    "EnclaveAzureDatabaseConnString":  ""
 }
