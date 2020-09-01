@@ -206,7 +206,7 @@ namespace Microsoft.Data.SqlClient
             }
             if (!task.IsCompleted)
             {
-                task.ContinueWith(_ => { }); //Ensure the task does not leave an unobserved exception
+                task.ContinueWith(t => { var ignored = t.Exception; }); //Ensure the task does not leave an unobserved exception
                 if (onTimeout != null)
                 {
                     onTimeout();
