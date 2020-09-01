@@ -28,8 +28,8 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             var unobservedExceptionHappenedEvent = new AutoResetEvent(false);
             Exception unhandledException = null;
-            EventHandler<UnobservedTaskExceptionEventArgs> handleUnobservedException = 
-                (o, a) => { unhandledException = a.Exception; unobservedExceptionHappenedEvent.Set(); };
+            void handleUnobservedException(object o, UnobservedTaskExceptionEventArgs a)
+            { unhandledException = a.Exception; unobservedExceptionHappenedEvent.Set(); }
 
             TaskScheduler.UnobservedTaskException += handleUnobservedException;
 
