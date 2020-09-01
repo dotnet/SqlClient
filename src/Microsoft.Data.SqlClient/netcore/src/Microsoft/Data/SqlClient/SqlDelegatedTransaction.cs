@@ -80,13 +80,13 @@ namespace Microsoft.Data.SqlClient
             // transaction.
             SqlInternalConnection connection = _connection;
             SqlConnection usersConnection = connection.Connection;
-            SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.Initialize|RES|CPOOL> {0}, Connection {1}, delegating transaction.", ObjectID, connection.ObjectID);
+            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDelegatedTransaction.Initialize|RES|CPOOL> {0}, Connection {1}, delegating transaction.", ObjectID, connection.ObjectID);
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
                 if (connection.IsEnlistedInTransaction)
                 {
-                    SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.Initialize|RES|CPOOL> {0}, Connection {1}, was enlisted, now defecting.", ObjectID, connection.ObjectID);
+                    SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDelegatedTransaction.Initialize|RES|CPOOL> {0}, Connection {1}, was enlisted, now defecting.", ObjectID, connection.ObjectID);
 
                     // defect first
                     connection.EnlistNull();
@@ -143,7 +143,7 @@ namespace Microsoft.Data.SqlClient
             if (null != connection)
             {
                 SqlConnection usersConnection = connection.Connection;
-                SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.Promote|RES|CPOOL> {0}, Connection {1}, promoting transaction.", ObjectID, connection.ObjectID);
+                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDelegatedTransaction.Promote|RES|CPOOL> {0}, Connection {1}, promoting transaction.", ObjectID, connection.ObjectID);
                 RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 {
@@ -215,13 +215,13 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     // The transaction was aborted externally, since it's already doomed above, we only log the same.
-                    SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.Promote|RES|CPOOL> {0}, Connection {1}, aborted during promotion.", ObjectID, connection.ObjectID);
+                    SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDelegatedTransaction.Promote|RES|CPOOL> {0}, Connection {1}, aborted during promotion.", ObjectID, connection.ObjectID);
                 }
             }
             else
             {
                 // The transaction was aborted externally, doom the connection to make sure it's eventually rolled back and log the same.
-                SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.Promote|RES|CPOOL> {0}, Connection null, aborted before promoting.", ObjectID);
+                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDelegatedTransaction.Promote|RES|CPOOL> {0}, Connection null, aborted before promoting.", ObjectID);
             }
             return returnValue;
         }
@@ -235,7 +235,7 @@ namespace Microsoft.Data.SqlClient
             if (null != connection)
             {
                 SqlConnection usersConnection = connection.Connection;
-                SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.Rollback|RES|CPOOL> {0}, Connection {1}, rolling back transaction.", ObjectID, connection.ObjectID);
+                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDelegatedTransaction.Rollback|RES|CPOOL> {0}, Connection {1}, rolling back transaction.", ObjectID, connection.ObjectID);
                 RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 {
@@ -304,7 +304,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // The transaction was aborted, report that to SysTx and log the same.
                 enlistment.Aborted();
-                SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.Rollback|RES|CPOOL> {0}, Connection null, aborted before rollback.", ObjectID);
+                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDelegatedTransaction.Rollback|RES|CPOOL> {0}, Connection null, aborted before rollback.", ObjectID);
             }
         }
 
@@ -317,7 +317,7 @@ namespace Microsoft.Data.SqlClient
             if (null != connection)
             {
                 SqlConnection usersConnection = connection.Connection;
-                SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.SinglePhaseCommit|RES|CPOOL> {0}, Connection {1}, committing transaction.", ObjectID, connection.ObjectID);
+                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDelegatedTransaction.SinglePhaseCommit|RES|CPOOL> {0}, Connection {1}, committing transaction.", ObjectID, connection.ObjectID);
                 RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 {
@@ -421,7 +421,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // The transaction was aborted before we could commit, report that to SysTx and log the same.
                 enlistment.Aborted();
-                SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.SinglePhaseCommit|RES|CPOOL> {0}, Connection null, aborted before commit.", ObjectID);
+                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDelegatedTransaction.SinglePhaseCommit|RES|CPOOL> {0}, Connection null, aborted before commit.", ObjectID);
             }
         }
 
@@ -435,7 +435,7 @@ namespace Microsoft.Data.SqlClient
 
             if (connection != null)
             {
-                SqlClientEventSource.Log.TraceEvent("<sc.SqlDelegatedTransaction.TransactionEnded|RES|CPOOL> {0}, Connection {1}, transaction completed externally.", ObjectID, connection.ObjectID);
+                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDelegatedTransaction.TransactionEnded|RES|CPOOL> {0}, Connection {1}, transaction completed externally.", ObjectID, connection.ObjectID);
                 lock (connection)
                 {
                     if (_atomicTransaction.Equals(transaction))

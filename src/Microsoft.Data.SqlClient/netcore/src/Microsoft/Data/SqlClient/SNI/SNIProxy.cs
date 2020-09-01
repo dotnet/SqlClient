@@ -5,7 +5,6 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
@@ -21,6 +20,7 @@ namespace Microsoft.Data.SqlClient.SNI
         private const int DefaultSqlServerPort = 1433;
         private const int DefaultSqlServerDacPort = 1434;
         private const string SqlServerSpnHeader = "MSSQLSvc";
+        private const int MaxTokenSize = 0;
 
         internal class SspiClientContextResult
         {
@@ -29,13 +29,11 @@ namespace Microsoft.Data.SqlClient.SNI
             internal const uint KerberosTicketMissing = 2;
         }
 
-        public static readonly SNIProxy Singleton = new SNIProxy();
+        internal static readonly SNIProxy s_singleton = new SNIProxy();
 
-        /// <summary>
-        /// Terminate SNI
-        /// </summary>
-        public void Terminate()
+        internal static SNIProxy GetInstance()
         {
+            return s_singleton;
         }
 
         /// <summary>
@@ -44,7 +42,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="handle">Connection handle</param>
         /// <param name="options"></param>
         /// <returns>SNI error code</returns>
-        public uint EnableSsl(SNIHandle handle, uint options)
+        internal uint EnableSsl(SNIHandle handle, uint options)
         {
             try
             {
@@ -61,7 +59,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         /// <param name="handle">Connection handle</param>
         /// <returns>SNI error code</returns>
-        public uint DisableSsl(SNIHandle handle)
+        internal uint DisableSsl(SNIHandle handle)
         {
             handle.DisableSsl();
             return TdsEnums.SNI_SUCCESS;
@@ -75,7 +73,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="sendBuff">Send buffer</param>
         /// <param name="serverName">Service Principal Name buffer</param>
         /// <returns>SNI error code</returns>
-        public void GenSspiClientContext(SspiClientContextStatus sspiClientContextStatus, byte[] receivedBuff, ref byte[] sendBuff, byte[] serverName)
+        internal void GenSspiClientContext(SspiClientContextStatus sspiClientContextStatus, byte[] receivedBuff, ref byte[] sendBuff, byte[] serverName)
         {
             SafeDeleteContext securityContext = sspiClientContextStatus.SecurityContext;
             ContextFlagsPal contextFlags = sspiClientContextStatus.ContextFlags;
@@ -88,7 +86,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 credentialsHandle = NegotiateStreamPal.AcquireDefaultCredential(securityPackage, false);
             }
 
-            SecurityBuffer[] inSecurityBufferArray = null;
+            SecurityBuffer[] inSecurityBufferArray;
             if (receivedBuff != null)
             {
                 inSecurityBufferArray = new SecurityBuffer[] { new SecurityBuffer(receivedBuff, SecurityBufferType.SECBUFFER_TOKEN) };
@@ -98,7 +96,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 inSecurityBufferArray = Array.Empty<SecurityBuffer>();
             }
 
-            int tokenSize = NegotiateStreamPal.QueryMaxTokenSize(securityPackage);
+            int tokenSize = MaxTokenSize;
             SecurityBuffer outSecurityBuffer = new SecurityBuffer(tokenSize, SecurityBufferType.SECBUFFER_TOKEN);
 
             ContextFlagsPal requestedContextFlags = ContextFlagsPal.Connection
@@ -121,7 +119,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 statusCode.ErrorCode == SecurityStatusPalErrorCode.CompAndContinue)
             {
                 inSecurityBufferArray = new SecurityBuffer[] { outSecurityBuffer };
-                statusCode = NegotiateStreamPal.CompleteAuthToken(ref securityContext, inSecurityBufferArray);
+                statusCode = new SecurityStatusPal(SecurityStatusPalErrorCode.OK);
                 outSecurityBuffer.token = null;
             }
 
@@ -165,22 +163,12 @@ namespace Microsoft.Data.SqlClient.SNI
         }
 
         /// <summary>
-        /// Initialize SSPI
-        /// </summary>
-        /// <param name="maxLength">Max length of SSPI packet</param>
-        /// <returns>SNI error code</returns>
-        public uint InitializeSspiPackage(ref uint maxLength)
-        {
-            throw new PlatformNotSupportedException();
-        }
-
-        /// <summary>
         /// Set connection buffer size
         /// </summary>
         /// <param name="handle">SNI handle</param>
         /// <param name="bufferSize">Buffer size</param>
         /// <returns>SNI error code</returns>
-        public uint SetConnectionBufferSize(SNIHandle handle, uint bufferSize)
+        internal uint SetConnectionBufferSize(SNIHandle handle, uint bufferSize)
         {
             handle.SetBufferSize((int)bufferSize);
             return TdsEnums.SNI_SUCCESS;
@@ -193,7 +181,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="inBuff">Destination byte array where data packets are copied to</param>
         /// <param name="dataSize">Length of data packets</param>
         /// <returns>SNI error status</returns>
-        public uint PacketGetData(SNIPacket packet, byte[] inBuff, ref uint dataSize)
+        internal uint PacketGetData(SNIPacket packet, byte[] inBuff, ref uint dataSize)
         {
             int dataSizeInt = 0;
             packet.GetData(inBuff, ref dataSizeInt);
@@ -209,7 +197,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="packet">SNI packet</param>
         /// <param name="timeout">Timeout</param>
         /// <returns>SNI error status</returns>
-        public uint ReadSyncOverAsync(SNIHandle handle, out SNIPacket packet, int timeout)
+        internal uint ReadSyncOverAsync(SNIHandle handle, out SNIPacket packet, int timeout)
         {
             return handle.Receive(out packet, timeout);
         }
@@ -220,7 +208,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="handle">SNI handle</param>
         /// <param name="clientConnectionId">Client connection ID</param>
         /// <returns>SNI error status</returns>
-        public uint GetConnectionId(SNIHandle handle, ref Guid clientConnectionId)
+        internal uint GetConnectionId(SNIHandle handle, ref Guid clientConnectionId)
         {
             clientConnectionId = handle.ConnectionId;
 
@@ -234,7 +222,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="packet">SNI packet</param>
         /// <param name="sync">true if synchronous, false if asynchronous</param>
         /// <returns>SNI error status</returns>
-        public uint WritePacket(SNIHandle handle, SNIPacket packet, bool sync)
+        internal uint WritePacket(SNIHandle handle, SNIPacket packet, bool sync)
         {
             uint result;
             if (sync)
@@ -266,7 +254,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="cachedFQDN">Used for DNS Cache</param>
         /// <param name="pendingDNSInfo">Used for DNS Cache</param>
         /// <returns>SNI handle</returns>
-        public SNIHandle CreateConnectionHandle(object callbackObject, string fullServerName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[] spnBuffer, bool flushCache, bool async, bool parallel, bool isIntegratedSecurity, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
+        internal SNIHandle CreateConnectionHandle(object callbackObject, string fullServerName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[] spnBuffer, bool flushCache, bool async, bool parallel, bool isIntegratedSecurity, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
         {
             instanceName = new byte[1];
 
@@ -288,7 +276,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
 
             SNIHandle sniHandle = null;
-            switch (details.ConnectionProtocol)
+            switch (details._connectionProtocol)
             {
                 case DataSource.Protocol.Admin:
                 case DataSource.Protocol.None: // default to using tcp if no protocol is provided
@@ -299,7 +287,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     sniHandle = CreateNpHandle(details, timerExpire, callbackObject, parallel);
                     break;
                 default:
-                    Debug.Fail($"Unexpected connection protocol: {details.ConnectionProtocol}");
+                    Debug.Fail($"Unexpected connection protocol: {details._connectionProtocol}");
                     break;
             }
 
@@ -333,7 +321,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 postfix = dataSource.InstanceName;
             }
             // For handling tcp:<hostname> format
-            else if (dataSource.ConnectionProtocol == DataSource.Protocol.TCP)
+            else if (dataSource._connectionProtocol == DataSource.Protocol.TCP)
             {
                 postfix = DefaultSqlServerPort.ToString();
             }
@@ -396,7 +384,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
 
             int port = -1;
-            bool isAdminConnection = details.ConnectionProtocol == DataSource.Protocol.Admin;
+            bool isAdminConnection = details._connectionProtocol == DataSource.Protocol.Admin;
             if (details.IsSsrpRequired)
             {
                 try
@@ -449,7 +437,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="handle">SNI handle</param>
         /// <param name="packet">Packet</param>
         /// <returns>SNI error status</returns>
-        public uint ReadAsync(SNIHandle handle, out SNIPacket packet)
+        internal uint ReadAsync(SNIHandle handle, out SNIPacket packet)
         {
             packet = null;
             return handle.ReceiveAsync(ref packet);
@@ -461,7 +449,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="packet">SNI packet</param>
         /// <param name="data">Data</param>
         /// <param name="length">Length</param>
-        public void PacketSetData(SNIPacket packet, byte[] data, int length)
+        internal void PacketSetData(SNIPacket packet, byte[] data, int length)
         {
             packet.AppendData(data, length);
         }
@@ -471,7 +459,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         /// <param name="handle"></param>
         /// <returns>SNI error status</returns>
-        public uint CheckConnection(SNIHandle handle)
+        internal uint CheckConnection(SNIHandle handle)
         {
             return handle.CheckConnection();
         }
@@ -480,7 +468,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// Get last SNI error on this thread
         /// </summary>
         /// <returns></returns>
-        public SNIError GetLastError()
+        internal SNIError GetLastError()
         {
             return SNILoadHandle.SingletonInstance.LastError;
         }
@@ -524,10 +512,13 @@ namespace Microsoft.Data.SqlClient.SNI
     internal class DataSource
     {
         private const char CommaSeparator = ',';
-        private const char BackSlashSeparator = '\\';
+        private const char SemiColon = ':';
+        private const char BackSlashCharacter = '\\';
+
         private const string DefaultHostName = "localhost";
         private const string DefaultSqlServerInstanceName = "mssqlserver";
         private const string PipeBeginning = @"\\";
+        private const string Slash = @"/";
         private const string PipeToken = "pipe";
         private const string LocalDbHost = "(localdb)";
         private const string NamedPipeInstanceNameHeader = "mssql$";
@@ -535,7 +526,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
         internal enum Protocol { TCP, NP, None, Admin };
 
-        internal Protocol ConnectionProtocol = Protocol.None;
+        internal Protocol _connectionProtocol = Protocol.None;
 
         /// <summary>
         /// Provides the HostName of the server to connect to for TCP protocol. 
@@ -551,17 +542,17 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <summary>
         /// Provides the inferred Instance Name from Server Data Source
         /// </summary>
-        public string InstanceName { get; internal set; }
+        internal string InstanceName { get; private set; }
 
         /// <summary>
         /// Provides the pipe name in case of Named Pipes
         /// </summary>
-        public string PipeName { get; internal set; }
+        internal string PipeName { get; private set; }
 
         /// <summary>
         /// Provides the HostName to connect to in case of Named pipes Data Source
         /// </summary>
-        public string PipeHostName { get; internal set; }
+        internal string PipeHostName { get; private set; }
 
         private string _workingDataSource;
         private string _dataSourceAfterTrimmingProtocol;
@@ -574,31 +565,31 @@ namespace Microsoft.Data.SqlClient.SNI
             // Remove all whitespaces from the datasource and all operations will happen on lower case.
             _workingDataSource = dataSource.Trim().ToLowerInvariant();
 
-            int firstIndexOfColon = _workingDataSource.IndexOf(':');
+            int firstIndexOfColon = _workingDataSource.IndexOf(SemiColon);
 
             PopulateProtocol();
 
-            _dataSourceAfterTrimmingProtocol = (firstIndexOfColon > -1) && ConnectionProtocol != DataSource.Protocol.None
+            _dataSourceAfterTrimmingProtocol = (firstIndexOfColon > -1) && _connectionProtocol != Protocol.None
                 ? _workingDataSource.Substring(firstIndexOfColon + 1).Trim() : _workingDataSource;
 
-            if (_dataSourceAfterTrimmingProtocol.Contains("/")) // Pipe paths only allow back slashes
+            if (_dataSourceAfterTrimmingProtocol.Contains(Slash)) // Pipe paths only allow back slashes
             {
-                if (ConnectionProtocol == DataSource.Protocol.None)
+                if (_connectionProtocol == Protocol.None)
                     ReportSNIError(SNIProviders.INVALID_PROV);
-                else if (ConnectionProtocol == DataSource.Protocol.NP)
+                else if (_connectionProtocol == Protocol.NP)
                     ReportSNIError(SNIProviders.NP_PROV);
-                else if (ConnectionProtocol == DataSource.Protocol.TCP)
+                else if (_connectionProtocol == Protocol.TCP)
                     ReportSNIError(SNIProviders.TCP_PROV);
             }
         }
 
         private void PopulateProtocol()
         {
-            string[] splitByColon = _workingDataSource.Split(':');
+            string[] splitByColon = _workingDataSource.Split(SemiColon);
 
             if (splitByColon.Length <= 1)
             {
-                ConnectionProtocol = DataSource.Protocol.None;
+                _connectionProtocol = Protocol.None;
             }
             else
             {
@@ -606,29 +597,29 @@ namespace Microsoft.Data.SqlClient.SNI
                 switch (splitByColon[0].Trim())
                 {
                     case TdsEnums.TCP:
-                        ConnectionProtocol = DataSource.Protocol.TCP;
+                        _connectionProtocol = Protocol.TCP;
                         break;
                     case TdsEnums.NP:
-                        ConnectionProtocol = DataSource.Protocol.NP;
+                        _connectionProtocol = Protocol.NP;
                         break;
                     case TdsEnums.ADMIN:
-                        ConnectionProtocol = DataSource.Protocol.Admin;
+                        _connectionProtocol = Protocol.Admin;
                         break;
                     default:
                         // None of the supported protocols were found. This may be a IPv6 address
-                        ConnectionProtocol = DataSource.Protocol.None;
+                        _connectionProtocol = Protocol.None;
                         break;
                 }
             }
         }
 
-        public static string GetLocalDBInstance(string dataSource, out bool error)
+        internal static string GetLocalDBInstance(string dataSource, out bool error)
         {
             string instanceName = null;
 
             string workingDataSource = dataSource.ToLowerInvariant();
 
-            string[] tokensByBackSlash = workingDataSource.Split(BackSlashSeparator);
+            string[] tokensByBackSlash = workingDataSource.Split(BackSlashCharacter);
 
             error = false;
 
@@ -650,7 +641,7 @@ namespace Microsoft.Data.SqlClient.SNI
             return instanceName;
         }
 
-        public static DataSource ParseServerName(string dataSource)
+        internal static DataSource ParseServerName(string dataSource)
         {
             DataSource details = new DataSource(dataSource);
 
@@ -682,19 +673,19 @@ namespace Microsoft.Data.SqlClient.SNI
             // If Server name is empty or localhost, then use "localhost"
             if (string.IsNullOrEmpty(ServerName) || IsLocalHost(ServerName))
             {
-                ServerName = ConnectionProtocol == DataSource.Protocol.Admin ?
+                ServerName = _connectionProtocol == Protocol.Admin ?
                     Environment.MachineName : DefaultHostName;
             }
         }
 
         private bool InferConnectionDetails()
         {
-            string[] tokensByCommaAndSlash = _dataSourceAfterTrimmingProtocol.Split(BackSlashSeparator, ',');
+            string[] tokensByCommaAndSlash = _dataSourceAfterTrimmingProtocol.Split(BackSlashCharacter, CommaSeparator);
             ServerName = tokensByCommaAndSlash[0].Trim();
 
-            int commaIndex = _dataSourceAfterTrimmingProtocol.IndexOf(',');
+            int commaIndex = _dataSourceAfterTrimmingProtocol.IndexOf(CommaSeparator);
 
-            int backSlashIndex = _dataSourceAfterTrimmingProtocol.IndexOf(BackSlashSeparator);
+            int backSlashIndex = _dataSourceAfterTrimmingProtocol.IndexOf(PipeBeginning);
 
             // Check the parameters. The parameters are Comma separated in the Data Source. The parameter we really care about is the port
             // If Comma exists, the try to get the port number
@@ -712,11 +703,11 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
 
                 // For Tcp and Only Tcp are parameters allowed.
-                if (ConnectionProtocol == DataSource.Protocol.None)
+                if (_connectionProtocol == Protocol.None)
                 {
-                    ConnectionProtocol = DataSource.Protocol.TCP;
+                    _connectionProtocol = Protocol.TCP;
                 }
-                else if (ConnectionProtocol != DataSource.Protocol.TCP)
+                else if (_connectionProtocol != Protocol.TCP)
                 {
                     // Parameter has been specified for non-TCP protocol. This is not allowed.
                     ReportSNIError(SNIProviders.INVALID_PROV);
@@ -774,10 +765,10 @@ namespace Microsoft.Data.SqlClient.SNI
         private bool InferNamedPipesInformation()
         {
             // If we have a datasource beginning with a pipe or we have already determined that the protocol is Named Pipe
-            if (_dataSourceAfterTrimmingProtocol.StartsWith(PipeBeginning) || ConnectionProtocol == Protocol.NP)
+            if (_dataSourceAfterTrimmingProtocol.StartsWith(PipeBeginning) || _connectionProtocol == Protocol.NP)
             {
                 // If the data source is "np:servername"
-                if (!_dataSourceAfterTrimmingProtocol.Contains(BackSlashSeparator))
+                if (!_dataSourceAfterTrimmingProtocol.Contains(PipeBeginning))
                 {
                     PipeHostName = ServerName = _dataSourceAfterTrimmingProtocol;
                     InferLocalServerName();
@@ -787,7 +778,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
                 try
                 {
-                    string[] tokensByBackSlash = _dataSourceAfterTrimmingProtocol.Split(BackSlashSeparator);
+                    string[] tokensByBackSlash = _dataSourceAfterTrimmingProtocol.Split(BackSlashCharacter);
 
                     // The datasource is of the format \\host\pipe\sql\query [0]\[1]\[2]\[3]\[4]\[5]
                     // It would at least have 6 parts. 
@@ -846,11 +837,11 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
 
                 // DataSource is something like "\\pipename"
-                if (ConnectionProtocol == DataSource.Protocol.None)
+                if (_connectionProtocol == Protocol.None)
                 {
-                    ConnectionProtocol = DataSource.Protocol.NP;
+                    _connectionProtocol = Protocol.NP;
                 }
-                else if (ConnectionProtocol != DataSource.Protocol.NP)
+                else if (_connectionProtocol != Protocol.NP)
                 {
                     // In case the path began with a "\\" and protocol was not Named Pipes
                     ReportSNIError(SNIProviders.NP_PROV);

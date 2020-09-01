@@ -99,43 +99,43 @@ namespace Microsoft.Data.SqlClient
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/Class/*' />
         public byte Class
         {
-            get { return this.Errors[0].Class; }
+            get { return Errors.Count > 0 ? Errors[0].Class : default; }
         }
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/LineNumber/*' />
         public int LineNumber
         {
-            get { return this.Errors[0].LineNumber; }
+            get { return Errors.Count > 0 ? Errors[0].LineNumber : default; }
         }
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/Number/*' />
         public int Number
         {
-            get { return this.Errors[0].Number; }
+            get { return Errors.Count > 0 ? Errors[0].Number : default; }
         }
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/Procedure/*' />
         public string Procedure
         {
-            get { return this.Errors[0].Procedure; }
+            get { return Errors.Count > 0 ? Errors[0].Procedure : default; }
         }
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/Server/*' />
         public string Server
         {
-            get { return this.Errors[0].Server; }
+            get { return Errors.Count > 0 ? Errors[0].Server : default; }
         }
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/State/*' />
         public byte State
         {
-            get { return this.Errors[0].State; }
+            get { return Errors.Count > 0 ? Errors[0].State : default; }
         }
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/Source/*' />
         override public string Source
         {
-            get { return this.Errors[0].Source; }
+            get { return TdsEnums.SQL_PROVIDER_NAME; }
         }
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlException.xml' path='docs/members[@name="SqlException"]/ToString/*' />
@@ -146,7 +146,7 @@ namespace Microsoft.Data.SqlClient
             sb.AppendFormat(SQLMessage.ExClientConnectionId(), _clientConnectionId);
 
             // Append the error number, state and class if the server provided it
-            if (Number != 0)
+            if (Errors.Count > 0 && Number != 0)
             {
                 sb.AppendLine();
                 sb.AppendFormat(SQLMessage.ExErrorNumberStateClass(), Number, State, Class);
@@ -169,12 +169,12 @@ namespace Microsoft.Data.SqlClient
             return sb.ToString();
         }
 
-        static internal SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion)
+        internal static SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion)
         {
             return CreateException(errorCollection, serverVersion, Guid.Empty);
         }
 
-        static internal SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion, SqlInternalConnectionTds internalConnection, Exception innerException = null)
+        internal static SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion, SqlInternalConnectionTds internalConnection, Exception innerException = null)
         {
             Guid connectionId = (internalConnection == null) ? Guid.Empty : internalConnection._clientConnectionId;
             var exception = CreateException(errorCollection, serverVersion, connectionId, innerException);
@@ -195,11 +195,10 @@ namespace Microsoft.Data.SqlClient
             return exception;
         }
 
-        static internal SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion, Guid conId, Exception innerException = null)
+        internal static SqlException CreateException(SqlErrorCollection errorCollection, string serverVersion, Guid conId, Exception innerException = null)
         {
             Debug.Assert(null != errorCollection && errorCollection.Count > 0, "no errorCollection?");
 
-            // concat all messages together MDAC 65533
             StringBuilder message = new StringBuilder();
             for (int i = 0; i < errorCollection.Count; i++)
             {
@@ -219,7 +218,7 @@ namespace Microsoft.Data.SqlClient
 
             exception.Data.Add("HelpLink.ProdName", "Microsoft SQL Server");
 
-            if (!ADP.IsEmpty(serverVersion))
+            if (!string.IsNullOrEmpty(serverVersion))
             {
                 exception.Data.Add("HelpLink.ProdVer", serverVersion);
             }

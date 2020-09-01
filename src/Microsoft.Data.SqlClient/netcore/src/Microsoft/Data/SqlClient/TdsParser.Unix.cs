@@ -26,7 +26,7 @@ namespace Microsoft.Data.SqlClient
         private SNIErrorDetails GetSniErrorDetails()
         {
             SNIErrorDetails details;
-            SNIError sniError = SNIProxy.Singleton.GetLastError();
+            SNIError sniError = SNIProxy.GetInstance().GetLastError();
             details.sniErrorNumber = sniError.sniError;
             details.errorMessage = sniError.errorMessage;
             details.nativeError = sniError.nativeError;

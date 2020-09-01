@@ -775,6 +775,8 @@ namespace Microsoft.Data.SqlClient
         [System.ComponentModel.BrowsableAttribute(false)]
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
         public override string ServerVersion { get { throw null; } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ServerProcessId/*'/>
+        public int ServerProcessId { get { throw null; } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/State/*'/>
         [System.ComponentModel.BrowsableAttribute(false)]
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]

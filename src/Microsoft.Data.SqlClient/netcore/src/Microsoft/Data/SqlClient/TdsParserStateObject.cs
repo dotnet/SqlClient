@@ -542,8 +542,8 @@ namespace Microsoft.Data.SqlClient
                     return false;
                 }
 
-                SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParserStateObject.NullBitmap.Initialize|INFO|ADV> {0}, NBCROW bitmap received, column count = {1}", stateObj.ObjectID, columnsCount);
-                SqlClientEventSource.Log.AdvancedTraceBinEvent("<sc.TdsParserStateObject.NullBitmap.Initialize|INFO|ADV> NBCROW bitmap data: ", _nullBitmap, (ushort)_nullBitmap.Length);
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParserStateObject.NullBitmap.Initialize|INFO|ADV> {0}, NBCROW bitmap received, column count = {1}", stateObj.ObjectID, columnsCount);
+                SqlClientEventSource.Log.TryAdvancedTraceBinEvent("<sc.TdsParserStateObject.NullBitmap.Initialize|INFO|ADV> NBCROW bitmap data: ", _nullBitmap, (ushort)_nullBitmap.Length);
                 return true;
             }
 
@@ -873,7 +873,7 @@ namespace Microsoft.Data.SqlClient
         internal int DecrementPendingCallbacks(bool release)
         {
             int remaining = Interlocked.Decrement(ref _pendingCallbacks);
-            SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> {0}, after decrementing _pendingCallbacks: {1}", ObjectID, _pendingCallbacks);
+            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> {0}, after decrementing _pendingCallbacks: {1}", ObjectID, _pendingCallbacks);
             FreeGcHandle(remaining, release);
             // NOTE: TdsParserSessionPool may call DecrementPendingCallbacks on a TdsParserStateObject which is already disposed
             // This is not dangerous (since the stateObj is no longer in use), but we need to add a workaround in the assert for it
@@ -926,7 +926,7 @@ namespace Microsoft.Data.SqlClient
         internal int IncrementPendingCallbacks()
         {
             int remaining = Interlocked.Increment(ref _pendingCallbacks);
-            SqlClientEventSource.Log.AdvancedTraceEvent("<sc.TdsParserStateObject.IncrementPendingCallbacks|ADV> {0}, after incrementing _pendingCallbacks: {1}", ObjectID, _pendingCallbacks);
+            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParserStateObject.IncrementPendingCallbacks|ADV> {0}, after incrementing _pendingCallbacks: {1}", ObjectID, _pendingCallbacks);
             Debug.Assert(0 < remaining && remaining <= 3, $"_pendingCallbacks values is invalid after incrementing: {remaining}");
             return remaining;
         }
@@ -1403,36 +1403,28 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
 
-            byte[] buffer;
-            int offset;
+            Span<byte> buffer = stackalloc byte[2];
             if (((_inBytesUsed + 2) > _inBytesRead) || (_inBytesPacket < 2))
             {
                 // If the char isn't fully in the buffer, or if it isn't fully in the packet,
                 // then use ReadByteArray since the logic is there to take care of that.
-
-                if (!TryReadByteArray(_bTmp, 2))
+                if (!TryReadByteArray(buffer, 2))
                 {
                     value = '\0';
                     return false;
                 }
-
-                buffer = _bTmp;
-                offset = 0;
             }
             else
             {
                 // The entire char is in the packet and in the buffer, so just return it
                 // and take care of the counters.
-
-                buffer = _inBuff;
-                offset = _inBytesUsed;
-
+                buffer = _inBuff.AsSpan(_inBytesUsed, 2);
                 _inBytesUsed += 2;
                 _inBytesPacket -= 2;
             }
 
             AssertValidState();
-            value = (char)((buffer[offset + 1] << 8) + buffer[offset]);
+            value = (char)((buffer[1] << 8) + buffer[0]);
             return true;
         }
 
@@ -1440,70 +1432,58 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
 
-            byte[] buffer;
-            int offset;
+            Span<byte> buffer = stackalloc byte[2];
             if (((_inBytesUsed + 2) > _inBytesRead) || (_inBytesPacket < 2))
             {
                 // If the int16 isn't fully in the buffer, or if it isn't fully in the packet,
                 // then use ReadByteArray since the logic is there to take care of that.
-
-                if (!TryReadByteArray(_bTmp, 2))
+                if (!TryReadByteArray(buffer, 2))
                 {
                     value = default;
                     return false;
                 }
-
-                buffer = _bTmp;
-                offset = 0;
             }
             else
             {
                 // The entire int16 is in the packet and in the buffer, so just return it
                 // and take care of the counters.
-
-                buffer = _inBuff;
-                offset = _inBytesUsed;
-
+                buffer = _inBuff.AsSpan(_inBytesUsed,2);
                 _inBytesUsed += 2;
                 _inBytesPacket -= 2;
             }
 
             AssertValidState();
-            value = (short)((buffer[offset + 1] << 8) + buffer[offset]);
+            value = (short)((buffer[1] << 8) + buffer[0]);
             return true;
         }
 
         internal bool TryReadInt32(out int value)
         {
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
+            Span<byte> buffer = stackalloc byte[4];
             if (((_inBytesUsed + 4) > _inBytesRead) || (_inBytesPacket < 4))
             {
                 // If the int isn't fully in the buffer, or if it isn't fully in the packet,
                 // then use ReadByteArray since the logic is there to take care of that.
-
-                if (!TryReadByteArray(_bTmp, 4))
+                if (!TryReadByteArray(buffer, 4))
                 {
                     value = 0;
                     return false;
                 }
-
-                AssertValidState();
-                value = BitConverter.ToInt32(_bTmp, 0);
-                return true;
             }
             else
             {
                 // The entire int is in the packet and in the buffer, so just return it
                 // and take care of the counters.
-
-                value = BitConverter.ToInt32(_inBuff, _inBytesUsed);
-
+                buffer = _inBuff.AsSpan(_inBytesUsed, 4);
                 _inBytesUsed += 4;
                 _inBytesPacket -= 4;
-
-                AssertValidState();
-                return true;
             }
+
+            AssertValidState();
+            value = (buffer[3] << 24) + (buffer[2] <<16) + (buffer[1] << 8) + buffer[0];
+            return true;
+
         }
 
         // This method is safe to call when doing async without snapshot
@@ -1559,36 +1539,28 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
 
-            byte[] buffer;
-            int offset;
+            Span<byte> buffer = stackalloc byte[2];
             if (((_inBytesUsed + 2) > _inBytesRead) || (_inBytesPacket < 2))
             {
                 // If the uint16 isn't fully in the buffer, or if it isn't fully in the packet,
                 // then use ReadByteArray since the logic is there to take care of that.
-
-                if (!TryReadByteArray(_bTmp, 2))
+                if (!TryReadByteArray(buffer, 2))
                 {
                     value = default;
                     return false;
                 }
-
-                buffer = _bTmp;
-                offset = 0;
             }
             else
             {
                 // The entire uint16 is in the packet and in the buffer, so just return it
                 // and take care of the counters.
-
-                buffer = _inBuff;
-                offset = _inBytesUsed;
-
+                buffer = _inBuff.AsSpan(_inBytesUsed, 2);
                 _inBytesUsed += 2;
                 _inBytesPacket -= 2;
             }
 
             AssertValidState();
-            value = (ushort)((buffer[offset + 1] << 8) + buffer[offset]);
+            value = (ushort)((buffer[1] << 8) + buffer[0]);
             return true;
         }
 
@@ -2534,7 +2506,7 @@ namespace Microsoft.Data.SqlClient
                     if ((error != TdsEnums.SNI_SUCCESS) && (error != TdsEnums.SNI_WAIT_TIMEOUT))
                     {
                         // Connection is dead
-                        SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.IsConnectionAlive|Info> received error {0} on idle connection", (int)error);
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.IsConnectionAlive|Info> received error {0} on idle connection", (int)error);
                         isAlive = false;
                         if (throwOnException)
                         {
@@ -2923,7 +2895,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (sniError != TdsEnums.SNI_SUCCESS)
                 {
-                    SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.WriteAsyncCallback|Info> write async returned error code {0}", (int)sniError);
+                    SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.WriteAsyncCallback|Info> write async returned error code {0}", (int)sniError);
                     try
                     {
                         AddError(_parser.ProcessSNIError(this));
@@ -3413,7 +3385,7 @@ namespace Microsoft.Data.SqlClient
 
                         if (error != TdsEnums.SNI_SUCCESS)
                         {
-                            SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.WritePacket|Info> write async returned error code {0}", (int)error);
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.WritePacket|Info> write async returned error code {0}", (int)error);
                             AddError(_parser.ProcessSNIError(this));
                             ThrowExceptionAndWarning();
                         }
@@ -3448,7 +3420,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.WritePacket|Info> write async returned error code {0}", (int)sniError);
+                    SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.WritePacket|Info> write async returned error code {0}", (int)sniError);
                     AddError(_parser.ProcessSNIError(this));
                     ThrowExceptionAndWarning(callerHasConnectionLock);
                 }
@@ -3487,35 +3459,35 @@ namespace Microsoft.Data.SqlClient
                     if (!_skipSendAttention)
                     {
 #endif
-                    // Take lock and send attention
-                    bool releaseLock = false;
-                    if ((mustTakeWriteLock) && (!_parser.Connection.ThreadHasParserLockForClose))
-                    {
-                        releaseLock = true;
-                        _parser.Connection._parserLock.Wait(canReleaseFromAnyThread: false);
-                        _parser.Connection.ThreadHasParserLockForClose = true;
-                    }
-                    try
-                    {
-                        // Check again (just in case the connection was closed while we were waiting)
-                        if (_parser.State == TdsParserState.Closed || _parser.State == TdsParserState.Broken)
+                        // Take lock and send attention
+                        bool releaseLock = false;
+                        if ((mustTakeWriteLock) && (!_parser.Connection.ThreadHasParserLockForClose))
                         {
-                            return;
+                            releaseLock = true;
+                            _parser.Connection._parserLock.Wait(canReleaseFromAnyThread: false);
+                            _parser.Connection.ThreadHasParserLockForClose = true;
                         }
+                        try
+                        {
+                            // Check again (just in case the connection was closed while we were waiting)
+                            if (_parser.State == TdsParserState.Closed || _parser.State == TdsParserState.Broken)
+                            {
+                                return;
+                            }
 
-                        uint sniError;
-                        _parser._asyncWrite = false; // stop async write 
-                        SNIWritePacket(attnPacket, out sniError, canAccumulate: false, callerHasConnectionLock: false);
-                        SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.SendAttention|{0}> Send Attention ASync.", "Info");
-                    }
-                    finally
-                    {
-                        if (releaseLock)
-                        {
-                            _parser.Connection.ThreadHasParserLockForClose = false;
-                            _parser.Connection._parserLock.Release();
+                            uint sniError;
+                            _parser._asyncWrite = false; // stop async write 
+                            SNIWritePacket(attnPacket, out sniError, canAccumulate: false, callerHasConnectionLock: false);
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.SendAttention|INFO> Send Attention ASync.");
                         }
-                    }
+                        finally
+                        {
+                            if (releaseLock)
+                            {
+                                _parser.Connection.ThreadHasParserLockForClose = false;
+                                _parser.Connection._parserLock.Release();
+                            }
+                        }
 #if DEBUG
                     }
 #endif
@@ -3528,8 +3500,8 @@ namespace Microsoft.Data.SqlClient
                     _attentionSending = false;
                 }
 
-                SqlClientEventSource.Log.AdvancedTraceBinEvent("<sc.TdsParser.WritePacket|INFO|ADV>  Packet sent", _outBuff, (ushort)_outBytesUsed);
-                SqlClientEventSource.Log.TraceEvent("<sc.TdsParser.SendAttention|{0}> Attention sent to the server.", "Info");
+                SqlClientEventSource.Log.TryAdvancedTraceBinEvent("<sc.TdsParser.WritePacket|INFO|ADV>  Packet sent", _outBuff, (ushort)_outBytesUsed);
+                SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.SendAttention|INFO> Attention sent to the server.");
 
                 AssertValidState();
             }
@@ -3627,8 +3599,8 @@ namespace Microsoft.Data.SqlClient
                 statistics.RequestNetworkServerTimer();
             }
         }
-        [Conditional("DEBUG")]
 
+        [Conditional("DEBUG")]
         private void AssertValidState()
         {
             if (_inBytesUsed < 0 || _inBytesRead < 0)

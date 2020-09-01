@@ -57,7 +57,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (SqlCommand cmd = conn.CreateCommand())
             {
                 conn.Open();
-                cmd.CommandText = "SELECT object_id FROM sys.fulltext_indexes WHERE object_id = object_id('Northwind.dbo.Employees')";
+                string db = conn.DataSource;
+                cmd.CommandText = $"SELECT object_id FROM sys.fulltext_indexes WHERE object_id = object_id('{db}.dbo.Employees')";
 
                 return (cmd.ExecuteScalar() != null);
             }
@@ -92,7 +93,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     sqlConnection.FireInfoMessageEventOnUserErrors = messagesOnErrors;
 
                     // These queries should return warnings because AND here is a noise word.
-                    SqlCommand cmd = new SqlCommand("select FirstName from Northwind.dbo.Employees where contains(FirstName, '\"Anne AND\"')" + orderClause, sqlConnection);
+                    SqlCommand cmd = new SqlCommand("select FirstName from Employees where contains(FirstName, '\"Anne AND\"')" + orderClause, sqlConnection);
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {
                         Assert.True(reader.HasRows, "FAILED: SqlDataReader.HasRows is not correct (should be TRUE)");
@@ -107,7 +108,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                     hitWarnings = false;
 
-                    cmd.CommandText = "select FirstName from Northwind.dbo.Employees where contains(FirstName, '\"NotARealPerson AND\"')" + orderClause;
+                    cmd.CommandText = "select FirstName from Employees where contains(FirstName, '\"NotARealPerson AND\"')" + orderClause;
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {
                         Assert.False(reader.HasRows, "FAILED: SqlDataReader.HasRows is not correct (should be FALSE)");
