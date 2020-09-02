@@ -39,7 +39,7 @@ namespace Microsoft.Data.SqlClient
 
         private string _commandText;
         private CommandType _commandType;
-        private int? _cmdTimeout;
+        private int? _commandTimeout;
         private UpdateRowSource _updatedRowSource = UpdateRowSource.Both;
         private bool _designTimeInvisible;
 
@@ -762,7 +762,7 @@ namespace Microsoft.Data.SqlClient
         { // V1.2.3300, XXXCommand V1.0.5000
             get
             {
-                return _cmdTimeout ?? (_activeConnection?.CommandTimeout ?? ADP.DefaultCommandTimeout);
+                return _commandTimeout ?? DefaultCommandTimeout;
             }
             set
             {
@@ -772,10 +772,10 @@ namespace Microsoft.Data.SqlClient
                     throw ADP.InvalidCommandTimeout(value);
                 }
 
-                if (value != _cmdTimeout)
+                if (value != _commandTimeout)
                 {
                     PropertyChanging();
-                    _cmdTimeout = value;
+                    _commandTimeout = value;
                 }
             }
         }
@@ -786,13 +786,16 @@ namespace Microsoft.Data.SqlClient
             if (ADP.DefaultCommandTimeout != CommandTimeout)
             {
                 PropertyChanging();
-                _cmdTimeout = ADP.DefaultCommandTimeout;
+                _commandTimeout = DefaultCommandTimeout;
             }
         }
 
-        private bool ShouldSerializeCommandTimeout()
-        { // V1.2.3300
-            return ADP.DefaultCommandTimeout != CommandTimeout;
+        private int DefaultCommandTimeout
+        {
+            get
+            {
+                return _activeConnection?.CommandTimeout ?? ADP.DefaultCommandTimeout;
+            }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandType/*'/>

@@ -243,7 +243,6 @@ namespace Microsoft.Data.SqlClient
             hash.Add(DbConnectionStringSynonyms.EXTENDEDPROPERTIES, Keywords.AttachDBFilename);
             hash.Add(DbConnectionStringSynonyms.INITIALFILENAME, Keywords.AttachDBFilename);
             hash.Add(DbConnectionStringSynonyms.CONNECTIONTIMEOUT, Keywords.ConnectTimeout);
-            hash.Add(DbConnectionStringSynonyms.COMMANDTIMEOUT, Keywords.CommandTimeout);
             hash.Add(DbConnectionStringSynonyms.CONNECTRETRYCOUNT, Keywords.ConnectRetryCount);
             hash.Add(DbConnectionStringSynonyms.CONNECTRETRYINTERVAL, Keywords.ConnectRetryInterval);
             hash.Add(DbConnectionStringSynonyms.TIMEOUT, Keywords.ConnectTimeout);

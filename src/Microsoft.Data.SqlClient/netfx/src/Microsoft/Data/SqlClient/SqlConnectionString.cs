@@ -24,8 +24,8 @@ namespace Microsoft.Data.SqlClient
             internal const bool Asynchronous = false;
             internal const string AttachDBFilename = "";
             internal const PoolBlockingPeriod PoolBlockingPeriod = DbConnectionStringDefaults.PoolBlockingPeriod;
-            internal const int Connect_Timeout = ADP.DefaultConnectionTimeout;
             internal const int Command_Timeout = ADP.DefaultCommandTimeout;
+            internal const int Connect_Timeout = ADP.DefaultConnectionTimeout;
             internal const bool Connection_Reset = true;
             internal const bool Context_Connection = false;
             internal const string Current_Language = "";
@@ -237,8 +237,8 @@ namespace Microsoft.Data.SqlClient
         private readonly string _enclaveAttestationUrl;
         private readonly SqlConnectionAttestationProtocol _attestationProtocol;
 
-        private readonly int _connectTimeout;
         private readonly int _commandTimeout;
+        private readonly int _connectTimeout;
         private readonly int _loadBalanceTimeout;
         private readonly int _maxPoolSize;
         private readonly int _minPoolSize;
@@ -610,8 +610,8 @@ namespace Microsoft.Data.SqlClient
             _pooling = connectionOptions._pooling;
             _replication = connectionOptions._replication;
             _userInstance = userInstance;
-            _connectTimeout = connectionOptions._connectTimeout;
             _commandTimeout = connectionOptions._commandTimeout;
+            _connectTimeout = connectionOptions._connectTimeout;
             _loadBalanceTimeout = connectionOptions._loadBalanceTimeout;
             _poolBlockingPeriod = connectionOptions._poolBlockingPeriod;
             _maxPoolSize = connectionOptions._maxPoolSize;
@@ -681,8 +681,8 @@ namespace Microsoft.Data.SqlClient
         internal bool Replication { get { return _replication; } }
         internal bool UserInstance { get { return _userInstance; } }
 
-        internal int ConnectTimeout { get { return _connectTimeout; } }
         internal int CommandTimeout { get { return _commandTimeout; } }
+        internal int ConnectTimeout { get { return _connectTimeout; } }
         internal int LoadBalanceTimeout { get { return _loadBalanceTimeout; } }
         internal int MaxPoolSize { get { return _maxPoolSize; } }
         internal int MinPoolSize { get { return _minPoolSize; } }
