@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 stringBuilder.Pooling = false;
                 OpenConnections(stringBuilder.ConnectionString);
 
-                Thread.Sleep(3000); //wait to complete sampling!
+                Thread.Sleep(3000); // wait to complete sampling!
                 Assert.All(TraceListener.EventCounters, item => Assert.True(item.Value > 0));
             }
         }
