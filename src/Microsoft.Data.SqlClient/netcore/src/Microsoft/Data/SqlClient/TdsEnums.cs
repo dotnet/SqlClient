@@ -990,7 +990,6 @@ namespace Microsoft.Data.SqlClient
         internal const long MAX_TCE_CIPHERTEXT_SIZE = 2147483648; // max size of encrypted blob- currently 2GB.
         internal const byte CustomCipherAlgorithmId = 0; // Id used for custom encryption algorithm.
 
-        internal const int AES_256_CBC = 1;
         internal const int AEAD_AES_256_CBC_HMAC_SHA256 = 2;
         internal const string ENCLAVE_TYPE_VBS = "VBS";
         internal const string ENCLAVE_TYPE_SGX = "SGX";

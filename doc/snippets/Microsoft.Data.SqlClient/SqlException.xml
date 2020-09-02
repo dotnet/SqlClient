@@ -85,7 +85,9 @@ catch (Exception ex) {
  For information about the warning and informational messages sent by SQL Server, see the Troubleshooting section of the SQL Server documentation.  
   
  This is a wrapper for the <xref:Microsoft.Data.SqlClient.SqlError.Class%2A> property of the first <xref:Microsoft.Data.SqlClient.SqlError> in the <xref:Microsoft.Data.SqlClient.SqlException.Errors%2A> property.  
-  
+
+ If <xref:Microsoft.Data.SqlClient.SqlException.Errors%2A> is `null`, the [`default`](https://docs.microsoft.com/dotnet/csharp/language-reference/builtin-types/default-values) value for `byte` is returned.
+
    
   
 ## Examples  
@@ -161,7 +163,9 @@ catch (Exception ex) {
  The line numbering starts at 1; if 0 is returned, the line number is not applicable.  
   
  This is a wrapper for the <xref:Microsoft.Data.SqlClient.SqlError.LineNumber%2A> property of the first <xref:Microsoft.Data.SqlClient.SqlError> in the <xref:Microsoft.Data.SqlClient.SqlException.Errors%2A> property.  
-  
+     
+ If <xref:Microsoft.Data.SqlClient.SqlException.Errors%2A> is `null`, the [`default`](https://docs.microsoft.com/dotnet/csharp/language-reference/builtin-types/default-values) value for `int` is returned.
+
    
   
 ## Examples  
@@ -190,7 +194,11 @@ catch (Exception ex) {
             <format type="text/markdown"><![CDATA[  
   
 ## Remarks  
- This is a wrapper for the <xref:Microsoft.Data.SqlClient.SqlError.Number%2A> property of the first <xref:Microsoft.Data.SqlClient.SqlError> in the <xref:Microsoft.Data.SqlClient.SqlException.Errors%2A> property. For more information on SQL Server engine errors, see [Database Engine Events and Errors](/sql/relational-databases/errors-events/database-engine-events-and-errors).  
+ This is a wrapper for the <xref:Microsoft.Data.SqlClient.SqlError.Number%2A> property of the first <xref:Microsoft.Data.SqlClient.SqlError> in the <xref:Microsoft.Data.SqlClient.SqlException.Errors%2A> property. 
+ 
+ If <xref:Microsoft.Data.SqlClient.SqlException.Errors%2A> is `null`, the [`default`](https://docs.microsoft.com/dotnet/csharp/language-reference/builtin-types/default-values) value for `int` is returned.  
+ 
+ For more information on SQL Server engine errors, see [Database Engine Events and Errors](/sql/relational-databases/errors-events/database-engine-events-and-errors).  
   
    
   
@@ -215,8 +223,9 @@ catch (Exception ex) {
             <format type="text/markdown"><![CDATA[  
   
 ## Remarks  
- This is a wrapper for the <xref:Microsoft.Data.SqlClient.SqlError.Procedure%2A> property of the first <xref:Microsoft.Data.SqlClient.SqlError> in the <xref:Microsoft.Data.SqlClient.SqlException.Errors%2A> property.  
-  
+ This is a wrapper for the <xref:Microsoft.Data.SqlClient.SqlError.Procedure%2A> property of the first <xref:Microsoft.Data.SqlClient.SqlError> in the <xref:Microsoft.Data.SqlClient.SqlException.Errors%2A> property. 
+ 
+ If <xref:Microsoft.Data.SqlClient.SqlException.Errors%2A> is `null`, the [`default`](https://docs.microsoft.com/dotnet/csharp/language-reference/builtin-types/default-values) value for `string` is returned.  
    
   
 ## Examples  
@@ -241,7 +250,8 @@ catch (Exception ex) {
   
 ## Remarks  
  This is a wrapper for the <xref:Microsoft.Data.SqlClient.SqlError.Server%2A> property of the first <xref:Microsoft.Data.SqlClient.SqlError> in the <xref:Microsoft.Data.SqlClient.SqlException.Errors%2A> property.  
-  
+
+ If <xref:Microsoft.Data.SqlClient.SqlException.Errors%2A> is `null`, the [`default`](https://docs.microsoft.com/dotnet/csharp/language-reference/builtin-types/default-values) value for `string` is returned.
    
   
 ## Examples  
@@ -266,7 +276,6 @@ catch (Exception ex) {
   
 ## Remarks  
  This is a wrapper for the <xref:Microsoft.Data.SqlClient.SqlError.Source%2A> property of the first <xref:Microsoft.Data.SqlClient.SqlError> in the <xref:Microsoft.Data.SqlClient.SqlException.Errors%2A> property.  
-  
    
   
 ## Examples  
@@ -291,7 +300,8 @@ catch (Exception ex) {
   
 ## Remarks  
  This is a wrapper for the <xref:Microsoft.Data.SqlClient.SqlError.State%2A> property of the first <xref:Microsoft.Data.SqlClient.SqlError> in the <xref:Microsoft.Data.SqlClient.SqlException.Errors%2A> property.  
-  
+
+ If <xref:Microsoft.Data.SqlClient.SqlException.Errors%2A> is `null`, the [`default`](https://docs.microsoft.com/dotnet/csharp/language-reference/builtin-types/default-values) value for `byte` is returned.
    
   
 ## Examples  

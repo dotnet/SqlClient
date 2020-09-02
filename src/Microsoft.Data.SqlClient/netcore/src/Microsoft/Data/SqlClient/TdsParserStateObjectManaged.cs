@@ -47,11 +47,11 @@ namespace Microsoft.Data.SqlClient.SNI
         }
 
         protected override uint SNIPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize)
-            => SNIProxy.Singleton.PacketGetData(packet.ManagedPacket, _inBuff, ref dataSize);
+            => SNIProxy.GetInstance().PacketGetData(packet.ManagedPacket, _inBuff, ref dataSize);
 
         internal override void CreatePhysicalSNIHandle(string serverName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[] spnBuffer, bool flushCache, bool async, bool parallel, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo, bool isIntegratedSecurity)
         {
-            _sessionHandle = SNIProxy.Singleton.CreateConnectionHandle(this, serverName, ignoreSniOpenTimeout, timerExpire, out instanceName, ref spnBuffer, flushCache, async, parallel, isIntegratedSecurity, cachedFQDN, ref pendingDNSInfo);
+            _sessionHandle = SNIProxy.GetInstance().CreateConnectionHandle(this, serverName, ignoreSniOpenTimeout, timerExpire, out instanceName, ref spnBuffer, flushCache, async, parallel, isIntegratedSecurity, cachedFQDN, ref pendingDNSInfo);
             if (_sessionHandle == null)
             {
                 _parser.ProcessSNIError(this);
@@ -121,7 +121,7 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 throw ADP.ClosedConnectionError();
             }
-            error = SNIProxy.Singleton.ReadSyncOverAsync(handle, out SNIPacket packet, timeoutRemaining);
+            error = SNIProxy.GetInstance().ReadSyncOverAsync(handle, out SNIPacket packet, timeoutRemaining);
             return PacketHandle.FromManagedPacket(packet);
         }
 
@@ -142,12 +142,12 @@ namespace Microsoft.Data.SqlClient.SNI
         internal override uint CheckConnection()
         {
             SNIHandle handle = Handle;
-            return handle == null ? TdsEnums.SNI_SUCCESS : SNIProxy.Singleton.CheckConnection(handle);
+            return handle == null ? TdsEnums.SNI_SUCCESS : SNIProxy.GetInstance().CheckConnection(handle);
         }
 
         internal override PacketHandle ReadAsync(SessionHandle handle, out uint error)
         {
-            error = SNIProxy.Singleton.ReadAsync(handle.ManagedHandle, out SNIPacket packet);
+            error = SNIProxy.GetInstance().ReadAsync(handle.ManagedHandle, out SNIPacket packet);
             return PacketHandle.FromManagedPacket(packet);
         }
 
@@ -155,7 +155,7 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             PacketHandle packetHandle = GetResetWritePacket(TdsEnums.HEADER_LEN);
 #if DEBUG
-            Debug.Assert(packetHandle.ManagedPacket.IsActive, "rental packet is not active a serious pooling error may have occured");
+            Debug.Assert(packetHandle.ManagedPacket.IsActive, "rental packet is not active a serious pooling error may have occurred");
 #endif
             SetPacketData(packetHandle, SQL.AttentionHeader, TdsEnums.HEADER_LEN);
             packetHandle.ManagedPacket.IsOutOfBand = true;
@@ -163,7 +163,7 @@ namespace Microsoft.Data.SqlClient.SNI
         }
 
         internal override uint WritePacket(PacketHandle packet, bool sync) =>
-            SNIProxy.Singleton.WritePacket(Handle, packet.ManagedPacket, sync);
+            SNIProxy.GetInstance().WritePacket(Handle, packet.ManagedPacket, sync);
 
         // No- Op in managed SNI
         internal override PacketHandle AddPacketToPendingList(PacketHandle packet) => packet;
@@ -183,7 +183,7 @@ namespace Microsoft.Data.SqlClient.SNI
             SNIHandle handle = Handle;
             SNIPacket packet = handle.RentPacket(headerSize: handle.ReserveHeaderSize, dataSize: dataSize);
 #if DEBUG
-            Debug.Assert(packet.IsActive, "packet is not active, a serious pooling error may have occured");
+            Debug.Assert(packet.IsActive, "packet is not active, a serious pooling error may have occurred");
 #endif
             Debug.Assert(packet.ReservedHeaderSize == handle.ReserveHeaderSize, "failed to reserve header");
             return PacketHandle.FromManagedPacket(packet);
@@ -194,11 +194,11 @@ namespace Microsoft.Data.SqlClient.SNI
             Debug.Assert(_asyncWriteCount == 0, "Should not clear all write packets if there are packets pending");
         }
 
-        internal override void SetPacketData(PacketHandle packet, byte[] buffer, int bytesUsed) => SNIProxy.Singleton.PacketSetData(packet.ManagedPacket, buffer, bytesUsed);
+        internal override void SetPacketData(PacketHandle packet, byte[] buffer, int bytesUsed) => SNIProxy.GetInstance().PacketSetData(packet.ManagedPacket, buffer, bytesUsed);
 
-        internal override uint SniGetConnectionId(ref Guid clientConnectionId) => SNIProxy.Singleton.GetConnectionId(Handle, ref clientConnectionId);
+        internal override uint SniGetConnectionId(ref Guid clientConnectionId) => SNIProxy.GetInstance().GetConnectionId(Handle, ref clientConnectionId);
 
-        internal override uint DisableSsl() => SNIProxy.Singleton.DisableSsl(Handle);
+        internal override uint DisableSsl() => SNIProxy.GetInstance().DisableSsl(Handle);
 
         internal override uint EnableMars(ref uint info)
         {
@@ -211,9 +211,9 @@ namespace Microsoft.Data.SqlClient.SNI
             return TdsEnums.SNI_ERROR;
         }
 
-        internal override uint EnableSsl(ref uint info) => SNIProxy.Singleton.EnableSsl(Handle, info);
+        internal override uint EnableSsl(ref uint info) => SNIProxy.GetInstance().EnableSsl(Handle, info);
 
-        internal override uint SetConnectionBufferSize(ref uint unsignedPacketSize) => SNIProxy.Singleton.SetConnectionBufferSize(Handle, unsignedPacketSize);
+        internal override uint SetConnectionBufferSize(ref uint unsignedPacketSize) => SNIProxy.GetInstance().SetConnectionBufferSize(Handle, unsignedPacketSize);
 
         internal override uint GenerateSspiClientContext(byte[] receivedBuff, uint receivedLength, ref byte[] sendBuff, ref uint sendLength, byte[] _sniSpnBuffer)
         {
@@ -221,7 +221,8 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 _sspiClientContextStatus = new SspiClientContextStatus();
             }
-            SNIProxy.Singleton.GenSspiClientContext(_sspiClientContextStatus, receivedBuff, ref sendBuff, _sniSpnBuffer);
+            
+            SNIProxy.GetInstance().GenSspiClientContext(_sspiClientContextStatus, receivedBuff, ref sendBuff, _sniSpnBuffer);
             sendLength = (uint)(sendBuff != null ? sendBuff.Length : 0);
             return 0;
         }

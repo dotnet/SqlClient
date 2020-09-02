@@ -40,7 +40,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         srcConn.Open();
 
                         // First copy the customer ID list across
-                        SqlCommand customerCommand = new SqlCommand("SELECT CustomerID from Northwind..Customers", srcConn);
+                        SqlCommand customerCommand = new SqlCommand("SELECT CustomerID from Customers", srcConn);
                         using (DbDataReader reader = customerCommand.ExecuteReader())
                         {
                             using (SqlBulkCopy bulkcopy = new SqlBulkCopy(dstConn))
@@ -50,7 +50,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             }
                         }
 
-                        SqlCommand srcCmd = new SqlCommand("select OrderID, CustomerID from Northwind..Orders where OrderId = 10643", srcConn);
+                        SqlCommand srcCmd = new SqlCommand("select OrderID, CustomerID from Orders where OrderId = 10643", srcConn);
                         using (DbDataReader reader = srcCmd.ExecuteReader())
                         {
                             using (SqlBulkCopy bulkcopy = new SqlBulkCopy(dstConn))

@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient
 
         private void UnloadEventHandler(object sender, EventArgs e)
         {
-            long scopeID = SqlClientEventSource.Log.NotificationScopeEnterEvent("<sc.SqlDependencyPerAppDomainDispatcher.UnloadEventHandler|DEP> {0}", ObjectID);
+            long scopeID = SqlClientEventSource.Log.TryNotificationScopeEnterEvent("<sc.SqlDependencyPerAppDomainDispatcher.UnloadEventHandler|DEP> {0}", ObjectID);
             try
             {
                 // Make non-blocking call to ProcessDispatcher to ThreadPool.QueueUserWorkItem to complete 
@@ -31,7 +31,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.NotificationScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.TryNotificationScopeLeaveEvent(scopeID);
             }
         }
     }

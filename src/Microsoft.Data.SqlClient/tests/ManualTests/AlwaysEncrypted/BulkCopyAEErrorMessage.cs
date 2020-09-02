@@ -10,20 +10,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     /// <summary>
     /// Always Encrypted public API Manual tests.
-    /// TODO: These tests are marked as Windows only for now but should be run for all platforms once the Master Key is accessible to this app from Azure Key Vault.
     /// </summary>
-    [PlatformSpecific(TestPlatforms.Windows)]
-    public class BulkCopyAEErrorMessage : IClassFixture<SQLSetupStrategyCertStoreProvider>
+    public class BulkCopyAEErrorMessage : IClassFixture<PlatformSpecificTestContext>
     {
-        private SQLSetupStrategyCertStoreProvider _fixture;
-        
+        private SQLSetupStrategy _fixture;
+
         private readonly string _tableName;
         private readonly string _columnName;
 
-        public BulkCopyAEErrorMessage(SQLSetupStrategyCertStoreProvider fixture)
+        public BulkCopyAEErrorMessage(PlatformSpecificTestContext context)
         {
-            _fixture = fixture;
-            _tableName = fixture.BulkCopyAEErrorMessageTestTable.Name;
+            _fixture = context.Fixture;
+            _tableName = _fixture.BulkCopyAEErrorMessageTestTable.Name;
             _columnName = "c1";
         }
 
@@ -35,8 +33,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             DataTable dataTable = CreateDataTable(value);
 
             Assert.True(StringToIntTest(connectionString, _tableName, dataTable, value, dataTable.Rows.Count), "Did not get any exceptions for DataTable when converting data from 'string' to 'int' datatype!");
-            Assert.True(StringToIntTest(connectionString, _tableName, dataTable.Select(), value, dataTable.Rows.Count),"Did not get any exceptions for DataRow[] when converting data from 'string' to 'int' datatype!");
-            Assert.True(StringToIntTest(connectionString, _tableName, dataTable.CreateDataReader(), value, -1),"Did not get any exceptions for DataReader when converting data from 'string' to 'int' datatype!");
+            Assert.True(StringToIntTest(connectionString, _tableName, dataTable.Select(), value, dataTable.Rows.Count), "Did not get any exceptions for DataRow[] when converting data from 'string' to 'int' datatype!");
+            Assert.True(StringToIntTest(connectionString, _tableName, dataTable.CreateDataReader(), value, -1), "Did not get any exceptions for DataReader when converting data from 'string' to 'int' datatype!");
         }
 
         private DataTable CreateDataTable(string value)
@@ -44,7 +42,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             var dataTable = new DataTable();
             dataTable.Columns.Add(_columnName, typeof(string));
 
-            var dataRow = dataTable.NewRow();            
+            var dataRow = dataTable.NewRow();
             dataRow[_columnName] = value;
             dataTable.Rows.Add(dataRow);
             dataTable.AcceptChanges();
@@ -90,7 +88,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             catch (Exception ex)
             {
                 string pattern;
-                object[] args = 
+                object[] args =
                     new object[] { string.Empty, value.GetType().Name, targetType, 0, _columnName, rowNo };
                 if (rowNo == -1)
                 {

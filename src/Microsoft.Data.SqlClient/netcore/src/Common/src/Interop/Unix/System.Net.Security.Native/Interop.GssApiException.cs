@@ -3,8 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 internal static partial class Interop
@@ -13,22 +11,19 @@ internal static partial class Interop
     {
         internal sealed class GssApiException : Exception
         {
-            private readonly Status _minorStatus;
+            internal Status MinorStatus { get; private set; }
 
-            public Status MinorStatus
-            {
-                get { return _minorStatus;}
-            }
+            internal GssApiException() { }
 
-            public GssApiException(string message) : base(message)
-            {
-            }
+            internal GssApiException(string message) : base(message) { }
 
-            public GssApiException(Status majorStatus, Status minorStatus)
+            internal GssApiException(string message, Exception innerException) : base(message, innerException) { }
+
+            internal GssApiException(Status majorStatus, Status minorStatus)
                 : base(GetGssApiDisplayStatus(majorStatus, minorStatus))
             {
                 HResult = (int)majorStatus;
-                _minorStatus = minorStatus;
+                MinorStatus = minorStatus;
             }
 
             private static string GetGssApiDisplayStatus(Status majorStatus, Status minorStatus)
@@ -43,13 +38,12 @@ internal static partial class Interop
 
             private static string GetGssApiDisplayStatus(Status status, bool isMinor)
             {
-                GssBuffer displayBuffer = default(GssBuffer);
+                GssBuffer displayBuffer = default;
 
                 try
                 {
-                    Interop.NetSecurityNative.Status minStat;
-                    Interop.NetSecurityNative.Status displayCallStatus = isMinor ?
-                        DisplayMinorStatus(out minStat, status, ref displayBuffer):
+                    Status displayCallStatus = isMinor ?
+                        DisplayMinorStatus(out Status minStat, status, ref displayBuffer) :
                         DisplayMajorStatus(out minStat, status, ref displayBuffer);
                     return (Status.GSS_S_COMPLETE != displayCallStatus) ? null : Marshal.PtrToStringAnsi(displayBuffer._data);
                 }
