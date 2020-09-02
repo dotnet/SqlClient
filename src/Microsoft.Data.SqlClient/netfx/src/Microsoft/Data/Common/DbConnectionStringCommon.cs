@@ -1011,8 +1011,8 @@ namespace Microsoft.Data.Common
         internal const string ApplicationName = "Framework Microsoft SqlClient Data Provider";
         internal const bool AsynchronousProcessing = false;
         internal const string AttachDBFilename = "";
-        internal const int ConnectTimeout = 15;
         internal const int CommandTimeout = 30;
+        internal const int ConnectTimeout = 15;
         internal const bool ConnectionReset = true;
         internal const bool ContextConnection = false;
         internal const string CurrentLanguage = "";

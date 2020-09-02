@@ -110,8 +110,8 @@ namespace Microsoft.Data.SqlClient
         private string _userID = DbConnectionStringDefaults.UserID;
         private string _workstationID = DbConnectionStringDefaults.WorkstationID;
 
+        private int _commandTimeout = DbConnectionStringDefaults.CommandTimeout;
         private int _connectTimeout = DbConnectionStringDefaults.ConnectTimeout;
-        private int _commandTimeout = DbConnectionStringDefaults.CommandTimeout; 
         private int _loadBalanceTimeout = DbConnectionStringDefaults.LoadBalanceTimeout;
         private int _maxPoolSize = DbConnectionStringDefaults.MaxPoolSize;
         private int _minPoolSize = DbConnectionStringDefaults.MinPoolSize;
@@ -341,11 +341,11 @@ namespace Microsoft.Data.SqlClient
                             WorkstationID = ConvertToString(value);
                             break;
 
-                        case Keywords.ConnectTimeout:
-                            ConnectTimeout = ConvertToInt32(value);
-                            break;
                         case Keywords.CommandTimeout:
                             CommandTimeout = ConvertToInt32(value);
+                            break;
+                        case Keywords.ConnectTimeout:
+                            ConnectTimeout = ConvertToInt32(value);
                             break;
                         case Keywords.LoadBalanceTimeout:
                             LoadBalanceTimeout = ConvertToInt32(value);
