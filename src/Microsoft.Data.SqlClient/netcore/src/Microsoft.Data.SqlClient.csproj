@@ -28,9 +28,6 @@
   <PropertyGroup Condition="'$(TargetGroup)' == 'netcoreapp' AND '$(TargetFramework)' != 'netcoreapp2.1'">
     <DefineConstants>$(DefineConstants);NETCORE3</DefineConstants>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(TargetGroup)' == 'netstandard' AND '$(TargetFramework)' != 'netstandard2.0'">
-    <DefineConstants>$(DefineConstants);NETSTANDARD21</DefineConstants>
-  </PropertyGroup>
   <PropertyGroup>
     <DebugType>portable</DebugType>
     <DebugSymbols>true</DebugSymbols>
@@ -45,7 +42,6 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientEventSource.cs">
       <Link>Microsoft\Data\SqlClient\SqlClientEventSource.cs</Link>
     </Compile>
-    <Compile Include="Microsoft\Data\SqlClient\SqlClientEventSource.NetCoreApp.cs" />
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientLogger.cs">
       <Link>Microsoft\Data\SqlClient\SqlClientLogger.cs</Link>
     </Compile>
@@ -251,6 +247,14 @@
     <Compile Include="Microsoft\Data\SqlClient\EnclaveProviderBase.cs" />
     <Compile Include="Microsoft\Data\SqlClient\EnclaveSessionCache.cs" />
 	</ItemGroup>
+  <!-- netcoreapp 2.1 & netstandard 2.0 -->
+  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND ('$(TargetFramework)' == 'netcoreapp2.1' OR '$(TargetFramework)' == 'netstandard2.0')">
+    <Compile Include="Microsoft\Data\SqlClient\SqlClientEventSource.NetCoreApp2.cs" />
+  </ItemGroup>
+  <!-- netcoreapp 3.1 & netstandard 2.1 and above -->
+  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetFramework)' != 'netcoreapp2.1' AND '$(TargetFramework)' != 'netstandard2.0'">
+    <Compile Include="Microsoft\Data\SqlClient\SqlClientEventSource.NetCoreApp3.cs" />
+  </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netcoreapp'">
     <Compile Include="Microsoft\Data\Common\DbConnectionStringCommon.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPool.NetCoreApp.cs" />

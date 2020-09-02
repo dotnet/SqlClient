@@ -7,8 +7,19 @@ using System.Threading;
 
 namespace Microsoft.Data.SqlClient
 {
+    internal abstract class SqlClientEventSourceBase : EventSource
+    {
+        protected override void OnEventCommand(EventCommandEventArgs command)
+        {
+            base.OnEventCommand(command);
+            EventCommandMethodCall(command);
+        }
+
+        protected virtual void EventCommandMethodCall(EventCommandEventArgs command){}
+    }
+
     [EventSource(Name = "Microsoft.Data.SqlClient.EventSource")]
-    internal partial class SqlClientEventSource : EventSource
+    internal partial class SqlClientEventSource : SqlClientEventSourceBase
     {
         // Defines the singleton instance for the Resources ETW provider
         internal static readonly SqlClientEventSource Log = new SqlClientEventSource();

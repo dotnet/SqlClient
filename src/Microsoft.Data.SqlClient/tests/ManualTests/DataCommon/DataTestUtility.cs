@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 using Microsoft.Identity.Client;
 using Microsoft.Data.SqlClient.TestUtilities;
 using Xunit;
+using System.Linq;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -694,7 +695,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 if (eventSource.Name.Equals("Microsoft.Data.SqlClient.EventSource"))
                 {
-                    // Collect all traces for better code coverage
+                    //// Collect all traces for better code coverage
                     EnableEvents(eventSource, EventLevel.Informational, EventKeywords.All);
                 }
             }
