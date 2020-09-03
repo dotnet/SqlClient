@@ -15,7 +15,37 @@ namespace Microsoft.Data.SqlClient
             EventCommandMethodCall(command);
         }
 
-        protected virtual void EventCommandMethodCall(EventCommandEventArgs command){}
+        protected virtual void EventCommandMethodCall(EventCommandEventArgs command) { }
+
+        #region not implemented for .Net core 2.1, .Net standard 2.0 and lower
+        internal virtual void HardConnectRequest() { /*no-op*/ }
+
+        internal virtual void HardDisconnectRequest() { /*no-op*/ }
+
+        internal virtual void SoftConnectRequest() { /*no-op*/ }
+
+        internal virtual void SoftDisconnectRequest() { /*no-op*/ }
+
+        internal virtual void NonPooledConnectionRequest(bool increment = true) { /*no-op*/ }
+
+        internal virtual void PooledConnectionRequest(bool increment = true) { /*no-op*/ }
+
+        internal virtual void ActiveConnectionPoolGroupRequest(bool increment = true) { /*no-op*/ }
+
+        internal virtual void InactiveConnectionPoolGroupRequest(bool increment = true) { /*no-op*/ }
+
+        internal virtual void ActiveConnectionPoolRequest(bool increment = true) { /*no-op*/ }
+
+        internal virtual void InactiveConnectionPoolRequest(bool increment = true) { /*no-op*/ }
+
+        internal virtual void ActiveConnectionRequest(bool increment = true) { /*no-op*/ }
+
+        internal virtual void FreeConnectionRequest(bool increment = true) { /*no-op*/ }
+
+        internal virtual void StasisConnectionRequest(bool increment = true) { /*no-op*/ }
+
+        internal virtual void ReclaimedConnectionRequest() { /*no-op*/ }
+        #endregion
     }
 
     [EventSource(Name = "Microsoft.Data.SqlClient.EventSource")]

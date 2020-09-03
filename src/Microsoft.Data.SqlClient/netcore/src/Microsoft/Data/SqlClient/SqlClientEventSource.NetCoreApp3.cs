@@ -186,7 +186,7 @@ namespace Microsoft.Data.SqlClient
         /// The number of actual connections that are being made to servers
         /// </summary>
         [NonEvent]
-        internal void HardConnectRequest()
+        internal override void HardConnectRequest()
         {
             if (IsEnabled())
             {
@@ -199,7 +199,7 @@ namespace Microsoft.Data.SqlClient
         /// The number of actual disconnects that are being made to servers
         /// </summary>
         [NonEvent]
-        internal void HardDisconnectRequest()
+        internal override void HardDisconnectRequest()
         {
             if (IsEnabled())
             {
@@ -212,7 +212,7 @@ namespace Microsoft.Data.SqlClient
         /// The number of connections we get from the pool
         /// </summary>
         [NonEvent]
-        internal void SoftConnectRequest()
+        internal override void SoftConnectRequest()
         {
             if (IsEnabled())
             {
@@ -225,7 +225,7 @@ namespace Microsoft.Data.SqlClient
         /// The number of connections we return to the pool
         /// </summary>
         [NonEvent]
-        internal void SoftDisconnectRequest()
+        internal override void SoftDisconnectRequest()
         {
             if (IsEnabled())
             {
@@ -239,7 +239,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="increment"></param>
         [NonEvent]
-        internal void NonPooledConnectionRequest(bool increment = true)
+        internal override void NonPooledConnectionRequest(bool increment = true)
         {
             Request(ref _nonPooledConnectionsCounter, increment);
         }
@@ -249,7 +249,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="increment"></param>
         [NonEvent]
-        internal void PooledConnectionRequest(bool increment = true)
+        internal override void PooledConnectionRequest(bool increment = true)
         {
             Request(ref _pooledConnectionsCounter, increment);
         }
@@ -259,7 +259,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="increment"></param>
         [NonEvent]
-        internal void ActiveConnectionPoolGroupRequest(bool increment = true)
+        internal override void ActiveConnectionPoolGroupRequest(bool increment = true)
         {
             Request(ref _activeConnectionPoolGroupsCounter, increment);
         }
@@ -269,7 +269,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="increment"></param>
         [NonEvent]
-        internal void InactiveConnectionPoolGroupRequest(bool increment = true)
+        internal override void InactiveConnectionPoolGroupRequest(bool increment = true)
         {
             Request(ref _inactiveConnectionPoolGroupsCounter, increment);
         }
@@ -279,7 +279,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="increment"></param>
         [NonEvent]
-        internal void ActiveConnectionPoolRequest(bool increment = true)
+        internal override void ActiveConnectionPoolRequest(bool increment = true)
         {
             Request(ref _activeConnectionPoolsCounter, increment);
         }
@@ -289,7 +289,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="increment"></param>
         [NonEvent]
-        internal void InactiveConnectionPoolRequest(bool increment = true)
+        internal override void InactiveConnectionPoolRequest(bool increment = true)
         {
             Request(ref _inactiveConnectionPoolsCounter, increment);
         }
@@ -299,7 +299,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="increment"></param>
         [NonEvent]
-        internal void ActiveConnectionRequest(bool increment = true)
+        internal override void ActiveConnectionRequest(bool increment = true)
         {
             Request(ref _activeConnectionsCounter, increment);
         }
@@ -309,7 +309,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="increment"></param>
         [NonEvent]
-        internal void FreeConnectionRequest(bool increment = true)
+        internal override void FreeConnectionRequest(bool increment = true)
         {
             Request(ref _freeConnectionsCounter, increment);
         }
@@ -319,7 +319,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="increment"></param>
         [NonEvent]
-        internal void StasisConnectionRequest(bool increment = true)
+        internal override void StasisConnectionRequest(bool increment = true)
         {
             Request(ref _stasisConnectionsCounter, increment);
         }
@@ -328,7 +328,7 @@ namespace Microsoft.Data.SqlClient
         ///  The number of connections we reclaim from GC'd external connections
         /// </summary>
         [NonEvent]
-        internal void ReclaimedConnectionRequest()
+        internal override void ReclaimedConnectionRequest()
         {
             Request(ref _reclaimedConnectionsCounter, true);
         }

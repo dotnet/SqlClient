@@ -11,6 +11,9 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    /// <summary>
+    /// This unit test is just valid for .NetCore 3.0 and above
+    /// </summary>
     public class EventCounterTest
     {
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
@@ -82,8 +85,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (eventSource.Name.Equals("Microsoft.Data.SqlClient.EventSource"))
             {
                 var options = new Dictionary<string, string>();
+                // define time interval 1 second
+                // without defining this parameter event counters will not enabled
                 options.Add("EventCounterIntervalSec", "1");
-                EnableEvents(eventSource, EventLevel.Informational, EventKeywords.All, options);
+                // enable for the None keyword
+                EnableEvents(eventSource, EventLevel.Informational, EventKeywords.None, options);
             }
         }
 
