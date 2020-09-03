@@ -529,6 +529,26 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        //TODO Add docs
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/CommandTimeout/*' />
+        [DisplayName(DbConnectionStringKeywords.CommandTimeout)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Initialization)]
+        [ResDescription(StringsHelper.ResourceNames.DbCommand_CommandTimeout)]
+        [RefreshProperties(RefreshProperties.All)]
+        public int CommandTimeout
+        {
+            get { return _commandTimeout; }
+            set
+            {
+                if (value < 0)
+                {
+                    throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.CommandTimeout);
+                }
+                SetValue(DbConnectionStringKeywords.CommandTimeout, value);
+                _commandTimeout = value;
+            }
+        }
+
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectionReset/*' />
         [Browsable(false)]
         [DisplayName(DbConnectionStringKeywords.ConnectionReset)]
@@ -577,26 +597,6 @@ namespace Microsoft.Data.SqlClient
                 }
                 SetValue(DbConnectionStringKeywords.ConnectTimeout, value);
                 _connectTimeout = value;
-            }
-        }
-
-        //TODO Fix docs!
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectTimeout/*' />
-        [DisplayName(DbConnectionStringKeywords.CommandTimeout)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Initialization)]
-        [ResDescription(StringsHelper.ResourceNames.DbCommand_CommandTimeout)]
-        [RefreshProperties(RefreshProperties.All)]
-        public int CommandTimeout
-        {
-            get { return _commandTimeout; }
-            set
-            {
-                if (value < 0)
-                {
-                    throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.CommandTimeout);
-                }
-                SetValue(DbConnectionStringKeywords.CommandTimeout, value);
-                _commandTimeout = value;
             }
         }
 

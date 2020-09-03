@@ -505,8 +505,8 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        //TODO Fix docs
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ConnectionTimeout/*' />
+        //TODO Add docs
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CommandTimeout/*' />
         public int CommandTimeout
         {
             get
