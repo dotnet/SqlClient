@@ -19,20 +19,21 @@ namespace Microsoft.Data.SqlClient
 
         internal static class DEFAULT
         {
+            private const string _emptyString = "";
             internal const ApplicationIntent ApplicationIntent = DbConnectionStringDefaults.ApplicationIntent;
             internal const string Application_Name = TdsEnums.SQL_PROVIDER_NAME;
             internal const bool Asynchronous = false;
-            internal const string AttachDBFilename = "";
+            internal const string AttachDBFilename = _emptyString;
             internal const PoolBlockingPeriod PoolBlockingPeriod = DbConnectionStringDefaults.PoolBlockingPeriod;
             internal const int Connect_Timeout = ADP.DefaultConnectionTimeout;
             internal const bool Connection_Reset = true;
             internal const bool Context_Connection = false;
-            internal const string Current_Language = "";
-            internal const string Data_Source = "";
+            internal const string Current_Language = _emptyString;
+            internal const string Data_Source = _emptyString;
             internal const bool Encrypt = false;
             internal const bool Enlist = true;
-            internal const string FailoverPartner = "";
-            internal const string Initial_Catalog = "";
+            internal const string FailoverPartner = _emptyString;
+            internal const string Initial_Catalog = _emptyString;
             internal const bool Integrated_Security = false;
             internal const int Load_Balance_Timeout = 0; // default of 0 means don't use
             internal const bool MARS = false;
@@ -40,24 +41,25 @@ namespace Microsoft.Data.SqlClient
             internal const int Min_Pool_Size = 0;
             internal const bool MultiSubnetFailover = DbConnectionStringDefaults.MultiSubnetFailover;
             internal static readonly bool TransparentNetworkIPResolution = DbConnectionStringDefaults.TransparentNetworkIPResolution;
-            internal const string Network_Library = "";
+            internal const string Network_Library = _emptyString;
             internal const int Packet_Size = 8000;
-            internal const string Password = "";
+            internal const string Password = _emptyString;
             internal const bool Persist_Security_Info = false;
             internal const bool Pooling = true;
             internal const bool TrustServerCertificate = false;
-            internal const string Type_System_Version = "";
-            internal const string User_ID = "";
+            internal const string Type_System_Version = _emptyString;
+            internal const string User_ID = _emptyString;
             internal const bool User_Instance = false;
             internal const bool Replication = false;
             internal const int Connect_Retry_Count = 1;
             internal const int Connect_Retry_Interval = 10;
             internal static readonly SqlAuthenticationMethod Authentication = SqlAuthenticationMethod.NotSpecified;
             internal static readonly SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Disabled;
-            internal const string EnclaveAttestationUrl = "";
+            internal const string EnclaveAttestationUrl = _emptyString;
             internal static readonly SqlConnectionAttestationProtocol AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified;
+
 #if ADONET_CERT_AUTH
-            internal const  string Certificate            = "";
+            internal const  string Certificate = _emptyString;
 #endif
         }
 
@@ -104,6 +106,7 @@ namespace Microsoft.Data.SqlClient
             internal const string Connect_Retry_Count = "connect retry count";
             internal const string Connect_Retry_Interval = "connect retry interval";
             internal const string Authentication = "authentication";
+
 #if ADONET_CERT_AUTH
             internal const string Certificate						= "certificate";
 #endif
@@ -556,9 +559,9 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.DeviceFlowWithUsernamePassword();
             }
 
-            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity && (HasUserIdKeyword || HasPasswordKeyword))
+            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity && (HasPasswordKeyword))
             {
-                throw SQL.ManagedIdentityWithUsernamePassword();
+                throw SQL.ManagedIdentityWithPassword();
             }
 
 #if ADONET_CERT_AUTH
@@ -637,7 +640,7 @@ namespace Microsoft.Data.SqlClient
             _enclaveAttestationUrl = connectionOptions._enclaveAttestationUrl;
             _attestationProtocol = connectionOptions._attestationProtocol;
 #if ADONET_CERT_AUTH
-            _certificate              = connectionOptions._certificate;
+            _certificate = connectionOptions._certificate;
 #endif
             ValidateValueLength(_dataSource, TdsEnums.MAXLEN_SERVERNAME, KEY.Data_Source);
         }

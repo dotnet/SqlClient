@@ -34,7 +34,7 @@
             <value>6</value>
         </ActiveDirectoryDeviceCodeFlow>
         <ActiveDirectoryManagedIdentity>
-          <summary>The authentication method uses Active Directory Managed Identity. Use System Assigned or User Assigned Managed Identity to connect to SQL Database from Azure client environments that have enabled support for Managed Identity.</summary>
+          <summary>The authentication method uses Active Directory Managed Identity. Use System Assigned or User Assigned Managed Identity to connect to SQL Database from Azure client environments that have enabled support for Managed Identity. For User Assigned Managed Identity, 'User Id' or 'UID' is required to be set to the object ID of the user identity.</summary>
           <value>7</value>
         </ActiveDirectoryManagedIdentity>
     </members>

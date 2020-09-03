@@ -1154,11 +1154,7 @@ namespace Microsoft.Data.SqlClient
     internal class ActiveDirectoryAuthentication
     {
         internal const string AdoClientId = "2fd908ad-0664-4344-b9be-cd3e8b574c38";
-        internal const string AZURE_IMDS_REST_URL = "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01";
         internal const string MSALGetAccessTokenFunctionName = "AcquireToken";
-
-        // Retry acquiring access token upto 20 times due to possible IMDS upgrade (Applies to VM only)
-        internal const int AZURE_IMDS_MAX_RETRY = 20;
     }
 
     // Fields in the first resultset of "sp_describe_parameter_encryption".

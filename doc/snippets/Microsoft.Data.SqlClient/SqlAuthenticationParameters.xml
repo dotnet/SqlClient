@@ -12,8 +12,7 @@
             <param name="userId">The user login name/ID.</param>
             <param name="password">The user password.</param>
             <param name="connectionId">The connection ID.</param>
-            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlAuthenticationParameters" />
- class using the specified authentication method, server name, database name, resource URI, authority URI, user login name/ID, user password and connection ID.</summary>
+            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlAuthenticationParameters" /> class using the specified authentication method, server name, database name, resource URI, authority URI, user login name/ID, user password and connection ID.</summary>
         </ctor>
         <AuthenticationMethod>
             <summary>Gets the authentication method.</summary>

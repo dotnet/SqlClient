@@ -682,17 +682,18 @@ namespace Microsoft.Data.Common
         // all
         // internal const string NamedConnection = "";
 
+        private const string _emptyString = "";
         // SqlClient
         internal const ApplicationIntent ApplicationIntent = Microsoft.Data.SqlClient.ApplicationIntent.ReadWrite;
         internal const string ApplicationName = "Core Microsoft SqlClient Data Provider";
-        internal const string AttachDBFilename = "";
+        internal const string AttachDBFilename = _emptyString;
         internal const int ConnectTimeout = 15;
-        internal const string CurrentLanguage = "";
-        internal const string DataSource = "";
+        internal const string CurrentLanguage = _emptyString;
+        internal const string DataSource = _emptyString;
         internal const bool Encrypt = false;
         internal const bool Enlist = true;
-        internal const string FailoverPartner = "";
-        internal const string InitialCatalog = "";
+        internal const string FailoverPartner = _emptyString;
+        internal const string InitialCatalog = _emptyString;
         internal const bool IntegratedSecurity = false;
         internal const int LoadBalanceTimeout = 0; // default of 0 means don't use
         internal const bool MultipleActiveResultSets = false;
@@ -700,21 +701,21 @@ namespace Microsoft.Data.Common
         internal const int MaxPoolSize = 100;
         internal const int MinPoolSize = 0;
         internal const int PacketSize = 8000;
-        internal const string Password = "";
+        internal const string Password = _emptyString;
         internal const bool PersistSecurityInfo = false;
         internal const bool Pooling = true;
         internal const bool TrustServerCertificate = false;
         internal const string TypeSystemVersion = "Latest";
-        internal const string UserID = "";
+        internal const string UserID = _emptyString;
         internal const bool UserInstance = false;
         internal const bool Replication = false;
-        internal const string WorkstationID = "";
+        internal const string WorkstationID = _emptyString;
         internal const string TransactionBinding = "Implicit Unbind";
         internal const int ConnectRetryCount = 1;
         internal const int ConnectRetryInterval = 10;
         internal static readonly SqlAuthenticationMethod Authentication = SqlAuthenticationMethod.NotSpecified;
         internal const SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Disabled;
-        internal const string EnclaveAttestationUrl = "";
+        internal const string EnclaveAttestationUrl = _emptyString;
         internal const SqlConnectionAttestationProtocol AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified;
     }
 

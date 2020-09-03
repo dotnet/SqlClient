@@ -2797,6 +2797,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Managed Identity&apos; with &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
+        /// </summary>
+        internal static string SQL_ManagedIdentityWithPassword {
+            get {
+                return ResourceManager.GetString("SQL_ManagedIdentityWithPassword", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The connection does not support MultipleActiveResultSets..
         /// </summary>
         internal static string SQL_MarsUnsupportedOnConnection {
@@ -3076,6 +3085,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot set the Credential property if &apos;Authentication=Active Directory Managed Identity&apos; has been specified in the connection string..
+        /// </summary>
+        internal static string SQL_SettingCredentialWithManagedIdentity {
+            get {
+                return ResourceManager.GetString("SQL_SettingCredentialWithManagedIdentity", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Device Code Flow&apos;, if the Credential property has been set..
         /// </summary>
         internal static string SQL_SettingDeviceFlowWithCredential {
@@ -3099,6 +3117,15 @@ namespace System {
         internal static string SQL_SettingInteractiveWithCredential {
             get {
                 return ResourceManager.GetString("SQL_SettingInteractiveWithCredential", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Managed Identity&apos;, if the Credential property has been set..
+        /// </summary>
+        internal static string SQL_SettingManagedIdentityWithCredential {
+            get {
+                return ResourceManager.GetString("SQL_SettingManagedIdentityWithCredential", resourceCulture);
             }
         }
         

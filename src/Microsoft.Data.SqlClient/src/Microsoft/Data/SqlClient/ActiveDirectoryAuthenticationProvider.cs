@@ -12,6 +12,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Identity.Client;
 using Microsoft.Identity.Client.Extensibility;
+using static Microsoft.Data.SqlClient.ActiveDirectoryAuthentication;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -46,8 +47,7 @@ namespace Microsoft.Data.SqlClient
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryPassword
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
-                || authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
-                || authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity;
+                || authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow;
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/BeforeLoad/*'/>
@@ -116,7 +116,7 @@ namespace Microsoft.Data.SqlClient
 #if netstandard
             if (parentActivityOrWindowFunc != null)
             {
-                app = PublicClientApplicationBuilder.Create(ActiveDirectoryAuthentication.AdoClientId)
+                app = PublicClientApplicationBuilder.Create(AdoClientId)
                 .WithAuthority(parameters.Authority)
                 .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
                 .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
@@ -128,7 +128,7 @@ namespace Microsoft.Data.SqlClient
 #if netfx
             if (_iWin32WindowFunc != null)
             {
-                app = PublicClientApplicationBuilder.Create(ActiveDirectoryAuthentication.AdoClientId)
+                app = PublicClientApplicationBuilder.Create(AdoClientId)
                 .WithAuthority(parameters.Authority)
                 .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
                 .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
@@ -141,7 +141,7 @@ namespace Microsoft.Data.SqlClient
             else
 #endif
             {
-                app = PublicClientApplicationBuilder.Create(ActiveDirectoryAuthentication.AdoClientId)
+                app = PublicClientApplicationBuilder.Create(AdoClientId)
                 .WithAuthority(parameters.Authority)
                 .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
                 .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
@@ -209,57 +209,11 @@ namespace Microsoft.Data.SqlClient
                 return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
 
             }
-            else if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity)
-            {
-                return await AcquireManagedIdentityTokenIMDSAsync(parameters);
-            }
             else
             {
                 throw SQL.UnsupportedAuthenticationSpecified(parameters.AuthenticationMethod);
             }
         });
-
-        private async Task<SqlAuthenticationToken> AcquireManagedIdentityTokenIMDSAsync(SqlAuthenticationParameters parameters)
-        {
-            string accessToken = "";
-            // IMDS upgrade time can take up to 70s
-            int imdsUpgradeTimeInMs = 70 * 1000;
-            string msiEndpoint = Environment.GetEnvironmentVariable("MSI_ENDPOINT");
-            string msiSecret = Environment.GetEnvironmentVariable("MSI_SECRET");
-
-            StringBuilder urlString = new StringBuilder();
-            int retry = 1, maxRetry = 1;
-            int[] retrySlots;
-
-            /*
-             * isAzureFunction is used for identifying if the current client application is running in a Virtual Machine
-             * (without MSI environment variables) or App Service/Function (with MSI environment variables) as the APIs to
-             * be called for acquiring MSI Token are different for both cases.
-            */
-            bool isAzureFunction = null != msiEndpoint && !string.IsNullOrEmpty(msiEndpoint)
-                                && null != msiSecret && !string.IsNullOrEmpty(msiSecret);
-
-            if(isAzureFunction)
-            {
-                urlString.Append(msiEndpoint).Append("?api-version=2019-08-01&resource=").Append(parameters.Resource);
-            }
-            else
-            {
-                urlString.Append(ActiveDirectoryAuthentication.AZURE_IMDS_REST_URL).Append("&resource=").Append(parameters.Resource);
-                // Retry acquiring access token upto 20 times due to possible IMDS upgrade (Applies to VM only)
-                maxRetry = ActiveDirectoryAuthentication.AZURE_IMDS_MAX_RETRY;
-            }
-
-            retrySlots = new int[maxRetry];
-            // Simplified variant of Exponential BackOff
-            for (int x = 0; x < maxRetry; x++)
-            {
-                retrySlots[x] = TdsEnums.INTERNAL_SERVER_ERROR * ((2 << 1) - 1) / 1000;
-            }
-
-            DateTime expiresOn = DateTime.UtcNow;
-            return new SqlAuthenticationToken(accessToken, new DateTimeOffset(expiresOn));
-        }
 
         private async Task<AuthenticationResult> AcquireTokenInteractiveDeviceFlowAsync(IPublicClientApplication app, string[] scopes, Guid connectionId, string userId,
             SqlAuthenticationMethod authenticationMethod)

@@ -10,8 +10,8 @@
 
 namespace System {
     using System;
-    
-    
+
+
     /// <summary>
     ///   A strongly-typed resource class, for looking up localized strings, etc.
     /// </summary>
@@ -23,15 +23,15 @@ namespace System {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Strings {
-        
+
         private static global::System.Resources.ResourceManager resourceMan;
-        
+
         private static global::System.Globalization.CultureInfo resourceCulture;
-        
+
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Strings() {
         }
-        
+
         /// <summary>
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
@@ -45,7 +45,7 @@ namespace System {
                 return resourceMan;
             }
         }
-        
+
         /// <summary>
         ///   Overrides the current thread's CurrentUICulture property for all
         ///   resource lookups using this strongly typed resource class.
@@ -59,7 +59,7 @@ namespace System {
                 resourceCulture = value;
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Data adapter mapping error..
         /// </summary>
@@ -68,7 +68,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_AdapterMappingExceptionMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Ascending.
         /// </summary>
@@ -77,7 +77,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_Ascending", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Specified parameter name &apos;{0}&apos; is not valid..
         /// </summary>
@@ -86,7 +86,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_BadParameterName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The method &apos;{0}&apos; cannot be called more than once for the same execution..
         /// </summary>
@@ -95,7 +95,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_CalledTwice", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid operation. The connection is closed..
         /// </summary>
@@ -104,7 +104,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_ClosedConnectionError", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid index {0} for this {1} with Count={2}..
         /// </summary>
@@ -113,7 +113,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_CollectionIndexInt32", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to A {0} with {1} &apos;{2}&apos; is not contained by this {3}..
         /// </summary>
@@ -122,7 +122,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_CollectionIndexString", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The {0} only accepts non-null {1} type objects, not {2} objects..
         /// </summary>
@@ -131,7 +131,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_CollectionInvalidType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The {0} is already contained by another {1}..
         /// </summary>
@@ -140,7 +140,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_CollectionIsNotParent", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The {0} with is already contained by this {1}..
         /// </summary>
@@ -149,7 +149,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_CollectionIsParent", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The {0} only accepts non-null {1} type objects..
         /// </summary>
@@ -158,7 +158,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_CollectionNullValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Attempted to remove an {0} that is not contained by this {1}..
         /// </summary>
@@ -167,7 +167,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_CollectionRemoveInvalidObject", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The {0}.{1} is required to be unique, &apos;{2}&apos; already exists in the collection..
         /// </summary>
@@ -176,7 +176,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_CollectionUniqueValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The column mapping from SourceColumn &apos;{0}&apos; failed because the DataColumn &apos;{1}&apos; is a computed column..
         /// </summary>
@@ -185,7 +185,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_ColumnSchemaExpression", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Inconvertible type mismatch between SourceColumn &apos;{0}&apos; of {1} and the DataColumn &apos;{2}&apos; of {3}..
         /// </summary>
@@ -194,7 +194,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_ColumnSchemaMismatch", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Missing the DataColumn &apos;{0}&apos; for the SourceColumn &apos;{2}&apos;..
         /// </summary>
@@ -203,7 +203,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_ColumnSchemaMissing1", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Missing the DataColumn &apos;{0}&apos; in the DataTable &apos;{1}&apos; for the SourceColumn &apos;{2}&apos;..
         /// </summary>
@@ -212,7 +212,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_ColumnSchemaMissing2", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to {0}: CommandText property has not been initialized.
         /// </summary>
@@ -221,7 +221,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_CommandTextRequired", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unable to retrieve the ComputerNameDnsFullyQualified, {0}..
         /// </summary>
@@ -230,7 +230,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_ComputerNameEx", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Update requires a connection..
         /// </summary>
@@ -239,7 +239,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_ConnecitonRequired_UpdateRows", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The connection was not closed. {0}.
         /// </summary>
@@ -248,7 +248,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_ConnectionAlreadyOpen", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The connection has been disabled..
         /// </summary>
@@ -257,7 +257,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_ConnectionIsDisabled", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to {0}: Connection property has not been initialized..
         /// </summary>
@@ -266,7 +266,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_ConnectionRequired", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Update requires a connection object.  The Connection property has not been initialized..
         /// </summary>
@@ -275,7 +275,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_ConnectionRequired_Batch", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Update requires the command clone to have a connection object. The Connection property of the command clone has not been initialized..
         /// </summary>
@@ -284,7 +284,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_ConnectionRequired_Clone", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Update requires the DeleteCommand to have a connection object. The Connection property of the DeleteCommand has not been initialized..
         /// </summary>
@@ -293,7 +293,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_ConnectionRequired_Delete", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Fill: SelectCommand.Connection property has not been initialized..
         /// </summary>
@@ -302,7 +302,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_ConnectionRequired_Fill", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to FillPage: SelectCommand.Connection property has not been initialized..
         /// </summary>
@@ -311,7 +311,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_ConnectionRequired_FillPage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to FillSchema: SelectCommand.Connection property has not been initialized..
         /// </summary>
@@ -320,7 +320,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_ConnectionRequired_FillSchema", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Update requires the InsertCommand to have a connection object. The Connection property of the InsertCommand has not been initialized..
         /// </summary>
@@ -329,7 +329,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_ConnectionRequired_Insert", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Update requires the UpdateCommand to have a connection object. The Connection property of the UpdateCommand has not been initialized..
         /// </summary>
@@ -338,7 +338,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_ConnectionRequired_Update", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The connection&apos;s current state: {0}..
         /// </summary>
@@ -347,7 +347,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_ConnectionStateMsg", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The connection&apos;s current state is closed..
         /// </summary>
@@ -356,7 +356,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_ConnectionStateMsg_Closed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The connection&apos;s current state is connecting..
         /// </summary>
@@ -365,7 +365,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_ConnectionStateMsg_Connecting", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The connection&apos;s current state is open..
         /// </summary>
@@ -374,7 +374,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_ConnectionStateMsg_Open", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The connection&apos;s current state is executing..
         /// </summary>
@@ -383,7 +383,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_ConnectionStateMsg_OpenExecuting", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The connection&apos;s current state is fetching..
         /// </summary>
@@ -392,7 +392,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_ConnectionStateMsg_OpenFetching", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Format of the initialization string does not conform to specification starting at index {0}..
         /// </summary>
@@ -401,7 +401,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_ConnectionStringSyntax", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Data adapter error..
         /// </summary>
@@ -410,7 +410,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_DataAdapterExceptionMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The argument is too long..
         /// </summary>
@@ -419,7 +419,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_DatabaseNameTooLong", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid attempt to call {0} when reader is closed..
         /// </summary>
@@ -428,7 +428,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_DataReaderClosed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to No data exists for the row/column..
         /// </summary>
@@ -437,7 +437,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_DataReaderNoData", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to DB concurrency violation..
         /// </summary>
@@ -446,7 +446,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_DBConcurrencyExceptionMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to &apos;{0}&apos; cannot be called when the DbDataRecord is read only..
         /// </summary>
@@ -455,7 +455,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_DbDataUpdatableRecordReadOnly", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to &apos;{0}&apos; cannot be called when the record is read only..
         /// </summary>
@@ -464,7 +464,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_DbRecordReadOnly", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to No mapping exists from DbType {0} to a known {1}..
         /// </summary>
@@ -473,7 +473,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_DbTypeNotSupported", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot enlist in the transaction because the connection is the primary connection for a delegated or promoted transaction..
         /// </summary>
@@ -482,7 +482,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_DelegatedTransactionPresent", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to {0} DeriveParameters only supports CommandType.StoredProcedure, not CommandType.{1}..
         /// </summary>
@@ -491,7 +491,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_DeriveParametersNotSupported", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Descending.
         /// </summary>
@@ -500,7 +500,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_Descending", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The acceptable values for the property &apos;{0}&apos; are &apos;{1}&apos; or &apos;{2}&apos;..
         /// </summary>
@@ -509,7 +509,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_DoubleValuedProperty", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Dynamic SQL generation is not supported against multiple base tables..
         /// </summary>
@@ -518,7 +518,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_DynamicSQLJoinUnsupported", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Dynamic SQL generation not supported against table names &apos;{0}&apos; that contain the QuotePrefix or QuoteSuffix character &apos;{1}&apos;..
         /// </summary>
@@ -527,7 +527,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_DynamicSQLNestedQuote", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Dynamic SQL generation for the DeleteCommand is not supported against a SelectCommand that does not return any key column information..
         /// </summary>
@@ -536,7 +536,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_DynamicSQLNoKeyInfoDelete", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Dynamic SQL generation for the DeleteCommand is not supported against a SelectCommand that does not contain a row version column..
         /// </summary>
@@ -545,7 +545,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_DynamicSQLNoKeyInfoRowVersionDelete", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Dynamic SQL generation for the UpdateCommand is not supported against a SelectCommand that does not contain a row version column..
         /// </summary>
@@ -554,7 +554,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_DynamicSQLNoKeyInfoRowVersionUpdate", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Dynamic SQL generation for the UpdateCommand is not supported against a SelectCommand that does not return any key column information..
         /// </summary>
@@ -563,7 +563,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_DynamicSQLNoKeyInfoUpdate", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Dynamic SQL generation is not supported against a SelectCommand that does not return any base table information..
         /// </summary>
@@ -572,7 +572,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_DynamicSQLNoTableInfo", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Expecting non-empty array for &apos;{0}&apos; parameter..
         /// </summary>
@@ -581,7 +581,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_EmptyArray", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Database cannot be null, the empty string, or string of only whitespace..
         /// </summary>
@@ -590,7 +590,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_EmptyDatabaseName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Expecting non-empty string for &apos;{0}&apos; parameter..
         /// </summary>
@@ -599,7 +599,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_EmptyString", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to &apos;{0}&apos;:The length of the literal value must be even..
         /// </summary>
@@ -608,7 +608,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_EvenLengthLiteralValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Hierarchical chapter columns must map to an AutoIncrement DataColumn..
         /// </summary>
@@ -617,7 +617,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_FillChapterAutoIncrement", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Fill: expected a non-empty string for the SourceTable name..
         /// </summary>
@@ -626,7 +626,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_FillRequiresSourceTableName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to FillSchema: expected a non-empty string for the SourceTable name..
         /// </summary>
@@ -635,7 +635,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_FillSchemaRequiresSourceTableName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to &apos;{0}&apos;:The literal value must be a string with hexadecimal digits.
         /// </summary>
@@ -644,7 +644,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_HexDigitLiteralValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Incorrect async result..
         /// </summary>
@@ -653,7 +653,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_IncorrectAsyncResult", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal DbConnection Error: {0}.
         /// </summary>
@@ -662,7 +662,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InternalConnectionError", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal .NET Framework Data Provider error {0}..
         /// </summary>
@@ -671,7 +671,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InternalProviderError", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The length of argument &apos;{0}&apos; exceeds it&apos;s limit of &apos;{1}&apos;..
         /// </summary>
@@ -680,7 +680,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidArgumentLength", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid argument value for method &apos;{0}&apos;..
         /// </summary>
@@ -689,7 +689,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidArgumentValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Buffer offset &apos;{1}&apos; plus the bytes available &apos;{0}&apos; is greater than the length of the passed in buffer..
         /// </summary>
@@ -698,7 +698,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidBufferSizeOrIndex", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid CommandTimeout value {0}; the value must be &gt;= 0..
         /// </summary>
@@ -707,7 +707,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidCommandTimeout", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid value for key &apos;{0}&apos;..
         /// </summary>
@@ -716,7 +716,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidConnectionOptionValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The value&apos;s length for key &apos;{0}&apos; exceeds it&apos;s limit of &apos;{1}&apos;..
         /// </summary>
@@ -725,7 +725,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidConnectionOptionValueLength", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid &apos;Connect Timeout&apos; value which must be an integer &gt;= 0..
         /// </summary>
@@ -734,7 +734,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidConnectTimeoutValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The DataDirectory substitute is not a string..
         /// </summary>
@@ -743,7 +743,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidDataDirectory", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Data length &apos;{0}&apos; is less than 0..
         /// </summary>
@@ -752,7 +752,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidDataLength", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Specified length &apos;{0}&apos; is out of range..
         /// </summary>
@@ -761,7 +761,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidDataLength2", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The parameter data type of {0} is invalid..
         /// </summary>
@@ -770,7 +770,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidDataType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Data type &apos;{0}&apos; can not be formatted as a literal because it has an invalid date time digits..
         /// </summary>
@@ -779,7 +779,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidDateTimeDigits", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid destination buffer (size of {0}) offset: {1}.
         /// </summary>
@@ -788,7 +788,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidDestinationBufferIndex", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The {0} enumeration value, {1}, is invalid..
         /// </summary>
@@ -797,7 +797,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidEnumerationValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The value can not be formatted as a literal of the requested type..
         /// </summary>
@@ -806,7 +806,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidFormatValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Implicit conversion of object type &apos;{0}&apos; to data type &apos;{1}&apos; is not supported..
         /// </summary>
@@ -815,7 +815,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidImplicitConversion", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid keyword, contain one or more of &apos;no characters&apos;, &apos;control characters&apos;, &apos;leading or trailing whitespace&apos; or &apos;leading semicolons&apos;..
         /// </summary>
@@ -824,7 +824,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidKey", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Data type &apos;{0}&apos; can not be formatted as a literal because it has an invalid maximum scale..
         /// </summary>
@@ -833,7 +833,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidMaximumScale", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The MaxRecords value of {0} is invalid; the value must be &gt;= 0..
         /// </summary>
@@ -842,7 +842,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidMaxRecords", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid value for this metadata..
         /// </summary>
@@ -851,7 +851,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidMetaDataValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid min or max pool size values, min pool size cannot be greater than the max pool size..
         /// </summary>
@@ -860,7 +860,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidMinMaxPoolSizeValues", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot set the AccessToken property if &apos;Authentication&apos; has been specified in the connection string..
         /// </summary>
@@ -869,7 +869,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidMixedUsageOfAccessTokenAndAuthentication", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot set the AccessToken property with the &apos;Context Connection&apos; keyword..
         /// </summary>
@@ -878,7 +878,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidMixedUsageOfAccessTokenAndContextConnection", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot set the AccessToken property if the Credential property is already set..
         /// </summary>
@@ -887,7 +887,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidMixedUsageOfAccessTokenAndCredential", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot set the AccessToken property if the &apos;Integrated Security&apos; connection string keyword has been set to &apos;true&apos; or &apos;SSPI&apos;..
         /// </summary>
@@ -896,7 +896,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidMixedUsageOfAccessTokenAndIntegratedSecurity", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot set the AccessToken property if &apos;UserID&apos;, &apos;UID&apos;, &apos;Password&apos;, or &apos;PWD&apos; has been specified in connection string..
         /// </summary>
@@ -905,7 +905,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidMixedUsageOfAccessTokenAndUserIDPassword", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot set the Credential property if the AccessToken property is already set..
         /// </summary>
@@ -914,7 +914,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidMixedUsageOfCredentialAndAccessToken", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot use Credential with UserID, UID, Password, or PWD connection string keywords..
         /// </summary>
@@ -923,7 +923,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidMixedUsageOfSecureAndClearCredential", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot use Credential with Context Connection keyword..
         /// </summary>
@@ -932,7 +932,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidMixedUsageOfSecureCredentialAndContextConnection", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot use Credential with Integrated Security connection string keyword..
         /// </summary>
@@ -941,7 +941,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidMixedUsageOfSecureCredentialAndIntegratedSecurity", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to {0} &quot;{1}&quot;..
         /// </summary>
@@ -950,7 +950,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidMultipartName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to {0} &quot;{1}&quot;, incorrect usage of quotes..
         /// </summary>
@@ -959,7 +959,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidMultipartNameQuoteUsage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to {0} &quot;{1}&quot;, the current limit of &quot;{2}&quot; is insufficient..
         /// </summary>
@@ -968,7 +968,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidMultipartNameToManyParts", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid parameter Offset value &apos;{0}&apos;. The value must be greater than or equal to 0..
         /// </summary>
@@ -977,7 +977,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidOffsetValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Specified QuotePrefix and QuoteSuffix values do not match..
         /// </summary>
@@ -986,7 +986,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidPrefixSuffix", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Specified SeekOrigin value is invalid..
         /// </summary>
@@ -995,7 +995,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidSeekOrigin", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid parameter Size value &apos;{0}&apos;. The value must be greater than or equal to 0..
         /// </summary>
@@ -1004,7 +1004,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidSizeValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid source buffer (size of {0}) offset: {1}.
         /// </summary>
@@ -1013,7 +1013,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidSourceBufferIndex", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to SourceColumn is required to be a non-empty string..
         /// </summary>
@@ -1022,7 +1022,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidSourceColumn", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to SourceTable is required to be a non-empty string.
         /// </summary>
@@ -1031,7 +1031,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidSourceTable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The StartRecord value of {0} is invalid; the value must be &gt;= 0..
         /// </summary>
@@ -1040,7 +1040,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidStartRecord", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid UDL file..
         /// </summary>
@@ -1049,7 +1049,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidUDL", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The value contains embedded nulls (\u0000)..
         /// </summary>
@@ -1058,7 +1058,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid Xml; can only parse elements of version one..
         /// </summary>
@@ -1067,7 +1067,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_InvalidXMLBadVersion", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Keyword not supported: &apos;{0}&apos;..
         /// </summary>
@@ -1076,7 +1076,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_KeywordNotSupported", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The literal value provided is not a valid literal for the data type &apos;{0}&apos;..
         /// </summary>
@@ -1085,7 +1085,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_LiteralValueIsInvalid", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot enlist in the transaction because a local transaction is in progress on the connection.  Finish local transaction and retry..
         /// </summary>
@@ -1094,7 +1094,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_LocalTransactionPresent", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Mismatched end method call for asyncResult.  Expected call to {0} but {1} was called instead..
         /// </summary>
@@ -1103,7 +1103,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_MismatchedAsyncResult", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Missing SourceColumn mapping for &apos;{0}&apos;..
         /// </summary>
@@ -1112,7 +1112,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_MissingColumnMapping", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Use of key &apos;{0}&apos; requires the key &apos;{1}&apos; to be present..
         /// </summary>
@@ -1121,7 +1121,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_MissingConnectionOptionValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to DataReader.GetFieldType({0}) returned null..
         /// </summary>
@@ -1130,7 +1130,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_MissingDataReaderFieldType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The SelectCommand property has not been initialized before calling &apos;{0}&apos;..
         /// </summary>
@@ -1139,7 +1139,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_MissingSelectCommand", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The DataAdapter.SelectCommand property needs to be initialized..
         /// </summary>
@@ -1148,7 +1148,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_MissingSourceCommand", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The DataAdapter.SelectCommand.Connection property needs to be initialized;.
         /// </summary>
@@ -1157,7 +1157,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_MissingSourceCommandConnection", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Missing SourceTable mapping: &apos;{0}&apos;.
         /// </summary>
@@ -1166,7 +1166,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_MissingTableMapping", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Missing TableMapping when TableMapping.DataSetTable=&apos;{0}&apos;..
         /// </summary>
@@ -1175,7 +1175,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_MissingTableMappingDestination", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Missing the &apos;{0}&apos; DataTable for the &apos;{1}&apos; SourceTable..
         /// </summary>
@@ -1184,7 +1184,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_MissingTableSchema", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Multiple return value parameters are not supported..
         /// </summary>
@@ -1193,7 +1193,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_MultipleReturnValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to {0} must be marked as read only..
         /// </summary>
@@ -1202,7 +1202,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_MustBeReadOnly", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid value for argument &apos;{0}&apos;. The value must be greater than or equal to 0..
         /// </summary>
@@ -1211,7 +1211,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_NegativeParameter", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The ConnectionString property has not been initialized..
         /// </summary>
@@ -1220,7 +1220,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_NoConnectionString", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to A Non CLS Exception was caught..
         /// </summary>
@@ -1229,7 +1229,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_NonCLSException", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Timeout attempting to open the connection.  The time period elapsed prior to attempting to open the connection has been exceeded.  This may have occurred because of too many simultaneous non-pooled connection attempts..
         /// </summary>
@@ -1238,7 +1238,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_NonPooledOpenTimeout", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid {2} attempt at dataIndex &apos;{0}&apos;.  With CommandBehavior.SequentialAccess, you may only read from dataIndex &apos;{1}&apos; or greater..
         /// </summary>
@@ -1247,7 +1247,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_NonSeqByteAccess", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid attempt to read from column ordinal &apos;{0}&apos;.  With CommandBehavior.SequentialAccess, you may only read from column ordinal &apos;{1}&apos; or greater..
         /// </summary>
@@ -1256,7 +1256,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_NonSequentialColumnAccess", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The QuotePrefix and QuoteSuffix properties cannot be changed once an Insert, Update, or Delete command has been generated..
         /// </summary>
@@ -1265,7 +1265,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_NoQuoteChange", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The stored procedure &apos;{0}&apos; doesn&apos;t exist..
         /// </summary>
@@ -1274,7 +1274,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_NoStoredProcedureExists", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Given security element is not a permission element..
         /// </summary>
@@ -1283,7 +1283,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_NotAPermissionElement", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Metadata must be SqlDbType.Row.
         /// </summary>
@@ -1292,7 +1292,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_NotRowType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The {0} enumeration value, {1}, is not supported by the {2} method..
         /// </summary>
@@ -1301,7 +1301,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_NotSupportedEnumerationValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unexpected null DataSet argument..
         /// </summary>
@@ -1310,7 +1310,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_NullDataSet", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unexpected null DataTable argument.
         /// </summary>
@@ -1319,7 +1319,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_NullDataTable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The numerical value is too large to fit into a 96 bit decimal..
         /// </summary>
@@ -1328,7 +1328,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_NumericToDecimalOverflow", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The &apos;{0}&apos; keyword is obsolete. Use &apos;{1}&apos; instead..
         /// </summary>
@@ -1337,7 +1337,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_ObsoleteKeyword", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The ODBC provider did not return results from SQLGETTYPEINFO..
         /// </summary>
@@ -1346,7 +1346,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_OdbcNoTypesFromProvider", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Offset must refer to a location within the value..
         /// </summary>
@@ -1355,7 +1355,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_OffsetOutOfRangeException", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Only specify one item in the dataTables array when using non-zero values for startRecords or maxRecords..
         /// </summary>
@@ -1364,7 +1364,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_OnlyOneTableForStartRecordOrMaxRecords", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Not allowed to change the &apos;{0}&apos; property. {1}.
         /// </summary>
@@ -1373,7 +1373,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_OpenConnectionPropertySet", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to {0} requires an open and available Connection. {1}.
         /// </summary>
@@ -1382,7 +1382,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_OpenConnectionRequired", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Update requires the updating command to have an open connection object. {1}.
         /// </summary>
@@ -1391,7 +1391,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_OpenConnectionRequired_Clone", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Update requires the {0}Command to have an open connection object. {1}.
         /// </summary>
@@ -1400,7 +1400,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_OpenConnectionRequired_Delete", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Update requires the {0}Command to have an open connection object. {1}.
         /// </summary>
@@ -1409,7 +1409,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_OpenConnectionRequired_Insert", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Update requires the {0}Command to have an open connection object. {1}.
         /// </summary>
@@ -1418,7 +1418,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_OpenConnectionRequired_Update", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to There is already an open DataReader associated with this {0} which must be closed first..
         /// </summary>
@@ -1427,7 +1427,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_OpenReaderExists", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to There is already an open SqlResultSet associated with this command which must be closed first..
         /// </summary>
@@ -1436,7 +1436,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_OpenResultSetExists", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Operation aborted..
         /// </summary>
@@ -1445,7 +1445,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_OperationAborted", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Operation aborted due to an exception (see InnerException for details)..
         /// </summary>
@@ -1454,7 +1454,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_OperationAbortedExceptionMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to {0} does not support parallel transactions..
         /// </summary>
@@ -1463,7 +1463,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_ParallelTransactionsNotSupported", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Failed to convert parameter value from a {0} to a {1}..
         /// </summary>
@@ -1472,7 +1472,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_ParameterConversionFailed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Parameter value &apos;{0}&apos; is out of range..
         /// </summary>
@@ -1481,7 +1481,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_ParameterValueOutOfRange", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Can not start another operation while there is an asynchronous operation pending..
         /// </summary>
@@ -1490,7 +1490,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_PendingAsyncOperation", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Type mismatch..
         /// </summary>
@@ -1499,7 +1499,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_PermissionTypeMismatch", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Timeout expired.  The timeout period elapsed prior to obtaining a connection from the pool.  This may have occurred because all pooled connections were in use and max pool size was reached..
         /// </summary>
@@ -1508,7 +1508,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_PooledOpenTimeout", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to {0}.Prepare method requires parameters of type &apos;{1}&apos; have an explicitly set Precision and Scale..
         /// </summary>
@@ -1517,7 +1517,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_PrepareParameterScale", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to {0}.Prepare method requires all variable length parameters to have an explicitly set non-zero Size..
         /// </summary>
@@ -1526,7 +1526,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_PrepareParameterSize", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to {0}.Prepare method requires all parameters to have an explicitly set type..
         /// </summary>
@@ -1535,7 +1535,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_PrepareParameterType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The &apos;{0}&apos; property requires Microsoft WindowsNT or a WindowsNT based operating system..
         /// </summary>
@@ -1544,7 +1544,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_PropertyNotSupported", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to {0} requires open connection when the quote prefix has not been set..
         /// </summary>
@@ -1553,7 +1553,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_QuotePrefixNotSet", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to When batching, the command&apos;s UpdatedRowSource property value of UpdateRowSource.FirstReturnedRecord or UpdateRowSource.Both is invalid..
         /// </summary>
@@ -1562,7 +1562,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_ResultsNotAllowedDuringBatch", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to RowUpdatedEvent: Errors occurred; no additional is information available..
         /// </summary>
@@ -1571,7 +1571,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_RowUpdatedErrors", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to RowUpdatingEvent: Errors occurred; no additional is information available..
         /// </summary>
@@ -1580,7 +1580,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_RowUpdatingErrors", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The only acceptable value for the property &apos;{0}&apos; is &apos;{1}&apos;..
         /// </summary>
@@ -1589,7 +1589,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_SingleValuedProperty", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid attempt to {0} when stream is closed..
         /// </summary>
@@ -1598,7 +1598,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_StreamClosed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The transaction assigned to this command must be the most nested pending local transaction..
         /// </summary>
@@ -1607,7 +1607,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_TransactionCompleted", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The transaction associated with the current connection has completed but has not been disposed.  The transaction must be disposed before the connection can be used to execute SQL statements..
         /// </summary>
@@ -1616,7 +1616,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_TransactionCompletedButNotDisposed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The transaction is either not associated with the current connection or has been completed..
         /// </summary>
@@ -1625,7 +1625,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_TransactionConnectionMismatch", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Connection currently has transaction enlisted.  Finish current transaction and retry..
         /// </summary>
@@ -1634,7 +1634,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_TransactionPresent", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to {0} requires the command to have a transaction when the connection assigned to the command is in a pending local transaction.  The Transaction property of the command has not been initialized..
         /// </summary>
@@ -1643,7 +1643,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_TransactionRequired", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to This {0} has completed; it is no longer usable..
         /// </summary>
@@ -1652,7 +1652,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_TransactionZombied", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unable to load the UDL file..
         /// </summary>
@@ -1661,7 +1661,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_UdlFileError", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Can not determine the correct boolean literal values. Boolean literals can not be created..
         /// </summary>
@@ -1670,7 +1670,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_UnableToCreateBooleanLiteral", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to {1}[{0}]: the Size property has an invalid size of 0..
         /// </summary>
@@ -1679,7 +1679,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_UninitializedParameterSize", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to No mapping exists from object type {0} to a known managed provider native type..
         /// </summary>
@@ -1688,7 +1688,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_UnknownDataType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unable to handle an unknown TypeCode {0} returned by Type {1}..
         /// </summary>
@@ -1697,7 +1697,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_UnknownDataTypeCode", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Literals of the native data type associated with data type &apos;{0}&apos; are not supported..
         /// </summary>
@@ -1706,7 +1706,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_UnsupportedNativeDataTypeOleDb", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The StatementType {0} is not expected here..
         /// </summary>
@@ -1715,7 +1715,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_UnwantedStatementType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Concurrency violation: the batched command affected {0} of the expected {1} records..
         /// </summary>
@@ -1724,7 +1724,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_UpdateConcurrencyViolation_Batch", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Concurrency violation: the DeleteCommand affected {0} of the expected {1} records..
         /// </summary>
@@ -1733,7 +1733,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_UpdateConcurrencyViolation_Delete", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Concurrency violation: the UpdateCommand affected {0} of the expected {1} records..
         /// </summary>
@@ -1742,7 +1742,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_UpdateConcurrencyViolation_Update", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to DataRow[{0}] is from a different DataTable than DataRow[0]..
         /// </summary>
@@ -1751,7 +1751,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_UpdateMismatchRowTable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Update requires the command clone to be valid..
         /// </summary>
@@ -1760,7 +1760,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_UpdateRequiresCommandClone", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Update requires a valid DeleteCommand when passed DataRow collection with deleted rows..
         /// </summary>
@@ -1769,7 +1769,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_UpdateRequiresCommandDelete", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Update requires a valid InsertCommand when passed DataRow collection with new rows..
         /// </summary>
@@ -1778,7 +1778,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_UpdateRequiresCommandInsert", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Auto SQL generation during Update requires a valid SelectCommand..
         /// </summary>
@@ -1787,7 +1787,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_UpdateRequiresCommandSelect", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Update requires a valid UpdateCommand when passed DataRow collection with modified rows..
         /// </summary>
@@ -1796,7 +1796,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_UpdateRequiresCommandUpdate", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Update unable to find TableMapping[&apos;{0}&apos;] or DataTable &apos;{0}&apos;..
         /// </summary>
@@ -1805,7 +1805,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_UpdateRequiresSourceTable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Update: expected a non-empty SourceTable name..
         /// </summary>
@@ -1814,7 +1814,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_UpdateRequiresSourceTableName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The version of SQL Server in use does not support datatype &apos;{0}&apos;..
         /// </summary>
@@ -1823,7 +1823,7 @@ namespace System {
                 return ResourceManager.GetString("ADP_VersionDoesNotSupportDataType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The validation of an attestation token failed. The token signature does not match the signature omputed using a public key retrieved from the attestation public key endpoint at &apos;{0}&apos;. Verify the DNS apping for the endpoint. If correct, contact Customer Support Services..
         /// </summary>
@@ -1832,7 +1832,7 @@ namespace System {
                 return ResourceManager.GetString("AttestationTokenSignatureValidationFailed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to .database.chinacloudapi.cn.
         /// </summary>
@@ -1841,7 +1841,7 @@ namespace System {
                 return ResourceManager.GetString("AZURESQL_ChinaEndpoint", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to .database.windows.net.
         /// </summary>
@@ -1850,7 +1850,7 @@ namespace System {
                 return ResourceManager.GetString("AZURESQL_GenericEndpoint", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to .database.cloudapi.de.
         /// </summary>
@@ -1859,7 +1859,7 @@ namespace System {
                 return ResourceManager.GetString("AZURESQL_GermanEndpoint", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to .database.usgovcloudapi.net.
         /// </summary>
@@ -1868,7 +1868,7 @@ namespace System {
                 return ResourceManager.GetString("AZURESQL_UsGovEndpoint", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to There is more than one table with the same name &apos;{0}&apos; (even if namespace is different)..
         /// </summary>
@@ -1877,7 +1877,7 @@ namespace System {
                 return ResourceManager.GetString("CodeGen_DuplicateTableName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot generate identifier for name &apos;{0}&apos;..
         /// </summary>
@@ -1886,7 +1886,7 @@ namespace System {
                 return ResourceManager.GetString("CodeGen_InvalidIdentifier", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Column &apos;{0}&apos;: Type &apos;{1}&apos; does not have parameterless constructor..
         /// </summary>
@@ -1895,7 +1895,7 @@ namespace System {
                 return ResourceManager.GetString("CodeGen_NoCtor0", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Column &apos;{0}&apos;: Type &apos;{1}&apos; does not have constructor with string argument..
         /// </summary>
@@ -1904,7 +1904,7 @@ namespace System {
                 return ResourceManager.GetString("CodeGen_NoCtor1", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Column &apos;{0}&apos;: Type &apos;{1}&apos; cannot be null..
         /// </summary>
@@ -1913,7 +1913,7 @@ namespace System {
                 return ResourceManager.GetString("CodeGen_TypeCantBeNull", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Occurs whenever this collection&apos;s membership changes..
         /// </summary>
@@ -1922,7 +1922,7 @@ namespace System {
                 return ResourceManager.GetString("collectionChangedEventDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Only elements allowed..
         /// </summary>
@@ -1931,7 +1931,7 @@ namespace System {
                 return ResourceManager.GetString("ConfigBaseElementsOnly", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Child nodes not allowed..
         /// </summary>
@@ -1940,7 +1940,7 @@ namespace System {
                 return ResourceManager.GetString("ConfigBaseNoChildNodes", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The requested .NET Framework Data Provider&apos;s implementation does not have an Instance field of a System.Data.Common.DbProviderFactory derived type..
         /// </summary>
@@ -1949,7 +1949,7 @@ namespace System {
                 return ResourceManager.GetString("ConfigProviderInvalid", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The missing .NET Framework Data Provider&apos;s assembly qualified name is required..
         /// </summary>
@@ -1958,7 +1958,7 @@ namespace System {
                 return ResourceManager.GetString("ConfigProviderMissing", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unable to find the requested .NET Framework Data Provider.  It may not be installed..
         /// </summary>
@@ -1967,7 +1967,7 @@ namespace System {
                 return ResourceManager.GetString("ConfigProviderNotFound", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Failed to find or load the registered .NET Framework Data Provider..
         /// </summary>
@@ -1976,7 +1976,7 @@ namespace System {
                 return ResourceManager.GetString("ConfigProviderNotInstalled", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Required attribute &apos;{0}&apos; cannot be empty..
         /// </summary>
@@ -1985,7 +1985,7 @@ namespace System {
                 return ResourceManager.GetString("ConfigRequiredAttributeEmpty", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Required attribute &apos;{0}&apos; not found..
         /// </summary>
@@ -1994,7 +1994,7 @@ namespace System {
                 return ResourceManager.GetString("ConfigRequiredAttributeMissing", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The &apos;{0}&apos; section can only appear once per config file..
         /// </summary>
@@ -2003,7 +2003,7 @@ namespace System {
                 return ResourceManager.GetString("ConfigSectionsUnique", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unrecognized attribute &apos;{0}&apos;..
         /// </summary>
@@ -2012,7 +2012,7 @@ namespace System {
                 return ResourceManager.GetString("ConfigUnrecognizedAttributes", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unrecognized element..
         /// </summary>
@@ -2021,7 +2021,7 @@ namespace System {
                 return ResourceManager.GetString("ConfigUnrecognizedElement", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the name of this constraint..
         /// </summary>
@@ -2030,7 +2030,7 @@ namespace System {
                 return ResourceManager.GetString("ConstraintNameDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the table of this constraint..
         /// </summary>
@@ -2039,7 +2039,7 @@ namespace System {
                 return ResourceManager.GetString("ConstraintTableDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to &apos;{0}&apos; argument contains null value..
         /// </summary>
@@ -2048,7 +2048,7 @@ namespace System {
                 return ResourceManager.GetString("Data_ArgumentContainsNull", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to &apos;{0}&apos; argument cannot be null..
         /// </summary>
@@ -2057,7 +2057,7 @@ namespace System {
                 return ResourceManager.GetString("Data_ArgumentNull", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to &apos;{0}&apos; argument is out of range..
         /// </summary>
@@ -2066,7 +2066,7 @@ namespace System {
                 return ResourceManager.GetString("Data_ArgumentOutOfRange", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Collection itself is not modifiable..
         /// </summary>
@@ -2075,7 +2075,7 @@ namespace System {
                 return ResourceManager.GetString("Data_CannotModifyCollection", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The given name &apos;{0}&apos; matches at least two names in the collection object with different cases, but does not match either of them with the same case..
         /// </summary>
@@ -2084,7 +2084,7 @@ namespace System {
                 return ResourceManager.GetString("Data_CaseInsensitiveNameConflict", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Failed to enable constraints. One or more rows contain values violating non-null, unique, or foreign-key constraints..
         /// </summary>
@@ -2093,7 +2093,7 @@ namespace System {
                 return ResourceManager.GetString("Data_EnforceConstraints", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Offset and length were out of bounds for the array or count is greater than the number of elements from index to the end of the source collection..
         /// </summary>
@@ -2102,7 +2102,7 @@ namespace System {
                 return ResourceManager.GetString("Data_InvalidOffsetLength", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The given name &apos;{0}&apos; matches at least two names in the collection object with different namespaces..
         /// </summary>
@@ -2111,7 +2111,7 @@ namespace System {
                 return ResourceManager.GetString("Data_NamespaceNameConflict", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Whether or not Fill will call DataRow.AcceptChanges..
         /// </summary>
@@ -2120,7 +2120,7 @@ namespace System {
                 return ResourceManager.GetString("DataAdapter_AcceptChangesDuringFill", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Whether or not Update will call DataRow.AcceptChanges..
         /// </summary>
@@ -2129,7 +2129,7 @@ namespace System {
                 return ResourceManager.GetString("DataAdapter_AcceptChangesDuringUpdate", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Whether or not to continue to the next DataRow when the Update events, RowUpdating and RowUpdated, Status is UpdateStatus.ErrorsOccurred..
         /// </summary>
@@ -2138,7 +2138,7 @@ namespace System {
                 return ResourceManager.GetString("DataAdapter_ContinueUpdateOnError", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Event triggered when a recoverable error occurs during Fill..
         /// </summary>
@@ -2147,7 +2147,7 @@ namespace System {
                 return ResourceManager.GetString("DataAdapter_FillError", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to How the adapter fills the DataTable from the DataReader..
         /// </summary>
@@ -2156,7 +2156,7 @@ namespace System {
                 return ResourceManager.GetString("DataAdapter_FillLoadOption", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The action taken when a table or column in the TableMappings is missing..
         /// </summary>
@@ -2165,7 +2165,7 @@ namespace System {
                 return ResourceManager.GetString("DataAdapter_MissingMappingAction", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The action taken when a table or column in the DataSet is missing..
         /// </summary>
@@ -2174,7 +2174,7 @@ namespace System {
                 return ResourceManager.GetString("DataAdapter_MissingSchemaAction", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Should Fill return provider specific values or common CLSCompliant values..
         /// </summary>
@@ -2183,7 +2183,7 @@ namespace System {
                 return ResourceManager.GetString("DataAdapter_ReturnProviderSpecificTypes", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to How to map source table to DataSet table..
         /// </summary>
@@ -2192,7 +2192,7 @@ namespace System {
                 return ResourceManager.GetString("DataAdapter_TableMappings", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Action.
         /// </summary>
@@ -2201,7 +2201,7 @@ namespace System {
                 return ResourceManager.GetString("DataCategory_Action", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Advanced.
         /// </summary>
@@ -2210,7 +2210,7 @@ namespace System {
                 return ResourceManager.GetString("DataCategory_Advanced", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Behavior.
         /// </summary>
@@ -2219,7 +2219,7 @@ namespace System {
                 return ResourceManager.GetString("DataCategory_Behavior", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Connection Resiliency.
         /// </summary>
@@ -2228,7 +2228,7 @@ namespace System {
                 return ResourceManager.GetString("DataCategory_ConnectionResilency", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Context.
         /// </summary>
@@ -2237,7 +2237,7 @@ namespace System {
                 return ResourceManager.GetString("DataCategory_Context", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Data.
         /// </summary>
@@ -2246,7 +2246,7 @@ namespace System {
                 return ResourceManager.GetString("DataCategory_Data", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Fill.
         /// </summary>
@@ -2255,7 +2255,7 @@ namespace System {
                 return ResourceManager.GetString("DataCategory_Fill", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to InfoMessage.
         /// </summary>
@@ -2264,7 +2264,7 @@ namespace System {
                 return ResourceManager.GetString("DataCategory_InfoMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Initialization.
         /// </summary>
@@ -2273,7 +2273,7 @@ namespace System {
                 return ResourceManager.GetString("DataCategory_Initialization", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Mapping.
         /// </summary>
@@ -2282,7 +2282,7 @@ namespace System {
                 return ResourceManager.GetString("DataCategory_Mapping", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Named ConnectionString.
         /// </summary>
@@ -2291,7 +2291,7 @@ namespace System {
                 return ResourceManager.GetString("DataCategory_NamedConnectionString", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Notification.
         /// </summary>
@@ -2300,7 +2300,7 @@ namespace System {
                 return ResourceManager.GetString("DataCategory_Notification", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Pooling.
         /// </summary>
@@ -2309,7 +2309,7 @@ namespace System {
                 return ResourceManager.GetString("DataCategory_Pooling", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Replication.
         /// </summary>
@@ -2318,7 +2318,7 @@ namespace System {
                 return ResourceManager.GetString("DataCategory_Replication", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Schema.
         /// </summary>
@@ -2327,7 +2327,7 @@ namespace System {
                 return ResourceManager.GetString("DataCategory_Schema", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Security.
         /// </summary>
@@ -2336,7 +2336,7 @@ namespace System {
                 return ResourceManager.GetString("DataCategory_Security", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Source.
         /// </summary>
@@ -2345,7 +2345,7 @@ namespace System {
                 return ResourceManager.GetString("DataCategory_Source", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to StateChange.
         /// </summary>
@@ -2354,7 +2354,7 @@ namespace System {
                 return ResourceManager.GetString("DataCategory_StateChange", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to StatementCompleted.
         /// </summary>
@@ -2363,7 +2363,7 @@ namespace System {
                 return ResourceManager.GetString("DataCategory_StatementCompleted", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to UDT.
         /// </summary>
@@ -2372,7 +2372,7 @@ namespace System {
                 return ResourceManager.GetString("DataCategory_Udt", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Update.
         /// </summary>
@@ -2381,7 +2381,7 @@ namespace System {
                 return ResourceManager.GetString("DataCategory_Update", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to XML.
         /// </summary>
@@ -2390,7 +2390,7 @@ namespace System {
                 return ResourceManager.GetString("DataCategory_Xml", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot set AutoIncrement property for a column with DefaultValue set..
         /// </summary>
@@ -2399,7 +2399,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_AutoIncrementAndDefaultValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot set AutoIncrement property for a computed column..
         /// </summary>
@@ -2408,7 +2408,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_AutoIncrementAndExpression", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot change AutoIncrement of a DataColumn with type &apos;{0}&apos; once it has data..
         /// </summary>
@@ -2417,7 +2417,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_AutoIncrementCannotSetIfHasData", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to AutoIncrementStep must be a non-zero value..
         /// </summary>
@@ -2426,7 +2426,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_AutoIncrementSeed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot change the Column &apos;{0}&apos; property Namespace. The Column is SimpleContent..
         /// </summary>
@@ -2435,7 +2435,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_CannotChangeNamespace", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The DateTimeMode can be set only on DataColumns of type DateTime..
         /// </summary>
@@ -2444,7 +2444,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_CannotSetDateTimeModeForNonDateTimeColumns", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot set Column &apos;{0}&apos; property MaxLength to &apos;{1}&apos;. There is at least one string in the table longer than the new limit..
         /// </summary>
@@ -2453,7 +2453,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_CannotSetMaxLength", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot set Column &apos;{0}&apos; property MaxLength. The Column is SimpleContent..
         /// </summary>
@@ -2462,7 +2462,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_CannotSetMaxLength2", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot set Column &apos;{0}&apos; to be null. Please use DBNull instead..
         /// </summary>
@@ -2471,7 +2471,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_CannotSetToNull", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot set Column &apos;{0}&apos; property MappingType to SimpleContent. The Column DataType is {1}..
         /// </summary>
@@ -2480,7 +2480,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_CannotSimpleContent", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot set Column &apos;{0}&apos; property DataType to {1}. The Column is SimpleContent..
         /// </summary>
@@ -2489,7 +2489,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_CannotSimpleContentType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot change DataType of a column once it has data..
         /// </summary>
@@ -2498,7 +2498,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_ChangeDataType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot change DateTimeMode from &apos;{0}&apos; to &apos;{1}&apos; once the table has data..
         /// </summary>
@@ -2507,7 +2507,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_DateTimeMode", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot set a DefaultValue on an AutoIncrement column..
         /// </summary>
@@ -2516,7 +2516,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_DefaultValueAndAutoIncrement", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The DefaultValue for column {0} is of type {1}, but the column is of type {2}..
         /// </summary>
@@ -2525,7 +2525,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_DefaultValueColumnDataType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The DefaultValue for column {0} is of type {1} and cannot be converted to {2}..
         /// </summary>
@@ -2534,7 +2534,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_DefaultValueDataType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The DefaultValue for the column is of type {0} and cannot be converted to {1}..
         /// </summary>
@@ -2543,7 +2543,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_DefaultValueDataType1", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Column &apos;{0}&apos; exceeds the MaxLength limit..
         /// </summary>
@@ -2552,7 +2552,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_ExceedMaxLength", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot set Expression property on column {0}, because it is a part of a constraint..
         /// </summary>
@@ -2561,7 +2561,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_ExpressionAndConstraint", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot set expression because column cannot be made ReadOnly..
         /// </summary>
@@ -2570,7 +2570,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_ExpressionAndReadOnly", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot create an expression on a column that has AutoIncrement or Unique..
         /// </summary>
@@ -2579,7 +2579,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_ExpressionAndUnique", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot set Expression property due to circular reference in the expression..
         /// </summary>
@@ -2588,7 +2588,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_ExpressionCircular", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot create a constraint based on Expression column {0}..
         /// </summary>
@@ -2597,7 +2597,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_ExpressionInConstraint", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to MaxLength applies to string data type only. You cannot set Column &apos;{0}&apos; property MaxLength to be non-negative number..
         /// </summary>
@@ -2606,7 +2606,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_HasToBeStringType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Type &apos;{0}&apos; does not contain static Null property or field..
         /// </summary>
@@ -2615,7 +2615,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_INullableUDTwithoutStaticNull", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to DataColumn with type &apos;{0}&apos; is a complexType. Can not serialize value of a complex type as Attribute.
         /// </summary>
@@ -2624,7 +2624,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_InvalidDataColumnMapping", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to &apos;{0}&apos; is Invalid DataSetDateTime value..
         /// </summary>
@@ -2633,7 +2633,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_InvalidDateTimeMode", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot set column &apos;{0}&apos;. The value violates the MaxLength limit of this column..
         /// </summary>
@@ -2642,7 +2642,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_LongerThanMaxLength", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to ColumnName is required when it is part of a DataTable..
         /// </summary>
@@ -2651,7 +2651,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_NameRequired", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Column &apos;{0}&apos; contains non-unique values..
         /// </summary>
@@ -2660,7 +2660,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_NonUniqueValues", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Column &apos;{0}&apos; does not allow DBNull.Value..
         /// </summary>
@@ -2669,7 +2669,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_NotAllowDBNull", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Column must belong to a table..
         /// </summary>
@@ -2678,7 +2678,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_NotInAnyTable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Column &apos;{0}&apos; does not belong to table {1}..
         /// </summary>
@@ -2687,7 +2687,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_NotInTheTable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Column &apos;{0}&apos; does not belong to underlying table &apos;{1}&apos;..
         /// </summary>
@@ -2696,7 +2696,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_NotInTheUnderlyingTable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to DataSet does not support System.Nullable&lt;&gt;..
         /// </summary>
@@ -2705,7 +2705,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_NullableTypesNotSupported", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Column requires a valid DataType..
         /// </summary>
@@ -2714,7 +2714,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_NullDataType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Column &apos;{0}&apos; has null values in it..
         /// </summary>
@@ -2723,7 +2723,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_NullKeyValues", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Column &apos;{0}&apos; does not allow nulls..
         /// </summary>
@@ -2732,7 +2732,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_NullValues", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Ordinal &apos;{0}&apos; exceeds the maximum number..
         /// </summary>
@@ -2741,7 +2741,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_OrdinalExceedMaximun", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Column &apos;{0}&apos; is read only..
         /// </summary>
@@ -2750,7 +2750,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_ReadOnly", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot change ReadOnly property for the expression column..
         /// </summary>
@@ -2759,7 +2759,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_ReadOnlyAndExpression", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to SetAdded and SetModified can only be called on DataRows with Unchanged DataRowState..
         /// </summary>
@@ -2768,7 +2768,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_SetAddedAndModifiedCalledOnNonUnchanged", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Couldn&apos;t store &lt;{0}&gt; in {1} Column.  Expected type is {2}..
         /// </summary>
@@ -2777,7 +2777,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_SetFailed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Type &apos;{0}&apos; does not implement IRevertibleChangeTracking; therefore can not proceed with RejectChanges()..
         /// </summary>
@@ -2786,7 +2786,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_UDTImplementsIChangeTrackingButnotIRevertible", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot change Unique property for the expression column..
         /// </summary>
@@ -2795,7 +2795,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumn_UniqueAndExpression", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates whether null values are allowed in this column..
         /// </summary>
@@ -2804,7 +2804,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumnAllowNullDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates whether the column automatically increments itself for new rows added to the table.  The type of this column must be Int16, Int32, or Int64..
         /// </summary>
@@ -2813,7 +2813,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumnAutoIncrementDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the starting value for an AutoIncrement column..
         /// </summary>
@@ -2822,7 +2822,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumnAutoIncrementSeedDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the increment used by an AutoIncrement column..
         /// </summary>
@@ -2831,7 +2831,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumnAutoIncrementStepDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the default user-interface caption for this column..
         /// </summary>
@@ -2840,7 +2840,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumnCaptionDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the name used to look up this column in the Columns collection of a DataTable..
         /// </summary>
@@ -2849,7 +2849,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumnColumnNameDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Returns the DataTable to which this column belongs..
         /// </summary>
@@ -2858,7 +2858,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumnDataTableDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the type of data stored in this column..
         /// </summary>
@@ -2867,7 +2867,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumnDataTypeDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates DateTimeMode of this DataColumn..
         /// </summary>
@@ -2876,7 +2876,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumnDateTimeModeDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the default column value used when adding new rows to the table..
         /// </summary>
@@ -2885,7 +2885,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumnDefaultValueDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the value that this column computes for each row based on other columns instead of taking user input..
         /// </summary>
@@ -2894,7 +2894,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumnExpressionDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to DataColumn.ColumnName.
         /// </summary>
@@ -2903,7 +2903,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumnMapping_DataSetColumn", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Source column name - case sensitive..
         /// </summary>
@@ -2912,7 +2912,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumnMapping_SourceColumn", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates how this column persists in XML: as an attribute, element, simple content node, or nothing..
         /// </summary>
@@ -2921,7 +2921,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumnMappingDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The number of items in the collection.
         /// </summary>
@@ -2930,7 +2930,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumnMappings_Count", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The specified DataColumnMapping object..
         /// </summary>
@@ -2939,7 +2939,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumnMappings_Item", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the maximum length of the value this column allows..
         /// </summary>
@@ -2948,7 +2948,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumnMaxLengthDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the XML uri for elements or attributes stored in this column..
         /// </summary>
@@ -2957,7 +2957,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumnNamespaceDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the index of this column in the Columns collection..
         /// </summary>
@@ -2966,7 +2966,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumnOrdinalDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the Prefix used for this DataColumn in xml representation..
         /// </summary>
@@ -2975,7 +2975,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumnPrefixDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates whether this column allows changes once a row has been added to the table..
         /// </summary>
@@ -2984,7 +2984,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumnReadOnlyDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Column &apos;{0}&apos; already belongs to this DataTable..
         /// </summary>
@@ -2993,7 +2993,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumns_Add1", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Column &apos;{0}&apos; already belongs to another DataTable..
         /// </summary>
@@ -3002,7 +3002,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumns_Add2", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot have more than one SimpleContent columns in a DataTable..
         /// </summary>
@@ -3011,7 +3011,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumns_Add3", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot add a SimpleContent column to a table containing element columns or nested relations..
         /// </summary>
@@ -3020,7 +3020,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumns_Add4", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to A column named &apos;{0}&apos; already belongs to this DataTable..
         /// </summary>
@@ -3029,7 +3029,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumns_AddDuplicate", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot add a column named &apos;{0}&apos;: a nested table with the same name already belongs to this DataTable..
         /// </summary>
@@ -3038,7 +3038,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumns_AddDuplicate2", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to A column named &apos;{0}&apos; already belongs to this DataTable: cannot set a nested table name to the same name..
         /// </summary>
@@ -3047,7 +3047,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumns_AddDuplicate3", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot find column {0}..
         /// </summary>
@@ -3056,7 +3056,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumns_OutOfRange", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot remove a column that doesn&apos;t belong to this table..
         /// </summary>
@@ -3065,7 +3065,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumns_Remove", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot remove this column, because it is part of the parent key for relationship {0}..
         /// </summary>
@@ -3074,7 +3074,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumns_RemoveChildKey", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot remove this column, because it is a part of the constraint {0} on the table {1}..
         /// </summary>
@@ -3083,7 +3083,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumns_RemoveConstraint", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot remove this column, because it is part of an expression: {0} = {1}..
         /// </summary>
@@ -3092,7 +3092,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumns_RemoveExpression", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot remove this column, because it&apos;s part of the primary key..
         /// </summary>
@@ -3101,7 +3101,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumns_RemovePrimaryKey", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates whether this column should restrict its values in the rows of the table to be unique..
         /// </summary>
@@ -3110,7 +3110,7 @@ namespace System {
                 return ResourceManager.GetString("DataColumnUniqueDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to This constraint cannot be added since ForeignKey doesn&apos;t belong to table {0}..
         /// </summary>
@@ -3119,7 +3119,7 @@ namespace System {
                 return ResourceManager.GetString("DataConstraint_AddFailed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot add primary key constraint since primary key is already set for the table..
         /// </summary>
@@ -3128,7 +3128,7 @@ namespace System {
                 return ResourceManager.GetString("DataConstraint_AddPrimaryKeyConstraint", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Property not accessible because &apos;{0}&apos;..
         /// </summary>
@@ -3137,7 +3137,7 @@ namespace System {
                 return ResourceManager.GetString("DataConstraint_BadObjectPropertyAccess", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot add constraint to DataTable &apos;{0}&apos; which is a child table in two nested relations..
         /// </summary>
@@ -3146,7 +3146,7 @@ namespace System {
                 return ResourceManager.GetString("DataConstraint_CantAddConstraintToMultipleNestedTable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot delete this row because constraints are enforced on relation {0}, and deleting this row will strand child rows..
         /// </summary>
@@ -3155,7 +3155,7 @@ namespace System {
                 return ResourceManager.GetString("DataConstraint_CascadeDelete", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot make this change because constraints are enforced on relation {0}, and changing this value will strand child rows..
         /// </summary>
@@ -3164,7 +3164,7 @@ namespace System {
                 return ResourceManager.GetString("DataConstraint_CascadeUpdate", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot clear table {0} because ForeignKeyConstraint {1} enforces constraints and there are child rows in {2}..
         /// </summary>
@@ -3173,7 +3173,7 @@ namespace System {
                 return ResourceManager.GetString("DataConstraint_ClearParentTable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Constraint matches constraint named {0} already in collection..
         /// </summary>
@@ -3182,7 +3182,7 @@ namespace System {
                 return ResourceManager.GetString("DataConstraint_Duplicate", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to A Constraint named &apos;{0}&apos; already belongs to this DataTable..
         /// </summary>
@@ -3191,7 +3191,7 @@ namespace System {
                 return ResourceManager.GetString("DataConstraint_DuplicateName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to ForeignKeyConstraint {0} requires the child key values ({1}) to exist in the parent table..
         /// </summary>
@@ -3200,7 +3200,7 @@ namespace System {
                 return ResourceManager.GetString("DataConstraint_ForeignKeyViolation", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to These columns don&apos;t point to this table..
         /// </summary>
@@ -3209,7 +3209,7 @@ namespace System {
                 return ResourceManager.GetString("DataConstraint_ForeignTable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot remove unique constraint &apos;{0}&apos;. Remove foreign key constraint &apos;{1}&apos; first..
         /// </summary>
@@ -3218,7 +3218,7 @@ namespace System {
                 return ResourceManager.GetString("DataConstraint_NeededForForeignKeyConstraint", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot change the name of a constraint to empty string when it is in the ConstraintCollection..
         /// </summary>
@@ -3227,7 +3227,7 @@ namespace System {
                 return ResourceManager.GetString("DataConstraint_NoName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Constraint &apos;{0}&apos; does not belong to this DataTable..
         /// </summary>
@@ -3236,7 +3236,7 @@ namespace System {
                 return ResourceManager.GetString("DataConstraint_NotInTheTable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot find constraint {0}..
         /// </summary>
@@ -3245,7 +3245,7 @@ namespace System {
                 return ResourceManager.GetString("DataConstraint_OutOfRange", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to This constraint cannot be enabled as not all values have corresponding parent values..
         /// </summary>
@@ -3254,7 +3254,7 @@ namespace System {
                 return ResourceManager.GetString("DataConstraint_ParentValues", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot remove a constraint that doesn&apos;t belong to this table..
         /// </summary>
@@ -3263,7 +3263,7 @@ namespace System {
                 return ResourceManager.GetString("DataConstraint_RemoveFailed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot remove this row because it has child rows, and constraints on relation {0} are enforced..
         /// </summary>
@@ -3272,7 +3272,7 @@ namespace System {
                 return ResourceManager.GetString("DataConstraint_RemoveParentRow", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to These columns don&apos;t currently have unique values..
         /// </summary>
@@ -3281,7 +3281,7 @@ namespace System {
                 return ResourceManager.GetString("DataConstraint_UniqueViolation", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot enforce constraints on constraint {0}..
         /// </summary>
@@ -3290,7 +3290,7 @@ namespace System {
                 return ResourceManager.GetString("DataConstraint_Violation", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Column &apos;{0}&apos; is constrained to be unique.  Value &apos;{1}&apos; is already present..
         /// </summary>
@@ -3299,7 +3299,7 @@ namespace System {
                 return ResourceManager.GetString("DataConstraint_ViolationValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to This type of node cannot be cloned: {0}..
         /// </summary>
@@ -3308,7 +3308,7 @@ namespace System {
                 return ResourceManager.GetString("DataDom_CloneNode", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot change the ColumnMapping property once the associated DataSet is mapped to a loaded XML document..
         /// </summary>
@@ -3317,7 +3317,7 @@ namespace System {
                 return ResourceManager.GetString("DataDom_ColumnMappingChange", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot change the column name once the associated DataSet is mapped to a loaded XML document..
         /// </summary>
@@ -3326,7 +3326,7 @@ namespace System {
                 return ResourceManager.GetString("DataDom_ColumnNameChange", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot change the column namespace once the associated DataSet is mapped to a loaded XML document..
         /// </summary>
@@ -3335,7 +3335,7 @@ namespace System {
                 return ResourceManager.GetString("DataDom_ColumnNamespaceChange", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot change the DataSet name once the DataSet is mapped to a loaded XML document..
         /// </summary>
@@ -3344,7 +3344,7 @@ namespace System {
                 return ResourceManager.GetString("DataDom_DataSetNameChange", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot add, remove, or change Nested relations from the DataSet once the DataSet is mapped to a loaded XML document..
         /// </summary>
@@ -3353,7 +3353,7 @@ namespace System {
                 return ResourceManager.GetString("DataDom_DataSetNestedRelationsChange", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The DataSet parameter is invalid. It cannot be null..
         /// </summary>
@@ -3362,7 +3362,7 @@ namespace System {
                 return ResourceManager.GetString("DataDom_DataSetNull", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot add or remove tables from the DataSet once the DataSet is mapped to a loaded XML document..
         /// </summary>
@@ -3371,7 +3371,7 @@ namespace System {
                 return ResourceManager.GetString("DataDom_DataSetTablesChange", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Please set DataSet.EnforceConstraints == false before trying to edit XmlDataDocument using XML operations..
         /// </summary>
@@ -3380,7 +3380,7 @@ namespace System {
                 return ResourceManager.GetString("DataDom_EnforceConstraintsShouldBeOff", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid foliation..
         /// </summary>
@@ -3389,7 +3389,7 @@ namespace System {
                 return ResourceManager.GetString("DataDom_Foliation", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to DataSet can be associated with at most one XmlDataDocument. Cannot associate the DataSet with the current XmlDataDocument because the DataSet is already associated with another XmlDataDocument..
         /// </summary>
@@ -3398,7 +3398,7 @@ namespace System {
                 return ResourceManager.GetString("DataDom_MultipleDataSet", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot load XmlDataDocument if it already contains data. Please use a new XmlDataDocument..
         /// </summary>
@@ -3407,7 +3407,7 @@ namespace System {
                 return ResourceManager.GetString("DataDom_MultipleLoad", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Clear function on DateSet and DataTable is not supported on XmlDataDocument..
         /// </summary>
@@ -3416,7 +3416,7 @@ namespace System {
                 return ResourceManager.GetString("DataDom_NotSupport_Clear", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot create entity references on DataDocument..
         /// </summary>
@@ -3425,7 +3425,7 @@ namespace System {
                 return ResourceManager.GetString("DataDom_NotSupport_EntRef", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to GetElementById() is not supported on DataDocument..
         /// </summary>
@@ -3434,7 +3434,7 @@ namespace System {
                 return ResourceManager.GetString("DataDom_NotSupport_GetElementById", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot add or remove columns from the table once the DataSet is mapped to a loaded XML document..
         /// </summary>
@@ -3443,7 +3443,7 @@ namespace System {
                 return ResourceManager.GetString("DataDom_TableColumnsChange", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot change the table name once the associated DataSet is mapped to a loaded XML document..
         /// </summary>
@@ -3452,7 +3452,7 @@ namespace System {
                 return ResourceManager.GetString("DataDom_TableNameChange", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot change the table namespace once the associated DataSet is mapped to a loaded XML document..
         /// </summary>
@@ -3461,7 +3461,7 @@ namespace System {
                 return ResourceManager.GetString("DataDom_TableNamespaceChange", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Find finds a row based on a Sort order, and no Sort order is specified..
         /// </summary>
@@ -3470,7 +3470,7 @@ namespace System {
                 return ResourceManager.GetString("DataIndex_FindWithoutSortOrder", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Expecting {0} value(s) for the key being indexed, but received {1} value(s)..
         /// </summary>
@@ -3479,7 +3479,7 @@ namespace System {
                 return ResourceManager.GetString("DataIndex_KeyLength", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The RowStates parameter must be set to a valid combination of values from the DataViewRowState enumeration..
         /// </summary>
@@ -3488,7 +3488,7 @@ namespace System {
                 return ResourceManager.GetString("DataIndex_RecordStateRange", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot create a Key when the same column is listed more than once: &apos;{0}&apos;.
         /// </summary>
@@ -3497,7 +3497,7 @@ namespace System {
                 return ResourceManager.GetString("DataKey_DuplicateColumns", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot have 0 columns..
         /// </summary>
@@ -3506,7 +3506,7 @@ namespace System {
                 return ResourceManager.GetString("DataKey_NoColumns", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot remove unique constraint since it&apos;s the primary key of a table..
         /// </summary>
@@ -3515,7 +3515,7 @@ namespace System {
                 return ResourceManager.GetString("DataKey_RemovePrimaryKey", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot remove unique constraint since it&apos;s the primary key of table {0}..
         /// </summary>
@@ -3524,7 +3524,7 @@ namespace System {
                 return ResourceManager.GetString("DataKey_RemovePrimaryKey1", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot create a Key from Columns that belong to different tables..
         /// </summary>
@@ -3533,7 +3533,7 @@ namespace System {
                 return ResourceManager.GetString("DataKey_TableMismatch", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot have more than {0} columns..
         /// </summary>
@@ -3542,7 +3542,7 @@ namespace System {
                 return ResourceManager.GetString("DataKey_TooManyColumns", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to &lt;target&gt;.{0} and &lt;source&gt;.{0} have conflicting properties: DataType property mismatch..
         /// </summary>
@@ -3551,7 +3551,7 @@ namespace System {
                 return ResourceManager.GetString("DataMerge_DataTypeMismatch", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Target table {0} missing definition for column {1}..
         /// </summary>
@@ -3560,7 +3560,7 @@ namespace System {
                 return ResourceManager.GetString("DataMerge_MissingColumnDefinition", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Target DataSet missing {0} {1}..
         /// </summary>
@@ -3569,7 +3569,7 @@ namespace System {
                 return ResourceManager.GetString("DataMerge_MissingConstraint", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Target DataSet missing definition for {0}..
         /// </summary>
@@ -3578,7 +3578,7 @@ namespace System {
                 return ResourceManager.GetString("DataMerge_MissingDefinition", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to PrimaryKey column {0} does not exist in source Table..
         /// </summary>
@@ -3587,7 +3587,7 @@ namespace System {
                 return ResourceManager.GetString("DataMerge_MissingPrimaryKeyColumnInSource", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Mismatch columns in the PrimaryKey : &lt;target&gt;.{0} versus &lt;source&gt;.{1}..
         /// </summary>
@@ -3596,7 +3596,7 @@ namespace System {
                 return ResourceManager.GetString("DataMerge_PrimaryKeyColumnsMismatch", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to &lt;target&gt;.PrimaryKey and &lt;source&gt;.PrimaryKey have different Length..
         /// </summary>
@@ -3605,7 +3605,7 @@ namespace System {
                 return ResourceManager.GetString("DataMerge_PrimaryKeyMismatch", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Relation {0} cannot be merged, because keys have mismatch columns..
         /// </summary>
@@ -3614,7 +3614,7 @@ namespace System {
                 return ResourceManager.GetString("DataMerge_ReltionKeyColumnsMismatch", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to A relation already exists for these child columns..
         /// </summary>
@@ -3623,7 +3623,7 @@ namespace System {
                 return ResourceManager.GetString("DataRelation_AlreadyExists", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to This relation already belongs to another DataSet..
         /// </summary>
@@ -3632,7 +3632,7 @@ namespace System {
                 return ResourceManager.GetString("DataRelation_AlreadyInOtherDataSet", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to This relation already belongs to this DataSet..
         /// </summary>
@@ -3641,7 +3641,7 @@ namespace System {
                 return ResourceManager.GetString("DataRelation_AlreadyInTheDataSet", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot add a DataRelation or Constraint that has different Locale or CaseSensitive settings between its parent and child tables..
         /// </summary>
@@ -3650,7 +3650,7 @@ namespace System {
                 return ResourceManager.GetString("DataRelation_CaseLocaleMismatch", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot add a relation to this table&apos;s ParentRelation collection where this table isn&apos;t the child table..
         /// </summary>
@@ -3659,7 +3659,7 @@ namespace System {
                 return ResourceManager.GetString("DataRelation_ChildTableMismatch", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Parent Columns and Child Columns don&apos;t have type-matching columns..
         /// </summary>
@@ -3668,7 +3668,7 @@ namespace System {
                 return ResourceManager.GetString("DataRelation_ColumnsTypeMismatch", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot have a relationship between tables in different DataSets..
         /// </summary>
@@ -3677,7 +3677,7 @@ namespace System {
                 return ResourceManager.GetString("DataRelation_DataSetMismatch", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to This relation doesn&apos;t belong to this relation collection..
         /// </summary>
@@ -3686,7 +3686,7 @@ namespace System {
                 return ResourceManager.GetString("DataRelation_DoesNotExist", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to A Relation named &apos;{0}&apos; already belongs to this DataSet..
         /// </summary>
@@ -3695,7 +3695,7 @@ namespace System {
                 return ResourceManager.GetString("DataRelation_DuplicateName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to This relation should connect two tables in this DataSet to be added to this DataSet..
         /// </summary>
@@ -3704,7 +3704,7 @@ namespace System {
                 return ResourceManager.GetString("DataRelation_ForeignDataSet", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The row doesn&apos;t belong to the same DataSet as this relation..
         /// </summary>
@@ -3713,7 +3713,7 @@ namespace System {
                 return ResourceManager.GetString("DataRelation_ForeignRow", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to GetChildRows requires a row whose Table is {0}, but the specified row&apos;s Table is {1}..
         /// </summary>
@@ -3722,7 +3722,7 @@ namespace System {
                 return ResourceManager.GetString("DataRelation_ForeignTable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to GetParentRow requires a row whose Table is {0}, but the specified row&apos;s Table is {1}..
         /// </summary>
@@ -3731,7 +3731,7 @@ namespace System {
                 return ResourceManager.GetString("DataRelation_GetParentRowTableMismatch", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Nested table &apos;{0}&apos; with empty namespace cannot have multiple parent tables in different namespaces..
         /// </summary>
@@ -3740,7 +3740,7 @@ namespace System {
                 return ResourceManager.GetString("DataRelation_InValidNamespaceInNestedRelation", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Nested table &apos;{0}&apos; which inherits its namespace cannot have multiple parent tables in different namespaces..
         /// </summary>
@@ -3749,7 +3749,7 @@ namespace System {
                 return ResourceManager.GetString("DataRelation_InValidNestedRelation", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to ParentKey and ChildKey are identical..
         /// </summary>
@@ -3758,7 +3758,7 @@ namespace System {
                 return ResourceManager.GetString("DataRelation_KeyColumnsIdentical", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to ParentColumns and ChildColumns should be the same length..
         /// </summary>
@@ -3767,7 +3767,7 @@ namespace System {
                 return ResourceManager.GetString("DataRelation_KeyLengthMismatch", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to ParentColumns and ChildColumns must not be zero length..
         /// </summary>
@@ -3776,7 +3776,7 @@ namespace System {
                 return ResourceManager.GetString("DataRelation_KeyZeroLength", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The table ({0}) cannot be the child table to itself in nested relations..
         /// </summary>
@@ -3785,7 +3785,7 @@ namespace System {
                 return ResourceManager.GetString("DataRelation_LoopInNestedRelations", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to RelationName is required when it is part of a DataSet..
         /// </summary>
@@ -3794,7 +3794,7 @@ namespace System {
                 return ResourceManager.GetString("DataRelation_NoName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Relation {0} does not belong to this DataSet..
         /// </summary>
@@ -3803,7 +3803,7 @@ namespace System {
                 return ResourceManager.GetString("DataRelation_NotInTheDataSet", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot find relation {0}..
         /// </summary>
@@ -3812,7 +3812,7 @@ namespace System {
                 return ResourceManager.GetString("DataRelation_OutOfRange", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot create a DataRelation if Parent or Child Columns are not in a DataSet..
         /// </summary>
@@ -3821,7 +3821,7 @@ namespace System {
                 return ResourceManager.GetString("DataRelation_ParentOrChildColumnsDoNotHaveDataSet", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot add a relation to this table&apos;s ChildRelation collection where this table isn&apos;t the parent table..
         /// </summary>
@@ -3830,7 +3830,7 @@ namespace System {
                 return ResourceManager.GetString("DataRelation_ParentTableMismatch", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot set the &apos;Nested&apos; property to false for this relation..
         /// </summary>
@@ -3839,7 +3839,7 @@ namespace System {
                 return ResourceManager.GetString("DataRelation_RelationNestedReadOnly", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to SetParentRow requires a child row whose Table is {0}, but the specified row&apos;s Table is {1}..
         /// </summary>
@@ -3848,7 +3848,7 @@ namespace System {
                 return ResourceManager.GetString("DataRelation_SetParentRowTableMismatch", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The same table &apos;{0}&apos; cannot be the child table in two nested relations..
         /// </summary>
@@ -3857,7 +3857,7 @@ namespace System {
                 return ResourceManager.GetString("DataRelation_TableCantBeNestedInTwoTables", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot create a collection on a null table..
         /// </summary>
@@ -3866,7 +3866,7 @@ namespace System {
                 return ResourceManager.GetString("DataRelation_TableNull", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot create a relation between tables in different DataSets..
         /// </summary>
@@ -3875,7 +3875,7 @@ namespace System {
                 return ResourceManager.GetString("DataRelation_TablesInDifferentSets", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The table this collection displays relations for has been removed from its DataSet..
         /// </summary>
@@ -3884,7 +3884,7 @@ namespace System {
                 return ResourceManager.GetString("DataRelation_TableWasRemoved", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the child columns of this relation..
         /// </summary>
@@ -3893,7 +3893,7 @@ namespace System {
                 return ResourceManager.GetString("DataRelationChildColumnsDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates whether relations are nested..
         /// </summary>
@@ -3902,7 +3902,7 @@ namespace System {
                 return ResourceManager.GetString("DataRelationNested", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the parent columns of this relation..
         /// </summary>
@@ -3911,7 +3911,7 @@ namespace System {
                 return ResourceManager.GetString("DataRelationParentColumnsDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The name used to look up this relation in the Relations collection of a DataSet..
         /// </summary>
@@ -3920,7 +3920,7 @@ namespace System {
                 return ResourceManager.GetString("DataRelationRelationNameDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot delete this row since it&apos;s already deleted..
         /// </summary>
@@ -3929,7 +3929,7 @@ namespace System {
                 return ResourceManager.GetString("DataRow_AlreadyDeleted", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to This row already belongs to another table..
         /// </summary>
@@ -3938,7 +3938,7 @@ namespace System {
                 return ResourceManager.GetString("DataRow_AlreadyInOtherCollection", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to This row already belongs to this table..
         /// </summary>
@@ -3947,7 +3947,7 @@ namespace System {
                 return ResourceManager.GetString("DataRow_AlreadyInTheCollection", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot remove a row that&apos;s already been removed..
         /// </summary>
@@ -3956,7 +3956,7 @@ namespace System {
                 return ResourceManager.GetString("DataRow_AlreadyRemoved", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot call BeginEdit() inside the RowChanging event..
         /// </summary>
@@ -3965,7 +3965,7 @@ namespace System {
                 return ResourceManager.GetString("DataRow_BeginEditInRowChanging", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot call CancelEdit() inside an OnRowChanging event.  Throw an exception to cancel this update..
         /// </summary>
@@ -3974,7 +3974,7 @@ namespace System {
                 return ResourceManager.GetString("DataRow_CancelEditInRowChanging", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Deleted row information cannot be accessed through the row..
         /// </summary>
@@ -3983,7 +3983,7 @@ namespace System {
                 return ResourceManager.GetString("DataRow_DeletedRowInaccessible", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot call Delete inside an OnRowDeleting event.  Throw an exception to cancel this delete..
         /// </summary>
@@ -3992,7 +3992,7 @@ namespace System {
                 return ResourceManager.GetString("DataRow_DeleteInRowDeleting", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot change a proposed value in the RowChanging event..
         /// </summary>
@@ -4001,7 +4001,7 @@ namespace System {
                 return ResourceManager.GetString("DataRow_EditInRowChanging", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to This row is empty..
         /// </summary>
@@ -4010,7 +4010,7 @@ namespace System {
                 return ResourceManager.GetString("DataRow_Empty", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot call EndEdit() inside an OnRowChanging event..
         /// </summary>
@@ -4019,7 +4019,7 @@ namespace System {
                 return ResourceManager.GetString("DataRow_EndEditInRowChanging", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unrecognized row state bit pattern..
         /// </summary>
@@ -4028,7 +4028,7 @@ namespace System {
                 return ResourceManager.GetString("DataRow_InvalidRowBitPattern", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Version must be Original, Current, or Proposed..
         /// </summary>
@@ -4037,7 +4037,7 @@ namespace System {
                 return ResourceManager.GetString("DataRow_InvalidVersion", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to A child row has multiple parents..
         /// </summary>
@@ -4046,7 +4046,7 @@ namespace System {
                 return ResourceManager.GetString("DataRow_MultipleParents", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to There is no Current data to access..
         /// </summary>
@@ -4055,7 +4055,7 @@ namespace System {
                 return ResourceManager.GetString("DataRow_NoCurrentData", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to There is no Original data to access..
         /// </summary>
@@ -4064,7 +4064,7 @@ namespace System {
                 return ResourceManager.GetString("DataRow_NoOriginalData", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to There is no Proposed data to access..
         /// </summary>
@@ -4073,7 +4073,7 @@ namespace System {
                 return ResourceManager.GetString("DataRow_NoProposedData", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The row doesn&apos;t belong to the same DataSet as this relation..
         /// </summary>
@@ -4082,7 +4082,7 @@ namespace System {
                 return ResourceManager.GetString("DataRow_NotInTheDataSet", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot perform this operation on a row not in the table..
         /// </summary>
@@ -4091,7 +4091,7 @@ namespace System {
                 return ResourceManager.GetString("DataRow_NotInTheTable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to There is no row at position {0}..
         /// </summary>
@@ -4100,7 +4100,7 @@ namespace System {
                 return ResourceManager.GetString("DataRow_OutOfRange", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to This relation and child row don&apos;t belong to same DataSet..
         /// </summary>
@@ -4109,7 +4109,7 @@ namespace System {
                 return ResourceManager.GetString("DataRow_ParentRowNotInTheDataSet", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to This row has been removed from a table and does not have any data.  BeginEdit() will allow creation of new data in this row..
         /// </summary>
@@ -4118,7 +4118,7 @@ namespace System {
                 return ResourceManager.GetString("DataRow_RemovedFromTheTable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Values are missing in the rowOrder sequence for table &apos;{0}&apos;..
         /// </summary>
@@ -4127,7 +4127,7 @@ namespace System {
                 return ResourceManager.GetString("DataRow_RowInsertMissing", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The row insert position {0} is invalid..
         /// </summary>
@@ -4136,7 +4136,7 @@ namespace System {
                 return ResourceManager.GetString("DataRow_RowInsertOutOfRange", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The rowOrder value={0} has been found twice for table named &apos;{1}&apos;..
         /// </summary>
@@ -4145,7 +4145,7 @@ namespace System {
                 return ResourceManager.GetString("DataRow_RowInsertTwice", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The given DataRow is not in the current DataRowCollection..
         /// </summary>
@@ -4154,7 +4154,7 @@ namespace System {
                 return ResourceManager.GetString("DataRow_RowOutOfRange", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Input array is longer than the number of columns in this table..
         /// </summary>
@@ -4163,7 +4163,7 @@ namespace System {
                 return ResourceManager.GetString("DataRow_ValuesArrayLength", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to {0} is neither a DataColumn nor a DataRelation for table {1}..
         /// </summary>
@@ -4172,7 +4172,7 @@ namespace System {
                 return ResourceManager.GetString("DataROWView_PropertyNotFound", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot change CaseSensitive or Locale property. This change would lead to at least one DataRelation or Constraint to have different Locale or CaseSensitive settings between its related tables..
         /// </summary>
@@ -4181,7 +4181,7 @@ namespace System {
                 return ResourceManager.GetString("DataSet_CannotChangeCaseLocale", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to SchemaSerializationMode property can be set only if it is overridden by derived DataSet..
         /// </summary>
@@ -4190,7 +4190,7 @@ namespace System {
                 return ResourceManager.GetString("DataSet_CannotChangeSchemaSerializationMode", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Constraint Exception..
         /// </summary>
@@ -4199,7 +4199,7 @@ namespace System {
                 return ResourceManager.GetString("DataSet_DefaultConstraintException", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Data Exception..
         /// </summary>
@@ -4208,7 +4208,7 @@ namespace System {
                 return ResourceManager.GetString("DataSet_DefaultDataException", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Deleted rows inaccessible..
         /// </summary>
@@ -4217,7 +4217,7 @@ namespace System {
                 return ResourceManager.GetString("DataSet_DefaultDeletedRowInaccessibleException", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Duplicate name not allowed..
         /// </summary>
@@ -4226,7 +4226,7 @@ namespace System {
                 return ResourceManager.GetString("DataSet_DefaultDuplicateNameException", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Operation not supported in the RowChanging event..
         /// </summary>
@@ -4235,7 +4235,7 @@ namespace System {
                 return ResourceManager.GetString("DataSet_DefaultInRowChangingEventException", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid constraint..
         /// </summary>
@@ -4244,7 +4244,7 @@ namespace System {
                 return ResourceManager.GetString("DataSet_DefaultInvalidConstraintException", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Missing primary key..
         /// </summary>
@@ -4253,7 +4253,7 @@ namespace System {
                 return ResourceManager.GetString("DataSet_DefaultMissingPrimaryKeyException", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Null not allowed..
         /// </summary>
@@ -4262,7 +4262,7 @@ namespace System {
                 return ResourceManager.GetString("DataSet_DefaultNoNullAllowedException", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Column is marked read only..
         /// </summary>
@@ -4271,7 +4271,7 @@ namespace System {
                 return ResourceManager.GetString("DataSet_DefaultReadOnlyException", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Row not found in table..
         /// </summary>
@@ -4280,7 +4280,7 @@ namespace System {
                 return ResourceManager.GetString("DataSet_DefaultRowNotInTableException", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Version not found..
         /// </summary>
@@ -4289,7 +4289,7 @@ namespace System {
                 return ResourceManager.GetString("DataSet_DefaultVersionNotFoundException", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The name &apos;{0}&apos; is invalid. A DataSet cannot have the same name of the DataTable..
         /// </summary>
@@ -4298,7 +4298,7 @@ namespace System {
                 return ResourceManager.GetString("DataSet_SetDataSetNameConflicting", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot change the name of the DataSet to an empty string..
         /// </summary>
@@ -4307,7 +4307,7 @@ namespace System {
                 return ResourceManager.GetString("DataSet_SetNameToEmpty", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The schema namespace is invalid. Please use this one instead: {0}..
         /// </summary>
@@ -4316,7 +4316,7 @@ namespace System {
                 return ResourceManager.GetString("DataSet_UnsupportedSchema", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates whether comparing strings within the DataSet is case sensitive..
         /// </summary>
@@ -4325,7 +4325,7 @@ namespace System {
                 return ResourceManager.GetString("DataSetCaseSensitiveDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The name of this DataSet..
         /// </summary>
@@ -4334,7 +4334,7 @@ namespace System {
                 return ResourceManager.GetString("DataSetDataSetNameDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates a custom &quot;view&quot; of the data contained by the DataSet. This view allows filtering, searching, and navigating through the custom data view..
         /// </summary>
@@ -4343,7 +4343,7 @@ namespace System {
                 return ResourceManager.GetString("DataSetDefaultViewDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Represents an in-memory cache of data..
         /// </summary>
@@ -4352,7 +4352,7 @@ namespace System {
                 return ResourceManager.GetString("DataSetDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates whether constraint rules are to be followed..
         /// </summary>
@@ -4361,7 +4361,7 @@ namespace System {
                 return ResourceManager.GetString("DataSetEnforceConstraintsDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates that the DataSet has errors..
         /// </summary>
@@ -4370,7 +4370,7 @@ namespace System {
                 return ResourceManager.GetString("DataSetHasErrorsDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Occurs after Initialization is finished..
         /// </summary>
@@ -4379,7 +4379,7 @@ namespace System {
                 return ResourceManager.GetString("DataSetInitializedDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates a locale under which to compare strings within the DataSet..
         /// </summary>
@@ -4388,7 +4388,7 @@ namespace System {
                 return ResourceManager.GetString("DataSetLocaleDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Occurs when it is not possible to merge schemas for two tables with the same name..
         /// </summary>
@@ -4397,7 +4397,7 @@ namespace System {
                 return ResourceManager.GetString("DataSetMergeFailedDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the XML uri namespace for the root element pointed at by this DataSet..
         /// </summary>
@@ -4406,7 +4406,7 @@ namespace System {
                 return ResourceManager.GetString("DataSetNamespaceDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the prefix of the namespace used for this DataSet..
         /// </summary>
@@ -4415,7 +4415,7 @@ namespace System {
                 return ResourceManager.GetString("DataSetPrefixDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The collection that holds the relations for this DataSet..
         /// </summary>
@@ -4424,7 +4424,7 @@ namespace System {
                 return ResourceManager.GetString("DataSetRelationsDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The collection that holds the tables for this DataSet..
         /// </summary>
@@ -4433,7 +4433,7 @@ namespace System {
                 return ResourceManager.GetString("DataSetTablesDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid usage of aggregate function {0}() and Type: {1}..
         /// </summary>
@@ -4442,7 +4442,7 @@ namespace System {
                 return ResourceManager.GetString("DataStorage_AggregateException", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Type &apos;{0}&apos; does not implement IComparable interface. Comparison cannot be done..
         /// </summary>
@@ -4451,7 +4451,7 @@ namespace System {
                 return ResourceManager.GetString("DataStorage_IComparableNotDefined", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid storage type: {0}..
         /// </summary>
@@ -4460,7 +4460,7 @@ namespace System {
                 return ResourceManager.GetString("DataStorage_InvalidStorageType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The DataSet Xml persistency does not support the value &apos;{0}&apos; as Char value, please use Byte storage instead..
         /// </summary>
@@ -4469,7 +4469,7 @@ namespace System {
                 return ResourceManager.GetString("DataStorage_ProblematicChars", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Type of value has a mismatch with column type.
         /// </summary>
@@ -4478,7 +4478,7 @@ namespace System {
                 return ResourceManager.GetString("DataStorage_SetInvalidDataType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to DataTable already belongs to another DataSet..
         /// </summary>
@@ -4487,7 +4487,7 @@ namespace System {
                 return ResourceManager.GetString("DataTable_AlreadyInOtherDataSet", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to DataTable already belongs to this DataSet..
         /// </summary>
@@ -4496,7 +4496,7 @@ namespace System {
                 return ResourceManager.GetString("DataTable_AlreadyInTheDataSet", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot add a nested relation or an element column to a table containing a SimpleContent column..
         /// </summary>
@@ -4505,7 +4505,7 @@ namespace System {
                 return ResourceManager.GetString("DataTable_CannotAddToSimpleContent", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to This DataTable can only be remoted as part of DataSet. One or more Expression Columns has reference to other DataTable(s)..
         /// </summary>
@@ -4514,7 +4514,7 @@ namespace System {
                 return ResourceManager.GetString("DataTable_CanNotRemoteDataTable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot serialize the DataTable. A DataTable being used in one or more DataColumn expressions is not a descendant of current DataTable..
         /// </summary>
@@ -4523,7 +4523,7 @@ namespace System {
                 return ResourceManager.GetString("DataTable_CanNotSerializeDataTableHierarchy", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot serialize the DataTable. DataTable name is not set..
         /// </summary>
@@ -4532,7 +4532,7 @@ namespace System {
                 return ResourceManager.GetString("DataTable_CanNotSerializeDataTableWithEmptyName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot have different remoting format property value for DataSet and DataTable..
         /// </summary>
@@ -4541,7 +4541,7 @@ namespace System {
                 return ResourceManager.GetString("DataTable_CanNotSetRemotingFormat", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The name &apos;{0}&apos; is invalid. A DataTable cannot have the same name of the DataSet..
         /// </summary>
@@ -4550,7 +4550,7 @@ namespace System {
                 return ResourceManager.GetString("DataTable_DatasetConflictingName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to A DataTable named &apos;{0}&apos; already belongs to this DataSet..
         /// </summary>
@@ -4559,7 +4559,7 @@ namespace System {
                 return ResourceManager.GetString("DataTable_DuplicateName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to A DataTable named &apos;{0}&apos; with the same Namespace &apos;{1}&apos; already belongs to this DataSet..
         /// </summary>
@@ -4568,7 +4568,7 @@ namespace System {
                 return ResourceManager.GetString("DataTable_DuplicateName2", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to PrimaryKey columns do not belong to this table..
         /// </summary>
@@ -4577,7 +4577,7 @@ namespace System {
                 return ResourceManager.GetString("DataTable_ForeignPrimaryKey", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot remove table {0}, because it referenced in ForeignKeyConstraint {1}.  Remove the constraint first..
         /// </summary>
@@ -4586,7 +4586,7 @@ namespace System {
                 return ResourceManager.GetString("DataTable_InConstraint", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot remove a table that has existing relations.  Remove relations first..
         /// </summary>
@@ -4595,7 +4595,7 @@ namespace System {
                 return ResourceManager.GetString("DataTable_InRelation", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to {0} isn&apos;t a valid Sort string entry..
         /// </summary>
@@ -4604,7 +4604,7 @@ namespace System {
                 return ResourceManager.GetString("DataTable_InvalidSortString", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Table doesn&apos;t have a primary key..
         /// </summary>
@@ -4613,7 +4613,7 @@ namespace System {
                 return ResourceManager.GetString("DataTable_MissingPrimaryKey", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to DataTable already has a simple content column..
         /// </summary>
@@ -4622,7 +4622,7 @@ namespace System {
                 return ResourceManager.GetString("DataTable_MultipleSimpleContentColumns", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to TableName is required when it is part of a DataSet..
         /// </summary>
@@ -4631,7 +4631,7 @@ namespace System {
                 return ResourceManager.GetString("DataTable_NoName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Table {0} does not belong to this DataSet..
         /// </summary>
@@ -4640,7 +4640,7 @@ namespace System {
                 return ResourceManager.GetString("DataTable_NotInTheDataSet", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot find table {0}..
         /// </summary>
@@ -4649,7 +4649,7 @@ namespace System {
                 return ResourceManager.GetString("DataTable_OutOfRange", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The table ({0}) cannot be the child table to itself in a nested relation: the DataSet name conflicts with the table name..
         /// </summary>
@@ -4658,7 +4658,7 @@ namespace System {
                 return ResourceManager.GetString("DataTable_SelfnestedDatasetConflictingName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to DataTable &apos;{0}&apos; does not match to any DataTable in source..
         /// </summary>
@@ -4667,7 +4667,7 @@ namespace System {
                 return ResourceManager.GetString("DataTable_TableNotFound", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates whether comparing strings within the table is case sensitive..
         /// </summary>
@@ -4676,7 +4676,7 @@ namespace System {
                 return ResourceManager.GetString("DataTableCaseSensitiveDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Returns the child relations for this table..
         /// </summary>
@@ -4685,7 +4685,7 @@ namespace System {
                 return ResourceManager.GetString("DataTableChildRelationsDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Occurs when a value has been changed for this column..
         /// </summary>
@@ -4694,7 +4694,7 @@ namespace System {
                 return ResourceManager.GetString("DataTableColumnChangedDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Occurs when a value has been submitted for this column.  The user can modify the proposed value and should throw an exception to cancel the edit..
         /// </summary>
@@ -4703,7 +4703,7 @@ namespace System {
                 return ResourceManager.GetString("DataTableColumnChangingDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The collection that holds the columns for this table..
         /// </summary>
@@ -4712,7 +4712,7 @@ namespace System {
                 return ResourceManager.GetString("DataTableColumnsDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The collection that holds the constraints for this table..
         /// </summary>
@@ -4721,7 +4721,7 @@ namespace System {
                 return ResourceManager.GetString("DataTableConstraintsDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the DataSet to which this table belongs..
         /// </summary>
@@ -4730,7 +4730,7 @@ namespace System {
                 return ResourceManager.GetString("DataTableDataSetDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to This is the default DataView for the table..
         /// </summary>
@@ -4739,7 +4739,7 @@ namespace System {
                 return ResourceManager.GetString("DataTableDefaultViewDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The expression used to compute the data-bound value of this row..
         /// </summary>
@@ -4748,7 +4748,7 @@ namespace System {
                 return ResourceManager.GetString("DataTableDisplayExpressionDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Returns whether the table has errors..
         /// </summary>
@@ -4757,7 +4757,7 @@ namespace System {
                 return ResourceManager.GetString("DataTableHasErrorsDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates a locale under which to compare strings within the table..
         /// </summary>
@@ -4766,7 +4766,7 @@ namespace System {
                 return ResourceManager.GetString("DataTableLocaleDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Individual columns mappings when this table mapping is matched..
         /// </summary>
@@ -4775,7 +4775,7 @@ namespace System {
                 return ResourceManager.GetString("DataTableMapping_ColumnMappings", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to DataTable.TableName.
         /// </summary>
@@ -4784,7 +4784,7 @@ namespace System {
                 return ResourceManager.GetString("DataTableMapping_DataSetTable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The DataTableMapping source table name. This name is case sensitive..
         /// </summary>
@@ -4793,7 +4793,7 @@ namespace System {
                 return ResourceManager.GetString("DataTableMapping_SourceTable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The number of items in the collection.
         /// </summary>
@@ -4802,7 +4802,7 @@ namespace System {
                 return ResourceManager.GetString("DataTableMappings_Count", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The specified DataTableMapping object.
         /// </summary>
@@ -4811,7 +4811,7 @@ namespace System {
                 return ResourceManager.GetString("DataTableMappings_Item", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates an initial starting size for this table..
         /// </summary>
@@ -4820,7 +4820,7 @@ namespace System {
                 return ResourceManager.GetString("DataTableMinimumCapacityDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the XML uri namespace for the elements contained in this table..
         /// </summary>
@@ -4829,7 +4829,7 @@ namespace System {
                 return ResourceManager.GetString("DataTableNamespaceDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Returns the parent relations for this table..
         /// </summary>
@@ -4838,7 +4838,7 @@ namespace System {
                 return ResourceManager.GetString("DataTableParentRelationsDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the Prefix of the namespace used for this table in XML representation..
         /// </summary>
@@ -4847,7 +4847,7 @@ namespace System {
                 return ResourceManager.GetString("DataTablePrefixDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the column(s) that represent the primary key for this table..
         /// </summary>
@@ -4856,7 +4856,7 @@ namespace System {
                 return ResourceManager.GetString("DataTablePrimaryKeyDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot create DataTableReader. Arguments contain null value..
         /// </summary>
@@ -4865,7 +4865,7 @@ namespace System {
                 return ResourceManager.GetString("DataTableReader_ArgumentContainsNullValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to DataTableReader Cannot be created. There is no DataTable in DataSet..
         /// </summary>
@@ -4874,7 +4874,7 @@ namespace System {
                 return ResourceManager.GetString("DataTableReader_CannotCreateDataReaderOnEmptyDataSet", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Current DataTable &apos;{0}&apos; is empty. There is no DataRow in DataTable..
         /// </summary>
@@ -4883,7 +4883,7 @@ namespace System {
                 return ResourceManager.GetString("DataTableReader_DataTableCleared", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot create DataTableReader. Argument is Empty..
         /// </summary>
@@ -4892,7 +4892,7 @@ namespace System {
                 return ResourceManager.GetString("DataTableReader_DataTableReaderArgumentIsEmpty", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to DataTableReader is invalid for current DataTable &apos;{0}&apos;..
         /// </summary>
@@ -4901,7 +4901,7 @@ namespace System {
                 return ResourceManager.GetString("DataTableReader_InvalidDataTableReader", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Current DataRow is either in Deleted or Detached state..
         /// </summary>
@@ -4910,7 +4910,7 @@ namespace System {
                 return ResourceManager.GetString("DataTableReader_InvalidRowInDataTableReader", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Schema of current DataTable &apos;{0}&apos; in DataTableReader has changed, DataTableReader is invalid..
         /// </summary>
@@ -4919,7 +4919,7 @@ namespace System {
                 return ResourceManager.GetString("DataTableReader_SchemaInvalidDataTableReader", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Occurs after a row in the table has been successfully edited..
         /// </summary>
@@ -4928,7 +4928,7 @@ namespace System {
                 return ResourceManager.GetString("DataTableRowChangedDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Occurs when the row is being changed so that the event handler can modify or cancel the change. The user can modify values in the row and should throw an  exception to cancel the edit..
         /// </summary>
@@ -4937,7 +4937,7 @@ namespace System {
                 return ResourceManager.GetString("DataTableRowChangingDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Occurs after a row in the table has been successfully deleted..
         /// </summary>
@@ -4946,7 +4946,7 @@ namespace System {
                 return ResourceManager.GetString("DataTableRowDeletedDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Occurs when a row in the table marked for deletion.  Throw an exception to cancel the deletion..
         /// </summary>
@@ -4955,7 +4955,7 @@ namespace System {
                 return ResourceManager.GetString("DataTableRowDeletingDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Occurs after all rows in the table has been successfully cleared..
         /// </summary>
@@ -4964,7 +4964,7 @@ namespace System {
                 return ResourceManager.GetString("DataTableRowsClearedDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Occurs prior to clearing all rows from the table..
         /// </summary>
@@ -4973,7 +4973,7 @@ namespace System {
                 return ResourceManager.GetString("DataTableRowsClearingDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the collection that holds the rows of data for this table..
         /// </summary>
@@ -4982,7 +4982,7 @@ namespace System {
                 return ResourceManager.GetString("DataTableRowsDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Occurs after a new DataRow has been instantiated..
         /// </summary>
@@ -4991,7 +4991,7 @@ namespace System {
                 return ResourceManager.GetString("DataTableRowsNewRowDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the name used to look up this table in the Tables collection of a DataSet..
         /// </summary>
@@ -5000,7 +5000,7 @@ namespace System {
                 return ResourceManager.GetString("DataTableTableNameDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot add external objects to this list..
         /// </summary>
@@ -5009,7 +5009,7 @@ namespace System {
                 return ResourceManager.GetString("DataView_AddExternalObject", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot call AddNew on a DataView where AllowNew is false..
         /// </summary>
@@ -5018,7 +5018,7 @@ namespace System {
                 return ResourceManager.GetString("DataView_AddNewNotAllowNull", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot bind to DataTable with no name..
         /// </summary>
@@ -5027,7 +5027,7 @@ namespace System {
                 return ResourceManager.GetString("DataView_CanNotBindTable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot clear this list..
         /// </summary>
@@ -5036,7 +5036,7 @@ namespace System {
                 return ResourceManager.GetString("DataView_CanNotClear", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot delete on a DataSource where AllowDelete is false..
         /// </summary>
@@ -5045,7 +5045,7 @@ namespace System {
                 return ResourceManager.GetString("DataView_CanNotDelete", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot edit on a DataSource where AllowEdit is false..
         /// </summary>
@@ -5054,7 +5054,7 @@ namespace System {
                 return ResourceManager.GetString("DataView_CanNotEdit", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot change DataSet property once it is set..
         /// </summary>
@@ -5063,7 +5063,7 @@ namespace System {
                 return ResourceManager.GetString("DataView_CanNotSetDataSet", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot change Table property once it is set..
         /// </summary>
@@ -5072,7 +5072,7 @@ namespace System {
                 return ResourceManager.GetString("DataView_CanNotSetTable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to DataTable must be set prior to using DataView..
         /// </summary>
@@ -5081,7 +5081,7 @@ namespace System {
                 return ResourceManager.GetString("DataView_CanNotUse", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to DataSet must be set prior to using DataViewManager..
         /// </summary>
@@ -5090,7 +5090,7 @@ namespace System {
                 return ResourceManager.GetString("DataView_CanNotUseDataViewManager", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The relation is not parented to the table to which this DataView points..
         /// </summary>
@@ -5099,7 +5099,7 @@ namespace System {
                 return ResourceManager.GetString("DataView_CreateChildView", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Index {0} is either negative or above rows count..
         /// </summary>
@@ -5108,7 +5108,7 @@ namespace System {
                 return ResourceManager.GetString("DataView_GetElementIndex", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot insert external objects to this list..
         /// </summary>
@@ -5117,7 +5117,7 @@ namespace System {
                 return ResourceManager.GetString("DataView_InsertExternalObject", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to DataView is not open..
         /// </summary>
@@ -5126,7 +5126,7 @@ namespace System {
                 return ResourceManager.GetString("DataView_NotOpen", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot remove objects not in the list..
         /// </summary>
@@ -5135,7 +5135,7 @@ namespace System {
                 return ResourceManager.GetString("DataView_RemoveExternalObject", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot change DataSet on a DataViewManager that&apos;s already the default view for a DataSet..
         /// </summary>
@@ -5144,7 +5144,7 @@ namespace System {
                 return ResourceManager.GetString("DataView_SetDataSetFailed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot set {0}..
         /// </summary>
@@ -5153,7 +5153,7 @@ namespace System {
                 return ResourceManager.GetString("DataView_SetFailed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot set an object into this list..
         /// </summary>
@@ -5162,7 +5162,7 @@ namespace System {
                 return ResourceManager.GetString("DataView_SetIListObject", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to RowStateFilter cannot show ModifiedOriginals and ModifiedCurrents at the same time..
         /// </summary>
@@ -5171,7 +5171,7 @@ namespace System {
                 return ResourceManager.GetString("DataView_SetRowStateFilter", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot change Table property on a DefaultView or a DataView coming from a DataViewManager..
         /// </summary>
@@ -5180,7 +5180,7 @@ namespace System {
                 return ResourceManager.GetString("DataView_SetTable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates whether this DataView and the user interface associated with it allows deletes..
         /// </summary>
@@ -5189,7 +5189,7 @@ namespace System {
                 return ResourceManager.GetString("DataViewAllowDeleteDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates whether this DataView and the user interface associated with it allows edits..
         /// </summary>
@@ -5198,7 +5198,7 @@ namespace System {
                 return ResourceManager.GetString("DataViewAllowEditDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates whether this DataView and the user interface associated with it allows new rows to be added..
         /// </summary>
@@ -5207,7 +5207,7 @@ namespace System {
                 return ResourceManager.GetString("DataViewAllowNewDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates whether to use the default sort if the Sort property is not set..
         /// </summary>
@@ -5216,7 +5216,7 @@ namespace System {
                 return ResourceManager.GetString("DataViewApplyDefaultSortDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Returns the number of items currently in this view..
         /// </summary>
@@ -5225,7 +5225,7 @@ namespace System {
                 return ResourceManager.GetString("DataViewCountDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to This returns a pointer to back to the DataViewManager that owns this DataSet (if any)..
         /// </summary>
@@ -5234,7 +5234,7 @@ namespace System {
                 return ResourceManager.GetString("DataViewDataViewManagerDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates whether the view is open..
         /// </summary>
@@ -5243,7 +5243,7 @@ namespace System {
                 return ResourceManager.GetString("DataViewIsOpenDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates that the data returned by this DataView has somehow changed..
         /// </summary>
@@ -5252,7 +5252,7 @@ namespace System {
                 return ResourceManager.GetString("DataViewListChangedDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the source of data for this DataViewManager..
         /// </summary>
@@ -5261,7 +5261,7 @@ namespace System {
                 return ResourceManager.GetString("DataViewManagerDataSetDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the sorting/filtering/state settings for any table in the corresponding DataSet..
         /// </summary>
@@ -5270,7 +5270,7 @@ namespace System {
                 return ResourceManager.GetString("DataViewManagerTableSettingsDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates an expression used to filter the data returned by this DataView..
         /// </summary>
@@ -5279,7 +5279,7 @@ namespace System {
                 return ResourceManager.GetString("DataViewRowFilterDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the versions of data returned by this DataView..
         /// </summary>
@@ -5288,7 +5288,7 @@ namespace System {
                 return ResourceManager.GetString("DataViewRowStateFilterDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the names of the column and the order in which data is returned by this DataView..
         /// </summary>
@@ -5297,7 +5297,7 @@ namespace System {
                 return ResourceManager.GetString("DataViewSortDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the table this DataView uses to get data..
         /// </summary>
@@ -5306,7 +5306,7 @@ namespace System {
                 return ResourceManager.GetString("DataViewTableDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Command text to execute..
         /// </summary>
@@ -5315,7 +5315,7 @@ namespace System {
                 return ResourceManager.GetString("DbCommand_CommandText", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Time to wait for command to execute..
         /// </summary>
@@ -5324,7 +5324,7 @@ namespace System {
                 return ResourceManager.GetString("DbCommand_CommandTimeout", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to How to interpret the CommandText..
         /// </summary>
@@ -5333,7 +5333,7 @@ namespace System {
                 return ResourceManager.GetString("DbCommand_CommandType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Connection used by the command..
         /// </summary>
@@ -5342,7 +5342,7 @@ namespace System {
                 return ResourceManager.GetString("DbCommand_Connection", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The parameters collection..
         /// </summary>
@@ -5351,7 +5351,7 @@ namespace System {
                 return ResourceManager.GetString("DbCommand_Parameters", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to When records are affected by a given statement by the execution of the command..
         /// </summary>
@@ -5360,7 +5360,7 @@ namespace System {
                 return ResourceManager.GetString("DbCommand_StatementCompleted", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The transaction used by the command..
         /// </summary>
@@ -5369,7 +5369,7 @@ namespace System {
                 return ResourceManager.GetString("DbCommand_Transaction", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to When used by a DataAdapter.Update, how command results are applied to the current DataRow..
         /// </summary>
@@ -5378,7 +5378,7 @@ namespace System {
                 return ResourceManager.GetString("DbCommand_UpdatedRowSource", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the position of the catalog name in a qualified table name in a text command..
         /// </summary>
@@ -5387,7 +5387,7 @@ namespace System {
                 return ResourceManager.GetString("DbCommandBuilder_CatalogLocation", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The character that separates the catalog name from the rest of the identifier in a text command..
         /// </summary>
@@ -5396,7 +5396,7 @@ namespace System {
                 return ResourceManager.GetString("DbCommandBuilder_CatalogSeparator", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to How the where clause is auto-generated for the Update and Delete commands when not specified by the user..
         /// </summary>
@@ -5405,7 +5405,7 @@ namespace System {
                 return ResourceManager.GetString("DbCommandBuilder_ConflictOption", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The DataAdapter for which to automatically generate Commands..
         /// </summary>
@@ -5414,7 +5414,7 @@ namespace System {
                 return ResourceManager.GetString("DbCommandBuilder_DataAdapter", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The prefix string wrapped around sql objects..
         /// </summary>
@@ -5423,7 +5423,7 @@ namespace System {
                 return ResourceManager.GetString("DbCommandBuilder_QuotePrefix", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The suffix string wrapped around sql objects..
         /// </summary>
@@ -5432,7 +5432,7 @@ namespace System {
                 return ResourceManager.GetString("DbCommandBuilder_QuoteSuffix", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Use schema from DataTable or the SelectCommand..
         /// </summary>
@@ -5441,7 +5441,7 @@ namespace System {
                 return ResourceManager.GetString("DbCommandBuilder_SchemaLocation", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The character that separates the schema name from the rest of the identifier in a text command..
         /// </summary>
@@ -5450,7 +5450,7 @@ namespace System {
                 return ResourceManager.GetString("DbCommandBuilder_SchemaSeparator", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to How the set clause is auto-generated for the Update command when not specified by the user..
         /// </summary>
@@ -5459,7 +5459,7 @@ namespace System {
                 return ResourceManager.GetString("DbCommandBuilder_SetAllValues", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Event triggered when messages arrive from the DataSource..
         /// </summary>
@@ -5468,7 +5468,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnection_InfoMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The ConnectionState indicating whether the connection is open or closed..
         /// </summary>
@@ -5477,7 +5477,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnection_State", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Event triggered when the connection changes state..
         /// </summary>
@@ -5486,7 +5486,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnection_StateChange", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to When true, indicates that managed connection pooling should be used..
         /// </summary>
@@ -5495,7 +5495,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_AdoNetPooler", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Declares the application workload type when connecting to a server..
         /// </summary>
@@ -5504,7 +5504,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_ApplicationIntent", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The name of the application..
         /// </summary>
@@ -5513,7 +5513,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_ApplicationName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to When true, enables usage of the Asynchronous functionality in the .NET Framework Data Provider..
         /// </summary>
@@ -5522,7 +5522,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_AsynchronousProcessing", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The name of the primary file, including the full path name, of an attachable database..
         /// </summary>
@@ -5531,7 +5531,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_AttachDBFilename", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Specifies the method of authenticating with SQL Server..
         /// </summary>
@@ -5540,7 +5540,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_Authentication", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Specified client certificate for authenticating with SQL Server.  .
         /// </summary>
@@ -5549,7 +5549,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_Certificate", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to When true, indicates the connection state is reset when removed from the pool..
         /// </summary>
@@ -5558,7 +5558,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_ConnectionReset", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The connection string used to connect to the Data Source..
         /// </summary>
@@ -5567,7 +5567,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_ConnectionString", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Number of attempts to restore connection..
         /// </summary>
@@ -5576,7 +5576,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_ConnectRetryCount", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Delay between attempts to restore connection..
         /// </summary>
@@ -5585,7 +5585,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_ConnectRetryInterval", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The length of time (in seconds) to wait for a connection to the server before terminating the attempt and generating an error..
         /// </summary>
@@ -5594,7 +5594,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_ConnectTimeout", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to When true, indicates the connection should be from the Sql Server context.  Available only when running in the Sql Server process..
         /// </summary>
@@ -5603,7 +5603,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_ContextConnection", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The SQL Server Language record name..
         /// </summary>
@@ -5612,7 +5612,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_CurrentLanguage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the name of the data source to connect to..
         /// </summary>
@@ -5621,7 +5621,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_DataSource", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The name of the ODBC Driver to use when connecting to the Data Source..
         /// </summary>
@@ -5630,7 +5630,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_Driver", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The DSN to use when connecting to the Data Source..
         /// </summary>
@@ -5639,7 +5639,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_DSN", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to When true, SQL Server uses SSL encryption for all data sent between the client and server if the server has a certificate installed..
         /// </summary>
@@ -5648,7 +5648,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_Encrypt", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Sessions in a Component Services (or MTS, if you are using Microsoft Windows NT) environment should automatically be enlisted in a global transaction where required..
         /// </summary>
@@ -5657,7 +5657,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_Enlist", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The name or network address of the instance of SQL Server that acts as a failover partner..
         /// </summary>
@@ -5666,7 +5666,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_FailoverPartner", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The UDL file to use when connecting to the Data Source..
         /// </summary>
@@ -5675,7 +5675,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_FileName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The name of the initial catalog or database in the data source..
         /// </summary>
@@ -5684,7 +5684,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_InitialCatalog", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Whether the connection is to be a secure connection or not..
         /// </summary>
@@ -5693,7 +5693,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_IntegratedSecurity", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The minimum amount of time (in seconds) for this connection to live in the pool before being destroyed..
         /// </summary>
@@ -5702,7 +5702,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_LoadBalanceTimeout", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The maximum number of connections allowed in the pool..
         /// </summary>
@@ -5711,7 +5711,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_MaxPoolSize", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The minimum number of connections allowed in the pool..
         /// </summary>
@@ -5720,7 +5720,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_MinPoolSize", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to When true, multiple result sets can be returned and read from one connection..
         /// </summary>
@@ -5729,7 +5729,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_MultipleActiveResultSets", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to If your application is connecting to a high-availability, disaster recovery (AlwaysOn) availability group (AG) on different subnets, MultiSubnetFailover=Yes configures SqlConnection to provide faster detection of and connection to the (currently) active server..
         /// </summary>
@@ -5738,7 +5738,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_MultiSubnetFailover", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The network library used to establish a connection to an instance of SQL Server..
         /// </summary>
@@ -5747,7 +5747,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_NetworkLibrary", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Specifies which OLE DB Services to enable or disable with the OleDb Provider..
         /// </summary>
@@ -5756,7 +5756,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_OleDbServices", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Size in bytes of the network packets used to communicate with an instance of SQL Server..
         /// </summary>
@@ -5765,7 +5765,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_PacketSize", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the password to be used when connecting to the data source..
         /// </summary>
@@ -5774,7 +5774,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_Password", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to When false, security-sensitive information, such as the password, is not returned as part of the connection if the connection is open or has ever been in an open state..
         /// </summary>
@@ -5783,7 +5783,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_PersistSecurityInfo", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Defines the blocking period behavior for a connection pool..
         /// </summary>
@@ -5792,7 +5792,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_PoolBlockingPeriod", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to When true, the connection object is drawn from the appropriate pool, or if necessary, is created and added to the appropriate pool..
         /// </summary>
@@ -5801,7 +5801,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_Pooling", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The name of the OLE DB Provider to use when connecting to the Data Source..
         /// </summary>
@@ -5810,7 +5810,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_Provider", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Used by SQL Server in Replication..
         /// </summary>
@@ -5819,7 +5819,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_Replication", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates binding behavior of connection to a System.Transactions Transaction when enlisted..
         /// </summary>
@@ -5828,7 +5828,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_TransactionBinding", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to If your application connects to different networks, TransparentNetworkIPResolution=Yes configures SqlConnection to provide transparent connection resolution to the currently active server, independently of the network IP topology..
         /// </summary>
@@ -5837,7 +5837,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_TransparentNetworkIPResolution", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to When true (and encrypt=true), SQL Server uses SSL encryption for all data sent between the client and server without validating the server certificate..
         /// </summary>
@@ -5846,7 +5846,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_TrustServerCertificate", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates which server type system the provider will expose through the DataReader..
         /// </summary>
@@ -5855,7 +5855,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_TypeSystemVersion", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the user ID to be used when connecting to the data source..
         /// </summary>
@@ -5864,7 +5864,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_UserID", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates whether the connection will be re-directed to connect to an instance of SQL Server running under the user&apos;s account..
         /// </summary>
@@ -5873,7 +5873,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_UserInstance", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The name of the workstation connecting to SQL Server..
         /// </summary>
@@ -5882,7 +5882,7 @@ namespace System {
                 return ResourceManager.GetString("DbConnectionString_WorkstationID", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Used during Update for deleted rows in DataSet..
         /// </summary>
@@ -5891,7 +5891,7 @@ namespace System {
                 return ResourceManager.GetString("DbDataAdapter_DeleteCommand", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Used during Update for new rows in DataSet..
         /// </summary>
@@ -5900,7 +5900,7 @@ namespace System {
                 return ResourceManager.GetString("DbDataAdapter_InsertCommand", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Event triggered before every DataRow during Update..
         /// </summary>
@@ -5909,7 +5909,7 @@ namespace System {
                 return ResourceManager.GetString("DbDataAdapter_RowUpdated", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Event triggered after every DataRow during Update..
         /// </summary>
@@ -5918,7 +5918,7 @@ namespace System {
                 return ResourceManager.GetString("DbDataAdapter_RowUpdating", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Used during Fill/FillSchema..
         /// </summary>
@@ -5927,7 +5927,7 @@ namespace System {
                 return ResourceManager.GetString("DbDataAdapter_SelectCommand", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Number of rows to batch together before executing against the data source..
         /// </summary>
@@ -5936,7 +5936,7 @@ namespace System {
                 return ResourceManager.GetString("DbDataAdapter_UpdateBatchSize", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Used during Update for modified rows in DataSet..
         /// </summary>
@@ -5945,7 +5945,7 @@ namespace System {
                 return ResourceManager.GetString("DbDataAdapter_UpdateCommand", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Only necessary to set for decimal and numeric parameters when using with Prepare, FillSchema and CommandBuilder scenarios..
         /// </summary>
@@ -5954,7 +5954,7 @@ namespace System {
                 return ResourceManager.GetString("DbDataParameter_Precision", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Only necessary to set for decimal and numeric parameters when using with Prepare, FillSchema and CommandBuilder scenarios..
         /// </summary>
@@ -5963,7 +5963,7 @@ namespace System {
                 return ResourceManager.GetString("DbDataParameter_Scale", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The parameter generic type..
         /// </summary>
@@ -5972,7 +5972,7 @@ namespace System {
                 return ResourceManager.GetString("DbParameter_DbType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Input, output, or bidirectional parameter..
         /// </summary>
@@ -5981,7 +5981,7 @@ namespace System {
                 return ResourceManager.GetString("DbParameter_Direction", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to a design-time property used for strongly typed code-generation..
         /// </summary>
@@ -5990,7 +5990,7 @@ namespace System {
                 return ResourceManager.GetString("DbParameter_IsNullable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Offset in variable length data types..
         /// </summary>
@@ -5999,7 +5999,7 @@ namespace System {
                 return ResourceManager.GetString("DbParameter_Offset", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Name of the parameter..
         /// </summary>
@@ -6008,7 +6008,7 @@ namespace System {
                 return ResourceManager.GetString("DbParameter_ParameterName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Size of variable length data types (string &amp; arrays)..
         /// </summary>
@@ -6017,7 +6017,7 @@ namespace System {
                 return ResourceManager.GetString("DbParameter_Size", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to When used by a DataAdapter.Update, the source column name that is used to find the DataSetColumn name in the ColumnMappings. This is to copy a value between the parameter and a data row..
         /// </summary>
@@ -6026,7 +6026,7 @@ namespace System {
                 return ResourceManager.GetString("DbParameter_SourceColumn", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to When used by DataAdapter.Update, the parameter value is changed from DBNull.Value into (Int32)1 or (Int32)0 if non-null..
         /// </summary>
@@ -6035,7 +6035,7 @@ namespace System {
                 return ResourceManager.GetString("DbParameter_SourceColumnNullMapping", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to When used by a DataAdapter.Update (UpdateCommand only), the version of the DataRow value that is used to update the data source..
         /// </summary>
@@ -6044,7 +6044,7 @@ namespace System {
                 return ResourceManager.GetString("DbParameter_SourceVersion", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Value of the parameter..
         /// </summary>
@@ -6053,7 +6053,7 @@ namespace System {
                 return ResourceManager.GetString("DbParameter_Value", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to How are the Insert/Update/DeleteCommands generated when not set by the user..
         /// </summary>
@@ -6062,7 +6062,7 @@ namespace System {
                 return ResourceManager.GetString("DbTable_ConflictDetection", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Connection used if the the Select/Insert/Update/DeleteCommands do not already have a connection..
         /// </summary>
@@ -6071,7 +6071,7 @@ namespace System {
                 return ResourceManager.GetString("DbTable_Connection", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Used during Update for deleted rows in the DataTable..
         /// </summary>
@@ -6080,7 +6080,7 @@ namespace System {
                 return ResourceManager.GetString("DbTable_DeleteCommand", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Used during Update for new rows in the DataTable..
         /// </summary>
@@ -6089,7 +6089,7 @@ namespace System {
                 return ResourceManager.GetString("DbTable_InsertCommand", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Should Fill return provider specific values or common CLSCompliant values..
         /// </summary>
@@ -6098,7 +6098,7 @@ namespace System {
                 return ResourceManager.GetString("DbTable_ReturnProviderSpecificTypes", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Used during Fill..
         /// </summary>
@@ -6107,7 +6107,7 @@ namespace System {
                 return ResourceManager.GetString("DbTable_SelectCommand", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to How to map source table to DataTable..
         /// </summary>
@@ -6116,7 +6116,7 @@ namespace System {
                 return ResourceManager.GetString("DbTable_TableMapping", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Number of rows to batch together before executing against the data source..
         /// </summary>
@@ -6125,7 +6125,7 @@ namespace System {
                 return ResourceManager.GetString("DbTable_UpdateBatchSize", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Used during Update for modified rows in the DataTable..
         /// </summary>
@@ -6134,7 +6134,7 @@ namespace System {
                 return ResourceManager.GetString("DbTable_UpdateCommand", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error occurred when retrying the download of the HGS root certificate after the initial request failed. Contact Customer Support Services..
         /// </summary>
@@ -6143,7 +6143,7 @@ namespace System {
                 return ResourceManager.GetString("EnclaveRetrySleepInSecondsValueException", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Unable to invalidate the requested enclave session, because it does not exist in the cache. Contact Customer Support Services..
         /// </summary>
@@ -6152,7 +6152,7 @@ namespace System {
                 return ResourceManager.GetString("EnclaveSessionInvalidationFailed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The validation of an attestation token failed. The token received from SQL Server is expired. Contact Customer Support Services..
         /// </summary>
@@ -6161,7 +6161,7 @@ namespace System {
                 return ResourceManager.GetString("ExpiredAttestationToken", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Syntax error in aggregate argument: Expecting a single column argument with possible &apos;Child&apos; qualifier..
         /// </summary>
@@ -6170,7 +6170,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_AggregateArgument", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unbound reference in the aggregate expression &apos;{0}&apos;..
         /// </summary>
@@ -6179,7 +6179,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_AggregateUnbound", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Operator &apos;{0}&apos; is ambiguous on operands of type &apos;{1}&apos; and &apos;{2}&apos;. Cannot mix signed and unsigned types. Please use explicit Convert() function..
         /// </summary>
@@ -6188,7 +6188,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_AmbiguousBinop", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to {0}() argument is out of range..
         /// </summary>
@@ -6197,7 +6197,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_ArgumentOutofRange", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Type mismatch in function argument: {0}(), argument {1}, expected {2}..
         /// </summary>
@@ -6206,7 +6206,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_ArgumentType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Type mismatch in function argument: {0}(), argument {1}, expected one of the Integer types..
         /// </summary>
@@ -6215,7 +6215,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_ArgumentTypeInteger", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot find the parent relation &apos;{0}&apos;..
         /// </summary>
@@ -6224,7 +6224,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_BindFailure", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot evaluate. Expression &apos;{0}&apos; is not an aggregate..
         /// </summary>
@@ -6233,7 +6233,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_ComputeNotAggregate", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot convert from {0} to {1}..
         /// </summary>
@@ -6242,7 +6242,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_DatatypeConvertion", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot convert value &apos;{0}&apos; to Type: {1}..
         /// </summary>
@@ -6251,7 +6251,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_DatavalueConvertion", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Divide by zero error encountered..
         /// </summary>
@@ -6260,7 +6260,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_DivideByZero", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot evaluate non-constant expression without current row..
         /// </summary>
@@ -6269,7 +6269,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_EvalNoContext", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Expression is too complex..
         /// </summary>
@@ -6278,7 +6278,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_ExpressionTooComplex", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unbound reference in the expression &apos;{0}&apos;..
         /// </summary>
@@ -6287,7 +6287,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_ExpressionUnbound", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Filter expression &apos;{0}&apos; does not evaluate to a Boolean term..
         /// </summary>
@@ -6296,7 +6296,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_FilterConvertion", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid number of arguments: function {0}()..
         /// </summary>
@@ -6305,7 +6305,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_FunctionArgumentCount", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The expression contains invalid date constant &apos;{0}&apos;..
         /// </summary>
@@ -6314,7 +6314,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_InvalidDate", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to &apos;hours&apos; argument is out of range. Value must be between -14 and +14..
         /// </summary>
@@ -6323,7 +6323,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_InvalidHoursArgument", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to &apos;minutes&apos; argument is out of range. Value must be between -59 and +59..
         /// </summary>
@@ -6332,7 +6332,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_InvalidMinutesArgument", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid column name [{0}]..
         /// </summary>
@@ -6341,7 +6341,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_InvalidName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The expression contains invalid name: &apos;{0}&apos;..
         /// </summary>
@@ -6350,7 +6350,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_InvalidNameBracketing", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Error in Like operator: the string pattern &apos;{0}&apos; is invalid..
         /// </summary>
@@ -6359,7 +6359,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_InvalidPattern", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The expression contains an invalid string constant: {0}..
         /// </summary>
@@ -6368,7 +6368,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_InvalidString", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Provided range for time one exceeds total of 14 hours..
         /// </summary>
@@ -6377,7 +6377,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_InvalidTimeZoneRange", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid type name &apos;{0}&apos;..
         /// </summary>
@@ -6386,7 +6386,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_InvalidType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Need a row or a table to Invoke DataFilter..
         /// </summary>
@@ -6395,7 +6395,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_InvokeArgument", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Syntax error: The IN keyword must be followed by a non-empty list of expressions separated by commas, and also must be enclosed in parentheses..
         /// </summary>
@@ -6404,7 +6404,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_InWithoutList", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Syntax error: The items following the IN keyword must be separated by commas and be enclosed in parentheses..
         /// </summary>
@@ -6413,7 +6413,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_InWithoutParentheses", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Syntax error: Invalid usage of &apos;Is&apos; operator. Correct syntax: &lt;expression&gt; Is [Not] Null..
         /// </summary>
@@ -6422,7 +6422,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_IsSyntax", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Syntax error in Lookup expression: Expecting keyword &apos;Parent&apos; followed by a single column argument with possible relation qualifier: Parent[(&lt;relation_name&gt;)].&lt;column_name&gt;..
         /// </summary>
@@ -6431,7 +6431,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_LookupArgument", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Kind property of provided DateTime argument, does not match &apos;hours&apos; and &apos;minutes&apos; arguments..
         /// </summary>
@@ -6440,7 +6440,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_MismatchKindandTimeSpan", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Syntax error: Missing operand after &apos;{0}&apos; operator..
         /// </summary>
@@ -6449,7 +6449,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_MissingOperand", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Syntax error: Missing operand before &apos;{0}&apos; operator..
         /// </summary>
@@ -6458,7 +6458,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_MissingOperandBefore", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The expression is missing the closing parenthesis..
         /// </summary>
@@ -6467,7 +6467,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_MissingRightParen", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Only constant expressions are allowed in the expression list for the IN operator..
         /// </summary>
@@ -6476,7 +6476,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_NonConstantArgument", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The feature not implemented. {0}..
         /// </summary>
@@ -6485,7 +6485,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_NYI", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Value is either too large or too small for Type &apos;{0}&apos;..
         /// </summary>
@@ -6494,7 +6494,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_Overflow", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Syntax error in the expression..
         /// </summary>
@@ -6503,7 +6503,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_Syntax", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The expression has too many closing parentheses..
         /// </summary>
@@ -6512,7 +6512,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_TooManyRightParentheses", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Type mismatch in expression &apos;{0}&apos;..
         /// </summary>
@@ -6521,7 +6521,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_TypeMismatch", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot perform &apos;{0}&apos; operation on {1} and {2}..
         /// </summary>
@@ -6530,7 +6530,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_TypeMismatchInBinop", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot find column [{0}]..
         /// </summary>
@@ -6539,7 +6539,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_UnboundName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The expression contains undefined function call {0}()..
         /// </summary>
@@ -6548,7 +6548,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_UndefinedFunction", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot interpret token &apos;{0}&apos; at position {1}..
         /// </summary>
@@ -6557,7 +6557,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_UnknownToken", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Expected {0}, but actual token at the position {2} is {1}..
         /// </summary>
@@ -6566,7 +6566,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_UnknownToken1", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The table [{0}] involved in more than one relation. You must explicitly mention a relation name in the expression &apos;{1}&apos;..
         /// </summary>
@@ -6575,7 +6575,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_UnresolvedRelation", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The expression contains unsupported operator &apos;{0}&apos;..
         /// </summary>
@@ -6584,7 +6584,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_UnsupportedOperator", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to A DataColumn of type &apos;{0}&apos; does not support expression..
         /// </summary>
@@ -6593,7 +6593,7 @@ namespace System {
                 return ResourceManager.GetString("Expr_UnsupportedType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The collection that holds custom user information..
         /// </summary>
@@ -6602,7 +6602,7 @@ namespace System {
                 return ResourceManager.GetString("ExtendedPropertiesDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Failed to create enclave session as attestation server is busy..
         /// </summary>
@@ -6611,7 +6611,7 @@ namespace System {
                 return ResourceManager.GetString("FailToCreateEnclaveSession", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The validation of an attestation information failed. The attestation information has an invalid format. Contact Customer Support Services. Error details: &apos;{0}&apos;..
         /// </summary>
@@ -6620,7 +6620,7 @@ namespace System {
                 return ResourceManager.GetString("FailToParseAttestationInfo", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The validation of an attestation token failed. The token has an invalid format. Contact Customer Support Services. Error details: &apos;{0}&apos;..
         /// </summary>
@@ -6629,7 +6629,7 @@ namespace System {
                 return ResourceManager.GetString("FailToParseAttestationToken", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to For accept and reject changes, indicates what kind of cascading should take place across this relation..
         /// </summary>
@@ -6638,7 +6638,7 @@ namespace System {
                 return ResourceManager.GetString("ForeignKeyConstraintAcceptRejectRuleDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the child columns of this constraint..
         /// </summary>
@@ -6647,7 +6647,7 @@ namespace System {
                 return ResourceManager.GetString("ForeignKeyConstraintChildColumnsDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to For deletions, indicates what kind of cascading should take place across this relation..
         /// </summary>
@@ -6656,7 +6656,7 @@ namespace System {
                 return ResourceManager.GetString("ForeignKeyConstraintDeleteRuleDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the parent columns of this constraint..
         /// </summary>
@@ -6665,7 +6665,7 @@ namespace System {
                 return ResourceManager.GetString("ForeignKeyConstraintParentColumnsDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to For updates, indicates what kind of cascading should take place across this relation..
         /// </summary>
@@ -6674,7 +6674,7 @@ namespace System {
                 return ResourceManager.GetString("ForeignKeyConstraintUpdateRuleDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the child table of this constraint..
         /// </summary>
@@ -6683,7 +6683,7 @@ namespace System {
                 return ResourceManager.GetString("ForeignKeyRelatedTableDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The attestation service returned an expired HGS root certificate for attestation URL &apos;{0}&apos;. Check the HGS root certificate configured for your HGS instance..
         /// </summary>
@@ -6692,7 +6692,7 @@ namespace System {
                 return ResourceManager.GetString("GetAttestationSigningCertificateFailedInvalidCertificate", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The obtained HGS root certificate for attestation URL &apos;{0}&apos; has an invalid format. Verify the attestation URL is correct and the HGS server is online and fully initialized. For more information contact Customer Support Services. Error details: &apos;{1}&apos;..
         /// </summary>
@@ -6701,7 +6701,7 @@ namespace System {
                 return ResourceManager.GetString("GetAttestationSigningCertificateRequestFailedFormat", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The validation of an attestation token failed. Cannot retrieve a public key from the attestation public key endpoint, or the retrieved key has an invalid format. Error details: &apos;{0}&apos;..
         /// </summary>
@@ -6710,7 +6710,7 @@ namespace System {
                 return ResourceManager.GetString("GetAttestationTokenSigningKeysFailed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Signature verification of the enclave&apos;s Diffie-Hellman key failed. Contact Customer Support Services..
         /// </summary>
@@ -6719,7 +6719,7 @@ namespace System {
                 return ResourceManager.GetString("GetSharedSecretFailed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Global Transactions are not enabled for this Azure SQL Database. Please contact Azure SQL Database support for assistance..
         /// </summary>
@@ -6728,7 +6728,7 @@ namespace System {
                 return ResourceManager.GetString("GT_Disabled", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The currently loaded System.Transactions.dll does not support Global Transactions. Please upgrade to .NET Framework 4.6.1 or later..
         /// </summary>
@@ -6737,7 +6737,7 @@ namespace System {
                 return ResourceManager.GetString("GT_UnsupportedSysTxVersion", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to There are no records in the SqlDataRecord enumeration. To send a table-valued parameter with no rows, use a null reference for the value instead..
         /// </summary>
@@ -6746,7 +6746,7 @@ namespace System {
                 return ResourceManager.GetString("IEnumerableOfSqlDataRecordHasNoRows", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The validation of an attestation token failed due to an error while decoding the enclave public key obtained from SQL Server. Contact Customer Support Services..
         /// </summary>
@@ -6755,7 +6755,7 @@ namespace System {
                 return ResourceManager.GetString("InvalidArgumentToBase64UrlDecoder", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The validation of an attestation token failed due to an error while computing a hash of the enclave public key obtained from SQL Server. Contact Customer Support Services..
         /// </summary>
@@ -6764,7 +6764,7 @@ namespace System {
                 return ResourceManager.GetString("InvalidArgumentToSHA256", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The validation of the attestation token has failed during signature validation. Exception: &apos;{0}&apos;..
         /// </summary>
@@ -6773,7 +6773,7 @@ namespace System {
                 return ResourceManager.GetString("InvalidAttestationToken", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The validation of an attestation token failed. Claim &apos;{0}&apos; in the token has an invalid value of &apos;{1}&apos;. Verify the attestation policy. If the policy is correct, contact Customer Support Services..
         /// </summary>
@@ -6782,7 +6782,7 @@ namespace System {
                 return ResourceManager.GetString("InvalidClaimInAttestationToken", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid column ordinals in schema table.  ColumnOrdinals, if present, must not have duplicates or gaps..
         /// </summary>
@@ -6791,7 +6791,7 @@ namespace System {
                 return ResourceManager.GetString("InvalidSchemaTableOrdinals", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates the columns of this constraint..
         /// </summary>
@@ -6800,7 +6800,7 @@ namespace System {
                 return ResourceManager.GetString("KeyConstraintColumnsDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Indicates if this constraint is a primary key..
         /// </summary>
@@ -6809,7 +6809,7 @@ namespace System {
                 return ResourceManager.GetString("KeyConstraintIsPrimaryKeyDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to ReadOnly Data is Modified..
         /// </summary>
@@ -6818,7 +6818,7 @@ namespace System {
                 return ResourceManager.GetString("Load_ReadOnlyDataModified", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Local Database Runtime: system.data.localdb configuration file section is of unknown type..
         /// </summary>
@@ -6827,7 +6827,7 @@ namespace System {
                 return ResourceManager.GetString("LocalDB_BadConfigSectionType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Local Database Runtime: Cannot create named instance..
         /// </summary>
@@ -6836,7 +6836,7 @@ namespace System {
                 return ResourceManager.GetString("LocalDB_CreateFailed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Local Database Runtime: Cannot load SQLUserInstance.dll..
         /// </summary>
@@ -6845,7 +6845,7 @@ namespace System {
                 return ResourceManager.GetString("LocalDB_FailedGetDLLHandle", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Local Database Runtime: Invalid instance version specification found in the configuration file..
         /// </summary>
@@ -6854,7 +6854,7 @@ namespace System {
                 return ResourceManager.GetString("LocalDB_InvalidVersion", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid SQLUserInstance.dll found at the location specified in the registry. Verify that the Local Database Runtime feature of SQL Server Express is properly installed..
         /// </summary>
@@ -6863,7 +6863,7 @@ namespace System {
                 return ResourceManager.GetString("LocalDB_MethodNotFound", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot obtain Local Database Runtime error message.
         /// </summary>
@@ -6872,7 +6872,7 @@ namespace System {
                 return ResourceManager.GetString("LocalDB_UnobtainableMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The collection name &apos;{0}&apos; matches at least two collections with the same name but with different case, but does not match any of them exactly..
         /// </summary>
@@ -6881,7 +6881,7 @@ namespace System {
                 return ResourceManager.GetString("MDF_AmbiguousCollectionName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to There are multiple collections named &apos;{0}&apos;..
         /// </summary>
@@ -6890,7 +6890,7 @@ namespace System {
                 return ResourceManager.GetString("MDF_CollectionNameISNotUnique", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The collection &apos;{0}&apos; is missing from the metadata XML..
         /// </summary>
@@ -6899,7 +6899,7 @@ namespace System {
                 return ResourceManager.GetString("MDF_DataTableDoesNotExist", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The DataSourceInformation table must contain exactly one row..
         /// </summary>
@@ -6908,7 +6908,7 @@ namespace System {
                 return ResourceManager.GetString("MDF_IncorrectNumberOfDataSourceInformationRows", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to &apos;{2}&apos; is not a valid value for the &apos;{1}&apos; restriction of the &apos;{0}&apos; schema collection..
         /// </summary>
@@ -6917,7 +6917,7 @@ namespace System {
                 return ResourceManager.GetString("MDF_InvalidRestrictionValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The metadata XML is invalid..
         /// </summary>
@@ -6926,7 +6926,7 @@ namespace System {
                 return ResourceManager.GetString("MDF_InvalidXml", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The metadata XML is invalid. The {1} column of the {0} collection must contain a non-empty string..
         /// </summary>
@@ -6935,7 +6935,7 @@ namespace System {
                 return ResourceManager.GetString("MDF_InvalidXmlInvalidValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The metadata XML is invalid. The {0} collection must contain a {1} column and it must be a string column..
         /// </summary>
@@ -6944,7 +6944,7 @@ namespace System {
                 return ResourceManager.GetString("MDF_InvalidXmlMissingColumn", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to One of the required DataSourceInformation tables columns is missing..
         /// </summary>
@@ -6953,7 +6953,7 @@ namespace System {
                 return ResourceManager.GetString("MDF_MissingDataSourceInformationColumn", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to One or more of the required columns of the restrictions collection is missing..
         /// </summary>
@@ -6962,7 +6962,7 @@ namespace System {
                 return ResourceManager.GetString("MDF_MissingRestrictionColumn", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to A restriction exists for which there is no matching row in the restrictions collection..
         /// </summary>
@@ -6971,7 +6971,7 @@ namespace System {
                 return ResourceManager.GetString("MDF_MissingRestrictionRow", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The schema table contains no columns..
         /// </summary>
@@ -6980,7 +6980,7 @@ namespace System {
                 return ResourceManager.GetString("MDF_NoColumns", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unable to build the &apos;{0}&apos; collection because execution of the SQL query failed. See the inner exception for details..
         /// </summary>
@@ -6989,7 +6989,7 @@ namespace System {
                 return ResourceManager.GetString("MDF_QueryFailed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to More restrictions were provided than the requested schema (&apos;{0}&apos;) supports..
         /// </summary>
@@ -6998,7 +6998,7 @@ namespace System {
                 return ResourceManager.GetString("MDF_TooManyRestrictions", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unable to build schema collection &apos;{0}&apos;;.
         /// </summary>
@@ -7007,7 +7007,7 @@ namespace System {
                 return ResourceManager.GetString("MDF_UnableToBuildCollection", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The requested collection ({0}) is not defined..
         /// </summary>
@@ -7016,7 +7016,7 @@ namespace System {
                 return ResourceManager.GetString("MDF_UndefinedCollection", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The population mechanism &apos;{0}&apos; is not defined..
         /// </summary>
@@ -7025,7 +7025,7 @@ namespace System {
                 return ResourceManager.GetString("MDF_UndefinedPopulationMechanism", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The requested collection ({0}) is not supported by this version of the provider..
         /// </summary>
@@ -7034,7 +7034,7 @@ namespace System {
                 return ResourceManager.GetString("MDF_UnsupportedVersion", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to SqlDbType.Structured type is only supported for multiple valued types..
         /// </summary>
@@ -7043,7 +7043,7 @@ namespace System {
                 return ResourceManager.GetString("MetaType_SingleValuedStructNotSupported", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The validation of the attestation token failed. Claim &apos;{0}&apos; is missing in the token. Verify the attestation policy. If the policy is correct, contact Customer Support Services..
         /// </summary>
@@ -7052,7 +7052,7 @@ namespace System {
                 return ResourceManager.GetString("MissingClaimInAttestationToken", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Simple type &apos;{0}&apos; has already be declared with different &apos;{1}&apos;..
         /// </summary>
@@ -7061,7 +7061,7 @@ namespace System {
                 return ResourceManager.GetString("NamedSimpleType_InvalidDuplicateNamedSimpleTypeDelaration", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The specified value is not valid in the &apos;{0}&apos; enumeration..
         /// </summary>
@@ -7070,7 +7070,7 @@ namespace System {
                 return ResourceManager.GetString("net_invalid_enum", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to DateType column for field &apos;{0}&apos; in schema table is null.  DataType must be non-null..
         /// </summary>
@@ -7079,7 +7079,7 @@ namespace System {
                 return ResourceManager.GetString("NullSchemaTableDataTypeNotSupported", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to {0} - unable to allocate an environment handle..
         /// </summary>
@@ -7088,7 +7088,7 @@ namespace System {
                 return ResourceManager.GetString("Odbc_CantAllocateEnvironmentHandle", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to {0} - unable to enable connection pooling....
         /// </summary>
@@ -7097,7 +7097,7 @@ namespace System {
                 return ResourceManager.GetString("Odbc_CantEnableConnectionpooling", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Can&apos;t set property on an open connection..
         /// </summary>
@@ -7106,7 +7106,7 @@ namespace System {
                 return ResourceManager.GetString("Odbc_CantSetPropertyOnOpenConnection", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The connection is closed..
         /// </summary>
@@ -7115,7 +7115,7 @@ namespace System {
                 return ResourceManager.GetString("Odbc_ConnectionClosed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to {0} [{1}] {2}.
         /// </summary>
@@ -7124,7 +7124,7 @@ namespace System {
                 return ResourceManager.GetString("Odbc_ExceptionMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to {0} - no error information available.
         /// </summary>
@@ -7133,7 +7133,7 @@ namespace System {
                 return ResourceManager.GetString("Odbc_ExceptionNoInfoMsg", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to {0} - unable to get descriptor handle..
         /// </summary>
@@ -7142,7 +7142,7 @@ namespace System {
                 return ResourceManager.GetString("Odbc_FailedToGetDescriptorHandle", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to &quot;The ODBC managed provider requires that the TABLE_NAME restriction be specified and non-null for the GetSchema indexes collection..
         /// </summary>
@@ -7151,7 +7151,7 @@ namespace System {
                 return ResourceManager.GetString("ODBC_GetSchemaRestrictionRequired", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to {0} - unable to map type..
         /// </summary>
@@ -7160,7 +7160,7 @@ namespace System {
                 return ResourceManager.GetString("Odbc_GetTypeMapping_UnknownType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The .NET Framework Odbc Data Provider requires Microsoft Data Access Components(MDAC) version 2.6 or later.  Version {0} was found currently installed..
         /// </summary>
@@ -7169,7 +7169,7 @@ namespace System {
                 return ResourceManager.GetString("Odbc_MDACWrongVersion", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid negative argument!.
         /// </summary>
@@ -7178,7 +7178,7 @@ namespace System {
                 return ResourceManager.GetString("Odbc_NegativeArgument", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to No valid mapping for a SQL_TRANSACTION &apos;{0}&apos; to a System.Data.IsolationLevel enumeration value..
         /// </summary>
@@ -7187,7 +7187,7 @@ namespace System {
                 return ResourceManager.GetString("Odbc_NoMappingForSqlTransactionLevel", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Not in a transaction.
         /// </summary>
@@ -7196,7 +7196,7 @@ namespace System {
                 return ResourceManager.GetString("Odbc_NotInTransaction", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The {0} enumeration value, {1}, is not supported by the .NET Framework Odbc Data Provider..
         /// </summary>
@@ -7205,7 +7205,7 @@ namespace System {
                 return ResourceManager.GetString("ODBC_NotSupportedEnumerationValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Use IsDBNull when DBNull.Value data is expected..
         /// </summary>
@@ -7214,7 +7214,7 @@ namespace System {
                 return ResourceManager.GetString("Odbc_NullData", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to OdbcCommandBuilder.DeriveParameters failed because the OdbcCommand.CommandText property value is an invalid multipart name.
         /// </summary>
@@ -7223,7 +7223,7 @@ namespace System {
                 return ResourceManager.GetString("ODBC_ODBCCommandText", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to An internal connection does not have an owner..
         /// </summary>
@@ -7232,7 +7232,7 @@ namespace System {
                 return ResourceManager.GetString("Odbc_OpenConnectionNoOwner", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid OdbcType enumeration value={0}..
         /// </summary>
@@ -7241,7 +7241,7 @@ namespace System {
                 return ResourceManager.GetString("Odbc_UnknownOdbcType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unknown SQL type - {0}..
         /// </summary>
@@ -7250,7 +7250,7 @@ namespace System {
                 return ResourceManager.GetString("Odbc_UnknownSQLType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unknown URT type - {0}..
         /// </summary>
@@ -7259,7 +7259,7 @@ namespace System {
                 return ResourceManager.GetString("Odbc_UnknownURTType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The DataAdapter for which to automatically generate OdbcCommands.
         /// </summary>
@@ -7268,7 +7268,7 @@ namespace System {
                 return ResourceManager.GetString("OdbcCommandBuilder_DataAdapter", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The character used in a text command as the opening quote for quoting identifiers that contain special characters..
         /// </summary>
@@ -7277,7 +7277,7 @@ namespace System {
                 return ResourceManager.GetString("OdbcCommandBuilder_QuotePrefix", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The character used in a text command as the closing quote for quoting identifiers that contain special characters..
         /// </summary>
@@ -7286,7 +7286,7 @@ namespace System {
                 return ResourceManager.GetString("OdbcCommandBuilder_QuoteSuffix", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Information used to connect to a Data Source..
         /// </summary>
@@ -7295,7 +7295,7 @@ namespace System {
                 return ResourceManager.GetString("OdbcConnection_ConnectionString", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Connection string exceeds maximum allowed length of {0}..
         /// </summary>
@@ -7304,7 +7304,7 @@ namespace System {
                 return ResourceManager.GetString("OdbcConnection_ConnectionStringTooLong", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Current connection timeout value, not settable in the ConnectionString..
         /// </summary>
@@ -7313,7 +7313,7 @@ namespace System {
                 return ResourceManager.GetString("OdbcConnection_ConnectionTimeout", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Current data source catalog value, &apos;Database=X&apos; in the connection string..
         /// </summary>
@@ -7322,7 +7322,7 @@ namespace System {
                 return ResourceManager.GetString("OdbcConnection_Database", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Current data source, &apos;Server=X&apos; in the connection string..
         /// </summary>
@@ -7331,7 +7331,7 @@ namespace System {
                 return ResourceManager.GetString("OdbcConnection_DataSource", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Current ODBC driver..
         /// </summary>
@@ -7340,7 +7340,7 @@ namespace System {
                 return ResourceManager.GetString("OdbcConnection_Driver", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Version of the product accessed by the ODBC Driver..
         /// </summary>
@@ -7349,7 +7349,7 @@ namespace System {
                 return ResourceManager.GetString("OdbcConnection_ServerVersion", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The parameter native type..
         /// </summary>
@@ -7358,7 +7358,7 @@ namespace System {
                 return ResourceManager.GetString("OdbcParameter_OdbcType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to &apos;Asynchronous Processing&apos; is not a supported feature of the .NET Framework Data OLE DB Provider(Microsoft.Data.OleDb)..
         /// </summary>
@@ -7367,7 +7367,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_AsynchronousNotSupported", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Accessor validation was deferred and was performed while the method returned data. The binding was invalid for this column or parameter..
         /// </summary>
@@ -7376,7 +7376,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_BadAccessor", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Microsoft.Data.OleDb.OleDbDataAdapter internal error: invalid parameter accessor: {0} {1}..
         /// </summary>
@@ -7385,7 +7385,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_BadStatus_ParamAcc", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to OleDbDataAdapter internal error: invalid row set accessor: Ordinal={0} Status={1}..
         /// </summary>
@@ -7394,7 +7394,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_BadStatusRowAccessor", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Can not determine the server&apos;s decimal separator. Non-integer numeric literals can not be created..
         /// </summary>
@@ -7403,7 +7403,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_CanNotDetermineDecimalSeparator", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The data value could not be converted for reasons other than sign mismatch or data overflow. For example, the data was corrupted in the data store but the row was still retrievable..
         /// </summary>
@@ -7412,7 +7412,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_CantConvertValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The provider could not allocate memory in which to return {0} data..
         /// </summary>
@@ -7421,7 +7421,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_CantCreate", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Command parameter[{0}] &apos;{1}&apos; is invalid..
         /// </summary>
@@ -7430,7 +7430,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_CommandParameterBadAccessor", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Command parameter[{0}] &apos;{1}&apos; data value could not be converted for reasons other than sign mismatch or data overflow..
         /// </summary>
@@ -7439,7 +7439,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_CommandParameterCantConvertValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Conversion failed for command parameter[{0}] &apos;{1}&apos; because the data value overflowed the type used by the provider..
         /// </summary>
@@ -7448,7 +7448,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_CommandParameterDataOverflow", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Parameter[{0}] &apos;{1}&apos; has no default value..
         /// </summary>
@@ -7457,7 +7457,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_CommandParameterDefault", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Error occurred with parameter[{0}]: {1}..
         /// </summary>
@@ -7466,7 +7466,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_CommandParameterError", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Conversion failed for command parameter[{0}] &apos;{1}&apos; because the data value was signed and the type used by the provider was unsigned..
         /// </summary>
@@ -7475,7 +7475,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_CommandParameterSignMismatch", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Provider encountered an error while sending command parameter[{0}] &apos;{1}&apos; value and stopped processing..
         /// </summary>
@@ -7484,7 +7484,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_CommandParameterUnavailable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The ICommandText interface is not supported by the &apos;{0}&apos; provider. Use CommandType.TableDirect instead..
         /// </summary>
@@ -7493,7 +7493,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_CommandTextNotSupported", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unable to load the XML file specified in configuration setting &apos;{0}&apos;..
         /// </summary>
@@ -7502,7 +7502,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_ConfigUnableToLoadXmlMetaDataFile", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The &apos;{0}&apos; configuration setting has the wrong number of values..
         /// </summary>
@@ -7511,7 +7511,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_ConfigWrongNumberOfValues", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Format of the initialization string does not conform to the OLE DB specification.  Starting around char[{0}] in the connection string..
         /// </summary>
@@ -7520,7 +7520,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_ConnectionStringSyntax", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Conversion failed because the {0} data value overflowed the type specified for the {0} value part in the consumer&apos;s buffer..
         /// </summary>
@@ -7529,7 +7529,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_DataOverflow", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to DBTYPE_VECTOR data is not supported by the .NET Framework Data OLE DB Provider(Microsoft.Data.OleDb)..
         /// </summary>
@@ -7538,7 +7538,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_DBBindingGetVector", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to IErrorInfo.GetDescription failed with {0}..
         /// </summary>
@@ -7547,7 +7547,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_FailedGetDescription", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to IErrorInfo.GetSource failed with {0}..
         /// </summary>
@@ -7556,7 +7556,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_FailedGetSource", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unable to retrieve the IRow interface from the ADODB.Record object..
         /// </summary>
@@ -7565,7 +7565,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_Fill_EmptyRecord", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unable to retrieve the &apos;{0}&apos; interface from the ADODB.RecordSet object..
         /// </summary>
@@ -7574,7 +7574,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_Fill_EmptyRecordSet", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Object is not an ADODB.RecordSet or an ADODB.Record..
         /// </summary>
@@ -7583,7 +7583,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_Fill_NotADODB", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to OleDbDataAdapter internal error: [get] Unknown OLE DB data type: 0x{0} ({1})..
         /// </summary>
@@ -7592,7 +7592,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_GVtUnknown", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot construct the ReservedWords schema collection because the provider does not support IDBInfo..
         /// </summary>
@@ -7601,7 +7601,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_IDBInfoNotSupported", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The OLE DB Provider specified in the ConnectionString is too long..
         /// </summary>
@@ -7610,7 +7610,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_InvalidProviderSpecified", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to No restrictions are expected for the DbInfoKeywords OleDbSchemaGuid..
         /// </summary>
@@ -7619,7 +7619,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_InvalidRestrictionsDbInfoKeywords", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to No restrictions are expected for the DbInfoLiterals OleDbSchemaGuid..
         /// </summary>
@@ -7628,7 +7628,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_InvalidRestrictionsDbInfoLiteral", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to No restrictions are expected for the schema guid OleDbSchemaGuid..
         /// </summary>
@@ -7637,7 +7637,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_InvalidRestrictionsSchemaGuids", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Type does not support the OLE DB interface ISourcesRowset.
         /// </summary>
@@ -7646,7 +7646,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_ISourcesRowsetNotSupported", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The .NET Framework Data Providers require Microsoft Data Access Components(MDAC).  Please install Microsoft Data Access Components(MDAC) version 2.6 or later..
         /// </summary>
@@ -7655,7 +7655,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_MDACNotAvailable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The .NET Framework OleDb Data Provider requires Microsoft Data Access Components(MDAC) version 2.6 or later.  Version {0} was found currently installed..
         /// </summary>
@@ -7664,7 +7664,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_MDACWrongVersion", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The .NET Framework Data Provider for OLEDB (Microsoft.Data.OleDb) does not support the Microsoft OLE DB Provider for ODBC Drivers (MSDASQL). Use the .NET Framework Data Provider for ODBC (System.Data.Odbc)..
         /// </summary>
@@ -7673,7 +7673,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_MSDASQLNotSupported", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to No error message available, result code: {0}..
         /// </summary>
@@ -7682,7 +7682,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_NoErrorInformation", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to &apos;{0}&apos; failed with no error message available, result code: {1}..
         /// </summary>
@@ -7691,7 +7691,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_NoErrorInformation2", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unspecified error: {0}.
         /// </summary>
@@ -7700,7 +7700,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_NoErrorMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to An OLE DB Provider was not specified in the ConnectionString.  An example would be, &apos;Provider=SQLOLEDB;&apos;..
         /// </summary>
@@ -7709,7 +7709,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_NoProviderSpecified", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The ICommandWithParameters interface is not supported by the &apos;{0}&apos; provider.  Command parameters are unsupported with the current provider..
         /// </summary>
@@ -7718,7 +7718,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_NoProviderSupportForParameters", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Retrieving procedure parameter information is not supported by the &apos;{0}&apos; provider..
         /// </summary>
@@ -7727,7 +7727,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_NoProviderSupportForSProcResetParameters", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The {0} enumeration value, {1}, is not supported by the .NET Framework OleDb Data Provider..
         /// </summary>
@@ -7736,7 +7736,7 @@ namespace System {
                 return ResourceManager.GetString("OLEDB_NotSupportedEnumerationValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The {0} OleDbSchemaGuid is not a supported schema by the &apos;{1}&apos; provider..
         /// </summary>
@@ -7745,7 +7745,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_NotSupportedSchemaTable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to OleDbCommandBuilder.DeriveParameters failed because the OleDbCommandBuilder.CommandText property value is an invalid multipart name.
         /// </summary>
@@ -7754,7 +7754,7 @@ namespace System {
                 return ResourceManager.GetString("OLEDB_OLEDBCommandText", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The .NET Framework Data Provider for OLEDB will not allow the OLE DB Provider to prompt the user in a non-interactive environment..
         /// </summary>
@@ -7763,7 +7763,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_PossiblePromptNotUserInteractive", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The ColumnID element was invalid..
         /// </summary>
@@ -7772,7 +7772,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_PropertyBadColumn", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The value of Options was invalid..
         /// </summary>
@@ -7781,7 +7781,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_PropertyBadOption", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Failed to initialize the &apos;{0}&apos; property for one of the following reasons:
         ///	The value data type was not the data type of the property or was not null. For example, the property was DBPROP_MEMORYUSAGE, which has a data type of Int32, and the data type was Int64.
@@ -7793,7 +7793,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_PropertyBadValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The &apos;{0}&apos;property&apos;s value was not set because doing so would have conflicted with an existing property..
         /// </summary>
@@ -7802,7 +7802,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_PropertyConflicting", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to A &apos;{0}&apos; property was specified to be applied to all columns but could not be applied to one or more of them..
         /// </summary>
@@ -7811,7 +7811,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_PropertyNotAllSettable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to (Reserved)..
         /// </summary>
@@ -7820,7 +7820,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_PropertyNotAvailable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The optional &apos;{0}&apos; property&apos;s value was not set to the specified value and setting the property to the specified value was not possible..
         /// </summary>
@@ -7829,7 +7829,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_PropertyNotSet", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The &apos;{0}&apos; property was read-only, or the consumer attempted to set values of properties in the Initialization property group after the data source object was initialized. Consumers can set the value of a read-only property to its current value. This status is also returned if a settable column property could not be set for the particular column..
         /// </summary>
@@ -7838,7 +7838,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_PropertyNotSettable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The property&apos;s value was not set because the provider did not support the &apos;{0}&apos; property, or the consumer attempted to get or set values of properties not in the Initialization property group and the data source object is uninitialized..
         /// </summary>
@@ -7847,7 +7847,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_PropertyNotSupported", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The provider returned an unknown DBPROPSTATUS_ value &apos;{0}&apos;..
         /// </summary>
@@ -7856,7 +7856,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_PropertyStatusUnknown", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The &apos;{0}&apos; provider is not registered on the local machine..
         /// </summary>
@@ -7865,7 +7865,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_ProviderUnavailable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to &apos;{0}&apos; interface is not supported by the &apos;{1}&apos; provider.  GetOleDbSchemaTable is unavailable with the current provider..
         /// </summary>
@@ -7874,7 +7874,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_SchemaRowsetsNotSupported", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Conversion failed because the {0} data value was signed and the type specified for the {0} value part in the consumer&apos;s buffer was unsigned..
         /// </summary>
@@ -7883,7 +7883,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_SignMismatch", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to OleDbDataAdapter internal error: [set] Unknown OLE DB data type: 0x{0} ({1})..
         /// </summary>
@@ -7892,7 +7892,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_SVtUnknown", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The OleDbDataReader.Read must be used from the same thread on which is was created if that thread&apos;s ApartmentState was not ApartmentState.MTA..
         /// </summary>
@@ -7901,7 +7901,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_ThreadApartmentState", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The ITransactionLocal interface is not supported by the &apos;{0}&apos; provider.  Local transactions are unavailable with the current provider..
         /// </summary>
@@ -7910,7 +7910,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_TransactionsNotSupported", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The provider could not determine the {0} value. For example, the row was just created, the default for the {0} column was not available, and the consumer had not yet set a new {0} value..
         /// </summary>
@@ -7919,7 +7919,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_Unavailable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to OLE DB Provider returned an unexpected status value of {0}..
         /// </summary>
@@ -7928,7 +7928,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_UnexpectedStatusValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Parameter[{0}]: the OleDbType property is uninitialized: OleDbType.{1}..
         /// </summary>
@@ -7937,7 +7937,7 @@ namespace System {
                 return ResourceManager.GetString("OleDb_UninitializedParameters", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The DataAdapter for which to automatically generate OleDbCommands.
         /// </summary>
@@ -7946,7 +7946,7 @@ namespace System {
                 return ResourceManager.GetString("OleDbCommandBuilder_DataAdapter", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The decimal separator used in numeric literals..
         /// </summary>
@@ -7955,7 +7955,7 @@ namespace System {
                 return ResourceManager.GetString("OleDbCommandBuilder_DecimalSeparator", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The prefix string wrapped around sql objects.
         /// </summary>
@@ -7964,7 +7964,7 @@ namespace System {
                 return ResourceManager.GetString("OleDbCommandBuilder_QuotePrefix", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The suffix string wrapped around sql objects.
         /// </summary>
@@ -7973,7 +7973,7 @@ namespace System {
                 return ResourceManager.GetString("OleDbCommandBuilder_QuoteSuffix", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Information used to connect to a Data Source..
         /// </summary>
@@ -7982,7 +7982,7 @@ namespace System {
                 return ResourceManager.GetString("OleDbConnection_ConnectionString", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Current connection timeout value, &apos;Connect Timeout=X&apos; in the ConnectionString..
         /// </summary>
@@ -7991,7 +7991,7 @@ namespace System {
                 return ResourceManager.GetString("OleDbConnection_ConnectionTimeout", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Current data source catalog value, &apos;Initial Catalog=X&apos; in the connection string..
         /// </summary>
@@ -8000,7 +8000,7 @@ namespace System {
                 return ResourceManager.GetString("OleDbConnection_Database", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Current data source, &apos;Data Source=X&apos; in the connection string..
         /// </summary>
@@ -8009,7 +8009,7 @@ namespace System {
                 return ResourceManager.GetString("OleDbConnection_DataSource", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Current OLE DB provider ProgID, &apos;Provider=X&apos; in the connection string..
         /// </summary>
@@ -8018,7 +8018,7 @@ namespace System {
                 return ResourceManager.GetString("OleDbConnection_Provider", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Version of the product accessed by the OLE DB Provider..
         /// </summary>
@@ -8027,7 +8027,7 @@ namespace System {
                 return ResourceManager.GetString("OleDbConnection_ServerVersion", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The parameter native type..
         /// </summary>
@@ -8036,7 +8036,7 @@ namespace System {
                 return ResourceManager.GetString("OleDbParameter_OleDbType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Occurs whenever a property for this control changes..
         /// </summary>
@@ -8045,7 +8045,7 @@ namespace System {
                 return ResourceManager.GetString("propertyChangedEventDescr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Min ({0}) must be less than or equal to max ({1}) in a Range object..
         /// </summary>
@@ -8054,7 +8054,7 @@ namespace System {
                 return ResourceManager.GetString("Range_Argument", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to This is a null range..
         /// </summary>
@@ -8063,7 +8063,7 @@ namespace System {
                 return ResourceManager.GetString("Range_NullRange", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Collection was modified; enumeration operation might not execute..
         /// </summary>
@@ -8072,7 +8072,7 @@ namespace System {
                 return ResourceManager.GetString("RbTree_EnumerationBroken", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to DataTable internal index is corrupted: &apos;{0}&apos;..
         /// </summary>
@@ -8081,7 +8081,7 @@ namespace System {
                 return ResourceManager.GetString("RbTree_InvalidState", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to MinimumCapacity must be non-negative..
         /// </summary>
@@ -8090,7 +8090,7 @@ namespace System {
                 return ResourceManager.GetString("RecordManager_MinimumCapacity", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Security Warning: The negotiated {0} is an insecure protocol and is supported for backward compatibility only. The recommended protocol version is TLS 1.2 and later..
         /// </summary>
@@ -8099,7 +8099,7 @@ namespace System {
                 return ResourceManager.GetString("SEC_ProtocolWarning", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to I/O Error detected in read/write operation.
         /// </summary>
@@ -8108,7 +8108,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_1", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to .
         /// </summary>
@@ -8117,7 +8117,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_10", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Timeout error.
         /// </summary>
@@ -8126,7 +8126,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_11", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to No server name supplied.
         /// </summary>
@@ -8135,7 +8135,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_12", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to TerminateListener() has been called.
         /// </summary>
@@ -8144,7 +8144,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_13", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Win9x not supported.
         /// </summary>
@@ -8153,7 +8153,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_14", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Function not supported.
         /// </summary>
@@ -8162,7 +8162,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_15", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Shared-Memory heap error.
         /// </summary>
@@ -8171,7 +8171,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_16", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot find an ip/ipv6 type address to connect.
         /// </summary>
@@ -8180,7 +8180,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_17", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Connection has been closed by peer.
         /// </summary>
@@ -8189,7 +8189,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_18", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Physical connection is not usable.
         /// </summary>
@@ -8198,7 +8198,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_19", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Connection was terminated.
         /// </summary>
@@ -8207,7 +8207,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_2", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Connection has been closed.
         /// </summary>
@@ -8216,7 +8216,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_20", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Encryption is enforced but there is no valid certificate.
         /// </summary>
@@ -8225,7 +8225,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_21", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Couldn&apos;t load library.
         /// </summary>
@@ -8234,7 +8234,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_22", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot open a new thread in server process.
         /// </summary>
@@ -8243,7 +8243,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_23", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot post event to completion port.
         /// </summary>
@@ -8252,7 +8252,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_24", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Connection string is not valid.
         /// </summary>
@@ -8261,7 +8261,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_25", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Error Locating Server/Instance Specified.
         /// </summary>
@@ -8270,7 +8270,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_26", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Error getting enabled protocols list from registry.
         /// </summary>
@@ -8279,7 +8279,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_27", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Server doesn&apos;t support requested protocol.
         /// </summary>
@@ -8288,7 +8288,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_28", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Shared Memory is not supported for clustered server connectivity.
         /// </summary>
@@ -8297,7 +8297,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_29", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Asynchronous operations not supported.
         /// </summary>
@@ -8306,7 +8306,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_3", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid attempt bind to shared memory segment.
         /// </summary>
@@ -8315,7 +8315,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_30", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Encryption(ssl/tls) handshake failed.
         /// </summary>
@@ -8324,7 +8324,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_31", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Packet size too large for SSL Encrypt/Decrypt operations.
         /// </summary>
@@ -8333,7 +8333,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_32", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to SSRP error.
         /// </summary>
@@ -8342,7 +8342,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_33", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Could not connect to the Shared Memory pipe.
         /// </summary>
@@ -8351,7 +8351,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_34", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to An internal exception was caught.
         /// </summary>
@@ -8360,7 +8360,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_35", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The Shared Memory dll used to connect to SQL Server 2000 was not found.
         /// </summary>
@@ -8369,7 +8369,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_36", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The SQL Server 2000 Shared Memory client dll appears to be invalid/corrupted.
         /// </summary>
@@ -8378,7 +8378,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_37", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot open a Shared Memory connection to SQL Server 2000.
         /// </summary>
@@ -8387,7 +8387,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_38", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Shared memory connectivity to SQL Server 2000 is either disabled or not available on this machine.
         /// </summary>
@@ -8396,7 +8396,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_39", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to .
         /// </summary>
@@ -8405,7 +8405,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_4", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Could not open a connection to SQL Server.
         /// </summary>
@@ -8414,7 +8414,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_40", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot open a Shared Memory connection to a remote SQL server.
         /// </summary>
@@ -8423,7 +8423,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_41", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Could not establish dedicated administrator connection (DAC) on default port. Make sure that DAC is enabled.
         /// </summary>
@@ -8432,7 +8432,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_42", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to An error occurred while obtaining the dedicated administrator connection (DAC) port. Make sure that SQL Browser is running, or check the error log for the port number.
         /// </summary>
@@ -8441,7 +8441,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_43", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Could not compose Service Principal Name (SPN) for Windows Integrated Authentication. Possible causes are server(s) incorrectly specified to connection API calls, Domain Name System (DNS) lookup failure or memory shortage.
         /// </summary>
@@ -8450,7 +8450,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_44", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Connecting with the MultiSubnetFailover connection option to a SQL Server instance configured with more than 64 IP addresses is not supported..
         /// </summary>
@@ -8459,7 +8459,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_47", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Connecting to a named SQL Server instance using the MultiSubnetFailover connection option is not supported..
         /// </summary>
@@ -8468,7 +8468,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_48", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Connecting to a SQL Server instance using the MultiSubnetFailover connection option is only supported when using the TCP protocol..
         /// </summary>
@@ -8477,7 +8477,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_49", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid parameter(s) found.
         /// </summary>
@@ -8486,7 +8486,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_5", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Local Database Runtime error occurred. .
         /// </summary>
@@ -8495,7 +8495,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_50", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to An instance name was not specified while connecting to a Local Database Runtime. Specify an instance name in the format (localdb)\instance_name..
         /// </summary>
@@ -8504,7 +8504,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_51", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unable to locate a Local Database Runtime installation. Verify that SQL Server Express is properly installed and that the Local Database Runtime feature is enabled..
         /// </summary>
@@ -8513,7 +8513,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_52", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid Local Database Runtime registry configuration found. Verify that SQL Server Express is properly installed..
         /// </summary>
@@ -8522,7 +8522,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_53", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unable to locate the registry entry for SQLUserInstance.dll file path. Verify that the Local Database Runtime feature of SQL Server Express is properly installed..
         /// </summary>
@@ -8531,7 +8531,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_54", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Registry value contains an invalid SQLUserInstance.dll file path. Verify that the Local Database Runtime feature of SQL Server Express is properly installed..
         /// </summary>
@@ -8540,7 +8540,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_55", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unable to load the SQLUserInstance.dll from the location specified in the registry. Verify that the Local Database Runtime feature of SQL Server Express is properly installed..
         /// </summary>
@@ -8549,7 +8549,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_56", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid SQLUserInstance.dll found at the location specified in the registry. Verify that the Local Database Runtime feature of SQL Server Express is properly installed..
         /// </summary>
@@ -8558,7 +8558,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_57", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unsupported protocol specified.
         /// </summary>
@@ -8567,7 +8567,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_6", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid connection found when setting up new session protocol.
         /// </summary>
@@ -8576,7 +8576,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_7", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Protocol not supported.
         /// </summary>
@@ -8585,7 +8585,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_8", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Associating port with I/O completion mechanism failed.
         /// </summary>
@@ -8594,7 +8594,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_ERROR_9", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to HTTP Provider.
         /// </summary>
@@ -8603,7 +8603,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_PN0", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Named Pipes Provider.
         /// </summary>
@@ -8612,7 +8612,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_PN1", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to .
         /// </summary>
@@ -8621,7 +8621,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_PN10", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to SQL Network Interfaces.
         /// </summary>
@@ -8630,7 +8630,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_PN11", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Session Provider.
         /// </summary>
@@ -8639,7 +8639,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_PN2", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Sign Provider.
         /// </summary>
@@ -8648,7 +8648,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_PN3", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Shared Memory Provider.
         /// </summary>
@@ -8657,7 +8657,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_PN4", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to SMux Provider.
         /// </summary>
@@ -8666,7 +8666,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_PN5", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to SSL Provider.
         /// </summary>
@@ -8675,7 +8675,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_PN6", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to TCP Provider.
         /// </summary>
@@ -8684,7 +8684,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_PN7", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to VIA Provider.
         /// </summary>
@@ -8693,7 +8693,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_PN8", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to CTAIP Provider.
         /// </summary>
@@ -8702,7 +8702,7 @@ namespace System {
                 return ResourceManager.GetString("SNI_PN9", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Connection open and login was successful, but then an error occurred while enlisting the connection into the current distributed transaction..
         /// </summary>
@@ -8711,7 +8711,7 @@ namespace System {
                 return ResourceManager.GetString("Snix_AutoEnlist", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to A transport-level error has occurred during connection clean-up..
         /// </summary>
@@ -8720,7 +8720,7 @@ namespace System {
                 return ResourceManager.GetString("Snix_Close", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to A network-related or instance-specific error occurred while establishing a connection to SQL Server. The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections..
         /// </summary>
@@ -8729,7 +8729,7 @@ namespace System {
                 return ResourceManager.GetString("Snix_Connect", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Connection open and login was successful, but then an error occurred while enabling MARS for this connection..
         /// </summary>
@@ -8738,7 +8738,7 @@ namespace System {
                 return ResourceManager.GetString("Snix_EnableMars", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to A transport-level error has occurred when sending the request to the server..
         /// </summary>
@@ -8747,7 +8747,7 @@ namespace System {
                 return ResourceManager.GetString("Snix_Execute", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Failed to establish a MARS session in preparation to send the request to the server..
         /// </summary>
@@ -8756,7 +8756,7 @@ namespace System {
                 return ResourceManager.GetString("Snix_GetMarsSession", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to A connection was successfully established with the server, but then an error occurred during the login process..
         /// </summary>
@@ -8765,7 +8765,7 @@ namespace System {
                 return ResourceManager.GetString("Snix_Login", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to A connection was successfully established with the server, but then an error occurred when obtaining the security/SSPI context information for integrated security login..
         /// </summary>
@@ -8774,7 +8774,7 @@ namespace System {
                 return ResourceManager.GetString("Snix_LoginSspi", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to A connection was successfully established with the server, but then an error occurred during the pre-login handshake..
         /// </summary>
@@ -8783,7 +8783,7 @@ namespace System {
                 return ResourceManager.GetString("Snix_PreLogin", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The client was unable to establish a connection because of an error during connection initialization process before login. Possible causes include the following:  the client tried to connect to an unsupported version of SQL Server; the server was too busy to accept new connections; or there was a resource limitation (insufficient memory or maximum allowed connections) on the server..
         /// </summary>
@@ -8792,7 +8792,7 @@ namespace System {
                 return ResourceManager.GetString("Snix_PreLoginBeforeSuccessfullWrite", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to A transport-level error has occurred during SSPI handshake..
         /// </summary>
@@ -8801,7 +8801,7 @@ namespace System {
                 return ResourceManager.GetString("Snix_ProcessSspi", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to A transport-level error has occurred when receiving results from the server..
         /// </summary>
@@ -8810,7 +8810,7 @@ namespace System {
                 return ResourceManager.GetString("Snix_Read", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to A transport-level error has occurred while sending information to the server..
         /// </summary>
@@ -8819,7 +8819,7 @@ namespace System {
                 return ResourceManager.GetString("Snix_SendRows", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The length of &apos;{0}&apos; must match the length of &apos;{1}&apos;..
         /// </summary>
@@ -8828,7 +8828,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_ArgumentLengthMismatch", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to This command requires an asynchronous connection. Set &quot;Asynchronous Processing=true&quot; in the connection string..
         /// </summary>
@@ -8837,7 +8837,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_AsyncConnectionRequired", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The asynchronous operation has already completed..
         /// </summary>
@@ -8846,7 +8846,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_AsyncOperationCompleted", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot use &apos;Authentication&apos; with &apos;Integrated Security&apos;..
         /// </summary>
@@ -8855,7 +8855,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_AuthenticationAndIntegratedSecurity", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Batching updates is not supported on the context connection..
         /// </summary>
@@ -8864,7 +8864,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_BatchedUpdatesNotAvailableOnContextConnection", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to SqlBulkCopy.WriteToServer failed because the SqlBulkCopy.DestinationTableName is an invalid multipart name.
         /// </summary>
@@ -8873,7 +8873,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_BulkCopyDestinationTableName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The given value{0} of type {1} from the data source cannot be converted to type {2} for Column {3} [{4}] Row {5}..
         /// </summary>
@@ -8882,7 +8882,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_BulkLoadCannotConvertValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The given value{0} of type {1} from the data source cannot be converted to type {2} for Column {3} [{4}]..
         /// </summary>
@@ -8891,7 +8891,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_BulkLoadCannotConvertValueWithoutRowNo", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Must not specify SqlBulkCopyOption.UseInternalTransaction and pass an external Transaction at the same time..
         /// </summary>
@@ -8900,7 +8900,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_BulkLoadConflictingTransactionOption", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unexpected existing transaction..
         /// </summary>
@@ -8909,7 +8909,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_BulkLoadExistingTransaction", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot access destination table &apos;{0}&apos;..
         /// </summary>
@@ -8918,7 +8918,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_BulkLoadInvalidDestinationTable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Function must not be called during event..
         /// </summary>
@@ -8927,7 +8927,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_BulkLoadInvalidOperationInsideEvent", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The given column order hint is not valid..
         /// </summary>
@@ -8936,7 +8936,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_BulkLoadInvalidOrderHint", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Timeout Value &apos;{0}&apos; is less than 0..
         /// </summary>
@@ -8945,7 +8945,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_BulkLoadInvalidTimeout", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Value cannot be converted to SqlVariant..
         /// </summary>
@@ -8954,7 +8954,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_BulkLoadInvalidVariantValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The locale id &apos;{0}&apos; of the source column &apos;{1}&apos; and the locale id &apos;{2}&apos; of the destination column &apos;{3}&apos; do not match..
         /// </summary>
@@ -8963,7 +8963,7 @@ namespace System {
                 return ResourceManager.GetString("Sql_BulkLoadLcidMismatch", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The mapped collection is in use and cannot be accessed at this time;.
         /// </summary>
@@ -8972,7 +8972,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_BulkLoadMappingInaccessible", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Mappings must be either all name or all ordinal based..
         /// </summary>
@@ -8981,7 +8981,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_BulkLoadMappingsNamesOrOrdinalsOnly", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The DestinationTableName property must be set before calling this method..
         /// </summary>
@@ -8990,7 +8990,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_BulkLoadMissingDestinationTable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Failed to obtain column collation information for the destination table. If the table is not in the current database the name must be qualified using the database name (e.g. [mydb]..[mytable](e.g. [mydb]..[mytable]); this also applies to temporary-tables (e.g. #mytable would be specified as tempdb..#mytable)..
         /// </summary>
@@ -8999,7 +8999,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_BulkLoadNoCollation", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The given ColumnMapping does not match up with any column in the source or destination..
         /// </summary>
@@ -9008,7 +9008,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_BulkLoadNonMatchingColumnMapping", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The given ColumnName &apos;{0}&apos; does not match up with any column in data source..
         /// </summary>
@@ -9017,7 +9017,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_BulkLoadNonMatchingColumnName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Column &apos;{0}&apos; does not allow DBNull.Value..
         /// </summary>
@@ -9026,7 +9026,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_BulkLoadNotAllowDBNull", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The column &apos;{0}&apos; was specified more than once..
         /// </summary>
@@ -9035,7 +9035,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_BulkLoadOrderHintDuplicateColumn", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The sorted column &apos;{0}&apos; is not valid in the destination table..
         /// </summary>
@@ -9044,7 +9044,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_BulkLoadOrderHintInvalidColumn", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Attempt to invoke bulk copy on an object that has a pending operation..
         /// </summary>
@@ -9053,7 +9053,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_BulkLoadPendingOperation", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to String or binary data would be truncated in table &apos;{0}&apos;, column &apos;{1}&apos;. Truncated value: &apos;{2}&apos;..
         /// </summary>
@@ -9062,7 +9062,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_BulkLoadStringTooLong", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to A column order hint cannot have an unspecified sort order..
         /// </summary>
@@ -9071,7 +9071,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_BulkLoadUnspecifiedSortOrder", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Failed to instantiate a SqlAuthenticationInitializer with type &apos;{0}&apos;..
         /// </summary>
@@ -9080,7 +9080,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_CannotCreateAuthInitializer", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Failed to instantiate an authentication provider with type &apos;{1}&apos; for &apos;{0}&apos;..
         /// </summary>
@@ -9089,7 +9089,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_CannotCreateAuthProvider", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot find an authentication provider for &apos;{0}&apos;..
         /// </summary>
@@ -9098,7 +9098,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_CannotFindAuthProvider", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Failed to read the config section for authentication providers..
         /// </summary>
@@ -9107,7 +9107,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_CannotGetAuthProviderConfig", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unable to get the address of the distributed transaction coordinator for the server, from the server.  Is DTC enabled on the server?.
         /// </summary>
@@ -9116,7 +9116,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_CannotGetDTCAddress", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The provider &apos;{0}&apos; threw an exception while initializing..
         /// </summary>
@@ -9125,7 +9125,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_CannotInitializeAuthProvider", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to {0} cannot be changed while async operation is in progress..
         /// </summary>
@@ -9134,7 +9134,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_CannotModifyPropertyAsyncOperationInProgress", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot create normalizer for &apos;{0}&apos;..
         /// </summary>
@@ -9143,7 +9143,7 @@ namespace System {
                 return ResourceManager.GetString("Sql_CanotCreateNormalizer", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Incorrect authentication parameters specified with certificate authentication..
         /// </summary>
@@ -9152,7 +9152,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_Certificate", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The &apos;{0}&apos; argument must not be null or empty..
         /// </summary>
@@ -9161,7 +9161,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_ChangePasswordArgumentMissing", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to ChangePassword can only be used with SQL authentication, not with integrated security..
         /// </summary>
@@ -9170,7 +9170,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_ChangePasswordConflictsWithSSPI", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to ChangePassword requires SQL Server 9.0 or later..
         /// </summary>
@@ -9179,7 +9179,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_ChangePasswordRequiresYukon", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The keyword &apos;{0}&apos; must not be specified in the connectionString argument to ChangePassword..
         /// </summary>
@@ -9188,7 +9188,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_ChangePasswordUseOfUnallowedKey", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The requested operation cannot be completed because the connection has been broken..
         /// </summary>
@@ -9197,7 +9197,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_ConnectionDoomed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The connection cannot be used because there is an ongoing operation that must be finished..
         /// </summary>
@@ -9206,7 +9206,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_ConnectionLockedForBcpEvent", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The only additional connection string keyword that may be used when requesting the context connection is the Type System Version keyword..
         /// </summary>
@@ -9215,7 +9215,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_ContextAllowsLimitedKeywords", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The context connection does not support Type System Version=SQL Server 2000..
         /// </summary>
@@ -9224,7 +9224,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_ContextAllowsOnlyTypeSystem2005", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The context connection is already in use..
         /// </summary>
@@ -9233,7 +9233,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_ContextConnectionIsInUse", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The requested operation requires a SqlClr context, which is only available when running in the Sql Server process..
         /// </summary>
@@ -9242,7 +9242,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_ContextUnavailableOutOfProc", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The requested operation requires a Sql Server execution thread.  The current thread was started by user code or other non-Sql Server engine code..
         /// </summary>
@@ -9251,7 +9251,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_ContextUnavailableWhileInProc", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Either Credential or both &apos;User ID&apos; and &apos;Password&apos; (or &apos;UID&apos; and &apos;PWD&apos;) connection string keywords must be specified, if &apos;Authentication={0}&apos;..
         /// </summary>
@@ -9260,7 +9260,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_CredentialsNotProvided", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The instance of SQL Server you attempted to connect to does not support CTAIP..
         /// </summary>
@@ -9269,7 +9269,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_CTAIPNotSupportedByServer", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The Collation specified by SQL Server is not supported..
         /// </summary>
@@ -9278,169 +9278,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_CultureIdError", resourceCulture);
             }
         }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The duration spent while attempting to connect to this server was - [Pre-Login] initialization={0}; handshake={1}; [Login] initialization={2}; .
-        /// </summary>
-        internal static string SQL_Duration_Login_Begin {
-            get {
-                return ResourceManager.GetString("SQL_Duration_Login_Begin", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The duration spent while attempting to connect to this server was - [Pre-Login] initialization={0}; handshake={1}; [Login] initialization={2}; authentication={3}; .
-        /// </summary>
-        internal static string SQL_Duration_Login_ProcessConnectionAuth {
-            get {
-                return ResourceManager.GetString("SQL_Duration_Login_ProcessConnectionAuth", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The duration spent while attempting to connect to this server was - [Pre-Login] initialization={0}; handshake={1}; [Login] initialization={2}; authentication={3}; [Post-Login] complete={4}; .
-        /// </summary>
-        internal static string SQL_Duration_PostLogin {
-            get {
-                return ResourceManager.GetString("SQL_Duration_PostLogin", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The duration spent while attempting to connect to this server was - [Pre-Login] initialization={0};.
-        /// </summary>
-        internal static string SQL_Duration_PreLogin_Begin {
-            get {
-                return ResourceManager.GetString("SQL_Duration_PreLogin_Begin", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The duration spent while attempting to connect to this server was - [Pre-Login] initialization={0}; handshake={1}; .
-        /// </summary>
-        internal static string SQL_Duration_PreLoginHandshake {
-            get {
-                return ResourceManager.GetString("SQL_Duration_PreLoginHandshake", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The instance of SQL Server you attempted to connect to requires encryption but this machine does not support it..
-        /// </summary>
-        internal static string SQL_EncryptionNotSupportedByClient {
-            get {
-                return ResourceManager.GetString("SQL_EncryptionNotSupportedByClient", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The instance of SQL Server you attempted to connect to does not support encryption..
-        /// </summary>
-        internal static string SQL_EncryptionNotSupportedByServer {
-            get {
-                return ResourceManager.GetString("SQL_EncryptionNotSupportedByServer", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Number of fields in record &apos;{0}&apos; does not match the number in the original record..
-        /// </summary>
-        internal static string SQL_EnumeratedRecordFieldCountChanged {
-            get {
-                return ResourceManager.GetString("SQL_EnumeratedRecordFieldCountChanged", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Metadata for field &apos;{0}&apos; of record &apos;{1}&apos; did not match the original record&apos;s metadata..
-        /// </summary>
-        internal static string SQL_EnumeratedRecordMetaDataChanged {
-            get {
-                return ResourceManager.GetString("SQL_EnumeratedRecordMetaDataChanged", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Specified data length {0} exceeds the allowed maximum length of {1}..
-        /// </summary>
-        internal static string SQL_ExceedsMaxDataLength {
-            get {
-                return ResourceManager.GetString("SQL_ExceedsMaxDataLength", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to ClientConnectionId:{0}.
-        /// </summary>
-        internal static string SQL_ExClientConnectionId {
-            get {
-                return ResourceManager.GetString("SQL_ExClientConnectionId", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Error Number:{0},State:{1},Class:{2}.
-        /// </summary>
-        internal static string SQL_ExErrorNumberStateClass {
-            get {
-                return ResourceManager.GetString("SQL_ExErrorNumberStateClass", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to ClientConnectionId before routing:{0}.
-        /// </summary>
-        internal static string SQL_ExOriginalClientConnectionId {
-            get {
-                return ResourceManager.GetString("SQL_ExOriginalClientConnectionId", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Routing Destination:{0}.
-        /// </summary>
-        internal static string SQL_ExRoutingDestination {
-            get {
-                return ResourceManager.GetString("SQL_ExRoutingDestination", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Timeout expired.  The connection has been broken as a result..
-        /// </summary>
-        internal static string SQL_FatalTimeout {
-            get {
-                return ResourceManager.GetString("SQL_FatalTimeout", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Instance failure..
-        /// </summary>
-        internal static string SQL_InstanceFailure {
-            get {
-                return ResourceManager.GetString("SQL_InstanceFailure", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Integrated&apos; with &apos;User ID&apos;, &apos;UID&apos;, &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
-        /// </summary>
-        internal static string SQL_IntegratedWithUserIDAndPassword {
-            get {
-                return ResourceManager.GetString("SQL_IntegratedWithUserIDAndPassword", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Interactive&apos; with &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
-        /// </summary>
-        internal static string SQL_InteractiveWithPassword {
-            get {
-                return ResourceManager.GetString("SQL_InteractiveWithPassword", resourceCulture);
-            }
-        }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Device Code Flow&apos; with &apos;User ID&apos;, &apos;UID&apos;, &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
         /// </summary>
@@ -9449,7 +9287,169 @@ namespace System {
                 return ResourceManager.GetString("SQL_DeviceFlowWithUsernamePassword", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to The duration spent while attempting to connect to this server was - [Pre-Login] initialization={0}; handshake={1}; [Login] initialization={2}; .
+        /// </summary>
+        internal static string SQL_Duration_Login_Begin {
+            get {
+                return ResourceManager.GetString("SQL_Duration_Login_Begin", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The duration spent while attempting to connect to this server was - [Pre-Login] initialization={0}; handshake={1}; [Login] initialization={2}; authentication={3}; .
+        /// </summary>
+        internal static string SQL_Duration_Login_ProcessConnectionAuth {
+            get {
+                return ResourceManager.GetString("SQL_Duration_Login_ProcessConnectionAuth", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The duration spent while attempting to connect to this server was - [Pre-Login] initialization={0}; handshake={1}; [Login] initialization={2}; authentication={3}; [Post-Login] complete={4}; .
+        /// </summary>
+        internal static string SQL_Duration_PostLogin {
+            get {
+                return ResourceManager.GetString("SQL_Duration_PostLogin", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The duration spent while attempting to connect to this server was - [Pre-Login] initialization={0};.
+        /// </summary>
+        internal static string SQL_Duration_PreLogin_Begin {
+            get {
+                return ResourceManager.GetString("SQL_Duration_PreLogin_Begin", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The duration spent while attempting to connect to this server was - [Pre-Login] initialization={0}; handshake={1}; .
+        /// </summary>
+        internal static string SQL_Duration_PreLoginHandshake {
+            get {
+                return ResourceManager.GetString("SQL_Duration_PreLoginHandshake", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The instance of SQL Server you attempted to connect to requires encryption but this machine does not support it..
+        /// </summary>
+        internal static string SQL_EncryptionNotSupportedByClient {
+            get {
+                return ResourceManager.GetString("SQL_EncryptionNotSupportedByClient", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The instance of SQL Server you attempted to connect to does not support encryption..
+        /// </summary>
+        internal static string SQL_EncryptionNotSupportedByServer {
+            get {
+                return ResourceManager.GetString("SQL_EncryptionNotSupportedByServer", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Number of fields in record &apos;{0}&apos; does not match the number in the original record..
+        /// </summary>
+        internal static string SQL_EnumeratedRecordFieldCountChanged {
+            get {
+                return ResourceManager.GetString("SQL_EnumeratedRecordFieldCountChanged", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Metadata for field &apos;{0}&apos; of record &apos;{1}&apos; did not match the original record&apos;s metadata..
+        /// </summary>
+        internal static string SQL_EnumeratedRecordMetaDataChanged {
+            get {
+                return ResourceManager.GetString("SQL_EnumeratedRecordMetaDataChanged", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Specified data length {0} exceeds the allowed maximum length of {1}..
+        /// </summary>
+        internal static string SQL_ExceedsMaxDataLength {
+            get {
+                return ResourceManager.GetString("SQL_ExceedsMaxDataLength", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to ClientConnectionId:{0}.
+        /// </summary>
+        internal static string SQL_ExClientConnectionId {
+            get {
+                return ResourceManager.GetString("SQL_ExClientConnectionId", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Error Number:{0},State:{1},Class:{2}.
+        /// </summary>
+        internal static string SQL_ExErrorNumberStateClass {
+            get {
+                return ResourceManager.GetString("SQL_ExErrorNumberStateClass", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to ClientConnectionId before routing:{0}.
+        /// </summary>
+        internal static string SQL_ExOriginalClientConnectionId {
+            get {
+                return ResourceManager.GetString("SQL_ExOriginalClientConnectionId", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Routing Destination:{0}.
+        /// </summary>
+        internal static string SQL_ExRoutingDestination {
+            get {
+                return ResourceManager.GetString("SQL_ExRoutingDestination", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Timeout expired.  The connection has been broken as a result..
+        /// </summary>
+        internal static string SQL_FatalTimeout {
+            get {
+                return ResourceManager.GetString("SQL_FatalTimeout", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Instance failure..
+        /// </summary>
+        internal static string SQL_InstanceFailure {
+            get {
+                return ResourceManager.GetString("SQL_InstanceFailure", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Integrated&apos; with &apos;User ID&apos;, &apos;UID&apos;, &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
+        /// </summary>
+        internal static string SQL_IntegratedWithUserIDAndPassword {
+            get {
+                return ResourceManager.GetString("SQL_IntegratedWithUserIDAndPassword", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Interactive&apos; with &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
+        /// </summary>
+        internal static string SQL_InteractiveWithPassword {
+            get {
+                return ResourceManager.GetString("SQL_InteractiveWithPassword", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Internal Error.
         /// </summary>
@@ -9458,7 +9458,7 @@ namespace System {
                 return ResourceManager.GetString("Sql_InternalError", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Buffer offset &apos;{1}&apos; plus the bytes available &apos;{0}&apos; is greater than the length of the passed in buffer..
         /// </summary>
@@ -9467,7 +9467,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_InvalidBufferSizeOrIndex", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Data length &apos;{0}&apos; is less than 0..
         /// </summary>
@@ -9476,7 +9476,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_InvalidDataLength", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid internal packet size:.
         /// </summary>
@@ -9485,7 +9485,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_InvalidInternalPacketSize", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The length of the value for the connection parameter &lt;{0}&gt; exceeds the maximum allowed 65535 characters..
         /// </summary>
@@ -9494,7 +9494,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_InvalidOptionLength", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid &apos;Packet Size&apos;.  The value must be an integer &gt;= 512 and &lt;= 32768..
         /// </summary>
@@ -9503,7 +9503,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_InvalidPacketSizeValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The length of the parameter &apos;{0}&apos; exceeds the limit of 128 characters..
         /// </summary>
@@ -9512,7 +9512,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_InvalidParameterNameLength", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid 3 part name format for TypeName..
         /// </summary>
@@ -9521,7 +9521,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_InvalidParameterTypeNameFormat", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Server {0}, database {1} is not configured for database mirroring..
         /// </summary>
@@ -9530,7 +9530,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_InvalidPartnerConfiguration", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid attempt to read when no data is present..
         /// </summary>
@@ -9539,7 +9539,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_InvalidRead", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The server certificate failed application validation..
         /// </summary>
@@ -9548,7 +9548,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_InvalidServerCertificate", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The SqlDbType &apos;{0}&apos; is invalid for {1}.  Only {2} is supported..
         /// </summary>
@@ -9557,7 +9557,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_InvalidSqlDbTypeWithOneAllowedType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unsupported SQL Server version.  The .NET Framework SqlClient Data Provider can only be used with SQL Server versions 7.0 and later..
         /// </summary>
@@ -9566,7 +9566,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_InvalidSQLServerVersionUnknown", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid SSPI packet size..
         /// </summary>
@@ -9575,7 +9575,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_InvalidSSPIPacketSize", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid Packet Size..
         /// </summary>
@@ -9584,7 +9584,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_InvalidTDSPacketSize", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The SQL Server instance returned an invalid or unsupported protocol version during login negotiation..
         /// </summary>
@@ -9593,7 +9593,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_InvalidTDSVersion", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid 3 part name format for UdtTypeName..
         /// </summary>
@@ -9602,7 +9602,16 @@ namespace System {
                 return ResourceManager.GetString("SQL_InvalidUdt3PartNameFormat", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Managed Identity&apos; with &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
+        /// </summary>
+        internal static string SQL_ManagedIdentityWithPassword {
+            get {
+                return ResourceManager.GetString("SQL_ManagedIdentityWithPassword", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to The connection does not support MultipleActiveResultSets..
         /// </summary>
@@ -9611,7 +9620,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_MarsUnsupportedOnConnection", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to MetaData parameter array must have length equivalent to ParameterDirection array argument..
         /// </summary>
@@ -9620,7 +9629,7 @@ namespace System {
                 return ResourceManager.GetString("Sql_MismatchedMetaDataDirectionArrayLengths", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to SqlDbType.SmallMoney overflow.  Value &apos;{0}&apos; is out of range.  Must be between -214,748.3648 and 214,748.3647..
         /// </summary>
@@ -9629,7 +9638,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_MoneyOverflow", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Failed to authenticate the user {0} in Active Directory (Authentication={1})..
         /// </summary>
@@ -9638,7 +9647,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_MSALFailure", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Error code 0x{0}; state {1}.
         /// </summary>
@@ -9647,7 +9656,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_MSALInnerException", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Nested TransactionScopes are not supported..
         /// </summary>
@@ -9656,7 +9665,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_NestedTransactionScopesNotSupported", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid attempt to GetBytes on column &apos;{0}&apos;.  The GetBytes function can only be used on columns of type Text, NText, or Image..
         /// </summary>
@@ -9665,7 +9674,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_NonBlobColumn", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid attempt to GetChars on column &apos;{0}&apos;.  The GetChars function can only be used on columns of type Text, NText, Xml, VarChar or NVarChar..
         /// </summary>
@@ -9674,7 +9683,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_NonCharColumn", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to SSE Instance re-direction is not supported for non-local user instances..
         /// </summary>
@@ -9683,7 +9692,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_NonLocalSSEInstance", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid command sent to ExecuteXmlReader.  The command must return an Xml result..
         /// </summary>
@@ -9692,7 +9701,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_NonXmlResult", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The requested operation is not available on the context connection..
         /// </summary>
@@ -9701,7 +9710,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_NotAvailableOnContextConnection", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Notifications are not available on the context connection..
         /// </summary>
@@ -9710,7 +9719,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_NotificationsNotAvailableOnContextConnection", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Notifications require SQL Server 9.0 or later..
         /// </summary>
@@ -9719,7 +9728,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_NotificationsRequireYukon", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The {0} enumeration value, {1}, is not supported by the .NET Framework SqlClient Data Provider..
         /// </summary>
@@ -9728,7 +9737,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_NotSupportedEnumerationValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Command parameter must have a non null and non empty command text..
         /// </summary>
@@ -9737,7 +9746,7 @@ namespace System {
                 return ResourceManager.GetString("Sql_NullCommandText", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid transaction or invalid name for a point at which to save within the transaction..
         /// </summary>
@@ -9746,7 +9755,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_NullEmptyTransactionName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Open result count exceeded..
         /// </summary>
@@ -9755,7 +9764,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_OpenResultCountExceeded", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Operation cancelled by user..
         /// </summary>
@@ -9764,7 +9773,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_OperationCancelled", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Parameter &apos;{0}&apos; cannot be null or empty..
         /// </summary>
@@ -9773,7 +9782,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_ParameterCannotBeEmpty", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Parameter &apos;{0}&apos; exceeds the size limit for the sql_variant datatype..
         /// </summary>
@@ -9782,7 +9791,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_ParameterInvalidVariant", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The {0} type parameter &apos;{1}&apos; must have a valid type name..
         /// </summary>
@@ -9791,7 +9800,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_ParameterTypeNameRequired", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal connection fatal error..
         /// </summary>
@@ -9800,7 +9809,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_ParsingError", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal connection fatal error. Error state: {0}, Authentication Library Type: {1}.
         /// </summary>
@@ -9809,7 +9818,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_ParsingErrorAuthLibraryType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal connection fatal error. Error state: {0}, Feature Id: {1}.
         /// </summary>
@@ -9818,7 +9827,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_ParsingErrorFeatureId", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal connection fatal error. Error state: {0}, Length: {1}.
         /// </summary>
@@ -9827,7 +9836,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_ParsingErrorLength", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal connection fatal error. Error state: {0}, Offset: {1}.
         /// </summary>
@@ -9836,7 +9845,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_ParsingErrorOffset", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal connection fatal error. Error state: {0}, Status: {1}.
         /// </summary>
@@ -9845,7 +9854,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_ParsingErrorStatus", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal connection fatal error. Error state: {0}, Token : {1}.
         /// </summary>
@@ -9854,7 +9863,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_ParsingErrorToken", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal connection fatal error. Error state: {0}, Value: {1}.
         /// </summary>
@@ -9863,7 +9872,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_ParsingErrorValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal connection fatal error. Error state: {0}.
         /// </summary>
@@ -9872,7 +9881,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_ParsingErrorWithState", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The command execution cannot proceed due to a pending asynchronous operation already in progress..
         /// </summary>
@@ -9881,7 +9890,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_PendingBeginXXXExists", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to An error occurred with a prior row sent to the SqlPipe.  SendResultsEnd must be called before anything else can be sent..
         /// </summary>
@@ -9890,7 +9899,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_PipeErrorRequiresSendEnd", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Precision value &apos;{0}&apos; is either less than 0 or greater than the maximum allowed precision of 38..
         /// </summary>
@@ -9899,7 +9908,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_PrecisionValueOutOfRange", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Scale value &apos;{0}&apos; is either less than 0 or greater than the maximum allowed scale of 38..
         /// </summary>
@@ -9908,25 +9917,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_ScaleValueOutOfRange", resourceCulture);
             }
         }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot set the Credential property if &apos;Authentication=Active Directory Integrated&apos; has been specified in the connection string..
-        /// </summary>
-        internal static string SQL_SettingCredentialWithIntegrated {
-            get {
-                return ResourceManager.GetString("SQL_SettingCredentialWithIntegrated", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot set the Credential property if &apos;Authentication=Active Directory Interactive&apos; has been specified in the connection string..
-        /// </summary>
-        internal static string SQL_SettingCredentialWithInteractive {
-            get {
-                return ResourceManager.GetString("SQL_SettingCredentialWithInteractive", resourceCulture);
-            }
-        }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot set the Credential property if &apos;Authentication=Active Directory Device Code Flow&apos; has been specified in the connection string..
         /// </summary>
@@ -9935,25 +9926,34 @@ namespace System {
                 return ResourceManager.GetString("SQL_SettingCredentialWithDeviceFlow", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Integrated&apos;, if the Credential property has been set..
+        ///   Looks up a localized string similar to Cannot set the Credential property if &apos;Authentication=Active Directory Integrated&apos; has been specified in the connection string..
         /// </summary>
-        internal static string SQL_SettingIntegratedWithCredential {
+        internal static string SQL_SettingCredentialWithIntegrated {
             get {
-                return ResourceManager.GetString("SQL_SettingIntegratedWithCredential", resourceCulture);
+                return ResourceManager.GetString("SQL_SettingCredentialWithIntegrated", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Interactive&apos;, if the Credential property has been set..
+        ///   Looks up a localized string similar to Cannot set the Credential property if &apos;Authentication=Active Directory Interactive&apos; has been specified in the connection string..
         /// </summary>
-        internal static string SQL_SettingInteractiveWithCredential {
+        internal static string SQL_SettingCredentialWithInteractive {
             get {
-                return ResourceManager.GetString("SQL_SettingInteractiveWithCredential", resourceCulture);
+                return ResourceManager.GetString("SQL_SettingCredentialWithInteractive", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot set the Credential property if &apos;Authentication=Active Directory Managed Identity&apos; has been specified in the connection string..
+        /// </summary>
+        internal static string SQL_SettingCredentialWithManagedIdentity {
+            get {
+                return ResourceManager.GetString("SQL_SettingCredentialWithManagedIdentity", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Device Code Flow&apos;, if the Credential property has been set..
         /// </summary>
@@ -9962,7 +9962,34 @@ namespace System {
                 return ResourceManager.GetString("SQL_SettingDeviceFlowWithCredential", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Integrated&apos;, if the Credential property has been set..
+        /// </summary>
+        internal static string SQL_SettingIntegratedWithCredential {
+            get {
+                return ResourceManager.GetString("SQL_SettingIntegratedWithCredential", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Interactive&apos;, if the Credential property has been set..
+        /// </summary>
+        internal static string SQL_SettingInteractiveWithCredential {
+            get {
+                return ResourceManager.GetString("SQL_SettingInteractiveWithCredential", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Managed Identity&apos;, if the Credential property has been set..
+        /// </summary>
+        internal static string SQL_SettingManagedIdentityWithCredential {
+            get {
+                return ResourceManager.GetString("SQL_SettingManagedIdentityWithCredential", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to A severe error occurred on the current command.  The results, if any, should be discarded..
         /// </summary>
@@ -9971,7 +9998,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_SevereError", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to SqlDbType.SmallDateTime overflow.  Value &apos;{0}&apos; is out of range.  Must be between 1/1/1900 12:00:00 AM and 6/6/2079 11:59:59 PM..
         /// </summary>
@@ -9980,7 +10007,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_SmallDateTimeOverflow", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The {0} enumeration value, {1}, is not supported by SQL Server 7.0 or SQL Server 2000..
         /// </summary>
@@ -9989,7 +10016,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_SnapshotNotSupported", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Memory allocation for internal connection failed..
         /// </summary>
@@ -9998,7 +10025,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_SNIPacketAllocationFailure", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to SqlCommand.DeriveParameters failed because the SqlCommand.CommandText property value is an invalid multipart name.
         /// </summary>
@@ -10007,7 +10034,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_SqlCommandCommandText", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to &apos;{0}&apos; cannot be called when the record is read only..
         /// </summary>
@@ -10016,7 +10043,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_SqlRecordReadOnly", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Operation cannot be completed because the record is read only..
         /// </summary>
@@ -10025,7 +10052,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_SqlRecordReadOnly2", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid attempt to call method {0} when SqlResultSet is closed..
         /// </summary>
@@ -10034,7 +10061,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_SqlResultSetClosed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Operation cannot be completed because the SqlResultSet is closed..
         /// </summary>
@@ -10043,7 +10070,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_SqlResultSetClosed2", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Operation cannot be completed because the command that created the SqlResultSet has been dissociated from the original connection. SqlResultSet is closed..
         /// </summary>
@@ -10052,7 +10079,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_SqlResultSetCommandNotInSameConnection", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to SqlResultSet could not be created for the given query with the desired options..
         /// </summary>
@@ -10061,7 +10088,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_SqlResultSetNoAcceptableCursor", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid attempt to call method {0} when the current row is deleted.
         /// </summary>
@@ -10070,7 +10097,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_SqlResultSetRowDeleted", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Operation cannot be completed because the current row is deleted.
         /// </summary>
@@ -10079,7 +10106,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_SqlResultSetRowDeleted2", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to &apos;{0}&apos; cannot be called when the SqlDataRecord is read only..
         /// </summary>
@@ -10088,7 +10115,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_SqlUpdatableRecordReadOnly", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The target principal name is incorrect.  Cannot generate SSPI context..
         /// </summary>
@@ -10097,7 +10124,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_SSPIGenerateError", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot initialize SSPI package..
         /// </summary>
@@ -10106,7 +10133,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_SSPIInitializeError", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid attempt to GetStream on column &apos;{0}&apos;. The GetStream function can only be used on columns of type Binary, Image, Udt or VarBinary..
         /// </summary>
@@ -10115,7 +10142,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_StreamNotSupportOnColumnType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The Stream does not support reading..
         /// </summary>
@@ -10124,7 +10151,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_StreamReadNotSupported", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The Stream does not support seeking..
         /// </summary>
@@ -10133,7 +10160,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_StreamSeekNotSupported", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The Stream does not support writing..
         /// </summary>
@@ -10142,7 +10169,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_StreamWriteNotSupported", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Processing of results from SQL Server failed because of an invalid multipart name.
         /// </summary>
@@ -10151,7 +10178,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_TDSParserTableName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid attempt to GetTextReader on column &apos;{0}&apos;. The GetTextReader function can only be used on columns of type Char, NChar, NText, NVarChar, Text or VarChar..
         /// </summary>
@@ -10160,7 +10187,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_TextReaderNotSupportOnColumnType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Timeout expired.  The timeout period elapsed prior to completion of the operation or the server is not responding..
         /// </summary>
@@ -10169,16 +10196,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_Timeout", resourceCulture);
             }
         }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Active Directory Interactive authentication timed out. The user took too long to respond to the authentication request..
-        /// </summary>
-        internal static string SQL_Timeout_Active_Directory_Interactive_Authentication {
-            get {
-                return ResourceManager.GetString("SQL_Timeout_Active_Directory_Interactive_Authentication", resourceCulture);
-            }
-        }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Active Directory Device Code Flow authentication timed out. The user took too long to respond to the authentication request..
         /// </summary>
@@ -10187,7 +10205,16 @@ namespace System {
                 return ResourceManager.GetString("SQL_Timeout_Active_Directory_DeviceFlow_Authentication", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Active Directory Interactive authentication timed out. The user took too long to respond to the authentication request..
+        /// </summary>
+        internal static string SQL_Timeout_Active_Directory_Interactive_Authentication {
+            get {
+                return ResourceManager.GetString("SQL_Timeout_Active_Directory_Interactive_Authentication", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Execution Timeout Expired.  The timeout period elapsed prior to completion of the operation or the server is not responding..
         /// </summary>
@@ -10196,7 +10223,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_Timeout_Execution", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to This failure occurred while attempting to connect to the {0} server..
         /// </summary>
@@ -10205,7 +10232,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_Timeout_FailoverInfo", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Connection Timeout Expired.  The timeout period elapsed at the start of the login phase.  This could be because of insufficient time provided for connection timeout..
         /// </summary>
@@ -10214,7 +10241,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_Timeout_Login_Begin", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Connection Timeout Expired.  The timeout period elapsed while attempting to authenticate the login.  This could be because the server failed to authenticate the user or the server was unable to respond back in time..
         /// </summary>
@@ -10223,7 +10250,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_Timeout_Login_ProcessConnectionAuth", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Connection Timeout Expired.  The timeout period elapsed during the post-login phase.  The connection could have timed out while waiting for server to complete the login process and respond; Or it could have timed out while attempting to create multiple active connections..
         /// </summary>
@@ -10232,7 +10259,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_Timeout_PostLogin", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Connection Timeout Expired.  The timeout period elapsed at the start of the pre-login phase.  This could be because of insufficient time provided for connection timeout..
         /// </summary>
@@ -10241,7 +10268,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_Timeout_PreLogin_Begin", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Connection Timeout Expired.  The timeout period elapsed while attempting to consume the pre-login handshake acknowledgement.  This could be because the pre-login handshake failed or the server was unable to respond back in time..
         /// </summary>
@@ -10250,7 +10277,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_Timeout_PreLogin_ConsumeHandshake", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Connection Timeout Expired.  The timeout period elapsed while attempting to create and initialize a socket to the server.  This could be either because the server was unreachable or unable to respond back in time..
         /// </summary>
@@ -10259,7 +10286,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_Timeout_PreLogin_InitializeConnection", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Connection Timeout Expired.  The timeout period elapsed while making a pre-login handshake request.  This could be because the server was unable to respond back in time..
         /// </summary>
@@ -10268,7 +10295,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_Timeout_PreLogin_SendHandshake", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to This failure occurred while attempting to connect to the routing destination. The duration spent while attempting to connect to the original server was - [Pre-Login] initialization={0}; handshake={1}; [Login] initialization={2}; authentication={3}; [Post-Login] complete={4};  .
         /// </summary>
@@ -10277,7 +10304,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_Timeout_RoutingDestinationInfo", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to SqlDbType.Time overflow.  Value &apos;{0}&apos; is out of range.  Must be between 00:00:00.0000000 and 23:59:59.9999999..
         /// </summary>
@@ -10286,7 +10313,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_TimeOverflow", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Scale value &apos;{0}&apos; is either less than 0 or greater than the maximum allowed scale of 7..
         /// </summary>
@@ -10295,7 +10322,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_TimeScaleValueOutOfRange", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Too many values..
         /// </summary>
@@ -10304,7 +10331,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_TooManyValues", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to SqlParameter.TypeName is an invalid multipart name.
         /// </summary>
@@ -10313,7 +10340,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_TypeName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to SqlParameter.UdtTypeName is an invalid multipart name.
         /// </summary>
@@ -10322,7 +10349,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_UDTTypeName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unexpected server event: {0}..
         /// </summary>
@@ -10331,7 +10358,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_UnexpectedSmiEvent", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unrecognized System.Transactions.IsolationLevel enumeration value: {0}..
         /// </summary>
@@ -10340,7 +10367,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_UnknownSysTxIsolationLevel", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The authentication &apos;{0}&apos; is not supported..
         /// </summary>
@@ -10349,7 +10376,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_UnsupportedAuthentication", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The provider &apos;{0}&apos; does not support authentication &apos;{1}&apos;..
         /// </summary>
@@ -10358,7 +10385,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_UnsupportedAuthenticationByProvider", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unsupported authentication specified in this context: {0}.
         /// </summary>
@@ -10367,7 +10394,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_UnsupportedAuthenticationSpecified", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to SQL authentication method &apos;{0}&apos; is not supported..
         /// </summary>
@@ -10376,7 +10403,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_UnsupportedSqlAuthenticationMethod", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to User Instance and Failover are not compatible options.  Please choose only one of the two in the connection string..
         /// </summary>
@@ -10385,7 +10412,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_UserInstanceFailoverNotCompatible", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to A user instance was requested in the connection string but the server specified does not support this option..
         /// </summary>
@@ -10394,7 +10421,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_UserInstanceFailure", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to User instances are not allowed when running in the Sql Server process..
         /// </summary>
@@ -10403,7 +10430,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_UserInstanceNotAvailableInProc", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Expecting argument of type {1}, but received type {0}..
         /// </summary>
@@ -10412,7 +10439,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_WrongType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid attempt to GetXmlReader on column &apos;{0}&apos;. The GetXmlReader function can only be used on columns of type Xml..
         /// </summary>
@@ -10421,7 +10448,7 @@ namespace System {
                 return ResourceManager.GetString("SQL_XmlReaderNotSupportOnColumnType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Notification values used by Microsoft SQL Server..
         /// </summary>
@@ -10430,7 +10457,7 @@ namespace System {
                 return ResourceManager.GetString("SqlCommand_Notification", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Automatic enlistment in notifications used by Microsoft SQL Server..
         /// </summary>
@@ -10439,7 +10466,7 @@ namespace System {
                 return ResourceManager.GetString("SqlCommand_NotificationAutoEnlist", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The DataAdapter for which to automatically generate SqlCommands.
         /// </summary>
@@ -10448,7 +10475,7 @@ namespace System {
                 return ResourceManager.GetString("SqlCommandBuilder_DataAdapter", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The decimal separator used in numeric literals..
         /// </summary>
@@ -10457,7 +10484,7 @@ namespace System {
                 return ResourceManager.GetString("SqlCommandBuilder_DecimalSeparator", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The character used in a text command as the opening quote for quoting identifiers that contain special characters..
         /// </summary>
@@ -10466,7 +10493,7 @@ namespace System {
                 return ResourceManager.GetString("SqlCommandBuilder_QuotePrefix", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The character used in a text command as the closing quote for quoting identifiers that contain special characters..
         /// </summary>
@@ -10475,7 +10502,7 @@ namespace System {
                 return ResourceManager.GetString("SqlCommandBuilder_QuoteSuffix", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Access token to use for authentication..
         /// </summary>
@@ -10484,7 +10511,7 @@ namespace System {
                 return ResourceManager.GetString("SqlConnection_AccessToken", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to State of connection, synchronous or asynchronous.  &apos;Asynchronous Processing=x&apos; in the connection string..
         /// </summary>
@@ -10493,7 +10520,7 @@ namespace System {
                 return ResourceManager.GetString("SqlConnection_Asynchronous", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to A guid to represent the physical connection..
         /// </summary>
@@ -10502,7 +10529,7 @@ namespace System {
                 return ResourceManager.GetString("SqlConnection_ClientConnectionId", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Information used to connect to a DataSource, such as &apos;Data Source=x;Initial Catalog=x;Integrated Security=SSPI&apos;..
         /// </summary>
@@ -10511,7 +10538,7 @@ namespace System {
                 return ResourceManager.GetString("SqlConnection_ConnectionString", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Current connection timeout value, &apos;Connect Timeout=X&apos; in the ConnectionString..
         /// </summary>
@@ -10520,7 +10547,7 @@ namespace System {
                 return ResourceManager.GetString("SqlConnection_ConnectionTimeout", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to User Id and secure password to use for authentication..
         /// </summary>
@@ -10529,7 +10556,7 @@ namespace System {
                 return ResourceManager.GetString("SqlConnection_Credential", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Custom column encryption key store providers..
         /// </summary>
@@ -10538,7 +10565,7 @@ namespace System {
                 return ResourceManager.GetString("SqlConnection_CustomColumnEncryptionKeyStoreProviders", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Current SQL Server database, &apos;Initial Catalog=X&apos; in the connection string..
         /// </summary>
@@ -10547,7 +10574,7 @@ namespace System {
                 return ResourceManager.GetString("SqlConnection_Database", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Current SqlServer that the connection is opened to, &apos;Data Source=X&apos; in the connection string..
         /// </summary>
@@ -10556,7 +10583,7 @@ namespace System {
                 return ResourceManager.GetString("SqlConnection_DataSource", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Network packet size, &apos;Packet Size=x&apos; in the connection string..
         /// </summary>
@@ -10565,7 +10592,7 @@ namespace System {
                 return ResourceManager.GetString("SqlConnection_PacketSize", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Information used to connect for replication..
         /// </summary>
@@ -10574,7 +10601,7 @@ namespace System {
                 return ResourceManager.GetString("SqlConnection_Replication", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Server Process Id (SPID) of the active connection..
         /// </summary>
@@ -10583,7 +10610,7 @@ namespace System {
                 return ResourceManager.GetString("SqlConnection_ServerProcessId", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Version of the SQL Server accessed by the SqlConnection..
         /// </summary>
@@ -10592,7 +10619,7 @@ namespace System {
                 return ResourceManager.GetString("SqlConnection_ServerVersion", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Collect statistics for this connection..
         /// </summary>
@@ -10601,7 +10628,7 @@ namespace System {
                 return ResourceManager.GetString("SqlConnection_StatisticsEnabled", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Workstation Id, &apos;Workstation ID=x&apos; in the connection string..
         /// </summary>
@@ -10610,7 +10637,7 @@ namespace System {
                 return ResourceManager.GetString("SqlConnection_WorkstationId", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot convert object of type &apos;{0}&apos; to object of type &apos;{1}&apos;..
         /// </summary>
@@ -10619,7 +10646,7 @@ namespace System {
                 return ResourceManager.GetString("SqlConvert_ConvertFailed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The connection is broken and recovery is not possible.  The client driver attempted to recover the connection one or more times and all attempts failed.  Increase the value of ConnectRetryCount to increase the number of recovery attempts..
         /// </summary>
@@ -10628,7 +10655,7 @@ namespace System {
                 return ResourceManager.GetString("SQLCR_AllAttemptsFailed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The server did not preserve SSL encryption during a recovery attempt, connection recovery is not possible..
         /// </summary>
@@ -10637,7 +10664,7 @@ namespace System {
                 return ResourceManager.GetString("SQLCR_EncryptionChanged", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid ConnectRetryCount value (should be 0-255)..
         /// </summary>
@@ -10646,7 +10673,7 @@ namespace System {
                 return ResourceManager.GetString("SQLCR_InvalidConnectRetryCountValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid ConnectRetryInterval value (should be 1-60)..
         /// </summary>
@@ -10655,7 +10682,7 @@ namespace System {
                 return ResourceManager.GetString("SQLCR_InvalidConnectRetryIntervalValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Next reconnection attempt will exceed query timeout. Reconnection was terminated..
         /// </summary>
@@ -10664,7 +10691,7 @@ namespace System {
                 return ResourceManager.GetString("SQLCR_NextAttemptWillExceedQueryTimeout", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The server did not acknowledge a recovery attempt, connection recovery is not possible..
         /// </summary>
@@ -10673,7 +10700,7 @@ namespace System {
                 return ResourceManager.GetString("SQLCR_NoCRAckAtReconnection", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The server did not preserve the exact client TDS version requested during a recovery attempt, connection recovery is not possible..
         /// </summary>
@@ -10682,7 +10709,7 @@ namespace System {
                 return ResourceManager.GetString("SQLCR_TDSVestionNotPreserved", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The connection is broken and recovery is not possible.  The connection is marked by the client driver as unrecoverable.  No attempt was made to restore the connection..
         /// </summary>
@@ -10691,7 +10718,7 @@ namespace System {
                 return ResourceManager.GetString("SQLCR_UnrecoverableClient", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The connection is broken and recovery is not possible.  The connection is marked by the server as unrecoverable.  No attempt was made to restore the connection..
         /// </summary>
@@ -10700,7 +10727,7 @@ namespace System {
                 return ResourceManager.GetString("SQLCR_UnrecoverableServer", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Failure while attempting to promote transaction..
         /// </summary>
@@ -10709,7 +10736,7 @@ namespace System {
                 return ResourceManager.GetString("SqlDelegatedTransaction_PromotionFailed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to To add a command to existing dependency object..
         /// </summary>
@@ -10718,7 +10745,7 @@ namespace System {
                 return ResourceManager.GetString("SqlDependency_AddCommandDependency", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The SQL Server Service Broker for the current database is not enabled, and as a result query notifications are not supported.  Please enable the Service Broker for this database if you wish to use notifications..
         /// </summary>
@@ -10727,7 +10754,7 @@ namespace System {
                 return ResourceManager.GetString("SqlDependency_DatabaseBrokerDisabled", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to When using SqlDependency without providing an options value, SqlDependency.Start() must be called prior to execution of a command added to the SqlDependency instance..
         /// </summary>
@@ -10736,7 +10763,7 @@ namespace System {
                 return ResourceManager.GetString("SqlDependency_DefaultOptionsButNoStart", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Command is already associated with another dependency object. Can not overwrite..
         /// </summary>
@@ -10745,7 +10772,7 @@ namespace System {
                 return ResourceManager.GetString("SqlDependency_Duplicate", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to SqlDependency does not support calling Start() with different connection strings having the same server, user, and database in the same app domain..
         /// </summary>
@@ -10754,7 +10781,7 @@ namespace System {
                 return ResourceManager.GetString("SqlDependency_DuplicateStart", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to SqlDependency.OnChange does not support multiple event registrations for the same delegate..
         /// </summary>
@@ -10763,7 +10790,7 @@ namespace System {
                 return ResourceManager.GetString("SqlDependency_EventNoDuplicate", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Property to indicate if this dependency is invalid..
         /// </summary>
@@ -10772,7 +10799,7 @@ namespace System {
                 return ResourceManager.GetString("SqlDependency_HasChanges", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to A string that uniquely identifies this dependency object..
         /// </summary>
@@ -10781,7 +10808,7 @@ namespace System {
                 return ResourceManager.GetString("SqlDependency_Id", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to No SqlDependency exists for the key..
         /// </summary>
@@ -10790,7 +10817,7 @@ namespace System {
                 return ResourceManager.GetString("SqlDependency_IdMismatch", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Timeout specified is invalid. Timeout cannot be &lt; 0..
         /// </summary>
@@ -10799,7 +10826,7 @@ namespace System {
                 return ResourceManager.GetString("SqlDependency_InvalidTimeout", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to SqlDependency.Start has been called for the server the command is executing against more than once, but there is no matching server/user/database Start() call for current command..
         /// </summary>
@@ -10808,7 +10835,7 @@ namespace System {
                 return ResourceManager.GetString("SqlDependency_NoMatchingServerDatabaseStart", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to When using SqlDependency without providing an options value, SqlDependency.Start() must be called for each server that is being executed against..
         /// </summary>
@@ -10817,7 +10844,7 @@ namespace System {
                 return ResourceManager.GetString("SqlDependency_NoMatchingServerStart", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Event that can be used to subscribe for change notifications..
         /// </summary>
@@ -10826,7 +10853,7 @@ namespace System {
                 return ResourceManager.GetString("SqlDependency_OnChange", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Dependency object used to receive query notifications..
         /// </summary>
@@ -10835,7 +10862,7 @@ namespace System {
                 return ResourceManager.GetString("SqlDependency_SqlDependency", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The process cannot access the file specified because it has been opened in another transaction..
         /// </summary>
@@ -10844,7 +10871,7 @@ namespace System {
                 return ResourceManager.GetString("SqlFileStream_FileAlreadyInTransaction", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to An invalid parameter was passed to the function..
         /// </summary>
@@ -10853,7 +10880,7 @@ namespace System {
                 return ResourceManager.GetString("SqlFileStream_InvalidParameter", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The path name is not valid..
         /// </summary>
@@ -10862,7 +10889,7 @@ namespace System {
                 return ResourceManager.GetString("SqlFileStream_InvalidPath", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The path name is invalid or does not point to a disk file..
         /// </summary>
@@ -10871,7 +10898,7 @@ namespace System {
                 return ResourceManager.GetString("SqlFileStream_PathNotValidDiskResource", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The dbType {0} is invalid for this constructor..
         /// </summary>
@@ -10880,7 +10907,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMetaData_InvalidSqlDbTypeForConstructorFormat", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The name is too long..
         /// </summary>
@@ -10889,7 +10916,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMetaData_NameTooLong", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to GetMetaData is not valid for this SqlDbType..
         /// </summary>
@@ -10898,7 +10925,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMetaData_NoMetadata", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The sort order and ordinal must either both be specified, or neither should be specified (SortOrder.Unspecified and -1).  The values given were: order = {0}, ordinal = {1}..
         /// </summary>
@@ -10907,7 +10934,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMetaData_SpecifyBothSortOrderAndOrdinal", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to SQL Type has already been loaded with data..
         /// </summary>
@@ -10916,7 +10943,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_AlreadyFilledMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Arithmetic Overflow..
         /// </summary>
@@ -10925,7 +10952,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_ArithOverflowMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The buffer is insufficient. Read or write operation failed..
         /// </summary>
@@ -10934,7 +10961,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_BufferInsufficientMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid attempt to access a closed XmlReader..
         /// </summary>
@@ -10943,7 +10970,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_ClosedXmlReaderMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Two strings to be compared have different collation..
         /// </summary>
@@ -10952,7 +10979,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_CompareDiffCollationMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Two strings to be concatenated have different collation..
         /// </summary>
@@ -10961,7 +10988,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_ConcatDiffCollationMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Conversion overflows..
         /// </summary>
@@ -10970,7 +10997,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_ConversionOverflowMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to SqlDateTime overflow. Must be between 1/1/1753 12:00:00 AM and 12/31/9999 11:59:59 PM..
         /// </summary>
@@ -10979,7 +11006,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_DateTimeOverflowMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Divide by zero error encountered..
         /// </summary>
@@ -10988,7 +11015,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_DivideByZeroMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The input wasn&apos;t in a correct format..
         /// </summary>
@@ -10997,7 +11024,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_FormatMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid array size..
         /// </summary>
@@ -11006,7 +11033,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_InvalidArraySizeMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid SqlDateTime..
         /// </summary>
@@ -11015,7 +11042,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_InvalidDateTimeMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Argument to GetDayOfWeek must be integer between 1 and 7..
         /// </summary>
@@ -11024,7 +11051,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_InvalidFirstDayMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid flag value..
         /// </summary>
@@ -11033,7 +11060,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_InvalidFlagMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid attempt to call {0} when the stream is closed..
         /// </summary>
@@ -11042,7 +11069,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_InvalidOpStreamClosed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid attempt to call {0} when the stream non-readable..
         /// </summary>
@@ -11051,7 +11078,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_InvalidOpStreamNonReadable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid attempt to call {0} when the stream is non-seekable..
         /// </summary>
@@ -11060,7 +11087,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_InvalidOpStreamNonSeekable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid attempt to call {0} when the stream non-writable..
         /// </summary>
@@ -11069,7 +11096,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_InvalidOpStreamNonWritable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid numeric precision/scale..
         /// </summary>
@@ -11078,7 +11105,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_InvalidPrecScaleMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The SqlBytes and SqlChars don&apos;t support length of more than 2GB in this version..
         /// </summary>
@@ -11087,7 +11114,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_LenTooLargeMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Message.
         /// </summary>
@@ -11096,7 +11123,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_MessageString", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to There is no buffer. Read or write operation failed..
         /// </summary>
@@ -11105,7 +11132,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_NoBufferMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to SQL Type has not been loaded with data..
         /// </summary>
@@ -11114,7 +11141,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_NotFilledMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Null.
         /// </summary>
@@ -11123,7 +11150,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_NullString", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Data is Null. This method or property cannot be called on Null values..
         /// </summary>
@@ -11132,7 +11159,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_NullValueMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Conversion from SqlDecimal to Decimal overflows..
         /// </summary>
@@ -11141,7 +11168,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_NumeToDecOverflowMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot set to non-zero length, because current value is Null..
         /// </summary>
@@ -11150,7 +11177,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_SetNonZeroLenOnNullMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to SqlType error..
         /// </summary>
@@ -11159,7 +11186,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_SqlTypeMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Stream has been closed or disposed..
         /// </summary>
@@ -11168,7 +11195,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_StreamClosedMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to An error occurred while reading..
         /// </summary>
@@ -11177,7 +11204,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_StreamErrorMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Subclass did not override a required method..
         /// </summary>
@@ -11186,7 +11213,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_SubclassMustOverride", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to A time zone was specified. SqlDateTime does not support time zones..
         /// </summary>
@@ -11195,7 +11222,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_TimeZoneSpecifiedMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Data returned is larger than 2Gb in size. Use SequentialAccess command behavior in order to get all of the data..
         /// </summary>
@@ -11204,7 +11231,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_TruncationMaxDataMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Numeric arithmetic causes truncation..
         /// </summary>
@@ -11213,7 +11240,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_TruncationMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot write to non-zero offset, because current value is Null..
         /// </summary>
@@ -11222,7 +11249,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_WriteNonZeroOffsetOnNullMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot write from an offset that is larger than current length. It would leave uninitialized data in the buffer..
         /// </summary>
@@ -11231,7 +11258,7 @@ namespace System {
                 return ResourceManager.GetString("SqlMisc_WriteOffsetLargerThanLenMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Connecting to a mirrored SQL Server instance using the MultiSubnetFailover connection option is not supported..
         /// </summary>
@@ -11240,7 +11267,7 @@ namespace System {
                 return ResourceManager.GetString("SQLMSF_FailoverPartnerNotSupported", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to This SqlCommand object is already associated with another SqlDependency object..
         /// </summary>
@@ -11249,7 +11276,7 @@ namespace System {
                 return ResourceManager.GetString("SQLNotify_AlreadyHasCommand", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Notification Error. Type={0}, Info={1}, Source={2}..
         /// </summary>
@@ -11258,7 +11285,7 @@ namespace System {
                 return ResourceManager.GetString("SQLNotify_ErrorFormat", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to SqlDependency object cannot be created when running inside the SQL Server process..
         /// </summary>
@@ -11267,7 +11294,7 @@ namespace System {
                 return ResourceManager.GetString("SqlNotify_SqlDepCannotBeCreatedInProc", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to DBNull value for parameter &apos;{0}&apos; is not supported. Table-valued parameters cannot be DBNull..
         /// </summary>
@@ -11276,7 +11303,7 @@ namespace System {
                 return ResourceManager.GetString("SqlParameter_DBNullNotSupportedForTVP", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Precision &apos;{0}&apos; required to send all values in column &apos;{1}&apos; exceeds the maximum supported precision &apos;{2}&apos;. The values must all fit in a single precision..
         /// </summary>
@@ -11285,7 +11312,7 @@ namespace System {
                 return ResourceManager.GetString("SqlParameter_InvalidTableDerivedPrecisionForTvp", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Offset in variable length data types..
         /// </summary>
@@ -11294,7 +11321,7 @@ namespace System {
                 return ResourceManager.GetString("SqlParameter_Offset", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Name of the parameter, like &apos;@p1&apos;.
         /// </summary>
@@ -11303,7 +11330,7 @@ namespace System {
                 return ResourceManager.GetString("SqlParameter_ParameterName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The parameter native type..
         /// </summary>
@@ -11312,7 +11339,7 @@ namespace System {
                 return ResourceManager.GetString("SqlParameter_SqlDbType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The server&apos;s name for the type..
         /// </summary>
@@ -11321,7 +11348,7 @@ namespace System {
                 return ResourceManager.GetString("SqlParameter_TypeName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to TypeName specified for parameter &apos;{0}&apos;.  TypeName must only be set for Structured parameters..
         /// </summary>
@@ -11330,7 +11357,7 @@ namespace System {
                 return ResourceManager.GetString("SqlParameter_UnexpectedTypeNameForNonStruct", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to ParameterDirection &apos;{0}&apos; specified for parameter &apos;{1}&apos; is not supported. Table-valued parameters only support ParameterDirection.Input..
         /// </summary>
@@ -11339,7 +11366,7 @@ namespace System {
                 return ResourceManager.GetString("SqlParameter_UnsupportedTVPOutputParameter", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to XmlSchemaCollectionDatabase.
         /// </summary>
@@ -11348,7 +11375,7 @@ namespace System {
                 return ResourceManager.GetString("SqlParameter_XmlSchemaCollectionDatabase", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to XmlSchemaCollectionName.
         /// </summary>
@@ -11357,7 +11384,7 @@ namespace System {
                 return ResourceManager.GetString("SqlParameter_XmlSchemaCollectionName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to XmlSchemaCollectionOwningSchema.
         /// </summary>
@@ -11366,7 +11393,7 @@ namespace System {
                 return ResourceManager.GetString("SqlParameter_XmlSchemaCollectionOwningSchema", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to A result set is currently being sent to the pipe. End the current result set before calling {0}..
         /// </summary>
@@ -11375,7 +11402,7 @@ namespace System {
                 return ResourceManager.GetString("SqlPipe_AlreadyHasAnOpenResultSet", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to SqlPipe does not support executing a command with a connection that is not a context connection..
         /// </summary>
@@ -11384,7 +11411,7 @@ namespace System {
                 return ResourceManager.GetString("SqlPipe_CommandHookedUpToNonContextConnection", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Result set has not been initiated.  Call SendResultSetStart before calling {0}..
         /// </summary>
@@ -11393,7 +11420,7 @@ namespace System {
                 return ResourceManager.GetString("SqlPipe_DoesNotHaveAnOpenResultSet", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Could not use the pipe while it is busy with another operation..
         /// </summary>
@@ -11402,7 +11429,7 @@ namespace System {
                 return ResourceManager.GetString("SqlPipe_IsBusy", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Message length {0} exceeds maximum length supported of 4000..
         /// </summary>
@@ -11411,7 +11438,7 @@ namespace System {
                 return ResourceManager.GetString("SqlPipe_MessageTooLong", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The sort ordinal {0} was specified twice..
         /// </summary>
@@ -11420,7 +11447,7 @@ namespace System {
                 return ResourceManager.GetString("SqlProvider_DuplicateSortOrdinal", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The size of column &apos;{0}&apos; is not supported. The size is {1}..
         /// </summary>
@@ -11429,7 +11456,7 @@ namespace System {
                 return ResourceManager.GetString("SqlProvider_InvalidDataColumnMaxLength", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The type of column &apos;{0}&apos; is not supported.  The type is &apos;{1}&apos;.
         /// </summary>
@@ -11438,7 +11465,7 @@ namespace System {
                 return ResourceManager.GetString("SqlProvider_InvalidDataColumnType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The sort ordinal {0} was not specified..
         /// </summary>
@@ -11447,7 +11474,7 @@ namespace System {
                 return ResourceManager.GetString("SqlProvider_MissingSortOrdinal", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to There are not enough fields in the Structured type.  Structured types must have at least one field..
         /// </summary>
@@ -11456,7 +11483,7 @@ namespace System {
                 return ResourceManager.GetString("SqlProvider_NotEnoughColumnsInStructuredType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The sort ordinal {0} on field {1} exceeds the total number of fields..
         /// </summary>
@@ -11465,7 +11492,7 @@ namespace System {
                 return ResourceManager.GetString("SqlProvider_SortOrdinalGreaterThanFieldCount", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Connecting to a mirrored SQL Server instance using the ApplicationIntent ReadOnly connection option is not supported..
         /// </summary>
@@ -11474,7 +11501,7 @@ namespace System {
                 return ResourceManager.GetString("SQLROR_FailoverNotSupported", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid routing information received..
         /// </summary>
@@ -11483,7 +11510,7 @@ namespace System {
                 return ResourceManager.GetString("SQLROR_InvalidRoutingInfo", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Two or more redirections have occurred. Only one redirection per login is allowed..
         /// </summary>
@@ -11492,7 +11519,7 @@ namespace System {
                 return ResourceManager.GetString("SQLROR_RecursiveRoutingNotSupported", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Server provided routing information, but timeout already expired..
         /// </summary>
@@ -11501,7 +11528,7 @@ namespace System {
                 return ResourceManager.GetString("SQLROR_TimeoutAfterRoutingInfo", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unexpected routing information received..
         /// </summary>
@@ -11510,7 +11537,7 @@ namespace System {
                 return ResourceManager.GetString("SQLROR_UnexpectedRoutingInfo", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Structured, multiple-valued types can only be used for parameters, and cannot be nested within another type..
         /// </summary>
@@ -11519,7 +11546,7 @@ namespace System {
                 return ResourceManager.GetString("SQLTVP_TableTypeCanOnlyBeParameter", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The provider has failed to load the following assembly: {0}.
         /// </summary>
@@ -11528,7 +11555,7 @@ namespace System {
                 return ResourceManager.GetString("SQLUDT_CantLoadAssembly", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unable to get Type Info for {0},{1}.
         /// </summary>
@@ -11537,7 +11564,7 @@ namespace System {
                 return ResourceManager.GetString("SQLUDT_InvalidDbId", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to UDT size must be less than {1}, size: {0}.
         /// </summary>
@@ -11546,7 +11573,7 @@ namespace System {
                 return ResourceManager.GetString("SQLUDT_InvalidSize", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Specified type is not registered on the target server.{0}..
         /// </summary>
@@ -11555,7 +11582,7 @@ namespace System {
                 return ResourceManager.GetString("SQLUDT_InvalidSqlType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to &apos;{0}&apos; is an invalid user defined type, reason: {1}..
         /// </summary>
@@ -11564,7 +11591,7 @@ namespace System {
                 return ResourceManager.GetString("SqlUdt_InvalidUdtMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to UdtTypeName property must be set for UDT parameters..
         /// </summary>
@@ -11573,7 +11600,7 @@ namespace System {
                 return ResourceManager.GetString("SQLUDT_InvalidUdtTypeName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to UDT parameters not permitted in the where clause unless part of the primary key..
         /// </summary>
@@ -11582,7 +11609,7 @@ namespace System {
                 return ResourceManager.GetString("SQLUDT_InWhereClause", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to range: 0-8000.
         /// </summary>
@@ -11591,7 +11618,7 @@ namespace System {
                 return ResourceManager.GetString("SQLUDT_MaxByteSizeValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to unexpected error encountered in SqlClient data provider. {0}.
         /// </summary>
@@ -11600,7 +11627,7 @@ namespace System {
                 return ResourceManager.GetString("SQLUDT_Unexpected", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to UdtTypeName property must be set only for UDT parameters..
         /// </summary>
@@ -11609,7 +11636,7 @@ namespace System {
                 return ResourceManager.GetString("SQLUDT_UnexpectedUdtTypeName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Native format can&apos;t be supported..
         /// </summary>
@@ -11618,7 +11645,7 @@ namespace System {
                 return ResourceManager.GetString("SqlUdtReason_CannotSupportNative", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to does not implement IBinarySerialize.
         /// </summary>
@@ -11627,7 +11654,7 @@ namespace System {
                 return ResourceManager.GetString("SqlUdtReason_CannotSupportUserDefined", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Serialization without mapping is not yet supported..
         /// </summary>
@@ -11636,7 +11663,7 @@ namespace System {
                 return ResourceManager.GetString("SqlUdtReason_MaplessNotYetSupported", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to supports both in-memory and user-defined formats.
         /// </summary>
@@ -11645,7 +11672,7 @@ namespace System {
                 return ResourceManager.GetString("SqlUdtReason_MultipleSerFormats", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Multiple valued assembly references must have a nonzero Assembly Id..
         /// </summary>
@@ -11654,7 +11681,7 @@ namespace System {
                 return ResourceManager.GetString("SqlUdtReason_MultivaluedAssemblyId", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The type of field &apos;{0}&apos; is marked as explicit layout which is not allowed in Native format.
         /// </summary>
@@ -11663,7 +11690,7 @@ namespace System {
                 return ResourceManager.GetString("SqlUdtReason_NativeFormatExplictLayoutNotAllowed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Native format does not support fields (directly or through another field) of type &apos;{0}&apos;.
         /// </summary>
@@ -11672,7 +11699,7 @@ namespace System {
                 return ResourceManager.GetString("SqlUdtReason_NativeFormatNoFieldSupport", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Native UDT specifies a max byte size.
         /// </summary>
@@ -11681,7 +11708,7 @@ namespace System {
                 return ResourceManager.GetString("SqlUdtReason_NativeUdtMaxByteSize", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Native UDT not sequential layout due to type &apos;{0}&apos;.
         /// </summary>
@@ -11690,7 +11717,7 @@ namespace System {
                 return ResourceManager.GetString("SqlUdtReason_NativeUdtNotSequentialLayout", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to field &apos;{0}&apos; is marked non-serialized.
         /// </summary>
@@ -11699,7 +11726,7 @@ namespace System {
                 return ResourceManager.GetString("SqlUdtReason_NonSerializableField", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to does not have a public constructor.
         /// </summary>
@@ -11708,7 +11735,7 @@ namespace System {
                 return ResourceManager.GetString("SqlUdtReason_NoPublicConstructor", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to no public constructors.
         /// </summary>
@@ -11717,7 +11744,7 @@ namespace System {
                 return ResourceManager.GetString("SqlUdtReason_NoPublicConstructors", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to does not implement INullable.
         /// </summary>
@@ -11726,7 +11753,7 @@ namespace System {
                 return ResourceManager.GetString("SqlUdtReason_NotNullable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to not serializable.
         /// </summary>
@@ -11735,7 +11762,7 @@ namespace System {
                 return ResourceManager.GetString("SqlUdtReason_NotSerializable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to no UDT attribute.
         /// </summary>
@@ -11744,7 +11771,7 @@ namespace System {
                 return ResourceManager.GetString("SqlUdtReason_NoUdtAttribute", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to &apos;public static x Null { get; }&apos; method is missing.
         /// </summary>
@@ -11753,7 +11780,7 @@ namespace System {
                 return ResourceManager.GetString("SqlUdtReason_NullPropertyMissing", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to &apos;public static x Parse(System.Data.SqlTypes.SqlString)&apos; method is missing.
         /// </summary>
@@ -11762,7 +11789,7 @@ namespace System {
                 return ResourceManager.GetString("SqlUdtReason_ParseMethodMissing", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to &apos;public override string ToString()&apos; method is missing.
         /// </summary>
@@ -11771,7 +11798,7 @@ namespace System {
                 return ResourceManager.GetString("SqlUdtReason_ToStringMethodMissing", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Type is not public.
         /// </summary>
@@ -11780,7 +11807,7 @@ namespace System {
                 return ResourceManager.GetString("SqlUdtReason_TypeNotPublic", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot get value because it is DBNull..
         /// </summary>
@@ -11789,7 +11816,7 @@ namespace System {
                 return ResourceManager.GetString("StrongTyping_CananotAccessDBNull", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot remove relation since it is built in to this dataSet..
         /// </summary>
@@ -11798,7 +11825,7 @@ namespace System {
                 return ResourceManager.GetString("StrongTyping_CananotRemoveRelation", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot remove column since it is built in to this dataSet..
         /// </summary>
@@ -11807,7 +11834,7 @@ namespace System {
                 return ResourceManager.GetString("StrongTyping_CannotRemoveColumn", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Attestation information was not returned by SQL Server. Enclave type is &apos;{0}&apos; and enclave attestation URL is &apos;{1}&apos;..
         /// </summary>
@@ -11816,7 +11843,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_AttestationInfoNotReturnedFromSQLServer", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Error occurred when generating enclave package. Attestation Protocol has not been specified in the connection string, but the query requires enclave computations..
         /// </summary>
@@ -11825,7 +11852,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to You have specified the attestation protocol in the connection string, but the SQL Server instance in use does not support enclave based computations..
         /// </summary>
@@ -11834,7 +11861,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_AttestationProtocolNotSupported", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Failed to initialize connection. The attestation protocol &apos;{0}&apos; does not support the enclave type &apos;{1}&apos;..
         /// </summary>
@@ -11843,7 +11870,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_AttestationProtocolNotSupportEnclaveType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to You have specified the enclave attestation URL in the connection string, but the SQL Server instance in use does not support enclave based computations..
         /// </summary>
@@ -11852,7 +11879,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_AttestationURLNotSupported", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to {0} should be identical on all commands ({1}, {2}, {3}, {4}) when doing batch updates..
         /// </summary>
@@ -11861,7 +11888,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_BatchedUpdateColumnEncryptionSettingMismatch", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Failed to instantiate an enclave provider with type &apos;{1}&apos; for name &apos;{0}&apos;. Error message: {2} .
         /// </summary>
@@ -11870,7 +11897,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_CannotCreateSqlColumnEncryptionEnclaveProvider", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Failed to read the configuration section for enclave providers. Make sure the section is correctly formatted in your application configuration file. Error Message: {0}.
         /// </summary>
@@ -11879,7 +11906,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_CannotGetSqlColumnEncryptionEnclaveProviderConfig", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Key store providers cannot be set more than once..
         /// </summary>
@@ -11888,7 +11915,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_CanOnlyCallOnce", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Certificate with thumbprint &apos;{0}&apos; not found in certificate store &apos;{1}&apos; in certificate location &apos;{2}&apos;..
         /// </summary>
@@ -11897,7 +11924,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_CertificateNotFound", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Certificate with thumbprint &apos;{0}&apos; not found in certificate store &apos;{1}&apos; in certificate location &apos;{2}&apos;. Verify the certificate path in the column master key definition in the database is correct, and the certificate has been imported correctly into the certificate location/store..
         /// </summary>
@@ -11906,7 +11933,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_CertificateNotFoundSysErr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Certificate specified in key path &apos;{0}&apos; does not have a private key to encrypt a column encryption key. Verify the certificate is imported correctly..
         /// </summary>
@@ -11915,7 +11942,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_CertificateWithNoPrivateKey", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Certificate specified in key path &apos;{0}&apos; does not have a private key to decrypt a column encryption key. Verify the certificate is imported correctly..
         /// </summary>
@@ -11924,7 +11951,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_CertificateWithNoPrivateKeySysErr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Failed to decrypt column &apos;{0}&apos;..
         /// </summary>
@@ -11933,7 +11960,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_ColumnDecryptionFailed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal Error. Encrypted column encryption keys not found when trying to send the keys to the enclave..
         /// </summary>
@@ -11942,7 +11969,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_ColumnEncryptionKeysNotFound", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. The signature returned by SQL Server for enclave-enabled column master key, specified at key path &apos;{0}&apos;, cannot be null or empty..
         /// </summary>
@@ -11951,7 +11978,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_ColumnMasterKeySignatureNotFound", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The signature returned by SQL Server for the column master key, specified in key path &apos;{0}&apos;, is invalid (does not match the computed signature). Recreate column master key metadata, making sure the signature inside the metadata is computed using the column master key being referenced in the metadata. If the error persists, please contact Microsoft for assistance..
         /// </summary>
@@ -11960,7 +11987,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_ColumnMasterKeySignatureVerificationFailed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Specifies an attestation protocol for its corresponding enclave attestation service..
         /// </summary>
@@ -11969,7 +11996,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_DbConnectionString_AttestationProtocol", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Default column encryption setting for all the commands on the connection..
         /// </summary>
@@ -11978,7 +12005,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_DbConnectionString_ColumnEncryptionSetting", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Specifies an endpoint of an enclave attestation service, which will be used to verify whether the enclave, configured in the SQL Server instance for computations on database columns encrypted using Always Encrypted, is valid and secure..
         /// </summary>
@@ -11987,7 +12014,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_DbConnectionString_EnclaveAttestationUrl", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Decryption failed. The last 10 bytes of the encrypted column encryption key are: &apos;{0}&apos;. The first 10 bytes of ciphertext are: &apos;{1}&apos;..
         /// </summary>
@@ -11996,7 +12023,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_DecryptionFailed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal Error. Empty argument &apos;{0}&apos; specified when constructing an object of type &apos;{1}&apos;. &apos;{0}&apos; cannot be empty..
         /// </summary>
@@ -12005,7 +12032,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_EmptyArgumentInConstructorInternal", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal Error. Argument &apos;{0}&apos; cannot be empty when executing method &apos;{1}.{2}&apos;..
         /// </summary>
@@ -12014,7 +12041,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_EmptyArgumentInternal", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Empty certificate thumbprint specified in certificate path &apos;{0}&apos;..
         /// </summary>
@@ -12023,7 +12050,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_EmptyCertificateThumbprint", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Empty certificate thumbprint specified in certificate path &apos;{0}&apos;..
         /// </summary>
@@ -12032,7 +12059,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_EmptyCertificateThumbprintSysErr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Empty key identifier specified in column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;..
         /// </summary>
@@ -12041,7 +12068,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_EmptyCngKeyId", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Empty key identifier specified in column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;..
         /// </summary>
@@ -12050,7 +12077,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_EmptyCngKeyIdSysErr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Empty Microsoft Cryptography API: Next Generation (CNG) provider name specified in column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;..
         /// </summary>
@@ -12059,7 +12086,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_EmptyCngName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Empty Microsoft Cryptography API: Next Generation (CNG) provider name specified in column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;..
         /// </summary>
@@ -12068,7 +12095,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_EmptyCngNameSysErr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Empty column encryption key specified..
         /// </summary>
@@ -12077,7 +12104,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_EmptyColumnEncryptionKey", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Empty key identifier specified in column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;..
         /// </summary>
@@ -12086,7 +12113,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_EmptyCspKeyId", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Empty key identifier specified in column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;..
         /// </summary>
@@ -12095,7 +12122,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_EmptyCspKeyIdSysErr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Empty Microsoft cryptographic service provider (CSP) name specified in column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;..
         /// </summary>
@@ -12104,7 +12131,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_EmptyCspName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Empty Microsoft cryptographic service provider (CSP) name specified in column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;..
         /// </summary>
@@ -12113,7 +12140,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_EmptyCspNameSysErr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Empty encrypted column encryption key specified..
         /// </summary>
@@ -12122,7 +12149,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_EmptyEncryptedColumnEncryptionKey", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid key store provider name specified. Key store provider names cannot be null or empty..
         /// </summary>
@@ -12131,7 +12158,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_EmptyProviderName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to You have specified the enclave attestation URL and attestation protocol in the connection string, but the SQL Server instance in use does not support enclave based computations..
         /// </summary>
@@ -12140,7 +12167,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_EnclaveComputationsNotSupported", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to No enclave provider found for enclave type &apos;{0}&apos; and attestation protocol &apos;{1}&apos;. Please specify the correct attestation protocol in the connection string. .
         /// </summary>
@@ -12149,7 +12176,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_EnclaveProviderNotFound", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Executing a query requires enclave computations, but the application configuration is missing the enclave provider  section..
         /// </summary>
@@ -12158,7 +12185,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_EnclaveProvidersNotConfiguredForEnclaveBasedQuery", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to You have specified the enclave attestation URL in the connection string, but the SQL Server instance did not return an enclave type. Please make sure the enclave type is correctly configured in your instance..
         /// </summary>
@@ -12167,7 +12194,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_EnclaveTypeNotReturned", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The enclave type &apos;{0}&apos; returned from the server is not supported..
         /// </summary>
@@ -12176,7 +12203,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_EnclaveTypeNotSupported", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal Error. Enclave type received from SQL Server is null or empty when executing a query requiring enclave computations..
         /// </summary>
@@ -12185,7 +12212,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_EnclaveTypeNullForEnclaveBasedQuery", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Error encountered while generating package to be sent to enclave. Error message: {0}.
         /// </summary>
@@ -12194,7 +12221,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_ExceptionWhenGeneratingEnclavePackage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal Error.  Failed to encrypt byte package to be sent to the enclave. Error Message: {0} .
         /// </summary>
@@ -12203,7 +12230,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_FailedToEncryptRegisterRulesBytePackage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal Error. The buffer specified by argument &apos;{0}&apos; for method &apos;{1}.{2}&apos; has insufficient space..
         /// </summary>
@@ -12212,7 +12239,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InsufficientBuffer", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The specified ciphertext&apos;s encryption algorithm version &apos;{0}&apos; does not match the expected encryption algorithm version &apos;{1}&apos;..
         /// </summary>
@@ -12221,7 +12248,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidAlgorithmVersion", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Specified encrypted column encryption key contains an invalid encryption algorithm version &apos;{0}&apos;. Expected version is &apos;{1}&apos;..
         /// </summary>
@@ -12230,7 +12257,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidAlgorithmVersionInEncryptedCEK", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid attestation parameters specified by the enclave provider for enclave type &apos;{0}&apos;. Error occurred when converting the value &apos;{1}&apos; of parameter &apos;{2}&apos; to unsigned int. Error Message: {3}.
         /// </summary>
@@ -12239,7 +12266,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidAttestationParameterUnableToConvertToUnsignedInt", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Specified ciphertext has an invalid authentication tag..
         /// </summary>
@@ -12248,7 +12275,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidAuthenticationTag", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid certificate location &apos;{0}&apos; in certificate path &apos;{1}&apos;. Use the following format: &lt;certificate location&gt;{4}&lt;certificate store&gt;{4}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either &apos;{2}&apos; or &apos;{3}&apos;..
         /// </summary>
@@ -12257,7 +12284,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidCertificateLocation", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Invalid certificate location &apos;{0}&apos; in certificate path &apos;{1}&apos;. Use the following format: &lt;certificate location&gt;{4}&lt;certificate store&gt;{4}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either &apos;{2}&apos; or &apos;{3}&apos;..
         /// </summary>
@@ -12266,7 +12293,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidCertificateLocationSysErr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid certificate path: &apos;{0}&apos;. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either &apos;{1}&apos; or &apos;{2}&apos;..
         /// </summary>
@@ -12275,7 +12302,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidCertificatePath", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Invalid certificate path: &apos;{0}&apos;. Use the following format: &lt;certificate location&gt;{3}&lt;certificate store&gt;{3}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either &apos;{1}&apos; or &apos;{2}&apos;..
         /// </summary>
@@ -12284,7 +12311,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidCertificatePathSysErr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The specified encrypted column encryption key signature does not match the signature computed with the column master key (certificate) in &apos;{0}&apos;. The encrypted column encryption key may be corrupt, or the specified path may be incorrect..
         /// </summary>
@@ -12293,7 +12320,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidCertificateSignature", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid certificate store &apos;{0}&apos; specified in certificate path &apos;{1}&apos;. Expected value: &apos;{2}&apos;..
         /// </summary>
@@ -12302,7 +12329,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidCertificateStore", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Invalid certificate store &apos;{0}&apos; specified in certificate path &apos;{1}&apos;. Expected value: &apos;{2}&apos;..
         /// </summary>
@@ -12311,7 +12338,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidCertificateStoreSysErr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The specified encrypted column encryption key&apos;s ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (certificate) in &apos;{2}&apos;. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect..
         /// </summary>
@@ -12320,7 +12347,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidCiphertextLengthInEncryptedCEK", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The specified encrypted column encryption key&apos;s ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (asymmetric key) in &apos;{2}&apos;. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptography API: Next Generation (CNG) provider path may be incorrect..
         /// </summary>
@@ -12329,7 +12356,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidCiphertextLengthInEncryptedCEKCng", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The specified encrypted column encryption key&apos;s ciphertext length: {0} does not match the ciphertext length: {1} when using column master key (asymmetric key) in &apos;{2}&apos;. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptographic Service provider (CSP) path may be incorrect..
         /// </summary>
@@ -12338,7 +12365,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidCiphertextLengthInEncryptedCEKCsp", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Specified ciphertext has an invalid size of {0} bytes, which is below the minimum {1} bytes required for decryption..
         /// </summary>
@@ -12347,7 +12374,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidCipherTextSize", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to An error occurred while opening the Microsoft Cryptography API: Next Generation (CNG) key: &apos;{0}&apos;. Verify that the CNG provider name &apos;{1}&apos; is valid, installed on the machine, and the key &apos;{2}&apos; exists..
         /// </summary>
@@ -12356,7 +12383,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidCngKey", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. An error occurred while opening the Microsoft Cryptography API: Next Generation (CNG) key: &apos;{0}&apos;. Verify that the CNG provider name &apos;{1}&apos; is valid, installed on the machine, and the key &apos;{2}&apos; exists..
         /// </summary>
@@ -12365,7 +12392,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidCngKeySysErr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;..
         /// </summary>
@@ -12374,7 +12401,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidCngPath", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Invalid column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{1}&lt;Key Identifier&gt;..
         /// </summary>
@@ -12383,7 +12410,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidCngPathSysErr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid key identifier: &apos;{0}&apos;. Verify that the key identifier in column master key path: &apos;{1}&apos; is valid and exists in the CSP..
         /// </summary>
@@ -12392,7 +12419,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidCspKeyId", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Invalid key identifier: &apos;{0}&apos;. Verify that the key identifier in column master key path: &apos;{1}&apos; is valid and exists in the CSP..
         /// </summary>
@@ -12401,7 +12428,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidCspKeyIdSysErr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid Microsoft cryptographic service provider (CSP) name: &apos;{0}&apos;. Verify that the CSP provider name in column master key path: &apos;{1}&apos; is valid and installed on the machine..
         /// </summary>
@@ -12410,7 +12437,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidCspName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Invalid Microsoft cryptographic service provider (CSP) name: &apos;{0}&apos;. Verify that the CSP provider name in column master key path: &apos;{1}&apos; is valid and installed on the machine..
         /// </summary>
@@ -12419,7 +12446,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidCspNameSysErr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;..
         /// </summary>
@@ -12428,7 +12455,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidCspPath", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Invalid column master key path: &apos;{0}&apos;. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{1}&lt;Key Identifier&gt;..
         /// </summary>
@@ -12437,7 +12464,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidCspPathSysErr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid key store provider name &apos;{0}&apos;. &apos;{1}&apos; prefix is reserved for system key store providers..
         /// </summary>
@@ -12446,7 +12473,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidCustomKeyStoreProviderName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal Error. The given database id &apos;{0}&apos; is not valid. Error occurred when converting the database id to unsigned int. Error Message: {1}.
         /// </summary>
@@ -12455,7 +12482,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidDatabaseIdUnableToCastToUnsignedInt", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Error occurred when populating enclave metadata. The referenced column encryption key ordinal &apos;{0}&apos; is missing in the encryption metadata returned by SQL Server. Max ordinal is &apos;{1}&apos;. .
         /// </summary>
@@ -12464,7 +12491,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidEncryptionKeyOrdinalEnclaveMetadata", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Error occurred when populating parameter metadata. The referenced column encryption key ordinal &apos;{0}&apos; is missing in the encryption metadata returned by SQL Server. Max ordinal is &apos;{1}&apos;. .
         /// </summary>
@@ -12473,7 +12500,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidEncryptionKeyOrdinalParameterMetadata", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Encryption type &apos;{1}&apos; specified for the column in the database is either invalid or corrupted. Valid encryption types for algorithm &apos;{0}&apos; are: {2}..
         /// </summary>
@@ -12482,7 +12509,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidEncryptionType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid key encryption algorithm specified: &apos;{0}&apos;. Expected value: &apos;{1}&apos;..
         /// </summary>
@@ -12491,7 +12518,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidKeyEncryptionAlgorithm", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Invalid key encryption algorithm specified: &apos;{0}&apos;. Expected value: &apos;{1}&apos;..
         /// </summary>
@@ -12500,7 +12527,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidKeyEncryptionAlgorithmSysErr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal Error. The given key id &apos;{0}&apos; is not valid. Error occurred when converting the key id to unsigned short. Error Message: {1}.
         /// </summary>
@@ -12509,7 +12536,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidKeyIdUnableToCastToUnsignedShort", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The column encryption key has been successfully decrypted but it&apos;s length: {1} does not match the length: {2} for algorithm &apos;{0}&apos;. Verify the encrypted value of the column encryption key in the database..
         /// </summary>
@@ -12518,7 +12545,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidKeySize", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid key store provider name: &apos;{0}&apos;. A key store provider name must denote either a system key store provider or a registered custom key store provider. Valid system key store provider names are: {1}. Valid (currently registered) custom key store provider names are: {2}. Please verify key store provider information in column master key definitions in the database, and verify all custom key store providers used in your application are registered properly..
         /// </summary>
@@ -12527,7 +12554,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidKeyStoreProviderName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The specified encrypted column encryption key signature does not match the signature computed with the column master key (asymmetric key) in &apos;{0}&apos;. The encrypted column encryption key may be corrupt, or the specified path may be incorrect..
         /// </summary>
@@ -12536,7 +12563,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidSignature", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The specified encrypted column encryption key&apos;s signature length: {0} does not match the signature length: {1} when using column master key (certificate) in &apos;{2}&apos;. The encrypted column encryption key may be corrupt, or the specified certificate path may be incorrect..
         /// </summary>
@@ -12545,7 +12572,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidSignatureInEncryptedCEK", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The specified encrypted column encryption key&apos;s signature length: {0} does not match the signature length: {1} when using column master key (asymmetric key) in &apos;{2}&apos;. The encrypted column encryption key may be corrupt, or the specified Microsoft Cryptography API: Next Generation (CNG) provider path may be incorrect..
         /// </summary>
@@ -12554,7 +12581,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidSignatureInEncryptedCEKCng", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The specified encrypted column encryption key&apos;s signature length: {0} does not match the signature length: {1} when using column master key (asymmetric key) in &apos;{2}&apos;. The encrypted column encryption key may be corrupt, or the specified Microsoft cryptographic service provider (CSP) path may be incorrect..
         /// </summary>
@@ -12563,7 +12590,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_InvalidSignatureInEncryptedCEKCsp", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Failed to decrypt a column encryption key using key store provider: &apos;{0}&apos;. Verify the properties of the column encryption key and its column master key in your database. The last 10 bytes of the encrypted column encryption key are: &apos;{1}&apos;..
         /// </summary>
@@ -12572,7 +12599,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_KeyDecryptionFailed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Failed to decrypt a column encryption key using key store provider: &apos;{0}&apos;. The last 10 bytes of the encrypted column encryption key are: &apos;{1}&apos;..
         /// </summary>
@@ -12581,7 +12608,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_KeyDecryptionFailedCertStore", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Specified certificate path has {0} bytes, which exceeds maximum length of {1} bytes..
         /// </summary>
@@ -12590,7 +12617,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_LargeCertificatePathLength", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Specified certificate path has {0} bytes, which exceeds maximum length of {1} bytes..
         /// </summary>
@@ -12599,7 +12626,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_LargeCertificatePathLengthSysErr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Error occurred when parsing the results of &apos;{0}&apos;. The attestation information resultset is expected to contain only one row, but it contains multiple rows..
         /// </summary>
@@ -12608,7 +12635,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_MultipleRowsReturnedForAttestationInfo", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Error occurred when generating enclave package. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is &apos;{0}&apos;. .
         /// </summary>
@@ -12617,7 +12644,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Error occurred when reading &apos;{0}&apos; resultset. Attestation URL has not been specified in the connection string, but the query requires enclave computations.  Enclave type is &apos;{1}&apos;. .
         /// </summary>
@@ -12626,7 +12653,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to {0} instance in use does not support column encryption..
         /// </summary>
@@ -12635,7 +12662,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_NotSupportedByServer", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal Error. Null argument &apos;{0}&apos; specified when constructing an object of type &apos;{1}&apos;. &apos;{0}&apos; cannot be null..
         /// </summary>
@@ -12644,7 +12671,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_NullArgumentInConstructorInternal", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal Error. Argument &apos;{0}&apos; cannot be null when executing method &apos;{1}.{2}&apos;..
         /// </summary>
@@ -12653,7 +12680,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_NullArgumentInternal", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either &apos;{0}&apos; or &apos;{1}&apos;..
         /// </summary>
@@ -12662,7 +12689,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_NullCertificatePath", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Certificate path cannot be null. Use the following format: &lt;certificate location&gt;{2}&lt;certificate store&gt;{2}&lt;certificate thumbprint&gt;, where &lt;certificate location&gt; is either &apos;{0}&apos; or &apos;{1}&apos;..
         /// </summary>
@@ -12671,7 +12698,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_NullCertificatePathSysErr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Ciphertext value cannot be null..
         /// </summary>
@@ -12680,7 +12707,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_NullCipherText", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Column master key path cannot be null. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{0}&lt;Key Identifier&gt;..
         /// </summary>
@@ -12689,7 +12716,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_NullCngPath", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Column master key path cannot be null. Use the following format for a key stored in a Microsoft Cryptography API: Next Generation (CNG) provider: &lt;CNG Provider Name&gt;{0}&lt;Key Identifier&gt;..
         /// </summary>
@@ -12698,7 +12725,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_NullCngPathSysErr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Encryption algorithm cannot be null. Valid algorithms are: {0}..
         /// </summary>
@@ -12707,7 +12734,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_NullColumnEncryptionAlgorithm", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Column encryption key cannot be null..
         /// </summary>
@@ -12716,7 +12743,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_NullColumnEncryptionKey", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Column encryption key cannot be null..
         /// </summary>
@@ -12725,7 +12752,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_NullColumnEncryptionKeySysErr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Column master key path cannot be null. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{0}&lt;Key Identifier&gt;..
         /// </summary>
@@ -12734,7 +12761,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_NullCspPath", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Column master key path cannot be null. Use the following format for a key stored in a Microsoft cryptographic service provider (CSP): &lt;CSP Provider Name&gt;{0}&lt;Key Identifier&gt;..
         /// </summary>
@@ -12743,7 +12770,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_NullCspPathSysErr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Column encryption key store provider dictionary cannot be null. Expecting a non-null value..
         /// </summary>
@@ -12752,7 +12779,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_NullCustomKeyStoreProviderDictionary", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal Error. Enclave package is null during execution of an enclave based query. Enclave type is &apos;{0}&apos; and enclaveAttestationUrl is &apos;{1}&apos;..
         /// </summary>
@@ -12761,7 +12788,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_NullEnclavePackageForEnclaveBasedQuery", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal Error. Enclave session is null during query execution. Enclave type is &apos;{0}&apos; and enclaveAttestationUrl is &apos;{1}&apos;..
         /// </summary>
@@ -12770,7 +12797,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_NullEnclaveSessionDuringQueryExecution", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unable to communicate with the enclave. Null enclave session information received from the enclave provider. Enclave type is &apos;{0}&apos; and enclave attestation URL is &apos;{1}&apos;..
         /// </summary>
@@ -12779,7 +12806,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_NullEnclaveSessionReturnedFromProvider", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Encrypted column encryption key cannot be null..
         /// </summary>
@@ -12788,7 +12815,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_NullEncryptedColumnEncryptionKey", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Key encryption algorithm cannot be null..
         /// </summary>
@@ -12797,7 +12824,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_NullKeyEncryptionAlgorithm", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Key encryption algorithm cannot be null..
         /// </summary>
@@ -12806,7 +12833,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_NullKeyEncryptionAlgorithmSysErr", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Plaintext value cannot be null..
         /// </summary>
@@ -12815,7 +12842,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_NullPlainText", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Null reference specified for key store provider &apos;{0}&apos;. Expecting a non-null value..
         /// </summary>
@@ -12824,7 +12851,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_NullProviderValue", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal Error. Failed to serialize keys to be sent to the enclave. The start offset specified by argument &apos;{0}&apos; for method {1}.{2} is out of bounds..
         /// </summary>
@@ -12833,7 +12860,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_OffsetOutOfBounds", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Failed to decrypt parameter &apos;{0}&apos;..
         /// </summary>
@@ -12842,7 +12869,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_ParamDecryptionFailed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Failed to encrypt parameter &apos;{0}&apos;..
         /// </summary>
@@ -12851,7 +12878,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_ParamEncryptionFailed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Metadata for parameter &apos;{1}&apos; in statement or procedure &apos;{2}&apos; is missing in resultset returned by {0}..
         /// </summary>
@@ -12860,7 +12887,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_ParamEncryptionMetaDataMissing", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot set {0} for {3} &apos;{1}&apos; because encryption is not enabled for the statement or procedure &apos;{2}&apos;..
         /// </summary>
@@ -12869,7 +12896,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_ParamInvalidForceColumnEncryptionSetting", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot execute statement or procedure &apos;{1}&apos; because {2} was set for {3} &apos;{0}&apos; and the database expects this parameter to be sent as plaintext. This may be due to a configuration error..
         /// </summary>
@@ -12878,7 +12905,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_ParamUnExpectedEncryptionMetadata", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. Metadata for parameters for command &apos;{1}&apos; in a batch is missing in the resultset returned by {0}..
         /// </summary>
@@ -12887,7 +12914,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_ProcEncryptionMetaDataMissing", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Retrieving encrypted column &apos;{0}&apos; with {1} is not supported..
         /// </summary>
@@ -12896,7 +12923,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_SequentialAccessNotSupportedOnEncryptedColumn", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal Error. SqlColumnEncryptionEnclaveProviderName cannot be null or empty..
         /// </summary>
@@ -12905,7 +12932,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_SqlColumnEncryptionEnclaveProviderNameCannotBeEmpty", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Column encryption setting for the command. Overrides the connection level default..
         /// </summary>
@@ -12914,7 +12941,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_SqlCommand_ColumnEncryptionSetting", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Defines the time-to-live of entries in the column encryption key cache..
         /// </summary>
@@ -12923,7 +12950,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_SqlConnection_ColumnEncryptionKeyCacheTtl", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Defines whether query metadata caching is enabled..
         /// </summary>
@@ -12932,7 +12959,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_SqlConnection_ColumnEncryptionQueryMetadataCacheEnabled", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Dictionary object containing SQL Server names and their trusted column master key paths..
         /// </summary>
@@ -12941,7 +12968,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_SqlConnection_TrustedColumnMasterKeyPaths", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Forces parameter to be encrypted before sending sensitive data to server. .
         /// </summary>
@@ -12950,7 +12977,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_SqlParameter_ForceColumnEncryption", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Retrieving encrypted column &apos;{0}&apos; as a {1} is not supported..
         /// </summary>
@@ -12959,7 +12986,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_StreamNotSupportOnEncryptedColumn", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unable to establish secure channel. Error Message: {0}.
         /// </summary>
@@ -12968,7 +12995,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_UnableToEstablishSecureChannel", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unable to verify a column master key signature. Error message: {0} .
         /// </summary>
@@ -12977,7 +13004,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_UnableToVerifyColumnMasterKeySignature", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. The result returned by &apos;{0}&apos; is invalid. The attestation information resultset is missing for enclave type &apos;{1}&apos;. .
         /// </summary>
@@ -12986,7 +13013,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_UnexpectedDescribeParamFormatAttestationInfo", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error. The result returned by &apos;{0}&apos; is invalid. The parameter metadata resultset is missing..
         /// </summary>
@@ -12995,7 +13022,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_UnexpectedDescribeParamFormatParameterMetadata", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Encryption algorithm &apos;{0}&apos; for the column in the database is either invalid or corrupted. Valid algorithms are: {1}..
         /// </summary>
@@ -13004,7 +13031,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_UnknownColumnEncryptionAlgorithm", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Encryption algorithm id &apos;{0}&apos; for the column in the database is either invalid or corrupted. Valid encryption algorithm ids are: {1}..
         /// </summary>
@@ -13013,7 +13040,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_UnknownColumnEncryptionAlgorithmId", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Failed to decrypt a column encryption key. Invalid key store provider name: &apos;{0}&apos;. A key store provider name must denote either a system key store provider or a registered custom key store provider. Valid system key store provider names are: {1}. Valid (currently registered) custom key store provider names are: {2}. Please verify key store provider information in column master key definitions in the database, and verify all custom key store providers used in your application are registered properly..
         /// </summary>
@@ -13022,7 +13049,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_UnrecognizedKeyStoreProviderName", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Encryption and decryption of data type &apos;{0}&apos; is not supported..
         /// </summary>
@@ -13031,7 +13058,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_UnsupportedDatatype", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Normalization version &apos;{0}&apos; received from {2} is not supported. Valid normalization versions are: {1}..
         /// </summary>
@@ -13040,7 +13067,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_UnsupportedNormalizationVersion", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Column master key path &apos;{0}&apos; received from server &apos;{1}&apos; is not a trusted key path..
         /// </summary>
@@ -13049,7 +13076,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_UntrustedKeyPath", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot encrypt. Encrypting resulted in {0} bytes of ciphertext which exceeds the maximum allowed limit of {1} bytes. The specified plaintext value is likely too large (plaintext size is: {2} bytes)..
         /// </summary>
@@ -13058,7 +13085,7 @@ namespace System {
                 return ResourceManager.GetString("TCE_VeryLargeCiphertext", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Failed to check if the enclave is running in the production mode. Contact Customer Support Services..
         /// </summary>
@@ -13067,7 +13094,7 @@ namespace System {
                 return ResourceManager.GetString("VerifyEnclaveDebuggable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Could not verify enclave policy due to a difference between the expected and actual values of the policy on property &apos;{0}&apos;. Actual: &apos;{1}&apos;, Expected: &apos;{2}&apos;..
         /// </summary>
@@ -13076,7 +13103,7 @@ namespace System {
                 return ResourceManager.GetString("VerifyEnclavePolicyFailedFormat", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Signature verification of the enclave report failed. The report signature does not match the signature computed using the HGS root certificate. Verify the DNS mapping for the endpoint. If correct, contact Customer Support Services..
         /// </summary>
@@ -13085,7 +13112,7 @@ namespace System {
                 return ResourceManager.GetString("VerifyEnclaveReportFailed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The enclave report received from SQL Server is not in the correct format. Contact Customer Support Services..
         /// </summary>
@@ -13094,7 +13121,7 @@ namespace System {
                 return ResourceManager.GetString("VerifyEnclaveReportFormatFailed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Failed to build a chain of trust between the enclave host&apos;s health report and the HGS root certificate for attestation URL &apos;{0}&apos; with status: &apos;{1}&apos;. Verify the attestation URL matches the URL configured on the SQL Server machine. If both the client and SQL Server use the same attestation service, contact Customer Support Services..
         /// </summary>
@@ -13103,7 +13130,7 @@ namespace System {
                 return ResourceManager.GetString("VerifyHealthCertificateChainFormat", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The value of attribute &apos;{0}&apos; should be &apos;{1}&apos; or &apos;{2}&apos;..
         /// </summary>
@@ -13112,7 +13139,7 @@ namespace System {
                 return ResourceManager.GetString("Xml_AttributeValues", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot convert &apos;{0}&apos; to type &apos;{1}&apos;..
         /// </summary>
@@ -13121,7 +13148,7 @@ namespace System {
                 return ResourceManager.GetString("Xml_CannotConvert", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Unable to proceed with deserialization. Data does not implement IXMLSerializable, therefore polymorphism is not supported..
         /// </summary>
@@ -13130,7 +13157,7 @@ namespace System {
                 return ResourceManager.GetString("Xml_CanNotDeserializeObjectType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to DataSet cannot instantiate an abstract ComplexType for the node {0}..
         /// </summary>
@@ -13139,7 +13166,7 @@ namespace System {
                 return ResourceManager.GetString("Xml_CannotInstantiateAbstract", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to DataSet doesn&apos;t allow the circular reference in the ComplexType named &apos;{0}&apos;..
         /// </summary>
@@ -13148,7 +13175,7 @@ namespace System {
                 return ResourceManager.GetString("Xml_CircularComplexType", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Column name &apos;{0}&apos; is defined for different mapping types..
         /// </summary>
@@ -13157,7 +13184,7 @@ namespace System {
                 return ResourceManager.GetString("Xml_ColumnConflict", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to DataTable does not support schema inference from Xml..
         /// </summary>
@@ -13166,7 +13193,7 @@ namespace System {
                 return ResourceManager.GetString("Xml_DataTableInferenceNotSupported", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Data type not defined..
         /// </summary>
@@ -13175,7 +13202,7 @@ namespace System {
                 return ResourceManager.GetString("Xml_DatatypeNotDefined", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to The constraint name {0} is already used in the schema..
         /// </summary>
@@ -13184,7 +13211,7 @@ namespace System {
                 return ResourceManager.GetString("Xml_DuplicateConstraint", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to DataSet will not serialize types that implement IDynamicMetaObjectProvider but do not also implement IXmlSerializable..
         /// </summary>
@@ -13193,7 +13220,7 @@ namespace System {
                 return ResourceManager.GetString("Xml_DynamicWithoutXmlSerializable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot find ElementType name=&apos;{0}&apos;..
         /// </summary>
@@ -13202,7 +13229,7 @@ namespace System {
                 return ResourceManager.GetString("Xml_ElementTypeNotFound", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to DataSet cannot expand entities. Use XmlValidatingReader and set the EntityHandling property accordingly..
         /// </summary>
@@ -13211,7 +13238,7 @@ namespace System {
                 return ResourceManager.GetString("Xml_FoundEntity", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid XPath selection inside field node. Cannot find: {0}..
         /// </summary>
@@ -13220,7 +13247,7 @@ namespace System {
                 return ResourceManager.GetString("Xml_InvalidField", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid &apos;Key&apos; node inside constraint named: {0}..
         /// </summary>
@@ -13229,7 +13256,7 @@ namespace System {
                 return ResourceManager.GetString("Xml_InvalidKey", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Prefix &apos;{0}&apos; is not valid, because it contains special characters..
         /// </summary>
@@ -13238,7 +13265,7 @@ namespace System {
                 return ResourceManager.GetString("Xml_InvalidPrefix", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid XPath selection inside selector node: {0}..
         /// </summary>
@@ -13247,7 +13274,7 @@ namespace System {
                 return ResourceManager.GetString("Xml_InvalidSelector", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to IsDataSet attribute is missing in input Schema..
         /// </summary>
@@ -13256,7 +13283,7 @@ namespace System {
                 return ResourceManager.GetString("Xml_IsDataSetAttributeMissingInSchema", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Duplicated declaration &apos;{0}&apos;..
         /// </summary>
@@ -13265,7 +13292,7 @@ namespace System {
                 return ResourceManager.GetString("Xml_MergeDuplicateDeclaration", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid Relation definition: different length keys..
         /// </summary>
@@ -13274,7 +13301,7 @@ namespace System {
                 return ResourceManager.GetString("Xml_MismatchKeyLength", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Invalid {0} syntax: missing required &apos;{1}&apos; attribute..
         /// </summary>
@@ -13283,7 +13310,7 @@ namespace System {
                 return ResourceManager.GetString("Xml_MissingAttribute", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Missing &apos;{0}&apos; part in &apos;{1}&apos; constraint named &apos;{2}&apos;..
         /// </summary>
@@ -13292,7 +13319,7 @@ namespace System {
                 return ResourceManager.GetString("Xml_MissingRefer", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot load diffGram. The &apos;sql&apos; node is missing..
         /// </summary>
@@ -13301,7 +13328,7 @@ namespace System {
                 return ResourceManager.GetString("Xml_MissingSQL", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot load diffGram. Table &apos;{0}&apos; is missing in the destination dataset..
         /// </summary>
@@ -13310,7 +13337,7 @@ namespace System {
                 return ResourceManager.GetString("Xml_MissingTable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot proceed with serializing DataTable &apos;{0}&apos;. It contains a DataRow which has multiple parent rows on the same Foreign Key..
         /// </summary>
@@ -13319,7 +13346,7 @@ namespace System {
                 return ResourceManager.GetString("Xml_MultipleParentRows", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to An error occurred with the multiple target converter while writing an Xml Schema.  A null or empty string was returned..
         /// </summary>
@@ -13328,7 +13355,7 @@ namespace System {
                 return ResourceManager.GetString("Xml_MultipleTargetConverterEmpty", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to An error occurred with the multiple target converter while writing an Xml Schema.  See the inner exception for details..
         /// </summary>
@@ -13337,7 +13364,7 @@ namespace System {
                 return ResourceManager.GetString("Xml_MultipleTargetConverterError", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Circular reference in self-nested table &apos;{0}&apos;..
         /// </summary>
@@ -13346,7 +13373,7 @@ namespace System {
                 return ResourceManager.GetString("Xml_NestedCircular", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Type &apos;{0}&apos; does not implement IXmlSerializable interface therefore can not proceed with serialization..
         /// </summary>
@@ -13355,7 +13382,7 @@ namespace System {
                 return ResourceManager.GetString("Xml_PolymorphismNotSupported", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Child table key is missing in relation &apos;{0}&apos;..
         /// </summary>
@@ -13364,7 +13391,7 @@ namespace System {
                 return ResourceManager.GetString("Xml_RelationChildKeyMissing", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Child table name is missing in relation &apos;{0}&apos;..
         /// </summary>
@@ -13373,7 +13400,7 @@ namespace System {
                 return ResourceManager.GetString("Xml_RelationChildNameMissing", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Parent table name is missing in relation &apos;{0}&apos;..
         /// </summary>
@@ -13382,7 +13409,7 @@ namespace System {
                 return ResourceManager.GetString("Xml_RelationParentNameMissing", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Parent table key is missing in relation &apos;{0}&apos;..
         /// </summary>
@@ -13391,7 +13418,7 @@ namespace System {
                 return ResourceManager.GetString("Xml_RelationTableKeyMissing", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to DataSet doesn&apos;t support &apos;union&apos; or &apos;list&apos; as simpleType..
         /// </summary>
@@ -13400,7 +13427,7 @@ namespace System {
                 return ResourceManager.GetString("Xml_SimpleTypeNotSupported", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot determine the DataSet Element. IsDataSet attribute exist more than once..
         /// </summary>
@@ -13409,7 +13436,7 @@ namespace System {
                 return ResourceManager.GetString("Xml_TooManyIsDataSetAtributeInSchema", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Undefined data type: &apos;{0}&apos;..
         /// </summary>
@@ -13418,7 +13445,7 @@ namespace System {
                 return ResourceManager.GetString("Xml_UndefinedDatatype", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Value &apos;{1}&apos; is invalid for attribute &apos;{0}&apos;..
         /// </summary>
