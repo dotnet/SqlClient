@@ -11,7 +11,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     public class CoreCryptoTests : IClassFixture<SQLSetupStrategyCertStoreProvider>
     {
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Always Encrypted not supported in Azure Synapse.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void TestAeadCryptoWithNativeBaseline()
         {
@@ -45,7 +46,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Always Encrypted not supported in Azure Synapse.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         [PlatformSpecific(TestPlatforms.Windows)]
         public void TestRsaCryptoWithNativeBaseline()
         {

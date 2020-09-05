@@ -64,7 +64,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             InitDataValues();
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // TODO Synapse: Remove Northwind dependency by creating required tables in setup.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void SimpleFillTest()
         {
             using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
@@ -85,7 +86,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // TODO Synapse: Remove Northwind dependency by creating required tables in setup.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void PrepUnprepTest()
         {
             // share the connection
@@ -171,7 +173,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Create table statement contains a data type that is unsupported in Parallel Data Warehouse.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void SqlVariantTest()
         {
             string tableName = DataTestUtility.GenerateObjectName();
@@ -265,7 +268,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: The RETURN statement can only be used in user-defined functions.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void ParameterTest_AllTypes()
         {
             string procName = DataTestUtility.GenerateObjectName();
@@ -477,7 +481,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: The RETURN statement can only be used in user-defined functions.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void ParameterTest_InOut()
         {
             string procName = DataTestUtility.GetUniqueName("P");
@@ -574,7 +579,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // TODO Synapse: Remove Northwind dependency by creating required tables in setup.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void UpdateTest()
         {
             using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
@@ -658,7 +664,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // these next texts verify that 'bulk' operations work.  If each command type modifies more than three rows, then we do a Prep/Exec instead of
         // adhoc ExecuteSql.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // TODO Synapse: Remove Northwind dependency by creating required tables in setup.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void BulkUpdateTest()
         {
             using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
@@ -755,7 +762,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // Makes sure that we can refresh an identity column in the dataSet
         // for a newly inserted row
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Must declare the scalar variable "@@IDENTITY".
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void UpdateRefreshTest()
         {
             string createIdentTable =
@@ -849,7 +857,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Create table statement contains a data type that is unsupported in Parallel Data Warehouse.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void UpdateNullTest()
         {
             string tableName = DataTestUtility.GenerateObjectName();
@@ -905,7 +914,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Create table statement contains a data type that is unsupported in Parallel Data Warehouse.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void UpdateOffsetTest()
         {
             string tableName = DataTestUtility.GenerateObjectName();
@@ -981,16 +991,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void SelectAllTest()
         {
             // Test exceptions
-            using (SqlDataAdapter sqlAdapter = new SqlDataAdapter(new SqlCommand("select * from orders", new SqlConnection(DataTestUtility.TCPConnectionString))))
+            using (SqlDataAdapter sqlAdapter = new SqlDataAdapter(new SqlCommand("select * from sys.columns", new SqlConnection(DataTestUtility.TCPConnectionString))))
             {
                 DataSet dataset = new DataSet();
-                sqlAdapter.TableMappings.Add("Table", "orders");
+                sqlAdapter.TableMappings.Add("View", "sys.columns");
                 sqlAdapter.Fill(dataset);
             }
         }
 
         // AutoGen test
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // TODO Synapse: Remove Northwind dependency by creating required tables in setup.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void AutoGenUpdateTest()
         {
             using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
@@ -1061,7 +1072,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Dynamic SQL generation is not supported against a SelectCommand that does not return any base table information.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void AutoGenErrorTest()
         {
             string createIdentTable =
@@ -1104,9 +1116,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        // These next tests verify that 'bulk' operations work. If each command type modifies more than three rows, then we do a Prep/Exec instead of
+        // These next tests verify that 'bulk' operations work.
+        // If each command type modifies more than three rows, then we do a Prep/Exec instead of
         // adhoc ExecuteSql.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // TODO Synapse: Remove Northwind dependency nu creating required tables in setup.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void AutoGenBulkUpdateTest()
         {
             using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
@@ -1256,7 +1270,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Parse error at line: 1, column: 65: Incorrect syntax near 'as'.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void TestReadOnlyColumnMetadata()
         {
             using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))

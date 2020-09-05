@@ -8,7 +8,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class DDMARSTest
     {
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // TODO Synapse: Remove dependency from Northwind database
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestMain()
         {
             string connstr = (new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { MultipleActiveResultSets = true }).ConnectionString;

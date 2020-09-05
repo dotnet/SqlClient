@@ -11,38 +11,40 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class TransactionEnlistmentTest
     {
+        // TODO Synapse: Cannot find data type 'text'.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public static void TestAutoEnlistment_TxScopeComplete()
         {
             RunTestSet(TestCase_AutoEnlistment_TxScopeComplete);
         }
 
+        // TODO Synapse: Cannot find data type 'text'.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public static void TestAutoEnlistment_TxScopeNonComplete()
         {
             RunTestSet(TestCase_AutoEnlistment_TxScopeNonComplete);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // TODO Synapse: Cannot find data type 'text'.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestManualEnlistment_Enlist()
         {
             RunTestSet(TestCase_ManualEnlistment_Enlist);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // TODO Synapse: Cannot find data type 'text'.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestManualEnlistment_NonEnlist()
         {
             RunTestSet(TestCase_ManualEnlistment_NonEnlist);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // TODO Synapse: Cannot find data type 'text'.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestManualEnlistment_Enlist_TxScopeComplete()
         {
             RunTestSet(TestCase_ManualEnlistment_Enlist_TxScopeComplete);
         }
-
-
-
 
         private static void TestCase_AutoEnlistment_TxScopeComplete()
         {
@@ -165,9 +167,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.True(result.Rows.Count == 1);
             Assert.True(string.Equals(result.Rows[0][0], InputCol2));
         }
-
-
-
 
         private static string TestTableName;
         private static string ConnectionString;

@@ -13,7 +13,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static string commandText =
             "SELECT * from dbo.Customers FOR XML AUTO, XMLDATA;";
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Parse error at line: 1, column: 29: Incorrect syntax near 'FOR'.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void ExecuteTest()
         {
             using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
@@ -34,7 +35,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Northwind dependency + Parse error at line: 1, column: 29: Incorrect syntax near 'FOR'.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void ExceptionTest()
         {
             using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))

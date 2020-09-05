@@ -33,7 +33,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return commandText;
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Parse error at line: 1, column: 198: Incorrect syntax near ';'.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void ExecuteTest()
         {
             using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
@@ -51,7 +52,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Parse error at line: 1, column: 198: Incorrect syntax near ';'.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void BeginExecuteReaderWithCallback()
         {
             object state = new object();

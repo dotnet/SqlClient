@@ -26,7 +26,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string s_selectTableCmd = $"SELECT COUNT(*) FROM {s_tableName}";
         private static readonly string s_dropDatabaseCmd = $"DROP DATABASE {s_databaseName}";
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Stored procedure sp_who2 does not exist or is not supported.
+        // Synapse: SqlConnection.ServerProcessId is always retrieved as 0.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void EnvironmentHostNameSPIDTest()
         {
             SqlConnectionStringBuilder builder = (new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { Pooling = true });
@@ -44,6 +46,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     reader.Read();
                     sessionSpid = reader.GetInt16(0);
                 }
+
                 // Confirm Server process id is same as result of SELECT @@SPID
                 Assert.Equal(sessionSpid, sqlClientSPID);
 
@@ -113,7 +116,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.True(timeElapsed < threshold);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Catalog view 'sysprocesses' is not supported in this version.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void LocalProcessIdTest()
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
@@ -205,6 +209,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        // Synapse: Parse error at line: 1, column: 59: Incorrect syntax near 'SINGLE_USER' - No support for MULTI_USER
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public static void ConnectionKilledTest()
         {
@@ -235,7 +240,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: KILL not supported on Azure Synapse - Parse error at line: 1, column: 6: Incorrect syntax near '105'.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void ConnectionResiliencySPIDTest()
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
@@ -249,7 +255,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 InternalConnectionWrapper wrapper = new InternalConnectionWrapper(conn, true, builder.ConnectionString);
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "SELECT TOP 1 * FROM dbo.Employees";
+                    cmd.CommandText = "SELECT @@SPID";
                     wrapper.KillConnectionByTSql();
                     bool cmdSuccess = false;
                     try

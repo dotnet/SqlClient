@@ -21,7 +21,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             RunDataTestForSingleConnString(_TCPConnectionString);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // TODO Synapse: Fix this test for Azure Synapse.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void ConnectionPool_Mars()
         {
             RunDataTestForSingleConnString(_tcpMarsConnStr);

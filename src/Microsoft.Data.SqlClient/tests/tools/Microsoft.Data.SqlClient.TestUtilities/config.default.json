@@ -17,5 +17,6 @@
     "SupportsLocalDb": false,
     "SupportsFileStream": false,
     "UseManagedSNIOnWindows": false,
-    "EnclaveAzureDatabaseConnString":  ""
+    "IsAzureSynapse": false,
+    "EnclaveAzureDatabaseConnString": ""
 }
