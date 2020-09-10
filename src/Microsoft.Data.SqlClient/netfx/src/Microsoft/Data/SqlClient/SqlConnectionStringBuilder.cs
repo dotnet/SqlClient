@@ -529,7 +529,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        //TODO Add docs
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/CommandTimeout/*' />
         [DisplayName(DbConnectionStringKeywords.CommandTimeout)]
         [ResCategory(StringsHelper.ResourceNames.DataCategory_Initialization)]

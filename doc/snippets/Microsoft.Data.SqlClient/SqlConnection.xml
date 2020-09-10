@@ -472,6 +472,23 @@ The connection string contains <see langword="Context Connection=true" />.
             <value>The list of trusted master key paths for the column encryption.</value>
             <remarks>To be added.</remarks>
         </ColumnEncryptionTrustedMasterKeyPaths>
+		<CommandTimeout>
+			<summary>
+				Gets the default wait time (in seconds) before terminating the attempt to execute a command and generating an error. The default is 30 seconds.
+			</summary>
+			<value>
+				The time in seconds to wait for the command to execute. The default is 30 seconds.
+			</value>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+
+ You can set default wait time by using the `Command Timeout` keyword in the connection string. A value of 0 indicates no limit (an attempt to execute a command will wait indefinitely).
+  
+ ]]></format>
+            </remarks>
+		</CommandTimeout>
         <ConnectionString>
             <summary>Gets or sets the string used to open a SQL Server database.</summary>
             <value>The connection string that includes the source database name, and other parameters needed to establish the initial connection. The default value is an empty string.</value>

@@ -424,7 +424,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        //TODO Add docs
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/CommandTimeout/*' />
         public int CommandTimeout
         {
