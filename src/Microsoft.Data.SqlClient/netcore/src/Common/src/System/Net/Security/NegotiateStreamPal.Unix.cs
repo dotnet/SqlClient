@@ -2,15 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System.IO;
-using System.Security;
-using System.Security.Principal;
-using System.Threading;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
-using System.Security.Authentication;
-using System.Security.Authentication.ExtendedProtection;
 using Microsoft.Win32.SafeHandles;
 
 namespace System.Net.Security
@@ -25,74 +18,6 @@ namespace System.Net.Security
         // value should match the Windows sspicli NTE_FAIL value
         // defined in winerror.h
         private const int NTE_FAIL = unchecked((int)0x80090020);
-
-        internal static string QueryContextClientSpecifiedSpn(SafeDeleteContext securityContext)
-        {
-            throw new PlatformNotSupportedException(SR.net_nego_server_not_supported);
-        }
-
-        internal static string QueryContextAuthenticationPackage(SafeDeleteContext securityContext)
-        {
-            SafeDeleteNegoContext negoContext = (SafeDeleteNegoContext)securityContext;
-            return negoContext.IsNtlmUsed ? NegotiationInfoClass.NTLM : NegotiationInfoClass.Kerberos;
-        }
-
-        static byte[] GssWrap(
-            SafeGssContextHandle context,
-            bool encrypt,
-            byte[] buffer,
-            int offset,
-            int count)
-        {
-            Debug.Assert((buffer != null) && (buffer.Length > 0), "Invalid input buffer passed to Encrypt");
-            Debug.Assert((offset >= 0) && (offset < buffer.Length), "Invalid input offset passed to Encrypt");
-            Debug.Assert((count >= 0) && (count <= (buffer.Length - offset)), "Invalid input count passed to Encrypt");
-
-            Interop.NetSecurityNative.GssBuffer encryptedBuffer = default(Interop.NetSecurityNative.GssBuffer);
-            try
-            {
-                Interop.NetSecurityNative.Status minorStatus;
-                Interop.NetSecurityNative.Status status = Interop.NetSecurityNative.WrapBuffer(out minorStatus, context, encrypt, buffer, offset, count, ref encryptedBuffer);
-                if (status != Interop.NetSecurityNative.Status.GSS_S_COMPLETE)
-                {
-                    throw new Interop.NetSecurityNative.GssApiException(status, minorStatus);
-                }
-
-                return encryptedBuffer.ToByteArray();
-            }
-            finally
-            {
-                encryptedBuffer.Dispose();
-            }
-        }
-
-        private static int GssUnwrap(
-            SafeGssContextHandle context,
-            byte[] buffer,
-            int offset,
-            int count)
-        {
-            Debug.Assert((buffer != null) && (buffer.Length > 0), "Invalid input buffer passed to Decrypt");
-            Debug.Assert((offset >= 0) && (offset <= buffer.Length), "Invalid input offset passed to Decrypt");
-            Debug.Assert((count >= 0) && (count <= (buffer.Length - offset)), "Invalid input count passed to Decrypt");
-
-            Interop.NetSecurityNative.GssBuffer decryptedBuffer = default(Interop.NetSecurityNative.GssBuffer);
-            try
-            {
-                Interop.NetSecurityNative.Status minorStatus;
-                Interop.NetSecurityNative.Status status = Interop.NetSecurityNative.UnwrapBuffer(out minorStatus, context, buffer, offset, count, ref decryptedBuffer);
-                if (status != Interop.NetSecurityNative.Status.GSS_S_COMPLETE)
-                {
-                    throw new Interop.NetSecurityNative.GssApiException(status, minorStatus);
-                }
-
-                return decryptedBuffer.Copy(buffer, offset);
-            }
-            finally
-            {
-                decryptedBuffer.Dispose();
-            }
-        }
 
         private static bool GssInitSecurityContext(
             ref SafeGssContextHandle context,
@@ -116,7 +41,7 @@ namespace System.Net.Security
                 context = new SafeGssContextHandle();
             }
 
-            Interop.NetSecurityNative.GssBuffer token = default(Interop.NetSecurityNative.GssBuffer);
+            Interop.NetSecurityNative.GssBuffer token = default;
             Interop.NetSecurityNative.Status status;
 
             try
@@ -227,14 +152,14 @@ namespace System.Net.Security
             // TODO (Issue #3718): The second buffer can contain a channel binding which is not supported
             if ((null != inSecurityBufferArray) && (inSecurityBufferArray.Length > 1))
             {
-                throw new PlatformNotSupportedException(SR.net_nego_channel_binding_not_supported);
+                throw new PlatformNotSupportedException(Strings.net_nego_channel_binding_not_supported);
             }
 
             SafeFreeNegoCredentials negoCredentialsHandle = (SafeFreeNegoCredentials)credentialsHandle;
 
             if (negoCredentialsHandle.IsDefault && string.IsNullOrEmpty(spn))
             {
-                throw new PlatformNotSupportedException(SR.net_nego_not_supported_empty_target_with_defaultcreds);
+                throw new PlatformNotSupportedException(Strings.net_nego_not_supported_empty_target_with_defaultcreds);
             }
 
             SecurityStatusPal status = EstablishSecurityContext(
@@ -252,27 +177,11 @@ namespace System.Net.Security
                 ContextFlagsPal mask = ContextFlagsPal.Confidentiality;
                 if ((requestedContextFlags & mask) != (contextFlags & mask))
                 {
-                    throw new PlatformNotSupportedException(SR.net_nego_protection_level_not_supported);
+                    throw new PlatformNotSupportedException(Strings.net_nego_protection_level_not_supported);
                 }
             }
 
             return status;
-        }
-
-        internal static SecurityStatusPal AcceptSecurityContext(
-            SafeFreeCredentials credentialsHandle,
-            ref SafeDeleteContext securityContext,
-            ContextFlagsPal requestedContextFlags,
-            SecurityBuffer[] inSecurityBufferArray,
-            SecurityBuffer outSecurityBuffer,
-            ref ContextFlagsPal contextFlags)
-        {
-            throw new PlatformNotSupportedException(SR.net_nego_server_not_supported);
-        }
-
-        internal static Win32Exception CreateExceptionFromError(SecurityStatusPal statusCode)
-        {
-            return new Win32Exception(NTE_FAIL, (statusCode.Exception != null) ? statusCode.Exception.Message : statusCode.ErrorCode.ToString());
         }
 
         internal static int QueryMaxTokenSize(string package)
@@ -290,7 +199,7 @@ namespace System.Net.Security
         {
             if (isServer)
             {
-                throw new PlatformNotSupportedException(SR.net_nego_server_not_supported);
+                throw new PlatformNotSupportedException(Strings.net_nego_server_not_supported);
             }
 
             bool isEmptyCredential = string.IsNullOrWhiteSpace(credential.UserName) ||
@@ -299,7 +208,7 @@ namespace System.Net.Security
             if (ntlmOnly && isEmptyCredential)
             {
                 // NTLM authentication is not possible with default credentials which are no-op 
-                throw new PlatformNotSupportedException(SR.net_ntlm_not_possible_default_cred);
+                throw new PlatformNotSupportedException(Strings.net_ntlm_not_possible_default_cred);
             }
 
             try
@@ -312,105 +221,6 @@ namespace System.Net.Security
             {
                 throw new Win32Exception(NTE_FAIL, ex.Message);
             }
-        }
-
-        internal static SecurityStatusPal CompleteAuthToken(
-            ref SafeDeleteContext securityContext,
-            SecurityBuffer[] inSecurityBufferArray)
-        {
-            return new SecurityStatusPal(SecurityStatusPalErrorCode.OK);
-        }
-
-        internal static int Encrypt(
-            SafeDeleteContext securityContext,
-            byte[] buffer,
-            int offset,
-            int count,
-            bool isConfidential,
-            bool isNtlm,
-            ref byte[] output,
-            uint sequenceNumber)
-        {
-            SafeDeleteNegoContext gssContext = (SafeDeleteNegoContext) securityContext;
-            byte[] tempOutput = GssWrap(gssContext.GssContext, isConfidential, buffer, offset, count);
-
-            // Create space for prefixing with the length
-            const int prefixLength = 4;
-            output = new byte[tempOutput.Length + prefixLength];
-            Array.Copy(tempOutput, 0, output, prefixLength, tempOutput.Length);
-            int resultSize = tempOutput.Length;
-            unchecked
-            {
-                output[0] = (byte)((resultSize) & 0xFF);
-                output[1] = (byte)(((resultSize) >> 8) & 0xFF);
-                output[2] = (byte)(((resultSize) >> 16) & 0xFF);
-                output[3] = (byte)(((resultSize) >> 24) & 0xFF);
-            }
-
-            return resultSize + 4;
-        }
-
-        internal static int Decrypt(
-            SafeDeleteContext securityContext,
-            byte[] buffer,
-            int offset,
-            int count,
-            bool isConfidential,
-            bool isNtlm,
-            out int newOffset,
-            uint sequenceNumber)
-        {
-            if (offset < 0 || offset > (buffer == null ? 0 : buffer.Length))
-            {
-                NetEventSource.Fail(securityContext, "Argument 'offset' out of range");
-                throw new ArgumentOutOfRangeException(nameof(offset));
-            }
-
-            if (count < 0 || count > (buffer == null ? 0 : buffer.Length - offset))
-            {
-                NetEventSource.Fail(securityContext, "Argument 'count' out of range.");
-                throw new ArgumentOutOfRangeException(nameof(count));
-            }
-
-            newOffset = offset;
-            return GssUnwrap(((SafeDeleteNegoContext)securityContext).GssContext, buffer, offset, count);
-        }
-
-        internal static int VerifySignature(SafeDeleteContext securityContext, byte[] buffer, int offset, int count)
-        {
-            if (offset < 0 || offset > (buffer == null ? 0 : buffer.Length))
-            {
-                NetEventSource.Fail(securityContext, "Argument 'offset' out of range");
-                throw new ArgumentOutOfRangeException(nameof(offset));
-            }
-
-            if (count < 0 || count > (buffer == null ? 0 : buffer.Length - offset))
-            {
-                NetEventSource.Fail(securityContext, "Argument 'count' out of range.");
-                throw new ArgumentOutOfRangeException(nameof(count));
-            }
-
-            return GssUnwrap(((SafeDeleteNegoContext)securityContext).GssContext, buffer, offset, count);
-        }
-
-        internal static int MakeSignature(SafeDeleteContext securityContext, byte[] buffer, int offset, int count, ref byte[] output)
-        {
-            SafeDeleteNegoContext gssContext = (SafeDeleteNegoContext)securityContext;
-            byte[] tempOutput = GssWrap(gssContext.GssContext, false, buffer, offset, count);
-            // Create space for prefixing with the length
-            const int prefixLength = 4;
-            output = new byte[tempOutput.Length + prefixLength];
-            Array.Copy(tempOutput, 0, output, prefixLength, tempOutput.Length);
-            int resultSize = tempOutput.Length;
-            unchecked
-            {
-                output[0] = (byte)((resultSize) & 0xFF);
-                output[1] = (byte)(((resultSize) >> 8) & 0xFF);
-                output[2] = (byte)(((resultSize) >> 16) & 0xFF);
-                output[3] = (byte)(((resultSize) >> 24) & 0xFF);
-            }
-
-            return resultSize + 4;
         }
     }
 }

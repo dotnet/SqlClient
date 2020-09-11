@@ -75,15 +75,13 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private void WaitForSSLHandShakeToComplete(ref uint error)
+        private void WaitForSSLHandShakeToComplete(ref uint error, ref int protocolVersion)
         {
-            if (TdsParserStateObjectFactory.UseManagedSNI)
-                return;
             // in the case where an async connection is made, encryption is used and Windows Authentication is used, 
             // wait for SSL handshake to complete, so that the SSL context is fully negotiated before we try to use its 
             // Channel Bindings as part of the Windows Authentication context build (SSL handshake must complete 
             // before calling SNISecGenClientContext).
-            error = _physicalStateObj.WaitForSSLHandShakeToComplete();
+            error = _physicalStateObj.WaitForSSLHandShakeToComplete(out protocolVersion);
             if (error != TdsEnums.SNI_SUCCESS)
             {
                 _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
@@ -97,7 +95,7 @@ namespace Microsoft.Data.SqlClient
 
             if (TdsParserStateObjectFactory.UseManagedSNI)
             {
-                SNIError sniError = SNIProxy.Singleton.GetLastError();
+                SNIError sniError = SNIProxy.GetInstance().GetLastError();
                 details.sniErrorNumber = sniError.sniError;
                 details.errorMessage = sniError.errorMessage;
                 details.nativeError = sniError.nativeError;
@@ -108,8 +106,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                SNINativeMethodWrapper.SNI_Error sniError;
-                SNINativeMethodWrapper.SNIGetLastError(out sniError);
+                SNINativeMethodWrapper.SNIGetLastError(out SNINativeMethodWrapper.SNI_Error sniError);
                 details.sniErrorNumber = sniError.sniError;
                 details.errorMessage = sniError.errorMessage;
                 details.nativeError = sniError.nativeError;

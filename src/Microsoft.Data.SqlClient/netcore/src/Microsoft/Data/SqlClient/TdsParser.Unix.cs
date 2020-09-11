@@ -18,16 +18,15 @@ namespace Microsoft.Data.SqlClient
             // No - Op
         }
 
-        private void WaitForSSLHandShakeToComplete(ref uint error)
+        private void WaitForSSLHandShakeToComplete(ref uint error, ref int protocolVersion)
         {
             // No - Op
-            
         }
 
         private SNIErrorDetails GetSniErrorDetails()
         {
             SNIErrorDetails details;
-            SNIError sniError = SNIProxy.Singleton.GetLastError();
+            SNIError sniError = SNIProxy.GetInstance().GetLastError();
             details.sniErrorNumber = sniError.sniError;
             details.errorMessage = sniError.errorMessage;
             details.nativeError = sniError.nativeError;

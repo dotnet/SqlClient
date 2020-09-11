@@ -26,6 +26,8 @@
     <Compile Include="Discoverers\OuterLoopTestsDiscoverer.cs" />
     <Compile Include="Attributes\PlatformSpecificAttribute.cs" />
     <Compile Include="Discoverers\PlatformSpecificDiscoverer.cs" />
+    <Compile Include="Extensions\AssertExtensions.cs" />
+    <Compile Include="Extensions\PlatformDetection.cs" />
     <Compile Include="RuntimeStressTestModes.cs" />
     <Compile Include="Attributes\SkipOnCoreClrAttribute.cs" />
     <Compile Include="Discoverers\SkipOnCoreClrDiscoverer.cs" />
@@ -46,6 +48,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNETTestSdkVersion)" />
+    <PackageReference Include="System.Runtime.InteropServices.RuntimeInformation" Version="$(SystemRuntimeInteropServicesRuntimeInformationVersion)" />
     <PackageReference Include="xunit" Version="$(XunitVersion)" />
     <PackageReference Include="xunit.runner.visualstudio" Version="$(XunitVersion)" />
     <PackageReference Include="xunit.runner.console" Version="$(XunitVersion)" />

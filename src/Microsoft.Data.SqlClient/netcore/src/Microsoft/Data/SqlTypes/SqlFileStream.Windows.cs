@@ -61,7 +61,7 @@ namespace Microsoft.Data.SqlTypes
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/ctor2/*' />
         public SqlFileStream(string path, byte[] transactionContext, FileAccess access, FileOptions options, long allocationSize)
         {
-            long scopeID = SqlClientEventSource.Log.ScopeEnterEvent("<sc.SqlFileStream.ctor|API> {0} access={1} options={2} path='{3}'", ObjectID, (int)access, (int)options, path);
+            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlFileStream.ctor|API> {0} access={1} options={2} path='{3}'", ObjectID, (int)access, (int)options, path);
             try
             {
                 //-----------------------------------------------------------------
@@ -86,7 +86,7 @@ namespace Microsoft.Data.SqlTypes
             }
             finally
             {
-                SqlClientEventSource.Log.ScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
             }
         }
 
@@ -450,13 +450,13 @@ namespace Microsoft.Data.SqlTypes
             path = path.Trim();
             if (path.Length == 0)
             {
-                throw ADP.Argument(System.SRHelper.GetString(SR.SqlFileStream_InvalidPath), "path");
+                throw ADP.Argument(System.StringsHelper.GetString(Strings.SqlFileStream_InvalidPath), "path");
             }
 
             // make sure path is not DOS device path
             if (!path.StartsWith(@"\\") && !System.IO.PathInternal.IsDevice(path.AsSpan()))
             {
-                throw ADP.Argument(System.SRHelper.GetString(SR.SqlFileStream_InvalidPath), "path");
+                throw ADP.Argument(System.StringsHelper.GetString(Strings.SqlFileStream_InvalidPath), "path");
             }
 
             // normalize the path
@@ -465,7 +465,7 @@ namespace Microsoft.Data.SqlTypes
             // make sure path is a UNC path
             if (System.IO.PathInternal.IsDeviceUNC(path.AsSpan()))
             {
-                throw ADP.Argument(System.SRHelper.GetString(SR.SqlFileStream_PathNotValidDiskResource), "path");
+                throw ADP.Argument(System.StringsHelper.GetString(Strings.SqlFileStream_PathNotValidDiskResource), "path");
             }
 
             return path;
@@ -599,7 +599,7 @@ namespace Microsoft.Data.SqlTypes
                                                                                 eaBuffer: b,
                                                                                 eaLength: (uint)fullSize);
 
-                        SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlFileStream.OpenSqlFileStream|ADV> {0}, desiredAccess=0x{1}, allocationSize={2}, " +
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlFileStream.OpenSqlFileStream|ADV> {0}, desiredAccess=0x{1}, allocationSize={2}, " +
                        "fileAttributes=0x{3}, shareAccess=0x{4}, dwCreateDisposition=0x{5}, createOptions=0x{ dwCreateOptions}", ObjectID, (int)nDesiredAccess, allocationSize, 0, (int)nShareAccess, dwCreateDisposition);
 
                         retval = status;
@@ -619,10 +619,10 @@ namespace Microsoft.Data.SqlTypes
                         break;
 
                     case Interop.Errors.ERROR_SHARING_VIOLATION:
-                        throw ADP.InvalidOperation(System.SRHelper.GetString(SR.SqlFileStream_FileAlreadyInTransaction));
+                        throw ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SqlFileStream_FileAlreadyInTransaction));
 
                     case Interop.Errors.ERROR_INVALID_PARAMETER:
-                        throw ADP.Argument(System.SRHelper.GetString(SR.SqlFileStream_InvalidParameter));
+                        throw ADP.Argument(System.StringsHelper.GetString(Strings.SqlFileStream_InvalidParameter));
 
                     case Interop.Errors.ERROR_FILE_NOT_FOUND:
                         {
@@ -655,7 +655,7 @@ namespace Microsoft.Data.SqlTypes
                 if (Interop.Kernel32.GetFileType(hFile) != Interop.Kernel32.FileTypes.FILE_TYPE_DISK)
                 {
                     hFile.Dispose();
-                    throw ADP.Argument(System.SRHelper.GetString(SR.SqlFileStream_PathNotValidDiskResource));
+                    throw ADP.Argument(System.StringsHelper.GetString(Strings.SqlFileStream_PathNotValidDiskResource));
                 }
 
                 // if the user is opening the SQL FileStream in read/write mode, we assume that they want to scan

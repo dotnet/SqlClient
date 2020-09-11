@@ -2499,6 +2499,9 @@
   <data name="SQL_InteractiveWithPassword" xml:space="preserve">
     <value>Não é possível usar 'Authentication=Active Directory Interactive' com as palavras-chave de cadeia de conexão 'Password' ou 'PWD'.</value>
   </data>
+  <data name="SQL_DeviceFlowWithUsernamePassword" xml:space="preserve">
+    <value>Não é possível usar 'Authentication=Active Directory Device Code Flow' com as palavras-chave de cadeia de conexão 'User ID', 'UID', 'Password' ou 'PWD'.</value>
+  </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>Não é possível usar 'Authentication=Active Directory Integrated' quando a propriedade Credential está definida.</value>
   </data>
@@ -4529,5 +4532,47 @@
   </data>
   <data name="SQLUDT_InvalidSize" xml:space="preserve">
     <value>O tamanho do UDT precisa ser menor que {1}. Tamanho: {0}</value>
+  </data>
+  <data name="SEC_ProtocolWarning" xml:space="preserve">
+    <value>Aviso de Segurança: o {0} negociado é um protocolo não seguro com suporte somente para compatibilidade com versões anteriores. A versão recomendada do protocolo é TLS 1.2 e posterior.</value>
+  </data>
+  <data name="net_invalid_enum" xml:space="preserve">
+    <value>O valor especificado não é válido na enumeração '{0}'.</value>
+  </data>
+  <data name="SQL_BulkLoadInvalidOrderHint" xml:space="preserve">
+    <value>A dica de ordem de coluna fornecida não é válida.</value>
+  </data>
+  <data name="SQL_BulkLoadOrderHintDuplicateColumn" xml:space="preserve">
+    <value>Uma coluna '{0}' foi especificada mais de uma vez.</value>
+  </data>
+  <data name="SQL_BulkLoadOrderHintInvalidColumn" xml:space="preserve">
+    <value>A coluna classificada '{0}' não é válida na tabela de destino.</value>
+  </data>
+  <data name="SQL_BulkLoadUnspecifiedSortOrder" xml:space="preserve">
+    <value>Uma dica de ordem de coluna não pode ter uma ordem de classificação não especificada.</value>
+  </data>
+  <data name="SQL_UnsupportedAuthenticationSpecified" xml:space="preserve">
+    <value>Autenticação sem suporte especificada neste contexto: {0}</value>
+  </data>
+  <data name="SQL_Timeout_Active_Directory_Interactive_Authentication" xml:space="preserve">
+    <value>A autenticação Interativa do Active Directory atingiu o tempo limite. O usuário demorou muito tempo para responder à solicitação de autenticação.</value>
+  </data>
+  <data name="SQL_SettingInteractiveWithCredential" xml:space="preserve">
+    <value>Não é possível usar 'Authentication=Active Directory Interactive' quando a propriedade Credential está configurada.</value>
+  </data>
+  <data name="SQL_SettingCredentialWithInteractive" xml:space="preserve">
+    <value>Não é possível definir a propriedade Credential quando 'Authentication=Active Directory Interactive' é especificado na cadeia de conexão.</value>
+  </data>
+  <data name="SqlConnection_ServerProcessId" xml:space="preserve">
+    <value>SPID (ID do Processo do Servidor) da conexão ativa.</value>
+  </data>
+  <data name="SQL_Timeout_Active_Directory_DeviceFlow_Authentication" xml:space="preserve">
+    <value>A autenticação de Fluxo de Código de Dispositivo do Active Directory atingiu o tempo limite. O usuário demorou muito tempo para responder à solicitação de autenticação.</value>
+  </data>
+  <data name="SQL_SettingCredentialWithDeviceFlow" xml:space="preserve">
+    <value>Não é possível definir a propriedade Credential quando 'Authentication=Active Directory Device Code Flow' está especificado na cadeia de conexão.</value>
+  </data>
+  <data name="SQL_SettingDeviceFlowWithCredential" xml:space="preserve">
+    <value>Não é possível usar 'Authentication=Active Directory Device Code Flow' quando a propriedade Credential está configurada.</value>
   </data>
 </root>
