@@ -12,11 +12,7 @@ using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Diagnosers;
 using BenchmarkDotNet.Engines;
 using BenchmarkDotNet.Jobs;
-using BenchmarkDotNet.Loggers;
-using BenchmarkDotNet.Reports;
 using BenchmarkDotNet.Running;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.Diagnostics.Runtime.Interop;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
