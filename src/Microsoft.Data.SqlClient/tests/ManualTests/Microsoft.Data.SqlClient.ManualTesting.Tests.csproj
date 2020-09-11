@@ -62,7 +62,7 @@
     </Compile>
     <Compile Include="DataCommon\AADUtility.cs" />
     <Compile Include="SQL\DataClassificationTest\DataClassificationTest.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\GenericsBenchmark.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\NoBoxingValueTypes.cs" />
     <Compile Include="TracingTests\EventSourceTest.cs" />
     <Compile Include="SQL\AdapterTest\AdapterTest.cs" />
     <Compile Include="SQL\AsyncTest\BeginExecAsyncTest.cs" />
@@ -273,6 +273,7 @@
     <ProjectReference Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
     <ProjectReference Condition="!$(ReferenceType.Contains('NetStandard'))" Include="$(AddOnsPath)AzureKeyVaultProvider\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
     <ProjectReference Condition="$(ReferenceType.Contains('NetStandard'))" Include="$(TestsPath)NSLibrary\Microsoft.Data.SqlClient.NSLibrary.csproj" />
+    <PackageReference Include="BenchmarkDotNet" Version="0.12.1" />
     <PackageReference Condition="$(ReferenceType)=='Package'" Include="Microsoft.Data.SqlClient" Version="$(TestMicrosoftDataSqlClientVersion)" />
   </ItemGroup>
   <ItemGroup>

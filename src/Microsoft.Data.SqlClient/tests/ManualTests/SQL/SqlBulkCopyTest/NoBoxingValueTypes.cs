@@ -7,200 +7,124 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Linq.Expressions;
+using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Configs;
+using BenchmarkDotNet.Diagnosers;
+using BenchmarkDotNet.Engines;
+using BenchmarkDotNet.Jobs;
+using BenchmarkDotNet.Loggers;
+using BenchmarkDotNet.Reports;
+using BenchmarkDotNet.Running;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.Diagnostics.Runtime.Interop;
+using Xunit;
 
-namespace Microsoft.Data.SqlClient.ManualTesting.Tests.MicrosoftDataSqlClient.tests.ManualTests.SQL.SqlBulkCopyTest
+namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-    //class Program
-    //{
-    //    static void Main(string[] args)
-    //    {
-    //        if (args.Length > 0 && args[0] == "--direct")
-    //        {
-    //            var b = new GenericsBencmark();
-
-    //            b.Setup();
-
-    //            for (int i = 0; i < 10; i++)
-    //            {
-    //                var sw = Stopwatch.StartNew();
-
-    //                Console.WriteLine($"Starting Batch {i}");
-    //                b.All();
-
-    //                sw.Stop();
-
-    //                Console.WriteLine($"Finished batch {i} in {sw.ElapsedMilliseconds} ms.");
-    //            }
-
-    //            return;
-    //        }
-
-    //        var config = ManualConfig.Create(DefaultConfig.Instance);
-    //        config.Options = ConfigOptions.DisableOptimizationsValidator;
-    //        config.Add(new ConsoleLogger());
-
-    //        BenchmarkDotNet.Running.BenchmarkRunner.Run(typeof(GenericsBencmark), config);
-    //    }
-    //}
-
-    //[SimpleJob(launchCount: 1)]
-    //[MarkdownExporter, RankColumn, MemoryDiagnoser]
-    public class GenericsBenchmark
+    public class NoBoxingValueTypes : IDisposable
     {
-        
-        private const string DB = "cmeyertons_benchmark";
-        private const string _allTable = "dbo._alltable";
-        private const string _decimalTable = "dbo._decimalTable";
-        private const string _stringTable = "dbo._stringTable";
-        private const string _intTable = "dbo._intTable";
-        private const string _boolTable = "dbo._boolTable";
-        private const int _count = 100000;
-
+        private static readonly string _table = DataTestUtility.GetUniqueNameForSqlServer(nameof(NoBoxingValueTypes));
+        private const int _count = 5000;
+        private static readonly ItemToCopy _item;
         private static readonly IEnumerable<ItemToCopy> _items;
-        private static readonly string _connString;
+        private static readonly IDataReader _reader;
 
-        private IDataReader _allReader;
-        private IDataReader _decimalReader;
-        private IDataReader _stringReader;
-        private IDataReader _intReader;
-        private IDataReader _boolReader;
+        private static readonly string _connString = DataTestUtility.TCPConnectionString;
 
         private class ItemToCopy
         {
             // keeping this data static so the performance of the benchmark is not varied by the data size & shape
-            public decimal DecimalColumn { get; } = 123456.789m;
-            public string StringColumn { get; } = "abcdefgijk";
             public int IntColumn { get; } = 123456;
             public bool BoolColumn { get; } = true;
         }
 
-        static GenericsBenchmark()
+        static NoBoxingValueTypes()
         {
-            var csb = new SqlConnectionStringBuilder()
-            {
-                DataSource = ".",
-                InitialCatalog = "master",
-                IntegratedSecurity = true,
-            };
+            _item = new ItemToCopy();
 
-            var masterCs = csb.ToString();
-            _connString = new SqlConnectionStringBuilder(masterCs)
-            {
-                InitialCatalog = DB,
-            }.ToString();
+            _items = Enumerable.Range(0, _count).Select(x => _item).ToArray();
 
-            // these were using Dapper in cmeyertons benchmark project
-            //using var masterc = new SqlConnection(masterCs);
-            //using var c = new SqlConnection(_connString);
-
-            //masterc.Execute(@$"
-            //    DROP DATABASE IF EXISTS {DB};
-            //    CREATE DATABASE {DB};
-            //");
-
-            //c.Execute($@"
-            //    USE {DB};
-            //    CREATE TABLE {_allTable} (
-            //        DecimalColumn DECIMAL NOT NULL,
-            //        StringColumn NVARCHAR(50) NULL,
-            //        IntColumn INT NOT NULL,
-            //        BoolColumn BIT NOT NULL
-            //    )
-            //    CREATE TABLE {_decimalTable} (
-            //        DecimalColumn DECIMAL NOT NULL
-            //    )
-            //    CREATE TABLE {_stringTable} (
-            //        StringColumn NVARCHAR(50) NULL
-            //    )
-            //    CREATE TABLE {_intTable} (
-            //        IntColumn INT NOT NULL
-            //    )
-            //    CREATE TABLE {_boolTable} (
-            //        BoolColumn BIT NOT NULL
-            //    )
-            //");
-
-            var item = new ItemToCopy();
-
-            _items = Enumerable.Range(0, _count).Select(x => item).ToArray();
-        }
-
-        //[GlobalSetup]
-        public void Setup()
-        {
-            _allReader = new EnumerableDataReaderFactoryBuilder<ItemToCopy>(_allTable)
-                .Add("DecimalColumn", i => i.DecimalColumn)
-                .Add("StringColumn", i => i.StringColumn)
+            _reader = new EnumerableDataReaderFactoryBuilder<ItemToCopy>(_table)
                 .Add("IntColumn", i => i.IntColumn)
-                .Add("BoolColumn", i => i.BoolColumn)
-                .BuildFactory()
-                .CreateReader(_items)
-            ;
-
-            _decimalReader = new EnumerableDataReaderFactoryBuilder<ItemToCopy>(_decimalTable)
-                .Add("DecimalColumn", i => i.DecimalColumn)
-                .BuildFactory()
-                .CreateReader(_items)
-            ;
-
-            _stringReader = new EnumerableDataReaderFactoryBuilder<ItemToCopy>(_stringTable)
-                .Add("StringColumn", i => i.StringColumn)
-                .BuildFactory()
-                .CreateReader(_items)
-            ;
-
-            _intReader = new EnumerableDataReaderFactoryBuilder<ItemToCopy>(_intTable)
-                .Add("IntColumn", i => i.IntColumn)
-                .BuildFactory()
-                .CreateReader(_items)
-            ;
-
-            _boolReader = new EnumerableDataReaderFactoryBuilder<ItemToCopy>(_boolTable)
                 .Add("BoolColumn", i => i.BoolColumn)
                 .BuildFactory()
                 .CreateReader(_items)
             ;
         }
 
-        // [Benchmark]
-        public void All() => BulkCopy(_allReader, _allTable);
-
-        // [Benchmark]
-        public void Decimal() => BulkCopy(_decimalReader, _decimalTable);
-
-        // [Benchmark]
-        public void String() => BulkCopy(_stringReader, _stringTable);
-
-        // [Benchmark]
-        public void Int() => BulkCopy(_intReader, _intTable);
-
-        // [Benchmark]
-        public void Bool() => BulkCopy(_boolReader, _boolTable);
-
-        private static void BulkCopy(IDataReader reader, string tableName)
+        public NoBoxingValueTypes()
         {
-            reader.Close(); // this resets the reader
-
-            using (var bc = new SqlBulkCopy(_connString, SqlBulkCopyOptions.TableLock))
+            using (var conn = new SqlConnection(_connString))
+            using (var cmd = conn.CreateCommand())
             {
-                bc.BatchSize = _count;
-                bc.DestinationTableName = tableName;
-                bc.BulkCopyTimeout = 60;
-
-                bc.WriteToServer(reader);
+                conn.Open();
+                Helpers.TryExecute(cmd, $@"
+                    CREATE TABLE {_table} (
+                        IntColumn INT NOT NULL,
+                        BoolColumn BIT NOT NULL
+                    )
+                ");
             }
         }
 
-        //all code here and below is a custom data reader implementation to support the benchmark.
-        private interface IEnumerableDataReaderFactoryBuilder<T>
-        {
-            string Name { get; }
+        
 
-            EnumerableDataReaderFactoryBuilder<T> Add<TColumn>(string column, Expression<Func<T, TColumn>> expression);
-            EnumerableDataReaderFactory<T> BuildFactory();
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public void Should_Not_Box()
+        { // in debug mode, the double boxing DOES occur, which causes this test to fail (does the JIT "do" less in debug?)
+#if DEBUG
+            return;
+#endif
+            var config = ManualConfig.Create(DefaultConfig.Instance)
+                .WithOptions(ConfigOptions.DisableOptimizationsValidator)
+                .AddJob(Job.InProcess.WithLaunchCount(1).WithInvocationCount(1).WithIterationCount(1).WithWarmupCount(0).WithStrategy(RunStrategy.ColdStart))
+                .AddDiagnoser(MemoryDiagnoser.Default)
+            ;
+
+            var summary = BenchmarkRunner.Run<NoBoxingValueTypesBenchmark>(config);
+
+            var numValueTypeColumns = 2;
+            var totalBytesWhenBoxed = IntPtr.Size * _count * numValueTypeColumns;
+
+            var report = summary.Reports.First();
+
+            Assert.Equal(1, report.AllMeasurements.Count);
+            Assert.True(report.GcStats.BytesAllocatedPerOperation < totalBytesWhenBoxed);
         }
 
-        private class EnumerableDataReaderFactoryBuilder<T> : IEnumerableDataReaderFactoryBuilder<T>
+        public class NoBoxingValueTypesBenchmark
+        {
+            [Benchmark]
+            public void BulkCopy()
+            {
+                _reader.Close(); // this resets the reader
+
+                using (var bc = new SqlBulkCopy(DataTestUtility.TCPConnectionString, SqlBulkCopyOptions.TableLock))
+                {
+                    bc.BatchSize = _count;
+                    bc.DestinationTableName = _table;
+                    bc.BulkCopyTimeout = 60;
+
+                    bc.WriteToServer(_reader);
+                }
+            }
+        }
+
+        public void Dispose()
+        {
+            using (var conn = new SqlConnection(_connString))
+            using (var cmd = conn.CreateCommand())
+            {
+                conn.Open();
+                Helpers.TryExecute(cmd, $@"
+                    DROP TABLE IF EXISTS {_table}
+                ");
+            }
+        }
+
+        //all code here and below is a custom data reader implementation to support the benchmark
+
+        private class EnumerableDataReaderFactoryBuilder<T>
         {
             private readonly List<LambdaExpression> _expressions = new List<LambdaExpression>();
             private readonly List<Func<T, object>> _objExpressions = new List<Func<T, object>>();
@@ -208,7 +132,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.MicrosoftDataSqlClient.te
 
             public EnumerableDataReaderFactoryBuilder(string tableName)
             {
-                this.Name = tableName;
+                Name = tableName;
                 _schemaTable = new DataTable();
             }
 
@@ -226,26 +150,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.MicrosoftDataSqlClient.te
                 typeof(DateTime),
             }.ToHashSet();
 
-            private static readonly object _boxedTrue = (object)true;
-            private static readonly object _boxedFalse = (object)false;
-
             public EnumerableDataReaderFactoryBuilder<T> Add<TColumn>(string column, Expression<Func<T, TColumn>> expression)
             {
                 var t = typeof(TColumn);
 
                 var func = expression.Compile();
 
-                Expression<Func<T, object>> objExpression;
-
-                if (typeof(T) == typeof(bool))
-                {
-                    //use a pre-boxed value -- the JIT should optimize out the (bool)(object) boxing
-                    objExpression = o => ((bool)(object)func(o) ? _boxedTrue : _boxedFalse);
-                }
-                else
-                {
-                    objExpression = o => func(o);
-                }
+                // don't do any optimizations for boxing bools here to detect boxing occurring properly.
+                Expression<Func<T, object>> objExpression= o => func(o);
 
                 _objExpressions.Add(objExpression.Compile());
 
@@ -257,7 +169,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.MicrosoftDataSqlClient.te
                 }
                 else
                 {
-                    Console.WriteLine($"Could not matching return type for {this.Name}.{column} of: {t.Name}");
+                    Console.WriteLine($"Could not matching return type for {Name}.{column} of: {t.Name}");
                     _schemaTable.Columns.Add(column); //add w/o type to force using GetValue
 
                     _expressions.Add(objExpression);
