@@ -325,12 +325,14 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_IntegratedWithUserIDAndPassword));
         }
-
         static internal Exception InteractiveWithPassword()
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_InteractiveWithPassword));
         }
-
+        static internal Exception DeviceFlowWithUsernamePassword()
+        {
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_DeviceFlowWithUsernamePassword));
+        }
         static internal Exception SettingIntegratedWithCredential()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SettingIntegratedWithCredential));
@@ -338,6 +340,10 @@ namespace Microsoft.Data.SqlClient
         static internal Exception SettingInteractiveWithCredential()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SettingInteractiveWithCredential));
+        }
+        static internal Exception SettingDeviceFlowWithCredential()
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SettingDeviceFlowWithCredential));
         }
         static internal Exception SettingCredentialWithIntegratedArgument()
         {
@@ -347,6 +353,10 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_SettingCredentialWithInteractive));
         }
+        static internal Exception SettingCredentialWithDeviceFlowArgument()
+        {
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_SettingCredentialWithDeviceFlow));
+        }
         static internal Exception SettingCredentialWithIntegratedInvalid()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SettingCredentialWithIntegrated));
@@ -354,6 +364,10 @@ namespace Microsoft.Data.SqlClient
         static internal Exception SettingCredentialWithInteractiveInvalid()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SettingCredentialWithInteractive));
+        }
+        static internal Exception SettingCredentialWithDeviceFlowInvalid()
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SettingCredentialWithDeviceFlow));
         }
         static internal Exception InvalidSQLServerVersionUnknown()
         {
@@ -476,6 +490,11 @@ namespace Microsoft.Data.SqlClient
         static internal Exception ActiveDirectoryInteractiveTimeout()
         {
             return ADP.TimeoutException(Strings.SQL_Timeout_Active_Directory_Interactive_Authentication);
+        }
+
+        static internal Exception ActiveDirectoryDeviceFlowTimeout()
+        {
+            return ADP.TimeoutException(Strings.SQL_Timeout_Active_Directory_DeviceFlow_Authentication);
         }
 
         //

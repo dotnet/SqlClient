@@ -706,7 +706,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error code</returns>
         public override uint SendAsync(SNIPacket packet, SNIAsyncCallback callback = null)
         {
-            long scopeID = SqlClientEventSource.Log.SNIScopeEnterEvent("<sc.SNI.SNITcpHandle.SendAsync |SNI|SCOPE>");
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("<sc.SNI.SNITcpHandle.SendAsync |SNI|SCOPE>");
             SNIPacket errorPacket;
             SNIAsyncCallback cb = callback ?? _sendCallback;
             try
@@ -721,7 +721,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             finally
             {
-                SqlClientEventSource.Log.SNIScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.TrySNIScopeLeaveEvent(scopeID);
             }
         }
 

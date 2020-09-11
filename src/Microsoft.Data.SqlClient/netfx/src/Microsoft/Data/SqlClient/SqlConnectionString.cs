@@ -551,6 +551,11 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.InteractiveWithPassword();
             }
 
+            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow && (HasUserIdKeyword || HasPasswordKeyword))
+            {
+                throw SQL.DeviceFlowWithUsernamePassword();
+            }
+
 #if ADONET_CERT_AUTH
             
             if (!DbConnectionStringBuilderUtil.IsValidCertificateValue(_certificate)) {

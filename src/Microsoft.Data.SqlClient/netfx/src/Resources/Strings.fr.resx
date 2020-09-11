@@ -2499,6 +2499,9 @@
   <data name="SQL_InteractiveWithPassword" xml:space="preserve">
     <value>Impossible d'utiliser « Authentication=Active Directory Interactive » avec les mots clés de chaîne de connexion « Password » ou « PWD ».</value>
   </data>
+  <data name="SQL_DeviceFlowWithUsernamePassword" xml:space="preserve">
+    <value>Impossible d'utiliser « Authentication=Active Directory Device Code Flow » avec les mots clés de chaîne de connexion « User ID », « UID », « Password » et « PWD ».</value>
+  </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>Impossible d'utiliser 'Authentication=Active Directory Integrated', si la propriété Credential a été définie.</value>
   </data>
@@ -4559,5 +4562,17 @@
   </data>
   <data name="SQL_SettingCredentialWithInteractive" xml:space="preserve">
     <value>Impossible de définir la propriété Credential si « Authentication=Active Directory Interactive » a été spécifié dans la chaîne de connexion.</value>
+  </data>
+  <data name="SqlConnection_ServerProcessId" xml:space="preserve">
+    <value>ID de processus serveur (SPID) de la connexion active.</value>
+  </data>
+  <data name="SQL_Timeout_Active_Directory_DeviceFlow_Authentication" xml:space="preserve">
+    <value>L'authentification Active Directory Device Code Flow a expiré. L'utilisateur a mis trop de temps à répondre à la demande d'authentification.</value>
+  </data>
+  <data name="SQL_SettingCredentialWithDeviceFlow" xml:space="preserve">
+    <value>Impossible de définir la propriété Credential si « Authentication=Active Directory Device Code Flow » est spécifié dans la chaîne de connexion.</value>
+  </data>
+  <data name="SQL_SettingDeviceFlowWithCredential" xml:space="preserve">
+    <value>Impossible d'utiliser « Authentication=Active Directory Device Code Flow » si la propriété Credential est définie.</value>
   </data>
 </root>

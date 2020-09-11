@@ -31,13 +31,6 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Empty destructor for binary back compat.
-        /// </summary>
-        ~SqlClientSymmetricKey()
-        {
-        }
-
-        /// <summary>
         /// Returns a copy of the plain text key
         /// This is needed for actual encryption/decryption.
         /// </summary>

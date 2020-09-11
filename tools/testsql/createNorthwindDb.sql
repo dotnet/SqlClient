@@ -4318,7 +4318,7 @@ SELECT @isFullTextSearchingEnabled = FULLTEXTSERVICEPROPERTY('IsFullTextInstalle
 IF(@isFullTextSearchingEnabled = 1)
 BEGIN
 	Use [Northwind]
-    CREATE FULLTEXT CATALOG Northwind_Employee_FTC AS DEFAULT;
+    CREATE FULLTEXT CATALOG [Northwind_Employee_FTC] AS DEFAULT;
     CREATE FULLTEXT INDEX ON Employees (FirstName, Title, City) 
        KEY INDEX PK_Employees;
 	   PRINT N'Successfully Created FULLTEXT INDEX ON Employees (FirstName, Title, City)'

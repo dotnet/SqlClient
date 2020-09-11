@@ -2,9 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System.Diagnostics;
 using System.Runtime.InteropServices;
-using  Microsoft.Win32.SafeHandles;
+using Microsoft.Win32.SafeHandles;
 
 namespace System.Net.Security
 {
@@ -37,7 +36,7 @@ namespace System.Net.Security
         //
         // Static cache will return the target handle if found the reference in the table.
         //
-        internal SafeFreeCredentials Target;
+        internal SafeFreeCredentials _target;
 
         internal static SafeCredentialReference CreateReference(SafeFreeCredentials target)
         {
@@ -55,19 +54,19 @@ namespace System.Net.Security
             // its dispose should be postponed
             bool ignore = false;
             target.DangerousAddRef(ref ignore);
-            Target = target;
+            _target = target;
             SetHandle(new IntPtr(0));   // make this handle valid
         }
 
         protected override bool ReleaseHandle()
         {
-            SafeFreeCredentials target = Target;
+            SafeFreeCredentials target = _target;
             if (target != null)
             {
                 target.DangerousRelease();
             }
 
-            Target = null;
+            _target = null;
             return true;
         }
     }

@@ -50,7 +50,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         ") ON [PRIMARY]");
 
                     using (SqlConnection srcConn = new SqlConnection(srcConstr))
-                    using (SqlCommand customerCmd = new SqlCommand("SELECT CustomerID from Northwind..Customers", srcConn))
+                    using (SqlCommand customerCmd = new SqlCommand("SELECT CustomerID from Customers", srcConn))
                     {
                         srcConn.Open();
 
@@ -90,7 +90,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                 ColumnMappings.Add("ShipCountry", "ShipCountry");
 
                                 bulkcopy.WriteToServer(reader);
-                                
+
                                 DataTestUtility.AssertEqualsWithDescription(bulkcopy.RowsCopied, 830, "Unexpected number of rows.");
                             }
                             Helpers.VerifyResults(dstConn, dstTable, 14, 830);
