@@ -83,7 +83,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public class NoBoxingValueTypesBenchmark
         {
-            [Benchmark]
+            // [Benchmark]
             public void BulkCopy()
             {
                 _reader.Close(); // this resets the reader
