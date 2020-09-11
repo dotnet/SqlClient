@@ -1390,15 +1390,7 @@ namespace Microsoft.Data.SqlClient
                 isSqlType = false;
                 isDataFeed = false;
 
-                Type t = null;
-                try
-                {
-                    t = ((IDataReader)_rowSource).GetFieldType(ordinal);
-                }
-                catch
-                {
-                    // do some error logging here??
-                }
+                Type t = ((IDataReader)_rowSource).GetFieldType(ordinal);
 
                 if (t == typeof(bool))
                 {
