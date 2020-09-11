@@ -249,7 +249,7 @@
 	</ItemGroup>
   <!-- netcoreapp 3.1 & netstandard 2.1 and above -->
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetFramework)' != 'netcoreapp2.1' AND '$(TargetFramework)' != 'netstandard2.0'">
-    <Compile Include="Microsoft\Data\SqlClient\SqlClientEventSource.NetCoreApp3.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SqlClientEventSource.NetCoreApp.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netcoreapp'">
     <Compile Include="Microsoft\Data\Common\DbConnectionStringCommon.NetCoreApp.cs" />

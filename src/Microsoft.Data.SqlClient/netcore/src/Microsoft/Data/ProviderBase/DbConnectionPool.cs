@@ -294,7 +294,7 @@ namespace Microsoft.Data.ProviderBase
                 // connections, we'll put it back...
                 if (0 <= entry)
                 {
-                    SqlClientEventSource.Log.FreeConnectionRequest();
+                    SqlClientEventSource.Log.FreeConnectionRequest(false);
                     Pool.PutObjectFromTransactedPool(transactedObject);
                 }
             }
