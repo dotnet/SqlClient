@@ -63,8 +63,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        
-
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Should_Not_Box()
         { // in debug mode, the double boxing DOES occur, which causes this test to fail (does the JIT "do" less in debug?)
@@ -119,7 +117,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         //all code here and below is a custom data reader implementation to support the benchmark
-
         private class EnumerableDataReaderFactoryBuilder<T>
         {
             private readonly List<LambdaExpression> _expressions = new List<LambdaExpression>();
