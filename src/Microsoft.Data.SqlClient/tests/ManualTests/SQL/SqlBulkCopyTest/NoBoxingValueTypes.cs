@@ -125,7 +125,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 _schemaTable = new DataTable();
             }
 
-            private static readonly HashSet<Type> _validTypes = new[]
+            private static readonly HashSet<Type> _validTypes = new HashSet<Type>
             {
                 typeof(decimal),
                 typeof(decimal?),
@@ -137,7 +137,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 typeof(bool?),
                 typeof(Guid),
                 typeof(DateTime),
-            }.ToHashSet();
+            };
 
             public EnumerableDataReaderFactoryBuilder<T> Add<TColumn>(string column, Expression<Func<T, TColumn>> expression)
             {
