@@ -147,6 +147,9 @@ namespace Microsoft.Data.SqlClient.Tests
 
             cmd = new SqlCommand(COMMAND_TEXT, conn);
             Assert.Equal(timeout, cmd.CommandTimeout);
+
+            cmd.CommandTimeout = timeout + 10;
+            Assert.Equal(timeout + 10, cmd.CommandTimeout);
         }
 
         [Fact]

@@ -484,7 +484,7 @@ The connection string contains <see langword="Context Connection=true" />.
   
 ## Remarks  
 
- You can set default wait time by using the `Command Timeout` keyword in the connection string. A value of 0 indicates no limit (an attempt to execute a command will wait indefinitely).
+ You can set the default wait time by using the `Command Timeout` keyword in the connection string. A value of 0 indicates no limit (an attempt to execute a command will wait indefinitely).
   
  ]]></format>
             </remarks>
