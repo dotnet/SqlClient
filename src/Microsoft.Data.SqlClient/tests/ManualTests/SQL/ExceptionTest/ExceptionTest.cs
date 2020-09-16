@@ -50,7 +50,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static bool EmployeesTableHasFullTextIndex()
         {
-            if (DataTestUtility.TCPConnectionString == null)
+            // Test case not supported on Azure Synapse.
+            if (DataTestUtility.TCPConnectionString == null || DataTestUtility.IsAzureSynapse)
                 return false;
 
             using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
@@ -64,6 +65,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        // TODO Synapse: Remove dependency from Northwind database.
         [ConditionalFact(nameof(EmployeesTableHasFullTextIndex))]
         public static void WarningsBeforeRowsTest()
         {
@@ -149,6 +151,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return true;
         }
 
+        // Synapse: 110003;Invalid user or password
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public static void ExceptionTests()
         {
@@ -183,7 +186,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             VerifyConnectionFailure<SqlException>(() => GenerateConnectionException(badBuilder.ConnectionString), errorMessage, (ex) => VerifyException(ex, 1, 18456, 1, 14));
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: 110003;Invalid user or password
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void VariousExceptionTests()
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
