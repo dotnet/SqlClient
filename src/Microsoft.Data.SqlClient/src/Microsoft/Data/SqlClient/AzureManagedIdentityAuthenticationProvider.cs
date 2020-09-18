@@ -13,7 +13,6 @@ namespace Microsoft.Data.SqlClient
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/AzureManagedIdentityAuthenticationProvider.xml' path='docs/members[@name="AzureManagedIdentityAuthenticationProvider"]/AzureManagedIdentityAuthenticationProvider/*'/>
     public sealed class AzureManagedIdentityAuthenticationProvider : SqlAuthenticationProvider
     {
-        // This is for unit testing
         private readonly HttpClient _httpClient;
 
         // HttpClient is intended to be instantiated once and re-used throughout the life of an application.

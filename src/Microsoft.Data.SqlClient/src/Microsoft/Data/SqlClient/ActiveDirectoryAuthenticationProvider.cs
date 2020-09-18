@@ -156,13 +156,13 @@ namespace Microsoft.Data.SqlClient
                     result = app.AcquireTokenByIntegratedWindowsAuth(scopes)
                         .WithCorrelationId(parameters.ConnectionId)
                         .WithUsername(parameters.UserId)
-                        .ExecuteAsync().GetAwaiter().GetResult();
+                        .ExecuteAsync().Result;
                 }
                 else
                 {
                     result = app.AcquireTokenByIntegratedWindowsAuth(scopes)
                         .WithCorrelationId(parameters.ConnectionId)
-                        .ExecuteAsync().GetAwaiter().GetResult();
+                        .ExecuteAsync().Result;
                 }
                 return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
             }
@@ -174,7 +174,7 @@ namespace Microsoft.Data.SqlClient
                 password.MakeReadOnly();
                 result = app.AcquireTokenByUsernamePassword(scopes, parameters.UserId, password)
                     .WithCorrelationId(parameters.ConnectionId)
-                    .ExecuteAsync().GetAwaiter().GetResult();
+                    .ExecuteAsync().Result;
                 return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
             }
             else if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive ||
