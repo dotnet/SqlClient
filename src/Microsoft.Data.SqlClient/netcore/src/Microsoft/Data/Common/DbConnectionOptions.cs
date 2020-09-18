@@ -30,14 +30,14 @@ namespace Microsoft.Data.Common
         protected static bool TryGetParsetableValue(Dictionary<string, string> parsetable, string key, out string value) => parsetable.TryGetValue(key, out value);
 
         // same as Boolean, but with SSPI thrown in as valid yes
-        protected bool ConvertValueToIntegratedSecurity(Dictionary<string, string> parsetable)
+        protected static bool ConvertValueToIntegratedSecurity(Dictionary<string, string> parsetable)
         {
 	        return parsetable.TryGetValue(KEY.Integrated_Security, out string value) && value != null ?
 		        ConvertValueToIntegratedSecurityInternal(value) :
 		        false;
         }
 
-        internal bool ConvertValueToIntegratedSecurityInternal(string stringValue)
+        private static bool ConvertValueToIntegratedSecurityInternal(string stringValue)
         {
             if (CompareInsensitiveInvariant(stringValue, "sspi") || CompareInsensitiveInvariant(stringValue, "true") || CompareInsensitiveInvariant(stringValue, "yes"))
                 return true;
@@ -57,15 +57,14 @@ namespace Microsoft.Data.Common
             }
         }
 
-        public int ConvertValueToInt32(Dictionary<string, string> parsetable, string keyName, int defaultValue)
+        protected static int ConvertValueToInt32(Dictionary<string, string> parsetable, string keyName, int defaultValue)
         {
-	        string value;
-	        return parsetable.TryGetValue(keyName, out value) && value != null ?
+            return parsetable.TryGetValue(keyName, out string value) && value != null ?
 		        ConvertToInt32Internal(keyName, value) :
 		        defaultValue;
         }
 
-        internal static int ConvertToInt32Internal(string keyname, string stringValue)
+        private static int ConvertToInt32Internal(string keyname, string stringValue)
         {
 	        try
 	        {
@@ -81,7 +80,7 @@ namespace Microsoft.Data.Common
 	        }
         }
 
-        public string ConvertValueToString(Dictionary<string, string> parsetable, string keyName, string defaultValue)
+        protected static string ConvertValueToString(Dictionary<string, string> parsetable, string keyName, string defaultValue)
         {
             return parsetable.TryGetValue(keyName, out string value) && value != null ? value : defaultValue;
         }

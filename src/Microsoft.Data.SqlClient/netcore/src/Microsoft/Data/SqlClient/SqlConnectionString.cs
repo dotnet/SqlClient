@@ -626,7 +626,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        public override string UsersConnectionString(bool hidePassword) =>
+        internal override string UsersConnectionString(bool hidePassword) =>
 	        UsersConnectionString(_keyChain, hidePassword, false);
 
         internal override string UsersConnectionStringForTrace() => UsersConnectionString(_keyChain, true, true);
@@ -657,7 +657,7 @@ namespace Microsoft.Data.SqlClient
 
         // This dictionary is meant to be read-only translation of parsed string
         // keywords/synonyms to a known keyword string.
-        internal static Dictionary<string, string> GetParseSynonyms()
+        private static Dictionary<string, string> GetParseSynonyms()
         {
             Dictionary<string, string> synonyms = s_sqlClientSynonyms;
             if (null == synonyms)

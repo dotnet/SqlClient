@@ -12,7 +12,7 @@ using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.Common
 {
-    abstract partial class DbConnectionOptions
+    internal abstract partial class DbConnectionOptions
     {
 #if DEBUG
         /*private const string ConnectionStringPatternV1 =
@@ -71,7 +71,7 @@ namespace Microsoft.Data.Common
         private const string ConnectionStringValidValuePattern = "^[^\u0000]*$";                    // value not allowed to contain embedded null
         private const string ConnectionStringQuoteValuePattern = "^[^\"'=;\\s\\p{Cc}]*$";           // generally do not quote the value if it matches the pattern
         private const string ConnectionStringQuoteOdbcValuePattern = "^\\{([^\\}\u0000]|\\}\\})*\\}$"; // do not quote odbc value if it matches this pattern
-        internal const string DataDirectory = "|datadirectory|";
+        private const string DataDirectory = "|datadirectory|";
 
         private static readonly Regex s_connectionStringValidKeyRegex = new Regex(ConnectionStringValidKeyPattern, RegexOptions.Compiled);
         private static readonly Regex s_connectionStringValidValueRegex = new Regex(ConnectionStringValidValuePattern, RegexOptions.Compiled);
@@ -98,7 +98,7 @@ namespace Microsoft.Data.Common
 
         protected readonly string _usersConnectionString;
 
-        public abstract string UsersConnectionString(bool hidePassword);
+        internal abstract string UsersConnectionString(bool hidePassword);
 
         internal abstract string UsersConnectionStringForTrace();
         public abstract bool IsEmpty { get;}
@@ -110,7 +110,7 @@ namespace Microsoft.Data.Common
 		        defaultValue;
         }
 
-        internal static bool ConvertValueToBooleanInternal(string keyName, string stringValue)
+        private static bool ConvertValueToBooleanInternal(string keyName, string stringValue)
         {
             if (CompareInsensitiveInvariant(stringValue, "true") || CompareInsensitiveInvariant(stringValue, "yes"))
                 return true;
@@ -202,7 +202,7 @@ namespace Microsoft.Data.Common
             NullTermination,
         };
 
-        internal static int GetKeyValuePair(string connectionString, int currentPosition, StringBuilder buffer, bool useOdbcRules, out string keyname, out string keyvalue)
+        private static int GetKeyValuePair(string connectionString, int currentPosition, StringBuilder buffer, bool useOdbcRules, out string keyname, out string keyvalue)
         {
             int startposition = currentPosition;
 

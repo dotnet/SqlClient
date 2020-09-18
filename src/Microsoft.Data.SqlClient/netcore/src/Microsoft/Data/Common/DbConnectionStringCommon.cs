@@ -105,7 +105,7 @@ namespace Microsoft.Data.Common
         const string ActiveDirectoryServicePrincipalString = "Active Directory Service Principal";
         const string ActiveDirectoryDeviceCodeFlowString = "Active Directory Device Code Flow";
 
-        internal static bool TryConvertToAuthenticationType(string value, out SqlAuthenticationMethod result)
+        private static bool TryConvertToAuthenticationType(string value, out SqlAuthenticationMethod result)
         {
             Debug.Assert(Enum.GetNames(typeof(SqlAuthenticationMethod)).Length == 7, "SqlAuthenticationMethod enum has changed, update needed");
 
@@ -154,7 +154,7 @@ namespace Microsoft.Data.Common
             return isSuccess;
         }
 
-        internal static bool TryConvertToApplicationIntent(string value, out ApplicationIntent result)
+        private static bool TryConvertToApplicationIntent(string value, out ApplicationIntent result)
         {
             Debug.Assert(Enum.GetNames(typeof(ApplicationIntent)).Length == 2, "ApplicationIntent enum has changed, update needed");
             Debug.Assert(null != value, "TryConvertToApplicationIntent(null,...)");
@@ -188,7 +188,7 @@ namespace Microsoft.Data.Common
         /// <param name="value"></param>
         /// <param name="result"></param>
         /// <returns></returns>
-        internal static bool TryConvertToColumnEncryptionSetting(string value, out SqlConnectionColumnEncryptionSetting result)
+        private static bool TryConvertToColumnEncryptionSetting(string value, out SqlConnectionColumnEncryptionSetting result)
         {
             bool isSuccess = false;
 
@@ -259,7 +259,7 @@ namespace Microsoft.Data.Common
         /// <param name="value"></param>
         /// <param name="result"></param>
         /// <returns></returns>
-        internal static bool TryConvertToAttestationProtocol(string value, out SqlConnectionAttestationProtocol result)
+        private static bool TryConvertToAttestationProtocol(string value, out SqlConnectionAttestationProtocol result)
         {
             if (StringComparer.InvariantCultureIgnoreCase.Equals(value, AttestationProtocolHGS))
             {

@@ -11,7 +11,7 @@ namespace Microsoft.Data.Common
     internal static partial class DbConnectionStringBuilderUtil
     {
         #region <<PoolBlockingPeriod Utility>>
-        internal static bool TryConvertToPoolBlockingPeriod(string value, out PoolBlockingPeriod result)
+        private static bool TryConvertToPoolBlockingPeriod(string value, out PoolBlockingPeriod result)
         {
             Debug.Assert(Enum.GetNames(typeof(PoolBlockingPeriod)).Length == 3, "PoolBlockingPeriod enum has changed, update needed");
             Debug.Assert(null != value, "TryConvertToPoolBlockingPeriod(null,...)");
