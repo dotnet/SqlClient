@@ -1240,6 +1240,7 @@ For example, with a 30 second time out, if <xref:Microsoft.Data.SqlClient.SqlDat
 [!code-csharp[SqlCommand CommandTimeout](~/../sqlclient/doc/samples/SqlCommand_CommandTimeout.cs)]
 ]]></format>
 			</remarks>
+			<exception cref="T:System.ArgumentException">The value set is less than 0.</exception>
 		</CommandTimeout>
 		<CommandType>
 			<summary>
