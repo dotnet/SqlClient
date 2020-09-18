@@ -284,7 +284,7 @@ namespace Microsoft.Data.SqlClient
             _userInstance = ConvertValueToBoolean(parsetable, KEY.User_Instance, DEFAULT.User_Instance);
             _multiSubnetFailover = ConvertValueToBoolean(parsetable, KEY.MultiSubnetFailover, DEFAULT.MultiSubnetFailover);
 
-            _commandTimeout = ConvertValueToInt32(KEY.Command_Timeout, DEFAULT.Command_Timeout);
+            _commandTimeout = ConvertValueToInt32(parsetable, KEY.Command_Timeout, DEFAULT.Command_Timeout);
             _connectTimeout = ConvertValueToInt32(parsetable, KEY.Connect_Timeout, DEFAULT.Connect_Timeout);
             _loadBalanceTimeout = ConvertValueToInt32(parsetable, KEY.Load_Balance_Timeout, DEFAULT.Load_Balance_Timeout);
             _maxPoolSize = ConvertValueToInt32(parsetable, KEY.Max_Pool_Size, DEFAULT.Max_Pool_Size);
