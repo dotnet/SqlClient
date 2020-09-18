@@ -75,6 +75,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Data.SqlClient", 
 	ProjectSection(SolutionItems) = preProject
 		..\doc\snippets\Microsoft.Data.SqlClient\ActiveDirectoryAuthenticationProvider.xml = ..\doc\snippets\Microsoft.Data.SqlClient\ActiveDirectoryAuthenticationProvider.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\ApplicationIntent.xml = ..\doc\snippets\Microsoft.Data.SqlClient\ApplicationIntent.xml
+		..\doc\snippets\Microsoft.Data.SqlClient\AzureManagedIdentityAuthenticationProvider.xml = ..\doc\snippets\Microsoft.Data.SqlClient\AzureManagedIdentityAuthenticationProvider.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\OnChangeEventHandler.xml = ..\doc\snippets\Microsoft.Data.SqlClient\OnChangeEventHandler.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\PoolBlockingPeriod.xml = ..\doc\snippets\Microsoft.Data.SqlClient\PoolBlockingPeriod.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SortOrder.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SortOrder.xml

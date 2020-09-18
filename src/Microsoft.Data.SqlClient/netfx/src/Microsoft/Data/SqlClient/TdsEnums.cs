@@ -243,7 +243,7 @@ namespace Microsoft.Data.SqlClient
         public const byte MSALWORKFLOW_ACTIVEDIRECTORYINTERACTIVE = 0x03;
         public const byte MSALWORKFLOW_ACTIVEDIRECTORYSERVICEPRINCIPAL = 0x01; // Using the Password byte as that is the closest we have
         public const byte MSALWORKFLOW_ACTIVEDIRECTORYDEVICECODEFLOW = 0x03; // Using the Interactive byte as that is the closest we have
-        public const byte MSALWORKFLOW_ACTIVEDIRECTORYMANAGEDIDENTITY = 0x02; // Using the Integrated byte as that is the closest we have
+        public const byte MSALWORKFLOW_ACTIVEDIRECTORYMANAGEDIDENTITY = 0x03; // Using the Interactive byte as that's supported for Identity based authentication
 
         public enum ActiveDirectoryWorkflow : byte
         {

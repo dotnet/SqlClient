@@ -1,5 +1,8 @@
-﻿using System;
-using System.Linq;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+using System;
 using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -7,9 +10,7 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <summary>
-    ///
-    /// </summary>
+    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/AzureManagedIdentityAuthenticationProvider.xml' path='docs/members[@name="AzureManagedIdentityAuthenticationProvider"]/AzureManagedIdentityAuthenticationProvider/*'/>
     public sealed class AzureManagedIdentityAuthenticationProvider : SqlAuthenticationProvider
     {
         // This is for unit testing
@@ -17,46 +18,45 @@ namespace Microsoft.Data.SqlClient
 
         // HttpClient is intended to be instantiated once and re-used throughout the life of an application.
 #if NETFRAMEWORK
-        private static readonly HttpClient DefaultHttpClient = new HttpClient();
+        private static readonly HttpClient s_defaultHttpClient = new HttpClient();
 #else
-        private static readonly HttpClient DefaultHttpClient = new HttpClient(new HttpClientHandler() { CheckCertificateRevocationList = true });
+        private static readonly HttpClient s_defaultHttpClient = new HttpClient(new HttpClientHandler() { CheckCertificateRevocationList = true });
 #endif
 
-        // Retry acquiring access token upto 20 times due to possible IMDS upgrade (Applies to VM only)
-        private const int AZURE_IMDS_MAX_RETRY = 20;
         private const string AzureSystemApiVersion = "&api-version=2019-08-01";
         private const string AzureVmImdsApiVersion = "&api-version=2018-02-01";
+        private const string AccessToken = "access_token";
+        private const string Expiry = "expires_on";
+        private const int FileTimeLength = 10;
+
+        private const int DefaultRetryTimeout = 0;
+        private const int DefaultMaxRetryCount = 5;
 
         // Azure Instance Metadata Service (IMDS) endpoint
         private const string AzureVmImdsEndpoint = "http://169.254.169.254/metadata/identity/oauth2/token";
 
         // Timeout for Azure IMDS probe request
         internal const int AzureVmImdsProbeTimeoutInSeconds = 2;
-        internal readonly TimeSpan AzureVmImdsProbeTimeout = TimeSpan.FromSeconds(AzureVmImdsProbeTimeoutInSeconds);
+        internal readonly TimeSpan _azureVmImdsProbeTimeout = TimeSpan.FromSeconds(AzureVmImdsProbeTimeoutInSeconds);
 
         // Configurable timeout for MSI retry logic
-        internal readonly int _retryTimeoutInSeconds = 0;
-
-        /// <summary>
-        ///
-        /// </summary>
-        /// <param name="retryTimeoutInSeconds"></param>
-        /// <param name="httpClient"></param>
-        public AzureManagedIdentityAuthenticationProvider(int retryTimeoutInSeconds = 0, HttpClient httpClient = null)
+        internal readonly int _retryTimeoutInSeconds = DefaultRetryTimeout;
+        internal readonly int _maxRetryCount = DefaultMaxRetryCount;
+        
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/AzureManagedIdentityAuthenticationProvider.xml' path='docs/members[@name="AzureManagedIdentityAuthenticationProvider"]/ctor/*'/>
+        public AzureManagedIdentityAuthenticationProvider(int retryTimeoutInSeconds = DefaultRetryTimeout, int maxRetryCount = DefaultMaxRetryCount, HttpClient httpClient = null)
         {
             _retryTimeoutInSeconds = retryTimeoutInSeconds;
             _httpClient = httpClient;
+            _maxRetryCount = maxRetryCount;
         }
 
-        /// <summary>
-        ///
-        /// </summary>
-        /// <param name="parameters"></param>
-        /// <returns></returns>
+        // Reference: https://docs.microsoft.com/azure/active-directory/managed-identities-azure-resources/how-to-use-vm-token#get-a-token-using-http
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/AzureManagedIdentityAuthenticationProvider.xml' path='docs/members[@name="AzureManagedIdentityAuthenticationProvider"]/AcquireTokenAsync/*'/>
         public override async Task<SqlAuthenticationToken> AcquireTokenAsync(SqlAuthenticationParameters parameters)
         {
             // Use the httpClient specified in the constructor. If it was not specified in the constructor, use the default httpClient.
-            HttpClient httpClient = _httpClient ?? DefaultHttpClient;
+            HttpClient httpClient = _httpClient ?? s_defaultHttpClient;
 
             try
             {
@@ -76,7 +76,7 @@ namespace Microsoft.Data.SqlClient
 
                         try
                         {
-                            internalTokenSource.CancelAfter(AzureVmImdsProbeTimeout);
+                            internalTokenSource.CancelAfter(_azureVmImdsProbeTimeout);
                             await httpClient.SendAsync(imdsProbeRequest, linkedTokenSource.Token).ConfigureAwait(false);
                         }
                         catch (OperationCanceledException)
@@ -84,8 +84,8 @@ namespace Microsoft.Data.SqlClient
                             // request to IMDS timed out (internal cancellation token canceled), neither Azure VM IMDS nor App Services MSI are available
                             if (internalTokenSource.Token.IsCancellationRequested)
                             {
-                                //throw new AzureServiceTokenProviderException(ConnectionString, parameters.Resource, parameters.Authority,
-                                //    $"{AzureServiceTokenProviderException.ManagedServiceIdentityUsed} {AzureServiceTokenProviderException.MsiEndpointNotListening}");
+                                // Throw error: Tried to get token using Managed Identity. Unable to connect to the Instance Metadata Service (IMDS). Skipping request to the Managed Service Identity (MSI) token endpoint.
+                                throw SQL.Azure_ManagedIdentityException($"{Strings.Azure_ManagedIdentityUsed} {Strings.Azure_MetadataEndpointNotListening}");
                             }
 
                             throw;
@@ -93,92 +93,75 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 
-                // If managed identity is specified, include object ID parameter in request
-                string clientIdParameter = parameters.UserId != default
+                // If user assigned managed identity is specified, include object ID parameter in request
+                string objectIdParameter = parameters.UserId != default
                     ? $"&object_id={parameters.UserId}"
                     : string.Empty;
 
                 // Craft request as per the MSI protocol
                 var requestUrl = isAppServicesMsiAvailable
-                    ? $"{msiEndpoint}?resource={parameters.Resource}{clientIdParameter}{AzureSystemApiVersion}"
-                    : $"{AzureVmImdsEndpoint}?resource={parameters.Resource}{clientIdParameter}{AzureVmImdsApiVersion}";
-
-                Func<HttpRequestMessage> getRequestMessage = () =>
-                {
-                    HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
-
-                    if (isAppServicesMsiAvailable)
-                    {
-                        request.Headers.Add("X-IDENTITY-HEADER", msiHeader);
-                    }
-                    else
-                    {
-                        request.Headers.Add("Metadata", "true");
-                    }
-
-                    return request;
-                };
+                    ? $"{msiEndpoint}?resource={parameters.Resource}{objectIdParameter}{AzureSystemApiVersion}"
+                    : $"{AzureVmImdsEndpoint}?resource={parameters.Resource}{objectIdParameter}{AzureVmImdsApiVersion}";
 
                 HttpResponseMessage response = null;
+
                 try
                 {
-                    response = await httpClient.SendAsyncWithRetry(getRequestMessage, _retryTimeoutInSeconds, default).ConfigureAwait(false);
+                    response = await httpClient.SendAsyncWithRetry(getRequestMessage, _retryTimeoutInSeconds, _maxRetryCount, default).ConfigureAwait(false);
+                    HttpRequestMessage getRequestMessage()
+                    {
+                        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
+
+                        if (isAppServicesMsiAvailable)
+                        {
+                            request.Headers.Add("X-IDENTITY-HEADER", msiHeader);
+                        }
+                        else
+                        {
+                            request.Headers.Add("Metadata", "true");
+                        }
+
+                        return request;
+                    }
                 }
                 catch (HttpRequestException)
                 {
-                    //throw new AzureServiceTokenProviderException(ConnectionString, resource, authority,
-                    //    $"{AzureServiceTokenProviderException.ManagedServiceIdentityUsed} {AzureServiceTokenProviderException.RetryFailure} {AzureServiceTokenProviderException.MsiEndpointNotListening}");
+                    // Throw error: Tried to get token using Managed Service Identity. Failed after 5 retries. Unable to connect to the Managed Service Identity (MSI) endpoint. Please check that you are running on an Azure resource that has MSI setup.
+                    throw SQL.Azure_ManagedIdentityException($"{Strings.Azure_ManagedIdentityUsed} {Strings.Azure_RetryFailure} {Strings.Azure_IdentityEndpointNotListening}");
                 }
 
                 // If the response is successful, it should have JSON response with an access_token field
                 if (response.IsSuccessStatusCode)
                 {
-                    //PrincipalUsed.IsAuthenticated = true;
+                    string jsonResponse = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    int accessTokenStartIndex = jsonResponse.IndexOf(AccessToken) + AccessToken.Length + 3;
+                    var imdsAccessToken = jsonResponse.Substring(accessTokenStartIndex, jsonResponse.IndexOf('"', accessTokenStartIndex) - accessTokenStartIndex);
+                    var expiresin = jsonResponse.Substring(jsonResponse.IndexOf(Expiry) + Expiry.Length + 3, FileTimeLength);
+                    DateTime expiryTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(long.Parse(expiresin));
 
-                    //string jsonResponse = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-
-                    //// Parse the JSON response
-                    //TokenResponse tokenResponse = TokenResponse.Parse(jsonResponse);
-
-                    //AccessToken token = AccessToken.Parse(tokenResponse.AccessToken);
-
-                    //// If token is null, then there has been a parsing issue, which means the access token format has changed
-                    //if (token != null)
-                    //{
-                    //    PrincipalUsed.AppId = token.AppId;
-                    //    PrincipalUsed.TenantId = token.TenantId;
-                    //}
-
-                    //return AppAuthenticationResult.Create(tokenResponse);
-                    return null;
+                    return new SqlAuthenticationToken(imdsAccessToken, expiryTime);
                 }
 
-                //string errorStatusDetail = response.IsRetryableStatusCode()
-                //    ? AzureServiceTokenProviderException.RetryFailure
-                //    : AzureServiceTokenProviderException.NonRetryableError;
+                // RetryFailure : Failed after 5 retries.
+                // NonRetryableError : Received a non-retryable error.
+                string errorStatusDetail = response.IsRetryableStatusCode()
+                    ? Strings.Azure_RetryFailure
+                    : Strings.Azure_NonRetryableError;
 
-                //string errorText = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                string errorText = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-                //throw new Exception($"{errorStatusDetail} MSI ResponseCode: {response.StatusCode}, Response: {errorText}");
+                throw SQL.Azure_ManagedIdentityException($"{errorStatusDetail} Identity Response Code: {response.StatusCode}, Response: {errorText}");
             }
             catch (Exception exp)
             {
                 if (exp is SqlException)
                     throw;
-
-                //throw new AzureServiceTokenProviderException(ConnectionString, resource, authority,
-                //    $"{AzureServiceTokenProviderException.ManagedServiceIdentityUsed} {AzureServiceTokenProviderException.GenericErrorMessage} {exp.Message}");
+                // Throw error: Access token could not be acquired. {exp.Message}
+                throw SQL.Azure_ManagedIdentityException($"{Strings.Azure_ManagedIdentityUsed} {Strings.Azure_GenericErrorMessage} {exp.Message}");
             }
-
-            //Cheena: Remove later
-            return null;
         }
 
-        /// <summary>
-        ///
-        /// </summary>
-        /// <param name="authentication"></param>
-        /// <returns></returns>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/AzureManagedIdentityAuthenticationProvider.xml' path='docs/members[@name="AzureManagedIdentityAuthenticationProvider"]/IsSupported/*'/>
         public override bool IsSupported(SqlAuthenticationMethod authentication)
         {
             return authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity;
@@ -187,12 +170,11 @@ namespace Microsoft.Data.SqlClient
 
     internal static class SqlManagedIdentityRetryHelper
     {
-        internal const int MaxRetries = 5;
         internal const int DeltaBackOffInSeconds = 2;
         internal const string RetryTimeoutError = "Reached retry timeout limit set by MsiRetryTimeout parameter in connection string.";
 
         // for unit test purposes
-        internal static bool WaitBeforeRetry = true;
+        internal static bool s_waitBeforeRetry = true;
 
         internal static bool IsRetryableStatusCode(this HttpResponseMessage response)
         {
@@ -203,7 +185,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Implements recommended retry guidance here: https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/how-to-use-vm-token#retry-guidance
         /// </summary>
-        internal static async Task<HttpResponseMessage> SendAsyncWithRetry(this HttpClient httpClient, Func<HttpRequestMessage> getRequest, int retryTimeoutInSeconds, CancellationToken cancellationToken)
+        internal static async Task<HttpResponseMessage> SendAsyncWithRetry(this HttpClient httpClient, Func<HttpRequestMessage> getRequest, int retryTimeoutInSeconds, int maxRetryCount, CancellationToken cancellationToken)
         {
             using (var timeoutTokenSource = new CancellationTokenSource())
             using (var linkedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(timeoutTokenSource.Token, cancellationToken))
@@ -228,21 +210,23 @@ namespace Microsoft.Data.SqlClient
                         {
                             response = await httpClient.SendAsync(getRequest(), linkedTokenSource.Token).ConfigureAwait(false);
 
-                            if (response.IsSuccessStatusCode || !response.IsRetryableStatusCode() || attempts == MaxRetries)
+                            if (response.IsSuccessStatusCode || !response.IsRetryableStatusCode() || attempts == maxRetryCount)
                             {
                                 break;
                             }
                         }
                         catch (HttpRequestException)
                         {
-                            if (attempts == MaxRetries)
+                            if (attempts == maxRetryCount)
+                            {
                                 throw;
+                            }
                         }
 
-                        if (WaitBeforeRetry)
+                        if (s_waitBeforeRetry)
                         {
                             // use recommended exponential backoff strategy, and use linked token wait handle so caller or retry timeout is still able to cancel
-                            backoffTimeInSecs = backoffTimeInSecs + (int)Math.Pow(DeltaBackOffInSeconds, attempts);
+                            backoffTimeInSecs += (int)Math.Pow(DeltaBackOffInSeconds, attempts);
                             linkedTokenSource.Token.WaitHandle.WaitOne(TimeSpan.FromSeconds(backoffTimeInSecs));
                             linkedTokenSource.Token.ThrowIfCancellationRequested();
                         }

@@ -1594,7 +1594,7 @@ namespace Microsoft.Data.SqlClient
                 _fedAuthFeatureExtensionData =
                     new FederatedAuthenticationFeatureExtensionData
                     {
-                        libraryType = TdsEnums.FedAuthLibrary.SecurityToken,
+                        libraryType = TdsEnums.FedAuthLibrary.MSAL,
                         authentication = ConnectionOptions.Authentication,
                         fedAuthRequiredPreLoginResponse = _fedAuthRequired
                     };
