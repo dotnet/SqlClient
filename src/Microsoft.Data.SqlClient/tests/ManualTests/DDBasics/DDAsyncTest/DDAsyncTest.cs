@@ -15,7 +15,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void OpenConnection_WithAsyncTrue_ThrowsNotSupportedException()
         {
-            //Fails on NetCore
+            //Passes on NetCore
             var asyncConnectionString = DataTestUtility.TCPConnectionString + ";async=true";
             Assert.Throws<NotSupportedException>(() => { new SqlConnection(asyncConnectionString); });
         }
@@ -30,7 +30,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         #region <<ExecuteCommand_WithNewConnection>>
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // TODO Synapse: Remove dependency on Northwind database by creating required table in setup.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void ExecuteCommand_WithNewConnection_ShouldPerformAsyncByDefault()
         {
             var executedProcessList = new List<string>();
@@ -75,7 +76,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         #endregion
 
         #region <<ExecuteCommand_WithSharedConnection>>
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Parallel query execution on the same connection is not supported.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void ExecuteCommand_WithSharedConnection_ShouldPerformAsyncByDefault()
         {
             var executedProcessList = new List<string>();

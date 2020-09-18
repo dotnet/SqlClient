@@ -201,7 +201,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }).Dispose();
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Parse error at line: 1, column: 27: Incorrect syntax near 'for'.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void ExecuteXmlReaderTest()
         {
             RemoteExecutor.Invoke(cs =>
@@ -388,7 +389,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }).Dispose();
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse:  Parse error at line: 1, column: 27: Incorrect syntax near 'for'.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void ExecuteXmlReaderAsyncTest()
         {
             RemoteExecutor.Invoke(cs =>

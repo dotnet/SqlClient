@@ -17,7 +17,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
                 {
                     connection.Open();
-                    using (SqlCommand command = new SqlCommand("SELECT * From [Customers]", connection))
+                    using (SqlCommand command = new SqlCommand("SELECT @@VERSION", connection))
                     using (SqlDataReader reader = command.ExecuteReader())
                     {
                         while (reader.Read())

@@ -12,6 +12,7 @@ using Xunit;
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     [ActiveIssue(5536)]
+    // TODO Synapse: Remove dependency from UDTTest Database
     public class UdtTest2
     {
         private string _connStr = null;

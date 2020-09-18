@@ -16,8 +16,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private const string DATABASE_NAME = "master";
         private const int CONCURRENT_COMMANDS = 5;
 
+        // TODO Synapse: Remove dependency on Northwind database
         [ActiveIssue(6643, TestPlatforms.AnyUnix)]
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestReaderMars()
         {
             string connectionString =

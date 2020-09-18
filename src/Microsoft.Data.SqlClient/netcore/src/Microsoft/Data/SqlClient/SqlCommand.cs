@@ -65,7 +65,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         private CommandType _commandType;
-        private int _commandTimeout = ADP.DefaultCommandTimeout;
+        private int? _commandTimeout;
         private UpdateRowSource _updatedRowSource = UpdateRowSource.Both;
         private bool _designTimeInvisible;
 
@@ -572,7 +572,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                return _commandTimeout;
+                return _commandTimeout ?? DefaultCommandTimeout;
             }
             set
             {
@@ -592,10 +592,18 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ResetCommandTimeout/*'/>
         public void ResetCommandTimeout()
         {
-            if (ADP.DefaultCommandTimeout != _commandTimeout)
+            if (ADP.DefaultCommandTimeout != CommandTimeout)
             {
                 PropertyChanging();
-                _commandTimeout = ADP.DefaultCommandTimeout;
+                _commandTimeout = DefaultCommandTimeout;
+            }
+        }
+
+        private int DefaultCommandTimeout
+        {
+            get
+            {
+                return _activeConnection?.CommandTimeout ?? ADP.DefaultCommandTimeout;
             }
         }
 

@@ -12,7 +12,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class DDDataTypesTest
     {
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Cannot find data type 'XML'.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void XmlTest()
         {
             string tempTable = "xml_" + Guid.NewGuid().ToString().Replace('-', '_');
@@ -73,7 +74,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: The statement failed. Column 'col1' has a data type that cannot participate in a columnstore index.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void MaxTypesTest()
         {
             string tempTable = "max_" + Guid.NewGuid().ToString().Replace('-', '_');

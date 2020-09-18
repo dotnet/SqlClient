@@ -16,7 +16,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class SqlServerTypesTest
     {
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Parse error at line: 1, column: 48: Incorrect syntax near 'hierarchyid'.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void GetSchemaTableTest()
         {
             string db = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString).InitialCatalog;
@@ -41,8 +42,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        // Synapse: Parse error at line: 1, column: 48: Incorrect syntax near 'hierarchyid'.
         [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void GetValueTestThrowsExceptionOnNetCore()
         {
             using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
@@ -60,8 +62,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        // Synapse: Parse error at line: 1, column: 48: Incorrect syntax near 'hierarchyid'.
         [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp)]
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void GetValueTest()
         {
             using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
@@ -77,7 +80,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'hierarchyid'.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestUdtZeroByte()
         {
             using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
@@ -96,13 +100,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'hierarchyid'.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestUdtSqlDataReaderGetSqlBytesSequentialAccess()
         {
             TestUdtSqlDataReaderGetSqlBytes(CommandBehavior.SequentialAccess);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'hierarchyid'.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestUdtSqlDataReaderGetSqlBytes()
         {
             TestUdtSqlDataReaderGetSqlBytes(CommandBehavior.Default);
@@ -139,13 +145,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'hierarchyid'.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestUdtSqlDataReaderGetBytesSequentialAccess()
         {
             TestUdtSqlDataReaderGetBytes(CommandBehavior.SequentialAccess);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'hierarchyid'.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestUdtSqlDataReaderGetBytes()
         {
             TestUdtSqlDataReaderGetBytes(CommandBehavior.Default);
@@ -195,13 +203,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'hierarchyid'.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestUdtSqlDataReaderGetStreamSequentialAccess()
         {
             TestUdtSqlDataReaderGetStream(CommandBehavior.SequentialAccess);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'hierarchyid'.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestUdtSqlDataReaderGetStream()
         {
             TestUdtSqlDataReaderGetStream(CommandBehavior.Default);
@@ -259,7 +269,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 #if netcoreapp
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Parse error at line: 1, column: 41: Incorrect syntax near 'hierarchyid'.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestUdtSchemaMetadata()
         {
             using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
@@ -297,7 +308,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 #endif
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'geometry'.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestUdtParameterSetSqlByteValue()
         {
             const string ExpectedPointValue = "POINT (1 1)";
@@ -331,7 +343,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Parse error at line: 1, column: 8: Incorrect syntax near 'geometry'.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestUdtParameterSetRawByteValue()
         {
             const string ExpectedPointValue = "POINT (1 1)";

@@ -21,7 +21,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             this._output = output;
         }
 
-        [ActiveIssue(490)] // This test seems to fail regularly in pipelines due to deadlocks. But it's still useful for local testing.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void CancelAsyncConnections()
         {

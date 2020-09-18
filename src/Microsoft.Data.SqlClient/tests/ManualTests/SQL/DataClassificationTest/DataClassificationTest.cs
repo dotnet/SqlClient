@@ -14,7 +14,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         private static string s_tableName;
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsSupportedDataClassification))]
+        // Synapse: Azure Synapse does not support RANK
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.IsSupportedDataClassification))]
         public static void TestDataClassificationResultSetRank()
         {
             s_tableName = DataTestUtility.GetUniqueNameForSqlServer("DC");
@@ -98,11 +99,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         {
                             if (columnPos == 1 || columnPos == 2)
                             {
-                                Assert.True(sp.SensitivityRank == SensitivityRank.LOW);
+                                Assert.Equal(SensitivityRank.LOW, sp.SensitivityRank);
                             }
                             else if (columnPos == 6 || columnPos == 7)
                             {
-                                Assert.True(sp.SensitivityRank == SensitivityRank.MEDIUM);
+                                Assert.Equal(SensitivityRank.MEDIUM, sp.SensitivityRank);
                             }
                         }
                         else

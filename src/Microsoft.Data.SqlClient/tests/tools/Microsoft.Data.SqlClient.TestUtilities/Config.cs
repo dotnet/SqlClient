@@ -31,6 +31,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities
         public string DNSCachingConnString = null;
         public string DNSCachingServerCR = null;  // this is for the control ring
         public string DNSCachingServerTR = null;  // this is for the tenant ring
+        public bool IsAzureSynapse = false; // True for Azure Data Warehouse/Synapse
         public bool IsDNSCachingSupportedCR = false;  // this is for the control ring
         public bool IsDNSCachingSupportedTR = false;  // this is for the tenant ring
         public string EnclaveAzureDatabaseConnString = null;
