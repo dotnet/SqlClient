@@ -24,6 +24,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
             Assert.Equal(string.Empty, cn.ConnectionString);
             Assert.Equal(15, cn.ConnectionTimeout);
+
             Assert.Null(cn.Container);
             Assert.Equal(string.Empty, cn.Database);
             Assert.Equal(string.Empty, cn.DataSource);
@@ -43,6 +44,7 @@ namespace Microsoft.Data.SqlClient.Tests
             SqlConnection cn = new SqlConnection(connectionString);
             Assert.Equal(connectionString, cn.ConnectionString);
             Assert.Equal(15, cn.ConnectionTimeout);
+            Assert.Equal(30, cn.CommandTimeout);
             Assert.Null(cn.Container);
             Assert.Equal("dotNet", cn.Database);
             Assert.Equal("SQLSRV", cn.DataSource);
@@ -56,6 +58,7 @@ namespace Microsoft.Data.SqlClient.Tests
             cn = new SqlConnection((string)null);
             Assert.Equal(string.Empty, cn.ConnectionString);
             Assert.Equal(15, cn.ConnectionTimeout);
+            Assert.Equal(30, cn.CommandTimeout);
             Assert.Null(cn.Container);
             Assert.Equal(string.Empty, cn.Database);
             Assert.Equal(string.Empty, cn.DataSource);
@@ -713,6 +716,85 @@ namespace Microsoft.Data.SqlClient.Tests
                 Assert.Equal(typeof(OverflowException), ex.InnerException.GetType());
                 Assert.NotNull(ex.Message);
                 Assert.True(ex.Message.IndexOf("'connect timeout'") != -1);
+                Assert.Null(ex.ParamName);
+
+                // Value was either too large or too small for an Int32
+                OverflowException oe = (OverflowException)ex.InnerException;
+                Assert.Null(oe.InnerException);
+                Assert.NotNull(oe.Message);
+            }
+        }
+
+        [Fact]
+        public void ConnectionString_CommandTimeout()
+        {
+            SqlConnection cn = new SqlConnection();
+            cn.ConnectionString = "Command Timeout=45";
+            Assert.Equal(45, cn.CommandTimeout);
+            cn.ConnectionString = "Command Timeout=40";
+            Assert.Equal(40, cn.CommandTimeout);
+            cn.ConnectionString = "command timeout=";
+            Assert.Equal(30, cn.CommandTimeout);
+            cn.ConnectionString = "Command Timeout=2147483647";
+            Assert.Equal(int.MaxValue, cn.CommandTimeout);
+            cn.ConnectionString = "Command Timeout=0";
+            Assert.Equal(0, cn.CommandTimeout);
+        }
+
+        [Fact]
+        public void ConnectionString_CommandTimeout_Invalid()
+        {
+            SqlConnection cn = new SqlConnection();
+
+            // negative number
+            try
+            {
+                cn.ConnectionString = "Command timeout=-1";
+            }
+            catch (ArgumentException ex)
+            {
+                // Invalid value for key 'connect timeout'
+                Assert.Equal(typeof(ArgumentException), ex.GetType());
+                Assert.Null(ex.InnerException);
+                Assert.NotNull(ex.Message);
+                Assert.True(ex.Message.IndexOf("'command timeout'") != -1);
+                Assert.Null(ex.ParamName);
+            }
+
+            // invalid number
+            try
+            {
+                cn.ConnectionString = "command Timeout=BB";
+            }
+            catch (ArgumentException ex)
+            {
+                // Invalid value for key 'connect timeout'
+                Assert.Equal(typeof(ArgumentException), ex.GetType());
+                Assert.NotNull(ex.InnerException);
+                Assert.Equal(typeof(FormatException), ex.InnerException.GetType());
+                Assert.NotNull(ex.Message);
+                Assert.True(ex.Message.IndexOf("'command timeout'") != -13);
+                Assert.Null(ex.ParamName);
+
+                // Input string was not in a correct format
+                FormatException fe = (FormatException)ex.InnerException;
+                Assert.Null(fe.InnerException);
+                Assert.NotNull(fe.Message);
+            }
+
+            // overflow
+            try
+            {
+                cn.ConnectionString = "command timeout=2147483648";
+            }
+            catch (ArgumentException ex)
+            {
+                // Invalid value for key 'command timeout'
+                Assert.Equal(typeof(ArgumentException), ex.GetType());
+                Assert.NotNull(ex.InnerException);
+                Assert.Equal(typeof(OverflowException), ex.InnerException.GetType());
+                Assert.NotNull(ex.Message);
+                Assert.True(ex.Message.IndexOf("'command timeout'") != -1);
                 Assert.Null(ex.ParamName);
 
                 // Value was either too large or too small for an Int32

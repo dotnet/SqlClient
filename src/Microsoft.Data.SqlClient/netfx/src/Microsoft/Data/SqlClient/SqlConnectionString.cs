@@ -25,6 +25,7 @@ namespace Microsoft.Data.SqlClient
             internal const bool Asynchronous = false;
             internal const string AttachDBFilename = _emptyString;
             internal const PoolBlockingPeriod PoolBlockingPeriod = DbConnectionStringDefaults.PoolBlockingPeriod;
+            internal const int Command_Timeout = ADP.DefaultCommandTimeout;
             internal const int Connect_Timeout = ADP.DefaultConnectionTimeout;
             internal const bool Connection_Reset = true;
             internal const bool Context_Connection = false;
@@ -76,6 +77,7 @@ namespace Microsoft.Data.SqlClient
             internal const string EnclaveAttestationUrl = "enclave attestation url";
             internal const string AttestationProtocol = "attestation protocol";
             internal const string Connect_Timeout = "connect timeout";
+            internal const string Command_Timeout = "command timeout";
             internal const string Connection_Reset = "connection reset";
             internal const string Context_Connection = "context connection";
             internal const string Current_Language = "current language";
@@ -238,6 +240,7 @@ namespace Microsoft.Data.SqlClient
         private readonly string _enclaveAttestationUrl;
         private readonly SqlConnectionAttestationProtocol _attestationProtocol;
 
+        private readonly int _commandTimeout;
         private readonly int _connectTimeout;
         private readonly int _loadBalanceTimeout;
         private readonly int _maxPoolSize;
@@ -299,6 +302,7 @@ namespace Microsoft.Data.SqlClient
             _transparentNetworkIPResolution = ConvertValueToBoolean(KEY.TransparentNetworkIPResolution, DEFAULT.TransparentNetworkIPResolution);
 
             _connectTimeout = ConvertValueToInt32(KEY.Connect_Timeout, DEFAULT.Connect_Timeout);
+            _commandTimeout = ConvertValueToInt32(KEY.Command_Timeout, DEFAULT.Command_Timeout);
             _loadBalanceTimeout = ConvertValueToInt32(KEY.Load_Balance_Timeout, DEFAULT.Load_Balance_Timeout);
             _maxPoolSize = ConvertValueToInt32(KEY.Max_Pool_Size, DEFAULT.Max_Pool_Size);
             _minPoolSize = ConvertValueToInt32(KEY.Min_Pool_Size, DEFAULT.Min_Pool_Size);
@@ -377,6 +381,11 @@ namespace Microsoft.Data.SqlClient
             if (_connectTimeout < 0)
             {
                 throw ADP.InvalidConnectionOptionValue(KEY.Connect_Timeout);
+            }
+
+            if (_commandTimeout < 0)
+            {
+                throw ADP.InvalidConnectionOptionValue(KEY.Command_Timeout);
             }
 
             if (_maxPoolSize < 1)
@@ -609,6 +618,7 @@ namespace Microsoft.Data.SqlClient
             _pooling = connectionOptions._pooling;
             _replication = connectionOptions._replication;
             _userInstance = userInstance;
+            _commandTimeout = connectionOptions._commandTimeout;
             _connectTimeout = connectionOptions._connectTimeout;
             _loadBalanceTimeout = connectionOptions._loadBalanceTimeout;
             _poolBlockingPeriod = connectionOptions._poolBlockingPeriod;
@@ -679,6 +689,7 @@ namespace Microsoft.Data.SqlClient
         internal bool Replication { get { return _replication; } }
         internal bool UserInstance { get { return _userInstance; } }
 
+        internal int CommandTimeout { get { return _commandTimeout; } }
         internal int ConnectTimeout { get { return _connectTimeout; } }
         internal int LoadBalanceTimeout { get { return _loadBalanceTimeout; } }
         internal int MaxPoolSize { get { return _maxPoolSize; } }
@@ -772,6 +783,7 @@ namespace Microsoft.Data.SqlClient
                 hash.Add(KEY.AttachDBFilename, KEY.AttachDBFilename);
                 hash.Add(KEY.PoolBlockingPeriod, KEY.PoolBlockingPeriod);
                 hash.Add(KEY.Connect_Timeout, KEY.Connect_Timeout);
+                hash.Add(KEY.Command_Timeout, KEY.Command_Timeout);
                 hash.Add(KEY.Connection_Reset, KEY.Connection_Reset);
                 hash.Add(KEY.Context_Connection, KEY.Context_Connection);
                 hash.Add(KEY.Current_Language, KEY.Current_Language);

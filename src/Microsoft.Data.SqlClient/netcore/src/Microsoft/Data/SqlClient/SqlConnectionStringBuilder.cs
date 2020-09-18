@@ -57,6 +57,9 @@ namespace Microsoft.Data.SqlClient
             ColumnEncryptionSetting,
             EnclaveAttestationUrl,
             AttestationProtocol,
+
+            CommandTimeout,
+
             // keep the count value last
             KeywordsCount
         }
@@ -81,6 +84,7 @@ namespace Microsoft.Data.SqlClient
         private string _userID = DbConnectionStringDefaults.UserID;
         private string _workstationID = DbConnectionStringDefaults.WorkstationID;
 
+        private int _commandTimeout = DbConnectionStringDefaults.CommandTimeout;
         private int _connectTimeout = DbConnectionStringDefaults.ConnectTimeout;
         private int _loadBalanceTimeout = DbConnectionStringDefaults.LoadBalanceTimeout;
         private int _maxPoolSize = DbConnectionStringDefaults.MaxPoolSize;
@@ -113,6 +117,7 @@ namespace Microsoft.Data.SqlClient
 #if netcoreapp
             validKeywords[(int)Keywords.PoolBlockingPeriod] = DbConnectionStringKeywords.PoolBlockingPeriod;
 #endif
+            validKeywords[(int)Keywords.CommandTimeout] = DbConnectionStringKeywords.CommandTimeout;
             validKeywords[(int)Keywords.ConnectTimeout] = DbConnectionStringKeywords.ConnectTimeout;
             validKeywords[(int)Keywords.CurrentLanguage] = DbConnectionStringKeywords.CurrentLanguage;
             validKeywords[(int)Keywords.DataSource] = DbConnectionStringKeywords.DataSource;
@@ -156,6 +161,7 @@ namespace Microsoft.Data.SqlClient
 #if netcoreapp
             hash.Add(DbConnectionStringKeywords.PoolBlockingPeriod, Keywords.PoolBlockingPeriod);
 #endif
+            hash.Add(DbConnectionStringKeywords.CommandTimeout, Keywords.CommandTimeout);
             hash.Add(DbConnectionStringKeywords.ConnectTimeout, Keywords.ConnectTimeout);
             hash.Add(DbConnectionStringKeywords.CurrentLanguage, Keywords.CurrentLanguage);
             hash.Add(DbConnectionStringKeywords.DataSource, Keywords.DataSource);
@@ -286,6 +292,9 @@ namespace Microsoft.Data.SqlClient
                             WorkstationID = ConvertToString(value);
                             break;
 
+                        case Keywords.CommandTimeout:
+                            CommandTimeout = ConvertToInt32(value);
+                            break;
                         case Keywords.ConnectTimeout:
                             ConnectTimeout = ConvertToInt32(value);
                             break;
@@ -401,6 +410,21 @@ namespace Microsoft.Data.SqlClient
             {
                 SetValue(DbConnectionStringKeywords.AttachDBFilename, value);
                 _attachDBFilename = value;
+            }
+        }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/CommandTimeout/*' />
+        public int CommandTimeout
+        {
+            get { return _commandTimeout; }
+            set
+            {
+                if (value < 0)
+                {
+                    throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.CommandTimeout);
+                }
+                SetValue(DbConnectionStringKeywords.CommandTimeout, value);
+                _commandTimeout = value;
             }
         }
 
@@ -893,6 +917,8 @@ namespace Microsoft.Data.SqlClient
 #if netcoreapp
                 case Keywords.PoolBlockingPeriod: return PoolBlockingPeriod;
 #endif
+                case Keywords.CommandTimeout:
+                    return CommandTimeout;
                 case Keywords.ConnectTimeout:
                     return ConnectTimeout;
                 case Keywords.CurrentLanguage:
@@ -1008,6 +1034,9 @@ namespace Microsoft.Data.SqlClient
                     _poolBlockingPeriod = DbConnectionStringDefaults.PoolBlockingPeriod;
                     break;
 #endif
+                case Keywords.CommandTimeout:
+                    _commandTimeout = DbConnectionStringDefaults.CommandTimeout;
+                    break;
                 case Keywords.ConnectTimeout:
                     _connectTimeout = DbConnectionStringDefaults.ConnectTimeout;
                     break;
