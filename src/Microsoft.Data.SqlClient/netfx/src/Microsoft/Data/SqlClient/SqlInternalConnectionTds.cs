@@ -1587,7 +1587,8 @@ namespace Microsoft.Data.SqlClient
                         fedAuthRequiredPreLoginResponse = _fedAuthRequired
                     };
             }
-            if (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity)
+            if (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
+                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI)
             {
                 requestedFeatures |= TdsEnums.FeatureExtension.FedAuth;
                 _federatedAuthenticationInfoRequested = true;
@@ -1979,7 +1980,8 @@ namespace Microsoft.Data.SqlClient
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive ||
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal ||
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow ||
-                                       connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity;
+                                       connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity ||
+                                       connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI;
 
             // Check if the user had explicitly specified the TNIR option in the connection string or the connection string builder.
             // If the user has specified the option in the connection string explicitly, then we shouldn't disable TNIR.
@@ -2566,6 +2568,7 @@ namespace Microsoft.Data.SqlClient
                          || _credential != null
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
+                         || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
                          || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _fedAuthRequired),
                          "Credentials aren't provided for calling MSAL");
@@ -2782,7 +2785,6 @@ namespace Microsoft.Data.SqlClient
                     switch (ConnectionOptions.Authentication)
                     {
                         case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
-                        case SqlAuthenticationMethod.ActiveDirectoryManagedIdentity:
                             username = TdsEnums.NTAUTHORITYANONYMOUSLOGON;
                             if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
                             {
@@ -2796,6 +2798,8 @@ namespace Microsoft.Data.SqlClient
                             break;
                         case SqlAuthenticationMethod.ActiveDirectoryInteractive:
                         case SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow:
+                        case SqlAuthenticationMethod.ActiveDirectoryManagedIdentity:
+                        case SqlAuthenticationMethod.ActiveDirectoryMSI:
                             if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
                             {
                                 fedAuthToken = _activeDirectoryAuthTimeoutRetryHelper.CachedToken;

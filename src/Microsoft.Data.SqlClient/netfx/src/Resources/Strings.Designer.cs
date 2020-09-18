@@ -9658,7 +9658,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Managed Identity&apos; with &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication={0}&apos; with &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
         /// </summary>
         internal static string SQL_ManagedIdentityWithPassword {
             get {
@@ -10000,7 +10000,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Cannot set the Credential property if &apos;Authentication=Active Directory Managed Identity&apos; has been specified in the connection string..
+        ///   Looks up a localized string similar to Cannot set the Credential property if &apos;Authentication={0}&apos; has been specified in the connection string..
         /// </summary>
         internal static string SQL_SettingCredentialWithManagedIdentity {
             get {
@@ -10036,7 +10036,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Managed Identity&apos;, if the Credential property has been set..
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication={0}&apos;, if the Credential property has been set..
         /// </summary>
         internal static string SQL_SettingManagedIdentityWithCredential {
             get {

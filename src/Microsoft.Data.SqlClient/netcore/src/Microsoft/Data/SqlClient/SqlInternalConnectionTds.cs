@@ -1316,7 +1316,8 @@ namespace Microsoft.Data.SqlClient
                     };
             }
 
-            if (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity)
+            if (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
+                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI)
             {
                 requestedFeatures |= TdsEnums.FeatureExtension.FedAuth;
                 _federatedAuthenticationInfoRequested = true;
@@ -2122,6 +2123,7 @@ namespace Microsoft.Data.SqlClient
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
+                         || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI
                          || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _fedAuthRequired),
                          "Credentials aren't provided for calling MSAL");
             Debug.Assert(fedAuthInfo != null, "info should not be null.");
@@ -2362,6 +2364,8 @@ namespace Microsoft.Data.SqlClient
                             break;
                         case SqlAuthenticationMethod.ActiveDirectoryInteractive:
                         case SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow:
+                        case SqlAuthenticationMethod.ActiveDirectoryManagedIdentity:
+                        case SqlAuthenticationMethod.ActiveDirectoryMSI:
                             if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
                             {
                                 _fedAuthToken = _activeDirectoryAuthTimeoutRetryHelper.CachedToken;
@@ -2369,18 +2373,6 @@ namespace Microsoft.Data.SqlClient
                             else
                             {
                                 authParamsBuilder.WithUserId(ConnectionOptions.UserID);
-                                Task.Run(() => _fedAuthToken = authProvider.AcquireTokenAsync(authParamsBuilder).Result.ToSqlFedAuthToken()).Wait();
-                                _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
-                            }
-                            break;
-                        case SqlAuthenticationMethod.ActiveDirectoryManagedIdentity:
-                            username = TdsEnums.NTAUTHORITYANONYMOUSLOGON;
-                            if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
-                            {
-                                _fedAuthToken = _activeDirectoryAuthTimeoutRetryHelper.CachedToken;
-                            }
-                            else
-                            {
                                 Task.Run(() => _fedAuthToken = authProvider.AcquireTokenAsync(authParamsBuilder).Result.ToSqlFedAuthToken()).Wait();
                                 _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
                             }

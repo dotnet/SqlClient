@@ -1102,6 +1102,9 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryManagedIdentity/*'/>
         ActiveDirectoryManagedIdentity,
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryMSI/*'/>
+        ActiveDirectoryMSI,
 #if ADONET_CERT_AUTH
         SqlCertificate
 #endif

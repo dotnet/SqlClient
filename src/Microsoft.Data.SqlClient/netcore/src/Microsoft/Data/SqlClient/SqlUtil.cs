@@ -281,9 +281,9 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_DeviceFlowWithUsernamePassword));
         }
-        internal static Exception ManagedIdentityWithPassword()
+        internal static Exception ManagedIdentityWithPassword(string authenticationMode)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_ManagedIdentityWithPassword));
+            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_ManagedIdentityWithPassword, authenticationMode));
         }
         static internal Exception SettingIntegratedWithCredential()
         {
@@ -297,9 +297,9 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_SettingDeviceFlowWithCredential));
         }
-        static internal Exception SettingManagedIdentityWithCredential()
+        static internal Exception SettingManagedIdentityWithCredential(string authenticationMode)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_SettingManagedIdentityWithCredential));
+            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_SettingManagedIdentityWithCredential, authenticationMode));
         }
         static internal Exception SettingCredentialWithIntegratedArgument()
         {
@@ -313,9 +313,9 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_SettingCredentialWithDeviceFlow));
         }
-        static internal Exception SettingCredentialWithManagedIdentityArgument()
+        static internal Exception SettingCredentialWithManagedIdentityArgument(string authenticationMode)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_SettingCredentialWithManagedIdentity));
+            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_SettingCredentialWithManagedIdentity, authenticationMode));
         }
         static internal Exception SettingCredentialWithIntegratedInvalid()
         {
@@ -329,9 +329,9 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_SettingCredentialWithDeviceFlow));
         }
-        static internal Exception SettingCredentialWithManagedIdentityInvalid()
+        static internal Exception SettingCredentialWithManagedIdentityInvalid(string authenticationMode)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_SettingCredentialWithManagedIdentity));
+            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_SettingCredentialWithManagedIdentity, authenticationMode));
         }
         internal static Exception NullEmptyTransactionName()
         {

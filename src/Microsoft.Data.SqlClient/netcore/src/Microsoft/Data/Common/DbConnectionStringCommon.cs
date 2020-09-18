@@ -104,7 +104,8 @@ namespace Microsoft.Data.Common
         const string ActiveDirectoryInteractiveString = "Active Directory Interactive";
         const string ActiveDirectoryServicePrincipalString = "Active Directory Service Principal";
         const string ActiveDirectoryDeviceCodeFlowString = "Active Directory Device Code Flow";
-        const string ActiveDirectoryManagedIdentityString = "Active Directory Managed Identity";
+        internal const string ActiveDirectoryManagedIdentityString = "Active Directory Managed Identity";
+        internal const string ActiveDirectoryMSIString = "Active Directory MSI";
 
         internal static bool TryConvertToAuthenticationType(string value, out SqlAuthenticationMethod result)
         {
@@ -152,6 +153,12 @@ namespace Microsoft.Data.Common
                 || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity, CultureInfo.InvariantCulture)))
             {
                 result = SqlAuthenticationMethod.ActiveDirectoryManagedIdentity;
+                isSuccess = true;
+            }
+            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ActiveDirectoryMSIString)
+                || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.ActiveDirectoryMSI, CultureInfo.InvariantCulture)))
+            {
+                result = SqlAuthenticationMethod.ActiveDirectoryMSI;
                 isSuccess = true;
             }
             else
@@ -502,6 +509,7 @@ namespace Microsoft.Data.Common
                 || value == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
                 || value == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
                 || value == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
+                || value == SqlAuthenticationMethod.ActiveDirectoryMSI
                 || value == SqlAuthenticationMethod.NotSpecified;
         }
 
@@ -525,6 +533,8 @@ namespace Microsoft.Data.Common
                     return ActiveDirectoryDeviceCodeFlowString;
                 case SqlAuthenticationMethod.ActiveDirectoryManagedIdentity:
                     return ActiveDirectoryManagedIdentityString;
+                case SqlAuthenticationMethod.ActiveDirectoryMSI:
+                    return ActiveDirectoryMSIString;
                 default:
                     return null;
             }

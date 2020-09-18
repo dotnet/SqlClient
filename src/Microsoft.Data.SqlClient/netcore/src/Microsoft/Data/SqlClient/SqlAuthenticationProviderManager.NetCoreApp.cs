@@ -42,6 +42,8 @@ namespace Microsoft.Data.SqlClient
             Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal, activeDirectoryAuthProvider);
             Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, activeDirectoryAuthProvider);
             Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity, azureManagedIdentityAuthenticationProvider);
+            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryMSI, azureManagedIdentityAuthenticationProvider);
+
         }
 
         /// <summary>
@@ -147,6 +149,8 @@ namespace Microsoft.Data.SqlClient
                     return SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow;
                 case ActiveDirectoryManagedIdentity:
                     return SqlAuthenticationMethod.ActiveDirectoryManagedIdentity;
+                case ActiveDirectoryMSI:
+                    return SqlAuthenticationMethod.ActiveDirectoryMSI;
                 default:
                     throw SQL.UnsupportedAuthentication(authentication);
             }

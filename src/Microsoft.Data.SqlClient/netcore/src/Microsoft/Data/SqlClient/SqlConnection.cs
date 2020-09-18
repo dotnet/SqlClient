@@ -135,25 +135,25 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw ADP.InvalidMixedArgumentOfSecureCredentialAndIntegratedSecurity();
                 }
-
-                if (UsesActiveDirectoryIntegrated(connectionOptions))
+                else if (UsesActiveDirectoryIntegrated(connectionOptions))
                 {
                     throw SQL.SettingCredentialWithIntegratedArgument();
                 }
-
-                if (UsesActiveDirectoryInteractive(connectionOptions))
+                else if (UsesActiveDirectoryInteractive(connectionOptions))
                 {
                     throw SQL.SettingCredentialWithInteractiveArgument();
                 }
-
-                if (UsesActiveDirectoryDeviceCodeFlow(connectionOptions))
+                else if (UsesActiveDirectoryDeviceCodeFlow(connectionOptions))
                 {
                     throw SQL.SettingCredentialWithDeviceFlowArgument();
                 }
-
-                if (UsesActiveDirectoryManagedIdentity(connectionOptions))
+                else if (UsesActiveDirectoryManagedIdentity(connectionOptions))
                 {
-                    throw SQL.SettingCredentialWithManagedIdentityArgument();
+                    throw SQL.SettingCredentialWithManagedIdentityArgument(DbConnectionStringBuilderUtil.ActiveDirectoryManagedIdentityString);
+                }
+                else if (UsesActiveDirectoryMSI(connectionOptions))
+                {
+                    throw SQL.SettingCredentialWithManagedIdentityArgument(DbConnectionStringBuilderUtil.ActiveDirectoryMSIString);
                 }
 
                 Credential = credential;
@@ -402,33 +402,38 @@ namespace Microsoft.Data.SqlClient
 
         private bool UsesActiveDirectoryIntegrated(SqlConnectionString opt)
         {
-            return opt != null ? opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated : false;
+            return opt != null && opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated;
         }
 
         private bool UsesActiveDirectoryInteractive(SqlConnectionString opt)
         {
-            return opt != null ? opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive : false;
+            return opt != null && opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive;
         }
 
         private bool UsesActiveDirectoryDeviceCodeFlow(SqlConnectionString opt)
         {
-            return opt != null ? opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow : false;
+            return opt != null && opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow;
         }
 
         private bool UsesActiveDirectoryManagedIdentity(SqlConnectionString opt)
         {
-            return opt != null ? opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity : false;
+            return opt != null && opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity;
+        }
+
+        private bool UsesActiveDirectoryMSI(SqlConnectionString opt)
+        {
+            return opt != null && opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI;
         }
 
         private bool UsesAuthentication(SqlConnectionString opt)
         {
-            return opt != null ? opt.Authentication != SqlAuthenticationMethod.NotSpecified : false;
+            return opt != null && opt.Authentication != SqlAuthenticationMethod.NotSpecified;
         }
 
         // Does this connection use Integrated Security?
         private bool UsesIntegratedSecurity(SqlConnectionString opt)
         {
-            return opt != null ? opt.IntegratedSecurity : false;
+            return opt != null && opt.IntegratedSecurity;
         }
 
         // Does this connection use old style of clear userID or Password in connection string?
@@ -477,7 +482,7 @@ namespace Microsoft.Data.SqlClient
                     if (_credential != null)
                     {
                         // Check for Credential being used with Authentication=ActiveDirectoryIntegrated | ActiveDirectoryInteractive |
-                        //  ActiveDirectoryDeviceCodeFlow | ActiveDirectoryManagedIdentity. Since a different error string is used
+                        //  ActiveDirectoryDeviceCodeFlow | ActiveDirectoryManagedIdentity/ActiveDirectoryMSI. Since a different error string is used
                         // for this case in ConnectionString setter vs in Credential setter, check for this error case before calling
                         // CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential, which is common to both setters.
                         if (UsesActiveDirectoryIntegrated(connectionOptions))
@@ -494,7 +499,11 @@ namespace Microsoft.Data.SqlClient
                         }
                         else if (UsesActiveDirectoryManagedIdentity(connectionOptions))
                         {
-                            throw SQL.SettingManagedIdentityWithCredential();
+                            throw SQL.SettingManagedIdentityWithCredential(DbConnectionStringBuilderUtil.ActiveDirectoryManagedIdentityString);
+                        }
+                        else if (UsesActiveDirectoryMSI(connectionOptions))
+                        {
+                            throw SQL.SettingManagedIdentityWithCredential(DbConnectionStringBuilderUtil.ActiveDirectoryMSIString);
                         }
 
                         CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential(connectionOptions);
@@ -778,28 +787,33 @@ namespace Microsoft.Data.SqlClient
                 // check if the usage of credential has any conflict with the keys used in connection string
                 if (value != null)
                 {
+                    var connectionOptions = (SqlConnectionString)ConnectionOptions;
                     // Check for Credential being used with Authentication=ActiveDirectoryIntegrated | ActiveDirectoryInteractive |
-                    // ActiveDirectoryDeviceCodeFlow | ActiveDirectoryManagedIdentity. Since a different error string is used
+                    // ActiveDirectoryDeviceCodeFlow | ActiveDirectoryManagedIdentity/ActiveDirectoryMSI. Since a different error string is used
                     // for this case in ConnectionString setter vs in Credential setter, check for this error case before calling
                     // CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential, which is common to both setters.
-                    if (UsesActiveDirectoryIntegrated((SqlConnectionString)ConnectionOptions))
+                    if (UsesActiveDirectoryIntegrated(connectionOptions))
                     {
                         throw SQL.SettingCredentialWithIntegratedInvalid();
                     }
-                    else if (UsesActiveDirectoryInteractive((SqlConnectionString)ConnectionOptions))
+                    else if (UsesActiveDirectoryInteractive(connectionOptions))
                     {
                         throw SQL.SettingCredentialWithInteractiveInvalid();
                     }
-                    else if (UsesActiveDirectoryDeviceCodeFlow((SqlConnectionString)ConnectionOptions))
+                    else if (UsesActiveDirectoryDeviceCodeFlow(connectionOptions))
                     {
                         throw SQL.SettingCredentialWithDeviceFlowInvalid();
                     }
-                    else if (UsesActiveDirectoryManagedIdentity((SqlConnectionString)ConnectionOptions))
+                    else if (UsesActiveDirectoryManagedIdentity(connectionOptions))
                     {
-                        throw SQL.SettingCredentialWithManagedIdentityInvalid();
+                        throw SQL.SettingCredentialWithManagedIdentityInvalid(DbConnectionStringBuilderUtil.ActiveDirectoryManagedIdentityString);
+                    }
+                    else if (UsesActiveDirectoryMSI(connectionOptions))
+                    {
+                        throw SQL.SettingCredentialWithManagedIdentityInvalid(DbConnectionStringBuilderUtil.ActiveDirectoryMSIString);
                     }
 
-                    CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential((SqlConnectionString)ConnectionOptions);
+                    CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential(connectionOptions);
                     if (_accessToken != null)
                     {
                         throw ADP.InvalidMixedUsageOfCredentialAndAccessToken();

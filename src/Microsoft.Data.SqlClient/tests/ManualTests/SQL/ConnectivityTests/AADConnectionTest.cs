@@ -355,6 +355,76 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Contains(expectedMessage, e.Message);
         }
 
+        [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        public static void ActiveDirectoryManagedIdentityWithCredentialsMustFail()
+        {
+            // connection fails with expected error message.
+            string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
+            string connStrWithNoCred = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +
+                "Authentication=Active Directory Managed Identity;";
+
+            SecureString str = new SecureString();
+            foreach (char c in "hello")
+            {
+                str.AppendChar(c);
+            }
+            str.MakeReadOnly();
+            SqlCredential credential = new SqlCredential("someuser", str);
+            InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => ConnectAndDisconnect(connStrWithNoCred, credential));
+
+            string expectedMessage = "Cannot set the Credential property if 'Authentication=Active Directory Managed Identity' has been specified in the connection string.";
+            Assert.Contains(expectedMessage, e.Message);
+        }
+
+        [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        public static void ActiveDirectoryManagedIdentityWithPasswordMustFail()
+        {
+            // connection fails with expected error message.
+            string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
+            string connStrWithNoCred = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +
+                "Authentication=Active Directory Managed Identity; Password=anything";
+
+            InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => ConnectAndDisconnect(connStrWithNoCred));
+
+            string expectedMessage = "Cannot use 'Authentication=Active Directory Managed Identity' with 'Password' or 'PWD' connection string keywords.";
+            Assert.Contains(expectedMessage, e.Message);
+        }
+
+        [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        public static void ActiveDirectoryMSIWithCredentialsMustFail()
+        {
+            // connection fails with expected error message.
+            string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
+            string connStrWithNoCred = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +
+                "Authentication=Active Directory MSI;";
+
+            SecureString str = new SecureString();
+            foreach (char c in "hello")
+            {
+                str.AppendChar(c);
+            }
+            str.MakeReadOnly();
+            SqlCredential credential = new SqlCredential("someuser", str);
+            InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => ConnectAndDisconnect(connStrWithNoCred, credential));
+
+            string expectedMessage = "Cannot set the Credential property if 'Authentication=Active Directory MSI' has been specified in the connection string.";
+            Assert.Contains(expectedMessage, e.Message);
+        }
+
+        [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        public static void ActiveDirectoryMSIWithPasswordMustFail()
+        {
+            // connection fails with expected error message.
+            string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
+            string connStrWithNoCred = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +
+                "Authentication=ActiveDirectoryMSI; Password=anything";
+
+            InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => ConnectAndDisconnect(connStrWithNoCred));
+
+            string expectedMessage = "Cannot use 'Authentication=Active Directory MSI' with 'Password' or 'PWD' connection string keywords.";
+            Assert.Contains(expectedMessage, e.Message);
+        }
+
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsIntegratedSecuritySetup), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ADInteractiveUsingSSPI()
         {

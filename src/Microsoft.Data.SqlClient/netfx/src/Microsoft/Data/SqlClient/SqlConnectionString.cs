@@ -568,9 +568,14 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.DeviceFlowWithUsernamePassword();
             }
 
-            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity && (HasPasswordKeyword))
+            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity && HasPasswordKeyword)
             {
-                throw SQL.ManagedIdentityWithPassword();
+                throw SQL.ManagedIdentityWithPassword(DbConnectionStringBuilderUtil.ActiveDirectoryManagedIdentityString);
+            }
+
+            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI && HasPasswordKeyword)
+            {
+                throw SQL.ManagedIdentityWithPassword(DbConnectionStringBuilderUtil.ActiveDirectoryMSIString);
             }
 
 #if ADONET_CERT_AUTH

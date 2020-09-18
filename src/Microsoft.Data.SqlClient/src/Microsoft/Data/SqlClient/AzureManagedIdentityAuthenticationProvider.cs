@@ -41,7 +41,7 @@ namespace Microsoft.Data.SqlClient
         // Configurable timeout for MSI retry logic
         internal readonly int _retryTimeoutInSeconds = DefaultRetryTimeout;
         internal readonly int _maxRetryCount = DefaultMaxRetryCount;
-        
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/AzureManagedIdentityAuthenticationProvider.xml' path='docs/members[@name="AzureManagedIdentityAuthenticationProvider"]/ctor/*'/>
         public AzureManagedIdentityAuthenticationProvider(int retryTimeoutInSeconds = DefaultRetryTimeout, int maxRetryCount = DefaultMaxRetryCount, HttpClient httpClient = null)
         {
@@ -163,7 +163,8 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/AzureManagedIdentityAuthenticationProvider.xml' path='docs/members[@name="AzureManagedIdentityAuthenticationProvider"]/IsSupported/*'/>
         public override bool IsSupported(SqlAuthenticationMethod authentication)
         {
-            return authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity;
+            return authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
+                || authentication == SqlAuthenticationMethod.ActiveDirectoryMSI;
         }
     }
 
