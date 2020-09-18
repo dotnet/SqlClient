@@ -384,7 +384,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string connStrWithNoCred = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +
                 "Authentication=Active Directory Managed Identity; Password=anything";
 
-            InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => ConnectAndDisconnect(connStrWithNoCred));
+            ArgumentException e = Assert.Throws<ArgumentException>(() => ConnectAndDisconnect(connStrWithNoCred));
 
             string expectedMessage = "Cannot use 'Authentication=Active Directory Managed Identity' with 'Password' or 'PWD' connection string keywords.";
             Assert.Contains(expectedMessage, e.Message);
@@ -419,7 +419,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string connStrWithNoCred = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +
                 "Authentication=ActiveDirectoryMSI; Password=anything";
 
-            InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => ConnectAndDisconnect(connStrWithNoCred));
+            ArgumentException e = Assert.Throws<ArgumentException>(() => ConnectAndDisconnect(connStrWithNoCred));
 
             string expectedMessage = "Cannot use 'Authentication=Active Directory MSI' with 'Password' or 'PWD' connection string keywords.";
             Assert.Contains(expectedMessage, e.Message);

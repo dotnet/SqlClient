@@ -335,7 +335,7 @@ namespace Microsoft.Data.SqlClient
         }
         static internal Exception ManagedIdentityWithPassword(string authenticationMode)
         {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ManagedIdentityWithPassword, authenticationMode));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_ManagedIdentityWithPassword, authenticationMode));
         }
         static internal Exception SettingIntegratedWithCredential()
         {
