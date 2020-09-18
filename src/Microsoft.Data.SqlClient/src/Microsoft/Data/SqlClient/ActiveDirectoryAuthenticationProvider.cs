@@ -3,16 +3,12 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 using System.Security;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Identity.Client;
 using Microsoft.Identity.Client.Extensibility;
-using static Microsoft.Data.SqlClient.ActiveDirectoryAuthentication;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -96,11 +92,11 @@ namespace Microsoft.Data.SqlClient
                 return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
             }
 
-            /*
+            /* 
              * Today, MSAL.NET uses another redirect URI by default in desktop applications that run on Windows
              * (urn:ietf:wg:oauth:2.0:oob). In the future, we'll want to change this default, so we recommend
              * that you use https://login.microsoftonline.com/common/oauth2/nativeclient.
-             *
+             * 
              * https://docs.microsoft.com/en-us/azure/active-directory/develop/scenario-desktop-app-registration#redirect-uris
              */
             string redirectURI = "https://login.microsoftonline.com/common/oauth2/nativeclient";
@@ -116,7 +112,7 @@ namespace Microsoft.Data.SqlClient
 #if netstandard
             if (parentActivityOrWindowFunc != null)
             {
-                app = PublicClientApplicationBuilder.Create(AdoClientId)
+                app = PublicClientApplicationBuilder.Create(ActiveDirectoryAuthentication.AdoClientId)
                 .WithAuthority(parameters.Authority)
                 .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
                 .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
@@ -128,7 +124,7 @@ namespace Microsoft.Data.SqlClient
 #if netfx
             if (_iWin32WindowFunc != null)
             {
-                app = PublicClientApplicationBuilder.Create(AdoClientId)
+                app = PublicClientApplicationBuilder.Create(ActiveDirectoryAuthentication.AdoClientId)
                 .WithAuthority(parameters.Authority)
                 .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
                 .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
@@ -141,7 +137,7 @@ namespace Microsoft.Data.SqlClient
             else
 #endif
             {
-                app = PublicClientApplicationBuilder.Create(AdoClientId)
+                app = PublicClientApplicationBuilder.Create(ActiveDirectoryAuthentication.AdoClientId)
                 .WithAuthority(parameters.Authority)
                 .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
                 .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
@@ -164,7 +160,6 @@ namespace Microsoft.Data.SqlClient
                         .WithCorrelationId(parameters.ConnectionId)
                         .ExecuteAsync().Result;
                 }
-                return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
             }
             else if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryPassword)
             {
@@ -175,7 +170,6 @@ namespace Microsoft.Data.SqlClient
                 result = app.AcquireTokenByUsernamePassword(scopes, parameters.UserId, password)
                     .WithCorrelationId(parameters.ConnectionId)
                     .ExecuteAsync().Result;
-                return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
             }
             else if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive ||
                      parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
@@ -206,14 +200,15 @@ namespace Microsoft.Data.SqlClient
                 {
                     result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod);
                 }
-                return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
-
             }
             else
             {
                 throw SQL.UnsupportedAuthenticationSpecified(parameters.AuthenticationMethod);
             }
+
+            return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
         });
+
 
         private async Task<AuthenticationResult> AcquireTokenInteractiveDeviceFlowAsync(IPublicClientApplication app, string[] scopes, Guid connectionId, string userId,
             SqlAuthenticationMethod authenticationMethod)
@@ -226,7 +221,7 @@ namespace Microsoft.Data.SqlClient
              * MSAL cannot detect if the user navigates away or simply closes the browser. Apps using this technique are encouraged
              * to define a timeout (via CancellationToken). We recommend a timeout of at least a few minutes, to take into account
              * cases where the user is prompted to change password or perform 2FA.
-             *
+             * 
              * https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/wiki/System-Browser-on-.Net-Core#system-browser-experience
              */
             cts.CancelAfter(180000);
@@ -247,7 +242,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         /*
                          * We will use the MSAL Embedded or System web browser which changes by Default in MSAL according to this table:
-                         *
+                         * 
                          * Framework        Embedded  System  Default
                          * -------------------------------------------
                          * .NET Classic     Yes       Yes^    Embedded
@@ -257,9 +252,9 @@ namespace Microsoft.Data.SqlClient
                          * Xamarin.Android  Yes       Yes     System
                          * Xamarin.iOS      Yes       Yes     System
                          * Xamarin.Mac      Yes       No      Embedded
-                         *
+                         * 
                          * ^ Requires "http://localhost" redirect URI
-                         *
+                         * 
                          * https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/wiki/MSAL.NET-uses-web-browser#at-a-glance
                          */
                         return await app.AcquireTokenInteractive(scopes)
@@ -285,11 +280,11 @@ namespace Microsoft.Data.SqlClient
 
         private Task DefaultDeviceFlowCallback(DeviceCodeResult result)
         {
-            // This will print the message on the console which tells the user where to go sign-in using
+            // This will print the message on the console which tells the user where to go sign-in using 
             // a separate browser and the code to enter once they sign in.
             // The AcquireTokenWithDeviceCode() method will poll the server after firing this
             // device code callback to look for the successful login of the user via that browser.
-            // This background polling (whose interval and timeout data is also provided as fields in the
+            // This background polling (whose interval and timeout data is also provided as fields in the 
             // deviceCodeCallback class) will occur until:
             // * The user has successfully logged in via browser and entered the proper code
             // * The timeout specified by the server for the lifetime of this code (typically ~15 minutes) has been reached
