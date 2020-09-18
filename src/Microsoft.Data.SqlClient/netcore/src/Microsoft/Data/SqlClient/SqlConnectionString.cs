@@ -549,6 +549,7 @@ namespace Microsoft.Data.SqlClient
             _enclaveAttestationUrl = connectionOptions._enclaveAttestationUrl;
             _attestationProtocol = connectionOptions._attestationProtocol;
 
+            _hasPersistablePassword = connectionOptions._hasPersistablePassword;
             HasPasswordKeyword = connectionOptions.HasPasswordKeyword;
             HasUserIdKeyword = connectionOptions.HasUserIdKeyword;
             _keyChain = connectionOptions._keyChain;
@@ -563,6 +564,7 @@ namespace Microsoft.Data.SqlClient
                 HasPasswordKeyword = sqlConnectionOptions.HasPasswordKeyword;
                 HasUserIdKeyword = sqlConnectionOptions.HasUserIdKeyword;
                 _keyChain = sqlConnectionOptions._keyChain;
+                _hasPersistablePassword = sqlConnectionOptions._hasPersistablePassword;
             }
         }
 
