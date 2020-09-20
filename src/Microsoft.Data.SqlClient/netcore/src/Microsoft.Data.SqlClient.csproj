@@ -222,6 +222,27 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SQLFallbackDNSCache.cs">
       <Link>Microsoft\Data\SqlClient\SQLFallbackDNSCache.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\OperationAbortedException.cs">
+      <Link>Microsoft\Data\OperationAbortedException.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\DataException.cs">
+      <Link>Microsoft\Data\DataException.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\InvalidUdtException.cs">
+      <Link>Microsoft\Data\SqlClient\Server\InvalidUdtException.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\AlwaysEncryptedAttestationException.cs">
+      <Link>Microsoft\Data\SqlClient\AlwaysEncryptedAttestationException.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\EnclaveProviderBase.cs">
+      <Link>Microsoft\Data\SqlClient\EnclaveProviderBase.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\EnclaveSessionCache.cs">
+      <Link>Microsoft\Data\SqlClient\EnclaveSessionCache.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SignatureVerificationCache.cs">
+      <Link>Microsoft\Data\SqlClient\SignatureVerificationCache.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netstandard' OR '$(TargetGroup)' == 'netcoreapp' OR '$(IsUAPAssembly)' == 'true'">
     <Compile Include="Microsoft.Data.SqlClient.TypeForwards.cs" />
@@ -242,10 +263,7 @@
     <Compile Include="Microsoft\Data\SqlClient\AzureAttestationBasedEnclaveProvider.cs" />
     <Compile Include="Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProvider.cs" />
     <Compile Include="Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProviderBase.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\AlwaysEncryptedAttestationException.cs" />
     <Compile Include="Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\EnclaveProviderBase.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\EnclaveSessionCache.cs" />
 	</ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netcoreapp'">
     <Compile Include="Microsoft\Data\Common\DbConnectionStringCommon.NetCoreApp.cs" />
@@ -272,8 +290,6 @@
     <Compile Include="Microsoft\Data\SqlClient\Server\SqlDataRecord.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SqlRecordBuffer.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\ValueUtilsSmi.cs" />
-    <Compile Include="Microsoft\Data\DataException.cs" />
-    <Compile Include="Microsoft\Data\OperationAbortedException.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDbColumn.cs" />
     <Compile Include="$(CommonPath)\Microsoft\Data\Common\AdapterUtil.cs">
       <Link>Microsoft\Data\Common\AdapterUtil.cs</Link>
@@ -329,7 +345,6 @@
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPool.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\Server\InvalidUdtException.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SqlMetaData.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SqlNorm.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SqlSer.cs" />
@@ -420,7 +435,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlCredential.cs" />
     <Compile Include="Microsoft\Data\SqlClient\AlwaysEncryptedHelperClasses.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlSecurityUtility.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SignatureVerificationCache.cs" />
     <Compile Include="Microsoft\Data\SqlClient\EnclavePackage.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlEnclaveSession.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlQueryMetadataCache.cs" />
