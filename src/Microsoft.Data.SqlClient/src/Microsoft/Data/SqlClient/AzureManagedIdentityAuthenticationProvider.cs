@@ -168,6 +168,7 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
+    #region IMDS Retry Helper
     internal static class SqlManagedIdentityRetryHelper
     {
         internal const int DeltaBackOffInSeconds = 2;
@@ -246,4 +247,5 @@ namespace Microsoft.Data.SqlClient
             }
         }
     }
+    #endregion
 }
