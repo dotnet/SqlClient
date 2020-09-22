@@ -491,6 +491,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ConnectAndDisconnect(connStr);
         }
 
+        [ActiveIssue(1)] // Temporary disabling test for further investigation.
         [ConditionalFact(nameof(IsAADConnStringsSetup), nameof(IsManagedIdentitySetup))]
         public static void AccessToken_SystemManagedIdentityTest()
         {
