@@ -25,6 +25,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        private static bool AreConnStringsSetup() => DataTestUtility.AreConnStringsSetup();
         private static bool IsAzure() => !DataTestUtility.IsNotAzureServer();
         private static bool IsAccessTokenSetup() => DataTestUtility.IsAccessTokenSetup();
         private static bool IsAADConnStringsSetup() => DataTestUtility.IsAADPasswordConnStrSetup();
@@ -518,7 +519,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(nameof(DataTestUtility.AreConnStringsSetup), nameof(IsAzure))]
+        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsAzure))]
         public static void Azure_SystemManagedIdentityTest()
         {
             string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD", "Trusted_Connection", "Integrated Security" };
@@ -533,7 +534,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(nameof(DataTestUtility.AreConnStringsSetup), nameof(IsAzure))]
+        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsAzure))]
         public static void Azure_UserManagedIdentityTest()
         {
             string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD", "Trusted_Connection", "Integrated Security" };
@@ -548,7 +549,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(nameof(DataTestUtility.AreConnStringsSetup), nameof(IsAzure))]
+        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsAzure))]
         public static void Azure_AccessToken_SystemManagedIdentityTest()
         {
             string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD", "Trusted_Connection", "Integrated Security" };
@@ -562,7 +563,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(nameof(DataTestUtility.AreConnStringsSetup), nameof(IsAzure))]
+        [ConditionalFact(nameof(AreConnStringsSetup), nameof(IsAzure))]
         public static void Azure_AccessToken_UserManagedIdentityTest()
         {
             string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD", "Trusted_Connection", "Integrated Security" };
