@@ -44,7 +44,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private const string AzureVmImdsApiVersion = "&api-version=2018-02-01";
         private const string AccessToken = "access_token";
-        private const string Resource = "https://database.windows.net";
+        private const string Resource = "https://database.windows.net/";
 
 
         private const int DefaultRetryTimeout = 0;
