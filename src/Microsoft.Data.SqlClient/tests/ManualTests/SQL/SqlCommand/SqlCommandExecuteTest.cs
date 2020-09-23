@@ -60,16 +60,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static async Task ExecuteReaderAsync(string connectionString, CancellationToken token)
         {
             using (var connection = new SqlConnection(connectionString))
+            using (var cmd = GetCommand(connection))
+            using (var r = await cmd.ExecuteReaderAsync(token))
             {
-                using (var cmd = GetCommand(connection))
+                while (await r.ReadAsync(token))
                 {
-                    var r = await cmd.ExecuteReaderAsync(token);
-                    while (await r.ReadAsync(token))
-                    {
-                        await r.GetFieldValueAsync<string>(0);
-                        await r.GetFieldValueAsync<string>(1);
-                        await r.GetFieldValueAsync<string>(2);
-                    }
+                    await r.GetFieldValueAsync<string>(0);
+                    await r.GetFieldValueAsync<string>(1);
+                    await r.GetFieldValueAsync<string>(2);
                 }
             }
         }
