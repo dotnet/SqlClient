@@ -93,7 +93,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
 
                 _sslOverTdsStream = new SslOverTdsStream(_pipeStream);
-                _sslStream = new SslStreamProxy(_sslOverTdsStream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate), null);
+                _sslStream = new SslStreamProxy(_sslOverTdsStream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate));
 
                 _stream = _pipeStream;
                 _status = TdsEnums.SNI_SUCCESS;
