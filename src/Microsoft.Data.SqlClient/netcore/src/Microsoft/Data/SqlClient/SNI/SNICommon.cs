@@ -106,27 +106,9 @@ namespace Microsoft.Data.SqlClient.SNI
     {
         private Task _currentTask;
 
-        #region constructors
-        public SslStreamProxy(Stream innerStream) : base(innerStream)
-        {
-        }
-
-        public SslStreamProxy(Stream innerStream, bool leaveInnerStreamOpen) : base(innerStream, leaveInnerStreamOpen)
-        {
-        }
-
-        public SslStreamProxy(Stream innerStream, bool leaveInnerStreamOpen, RemoteCertificateValidationCallback userCertificateValidationCallback) : base(innerStream, leaveInnerStreamOpen, userCertificateValidationCallback)
-        {
-        }
-
-        public SslStreamProxy(Stream innerStream, bool leaveInnerStreamOpen, RemoteCertificateValidationCallback userCertificateValidationCallback, LocalCertificateSelectionCallback userCertificateSelectionCallback) : base(innerStream, leaveInnerStreamOpen, userCertificateValidationCallback, userCertificateSelectionCallback)
-        {
-        }
-
-        public SslStreamProxy(Stream innerStream, bool leaveInnerStreamOpen, RemoteCertificateValidationCallback userCertificateValidationCallback, LocalCertificateSelectionCallback userCertificateSelectionCallback, EncryptionPolicy encryptionPolicy) : base(innerStream, leaveInnerStreamOpen, userCertificateValidationCallback, userCertificateSelectionCallback, encryptionPolicy)
-        {
-        }
-        #endregion
+        public SslStreamProxy(Stream innerStream, bool leaveInnerStreamOpen, RemoteCertificateValidationCallback userCertificateValidationCallback) 
+            : base(innerStream, leaveInnerStreamOpen, userCertificateValidationCallback)
+        { }
 
         // Prevent the WriteAsync's collision
         public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
