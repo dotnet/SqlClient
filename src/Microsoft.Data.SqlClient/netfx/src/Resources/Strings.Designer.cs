@@ -9091,15 +9091,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Failed to fetch application client id with type &apos;{0}&apos;..
-        /// </summary>
-        internal static string SQL_CannotFetchApplicationClientId {
-            get {
-                return ResourceManager.GetString("SQL_CannotFetchApplicationClientId", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Cannot find an authentication provider for &apos;{0}&apos;..
         /// </summary>
         internal static string SQL_CannotFindAuthProvider {

@@ -61,15 +61,7 @@ namespace Microsoft.Data.SqlClient
 
             if (!string.IsNullOrEmpty(configSection.ApplicationClientId))
             {
-                try
-                {
-                    _applicationClientId = configSection.ApplicationClientId;
-                }
-                catch (Exception e)
-                {
-                    throw SQL.CannotFetchApplicationClientId(configSection.ApplicationClientId, e);
-                }
-
+                _applicationClientId = configSection.ApplicationClientId;
                 _sqlAuthLogger.LogInfo(_typeName, methodName, "Received user-defined Application Client Id");
             }
             else

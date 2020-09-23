@@ -11,7 +11,7 @@
       </summary>
     </ctor>
     <ctor2>
-      <param name="applicationClientId">Client Application Id to be used for acquiring access token for federated authentication. The driver uses it's own application client id by default.</param>
+      <param name="applicationClientId">Client Application Id to be used for acquiring access token for federated authentication. The driver uses its own application client id by default.</param>
       <summary>
         Initializes the <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider" /> class with the provided application client id.
       </summary>
@@ -30,7 +30,7 @@
     </ctor2>
     <ctor3>
       <param name="deviceCodeFlowCallbackMethod">The callback method to be used when performing 'Active Directory Device Code Flow' authentication.</param>
-      <param name="applicationClientId">(Optional) Client Application Id to be used for acquiring access token for federated authentication. The driver uses it's own application client id by default.</param>
+      <param name="applicationClientId">(Optional) Client Application Id to be used for acquiring access token for federated authentication. The driver uses its own application client id by default.</param>
       <summary>
         Initializes the <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider" /> class with the provided device code flow callback method and application client id.
       </summary>
