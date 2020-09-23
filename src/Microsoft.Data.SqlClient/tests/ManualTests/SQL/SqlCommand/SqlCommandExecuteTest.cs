@@ -77,11 +77,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static async Task ExecuteScalarAsync(string connectionString, CancellationToken token)
         {
             using (var connection = new SqlConnection(connectionString))
+            using (var cmd = GetCommand(connection))
             {
-                using (var cmd = GetCommand(connection))
-                {
-                    await cmd.ExecuteScalarAsync(token);
-                }
+                await cmd.ExecuteScalarAsync(token);
             }
         }
 
