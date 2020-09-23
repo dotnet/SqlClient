@@ -84,23 +84,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static async Task ExecuteNonQueryAsync(string connectionString, CancellationToken token)
         {
             using (var connection = new SqlConnection(connectionString))
+            using (var cmd = GetCommand(connection))
             {
-                using (var cmd = GetCommand(connection))
-                {
-                    await cmd.ExecuteNonQueryAsync(token);
-                }
+                await cmd.ExecuteNonQueryAsync(token);
             }
         }
 
         private static async Task ExecuteXmlReaderAsync(string connectionString, CancellationToken token)
         {
             using (var connection = new SqlConnection(connectionString))
+            using (var cmd = GetCommand(connection))
             {
-                using (var cmd = GetCommand(connection))
-                {
-                    cmd.CommandText += " FOR XML AUTO, XMLDATA";
-                    var r = await cmd.ExecuteXmlReaderAsync(token);
-                }
+                cmd.CommandText += " FOR XML AUTO, XMLDATA";
+                var r = await cmd.ExecuteXmlReaderAsync(token);
             }
         }
 
@@ -111,11 +107,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 + string.Concat(Enumerable.Repeat(aRecord, 200)).Substring(0, (aRecord.Length * 200) - 1)
                 + ") tbl_A ([Id], [Name], [State])";
             cnn.Open();
-            using (var cmd = cnn.CreateCommand())
-            {
-                cmd.CommandText = query;
-                return cmd;
-            }
+            var cmd = cnn.CreateCommand();
+            cmd.CommandText = query;
+            return cmd;
         }
         #endregion
 
