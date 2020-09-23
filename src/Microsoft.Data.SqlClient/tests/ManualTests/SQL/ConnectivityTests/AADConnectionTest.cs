@@ -29,7 +29,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static bool IsAzure() => !DataTestUtility.IsNotAzureServer();
         private static bool IsAccessTokenSetup() => DataTestUtility.IsAccessTokenSetup();
         private static bool IsAADConnStringsSetup() => DataTestUtility.IsAADPasswordConnStrSetup();
-        private static bool IsManagedIdentitySetup() => DataTestUtility.ManagedIdentity;
+        private static bool IsManagedIdentitySetup() => DataTestUtility.ManagedIdentitySupported;
 
         [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup))]
         public static void AccessTokenTest()
@@ -491,7 +491,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ConnectAndDisconnect(connStr);
         }
 
-        [ActiveIssue(1)] // Temporary disabling test for further investigation.
         [ConditionalFact(nameof(IsAADConnStringsSetup), nameof(IsManagedIdentitySetup))]
         public static void AccessToken_SystemManagedIdentityTest()
         {

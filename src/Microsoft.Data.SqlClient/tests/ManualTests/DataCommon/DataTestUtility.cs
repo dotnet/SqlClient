@@ -50,7 +50,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string UserManagedIdentityObjectId = null;
 
         public static readonly string EnclaveAzureDatabaseConnString = null;
-        public static bool ManagedIdentity = true;
+        public static bool ManagedIdentitySupported = true;
         public static string AADAccessToken = null;
         public static string AADSystemIdentityAccessToken = null;
         public static string AADUserIdentityAccessToken = null;
@@ -410,12 +410,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static string GetSystemIdentityAccessToken()
         {
-            if (true == ManagedIdentity && null == AADSystemIdentityAccessToken && IsAADPasswordConnStrSetup())
+            if (true == ManagedIdentitySupported && null == AADSystemIdentityAccessToken && IsAADPasswordConnStrSetup())
             {
-                AADSystemIdentityAccessToken = AADUtility.GetManagedIdentityToken(null).GetAwaiter().GetResult();
+                AADSystemIdentityAccessToken = AADUtility.GetManagedIdentityToken().GetAwaiter().GetResult();
                 if (AADSystemIdentityAccessToken == null)
                 {
-                    ManagedIdentity = false;
+                    ManagedIdentitySupported = false;
                 }
             }
             return (null != AADSystemIdentityAccessToken) ? new string(AADSystemIdentityAccessToken.ToCharArray()) : null;
@@ -423,13 +423,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static string GetUserIdentityAccessToken()
         {
-            if (true == ManagedIdentity && null == AADUserIdentityAccessToken && IsAADPasswordConnStrSetup())
+            if (true == ManagedIdentitySupported && null == AADUserIdentityAccessToken && IsAADPasswordConnStrSetup())
             {
                 // Pass User Assigned Managed Identity Object Id here.
                 AADUserIdentityAccessToken = AADUtility.GetManagedIdentityToken(UserManagedIdentityObjectId).GetAwaiter().GetResult();
-                if (AADSystemIdentityAccessToken == null)
+                if (AADUserIdentityAccessToken == null)
                 {
-                    ManagedIdentity = false;
+                    ManagedIdentitySupported = false;
                 }
             }
             return (null != AADUserIdentityAccessToken) ? new string(AADUserIdentityAccessToken.ToCharArray()) : null;

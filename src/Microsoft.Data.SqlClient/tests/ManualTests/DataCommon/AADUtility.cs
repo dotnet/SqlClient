@@ -27,7 +27,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return result.AccessToken;
         }
 
-        public static async Task<string> GetManagedIdentityToken(string objectId) =>
+        public static async Task<string> GetManagedIdentityToken(string objectId = null) =>
             await new MockManagedIdentityTokenProvider().AcquireTokenAsync(objectId).ConfigureAwait(false);
 
     }
@@ -69,7 +69,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             try
             {
                 // If user assigned managed identity is specified, include object ID parameter in request
-                string objectIdParameter = objectId != default
+                string objectIdParameter = objectId != null
                     ? $"&object_id={objectId}"
                     : string.Empty;
 
