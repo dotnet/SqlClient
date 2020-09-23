@@ -226,7 +226,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 _tcpStream = new NetworkStream(_socket, true);
 
                 _sslOverTdsStream = new SslOverTdsStream(_tcpStream);
-                _sslStream = new SslStreamProxy(_sslOverTdsStream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate), null);
+                _sslStream = new SslStreamProxy(_sslOverTdsStream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate));
             }
             catch (SocketException se)
             {
