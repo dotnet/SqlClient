@@ -432,6 +432,11 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_CannotCreateAuthInitializer, type), e);
         }
+        
+        static internal Exception CannotFetchApplicationClientId(string type, Exception e)
+        {
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_CannotFetchApplicationClientId, type), e);
+        }
 
         internal static Exception CannotInitializeAuthProvider(string type, Exception e)
         {
