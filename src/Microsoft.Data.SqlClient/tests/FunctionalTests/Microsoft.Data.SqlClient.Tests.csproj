@@ -50,7 +50,6 @@
     <Compile Include="SqlMetaDataTest.cs" />
     <Compile Include="SqlConnectionStringBuilderTest.cs" />
     <Compile Include="SerializeSqlTypesTest.cs" />
-    <Compile Include="GenericConverterTests.cs" />
     <Compile Include="TestTdsServer.cs" />
   </ItemGroup>
   <ItemGroup>
