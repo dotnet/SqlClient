@@ -432,7 +432,7 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_CannotCreateAuthInitializer, type), e);
         }
-        
+
         internal static Exception CannotInitializeAuthProvider(string type, Exception e)
         {
             return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_CannotInitializeAuthProvider, type), e);
@@ -903,11 +903,11 @@ namespace Microsoft.Data.SqlClient
         internal static Exception BulkLoadInvalidOrderHint()
         {
             return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_BulkLoadInvalidOrderHint));
-        }   
+        }
         internal static Exception BulkLoadOrderHintInvalidColumn(string columnName)
         {
             return ADP.InvalidOperation(string.Format(System.StringsHelper.GetString(Strings.SQL_BulkLoadOrderHintInvalidColumn), columnName));
-        }      
+        }
         internal static Exception BulkLoadOrderHintDuplicateColumn(string columnName)
         {
             return ADP.InvalidOperation(string.Format(System.StringsHelper.GetString(Strings.SQL_BulkLoadOrderHintDuplicateColumn), columnName));
