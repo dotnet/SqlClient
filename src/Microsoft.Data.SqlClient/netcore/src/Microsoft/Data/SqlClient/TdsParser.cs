@@ -2907,7 +2907,7 @@ namespace Microsoft.Data.SqlClient
             int count;
 
             // This is added back since removing it from here introduces regressions in Managed SNI.
-            // It forces SqlDataReader.ReadAsync() method to run synchronously, 
+            // It forces SqlDataReader.ReadAsync() method to run synchronously,
             // and will block the calling thread until data is fed from SQL Server.
             // TODO Investigate better solution to support non-blocking ReadAsync().
             stateObj._syncOverAsync = true;
@@ -6629,8 +6629,8 @@ namespace Microsoft.Data.SqlClient
                     {
                         stateObj.WriteByte(mt.Precision); //propbytes: precision
                         stateObj.WriteByte((byte)((decimal.GetBits((decimal)value)[3] & 0x00ff0000) >> 0x10)); // propbytes: scale
-                        var d = (decimal)value;
-                        WriteDecimal(d, stateObj);
+                        WriteDecimal((decimal)value, stateObj);
+                        WriteDecimal((decimal)value, stateObj);
                         break;
                     }
 

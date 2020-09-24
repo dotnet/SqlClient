@@ -7,6 +7,12 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Linq.Expressions;
+using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Configs;
+using BenchmarkDotNet.Diagnosers;
+using BenchmarkDotNet.Jobs;
+using BenchmarkDotNet.Running;
+using BenchmarkDotNet.Validators;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -57,34 +63,43 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        private class RunOnceConfig : ManualConfig
+        {
+            public RunOnceConfig()
+            {
+                Add(Job.InProcess.WithLaunchCount(1).WithIterationCount(1).WithWarmupCount(0));
+                Add(MemoryDiagnoser.Default);
+
+                Add(JitOptimizationsValidator.DontFailOnError);
+            }
+        }
+
+        #if DEBUG
+           //return;
+#endif
+
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void Should_Not_Box()
-        { // in debug mode, the double boxing DOES occur, which causes this test to fail (does the JIT "do" less in debug?)
-#if DEBUG
-            return;
-#endif
-            // cannot figure out an easy way to get this to work on all platforms
+        { // in debug mode, the double boxing DOES occur as the JIT optimizes less code
 
-            //var config = ManualConfig.Create(DefaultConfig.Instance)
-            //    .WithOptions(ConfigOptions.DisableOptimizationsValidator)
-            //    .AddJob(Job.InProcess.WithLaunchCount(1).WithInvocationCount(1).WithIterationCount(1).WithWarmupCount(0).WithStrategy(RunStrategy.ColdStart))
-            //    .AddDiagnoser(MemoryDiagnoser.Default)
-            //;
+            //cannot figure out an easy way to get this to work on all platforms
 
-            //var summary = BenchmarkRunner.Run<NoBoxingValueTypesBenchmark>(config);
+            var config = new RunOnceConfig(); // cannot use fluent syntax to still support net461
 
-            //var numValueTypeColumns = 2;
-            //var totalBytesWhenBoxed = IntPtr.Size * _count * numValueTypeColumns;
+            var summary = BenchmarkRunner.Run<NoBoxingValueTypesBenchmark>(config);
 
-            //var report = summary.Reports.First();
+            var numValueTypeColumns = 2;
+            var totalBytesWhenBoxed = IntPtr.Size * _count * numValueTypeColumns;
 
-            //Assert.Equal(1, report.AllMeasurements.Count);
-            //Assert.True(report.GcStats.BytesAllocatedPerOperation < totalBytesWhenBoxed);
+            var report = summary.Reports.First();
+
+            Assert.Equal(1, report.AllMeasurements.Count);
+            Assert.True(report.GcStats.BytesAllocatedPerOperation < totalBytesWhenBoxed);
         }
 
         public class NoBoxingValueTypesBenchmark
         {
-            // [Benchmark]
+            [Benchmark]
             public void BulkCopy()
             {
                 _reader.Close(); // this resets the reader

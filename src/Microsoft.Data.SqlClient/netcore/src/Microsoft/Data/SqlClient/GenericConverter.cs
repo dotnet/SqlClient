@@ -4,9 +4,14 @@
 
 namespace Microsoft.Data.SqlClient
 {
+    /// <summary>
+    /// Serves to convert generic to out type by casting to object first.  Relies on JIT to optimize out unneccessary casts and prevent double boxing. 
+    /// </summary>
     internal static class GenericConverter
     {
-        // This leverages the same assumptions in SqlBuffer that the JIT will optimize out the boxing / unboxing when TIn == TOut
-        public static TOut Convert<TIn, TOut>(TIn value) => (TOut)(object)value;
+        public static TOut Convert<TIn, TOut>(TIn value)
+        {
+            return (TOut)(object)value;
+        }
     }
 }

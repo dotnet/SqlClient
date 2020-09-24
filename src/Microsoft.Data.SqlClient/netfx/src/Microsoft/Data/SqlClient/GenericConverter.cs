@@ -2,39 +2,15 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
-using System.Linq.Expressions;
-
 namespace Microsoft.Data.SqlClient
 {
+    // This leverages the same assumptions in SqlBuffer that the JIT will optimize out the boxing / unboxing when TIn == TOut
+    // This behavior is proven out in the NoBoxingValueTypes BulkCopy unit test that benchmarks and measures the allocations
     internal static class GenericConverter
     {
         public static TOut Convert<TIn, TOut>(TIn value)
         {
-            return GenericConverterHelper<TIn, TOut>.Convert(value);
-        }
-
-        /// <summary>
-        /// Note: this file is inherently different because the .NET Core JIT can leverage some better "smarts" to optimize out unnecessary casts
-        /// </summary>
-        private static class GenericConverterHelper<TIn, TOut>
-        {
-            /// <summary>
-            /// Converts the value to the TOut type
-            /// </summary>
-            public static readonly Func<TIn, TOut> Convert;
-
-            static GenericConverterHelper()
-            {
-                var paramExpr = Expression.Parameter(typeof(TIn), "input");
-
-                var lambda = typeof(TIn) != typeof(TOut)
-                    ? Expression.Lambda<Func<TIn, TOut>>(Expression.Convert(paramExpr, typeof(TOut)), paramExpr)
-                    : Expression.Lambda<Func<TIn, TOut>>(paramExpr, paramExpr)
-                ;
-
-                Convert = lambda.Compile();
-            }
-        }
+            return (TOut)(object)value;
+        }            
     }
 }

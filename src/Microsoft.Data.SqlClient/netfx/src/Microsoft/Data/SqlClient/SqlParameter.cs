@@ -16,10 +16,8 @@ using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Server;
 
-
 namespace Microsoft.Data.SqlClient
 {
-
     internal abstract class DataFeed
     {
     }
@@ -109,7 +107,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <summary>
         /// Indicates if the parameter encryption metadata received by sp_describe_parameter_encryption.
-        /// For unencrypted parameters, the encryption metadata should still be sent (and will indicate 
+        /// For unencrypted parameters, the encryption metadata should still be sent (and will indicate
         /// that no encryption is needed).
         /// </summary>
         internal bool HasReceivedMetadata { get; set; }
@@ -461,7 +459,7 @@ namespace Microsoft.Data.SqlClient
             long actualLen = GetActualSize();
             long maxLen = this.Size;
 
-            // GetActualSize returns bytes length, but smi expects char length for 
+            // GetActualSize returns bytes length, but smi expects char length for
             //  character types, so adjust
             if (!mt.IsLong)
             {
@@ -782,10 +780,10 @@ namespace Microsoft.Data.SqlClient
             {
                 MetaType metatype = _metaType;
                 // HACK!!!
-                // We didn't want to expose SmallVarBinary on SqlDbType so we 
-                // stuck it at the end of SqlDbType in v1.0, except that now 
+                // We didn't want to expose SmallVarBinary on SqlDbType so we
+                // stuck it at the end of SqlDbType in v1.0, except that now
                 // we have new data types after that and it's smack dab in the
-                // middle of the valid range.  To prevent folks from setting 
+                // middle of the valid range.  To prevent folks from setting
                 // this invalid value we have to have this code here until we
                 // can take the time to fix it later.
                 if ((SqlDbType)TdsEnums.SmallVarBinary == value)
@@ -1089,13 +1087,24 @@ namespace Microsoft.Data.SqlClient
         // Coerced Value is also used in SqlBulkCopy.ConvertValue(object value, _SqlMetaData metadata)
         internal static object CoerceValue(object value, MetaType destinationType, out bool coercedToDataFeed, out bool typeChanged, bool allowStreaming = true)
         {
+            typeChanged = CoerceValueIfNeeded(value, destinationType, out var objValue, out coercedToDataFeed, allowStreaming);
+
+            return typeChanged ? objValue : value;
+        }
+
+        internal static bool CoerceValueIfNeeded<T>(T value, MetaType destinationType, out object objValue, out bool coercedToDataFeed, bool allowStreaming = true)
+        {
             Debug.Assert(!(value is DataFeed), "Value provided should not already be a data feed");
             Debug.Assert(!ADP.IsNull(value), "Value provided should not be null");
             Debug.Assert(null != destinationType, "null destinationType");
 
             coercedToDataFeed = false;
-            typeChanged = false;
-            Type currentType = value.GetType();
+            objValue = null;
+            Type currentType = typeof(T) == typeof(object)
+                ? value.GetType() // only call GetType if we know boxing has already occurred.
+                : typeof(T);
+
+            var typeChanged = false;
 
             if ((typeof(object) != destinationType.ClassType) &&
                     (currentType != destinationType.ClassType) &&
@@ -1110,45 +1119,45 @@ namespace Microsoft.Data.SqlClient
                         // For Xml data, destination Type is always string
                         if (typeof(SqlXml) == currentType)
                         {
-                            value = MetaType.GetStringFromXml((XmlReader)(((SqlXml)value).CreateReader()));
+                            objValue = MetaType.GetStringFromXml(GenericConverter.Convert<T, SqlXml>(value).CreateReader());
                         }
                         else if (typeof(SqlString) == currentType)
                         {
                             typeChanged = false;   // Do nothing
                         }
-                        else if (typeof(XmlReader).IsAssignableFrom(currentType))
+                        else if (value is XmlReader xmlReader)
                         {
                             if (allowStreaming)
                             {
                                 coercedToDataFeed = true;
-                                value = new XmlDataFeed((XmlReader)value);
+                                objValue = new XmlDataFeed(xmlReader);
                             }
                             else
                             {
-                                value = MetaType.GetStringFromXml((XmlReader)value);
+                                objValue = MetaType.GetStringFromXml(xmlReader);
                             }
                         }
                         else if (typeof(char[]) == currentType)
                         {
-                            value = new string((char[])value);
+                            objValue = new string(GenericConverter.Convert<T, char[]>(value));
                         }
                         else if (typeof(SqlChars) == currentType)
                         {
-                            value = new string(((SqlChars)value).Value);
+                            objValue = new string(GenericConverter.Convert<T, SqlChars>(value).Value);
                         }
-                        else if (value is TextReader && allowStreaming)
+                        else if (value is TextReader tr && allowStreaming)
                         {
                             coercedToDataFeed = true;
-                            value = new TextDataFeed((TextReader)value);
+                            objValue = new TextDataFeed(tr);
                         }
                         else
                         {
-                            value = Convert.ChangeType(value, destinationType.ClassType, (IFormatProvider)null);
+                            objValue = Convert.ChangeType(value, destinationType.ClassType, (IFormatProvider)null);
                         }
                     }
                     else if ((DbType.Currency == destinationType.DbType) && (typeof(string) == currentType))
                     {
-                        value = Decimal.Parse((string)value, NumberStyles.Currency, (IFormatProvider)null); // WebData 99376
+                        objValue = decimal.Parse(GenericConverter.Convert<T, string>(value), NumberStyles.Currency, (IFormatProvider)null);
                     }
                     else if ((typeof(SqlBytes) == currentType) && (typeof(byte[]) == destinationType.ClassType))
                     {
@@ -1156,32 +1165,32 @@ namespace Microsoft.Data.SqlClient
                     }
                     else if ((typeof(string) == currentType) && (SqlDbType.Time == destinationType.SqlDbType))
                     {
-                        value = TimeSpan.Parse((string)value);
+                        objValue = TimeSpan.Parse(GenericConverter.Convert<T, string>(value));
                     }
                     else if ((typeof(string) == currentType) && (SqlDbType.DateTimeOffset == destinationType.SqlDbType))
                     {
-                        value = DateTimeOffset.Parse((string)value, (IFormatProvider)null);
+                        objValue = DateTimeOffset.Parse(GenericConverter.Convert<T, string>(value), (IFormatProvider)null);
                     }
                     else if ((typeof(DateTime) == currentType) && (SqlDbType.DateTimeOffset == destinationType.SqlDbType))
                     {
-                        value = new DateTimeOffset((DateTime)value);
+                        objValue = new DateTimeOffset(GenericConverter.Convert<T, DateTime>(value));
                     }
-                    else if (TdsEnums.SQLTABLE == destinationType.TDSType &&
-                                (value is DataTable ||
+                    else if (TdsEnums.SQLTABLE == destinationType.TDSType && (
+                                value is DataTable ||
                                 value is DbDataReader ||
                                 value is System.Collections.Generic.IEnumerable<SqlDataRecord>))
                     {
                         // no conversion for TVPs.
                         typeChanged = false;
                     }
-                    else if (destinationType.ClassType == typeof(byte[]) && value is Stream && allowStreaming)
+                    else if (destinationType.ClassType == typeof(byte[]) && allowStreaming && value is Stream stream)
                     {
                         coercedToDataFeed = true;
-                        value = new StreamDataFeed((Stream)value);
+                        objValue = new StreamDataFeed(stream);
                     }
                     else
                     {
-                        value = Convert.ChangeType(value, destinationType.ClassType, (IFormatProvider)null);
+                        objValue = Convert.ChangeType(value, destinationType.ClassType, (IFormatProvider)null);
                     }
                 }
                 catch (Exception e)
@@ -1198,7 +1207,7 @@ namespace Microsoft.Data.SqlClient
 
             Debug.Assert(allowStreaming || !coercedToDataFeed, "Streaming is not allowed, but type was coerced into a data feed");
             Debug.Assert(value.GetType() == currentType ^ typeChanged, "Incorrect value for typeChanged");
-            return value;
+            return typeChanged;
         }
 
         internal void FixStreamDataForNonPLP()
@@ -1791,7 +1800,7 @@ namespace Microsoft.Data.SqlClient
             MetaType metaType = GetMetaTypeOnly();
             _internalMetaType = metaType;
 
-            // NOTE: (General Criteria): SqlParameter does a Size Validation check and would fail if the size is 0. 
+            // NOTE: (General Criteria): SqlParameter does a Size Validation check and would fail if the size is 0.
             //                           This condition filters all scenarios where we view a valid size 0.
             if (ADP.IsDirection(this, ParameterDirection.Output) &&
                 !ADP.IsDirection(this, ParameterDirection.ReturnValue) && // SQL BU DT 372370
@@ -1864,15 +1873,15 @@ namespace Microsoft.Data.SqlClient
 
                 // Bug: VSTFDevDiv #636867
                 // Notes:
-                // 'actualSizeInBytes' is the size of value passed; 
+                // 'actualSizeInBytes' is the size of value passed;
                 // 'sizeInCharacters' is the parameter size;
-                // 'actualSizeInBytes' is in bytes; 
-                // 'this.Size' is in charaters; 
-                // 'sizeInCharacters' is in characters; 
+                // 'actualSizeInBytes' is in bytes;
+                // 'this.Size' is in charaters;
+                // 'sizeInCharacters' is in characters;
                 // 'TdsEnums.TYPE_SIZE_LIMIT' is in bytes;
                 // For Non-NCharType and for non-Yukon or greater variables, size should be maintained;
                 // Reverting changes from bug VSTFDevDiv # 479739 as it caused an regression;
-                // Modifed variable names from 'size' to 'sizeInCharacters', 'actualSize' to 'actualSizeInBytes', and 
+                // Modifed variable names from 'size' to 'sizeInCharacters', 'actualSize' to 'actualSizeInBytes', and
                 // 'maxSize' to 'maxSizeInBytes'
                 // The idea is to
                 //  1) revert the regression from bug 479739

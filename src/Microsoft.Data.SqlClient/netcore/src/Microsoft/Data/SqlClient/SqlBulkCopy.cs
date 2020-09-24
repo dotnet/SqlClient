@@ -1447,7 +1447,6 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                
                 isSqlType = false;
                 isDataFeed = false;
                 method = ValueMethod.GetValue;
