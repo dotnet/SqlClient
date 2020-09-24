@@ -6,8 +6,8 @@
       </summary>
     </AzureManagedIdentityAuthenticationProvider>
     <ctor>
-      <param name="retryTimeoutInSeconds">Number of seconds to wait for response from Managed Identity service endpoint when attempting a retry. The default is 0, i.e. no timeout is applied.</param>
-      <param name="maxRetryCount">Maximum number of retries to perform when Managed Identity service endpoint is unreachable. By default, the driver retries 5 times.</param>
+      <param name="retryTimeoutInSeconds">Number of seconds to wait for a response from the Managed Identity service endpoint when attempting a retry. The default is 0, i.e. no timeout is applied.</param>
+      <param name="maxRetryCount">Maximum number of retries when the Managed Identity service endpoint is unreachable. By default, the driver retries 5 times.</param>
       <param name="httpClient">
         An instance of <see cref="T:System.Net.Http.HttpClient" /> to be used by this authentication provider.
       </param>
@@ -35,7 +35,7 @@
   
 |Authentication Method|
 |----------------|
-|<xref:Microsoft.Data.SqlClient.SqlAuthenticationMethod.ActiveDirectoryMnaagedIdentity%2A>|
+|<xref:Microsoft.Data.SqlClient.SqlAuthenticationMethod.ActiveDirectoryManagedIdentity%2A>|
 
  ]]>
         </format>
