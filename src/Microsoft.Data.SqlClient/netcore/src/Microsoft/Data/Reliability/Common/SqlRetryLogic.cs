@@ -59,14 +59,15 @@ namespace Microsoft.Data.SqlClient.Reliability
             RetryIntervalEnumerator.Dispose();
         }
 
-        public bool TryNextInterval(out int intervalTime)
+        public bool TryNextInterval(out TimeSpan intervalTime)
         {
-            intervalTime = 0;
+            intervalTime = TimeSpan.Zero;
             bool result = Current < NumberOfTries;
 
             if (result)
             {
                 Current++;
+                // it doesn't mind if the enumerator gets to the last value till the number of attempts ends.
                 RetryIntervalEnumerator.MoveNext();
                 intervalTime = RetryIntervalEnumerator.Current;
             }

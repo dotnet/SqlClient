@@ -13,13 +13,16 @@ namespace Microsoft.Data.SqlClient.Reliability
         int NumberOfTries { get; }
 
         /// 
+        int Current { get; }
+
+        /// 
         ISqlRetryIntervalEnumerator RetryIntervalEnumerator { get; }
-        
+
         /// 
         Predicate<Exception> TransientPredicate { get; }
 
         /// 
-        bool TryNextInterval(out int intervalTime);
+        bool TryNextInterval(out TimeSpan intervalTime);
 
         ///
         void Reset();

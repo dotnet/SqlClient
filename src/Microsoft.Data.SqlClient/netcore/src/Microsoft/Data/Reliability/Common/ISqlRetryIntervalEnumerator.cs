@@ -2,20 +2,21 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Collections.Generic;
 
 namespace Microsoft.Data.SqlClient.Reliability
 {
     ///
-    public interface ISqlRetryIntervalEnumerator : IEnumerator<int>
+    public interface ISqlRetryIntervalEnumerator : IEnumerator<TimeSpan>
     {
         ///
-        int MaxTimeInterval { get; }
+        TimeSpan MaxTimeInterval { get; }
 
         ///
-        int MinTimeInterval { get; }
+        TimeSpan MinTimeInterval { get; }
 
         ///
-        int TimeInterval { get; }
+        TimeSpan TimeInterval { get; }
     }
 }

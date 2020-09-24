@@ -13,6 +13,9 @@ namespace Microsoft.Data.SqlClient
     public interface ISqlRetryLogicProvider
     {
         /// 
+        EventHandler<SqlRetryingEventArgs> Retrying { get; set; }
+
+        /// 
         ISqlRetryLogic RetryLogic { get; }
 
         ///
