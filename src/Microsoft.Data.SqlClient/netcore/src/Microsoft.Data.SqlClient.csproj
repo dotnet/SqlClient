@@ -717,7 +717,6 @@
     <Compile Include="Microsoft\Data\Reliability\SqlRetryIntervalEnumerators.cs" />
     <Compile Include="Microsoft\Data\Reliability\Common\SqlRetryLogicProvider.cs" />
     <Compile Include="Microsoft\Data\Reliability\Common\SqlRetryLogic.cs" />
-    <Compile Include="Microsoft\Data\Reliability\SqlThrottlingCondition.cs" />
     <Compile Include="Microsoft\Data\SqlClient\AAsyncCallContext.cs" />
     <Compile Include="Resources\SR.Designer.cs">
       <DesignTime>True</DesignTime>

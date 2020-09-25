@@ -54,11 +54,6 @@ namespace Microsoft.Data.SqlClient.Reliability
             }
         }
 
-        public void Dispose()
-        {
-            RetryIntervalEnumerator.Dispose();
-        }
-
         public bool TryNextInterval(out TimeSpan intervalTime)
         {
             intervalTime = TimeSpan.Zero;

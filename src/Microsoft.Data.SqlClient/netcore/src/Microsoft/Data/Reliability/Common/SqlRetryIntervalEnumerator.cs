@@ -9,7 +9,7 @@ namespace Microsoft.Data.SqlClient.Reliability
 {
     internal abstract class SqlRetryIntervalEnumerator : ISqlRetryIntervalEnumerator
     {
-        public TimeSpan TimeInterval { get; protected set; }
+        public TimeSpan GapTimeInterval { get; protected set; }
 
         public TimeSpan MaxTimeInterval { get; protected set; }
 
@@ -21,7 +21,7 @@ namespace Microsoft.Data.SqlClient.Reliability
 
         public SqlRetryIntervalEnumerator()
         {
-            TimeInterval = TimeSpan.Zero;
+            GapTimeInterval = TimeSpan.Zero;
             MaxTimeInterval = TimeSpan.Zero;
             MinTimeInterval = TimeSpan.Zero;
         }
@@ -29,7 +29,7 @@ namespace Microsoft.Data.SqlClient.Reliability
         public SqlRetryIntervalEnumerator(TimeSpan timeInterval, TimeSpan maxTime, TimeSpan minTime)
         {
             Validate(timeInterval, maxTime, minTime);
-            TimeInterval = timeInterval;
+            GapTimeInterval = timeInterval;
             MaxTimeInterval = maxTime;
             MinTimeInterval = minTime;
         }

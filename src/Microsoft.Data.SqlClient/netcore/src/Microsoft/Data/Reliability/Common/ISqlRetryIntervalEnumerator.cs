@@ -7,16 +7,24 @@ using System.Collections.Generic;
 
 namespace Microsoft.Data.SqlClient.Reliability
 {
-    ///
+    /// <summary>
+    /// Generates a sequence of the time intervals.
+    /// </summary>
     public interface ISqlRetryIntervalEnumerator : IEnumerator<TimeSpan>
     {
-        ///
+        /// <summary>
+        /// Maximum time interval value.
+        /// </summary>
         TimeSpan MaxTimeInterval { get; }
 
-        ///
+        /// <summary>
+        /// Minimum time interval value.
+        /// </summary>
         TimeSpan MinTimeInterval { get; }
 
-        ///
-        TimeSpan TimeInterval { get; }
+        /// <summary>
+        /// The gap time of each interval
+        /// </summary>
+        TimeSpan GapTimeInterval { get; }
     }
 }

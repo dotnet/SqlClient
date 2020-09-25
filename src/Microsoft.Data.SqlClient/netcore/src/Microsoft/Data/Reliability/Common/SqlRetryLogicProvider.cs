@@ -127,7 +127,7 @@ namespace Microsoft.Data.SqlClient.Reliability
         }
 
         /// 
-        public async Task ExecuteAsync<TResult>(Func<Task> function, CancellationToken cancellationToken = default)
+        public async Task ExecuteAsync(Func<Task> function, CancellationToken cancellationToken = default)
         {
             var exceptions = new List<Exception>();
         retry:

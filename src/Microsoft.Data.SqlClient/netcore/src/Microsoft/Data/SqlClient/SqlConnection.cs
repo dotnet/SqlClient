@@ -1411,7 +1411,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsync/*' />
         public override Task OpenAsync(CancellationToken cancellationToken)
         {
-            return RetryLogicProvider.ExecuteAsync<Task>(() => InternalOpenAsync(cancellationToken), cancellationToken);
+            return RetryLogicProvider.ExecuteAsync(() => InternalOpenAsync(cancellationToken), cancellationToken);
         }
 
         private Task InternalOpenAsync(CancellationToken cancellationToken)

@@ -50,7 +50,6 @@ namespace Microsoft.Data.SqlClient.Reliability
 
             if (e is SqlException ex)
             {
-                SqlThrottlingCondition.EnrichException(ex);
                 foreach (SqlError item in ex.Errors)
                 {
                     if (RetriableConditions.TryGetValue(item.Number, out var condition) && (condition == null || condition.Invoke(item)))
@@ -65,14 +64,6 @@ namespace Microsoft.Data.SqlClient.Reliability
                 result = true;
             }
             return result;
-        }
-
-        /// 
-        protected bool IsServiceBusiy(SqlError err)
-        {
-            var condition = SqlThrottlingCondition.FromError(err);
-
-            return false;
         }
     }
 

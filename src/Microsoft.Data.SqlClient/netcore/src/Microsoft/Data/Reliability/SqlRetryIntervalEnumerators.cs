@@ -10,8 +10,8 @@ namespace Microsoft.Data.SqlClient.Reliability
     {
         private int internalCounter = 1;
 
-        public SqlExponentialIntervalEnumerator(TimeSpan timeInterval, TimeSpan maxTimeInterval, TimeSpan minTimeInterval)
-            : base(timeInterval, maxTimeInterval, minTimeInterval)
+        public SqlExponentialIntervalEnumerator(TimeSpan deltaBackoffTime, TimeSpan maxTimeInterval, TimeSpan minTimeInterval)
+            : base(deltaBackoffTime, maxTimeInterval, minTimeInterval)
         {
         }
 
@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient.Reliability
         {
             var random = new Random();
             int delta = Convert.ToInt32((Math.Pow(2.0, internalCounter++) - 1.0)
-                                        * random.Next(Convert.ToInt32(TimeInterval.TotalMilliseconds * 0.8), Convert.ToInt32(TimeInterval.TotalMilliseconds * 1.2)));
+                                        * random.Next(Convert.ToInt32(GapTimeInterval.TotalMilliseconds * 0.8), Convert.ToInt32(GapTimeInterval.TotalMilliseconds * 1.2)));
             var newVlaue = TimeSpan.FromMilliseconds(MinTimeInterval.TotalMilliseconds + delta);
             return newVlaue < MaxTimeInterval ? newVlaue : MaxTimeInterval;
         }
@@ -34,7 +34,7 @@ namespace Microsoft.Data.SqlClient.Reliability
 
         protected override TimeSpan GetNextInterval()
         {
-            var interval = Current + TimeInterval;
+            var interval = Current + GapTimeInterval;
 
             if (interval < MinTimeInterval)
             {
@@ -51,14 +51,14 @@ namespace Microsoft.Data.SqlClient.Reliability
 
     internal class SqlFixedIntervalEnumerator : SqlRetryIntervalEnumerator
     {
-        public SqlFixedIntervalEnumerator(TimeSpan timeInterval, TimeSpan maxTimeInterval, TimeSpan minTimeInterval)
-            : base(timeInterval, maxTimeInterval, minTimeInterval)
+        public SqlFixedIntervalEnumerator(TimeSpan gapTimeInterval, TimeSpan maxTimeInterval, TimeSpan minTimeInterval)
+            : base(gapTimeInterval, maxTimeInterval, minTimeInterval)
         {
         }
 
         protected override TimeSpan GetNextInterval()
         {
-            return TimeInterval;
+            return GapTimeInterval;
         }
     }
 
