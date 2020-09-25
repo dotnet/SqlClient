@@ -397,6 +397,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Contains(expectedMessage, e.Message);
         }
 
+        [InlineData("2445343 2343253")]
+        [InlineData("2445343$#^@@%2343253")]
+        [ConditionalTheory(nameof(IsAADConnStringsSetup))]
+        public static void ActiveDirectoryManagedIdentityWithInvalidUserIdMustFail(string userId)
+        {
+            // connection fails with expected error message.
+            string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
+            string connStrWithNoCred = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +
+                $"Authentication=Active Directory Managed Identity; User Id={userId}";
+
+            SqlException e = Assert.Throws<SqlException>(() => ConnectAndDisconnect(connStrWithNoCred));
+
+            string expectedMessage = "Response: {\"error\":\"invalid_request\",\"error_description\":\"Identity not found\"}";
+            Assert.Contains(expectedMessage, e.Message);
+        }
+
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
         public static void ActiveDirectoryMSIWithCredentialsMustFail()
         {

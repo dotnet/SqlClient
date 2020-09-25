@@ -94,7 +94,7 @@ namespace Microsoft.Data.SqlClient
 
                 // If user assigned managed identity is specified, include object ID parameter in request
                 string objectIdParameter = parameters.UserId != default
-                    ? $"&object_id={parameters.UserId}"
+                    ? $"&object_id={Uri.EscapeUriString(parameters.UserId)}"
                     : string.Empty;
 
                 // Craft request as per the MSI protocol
