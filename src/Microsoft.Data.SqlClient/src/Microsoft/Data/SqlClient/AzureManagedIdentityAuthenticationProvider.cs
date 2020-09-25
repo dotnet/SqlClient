@@ -68,6 +68,7 @@ namespace Microsoft.Data.SqlClient
                 // if App Service MSI is not available then Azure VM IMDS may be available, test with a probe request
                 if (!isAppServicesMsiAvailable)
                 {
+                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | This environment is not identified as an Azure App Service environment. Proceeding to validate Azure VM IMDS endpoint availability.");
                     using (var internalTokenSource = new CancellationTokenSource())
                     using (var linkedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(internalTokenSource.Token, default))
                     {
@@ -77,12 +78,14 @@ namespace Microsoft.Data.SqlClient
                         {
                             internalTokenSource.CancelAfter(_azureVmImdsProbeTimeout);
                             await httpClient.SendAsync(imdsProbeRequest, linkedTokenSource.Token).ConfigureAwait(false);
+                            SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | The Instance Metadata Service (IMDS) service endpoint is accessible. Proceeding to acquire access token.");
                         }
                         catch (OperationCanceledException)
                         {
                             // request to IMDS timed out (internal cancellation token canceled), neither Azure VM IMDS nor App Services MSI are available
                             if (internalTokenSource.Token.IsCancellationRequested)
                             {
+                                SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | The Instance Metadata Service (IMDS) service endpoint is not accessible.");
                                 // Throw error: Tried to get token using Managed Identity. Unable to connect to the Instance Metadata Service (IMDS). Skipping request to the Managed Service Identity (MSI) token endpoint.
                                 throw SQL.Azure_ManagedIdentityException($"{Strings.Azure_ManagedIdentityUsed} {Strings.Azure_MetadataEndpointNotListening}");
                             }
@@ -91,11 +94,19 @@ namespace Microsoft.Data.SqlClient
                         }
                     }
                 }
+                else
+                {
+                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | This environment is identified as an Azure App Service environment. Proceeding to acquire access token from Endpoint URL: {0}", msiEndpoint);
+                }
+
+                string objectIdParameter = string.Empty;
 
                 // If user assigned managed identity is specified, include object ID parameter in request
-                string objectIdParameter = parameters.UserId != default
-                    ? $"&object_id={Uri.EscapeUriString(parameters.UserId)}"
-                    : string.Empty;
+                if (parameters.UserId != default)
+                {
+                    objectIdParameter = $"&object_id={Uri.EscapeUriString(parameters.UserId)}";
+                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Identity Object id received and will be used for acquiring access token {0}", parameters.UserId);
+                }
 
                 // Craft request as per the MSI protocol
                 var requestUrl = isAppServicesMsiAvailable
@@ -125,6 +136,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (HttpRequestException)
                 {
+                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Failed after 5 retries. Unable to connect to the Managed Service Identity (MSI) endpoint.");
                     // Throw error: Tried to get token using Managed Service Identity. Failed after 5 retries. Unable to connect to the Managed Service Identity (MSI) endpoint. Please check that you are running on an Azure resource that has MSI setup.
                     throw SQL.Azure_ManagedIdentityException($"{Strings.Azure_ManagedIdentityUsed} {Strings.Azure_RetryFailure} {Strings.Azure_IdentityEndpointNotListening}");
                 }
@@ -132,27 +144,31 @@ namespace Microsoft.Data.SqlClient
                 // If the response is successful, it should have JSON response with an access_token field
                 if (response.IsSuccessStatusCode)
                 {
+                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Successful response received. Status Code {0}", response.StatusCode);
                     string jsonResponse = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
                     int accessTokenStartIndex = jsonResponse.IndexOf(AccessToken) + AccessToken.Length + 3;
                     var imdsAccessToken = jsonResponse.Substring(accessTokenStartIndex, jsonResponse.IndexOf('"', accessTokenStartIndex) - accessTokenStartIndex);
                     var expiresin = jsonResponse.Substring(jsonResponse.IndexOf(Expiry) + Expiry.Length + 3, FileTimeLength);
                     DateTime expiryTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(long.Parse(expiresin));
-
+                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Access Token received. Expiry Time: {0}", expiryTime);
                     return new SqlAuthenticationToken(imdsAccessToken, expiryTime);
                 }
 
                 // RetryFailure : Failed after 5 retries.
                 // NonRetryableError : Received a non-retryable error.
+                SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Request to acquire access token failed with status code {0}", response.StatusCode);
                 string errorStatusDetail = response.IsRetryableStatusCode()
                     ? Strings.Azure_RetryFailure
                     : Strings.Azure_NonRetryableError;
 
                 string errorText = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
+                SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Error occurred while acquiring access token: {0} Identity Response Code: {1}, Response: {2}", errorStatusDetail, response.StatusCode, errorText);
                 throw SQL.Azure_ManagedIdentityException($"{errorStatusDetail} Identity Response Code: {response.StatusCode}, Response: {errorText}");
             }
             catch (Exception exp)
             {
+                SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Error occurred while acquiring access token: {0}", exp.Message);
                 if (exp is SqlException)
                     throw;
                 // Throw error: Access token could not be acquired. {exp.Message}
@@ -216,12 +232,13 @@ namespace Microsoft.Data.SqlClient
                                 break;
                             }
                         }
-                        catch (HttpRequestException)
+                        catch (HttpRequestException e)
                         {
                             if (attempts == maxRetryCount)
                             {
                                 throw;
                             }
+                            SqlClientEventSource.Log.TryTraceEvent("SendAsyncWithRetry | Exception occurred {0} | Attempting retry: {1} of {2}", e.Message, attempts, maxRetryCount);
                         }
 
                         if (s_waitBeforeRetry)
