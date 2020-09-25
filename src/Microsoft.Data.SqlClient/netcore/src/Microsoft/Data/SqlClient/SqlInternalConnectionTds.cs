@@ -1302,22 +1302,10 @@ namespace Microsoft.Data.SqlClient
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
+                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
+                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI
                 // Since AD Integrated may be acting like Windows integrated, additionally check _fedAuthRequired
                 || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _fedAuthRequired))
-            {
-                requestedFeatures |= TdsEnums.FeatureExtension.FedAuth;
-                _federatedAuthenticationInfoRequested = true;
-                _fedAuthFeatureExtensionData =
-                    new FederatedAuthenticationFeatureExtensionData
-                    {
-                        libraryType = TdsEnums.FedAuthLibrary.MSAL,
-                        authentication = ConnectionOptions.Authentication,
-                        fedAuthRequiredPreLoginResponse = _fedAuthRequired
-                    };
-            }
-
-            if (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
-                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI)
             {
                 requestedFeatures |= TdsEnums.FeatureExtension.FedAuth;
                 _federatedAuthenticationInfoRequested = true;

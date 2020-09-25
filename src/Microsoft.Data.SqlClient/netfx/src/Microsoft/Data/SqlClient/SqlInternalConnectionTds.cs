@@ -983,7 +983,7 @@ namespace Microsoft.Data.SqlClient
                 tdsReliabilitySection.Start();
 #endif //DEBUG
 
-                isAlive = _parser._physicalStateObj.IsConnectionAlive(throwOnException);
+            isAlive = _parser._physicalStateObj.IsConnectionAlive(throwOnException);
 
 #if DEBUG
             }
@@ -1574,6 +1574,8 @@ namespace Microsoft.Data.SqlClient
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
+                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
+                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI
                 // Since AD Integrated may be acting like Windows integrated, additionally check _fedAuthRequired
                 || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _fedAuthRequired))
             {
@@ -1587,19 +1589,7 @@ namespace Microsoft.Data.SqlClient
                         fedAuthRequiredPreLoginResponse = _fedAuthRequired
                     };
             }
-            if (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
-                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI)
-            {
-                requestedFeatures |= TdsEnums.FeatureExtension.FedAuth;
-                _federatedAuthenticationInfoRequested = true;
-                _fedAuthFeatureExtensionData =
-                    new FederatedAuthenticationFeatureExtensionData
-                    {
-                        libraryType = TdsEnums.FedAuthLibrary.MSAL,
-                        authentication = ConnectionOptions.Authentication,
-                        fedAuthRequiredPreLoginResponse = _fedAuthRequired
-                    };
-            }
+
             if (_accessTokenInBytes != null)
             {
                 requestedFeatures |= TdsEnums.FeatureExtension.FedAuth;
@@ -2382,18 +2372,18 @@ namespace Microsoft.Data.SqlClient
                     {
                         tdsReliabilitySection.Start();
 #endif //DEBUG
-                        Task reconnectTask = parent.ValidateAndReconnect(() =>
-                        {
-                            ThreadHasParserLockForClose = false;
-                            _parserLock.Release();
-                            releaseConnectionLock = false;
-                        }, timeout);
-                        if (reconnectTask != null)
-                        {
-                            AsyncHelper.WaitForCompletion(reconnectTask, timeout);
-                            return true;
-                        }
-                        return false;
+                    Task reconnectTask = parent.ValidateAndReconnect(() =>
+                    {
+                        ThreadHasParserLockForClose = false;
+                        _parserLock.Release();
+                        releaseConnectionLock = false;
+                    }, timeout);
+                    if (reconnectTask != null)
+                    {
+                        AsyncHelper.WaitForCompletion(reconnectTask, timeout);
+                        return true;
+                    }
+                    return false;
 #if DEBUG
                     }
                     finally
