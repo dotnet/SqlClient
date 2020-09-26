@@ -5,24 +5,23 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Data.SqlClient.Reliability;
 
 namespace Microsoft.Data.SqlClient
 {
     /// <summary>
     /// Apply a retry logic on an operation.
     /// </summary>
-    public interface ISqlRetryLogicProvider
+    public abstract class SqlRetryLogicBaseProvider
     {
         /// <summary>
         /// This event raises exactly before time delay in retry the operation again. 
         /// </summary>
-        EventHandler<SqlRetryingEventArgs> Retrying { get; set; }
+        public EventHandler<SqlRetryingEventArgs> Retrying { get; set; }
 
         /// <summary>
         /// Defined retry logic
         /// </summary>
-        ISqlRetryLogic RetryLogic { get; }
+        public SqlRetryLogicBase RetryLogic { get; protected set; }
 
         /// <summary>
         /// Executes a function with a TResult type.
@@ -30,7 +29,7 @@ namespace Microsoft.Data.SqlClient
         /// <typeparam name="TResult">The function return type</typeparam>
         /// <param name="function">The operaiton is likly be in the retry logic if transient condition happens</param>
         /// <returns>A TResult object or an exception</returns>
-        TResult Execute<TResult>(Func<TResult> function);
+        public abstract TResult Execute<TResult>(Func<TResult> function);
 
         /// <summary>
         /// Executes a function with a generic Task and TResult type.
@@ -39,8 +38,7 @@ namespace Microsoft.Data.SqlClient
         /// <param name="function">The operaiton is likly be in the retry logic if transient condition happens</param>
         /// <param name="cancellationToken">The cancellation instruction</param>
         /// <returns>A task representing TResult or an exception</returns>
-        Task<TResult> ExecuteAsync<TResult>(Func<Task<TResult>> function, CancellationToken cancellationToken = default);
-
+        public abstract Task<TResult> ExecuteAsync<TResult>(Func<Task<TResult>> function, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Execute a function with a generic Task type.
@@ -48,6 +46,6 @@ namespace Microsoft.Data.SqlClient
         /// <param name="function">The operaiton is likly be in the retry logic if transient condition happens</param>
         /// <param name="cancellationToken">The cancellation instruction</param>
         /// <returns>A Task or an exception</returns>
-        Task ExecuteAsync(Func<Task> function, CancellationToken cancellationToken = default);
+        public abstract Task ExecuteAsync(Func<Task> function, CancellationToken cancellationToken = default);
     }
 }

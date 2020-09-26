@@ -61,7 +61,7 @@ namespace Microsoft.Data.SqlClient
         private int _reconnectCount;
 
         // Retry Logic
-        private ISqlRetryLogicProvider _retryLogicProvider;
+        private SqlRetryLogicBaseProvider _retryLogicProvider;
 
         // diagnostics listener
         private static readonly SqlDiagnosticListener s_diagnosticListener = new SqlDiagnosticListener(SqlClientDiagnosticListenerExtensions.DiagnosticListenerName);
@@ -105,7 +105,7 @@ namespace Microsoft.Data.SqlClient
         private static readonly Action<Task<object>, object> s_openAsyncComplete = OpenAsyncComplete;
 
         ///
-        public ISqlRetryLogicProvider RetryLogicProvider
+        public SqlRetryLogicBaseProvider RetryLogicProvider
         {
             get
             {

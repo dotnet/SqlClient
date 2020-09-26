@@ -6,7 +6,7 @@ using System;
 
 namespace Microsoft.Data.SqlClient.Reliability
 {
-    internal class SqlExponentialIntervalEnumerator : SqlRetryIntervalEnumerator
+    internal class SqlExponentialIntervalEnumerator : SqlRetryIntervalBaseEnumerator
     {
         private int internalCounter = 1;
 
@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient.Reliability
         }
     }
 
-    internal class SqlIncrementalIntervalEnumerator : SqlRetryIntervalEnumerator
+    internal class SqlIncrementalIntervalEnumerator : SqlRetryIntervalBaseEnumerator
     {
         public SqlIncrementalIntervalEnumerator(TimeSpan timeInterval, TimeSpan maxTimeInterval, TimeSpan minTimeInterval)
             : base(timeInterval, maxTimeInterval, minTimeInterval)
@@ -49,7 +49,7 @@ namespace Microsoft.Data.SqlClient.Reliability
         }
     }
 
-    internal class SqlFixedIntervalEnumerator : SqlRetryIntervalEnumerator
+    internal class SqlFixedIntervalEnumerator : SqlRetryIntervalBaseEnumerator
     {
         public SqlFixedIntervalEnumerator(TimeSpan gapTimeInterval, TimeSpan maxTimeInterval, TimeSpan minTimeInterval)
             : base(gapTimeInterval, maxTimeInterval, minTimeInterval)
@@ -62,7 +62,7 @@ namespace Microsoft.Data.SqlClient.Reliability
         }
     }
 
-    internal class SqlNoneIntervalEnumerator : SqlRetryIntervalEnumerator
+    internal class SqlNoneIntervalEnumerator : SqlRetryIntervalBaseEnumerator
     {
         protected override TimeSpan GetNextInterval()
         {

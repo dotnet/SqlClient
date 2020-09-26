@@ -7,44 +7,18 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Microsoft.Data.SqlClient.Reliability
+namespace Microsoft.Data.SqlClient
 {
-    /// provide retry information on each attemp
-    public class SqlRetryingEventArgs : EventArgs
-    {
-
-        /// 
-        public SqlRetryingEventArgs(int retryCount, TimeSpan delay, IList<Exception> exceptions)
-        {
-            RetryCount = retryCount;
-            Delay = delay;
-            Exceptions = exceptions;
-        }
-
-        /// retry-attempt-number, after the fisrt exception occurrence
-        public int RetryCount { get; private set; }
-
-        /// current waiting time in millisecond
-        public TimeSpan Delay { get; private set; }
-
-        /// if set to true retry will intruppted immidiately
-        public bool Cancel { get; set; } = false;
-
-        /// list of exceptions since first happening
-        public IList<Exception> Exceptions { get; private set; }
-    }
-
-    /// 
-    public abstract class SqlRetryLogicProvider : ISqlRetryLogicProvider
+    /// <summary>
+    /// Apply a retry logic on an operation.
+    /// </summary>
+    public abstract class SqlRetryLogicProvider : SqlRetryLogicBaseProvider
     {
         // safety switch for the preview version
         private const string EnableRetryLogicSwitch = "Switch.Microsoft.Data.SqlClient.EnableRetryLogic";
         private bool EnableRetryLogic = false;
 
-        /// 
-        public EventHandler<SqlRetryingEventArgs> Retrying { set; get; }
-
-        /// 
+        ///
         public SqlRetryLogicProvider()
         {
             AppContext.TryGetSwitch(EnableRetryLogicSwitch, out EnableRetryLogic);
@@ -55,11 +29,8 @@ namespace Microsoft.Data.SqlClient.Reliability
             Retrying?.Invoke(this, eventArgs);
         }
 
-        /// 
-        public ISqlRetryLogic RetryLogic { get; protected set; }
-
-        /// 
-        public TResult Execute<TResult>(Func<TResult> function)
+        ///
+        public override TResult Execute<TResult>(Func<TResult> function)
         {
             var exceptions = new List<Exception>();
         retry:
@@ -92,8 +63,8 @@ namespace Microsoft.Data.SqlClient.Reliability
             }
         }
 
-        /// 
-        public async Task<TResult> ExecuteAsync<TResult>(Func<Task<TResult>> function, CancellationToken cancellationToken = default)
+        ///
+        public override async Task<TResult> ExecuteAsync<TResult>(Func<Task<TResult>> function, CancellationToken cancellationToken = default)
         {
             var exceptions = new List<Exception>();
         retry:
@@ -126,8 +97,8 @@ namespace Microsoft.Data.SqlClient.Reliability
             }
         }
 
-        /// 
-        public async Task ExecuteAsync(Func<Task> function, CancellationToken cancellationToken = default)
+        ///
+        public override async Task ExecuteAsync(Func<Task> function, CancellationToken cancellationToken = default)
         {
             var exceptions = new List<Exception>();
         retry:

@@ -323,7 +323,7 @@ namespace Microsoft.Data.SqlClient
         private _SqlRPC[] _sqlRPCParameterEncryptionReqArray;
         private List<SqlParameterCollection> _parameterCollectionList;
         private int _currentlyExecutingBatch;
-        private ISqlRetryLogicProvider _retryLogicProvider;
+        private SqlRetryLogicBaseProvider _retryLogicProvider;
 
         /// <summary>
         /// This variable is used to keep track of which RPC batch's results are being read when reading the results of
@@ -477,7 +477,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         ///
-        public ISqlRetryLogicProvider RetryLogicProvider
+        public SqlRetryLogicBaseProvider RetryLogicProvider
         {
             get
             {

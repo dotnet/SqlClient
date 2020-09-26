@@ -6,39 +6,32 @@ using System;
 
 namespace Microsoft.Data.SqlClient.Reliability
 {
-    internal class SqlRetryLogic : ISqlRetryLogic
+    internal class SqlRetryLogic : SqlRetryLogicBase
     {
         private const int firstCounter = 1;
 
-        public int NumberOfTries { get; private set; }
-
-        public ISqlRetryIntervalEnumerator RetryIntervalEnumerator { get; private set; }
-
-        public Predicate<Exception> TransientPredicate { get; private set; }
-
-        public int Current { get; private set; } = firstCounter;
-
-        public SqlRetryLogic(int numberOfTries, ISqlRetryIntervalEnumerator enumerator, Predicate<Exception> transientPredicate)
+        public SqlRetryLogic(int numberOfTries, SqlRetryIntervalBaseEnumerator enumerator, Predicate<Exception> transientPredicate)
         {
             Validate(numberOfTries, enumerator, transientPredicate);
 
             NumberOfTries = numberOfTries;
             RetryIntervalEnumerator = enumerator;
             TransientPredicate = transientPredicate;
+            Current = firstCounter;
         }
 
-        public SqlRetryLogic(ISqlRetryIntervalEnumerator enumerator, Predicate<Exception> transientPredicate = null)
+        public SqlRetryLogic(SqlRetryIntervalBaseEnumerator enumerator, Predicate<Exception> transientPredicate = null)
             : this(firstCounter, enumerator, transientPredicate ?? (_ => false))
         {
         }
 
-        public void Reset()
+        public override void Reset()
         {
             Current = firstCounter;
             RetryIntervalEnumerator.Reset();
         }
 
-        private void Validate(int numberOfTries, ISqlRetryIntervalEnumerator enumerator, Predicate<Exception> transientPredicate)
+        private void Validate(int numberOfTries, SqlRetryIntervalBaseEnumerator enumerator, Predicate<Exception> transientPredicate)
         {
             if (numberOfTries < firstCounter)
             {
@@ -54,7 +47,7 @@ namespace Microsoft.Data.SqlClient.Reliability
             }
         }
 
-        public bool TryNextInterval(out TimeSpan intervalTime)
+        public override bool TryNextInterval(out TimeSpan intervalTime)
         {
             intervalTime = TimeSpan.Zero;
             bool result = Current < NumberOfTries;

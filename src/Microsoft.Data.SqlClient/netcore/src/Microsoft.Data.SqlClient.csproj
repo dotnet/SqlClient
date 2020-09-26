@@ -709,11 +709,11 @@
     <Reference Include="System.Memory" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Microsoft\Data\Reliability\Common\ISqlRetryIntervalEnumerator.cs" />
-    <Compile Include="Microsoft\Data\Reliability\Common\ISqlRetryLogic.cs" />
-    <Compile Include="Microsoft\Data\Reliability\Common\ISqlRetryLogicProvider.cs" />
+    <Compile Include="Microsoft\Data\Reliability\Common\SqlRetryingEventArgs.cs" />
+    <Compile Include="Microsoft\Data\Reliability\Common\SqlRetryLogicBase.cs" />
+    <Compile Include="Microsoft\Data\Reliability\Common\SqlRetryLogicBaseProvider.cs" />
     <Compile Include="Microsoft\Data\Reliability\SqlConfigurableRetryLogicProviders.cs" />
-    <Compile Include="Microsoft\Data\Reliability\Common\SqlRetryIntervalEnumerator.cs" />
+    <Compile Include="Microsoft\Data\Reliability\Common\SqlRetryIntervalBaseEnumerator.cs" />
     <Compile Include="Microsoft\Data\Reliability\SqlRetryIntervalEnumerators.cs" />
     <Compile Include="Microsoft\Data\Reliability\Common\SqlRetryLogicProvider.cs" />
     <Compile Include="Microsoft\Data\Reliability\Common\SqlRetryLogic.cs" />
