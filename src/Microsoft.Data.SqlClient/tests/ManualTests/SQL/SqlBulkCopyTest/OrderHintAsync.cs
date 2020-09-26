@@ -27,10 +27,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.True(t.IsCompleted, "Task did not complete! Status: " + t.Status);
         }
 
-        public static async Task TestAsync(string srcConstr, string dstTable, string dstTable2)
+        public static async Task TestAsync(string connStr, string dstTable, string dstTable2)
         {
-            srcConstr = (new SqlConnectionStringBuilder(srcConstr) { InitialCatalog = "Northwind" }).ConnectionString;
-            string dstConstr = (new SqlConnectionStringBuilder(srcConstr)).ConnectionString;
             string sourceQuery = string.Format(sourceQueryTemplate, sourceTable);
             string sourceQuery2 = string.Format(sourceQueryTemplate2, sourceTable2);
             string initialQuery = string.Format(initialQueryTemplate, dstTable);
@@ -38,13 +36,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string getRowCountQuery = string.Format(getRowCountQueryTemplate, sourceTable);
             string getRowCountQuery2 = string.Format(getRowCountQueryTemplate, sourceTable2);
 
-            using (SqlConnection dstConn = new SqlConnection(dstConstr))
+            using (SqlConnection dstConn = new SqlConnection(connStr))
             using (SqlCommand dstCmd = dstConn.CreateCommand())
             {
                 await dstConn.OpenAsync();
                 Helpers.TryExecute(dstCmd, initialQuery);
                 Helpers.TryExecute(dstCmd, initialQuery2);
-                using (SqlConnection srcConn = new SqlConnection(srcConstr))
+                using (SqlConnection srcConn = new SqlConnection(connStr))
                 using (SqlCommand srcCmd = new SqlCommand(getRowCountQuery, srcConn))
                 {
                     await srcConn.OpenAsync();

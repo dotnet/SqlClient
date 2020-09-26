@@ -148,7 +148,7 @@ namespace Microsoft.Data.SqlClient
         public const byte SQLDEBUG_CMD = 0x60;
         public const byte SQLLOGINACK = 0xad;
         public const byte SQLFEATUREEXTACK = 0xae;    // TDS 7.4 - feature ack
-        public const byte SQLSESSIONSTATE = 0xe4;    // TDS 7.4 - connection resiliency session state  
+        public const byte SQLSESSIONSTATE = 0xe4;    // TDS 7.4 - connection resiliency session state
         public const byte SQLENVCHANGE = 0xe3;    // Environment change notification
         public const byte SQLSECLEVEL = 0xed;    // Security level token ???
         public const byte SQLROWCRC = 0x39;    // ROWCRC datastream???
@@ -199,11 +199,11 @@ namespace Microsoft.Data.SqlClient
         public const byte FEATUREEXT_TERMINATOR = 0xFF;
         public const byte FEATUREEXT_SRECOVERY = 0x01;
         public const byte FEATUREEXT_FEDAUTH = 0x02;
-        // 0x03 is for x_eFeatureExtensionId_Rcs 
+        // 0x03 is for x_eFeatureExtensionId_Rcs
         public const byte FEATUREEXT_TCE = 0x04;
         public const byte FEATUREEXT_GLOBALTRANSACTIONS = 0x05;
-        // 0x06 is for x_eFeatureExtensionId_LoginToken 
-        // 0x07 is for x_eFeatureExtensionId_ClientSideTelemetry 
+        // 0x06 is for x_eFeatureExtensionId_LoginToken
+        // 0x07 is for x_eFeatureExtensionId_ClientSideTelemetry
         public const byte FEATUREEXT_AZURESQLSUPPORT = 0x08;
         public const byte FEATUREEXT_DATACLASSIFICATION = 0x09;
         public const byte FEATUREEXT_UTF8SUPPORT = 0x0A;
@@ -219,7 +219,7 @@ namespace Microsoft.Data.SqlClient
             GlobalTransactions = 1 << (TdsEnums.FEATUREEXT_GLOBALTRANSACTIONS - 1),
             AzureSQLSupport = 1 << (TdsEnums.FEATUREEXT_AZURESQLSUPPORT - 1),
             DataClassification = 1 << (TdsEnums.FEATUREEXT_DATACLASSIFICATION - 1),
-            UTF8Support = 1 << (TdsEnums.FEATUREEXT_UTF8SUPPORT - 1),            
+            UTF8Support = 1 << (TdsEnums.FEATUREEXT_UTF8SUPPORT - 1),
             SQLDNSCaching = 1 << (TdsEnums.FEATUREEXT_SQLDNSCACHING - 1)
         }
 
@@ -264,7 +264,7 @@ namespace Microsoft.Data.SqlClient
         public const byte MAX_NIC_SIZE = 6;               // The size of a MAC or client address
         public const byte SQLVARIANT_SIZE = 2;               // size of the fixed portion of a sql variant (type, cbPropBytes)
         public const byte VERSION_SIZE = 4;               // size of the tds version (4 unsigned bytes)
-        public const int CLIENT_PROG_VER = 0x06000000;      // Client interface version       
+        public const int CLIENT_PROG_VER = 0x06000000;      // Client interface version
         public const int YUKON_LOG_REC_FIXED_LEN = 0x5e;
         // misc
         public const int TEXT_TIME_STAMP_LEN = 8;
@@ -610,8 +610,8 @@ namespace Microsoft.Data.SqlClient
         // Login data validation Rules
         //
         internal const ushort MAXLEN_HOSTNAME = 128; // the client machine name
-        internal const ushort MAXLEN_CLIENTID = 128; 
-        internal const ushort MAXLEN_CLIENTSECRET = 128; 
+        internal const ushort MAXLEN_CLIENTID = 128;
+        internal const ushort MAXLEN_CLIENTSECRET = 128;
         internal const ushort MAXLEN_APPNAME = 128; // the client application name
         internal const ushort MAXLEN_SERVERNAME = 128; // the server name
         internal const ushort MAXLEN_CLIENTINTERFACE = 128; // the interface library name
@@ -951,7 +951,6 @@ namespace Microsoft.Data.SqlClient
         internal const long MAX_TCE_CIPHERTEXT_SIZE = 2147483648; // max size of encrypted blob- currently 2GB.
         internal const byte CustomCipherAlgorithmId = 0; // Id used for custom encryption algorithm.
 
-        internal const int AES_256_CBC = 1;
         internal const int AEAD_AES_256_CBC_HMAC_SHA256 = 2;
         internal const string ENCLAVE_TYPE_VBS = "VBS";
         internal const string ENCLAVE_TYPE_SGX = "SGX";
@@ -1100,7 +1099,7 @@ namespace Microsoft.Data.SqlClient
         ActiveDirectoryDeviceCodeFlow,
 #if ADONET_CERT_AUTH
         SqlCertificate
-#endif        
+#endif
     }
     // This enum indicates the state of TransparentNetworkIPResolution
     // The first attempt when TNIR is on should be sequential. If the first attempt failes next attempts should be parallel.

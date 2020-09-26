@@ -648,7 +648,7 @@ namespace Microsoft.Data.Common
 
         internal static bool IsValidAuthenticationTypeValue(SqlAuthenticationMethod value)
         {
-            Debug.Assert(Enum.GetNames(typeof(SqlAuthenticationMethod)).Length == 6, "SqlAuthenticationMethod enum has changed, update needed");
+            Debug.Assert(Enum.GetNames(typeof(SqlAuthenticationMethod)).Length == 7, "SqlAuthenticationMethod enum has changed, update needed");
             return value == SqlAuthenticationMethod.SqlPassword
                 || value == SqlAuthenticationMethod.ActiveDirectoryPassword
                 || value == SqlAuthenticationMethod.ActiveDirectoryIntegrated
@@ -1011,6 +1011,7 @@ namespace Microsoft.Data.Common
         internal const string ApplicationName = "Framework Microsoft SqlClient Data Provider";
         internal const bool AsynchronousProcessing = false;
         internal const string AttachDBFilename = "";
+        internal const int CommandTimeout = 30;
         internal const int ConnectTimeout = 15;
         internal const bool ConnectionReset = true;
         internal const bool ContextConnection = false;
@@ -1094,6 +1095,7 @@ namespace Microsoft.Data.Common
         internal const string AsynchronousProcessing = "Asynchronous Processing";
         internal const string AttachDBFilename = "AttachDbFilename";
         internal const string ConnectTimeout = "Connect Timeout";
+        internal const string CommandTimeout = "Command Timeout";
         internal const string ConnectionReset = "Connection Reset";
         internal const string ContextConnection = "Context Connection";
         internal const string CurrentLanguage = "Current Language";

@@ -19,10 +19,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string sourceQueryTemplate2 = "SELECT LastName, FirstName FROM {0}";
         private static readonly string getRowCountQueryTemplate = "SELECT COUNT(*) FROM {0}";
 
-        public static void Test(string srcConstr, string dstTable, string dstTable2)
+        public static void Test(string connStr, string dstTable, string dstTable2)
         {
-            srcConstr = (new SqlConnectionStringBuilder(srcConstr) { InitialCatalog = "Northwind" }).ConnectionString;
-            string dstConstr = (new SqlConnectionStringBuilder(srcConstr)).ConnectionString;
             string sourceQuery = string.Format(sourceQueryTemplate, sourceTable);
             string sourceQuery2 = string.Format(sourceQueryTemplate2, sourceTable2);
             string initialQuery = string.Format(initialQueryTemplate, dstTable);
@@ -30,13 +28,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string getRowCountQuery = string.Format(getRowCountQueryTemplate, sourceTable);
             string getRowCountQuery2 = string.Format(getRowCountQueryTemplate, sourceTable2);
 
-            using (SqlConnection dstConn = new SqlConnection(dstConstr))
+            using (SqlConnection dstConn = new SqlConnection(connStr))
             using (SqlCommand dstCmd = dstConn.CreateCommand())
             {
                 dstConn.Open();
                 Helpers.TryExecute(dstCmd, initialQuery);
                 Helpers.TryExecute(dstCmd, initialQuery2);
-                using (SqlConnection srcConn = new SqlConnection(srcConstr))
+                using (SqlConnection srcConn = new SqlConnection(connStr))
                 using (SqlCommand srcCmd = new SqlCommand(getRowCountQuery, srcConn))
                 {
                     srcConn.Open();

@@ -81,6 +81,8 @@ namespace Microsoft.Data.SqlClient
             EnclaveAttestationUrl,
             AttestationProtocol,
 
+            CommandTimeout,
+
 #if ADONET_CERT_AUTH
             Certificate,
 #endif
@@ -108,6 +110,7 @@ namespace Microsoft.Data.SqlClient
         private string _userID = DbConnectionStringDefaults.UserID;
         private string _workstationID = DbConnectionStringDefaults.WorkstationID;
 
+        private int _commandTimeout = DbConnectionStringDefaults.CommandTimeout;
         private int _connectTimeout = DbConnectionStringDefaults.ConnectTimeout;
         private int _loadBalanceTimeout = DbConnectionStringDefaults.LoadBalanceTimeout;
         private int _maxPoolSize = DbConnectionStringDefaults.MaxPoolSize;
@@ -151,6 +154,7 @@ namespace Microsoft.Data.SqlClient
             validKeywords[(int)Keywords.ConnectionReset] = DbConnectionStringKeywords.ConnectionReset;
             validKeywords[(int)Keywords.ContextConnection] = DbConnectionStringKeywords.ContextConnection;
             validKeywords[(int)Keywords.ConnectTimeout] = DbConnectionStringKeywords.ConnectTimeout;
+            validKeywords[(int)Keywords.CommandTimeout] = DbConnectionStringKeywords.CommandTimeout;
             validKeywords[(int)Keywords.CurrentLanguage] = DbConnectionStringKeywords.CurrentLanguage;
             validKeywords[(int)Keywords.DataSource] = DbConnectionStringKeywords.DataSource;
             validKeywords[(int)Keywords.Encrypt] = DbConnectionStringKeywords.Encrypt;
@@ -195,6 +199,7 @@ namespace Microsoft.Data.SqlClient
             hash.Add(DbConnectionStringKeywords.AttachDBFilename, Keywords.AttachDBFilename);
             hash.Add(DbConnectionStringKeywords.PoolBlockingPeriod, Keywords.PoolBlockingPeriod);
             hash.Add(DbConnectionStringKeywords.ConnectTimeout, Keywords.ConnectTimeout);
+            hash.Add(DbConnectionStringKeywords.CommandTimeout, Keywords.CommandTimeout);
             hash.Add(DbConnectionStringKeywords.ConnectionReset, Keywords.ConnectionReset);
             hash.Add(DbConnectionStringKeywords.ContextConnection, Keywords.ContextConnection);
             hash.Add(DbConnectionStringKeywords.CurrentLanguage, Keywords.CurrentLanguage);
@@ -336,6 +341,9 @@ namespace Microsoft.Data.SqlClient
                             WorkstationID = ConvertToString(value);
                             break;
 
+                        case Keywords.CommandTimeout:
+                            CommandTimeout = ConvertToInt32(value);
+                            break;
                         case Keywords.ConnectTimeout:
                             ConnectTimeout = ConvertToInt32(value);
                             break;
@@ -518,6 +526,25 @@ namespace Microsoft.Data.SqlClient
 
                 SetPoolBlockingPeriodValue(value);
                 _poolBlockingPeriod = value;
+            }
+        }
+
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/CommandTimeout/*' />
+        [DisplayName(DbConnectionStringKeywords.CommandTimeout)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Initialization)]
+        [ResDescription(StringsHelper.ResourceNames.DbCommand_CommandTimeout)]
+        [RefreshProperties(RefreshProperties.All)]
+        public int CommandTimeout
+        {
+            get { return _commandTimeout; }
+            set
+            {
+                if (value < 0)
+                {
+                    throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.CommandTimeout);
+                }
+                SetValue(DbConnectionStringKeywords.CommandTimeout, value);
+                _commandTimeout = value;
             }
         }
 
@@ -1268,6 +1295,8 @@ namespace Microsoft.Data.SqlClient
                     return PoolBlockingPeriod;
                 case Keywords.ConnectTimeout:
                     return ConnectTimeout;
+                case Keywords.CommandTimeout:
+                    return CommandTimeout;
 #pragma warning disable 618 // Obsolete ConnectionReset
                 case Keywords.ConnectionReset:
                     return ConnectionReset;
@@ -1429,6 +1458,9 @@ namespace Microsoft.Data.SqlClient
 #endif
                 case Keywords.ConnectTimeout:
                     _connectTimeout = DbConnectionStringDefaults.ConnectTimeout;
+                    break;
+                case Keywords.CommandTimeout:
+                    _commandTimeout = DbConnectionStringDefaults.CommandTimeout;
                     break;
                 case Keywords.ConnectionReset:
                     _connectionReset = DbConnectionStringDefaults.ConnectionReset;

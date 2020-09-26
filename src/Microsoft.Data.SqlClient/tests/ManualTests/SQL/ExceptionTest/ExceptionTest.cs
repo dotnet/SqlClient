@@ -50,19 +50,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static bool EmployeesTableHasFullTextIndex()
         {
-            if (DataTestUtility.TCPConnectionString == null)
+            // Test case not supported on Azure Synapse.
+            if (DataTestUtility.TCPConnectionString == null || DataTestUtility.IsAzureSynapse)
                 return false;
 
             using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand cmd = conn.CreateCommand())
             {
                 conn.Open();
-                cmd.CommandText = "SELECT object_id FROM sys.fulltext_indexes WHERE object_id = object_id('Northwind.dbo.Employees')";
+                string db = conn.DataSource;
+                cmd.CommandText = $"SELECT object_id FROM sys.fulltext_indexes WHERE object_id = object_id('{db}.dbo.Employees')";
 
                 return (cmd.ExecuteScalar() != null);
             }
         }
 
+        // TODO Synapse: Remove dependency from Northwind database.
         [ConditionalFact(nameof(EmployeesTableHasFullTextIndex))]
         public static void WarningsBeforeRowsTest()
         {
@@ -92,7 +95,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     sqlConnection.FireInfoMessageEventOnUserErrors = messagesOnErrors;
 
                     // These queries should return warnings because AND here is a noise word.
-                    SqlCommand cmd = new SqlCommand("select FirstName from Northwind.dbo.Employees where contains(FirstName, '\"Anne AND\"')" + orderClause, sqlConnection);
+                    SqlCommand cmd = new SqlCommand("select FirstName from Employees where contains(FirstName, '\"Anne AND\"')" + orderClause, sqlConnection);
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {
                         Assert.True(reader.HasRows, "FAILED: SqlDataReader.HasRows is not correct (should be TRUE)");
@@ -107,7 +110,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                     hitWarnings = false;
 
-                    cmd.CommandText = "select FirstName from Northwind.dbo.Employees where contains(FirstName, '\"NotARealPerson AND\"')" + orderClause;
+                    cmd.CommandText = "select FirstName from Employees where contains(FirstName, '\"NotARealPerson AND\"')" + orderClause;
                     using (SqlDataReader reader = cmd.ExecuteReader())
                     {
                         Assert.False(reader.HasRows, "FAILED: SqlDataReader.HasRows is not correct (should be FALSE)");
@@ -148,6 +151,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return true;
         }
 
+        // Synapse: 110003;Invalid user or password
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public static void ExceptionTests()
         {
@@ -182,7 +186,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             VerifyConnectionFailure<SqlException>(() => GenerateConnectionException(badBuilder.ConnectionString), errorMessage, (ex) => VerifyException(ex, 1, 18456, 1, 14));
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: 110003;Invalid user or password
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void VariousExceptionTests()
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
