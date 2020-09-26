@@ -104,7 +104,7 @@ namespace Microsoft.Data.SqlClient
                 // If user assigned managed identity is specified, include object ID parameter in request
                 if (parameters.UserId != default)
                 {
-                    objectIdParameter = $"&object_id={Uri.EscapeUriString(parameters.UserId)}";
+                    objectIdParameter = $"&object_id={Uri.EscapeDataString(parameters.UserId)}";
                     SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Identity Object id received and will be used for acquiring access token {0}", parameters.UserId);
                 }
 
