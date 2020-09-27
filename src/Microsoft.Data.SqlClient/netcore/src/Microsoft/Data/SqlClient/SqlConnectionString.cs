@@ -557,17 +557,6 @@ namespace Microsoft.Data.SqlClient
             ValidateValueLength(_dataSource, TdsEnums.MAXLEN_SERVERNAME, KEY.Data_Source);
         }
 
-        private SqlConnectionString(DbConnectionOptions connectionOptions) : base(connectionOptions)
-        {
-            if (connectionOptions is SqlConnectionString sqlConnectionOptions)
-            {
-                HasPasswordKeyword = sqlConnectionOptions.HasPasswordKeyword;
-                HasUserIdKeyword = sqlConnectionOptions.HasUserIdKeyword;
-                _keyChain = sqlConnectionOptions._keyChain;
-                _hasPersistablePassword = sqlConnectionOptions._hasPersistablePassword;
-            }
-        }
-
         internal bool IntegratedSecurity { get { return _integratedSecurity; } }
 
         // We always initialize in Async mode so that both synchronous and asynchronous methods
