@@ -410,7 +410,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             AggregateException e = Assert.Throws<AggregateException>(() => ConnectAndDisconnect(connStrWithNoCred));
 
             string expectedMessage = "Response: {\"error\":\"invalid_request\",\"error_description\":\"Identity not found\"}";
-            Assert.Contains(expectedMessage, e.Message);
+            Assert.Contains(expectedMessage, e.GetBaseException().Message);
         }
 
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
