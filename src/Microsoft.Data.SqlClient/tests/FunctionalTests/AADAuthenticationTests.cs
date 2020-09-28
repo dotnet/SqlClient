@@ -14,6 +14,7 @@ namespace Microsoft.Data.SqlClient.Tests
     {
         private SqlConnectionStringBuilder _builder;
         private SqlCredential _credential = null;
+
         [Theory]
         [InlineData("Test combination of Access Token and IntegratedSecurity", new object[] { "Integrated Security", true })]
         [InlineData("Test combination of Access Token and User Id", new object[] { "UID", "sampleUserId" })]
@@ -53,6 +54,22 @@ namespace Microsoft.Data.SqlClient.Tests
         public void CustomActiveDirectoryProviderTest()
         {
             SqlAuthenticationProvider authProvider = new ActiveDirectoryAuthenticationProvider(CustomDeviceFlowCallback);
+            SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, authProvider);
+            Assert.Equal(authProvider, SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
+        }
+
+        [Fact]
+        public void CustomActiveDirectoryProviderTest_AppClientId()
+        {
+            SqlAuthenticationProvider authProvider = new ActiveDirectoryAuthenticationProvider(Guid.NewGuid().ToString());
+            SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, authProvider);
+            Assert.Equal(authProvider, SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
+        }
+
+        [Fact]
+        public void CustomActiveDirectoryProviderTest_AppClientId_DeviceFlowCallback()
+        {
+            SqlAuthenticationProvider authProvider = new ActiveDirectoryAuthenticationProvider(CustomDeviceFlowCallback, Guid.NewGuid().ToString());
             SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, authProvider);
             Assert.Equal(authProvider, SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow));
         }
