@@ -23,7 +23,6 @@ namespace Microsoft.Data.SqlClient
 
         static SqlAuthenticationProviderManager()
         {
-            var activeDirectoryAuthProvider = new ActiveDirectoryAuthenticationProvider();
             SqlAuthenticationProviderConfigurationSection configurationSection = null;
             try
             {
@@ -38,9 +37,11 @@ namespace Microsoft.Data.SqlClient
             catch (ConfigurationErrorsException e)
             {
                 // Don't throw an error for invalid config files
-                SqlClientEventSource.Log.TryTraceEvent("Unable to load custom SqlAuthenticationProviders or SqlClientAuthenticationProviders. ConfigurationManager failed to load due to configuration errors: {0}", e);
+                SqlClientEventSource.Log.TryTraceEvent("static SqlAuthenticationProviderManager: Unable to load custom SqlAuthenticationProviders or SqlClientAuthenticationProviders. ConfigurationManager failed to load due to configuration errors: {0}", e);
             }
             Instance = new SqlAuthenticationProviderManager(configurationSection);
+
+            var activeDirectoryAuthProvider = new ActiveDirectoryAuthenticationProvider(Instance._applicationClientId);
             Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryIntegrated, activeDirectoryAuthProvider);
             Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, activeDirectoryAuthProvider);
             Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive, activeDirectoryAuthProvider);
@@ -54,6 +55,7 @@ namespace Microsoft.Data.SqlClient
         private readonly IReadOnlyCollection<SqlAuthenticationMethod> _authenticationsWithAppSpecifiedProvider;
         private readonly ConcurrentDictionary<SqlAuthenticationMethod, SqlAuthenticationProvider> _providers;
         private readonly SqlClientLogger _sqlAuthLogger = new SqlClientLogger();
+        private readonly string _applicationClientId = ActiveDirectoryAuthentication.AdoClientId;
 
         /// <summary>
         /// Constructor.
@@ -72,8 +74,17 @@ namespace Microsoft.Data.SqlClient
                 return;
             }
 
+            if (!string.IsNullOrEmpty(configSection.ApplicationClientId))
+            {
+                _applicationClientId = configSection.ApplicationClientId;
+                _sqlAuthLogger.LogInfo(_typeName, methodName, "Received user-defined Application Client Id");
+            }
+            else
+            {
+                _sqlAuthLogger.LogInfo(_typeName, methodName, "No user-defined Application Client Id found.");
+            }
+
             // Create user-defined auth initializer, if any.
-            //
             if (!string.IsNullOrEmpty(configSection.InitializerType))
             {
                 try
@@ -226,13 +237,19 @@ namespace Microsoft.Data.SqlClient
         /// User-defined auth providers.
         /// </summary>
         [ConfigurationProperty("providers")]
-        public ProviderSettingsCollection Providers => (ProviderSettingsCollection)base["providers"];
+        public ProviderSettingsCollection Providers => (ProviderSettingsCollection)this["providers"];
 
         /// <summary>
         /// User-defined initializer.
         /// </summary>
         [ConfigurationProperty("initializerType")]
-        public string InitializerType => base["initializerType"] as string;
+        public string InitializerType => this["initializerType"] as string;
+
+        /// <summary>
+        /// Application Client Id
+        /// </summary>
+        [ConfigurationProperty("applicationClientId", IsRequired = false)]
+        public string ApplicationClientId => this["applicationClientId"] as string;
     }
 
     /// <summary>

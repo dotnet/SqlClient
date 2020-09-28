@@ -903,11 +903,11 @@ namespace Microsoft.Data.SqlClient
         internal static Exception BulkLoadInvalidOrderHint()
         {
             return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_BulkLoadInvalidOrderHint));
-        }   
+        }
         internal static Exception BulkLoadOrderHintInvalidColumn(string columnName)
         {
             return ADP.InvalidOperation(string.Format(System.StringsHelper.GetString(Strings.SQL_BulkLoadOrderHintInvalidColumn), columnName));
-        }      
+        }
         internal static Exception BulkLoadOrderHintDuplicateColumn(string columnName)
         {
             return ADP.InvalidOperation(string.Format(System.StringsHelper.GetString(Strings.SQL_BulkLoadOrderHintDuplicateColumn), columnName));

@@ -772,7 +772,7 @@ namespace Microsoft.Data.SqlClient
         static internal Exception CannotCompleteDelegatedTransactionWithOpenResults(SqlInternalConnectionTds internalConnection, bool marsOn)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(TdsEnums.TIMEOUT_EXPIRED, (byte)0x00, TdsEnums.MIN_ERROR_CLASS, null, (StringsHelper.GetString(Strings.ADP_OpenReaderExists, marsOn? ADP.Command : ADP.Connection)), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
+            errors.Add(new SqlError(TdsEnums.TIMEOUT_EXPIRED, (byte)0x00, TdsEnums.MIN_ERROR_CLASS, null, (StringsHelper.GetString(Strings.ADP_OpenReaderExists, marsOn ? ADP.Command : ADP.Connection)), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
             return SqlException.CreateException(errors, null, internalConnection);
         }
         static internal SysTx.TransactionPromotionException PromotionFailed(Exception inner)
@@ -858,7 +858,7 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQLUDT_InvalidSqlType, typeName));
         }
-        
+
         static internal Exception UDTInvalidSize(int maxSize, int maxSupportedSize)
         {
             throw ADP.ArgumentOutOfRange(StringsHelper.GetString(Strings.SQLUDT_InvalidSize, maxSize, maxSupportedSize));

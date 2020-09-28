@@ -8,8 +8,8 @@ namespace Microsoft.Data.SqlClient
     {
         static SqlAuthenticationProviderManager()
         {
-            var activeDirectoryAuthProvider = new ActiveDirectoryAuthenticationProvider();
             Instance = new SqlAuthenticationProviderManager();
+            var activeDirectoryAuthProvider = new ActiveDirectoryAuthenticationProvider(Instance._applicationClientId);
             Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, activeDirectoryAuthProvider);
             Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryIntegrated, activeDirectoryAuthProvider);
             Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive, activeDirectoryAuthProvider);
