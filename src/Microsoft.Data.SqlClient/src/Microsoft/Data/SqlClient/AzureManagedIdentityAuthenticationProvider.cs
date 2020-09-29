@@ -10,16 +10,13 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/AzureManagedIdentityAuthenticationProvider.xml' path='docs/members[@name="AzureManagedIdentityAuthenticationProvider"]/AzureManagedIdentityAuthenticationProvider/*'/>
-    public sealed class AzureManagedIdentityAuthenticationProvider : SqlAuthenticationProvider
+    internal sealed class AzureManagedIdentityAuthenticationProvider : SqlAuthenticationProvider
     {
-        private readonly HttpClient _httpClient;
-
         // HttpClient is intended to be instantiated once and re-used throughout the life of an application.
 #if NETFRAMEWORK
-        private static readonly HttpClient s_defaultHttpClient = new HttpClient();
+        private static readonly HttpClient s_httpClient = new HttpClient();
 #else
-        private static readonly HttpClient s_defaultHttpClient = new HttpClient(new HttpClientHandler() { CheckCertificateRevocationList = true });
+        private static readonly HttpClient s_httpClient = new HttpClient(new HttpClientHandler() { CheckCertificateRevocationList = true });
 #endif
 
         private const string AzureSystemApiVersion = "&api-version=2019-08-01";
@@ -42,20 +39,10 @@ namespace Microsoft.Data.SqlClient
         internal readonly int _retryTimeoutInSeconds = DefaultRetryTimeout;
         internal readonly int _maxRetryCount = DefaultMaxRetryCount;
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/AzureManagedIdentityAuthenticationProvider.xml' path='docs/members[@name="AzureManagedIdentityAuthenticationProvider"]/ctor/*'/>
-        public AzureManagedIdentityAuthenticationProvider(int retryTimeoutInSeconds = DefaultRetryTimeout, int maxRetryCount = DefaultMaxRetryCount, HttpClient httpClient = null)
-        {
-            _retryTimeoutInSeconds = retryTimeoutInSeconds;
-            _httpClient = httpClient;
-            _maxRetryCount = maxRetryCount;
-        }
-
         // Reference: https://docs.microsoft.com/azure/active-directory/managed-identities-azure-resources/how-to-use-vm-token#get-a-token-using-http
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/AzureManagedIdentityAuthenticationProvider.xml' path='docs/members[@name="AzureManagedIdentityAuthenticationProvider"]/AcquireTokenAsync/*'/>
         public override async Task<SqlAuthenticationToken> AcquireTokenAsync(SqlAuthenticationParameters parameters)
         {
-            // Use the httpClient specified in the constructor. If it was not specified in the constructor, use the default httpClient.
-            HttpClient httpClient = _httpClient ?? s_defaultHttpClient;
+            HttpClient httpClient = s_httpClient;
 
             try
             {
@@ -176,7 +163,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/AzureManagedIdentityAuthenticationProvider.xml' path='docs/members[@name="AzureManagedIdentityAuthenticationProvider"]/IsSupported/*'/>
         public override bool IsSupported(SqlAuthenticationMethod authentication)
         {
             return authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
