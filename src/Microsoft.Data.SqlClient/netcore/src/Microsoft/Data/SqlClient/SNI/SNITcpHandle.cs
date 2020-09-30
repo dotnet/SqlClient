@@ -707,7 +707,6 @@ namespace Microsoft.Data.SqlClient.SNI
         public override uint SendAsync(SNIPacket packet, SNIAsyncCallback callback = null)
         {
             long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("<sc.SNI.SNITcpHandle.SendAsync |SNI|SCOPE>");
-            SNIPacket errorPacket;
             SNIAsyncCallback cb = callback ?? _sendCallback;
             try
             {
@@ -716,7 +715,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             catch (Exception e) when (e is ObjectDisposedException || e is InvalidOperationException || e is IOException)
             {
-                errorPacket = packet;
+                SNIPacket errorPacket = packet;
                 return ReportErrorAndReleasePacket(errorPacket, e);
             }
             finally

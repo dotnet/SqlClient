@@ -331,6 +331,11 @@ namespace Microsoft.Data.SqlClient.SNI
                 packet.WriteToStreamAsync(_stream, cb, SNIProviders.NP_PROV);
                 return TdsEnums.SNI_SUCCESS_IO_PENDING;
             }
+            catch (Exception e) when (e is ObjectDisposedException || e is InvalidOperationException || e is IOException)
+            {
+                SNIPacket errorPacket = packet;
+                return ReportErrorAndReleasePacket(errorPacket, e);
+            }
             finally
             {
                 SqlClientEventSource.Log.TrySNIScopeLeaveEvent(scopeID);
