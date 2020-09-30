@@ -24,6 +24,7 @@ namespace Microsoft.Data.SqlClient
         private readonly IReadOnlyCollection<SqlAuthenticationMethod> _authenticationsWithAppSpecifiedProvider;
         private readonly ConcurrentDictionary<SqlAuthenticationMethod, SqlAuthenticationProvider> _providers;
         private readonly SqlClientLogger _sqlAuthLogger = new SqlClientLogger();
+        private readonly string _applicationClientId = ActiveDirectoryAuthentication.AdoClientId;
 
         public static readonly SqlAuthenticationProviderManager Instance;
 

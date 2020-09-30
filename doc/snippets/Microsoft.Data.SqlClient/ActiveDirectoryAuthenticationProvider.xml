@@ -11,19 +11,38 @@
       </summary>
     </ctor>
     <ctor2>
-      <param name="deviceCodeFlowCallbackMethod">The callback method to be used when performing 'Active Directory Device Code Flow' authentication.</param>
+      <param name="applicationClientId">Client Application Id to be used for acquiring an access token for federated authentication. The driver uses its own application client id by default.</param>
       <summary>
-        Initializes the <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider" /> class with the provided device code flow callback method.
+        Initializes the <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider" /> class with the provided application client id.
       </summary>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[  
+
+## Examples  
+ The following example demonstrates providing a user-defined application client id to SqlClient for the "Active Directory Interactive" authentication method:
+ 
+ [!code-csharp[ActiveDirectory_ApplicationClientId Example#1](~/../sqlclient/doc/samples/ApplicationClientIdAzureAuthenticationProvider.cs#1)]
+  
+ ]]>
+        </format>
+      </remarks>
     </ctor2>
+    <ctor3>
+      <param name="deviceCodeFlowCallbackMethod">The callback method to be used with 'Active Directory Device Code Flow' authentication.</param>
+      <param name="applicationClientId">(Optional) Client Application Id to be used for acquiring an access token for federated authentication. The driver uses its own application client id by default.</param>
+      <summary>
+        Initializes the <see cref="T:Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider" /> class with the provided device code flow callback method and application client id.
+      </summary>
+    </ctor3>
     <AcquireTokenAsync>
       <param name="parameters">The Active Directory authentication parameters passed to authentication providers.</param>
       <summary>Acquires a security token from the authority.</summary>
       <returns>Represents an asynchronous operation that returns the authentication token.</returns>
     </AcquireTokenAsync>
     <SetDeviceCodeFlowCallback>
-      <param name="deviceCodeFlowCallbackMethod">The callback method to be used when performing 'Active Directory Device Code Flow' authentication.</param>
-      <summary>Sets the callback method, overriding the default implementation that processes the result when performing 'Active Directory Device Code Flow' authentication.</summary>
+      <param name="deviceCodeFlowCallbackMethod">The callback method to be used with 'Active Directory Device Code Flow' authentication.</param>
+      <summary>Sets the callback method, overriding the default implementation that processes the result for 'Active Directory Device Code Flow' authentication.</summary>
     </SetDeviceCodeFlowCallback>
     <SetParentActivityOrWindowFunc>
       <param name="parentActivityOrWindowFunc">The parent as an object, in order to be used from shared .NET Standard assemblies.</param>

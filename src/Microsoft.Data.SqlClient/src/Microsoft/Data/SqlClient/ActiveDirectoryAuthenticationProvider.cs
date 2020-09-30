@@ -20,13 +20,21 @@ namespace Microsoft.Data.SqlClient
         private readonly SqlClientLogger _logger = new SqlClientLogger();
         private Func<DeviceCodeResult, Task> _deviceCodeFlowCallback;
         private ICustomWebUi _customWebUI = null;
+        private readonly string _applicationClientId = ActiveDirectoryAuthentication.AdoClientId;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor/*'/>
         public ActiveDirectoryAuthenticationProvider() => new ActiveDirectoryAuthenticationProvider(DefaultDeviceFlowCallback);
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor2/*'/>
-        public ActiveDirectoryAuthenticationProvider(Func<DeviceCodeResult, Task> deviceCodeFlowCallbackMethod)
+        public ActiveDirectoryAuthenticationProvider(string applicationClientId) => new ActiveDirectoryAuthenticationProvider(DefaultDeviceFlowCallback, applicationClientId);
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor3/*'/>
+        public ActiveDirectoryAuthenticationProvider(Func<DeviceCodeResult, Task> deviceCodeFlowCallbackMethod, string applicationClientId = null)
         {
+            if (applicationClientId != null)
+            {
+                _applicationClientId = applicationClientId;
+            }
             SetDeviceCodeFlowCallback(deviceCodeFlowCallbackMethod);
         }
 
@@ -112,7 +120,7 @@ namespace Microsoft.Data.SqlClient
 #if netstandard
             if (parentActivityOrWindowFunc != null)
             {
-                app = PublicClientApplicationBuilder.Create(ActiveDirectoryAuthentication.AdoClientId)
+                app = PublicClientApplicationBuilder.Create(_applicationClientId)
                 .WithAuthority(parameters.Authority)
                 .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
                 .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
@@ -124,7 +132,7 @@ namespace Microsoft.Data.SqlClient
 #if netfx
             if (_iWin32WindowFunc != null)
             {
-                app = PublicClientApplicationBuilder.Create(ActiveDirectoryAuthentication.AdoClientId)
+                app = PublicClientApplicationBuilder.Create(_applicationClientId)
                 .WithAuthority(parameters.Authority)
                 .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
                 .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
@@ -137,7 +145,7 @@ namespace Microsoft.Data.SqlClient
             else
 #endif
             {
-                app = PublicClientApplicationBuilder.Create(ActiveDirectoryAuthentication.AdoClientId)
+                app = PublicClientApplicationBuilder.Create(_applicationClientId)
                 .WithAuthority(parameters.Authority)
                 .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
                 .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())

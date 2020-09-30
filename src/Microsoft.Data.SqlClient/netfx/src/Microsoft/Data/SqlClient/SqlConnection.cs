@@ -642,6 +642,20 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CommandTimeout/*' />
+        [
+        DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlConnection_ConnectionTimeout),
+        ]
+        public int CommandTimeout
+        {
+            get
+            {
+                SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
+                return ((null != constr) ? constr.CommandTimeout : SqlConnectionString.DEFAULT.Command_Timeout);
+            }
+        }
+
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ConnectionString/*' />
         [
         DefaultValue(""),
