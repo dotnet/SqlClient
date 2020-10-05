@@ -3,21 +3,33 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Transactions;
 
-namespace Microsoft.Data.SqlClient.Reliability
+namespace Microsoft.Data.SqlClient
 {
-    internal class SqlRetryLogic : SqlRetryLogicBase
+    internal sealed class SqlRetryLogic : SqlRetryLogicBase
     {
-        private const int firstCounter = 1;
+        private const int firstCounter = 0;
 
-        public SqlRetryLogic(int numberOfTries, SqlRetryIntervalBaseEnumerator enumerator, Predicate<Exception> transientPredicate)
+        public Predicate<string> PreCondition { get; private set; }
+
+        public SqlRetryLogic(int numberOfTries,
+                             SqlRetryIntervalBaseEnumerator enumerator,
+                             Predicate<Exception> transientPredicate,
+                             Predicate<string> preCondition)
         {
             Validate(numberOfTries, enumerator, transientPredicate);
 
             NumberOfTries = numberOfTries;
             RetryIntervalEnumerator = enumerator;
             TransientPredicate = transientPredicate;
+            PreCondition = preCondition;
             Current = firstCounter;
+        }
+
+        public SqlRetryLogic(int numberOfTries, SqlRetryIntervalBaseEnumerator enumerator, Predicate<Exception> transientPredicate)
+            : this(numberOfTries, enumerator, transientPredicate, null)
+        {
         }
 
         public SqlRetryLogic(SqlRetryIntervalBaseEnumerator enumerator, Predicate<Exception> transientPredicate = null)
@@ -50,7 +62,8 @@ namespace Microsoft.Data.SqlClient.Reliability
         public override bool TryNextInterval(out TimeSpan intervalTime)
         {
             intervalTime = TimeSpan.Zero;
-            bool result = Current < NumberOfTries;
+            // First try has occurred before starting the retry process. 
+            bool result = Current < NumberOfTries - 1;
 
             if (result)
             {
@@ -59,6 +72,20 @@ namespace Microsoft.Data.SqlClient.Reliability
                 RetryIntervalEnumerator.MoveNext();
                 intervalTime = RetryIntervalEnumerator.Current;
             }
+            return result;
+        }
+
+        public override bool RetryCondition(object sender)
+        {
+            bool result = true;
+
+            if(sender is SqlCommand command)
+            {
+                result = Transaction.Current == null // check TransactionScope
+                        && command.Transaction == null // check SqlTransaction on a SqlCommand
+                        && (PreCondition == null || PreCondition.Invoke(command.CommandText)); // if it contains an invalid command to retry
+            }
+
             return result;
         }
     }

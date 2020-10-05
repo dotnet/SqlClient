@@ -27,25 +27,28 @@ namespace Microsoft.Data.SqlClient
         /// Executes a function with a TResult type.
         /// </summary>
         /// <typeparam name="TResult">The function return type</typeparam>
+        /// <param name="sender">Sender object</param>
         /// <param name="function">The operaiton is likly be in the retry logic if transient condition happens</param>
         /// <returns>A TResult object or an exception</returns>
-        public abstract TResult Execute<TResult>(Func<TResult> function);
+        public abstract TResult Execute<TResult>(object sender, Func<TResult> function);
 
         /// <summary>
         /// Executes a function with a generic Task and TResult type.
         /// </summary>
         /// <typeparam name="TResult">Inner function return type</typeparam>
+        /// <param name="sender">Sender object</param>
         /// <param name="function">The operaiton is likly be in the retry logic if transient condition happens</param>
         /// <param name="cancellationToken">The cancellation instruction</param>
         /// <returns>A task representing TResult or an exception</returns>
-        public abstract Task<TResult> ExecuteAsync<TResult>(Func<Task<TResult>> function, CancellationToken cancellationToken = default);
+        public abstract Task<TResult> ExecuteAsync<TResult>(object sender, Func<Task<TResult>> function, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Execute a function with a generic Task type.
         /// </summary>
+        /// <param name="sender">Sender object</param>
         /// <param name="function">The operaiton is likly be in the retry logic if transient condition happens</param>
         /// <param name="cancellationToken">The cancellation instruction</param>
         /// <returns>A Task or an exception</returns>
-        public abstract Task ExecuteAsync(Func<Task> function, CancellationToken cancellationToken = default);
+        public abstract Task ExecuteAsync(object sender, Func<Task> function, CancellationToken cancellationToken = default);
     }
 }

@@ -12,27 +12,24 @@ namespace Microsoft.Data.SqlClient
     /// <summary>
     /// Apply a retry logic on an operation.
     /// </summary>
-    public abstract class SqlRetryLogicProvider : SqlRetryLogicBaseProvider
+    internal class SqlRetryLogicProvider : SqlRetryLogicBaseProvider
     {
         // safety switch for the preview version
         private const string EnableRetryLogicSwitch = "Switch.Microsoft.Data.SqlClient.EnableRetryLogic";
-        private bool EnableRetryLogic = false;
+        private readonly bool enableRetryLogic = false;
 
         ///
-        public SqlRetryLogicProvider()
+        public SqlRetryLogicProvider(SqlRetryLogicBase retryLogic)
         {
-            AppContext.TryGetSwitch(EnableRetryLogicSwitch, out EnableRetryLogic);
-        }
-
-        private void OnRetrying(SqlRetryingEventArgs eventArgs)
-        {
-            Retrying?.Invoke(this, eventArgs);
+            AppContext.TryGetSwitch(EnableRetryLogicSwitch, out enableRetryLogic);
+            RetryLogic = retryLogic;
         }
 
         ///
-        public override TResult Execute<TResult>(Func<TResult> function)
+        public override TResult Execute<TResult>(object sender, Func<TResult> function)
         {
             var exceptions = new List<Exception>();
+            RetryLogic.Reset();
         retry:
             try
             {
@@ -40,12 +37,13 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
-                if (EnableRetryLogic && RetryLogic.TransientPredicate(e))
+                if (enableRetryLogic && RetryLogic.RetryCondition(sender) && RetryLogic.TransientPredicate(e))
                 {
                     exceptions.Add(e);
                     if (RetryLogic.TryNextInterval(out TimeSpan intervalTime))
                     {
-                        ApplyRetryEvent(RetryLogic.Current, intervalTime, exceptions);
+                        // The retrying event raises on each retry.
+                        ApplyRetryingEvent(sender, RetryLogic.Current, intervalTime, exceptions);
 
                         // TODO: log the retried execution and the throttled exception
                         Thread.Sleep(intervalTime);
@@ -64,9 +62,10 @@ namespace Microsoft.Data.SqlClient
         }
 
         ///
-        public override async Task<TResult> ExecuteAsync<TResult>(Func<Task<TResult>> function, CancellationToken cancellationToken = default)
+        public override async Task<TResult> ExecuteAsync<TResult>(object sender, Func<Task<TResult>> function, CancellationToken cancellationToken = default)
         {
             var exceptions = new List<Exception>();
+            RetryLogic.Reset();
         retry:
             try
             {
@@ -74,12 +73,13 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
-                if (EnableRetryLogic && RetryLogic.TransientPredicate(e))
+                if (enableRetryLogic && RetryLogic.RetryCondition(sender) && RetryLogic.TransientPredicate(e))
                 {
                     exceptions.Add(e);
                     if (RetryLogic.TryNextInterval(out TimeSpan intervalTime))
                     {
-                        ApplyRetryEvent(RetryLogic.Current, intervalTime, exceptions);
+                        // The retrying event raises on each retry.
+                        ApplyRetryingEvent(sender, RetryLogic.Current, intervalTime, exceptions);
 
                         // TODO: log the retried execution and the throttled exception
                         await Task.Delay(intervalTime, cancellationToken);
@@ -98,9 +98,10 @@ namespace Microsoft.Data.SqlClient
         }
 
         ///
-        public override async Task ExecuteAsync(Func<Task> function, CancellationToken cancellationToken = default)
+        public override async Task ExecuteAsync(object sender, Func<Task> function, CancellationToken cancellationToken = default)
         {
             var exceptions = new List<Exception>();
+            RetryLogic.Reset();
         retry:
             try
             {
@@ -108,12 +109,13 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
-                if (EnableRetryLogic && RetryLogic.TransientPredicate(e))
+                if (enableRetryLogic && RetryLogic.RetryCondition(sender) && RetryLogic.TransientPredicate(e))
                 {
                     exceptions.Add(e);
                     if (RetryLogic.TryNextInterval(out TimeSpan intervalTime))
                     {
-                        ApplyRetryEvent(RetryLogic.Current, intervalTime, exceptions);
+                        // The retrying event raises on each retry.
+                        ApplyRetryingEvent(sender, RetryLogic.Current, intervalTime, exceptions);
 
                         // TODO: log the retried execution and the throttled exception
                         await Task.Delay(intervalTime, cancellationToken);
@@ -130,6 +132,8 @@ namespace Microsoft.Data.SqlClient
                 }
             }
         }
+        
+        #region private methods
 
         private Exception CreateException(IList<Exception> exceptions, bool manualCancellation = false)
         {
@@ -137,28 +141,30 @@ namespace Microsoft.Data.SqlClient
             string message;
             if (manualCancellation)
             {
-                message = $"The retry manually has been canceled by user after {RetryLogic.Current - 1} attempt(s).";
+                message = $"The retry manually has been canceled by user after {RetryLogic.Current} attempt(s).";
             }
             else
             {
-                message = $"The number of retries has been exceeded from the maximum {RetryLogic.Current} attempt(s).";
+                message = $"The number of retries has been exceeded from the maximum {RetryLogic.NumberOfTries} attempt(s).";
             }
 
-            RetryLogic.Reset();
             return new AggregateException(message, exceptions);
         }
 
-        private void ApplyRetryEvent(int retryCount, TimeSpan intervalTime, List<Exception> exceptions)
+        private void OnRetrying(object sender, SqlRetryingEventArgs eventArgs) => Retrying?.Invoke(sender, eventArgs);
+
+        private void ApplyRetryingEvent(object sender, int retryCount, TimeSpan intervalTime, List<Exception> exceptions)
         {
             if (Retrying != null)
             {
                 var retryEventArgs = new SqlRetryingEventArgs(retryCount - 1, intervalTime, exceptions);
-                OnRetrying(retryEventArgs);
+                OnRetrying(sender, retryEventArgs);
                 if (retryEventArgs.Cancel)
                 {
                     throw CreateException(exceptions, true);
                 }
             }
         }
+        #endregion
     }
 }

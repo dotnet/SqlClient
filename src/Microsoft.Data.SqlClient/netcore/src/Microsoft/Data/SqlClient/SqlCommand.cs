@@ -482,8 +482,8 @@ namespace Microsoft.Data.SqlClient
             {
                 if (_retryLogicProvider == null)
                 {
-                    //TODO: select the default retry logic if it was set in the connection string or a defined switch
-                    _retryLogicProvider = new Reliability.SqlNoneRetryLogicProvider();
+                    //TODO: Reade default retry strategy from the configuration file.
+                    _retryLogicProvider = SqlConfigurableRetryFactory.CreateNoneRetryProvider();
                 }
                 return _retryLogicProvider;
             }
@@ -1020,7 +1020,7 @@ namespace Microsoft.Data.SqlClient
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
                 SqlDataReader ds;
-                ds = RetryLogicProvider.Execute(() => RunExecuteReader(0, RunBehavior.ReturnImmediately, returnStream: true));
+                ds = RetryLogicProvider.Execute(this, () => RunExecuteReader(0, RunBehavior.ReturnImmediately, returnStream: true));
                 success = true;
 
                 return CompleteExecuteScalar(ds, false);
@@ -1099,7 +1099,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
-                RetryLogicProvider.Execute(() => InternalExecuteNonQuery(completion: null, sendToPipe: false, timeout: CommandTimeout, out _, methodName: nameof(ExecuteNonQuery)));
+                RetryLogicProvider.Execute(this, () => InternalExecuteNonQuery(completion: null, sendToPipe: false, timeout: CommandTimeout, out _, methodName: nameof(ExecuteNonQuery)));
                 return _rowsAffected;
             }
             catch (Exception ex)
@@ -1593,7 +1593,7 @@ namespace Microsoft.Data.SqlClient
 
                 // use the reader to consume metadata
                 SqlDataReader ds;
-                ds = RetryLogicProvider.Execute(() => RunExecuteReader(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, returnStream: true));
+                ds = RetryLogicProvider.Execute(this, () => RunExecuteReader(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, returnStream: true));
                 success = true;
                 return CompleteXmlReader(ds);
             }
@@ -1913,7 +1913,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
-                return RetryLogicProvider.Execute(() => RunExecuteReader(behavior, RunBehavior.ReturnImmediately, returnStream: true));
+                return RetryLogicProvider.Execute(this, () => RunExecuteReader(behavior, RunBehavior.ReturnImmediately, returnStream: true));
             }
             catch (Exception ex)
             {
@@ -2398,7 +2398,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteNonQueryAsync[@name="CancellationToken"]/*'/>
         public override Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
         {
-            return RetryLogicProvider.ExecuteAsync(() => InternalExecuteNonQueryAsync(cancellationToken), cancellationToken);
+            return RetryLogicProvider.ExecuteAsync(this, () => InternalExecuteNonQueryAsync(cancellationToken), cancellationToken);
         }
 
         private Task<int> InternalExecuteNonQueryAsync(CancellationToken cancellationToken)
@@ -2490,7 +2490,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="commandBehaviorAndCancellationToken"]/*'/>
         new public Task<SqlDataReader> ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
         {
-            return RetryLogicProvider.ExecuteAsync(() => InternalExecuteReaderAsync(behavior, cancellationToken), cancellationToken);
+            return RetryLogicProvider.ExecuteAsync(this, () => InternalExecuteReaderAsync(behavior, cancellationToken), cancellationToken);
         }
 
         private Task<SqlDataReader> InternalExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
@@ -2564,7 +2564,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="CancellationToken"]/*'/>
         public override Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
         {
-            return RetryLogicProvider.ExecuteAsync(() => InternalExecuteScalarAsync(cancellationToken), cancellationToken);
+            return RetryLogicProvider.ExecuteAsync(this, () => InternalExecuteScalarAsync(cancellationToken), cancellationToken);
         }
 
         private Task<object> InternalExecuteScalarAsync(CancellationToken cancellationToken)
@@ -2659,7 +2659,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReaderAsync[@name="CancellationToken"]/*'/>
         public Task<XmlReader> ExecuteXmlReaderAsync(CancellationToken cancellationToken)
         {
-            return RetryLogicProvider.ExecuteAsync(() => InternalExecuteXmlReaderAsync(cancellationToken), cancellationToken);
+            return RetryLogicProvider.ExecuteAsync(this, () => InternalExecuteXmlReaderAsync(cancellationToken), cancellationToken);
         }
 
         private Task<XmlReader> InternalExecuteXmlReaderAsync(CancellationToken cancellationToken)

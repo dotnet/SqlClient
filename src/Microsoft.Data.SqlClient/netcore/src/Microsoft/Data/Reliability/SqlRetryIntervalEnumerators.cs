@@ -4,7 +4,7 @@
 
 using System;
 
-namespace Microsoft.Data.SqlClient.Reliability
+namespace Microsoft.Data.SqlClient
 {
     internal class SqlExponentialIntervalEnumerator : SqlRetryIntervalBaseEnumerator
     {
@@ -34,25 +34,34 @@ namespace Microsoft.Data.SqlClient.Reliability
 
         protected override TimeSpan GetNextInterval()
         {
-            var interval = Current + GapTimeInterval;
-
-            if (interval < MinTimeInterval)
+            if (Current >= MaxTimeInterval)
             {
-                interval = MinTimeInterval;
+                return MaxTimeInterval;
             }
-            else if (interval > MaxTimeInterval)
+            else
             {
-                interval = MaxTimeInterval;
-            }
+                var random = new Random();
+                var interval = TimeSpan.FromMilliseconds(Current.TotalMilliseconds
+                                                         + random.Next(Convert.ToInt32(GapTimeInterval.TotalMilliseconds * 0.8), Convert.ToInt32(GapTimeInterval.TotalMilliseconds * 1.2)));
 
-            return interval;
+                if (interval < MinTimeInterval)
+                {
+                    interval = MinTimeInterval;
+                }
+                else if (interval > MaxTimeInterval)
+                {
+                    interval = MaxTimeInterval;
+                }
+
+                return interval;
+            }
         }
     }
 
     internal class SqlFixedIntervalEnumerator : SqlRetryIntervalBaseEnumerator
     {
-        public SqlFixedIntervalEnumerator(TimeSpan gapTimeInterval, TimeSpan maxTimeInterval, TimeSpan minTimeInterval)
-            : base(gapTimeInterval, maxTimeInterval, minTimeInterval)
+        public SqlFixedIntervalEnumerator(TimeSpan gapTimeInterval)
+            : base(gapTimeInterval, gapTimeInterval, gapTimeInterval)
         {
         }
 

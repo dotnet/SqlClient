@@ -27,6 +27,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <summary>
         /// Retry-attempt-number, after the fisrt exception occurrence.
+        /// It starts from zero.
         /// </summary>
         public int RetryCount { get; private set; }
 

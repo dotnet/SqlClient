@@ -111,8 +111,8 @@ namespace Microsoft.Data.SqlClient
             {
                 if (_retryLogicProvider == null)
                 {
-                    //TODO: select the default retry logic if it was set in the connection string or a defined switch
-                    _retryLogicProvider = new Reliability.SqlNoneRetryLogicProvider();
+                    //TODO: Reade default retry strategy from the configuration file.
+                    _retryLogicProvider = SqlConfigurableRetryFactory.CreateNoneRetryProvider();
                 }
                 return _retryLogicProvider;
             }
@@ -1166,7 +1166,7 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
-                    if (!RetryLogicProvider.Execute<bool>(() => TryOpen(null, overrides)))
+                    if (!RetryLogicProvider.Execute<bool>(this, () => TryOpen(null, overrides)))
                     {
                         throw ADP.InternalError(ADP.InternalErrorCode.SynchronousConnectReturnedPending);
                     }
@@ -1419,7 +1419,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsync/*' />
         public override Task OpenAsync(CancellationToken cancellationToken)
         {
-            return RetryLogicProvider.ExecuteAsync(() => InternalOpenAsync(cancellationToken), cancellationToken);
+            return RetryLogicProvider.ExecuteAsync(this, () => InternalOpenAsync(cancellationToken), cancellationToken);
         }
 
         private Task InternalOpenAsync(CancellationToken cancellationToken)

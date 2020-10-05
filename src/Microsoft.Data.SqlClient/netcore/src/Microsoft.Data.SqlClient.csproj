@@ -711,7 +711,7 @@
     <Compile Include="Microsoft\Data\Reliability\Common\SqlRetryingEventArgs.cs" />
     <Compile Include="Microsoft\Data\Reliability\Common\SqlRetryLogicBase.cs" />
     <Compile Include="Microsoft\Data\Reliability\Common\SqlRetryLogicBaseProvider.cs" />
-    <Compile Include="Microsoft\Data\Reliability\SqlConfigurableRetryLogicProviders.cs" />
+    <Compile Include="Microsoft\Data\Reliability\SqlConfigurableRetryFactory.cs" />
     <Compile Include="Microsoft\Data\Reliability\Common\SqlRetryIntervalBaseEnumerator.cs" />
     <Compile Include="Microsoft\Data\Reliability\SqlRetryIntervalEnumerators.cs" />
     <Compile Include="Microsoft\Data\Reliability\Common\SqlRetryLogicProvider.cs" />
