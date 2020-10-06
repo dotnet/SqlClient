@@ -5,7 +5,6 @@
 using System;
 using System.Data;
 using System.Diagnostics;
-using System.Net;
 
 namespace Microsoft.Data.SqlClient
 {

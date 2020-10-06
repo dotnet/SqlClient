@@ -201,18 +201,18 @@ namespace Microsoft.Data.SqlClient
                     try
                     {
                         result = await app.AcquireTokenSilent(scopes, account).ExecuteAsync();
-                        SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result.ExpiresOn);
+                        SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (silent) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result.ExpiresOn);
                     }
                     catch (MsalUiRequiredException)
                     {
                         result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod);
-                        SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result.ExpiresOn);
+                        SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result.ExpiresOn);
                     }
                 }
                 else
                 {
                     result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod);
-                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result.ExpiresOn);
+                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result.ExpiresOn);
                 }
             }
             else
