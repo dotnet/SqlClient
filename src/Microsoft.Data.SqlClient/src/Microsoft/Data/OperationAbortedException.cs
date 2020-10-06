@@ -4,6 +4,7 @@
 
 using System;
 using System.Runtime.Serialization;
+using Microsoft.Data.Common;
 
 namespace Microsoft.Data
 {
@@ -32,6 +33,7 @@ namespace Microsoft.Data
             {
                 e = new OperationAbortedException(Strings.ADP_OperationAbortedExceptionMessage, inner);
             }
+            ADP.TraceExceptionAsReturnValue(e);
             return e;
         }
     }
