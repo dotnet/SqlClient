@@ -281,6 +281,10 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_DeviceFlowWithUsernamePassword));
         }
+        internal static Exception ManagedIdentityWithPassword(string authenticationMode)
+        {
+            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_ManagedIdentityWithPassword, authenticationMode));
+        }
         static internal Exception SettingIntegratedWithCredential()
         {
             return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_SettingIntegratedWithCredential));
@@ -292,6 +296,10 @@ namespace Microsoft.Data.SqlClient
         static internal Exception SettingDeviceFlowWithCredential()
         {
             return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_SettingDeviceFlowWithCredential));
+        }
+        static internal Exception SettingManagedIdentityWithCredential(string authenticationMode)
+        {
+            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_SettingManagedIdentityWithCredential, authenticationMode));
         }
         static internal Exception SettingCredentialWithIntegratedArgument()
         {
@@ -305,6 +313,10 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_SettingCredentialWithDeviceFlow));
         }
+        static internal Exception SettingCredentialWithManagedIdentityArgument(string authenticationMode)
+        {
+            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_SettingCredentialWithManagedIdentity, authenticationMode));
+        }
         static internal Exception SettingCredentialWithIntegratedInvalid()
         {
             return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_SettingCredentialWithIntegrated));
@@ -316,6 +328,10 @@ namespace Microsoft.Data.SqlClient
         static internal Exception SettingCredentialWithDeviceFlowInvalid()
         {
             return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_SettingCredentialWithDeviceFlow));
+        }
+        static internal Exception SettingCredentialWithManagedIdentityInvalid(string authenticationMode)
+        {
+            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_SettingCredentialWithManagedIdentity, authenticationMode));
         }
         internal static Exception NullEmptyTransactionName()
         {
@@ -1212,6 +1228,16 @@ namespace Microsoft.Data.SqlClient
         internal static Exception BatchedUpdatesNotAvailableOnContextConnection()
         {
             return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_BatchedUpdatesNotAvailableOnContextConnection));
+        }
+        internal static Exception Azure_ManagedIdentityException(string msg)
+        {
+            SqlErrorCollection errors = new SqlErrorCollection
+            {
+                new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, msg, "", 0)
+            };
+            SqlException exc = SqlException.CreateException(errors, null);
+            exc._doNotReconnect = true; // disable open retry logic on this error
+            return exc;
         }
 
         #region Always Encrypted Errors
