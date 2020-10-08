@@ -176,9 +176,6 @@ namespace Microsoft.Data.SqlClient
         internal const int DeltaBackOffInSeconds = 2;
         internal const string RetryTimeoutError = "Reached retry timeout limit set by MsiRetryTimeout parameter in connection string.";
 
-        // for unit test purposes
-        internal static bool s_waitBeforeRetry = true;
-
         internal static bool IsRetryableStatusCode(this HttpResponseMessage response)
         {
             // 404 NotFound, 429 TooManyRequests, and 5XX server error status codes are retryable
@@ -227,13 +224,10 @@ namespace Microsoft.Data.SqlClient
                             SqlClientEventSource.Log.TryTraceEvent("SendAsyncWithRetry | Exception occurred {0} | Attempting retry: {1} of {2}", e.Message, attempts, maxRetryCount);
                         }
 
-                        if (s_waitBeforeRetry)
-                        {
-                            // use recommended exponential backoff strategy, and use linked token wait handle so caller or retry timeout is still able to cancel
-                            backoffTimeInSecs += (int)Math.Pow(DeltaBackOffInSeconds, attempts);
-                            linkedTokenSource.Token.WaitHandle.WaitOne(TimeSpan.FromSeconds(backoffTimeInSecs));
-                            linkedTokenSource.Token.ThrowIfCancellationRequested();
-                        }
+                        // use recommended exponential backoff strategy, and use linked token wait handle so caller or retry timeout is still able to cancel
+                        backoffTimeInSecs += (int)Math.Pow(DeltaBackOffInSeconds, attempts);
+                        linkedTokenSource.Token.WaitHandle.WaitOne(TimeSpan.FromSeconds(backoffTimeInSecs));
+                        linkedTokenSource.Token.ThrowIfCancellationRequested();
                     }
 
                     return response;
