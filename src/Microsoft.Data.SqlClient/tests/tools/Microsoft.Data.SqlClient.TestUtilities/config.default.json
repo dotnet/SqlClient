@@ -18,5 +18,6 @@
     "SupportsFileStream": false,
     "UseManagedSNIOnWindows": false,
     "IsAzureSynapse": false,
-    "EnclaveAzureDatabaseConnString": ""
+    "EnclaveAzureDatabaseConnString": "",
+    "UserManagedIdentityObjectId": ""
 }

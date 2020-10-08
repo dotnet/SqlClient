@@ -253,21 +253,21 @@ namespace Microsoft.Data.SqlClient
             10928,
 
             // SQL Error Code: 10929
-            // Resource ID: %d. The %s minimum guarantee is %d, maximum limit is %d and the current usage for the database is %d. 
+            // Resource ID: %d. The %s minimum guarantee is %d, maximum limit is %d and the current usage for the database is %d.
             // However, the server is currently too busy to support requests greater than %d for this database.
             10929,
 
             // SQL Error Code: 40197
-            // You will receive this error, when the service is down due to software or hardware upgrades, hardware failures, 
-            // or any other failover problems. The error code (%d) embedded within the message of error 40197 provides 
-            // additional information about the kind of failure or failover that occurred. Some examples of the error codes are 
+            // You will receive this error, when the service is down due to software or hardware upgrades, hardware failures,
+            // or any other failover problems. The error code (%d) embedded within the message of error 40197 provides
+            // additional information about the kind of failure or failover that occurred. Some examples of the error codes are
             // embedded within the message of error 40197 are 40020, 40143, 40166, and 40540.
             40197,
 
             // The service is currently busy. Retry the request after 10 seconds. Incident ID: %ls. Code: %d.
             40501,
 
-            // Database '%.*ls' on server '%.*ls' is not currently available. Please retry the connection later. 
+            // Database '%.*ls' on server '%.*ls' is not currently available. Please retry the connection later.
             // If the problem persists, contact customer support, and provide them the session tracing ID of '%.*ls'.
             40613
         };
@@ -378,7 +378,7 @@ namespace Microsoft.Data.SqlClient
             internal void Release()
             {
                 if (_semaphore.CurrentCount == 0)
-                {  //  semaphore methods were used for locking                   
+                {  //  semaphore methods were used for locking
                     _semaphore.Release();
                 }
                 else
@@ -396,7 +396,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            // Necessary but not sufficient condition for thread to have lock (since semaphore may be obtained by any thread)            
+            // Necessary but not sufficient condition for thread to have lock (since semaphore may be obtained by any thread)
             internal bool ThreadMayHaveLock()
             {
                 return Monitor.IsEntered(_semaphore) || _semaphore.CurrentCount == 0;
@@ -798,15 +798,15 @@ namespace Microsoft.Data.SqlClient
         /// <remarks>
         /// <para>
         /// This method must be called while holding a lock on the SqlInternalConnection instance,
-        /// to ensure we don't accidentally execute after the transaction has completed on a different thread, 
+        /// to ensure we don't accidentally execute after the transaction has completed on a different thread,
         /// causing us to unwittingly execute in auto-commit mode.
         /// </para>
-        /// 
+        ///
         /// <para>
-        /// When using Explicit transaction unbinding, 
+        /// When using Explicit transaction unbinding,
         /// verify that the enlisted transaction is active and equal to the current ambient transaction.
         /// </para>
-        /// 
+        ///
         /// <para>
         /// When using Implicit transaction unbinding,
         /// verify that the enlisted transaction is active.
@@ -895,7 +895,7 @@ namespace Microsoft.Data.SqlClient
                 DoomThisConnection();
             }
 
-            // If we're deactivating with a delegated transaction, we 
+            // If we're deactivating with a delegated transaction, we
             // should not be cleaning up the parser just yet, that will
             // cause our transaction to be rolled back and the connection
             // to be reset.  We'll get called again once the delegated
@@ -1095,17 +1095,17 @@ namespace Microsoft.Data.SqlClient
 
                 // SQLBUDT #20010853 - Promote, Commit and Rollback requests for
                 // delegated transactions often happen while there is an open result
-                // set, so we need to handle them by using a different MARS session, 
+                // set, so we need to handle them by using a different MARS session,
                 // otherwise we'll write on the physical state objects while someone
-                // else is using it.  When we don't have MARS enabled, we need to 
-                // lock the physical state object to synchronize it's use at least 
-                // until we increment the open results count.  Once it's been 
+                // else is using it.  When we don't have MARS enabled, we need to
+                // lock the physical state object to synchronize it's use at least
+                // until we increment the open results count.  Once it's been
                 // incremented the delegated transaction requests will fail, so they
                 // won't stomp on anything.
-                // 
+                //
                 // We need to keep this lock through the duration of the TM request
                 // so that we won't hijack a different request's data stream and a
-                // different request won't hijack ours, so we have a lock here on 
+                // different request won't hijack ours, so we have a lock here on
                 // an object that the ExecTMReq will also lock, but since we're on
                 // the same thread, the lock is a no-op.
 
@@ -1272,7 +1272,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // VSTS#795621 - Ensure ServerName is Sent During TdsLogin To Enable Sql Azure Connectivity.
-            // Using server.UserServerName (versus ConnectionOptions.DataSource) since TdsLogin requires 
+            // Using server.UserServerName (versus ConnectionOptions.DataSource) since TdsLogin requires
             // serverName to always be non-null.
             login.serverName = server.UserServerName;
 
@@ -1295,13 +1295,15 @@ namespace Microsoft.Data.SqlClient
                 _sessionRecoveryRequested = true;
             }
 
-            // If the workflow being used is Active Directory Password/Integrated/Interactive/Service Principal and server's prelogin response
+            // If the workflow being used is Active Directory Authentication and server's prelogin response
             // for FEDAUTHREQUIRED option indicates Federated Authentication is required, we have to insert FedAuth Feature Extension
             // in Login7, indicating the intent to use Active Directory Authentication for SQL Server.
             if (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
+                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
+                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI
                 // Since AD Integrated may be acting like Windows integrated, additionally check _fedAuthRequired
                 || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _fedAuthRequired))
             {
@@ -1491,7 +1493,7 @@ namespace Microsoft.Data.SqlClient
                 if (connectionOptions.MultiSubnetFailover)
                 {
                     attemptNumber++;
-                    // Set timeout for this attempt, but don't exceed original timer                
+                    // Set timeout for this attempt, but don't exceed original timer
                     long nextTimeoutInterval = checked(timeoutUnitInterval * attemptNumber);
                     long milliseconds = timeout.MillisecondsRemaining;
                     if (nextTimeoutInterval > milliseconds)
@@ -1514,7 +1516,7 @@ namespace Microsoft.Data.SqlClient
                     AttemptOneLogin(serverInfo,
                                     newPassword,
                                     newSecurePassword,
-                                    !connectionOptions.MultiSubnetFailover,    // ignore timeout for SniOpen call unless MSF 
+                                    !connectionOptions.MultiSubnetFailover,    // ignore timeout for SniOpen call unless MSF
                                     connectionOptions.MultiSubnetFailover ? intervalTimer : timeout);
 
                     if (connectionOptions.MultiSubnetFailover && null != ServerProvidedFailOverPartner)
@@ -1609,7 +1611,7 @@ namespace Microsoft.Data.SqlClient
                     return; // LoginWithFailover successfully connected and handled entire connection setup
                 }
 
-                // Sleep for a bit to prevent clogging the network with requests, 
+                // Sleep for a bit to prevent clogging the network with requests,
                 //  then update sleep interval for next iteration (max 1 second interval)
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.LoginNoFailover|ADV> {0}, sleeping {1}[milisec]", ObjectID, sleepInterval);
                 Thread.Sleep(sleepInterval);
@@ -1620,7 +1622,7 @@ namespace Microsoft.Data.SqlClient
             if (null != PoolGroupProviderInfo)
             {
                 // We must wait for CompleteLogin to finish for to have the
-                // env change from the server to know its designated failover 
+                // env change from the server to know its designated failover
                 // partner; save this information in _currentFailoverPartner.
                 PoolGroupProviderInfo.FailoverCheck(this, false, connectionOptions, ServerProvidedFailOverPartner);
             }
@@ -1706,7 +1708,7 @@ namespace Microsoft.Data.SqlClient
             //  2) Parser threw exception while main timer was expired
             //  3) Parser threw logon failure-related exception (LOGON_FAILED, PASSWORD_EXPIRED, etc)
             //
-            //  Of these methods, only #1 exits normally. This preserves the call stack on the exception 
+            //  Of these methods, only #1 exits normally. This preserves the call stack on the exception
             //  back into the parser for the error cases.
             while (true)
             {
@@ -1762,7 +1764,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         // We are in login with failover scenation and server sent routing information
                         // If it is read-only routing - we did not supply AppIntent=RO (it should be checked before)
-                        // If it is something else, not known yet (future server) - this client is not designed to support this.                    
+                        // If it is something else, not known yet (future server) - this client is not designed to support this.
                         // In any case, server should not have sent the routing info.
                         SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.LoginWithFailover> Routed to {0}", RoutingInfo.ServerName);
                         throw SQL.ROR_UnexpectedRoutingInfo(this);
@@ -2108,6 +2110,8 @@ namespace Microsoft.Data.SqlClient
                          || _credential != null
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
+                         || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
+                         || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI
                          || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _fedAuthRequired),
                          "Credentials aren't provided for calling MSAL");
             Debug.Assert(fedAuthInfo != null, "info should not be null.");
@@ -2348,6 +2352,8 @@ namespace Microsoft.Data.SqlClient
                             break;
                         case SqlAuthenticationMethod.ActiveDirectoryInteractive:
                         case SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow:
+                        case SqlAuthenticationMethod.ActiveDirectoryManagedIdentity:
+                        case SqlAuthenticationMethod.ActiveDirectoryMSI:
                             if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
                             {
                                 _fedAuthToken = _activeDirectoryAuthTimeoutRetryHelper.CachedToken;
@@ -2694,7 +2700,7 @@ namespace Microsoft.Data.SqlClient
                         }
 
                         // need to add more steps for phase 2
-                        // get IPv4 + IPv6 + Port number 
+                        // get IPv4 + IPv6 + Port number
                         // not put them in the DNS cache at this point but need to store them somewhere
                         // generate pendingSQLDNSObject and turn on IsSQLDNSRetryEnabled flag
 
@@ -2703,7 +2709,7 @@ namespace Microsoft.Data.SqlClient
 
                 default:
                     {
-                        // Unknown feature ack 
+                        // Unknown feature ack
                         throw SQL.ParsingError();
                     }
             }

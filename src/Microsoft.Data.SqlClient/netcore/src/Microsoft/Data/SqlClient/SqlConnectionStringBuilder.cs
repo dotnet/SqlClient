@@ -29,7 +29,6 @@ namespace Microsoft.Data.SqlClient
             PersistSecurityInfo,
             UserID,
             Password,
-
             Enlist,
             Pooling,
             MinPoolSize,
@@ -37,10 +36,8 @@ namespace Microsoft.Data.SqlClient
 #if netcoreapp
             PoolBlockingPeriod,
 #endif
-
             MultipleActiveResultSets,
             Replication,
-
             ConnectTimeout,
             Encrypt,
             TrustServerCertificate,
@@ -48,23 +45,15 @@ namespace Microsoft.Data.SqlClient
             PacketSize,
             TypeSystemVersion,
             Authentication,
-
             ApplicationName,
             CurrentLanguage,
             WorkstationID,
-
             UserInstance,
-
             TransactionBinding,
-
             ApplicationIntent,
-
             MultiSubnetFailover,
-
             ConnectRetryCount,
-
             ConnectRetryInterval,
-
             ColumnEncryptionSetting,
             EnclaveAttestationUrl,
             AttestationProtocol,
@@ -991,7 +980,6 @@ namespace Microsoft.Data.SqlClient
                     return EnclaveAttestationUrl;
                 case Keywords.AttestationProtocol:
                     return AttestationProtocol;
-
                 default:
                     Debug.Fail("unexpected keyword");
                     throw UnsupportedKeyword(s_validKeywords[(int)index]);
