@@ -2502,6 +2502,9 @@
   <data name="SQL_DeviceFlowWithUsernamePassword" xml:space="preserve">
     <value>无法结合使用 "Authentication=Active Directory Device Code Flow" 与 "User ID"、"UID"、"Password" 或 "PWD" 连接字符串关键字。</value>
   </data>
+  <data name="SQL_ManagedIdentityWithPassword" xml:space="preserve">
+    <value>Cannot use 'Authentication={0}' with 'Password' or 'PWD' connection string keywords.</value>
+  </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>如果设置了 Credential 属性，则无法使用“Authentication=Active Directory Integrated”。</value>
   </data>
@@ -4572,7 +4575,31 @@
   <data name="SQL_SettingCredentialWithDeviceFlow" xml:space="preserve">
     <value>如果在连接字符串中指定了 "Authentication=Active Directory Device Code Flow"，则无法设置 Credential 属性。</value>
   </data>
+  <data name="SQL_SettingCredentialWithManagedIdentity" xml:space="preserve">
+    <value>Cannot set the Credential property if 'Authentication={0}' has been specified in the connection string.</value>
+  </data>
   <data name="SQL_SettingDeviceFlowWithCredential" xml:space="preserve">
     <value>如果设置了 Credential 属性，则无法使用 "Authentication=Active Directory Device Code Flow"。</value>
+  </data>
+  <data name="SQL_SettingManagedIdentityWithCredential" xml:space="preserve">
+    <value>Cannot use 'Authentication={0}', if the Credential property has been set.</value>
+  </data>
+  <data name="Azure_GenericErrorMessage" xml:space="preserve">
+    <value>Access token could not be acquired.</value>
+  </data>
+  <data name="Azure_IdentityEndpointNotListening" xml:space="preserve">
+    <value>Unable to connect to the Managed Identity endpoint. Please check that you are running on an Azure resource that has Identity setup.</value>
+  </data>
+  <data name="Azure_ManagedIdentityUsed" xml:space="preserve">
+    <value>Tried to get token using Managed Identity.</value>
+  </data>
+  <data name="Azure_MetadataEndpointNotListening" xml:space="preserve">
+    <value>Unable to connect to the Instance Metadata Service (IMDS). Skipping request to the Managed Identity token endpoint.</value>
+  </data>
+  <data name="Azure_NonRetryableError" xml:space="preserve">
+    <value>Received a non-retryable error.</value>
+  </data>
+  <data name="Azure_RetryFailure" xml:space="preserve">
+    <value>Failed after 5 retries.</value>
   </data>
 </root>
