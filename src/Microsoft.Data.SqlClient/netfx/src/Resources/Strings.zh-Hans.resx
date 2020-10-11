@@ -2503,7 +2503,7 @@
     <value>无法结合使用 "Authentication=Active Directory Device Code Flow" 与 "User ID"、"UID"、"Password" 或 "PWD" 连接字符串关键字。</value>
   </data>
   <data name="SQL_ManagedIdentityWithPassword" xml:space="preserve">
-    <value>Cannot use 'Authentication={0}' with 'Password' or 'PWD' connection string keywords.</value>
+    <value>无法将 "Authentication={0}" 与 "Password" 或 "PWD" 连接字符串关键字结合使用。</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>如果设置了 Credential 属性，则无法使用“Authentication=Active Directory Integrated”。</value>
@@ -4576,30 +4576,30 @@
     <value>如果在连接字符串中指定了 "Authentication=Active Directory Device Code Flow"，则无法设置 Credential 属性。</value>
   </data>
   <data name="SQL_SettingCredentialWithManagedIdentity" xml:space="preserve">
-    <value>Cannot set the Credential property if 'Authentication={0}' has been specified in the connection string.</value>
+    <value>如果在连接字符串中指定了 "Authentication={0}"，则无法设置 Credential 属性。</value>
   </data>
   <data name="SQL_SettingDeviceFlowWithCredential" xml:space="preserve">
     <value>如果设置了 Credential 属性，则无法使用 "Authentication=Active Directory Device Code Flow"。</value>
   </data>
   <data name="SQL_SettingManagedIdentityWithCredential" xml:space="preserve">
-    <value>Cannot use 'Authentication={0}', if the Credential property has been set.</value>
+    <value>如果设置了 Credential 属性，则无法使用 "Authentication={0}"。</value>
   </data>
   <data name="Azure_GenericErrorMessage" xml:space="preserve">
-    <value>Access token could not be acquired.</value>
+    <value>无法获取访问令牌。</value>
   </data>
   <data name="Azure_IdentityEndpointNotListening" xml:space="preserve">
-    <value>Unable to connect to the Managed Identity endpoint. Please check that you are running on an Azure resource that has Identity setup.</value>
+    <value>无法连接到托管标识终结点。请检查你运行的 Azure 资源是否设置了标识。</value>
   </data>
   <data name="Azure_ManagedIdentityUsed" xml:space="preserve">
-    <value>Tried to get token using Managed Identity.</value>
+    <value>已尝试使用托管标识来获取令牌。</value>
   </data>
   <data name="Azure_MetadataEndpointNotListening" xml:space="preserve">
-    <value>Unable to connect to the Instance Metadata Service (IMDS). Skipping request to the Managed Identity token endpoint.</value>
+    <value>无法连接到实例元数据服务(IMDS)。正在跳过对托管标识令牌终结点的请求。</value>
   </data>
   <data name="Azure_NonRetryableError" xml:space="preserve">
-    <value>Received a non-retryable error.</value>
+    <value>收到了不可重试的错误。</value>
   </data>
   <data name="Azure_RetryFailure" xml:space="preserve">
-    <value>Failed after 5 retries.</value>
+    <value>5 次重试后失败。</value>
   </data>
 </root>
