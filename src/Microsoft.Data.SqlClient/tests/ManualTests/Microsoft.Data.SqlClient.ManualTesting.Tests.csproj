@@ -232,6 +232,10 @@
   <ItemGroup Condition="'$(TargetGroup)'=='netcoreapp'">
     <Compile Include="TracingTests\DiagnosticTest.cs" />
     <Compile Include="TracingTests\FakeDiagnosticListenerObserver.cs" />
+    <!-- Temporary till the design be finalized. -->
+    <Compile Include="SQL\RetryLogic\RetryLogicTestHelper.cs" />
+    <Compile Include="SQL\RetryLogic\SqlConnectionCRLTest.cs" />
+    <Compile Include="SQL\RetryLogic\SqlCommandCRLTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ProviderAgnostic\MultipleResultsTest\MultipleResultsTest.bsl" />
