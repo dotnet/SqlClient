@@ -1166,7 +1166,7 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
-                    if (!RetryLogicProvider.Execute<bool>(this, () => TryOpen(null, overrides)))
+                    if (!RetryLogicProvider.Execute(this, () => TryOpen(null, overrides)))
                     {
                         throw ADP.InternalError(ADP.InternalErrorCode.SynchronousConnectReturnedPending);
                     }

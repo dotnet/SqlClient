@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Data;
 using System.Threading;
 using System.Transactions;
 using Xunit;
@@ -30,6 +31,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.Throws<AggregateException>(() => cmd.ExecuteReader());
                 Assert.Equal(numberOfRetries, provider.RetryLogic?.Current + 1);
 
+                Assert.Throws<AggregateException>(() => cmd.ExecuteReader(CommandBehavior.Default));
+                Assert.Equal(numberOfRetries, provider.RetryLogic?.Current + 1);
+                
                 Assert.Throws<AggregateException>(() => cmd.ExecuteNonQuery());
                 Assert.Equal(numberOfRetries, provider.RetryLogic?.Current + 1);
 
@@ -55,6 +59,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.Equal(cancelAfterRetries, provider.RetryLogic?.Current);
 
                 Assert.Throws<AggregateException>(() => cmd.ExecuteReader());
+                Assert.Equal(cancelAfterRetries, provider.RetryLogic?.Current);
+
+                Assert.Throws<AggregateException>(() => cmd.ExecuteReader(CommandBehavior.Default));
                 Assert.Equal(cancelAfterRetries, provider.RetryLogic?.Current);
 
                 Assert.Throws<AggregateException>(() => cmd.ExecuteNonQuery());
@@ -83,6 +90,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.Equal(0, provider.RetryLogic?.Current);
 
                 Assert.Throws<SqlException>(() => cmd.ExecuteReader());
+                Assert.Equal(0, provider.RetryLogic?.Current);
+
+                Assert.Throws<SqlException>(() => cmd.ExecuteReader(CommandBehavior.Default));
                 Assert.Equal(0, provider.RetryLogic?.Current);
 
                 Assert.Throws<SqlException>(() => cmd.ExecuteNonQuery());
@@ -114,6 +124,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.Equal(0, provider.RetryLogic?.Current);
 
                 Assert.Throws<SqlException>(() => cmd.ExecuteReader());
+                Assert.Equal(0, provider.RetryLogic?.Current);
+
+                Assert.Throws<SqlException>(() => cmd.ExecuteReader(CommandBehavior.Default));
                 Assert.Equal(0, provider.RetryLogic?.Current);
 
                 Assert.Throws<SqlException>(() => cmd.ExecuteNonQuery());
@@ -181,8 +194,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyErr3702), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper))]
         public void DropDatabaseWithActiveConnection(string cnnString, SqlRetryLogicBaseProvider provider)
         {
-            int numberOfRetries = provider.RetryLogic.NumberOfTries;
-
             string database = DataTestUtility.GetUniqueNameForSqlServer($"RetryLogic_{provider.RetryLogic.RetryIntervalEnumerator.GetType().Name}", false);
             var builder = new SqlConnectionStringBuilder(cnnString)
             {
@@ -224,7 +235,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyErrNegative2), parameters: new object[] { 10 }, MemberType = typeof(RetryLogicTestHelper))]
         public void UpdateALockedTable(string cnnString, SqlRetryLogicBaseProvider provider)
         {
-            string tableName = "Region";
+            string tableName = DataTestUtility.GetUniqueNameForSqlServer("Region");
             string fieldName = "RegionDescription";
             
             using (var cnn1 = new SqlConnection(cnnString))
@@ -238,10 +249,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 cmd1.Connection = cnn1;
                 cmd2.Connection = cnn2;
 
+                // Create a separate table from Region
+                cmd1.CommandText = $"SELECT TOP (4) * INTO {tableName} FROM Region;";
+                cmd1.ExecuteNonQuery();
+
                 // Hold lock the table for 3 seconds (more that the connection timeout)
                 cmd1.CommandText = $"BEGIN TRAN; SELECT * FROM {tableName} WITH(TABLOCKx, HOLDLOCK); WAITFOR DELAY '00:00:03'; ROLLBACK;";
                 cmd1.ExecuteNonQueryAsync();
-                // Be sure the table is locked. 
+                // Be sure the table is locked.
                 Thread.Sleep(500);
 
                 // Update the locked table
@@ -251,6 +266,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 cmd2.ExecuteNonQuery();
 
                 Assert.True(provider.RetryLogic.Current > 0);
+
+                DataTestUtility.DropTable(cnn2, tableName);
             }
         }
 
@@ -273,6 +290,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.Equal(numberOfRetries, provider.RetryLogic?.Current + 1);
 
                 await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteReaderAsync());
+                Assert.Equal(numberOfRetries, provider.RetryLogic?.Current + 1);
+
+                await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteReaderAsync(CommandBehavior.Default));
+                Assert.Equal(numberOfRetries, provider.RetryLogic?.Current + 1);
+
+                await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteReaderAsync(CommandBehavior.Default, CancellationToken.None));
                 Assert.Equal(numberOfRetries, provider.RetryLogic?.Current + 1);
 
                 await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteNonQueryAsync());
@@ -302,6 +325,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteReaderAsync());
                 Assert.Equal(cancelAfterRetries, provider.RetryLogic?.Current);
 
+                await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteReaderAsync(CommandBehavior.Default));
+                Assert.Equal(cancelAfterRetries, provider.RetryLogic?.Current);
+
+                await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteReaderAsync(CommandBehavior.Default, CancellationToken.None));
+                Assert.Equal(cancelAfterRetries, provider.RetryLogic?.Current);
+
                 await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteNonQueryAsync());
                 Assert.Equal(cancelAfterRetries, provider.RetryLogic?.Current);
 
@@ -310,6 +339,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.Equal(cancelAfterRetries, provider.RetryLogic?.Current);
             }
         }
+
         #endregion
 
         #region private members

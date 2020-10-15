@@ -223,22 +223,22 @@ namespace Microsoft.Data.SqlClient
         private static bool TransientErrorsCondition(Exception e, IEnumerable<int> retriableConditions)
         {
             bool result = false;
-
-            if (e is SqlException ex)
+            if (e is SqlException ex && !ex._doNotReconnect)
             {
                 foreach (SqlError item in ex.Errors)
                 {
-                    if (retriableConditions.Count(x => x == item.Number) > 0)
+                    if (retriableConditions.Contains(item.Number))
                     {
                         result = true;
                         break;
                     }
                 }
             }
-            else if (e is TimeoutException)
-            {
-                result = true;
-            }
+            // TODO: Allow user to specify other exceptions!
+            //else if (e is TimeoutException)
+            //{
+            //    result = true;
+            //}
             return result;
         }
     }
