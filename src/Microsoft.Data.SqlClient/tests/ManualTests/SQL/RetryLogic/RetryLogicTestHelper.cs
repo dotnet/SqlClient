@@ -57,7 +57,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 builder.Clear();
                 builder.ConnectionString = cnnString;
-                builder.ConnectTimeout = 1;
+                builder.ConnectTimeout = 5;
                 builder.Pooling = false;
                 yield return new object[] { builder.ConnectionString };
 
@@ -88,6 +88,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     yield return new object[] { cnn[0], item[0] };
         }
 
+        public static IEnumerable<object[]> GetConnectionAndRetryStrategyInvalidCatalog(int numberOfRetries)
+        {
+            return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromSeconds(100), FilterSqlStatements.None, null, 200);
+        }
+
         public static IEnumerable<object[]> GetConnectionAndRetryStrategy(int numberOfRetries)
         {
             return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromSeconds(10), FilterSqlStatements.None, null);
@@ -105,13 +110,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static IEnumerable<object[]> GetConnectionAndRetryStrategyLongRunner(int numberOfRetries)
         {
-            return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromSeconds(30), FilterSqlStatements.None, null, 5 * 1000 );
+            return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromSeconds(120), FilterSqlStatements.None, null, 20 * 1000 );
         }
 
         // 3702: Cannot drop database because it is currently in use.
-        public static IEnumerable<object[]> GetConnectionAndRetryStrategyErr3702(int numberOfRetries)
+        // -2: Execution Timeout Expired.  The timeout period elapsed prior to completion of the operation or the server is not responding.
+        public static IEnumerable<object[]> GetConnectionAndRetryStrategyDropDB(int numberOfRetries)
         {
-            return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromMilliseconds(100), FilterSqlStatements.None, new int[] { 3702 });
+            return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromMilliseconds(2000), FilterSqlStatements.None, new int[] { 3702, -2 }, 500);
         }
 
         // -2: Execution Timeout Expired.  The timeout period elapsed prior to completion of the operation or the server is not responding.
