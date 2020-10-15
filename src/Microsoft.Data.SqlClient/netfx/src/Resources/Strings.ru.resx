@@ -2503,7 +2503,7 @@
     <value>Невозможно использовать "Authentication=Active Directory Device Code Flow" с ключевыми словами строки подключения "User ID", "UID", "Password" или "PWD".</value>
   </data>
   <data name="SQL_ManagedIdentityWithPassword" xml:space="preserve">
-    <value>Cannot use 'Authentication={0}' with 'Password' or 'PWD' connection string keywords.</value>
+    <value>Невозможно использовать "Authentication={0}" с ключевыми словами Password или PWD в строке подключения.</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>Не удается использовать "Authentication=Active Directory Integrated", если задано свойство "Credential".</value>
