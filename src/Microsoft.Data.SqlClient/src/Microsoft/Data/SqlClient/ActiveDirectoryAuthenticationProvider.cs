@@ -20,13 +20,21 @@ namespace Microsoft.Data.SqlClient
         private readonly SqlClientLogger _logger = new SqlClientLogger();
         private Func<DeviceCodeResult, Task> _deviceCodeFlowCallback;
         private ICustomWebUi _customWebUI = null;
+        private readonly string _applicationClientId = ActiveDirectoryAuthentication.AdoClientId;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor/*'/>
         public ActiveDirectoryAuthenticationProvider() => new ActiveDirectoryAuthenticationProvider(DefaultDeviceFlowCallback);
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor2/*'/>
-        public ActiveDirectoryAuthenticationProvider(Func<DeviceCodeResult, Task> deviceCodeFlowCallbackMethod)
+        public ActiveDirectoryAuthenticationProvider(string applicationClientId) => new ActiveDirectoryAuthenticationProvider(DefaultDeviceFlowCallback, applicationClientId);
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor3/*'/>
+        public ActiveDirectoryAuthenticationProvider(Func<DeviceCodeResult, Task> deviceCodeFlowCallbackMethod, string applicationClientId = null)
         {
+            if (applicationClientId != null)
+            {
+                _applicationClientId = applicationClientId;
+            }
             SetDeviceCodeFlowCallback(deviceCodeFlowCallbackMethod);
         }
 
@@ -89,6 +97,7 @@ namespace Microsoft.Data.SqlClient
                     .Build();
 
                 result = ccApp.AcquireTokenForClient(scopes).ExecuteAsync().Result;
+                SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Service Principal auth mode. Expiry Time: {0}", result.ExpiresOn);
                 return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
             }
 
@@ -102,7 +111,7 @@ namespace Microsoft.Data.SqlClient
             string redirectURI = "https://login.microsoftonline.com/common/oauth2/nativeclient";
 
 #if netcoreapp
-            if(parameters.AuthenticationMethod != SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
+            if (parameters.AuthenticationMethod != SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
             {
                 redirectURI = "http://localhost";
             }
@@ -112,7 +121,7 @@ namespace Microsoft.Data.SqlClient
 #if netstandard
             if (parentActivityOrWindowFunc != null)
             {
-                app = PublicClientApplicationBuilder.Create(ActiveDirectoryAuthentication.AdoClientId)
+                app = PublicClientApplicationBuilder.Create(_applicationClientId)
                 .WithAuthority(parameters.Authority)
                 .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
                 .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
@@ -124,7 +133,7 @@ namespace Microsoft.Data.SqlClient
 #if netfx
             if (_iWin32WindowFunc != null)
             {
-                app = PublicClientApplicationBuilder.Create(ActiveDirectoryAuthentication.AdoClientId)
+                app = PublicClientApplicationBuilder.Create(_applicationClientId)
                 .WithAuthority(parameters.Authority)
                 .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
                 .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
@@ -137,7 +146,7 @@ namespace Microsoft.Data.SqlClient
             else
 #endif
             {
-                app = PublicClientApplicationBuilder.Create(ActiveDirectoryAuthentication.AdoClientId)
+                app = PublicClientApplicationBuilder.Create(_applicationClientId)
                 .WithAuthority(parameters.Authority)
                 .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
                 .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
@@ -160,6 +169,7 @@ namespace Microsoft.Data.SqlClient
                         .WithCorrelationId(parameters.ConnectionId)
                         .ExecuteAsync().Result;
                 }
+                SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Integrated auth mode. Expiry Time: {0}", result.ExpiresOn);
             }
             else if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryPassword)
             {
@@ -170,6 +180,7 @@ namespace Microsoft.Data.SqlClient
                 result = app.AcquireTokenByUsernamePassword(scopes, parameters.UserId, password)
                     .WithCorrelationId(parameters.ConnectionId)
                     .ExecuteAsync().Result;
+                SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Password auth mode. Expiry Time: {0}", result.ExpiresOn);
             }
             else if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive ||
                      parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
@@ -190,19 +201,23 @@ namespace Microsoft.Data.SqlClient
                     try
                     {
                         result = await app.AcquireTokenSilent(scopes, account).ExecuteAsync();
+                        SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (silent) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result.ExpiresOn);
                     }
                     catch (MsalUiRequiredException)
                     {
                         result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod);
+                        SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result.ExpiresOn);
                     }
                 }
                 else
                 {
                     result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod);
+                    SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result.ExpiresOn);
                 }
             }
             else
             {
+                SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | {0} authentication mode not supported by ActiveDirectoryAuthenticationProvider class.", parameters.AuthenticationMethod);
                 throw SQL.UnsupportedAuthenticationSpecified(parameters.AuthenticationMethod);
             }
 
@@ -272,6 +287,7 @@ namespace Microsoft.Data.SqlClient
             }
             catch (OperationCanceledException)
             {
+                SqlClientEventSource.Log.TryTraceEvent("AcquireTokenInteractiveDeviceFlowAsync | Operation timed out while acquiring access token.");
                 throw (authenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive) ?
                     SQL.ActiveDirectoryInteractiveTimeout() :
                     SQL.ActiveDirectoryDeviceFlowTimeout();
@@ -290,6 +306,7 @@ namespace Microsoft.Data.SqlClient
             // * The timeout specified by the server for the lifetime of this code (typically ~15 minutes) has been reached
             // * The developing application calls the Cancel() method on a CancellationToken sent into the method.
             //   If this occurs, an OperationCanceledException will be thrown (see catch below for more details).
+            SqlClientEventSource.Log.TryTraceEvent("AcquireTokenInteractiveDeviceFlowAsync | Callback triggered with Device Code Result: {0}", result.Message);
             Console.WriteLine(result.Message);
             return Task.FromResult(0);
         }

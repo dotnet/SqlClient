@@ -898,6 +898,60 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Access token could not be acquired..
+        /// </summary>
+        internal static string Azure_GenericErrorMessage {
+            get {
+                return ResourceManager.GetString("Azure_GenericErrorMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to connect to the Managed Identity endpoint. Please check that you are running on an Azure resource that has Identity setup..
+        /// </summary>
+        internal static string Azure_IdentityEndpointNotListening {
+            get {
+                return ResourceManager.GetString("Azure_IdentityEndpointNotListening", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Tried to get token using Managed Identity..
+        /// </summary>
+        internal static string Azure_ManagedIdentityUsed {
+            get {
+                return ResourceManager.GetString("Azure_ManagedIdentityUsed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to connect to the Instance Metadata Service (IMDS). Skipping request to the Managed Identity token endpoint..
+        /// </summary>
+        internal static string Azure_MetadataEndpointNotListening {
+            get {
+                return ResourceManager.GetString("Azure_MetadataEndpointNotListening", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Received a non-retryable error..
+        /// </summary>
+        internal static string Azure_NonRetryableError {
+            get {
+                return ResourceManager.GetString("Azure_NonRetryableError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed after 5 retries..
+        /// </summary>
+        internal static string Azure_RetryFailure {
+            get {
+                return ResourceManager.GetString("Azure_RetryFailure", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to .database.chinacloudapi.cn.
         /// </summary>
         internal static string AZURESQL_ChinaEndpoint {
@@ -2797,6 +2851,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication={0}&apos; with &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
+        /// </summary>
+        internal static string SQL_ManagedIdentityWithPassword {
+            get {
+                return ResourceManager.GetString("SQL_ManagedIdentityWithPassword", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The connection does not support MultipleActiveResultSets..
         /// </summary>
         internal static string SQL_MarsUnsupportedOnConnection {
@@ -3076,6 +3139,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot set the Credential property if &apos;Authentication={0}&apos; has been specified in the connection string..
+        /// </summary>
+        internal static string SQL_SettingCredentialWithManagedIdentity {
+            get {
+                return ResourceManager.GetString("SQL_SettingCredentialWithManagedIdentity", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Device Code Flow&apos;, if the Credential property has been set..
         /// </summary>
         internal static string SQL_SettingDeviceFlowWithCredential {
@@ -3099,6 +3171,15 @@ namespace System {
         internal static string SQL_SettingInteractiveWithCredential {
             get {
                 return ResourceManager.GetString("SQL_SettingInteractiveWithCredential", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication={0}&apos;, if the Credential property has been set..
+        /// </summary>
+        internal static string SQL_SettingManagedIdentityWithCredential {
+            get {
+                return ResourceManager.GetString("SQL_SettingManagedIdentityWithCredential", resourceCulture);
             }
         }
         

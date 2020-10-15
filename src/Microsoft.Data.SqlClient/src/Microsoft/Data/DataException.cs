@@ -8,12 +8,6 @@ using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data
 {
-    // These functions are major point of localization.
-    // We need to have a rules to enforce consistency there.
-    // The dangerous point there are the string arguments of the exported (internal) methods.
-    // This string can be argument, table or constraint name but never text of exception itself.
-    // Make an invariant that all texts of exceptions coming from resources only.
-
     internal static class ExceptionBuilder
     {
         // The class defines the exceptions that are specific to the DataSet.
@@ -25,14 +19,20 @@ namespace Microsoft.Data
         // The resource Data.txt will ensure proper string text based on the appropriate
         // locale.
 
-        static private void TraceException(
-           string trace, Exception e)
+        private static void TraceException(string trace, Exception e)
         {
             Debug.Assert(null != e, "TraceException: null Exception");
             if (null != e)
             {
                 SqlClientEventSource.Log.TryAdvancedTraceEvent(trace, e.Message);
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("<comm.ADP.TraceException|ERR|ADV> Environment StackTrace = '{0}'", Environment.StackTrace);
+                try
+                {
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent("<comm.ADP.TraceException|ERR|ADV> Environment StackTrace = '{0}'", Environment.StackTrace);
+                }
+                catch (System.Security.SecurityException)
+                {
+                    // if you don't have permission - you don't get the stack trace
+                }
             }
         }
 
@@ -41,18 +41,16 @@ namespace Microsoft.Data
             TraceException("<comm.ADP.TraceException|ERR|THROW> Message='{0}'", e);
         }
 
-        //
-        // COM+ exceptions
-        //
         internal static ArgumentException _Argument(string error)
         {
             ArgumentException e = new ArgumentException(error);
             ExceptionBuilder.TraceExceptionAsReturnValue(e);
             return e;
         }
-        public static Exception InvalidOffsetLength()
+
+        internal static Exception InvalidOffsetLength()
         {
             return _Argument(StringsHelper.GetString(Strings.Data_InvalidOffsetLength));
         }
-    }// ExceptionBuilder
+    }
 }

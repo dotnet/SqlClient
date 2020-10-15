@@ -264,3 +264,17 @@ There may be times where connection cannot be made to SQL Server, we found below
     <TargetsWindows>false</TargetsWindows>
     <TargetsUnix>true</TargetsUnix>
   ```
+
+## Collecting Code Coverage
+
+### Using VSTest
+
+```bash
+dotnet test <test_properties...> --collect:"Code Coverage"
+```
+
+### Using Coverlet Collector
+
+```bash
+dotnet test <test_properties...> --collect:"XPlat Code Coverage"
+```

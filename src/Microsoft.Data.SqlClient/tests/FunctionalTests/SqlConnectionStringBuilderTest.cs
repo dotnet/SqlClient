@@ -17,6 +17,18 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("Attestation Protocol = HGS")]
         [InlineData("Authentication = Active Directory Password ")]
         [InlineData("Authentication = ActiveDirectoryPassword ")]
+        [InlineData("Authentication = Active Directory Integrated ")]
+        [InlineData("Authentication = ActiveDirectoryIntegrated ")]
+        [InlineData("Authentication = Active Directory Interactive ")]
+        [InlineData("Authentication = ActiveDirectoryInteractive ")]
+        [InlineData("Authentication = Active Directory Device Code Flow ")]
+        [InlineData("Authentication = ActiveDirectoryDeviceCodeFlow ")]
+        [InlineData("Authentication = Active Directory Service Principal ")]
+        [InlineData("Authentication = ActiveDirectoryServicePrincipal ")]
+        [InlineData("Authentication = Active Directory Managed Identity ")]
+        [InlineData("Authentication = ActiveDirectoryManagedIdentity ")]
+        [InlineData("Authentication = Active Directory MSI ")]
+        [InlineData("Authentication = ActiveDirectoryMSI ")]
         [InlineData("Command Timeout = 5")]
         [InlineData("Command Timeout = 15")]
         [InlineData("Command Timeout = 0")]
@@ -55,7 +67,8 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("PersistSecurityInfo = true")]
         [InlineData("Pooling = no")]
         [InlineData("Pooling = false")]
-#if netcoreapp // PoolBlockingPeriod is not supported in .NET Standard
+#if netcoreapp
+        // PoolBlockingPeriod is not supported in .NET Standard
         [InlineData("PoolBlockingPeriod = Auto")]
         [InlineData("PoolBlockingperiod = NeverBlock")]
 #endif
@@ -74,10 +87,6 @@ namespace Microsoft.Data.SqlClient.Tests
 
         [Theory]
         [InlineData("Asynchronous Processing = True")]
-        [InlineData("Authentication = Active Directory Integrated ")]
-        [InlineData("Authentication = ActiveDirectoryIntegrated ")]
-        [InlineData("Authentication = Active Directory Interactive ")]
-        [InlineData("Authentication = ActiveDirectoryInteractive ")]
         [InlineData("Context Connection = false")]
         [InlineData("Network Library = dbmssocn")]
         [InlineData("Network = dbnmpntw")]

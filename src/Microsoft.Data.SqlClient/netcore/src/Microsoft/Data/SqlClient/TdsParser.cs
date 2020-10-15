@@ -397,6 +397,12 @@ namespace Microsoft.Data.SqlClient
                     case SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow:
                         SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Device Code Flow authentication");
                         break;
+                    case SqlAuthenticationMethod.ActiveDirectoryManagedIdentity:
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Managed Identity authentication");
+                        break;
+                    case SqlAuthenticationMethod.ActiveDirectoryMSI:
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory MSI authentication");
+                        break;
                     case SqlAuthenticationMethod.SqlPassword:
                         SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> SQL Password authentication");
                         break;
@@ -2907,7 +2913,7 @@ namespace Microsoft.Data.SqlClient
             int count;
 
             // This is added back since removing it from here introduces regressions in Managed SNI.
-            // It forces SqlDataReader.ReadAsync() method to run synchronously, 
+            // It forces SqlDataReader.ReadAsync() method to run synchronously,
             // and will block the calling thread until data is fed from SQL Server.
             // TODO Investigate better solution to support non-blocking ReadAsync().
             stateObj._syncOverAsync = true;
@@ -7804,6 +7810,10 @@ namespace Microsoft.Data.SqlClient
                                 break;
                             case SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow:
                                 workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYDEVICECODEFLOW;
+                                break;
+                            case SqlAuthenticationMethod.ActiveDirectoryManagedIdentity:
+                            case SqlAuthenticationMethod.ActiveDirectoryMSI:
+                                workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYMANAGEDIDENTITY;
                                 break;
                             default:
                                 Debug.Assert(false, "Unrecognized Authentication type for fedauth MSAL request");
