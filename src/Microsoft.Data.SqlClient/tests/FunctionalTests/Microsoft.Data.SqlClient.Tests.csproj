@@ -62,12 +62,13 @@
     <PackageReference Include="System.Linq.Expressions" Version="4.3.0" />
     <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="4.5.1" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+    <Reference Condition="'$(TargetGroup)'=='netfx' OR '$(TargetFramework)'=='netcoreapp2.1'" Include="System.Transactions" />
   </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.1'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.1'">
     <PackageReference Include="System.Data.Odbc" Version="4.5.0" />
   </ItemGroup>
-   <ItemGroup>
-    <Reference Include="System.Transactions" />
+  <ItemGroup Condition="'$(TargetFramework)' != 'netcoreapp2.1' AND '$(TargetGroup)' == 'netcoreapp'">
+    <PackageReference Include="System.Data.Odbc" Version="4.6.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="$(TestsPath)ManualTests\SQL\UdtTest\UDTs\Address\Address.csproj">
