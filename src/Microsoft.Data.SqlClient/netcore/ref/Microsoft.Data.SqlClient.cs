@@ -375,7 +375,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/ColumnSetColumns/*'/>
         public static readonly string ColumnSetColumns;
     }
-#if !NETSTANDARD20
+#if NETCORE || NETSTANDARD21_AND_ABOVE
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/SqlConnectionAttestationProtocol/*' />
     public enum SqlConnectionAttestationProtocol
     {
@@ -848,7 +848,7 @@ namespace Microsoft.Data.SqlClient
         [System.ComponentModel.DisplayNameAttribute("Data Source")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public string DataSource { get { throw null; } set { } }
-#if !NETSTANDARD20
+#if NETCORE || NETSTANDARD21_AND_ABOVE
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/AttestationProtocol/*' />
         [System.ComponentModel.DisplayNameAttribute("Attestation Protocol")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
