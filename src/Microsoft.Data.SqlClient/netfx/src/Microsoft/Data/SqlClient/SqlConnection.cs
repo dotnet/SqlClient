@@ -283,7 +283,7 @@ namespace Microsoft.Data.SqlClient
 
         // Transient Fault handling flag. This is needed to convey to the downstream mechanism of connection establishment, if Transient Fault handling should be used or not
         // The downstream handling of Connection open is the same for idle connection resiliency. Currently we want to apply transient fault handling only to the connections opened
-        // using SqlConnection.Open() method. 
+        // using SqlConnection.Open() method.
         internal bool _applyTransientFaultHandling = false;
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionString/*' />
@@ -331,6 +331,16 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.SettingCredentialWithDeviceFlowArgument();
                 }
 
+                if (UsesActiveDirectoryManagedIdentity(connectionOptions))
+                {
+                    throw SQL.SettingCredentialWithManagedIdentityArgument(DbConnectionStringBuilderUtil.ActiveDirectoryManagedIdentityString);
+                }
+
+                if (UsesActiveDirectoryMSI(connectionOptions))
+                {
+                    throw SQL.SettingCredentialWithManagedIdentityArgument(DbConnectionStringBuilderUtil.ActiveDirectoryMSIString);
+                }
+
                 Credential = credential;
             }
             // else
@@ -356,7 +366,7 @@ namespace Microsoft.Data.SqlClient
             CacheConnectionStringProperties();
         }
 
-        // This method will be called once connection string is set or changed. 
+        // This method will be called once connection string is set or changed.
         private void CacheConnectionStringProperties()
         {
             SqlConnectionString connString = ConnectionOptions as SqlConnectionString;
@@ -364,7 +374,7 @@ namespace Microsoft.Data.SqlClient
             {
                 _connectRetryCount = connString.ConnectRetryCount;
                 // For Azure SQL connection, set _connectRetryCount to 2 instead of 1 will greatly improve recovery
-                //   success rate 
+                //   success rate
                 if (_connectRetryCount == 1 && ADP.IsAzureSqlServerEndpoint(connString.DataSource))
                 {
                     _connectRetryCount = 2;
@@ -506,33 +516,43 @@ namespace Microsoft.Data.SqlClient
         // Is this connection is a Context Connection?
         private bool UsesContextConnection(SqlConnectionString opt)
         {
-            return opt != null ? opt.ContextConnection : false;
+            return opt != null && opt.ContextConnection;
         }
 
         private bool UsesActiveDirectoryIntegrated(SqlConnectionString opt)
         {
-            return opt != null ? opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated : false;
+            return opt != null && opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated;
         }
 
         private bool UsesActiveDirectoryInteractive(SqlConnectionString opt)
         {
-            return opt != null ? opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive : false;
+            return opt != null && opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive;
         }
 
         private bool UsesActiveDirectoryDeviceCodeFlow(SqlConnectionString opt)
         {
-            return opt != null ? opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow : false;
+            return opt != null && opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow;
+        }
+
+        private bool UsesActiveDirectoryManagedIdentity(SqlConnectionString opt)
+        {
+            return opt != null && opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity;
+        }
+
+        private bool UsesActiveDirectoryMSI(SqlConnectionString opt)
+        {
+            return opt != null && opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI;
         }
 
         private bool UsesAuthentication(SqlConnectionString opt)
         {
-            return opt != null ? opt.Authentication != SqlAuthenticationMethod.NotSpecified : false;
+            return opt != null && opt.Authentication != SqlAuthenticationMethod.NotSpecified;
         }
 
         // Does this connection uses Integrated Security?
         private bool UsesIntegratedSecurity(SqlConnectionString opt)
         {
-            return opt != null ? opt.IntegratedSecurity : false;
+            return opt != null && opt.IntegratedSecurity;
         }
 
         // Does this connection uses old style of clear userID or Password in connection string?
@@ -548,7 +568,7 @@ namespace Microsoft.Data.SqlClient
 
         private bool UsesCertificate(SqlConnectionString opt)
         {
-            return opt != null ? opt.UsesCertificate : false;
+            return opt != null && opt.UsesCertificate;
         }
 
         internal SqlConnectionString.TransactionBindingEnum TransactionBinding
@@ -681,7 +701,8 @@ namespace Microsoft.Data.SqlClient
                     SqlConnectionString connectionOptions = new SqlConnectionString(value);
                     if (_credential != null)
                     {
-                        // Check for Credential being used with Authentication=ActiveDirectoryIntegrated/ActiveDirectoryInteractive/ActiveDirectoryDeviceCodeFlow. Since a different error string is used
+                        // Check for Credential being used with Authentication=ActiveDirectoryIntegrated | ActiveDirectoryInteractive |
+                        // ActiveDirectoryDeviceCodeFlow | ActiveDirectoryManagedIdentity/ActiveDirectoryMSI. Since a different error string is used
                         // for this case in ConnectionString setter vs in Credential setter, check for this error case before calling
                         // CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential, which is common to both setters.
                         if (UsesActiveDirectoryIntegrated(connectionOptions))
@@ -695,6 +716,14 @@ namespace Microsoft.Data.SqlClient
                         else if (UsesActiveDirectoryDeviceCodeFlow(connectionOptions))
                         {
                             throw SQL.SettingDeviceFlowWithCredential();
+                        }
+                        else if (UsesActiveDirectoryManagedIdentity(connectionOptions))
+                        {
+                            throw SQL.SettingManagedIdentityWithCredential(DbConnectionStringBuilderUtil.ActiveDirectoryManagedIdentityString);
+                        }
+                        else if (UsesActiveDirectoryMSI(connectionOptions))
+                        {
+                            throw SQL.SettingManagedIdentityWithCredential(DbConnectionStringBuilderUtil.ActiveDirectoryMSIString);
                         }
 
                         CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential(connectionOptions);
@@ -752,9 +781,9 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// 
+        ///
         /// To indicate the IsSupported flag sent by the server for DNS Caching. This property is for internal testing only.
-        /// 
+        ///
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         internal string SQLDNSCachingSupportedState
         {
@@ -776,9 +805,9 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// 
+        ///
         /// To indicate the IsSupported flag sent by the server for DNS Caching before redirection. This property is for internal testing only.
-        /// 
+        ///
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         internal string SQLDNSCachingSupportedStateBeforeRedirect
         {
@@ -1010,23 +1039,33 @@ namespace Microsoft.Data.SqlClient
                 // check if the usage of credential has any conflict with the keys used in connection string
                 if (value != null)
                 {
-                    // Check for Credential being used with Authentication=ActiveDirectoryIntegrated/ActiveDirectoryInteractive/ActiveDirectoryDeviceCodeFlow. Since a different error string is used
+                    var connectionOptions = (SqlConnectionString)ConnectionOptions;
+                    // Check for Credential being used with Authentication=ActiveDirectoryIntegrated | ActiveDirectoryInteractive |
+                    // ActiveDirectoryDeviceCodeFlow | ActiveDirectoryManagedIdentity/ActiveDirectoryMSI. Since a different error string is used
                     // for this case in ConnectionString setter vs in Credential setter, check for this error case before calling
                     // CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential, which is common to both setters.
-                    if (UsesActiveDirectoryIntegrated((SqlConnectionString)ConnectionOptions))
+                    if (UsesActiveDirectoryIntegrated(connectionOptions))
                     {
                         throw SQL.SettingCredentialWithIntegratedInvalid();
                     }
-                    else if (UsesActiveDirectoryInteractive((SqlConnectionString)ConnectionOptions))
+                    else if (UsesActiveDirectoryInteractive(connectionOptions))
                     {
                         throw SQL.SettingCredentialWithInteractiveInvalid();
                     }
-                    else if (UsesActiveDirectoryDeviceCodeFlow((SqlConnectionString)ConnectionOptions))
+                    else if (UsesActiveDirectoryDeviceCodeFlow(connectionOptions))
                     {
                         throw SQL.SettingCredentialWithDeviceFlowInvalid();
                     }
+                    else if (UsesActiveDirectoryManagedIdentity(connectionOptions))
+                    {
+                        throw SQL.SettingCredentialWithManagedIdentityInvalid(DbConnectionStringBuilderUtil.ActiveDirectoryManagedIdentityString);
+                    }
+                    else if (UsesActiveDirectoryMSI(connectionOptions))
+                    {
+                        throw SQL.SettingCredentialWithManagedIdentityInvalid(DbConnectionStringBuilderUtil.ActiveDirectoryMSIString);
+                    }
 
-                    CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential((SqlConnectionString)ConnectionOptions);
+                    CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential(connectionOptions);
                     if (_accessToken != null)
                     {
                         throw ADP.InvalidMixedUsageOfCredentialAndAccessToken();
@@ -1216,7 +1255,7 @@ namespace Microsoft.Data.SqlClient
 
                 DbTransaction transaction = BeginTransaction(isolationLevel);
 
-                // VSTFDEVDIV# 560355 - InnerConnection doesn't maintain a ref on the outer connection (this) and 
+                // VSTFDEVDIV# 560355 - InnerConnection doesn't maintain a ref on the outer connection (this) and
                 //   subsequently leaves open the possibility that the outer connection could be GC'ed before the SqlTransaction
                 //   is fully hooked up (leaving a DbTransaction with a null connection property). Ensure that this is reachable
                 //   until the completion of BeginTransaction with KeepAlive
@@ -1357,7 +1396,7 @@ namespace Microsoft.Data.SqlClient
         {
             // CloseConnection() now handles the lock
 
-            // The SqlInternalConnectionTds is set to OpenBusy during close, once this happens the cast below will fail and 
+            // The SqlInternalConnectionTds is set to OpenBusy during close, once this happens the cast below will fail and
             // the command will no longer be cancelable.  It might be desirable to be able to cancel the close opperation, but this is
             // outside of the scope of Whidbey RTM.  See (SqlCommand::Cancel) for other lock.
             _originalConnectionId = ClientConnectionId;
@@ -1401,7 +1440,7 @@ namespace Microsoft.Data.SqlClient
                             }
                             AsyncHelper.WaitForCompletion(reconnectTask, 0, null, rethrowExceptions: false); // we do not need to deal with possible exceptions in reconnection
                             if (State != ConnectionState.Open)
-                            {// if we cancelled before the connection was opened 
+                            {// if we cancelled before the connection was opened
                                 OnStateChange(DbConnectionInternal.StateChangeClosed);
                             }
                         }
@@ -1559,7 +1598,7 @@ namespace Microsoft.Data.SqlClient
             }
             Interlocked.CompareExchange(ref _asyncWaitingForReconnection, waitingTask, null);
             if (_asyncWaitingForReconnection != waitingTask)
-            { // somebody else managed to register 
+            { // somebody else managed to register
                 throw SQL.MARSUnsupportedOnConnection();
             }
         }
@@ -1655,7 +1694,7 @@ namespace Microsoft.Data.SqlClient
                             {
                                 if (tdsConn.Parser._sessionPool.ActiveSessionsCount > 0)
                                 {
-                                    // >1 MARS session 
+                                    // >1 MARS session
                                     if (beforeDisconnect != null)
                                     {
                                         beforeDisconnect();
@@ -1718,7 +1757,7 @@ namespace Microsoft.Data.SqlClient
                                 OnError(SQL.CR_UnrecoverableServer(ClientConnectionId), true, null);
                             }
                         } // ValidateSNIConnection
-                    } // sessionRecoverySupported                  
+                    } // sessionRecoverySupported
                 } // connectRetryCount>0
             }
             else

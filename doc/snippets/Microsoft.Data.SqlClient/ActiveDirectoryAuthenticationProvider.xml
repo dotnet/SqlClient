@@ -88,6 +88,8 @@
 |<xref:Microsoft.Data.SqlClient.SqlAuthenticationMethod.ActiveDirectoryInteractive%2A>|
 |<xref:Microsoft.Data.SqlClient.SqlAuthenticationMethod.ActiveDirectoryServicePrincipal%2A>|
 |<xref:Microsoft.Data.SqlClient.SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow%2A>|
+|<xref:Microsoft.Data.SqlClient.SqlAuthenticationMethod.ActiveDirectoryManagedIdentity%2A>|
+|<xref:Microsoft.Data.SqlClient.SqlAuthenticationMethod.ActiveDirectoryMSI%2A>|
 
 ## Examples  
  The following example demonstrates providing a custom device flow callback to SqlClient for the Device Code Flow authentication method:

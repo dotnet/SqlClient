@@ -19,6 +19,8 @@ namespace Microsoft.Data.SqlClient
         private const string ActiveDirectoryInteractive = "active directory interactive";
         private const string ActiveDirectoryServicePrincipal = "active directory service principal";
         private const string ActiveDirectoryDeviceCodeFlow = "active directory device code flow";
+        private const string ActiveDirectoryManagedIdentity = "active directory managed identity";
+        private const string ActiveDirectoryMSI = "active directory msi";
 
         private readonly string _typeName;
         private readonly IReadOnlyCollection<SqlAuthenticationMethod> _authenticationsWithAppSpecifiedProvider;

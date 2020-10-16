@@ -47,12 +47,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string DNSCachingServerTR = null;  // this is for the tenant ring
         public static readonly bool IsDNSCachingSupportedCR = false;  // this is for the control ring
         public static readonly bool IsDNSCachingSupportedTR = false;  // this is for the tenant ring
+        public static readonly string UserManagedIdentityObjectId = null;
 
         public static readonly string EnclaveAzureDatabaseConnString = null;
-
+        public static bool ManagedIdentitySupported = true;
         public static string AADAccessToken = null;
+        public static string AADSystemIdentityAccessToken = null;
+        public static string AADUserIdentityAccessToken = null;
         public const string UdtTestDbName = "UdtTestDb";
         public const string AKVKeyName = "TestSqlClientAzureKeyVaultProvider";
+
         private const string ManagedNetworkingAppContextSwitch = "Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows";
 
         private static Dictionary<string, bool> AvailableDatabases;
@@ -83,6 +87,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             IsDNSCachingSupportedCR = c.IsDNSCachingSupportedCR;
             IsDNSCachingSupportedTR = c.IsDNSCachingSupportedTR;
             EnclaveAzureDatabaseConnString = c.EnclaveAzureDatabaseConnString;
+            UserManagedIdentityObjectId = c.UserManagedIdentityObjectId;
 
             System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
 
@@ -403,7 +408,38 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return (null != AADAccessToken) ? new string(AADAccessToken.ToCharArray()) : null;
         }
 
+        public static string GetSystemIdentityAccessToken()
+        {
+            if (true == ManagedIdentitySupported && null == AADSystemIdentityAccessToken && IsAADPasswordConnStrSetup())
+            {
+                AADSystemIdentityAccessToken = AADUtility.GetManagedIdentityToken().GetAwaiter().GetResult();
+                if (AADSystemIdentityAccessToken == null)
+                {
+                    ManagedIdentitySupported = false;
+                }
+            }
+            return (null != AADSystemIdentityAccessToken) ? new string(AADSystemIdentityAccessToken.ToCharArray()) : null;
+        }
+
+        public static string GetUserIdentityAccessToken()
+        {
+            if (true == ManagedIdentitySupported && null == AADUserIdentityAccessToken && IsAADPasswordConnStrSetup())
+            {
+                // Pass User Assigned Managed Identity Object Id here.
+                AADUserIdentityAccessToken = AADUtility.GetManagedIdentityToken(UserManagedIdentityObjectId).GetAwaiter().GetResult();
+                if (AADUserIdentityAccessToken == null)
+                {
+                    ManagedIdentitySupported = false;
+                }
+            }
+            return (null != AADUserIdentityAccessToken) ? new string(AADUserIdentityAccessToken.ToCharArray()) : null;
+        }
+
         public static bool IsAccessTokenSetup() => !string.IsNullOrEmpty(GetAccessToken());
+
+        public static bool IsSystemIdentityTokenSetup() => !string.IsNullOrEmpty(GetSystemIdentityAccessToken());
+
+        public static bool IsUserIdentityTokenSetup() => !string.IsNullOrEmpty(GetUserIdentityAccessToken());
 
         public static bool IsFileStreamSetup() => SupportsFileStream;
 
