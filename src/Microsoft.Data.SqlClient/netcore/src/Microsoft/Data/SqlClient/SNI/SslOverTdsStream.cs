@@ -39,7 +39,7 @@ namespace Microsoft.Data.SqlClient.SNI
         public void FinishHandshake()
         {
             _encapsulate = false;
-            SqlClientEventSource.Log.SNITraceEvent("<sc.SNI.SslOverTdsStream.FinishHandshake |SNI|INFO> switched from encapsulation to passthrough mode");
+            SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.SslOverTdsStream.FinishHandshake |SNI|INFO> switched from encapsulation to passthrough mode");
         }
 
         /// <summary>

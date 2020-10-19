@@ -264,13 +264,13 @@
   </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netstandard' AND '$(TargetFramework)' == 'netstandard2.0'">
     <Compile Include="Microsoft\Data\SqlClient\EnclaveDelegate.NetStandard.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SslOverTdsStream.NetStandard.cs" />
   </ItemGroup>
 	<ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netstandard'">
 		<Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.NetStandard.cs" />
 		<Compile Include="Microsoft\Data\SqlClient\SqlDiagnosticListener.NetStandard.cs" />
 		<Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.NetStandard.cs" />
 		<Compile Include="Microsoft\Data\SqlClient\TdsParser.NetStandard.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SNI\SslOverTdsStream.NetStandard.cs" />
 	</ItemGroup>
 	<ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetFramework)' != 'netstandard2.0'">
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.NetCoreApp.cs" />

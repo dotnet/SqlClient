@@ -1024,12 +1024,12 @@ namespace Microsoft.Data.SqlClient
 
         public void Dispose()
         {
-            SqlClientEventSource.Log.SNIScopeLeaveEvent(_scopeID);
+            SqlClientEventSource.Log.SNIScopeLeave(_scopeID);
         }
 
         public static SNIEventScope Create(string message)
         {
-            return new SNIEventScope(SqlClientEventSource.Log.SNIScopeEnterEvent(message));
+            return new SNIEventScope(SqlClientEventSource.Log.SNIScopeEnter(message));
         }
     }
 }
