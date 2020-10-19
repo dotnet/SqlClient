@@ -2503,7 +2503,7 @@
     <value>No se puede usar "Authentication=Active Directory Device Code Flow" con las palabras clave de cadena de conexión "User ID", "UID", "Password" ni "PWD".</value>
   </data>
   <data name="SQL_ManagedIdentityWithPassword" xml:space="preserve">
-    <value>Cannot use 'Authentication={0}' with 'Password' or 'PWD' connection string keywords.</value>
+    <value>No se puede usar "Authentication={0}" con las palabras clave de cadena de conexión "Password" ni "PWD".</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>No se puede usar "Authentication=Active Directory Integrated" si se ha establecido la propiedad Credential.</value>
@@ -4576,30 +4576,30 @@
     <value>No se puede establecer la propiedad Credential si se ha especificado "Authentication=Active Directory Device Code Flow" en la cadena de conexión.</value>
   </data>
   <data name="SQL_SettingCredentialWithManagedIdentity" xml:space="preserve">
-    <value>Cannot set the Credential property if 'Authentication={0}' has been specified in the connection string.</value>
+    <value>No se puede establecer la propiedad Credential si se ha especificado "Authentication={0}" en la cadena de conexión.</value>
   </data>
   <data name="SQL_SettingDeviceFlowWithCredential" xml:space="preserve">
     <value>No se puede usar "Active Directory Device Code Flow" si se ha establecido la propiedad Credential.</value>
   </data>
   <data name="SQL_SettingManagedIdentityWithCredential" xml:space="preserve">
-    <value>Cannot use 'Authentication={0}', if the Credential property has been set.</value>
+    <value>No se puede usar "Authentication={0}" si se ha establecido la propiedad Credential.</value>
   </data>
   <data name="Azure_GenericErrorMessage" xml:space="preserve">
-    <value>Access token could not be acquired.</value>
+    <value>No se pudo adquirir el token de acceso.</value>
   </data>
   <data name="Azure_IdentityEndpointNotListening" xml:space="preserve">
-    <value>Unable to connect to the Managed Identity endpoint. Please check that you are running on an Azure resource that has Identity setup.</value>
+    <value>No se puede conectar con el punto de conexión de la identidad administrada. Compruebe que se está ejecutando en un recurso de Azure que tiene la configuración de identidad.</value>
   </data>
   <data name="Azure_ManagedIdentityUsed" xml:space="preserve">
-    <value>Tried to get token using Managed Identity.</value>
+    <value>Se intentó obtener el token con la identidad administrada.</value>
   </data>
   <data name="Azure_MetadataEndpointNotListening" xml:space="preserve">
-    <value>Unable to connect to the Instance Metadata Service (IMDS). Skipping request to the Managed Identity token endpoint.</value>
+    <value>No se puede conectar con Instance Metadata Service (IMDS). Se omitirá la solicitud al punto de conexión del token de la identidad administrada.</value>
   </data>
   <data name="Azure_NonRetryableError" xml:space="preserve">
-    <value>Received a non-retryable error.</value>
+    <value>Se ha recibido un error no recuperable.</value>
   </data>
   <data name="Azure_RetryFailure" xml:space="preserve">
-    <value>Failed after 5 retries.</value>
+    <value>Error después de 5 reintentos.</value>
   </data>
 </root>
