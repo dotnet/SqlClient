@@ -3022,7 +3022,7 @@ namespace Microsoft.Data.SqlClient
             return returnedTask;
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="CancellationToken"]/*'/>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteScalarAsync[@name="CancellationToken"]/*'/>
         public override Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
         {
             return ExecuteReaderAsync(cancellationToken).ContinueWith((executeTask) =>

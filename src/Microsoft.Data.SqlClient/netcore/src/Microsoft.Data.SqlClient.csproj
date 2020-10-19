@@ -20,13 +20,13 @@
     <Product>Core $(BaseProduct)</Product>
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetGroup)' == 'netcoreapp'">
-    <DefineConstants>$(DefineConstants);netcoreapp;</DefineConstants>
+    <DefineConstants>$(DefineConstants);NETCOREAPP;</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetGroup)' == 'netstandard'">
-    <DefineConstants>$(DefineConstants);netstandard;</DefineConstants>
+    <DefineConstants>$(DefineConstants);NETSTANDARD;</DefineConstants>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(TargetGroup)' == 'netcoreapp' AND '$(TargetFramework)' != 'netcoreapp2.1'">
-    <DefineConstants>$(DefineConstants);NETCORE3</DefineConstants>
+  <PropertyGroup Condition="'$(TargetGroup)' == 'netcoreapp' AND !$(TargetFramework.StartsWith('netcoreapp2.'))">
+    <DefineConstants>$(DefineConstants);NETCOREAPP31_AND_ABOVE</DefineConstants>
   </PropertyGroup>
   <PropertyGroup>
     <DebugType>portable</DebugType>
@@ -234,15 +234,6 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\InvalidUdtException.cs">
       <Link>Microsoft\Data\SqlClient\Server\InvalidUdtException.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\AlwaysEncryptedAttestationException.cs">
-      <Link>Microsoft\Data\SqlClient\AlwaysEncryptedAttestationException.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\EnclaveProviderBase.cs">
-      <Link>Microsoft\Data\SqlClient\EnclaveProviderBase.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\EnclaveSessionCache.cs">
-      <Link>Microsoft\Data\SqlClient\EnclaveSessionCache.cs</Link>
-    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SignatureVerificationCache.cs">
       <Link>Microsoft\Data\SqlClient\SignatureVerificationCache.cs</Link>
     </Compile>
@@ -272,6 +263,15 @@
 		<Compile Include="Microsoft\Data\SqlClient\TdsParser.NetStandard.cs" />
 	</ItemGroup>
 	<ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetFramework)' != 'netstandard2.0'">
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\AlwaysEncryptedAttestationException.cs">
+      <Link>Microsoft\Data\SqlClient\AlwaysEncryptedAttestationException.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\EnclaveProviderBase.cs">
+      <Link>Microsoft\Data\SqlClient\EnclaveProviderBase.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\EnclaveSessionCache.cs">
+      <Link>Microsoft\Data\SqlClient\EnclaveSessionCache.cs</Link>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlEnclaveAttestationParameters.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\EnclaveDelegate.NetCoreApp.cs" />

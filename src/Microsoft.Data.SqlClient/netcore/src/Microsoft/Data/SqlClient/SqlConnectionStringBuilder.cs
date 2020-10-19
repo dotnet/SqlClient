@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient
             Pooling,
             MinPoolSize,
             MaxPoolSize,
-#if netcoreapp
+#if NETCOREAPP
             PoolBlockingPeriod,
 #endif
             MultipleActiveResultSets,
@@ -114,7 +114,7 @@ namespace Microsoft.Data.SqlClient
             validKeywords[(int)Keywords.ApplicationIntent] = DbConnectionStringKeywords.ApplicationIntent;
             validKeywords[(int)Keywords.ApplicationName] = DbConnectionStringKeywords.ApplicationName;
             validKeywords[(int)Keywords.AttachDBFilename] = DbConnectionStringKeywords.AttachDBFilename;
-#if netcoreapp
+#if NETCOREAPP
             validKeywords[(int)Keywords.PoolBlockingPeriod] = DbConnectionStringKeywords.PoolBlockingPeriod;
 #endif
             validKeywords[(int)Keywords.CommandTimeout] = DbConnectionStringKeywords.CommandTimeout;
@@ -158,7 +158,7 @@ namespace Microsoft.Data.SqlClient
             hash.Add(DbConnectionStringKeywords.ApplicationIntent, Keywords.ApplicationIntent);
             hash.Add(DbConnectionStringKeywords.ApplicationName, Keywords.ApplicationName);
             hash.Add(DbConnectionStringKeywords.AttachDBFilename, Keywords.AttachDBFilename);
-#if netcoreapp
+#if NETCOREAPP
             hash.Add(DbConnectionStringKeywords.PoolBlockingPeriod, Keywords.PoolBlockingPeriod);
 #endif
             hash.Add(DbConnectionStringKeywords.CommandTimeout, Keywords.CommandTimeout);
@@ -208,7 +208,7 @@ namespace Microsoft.Data.SqlClient
             hash.Add(DbConnectionStringSynonyms.MULTIPLEACTIVERESULTSETS, Keywords.MultipleActiveResultSets);
             hash.Add(DbConnectionStringSynonyms.MULTISUBNETFAILOVER, Keywords.MultiSubnetFailover);
             hash.Add(DbConnectionStringSynonyms.NETWORKADDRESS, Keywords.DataSource);
-#if netcoreapp
+#if NETCOREAPP
             hash.Add(DbConnectionStringSynonyms.POOLBLOCKINGPERIOD, Keywords.PoolBlockingPeriod);
 #endif
             hash.Add(DbConnectionStringSynonyms.SERVER, Keywords.DataSource);
@@ -326,7 +326,7 @@ namespace Microsoft.Data.SqlClient
                         case Keywords.AttestationProtocol:
                             AttestationProtocol = ConvertToAttestationProtocol(keyword, value);
                             break;
-#if netcoreapp
+#if NETCOREAPP
                         case Keywords.PoolBlockingPeriod: PoolBlockingPeriod = ConvertToPoolBlockingPeriod(keyword, value); break;
 #endif
                         case Keywords.Encrypt:
@@ -914,7 +914,7 @@ namespace Microsoft.Data.SqlClient
                     return ApplicationName;
                 case Keywords.AttachDBFilename:
                     return AttachDBFilename;
-#if netcoreapp
+#if NETCOREAPP
                 case Keywords.PoolBlockingPeriod: return PoolBlockingPeriod;
 #endif
                 case Keywords.CommandTimeout:
@@ -1029,7 +1029,7 @@ namespace Microsoft.Data.SqlClient
                 case Keywords.Authentication:
                     _authentication = DbConnectionStringDefaults.Authentication;
                     break;
-#if netcoreapp
+#if NETCOREAPP
                 case Keywords.PoolBlockingPeriod:
                     _poolBlockingPeriod = DbConnectionStringDefaults.PoolBlockingPeriod;
                     break;
