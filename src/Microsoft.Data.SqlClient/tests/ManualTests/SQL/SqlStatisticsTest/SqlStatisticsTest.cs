@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             startTime = DateTime.Now;
             SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString);
-            string text = "SELECT TOP 2000 * from [dbo].[Order Details]";
+            string text = "SELECT TOP 2000 * from [sys].[all_views]";
             using (SqlCommand command = new SqlCommand(text))
             {
                 connection.StatisticsEnabled = true;

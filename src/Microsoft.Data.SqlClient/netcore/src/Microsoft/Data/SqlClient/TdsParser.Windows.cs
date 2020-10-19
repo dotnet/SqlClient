@@ -95,7 +95,7 @@ namespace Microsoft.Data.SqlClient
 
             if (TdsParserStateObjectFactory.UseManagedSNI)
             {
-                SNIError sniError = SNIProxy.Singleton.GetLastError();
+                SNIError sniError = SNIProxy.GetInstance().GetLastError();
                 details.sniErrorNumber = sniError.sniError;
                 details.errorMessage = sniError.errorMessage;
                 details.nativeError = sniError.nativeError;
@@ -106,8 +106,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                SNINativeMethodWrapper.SNI_Error sniError;
-                SNINativeMethodWrapper.SNIGetLastError(out sniError);
+                SNINativeMethodWrapper.SNIGetLastError(out SNINativeMethodWrapper.SNI_Error sniError);
                 details.sniErrorNumber = sniError.sniError;
                 details.errorMessage = sniError.errorMessage;
                 details.nativeError = sniError.nativeError;

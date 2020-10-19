@@ -14,7 +14,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         private static ManualResetEvent workerCompletedEvent = new ManualResetEvent(false);
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        // Synapse: Invalid object name 'sys.database_mirroring'.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestMultipleConnectionToMirroredServer()
         {
             string mirroringStateDesc;

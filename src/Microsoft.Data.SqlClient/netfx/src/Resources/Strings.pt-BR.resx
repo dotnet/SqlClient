@@ -2499,6 +2499,12 @@
   <data name="SQL_InteractiveWithPassword" xml:space="preserve">
     <value>Não é possível usar 'Authentication=Active Directory Interactive' com as palavras-chave de cadeia de conexão 'Password' ou 'PWD'.</value>
   </data>
+  <data name="SQL_DeviceFlowWithUsernamePassword" xml:space="preserve">
+    <value>Não é possível usar 'Authentication=Active Directory Device Code Flow' com as palavras-chave de cadeia de conexão 'User ID', 'UID', 'Password' ou 'PWD'.</value>
+  </data>
+  <data name="SQL_ManagedIdentityWithPassword" xml:space="preserve">
+    <value>Não é possível usar 'Authentication={0}' com as palavras-chave de cadeia de conexão 'Password' ou 'PWD'.</value>
+  </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>Não é possível usar 'Authentication=Active Directory Integrated' quando a propriedade Credential está definida.</value>
   </data>
@@ -4559,5 +4565,41 @@
   </data>
   <data name="SQL_SettingCredentialWithInteractive" xml:space="preserve">
     <value>Não é possível definir a propriedade Credential quando 'Authentication=Active Directory Interactive' é especificado na cadeia de conexão.</value>
+  </data>
+  <data name="SqlConnection_ServerProcessId" xml:space="preserve">
+    <value>SPID (ID do Processo do Servidor) da conexão ativa.</value>
+  </data>
+  <data name="SQL_Timeout_Active_Directory_DeviceFlow_Authentication" xml:space="preserve">
+    <value>A autenticação de Fluxo de Código de Dispositivo do Active Directory atingiu o tempo limite. O usuário demorou muito tempo para responder à solicitação de autenticação.</value>
+  </data>
+  <data name="SQL_SettingCredentialWithDeviceFlow" xml:space="preserve">
+    <value>Não é possível definir a propriedade Credential quando 'Authentication=Active Directory Device Code Flow' está especificado na cadeia de conexão.</value>
+  </data>
+  <data name="SQL_SettingCredentialWithManagedIdentity" xml:space="preserve">
+    <value>Não é possível definir a propriedade Credential quando 'Authentication={0}' é especificado na cadeia de conexão.</value>
+  </data>
+  <data name="SQL_SettingDeviceFlowWithCredential" xml:space="preserve">
+    <value>Não é possível usar 'Authentication=Active Directory Device Code Flow' quando a propriedade Credential está configurada.</value>
+  </data>
+  <data name="SQL_SettingManagedIdentityWithCredential" xml:space="preserve">
+    <value>Não é possível usar 'Authentication={0}' quando a propriedade Credential está configurada.</value>
+  </data>
+  <data name="Azure_GenericErrorMessage" xml:space="preserve">
+    <value>Não foi possível adquirir o token de acesso.</value>
+  </data>
+  <data name="Azure_IdentityEndpointNotListening" xml:space="preserve">
+    <value>Não foi possível se conectar com o ponto de extremidade de Identidade Gerenciada. Verifique se a execução está ocorrendo em um recurso do Azure que tenha configuração de Identidade.</value>
+  </data>
+  <data name="Azure_ManagedIdentityUsed" xml:space="preserve">
+    <value>Tentativa de obter o token usando a Identidade Gerenciada.</value>
+  </data>
+  <data name="Azure_MetadataEndpointNotListening" xml:space="preserve">
+    <value>Não foi possível se conectar com o IMDS (Serviço de Metadados de Instância). Ignorando a solicitação para o ponto de extremidade do token de Identidade Gerenciada.</value>
+  </data>
+  <data name="Azure_NonRetryableError" xml:space="preserve">
+    <value>Um erro sem nova tentativa foi recebido.</value>
+  </data>
+  <data name="Azure_RetryFailure" xml:space="preserve">
+    <value>Falha após cinco novas tentativas.</value>
   </data>
 </root>

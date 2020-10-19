@@ -11,18 +11,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     /// <summary>
     /// Always Encrypted public API Manual tests.
-    /// TODO: These tests are marked as Windows only for now but should be run for all platforms once the Master Key is accessible to this app from Azure Key Vault.
     /// </summary>
-    [PlatformSpecific(TestPlatforms.Windows)]
-    public class BulkCopyAE : IClassFixture<SQLSetupStrategyCertStoreProvider>, IDisposable
+    public class BulkCopyAE : IClassFixture<PlatformSpecificTestContext>, IDisposable
     {
-        private SQLSetupStrategyCertStoreProvider fixture;
+        private SQLSetupStrategy fixture;
 
         private readonly string tableName;
 
-        public BulkCopyAE(SQLSetupStrategyCertStoreProvider fixture)
+        public BulkCopyAE(PlatformSpecificTestContext context)
         {
-            this.fixture = fixture;
+            fixture = context.Fixture;
             tableName = fixture.BulkCopyAETestTable.Name;
         }
 
@@ -34,7 +32,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             dataTable.Columns.Add("c1", typeof(string));
 
             var dataRow = dataTable.NewRow();
-            String result = "stringValue";
+            string result = "stringValue";
             dataRow["c1"] = result;
             dataTable.Rows.Add(dataRow);
             dataTable.AcceptChanges();

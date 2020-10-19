@@ -10,7 +10,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public static class ParallelTransactionsTest
     {
         #region <<Basic Parallel Test>>
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // TODO Synapse: Remove dependency from Northwind database
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void BasicParallelTest_shouldThrowsUnsupported()
         {
             string connectionString = DataTestUtility.TCPConnectionString;
@@ -66,7 +67,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         #endregion
 
         #region <<MultipleExecutesInSameTransactionTest>>
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Remove dependency from Northwind database
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void MultipleExecutesInSameTransactionTest_shouldThrowsUnsupported()
         {
             string connectionString = DataTestUtility.TCPConnectionString;

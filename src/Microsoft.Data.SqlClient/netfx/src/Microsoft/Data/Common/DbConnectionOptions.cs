@@ -641,7 +641,7 @@ namespace Microsoft.Data.Common
                     }
                     else
                     {
-                        SqlClientEventSource.Log.AdvancedTraceEvent("<comm.DbConnectionOptions|INFO|ADV> KeyName='{0}'", keyname);
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<comm.DbConnectionOptions|INFO|ADV> KeyName='{0}'", keyname);
                     }
                 }
             }

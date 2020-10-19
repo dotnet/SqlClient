@@ -26,8 +26,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string s_selectTableCmd = $"SELECT COUNT(*) FROM {s_tableName}";
         private static readonly string s_dropDatabaseCmd = $"DROP DATABASE {s_databaseName}";
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void EnvironmentHostNameTest()
+        // Synapse: Stored procedure sp_who2 does not exist or is not supported.
+        // Synapse: SqlConnection.ServerProcessId is always retrieved as 0.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public static void EnvironmentHostNameSPIDTest()
         {
             SqlConnectionStringBuilder builder = (new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { Pooling = true });
             builder.ApplicationName = "HostNameTest";
@@ -35,6 +37,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (SqlConnection sqlConnection = new SqlConnection(builder.ConnectionString))
             {
                 sqlConnection.Open();
+                int sqlClientSPID = sqlConnection.ServerProcessId;
                 int sessionSpid;
 
                 using (SqlCommand cmd = new SqlCommand("SELECT @@SPID", sqlConnection))
@@ -43,6 +46,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     reader.Read();
                     sessionSpid = reader.GetInt16(0);
                 }
+
+                // Confirm Server process id is same as result of SELECT @@SPID
+                Assert.Equal(sessionSpid, sqlClientSPID);
+
+                // Confirm once again SPID on SqlConnection directly
+                Assert.Equal(sessionSpid, sqlConnection.ServerProcessId);
 
                 using (SqlCommand command = new SqlCommand("sp_who2", sqlConnection))
                 using (SqlDataReader reader = command.ExecuteReader())
@@ -55,7 +64,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         int spidOrdinal = reader.GetOrdinal(COL_SPID);
                         string spid = reader.GetString(spidOrdinal);
 
-                        if (programName != null && programName.Trim().Equals(builder.ApplicationName) && Int16.Parse(spid) == sessionSpid)
+                        if (programName != null && programName.Trim().Equals(builder.ApplicationName) && short.Parse(spid) == sessionSpid)
                         {
                             // Get the hostname
                             int hostnameOrdinal = reader.GetOrdinal(COL_HOSTNAME);
@@ -67,6 +76,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         }
                     }
                 }
+                // Confirm Server Process Id stays the same after query execution
+                Assert.Equal(sessionSpid, sqlConnection.ServerProcessId);
             }
             Assert.True(false, "No non-empty hostname found for the application");
         }
@@ -105,12 +116,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.True(timeElapsed < threshold);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void ProcessIdTest()
+        // Synapse: Catalog view 'sysprocesses' is not supported in this version.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public static void LocalProcessIdTest()
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
             string sqlProviderName = builder.ApplicationName;
-            string sqlProviderProcessID = System.Diagnostics.Process.GetCurrentProcess().Id.ToString();
+            string sqlProviderProcessID = Process.GetCurrentProcess().Id.ToString();
 
             using (SqlConnection sqlConnection = new SqlConnection(builder.ConnectionString))
             {
@@ -197,6 +209,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        // Synapse: Parse error at line: 1, column: 59: Incorrect syntax near 'SINGLE_USER' - No support for MULTI_USER
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public static void ConnectionKilledTest()
         {
@@ -227,8 +240,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void ConnectionResiliencyTest()
+        // Synapse: KILL not supported on Azure Synapse - Parse error at line: 1, column: 6: Incorrect syntax near '105'.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public static void ConnectionResiliencySPIDTest()
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
             builder.ConnectRetryCount = 0;
@@ -241,7 +255,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 InternalConnectionWrapper wrapper = new InternalConnectionWrapper(conn, true, builder.ConnectionString);
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "SELECT TOP 1 * FROM dbo.Employees";
+                    cmd.CommandText = "SELECT @@SPID";
                     wrapper.KillConnectionByTSql();
                     bool cmdSuccess = false;
                     try
@@ -256,23 +270,37 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             builder.ConnectRetryCount = 2;
+            // Also check SPID changes with connection resiliency
             using (SqlConnection conn = new SqlConnection(builder.ConnectionString))
             {
                 conn.Open();
+                int clientSPID = conn.ServerProcessId;
+                int serverSPID = 0;
                 InternalConnectionWrapper wrapper = new InternalConnectionWrapper(conn, true, builder.ConnectionString);
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "SELECT TOP 1 * FROM dbo.Employees";
+                    cmd.CommandText = "SELECT @@SPID";
                     using (SqlDataReader reader = cmd.ExecuteReader())
                         while (reader.Read())
-                        { }
+                        {
+                            serverSPID = reader.GetInt16(0);
+                        }
+
+                    Assert.Equal(serverSPID, clientSPID);
+                    // Also check SPID after query execution
+                    Assert.Equal(serverSPID, conn.ServerProcessId);
 
                     wrapper.KillConnectionByTSql();
 
                     // Connection resiliency should reconnect transparently
                     using (SqlDataReader reader = cmd.ExecuteReader())
                         while (reader.Read())
-                        { }
+                        {
+                            serverSPID = reader.GetInt16(0);
+                        }
+
+                    // SPID should match server's SPID
+                    Assert.Equal(serverSPID, conn.ServerProcessId);
                 }
             }
         }

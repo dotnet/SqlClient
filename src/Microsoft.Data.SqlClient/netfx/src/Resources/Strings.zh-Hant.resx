@@ -2499,6 +2499,12 @@
   <data name="SQL_InteractiveWithPassword" xml:space="preserve">
     <value>使用 'Authentication=Active Directory Interactive' 時，無法搭配 'Password' 或 'PWD' 連接字串關鍵字一起使用。</value>
   </data>
+  <data name="SQL_DeviceFlowWithUsernamePassword" xml:space="preserve">
+    <value>無法搭配 'User ID'、'UID'、'Password' 或 'PWD' 連接字串關鍵字使用 'Authentication=Active Directory Device Code Flow'。</value>
+  </data>
+  <data name="SQL_ManagedIdentityWithPassword" xml:space="preserve">
+    <value>使用 'Authentication={0}' 時，無法搭配 'Password' 或 'PWD' 連接字串關鍵字一起使用。</value>
+  </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>如果已設定 Credential 屬性，則無法使用 'Authentication=Active Directory Integrated'。</value>
   </data>
@@ -4559,5 +4565,41 @@
   </data>
   <data name="SQL_SettingCredentialWithInteractive" xml:space="preserve">
     <value>如果連接字串中已指定 'Authentication=Active Directory Interactive'，則無法設定 Credential 屬性。</value>
+  </data>
+  <data name="SqlConnection_ServerProcessId" xml:space="preserve">
+    <value>使用中連線的伺服器處理序識別碼 (SPID)。</value>
+  </data>
+  <data name="SQL_Timeout_Active_Directory_DeviceFlow_Authentication" xml:space="preserve">
+    <value>Active Directory 裝置代碼流程驗證逾時。使用者回應驗證要求所花的時間過長。</value>
+  </data>
+  <data name="SQL_SettingCredentialWithDeviceFlow" xml:space="preserve">
+    <value>如果連接字串中已指定 'Authentication=Active Directory Device Code Flow'，則無法設定 Credential 屬性。</value>
+  </data>
+  <data name="SQL_SettingCredentialWithManagedIdentity" xml:space="preserve">
+    <value>如果連接字串中已指定 'Authentication={0}'，則無法設定 Credential 屬性。</value>
+  </data>
+  <data name="SQL_SettingDeviceFlowWithCredential" xml:space="preserve">
+    <value>如果已設定 Credential 屬性，則無法使用 'Authentication=Active Directory Device Code Flow'。</value>
+  </data>
+  <data name="SQL_SettingManagedIdentityWithCredential" xml:space="preserve">
+    <value>如果已設定 Credential 屬性，就無法使用 'Authentication={0}'。</value>
+  </data>
+  <data name="Azure_GenericErrorMessage" xml:space="preserve">
+    <value>無法取得存取權杖。</value>
+  </data>
+  <data name="Azure_IdentityEndpointNotListening" xml:space="preserve">
+    <value>無法連線到受控識別端點。請確認您在具有身分識別設定的 Azure 資源上執行。</value>
+  </data>
+  <data name="Azure_ManagedIdentityUsed" xml:space="preserve">
+    <value>嘗試使用受控識別取得權杖。</value>
+  </data>
+  <data name="Azure_MetadataEndpointNotListening" xml:space="preserve">
+    <value>無法連線到 Instance Metadata Service (IMDS) 。正在跳過受控識別權杖端點的要求。</value>
+  </data>
+  <data name="Azure_NonRetryableError" xml:space="preserve">
+    <value>收到無法重試的錯誤。</value>
+  </data>
+  <data name="Azure_RetryFailure" xml:space="preserve">
+    <value>重試 5 次後失敗。</value>
   </data>
 </root>

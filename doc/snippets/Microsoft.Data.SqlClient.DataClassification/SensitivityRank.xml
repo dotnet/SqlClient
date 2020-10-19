@@ -1,0 +1,17 @@
+﻿<?xml version="1.0"?>
+<docs>
+  <members name="SensitivityRank">
+    <SensitivityRank>
+      <summary>
+        A relative ranking of the sensitivity of a query or of a column that is part of percolumn data.
+        It is an identifier based on a predefined set of values which define sensitivity rank. Used by other services like Advanced Threat Protection to detect anomalies based on their rank.
+      </summary>
+    </SensitivityRank>
+    <NotDefined>No sensitivity rank defined.</NotDefined>
+    <None>Corresponds to rank value of 0.</None>
+    <Low>Corresponds to rank value of 10.</Low>
+    <Medium>Corresponds to rank value 20.</Medium>
+    <High>Corresponds to rank value 30.</High>
+    <Critical>Corresponds to rank value 40.</Critical>
+  </members>
+</docs>
