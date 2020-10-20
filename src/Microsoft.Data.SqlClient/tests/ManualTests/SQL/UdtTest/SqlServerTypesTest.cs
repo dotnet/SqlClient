@@ -268,7 +268,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
         }
-#if netcoreapp
+#if NETCOREAPP
         // Synapse: Parse error at line: 1, column: 41: Incorrect syntax near 'hierarchyid'.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestUdtSchemaMetadata()
