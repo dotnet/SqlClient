@@ -395,7 +395,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void DropDatabase(SqlConnection sqlConnection, string dbName)
         {
             // database name must be pass without brackets.
-            using (SqlCommand cmd = new SqlCommand(string.Format("IF (DB_ID('{0}') IS NOT NULL) \nBEGIN \n ALTER DATABASE [{0}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE \n DROP DATABASE [{0}] \nEND", dbName), sqlConnection))
+            using (SqlCommand cmd = new SqlCommand(string.Format("IF (EXISTS(SELECT 1 FROM sys.databases WHERE name = '{0}')) \nBEGIN \n ALTER DATABASE [{0}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE \n DROP DATABASE [{0}] \nEND", dbName), sqlConnection))
             {
                 cmd.ExecuteNonQuery();
             }

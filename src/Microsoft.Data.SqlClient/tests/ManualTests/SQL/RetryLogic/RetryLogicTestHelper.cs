@@ -88,9 +88,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     yield return new object[] { cnn[0], item[0] };
         }
 
+        // 233:     A connection was successfully established with the server, but then an error occurred during the login process. (provider: Shared Memory Provider, error: 0 - No process is on the other end of the pipe.) (Microsoft SQL Server, Error: 233)
+        // 997:     A connection was successfully established with the server, but then an error occurred during the login process. (provider: Named Pipes Provider, error: 0 - Overlapped I/O operation is in progress)
+        // 4060:    Cannot open database "%.*ls" requested by the login. The login failed.
         public static IEnumerable<object[]> GetConnectionAndRetryStrategyInvalidCatalog(int numberOfRetries)
         {
-            return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromSeconds(100), FilterSqlStatements.None, null, 200);
+            return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromSeconds(100), FilterSqlStatements.None, new int[] { 233, 997, 4060 }, 200);
         }
 
         public static IEnumerable<object[]> GetConnectionAndRetryStrategy(int numberOfRetries)
@@ -110,7 +113,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static IEnumerable<object[]> GetConnectionAndRetryStrategyLongRunner(int numberOfRetries)
         {
-            return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromSeconds(120), FilterSqlStatements.None, null, 20 * 1000 );
+            return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromSeconds(120), FilterSqlStatements.None, new int[] { 4060, -2}, 20 * 1000 );
         }
 
         // 3702: Cannot drop database because it is currently in use.

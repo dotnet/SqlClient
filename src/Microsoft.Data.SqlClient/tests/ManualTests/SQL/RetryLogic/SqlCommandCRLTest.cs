@@ -208,7 +208,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 cnn1.Open();
                 cmd.Connection = cnn1;
-                cmd.CommandText = $"CREATE DATABASE [{database}]";
+                // Create database and wait to finalize it.
+                cmd.CommandText = $"CREATE DATABASE [{database}]; \nWHILE(NOT EXISTS(SELECT 1 FROM sys.databases WHERE name = '{database}')) \nWAITFOR DELAY '00:00:10' ";
                 cmd.ExecuteNonQuery();
 
                 // open an active connection to the database to raise error 3702 if someone drops it.
@@ -253,19 +254,28 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 cmd2.Connection = cnn2;
 
                 // Create a separate table from Region
-                cmd1.CommandText = $"SELECT TOP (4) * INTO {tableName} FROM Region;";
+                cmd1.CommandText = $"SELECT TOP (1) * INTO {tableName} FROM Region;";
                 cmd1.ExecuteNonQuery();
 
+                CancellationTokenSource tokenSource = new CancellationTokenSource();
+
+                provider.Retrying += (s, e) =>
+                {
+                    tokenSource.Cancel();
+                    cmd1.Cancel();
+                    cnn1.Close();
+                };
+
                 // Hold lock the table for 3 seconds (more that the connection timeout)
-                cmd1.CommandText = $"BEGIN TRAN; SELECT * FROM {tableName} WITH(TABLOCKx, HOLDLOCK); WAITFOR DELAY '00:00:03'; ROLLBACK;";
-                cmd1.ExecuteNonQueryAsync();
+                cmd1.CommandText = $"BEGIN TRAN; SELECT * FROM {tableName} WITH(TABLOCKx, HOLDLOCK); WAITFOR DELAY '00:00:30'; ROLLBACK;";
+                cmd1.ExecuteNonQueryAsync(tokenSource.Token);
                 // Be sure the table is locked.
-                Thread.Sleep(500);
+                Thread.Sleep(1000);
 
                 // Update the locked table
                 cmd2.RetryLogicProvider = provider;
                 cmd2.CommandTimeout = 1;
-                cmd2.CommandText = $"BEGIN TRAN; UPDATE {tableName} SET  {fieldName}= {fieldName}; ROLLBACK;";
+                cmd2.CommandText = $"BEGIN TRAN; UPDATE {tableName} SET  {fieldName}= {fieldName}; COMMIT;";
                 cmd2.ExecuteNonQuery();
 
                 Assert.True(provider.RetryLogic.Current > 0);
