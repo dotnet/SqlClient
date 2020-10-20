@@ -21,11 +21,9 @@ namespace Microsoft.Data.SqlClient
     [System.ComponentModel.TypeConverterAttribute(typeof(SqlConnectionStringBuilder.SqlConnectionStringBuilderConverter))]
     public sealed class SqlConnectionStringBuilder : DbConnectionStringBuilder
     {
-
         private enum Keywords
         { // specific ordering for ConnectionString output construction
           //            NamedConnection,
-
             DataSource,
             FailoverPartner,
             AttachDBFilename,
@@ -34,18 +32,15 @@ namespace Microsoft.Data.SqlClient
             PersistSecurityInfo,
             UserID,
             Password,
-
             Enlist,
             Pooling,
             MinPoolSize,
             MaxPoolSize,
             PoolBlockingPeriod,
-
             AsynchronousProcessing,
             ConnectionReset,
             MultipleActiveResultSets,
             Replication,
-
             ConnectTimeout,
             Encrypt,
             TrustServerCertificate,
@@ -53,31 +48,19 @@ namespace Microsoft.Data.SqlClient
             NetworkLibrary,
             PacketSize,
             TypeSystemVersion,
-
             Authentication,
-
             ApplicationName,
             CurrentLanguage,
             WorkstationID,
-
             UserInstance,
-
             ContextConnection,
-
             TransactionBinding,
-
             ApplicationIntent,
-
             MultiSubnetFailover,
-
             TransparentNetworkIPResolution,
-
             ConnectRetryCount,
-
             ConnectRetryInterval,
-
             ColumnEncryptionSetting,
-
             EnclaveAttestationUrl,
             AttestationProtocol,
 
@@ -109,7 +92,6 @@ namespace Microsoft.Data.SqlClient
         private string _typeSystemVersion = DbConnectionStringDefaults.TypeSystemVersion;
         private string _userID = DbConnectionStringDefaults.UserID;
         private string _workstationID = DbConnectionStringDefaults.WorkstationID;
-
         private int _commandTimeout = DbConnectionStringDefaults.CommandTimeout;
         private int _connectTimeout = DbConnectionStringDefaults.ConnectTimeout;
         private int _loadBalanceTimeout = DbConnectionStringDefaults.LoadBalanceTimeout;
@@ -118,7 +100,6 @@ namespace Microsoft.Data.SqlClient
         private int _packetSize = DbConnectionStringDefaults.PacketSize;
         private int _connectRetryCount = DbConnectionStringDefaults.ConnectRetryCount;
         private int _connectRetryInterval = DbConnectionStringDefaults.ConnectRetryInterval;
-
         private bool _asynchronousProcessing = DbConnectionStringDefaults.AsynchronousProcessing;
         private bool _connectionReset = DbConnectionStringDefaults.ConnectionReset;
         private bool _contextConnection = DbConnectionStringDefaults.ContextConnection;
@@ -140,7 +121,7 @@ namespace Microsoft.Data.SqlClient
         private PoolBlockingPeriod _poolBlockingPeriod = DbConnectionStringDefaults.PoolBlockingPeriod;
 
 #if ADONET_CERT_AUTH
-        private string _certificate                 = DbConnectionStringDefaults.Certificate;
+        private string _certificate = DbConnectionStringDefaults.Certificate;
 #endif
 
         static SqlConnectionStringBuilder()
@@ -187,8 +168,8 @@ namespace Microsoft.Data.SqlClient
             validKeywords[(int)Keywords.ColumnEncryptionSetting] = DbConnectionStringKeywords.ColumnEncryptionSetting;
             validKeywords[(int)Keywords.EnclaveAttestationUrl] = DbConnectionStringKeywords.EnclaveAttestationUrl;
             validKeywords[(int)Keywords.AttestationProtocol] = DbConnectionStringKeywords.AttestationProtocol;
-#if ADONET_CERT_AUTH            
-            validKeywords[(int)Keywords.Certificate]              = DbConnectionStringKeywords.Certificate;
+#if ADONET_CERT_AUTH
+            validKeywords[(int)Keywords.Certificate] = DbConnectionStringKeywords.Certificate;
 #endif
             _validKeywords = validKeywords;
 
@@ -234,8 +215,8 @@ namespace Microsoft.Data.SqlClient
             hash.Add(DbConnectionStringKeywords.ColumnEncryptionSetting, Keywords.ColumnEncryptionSetting);
             hash.Add(DbConnectionStringKeywords.EnclaveAttestationUrl, Keywords.EnclaveAttestationUrl);
             hash.Add(DbConnectionStringKeywords.AttestationProtocol, Keywords.AttestationProtocol);
-#if ADONET_CERT_AUTH                       
-            hash.Add(DbConnectionStringKeywords.Certificate,						Keywords.Certificate);
+#if ADONET_CERT_AUTH
+            hash.Add(DbConnectionStringKeywords.Certificate, Keywords.Certificate);
 #endif
             hash.Add(DbConnectionStringSynonyms.APP, Keywords.ApplicationName);
             hash.Add(DbConnectionStringSynonyms.APPLICATIONINTENT, Keywords.ApplicationIntent);
@@ -377,7 +358,9 @@ namespace Microsoft.Data.SqlClient
                             AttestationProtocol = ConvertToAttestationProtocol(keyword, value);
                             break;
 #if ADONET_CERT_AUTH
-                    case Keywords.Certificate:						Certificate = ConvertToString(value); break;
+                        case Keywords.Certificate:
+                            Certificate = ConvertToString(value);
+                            break;
 #endif
                         case Keywords.AsynchronousProcessing:
                             AsynchronousProcessing = ConvertToBoolean(value);

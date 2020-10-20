@@ -1834,6 +1834,60 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Access token could not be acquired..
+        /// </summary>
+        internal static string Azure_GenericErrorMessage {
+            get {
+                return ResourceManager.GetString("Azure_GenericErrorMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to connect to the Managed Identity endpoint. Please check that you are running on an Azure resource that has Identity setup..
+        /// </summary>
+        internal static string Azure_IdentityEndpointNotListening {
+            get {
+                return ResourceManager.GetString("Azure_IdentityEndpointNotListening", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Tried to get token using Managed Identity..
+        /// </summary>
+        internal static string Azure_ManagedIdentityUsed {
+            get {
+                return ResourceManager.GetString("Azure_ManagedIdentityUsed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to connect to the Instance Metadata Service (IMDS). Skipping request to the Managed Identity token endpoint..
+        /// </summary>
+        internal static string Azure_MetadataEndpointNotListening {
+            get {
+                return ResourceManager.GetString("Azure_MetadataEndpointNotListening", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Received a non-retryable error..
+        /// </summary>
+        internal static string Azure_NonRetryableError {
+            get {
+                return ResourceManager.GetString("Azure_NonRetryableError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Failed after 5 retries..
+        /// </summary>
+        internal static string Azure_RetryFailure {
+            get {
+                return ResourceManager.GetString("Azure_RetryFailure", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to .database.chinacloudapi.cn.
         /// </summary>
         internal static string AZURESQL_ChinaEndpoint {
@@ -9280,6 +9334,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Device Code Flow&apos; with &apos;User ID&apos;, &apos;UID&apos;, &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
+        /// </summary>
+        internal static string SQL_DeviceFlowWithUsernamePassword {
+            get {
+                return ResourceManager.GetString("SQL_DeviceFlowWithUsernamePassword", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The duration spent while attempting to connect to this server was - [Pre-Login] initialization={0}; handshake={1}; [Login] initialization={2}; .
         /// </summary>
         internal static string SQL_Duration_Login_Begin {
@@ -9442,15 +9505,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Device Code Flow&apos; with &apos;User ID&apos;, &apos;UID&apos;, &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
-        /// </summary>
-        internal static string SQL_DeviceFlowWithUsernamePassword {
-            get {
-                return ResourceManager.GetString("SQL_DeviceFlowWithUsernamePassword", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Internal Error.
         /// </summary>
         internal static string Sql_InternalError {
@@ -9600,6 +9654,15 @@ namespace System {
         internal static string SQL_InvalidUdt3PartNameFormat {
             get {
                 return ResourceManager.GetString("SQL_InvalidUdt3PartNameFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication={0}&apos; with &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
+        /// </summary>
+        internal static string SQL_ManagedIdentityWithPassword {
+            get {
+                return ResourceManager.GetString("SQL_ManagedIdentityWithPassword", resourceCulture);
             }
         }
         
@@ -9910,6 +9973,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot set the Credential property if &apos;Authentication=Active Directory Device Code Flow&apos; has been specified in the connection string..
+        /// </summary>
+        internal static string SQL_SettingCredentialWithDeviceFlow {
+            get {
+                return ResourceManager.GetString("SQL_SettingCredentialWithDeviceFlow", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot set the Credential property if &apos;Authentication=Active Directory Integrated&apos; has been specified in the connection string..
         /// </summary>
         internal static string SQL_SettingCredentialWithIntegrated {
@@ -9928,11 +10000,20 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Cannot set the Credential property if &apos;Authentication=Active Directory Device Code Flow&apos; has been specified in the connection string..
+        ///   Looks up a localized string similar to Cannot set the Credential property if &apos;Authentication={0}&apos; has been specified in the connection string..
         /// </summary>
-        internal static string SQL_SettingCredentialWithDeviceFlow {
+        internal static string SQL_SettingCredentialWithManagedIdentity {
             get {
-                return ResourceManager.GetString("SQL_SettingCredentialWithDeviceFlow", resourceCulture);
+                return ResourceManager.GetString("SQL_SettingCredentialWithManagedIdentity", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Device Code Flow&apos;, if the Credential property has been set..
+        /// </summary>
+        internal static string SQL_SettingDeviceFlowWithCredential {
+            get {
+                return ResourceManager.GetString("SQL_SettingDeviceFlowWithCredential", resourceCulture);
             }
         }
         
@@ -9955,11 +10036,11 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Device Code Flow&apos;, if the Credential property has been set..
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication={0}&apos;, if the Credential property has been set..
         /// </summary>
-        internal static string SQL_SettingDeviceFlowWithCredential {
+        internal static string SQL_SettingManagedIdentityWithCredential {
             get {
-                return ResourceManager.GetString("SQL_SettingDeviceFlowWithCredential", resourceCulture);
+                return ResourceManager.GetString("SQL_SettingManagedIdentityWithCredential", resourceCulture);
             }
         }
         
@@ -10171,20 +10252,20 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Active Directory Interactive authentication timed out. The user took too long to respond to the authentication request..
-        /// </summary>
-        internal static string SQL_Timeout_Active_Directory_Interactive_Authentication {
-            get {
-                return ResourceManager.GetString("SQL_Timeout_Active_Directory_Interactive_Authentication", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Active Directory Device Code Flow authentication timed out. The user took too long to respond to the authentication request..
         /// </summary>
         internal static string SQL_Timeout_Active_Directory_DeviceFlow_Authentication {
             get {
                 return ResourceManager.GetString("SQL_Timeout_Active_Directory_DeviceFlow_Authentication", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Active Directory Interactive authentication timed out. The user took too long to respond to the authentication request..
+        /// </summary>
+        internal static string SQL_Timeout_Active_Directory_Interactive_Authentication {
+            get {
+                return ResourceManager.GetString("SQL_Timeout_Active_Directory_Interactive_Authentication", resourceCulture);
             }
         }
         
