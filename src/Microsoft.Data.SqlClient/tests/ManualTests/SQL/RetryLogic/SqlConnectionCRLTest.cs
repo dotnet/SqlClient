@@ -33,7 +33,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(cancelAfterRetries, provider.RetryLogic.Current);
         }
 
-        [Theory]
+        [ActiveIssue(14590, TestPlatforms.Windows)]
+        // avoid creating a new database in Azure
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureServer))]
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyLongRunner), parameters: new object[] { 10 }, MemberType = typeof(RetryLogicTestHelper))]
         public void CreateDatabaseWhileTryingToConnect(string cnnString, SqlRetryLogicBaseProvider provider)
         {
@@ -49,26 +51,35 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (var cnn1 = new SqlConnection(new SqlConnectionStringBuilder(cnnString) { ConnectTimeout = 60 }.ConnectionString))
             {
                 cnn1.Open();
-                provider.Retrying += (object s, SqlRetryingEventArgs e) =>
+                try
                 {
-                    using (var cmd = cnn1.CreateCommand())
+                    provider.Retrying += (object s, SqlRetryingEventArgs e) =>
                     {
-                        // Create database just after first faliure.
-                        if (e.RetryCount == 0)
+                        using (var cmd = cnn1.CreateCommand())
                         {
-                            cmd.CommandText = $"CREATE DATABASE [{database}];";
-                            cmd.ExecuteNonQueryAsync();
+                            // Create database just after first faliure.
+                            if (e.RetryCount == 0)
+                            {
+                                cmd.CommandText = $"CREATE DATABASE [{database}];";
+                                cmd.ExecuteNonQueryAsync();
+                            }
                         }
+                    };
+
+                    using (var cnn2 = new SqlConnection(builder.ConnectionString))
+                    {
+                        cnn2.RetryLogicProvider = provider;
+                        cnn2.Open();
                     }
-                };
-
-                using (var cnn2 = new SqlConnection(builder.ConnectionString))
-                {
-                    cnn2.RetryLogicProvider = provider;
-                    cnn2.Open();
                 }
-
-                DataTestUtility.DropDatabase(cnn1, database);
+                catch (Exception e)
+                {
+                    Assert.Null(e);
+                }
+                finally
+                {
+                    DataTestUtility.DropDatabase(cnn1, database);
+                }
             }
             Assert.True(provider.RetryLogic.Current > 0);
         }

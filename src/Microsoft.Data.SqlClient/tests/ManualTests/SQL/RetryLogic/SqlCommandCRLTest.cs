@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         #region Sync
         [Theory]
-        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyErr207), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper))]
+        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCommand), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper))]
         public void RetryExecuteFail(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             int numberOfRetries = provider.RetryLogic.NumberOfTries;
@@ -44,7 +44,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [Theory]
-        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyErr207), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper))]
+        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCommand), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper))]
         public void RetryExecuteCancel(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             int numberOfRetries = provider.RetryLogic.NumberOfTries;
@@ -73,8 +73,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        [ActiveIssue(14588)]
         [Theory]
-        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyErr207), parameters: new object[] { 5 }, MemberType = typeof(RetryLogicTestHelper))]
+        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCommand), parameters: new object[] { 5 }, MemberType = typeof(RetryLogicTestHelper))]
         public void RetryExecuteWithTransScope(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             int numberOfRetries = provider.RetryLogic.NumberOfTries;
@@ -107,7 +108,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [Theory]
-        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyErr207), parameters: new object[] { 5 }, MemberType = typeof(RetryLogicTestHelper))]
+        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCommand), parameters: new object[] { 5 }, MemberType = typeof(RetryLogicTestHelper))]
         public void RetryExecuteWithTrans(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             int numberOfRetries = provider.RetryLogic.NumberOfTries;
@@ -190,7 +191,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [Theory]
+        [ActiveIssue(14325)]
+        // avoid creating a new database in Azure
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureServer))]
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyDropDB), parameters: new object[] { 5 }, MemberType = typeof(RetryLogicTestHelper))]
         public void DropDatabaseWithActiveConnection(string cnnString, SqlRetryLogicBaseProvider provider)
         {
@@ -200,43 +203,60 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 InitialCatalog = database,
                 ConnectTimeout = 1
             };
-            bool poolingEnabled = builder.Pooling;
 
+            using (var cnn3 = new SqlConnection(cnnString))
             using (var cnn2 = new SqlConnection(builder.ConnectionString))
-            using (var cnn1 = new SqlConnection(new SqlConnectionStringBuilder(cnnString) { ConnectTimeout = 60}.ConnectionString))
+            using (var cnn1 = new SqlConnection(new SqlConnectionStringBuilder(cnnString) { ConnectTimeout = 120 }.ConnectionString))
             using (var cmd = new SqlCommand())
             {
                 cnn1.Open();
                 cmd.Connection = cnn1;
-                // Create database and wait to finalize it.
+                // Create the database and wait until it is finalized.
                 cmd.CommandText = $"CREATE DATABASE [{database}]; \nWHILE(NOT EXISTS(SELECT 1 FROM sys.databases WHERE name = '{database}')) \nWAITFOR DELAY '00:00:10' ";
                 cmd.ExecuteNonQuery();
 
-                // open an active connection to the database to raise error 3702 if someone drops it.
-                cnn2.Open();
-
-                // kill the active connection to the database after the first faliure.
-                provider.Retrying += (s, e) =>
+                try
                 {
-                    cnn2.Close();
-                    // assumption: the connection who returns to the connection pool stays connected to the database
-                    if (poolingEnabled)
+                    // open an active connection to the database to raise error 3702 if someone drops it.
+                    cnn2.Open();
+                    cnn3.Open();
+
+                    // kill the active connection to the database after the first faliure.
+                    provider.Retrying += (s, e) =>
                     {
-                        SqlConnection.ClearPool(cnn2);
-                    }
-                };
+                        if (cnn2.State == ConnectionState.Open)
+                        {
+                        // in some reason closing connection doesn't eliminate the active connection to the database
+                        using (var cmd3 = cnn3.CreateCommand())
+                            {
+                                cmd3.CommandText = $"KILL {cnn2.ServerProcessId}";
+                                cmd3.ExecuteNonQueryAsync();
+                            }
+                            cnn2.Close();
+                        }
+                    };
 
-                // drop the database
-                cmd.RetryLogicProvider = provider;
-                cmd.CommandText = $"DROP DATABASE [{database}]";
-                cmd.ExecuteNonQuery();
+                    // drop the database
+                    cmd.RetryLogicProvider = provider;
+                    cmd.CommandText = $"DROP DATABASE [{database}]";
+                    cmd.ExecuteNonQuery();
 
-                Assert.True(provider.RetryLogic.Current > 0);
+                    Assert.True(provider.RetryLogic.Current > 0);
+                }
+                catch (Exception e)
+                {
+                    Assert.Null(e);
+                }
+                finally
+                {
+                    // additional try to drop the database if it still exists.
+                    DataTestUtility.DropDatabase(cnn1, database);
+                }
             }
         }
 
         [Theory]
-        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyErrNegative2), parameters: new object[] { 10 }, MemberType = typeof(RetryLogicTestHelper))]
+        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyLockedTable), parameters: new object[] { 10 }, MemberType = typeof(RetryLogicTestHelper))]
         public void UpdateALockedTable(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             string tableName = DataTestUtility.GetUniqueNameForSqlServer("Region");
@@ -257,30 +277,40 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 cmd1.CommandText = $"SELECT TOP (1) * INTO {tableName} FROM Region;";
                 cmd1.ExecuteNonQuery();
 
-                CancellationTokenSource tokenSource = new CancellationTokenSource();
-
-                provider.Retrying += (s, e) =>
+                try
                 {
-                    tokenSource.Cancel();
-                    cmd1.Cancel();
-                    cnn1.Close();
-                };
+                    CancellationTokenSource tokenSource = new CancellationTokenSource();
 
-                // Hold lock the table for 3 seconds (more that the connection timeout)
-                cmd1.CommandText = $"BEGIN TRAN; SELECT * FROM {tableName} WITH(TABLOCKx, HOLDLOCK); WAITFOR DELAY '00:00:30'; ROLLBACK;";
-                cmd1.ExecuteNonQueryAsync(tokenSource.Token);
-                // Be sure the table is locked.
-                Thread.Sleep(1000);
+                    provider.Retrying += (s, e) =>
+                    {
+                        // cancel the blocker task
+                        tokenSource.Cancel();
+                        cmd1.Cancel();
+                        cnn1.Close();
+                    };
+                
+                    // Hold lock the table for 10 seconds (more that the connection timeout)
+                    cmd1.CommandText = $"BEGIN TRAN; SELECT * FROM {tableName} WITH(TABLOCKx, HOLDLOCK); WAITFOR DELAY '00:00:10'; ROLLBACK;";
+                    cmd1.ExecuteNonQueryAsync(tokenSource.Token);
+                    // Be sure the table is locked.
+                    Thread.Sleep(1000);
 
-                // Update the locked table
-                cmd2.RetryLogicProvider = provider;
-                cmd2.CommandTimeout = 1;
-                cmd2.CommandText = $"BEGIN TRAN; UPDATE {tableName} SET  {fieldName}= {fieldName}; COMMIT;";
-                cmd2.ExecuteNonQuery();
+                    // Update the locked table
+                    cmd2.RetryLogicProvider = provider;
+                    cmd2.CommandTimeout = 1;
+                    cmd2.CommandText = $"UPDATE {tableName} SET {fieldName} = 'updated';";
+                    cmd2.ExecuteNonQuery();
 
-                Assert.True(provider.RetryLogic.Current > 0);
-
-                DataTestUtility.DropTable(cnn2, tableName);
+                    Assert.True(provider.RetryLogic.Current > 0);
+                }
+                catch (Exception e)
+                {
+                    Assert.Null(e);
+                }
+                finally
+                {
+                    DataTestUtility.DropTable(cnn2, tableName);
+                }
             }
         }
 
@@ -288,7 +318,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         #region Async
         [Theory]
-        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyErr207), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper))]
+        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCommand), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper))]
         public async void RetryExecuteAsyncFail(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             int numberOfRetries = provider.RetryLogic.NumberOfTries;
@@ -321,7 +351,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [Theory]
-        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyErr207), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper))]
+        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCommand), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper))]
         public async void RetryExecuteAsyncCancel(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             int numberOfRetries = provider.RetryLogic.NumberOfTries;

@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -45,6 +46,37 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         private const string RetryAppContextSwitch = "Switch.Microsoft.Data.SqlClient.EnableRetryLogic";
 
+        private static readonly HashSet<int> s_defaultTransientErrors
+           = new HashSet<int>
+               {
+                    1204,  // The instance of the SQL Server Database Engine cannot obtain a LOCK resource at this time. Rerun your statement when there are fewer active users. Ask the database administrator to check the lock and memory configuration for this instance, or to check for long-running transactions.
+                    1205,  // Transaction (Process ID) was deadlocked on resources with another process and has been chosen as the deadlock victim. Rerun the transaction
+                    1222,  // Lock request time out period exceeded.
+                    49918,  // Cannot process request. Not enough resources to process request.
+                    49919,  // Cannot process create or update request. Too many create or update operations in progress for subscription "%ld".
+                    49920,  // Cannot process request. Too many operations in progress for subscription "%ld".
+                    4060,  // Cannot open database "%.*ls" requested by the login. The login failed.
+                    4221,  // Login to read-secondary failed due to long wait on 'HADR_DATABASE_WAIT_FOR_TRANSITION_TO_VERSIONING'. The replica is not available for login because row versions are missing for transactions that were in-flight when the replica was recycled. The issue can be resolved by rolling back or committing the active transactions on the primary replica. Occurrences of this condition can be minimized by avoiding long write transactions on the primary.
+
+                    40143,  // The service has encountered an error processing your request. Please try again.
+                    40613,  // Database '%.*ls' on server '%.*ls' is not currently available. Please retry the connection later. If the problem persists, contact customer support, and provide them the session tracing ID of '%.*ls'.
+                    40501,  // The service is currently busy. Retry the request after 10 seconds. Incident ID: %ls. Code: %d.
+                    40540,  // The service has encountered an error processing your request. Please try again.
+                    40197,  // The service has encountered an error processing your request. Please try again. Error code %d.
+                    10929,  // Resource ID: %d. The %s minimum guarantee is %d, maximum limit is %d and the current usage for the database is %d. However, the server is currently too busy to support requests greater than %d for this database. For more information, see http://go.microsoft.com/fwlink/?LinkId=267637. Otherwise, please try again later.
+                    10928,  // Resource ID: %d. The %s limit for the database is %d and has been reached. For more information, see http://go.microsoft.com/fwlink/?LinkId=267637.
+                    10060,  // An error has occurred while establishing a connection to the server. When connecting to SQL Server, this failure may be caused by the fact that under the default settings SQL Server does not allow remote connections. (provider: TCP Provider, error: 0 - A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.) (Microsoft SQL Server, Error: 10060)
+                    10054,  // The data value for one or more columns overflowed the type used by the provider.
+                    10053,  // Could not convert the data value due to reasons other than sign mismatch or overflow.
+                    233,    // A connection was successfully established with the server, but then an error occurred during the login process. (provider: Shared Memory Provider, error: 0 - No process is on the other end of the pipe.) (Microsoft SQL Server, Error: 233)
+                    997,    // A connection was successfully established with the server, but then an error occurred during the login process. (provider: Named Pipes Provider, error: 0 - Overlapped I/O operation is in progress)
+                    64,
+                    20,
+                    0,
+                    -2,     // Execution Timeout Expired.  The timeout period elapsed prior to completion of the operation or the server is not responding.
+                    207    // invalid column name
+               };
+
         public static void SetRetrySwitch(bool value)
         {
             AppContext.SetSwitch(RetryAppContextSwitch, value);
@@ -79,7 +111,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 NumberOfTries = numberOfRetries,
                 DeltaTime = TimeSpan.FromMilliseconds(deltaTimeMillisecond),
                 MaxTimeInterval = maxInterval,
-                TransientErrors = transientErrors,
+                TransientErrors = transientErrors ?? s_defaultTransientErrors,
                 AuthorizedSqlCondition = RetryPreConditon(unauthorizedStatemets)
             };
 
@@ -88,12 +120,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     yield return new object[] { cnn[0], item[0] };
         }
 
-        // 233:     A connection was successfully established with the server, but then an error occurred during the login process. (provider: Shared Memory Provider, error: 0 - No process is on the other end of the pipe.) (Microsoft SQL Server, Error: 233)
-        // 997:     A connection was successfully established with the server, but then an error occurred during the login process. (provider: Named Pipes Provider, error: 0 - Overlapped I/O operation is in progress)
-        // 4060:    Cannot open database "%.*ls" requested by the login. The login failed.
         public static IEnumerable<object[]> GetConnectionAndRetryStrategyInvalidCatalog(int numberOfRetries)
         {
-            return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromSeconds(100), FilterSqlStatements.None, new int[] { 233, 997, 4060 }, 200);
+            return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromSeconds(100), FilterSqlStatements.None, null, 200);
         }
 
         public static IEnumerable<object[]> GetConnectionAndRetryStrategy(int numberOfRetries)
@@ -101,9 +130,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromSeconds(10), FilterSqlStatements.None, null);
         }
 
-        public static IEnumerable<object[]> GetConnectionAndRetryStrategyErr207(int numberOfRetries)
+        public static IEnumerable<object[]> GetConnectionAndRetryStrategyInvalidCommand(int numberOfRetries)
         {
-            return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromMilliseconds(100), FilterSqlStatements.None, new int[] { 207 });
+            return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromMilliseconds(100), FilterSqlStatements.None, null);
         }
 
         public static IEnumerable<object[]> GetConnectionAndRetryStrategyFilterDMLStatements(int numberOfRetries)
@@ -111,22 +140,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromMilliseconds(100), FilterSqlStatements.DML, new int[] { 207, 102, 2812 });
         }
 
+        //40613:    Database '%.*ls' on server '%.*ls' is not currently available. Please retry the connection later. If the problem persists, contact customer support, and provide them the session tracing ID of '%.*ls'.
         public static IEnumerable<object[]> GetConnectionAndRetryStrategyLongRunner(int numberOfRetries)
         {
-            return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromSeconds(120), FilterSqlStatements.None, new int[] { 4060, -2}, 20 * 1000 );
+            return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromSeconds(120), FilterSqlStatements.None, null, 20 * 1000 );
         }
 
-        // 3702: Cannot drop database because it is currently in use.
-        // -2: Execution Timeout Expired.  The timeout period elapsed prior to completion of the operation or the server is not responding.
         public static IEnumerable<object[]> GetConnectionAndRetryStrategyDropDB(int numberOfRetries)
         {
-            return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromMilliseconds(2000), FilterSqlStatements.None, new int[] { 3702, -2 }, 500);
+            List<int> faults = s_defaultTransientErrors.ToList();
+            faults.Add(3702);    // Cannot drop database because it is currently in use.
+            return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromMilliseconds(2000), FilterSqlStatements.None, faults, 500);
         }
 
-        // -2: Execution Timeout Expired.  The timeout period elapsed prior to completion of the operation or the server is not responding.
-        public static IEnumerable<object[]> GetConnectionAndRetryStrategyErrNegative2(int numberOfRetries)
+        public static IEnumerable<object[]> GetConnectionAndRetryStrategyLockedTable(int numberOfRetries)
         {
-            return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromMilliseconds(100), FilterSqlStatements.None, new int[] { -2 });
+            return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromMilliseconds(100), FilterSqlStatements.None, null);
         }
 
         private static IEnumerable<object[]> GetRetryStrategies(IFloatingRetryLogicOption retryLogicOption)
