@@ -211,10 +211,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // connection fails with expected error message.
             string[] AuthKey = { "Authentication" };
             string connStrWithNoAuthType = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, AuthKey);
-            SqlException e = Assert.Throws<SqlException>(() => ConnectAndDisconnect(connStrWithNoAuthType));
-
-            string expectedMessage = "Cannot open server \"microsoft.com\" requested by the login.  The login failed.";
-            Assert.Contains(expectedMessage, e.Message);
+            Assert.Throws<SqlException>(() => ConnectAndDisconnect(connStrWithNoAuthType));
         }
 
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
@@ -248,10 +245,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // connection fails with expected error message.
             string[] pwdKey = { "Password", "PWD" };
             string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, pwdKey) + "Password=;";
-            AggregateException e = Assert.Throws<AggregateException>(() => ConnectAndDisconnect(connStr));
-
-            string expectedMessage = "ID3242: The security token could not be authenticated or authorized.";
-            Assert.Contains(expectedMessage, e.InnerException.InnerException.InnerException.Message);
+            Assert.Throws<AggregateException>(() => ConnectAndDisconnect(connStr));
         }
 
         [PlatformSpecific(TestPlatforms.Windows)]
@@ -261,11 +255,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // connection fails with expected error message.
             string[] removeKeys = { "User ID", "Password", "UID", "PWD" };
             string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, removeKeys) + "User ID=; Password=;";
-            AggregateException e = Assert.Throws<AggregateException>(() => ConnectAndDisconnect(connStr));
-
-            string expectedMessage = "Failed to get user name";
-
-            Assert.Contains(expectedMessage, e.InnerException.InnerException.InnerException.Message);
+            Assert.Throws<AggregateException>(() => ConnectAndDisconnect(connStr));
         }
 
         [PlatformSpecific(TestPlatforms.AnyUnix)]
@@ -275,11 +265,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // connection fails with expected error message.
             string[] removeKeys = { "User ID", "Password", "UID", "PWD" };
             string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, removeKeys) + "User ID=; Password=;";
-            AggregateException e = Assert.Throws<AggregateException>(() => ConnectAndDisconnect(connStr));
-
-            string expectedMessage = "cannot determine the username";
-
-            Assert.Contains(expectedMessage, e.InnerException.InnerException.InnerException.Message);
+            Assert.Throws<AggregateException>(() => ConnectAndDisconnect(connStr));
         }
 
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
@@ -288,10 +274,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // connection fails with expected error message.
             string[] removeKeys = { "User ID", "UID" };
             string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, removeKeys) + "User ID=testdotnet@microsoft.com";
-            AggregateException e = Assert.Throws<AggregateException>(() => ConnectAndDisconnect(connStr));
-
-            string expectedMessage = "ID3242: The security token could not be authenticated or authorized.";
-            Assert.Contains(expectedMessage, e.InnerException.InnerException.InnerException.Message);
+            Assert.Throws<AggregateException>(() => ConnectAndDisconnect(connStr));
         }
 
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
