@@ -55,7 +55,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: CREATE or ALTER PROCEDURE statement uses syntax or features that are not supported in SQL Server PDW.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void ReaderParameterTest()
         {
             string tableName = "#t_" + Guid.NewGuid().ToString().Replace('-', '_');

@@ -101,7 +101,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             _fixture = fixture;
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Column count in target table does not match column count specified in input. 
+        //          If BCP command, ensure format file column count matches destination table. 
+        //          If SSIS data import, check column mappings are consistent with target.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void StringToIntErrorMessageTest()
         {
             Assert.True(StringToIntTest(_fixture.Connection, _fixture.TableName, SourceType.DataTable), "Did not get any exceptions for DataTable when converting data from 'string' to 'int' datatype!");

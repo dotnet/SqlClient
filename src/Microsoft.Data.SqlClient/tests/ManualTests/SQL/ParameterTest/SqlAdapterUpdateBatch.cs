@@ -11,7 +11,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class SqlAdapterUpdateBatch
     {
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // TODO Synapse: Incorrect syntax near 'IF'.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void SqlAdapterTest()
         {
             string tableName = DataTestUtility.GetUniqueNameForSqlServer("Adapter");

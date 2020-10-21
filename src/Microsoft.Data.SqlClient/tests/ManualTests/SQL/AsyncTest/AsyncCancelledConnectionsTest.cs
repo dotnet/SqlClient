@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,11 +17,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public AsyncCancelledConnectionsTest(ITestOutputHelper output)
         {
-            this._output = output;
+            _output = output;
         }
 
-        [ActiveIssue(490)] // This test seems to fail regularly in pipelines due to deadlocks. But it's still useful for local testing.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Disabled on Azure since this test fails on concurrent runs on same database.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void CancelAsyncConnections()
         {
             string connectionString = DataTestUtility.TCPConnectionString;

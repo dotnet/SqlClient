@@ -29,18 +29,15 @@ namespace Microsoft.Data.SqlClient
             PersistSecurityInfo,
             UserID,
             Password,
-
             Enlist,
             Pooling,
             MinPoolSize,
             MaxPoolSize,
-#if netcoreapp
+#if NETCOREAPP
             PoolBlockingPeriod,
 #endif
-
             MultipleActiveResultSets,
             Replication,
-
             ConnectTimeout,
             Encrypt,
             TrustServerCertificate,
@@ -48,26 +45,20 @@ namespace Microsoft.Data.SqlClient
             PacketSize,
             TypeSystemVersion,
             Authentication,
-
             ApplicationName,
             CurrentLanguage,
             WorkstationID,
-
             UserInstance,
-
             TransactionBinding,
-
             ApplicationIntent,
-
             MultiSubnetFailover,
-
             ConnectRetryCount,
-
             ConnectRetryInterval,
-
             ColumnEncryptionSetting,
             EnclaveAttestationUrl,
             AttestationProtocol,
+
+            CommandTimeout,
 
             // keep the count value last
             KeywordsCount
@@ -93,6 +84,7 @@ namespace Microsoft.Data.SqlClient
         private string _userID = DbConnectionStringDefaults.UserID;
         private string _workstationID = DbConnectionStringDefaults.WorkstationID;
 
+        private int _commandTimeout = DbConnectionStringDefaults.CommandTimeout;
         private int _connectTimeout = DbConnectionStringDefaults.ConnectTimeout;
         private int _loadBalanceTimeout = DbConnectionStringDefaults.LoadBalanceTimeout;
         private int _maxPoolSize = DbConnectionStringDefaults.MaxPoolSize;
@@ -122,9 +114,10 @@ namespace Microsoft.Data.SqlClient
             validKeywords[(int)Keywords.ApplicationIntent] = DbConnectionStringKeywords.ApplicationIntent;
             validKeywords[(int)Keywords.ApplicationName] = DbConnectionStringKeywords.ApplicationName;
             validKeywords[(int)Keywords.AttachDBFilename] = DbConnectionStringKeywords.AttachDBFilename;
-#if netcoreapp
+#if NETCOREAPP
             validKeywords[(int)Keywords.PoolBlockingPeriod] = DbConnectionStringKeywords.PoolBlockingPeriod;
 #endif
+            validKeywords[(int)Keywords.CommandTimeout] = DbConnectionStringKeywords.CommandTimeout;
             validKeywords[(int)Keywords.ConnectTimeout] = DbConnectionStringKeywords.ConnectTimeout;
             validKeywords[(int)Keywords.CurrentLanguage] = DbConnectionStringKeywords.CurrentLanguage;
             validKeywords[(int)Keywords.DataSource] = DbConnectionStringKeywords.DataSource;
@@ -165,9 +158,10 @@ namespace Microsoft.Data.SqlClient
             hash.Add(DbConnectionStringKeywords.ApplicationIntent, Keywords.ApplicationIntent);
             hash.Add(DbConnectionStringKeywords.ApplicationName, Keywords.ApplicationName);
             hash.Add(DbConnectionStringKeywords.AttachDBFilename, Keywords.AttachDBFilename);
-#if netcoreapp
+#if NETCOREAPP
             hash.Add(DbConnectionStringKeywords.PoolBlockingPeriod, Keywords.PoolBlockingPeriod);
 #endif
+            hash.Add(DbConnectionStringKeywords.CommandTimeout, Keywords.CommandTimeout);
             hash.Add(DbConnectionStringKeywords.ConnectTimeout, Keywords.ConnectTimeout);
             hash.Add(DbConnectionStringKeywords.CurrentLanguage, Keywords.CurrentLanguage);
             hash.Add(DbConnectionStringKeywords.DataSource, Keywords.DataSource);
@@ -214,7 +208,7 @@ namespace Microsoft.Data.SqlClient
             hash.Add(DbConnectionStringSynonyms.MULTIPLEACTIVERESULTSETS, Keywords.MultipleActiveResultSets);
             hash.Add(DbConnectionStringSynonyms.MULTISUBNETFAILOVER, Keywords.MultiSubnetFailover);
             hash.Add(DbConnectionStringSynonyms.NETWORKADDRESS, Keywords.DataSource);
-#if netcoreapp
+#if NETCOREAPP
             hash.Add(DbConnectionStringSynonyms.POOLBLOCKINGPERIOD, Keywords.PoolBlockingPeriod);
 #endif
             hash.Add(DbConnectionStringSynonyms.SERVER, Keywords.DataSource);
@@ -298,6 +292,9 @@ namespace Microsoft.Data.SqlClient
                             WorkstationID = ConvertToString(value);
                             break;
 
+                        case Keywords.CommandTimeout:
+                            CommandTimeout = ConvertToInt32(value);
+                            break;
                         case Keywords.ConnectTimeout:
                             ConnectTimeout = ConvertToInt32(value);
                             break;
@@ -329,7 +326,7 @@ namespace Microsoft.Data.SqlClient
                         case Keywords.AttestationProtocol:
                             AttestationProtocol = ConvertToAttestationProtocol(keyword, value);
                             break;
-#if netcoreapp
+#if NETCOREAPP
                         case Keywords.PoolBlockingPeriod: PoolBlockingPeriod = ConvertToPoolBlockingPeriod(keyword, value); break;
 #endif
                         case Keywords.Encrypt:
@@ -413,6 +410,21 @@ namespace Microsoft.Data.SqlClient
             {
                 SetValue(DbConnectionStringKeywords.AttachDBFilename, value);
                 _attachDBFilename = value;
+            }
+        }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/CommandTimeout/*' />
+        public int CommandTimeout
+        {
+            get { return _commandTimeout; }
+            set
+            {
+                if (value < 0)
+                {
+                    throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.CommandTimeout);
+                }
+                SetValue(DbConnectionStringKeywords.CommandTimeout, value);
+                _commandTimeout = value;
             }
         }
 
@@ -902,9 +914,11 @@ namespace Microsoft.Data.SqlClient
                     return ApplicationName;
                 case Keywords.AttachDBFilename:
                     return AttachDBFilename;
-#if netcoreapp
+#if NETCOREAPP
                 case Keywords.PoolBlockingPeriod: return PoolBlockingPeriod;
 #endif
+                case Keywords.CommandTimeout:
+                    return CommandTimeout;
                 case Keywords.ConnectTimeout:
                     return ConnectTimeout;
                 case Keywords.CurrentLanguage:
@@ -966,7 +980,6 @@ namespace Microsoft.Data.SqlClient
                     return EnclaveAttestationUrl;
                 case Keywords.AttestationProtocol:
                     return AttestationProtocol;
-
                 default:
                     Debug.Fail("unexpected keyword");
                     throw UnsupportedKeyword(s_validKeywords[(int)index]);
@@ -1016,11 +1029,14 @@ namespace Microsoft.Data.SqlClient
                 case Keywords.Authentication:
                     _authentication = DbConnectionStringDefaults.Authentication;
                     break;
-#if netcoreapp
+#if NETCOREAPP
                 case Keywords.PoolBlockingPeriod:
                     _poolBlockingPeriod = DbConnectionStringDefaults.PoolBlockingPeriod;
                     break;
 #endif
+                case Keywords.CommandTimeout:
+                    _commandTimeout = DbConnectionStringDefaults.CommandTimeout;
+                    break;
                 case Keywords.ConnectTimeout:
                     _connectTimeout = DbConnectionStringDefaults.ConnectTimeout;
                     break;

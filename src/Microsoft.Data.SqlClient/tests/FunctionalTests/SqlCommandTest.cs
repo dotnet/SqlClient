@@ -136,6 +136,22 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(UpdateRowSource.Both, cmd.UpdatedRowSource);
         }
 
+        [Theory]
+        [InlineData(0)]
+        [InlineData(30)]
+        [InlineData(15)]
+        public void Constructor3_CommandTimeout(int timeout)
+        {
+            SqlConnection conn = new SqlConnection($"Command Timeout = {timeout}");
+            SqlCommand cmd;
+
+            cmd = new SqlCommand(COMMAND_TEXT, conn);
+            Assert.Equal(timeout, cmd.CommandTimeout);
+
+            cmd.CommandTimeout = timeout + 10;
+            Assert.Equal(timeout + 10, cmd.CommandTimeout);
+        }
+
         [Fact]
         public void Constructor4()
         {
