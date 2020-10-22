@@ -17,6 +17,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using SysTx = System.Transactions;
 
+[assembly: InternalsVisibleTo("FunctionalTests")]
+
 namespace Microsoft.Data.SqlClient
 {
     using Microsoft.Data.Common;
@@ -189,6 +191,7 @@ namespace Microsoft.Data.SqlClient
             }
             if (!task.IsCompleted)
             {
+                task.ContinueWith(t => { var ignored = t.Exception; }); //Ensure the task does not leave an unobserved exception
                 if (onTimeout != null)
                 {
                     onTimeout();

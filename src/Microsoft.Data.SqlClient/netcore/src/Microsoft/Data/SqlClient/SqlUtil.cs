@@ -17,6 +17,8 @@ using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
 
+[assembly: InternalsVisibleTo("FunctionalTests")]
+
 namespace Microsoft.Data.SqlClient
 {
     internal static class AsyncHelper
@@ -204,6 +206,7 @@ namespace Microsoft.Data.SqlClient
             }
             if (!task.IsCompleted)
             {
+                task.ContinueWith(t => { var ignored = t.Exception; }); //Ensure the task does not leave an unobserved exception
                 if (onTimeout != null)
                 {
                     onTimeout();
