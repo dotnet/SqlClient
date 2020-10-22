@@ -561,7 +561,7 @@ namespace Microsoft.Data.SqlClient
                     _stateObj.Parser.WriteInt(dt.time, _stateObj);
                 }
 
-                // Clean the variant metadata to prevent sharing it with next row. 
+                // Clean the variant metadata to prevent sharing it with next row.
                 // As a reminder, SetVariantType raises an assert if _variantType is not clean
                 _variantType = null;
             }
@@ -601,7 +601,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(
                 SmiXetterAccessMap.IsSetterAccessValid(_metaData, SmiXetterTypeCode.XetGuid));
 
-#if netcoreapp
+#if NETCOREAPP
 
             Span<byte> bytes = stackalloc byte[16];
             value.TryWriteBytes(bytes);
@@ -620,7 +620,7 @@ namespace Microsoft.Data.SqlClient
 
                 _stateObj.WriteByte((byte)_metaData.MaxLength);
             }
-#if netcoreapp
+#if NETCOREAPP
             _stateObj.WriteByteSpan(bytes);
 #else
             _stateObj.WriteByteArray(bytes, bytes.Length, 0);
@@ -660,7 +660,7 @@ namespace Microsoft.Data.SqlClient
             byte length;
             if (SqlDbType.Variant == _metaData.SqlDbType)
             {
-                // VSTFDevDiv #885208 - DateTimeOffset throws ArgumentException for when passing DateTimeOffset value to a sql_variant TVP 
+                // VSTFDevDiv #885208 - DateTimeOffset throws ArgumentException for when passing DateTimeOffset value to a sql_variant TVP
                 //                      using a SqlDataRecord or SqlDataReader
                 SmiMetaData dateTimeOffsetMetaData = SmiMetaData.DefaultDateTimeOffset;
                 scale = MetaType.MetaDateTimeOffset.Scale;

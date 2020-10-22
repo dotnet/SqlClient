@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Diagnostics.Tracing;
 using System.Threading;
 
@@ -1010,5 +1011,25 @@ namespace Microsoft.Data.SqlClient
             WriteEvent(SNIScopeExitId, scopeId);
         }
         #endregion
+    }
+
+    internal readonly struct SNIEventScope : IDisposable
+    {
+        private readonly long _scopeID;
+
+        public SNIEventScope(long scopeID)
+        {
+            _scopeID = scopeID;
+        }
+
+        public void Dispose()
+        {
+            SqlClientEventSource.Log.SNIScopeLeave(_scopeID);
+        }
+
+        public static SNIEventScope Create(string message)
+        {
+            return new SNIEventScope(SqlClientEventSource.Log.SNIScopeEnter(message));
+        }
     }
 }

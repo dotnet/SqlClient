@@ -66,14 +66,14 @@ namespace Microsoft.Data.SqlClient
             _logger.LogInfo(_type, "BeforeUnload", $"being unloaded from SqlAuthProviders for {authentication}.");
         }
 
-#if netstandard
+#if NETSTANDARD
         private Func<object> parentActivityOrWindowFunc = null;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetParentActivityOrWindowFunc/*'/>
         public void SetParentActivityOrWindowFunc(Func<object> parentActivityOrWindowFunc) => this.parentActivityOrWindowFunc = parentActivityOrWindowFunc;
 #endif
 
-#if netfx
+#if NETFRAMEWORK
         private Func<System.Windows.Forms.IWin32Window> _iWin32WindowFunc = null;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetIWin32WindowFunc/*'/>
@@ -101,16 +101,16 @@ namespace Microsoft.Data.SqlClient
                 return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
             }
 
-            /* 
+            /*
              * Today, MSAL.NET uses another redirect URI by default in desktop applications that run on Windows
              * (urn:ietf:wg:oauth:2.0:oob). In the future, we'll want to change this default, so we recommend
              * that you use https://login.microsoftonline.com/common/oauth2/nativeclient.
-             * 
+             *
              * https://docs.microsoft.com/en-us/azure/active-directory/develop/scenario-desktop-app-registration#redirect-uris
              */
             string redirectURI = "https://login.microsoftonline.com/common/oauth2/nativeclient";
 
-#if netcoreapp
+#if NETCOREAPP
             if (parameters.AuthenticationMethod != SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
             {
                 redirectURI = "http://localhost";
@@ -118,7 +118,7 @@ namespace Microsoft.Data.SqlClient
 #endif
             IPublicClientApplication app;
 
-#if netstandard
+#if NETSTANDARD
             if (parentActivityOrWindowFunc != null)
             {
                 app = PublicClientApplicationBuilder.Create(_applicationClientId)
@@ -130,7 +130,7 @@ namespace Microsoft.Data.SqlClient
                 .Build();
             }
 #endif
-#if netfx
+#if NETFRAMEWORK
             if (_iWin32WindowFunc != null)
             {
                 app = PublicClientApplicationBuilder.Create(_applicationClientId)
@@ -142,7 +142,7 @@ namespace Microsoft.Data.SqlClient
                 .Build();
             }
 #endif
-#if !netcoreapp
+#if !NETCOREAPP
             else
 #endif
             {
@@ -229,14 +229,14 @@ namespace Microsoft.Data.SqlClient
             SqlAuthenticationMethod authenticationMethod)
         {
             CancellationTokenSource cts = new CancellationTokenSource();
-#if netcoreapp
+#if NETCOREAPP
             /*
              * On .NET Core, MSAL will start the system browser as a separate process. MSAL does not have control over this browser,
              * but once the user finishes authentication, the web page is redirected in such a way that MSAL can intercept the Uri.
              * MSAL cannot detect if the user navigates away or simply closes the browser. Apps using this technique are encouraged
              * to define a timeout (via CancellationToken). We recommend a timeout of at least a few minutes, to take into account
              * cases where the user is prompted to change password or perform 2FA.
-             * 
+             *
              * https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/wiki/System-Browser-on-.Net-Core#system-browser-experience
              */
             cts.CancelAfter(180000);
@@ -257,7 +257,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         /*
                          * We will use the MSAL Embedded or System web browser which changes by Default in MSAL according to this table:
-                         * 
+                         *
                          * Framework        Embedded  System  Default
                          * -------------------------------------------
                          * .NET Classic     Yes       Yes^    Embedded
@@ -267,9 +267,9 @@ namespace Microsoft.Data.SqlClient
                          * Xamarin.Android  Yes       Yes     System
                          * Xamarin.iOS      Yes       Yes     System
                          * Xamarin.Mac      Yes       No      Embedded
-                         * 
+                         *
                          * ^ Requires "http://localhost" redirect URI
-                         * 
+                         *
                          * https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/wiki/MSAL.NET-uses-web-browser#at-a-glance
                          */
                         return await app.AcquireTokenInteractive(scopes)
@@ -296,11 +296,11 @@ namespace Microsoft.Data.SqlClient
 
         private Task DefaultDeviceFlowCallback(DeviceCodeResult result)
         {
-            // This will print the message on the console which tells the user where to go sign-in using 
+            // This will print the message on the console which tells the user where to go sign-in using
             // a separate browser and the code to enter once they sign in.
             // The AcquireTokenWithDeviceCode() method will poll the server after firing this
             // device code callback to look for the successful login of the user via that browser.
-            // This background polling (whose interval and timeout data is also provided as fields in the 
+            // This background polling (whose interval and timeout data is also provided as fields in the
             // deviceCodeCallback class) will occur until:
             // * The user has successfully logged in via browser and entered the proper code
             // * The timeout specified by the server for the lifetime of this code (typically ~15 minutes) has been reached

@@ -20,13 +20,13 @@
     <Product>Core $(BaseProduct)</Product>
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetGroup)' == 'netcoreapp'">
-    <DefineConstants>$(DefineConstants);netcoreapp;</DefineConstants>
+    <DefineConstants>$(DefineConstants);NETCOREAPP;</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetGroup)' == 'netstandard'">
-    <DefineConstants>$(DefineConstants);netstandard;</DefineConstants>
+    <DefineConstants>$(DefineConstants);NETSTANDARD;</DefineConstants>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(TargetGroup)' == 'netcoreapp' AND '$(TargetFramework)' != 'netcoreapp2.1'">
-    <DefineConstants>$(DefineConstants);NETCORE3</DefineConstants>
+  <PropertyGroup Condition="'$(TargetGroup)' == 'netcoreapp' AND !$(TargetFramework.StartsWith('netcoreapp2.'))">
+    <DefineConstants>$(DefineConstants);NETCOREAPP31_AND_ABOVE</DefineConstants>
   </PropertyGroup>
   <PropertyGroup>
     <DebugType>portable</DebugType>
@@ -234,17 +234,20 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\InvalidUdtException.cs">
       <Link>Microsoft\Data\SqlClient\Server\InvalidUdtException.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\AlwaysEncryptedAttestationException.cs">
-      <Link>Microsoft\Data\SqlClient\AlwaysEncryptedAttestationException.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\EnclaveProviderBase.cs">
-      <Link>Microsoft\Data\SqlClient\EnclaveProviderBase.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\EnclaveSessionCache.cs">
-      <Link>Microsoft\Data\SqlClient\EnclaveSessionCache.cs</Link>
-    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SignatureVerificationCache.cs">
       <Link>Microsoft\Data\SqlClient\SignatureVerificationCache.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsValueSetter.cs">
+      <Link>Microsoft\Data\SqlClient\TdsValueSetter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsParameterSetter.cs">
+      <Link>Microsoft\Data\SqlClient\TdsParameterSetter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsRecordBufferSetter.cs">
+      <Link>Microsoft\Data\SqlClient\TdsRecordBufferSetter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SmiRecordBuffer.cs">
+      <Link>Microsoft\Data\SqlClient\Server\SmiRecordBuffer.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netstandard' OR '$(TargetGroup)' == 'netcoreapp' OR '$(IsUAPAssembly)' == 'true'">
@@ -258,8 +261,18 @@
 		<Compile Include="Microsoft\Data\SqlClient\SqlDiagnosticListener.NetStandard.cs" />
 		<Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.NetStandard.cs" />
 		<Compile Include="Microsoft\Data\SqlClient\TdsParser.NetStandard.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SNI\SslOverTdsStream.NetStandard.cs" />
 	</ItemGroup>
 	<ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetFramework)' != 'netstandard2.0'">
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\AlwaysEncryptedAttestationException.cs">
+      <Link>Microsoft\Data\SqlClient\AlwaysEncryptedAttestationException.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\EnclaveProviderBase.cs">
+      <Link>Microsoft\Data\SqlClient\EnclaveProviderBase.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\EnclaveSessionCache.cs">
+      <Link>Microsoft\Data\SqlClient\EnclaveSessionCache.cs</Link>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlEnclaveAttestationParameters.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\EnclaveDelegate.NetCoreApp.cs" />
@@ -277,6 +290,7 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlDiagnosticListener.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.NetCoreApp.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SNI\SslOverTdsStream.NetCoreApp.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netcoreapp' AND '$(BuildSimulator)' == 'true'">
     <Compile Include="Microsoft\Data\SqlClient\SimulatorEnclaveProvider.NetCoreApp.cs" />
@@ -287,7 +301,6 @@
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiEventSink_Default.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiMetaData.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiMetaDataProperty.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\Server\SmiRecordBuffer.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiTypedGetterSetter.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiXetterAccessMap.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SqlDataRecord.cs" />
@@ -401,15 +414,12 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlUdtInfo.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlUtil.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsEnums.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParameterSetter.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.RegisterEncoding.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserHelperClasses.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserSessionPool.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObject.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStaticMethods.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsRecordBufferSetter.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsValueSetter.cs" />
     <Compile Include="$(CommonPath)\Microsoft\Data\Common\SQLResource.cs">
       <Link>Microsoft\Data\SQLTypes\SQLResource.cs</Link>
     </Compile>

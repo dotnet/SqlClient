@@ -63,7 +63,7 @@ namespace Microsoft.Data.SqlClient
             internal const string Application_Name = "application name";
             internal const string AsynchronousProcessing = "asynchronous processing";
             internal const string AttachDBFilename = "attachdbfilename";
-#if netcoreapp
+#if NETCOREAPP
             internal const string PoolBlockingPeriod = "pool blocking period";
 #endif
             internal const string ColumnEncryptionSetting = "column encryption setting";
@@ -141,7 +141,7 @@ namespace Microsoft.Data.SqlClient
             // network library
             internal const string NET = "net";
             internal const string NETWORK = "network";
-#if netcoreapp
+#if NETCOREAPP
             // pool blocking period
             internal const string POOLBLOCKINGPERIOD = "poolblockingperiod";
 #endif
@@ -159,7 +159,7 @@ namespace Microsoft.Data.SqlClient
             // make sure to update SynonymCount value below when adding or removing synonyms
         }
 
-#if netcoreapp
+#if NETCOREAPP
         internal const int SynonymCount = 25;
 #else
         internal const int SynonymCount = 24;
@@ -258,7 +258,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             _integratedSecurity = ConvertValueToIntegratedSecurity();
-#if netcoreapp
+#if NETCOREAPP
             _poolBlockingPeriod = ConvertValueToPoolBlockingPeriod();
 #endif
             _encrypt = ConvertValueToBoolean(KEY.Encrypt, DEFAULT.Encrypt);
@@ -511,7 +511,7 @@ namespace Microsoft.Data.SqlClient
             _commandTimeout = connectionOptions._commandTimeout;
             _connectTimeout = connectionOptions._connectTimeout;
             _loadBalanceTimeout = connectionOptions._loadBalanceTimeout;
-#if netcoreapp
+#if NETCOREAPP
             _poolBlockingPeriod = connectionOptions._poolBlockingPeriod;
 #endif
             _maxPoolSize = connectionOptions._maxPoolSize;
@@ -650,7 +650,7 @@ namespace Microsoft.Data.SqlClient
                     { KEY.Application_Name, KEY.Application_Name },
                     { KEY.AsynchronousProcessing, KEY.AsynchronousProcessing },
                     { KEY.AttachDBFilename, KEY.AttachDBFilename },
-#if netcoreapp
+#if NETCOREAPP
                     { KEY.PoolBlockingPeriod, KEY.PoolBlockingPeriod},
 #endif
                     { KEY.Command_Timeout, KEY.Command_Timeout },
@@ -703,7 +703,7 @@ namespace Microsoft.Data.SqlClient
                     { SYNONYM.MULTIPLEACTIVERESULTSETS, KEY.MARS },
                     { SYNONYM.MULTISUBNETFAILOVER, KEY.MultiSubnetFailover },
                     { SYNONYM.NETWORK_ADDRESS, KEY.Data_Source },
-#if netcoreapp
+#if NETCOREAPP
                     { SYNONYM.POOLBLOCKINGPERIOD, KEY.PoolBlockingPeriod},
 #endif
                     { SYNONYM.SERVER, KEY.Data_Source },

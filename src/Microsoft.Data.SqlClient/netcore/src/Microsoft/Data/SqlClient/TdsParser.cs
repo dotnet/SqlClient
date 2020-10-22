@@ -1658,7 +1658,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static void WriteInt(Span<byte> buffer, int value)
         {
-#if netcoreapp
+#if NETCOREAPP
             BitConverter.TryWriteBytes(buffer, value);
 #else
             buffer[0] = (byte)(value & 0xff);
