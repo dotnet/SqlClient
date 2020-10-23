@@ -226,8 +226,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         if (cnn2.State == ConnectionState.Open)
                         {
-                        // in some reason closing connection doesn't eliminate the active connection to the database
-                        using (var cmd3 = cnn3.CreateCommand())
+                            // in some reason closing connection doesn't eliminate the active connection to the database
+                            using (var cmd3 = cnn3.CreateCommand())
                             {
                                 cmd3.CommandText = $"KILL {cnn2.ServerProcessId}";
                                 cmd3.ExecuteNonQueryAsync();
@@ -255,7 +255,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [Theory]
+        // In Managed SNI and Named pipe connection, SqlCommand doesn't respect timeout.
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotUsingManagedSNIOnWindows), Skip = "ActiveIssue 12167")]
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyLockedTable), parameters: new object[] { 10 }, MemberType = typeof(RetryLogicTestHelper))]
         public void UpdateALockedTable(string cnnString, SqlRetryLogicBaseProvider provider)
         {
@@ -288,7 +289,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         cmd1.Cancel();
                         cnn1.Close();
                     };
-                
+
                     // Hold lock the table for 10 seconds (more that the connection timeout)
                     cmd1.CommandText = $"BEGIN TRAN; SELECT * FROM {tableName} WITH(TABLOCKx, HOLDLOCK); WAITFOR DELAY '00:00:10'; ROLLBACK;";
                     cmd1.ExecuteNonQueryAsync(tokenSource.Token);
@@ -300,8 +301,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     cmd2.CommandTimeout = 1;
                     cmd2.CommandText = $"UPDATE {tableName} SET {fieldName} = 'updated';";
                     cmd2.ExecuteNonQuery();
-
-                    Assert.True(provider.RetryLogic.Current > 0);
                 }
                 catch (Exception e)
                 {
@@ -311,6 +310,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     DataTestUtility.DropTable(cnn2, tableName);
                 }
+
+                Assert.True(provider.RetryLogic.Current > 0);
             }
         }
 
