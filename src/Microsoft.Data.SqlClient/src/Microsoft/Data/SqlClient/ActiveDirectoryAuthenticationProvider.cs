@@ -16,6 +16,11 @@ namespace Microsoft.Data.SqlClient
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ActiveDirectoryAuthenticationProvider/*'/>
     public sealed class ActiveDirectoryAuthenticationProvider : SqlAuthenticationProvider
     {
+        /// <summary>
+        /// This is a static cache instance meant to hold instances of "PublicClientApplication" mapping to information available in PublicClientAppKey.
+        /// The purpose of this cache is to allow re-use of Access Tokens fetched for a user interactively or with any other mode
+        /// to avoid interactive authentication request every-time, within application scope making use of MSAL's userTokenCache.
+        /// </summary>
         private static ConcurrentDictionary<PublicClientAppKey, IPublicClientApplication> s_pcaMap
             = new ConcurrentDictionary<PublicClientAppKey, IPublicClientApplication>();
         private static readonly string s_nativeClientRedirectUri = "https://login.microsoftonline.com/common/oauth2/nativeclient";
@@ -162,6 +167,7 @@ namespace Microsoft.Data.SqlClient
             else if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive ||
                      parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
             {
+                // Fetch available accounts from 'app' instance
                 System.Collections.Generic.IEnumerable<IAccount> accounts = await app.GetAccountsAsync();
                 IAccount account;
                 if (!string.IsNullOrEmpty(parameters.UserId))
@@ -177,17 +183,23 @@ namespace Microsoft.Data.SqlClient
                 {
                     try
                     {
+                        // If 'account' is available in 'app', we use the same to acquire token silently.
+                        // Read More on API docs: https://docs.microsoft.com/dotnet/api/microsoft.identity.client.clientapplicationbase.acquiretokensilent
                         result = await app.AcquireTokenSilent(scopes, account).ExecuteAsync();
                         SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (silent) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result.ExpiresOn);
                     }
                     catch (MsalUiRequiredException)
                     {
+                        // An 'MsalUiRequiredException' is thrown in the case where an interaction is required with the end user of the application, 
+                        // for instance, if no refresh token was in the cache, or the user needs to consent, or re-sign-in (for instance if the password expired), 
+                        // or the user needs to perform two factor authentication.
                         result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod);
                         SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result.ExpiresOn);
                     }
                 }
                 else
                 {
+                    // If no existing 'account' is found, we request user to sign in interactively.
                     result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod);
                     SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result.ExpiresOn);
                 }
@@ -392,22 +404,20 @@ namespace Microsoft.Data.SqlClient
 
             public override bool Equals(object obj)
             {
-                if (obj == null)
+                if (obj != null && obj is PublicClientAppKey pcaKey)
                 {
-                    return false;
-                }
-
-                PublicClientAppKey pcaKey = obj as PublicClientAppKey;
-                return (string.CompareOrdinal(_authority, pcaKey._authority) == 0
-                  && string.CompareOrdinal(_redirectUri, pcaKey._redirectUri) == 0
-                  && string.CompareOrdinal(_applicationClientId, pcaKey._applicationClientId) == 0
+                    return (string.CompareOrdinal(_authority, pcaKey._authority) == 0
+                        && string.CompareOrdinal(_redirectUri, pcaKey._redirectUri) == 0
+                        && string.CompareOrdinal(_applicationClientId, pcaKey._applicationClientId) == 0
 #if NETFRAMEWORK
-                  && pcaKey._iWin32WindowFunc == _iWin32WindowFunc
+                        && pcaKey._iWin32WindowFunc == _iWin32WindowFunc
 #endif
 #if NETSTANDARD
-                  && pcaKey._parentActivityOrWindowFunc == _parentActivityOrWindowFunc
+                        && pcaKey._parentActivityOrWindowFunc == _parentActivityOrWindowFunc
 #endif
-                  );
+                    );
+                }
+                return false;
             }
 
             public override int GetHashCode()
