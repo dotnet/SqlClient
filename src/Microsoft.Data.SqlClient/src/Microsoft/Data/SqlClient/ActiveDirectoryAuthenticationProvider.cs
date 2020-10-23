@@ -312,13 +312,7 @@ namespace Microsoft.Data.SqlClient
 
         private IPublicClientApplication GetPublicClientAppInstance(PublicClientAppKey publicClientAppKey)
         {
-            IPublicClientApplication clientApplicationInstance;
-
-            if (s_pcaMap.ContainsKey(publicClientAppKey))
-            {
-                s_pcaMap.TryGetValue(publicClientAppKey, out clientApplicationInstance);
-            }
-            else
+            if (!s_pcaMap.TryGetValue(publicClientAppKey, out IPublicClientApplication clientApplicationInstance))
             {
                 clientApplicationInstance = CreateClientAppInstance(publicClientAppKey);
                 s_pcaMap.TryAdd(publicClientAppKey, clientApplicationInstance);
