@@ -11,6 +11,7 @@ namespace Microsoft.Data.SqlClient.Tests
 {
     public class SqlHelperTest
     {
+        // This test is skipped on .NET Framework as AsyncHelper cannot be accessed from a Strong name assembly.
         private void TimeOutATask()
         {
             TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>();

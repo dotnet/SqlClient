@@ -17,8 +17,6 @@ using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.Common;
 
-[assembly: InternalsVisibleTo("FunctionalTests")]
-
 namespace Microsoft.Data.SqlClient
 {
     internal static class AsyncHelper

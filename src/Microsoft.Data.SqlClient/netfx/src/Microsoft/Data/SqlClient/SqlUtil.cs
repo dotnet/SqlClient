@@ -17,8 +17,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using SysTx = System.Transactions;
 
-[assembly: InternalsVisibleTo("FunctionalTests")]
-
 namespace Microsoft.Data.SqlClient
 {
     using Microsoft.Data.Common;
