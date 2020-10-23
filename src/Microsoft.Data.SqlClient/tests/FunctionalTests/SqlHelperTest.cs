@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -13,8 +14,14 @@ namespace Microsoft.Data.SqlClient.Tests
     {
         private void TimeOutATask()
         {
+            var sqlClientAssembly = Assembly.GetAssembly(typeof(SqlCommand));
+            //We're using reflection to avoid exposing the internals
+            MethodInfo waitForCompletion = sqlClientAssembly.GetType("Microsoft.Data.SqlClient.AsyncHelper")
+                ?.GetMethod("WaitForCompletion", BindingFlags.Static | BindingFlags.NonPublic);
+
+            Assert.False(waitForCompletion == null, "Running a test on SqlUtil.WaitForCompletion but could not find this method");
             TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>();
-            AsyncHelper.WaitForCompletion(tcs.Task, 1); //Will time out as task uncompleted
+            waitForCompletion.Invoke(null, new object[] { tcs.Task, 1, null, true }); //Will time out as task uncompleted
             tcs.SetException(new TimeoutException("Dummy timeout exception")); //Our task now completes with an error
         }
 
