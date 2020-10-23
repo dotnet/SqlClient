@@ -422,7 +422,8 @@ namespace Microsoft.Data.SqlClient
 
             private void CalculateHashCode()
             {
-                _hashValue = base.GetHashCode();
+                // use const value here to be able to compare by value and not by reference.
+                _hashValue = 1430287;
 
                 if (_authority != null)
                 {
