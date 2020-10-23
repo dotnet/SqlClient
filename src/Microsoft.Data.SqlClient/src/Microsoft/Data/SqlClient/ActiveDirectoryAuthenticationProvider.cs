@@ -394,6 +394,7 @@ namespace Microsoft.Data.SqlClient
 #if NETSTANDARD
                 _parentActivityOrWindowFunc = parentActivityOrWindowFunc;
 #endif
+                CalculateHashCode();
             }
 
             public override bool Equals(object obj)
