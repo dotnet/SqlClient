@@ -374,7 +374,6 @@ namespace Microsoft.Data.SqlClient
 #if NETSTANDARD
             public readonly Func<object> _parentActivityOrWindowFunc;
 #endif
-            private int _hashValue;
 
             public PublicClientAppKey(string authority, string redirectUri, string applicationClientId
 #if NETFRAMEWORK
@@ -394,7 +393,6 @@ namespace Microsoft.Data.SqlClient
 #if NETSTANDARD
                 _parentActivityOrWindowFunc = parentActivityOrWindowFunc;
 #endif
-                CalculateHashCode();
             }
 
             public override bool Equals(object obj)
@@ -415,56 +413,14 @@ namespace Microsoft.Data.SqlClient
                 return false;
             }
 
-            public override int GetHashCode()
-            {
-                return _hashValue;
-            }
-
-            private void CalculateHashCode()
-            {
-                // use const value here to be able to compare by value and not by reference.
-                _hashValue = 1430287;
-
-                if (_authority != null)
-                {
-                    unchecked
-                    {
-                        _hashValue = _hashValue * 17 + _authority.GetHashCode();
-                    }
-                }
-                if (_redirectUri != null)
-                {
-                    unchecked
-                    {
-                        _hashValue = _hashValue * 17 + _redirectUri.GetHashCode();
-                    }
-                }
-                if (_applicationClientId != null)
-                {
-                    unchecked
-                    {
-                        _hashValue = _hashValue * 17 + _applicationClientId.GetHashCode();
-                    }
-                }
+            public override int GetHashCode() => Tuple.Create(_authority, _redirectUri, _applicationClientId
 #if NETFRAMEWORK
-                if (_iWin32WindowFunc != null)
-                {
-                    unchecked
-                    {
-                        _hashValue = _hashValue * 17 + _iWin32WindowFunc.GetHashCode();
-                    }
-                }
+                , _iWin32WindowFunc
 #endif
 #if NETSTANDARD
-                if (_parentActivityOrWindowFunc != null)
-                {
-                    unchecked
-                    {
-                        _hashValue = _hashValue * 17 + _parentActivityOrWindowFunc.GetHashCode();
-                    }
-                }
+                , _parentActivityOrWindowFunc
 #endif
-            }
+                ).GetHashCode();
         }
     }
 }
