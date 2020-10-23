@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Fixed
 - Fixed unobserved exception issue when a timeout occurs before a faulted task completes with an exception [#688](https://github.com/dotnet/SqlClient/pull/688)
+- Fixed an issue where driver continues to prompt for credentials when using Azure Active Directory authentication [#770](https://github.com/dotnet/SqlClient/pull/770)
 
 ### Changes
 - Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `v2.1.1` with removed symbols, which are now published to Microsoft Symbols Server [#764](https://github.com/dotnet/SqlClient/pull/764)
