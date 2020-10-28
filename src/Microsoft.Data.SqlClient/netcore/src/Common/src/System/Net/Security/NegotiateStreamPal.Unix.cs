@@ -189,7 +189,14 @@ namespace System.Net.Security
             // This value is not used on Unix
             return 0;
         }
-        
+
+        internal static SecurityStatusPal CompleteAuthToken(
+            ref SafeDeleteContext securityContext,
+            SecurityBuffer[] inSecurityBufferArray)
+        {
+            return new SecurityStatusPal(SecurityStatusPalErrorCode.OK);
+        }
+
         internal static SafeFreeCredentials AcquireDefaultCredential(string package, bool isServer)
         {
             return AcquireCredentialsHandle(package, isServer, new NetworkCredential(string.Empty, string.Empty, string.Empty));

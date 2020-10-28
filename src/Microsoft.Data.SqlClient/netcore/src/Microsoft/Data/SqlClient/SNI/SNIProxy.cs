@@ -96,7 +96,8 @@ namespace Microsoft.Data.SqlClient.SNI
                 inSecurityBufferArray = Array.Empty<SecurityBuffer>();
             }
 
-            int tokenSize = MaxTokenSize;
+            int tokenSize = NegotiateStreamPal.QueryMaxTokenSize(securityPackage);
+
             SecurityBuffer outSecurityBuffer = new SecurityBuffer(tokenSize, SecurityBufferType.SECBUFFER_TOKEN);
 
             ContextFlagsPal requestedContextFlags = ContextFlagsPal.Connection
@@ -119,7 +120,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 statusCode.ErrorCode == SecurityStatusPalErrorCode.CompAndContinue)
             {
                 inSecurityBufferArray = new SecurityBuffer[] { outSecurityBuffer };
-                statusCode = new SecurityStatusPal(SecurityStatusPalErrorCode.OK);
+                statusCode = NegotiateStreamPal.CompleteAuthToken(ref securityContext, inSecurityBufferArray);
                 outSecurityBuffer.token = null;
             }
 
