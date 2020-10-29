@@ -3,13 +3,18 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Diagnostics;
+using System.Reflection;
 using System.Transactions;
 
 namespace Microsoft.Data.SqlClient
 {
     internal sealed class SqlRetryLogic : SqlRetryLogicBase
     {
-        private const int firstCounter = 0;
+        private const int counterDefaultValue = 0;
+        private const int maxAttempts = 60;
+
+        private readonly string _typeName = nameof(SqlRetryLogic);
 
         public Predicate<string> PreCondition { get; private set; }
 
@@ -18,13 +23,20 @@ namespace Microsoft.Data.SqlClient
                              Predicate<Exception> transientPredicate,
                              Predicate<string> preCondition)
         {
-            Validate(numberOfTries, enumerator, transientPredicate);
+            Debug.Assert(enumerator != null, $"The '{nameof(enumerator)}' mustn't be null.");
+            Debug.Assert(transientPredicate != null, $"The '{nameof(transientPredicate)}' mustn't be null.");
+
+            if (!(numberOfTries > counterDefaultValue && numberOfTries <= maxAttempts))
+            {
+                // The 'numberOfTries' should be between 1 and 60.
+                throw new ArgumentOutOfRangeException(nameof(numberOfTries), StringsHelper.GetString(Strings.SqlRetryLogic_InvalidRange, numberOfTries, counterDefaultValue + 1, maxAttempts));
+            }
 
             NumberOfTries = numberOfTries;
             RetryIntervalEnumerator = enumerator;
             TransientPredicate = transientPredicate;
             PreCondition = preCondition;
-            Current = firstCounter;
+            Current = counterDefaultValue;
         }
 
         public SqlRetryLogic(int numberOfTries, SqlRetryIntervalBaseEnumerator enumerator, Predicate<Exception> transientPredicate)
@@ -32,31 +44,15 @@ namespace Microsoft.Data.SqlClient
         {
         }
 
-        public SqlRetryLogic(SqlRetryIntervalBaseEnumerator enumerator, Predicate<Exception> transientPredicate = null)
-            : this(firstCounter, enumerator, transientPredicate ?? (_ => false))
+        public SqlRetryLogic(SqlRetryIntervalBaseEnumerator enumerator, Predicate<Exception> transientPredicate)
+            : this(counterDefaultValue + 1, enumerator, transientPredicate)
         {
         }
 
         public override void Reset()
         {
-            Current = firstCounter;
+            Current = counterDefaultValue;
             RetryIntervalEnumerator.Reset();
-        }
-
-        private void Validate(int numberOfTries, SqlRetryIntervalBaseEnumerator enumerator, Predicate<Exception> transientPredicate)
-        {
-            if (numberOfTries < firstCounter)
-            {
-                throw new ArgumentOutOfRangeException(nameof(numberOfTries));
-            }
-            if (enumerator == null)
-            {
-                throw new ArgumentNullException(nameof(enumerator));
-            }
-            else if (transientPredicate == null)
-            {
-                throw new ArgumentNullException(nameof(transientPredicate));
-            }
         }
 
         public override bool TryNextInterval(out TimeSpan intervalTime)
@@ -71,6 +67,11 @@ namespace Microsoft.Data.SqlClient
                 // it doesn't mind if the enumerator gets to the last value till the number of attempts ends.
                 RetryIntervalEnumerator.MoveNext();
                 intervalTime = RetryIntervalEnumerator.Current;
+                SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Next gap time will be '{2}' before the next retry number {3}", _typeName, MethodBase.GetCurrentMethod().Name, intervalTime, Current);
+            }
+            else
+            {
+                SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Current retry ({2}) has reached to the maximum attempts (total attempts except the first run = {3}).", _typeName, MethodBase.GetCurrentMethod().Name, Current, NumberOfTries - 1);
             }
             return result;
         }
@@ -79,13 +80,14 @@ namespace Microsoft.Data.SqlClient
         {
             bool result = true;
 
-            if(sender is SqlCommand command)
+            if (sender is SqlCommand command)
             {
                 result = Transaction.Current == null // check TransactionScope
                         && command.Transaction == null // check SqlTransaction on a SqlCommand
                         && (PreCondition == null || PreCondition.Invoke(command.CommandText)); // if it contains an invalid command to retry
-            }
 
+                SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> (retry condition = '{2}') Avoids retry if it runs in a transaction or is skipped in the command's statement checking.", _typeName, MethodBase.GetCurrentMethod().Name, result);
+            }
             return result;
         }
     }

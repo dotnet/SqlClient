@@ -5,6 +5,7 @@
 using System;
 using System.Data;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Transactions;
 using Xunit;
 
@@ -255,8 +256,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        // In Managed SNI and Named pipe connection, SqlCommand doesn't respect timeout.
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotUsingManagedSNIOnWindows), Skip = "ActiveIssue 12167")]
+        // In Managed SNI by Named pipe connection, SqlCommand doesn't respect timeout. "ActiveIssue 12167"
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotUsingManagedSNIOnWindows))]
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyLockedTable), parameters: new object[] { 10 }, MemberType = typeof(RetryLogicTestHelper))]
         public void UpdateALockedTable(string cnnString, SqlRetryLogicBaseProvider provider)
         {
@@ -342,11 +343,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteReaderAsync(CommandBehavior.Default, CancellationToken.None));
                 Assert.Equal(numberOfRetries, provider.RetryLogic.Current + 1);
 
+                await Assert.ThrowsAsync<AggregateException>(() => provider.ExecuteAsync(cmd, () => Task.Factory.FromAsync(cmd.BeginExecuteReader(), cmd.EndExecuteReader)));
+                Assert.Equal(numberOfRetries, provider.RetryLogic.Current + 1);
+
                 await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteNonQueryAsync());
+                Assert.Equal(numberOfRetries, provider.RetryLogic.Current + 1);
+
+                await Assert.ThrowsAsync<AggregateException>(() => provider.ExecuteAsync(cmd, () => Task.Factory.FromAsync(cmd.BeginExecuteNonQuery(), cmd.EndExecuteNonQuery)));
                 Assert.Equal(numberOfRetries, provider.RetryLogic.Current + 1);
 
                 cmd.CommandText = query + " FOR XML AUTO";
                 await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteXmlReaderAsync());
+                Assert.Equal(numberOfRetries, provider.RetryLogic.Current + 1);
+
+                await Assert.ThrowsAsync<AggregateException>(() => provider.ExecuteAsync(cmd, () => Task.Factory.FromAsync(cmd.BeginExecuteXmlReader(), cmd.EndExecuteXmlReader)));
                 Assert.Equal(numberOfRetries, provider.RetryLogic.Current + 1);
             }
         }
@@ -374,12 +384,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteReaderAsync(CommandBehavior.Default, CancellationToken.None));
                 Assert.Equal(cancelAfterRetries, provider.RetryLogic.Current);
+                
+                await Assert.ThrowsAsync<AggregateException>(() => provider.ExecuteAsync(cmd, () => Task.Factory.FromAsync(cmd.BeginExecuteReader(), cmd.EndExecuteReader)));
+                Assert.Equal(cancelAfterRetries, provider.RetryLogic.Current);
 
                 await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteNonQueryAsync());
                 Assert.Equal(cancelAfterRetries, provider.RetryLogic.Current);
 
+                await Assert.ThrowsAsync<AggregateException>(() => provider.ExecuteAsync(cmd, () => Task.Factory.FromAsync(cmd.BeginExecuteNonQuery(), cmd.EndExecuteNonQuery)));
+                Assert.Equal(cancelAfterRetries, provider.RetryLogic.Current);
+
                 cmd.CommandText = query + " FOR XML AUTO";
                 await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteXmlReaderAsync());
+                Assert.Equal(cancelAfterRetries, provider.RetryLogic.Current);
+
+                await Assert.ThrowsAsync<AggregateException>(() => provider.ExecuteAsync(cmd, () => Task.Factory.FromAsync(cmd.BeginExecuteXmlReader(), cmd.EndExecuteXmlReader)));
                 Assert.Equal(cancelAfterRetries, provider.RetryLogic.Current);
             }
         }

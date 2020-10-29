@@ -24,11 +24,16 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 var random = new Random();
-                var maxRandom = GapTimeInterval.TotalMilliseconds * 1.2 < int.MaxValue ? Convert.ToInt32(GapTimeInterval.TotalMilliseconds * 1.2) : int.MaxValue;
-                var minRandom = GapTimeInterval.TotalMilliseconds * 0.8 < int.MaxValue ? Convert.ToInt32(GapTimeInterval.TotalMilliseconds * 0.8) : Convert.ToInt32(int.MaxValue * 0.6);
+                var tempMax = GapTimeInterval.TotalMilliseconds * 1.2;
+                var tempMin = GapTimeInterval.TotalMilliseconds * 0.8;
+                var maxRandom = tempMax < int.MaxValue ? Convert.ToInt32(tempMax) : int.MaxValue;
+                var minRandom = tempMin < int.MaxValue ? Convert.ToInt32(tempMin) : Convert.ToInt32(int.MaxValue * 0.6);
                 var delta = (Math.Pow(2.0, internalCounter++) - 1.0) * random.Next(minRandom, maxRandom);
-                var newVlaue = TimeSpan.FromMilliseconds(MinTimeInterval.TotalMilliseconds + delta);
-                return newVlaue < MaxTimeInterval ? newVlaue : MaxTimeInterval;
+                var newTimeMilliseconds = MinTimeInterval.TotalMilliseconds + delta;
+                newTimeMilliseconds = newTimeMilliseconds < MaxTimeInterval.TotalMilliseconds ? newTimeMilliseconds : MaxTimeInterval.TotalMilliseconds;
+                var newVlaue = TimeSpan.FromMilliseconds(newTimeMilliseconds);
+
+                return newVlaue < MinTimeInterval ? MinTimeInterval : newVlaue;
             }
         }
     }
@@ -49,20 +54,15 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 var random = new Random();
-                var maxRandom = GapTimeInterval.TotalMilliseconds * 1.2 < int.MaxValue ? Convert.ToInt32(GapTimeInterval.TotalMilliseconds * 1.2) : int.MaxValue;
-                var minRandom = GapTimeInterval.TotalMilliseconds * 0.8 < int.MaxValue ? Convert.ToInt32(GapTimeInterval.TotalMilliseconds * 0.8) : Convert.ToInt32(int.MaxValue * 0.6);
-                var interval = TimeSpan.FromMilliseconds(Current.TotalMilliseconds + random.Next(minRandom, maxRandom));
+                var tempMax = GapTimeInterval.TotalMilliseconds * 1.2;
+                var tempMin = GapTimeInterval.TotalMilliseconds * 0.8;
+                var maxRandom = tempMax < int.MaxValue ? Convert.ToInt32(tempMax) : int.MaxValue;
+                var minRandom = tempMin < int.MaxValue ? Convert.ToInt32(tempMin) : Convert.ToInt32(int.MaxValue * 0.6);
+                var newTimeMilliseconds = Current.TotalMilliseconds + random.Next(minRandom, maxRandom);
+                newTimeMilliseconds = newTimeMilliseconds < MaxTimeInterval.TotalMilliseconds ? newTimeMilliseconds : MaxTimeInterval.TotalMilliseconds;
+                var interval = TimeSpan.FromMilliseconds(newTimeMilliseconds);
 
-                if (interval < MinTimeInterval)
-                {
-                    interval = MinTimeInterval;
-                }
-                else if (interval > MaxTimeInterval)
-                {
-                    interval = MaxTimeInterval;
-                }
-
-                return interval;
+                return interval < MinTimeInterval ? MinTimeInterval : interval;
             }
         }
     }

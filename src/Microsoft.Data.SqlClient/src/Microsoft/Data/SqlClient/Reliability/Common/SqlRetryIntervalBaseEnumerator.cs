@@ -13,6 +13,9 @@ namespace Microsoft.Data.SqlClient
     /// </summary>
     public abstract class SqlRetryIntervalBaseEnumerator : IEnumerator<TimeSpan>
     {
+        private readonly TimeSpan _minValue = TimeSpan.Zero;
+        private readonly TimeSpan _maxValue = TimeSpan.FromSeconds(120);
+
         /// <summary>
         /// The gap time of each interval
         /// </summary>
@@ -67,20 +70,29 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Validate the enumeration parameters.
         /// </summary>
-        /// <param name="timeInterval">The gap time of each interval</param>
-        /// <param name="maxTimeInterval">Maximum time interval value.</param>
-        /// <param name="minTimeInterval">Minimum time interval value.</param>
+        /// <param name="timeInterval">The gap time of each interval. Must be between 0 and 120 seconds.</param>
+        /// <param name="maxTimeInterval">Maximum time interval value. Must be between 0 and 120 seconds.</param>
+        /// <param name="minTimeInterval">Minimum time interval value. Must be between 0 and 120 seconds.</param>
         protected virtual void Validate(TimeSpan timeInterval, TimeSpan maxTimeInterval, TimeSpan minTimeInterval)
         {
-            // valid time iterval must be between 0 and 2 minutes
-            // TODO: grab the localized messages from the resource file
-            if(timeInterval.TotalMinutes > 2)
+            if(minTimeInterval < _minValue || minTimeInterval > _maxValue )
             {
-                throw new ArgumentOutOfRangeException(nameof(timeInterval));
+                throw new ArgumentOutOfRangeException(nameof(minTimeInterval), StringsHelper.GetString(Strings.SqlRetryLogic_InvalidRange, minTimeInterval, _minValue, _maxValue));
             }
-            else if (maxTimeInterval < minTimeInterval)
+
+            if (maxTimeInterval < _minValue || maxTimeInterval > _maxValue)
             {
-                throw new ArgumentOutOfRangeException(nameof(maxTimeInterval));
+                throw new ArgumentOutOfRangeException(nameof(maxTimeInterval), StringsHelper.GetString(Strings.SqlRetryLogic_InvalidRange, maxTimeInterval, _minValue, _maxValue));
+            }
+
+            if (timeInterval < _minValue || timeInterval > _maxValue)
+            {
+                throw new ArgumentOutOfRangeException(nameof(timeInterval), StringsHelper.GetString(Strings.SqlRetryLogic_InvalidRange, timeInterval, _minValue, _maxValue));
+            }
+
+            if (maxTimeInterval < minTimeInterval)
+            {
+                throw new ArgumentOutOfRangeException(nameof(maxTimeInterval), StringsHelper.GetString(Strings.SqlRetryLogic_InvalidRange, maxTimeInterval, minTimeInterval, _maxValue));
             }
         }
 

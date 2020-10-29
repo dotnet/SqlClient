@@ -4,7 +4,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -159,37 +161,15 @@ namespace Microsoft.Data.SqlClient
         /// Provide an exponential retry strategy.
         /// </summary>
         public static SqlRetryLogicBaseProvider CreateExponentialRetryProvider(IFloatingRetryLogicOption retryLogicOption)
-        {
-            if (retryLogicOption == null)
-            {
-                throw new ArgumentNullException(nameof(retryLogicOption));
-            }
-
-            var retryLogic = new SqlRetryLogic(retryLogicOption.NumberOfTries,
-                                        new SqlExponentialIntervalEnumerator(retryLogicOption.DeltaTime, retryLogicOption.MaxTimeInterval, retryLogicOption.MinTimeInterval),
-                                        (e) => TransientErrorsCondition(e, retryLogicOption.TransientErrors ?? s_defaultTransientErrors),
-                                        retryLogicOption.AuthorizedSqlCondition);
-
-            return new SqlRetryLogicProvider(retryLogic);
-        }
+            => InternalCreateRetryProvider(retryLogicOption,
+                                           retryLogicOption != null ? new SqlExponentialIntervalEnumerator(retryLogicOption.DeltaTime, retryLogicOption.MaxTimeInterval, retryLogicOption.MinTimeInterval) : null);
 
         /// <summary>
         /// Provide an incrimental retry strategy.
         /// </summary>
-        public static SqlRetryLogicBaseProvider CreateIncrementalRetryProvider(IFloatingRetryLogicOption retryLogicOption)
-        {
-            if (retryLogicOption == null)
-            {
-                throw new ArgumentNullException(nameof(retryLogicOption));
-            }
-
-            var retryLogic = new SqlRetryLogic(retryLogicOption.NumberOfTries,
-                                        new SqlIncrementalIntervalEnumerator(retryLogicOption.DeltaTime, retryLogicOption.MaxTimeInterval, retryLogicOption.MinTimeInterval),
-                                        (e) => TransientErrorsCondition(e, retryLogicOption.TransientErrors ?? s_defaultTransientErrors),
-                                        retryLogicOption.AuthorizedSqlCondition);
-
-            return new SqlRetryLogicProvider(retryLogic);
-        }
+        public static SqlRetryLogicBaseProvider CreateIncrementalRetryProvider(IFloatingRetryLogicOption retryLogicOption) 
+            => InternalCreateRetryProvider(retryLogicOption,
+                                               retryLogicOption != null ? new SqlIncrementalIntervalEnumerator(retryLogicOption.DeltaTime, retryLogicOption.MaxTimeInterval, retryLogicOption.MinTimeInterval) : null);
 
         /// <summary>
         /// Provide a fixed linear retry strategy.
@@ -209,12 +189,28 @@ namespace Microsoft.Data.SqlClient
             return new SqlRetryLogicProvider(retryLogic);
         }
 
+        private static SqlRetryLogicBaseProvider InternalCreateRetryProvider(IFloatingRetryLogicOption retryLogicOption, SqlRetryIntervalBaseEnumerator enumerator)
+        {
+            Debug.Assert(enumerator != null, $"The '{nameof(enumerator)}' mustn't be null.");
+
+            if (retryLogicOption == null)
+            {
+                throw new ArgumentNullException(nameof(retryLogicOption));
+            }
+
+            var retryLogic = new SqlRetryLogic(retryLogicOption.NumberOfTries, enumerator,
+                                        (e) => TransientErrorsCondition(e, retryLogicOption.TransientErrors ?? s_defaultTransientErrors),
+                                        retryLogicOption.AuthorizedSqlCondition);
+
+            return new SqlRetryLogicProvider(retryLogic);
+        }
+
         /// <summary>
-        /// Provide a none retry strategy.
+        /// Provide a non retriable strategy.
         /// </summary>
         public static SqlRetryLogicBaseProvider CreateNoneRetryProvider()
         {
-            var retryLogic = new SqlRetryLogic(new SqlNoneIntervalEnumerator());
+            var retryLogic = new SqlRetryLogic(new SqlNoneIntervalEnumerator(), _ => false);
 
             return new SqlRetryLogicProvider(retryLogic);
         }
@@ -223,12 +219,13 @@ namespace Microsoft.Data.SqlClient
         private static bool TransientErrorsCondition(Exception e, IEnumerable<int> retriableConditions)
         {
             bool result = false;
-            if (e is SqlException ex && !ex._doNotReconnect)
+            if (retriableConditions != null && e is SqlException ex && !ex._doNotReconnect)
             {
                 foreach (SqlError item in ex.Errors)
                 {
                     if (retriableConditions.Contains(item.Number))
                     {
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|ERR|CATCH> Found a transient error: number = <{2}>, message = <{3}>", nameof(SqlConfigurableRetryFactory), MethodBase.GetCurrentMethod().Name, item.Number, item.Message);
                         result = true;
                         break;
                     }

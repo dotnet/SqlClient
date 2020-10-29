@@ -111,7 +111,6 @@ namespace Microsoft.Data.SqlClient
             {
                 if (_retryLogicProvider == null)
                 {
-                    //TODO: Reade default retry strategy from the configuration file.
                     _retryLogicProvider = SqlConfigurableRetryFactory.CreateNoneRetryProvider();
                 }
                 return _retryLogicProvider;

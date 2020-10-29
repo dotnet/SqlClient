@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -39,8 +40,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyLongRunner), parameters: new object[] { 10 }, MemberType = typeof(RetryLogicTestHelper))]
         public void CreateDatabaseWhileTryingToConnect(string cnnString, SqlRetryLogicBaseProvider provider)
         {
-            var r = new Random();
-
             string database = DataTestUtility.GetUniqueNameForSqlServer($"RetryLogic_{provider.RetryLogic.RetryIntervalEnumerator.GetType().Name}", false);
             var builder = new SqlConnectionStringBuilder(cnnString)
             {
@@ -48,20 +47,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 ConnectTimeout = 1
             };
 
-            using (var cnn1 = new SqlConnection(new SqlConnectionStringBuilder(cnnString) { ConnectTimeout = 60 }.ConnectionString))
+            using (var cnn1 = new SqlConnection(new SqlConnectionStringBuilder(cnnString) { ConnectTimeout = 60, Pooling = false }.ConnectionString))
             {
                 cnn1.Open();
+                Task createDBTask = null;
                 try
                 {
                     provider.Retrying += (object s, SqlRetryingEventArgs e) =>
                     {
                         using (var cmd = cnn1.CreateCommand())
                         {
-                            // Create database just after first faliure.
-                            if (e.RetryCount == 0)
+                            // Try to create database just after first faliure.
+                            if (createDBTask == null || createDBTask.Status == TaskStatus.Faulted)
                             {
-                                cmd.CommandText = $"CREATE DATABASE [{database}];";
-                                cmd.ExecuteNonQueryAsync();
+                                cmd.CommandText = $"IF (NOT EXISTS(SELECT 1 FROM sys.databases WHERE name = '{database}')) CREATE DATABASE [{database}];";
+                                createDBTask = cmd.ExecuteNonQueryAsync();
                             }
                         }
                     };
@@ -78,6 +78,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
                 finally
                 {
+                    createDBTask?.Wait();
                     DataTestUtility.DropDatabase(cnn1, database);
                 }
             }
