@@ -1261,7 +1261,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (_isAsyncBulkCopy && (_DbDataReaderRowSource != null))
             {
-                //This will call ReadAsync for DbDataReader (for SqlDataReader it will be truely async read; for non-SqlDataReader it may block.) 
+                // This will call ReadAsync for DbDataReader (for SqlDataReader it will be truely async read; for non-SqlDataReader it may block.) 
                 return _DbDataReaderRowSource.ReadAsync(cts).ContinueWith((t) =>
                 {
                     if (t.Status == TaskStatus.RanToCompletion)
@@ -1272,7 +1272,12 @@ namespace Microsoft.Data.SqlClient
                 }, TaskScheduler.Default).Unwrap();
             }
             else
-            { //this will call Read for DataRows, DataTable and IDataReader (this includes all IDataReader except DbDataReader)
+            { // This will call Read for DataRows, DataTable and IDataReader (this includes all IDataReader except DbDataReader)
+              // Release lock to prevent possible deadlocks
+                SqlInternalConnectionTds internalConnection = _connection.GetOpenTdsConnection();
+                bool semaphoreLock = internalConnection._parserLock.CanBeReleasedFromAnyThread;
+                internalConnection._parserLock.Release();
+
                 _hasMoreRowToCopy = false;
                 try
                 {
@@ -1290,6 +1295,11 @@ namespace Microsoft.Data.SqlClient
                     {
                         throw;
                     }
+                }
+                finally
+                {
+                    _insideRowsCopiedEvent = false;
+                    internalConnection._parserLock.Wait(canReleaseFromAnyThread: semaphoreLock);
                 }
                 return null;
             }
