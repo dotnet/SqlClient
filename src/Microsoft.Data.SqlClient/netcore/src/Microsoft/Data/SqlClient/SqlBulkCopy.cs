@@ -1182,7 +1182,6 @@ namespace Microsoft.Data.SqlClient
                 }
                 finally
                 {
-                    _insideRowsCopiedEvent = false;
                     internalConnection._parserLock.Wait(canReleaseFromAnyThread: semaphoreLock);
                 }
                 return null;
