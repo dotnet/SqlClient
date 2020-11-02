@@ -1810,6 +1810,23 @@ namespace Microsoft.Data.SqlClient.Server
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetValues/*'/>
         public virtual int SetValues(params object[] values) { throw null; }
     }
+    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFacetAttribute.xml' path='docs/members[@name="SqlFacetAttribute"]/SqlFacetAttribute/*'/>
+    [System.AttributeUsageAttribute(System.AttributeTargets.Field | System.AttributeTargets.Property | System.AttributeTargets.ReturnValue | System.AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
+    public partial class SqlFacetAttribute : System.Attribute
+    {
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFacetAttribute.xml' path='docs/members[@name="SqlFacetAttribute"]/ctor/*'/>
+        public SqlFacetAttribute() { }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFacetAttribute.xml' path='docs/members[@name="SqlFacetAttribute"]/IsFixedLength/*'/>
+        public bool IsFixedLength { get { throw null; } set { } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFacetAttribute.xml' path='docs/members[@name="SqlFacetAttribute"]/IsNullable/*'/>
+        public bool IsNullable { get { throw null; } set { } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFacetAttribute.xml' path='docs/members[@name="SqlFacetAttribute"]/MaxSize/*'/>
+        public int MaxSize { get { throw null; } set { } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFacetAttribute.xml' path='docs/members[@name="SqlFacetAttribute"]/Precision/*'/>
+        public int Precision { get { throw null; } set { } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFacetAttribute.xml' path='docs/members[@name="SqlFacetAttribute"]/Scale/*'/>
+        public int Scale { get { throw null; } set { } }
+    }
     /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/SqlFunctionAttribute/*' />
     [System.AttributeUsage(System.AttributeTargets.Method, AllowMultiple = false, Inherited = false), System.SerializableAttribute]
     public partial class SqlFunctionAttribute : System.Attribute
