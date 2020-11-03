@@ -3,6 +3,8 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 using Newtonsoft.Json;
 using Xunit;
 
@@ -29,6 +31,28 @@ namespace Microsoft.Data.SqlClient.Tests
 
             Assert.Equal(e.ClientConnectionId, sqlEx.ClientConnectionId);
             Assert.Equal(e.StackTrace, sqlEx.StackTrace);
+        }
+
+
+        [Fact]
+        [ActiveIssue("12161", TestPlatforms.AnyUnix)]
+        public static void SqlExcpetionSerializationTest()
+        {
+            var formatter = new BinaryFormatter();
+            SqlException e = CreateException();
+            using (var stream = new MemoryStream())
+            {
+                try
+                {
+                    formatter.Serialize(stream, e);
+                    stream.Position = 0;
+                    var e2 = (SqlException)formatter.Deserialize(stream);
+                }
+                catch (Exception ex)
+                {
+                    Assert.False(true, $"Unexpected Exception occurred: {ex.Message}");
+                }
+            }
         }
 
         [Fact]
