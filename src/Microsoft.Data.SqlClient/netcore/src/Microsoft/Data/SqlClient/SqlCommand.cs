@@ -1779,7 +1779,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 success = true;
-                return CompleteXmlReader(InternalEndExecuteReader(asyncResult, false, nameof(EndExecuteXmlReader)));
+                return CompleteXmlReader(InternalEndExecuteReader(asyncResult, false, nameof(EndExecuteXmlReader)), true);
             }
             catch (Exception e)
             {
