@@ -1159,6 +1159,11 @@ namespace Microsoft.Data.SqlClient
             }
             else
             { // This will call Read for DataRows, DataTable and IDataReader (this includes all IDataReader except DbDataReader)
+              // Release lock to prevent possible deadlocks
+                SqlInternalConnectionTds internalConnection = _connection.GetOpenTdsConnection();
+                bool semaphoreLock = internalConnection._parserLock.CanBeReleasedFromAnyThread;
+                internalConnection._parserLock.Release();
+
                 _hasMoreRowToCopy = false;
                 try
                 {
@@ -1174,6 +1179,10 @@ namespace Microsoft.Data.SqlClient
                     {
                         throw;
                     }
+                }
+                finally
+                {
+                    internalConnection._parserLock.Wait(canReleaseFromAnyThread: semaphoreLock);
                 }
                 return null;
             }
