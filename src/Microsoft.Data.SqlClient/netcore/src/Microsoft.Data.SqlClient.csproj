@@ -370,8 +370,9 @@
     <Compile Include="Microsoft\Data\SqlClient\Server\SqlUserDefinedAggregateAttribute.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBuffer.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopyColumnMappingCollection.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\BulkCopy\SqlBulkCopy.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\BulkCopy\SqlBulkCopy.Async.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\BulkCopy\SqlBulkCopyColumnMappingCollection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlCachedBuffer.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientDiagnosticListenerExtensions.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientFactory.cs" />
