@@ -469,37 +469,37 @@ namespace Microsoft.Data.SqlClient
 
         public bool IsDifferentName
         {
-            get => (flags & _SqlMetadataFlags.IsDifferentName) != 0;
+            get => flags.HasFlag(_SqlMetadataFlags.IsDifferentName);
             set => Set(_SqlMetadataFlags.IsDifferentName, value);
         }
 
         public bool IsKey
         {
-            get => (flags & _SqlMetadataFlags.IsKey) != 0;
+            get => flags.HasFlag(_SqlMetadataFlags.IsKey);
             set => Set(_SqlMetadataFlags.IsKey, value);
         }
 
         public bool IsHidden
         {
-            get => (flags & _SqlMetadataFlags.IsHidden) != 0;
+            get => flags.HasFlag(_SqlMetadataFlags.IsHidden);
             set => Set(_SqlMetadataFlags.IsHidden, value);
         }
 
         public bool IsExpression
         {
-            get => (flags & _SqlMetadataFlags.IsExpression) != 0;
+            get => flags.HasFlag(_SqlMetadataFlags.IsExpression);
             set => Set(_SqlMetadataFlags.IsExpression, value);
         }
 
         public bool IsIdentity
         {
-            get => (flags & _SqlMetadataFlags.IsIdentity) != 0;
+            get => flags.HasFlag(_SqlMetadataFlags.IsIdentity);
             set => Set(_SqlMetadataFlags.IsIdentity, value);
         }
 
         public bool IsColumnSet
         {
-            get => (flags & _SqlMetadataFlags.IsColumnSet) != 0;
+            get => flags.HasFlag(_SqlMetadataFlags.IsColumnSet);
             set => Set(_SqlMetadataFlags.IsColumnSet, value);
         }
 
@@ -746,13 +746,13 @@ namespace Microsoft.Data.SqlClient
 
         public bool IsNullable
         {
-            get => (flags & SqlMetaDataPrivFlags.IsNullable) != 0;
+            get => flags.HasFlag(SqlMetaDataPrivFlags.IsNullable);
             set => Set(SqlMetaDataPrivFlags.IsNullable, value);
         }
 
         public bool IsMultiValued
         {
-            get => (flags & SqlMetaDataPrivFlags.IsMultiValued) != 0;
+            get => flags.HasFlag(SqlMetaDataPrivFlags.IsMultiValued);
             set => Set(SqlMetaDataPrivFlags.IsMultiValued, value);
         }
 
