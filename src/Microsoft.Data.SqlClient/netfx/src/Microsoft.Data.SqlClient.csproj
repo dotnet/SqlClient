@@ -23,6 +23,9 @@
     <DefineConstants>$(DefineConstants);NETFRAMEWORK;</DefineConstants>
   </PropertyGroup>
   <PropertyGroup>
+    <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(GeneratedSourceFileName)'))</TargetFrameworkMonikerAssemblyAttributesPath>
+  </PropertyGroup>
+  <PropertyGroup>
     <!-- CSC Compiler Options -->
     <NoConfig>True</NoConfig>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
