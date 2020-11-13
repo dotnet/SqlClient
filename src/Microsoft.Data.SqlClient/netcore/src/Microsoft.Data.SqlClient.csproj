@@ -442,6 +442,7 @@
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIPhysicalHandle.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIProxy.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNITcpHandle.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SNI\SNISslStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SslOverTdsStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNICommon.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SspiClientContextStatus.cs" />
@@ -739,7 +740,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Microsoft\Data\SqlClient\AAsyncCallContext.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNISslStream.cs" />
     <Compile Include="Resources\Strings.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
