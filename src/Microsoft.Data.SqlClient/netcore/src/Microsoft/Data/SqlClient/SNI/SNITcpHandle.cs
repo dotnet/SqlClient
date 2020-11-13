@@ -160,14 +160,14 @@ namespace Microsoft.Data.SqlClient.SNI
                 {
                     // Retry with cached IP address
                     if (ex is SocketException || ex is ArgumentException || ex is AggregateException)
-                    {                       
+                    {
                         if (hasCachedDNSInfo == false)
                         {
                             throw;
                         }
                         else
                         {
-                            int portRetry = String.IsNullOrEmpty(cachedDNSInfo.Port) ? port : Int32.Parse(cachedDNSInfo.Port); 
+                            int portRetry = String.IsNullOrEmpty(cachedDNSInfo.Port) ? port : Int32.Parse(cachedDNSInfo.Port);
 
                             try
                             {
@@ -180,9 +180,9 @@ namespace Microsoft.Data.SqlClient.SNI
                                     _socket = Connect(cachedDNSInfo.AddrIPv4, portRetry, ts, isInfiniteTimeOut, cachedFQDN, ref pendingDNSInfo);
                                 }
                             }
-                            catch(Exception exRetry)
+                            catch (Exception exRetry)
                             {
-                                if (exRetry is SocketException || exRetry is ArgumentNullException 
+                                if (exRetry is SocketException || exRetry is ArgumentNullException
                                     || exRetry is ArgumentException || exRetry is ArgumentOutOfRangeException || exRetry is AggregateException)
                                 {
                                     if (parallel)
@@ -199,7 +199,7 @@ namespace Microsoft.Data.SqlClient.SNI
                                     throw;
                                 }
                             }
-                        }                        
+                        }
                     }
                     else
                     {
@@ -226,7 +226,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 _tcpStream = new NetworkStream(_socket, true);
 
                 _sslOverTdsStream = new SslOverTdsStream(_tcpStream);
-                _sslStream = new SslStream(_sslOverTdsStream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate), null);
+                _sslStream = new SNISslStream(_sslOverTdsStream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate));
             }
             catch (SocketException se)
             {
@@ -331,7 +331,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
 
             CancellationTokenSource cts = null;
-            
+
             void Cancel()
             {
                 for (int i = 0; i < sockets.Length; ++i)
@@ -355,7 +355,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
 
             Socket availableSocket = null;
-            try 
+            try
             {
                 for (int i = 0; i < sockets.Length; ++i)
                 {
@@ -706,12 +706,17 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error code</returns>
         public override uint SendAsync(SNIPacket packet, SNIAsyncCallback callback = null)
         {
-            SNIAsyncCallback cb = callback ?? _sendCallback;
-            lock (this)
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("<sc.SNI.SNIMarsHandle.SendAsync |SNI|INFO|SCOPE>");
+            try
             {
+                SNIAsyncCallback cb = callback ?? _sendCallback;
                 packet.WriteToStreamAsync(_stream, cb, SNIProviders.TCP_PROV);
+                return TdsEnums.SNI_SUCCESS_IO_PENDING;
             }
-            return TdsEnums.SNI_SUCCESS_IO_PENDING;
+            finally
+            {
+                SqlClientEventSource.Log.TrySNIScopeLeaveEvent(scopeID);
+            }
         }
 
         /// <summary>
