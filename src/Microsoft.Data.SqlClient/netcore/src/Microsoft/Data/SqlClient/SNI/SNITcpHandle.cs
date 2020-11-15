@@ -143,7 +143,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 bool reportError = true;
 
                 // We will always first try to connect with serverName as before and let the DNS server to resolve the serverName.
-                // If the DSN resolution fails, we will try with IPs in the DNS cache if existed. We try with IPv4 first and followed by IPv6 if 
+                // If the DSN resolution fails, we will try with IPs in the DNS cache if existed. We try with IPv4 first and followed by IPv6 if
                 // IPv4 fails. The exceptions will be throw to upper level and be handled as before.
                 try
                 {
@@ -582,7 +582,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
 
                 // this lock ensures that two packets are not being written to the transport at the same time
-                // so that sending a standard and an out-of-band packet are both written atomically no data is 
+                // so that sending a standard and an out-of-band packet are both written atomically no data is
                 // interleaved
                 lock (_sendSync)
                 {
@@ -623,67 +623,65 @@ namespace Microsoft.Data.SqlClient.SNI
         public override uint Receive(out SNIPacket packet, int timeoutInMilliseconds)
         {
             SNIPacket errorPacket;
-            lock (this)
+            packet = null;
+            try
             {
-                packet = null;
-                try
+                if (timeoutInMilliseconds > 0)
                 {
-                    if (timeoutInMilliseconds > 0)
-                    {
-                        _socket.ReceiveTimeout = timeoutInMilliseconds;
-                    }
-                    else if (timeoutInMilliseconds == -1)
-                    {   // SqlCient internally represents infinite timeout by -1, and for TcpClient this is translated to a timeout of 0 
-                        _socket.ReceiveTimeout = 0;
-                    }
-                    else
-                    {
-                        // otherwise it is timeout for 0 or less than -1
-                        ReportTcpSNIError(0, SNICommon.ConnTimeoutError, string.Empty);
-                        return TdsEnums.SNI_WAIT_TIMEOUT;
-                    }
-
-                    packet = RentPacket(headerSize: 0, dataSize: _bufferSize);
-                    packet.ReadFromStream(_stream);
-
-                    if (packet.Length == 0)
-                    {
-                        errorPacket = packet;
-                        packet = null;
-                        var e = new Win32Exception();
-                        return ReportErrorAndReleasePacket(errorPacket, (uint)e.NativeErrorCode, 0, e.Message);
-                    }
-
-                    return TdsEnums.SNI_SUCCESS;
+                    _socket.ReceiveTimeout = timeoutInMilliseconds;
                 }
-                catch (ObjectDisposedException ode)
+                else if (timeoutInMilliseconds == -1)
                 {
-                    errorPacket = packet;
-                    packet = null;
-                    return ReportErrorAndReleasePacket(errorPacket, ode);
-                }
-                catch (SocketException se)
-                {
-                    errorPacket = packet;
-                    packet = null;
-                    return ReportErrorAndReleasePacket(errorPacket, se);
-                }
-                catch (IOException ioe)
-                {
-                    errorPacket = packet;
-                    packet = null;
-                    uint errorCode = ReportErrorAndReleasePacket(errorPacket, ioe);
-                    if (ioe.InnerException is SocketException socketException && socketException.SocketErrorCode == SocketError.TimedOut)
-                    {
-                        errorCode = TdsEnums.SNI_WAIT_TIMEOUT;
-                    }
-
-                    return errorCode;
-                }
-                finally
-                {
+                    // SqlClient internally represents infinite timeout by -1, and for TcpClient this is translated to a timeout of 0
                     _socket.ReceiveTimeout = 0;
                 }
+                else
+                {
+                    // otherwise it is timeout for 0 or less than -1
+                    ReportTcpSNIError(0, SNICommon.ConnTimeoutError, string.Empty);
+                    return TdsEnums.SNI_WAIT_TIMEOUT;
+                }
+
+                packet = RentPacket(headerSize: 0, dataSize: _bufferSize);
+                packet.ReadFromStream(_stream);
+
+                if (packet.Length == 0)
+                {
+                    errorPacket = packet;
+                    packet = null;
+                    var e = new Win32Exception();
+                    return ReportErrorAndReleasePacket(errorPacket, (uint)e.NativeErrorCode, 0, e.Message);
+                }
+
+                return TdsEnums.SNI_SUCCESS;
+            }
+            catch (ObjectDisposedException ode)
+            {
+                errorPacket = packet;
+                packet = null;
+                return ReportErrorAndReleasePacket(errorPacket, ode);
+            }
+            catch (SocketException se)
+            {
+                errorPacket = packet;
+                packet = null;
+                return ReportErrorAndReleasePacket(errorPacket, se);
+            }
+            catch (IOException ioe)
+            {
+                errorPacket = packet;
+                packet = null;
+                uint errorCode = ReportErrorAndReleasePacket(errorPacket, ioe);
+                if (ioe.InnerException is SocketException socketException && socketException.SocketErrorCode == SocketError.TimedOut)
+                {
+                    errorCode = TdsEnums.SNI_WAIT_TIMEOUT;
+                }
+
+                return errorCode;
+            }
+            finally
+            {
+                _socket.ReceiveTimeout = 0;
             }
         }
 
@@ -750,15 +748,15 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             try
             {
-                // _socket.Poll method with argument SelectMode.SelectRead returns 
+                // _socket.Poll method with argument SelectMode.SelectRead returns
                 //      True : if Listen has been called and a connection is pending, or
                 //      True : if data is available for reading, or
                 //      True : if the connection has been closed, reset, or terminated, i.e no active connection.
                 //      False : otherwise.
                 // _socket.Available property returns the number of bytes of data available to read.
                 //
-                // Since _socket.Connected alone doesn't guarantee if the connection is still active, we use it in 
-                // combination with _socket.Poll method and _socket.Available == 0 check. When both of them 
+                // Since _socket.Connected alone doesn't guarantee if the connection is still active, we use it in
+                // combination with _socket.Poll method and _socket.Available == 0 check. When both of them
                 // return true we can safely determine that the connection is no longer active.
                 if (!_socket.Connected || (_socket.Poll(100, SelectMode.SelectRead) && _socket.Available == 0))
                 {

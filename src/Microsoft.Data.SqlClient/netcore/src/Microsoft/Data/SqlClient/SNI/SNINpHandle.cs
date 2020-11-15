@@ -189,39 +189,36 @@ namespace Microsoft.Data.SqlClient.SNI
             try
             {
                 SNIPacket errorPacket;
-                lock (this)
+                packet = null;
+                try
                 {
-                    packet = null;
-                    try
-                    {
-                        packet = RentPacket(headerSize: 0, dataSize: _bufferSize);
-                        packet.ReadFromStream(_stream);
+                    packet = RentPacket(headerSize: 0, dataSize: _bufferSize);
+                    packet.ReadFromStream(_stream);
 
-                        if (packet.Length == 0)
-                        {
-                            errorPacket = packet;
-                            packet = null;
-                            var e = new Win32Exception();
-                            SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.SNINpHandle.Receive |SNI|ERR> packet length is 0.");
-                            return ReportErrorAndReleasePacket(errorPacket, (uint)e.NativeErrorCode, 0, e.Message);
-                        }
-                    }
-                    catch (ObjectDisposedException ode)
+                    if (packet.Length == 0)
                     {
                         errorPacket = packet;
                         packet = null;
-                        SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.SNINpHandle.Receive |SNI|ERR> ObjectDisposedException message = {0}.", ode.Message);
-                        return ReportErrorAndReleasePacket(errorPacket, ode);
+                        var e = new Win32Exception();
+                        SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.SNINpHandle.Receive |SNI|ERR> packet length is 0.");
+                        return ReportErrorAndReleasePacket(errorPacket, (uint)e.NativeErrorCode, 0, e.Message);
                     }
-                    catch (IOException ioe)
-                    {
-                        errorPacket = packet;
-                        packet = null;
-                        SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.SNINpHandle.Receive |SNI|ERR> IOException message = {0}.", ioe.Message);
-                        return ReportErrorAndReleasePacket(errorPacket, ioe);
-                    }
-                    return TdsEnums.SNI_SUCCESS;
                 }
+                catch (ObjectDisposedException ode)
+                {
+                    errorPacket = packet;
+                    packet = null;
+                    SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.SNINpHandle.Receive |SNI|ERR> ObjectDisposedException message = {0}.", ode.Message);
+                    return ReportErrorAndReleasePacket(errorPacket, ode);
+                }
+                catch (IOException ioe)
+                {
+                    errorPacket = packet;
+                    packet = null;
+                    SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.SNINpHandle.Receive |SNI|ERR> IOException message = {0}.", ioe.Message);
+                    return ReportErrorAndReleasePacket(errorPacket, ioe);
+                }
+                return TdsEnums.SNI_SUCCESS;
             }
             finally
             {
@@ -286,7 +283,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     }
 
                     // this lock ensures that two packets are not being written to the transport at the same time
-                    // so that sending a standard and an out-of-band packet are both written atomically no data is 
+                    // so that sending a standard and an out-of-band packet are both written atomically no data is
                     // interleaved
                     lock (_sendSync)
                     {
