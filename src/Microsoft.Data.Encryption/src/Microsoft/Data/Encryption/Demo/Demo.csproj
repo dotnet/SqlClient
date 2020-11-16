@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\..\tests\CommonTestUtilities\CommonTestUtilities.csproj" />
     <ProjectReference Include="..\AzureKeyVaultProvider\AzureKeyVaultProvider.csproj" />
     <ProjectReference Include="..\FileEncryption\FileEncryption.csproj" />
   </ItemGroup>
