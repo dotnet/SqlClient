@@ -19,11 +19,5 @@ namespace Microsoft.Data.Encryption.FileEncryption
         /// that are used to determine which transformation to perform on which column of data."/>
         /// </summary>
         IList<FileEncryptionSettings> FileEncryptionSettings { get; }
-
-        /// <summary>
-        /// Registers the encryption key store providers.
-        /// </summary>
-        /// <param name="encryptionKeyStoreProviders">Encryption key provider dictionary</param>
-        void RegisterKeyStoreProviders(IDictionary<string, EncryptionKeyStoreProvider> encryptionKeyStoreProviders);
     }
 }

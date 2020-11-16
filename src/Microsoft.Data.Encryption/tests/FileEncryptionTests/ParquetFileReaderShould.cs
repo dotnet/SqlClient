@@ -19,11 +19,7 @@ namespace Microsoft.Data.Encryption.FileEncryptionTests
         {
             using Stream inputFile = File.OpenRead("ResourceFiles\\plaintext.parquet");
             using Stream outputFile = File.OpenWrite($"ResourceFiles\\{nameof(EncryptParquetFileCorrectly)}_out.parquet");
-            using ParquetFileReader reader = new ParquetFileReader(inputFile);
-
-            reader.RegisterKeyStoreProviders(
-                new Dictionary<string, EncryptionKeyStoreProvider> { [azureKeyProvider.ProviderName] = azureKeyProvider }
-            );
+            using ParquetFileReader reader = new ParquetFileReader(file: inputFile);
 
             var writerSettings = reader.FileEncryptionSettings
                 .Select(s => (FileEncryptionSettings)s.Clone())
@@ -48,10 +44,9 @@ namespace Microsoft.Data.Encryption.FileEncryptionTests
         {
             using Stream inputFile = File.OpenRead("ResourceFiles\\ciphertext.parquet");
             using Stream outputFile = File.OpenWrite($"ResourceFiles\\{nameof(DecryptParquetFileCorrectly)}_out.parquet");
-            using ParquetFileReader reader = new ParquetFileReader(inputFile);
-
-            reader.RegisterKeyStoreProviders(
-                new Dictionary<string, EncryptionKeyStoreProvider> { [azureKeyProvider.ProviderName] = azureKeyProvider }
+            using ParquetFileReader reader = new ParquetFileReader(
+                file: inputFile,
+                encryptionKeyStoreProviders: new Dictionary<string, EncryptionKeyStoreProvider> { [azureKeyProvider.ProviderName] = azureKeyProvider }
             );
 
             var writerSettings = reader.FileEncryptionSettings
