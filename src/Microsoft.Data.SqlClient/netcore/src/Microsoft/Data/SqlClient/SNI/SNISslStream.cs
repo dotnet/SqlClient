@@ -28,9 +28,8 @@ namespace Microsoft.Data.SqlClient.SNI
         public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
             _readQueueSemaphore.Wait();
-            Task<int> t = base.ReadAsync(buffer, offset, count, cancellationToken);
-            _readQueueSemaphore.Release();
-            return t;
+            return base.ReadAsync(buffer, offset, count, cancellationToken)
+                .ContinueWith(t => _readQueueSemaphore.Release(t.Result));
         }
 
         // Prevent the WriteAsync's collision by running task in Semaphore Slim
