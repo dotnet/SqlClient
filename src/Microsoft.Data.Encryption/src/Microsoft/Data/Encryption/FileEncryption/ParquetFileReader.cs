@@ -51,7 +51,7 @@ namespace Microsoft.Data.Encryption.FileEncryption
         }
 
         /// <inheritdoc/>
-        public IEnumerable<IList<IColumn>> Read()
+        public IEnumerable<IEnumerable<IColumn>> Read()
         {
             // enumerate through row groups in this file
             for (int i = 0; i < ParquetReader.RowGroupCount; i++)

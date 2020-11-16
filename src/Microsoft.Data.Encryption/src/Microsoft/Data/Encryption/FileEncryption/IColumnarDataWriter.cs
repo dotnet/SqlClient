@@ -18,6 +18,6 @@ namespace Microsoft.Data.Encryption.FileEncryption
         /// Writes out the data on which encryption transformations were performed.
         /// </summary>
         /// <param name="columns">The <see cref="List{T}"/> of <see cref="IColumn"/>s to write out.</param>
-        void Write(IList<IColumn> columns);
+        void Write(IEnumerable<IColumn> columns);
     }
 }

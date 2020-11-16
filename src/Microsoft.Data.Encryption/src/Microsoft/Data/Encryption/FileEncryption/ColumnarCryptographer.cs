@@ -50,35 +50,34 @@ namespace Microsoft.Data.Encryption.FileEncryption
                 .ForEach(encodedChunk => CryptoWriter.Write(encodedChunk));
         }
 
-        private IList<IColumn> TransformChunk(IList<FileEncryptionSettings> readerSettings, IList<FileEncryptionSettings> writerSettings, IList<IColumn> sourceRowGroup)
+        private IEnumerable<IColumn> TransformChunk(IList<FileEncryptionSettings> readerSettings, IList<FileEncryptionSettings> writerSettings, IEnumerable<IColumn> sourceRowGroup)
         {
-            List<IColumn> transformedColumns = new List<IColumn>();
+            int columnIndex = 0;
 
-            for (int index = 0; index < sourceRowGroup.Count; index++)
+            foreach (IColumn column in sourceRowGroup)
             {
-                FileEncryptionSettings readerColumnSettings = readerSettings[index];
-                FileEncryptionSettings writerColumnSettings = writerSettings[index];
-                IColumn column = sourceRowGroup[index];
+                FileEncryptionSettings readerColumnSettings = readerSettings[columnIndex];
+                FileEncryptionSettings writerColumnSettings = writerSettings[columnIndex];
 
                 if (ShouldEncrypt(readerColumnSettings, writerColumnSettings))
                 {
-                    transformedColumns.Add(EncryptColumn(writerColumnSettings, column));
+                    yield return EncryptColumn(writerColumnSettings, column);
                 }
                 else if (ShouldDecrypt(readerColumnSettings, writerColumnSettings))
                 {
-                    transformedColumns.Add(DecryptColumn(writerColumnSettings, column));
+                    yield return DecryptColumn(writerColumnSettings, column);
                 }
                 else if (ShouldRotate(readerColumnSettings, writerColumnSettings))
                 {
-                    transformedColumns.Add(EncryptColumn(writerColumnSettings, DecryptColumn(readerColumnSettings, column)));
+                    yield return EncryptColumn(writerColumnSettings, DecryptColumn(readerColumnSettings, column));
                 }
                 else
                 {
-                    transformedColumns.Add(sourceRowGroup[index]);
+                    yield return column;
                 }
-            }
 
-            return transformedColumns;
+                columnIndex++;
+            }
         }
 
         private static Column<byte[]> EncryptColumn(FileEncryptionSettings writerColumnSettings, IColumn column)

@@ -1,5 +1,4 @@
-﻿using Microsoft.Data.Encryption.Cryptography;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Parquet;
 using Parquet.Data;
@@ -36,7 +35,7 @@ namespace Microsoft.Data.Encryption.FileEncryption
         }
 
         /// <inheritdoc/>
-        public void Write(IList<IColumn> columns)
+        public void Write(IEnumerable<IColumn> columns)
         {
             List<DataColumn> parquetColumns = CreateParquetColumns(columns);
             List<DataField> parquetFields = parquetColumns.Select(p => p.Field).ToList();
@@ -76,11 +75,11 @@ namespace Microsoft.Data.Encryption.FileEncryption
             FileStream.Dispose();
         }
 
-        private static List<DataColumn> CreateParquetColumns(IList<IColumn> columns)
+        private static List<DataColumn> CreateParquetColumns(IEnumerable<IColumn> columns)
         {
             var parquetColumns = new List<DataColumn>();
 
-            foreach (var column in columns)
+            foreach (IColumn column in columns)
             {
                 parquetColumns.Add(new DataColumn(
                    new DataField(column.Name, column.DataType),

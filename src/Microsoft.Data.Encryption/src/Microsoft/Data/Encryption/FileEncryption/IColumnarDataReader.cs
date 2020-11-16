@@ -12,7 +12,7 @@ namespace Microsoft.Data.Encryption.FileEncryption
         /// Reads in the data on which to perform an encryption transformation.
         /// </summary>
         /// <returns>The data to transform.</returns>
-        IEnumerable<IList<IColumn>> Read();
+        IEnumerable<IEnumerable<IColumn>> Read();
 
         /// <summary>
         /// Returns a <see cref="List{T}"/> of <see cref="FileEncryption.FileEncryptionSettings"/> 
