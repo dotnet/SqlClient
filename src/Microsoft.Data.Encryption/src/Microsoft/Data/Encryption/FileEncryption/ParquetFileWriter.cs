@@ -16,6 +16,8 @@ namespace Microsoft.Data.Encryption.FileEncryption
     /// </summary>
     public sealed class ParquetFileWriter : IColumnarDataWriter, IDisposable
     {
+        private bool isMetadataWritten = false;
+
         /// <inheritdoc/>
         public IList<FileEncryptionSettings> FileEncryptionSettings { get; private set; }
 
@@ -43,25 +45,27 @@ namespace Microsoft.Data.Encryption.FileEncryption
 
             using (var parquetWriter = new ParquetWriter(schema, FileStream))
             {
-                // TODO - Write is called many times; one for each rowgroup in the file. We do not need to compile 
-                // and write metadata many times. Refactor to write metadata only once.
-                CryptoMetadata metadata = CompileMetadata(columns, FileEncryptionSettings);
-                if (!metadata.IsEmpty())
+                if (!isMetadataWritten)
                 {
-                    parquetWriter.CustomMetadata = new Dictionary<string, string>
+                    CryptoMetadata metadata = CompileMetadata(columns, FileEncryptionSettings);
+                    if (!metadata.IsEmpty())
                     {
-                        [nameof(CryptoMetadata)] = JsonConvert.SerializeObject(
-                            value: metadata,
-                            settings: new JsonSerializerSettings()
-                            {
-                                NullValueHandling = NullValueHandling.Ignore,
-                                Converters = { new StringEnumConverter() },
-                                Formatting = Formatting.Indented
-                            })
-                    };
+                        parquetWriter.CustomMetadata = new Dictionary<string, string>
+                        {
+                            [nameof(CryptoMetadata)] = JsonConvert.SerializeObject(
+                                value: metadata,
+                                settings: new JsonSerializerSettings()
+                                {
+                                    NullValueHandling = NullValueHandling.Ignore,
+                                    Converters = { new StringEnumConverter() },
+                                    Formatting = Formatting.Indented
+                                })
+                        };
+                    }
+
+                    isMetadataWritten = true;
                 }
 
-                // create a new row group in the file
                 using (ParquetRowGroupWriter groupWriter = parquetWriter.CreateRowGroup())
                 {
                     parquetColumns.ForEach(groupWriter.WriteColumn);
