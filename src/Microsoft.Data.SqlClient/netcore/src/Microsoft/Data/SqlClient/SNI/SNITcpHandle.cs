@@ -223,7 +223,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
 
                 _socket.NoDelay = true;
-                _tcpStream = new NetworkStream(_socket, true);
+                _tcpStream = new SNINetworkStream(_socket, true);
 
                 _sslOverTdsStream = new SslOverTdsStream(_tcpStream);
                 _sslStream = new SNISslStream(_sslOverTdsStream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate));
