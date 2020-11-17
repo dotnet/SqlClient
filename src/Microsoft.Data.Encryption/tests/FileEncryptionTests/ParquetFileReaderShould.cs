@@ -7,10 +7,10 @@ using System.Linq;
 using Xunit;
 
 using static Microsoft.Data.Encryption.FileEncryption.FileEncryptionSettings;
-using static Microsoft.Data.CommonTestUtilities.DataTestUtility;
+using static Microsoft.Data.Encryption.TestUtilities.DataTestUtility;
 using System.Collections.Generic;
 
-namespace Microsoft.Data.Encryption.FileEncryptionTests
+namespace Microsoft.Data.Encryption.FileEncryption.Tests
 {
     public class ParquetFileReaderShould
     {

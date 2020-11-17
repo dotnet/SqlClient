@@ -7,9 +7,9 @@ using System;
 using System.Threading.Tasks;
 using Xunit;
 
-using static Microsoft.Data.CommonTestUtilities.DataTestUtility;
+using static Microsoft.Data.Encryption.TestUtilities.DataTestUtility;
 
-namespace Microsoft.Data.AzureKeyVaultProviderTests
+namespace Microsoft.Data.Encryption.AzureKeyVaultProvider.Tests
 {
     public class AzureKeyVaultProviderShould
     {

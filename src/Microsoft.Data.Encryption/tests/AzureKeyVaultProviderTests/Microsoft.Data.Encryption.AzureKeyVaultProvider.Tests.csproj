@@ -3,8 +3,8 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <IsPackable>false</IsPackable>
-    <AssemblyName>Microsoft.Data.AzureKeyVaultProviderTests</AssemblyName>
-    <RootNamespace>Microsoft.Data.AzureKeyVaultProviderTests</RootNamespace>
+    <AssemblyName>Microsoft.Data.Encryption.AzureKeyVaultProvider.Tests</AssemblyName>
+    <RootNamespace>Microsoft.Data.Encryption.AzureKeyVaultProvider.Tests</RootNamespace>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>MicrosoftDataEncryption.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
@@ -26,9 +26,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Microsoft\Data\Encryption\AzureKeyVaultProvider\AzureKeyVaultProvider.csproj" />
-    <ProjectReference Include="..\..\src\Microsoft\Data\Encryption\Cryptography\Cryptography.csproj" />
-    <ProjectReference Include="..\CommonTestUtilities\CommonTestUtilities.csproj" />
+    <ProjectReference Include="..\..\src\Microsoft\Data\Encryption\AzureKeyVaultProvider\Microsoft.Data.Encryption.AzureKeyVaultProvider.csproj" />
+    <ProjectReference Include="..\..\src\Microsoft\Data\Encryption\Cryptography\Microsoft.Data.Encryption.Cryptography.csproj" />
+    <ProjectReference Include="..\tools\Microsoft.Data.Encryption.TestUtilities.csproj" />
   </ItemGroup>
 
 </Project>

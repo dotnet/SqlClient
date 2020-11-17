@@ -6,9 +6,9 @@ using System.Reflection;
 using System.Security.Cryptography;
 using Xunit;
 using Xunit.Sdk;
-using static Microsoft.Data.CommonTestUtilities.DataTestUtility;
+using static Microsoft.Data.Encryption.TestUtilities.DataTestUtility;
 
-namespace Microsoft.Data.Encryption.CryptographyTests.Cryptography
+namespace Microsoft.Data.Encryption.Cryptography.Tests.Cryptography
 {
     public class EncryptionAlgorithmShould
     {

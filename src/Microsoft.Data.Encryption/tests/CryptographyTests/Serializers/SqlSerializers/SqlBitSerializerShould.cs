@@ -1,5 +1,5 @@
 ﻿using Microsoft.Data.Encryption.Cryptography.Serializers;
-using static Microsoft.Data.CommonTestUtilities.DataTestUtility;
+using static Microsoft.Data.Encryption.TestUtilities.DataTestUtility;
 using Xunit;
 using Xunit.Sdk;
 using System.Collections.Generic;
@@ -8,7 +8,7 @@ using System;
 using Microsoft.Data.SqlClient;
 using System.Data;
 
-namespace Microsoft.Data.Encryption.CryptographyTests.Serializers.SqlSerializers
+namespace Microsoft.Data.Encryption.Cryptography.Tests.Serializers.SqlSerializers
 {
     [Collection("Database collection")]
     public sealed class SqlBitSerializerShould : IDisposable

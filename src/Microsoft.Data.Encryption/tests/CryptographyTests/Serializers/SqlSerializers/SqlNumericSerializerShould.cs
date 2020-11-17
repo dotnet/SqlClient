@@ -7,9 +7,9 @@ using Xunit.Sdk;
 using System.Collections.Generic;
 using System.Reflection;
 
-using static Microsoft.Data.CommonTestUtilities.DataTestUtility;
+using static Microsoft.Data.Encryption.TestUtilities.DataTestUtility;
 
-namespace Microsoft.Data.Encryption.CryptographyTests.Serializers.SqlSerializers
+namespace Microsoft.Data.Encryption.Cryptography.Tests.Serializers.SqlSerializers
 {
     [Collection("Database collection")]
     public sealed class SqlNumericSerializerShould : IDisposable

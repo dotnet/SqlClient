@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 using Xunit;
 
-namespace Microsoft.Data.Encryption.CryptographyTests.Serializers
+namespace Microsoft.Data.Encryption.Cryptography.Tests.Serializers
 {
     public class SerializerFactoryShould
     {

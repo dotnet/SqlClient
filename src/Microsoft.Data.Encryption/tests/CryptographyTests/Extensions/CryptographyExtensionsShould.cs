@@ -6,9 +6,9 @@ using System.Linq;
 using System.Reflection;
 using Xunit;
 using Xunit.Sdk;
-using static Microsoft.Data.CommonTestUtilities.DataTestUtility;
+using static Microsoft.Data.Encryption.TestUtilities.DataTestUtility;
 
-namespace Microsoft.Data.Encryption.CryptographyTests.Extensions
+namespace Microsoft.Data.Encryption.Cryptography.Tests.Extensions
 {
     public class CryptographyExtensionsShould
     {

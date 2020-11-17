@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <AssemblyName>Microsoft.Data.CommonTestUtilities</AssemblyName>
-    <RootNamespace>Microsoft.Data.CommonTestUtilities</RootNamespace>
+    <AssemblyName>Microsoft.Data.Encryption.TestUtilities</AssemblyName>
+    <RootNamespace>Microsoft.Data.Encryption.TestUtilities</RootNamespace>
     <Authors>Jeff Trimmer</Authors>
     <Company>Microsoft</Company>
     <SignAssembly>true</SignAssembly>
@@ -17,9 +17,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Microsoft\Data\Encryption\AzureKeyVaultProvider\AzureKeyVaultProvider.csproj" />
-    <ProjectReference Include="..\..\src\Microsoft\Data\Encryption\Cryptography\Cryptography.csproj" />
-    <ProjectReference Include="..\..\src\Microsoft\Data\Encryption\FileEncryption\FileEncryption.csproj" />
+    <ProjectReference Include="..\..\src\Microsoft\Data\Encryption\AzureKeyVaultProvider\Microsoft.Data.Encryption.AzureKeyVaultProvider.csproj" />
+    <ProjectReference Include="..\..\src\Microsoft\Data\Encryption\Cryptography\Microsoft.Data.Encryption.Cryptography.csproj" />
+    <ProjectReference Include="..\..\src\Microsoft\Data\Encryption\FileEncryption\Microsoft.Data.Encryption.FileEncryption.csproj" />
   </ItemGroup>
 
   <ItemGroup>

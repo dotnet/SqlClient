@@ -7,7 +7,7 @@ using System.Text;
 using Xunit;
 using Xunit.Sdk;
 
-namespace Microsoft.Data.Encryption.FileEncryptionTests
+namespace Microsoft.Data.Encryption.FileEncryption.Tests
 {
     public class ColumnShould
     {

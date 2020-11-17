@@ -5,7 +5,7 @@ using System.Reflection;
 using Xunit;
 using Xunit.Sdk;
 
-namespace Microsoft.Data.Encryption.CryptographyTests.Serializers.StandardSerializers
+namespace Microsoft.Data.Encryption.Cryptography.Tests.Serializers.StandardSerializers
 {
     public class NullableDateTimeOffsetSerializerShould
     {

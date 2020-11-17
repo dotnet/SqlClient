@@ -6,7 +6,7 @@ using System.Reflection;
 using Xunit;
 using Xunit.Sdk;
 
-namespace Microsoft.Data.Encryption.CryptographyTests.Serializers
+namespace Microsoft.Data.Encryption.Cryptography.Tests.Serializers
 {
     public class SqlSerializerFactoryShould
     {

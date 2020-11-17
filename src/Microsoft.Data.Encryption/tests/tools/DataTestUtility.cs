@@ -4,7 +4,7 @@ using Microsoft.Data.Encryption.Cryptography;
 using Newtonsoft.Json;
 using System.IO;
 
-namespace Microsoft.Data.CommonTestUtilities
+namespace Microsoft.Data.Encryption.TestUtilities
 {
     public static class DataTestUtility
     {

@@ -7,9 +7,9 @@ using System.Reflection;
 using Xunit;
 using Xunit.Sdk;
 
-using static Microsoft.Data.CommonTestUtilities.DataTestUtility;
+using static Microsoft.Data.Encryption.TestUtilities.DataTestUtility;
 
-namespace Microsoft.Data.Encryption.CryptographyTests.Serializers.SqlSerializers
+namespace Microsoft.Data.Encryption.Cryptography.Tests.Serializers.SqlSerializers
 {
     [Collection("Database collection")]
     public class SqlNullableRealSerializerShould : IDisposable

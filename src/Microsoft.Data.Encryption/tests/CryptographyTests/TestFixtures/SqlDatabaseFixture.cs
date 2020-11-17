@@ -9,9 +9,9 @@ using Xtrimmer.SqlDatabaseBuilder;
 using Xunit;
 
 using static Xtrimmer.SqlDatabaseBuilder.DataType;
-using static Microsoft.Data.CommonTestUtilities.DataTestUtility;
+using static Microsoft.Data.Encryption.TestUtilities.DataTestUtility;
 
-namespace Microsoft.Data.Encryption.CryptographyTests
+namespace Microsoft.Data.Encryption.Cryptography.Tests
 {
     public sealed class SqlDatabaseFixture : IDisposable
     {

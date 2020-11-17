@@ -1,7 +1,7 @@
 ﻿using Microsoft.Data.Encryption.Cryptography.Serializers;
 using Xunit;
 
-namespace Microsoft.Data.Encryption.CryptographyTests.Serializers.StandardSerializers
+namespace Microsoft.Data.Encryption.Cryptography.Tests.Serializers.StandardSerializers
 {
     public class ByteArraySerializerShould
     {

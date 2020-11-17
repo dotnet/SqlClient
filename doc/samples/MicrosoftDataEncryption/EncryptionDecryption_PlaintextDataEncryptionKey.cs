@@ -1,11 +1,12 @@
-﻿using Microsoft.Data.Encryption.Cryptography;
+﻿//<Snippet1>
+using Microsoft.Data.Encryption.Cryptography;
 using System;
 
-namespace Microsoft.Data.Encryption.Demo
+namespace EncryptionDecryptionWithPlaintextDataEncryptionKey
 {
-    internal class TheMostSimpleCase
+    public class Program
     {
-        internal static void Demo()
+        public static void Main()
         {
             // Create some simple data elements
             string plaintextString = "MyString";
@@ -36,3 +37,4 @@ namespace Microsoft.Data.Encryption.Demo
         }
     }
 }
+//</Snippet1>

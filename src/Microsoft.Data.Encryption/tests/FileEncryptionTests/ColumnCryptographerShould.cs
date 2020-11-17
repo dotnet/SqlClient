@@ -10,9 +10,9 @@ using System.Linq;
 using System.Security.Cryptography;
 using Xunit;
 
-using static Microsoft.Data.CommonTestUtilities.DataTestUtility;
+using static Microsoft.Data.Encryption.TestUtilities.DataTestUtility;
 
-namespace Microsoft.Data.Encryption.FileEncryptionTests
+namespace Microsoft.Data.Encryption.FileEncryption.Tests
 {
     public class ColumnCryptographerShould
     {

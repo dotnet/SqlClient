@@ -3,7 +3,7 @@ using System;
 using System.Threading;
 using Xunit;
 
-namespace Microsoft.Data.Encryption.CryptographyTests
+namespace Microsoft.Data.Encryption.Cryptography.Tests
 {
     public class LocalCacheShould
     {
