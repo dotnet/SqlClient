@@ -189,37 +189,37 @@ namespace Microsoft.Data.SqlClient.SNI
             try
             {
                 SNIPacket errorPacket;
-                packet = null;
-                try
-                {
-                    packet = RentPacket(headerSize: 0, dataSize: _bufferSize);
-                    packet.ReadFromStream(_stream);
+                    packet = null;
+                    try
+                    {
+                        packet = RentPacket(headerSize: 0, dataSize: _bufferSize);
+                        packet.ReadFromStream(_stream);
 
-                    if (packet.Length == 0)
+                        if (packet.Length == 0)
+                        {
+                            errorPacket = packet;
+                            packet = null;
+                            var e = new Win32Exception();
+                            SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.SNINpHandle.Receive |SNI|ERR> packet length is 0.");
+                            return ReportErrorAndReleasePacket(errorPacket, (uint)e.NativeErrorCode, 0, e.Message);
+                        }
+                    }
+                    catch (ObjectDisposedException ode)
                     {
                         errorPacket = packet;
                         packet = null;
-                        var e = new Win32Exception();
-                        SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.SNINpHandle.Receive |SNI|ERR> packet length is 0.");
-                        return ReportErrorAndReleasePacket(errorPacket, (uint)e.NativeErrorCode, 0, e.Message);
+                        SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.SNINpHandle.Receive |SNI|ERR> ObjectDisposedException message = {0}.", ode.Message);
+                        return ReportErrorAndReleasePacket(errorPacket, ode);
                     }
+                    catch (IOException ioe)
+                    {
+                        errorPacket = packet;
+                        packet = null;
+                        SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.SNINpHandle.Receive |SNI|ERR> IOException message = {0}.", ioe.Message);
+                        return ReportErrorAndReleasePacket(errorPacket, ioe);
+                    }
+                    return TdsEnums.SNI_SUCCESS;
                 }
-                catch (ObjectDisposedException ode)
-                {
-                    errorPacket = packet;
-                    packet = null;
-                    SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.SNINpHandle.Receive |SNI|ERR> ObjectDisposedException message = {0}.", ode.Message);
-                    return ReportErrorAndReleasePacket(errorPacket, ode);
-                }
-                catch (IOException ioe)
-                {
-                    errorPacket = packet;
-                    packet = null;
-                    SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.SNINpHandle.Receive |SNI|ERR> IOException message = {0}.", ioe.Message);
-                    return ReportErrorAndReleasePacket(errorPacket, ioe);
-                }
-                return TdsEnums.SNI_SUCCESS;
-            }
             finally
             {
                 SqlClientEventSource.Log.TrySNIScopeLeaveEvent(scopeID);
@@ -268,40 +268,43 @@ namespace Microsoft.Data.SqlClient.SNI
                 bool releaseLock = false;
                 try
                 {
-                    // is the packet is marked out out-of-band (attention packets only) it must be
-                    // sent immediately even if a send of recieve operation is already in progress
-                    // because out of band packets are used to cancel ongoing operations
-                    // so try to take the lock if possible but continue even if it can't be taken
-                    if (packet.IsOutOfBand)
+                    lock (this)
                     {
-                        Monitor.TryEnter(this, ref releaseLock);
-                    }
-                    else
-                    {
-                        Monitor.Enter(this);
-                        releaseLock = true;
-                    }
-
-                    // this lock ensures that two packets are not being written to the transport at the same time
-                    // so that sending a standard and an out-of-band packet are both written atomically no data is
-                    // interleaved
-                    lock (_sendSync)
-                    {
-                        try
+                        // is the packet is marked out out-of-band (attention packets only) it must be
+                        // sent immediately even if a send of recieve operation is already in progress
+                        // because out of band packets are used to cancel ongoing operations
+                        // so try to take the lock if possible but continue even if it can't be taken
+                        if (packet.IsOutOfBand)
                         {
-                            packet.WriteToStream(_stream);
-                            return TdsEnums.SNI_SUCCESS;
+                            Monitor.TryEnter(this, ref releaseLock);
                         }
-                        catch (ObjectDisposedException ode)
+                        else
                         {
-                            SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.SNINpHandle.Send |SNI|ERR> ObjectDisposedException message = {0}.", ode.Message);
-                            return ReportErrorAndReleasePacket(packet, ode);
+                            Monitor.Enter(this);
+                            releaseLock = true;
                         }
-                        catch (IOException ioe)
-                        {
-                            SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.SNINpHandle.Send |SNI|ERR> IOException message = {0}.", ioe.Message);
 
-                            return ReportErrorAndReleasePacket(packet, ioe);
+                        // this lock ensures that two packets are not being written to the transport at the same time
+                        // so that sending a standard and an out-of-band packet are both written atomically no data is
+                        // interleaved
+                        lock (_sendSync)
+                        {
+                            try
+                            {
+                                packet.WriteToStream(_stream);
+                                return TdsEnums.SNI_SUCCESS;
+                            }
+                            catch (ObjectDisposedException ode)
+                            {
+                                SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.SNINpHandle.Send |SNI|ERR> ObjectDisposedException message = {0}.", ode.Message);
+                                return ReportErrorAndReleasePacket(packet, ode);
+                            }
+                            catch (IOException ioe)
+                            {
+                                SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.SNINpHandle.Send |SNI|ERR> IOException message = {0}.", ioe.Message);
+
+                                return ReportErrorAndReleasePacket(packet, ioe);
+                            }
                         }
                     }
                 }

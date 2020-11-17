@@ -566,45 +566,45 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             bool releaseLock = false;
             try
-            {
-                // is the packet is marked out out-of-band (attention packets only) it must be
-                // sent immediately even if a send of recieve operation is already in progress
-                // because out of band packets are used to cancel ongoing operations
-                // so try to take the lock if possible but continue even if it can't be taken
-                if (packet.IsOutOfBand)
                 {
-                    Monitor.TryEnter(this, ref releaseLock);
-                }
-                else
-                {
-                    Monitor.Enter(this);
-                    releaseLock = true;
-                }
+                    // is the packet is marked out out-of-band (attention packets only) it must be
+                    // sent immediately even if a send of recieve operation is already in progress
+                    // because out of band packets are used to cancel ongoing operations
+                    // so try to take the lock if possible but continue even if it can't be taken
+                    if (packet.IsOutOfBand)
+                    {
+                        Monitor.TryEnter(this, ref releaseLock);
+                    }
+                    else
+                    {
+                        Monitor.Enter(this);
+                        releaseLock = true;
+                    }
 
-                // this lock ensures that two packets are not being written to the transport at the same time
-                // so that sending a standard and an out-of-band packet are both written atomically no data is
-                // interleaved
-                lock (_sendSync)
-                {
-                    try
+                    // this lock ensures that two packets are not being written to the transport at the same time
+                    // so that sending a standard and an out-of-band packet are both written atomically no data is
+                    // interleaved
+                    lock (_sendSync)
                     {
-                        packet.WriteToStream(_stream);
-                        return TdsEnums.SNI_SUCCESS;
-                    }
-                    catch (ObjectDisposedException ode)
-                    {
-                        return ReportTcpSNIError(ode);
-                    }
-                    catch (SocketException se)
-                    {
-                        return ReportTcpSNIError(se);
-                    }
-                    catch (IOException ioe)
-                    {
-                        return ReportTcpSNIError(ioe);
+                        try
+                        {
+                            packet.WriteToStream(_stream);
+                            return TdsEnums.SNI_SUCCESS;
+                        }
+                        catch (ObjectDisposedException ode)
+                        {
+                            return ReportTcpSNIError(ode);
+                        }
+                        catch (SocketException se)
+                        {
+                            return ReportTcpSNIError(se);
+                        }
+                        catch (IOException ioe)
+                        {
+                            return ReportTcpSNIError(ioe);
+                        }
                     }
                 }
-            }
             finally
             {
                 if (releaseLock)
@@ -623,65 +623,68 @@ namespace Microsoft.Data.SqlClient.SNI
         public override uint Receive(out SNIPacket packet, int timeoutInMilliseconds)
         {
             SNIPacket errorPacket;
-            packet = null;
-            try
+            lock (this)
             {
-                if (timeoutInMilliseconds > 0)
+                packet = null;
+                try
                 {
-                    _socket.ReceiveTimeout = timeoutInMilliseconds;
-                }
-                else if (timeoutInMilliseconds == -1)
-                {
-                    // SqlClient internally represents infinite timeout by -1, and for TcpClient this is translated to a timeout of 0
-                    _socket.ReceiveTimeout = 0;
-                }
-                else
-                {
-                    // otherwise it is timeout for 0 or less than -1
-                    ReportTcpSNIError(0, SNICommon.ConnTimeoutError, string.Empty);
-                    return TdsEnums.SNI_WAIT_TIMEOUT;
-                }
+                    if (timeoutInMilliseconds > 0)
+                    {
+                        _socket.ReceiveTimeout = timeoutInMilliseconds;
+                    }
+                    else if (timeoutInMilliseconds == -1)
+                    {
+                        // SqlClient internally represents infinite timeout by -1, and for TcpClient this is translated to a timeout of 0
+                        _socket.ReceiveTimeout = 0;
+                    }
+                    else
+                    {
+                        // otherwise it is timeout for 0 or less than -1
+                        ReportTcpSNIError(0, SNICommon.ConnTimeoutError, string.Empty);
+                        return TdsEnums.SNI_WAIT_TIMEOUT;
+                    }
 
-                packet = RentPacket(headerSize: 0, dataSize: _bufferSize);
-                packet.ReadFromStream(_stream);
+                    packet = RentPacket(headerSize: 0, dataSize: _bufferSize);
+                    packet.ReadFromStream(_stream);
 
-                if (packet.Length == 0)
+                    if (packet.Length == 0)
+                    {
+                        errorPacket = packet;
+                        packet = null;
+                        var e = new Win32Exception();
+                        return ReportErrorAndReleasePacket(errorPacket, (uint)e.NativeErrorCode, 0, e.Message);
+                    }
+
+                    return TdsEnums.SNI_SUCCESS;
+                }
+                catch (ObjectDisposedException ode)
                 {
                     errorPacket = packet;
                     packet = null;
-                    var e = new Win32Exception();
-                    return ReportErrorAndReleasePacket(errorPacket, (uint)e.NativeErrorCode, 0, e.Message);
+                    return ReportErrorAndReleasePacket(errorPacket, ode);
                 }
-
-                return TdsEnums.SNI_SUCCESS;
-            }
-            catch (ObjectDisposedException ode)
-            {
-                errorPacket = packet;
-                packet = null;
-                return ReportErrorAndReleasePacket(errorPacket, ode);
-            }
-            catch (SocketException se)
-            {
-                errorPacket = packet;
-                packet = null;
-                return ReportErrorAndReleasePacket(errorPacket, se);
-            }
-            catch (IOException ioe)
-            {
-                errorPacket = packet;
-                packet = null;
-                uint errorCode = ReportErrorAndReleasePacket(errorPacket, ioe);
-                if (ioe.InnerException is SocketException socketException && socketException.SocketErrorCode == SocketError.TimedOut)
+                catch (SocketException se)
                 {
-                    errorCode = TdsEnums.SNI_WAIT_TIMEOUT;
+                    errorPacket = packet;
+                    packet = null;
+                    return ReportErrorAndReleasePacket(errorPacket, se);
                 }
+                catch (IOException ioe)
+                {
+                    errorPacket = packet;
+                    packet = null;
+                    uint errorCode = ReportErrorAndReleasePacket(errorPacket, ioe);
+                    if (ioe.InnerException is SocketException socketException && socketException.SocketErrorCode == SocketError.TimedOut)
+                    {
+                        errorCode = TdsEnums.SNI_WAIT_TIMEOUT;
+                    }
 
-                return errorCode;
-            }
-            finally
-            {
-                _socket.ReceiveTimeout = 0;
+                    return errorCode;
+                }
+                finally
+                {
+                    _socket.ReceiveTimeout = 0;
+                }
             }
         }
 
