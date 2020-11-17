@@ -13,9 +13,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         private readonly ITestOutputHelper _output;
         
-        // TODO: Set back the count to 100 tasks after fixing driver issue.
-        // Currently the count is reduced to 25 as we encounter error "Execution Timeout expired" for "Encrypted" connections.
-        private const int NumberOfTasks = 25;  // How many attempts to poison the connection pool we will try
+        private const int NumberOfTasks = 100;  // How many attempts to poison the connection pool we will try
 
         private const int NumberOfNonPoisoned = 10;  // Number of normal requests for each attempt 
 
