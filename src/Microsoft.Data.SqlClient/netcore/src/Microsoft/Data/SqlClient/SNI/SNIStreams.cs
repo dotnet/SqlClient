@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient.SNI
             _readAsyncQueueSemaphore = new ConcurrentQueueSemaphore(1);
         }
 
-        // Prevent the ReadAsync's collision by running task in Semaphore Slim
+        // Prevent ReadAsync collisions by running the task in a Semaphore Slim
         public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
             await _readAsyncQueueSemaphore.WaitAsync().ConfigureAwait(false);
@@ -39,7 +39,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
         }
 
-        // Prevent the WriteAsync's collision by running task in Semaphore Slim
+        // Prevent the WriteAsync collisions by running the task in a Semaphore Slim
         public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
             await _writeAsyncQueueSemaphore.WaitAsync().ConfigureAwait(false);
@@ -68,7 +68,7 @@ namespace Microsoft.Data.SqlClient.SNI
             _readAsyncQueueSemaphore = new ConcurrentQueueSemaphore(1);
         }
 
-        // Prevent the ReadAsync's collision by running task in Semaphore Slim
+        // Prevent the ReadAsync collisions by running the task in a Semaphore Slim
         public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
             await _readAsyncQueueSemaphore.WaitAsync().ConfigureAwait(false);
@@ -82,7 +82,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
         }
 
-        // Prevent the WriteAsync's collision by running task in Semaphore Slim
+        // Prevent the WriteAsync collisions by running the task in a Semaphore Slim
         public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
             await _writeAsyncQueueSemaphore.WaitAsync().ConfigureAwait(false);
