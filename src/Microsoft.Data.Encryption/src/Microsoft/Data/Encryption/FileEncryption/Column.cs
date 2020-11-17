@@ -16,6 +16,11 @@ namespace Microsoft.Data.Encryption.FileEncryption
         public string Name { get; set; }
 
         /// <summary>
+        /// Gets or sets the <see cref="Column{T}"/>'s index.
+        /// </summary>
+        public int Index { get; set; }
+
+        /// <summary>
         /// Gets the type of the data in the <see cref="Column{T}"/>.
         /// </summary>
         public Type DataType => typeof(T);

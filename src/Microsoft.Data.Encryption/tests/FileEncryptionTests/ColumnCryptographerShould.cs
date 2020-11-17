@@ -49,16 +49,16 @@ namespace Microsoft.Data.Encryption.FileEncryptionTests
                     },
                 data: new List<List<IColumn>>() { 
                         new List<IColumn>(){ 
-                            new Column<int>(new List<int>(){ 1, 1, 1, 1, 1}) { Name = "One-One" },
-                            new Column<int>(new List<int>(){ 1, 1, 1, 1, 1}) { Name = "One-Two" },
-                            new Column<int>(new List<int>(){ 1, 1, 1, 1, 1}) { Name = "One-Three" },
-                            new Column<int>(new List<int>(){ 1, 1, 1, 1, 1}) { Name = "One-Four" },
+                            new Column<int>(new List<int>(){ 1, 1, 1, 1, 1}) { Name = "One-One", Index = 0 },
+                            new Column<int>(new List<int>(){ 1, 1, 1, 1, 1}) { Name = "One-Two", Index = 1 },
+                            new Column<int>(new List<int>(){ 1, 1, 1, 1, 1}) { Name = "One-Three", Index = 2 },
+                            new Column<int>(new List<int>(){ 1, 1, 1, 1, 1}) { Name = "One-Four", Index = 3 },
                         },
                         new List<IColumn>(){
-                            new Column<int>(new List<int>(){ 2, 2, 2, 2, 2}) { Name = "Two-One" },
-                            new Column<int>(new List<int>(){ 2, 2, 2, 2, 2}) { Name = "Two-Two" },
-                            new Column<int>(new List<int>(){ 2, 2, 2, 2, 2}) { Name = "Two-Three" },
-                            new Column<int>(new List<int>(){ 2, 2, 2, 2, 2}) { Name = "Two-Four" },
+                            new Column<int>(new List<int>(){ 2, 2, 2, 2, 2}) { Name = "Two-One", Index = 0 },
+                            new Column<int>(new List<int>(){ 2, 2, 2, 2, 2}) { Name = "Two-Two", Index = 1 },
+                            new Column<int>(new List<int>(){ 2, 2, 2, 2, 2}) { Name = "Two-Three", Index = 2 },
+                            new Column<int>(new List<int>(){ 2, 2, 2, 2, 2}) { Name = "Two-Four", Index = 3 },
                         }
                     }
             );
@@ -110,16 +110,16 @@ namespace Microsoft.Data.Encryption.FileEncryptionTests
                     },
                 data: new List<List<IColumn>>() {
                         new List<IColumn>(){
-                            new Column<byte[]>(Enumerable.Repeat(deterministicOne, 5).ToList()) { Name = "One-One" },
-                            new Column<byte[]>(Enumerable.Repeat(randomizedOne, 5).ToList()) { Name = "One-Two" },
-                            new Column<int>(new List<int>(){ 1, 1, 1, 1, 1}) { Name = "One-Three" },
-                            new Column<int>(new List<int>(){ 1, 1, 1, 1, 1}) { Name = "One-Four" },
+                            new Column<byte[]>(Enumerable.Repeat(deterministicOne, 5).ToList()) { Name = "One-One", Index = 0 },
+                            new Column<byte[]>(Enumerable.Repeat(randomizedOne, 5).ToList()) { Name = "One-Two", Index = 1 },
+                            new Column<int>(new List<int>(){ 1, 1, 1, 1, 1}) { Name = "One-Three", Index = 2 },
+                            new Column<int>(new List<int>(){ 1, 1, 1, 1, 1}) { Name = "One-Four", Index = 3 },
                         },
                         new List<IColumn>(){
-                            new Column<byte[]>(Enumerable.Repeat(deterministicTwo, 5).ToList()) { Name = "Two-One" },
-                            new Column<byte[]>(Enumerable.Repeat(randomizedTwo, 5).ToList()) { Name = "Two-Two" },
-                            new Column<int>(new List<int>(){ 2, 2, 2, 2, 2}) { Name = "Two-Three" },
-                            new Column<int>(new List<int>(){ 2, 2, 2, 2, 2}) { Name = "Two-Four" },
+                            new Column<byte[]>(Enumerable.Repeat(deterministicTwo, 5).ToList()) { Name = "Two-One", Index = 0 },
+                            new Column<byte[]>(Enumerable.Repeat(randomizedTwo, 5).ToList()) { Name = "Two-Two", Index = 1 },
+                            new Column<int>(new List<int>(){ 2, 2, 2, 2, 2}) { Name = "Two-Three", Index = 2 },
+                            new Column<int>(new List<int>(){ 2, 2, 2, 2, 2}) { Name = "Two-Four", Index = 3 },
                         }
                     }
             );
@@ -168,16 +168,16 @@ namespace Microsoft.Data.Encryption.FileEncryptionTests
                     },
                 data: new List<List<IColumn>>() {
                         new List<IColumn>(){
-                            new Column<byte[]>(Enumerable.Repeat(deterministicOne, 5).ToList()) { Name = "One-One" },
-                            new Column<byte[]>(Enumerable.Repeat(randomizedOne, 5).ToList()) { Name = "One-Two" },
-                            new Column<int>(new List<int>(){ 1, 1, 1, 1, 1}) { Name = "One-Three" },
-                            new Column<int>(new List<int>(){ 1, 1, 1, 1, 1}) { Name = "One-Four" },
+                            new Column<byte[]>(Enumerable.Repeat(deterministicOne, 5).ToList()) { Name = "One-One", Index = 0 },
+                            new Column<byte[]>(Enumerable.Repeat(randomizedOne, 5).ToList()) { Name = "One-Two", Index = 1 },
+                            new Column<int>(new List<int>(){ 1, 1, 1, 1, 1}) { Name = "One-Three", Index = 2 },
+                            new Column<int>(new List<int>(){ 1, 1, 1, 1, 1}) { Name = "One-Four", Index = 3 },
                         },
                         new List<IColumn>(){
-                            new Column<byte[]>(Enumerable.Repeat(deterministicTwo, 5).ToList()) { Name = "Two-One" },
-                            new Column<byte[]>(Enumerable.Repeat(randomizedTwo, 5).ToList()) { Name = "Two-Two" },
-                            new Column<int>(new List<int>(){ 2, 2, 2, 2, 2}) { Name = "Two-Three" },
-                            new Column<int>(new List<int>(){ 2, 2, 2, 2, 2}) { Name = "Two-Four" },
+                            new Column<byte[]>(Enumerable.Repeat(deterministicTwo, 5).ToList()) { Name = "Two-One", Index = 0 },
+                            new Column<byte[]>(Enumerable.Repeat(randomizedTwo, 5).ToList()) { Name = "Two-Two", Index = 1 },
+                            new Column<int>(new List<int>(){ 2, 2, 2, 2, 2}) { Name = "Two-Three", Index = 2 },
+                            new Column<int>(new List<int>(){ 2, 2, 2, 2, 2}) { Name = "Two-Four", Index = 3 },
                         }
                     }
             );
@@ -238,16 +238,16 @@ namespace Microsoft.Data.Encryption.FileEncryptionTests
                     },
                 data: new List<List<IColumn>>() {
                         new List<IColumn>(){
-                            new Column<byte[]>(Enumerable.Repeat(deterministicOne, 5).ToList()) { Name = "One-One" },
-                            new Column<byte[]>(Enumerable.Repeat(randomizedOne, 5).ToList()) { Name = "One-Two" },
-                            new Column<int>(new List<int>(){ 1, 1, 1, 1, 1}) { Name = "One-Three" },
-                            new Column<int>(new List<int>(){ 1, 1, 1, 1, 1}) { Name = "One-Four" },
+                            new Column<byte[]>(Enumerable.Repeat(deterministicOne, 5).ToList()) { Name = "One-One", Index = 0 },
+                            new Column<byte[]>(Enumerable.Repeat(randomizedOne, 5).ToList()) { Name = "One-Two", Index = 1 },
+                            new Column<int>(new List<int>(){ 1, 1, 1, 1, 1}) { Name = "One-Three", Index = 2 },
+                            new Column<int>(new List<int>(){ 1, 1, 1, 1, 1}) { Name = "One-Four", Index = 3 },
                         },
                         new List<IColumn>(){
-                            new Column<byte[]>(Enumerable.Repeat(deterministicTwo, 5).ToList()) { Name = "Two-One" },
-                            new Column<byte[]>(Enumerable.Repeat(randomizedTwo, 5).ToList()) { Name = "Two-Two" },
-                            new Column<int>(new List<int>(){ 2, 2, 2, 2, 2}) { Name = "Two-Three" },
-                            new Column<int>(new List<int>(){ 2, 2, 2, 2, 2}) { Name = "Two-Four" },
+                            new Column<byte[]>(Enumerable.Repeat(deterministicTwo, 5).ToList()) { Name = "Two-One", Index = 0 },
+                            new Column<byte[]>(Enumerable.Repeat(randomizedTwo, 5).ToList()) { Name = "Two-Two", Index = 1 },
+                            new Column<int>(new List<int>(){ 2, 2, 2, 2, 2}) { Name = "Two-Three", Index = 2 },
+                            new Column<int>(new List<int>(){ 2, 2, 2, 2, 2}) { Name = "Two-Four", Index = 3 },
                         }
                     }
             );
@@ -302,16 +302,16 @@ namespace Microsoft.Data.Encryption.FileEncryptionTests
                     },
                 data: new List<List<IColumn>>() {
                         new List<IColumn>(){
-                            new Column<int>(new List<int>(){ 1, 1, 1, 1, 1}) { Name = "One-One" },
-                            new Column<byte[]>(Enumerable.Repeat(randomizedOne, 5).ToList()) { Name = "One-Two" },
-                            new Column<byte[]>(Enumerable.Repeat(deterministicOne, 5).ToList()) { Name = "One-Three" },
-                            new Column<byte[]>(Enumerable.Repeat(deterministicOne, 5).ToList()) { Name = "One-Four" },
+                            new Column<int>(new List<int>(){ 1, 1, 1, 1, 1}) { Name = "One-One", Index = 0 },
+                            new Column<byte[]>(Enumerable.Repeat(randomizedOne, 5).ToList()) { Name = "One-Two", Index = 1 },
+                            new Column<byte[]>(Enumerable.Repeat(deterministicOne, 5).ToList()) { Name = "One-Three", Index = 2 },
+                            new Column<byte[]>(Enumerable.Repeat(deterministicOne, 5).ToList()) { Name = "One-Four", Index = 3 },
                         },
                         new List<IColumn>(){
-                            new Column<int>(new List<int>(){ 2, 2, 2, 2, 2}) { Name = "Two-One" },
-                            new Column<byte[]>(Enumerable.Repeat(randomizedTwo, 5).ToList()) { Name = "Two-Two" },
-                            new Column<byte[]>(Enumerable.Repeat(deterministicTwo, 5).ToList()) { Name = "Two-Three" },
-                            new Column<byte[]>(Enumerable.Repeat(deterministicTwo, 5).ToList()) { Name = "Two-Four" },
+                            new Column<int>(new List<int>(){ 2, 2, 2, 2, 2}) { Name = "Two-One", Index = 0 },
+                            new Column<byte[]>(Enumerable.Repeat(randomizedTwo, 5).ToList()) { Name = "Two-Two", Index = 1 },
+                            new Column<byte[]>(Enumerable.Repeat(deterministicTwo, 5).ToList()) { Name = "Two-Three", Index = 2 },
+                            new Column<byte[]>(Enumerable.Repeat(deterministicTwo, 5).ToList()) { Name = "Two-Four", Index = 3 },
                         }
                     }
             );
@@ -388,20 +388,20 @@ namespace Microsoft.Data.Encryption.FileEncryptionTests
                     },
                 data: new List<List<IColumn>>() {
                         new List<IColumn>(){
-                            new Column<int>(new List<int>(){ 1, 1, 1, 1, 1}) { Name = "One-One" },
-                            new Column<byte[]>(Enumerable.Repeat(randomizedOne, 5).ToList()) { Name = "One-Two" },
-                            new Column<byte[]>(Enumerable.Repeat(deterministicOne, 5).ToList()) { Name = "One-Three" },
-                            new Column<byte[]>(Enumerable.Repeat(deterministicOne, 5).ToList()) { Name = "One-Four" },
-                            new Column<byte[]>(Enumerable.Repeat(deterministicOne, 5).ToList()) { Name = "One-Five" },
-                            new Column<int>(new List<int>(){ 1, 1, 1, 1, 1}) { Name = "One-Six" },
+                            new Column<int>(new List<int>(){ 1, 1, 1, 1, 1}) { Name = "One-One", Index = 0 },
+                            new Column<byte[]>(Enumerable.Repeat(randomizedOne, 5).ToList()) { Name = "One-Two", Index = 1 },
+                            new Column<byte[]>(Enumerable.Repeat(deterministicOne, 5).ToList()) { Name = "One-Three", Index = 2 },
+                            new Column<byte[]>(Enumerable.Repeat(deterministicOne, 5).ToList()) { Name = "One-Four", Index = 3 },
+                            new Column<byte[]>(Enumerable.Repeat(deterministicOne, 5).ToList()) { Name = "One-Five", Index = 4 },
+                            new Column<int>(new List<int>(){ 1, 1, 1, 1, 1}) { Name = "One-Six", Index = 5 },
                         },
                         new List<IColumn>(){
-                            new Column<int>(new List<int>(){ 2, 2, 2, 2, 2}) { Name = "Two-One" },
-                            new Column<byte[]>(Enumerable.Repeat(randomizedTwo, 5).ToList()) { Name = "Two-Two" },
-                            new Column<byte[]>(Enumerable.Repeat(deterministicTwo, 5).ToList()) { Name = "Two-Three" },
-                            new Column<byte[]>(Enumerable.Repeat(deterministicTwo, 5).ToList()) { Name = "Two-Four" },
-                            new Column<byte[]>(Enumerable.Repeat(deterministicTwo, 5).ToList()) { Name = "Two-Five" },
-                            new Column<int>(new List<int>(){ 2, 2, 2, 2, 2}) { Name = "Two-Six" },
+                            new Column<int>(new List<int>(){ 2, 2, 2, 2, 2}) { Name = "Two-One", Index = 0 },
+                            new Column<byte[]>(Enumerable.Repeat(randomizedTwo, 5).ToList()) { Name = "Two-Two", Index = 1 },
+                            new Column<byte[]>(Enumerable.Repeat(deterministicTwo, 5).ToList()) { Name = "Two-Three", Index = 2 },
+                            new Column<byte[]>(Enumerable.Repeat(deterministicTwo, 5).ToList()) { Name = "Two-Four", Index = 3 },
+                            new Column<byte[]>(Enumerable.Repeat(deterministicTwo, 5).ToList()) { Name = "Two-Five", Index = 4 },
+                            new Column<int>(new List<int>(){ 2, 2, 2, 2, 2}) { Name = "Two-Six", Index = 5 },
                         }
                     }
             );

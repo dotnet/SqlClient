@@ -13,6 +13,11 @@ namespace Microsoft.Data.Encryption.FileEncryption
         string Name { get; set; }
 
         /// <summary>
+        /// Gets or sets the column's index.
+        /// </summary>
+        int Index { get; set; }
+
+        /// <summary>
         /// Gets the type of the data in the <see cref="IColumn"/>.
         /// </summary>
         Type DataType { get; }

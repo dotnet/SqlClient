@@ -58,7 +58,7 @@ namespace Microsoft.Data.Encryption.FileEncryption
                     {
                         ColumnName = column.Name,
                         DataEncryptionKeyName = settings.DataEncryptionKey.Name,
-                        ColumnIndex = encryptionSettings.IndexOf(settings),
+                        ColumnIndex = column.Index,
                         EncryptionAlgorithm = DataEncryptionKeyAlgorithm.AEAD_AES_256_CBC_HMAC_SHA256,
                         EncryptionType = settings.EncryptionType,
                         Serializer = settings.GetSerializer()

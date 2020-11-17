@@ -80,6 +80,7 @@ namespace Microsoft.Data.Encryption.FileEncryption
                         Type genericColumnType = typeof(Column<>).MakeGenericType(dataType);
                         IColumn column = (IColumn)Activator.CreateInstance(genericColumnType, columnData);
                         column.Name = dataColumn.Field.Name;
+                        column.Index = j;
 
                         rowGroup.Add(column);
                     }

@@ -3,6 +3,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks.Dataflow;
 
 namespace Microsoft.Data.Encryption.FileEncryption
 {
@@ -45,38 +47,40 @@ namespace Microsoft.Data.Encryption.FileEncryption
             IList<FileEncryptionSettings> readerSettings = CryptoReader.FileEncryptionSettings;
             IList<FileEncryptionSettings> writerSettings = CryptoWriter.FileEncryptionSettings;
 
-            CryptoReader.Read()
-                .Select(chunk => TransformChunk(readerSettings, writerSettings, chunk))
-                .ForEach(encodedChunk => CryptoWriter.Write(encodedChunk));
+            var splitBlock = new TransformManyBlock<IEnumerable<IColumn>, IColumn>(c => c);
+            var transformBlock = new TransformBlock<IColumn, IColumn>(
+                transform: column => TransformColumn(column, readerSettings[column.Index], writerSettings[column.Index]), 
+                dataflowBlockOptions: new ExecutionDataflowBlockOptions() { MaxDegreeOfParallelism = 4 }
+            );
+            var collectorBlock = new BatchBlock<IColumn>(readerSettings.Count);
+            var actionBlock = new ActionBlock<IEnumerable<IColumn>>(chunk => CryptoWriter.Write(chunk));
+
+            splitBlock.LinkTo(transformBlock, new DataflowLinkOptions() { PropagateCompletion = true, });
+            transformBlock.LinkTo(collectorBlock, new DataflowLinkOptions() { PropagateCompletion = true, });
+            collectorBlock.LinkTo(actionBlock, new DataflowLinkOptions() { PropagateCompletion = true, });
+
+            CryptoReader.Read().ForEach(chunk => splitBlock.Post(chunk));
+            splitBlock.Complete();
+            actionBlock.Completion.Wait();
         }
 
-        private IEnumerable<IColumn> TransformChunk(IList<FileEncryptionSettings> readerSettings, IList<FileEncryptionSettings> writerSettings, IEnumerable<IColumn> sourceRowGroup)
+        private IColumn TransformColumn(IColumn column, FileEncryptionSettings readerSettings, FileEncryptionSettings writerSettings)
         {
-            int columnIndex = 0;
-
-            foreach (IColumn column in sourceRowGroup)
+            if (ShouldEncrypt(readerSettings, writerSettings))
             {
-                FileEncryptionSettings readerColumnSettings = readerSettings[columnIndex];
-                FileEncryptionSettings writerColumnSettings = writerSettings[columnIndex];
-
-                if (ShouldEncrypt(readerColumnSettings, writerColumnSettings))
-                {
-                    yield return EncryptColumn(writerColumnSettings, column);
-                }
-                else if (ShouldDecrypt(readerColumnSettings, writerColumnSettings))
-                {
-                    yield return DecryptColumn(writerColumnSettings, column);
-                }
-                else if (ShouldRotate(readerColumnSettings, writerColumnSettings))
-                {
-                    yield return EncryptColumn(writerColumnSettings, DecryptColumn(readerColumnSettings, column));
-                }
-                else
-                {
-                    yield return column;
-                }
-
-                columnIndex++;
+                return EncryptColumn(writerSettings, column);
+            }
+            else if (ShouldDecrypt(readerSettings, writerSettings))
+            {
+                return DecryptColumn(writerSettings, column);
+            }
+            else if (ShouldRotate(readerSettings, writerSettings))
+            {
+                return EncryptColumn(writerSettings, DecryptColumn(readerSettings, column));
+            }
+            else
+            {
+                return column;
             }
         }
 
@@ -88,7 +92,8 @@ namespace Microsoft.Data.Encryption.FileEncryption
 
             return new Column<byte[]>(encryptedData) 
             {
-                Name = column.Name
+                Name = column.Name,
+                Index = column.Index
             };
         }
 
@@ -100,6 +105,7 @@ namespace Microsoft.Data.Encryption.FileEncryption
             Type type = encryptedData.GetType().GenericTypeArguments[0];
             IColumn encodedColumn = (IColumn)Activator.CreateInstance(typeof(Column<>).MakeGenericType(type), encryptedData);
             encodedColumn.Name = column.Name;
+            encodedColumn.Index = column.Index;
 
             return encodedColumn;
         }
