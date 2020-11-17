@@ -47,21 +47,21 @@ namespace Microsoft.Data.Encryption.FileEncryption
             {
                 if (!isMetadataWritten)
                 {
-                    CryptoMetadata metadata = CompileMetadata(columns, FileEncryptionSettings);
-                    if (!metadata.IsEmpty())
+                CryptoMetadata metadata = CompileMetadata(columns, FileEncryptionSettings);
+                if (!metadata.IsEmpty())
+                {
+                    parquetWriter.CustomMetadata = new Dictionary<string, string>
                     {
-                        parquetWriter.CustomMetadata = new Dictionary<string, string>
-                        {
-                            [nameof(CryptoMetadata)] = JsonConvert.SerializeObject(
-                                value: metadata,
-                                settings: new JsonSerializerSettings()
-                                {
-                                    NullValueHandling = NullValueHandling.Ignore,
-                                    Converters = { new StringEnumConverter() },
-                                    Formatting = Formatting.Indented
-                                })
-                        };
-                    }
+                        [nameof(CryptoMetadata)] = JsonConvert.SerializeObject(
+                            value: metadata,
+                            settings: new JsonSerializerSettings()
+                            {
+                                NullValueHandling = NullValueHandling.Ignore,
+                                Converters = { new StringEnumConverter() },
+                                Formatting = Formatting.Indented
+                            })
+                    };
+                }
 
                     isMetadataWritten = true;
                 }
