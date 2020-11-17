@@ -2170,10 +2170,9 @@ namespace Microsoft.Data.SqlClient
             return tcs.Task;
         }
 
-        public int Release(int i = default)
+        public void Release()
         {
             _semaphore.Release();
-            return i;
         }
     }
 

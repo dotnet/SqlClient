@@ -27,15 +27,28 @@ namespace Microsoft.Data.SqlClient.SNI
         // Prevent the ReadAsync's collision by running task in Semaphore Slim
         public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            return _readAsyncQueueSemaphore.WaitAsync().ContinueWith<int>(t => base.ReadAsync(buffer, offset, count, cancellationToken).Result)
-                .ContinueWith(t => _readAsyncQueueSemaphore.Release(t.Result));
+            try
+            {
+                return _readAsyncQueueSemaphore.WaitAsync()
+                    .ContinueWith<int>(_ => base.ReadAsync(buffer, offset, count, cancellationToken).GetAwaiter().GetResult());
+            }
+            finally
+            {
+                _readAsyncQueueSemaphore.Release();
+            }
         }
 
         // Prevent the WriteAsync's collision by running task in Semaphore Slim
         public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            return _writeAsyncQueueSemaphore.WaitAsync().ContinueWith(t => base.WriteAsync(buffer, offset, count, cancellationToken))
-                .ContinueWith(t => _writeAsyncQueueSemaphore.Release());
+            try
+            {
+                return _writeAsyncQueueSemaphore.WaitAsync().ContinueWith(_ => base.WriteAsync(buffer, offset, count, cancellationToken));
+            }
+            finally
+            {
+                _writeAsyncQueueSemaphore.Release();
+            }
         }
     }
 }
