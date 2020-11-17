@@ -41,7 +41,8 @@
       <returns>Represents an asynchronous operation that returns the authentication token.</returns>
     </AcquireTokenAsync>
     <ClearUserTokenCache>
-      <summary>Clears cached instances of Public Client Application maintained by driver to access cached tokens from underlying token provider library.</summary>
+      <summary>Clears cached user tokens from the token provider.</summary>
+      <remarks>This will cause interactive authentication prompts to appear again if tokens were previously being obtained from the cache.</remarks>
     </ClearUserTokenCache>
     <SetDeviceCodeFlowCallback>
       <param name="deviceCodeFlowCallbackMethod">The callback method to be used with 'Active Directory Device Code Flow' authentication.</param>
