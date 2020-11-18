@@ -93,6 +93,7 @@ namespace Microsoft.Data.Encryption.FileEncryption
         public void Dispose()
         {
             ParquetReader.Dispose();
+            
         }
 
         private IList<FileEncryptionSettings> GetEncryptionSettings()
