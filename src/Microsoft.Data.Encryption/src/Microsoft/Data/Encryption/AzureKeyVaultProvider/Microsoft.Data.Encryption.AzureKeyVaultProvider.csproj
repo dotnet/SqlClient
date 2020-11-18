@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>Microsoft.Data.Encryption.AzureKeyVaultProvider</AssemblyName>
+    <RootNamespace>Microsoft.Data.Encryption.AzureKeyVaultProvider</RootNamespace>
+    <Authors>Jeff Trimmer</Authors>
+    <Company>Microsoft</Company>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>MicrosoftDataEncryption.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DocumentationFile></DocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Core" Version="1.4.1" />
+    <PackageReference Include="Azure.Security.KeyVault.Keys" Version="4.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Microsoft.Data.Encryption.csproj" />
+  </ItemGroup>
+
+</Project>
