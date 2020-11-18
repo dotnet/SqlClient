@@ -171,9 +171,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
         public static void GetAccessTokenByPasswordTest()
         {
+            // Clear token cache for code coverage.
+            ActiveDirectoryAuthenticationProvider.ClearUserTokenCache();
             using (SqlConnection connection = new SqlConnection(DataTestUtility.AADPasswordConnectionString))
             {
                 connection.Open();
+                Assert.True(connection.State == System.Data.ConnectionState.Open);
             }
         }
 

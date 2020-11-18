@@ -47,6 +47,15 @@ namespace Microsoft.Data.SqlClient
             SetDeviceCodeFlowCallback(deviceCodeFlowCallbackMethod);
         }
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ClearUserTokenCache/*'/>
+        public static void ClearUserTokenCache()
+        {
+            if (!s_pcaMap.IsEmpty)
+            {
+                s_pcaMap.Clear();
+            }
+        }
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetDeviceCodeFlowCallback/*'/>
         public void SetDeviceCodeFlowCallback(Func<DeviceCodeResult, Task> deviceCodeFlowCallbackMethod) => _deviceCodeFlowCallback = deviceCodeFlowCallbackMethod;
 
@@ -190,8 +199,8 @@ namespace Microsoft.Data.SqlClient
                     }
                     catch (MsalUiRequiredException)
                     {
-                        // An 'MsalUiRequiredException' is thrown in the case where an interaction is required with the end user of the application, 
-                        // for instance, if no refresh token was in the cache, or the user needs to consent, or re-sign-in (for instance if the password expired), 
+                        // An 'MsalUiRequiredException' is thrown in the case where an interaction is required with the end user of the application,
+                        // for instance, if no refresh token was in the cache, or the user needs to consent, or re-sign-in (for instance if the password expired),
                         // or the user needs to perform two factor authentication.
                         result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod);
                         SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result.ExpiresOn);
