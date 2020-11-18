@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30709.132
 MinimumVisualStudioVersion = 15.0.26124.0
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.Encryption.Cryptography", "src\Microsoft\Data\Encryption\Microsoft.Data.Encryption.csproj", "{B05DC27F-A830-40FF-B196-1758054296AB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.Encryption", "src\Microsoft\Data\Encryption\Microsoft.Data.Encryption.csproj", "{B05DC27F-A830-40FF-B196-1758054296AB}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.Encryption.AzureKeyVaultProvider", "src\Microsoft\Data\Encryption\AzureKeyVaultProvider\Microsoft.Data.Encryption.AzureKeyVaultProvider.csproj", "{A11EEDA8-64A7-4A2A-8CBD-D9CD13114FE1}"
 EndProject
@@ -16,6 +16,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.Encryption.FileEncryption.Tests", "tests\Microsoft.Data.Encryption.FileEncryption.Tests\Microsoft.Data.Encryption.FileEncryption.Tests.csproj", "{79347DC2-8E21-4C70-AA3D-096D0815BDAE}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.Encryption.Tests", "tests\Microsoft.Data.Encryption.Tests\Microsoft.Data.Encryption.Tests.csproj", "{C90082D1-A0B7-403C-9BF9-5B34A1BD85FC}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.Encryption.MockAzureKeyVaultProvider", "tests\tools\Microsoft.Data.Encryption.MockAzureKeyVaultProvider\Microsoft.Data.Encryption.MockAzureKeyVaultProvider.csproj", "{52D020FD-D320-4EC7-999D-5BB8599D4785}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -111,6 +113,18 @@ Global
 		{C90082D1-A0B7-403C-9BF9-5B34A1BD85FC}.Release|x64.Build.0 = Release|Any CPU
 		{C90082D1-A0B7-403C-9BF9-5B34A1BD85FC}.Release|x86.ActiveCfg = Release|Any CPU
 		{C90082D1-A0B7-403C-9BF9-5B34A1BD85FC}.Release|x86.Build.0 = Release|Any CPU
+		{52D020FD-D320-4EC7-999D-5BB8599D4785}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{52D020FD-D320-4EC7-999D-5BB8599D4785}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{52D020FD-D320-4EC7-999D-5BB8599D4785}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{52D020FD-D320-4EC7-999D-5BB8599D4785}.Debug|x64.Build.0 = Debug|Any CPU
+		{52D020FD-D320-4EC7-999D-5BB8599D4785}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{52D020FD-D320-4EC7-999D-5BB8599D4785}.Debug|x86.Build.0 = Debug|Any CPU
+		{52D020FD-D320-4EC7-999D-5BB8599D4785}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{52D020FD-D320-4EC7-999D-5BB8599D4785}.Release|Any CPU.Build.0 = Release|Any CPU
+		{52D020FD-D320-4EC7-999D-5BB8599D4785}.Release|x64.ActiveCfg = Release|Any CPU
+		{52D020FD-D320-4EC7-999D-5BB8599D4785}.Release|x64.Build.0 = Release|Any CPU
+		{52D020FD-D320-4EC7-999D-5BB8599D4785}.Release|x86.ActiveCfg = Release|Any CPU
+		{52D020FD-D320-4EC7-999D-5BB8599D4785}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
