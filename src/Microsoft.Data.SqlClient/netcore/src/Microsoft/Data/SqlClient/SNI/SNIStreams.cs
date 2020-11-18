@@ -15,41 +15,41 @@ namespace Microsoft.Data.SqlClient.SNI
     /// </summary>
     internal class SNISslStream : SslStream
     {
-        private readonly SemaphoreSlim _writeAsyncQueueSemaphore;
-        private readonly SemaphoreSlim _readAsyncQueueSemaphore;
+        private readonly SemaphoreSlim _writeAsyncSemaphore;
+        private readonly SemaphoreSlim _readAsyncSemaphore;
 
         public SNISslStream(Stream innerStream, bool leaveInnerStreamOpen, RemoteCertificateValidationCallback userCertificateValidationCallback)
             : base(innerStream, leaveInnerStreamOpen, userCertificateValidationCallback)
         {
-            _writeAsyncQueueSemaphore = new SemaphoreSlim(1);
-            _readAsyncQueueSemaphore = new SemaphoreSlim(1);
+            _writeAsyncSemaphore = new SemaphoreSlim(1);
+            _readAsyncSemaphore = new SemaphoreSlim(1);
         }
 
         // Prevent ReadAsync collisions by running the task in a Semaphore Slim
         public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            await _readAsyncQueueSemaphore.WaitAsync().ConfigureAwait(false);
+            await _readAsyncSemaphore.WaitAsync().ConfigureAwait(false);
             try
             {
-                return await base.ReadAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
+                return await base.ReadAsync(buffer, offset, count, cancellationToken);
             }
             finally
             {
-                _readAsyncQueueSemaphore.Release();
+                _readAsyncSemaphore.Release();
             }
         }
 
         // Prevent the WriteAsync collisions by running the task in a Semaphore Slim
         public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            await _writeAsyncQueueSemaphore.WaitAsync().ConfigureAwait(false);
+            await _writeAsyncSemaphore.WaitAsync().ConfigureAwait(false);
             try
             {
-                await base.WriteAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
+                await base.WriteAsync(buffer, offset, count, cancellationToken);
             }
             finally
             {
-                _writeAsyncQueueSemaphore.Release();
+                _writeAsyncSemaphore.Release();
             }
         }
     }
@@ -59,40 +59,40 @@ namespace Microsoft.Data.SqlClient.SNI
     /// </summary>
     internal class SNINetworkStream : NetworkStream
     {
-        private readonly SemaphoreSlim _writeAsyncQueueSemaphore;
-        private readonly SemaphoreSlim _readAsyncQueueSemaphore;
+        private readonly SemaphoreSlim _writeAsyncSemaphore;
+        private readonly SemaphoreSlim _readAsyncSemaphore;
 
         public SNINetworkStream(Socket socket, bool ownsSocket) : base(socket, ownsSocket)
         {
-            _writeAsyncQueueSemaphore = new SemaphoreSlim(1);
-            _readAsyncQueueSemaphore = new SemaphoreSlim(1);
+            _writeAsyncSemaphore = new SemaphoreSlim(1);
+            _readAsyncSemaphore = new SemaphoreSlim(1);
         }
 
         // Prevent the ReadAsync collisions by running the task in a Semaphore Slim
         public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            await _readAsyncQueueSemaphore.WaitAsync().ConfigureAwait(false);
+            await _readAsyncSemaphore.WaitAsync().ConfigureAwait(false);
             try
             {
-                return await base.ReadAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
+                return await base.ReadAsync(buffer, offset, count, cancellationToken);
             }
             finally
             {
-                _readAsyncQueueSemaphore.Release();
+                _readAsyncSemaphore.Release();
             }
         }
 
         // Prevent the WriteAsync collisions by running the task in a Semaphore Slim
         public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            await _writeAsyncQueueSemaphore.WaitAsync().ConfigureAwait(false);
+            await _writeAsyncSemaphore.WaitAsync().ConfigureAwait(false);
             try
             {
-                await base.WriteAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
+                await base.WriteAsync(buffer, offset, count, cancellationToken);
             }
             finally
             {
-                _writeAsyncQueueSemaphore.Release();
+                _writeAsyncSemaphore.Release();
             }
         }
     }
