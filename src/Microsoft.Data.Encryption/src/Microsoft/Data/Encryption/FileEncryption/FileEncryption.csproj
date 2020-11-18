@@ -7,7 +7,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
-    <Version>1.0.1-beta-202018111032</Version>
+    <Version>1.0.1-beta-202018111145</Version>
     <Company>Microsoft</Company>
     <Authors>Jeff Trimmer</Authors>
     <SignAssembly>true</SignAssembly>
