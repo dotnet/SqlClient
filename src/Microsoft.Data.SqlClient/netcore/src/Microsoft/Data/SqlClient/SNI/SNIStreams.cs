@@ -15,14 +15,14 @@ namespace Microsoft.Data.SqlClient.SNI
     /// </summary>
     internal class SNISslStream : SslStream
     {
-        private readonly ConcurrentQueueSemaphore _writeAsyncQueueSemaphore;
-        private readonly ConcurrentQueueSemaphore _readAsyncQueueSemaphore;
+        private readonly SemaphoreSlim _writeAsyncQueueSemaphore;
+        private readonly SemaphoreSlim _readAsyncQueueSemaphore;
 
         public SNISslStream(Stream innerStream, bool leaveInnerStreamOpen, RemoteCertificateValidationCallback userCertificateValidationCallback)
             : base(innerStream, leaveInnerStreamOpen, userCertificateValidationCallback)
         {
-            _writeAsyncQueueSemaphore = new ConcurrentQueueSemaphore(1);
-            _readAsyncQueueSemaphore = new ConcurrentQueueSemaphore(1);
+            _writeAsyncQueueSemaphore = new SemaphoreSlim(1);
+            _readAsyncQueueSemaphore = new SemaphoreSlim(1);
         }
 
         // Prevent ReadAsync collisions by running the task in a Semaphore Slim
@@ -59,13 +59,13 @@ namespace Microsoft.Data.SqlClient.SNI
     /// </summary>
     internal class SNINetworkStream : NetworkStream
     {
-        private readonly ConcurrentQueueSemaphore _writeAsyncQueueSemaphore;
-        private readonly ConcurrentQueueSemaphore _readAsyncQueueSemaphore;
+        private readonly SemaphoreSlim _writeAsyncQueueSemaphore;
+        private readonly SemaphoreSlim _readAsyncQueueSemaphore;
 
         public SNINetworkStream(Socket socket, bool ownsSocket) : base(socket, ownsSocket)
         {
-            _writeAsyncQueueSemaphore = new ConcurrentQueueSemaphore(1);
-            _readAsyncQueueSemaphore = new ConcurrentQueueSemaphore(1);
+            _writeAsyncQueueSemaphore = new SemaphoreSlim(1);
+            _readAsyncQueueSemaphore = new SemaphoreSlim(1);
         }
 
         // Prevent the ReadAsync collisions by running the task in a Semaphore Slim
