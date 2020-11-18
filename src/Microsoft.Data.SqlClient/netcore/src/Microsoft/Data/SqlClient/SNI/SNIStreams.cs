@@ -15,14 +15,14 @@ namespace Microsoft.Data.SqlClient.SNI
     /// </summary>
     internal class SNISslStream : SslStream
     {
-        private readonly SemaphoreSlim _writeAsyncSemaphore;
-        private readonly SemaphoreSlim _readAsyncSemaphore;
+        private readonly ConcurrentQueueSemaphore _writeAsyncSemaphore;
+        private readonly ConcurrentQueueSemaphore _readAsyncSemaphore;
 
         public SNISslStream(Stream innerStream, bool leaveInnerStreamOpen, RemoteCertificateValidationCallback userCertificateValidationCallback)
             : base(innerStream, leaveInnerStreamOpen, userCertificateValidationCallback)
         {
-            _writeAsyncSemaphore = new SemaphoreSlim(1);
-            _readAsyncSemaphore = new SemaphoreSlim(1);
+            _writeAsyncSemaphore = new ConcurrentQueueSemaphore(1);
+            _readAsyncSemaphore = new ConcurrentQueueSemaphore(1);
         }
 
         // Prevent ReadAsync collisions by running the task in a Semaphore Slim
@@ -31,7 +31,7 @@ namespace Microsoft.Data.SqlClient.SNI
             await _readAsyncSemaphore.WaitAsync().ConfigureAwait(false);
             try
             {
-                return await base.ReadAsync(buffer, offset, count, cancellationToken);
+                return await base.ReadAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
             }
             finally
             {
@@ -45,7 +45,7 @@ namespace Microsoft.Data.SqlClient.SNI
             await _writeAsyncSemaphore.WaitAsync().ConfigureAwait(false);
             try
             {
-                await base.WriteAsync(buffer, offset, count, cancellationToken);
+                await base.WriteAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
             }
             finally
             {
@@ -59,22 +59,22 @@ namespace Microsoft.Data.SqlClient.SNI
     /// </summary>
     internal class SNINetworkStream : NetworkStream
     {
-        private readonly SemaphoreSlim _writeAsyncSemaphore;
-        private readonly SemaphoreSlim _readAsyncSemaphore;
+        private readonly ConcurrentQueueSemaphore _writeAsyncSemaphore;
+        private readonly ConcurrentQueueSemaphore _readAsyncSemaphore;
 
         public SNINetworkStream(Socket socket, bool ownsSocket) : base(socket, ownsSocket)
         {
-            _writeAsyncSemaphore = new SemaphoreSlim(1);
-            _readAsyncSemaphore = new SemaphoreSlim(1);
+            _writeAsyncSemaphore = new ConcurrentQueueSemaphore(1);
+            _readAsyncSemaphore = new ConcurrentQueueSemaphore(1);
         }
 
-        // Prevent the ReadAsync collisions by running the task in a Semaphore Slim
+        // Prevent ReadAsync collisions by running the task in a Semaphore Slim
         public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
             await _readAsyncSemaphore.WaitAsync().ConfigureAwait(false);
             try
             {
-                return await base.ReadAsync(buffer, offset, count, cancellationToken);
+                return await base.ReadAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
             }
             finally
             {
@@ -88,7 +88,7 @@ namespace Microsoft.Data.SqlClient.SNI
             await _writeAsyncSemaphore.WaitAsync().ConfigureAwait(false);
             try
             {
-                await base.WriteAsync(buffer, offset, count, cancellationToken);
+                await base.WriteAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
             }
             finally
             {
