@@ -575,7 +575,7 @@ namespace Microsoft.Data.Encryption.FileEncryption.Tests
 
             public IList<FileEncryptionSettings> FileEncryptionSettings => Settings;
 
-            public IEnumerable<IList<IColumn>> Read() => Data;
+            public IEnumerable<IEnumerable<IColumn>> Read() => Data;
 
             public void RegisterKeyStoreProviders(IDictionary<string, EncryptionKeyStoreProvider> encryptionKeyStoreProviders)
             {
@@ -585,7 +585,7 @@ namespace Microsoft.Data.Encryption.FileEncryption.Tests
 
         private class TestWriter : IColumnarDataWriter
         {
-            public IEnumerable<IList<IColumn>> OutputData { get; private set; } = new List<IList<IColumn>>();
+            public IEnumerable<IEnumerable<IColumn>> OutputData { get; private set; } = new List<IList<IColumn>>();
 
             public string Metadata { get; private set; }
 
@@ -596,7 +596,7 @@ namespace Microsoft.Data.Encryption.FileEncryption.Tests
 
             public IList<FileEncryptionSettings> FileEncryptionSettings { get; private set; }
 
-            public void Write(IList<IColumn> columns)
+            public void Write(IEnumerable<IColumn> columns)
             {
                 CryptoMetadata metadata = CryptoMetadata.CompileMetadata(columns, FileEncryptionSettings);
                 Metadata = JsonConvert.SerializeObject(

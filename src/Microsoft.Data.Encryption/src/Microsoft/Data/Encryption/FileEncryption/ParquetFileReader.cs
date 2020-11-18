@@ -32,15 +32,18 @@ namespace Microsoft.Data.Encryption.FileEncryption
         /// <param name="file">The file from which to read.</param>
         public ParquetFileReader(Stream file)
         {
+            file.ValidateNotNull(nameof(file));
+
             FileStream = file;
             ParquetReader = new ParquetReader(FileStream);
         }
 
         /// <summary>
-        /// Used to register one or more <see cref="EncryptionKeyStoreProvider"/>s.
+        /// Initializes a new instance of the <see cref="ParquetFileReader"/> class.
         /// </summary>
+        /// <param name="file">The file from which to read.</param>
         /// <param name="encryptionKeyStoreProviders">The <see cref="EncryptionKeyStoreProvider"/>s to register.</param>
-        public void RegisterKeyStoreProviders(IDictionary<string, EncryptionKeyStoreProvider> encryptionKeyStoreProviders)
+        public ParquetFileReader(Stream file, IDictionary<string, EncryptionKeyStoreProvider> encryptionKeyStoreProviders) : this(file)
         {
             encryptionKeyStoreProviders.ValidateNotNull(nameof(encryptionKeyStoreProviders));
             encryptionKeyStoreProviders.Keys.ValidateNotEmpty(nameof(encryptionKeyStoreProviders.Keys));
@@ -51,7 +54,7 @@ namespace Microsoft.Data.Encryption.FileEncryption
         }
 
         /// <inheritdoc/>
-        public IEnumerable<IList<IColumn>> Read()
+        public IEnumerable<IEnumerable<IColumn>> Read()
         {
             // enumerate through row groups in this file
             for (int i = 0; i < ParquetReader.RowGroupCount; i++)

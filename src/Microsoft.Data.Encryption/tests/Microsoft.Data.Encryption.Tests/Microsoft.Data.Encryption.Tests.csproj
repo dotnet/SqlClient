@@ -15,7 +15,7 @@
     <PackageReference Include="Microsoft.Data.SqlClient" Version="2.1.0-preview1.20235.1" />
     <PackageReference Include="Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider" Version="1.1.1" />
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.8" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.8.0-preview-20200812-03" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.8.0" />
     <PackageReference Include="SqlDatabaseBuilder" Version="3.1.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
       <PrivateAssets>all</PrivateAssets>

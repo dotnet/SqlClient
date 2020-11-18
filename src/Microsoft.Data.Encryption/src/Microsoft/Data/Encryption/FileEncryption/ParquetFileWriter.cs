@@ -1,5 +1,4 @@
-﻿using Microsoft.Data.Encryption.Cryptography;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Parquet;
 using Parquet.Data;
@@ -17,6 +16,8 @@ namespace Microsoft.Data.Encryption.FileEncryption
     /// </summary>
     public sealed class ParquetFileWriter : IColumnarDataWriter, IDisposable
     {
+        private bool isMetadataWritten = false;
+
         /// <inheritdoc/>
         public IList<FileEncryptionSettings> FileEncryptionSettings { get; private set; }
 
@@ -36,7 +37,7 @@ namespace Microsoft.Data.Encryption.FileEncryption
         }
 
         /// <inheritdoc/>
-        public void Write(IList<IColumn> columns)
+        public void Write(IEnumerable<IColumn> columns)
         {
             List<DataColumn> parquetColumns = CreateParquetColumns(columns);
             List<DataField> parquetFields = parquetColumns.Select(p => p.Field).ToList();
@@ -44,8 +45,8 @@ namespace Microsoft.Data.Encryption.FileEncryption
 
             using (var parquetWriter = new ParquetWriter(schema, FileStream))
             {
-                // TODO - Write is called many times; one for each rowgroup in the file. We do not need to compile 
-                // and write metadata many times. Refactor to write metadata only once.
+                if (!isMetadataWritten)
+                {
                 CryptoMetadata metadata = CompileMetadata(columns, FileEncryptionSettings);
                 if (!metadata.IsEmpty())
                 {
@@ -62,7 +63,9 @@ namespace Microsoft.Data.Encryption.FileEncryption
                     };
                 }
 
-                // create a new row group in the file
+                    isMetadataWritten = true;
+                }
+
                 using (ParquetRowGroupWriter groupWriter = parquetWriter.CreateRowGroup())
                 {
                     parquetColumns.ForEach(groupWriter.WriteColumn);
@@ -76,11 +79,11 @@ namespace Microsoft.Data.Encryption.FileEncryption
             FileStream.Dispose();
         }
 
-        private static List<DataColumn> CreateParquetColumns(IList<IColumn> columns)
+        private static List<DataColumn> CreateParquetColumns(IEnumerable<IColumn> columns)
         {
             var parquetColumns = new List<DataColumn>();
 
-            foreach (var column in columns)
+            foreach (IColumn column in columns)
             {
                 parquetColumns.Add(new DataColumn(
                    new DataField(column.Name, column.DataType),

@@ -38,24 +38,25 @@ namespace Microsoft.Data.Encryption.FileEncryption
         /// <param name="columns">The <see cref="IColumn"/>s on which to compile metadata.</param>
         /// <param name="encryptionSettings">The <see cref="FileEncryptionSettings"/> on which to compile metadata.</param>
         /// <returns></returns>
-        public static CryptoMetadata CompileMetadata(IList<IColumn> columns, IList<FileEncryptionSettings> encryptionSettings)
+        public static CryptoMetadata CompileMetadata(IEnumerable<IColumn> columns, IList<FileEncryptionSettings> encryptionSettings)
         {
-            if (columns.Count != encryptionSettings.Count)
+            if (columns.Count() != encryptionSettings.Count)
             {
                 throw new ArgumentException($"{nameof(columns)}.Count does not equal {nameof(encryptionSettings)}.Count");
             }
 
             CryptoMetadata cryptoMetadata = new CryptoMetadata();
+            int columnIndex = 0;
 
-            for (int i = 0; i < columns.Count; i++)
+            foreach (IColumn column in columns)
             {
-                FileEncryptionSettings settings = encryptionSettings[i];
+                FileEncryptionSettings settings = encryptionSettings[columnIndex];
 
                 if (settings.EncryptionType != EncryptionType.Plaintext)
                 {
                     ColumnEncryptionMetadata columnEncryptionInformation = new ColumnEncryptionMetadata()
                     {
-                        ColumnName = columns[i].Name,
+                        ColumnName = column.Name,
                         DataEncryptionKeyName = settings.DataEncryptionKey.Name,
                         ColumnIndex = encryptionSettings.IndexOf(settings),
                         EncryptionAlgorithm = DataEncryptionKeyAlgorithm.AEAD_AES_256_CBC_HMAC_SHA256,
@@ -81,6 +82,8 @@ namespace Microsoft.Data.Encryption.FileEncryption
                     cryptoMetadata.DataEncryptionKeyInformation.Add(columnKeyInformation);
                     cryptoMetadata.KeyEncryptionKeyInformation.Add(columnMasterKeyInformation);
                 }
+
+                columnIndex++;
             }
 
             return cryptoMetadata;
