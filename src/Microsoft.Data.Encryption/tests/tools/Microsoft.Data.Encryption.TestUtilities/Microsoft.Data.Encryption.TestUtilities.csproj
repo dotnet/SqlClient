@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>Microsoft.Data.Encryption.TestUtilities</AssemblyName>
+    <RootNamespace>Microsoft.Data.Encryption.TestUtilities</RootNamespace>
+    <Authors>Jeff Trimmer</Authors>
+    <Company>Microsoft</Company>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>MicrosoftDataEncryption.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Identity" Version="1.2.1" />
+    <PackageReference Include="Moq" Version="4.14.7" />
+    <PackageReference Include="xunit" Version="2.4.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Microsoft.Data.Encryption.MockAzureKeyVaultProvider\Microsoft.Data.Encryption.MockAzureKeyVaultProvider.csproj" />
+    <ProjectReference Include="..\..\..\src\Microsoft\Data\Encryption\Microsoft.Data.Encryption.csproj" />
+    <ProjectReference Include="..\..\..\src\Microsoft\Data\Encryption\FileEncryption\Microsoft.Data.Encryption.FileEncryption.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="config.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>
