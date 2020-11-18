@@ -19,8 +19,8 @@
   <!-- NetFx and NetCore project dependencies -->
   <PropertyGroup>
     <MicrosoftIdentityClientVersion>4.21.1</MicrosoftIdentityClientVersion>
-    <MicrosoftIdentityModelProtocolsOpenIdConnectVersion>5.6.0</MicrosoftIdentityModelProtocolsOpenIdConnectVersion>
-    <MicrosoftIdentityModelJsonWebTokensVersion>5.6.0</MicrosoftIdentityModelJsonWebTokensVersion>
+    <MicrosoftIdentityModelProtocolsOpenIdConnectVersion>6.8.0</MicrosoftIdentityModelProtocolsOpenIdConnectVersion>
+    <MicrosoftIdentityModelJsonWebTokensVersion>6.8.0</MicrosoftIdentityModelJsonWebTokensVersion>
     <SystemBuffersVersion>4.5.1</SystemBuffersVersion>
     <SystemIOVersion>4.3.0</SystemIOVersion>
   </PropertyGroup>
