@@ -17,11 +17,11 @@ namespace Microsoft.Data.Encryption.FileEncryption
     public sealed class ParquetFileWriter : IColumnarDataWriter, IDisposable
     {
         private bool isMetadataWritten = false;
+        private ParquetWriter ParquetWriter { get; set; }
+        private Stream FileStream { get; set; }
 
         /// <inheritdoc/>
         public IList<FileEncryptionSettings> FileEncryptionSettings { get; private set; }
-
-        private Stream FileStream { get; set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ParquetFileWriter"/> class.
@@ -32,6 +32,11 @@ namespace Microsoft.Data.Encryption.FileEncryption
         /// </param>
         public ParquetFileWriter(Stream file, IList<FileEncryptionSettings> encryptionSettings)
         {
+            file.ValidateNotNull(nameof(file));
+            encryptionSettings.ValidateNotNull(nameof(encryptionSettings));
+            encryptionSettings.ValidateNotEmpty(nameof(encryptionSettings));
+            encryptionSettings.ValidateNotNullForEach(nameof(encryptionSettings));
+
             FileStream = file;
             FileEncryptionSettings = encryptionSettings;
         }
@@ -40,43 +45,45 @@ namespace Microsoft.Data.Encryption.FileEncryption
         public void Write(IEnumerable<IColumn> columns)
         {
             List<DataColumn> parquetColumns = CreateParquetColumns(columns);
-            List<DataField> parquetFields = parquetColumns.Select(p => p.Field).ToList();
-            Schema schema = new Schema(parquetFields);
 
-            using (var parquetWriter = new ParquetWriter(schema, FileStream))
+            if (ParquetWriter.IsNull())
             {
-                if (!isMetadataWritten)
+                List<DataField> parquetFields = parquetColumns.Select(p => p.Field).ToList();
+                Schema schema = new Schema(parquetFields);
+                ParquetWriter = new ParquetWriter(schema, FileStream);
+            }
+
+            if (!isMetadataWritten)
+            {
+                CryptoMetadata metadata = CompileMetadata(columns, FileEncryptionSettings);
+                if (!metadata.IsEmpty())
                 {
-                    CryptoMetadata metadata = CompileMetadata(columns, FileEncryptionSettings);
-                    if (!metadata.IsEmpty())
+                    ParquetWriter.CustomMetadata = new Dictionary<string, string>
                     {
-                        parquetWriter.CustomMetadata = new Dictionary<string, string>
-                        {
-                            [nameof(CryptoMetadata)] = JsonConvert.SerializeObject(
-                                value: metadata,
-                                settings: new JsonSerializerSettings()
-                                {
-                                    NullValueHandling = NullValueHandling.Ignore,
-                                    Converters = { new StringEnumConverter() },
-                                    Formatting = Formatting.Indented
-                                })
-                        };
-                    }
-
-                    isMetadataWritten = true;
+                        [nameof(CryptoMetadata)] = JsonConvert.SerializeObject(
+                            value: metadata,
+                            settings: new JsonSerializerSettings()
+                            {
+                                NullValueHandling = NullValueHandling.Ignore,
+                                Converters = { new StringEnumConverter() },
+                                Formatting = Formatting.Indented
+                            })
+                    };
                 }
 
-                using (ParquetRowGroupWriter groupWriter = parquetWriter.CreateRowGroup())
-                {
-                    parquetColumns.ForEach(groupWriter.WriteColumn);
-                }
+                isMetadataWritten = true;
+            }
+
+            using (ParquetRowGroupWriter groupWriter = ParquetWriter.CreateRowGroup())
+            {
+                parquetColumns.ForEach(groupWriter.WriteColumn);
             }
         }
 
         /// <inheritdoc/>
         public void Dispose()
         {
-            FileStream.Dispose();
+            ParquetWriter.Dispose();
         }
 
         private static List<DataColumn> CreateParquetColumns(IEnumerable<IColumn> columns)
