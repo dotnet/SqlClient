@@ -9,6 +9,7 @@
     <license type="expression">MIT</license>
     <projectUrl>https://aka.ms/sqlclientproject</projectUrl>
     <icon>dotnet.png</icon>
+    <repository type="git" url="https://github.com/dotnet/sqlclient" />
     <description>Provides the data provider for SQL Server. These classes provide access to versions of SQL Server and encapsulate database-specific protocols, including tabular data stream (TDS)
 
 Commonly Used Types:

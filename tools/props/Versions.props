@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="Latest" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="Current" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <AssemblyFileVersion Condition="'$(AssemblyFileVersion)' == ''">1.0.0.0</AssemblyFileVersion>
     <!-- This Assembly version corresponds to version of Microsoft.Data.SqlClient v2.0.0 Assembly. -->
@@ -23,6 +23,7 @@
     <MicrosoftIdentityModelJsonWebTokensVersion>6.8.0</MicrosoftIdentityModelJsonWebTokensVersion>
     <SystemBuffersVersion>4.5.1</SystemBuffersVersion>
     <SystemIOVersion>4.3.0</SystemIOVersion>
+    <MicrosoftSourceLinkGitHubVersion>1.0.0</MicrosoftSourceLinkGitHubVersion>
   </PropertyGroup>
   <!-- NetCore project dependencies -->
   <PropertyGroup>
