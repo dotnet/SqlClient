@@ -18,16 +18,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Microsoft\Data\Encryption\AzureKeyVaultProvider\Microsoft.Data.Encryption.AzureKeyVaultProvider.csproj" />
+    <ProjectReference Include="..\tools\Microsoft.Data.Encryption.MockAzureKeyVaultProvider\Microsoft.Data.Encryption.MockAzureKeyVaultProvider.csproj" />
     <ProjectReference Include="..\..\src\Microsoft\Data\Encryption\FileEncryption\Microsoft.Data.Encryption.FileEncryption.csproj" />
-    <ProjectReference Include="..\tools\Microsoft.Data.Encryption.TestUtilities.csproj" />
+    <ProjectReference Include="..\tools\Microsoft.Data.Encryption.TestUtilities\Microsoft.Data.Encryption.TestUtilities.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="ResourceFiles\ciphertext.parquet">
+    <None Update="SampleData\Parquet\ciphertext.parquet">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="ResourceFiles\plaintext.parquet">
+    <None Update="SampleData\Parquet\plaintext.parquet">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

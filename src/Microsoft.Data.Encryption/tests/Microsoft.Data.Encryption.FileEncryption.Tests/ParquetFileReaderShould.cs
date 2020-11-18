@@ -17,8 +17,8 @@ namespace Microsoft.Data.Encryption.FileEncryption.Tests
         [Fact]
         public void EncryptParquetFileCorrectly()
         {
-            using Stream inputFile = File.OpenRead("ResourceFiles\\plaintext.parquet");
-            using Stream outputFile = File.OpenWrite($"ResourceFiles\\{nameof(EncryptParquetFileCorrectly)}_out.parquet");
+            using Stream inputFile = File.OpenRead("SampleData\\Parquet\\plaintext.parquet");
+            using Stream outputFile = File.OpenWrite($"SampleData\\Parquet\\{nameof(EncryptParquetFileCorrectly)}_out.parquet");
             using ParquetFileReader reader = new ParquetFileReader(inputFile);
 
             reader.RegisterKeyStoreProviders(
@@ -46,8 +46,8 @@ namespace Microsoft.Data.Encryption.FileEncryption.Tests
         [Fact]
         public void DecryptParquetFileCorrectly()
         {
-            using Stream inputFile = File.OpenRead("ResourceFiles\\ciphertext.parquet");
-            using Stream outputFile = File.OpenWrite($"ResourceFiles\\{nameof(DecryptParquetFileCorrectly)}_out.parquet");
+            using Stream inputFile = File.OpenRead("SampleData\\Parquet\\ciphertext.parquet");
+            using Stream outputFile = File.OpenWrite($"SampleData\\Parquet\\{nameof(DecryptParquetFileCorrectly)}_out.parquet");
             using ParquetFileReader reader = new ParquetFileReader(inputFile);
 
             reader.RegisterKeyStoreProviders(

@@ -1,5 +1,5 @@
 ﻿using Azure.Identity;
-using Microsoft.Data.Encryption.AzureKeyVaultProvider;
+using Microsoft.Data.Encryption.MockAzureKeyVaultProvider;
 using Microsoft.Data.Encryption.Cryptography;
 using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
 using Microsoft.IdentityModel.Clients.ActiveDirectory;

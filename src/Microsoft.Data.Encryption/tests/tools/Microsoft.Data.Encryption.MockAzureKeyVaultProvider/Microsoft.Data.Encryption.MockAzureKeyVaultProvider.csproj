@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Microsoft.Data.Encryption.csproj" />
+		<ProjectReference Include="..\..\..\src\Microsoft\Data\Encryption\Microsoft.Data.Encryption.csproj" />
   </ItemGroup>
 
 </Project>

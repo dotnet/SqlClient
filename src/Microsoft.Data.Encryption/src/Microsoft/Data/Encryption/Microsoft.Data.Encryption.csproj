@@ -1,0 +1,134 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net46</TargetFrameworks>
+    <AssemblyName>Microsoft.Data.Encryption.Cryptography</AssemblyName>
+    <RootNamespace>Microsoft.Data.Encryption.Cryptography</RootNamespace>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+    <Version>1.0.0-pre</Version>
+    <Company>Microsoft</Company>
+    <Authors>Jeff Trimmer</Authors>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>MicrosoftDataEncryption.snk</AssemblyOriginatorKeyFile>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\.editorconfig" Link=".editorconfig" />
+  </ItemGroup>
+
+	<ItemGroup>
+		<Compile Include="Cryptography\AssemblyInfo.cs" />
+		<Compile Include="Cryptography\AeadAes256CbcHmac256EncryptionAlgorithm.cs" />
+		<Compile Include="Cryptography\DataEncryptionKey.cs" />
+		<Compile Include="Cryptography\DataProtector.cs" />
+		<Compile Include="Cryptography\EncryptionKeyStoreProvider.cs" />
+		<Compile Include="Cryptography\EncryptionSettings.cs" />
+		<Compile Include="Cryptography\KeyEncryptionKey.cs" />
+		<Compile Include="Cryptography\LocalCache.cs" />
+		<Compile Include="Cryptography\PlaintextDataEncryptionKey.cs" />
+		<Compile Include="Cryptography\ProtectedDataEncryptionKey.cs" />
+		<Compile Include="Cryptography\Extensions\ArgumentValidationExtensions.cs" />
+		<Compile Include="Cryptography\Extensions\CryptographyExtensions.cs" />
+		<Compile Include="Cryptography\Extensions\StringFormattingExtensions.cs" />
+		<Compile Include="Cryptography\Enums\DataEncryptionKeyAlgorithm.cs" />
+		<Compile Include="Cryptography\Enums\EncryptionType.cs" />
+		<Compile Include="Cryptography\Enums\KeyEncryptionKeyAlgorithm.cs" />
+		<Compile Include="Cryptography\Serializers\ISerializer.cs" />
+		<Compile Include="Cryptography\Serializers\SerializerFactory.cs" />
+		<Compile Include="Cryptography\Serializers\SqlSerializerFactory.cs" />
+		<Compile Include="Cryptography\Serializers\StandardSerializerFactory.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlBigIntSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlBinarySerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlBitSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlCharSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlCodePageEncodingSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlDateSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlDatetime2Serializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlDatetimeoffsetSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlDatetimeSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlDecimalSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlFloatSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlIntSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlMoneySerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlNcharSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlNullableBigIntSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlNullableBitSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlNullableDateSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlNullableDatetime2Serializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlNullableDatetimeoffsetSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlNullableDatetimeSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlNullableDecimalSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlNullableFloatSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlNullableIntSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlNullableMoneySerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlNullableNumericSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlNullableRealSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlNullableSmalldatetimeSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlNullableSmallintSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlNullableSmallmoneySerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlNullableTimeSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlNullableTinyintSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlNullableUniqueidentifierSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlNumericSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlNvarcharSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlRealSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlSmalldatetimeSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlSmallintSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlSmallmoneySerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlTimeSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlTinyintSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlUniqueidentifierSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlVarbinarySerializer.cs" />
+    <Compile Include="Cryptography\Serializers\SqlSerializers\SqlVarcharSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\BooleanSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\ByteArraySerializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\ByteSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\CharSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\DateTimeOffsetSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\DateTimeSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\DecimalSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\DoubleSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\GuidSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\Int16Serializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\Int32Serializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\Int64Serializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\NullableBooleanSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\NullableByteSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\NullableCharSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\NullableDateTImeOffsetSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\NullableDateTimeSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\NullableDecimalSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\NullableDoubleSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\NullableGuidSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\NullableInt16Serializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\NullableInt32Serializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\NullableInt64Serializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\NullableSByteSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\NullableSingleSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\NullableTimeSpanSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\NullableUInt16Serializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\NullableUInt32Serializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\NullableUInt64Serializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\SByteSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\SingleSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\StringSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\TimeSpanSerializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\UInt16Serializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\UInt32Serializer.cs" />
+    <Compile Include="Cryptography\Serializers\StandardSerializers\UInt64Serializer.cs" />
+	</ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="3.1.7" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net46'">
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="1.1.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Text.Encoding.CodePages" Version="4.7.1" />
+  </ItemGroup>
+
+</Project>
