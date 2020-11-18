@@ -21,7 +21,6 @@ using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.SqlTypes;
-using Newtonsoft.Json.Serialization;
 
 namespace Microsoft.Data.SqlClient
 {

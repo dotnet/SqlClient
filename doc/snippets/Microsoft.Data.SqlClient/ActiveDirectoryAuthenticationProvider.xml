@@ -40,6 +40,10 @@
       <summary>Acquires a security token from the authority.</summary>
       <returns>Represents an asynchronous operation that returns the authentication token.</returns>
     </AcquireTokenAsync>
+    <ClearUserTokenCache>
+      <summary>Clears cached user tokens from the token provider.</summary>
+      <remarks>This will cause interactive authentication prompts to appear again if tokens were previously being obtained from the cache.</remarks>
+    </ClearUserTokenCache>
     <SetDeviceCodeFlowCallback>
       <param name="deviceCodeFlowCallbackMethod">The callback method to be used with 'Active Directory Device Code Flow' authentication.</param>
       <summary>Sets the callback method, overriding the default implementation that processes the result for 'Active Directory Device Code Flow' authentication.</summary>

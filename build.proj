@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<Project ToolsVersion="Latest" DefaultTargets="BuildAllConfigurations" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="Current" DefaultTargets="BuildAllConfigurations" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <Import Project="src/Directory.Build.props" />
   <Import Project="$(ToolsDir)targets\GenerateNugetPackage.targets" />
@@ -17,6 +17,7 @@
     <GenerateNuget Condition="'$(GenerateNuget)' == ''">true</GenerateNuget>
     <ProjectProperties>Configuration=$(Configuration);AssemblyFileVersion=$(AssemblyFileVersion);TargetsWindows=$(TargetsWindows);TargetsUnix=$(TargetsUnix);</ProjectProperties>
     <TestProjectProperties>BuildProjectReferences=false;$(ProjectProperties);</TestProjectProperties>
+    <CI>ContinuousIntegrationBuild=true</CI>
   </PropertyGroup>
 
   <!-- Populate all managed projects -->
@@ -71,17 +72,17 @@
   </Target>
 
   <Target Name="BuildNetFx" DependsOnTargets="RestoreNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
-    <MSBuild Projects="@(NetFxDriver)" Properties="Platform=AnyCPU;$(ProjectProperties)" />
+    <MSBuild Projects="@(NetFxDriver)" Properties="$(CI);Platform=AnyCPU;$(ProjectProperties)" />
   </Target>
 
   <Target Name="BuildNetCore" DependsOnTargets="RestoreNetCore">
-    <MSBuild Projects="@(NetCoreDriver)" Properties="Platform=AnyCPU;$(ProjectProperties)" />
+    <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);Platform=AnyCPU;$(ProjectProperties)" />
   </Target>
 
   <Target Name="BuildNetCoreAllOS" DependsOnTargets="RestoreNetCore">
-    <MSBuild Projects="@(NetCoreDriver)" Properties="$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;" RemoveProperties="TargetsWindows;TargetsUnix;" />
-    <MSBuild Projects="@(NetCoreDriver)" Properties="$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT;" RemoveProperties="TargetsWindows;TargetsUnix;" Condition="'$(IsEnabledWindows)' == 'true'" />
-    <MSBuild Projects="@(NetCoreDriver)" Properties="$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;" RemoveProperties="TargetsWindows;TargetsUnix;" />
+    <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;" RemoveProperties="TargetsWindows;TargetsUnix;" />
+    <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT;" RemoveProperties="TargetsWindows;TargetsUnix;" Condition="'$(IsEnabledWindows)' == 'true'" />
+    <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;" RemoveProperties="TargetsWindows;TargetsUnix;" />
   </Target>
 
   <Target Name="BuildFunctionalTestsNetCore" DependsOnTargets="RestoreTestsNetCore">
@@ -114,21 +115,21 @@
 
   <Target Name="BuildAKVNetFx" Condition="'$(IsEnabledWindows)' == 'true' AND !$(ReferenceType.Contains('NetStandard'))">
     <MSBuild Projects="@(AKVProvider)" Targets="restore" Properties="TestTargetOS=$(TestOS)netfx" />
-    <MSBuild Projects="@(AKVProvider)" Properties="TestTargetOS=$(TestOS)netfx;Platform=$(Platform);$(TestProjectProperties)" />
+    <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netfx;Platform=$(Platform);$(TestProjectProperties)" />
   </Target>
 
   <Target Name="BuildAKVNetCore">
     <MSBuild Projects="@(AKVProvider)" Targets="restore" Properties="TestTargetOS=$(TestOS)netcoreapp" />
     <!-- Only build platform specific builds for Package reference types -->
-    <MSBuild Projects="@(AKVProvider)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;" Condition="!$(ReferenceType.Contains('Package'))"/>
-    <MSBuild Projects="@(AKVProvider)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=$(Platform);" Condition="$(ReferenceType.Contains('Package'))"/>
+    <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;" Condition="!$(ReferenceType.Contains('Package'))"/>
+    <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=$(Platform);" Condition="$(ReferenceType.Contains('Package'))"/>
   </Target>
 
   <Target Name="BuildAKVNetCoreAllOS">
     <MSBuild Projects="@(AKVProvider)" Targets="restore" Properties="TestTargetOS=$(TestOS)netcoreapp" />
-    <MSBuild Projects="@(AKVProvider)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;" RemoveProperties="TargetsWindows;TargetsUnix;" />
-    <MSBuild Projects="@(AKVProvider)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT;" RemoveProperties="TargetsWindows;TargetsUnix;" Condition="'$(IsEnabledWindows)' == 'true'" />
-    <MSBuild Projects="@(AKVProvider)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;" RemoveProperties="TargetsWindows;TargetsUnix;" />
+    <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;" RemoveProperties="TargetsWindows;TargetsUnix;" />
+    <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=Windows_NT;" RemoveProperties="TargetsWindows;TargetsUnix;" Condition="'$(IsEnabledWindows)' == 'true'" />
+    <MSBuild Projects="@(AKVProvider)" Properties="$(CI);TestTargetOS=$(TestOS)netcoreapp;$(ProjectProperties);Platform=AnyCPU;OSGroup=AnyOS;" RemoveProperties="TargetsWindows;TargetsUnix;" />
   </Target>
 
 </Project>
