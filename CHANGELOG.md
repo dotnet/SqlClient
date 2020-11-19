@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Stable Release 2.1.0] - 2020-11-19
+
+### Added
+- Microsoft.Data.SqlClient symbols are now source-linked [#789](https://github.com/dotnet/SqlClient/pull/789)
+- Added an API to clear cached access tokens from the token provider [#800](https://github.com/dotnet/SqlClient/pull/800)
+- Added `SqlFacetAttribute` implementation [#757](https://github.com/dotnet/SqlClient/pull/757)
+
+### Fixed
+- Fixed `InvalidOperationException` and `NotSupportedException` errors due to `WriteAsync` collisions [#796](https://github.com/dotnet/SqlClient/pull/796)
+- Fixed incorrect Settings.Async flag in `ExecuteXmlReaderAsync` [#782](https://github.com/dotnet/SqlClient/pull/782)
+- Fixed a regression in Windows Integrated authentication when using managed networking [#777](https://github.com/dotnet/SqlClient/pull/777)
+- Fixed Bulk Copy Async deadlock issues with custom `IDataReader` when using `SqlDataReader` internally [#779](https://github.com/dotnet/SqlClient/pull/779)
+- Fixed a serialization issue with `SqlException` in .NET Core [#780](https://github.com/dotnet/SqlClient/pull/780)
+
+### Changes
+- Updated versions of `Microsoft.IdentityModel` package dependencies [#794](https://github.com/dotnet/SqlClient/pull/794)
+
+
 ## [Preview Release 2.1.0-preview2.20297.7] - 2020-10-23
 
 ### Added

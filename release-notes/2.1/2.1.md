@@ -1,5 +1,11 @@
 # Microsoft.Data.SqlClient 2.1 Releases
 
+The following Microsoft.Data.SqlClient 2.1 stable releases have been shipped:
+
+| Release Date | Version | Notes |
+| :-- | :-- | :--: |
+| 2020/11/19 | 2.1.0 | [release notes](2.1.0.md) |
+
 The following Microsoft.Data.SqlClient 2.1 preview releases have been shipped:
 
 | Release Date | Version | Notes |
