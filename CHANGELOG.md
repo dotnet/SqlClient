@@ -8,15 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Added
 - Microsoft.Data.SqlClient symbols are now source-linked [#789](https://github.com/dotnet/SqlClient/pull/789)
-- Added new API to clear cached access tokens from token provider [#800](https://github.com/dotnet/SqlClient/pull/800)
-- Added implementation of `SqlFacetAttribute` [#757](https://github.com/dotnet/SqlClient/pull/757)
+- Added an API to clear cached access tokens from the token provider [#800](https://github.com/dotnet/SqlClient/pull/800)
+- Added `SqlFacetAttribute` implementation [#757](https://github.com/dotnet/SqlClient/pull/757)
 
 ### Fixed
-- Fixed `InvalidOperationException` and `NotSupportedException` errors from driver due to `WriteAsync` collisions [#796](https://github.com/dotnet/SqlClient/pull/796)
-- Fixed bug in `ExecuteXmlReaderAsync` implementation [#782](https://github.com/dotnet/SqlClient/pull/782)
-- Fix a regression in Windows Integrated authentication when using managed networking [#777](https://github.com/dotnet/SqlClient/pull/777)
+- Fixed `InvalidOperationException` and `NotSupportedException` errors due to `WriteAsync` collisions [#796](https://github.com/dotnet/SqlClient/pull/796)
+- Fixed incorrect Settings.Async flag in `ExecuteXmlReaderAsync` [#782](https://github.com/dotnet/SqlClient/pull/782)
+- Fixed a regression in Windows Integrated authentication when using managed networking [#777](https://github.com/dotnet/SqlClient/pull/777)
 - Fixed Bulk Copy Async deadlock issues with custom `IDataReader` when using `SqlDataReader` internally [#779](https://github.com/dotnet/SqlClient/pull/779)
-- Fix serialization issue with `SqlException` in .NET Core [#780](https://github.com/dotnet/SqlClient/pull/780)
+- Fixed a serialization issue with `SqlException` in .NET Core [#780](https://github.com/dotnet/SqlClient/pull/780)
 
 ### Changes
 - Updated versions of `Microsoft.IdentityModel` package dependencies [#794](https://github.com/dotnet/SqlClient/pull/794)
