@@ -442,6 +442,7 @@
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIPhysicalHandle.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIProxy.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNITcpHandle.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIStreams.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SslOverTdsStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNICommon.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SspiClientContextStatus.cs" />

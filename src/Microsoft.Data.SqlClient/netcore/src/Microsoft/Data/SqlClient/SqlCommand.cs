@@ -1319,7 +1319,7 @@ namespace Microsoft.Data.SqlClient
             if (_stateObj == null)
             {
                 var reconnectionCompletionSource = _reconnectionCompletionSource;
-                if (reconnectionCompletionSource != null && reconnectionCompletionSource.Task.IsCanceled)
+                if (reconnectionCompletionSource != null && reconnectionCompletionSource.Task != null && reconnectionCompletionSource.Task.IsCanceled)
                 {
                     throw SQL.CR_ReconnectionCancelled();
                 }

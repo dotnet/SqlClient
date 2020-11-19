@@ -12,24 +12,16 @@ namespace Microsoft.Data.SqlClient.SNI
     internal sealed partial class SslOverTdsStream
     {
         public override int Read(byte[] buffer, int offset, int count)
-        {
-            return Read(buffer.AsSpan(offset, count));
-        }
+            => Read(buffer.AsSpan(offset, count));
 
         public override void Write(byte[] buffer, int offset, int count)
-        {
-            Write(buffer.AsSpan(offset, count));
-        }
+            => Write(buffer.AsSpan(offset, count));
 
         public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
-        {
-            return ReadAsync(new Memory<byte>(buffer, offset, count), cancellationToken).AsTask();
-        }
+            => ReadAsync(new Memory<byte>(buffer, offset, count), cancellationToken).AsTask();
 
         public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
-        {
-            return WriteAsync(new ReadOnlyMemory<byte>(buffer, offset, count), cancellationToken).AsTask();
-        }
+            => WriteAsync(new ReadOnlyMemory<byte>(buffer, offset, count), cancellationToken).AsTask();
 
         public override int Read(Span<byte> buffer)
         {
@@ -287,7 +279,6 @@ namespace Microsoft.Data.SqlClient.SNI
                         }
 
                         await _stream.FlushAsync().ConfigureAwait(false);
-
 
                         remaining = remaining.Slice(dataLength);
                     }
