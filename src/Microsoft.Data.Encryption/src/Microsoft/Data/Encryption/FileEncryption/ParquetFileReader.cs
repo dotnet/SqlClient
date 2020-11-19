@@ -94,12 +94,10 @@ namespace Microsoft.Data.Encryption.FileEncryption
         public void Dispose()
         {
             ParquetReader.Dispose();
-            
         }
 
         private IList<FileEncryptionSettings> GetEncryptionSettings()
         {
-
             List<FileEncryptionSettings> encryptionSettings = new List<FileEncryptionSettings>();
             Schema schema = ParquetReader.Schema;
             DataField[] dataFields = schema.GetDataFields();
