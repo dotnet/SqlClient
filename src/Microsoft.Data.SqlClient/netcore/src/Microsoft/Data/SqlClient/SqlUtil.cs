@@ -2148,17 +2148,7 @@ namespace Microsoft.Data.SqlClient
             _semaphore = new SemaphoreSlim(initialCount);
         }
 
-        public ConcurrentQueueSemaphore(int initialCount, int maxCount)
-        {
-            _semaphore = new SemaphoreSlim(initialCount, maxCount);
-        }
-
-        public void Wait()
-        {
-            WaitAsync().Wait();
-        }
-
-        public Task WaitAsync()
+        public Task WaitAsync(CancellationToken cancellationToken)
         {
             var tcs = new TaskCompletionSource<bool>();
             _queue.Enqueue(tcs);
@@ -2166,7 +2156,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (_queue.TryDequeue(out TaskCompletionSource<bool> popped))
                     popped.SetResult(true);
-            });
+            }, cancellationToken);
             return tcs.Task;
         }
 

@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient.SNI
         // Prevent ReadAsync collisions by running the task in a Semaphore Slim
         public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            await _readAsyncSemaphore.WaitAsync().ConfigureAwait(false);
+            await _readAsyncSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             try
             {
                 return await base.ReadAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
@@ -42,7 +42,7 @@ namespace Microsoft.Data.SqlClient.SNI
         // Prevent the WriteAsync collisions by running the task in a Semaphore Slim
         public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            await _writeAsyncSemaphore.WaitAsync().ConfigureAwait(false);
+            await _writeAsyncSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             try
             {
                 await base.WriteAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
@@ -71,7 +71,7 @@ namespace Microsoft.Data.SqlClient.SNI
         // Prevent ReadAsync collisions by running the task in a Semaphore Slim
         public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            await _readAsyncSemaphore.WaitAsync().ConfigureAwait(false);
+            await _readAsyncSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             try
             {
                 return await base.ReadAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
@@ -85,7 +85,7 @@ namespace Microsoft.Data.SqlClient.SNI
         // Prevent the WriteAsync collisions by running the task in a Semaphore Slim
         public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            await _writeAsyncSemaphore.WaitAsync().ConfigureAwait(false);
+            await _writeAsyncSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
             try
             {
                 await base.WriteAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
