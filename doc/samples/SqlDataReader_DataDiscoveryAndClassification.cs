@@ -24,8 +24,9 @@ class Program
                 if (DataClassificationSupported(connection))
                 {
                     // Create the temporary table and retrieve its Data Discovery and Classification information.
-                    CreateTable(connection);
-                    RunTests(connection);
+                    // Set rankEnabled to be true if testing with rank information.
+                    CreateTable(connection, rankEnabled : true);
+                    RunTests(connection, rankEnabled : true);
                 }
             }
             finally
@@ -65,7 +66,8 @@ class Program
     /// Creates a temporary table for this sample program and sets tags for Sensitivity Classification.
     /// </summary>
     /// <param name="connection">The SqlConnection to work with.</param>
-    private static void CreateTable(SqlConnection connection)
+    /// <param name="rankEnabled">True if rank information is enabled and false otherwise</param>
+    private static void CreateTable(SqlConnection connection, bool rankEnabled = false)
     {
         SqlCommand command = new SqlCommand(null, connection);
 
@@ -81,35 +83,58 @@ class Program
             + "[Fax] [nvarchar](30) MASKED WITH (FUNCTION = 'default()') NULL)";
         command.ExecuteNonQuery();
 
-        // Set Sensitivity Classification tags for table columns.
-        command.CommandText = $"ADD SENSITIVITY CLASSIFICATION TO {tableName}"
-                + ".CompanyName WITH (LABEL='PII', LABEL_ID='L1', INFORMATION_TYPE='Company Name', INFORMATION_TYPE_ID='COMPANY')";
-        command.ExecuteNonQuery();
+        if (rankEnabled)
+        {
+            // Set Sensitivity Classification tags for table columns with rank information
+            command.CommandText = $"ADD SENSITIVITY CLASSIFICATION TO {tableName}"
+                    + ".CompanyName WITH (LABEL='PII', LABEL_ID='L1', INFORMATION_TYPE='Company Name', INFORMATION_TYPE_ID='COMPANY', RANK=LOW)";
+            command.ExecuteNonQuery();
 
-        command.CommandText = $"ADD SENSITIVITY CLASSIFICATION TO {tableName}"
-                + ".ContactName WITH (LABEL='PII', LABEL_ID='L1', INFORMATION_TYPE='Person Name', INFORMATION_TYPE_ID='NAME')";
-        command.ExecuteNonQuery();
+            command.CommandText = $"ADD SENSITIVITY CLASSIFICATION TO {tableName}"
+                    + ".ContactName WITH (LABEL='PII', LABEL_ID='L1', INFORMATION_TYPE='Person Name', INFORMATION_TYPE_ID='NAME', RANK=LOW)";
+            command.ExecuteNonQuery();
 
-        command.CommandText = $"ADD SENSITIVITY CLASSIFICATION TO {tableName}"
-                + ".Phone WITH (LABEL='PII', LABEL_ID='L1', INFORMATION_TYPE='Contact Information', INFORMATION_TYPE_ID='CONTACT')";
-        command.ExecuteNonQuery();
+            command.CommandText = $"ADD SENSITIVITY CLASSIFICATION TO {tableName}"
+                    + ".Phone WITH (LABEL='PII', LABEL_ID='L1', INFORMATION_TYPE='Contact Information', INFORMATION_TYPE_ID='CONTACT', RANK=MEDIUM)";
+            command.ExecuteNonQuery();
 
-        command.CommandText = $"ADD SENSITIVITY CLASSIFICATION TO {tableName}"
-                + ".Fax WITH (LABEL='PII', LABEL_ID='L1', INFORMATION_TYPE='Contact Information', INFORMATION_TYPE_ID='CONTACT')";
-        command.ExecuteNonQuery();
+            command.CommandText = $"ADD SENSITIVITY CLASSIFICATION TO {tableName}"
+                    + ".Fax WITH (LABEL='PII', LABEL_ID='L1', INFORMATION_TYPE='Contact Information', INFORMATION_TYPE_ID='CONTACT', RANK=MEDIUM)";
+            command.ExecuteNonQuery();
+        }
+        else
+        {
+            // Set Sensitivity Classification tags for table columns without rank information
+            command.CommandText = $"ADD SENSITIVITY CLASSIFICATION TO {tableName}"
+                    + ".CompanyName WITH (LABEL='PII', LABEL_ID='L1', INFORMATION_TYPE='Company Name', INFORMATION_TYPE_ID='COMPANY')";
+            command.ExecuteNonQuery();
+
+            command.CommandText = $"ADD SENSITIVITY CLASSIFICATION TO {tableName}"
+                    + ".ContactName WITH (LABEL='PII', LABEL_ID='L1', INFORMATION_TYPE='Person Name', INFORMATION_TYPE_ID='NAME')";
+            command.ExecuteNonQuery();
+
+            command.CommandText = $"ADD SENSITIVITY CLASSIFICATION TO {tableName}"
+                    + ".Phone WITH (LABEL='PII', LABEL_ID='L1', INFORMATION_TYPE='Contact Information', INFORMATION_TYPE_ID='CONTACT')";
+            command.ExecuteNonQuery();
+
+            command.CommandText = $"ADD SENSITIVITY CLASSIFICATION TO {tableName}"
+                    + ".Fax WITH (LABEL='PII', LABEL_ID='L1', INFORMATION_TYPE='Contact Information', INFORMATION_TYPE_ID='CONTACT')";
+            command.ExecuteNonQuery();
+        }        
     }
 
     /// <summary>
     /// Run query to fetch result set from target table.
     /// </summary>
     /// <param name="connection">The SqlConnection to work with.</param>
-    private static void RunTests(SqlConnection connection)
+    /// <param name="rankEnabled">True if rank information is enabled and false otherwise</param>
+    private static void RunTests(SqlConnection connection, bool rankEnabled = false)
     {
         SqlCommand command = new SqlCommand(null, connection);
         command.CommandText = $"SELECT * FROM {tableName}";
         using (SqlDataReader reader = command.ExecuteReader())
         {
-            PrintSensitivityClassification(reader);
+            PrintSensitivityClassification(reader, rankEnabled);
         }
     }
 
@@ -117,7 +142,8 @@ class Program
     /// Prints Sensitivity Classification data as received in the result set.
     /// </summary>
     /// <param name="reader">The SqlDataReader to work with.</param>
-    private static void PrintSensitivityClassification(SqlDataReader reader)
+    /// <param name="rankEnabled">True if rank information is enabled and false otherwise</param>
+    private static void PrintSensitivityClassification(SqlDataReader reader, bool rankEnabled = false)
     {
         if (reader.SensitivityClassification != null)
         {
@@ -140,8 +166,11 @@ class Program
                         Console.WriteLine($"Information Type: {sp.InformationType.Name}");
                         Console.WriteLine();
                     }
+
+                    Console.WriteLine($"Sensitivity Rank: {sp.SensitivityRank.ToString()}");
                 }
             }
+            Console.Writeline($"reader.SensitivityClassification.SensitivityRank : {reader.SensitivityClassification.SensitivityRank.ToString()}");
         }
     }
 
