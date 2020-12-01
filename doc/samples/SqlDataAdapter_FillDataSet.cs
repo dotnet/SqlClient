@@ -2,7 +2,7 @@
 using Microsoft.Data.SqlClient;
 using System.Data;
 
-namespace NextResultCS
+namespace DataAdapterTest
 {
     class Program
     {
@@ -12,6 +12,8 @@ namespace NextResultCS
             SqlConnection c = new SqlConnection(s);
             GetCustomers(c);
             PrintCustomersOrders(c, c);
+            CustomerFillSchema1(c);
+            CustomerFillSchema2(c);
             Console.ReadLine();
         }
 
@@ -60,6 +62,44 @@ namespace NextResultCS
                         Console.WriteLine("\t" + cRow["OrderID"]);
                 }
                 // </Snippet2>
+            }
+        }
+
+        static DataSet CustomerFillSchema1(SqlConnection connection)
+        {
+            using (connection)
+            {
+                // <Snippet3>
+                // Assumes that connection is a valid SqlConnection object.
+                DataSet custDataSet = new DataSet();
+
+                SqlDataAdapter custAdapter = new SqlDataAdapter(
+                    "SELECT * FROM dbo.Customers", connection);
+
+                custAdapter.FillSchema(custDataSet, SchemaType.Source, "Customers");
+                custAdapter.Fill(custDataSet, "Customers");
+                // </Snippet3>
+
+                return custDataSet;
+            }
+        }
+
+        static DataSet CustomerFillSchema2(SqlConnection connection)
+        {
+            using (connection)
+            {
+                // <Snippet4>
+                // Assumes that connection is a valid SqlConnection object.
+                DataSet custDataSet = new DataSet();
+
+                SqlDataAdapter custAdapter = new SqlDataAdapter(
+                    "SELECT * FROM dbo.Customers", connection);
+
+                custAdapter.MissingSchemaAction = MissingSchemaAction.AddWithKey;
+                custAdapter.Fill(custDataSet, "Customers");
+                // </Snippet4>
+
+                return custDataSet;
             }
         }
 
