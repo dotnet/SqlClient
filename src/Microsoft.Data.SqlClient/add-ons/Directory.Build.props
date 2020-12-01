@@ -28,6 +28,7 @@
     <!-- Set Target Framework when TestTargetOS is not empty. (Command Line) -->
     <When Condition="'$(TestTargetOS)' != ''">
         <PropertyGroup>
+          <TargetFramework Condition="'$(TestTargetOS)' == 'Windowsnetstandard' OR '$(TestTargetOS)' == 'Unixnetstandard'">netstandard2.0</TargetFramework>
           <TargetFramework Condition="'$(TestTargetOS)' == 'Windowsnetcoreapp' OR '$(TestTargetOS)' == 'Unixnetcoreapp'">netcoreapp2.1</TargetFramework>
           <TargetFramework Condition="('$(TestTargetOS)' == 'Windowsnetcoreapp' OR '$(TestTargetOS)' == 'Unixnetcoreapp') AND ($(ReferenceType)=='NetStandard' AND $(TargetNetStandardVersion)=='netstandard2.1')">netcoreapp3.1</TargetFramework>
           <TargetFramework Condition="'$(TestTargetOS)' == 'Windowsnetfx'">net46</TargetFramework>
