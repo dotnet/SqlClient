@@ -4,7 +4,7 @@ using System.Data.Common;
 using Microsoft.Data.SqlClient;
 using System.Threading.Tasks;
 
-class A
+class program
 {
    static async Task PerformDBOperationsUsingProviderModel(string connectionString)
    {

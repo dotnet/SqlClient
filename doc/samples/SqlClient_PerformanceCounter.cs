@@ -157,7 +157,7 @@ namespace PerformanceCounterTest
         {
             // To avoid storing the connection string in your code,  
             // you can retrieve it from a configuration file.  
-            return @"Data Source=.;User Id=LowPriv;Password=Data!05;" +
+            return @"Data Source=.;User Id=<myUserID>;Password=<myPassword>;" +
               "Initial Catalog=AdventureWorks";
         }
 
@@ -166,7 +166,7 @@ namespace PerformanceCounterTest
             // To avoid storing the connection string in your code,  
             // you can retrieve it from a configuration file.  
             return @"Initial Catalog=AdventureWorks;Data Source=.;" +
-              "User Id=LowPriv;Password=Data!05;";
+              "User Id=<myUserID>;Password=<myPassword>;";
         }
     }
 }

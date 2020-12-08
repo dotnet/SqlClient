@@ -31,7 +31,7 @@ namespace SqlBulkCopyAsyncCodeSample
         static string marsConnectionString = @"Server=(local);Database=Demo;MultipleActiveResultSets=true;Integrated Security=true";
 
         // Replace the Server name with your actual sql azure server name and User ID/Password
-        static string azureConnectionString = @"Server=SqlAzure;User ID=myUserID;Password=myPassword;Database=Demo";
+        static string azureConnectionString = @"Server=SqlAzure;User ID=<myUserID>;Password=<myPassword>;Database=Demo";
 
         static void Main(string[] args)
         {
