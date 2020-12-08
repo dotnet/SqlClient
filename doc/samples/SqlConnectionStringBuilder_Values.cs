@@ -23,7 +23,7 @@ class Program
         // To avoid storing the connection string in your code,
         // you can retrieve it from a configuration file. 
         return "Data Source=(local);Integrated Security=SSPI;" +
-            "Initial Catalog=AdventureWorks; Asynchronous Processing=true";
+            "Initial Catalog=AdventureWorks";
     }
 }
 // </Snippet1>

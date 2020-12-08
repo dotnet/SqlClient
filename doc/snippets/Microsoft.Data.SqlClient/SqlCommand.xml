@@ -284,12 +284,6 @@ The following console application creates updates data within the **AdventureWor
 				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.InvalidOperationException">
-				The name/value pair "Asynchronous Processing=true" was not included within the connection string defining the connection for this
-				<see cref="T:Microsoft.Data.SqlClient.SqlCommand" />
-				.
-				
-				-or-
-				
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
 				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
@@ -403,12 +397,6 @@ To set up this example, create a new Windows application. Put a <xref:System.Win
 				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.InvalidOperationException">
-				The name/value pair "Asynchronous Processing=true" was not included within the connection string defining the connection for this
-				<see cref="T:Microsoft.Data.SqlClient.SqlCommand" />
-				.
-				
-				-or-
-				
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
 				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
@@ -487,12 +475,6 @@ The following console application starts the process of retrieving a data reader
 				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.InvalidOperationException">
-				The name/value pair "Asynchronous Processing=true" was not included within the connection string defining the connection for this
-				<see cref="T:Microsoft.Data.SqlClient.SqlCommand" />
-				.
-				
-				-or-
-				
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
 				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
@@ -600,12 +582,6 @@ This example also passes the `CommandBehavior.CloseConnection` and `CommandBehav
 				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.InvalidOperationException">
-				The name/value pair "Asynchronous Processing=true" was not included within the connection string defining the connection for this
-				<see cref="T:Microsoft.Data.SqlClient.SqlCommand" />
-				.
-				
-				-or-
-				
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
 				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
@@ -724,12 +700,6 @@ To set up this example, create a new Windows application. Put a <xref:System.Win
 				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.InvalidOperationException">
-				The name/value pair "Asynchronous Processing=true" was not included within the connection string defining the connection for this
-				<see cref="T:Microsoft.Data.SqlClient.SqlCommand" />
-				.
-				
-				-or-
-				
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
 				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
@@ -859,12 +829,6 @@ This example passes the `CommandBehavior.CloseConnection` value in the `behavior
 				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.InvalidOperationException">
-				The name/value pair "Asynchronous Processing=true" was not included within the connection string defining the connection for this
-				<see cref="T:Microsoft.Data.SqlClient.SqlCommand" />
-				.
-				
-				-or-
-				
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
 				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
@@ -973,12 +937,6 @@ The following console application starts the process of retrieving XML data asyn
 				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.InvalidOperationException">
-				The name/value pair "Asynchronous Processing=true" was not included within the connection string defining the connection for this
-				<see cref="T:Microsoft.Data.SqlClient.SqlCommand" />
-				.
-				
-				-or-
-				
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
 				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
@@ -1107,12 +1065,6 @@ To set up this example, create a new Windows application. Put a <xref:System.Win
 				A timeout occurred during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
 			</exception>
 			<exception cref="T:System.InvalidOperationException">
-				The name/value pair "Asynchronous Processing=true" was not included within the connection string defining the connection for this
-				<see cref="T:Microsoft.Data.SqlClient.SqlCommand" />
-				.
-				
-				-or-
-				
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
 				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
@@ -1229,8 +1181,6 @@ A value of 0 indicates no limit (an attempt to execute a command will wait indef
 
 > [!NOTE]
 > The <xref:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout%2A> property will be ignored during old-style asynchronous method calls such as <xref:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteReader%2A>. It will be honored by the newer async methods such as <xref:Microsoft.Data.SqlClient.SqlCommand.ExecuteReaderAsync%2A>.
-
-<xref:Microsoft.Data.SqlClient.SqlCommand.CommandTimeout%2A> has no effect when the command is executed against a context connection (a <xref:Microsoft.Data.SqlClient.SqlConnection> opened with "context connection=true" in the connection string).
 
 > [!NOTE]
 > This property is the cumulative time-out (for all network packets that are read during the invocation of a method) for all network reads during command execution or processing of the results. A time-out can still occur after the first row is returned, and does not include user processing time, only network read time.
@@ -1725,10 +1675,6 @@ For more information about asynchronous programming in the .NET Framework Data P
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
 				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
-				
-				-or-
-				<see langword="Context Connection=true" />
-				is specified in the connection string.
 			</exception>
 			<exception cref="T:Microsoft.Data.SqlClient.SqlException">
 				SQL Server returned an error while executing the command text.
@@ -2022,10 +1968,6 @@ For more information about asynchronous programming in the .NET Framework Data P
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
 				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
-				
-				-or-
-				<see langword="Context Connection=true" />
-				is specified in the connection string.
 			</exception>
 			<exception cref="T:Microsoft.Data.SqlClient.SqlException">
 				SQL Server returned an error while executing the command text.
@@ -2124,10 +2066,6 @@ For more information about asynchronous programming in the .NET Framework Data P
 				-or-
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
 				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
-				
-				-or-
-				<see langword="Context Connection=true" />
-				is specified in the connection string.
 			</exception>
 			<exception cref="T:Microsoft.Data.SqlClient.SqlException">
 				SQL Server returned an error while executing the command text.
@@ -2227,10 +2165,6 @@ For more information about asynchronous programming in the .NET Framework Data P
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
 				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
-				
-				-or-
-				<see langword="Context Connection=true" />
-				is specified in the connection string.
 			</exception>
 			<exception cref="T:Microsoft.Data.SqlClient.SqlException">
 				SQL Server returned an error while executing the command text.
@@ -2334,10 +2268,6 @@ For more information about asynchronous programming in the .NET Framework Data P
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
 				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
-				
-				-or-
-				<see langword="Context Connection=true" />
-				is specified in the connection string.
 			</exception>
 			<exception cref="T:Microsoft.Data.SqlClient.SqlException">
 				SQL Server returned an error while executing the command text.
@@ -2513,10 +2443,6 @@ For more information about asynchronous programming in the .NET Framework Data P
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
 				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
-				
-				-or-
-				<see langword="Context Connection=true" />
-				is specified in the connection string.
 			</exception>
 			<exception cref="T:Microsoft.Data.SqlClient.SqlException">
 				SQL Server returned an error while executing the command text.
@@ -2708,10 +2634,6 @@ For more information about asynchronous programming in the .NET Framework Data P
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
 				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
-				
-				-or-
-				<see langword="Context Connection=true" />
-				is specified in the connection string.
 			</exception>
 			<exception cref="T:Microsoft.Data.SqlClient.SqlException">
 				SQL Server returned an error while executing the command text.
@@ -2806,10 +2728,6 @@ For more information about asynchronous programming in the .NET Framework Data P
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
 				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/dotnet/framework/data/adonet/sqlclient-streaming-support).
-				
-				-or-
-				<see langword="Context Connection=true" />
-				is specified in the connection string.
 			</exception>
 			<exception cref="T:Microsoft.Data.SqlClient.SqlException">
 				SQL Server returned an error while executing the command text.
