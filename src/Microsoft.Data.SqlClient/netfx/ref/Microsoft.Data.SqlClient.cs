@@ -909,7 +909,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/AsynchronousProcessing/*'/>
         [System.ComponentModel.DisplayNameAttribute("Asynchronous Processing")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
-        [System.ObsoleteAttribute("AsynchronousProcessing has been deprecated.  SqlConnection will ignore the 'Asynchronous Processing' keyword and always allow asynchronous processing the connection.")]
+        [System.ObsoleteAttribute("AsynchronousProcessing has been deprecated.  SqlConnection will ignore the 'Asynchronous Processing' keyword and always allow asynchronous processing.")]
         public bool AsynchronousProcessing { get { throw null; } set { } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/AttachDBFilename/*'/>
         [System.ComponentModel.DisplayNameAttribute("AttachDbFilename")]
