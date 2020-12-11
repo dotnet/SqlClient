@@ -28,14 +28,14 @@ internal static partial class Interop
             Status statusValue,
             ref GssBuffer buffer);
 
-        [DllImport(Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_ImportUserName", CharSet = CharSet.Unicode)]
+        [DllImport(Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_ImportUserName")]
         internal static extern Status ImportUserName(
             out Status minorStatus,
             string inputName,
             int inputNameByteCount,
             out SafeGssNameHandle outputName);
 
-        [DllImport(Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_ImportPrincipalName", CharSet = CharSet.Unicode)]
+        [DllImport(Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_ImportPrincipalName")]
         internal static extern Status ImportPrincipalName(
             out Status minorStatus,
             string inputName,
@@ -53,7 +53,7 @@ internal static partial class Interop
             SafeGssNameHandle desiredName,
             out SafeGssCredHandle outputCredHandle);
 
-        [DllImport(Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_InitiateCredWithPassword", CharSet = CharSet.Unicode)]
+        [DllImport(Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_InitiateCredWithPassword")]
         internal static extern Status InitiateCredWithPassword(
             out Status minorStatus,
             bool isNtlm,
