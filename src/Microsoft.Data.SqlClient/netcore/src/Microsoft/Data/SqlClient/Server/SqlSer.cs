@@ -251,7 +251,7 @@ namespace Microsoft.Data.SqlClient.Server
         public override long Position
         {
             get => _size;
-            set =>_size = value;
+            set => _size = value;
         }
 
         public override long Length => _size;
