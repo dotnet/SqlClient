@@ -1,12 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="Latest" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="Current" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   
   <!-- Import parent Directory.build.props -->
   <Import Project="..\..\Directory.Build.props" />
   
   <PropertyGroup>
     <ReferenceType Condition="'$(ReferenceType)'==''">Project</ReferenceType>
+    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
   </PropertyGroup>
+  
+  <PropertyGroup>
+    <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)'))</TargetFrameworkMonikerAssemblyAttributesPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)"/>
+  </ItemGroup>
 
   <Choose>
     <!-- Set Default Target Framework when building for Debug and Release configurations. (Visual Studio) -->
@@ -18,6 +28,7 @@
     <!-- Set Target Framework when TestTargetOS is not empty. (Command Line) -->
     <When Condition="'$(TestTargetOS)' != ''">
         <PropertyGroup>
+          <TargetFramework Condition="'$(TestTargetOS)' == 'Windowsnetstandard' OR '$(TestTargetOS)' == 'Unixnetstandard'">netstandard2.0</TargetFramework>
           <TargetFramework Condition="'$(TestTargetOS)' == 'Windowsnetcoreapp' OR '$(TestTargetOS)' == 'Unixnetcoreapp'">netcoreapp2.1</TargetFramework>
           <TargetFramework Condition="('$(TestTargetOS)' == 'Windowsnetcoreapp' OR '$(TestTargetOS)' == 'Unixnetcoreapp') AND ($(ReferenceType)=='NetStandard' AND $(TargetNetStandardVersion)=='netstandard2.1')">netcoreapp3.1</TargetFramework>
           <TargetFramework Condition="'$(TestTargetOS)' == 'Windowsnetfx'">net46</TargetFramework>

@@ -12,7 +12,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public class AsyncCancelledConnectionsTest
     {
         private readonly ITestOutputHelper _output;
+        
         private const int NumberOfTasks = 100;  // How many attempts to poison the connection pool we will try
+
         private const int NumberOfNonPoisoned = 10;  // Number of normal requests for each attempt 
 
         public AsyncCancelledConnectionsTest(ITestOutputHelper output)

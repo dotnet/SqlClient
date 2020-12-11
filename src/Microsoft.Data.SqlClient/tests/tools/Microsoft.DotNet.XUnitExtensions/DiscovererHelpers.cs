@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Runtime.InteropServices;
 using Xunit;
 
 namespace Microsoft.DotNet.XUnitExtensions
@@ -10,7 +11,7 @@ namespace Microsoft.DotNet.XUnitExtensions
     internal static class DiscovererHelpers
     {
         internal static bool TestPlatformApplies(TestPlatforms platforms) =>
-#if netcoreapp
+#if NETCOREAPP
                 (platforms.HasFlag(TestPlatforms.FreeBSD) && RuntimeInformation.IsOSPlatform(OSPlatform.Create("FREEBSD"))) ||
                 (platforms.HasFlag(TestPlatforms.Linux) && RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) ||
                 (platforms.HasFlag(TestPlatforms.NetBSD) && RuntimeInformation.IsOSPlatform(OSPlatform.Create("NETBSD"))) ||

@@ -2282,7 +2282,7 @@ namespace Microsoft.Data.SqlClient
             int? sqlExceptionNumber = null;
             try
             {
-                XmlReader result = CompleteXmlReader(InternalEndExecuteReader(asyncResult, ADP.EndExecuteXmlReader, isInternal: false));
+                XmlReader result = CompleteXmlReader(InternalEndExecuteReader(asyncResult, ADP.EndExecuteXmlReader, isInternal: false), true);
                 success = true;
                 return result;
             }
@@ -2316,7 +2316,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private XmlReader CompleteXmlReader(SqlDataReader ds)
+        private XmlReader CompleteXmlReader(SqlDataReader ds, bool async = false)
         {
             XmlReader xr = null;
 
@@ -2330,7 +2330,7 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     SqlStream sqlBuf = new SqlStream(ds, true /*addByteOrderMark*/, (md[0].SqlDbType == SqlDbType.Xml) ? false : true /*process all rows*/);
-                    xr = sqlBuf.ToXmlReader();
+                    xr = sqlBuf.ToXmlReader(async);
                 }
                 catch (Exception e)
                 {
@@ -3049,7 +3049,7 @@ namespace Microsoft.Data.SqlClient
             return returnedTask;
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="CancellationToken"]/*'/>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteScalarAsync[@name="CancellationToken"]/*'/>
         public override Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
         {
             return RetryLogicProvider.ExecuteAsync(this, () => InternalExecuteScalarAsync(cancellationToken), cancellationToken);

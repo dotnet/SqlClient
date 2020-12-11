@@ -21,7 +21,6 @@ using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.SqlTypes;
-using Newtonsoft.Json.Serialization;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -1658,7 +1657,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static void WriteInt(Span<byte> buffer, int value)
         {
-#if netcoreapp
+#if NETCOREAPP
             BitConverter.TryWriteBytes(buffer, value);
 #else
             buffer[0] = (byte)(value & 0xff);

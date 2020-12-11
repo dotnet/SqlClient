@@ -37,10 +37,8 @@ namespace Microsoft.AdoDotNet.CodeSamples
             // To avoid storing the connection string in your code, 
             // you can retrieve it from a configuration file. 
 
-            // If you do not include the Asynchronous Processing=true name/value pair,
-            // you wo not be able to execute the command asynchronously.
             return "Data Source=(local);Integrated Security=true;" +
-            "Initial Catalog=AdventureWorks; Asynchronous Processing=true";
+            "Initial Catalog=AdventureWorks";
         }
 
         private void DisplayStatus(string Text)

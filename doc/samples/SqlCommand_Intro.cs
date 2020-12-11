@@ -68,7 +68,7 @@ class Program
 
     static void Main(string[] args)
     {
-        String connectionString = "Data Source=(local);Initial Catalog=MySchool;Integrated Security=True;Asynchronous Processing=true;";
+        String connectionString = "Data Source=(local);Initial Catalog=MySchool;Integrated Security=True;";
 
         CountCourses(connectionString, 2012);
         Console.WriteLine();

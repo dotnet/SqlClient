@@ -93,7 +93,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
 
                 _sslOverTdsStream = new SslOverTdsStream(_pipeStream);
-                _sslStream = new SslStream(_sslOverTdsStream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate), null);
+                _sslStream = new SNISslStream(_sslOverTdsStream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate));
 
                 _stream = _pipeStream;
                 _status = TdsEnums.SNI_SUCCESS;
@@ -286,7 +286,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     }
 
                     // this lock ensures that two packets are not being written to the transport at the same time
-                    // so that sending a standard and an out-of-band packet are both written atomically no data is 
+                    // so that sending a standard and an out-of-band packet are both written atomically no data is
                     // interleaved
                     lock (_sendSync)
                     {

@@ -7,7 +7,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
 {
-    public class SqlConnectionStringBuilderTest
+    public partial class SqlConnectionStringBuilderTest
     {
 
         [Theory]
@@ -67,11 +67,6 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("PersistSecurityInfo = true")]
         [InlineData("Pooling = no")]
         [InlineData("Pooling = false")]
-#if netcoreapp
-        // PoolBlockingPeriod is not supported in .NET Standard
-        [InlineData("PoolBlockingPeriod = Auto")]
-        [InlineData("PoolBlockingperiod = NeverBlock")]
-#endif
         [InlineData("Replication = true")]
         [InlineData("Transaction Binding = Explicit Unbind")]
         [InlineData("Trust Server Certificate = true")]
@@ -145,7 +140,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(expected, builder.ConnectionString);
         }
 
-        private void ExecuteConnectionStringTests(string connectionString)
+        internal void ExecuteConnectionStringTests(string connectionString)
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString);
             string retrievedString = builder.ConnectionString;

@@ -4,6 +4,44 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Stable Release 2.1.0] - 2020-11-19
+
+### Added
+- Microsoft.Data.SqlClient symbols are now source-linked [#789](https://github.com/dotnet/SqlClient/pull/789)
+- Added an API to clear cached access tokens from the token provider [#800](https://github.com/dotnet/SqlClient/pull/800)
+- Added `SqlFacetAttribute` implementation [#757](https://github.com/dotnet/SqlClient/pull/757)
+
+### Fixed
+- Fixed `InvalidOperationException` and `NotSupportedException` errors due to `WriteAsync` collisions [#796](https://github.com/dotnet/SqlClient/pull/796)
+- Fixed incorrect Settings.Async flag in `ExecuteXmlReaderAsync` [#782](https://github.com/dotnet/SqlClient/pull/782)
+- Fixed a regression in Windows Integrated authentication when using managed networking [#777](https://github.com/dotnet/SqlClient/pull/777)
+- Fixed Bulk Copy Async deadlock issues with custom `IDataReader` when using `SqlDataReader` internally [#779](https://github.com/dotnet/SqlClient/pull/779)
+- Fixed a serialization issue with `SqlException` in .NET Core [#780](https://github.com/dotnet/SqlClient/pull/780)
+
+### Changes
+- Updated versions of `Microsoft.IdentityModel` package dependencies [#794](https://github.com/dotnet/SqlClient/pull/794)
+
+
+## [Preview Release 2.1.0-preview2.20297.7] - 2020-10-23
+
+### Added
+- Added support for Azure Active Directory Managed Identity authentication [#730](https://github.com/dotnet/SqlClient/pull/730)
+- Added support to provide a user-defined application client ID when using Active Directory authentication [#740](https://github.com/dotnet/SqlClient/pull/740)
+- Added the "Command Timeout" connection string property to set a default timeout for all commands executed with the connection [#722](https://github.com/dotnet/SqlClient/pull/722)
+- Added support for Always Encrypted on all supported platforms for .NET Standard 2.0 [#756](https://github.com/dotnet/SqlClient/pull/756)
+
+### Fixed
+- Fixed unobserved exception issue when a timeout occurs before a faulted task completes with an exception [#688](https://github.com/dotnet/SqlClient/pull/688) [#773](https://github.com/dotnet/SqlClient/pull/773)
+- Fixed an issue where driver continues to prompt for credentials when using Azure Active Directory authentication [#770](https://github.com/dotnet/SqlClient/pull/770)
+
+### Changes
+- Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `v2.1.1` and removed symbols from `Microsoft.Data.SqlClient.SNI.runtime`, which are now published to Microsoft Symbols Server [#764](https://github.com/dotnet/SqlClient/pull/764)
+- Updated `Microsoft.Identity.Client` dependency version to `v4.21.1` [#765](https://github.com/dotnet/SqlClient/pull/765)
+- Performance improvements when establishing an encrypted channel by removing sync over async method calls [#541](https://github.com/dotnet/SqlClient/pull/541)
+- Performance improvements by replacing heap-allocated arrays with Spans [#667](https://github.com/dotnet/SqlClient/pull/667)
+- Moved common files to shared folder between .NET Framework and .NET Core implementation [#734](https://github.com/dotnet/SqlClient/pull/734) [#753](https://github.com/dotnet/SqlClient/pull/753)
+
+
 ## [Stable Release 2.0.1] - 2020-08-25
 
 ### Added

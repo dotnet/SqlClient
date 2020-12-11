@@ -780,7 +780,7 @@ namespace Microsoft.Data.Common
         internal const string MaxPoolSize = "Max Pool Size";
         internal const string Pooling = "Pooling";
         internal const string MinPoolSize = "Min Pool Size";
-#if netcoreapp
+#if NETCOREAPP
         internal const string PoolBlockingPeriod = "Pool Blocking Period";
 #endif
     }
@@ -839,7 +839,7 @@ namespace Microsoft.Data.Common
         internal const string NET = "net";
         internal const string NETWORK = "network";
 
-#if netcoreapp
+#if NETCOREAPP
         //internal const string PoolBlockingPeriod = POOLBLOCKINGPERIOD;
         internal const string POOLBLOCKINGPERIOD = "PoolBlockingPeriod";
 #endif

@@ -20,13 +20,13 @@
     <Product>Core $(BaseProduct)</Product>
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetGroup)' == 'netcoreapp'">
-    <DefineConstants>$(DefineConstants);netcoreapp;</DefineConstants>
+    <DefineConstants>$(DefineConstants);NETCOREAPP;</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetGroup)' == 'netstandard'">
-    <DefineConstants>$(DefineConstants);netstandard;</DefineConstants>
+    <DefineConstants>$(DefineConstants);NETSTANDARD;</DefineConstants>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(TargetGroup)' == 'netcoreapp' AND '$(TargetFramework)' != 'netcoreapp2.1'">
-    <DefineConstants>$(DefineConstants);NETCORE3</DefineConstants>
+  <PropertyGroup Condition="'$(TargetGroup)' == 'netcoreapp' AND !$(TargetFramework.StartsWith('netcoreapp2.'))">
+    <DefineConstants>$(DefineConstants);NETCOREAPP31_AND_ABOVE</DefineConstants>
   </PropertyGroup>
   <PropertyGroup>
     <DebugType>portable</DebugType>
@@ -110,6 +110,9 @@
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SmiXetterTypeCode.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiXetterTypeCode.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlFacetAttribute.cs">
+      <Link>Microsoft\Data\SqlClient\Server\SqlFacetAttribute.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlFunctionAttribute.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlFunctionAttribute.cs</Link>
@@ -234,15 +237,6 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\InvalidUdtException.cs">
       <Link>Microsoft\Data\SqlClient\Server\InvalidUdtException.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\AlwaysEncryptedAttestationException.cs">
-      <Link>Microsoft\Data\SqlClient\AlwaysEncryptedAttestationException.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\EnclaveProviderBase.cs">
-      <Link>Microsoft\Data\SqlClient\EnclaveProviderBase.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\EnclaveSessionCache.cs">
-      <Link>Microsoft\Data\SqlClient\EnclaveSessionCache.cs</Link>
-    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SignatureVerificationCache.cs">
       <Link>Microsoft\Data\SqlClient\SignatureVerificationCache.cs</Link>
     </Compile>
@@ -294,8 +288,18 @@
 		<Compile Include="Microsoft\Data\SqlClient\SqlDiagnosticListener.NetStandard.cs" />
 		<Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.NetStandard.cs" />
 		<Compile Include="Microsoft\Data\SqlClient\TdsParser.NetStandard.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SNI\SslOverTdsStream.NetStandard.cs" />
 	</ItemGroup>
 	<ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetFramework)' != 'netstandard2.0'">
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\AlwaysEncryptedAttestationException.cs">
+      <Link>Microsoft\Data\SqlClient\AlwaysEncryptedAttestationException.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\EnclaveProviderBase.cs">
+      <Link>Microsoft\Data\SqlClient\EnclaveProviderBase.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\EnclaveSessionCache.cs">
+      <Link>Microsoft\Data\SqlClient\EnclaveSessionCache.cs</Link>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlEnclaveAttestationParameters.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\EnclaveDelegate.NetCoreApp.cs" />
@@ -313,6 +317,7 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlDiagnosticListener.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.NetCoreApp.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SNI\SslOverTdsStream.NetCoreApp.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netcoreapp' AND '$(BuildSimulator)' == 'true'">
     <Compile Include="Microsoft\Data\SqlClient\SimulatorEnclaveProvider.NetCoreApp.cs" />
@@ -461,6 +466,7 @@
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIPhysicalHandle.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIProxy.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNITcpHandle.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIStreams.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SslOverTdsStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNICommon.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SspiClientContextStatus.cs" />
@@ -790,6 +796,7 @@
     <PackageReference Include="System.Buffers" Version="$(SystemBuffersVersion)" />
     <PackageReference Include="System.Runtime.Caching" Version="$(SystemRuntimeCachingVersion)" />
     <PackageReference Include="System.Security.Cryptography.Cng" Version="$(SystemSecurityCryptographyCngVersion)" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="$(MicrosoftSourceLinkGitHubVersion)" PrivateAssets="All"/>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Update="Resources\Strings.resx">

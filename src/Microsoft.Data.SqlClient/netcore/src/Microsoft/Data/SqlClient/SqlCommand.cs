@@ -1337,7 +1337,7 @@ namespace Microsoft.Data.SqlClient
             if (_stateObj == null)
             {
                 var reconnectionCompletionSource = _reconnectionCompletionSource;
-                if (reconnectionCompletionSource != null && reconnectionCompletionSource.Task.IsCanceled)
+                if (reconnectionCompletionSource != null && reconnectionCompletionSource.Task != null && reconnectionCompletionSource.Task.IsCanceled)
                 {
                     throw SQL.CR_ReconnectionCancelled();
                 }
@@ -1797,7 +1797,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 success = true;
-                return CompleteXmlReader(InternalEndExecuteReader(asyncResult, false, nameof(EndExecuteXmlReader)));
+                return CompleteXmlReader(InternalEndExecuteReader(asyncResult, false, nameof(EndExecuteXmlReader)), true);
             }
             catch (Exception e)
             {
@@ -2560,7 +2560,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="CancellationToken"]/*'/>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteScalarAsync[@name="CancellationToken"]/*'/>
         public override Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
         {
             return RetryLogicProvider.ExecuteAsync(this, () => InternalExecuteScalarAsync(cancellationToken), cancellationToken);
