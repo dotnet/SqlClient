@@ -631,7 +631,7 @@ namespace Microsoft.Data.SqlClient.Server
 
             if (SqlDbType.NText == dbType || SqlDbType.Text == dbType)
             {
-                _locale = System.Globalization.CultureInfo.CurrentCulture.LCID;
+                _locale = CultureInfo.CurrentCulture.LCID;
             }
 
             _name = name;
