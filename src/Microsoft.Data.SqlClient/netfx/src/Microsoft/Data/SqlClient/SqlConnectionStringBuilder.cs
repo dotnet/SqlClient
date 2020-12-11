@@ -362,9 +362,11 @@ namespace Microsoft.Data.SqlClient
                             Certificate = ConvertToString(value);
                             break;
 #endif
+#pragma warning disable 618 // Obsolete AsynchronousProcessing
                         case Keywords.AsynchronousProcessing:
                             AsynchronousProcessing = ConvertToBoolean(value);
                             break;
+#pragma warning restore 618
                         case Keywords.PoolBlockingPeriod:
                             PoolBlockingPeriod = ConvertToPoolBlockingPeriod(keyword, value);
                             break;
@@ -372,10 +374,11 @@ namespace Microsoft.Data.SqlClient
                         case Keywords.ConnectionReset:
                             ConnectionReset = ConvertToBoolean(value);
                             break;
-#pragma warning restore 618
+                            // Obsolete ContextConnection
                         case Keywords.ContextConnection:
                             ContextConnection = ConvertToBoolean(value);
                             break;
+#pragma warning restore 618
                         case Keywords.Encrypt:
                             Encrypt = ConvertToBoolean(value);
                             break;
@@ -462,6 +465,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/AsynchronousProcessing/*' />
         [DisplayName(DbConnectionStringKeywords.AsynchronousProcessing)]
+        [Obsolete("AsynchronousProcessing has been deprecated. SqlConnection will ignore the 'Asynchronous Processing' keyword and always allow asynchronous processing.")]
         [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Initialization)]
         [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_AsynchronousProcessing)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
@@ -534,7 +538,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectionReset/*' />
         [Browsable(false)]
         [DisplayName(DbConnectionStringKeywords.ConnectionReset)]
-        [Obsolete("ConnectionReset has been deprecated.  SqlConnection will ignore the 'connection reset' keyword and always reset the connection")] // SQLPT 41700
+        [Obsolete("ConnectionReset has been deprecated. SqlConnection will ignore the 'connection reset' keyword and always reset the connection.")] // SQLPT 41700
         [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Pooling)]
         [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_ConnectionReset)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
@@ -550,6 +554,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ContextConnection/*' />
         [DisplayName(DbConnectionStringKeywords.ContextConnection)]
+        [Obsolete("ContextConnection has been deprecated. SqlConnection will ignore the 'Context Connection' keyword.")]
         [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Source)]
         [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_ContextConnection)]
         [RefreshPropertiesAttribute(RefreshProperties.All)]
@@ -1270,8 +1275,10 @@ namespace Microsoft.Data.SqlClient
                     return this.ApplicationIntent;
                 case Keywords.ApplicationName:
                     return ApplicationName;
+#pragma warning disable 618 // Obsolete AsynchronousProcessing
                 case Keywords.AsynchronousProcessing:
                     return AsynchronousProcessing;
+#pragma warning restore 618
                 case Keywords.AttachDBFilename:
                     return AttachDBFilename;
                 case Keywords.PoolBlockingPeriod:
@@ -1283,9 +1290,10 @@ namespace Microsoft.Data.SqlClient
 #pragma warning disable 618 // Obsolete ConnectionReset
                 case Keywords.ConnectionReset:
                     return ConnectionReset;
-#pragma warning restore 618
+                            // Obsolete ConnectionReset
                 case Keywords.ContextConnection:
                     return ContextConnection;
+#pragma warning restore 618
                 case Keywords.CurrentLanguage:
                     return CurrentLanguage;
                 case Keywords.DataSource:

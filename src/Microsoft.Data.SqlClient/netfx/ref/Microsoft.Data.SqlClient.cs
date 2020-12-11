@@ -909,6 +909,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/AsynchronousProcessing/*'/>
         [System.ComponentModel.DisplayNameAttribute("Asynchronous Processing")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
+        [System.ObsoleteAttribute("AsynchronousProcessing has been deprecated.  SqlConnection will ignore the 'Asynchronous Processing' keyword and always allow asynchronous processing.")]
         public bool AsynchronousProcessing { get { throw null; } set { } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/AttachDBFilename/*'/>
         [System.ComponentModel.DisplayNameAttribute("AttachDbFilename")]
@@ -931,7 +932,7 @@ namespace Microsoft.Data.SqlClient
         [System.ComponentModel.BrowsableAttribute(false)]
         [System.ComponentModel.DisplayNameAttribute("Connection Reset")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
-        [System.ObsoleteAttribute("ConnectionReset has been deprecated.  SqlConnection will ignore the 'connection reset' keyword and always reset the connection")]
+        [System.ObsoleteAttribute("ConnectionReset has been deprecated.  SqlConnection will ignore the 'connection reset' keyword and always reset the connection.")]
         public bool ConnectionReset { get { throw null; } set { } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectRetryCount/*'/>
         [System.ComponentModel.DisplayNameAttribute("Connect Retry Count")]
@@ -948,6 +949,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ContextConnection/*'/>
         [System.ComponentModel.DisplayNameAttribute("Context Connection")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
+        [System.ObsoleteAttribute("ContextConnection has been deprecated.  SqlConnection will ignore the 'Context Connection' keyword.")]
         public bool ContextConnection { get { throw null; } set { } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/CurrentLanguage/*'/>
         [System.ComponentModel.DisplayNameAttribute("Current Language")]

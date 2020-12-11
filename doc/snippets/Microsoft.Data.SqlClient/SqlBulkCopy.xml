@@ -780,8 +780,6 @@ For more information about asynchronous programming in the .NET Framework Data P
 				Returned in the task object, the
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
 				object is closed before method execution.
-				<see langword="Context Connection=true" />
-				is specified in the connection string.
 
 				A 
 				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
@@ -849,9 +847,6 @@ For more information about asynchronous programming in the .NET Framework Data P
 				Returned in the task object, the
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
 				object is closed before method execution.
-
-				<see langword="Context Connection=true" />
-				is specified in the connection string.
 
 				A 
 				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
@@ -921,8 +916,6 @@ For more information about asynchronous programming in the .NET Framework Data P
 				<see cref="T:System.Data.IDataReader" />'s associated connection was closed before the completed
 				<see cref="T:System.Threading.Tasks.Task" />
 				returned.
-				<see langword="Context Connection=true" />
-				is specified in the connection string.
 
 				A 
 				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
@@ -1026,8 +1019,6 @@ For more information about asynchronous programming in the .NET Framework Data P
 				<see cref="T:System.Data.IDataReader" />'s associated connection was closed before the completed
 				<see cref="T:System.Threading.Tasks.Task" />
 				returned.
-				<see langword="Context Connection=true" />
-				is specified in the connection string.
 
 				A 
 				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
@@ -1106,8 +1097,6 @@ For more information about asynchronous programming in the .NET Framework Data P
 				<see cref="T:System.Data.IDataReader" />'s associated connection was closed before the completed
 				<see cref="T:System.Threading.Tasks.Task" />
 				returned.
-				<see langword="Context Connection=true" />
-				is specified in the connection string.
 
 				A 
 				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
@@ -1167,8 +1156,6 @@ For more information about asynchronous programming in the .NET Framework Data P
 				Returned in the task object, the
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
 				object is closed before method execution.
-				<see langword="Context Connection=true" />
-				is specified in the connection string.
 
 				A 
 				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
@@ -1236,8 +1223,6 @@ For more information about asynchronous programming in the .NET Framework Data P
 				Returned in the task object, the
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
 				object is closed before method execution.
-				<see langword="Context Connection=true" />
-				is specified in the connection string.
 
 				A 
 				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
@@ -1298,8 +1283,6 @@ For more information about asynchronous programming in the .NET Framework Data P
 				Returned in the task object, the
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
 				object is closed before method execution.
-				<see langword="Context Connection=true" />
-				is specified in the connection string.
 
 				A 
 				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 
@@ -1372,8 +1355,6 @@ For more information about asynchronous programming in the .NET Framework Data P
 				Returned in the task object, the
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
 				object is closed before method execution.
-				<see langword="Context Connection=true" />
-				is specified in the connection string.
 
 				A 
 				<see cref="T:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHint" /> 

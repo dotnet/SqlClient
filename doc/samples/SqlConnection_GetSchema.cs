@@ -7,7 +7,7 @@ class Program
 {
     static void Main(string[] args)
     {
-        using (SqlConnection conn = new SqlConnection("Data Source=(local);Initial Catalog=MySchool;Integrated Security=True;Asynchronous Processing=true;"))
+        using (SqlConnection conn = new SqlConnection("Data Source=(local);Initial Catalog=MySchool;Integrated Security=True;"))
         {
             conn.Open();
 

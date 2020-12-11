@@ -362,9 +362,6 @@ End Module
             <exception cref="T:System.ArgumentException">
           The connection string contains any combination of <see langword="UserId" />, <see langword="Password" />, or <see langword="Integrated Security=true" />.
 
--or-
-  
-The connection string contains <see langword="Context Connection=true" />.  
 
 -or-
 
@@ -529,7 +526,7 @@ The connection string contains <see langword="Context Connection=true" />.
 |App|N/A|Synonym of **Application Name**.|  
 |Application Name|N/A|The name of the application, or '.NET SQLClient Data Provider' if no application name is provided.<br /><br /> An application name can be 128 characters or less.|  
 |Application Intent<br /><br /> -or-<br /><br />ApplicationIntent|ReadWrite|Declares the application workload type when connecting to a server. Possible values are `ReadOnly` and `ReadWrite`. For example:<br /><br /> `ApplicationIntent=ReadOnly`<br /><br /> For more information about SqlClient support for Always On Availability Groups, see [SqlClient Support for High Availability, Disaster Recovery](/dotnet/framework/data/adonet/sql/sqlclient-support-for-high-availability-disaster-recovery).|  
-|Asynchronous Processing<br /><br /> -or-<br /><br /> Async|'false'|When `true`, enables asynchronous operation support. Recognized values are `true`, `false`, `yes`, and `no`.<br /><br /> This property is ignored beginning in .NET Framework 4.5. For more information about SqlClient support for asynchronous programming, see [Asynchronous Programming](/dotnet/framework/data/adonet/asynchronous-programming).|  
+|Asynchronous Processing<br /><br /> -or-<br /><br /> Async|'false'|This property is obsolete and should not used.<br /><br /> When `true`, enables asynchronous operation support. Recognized values are `true`, `false`, `yes`, and `no`.<br /><br /> This property is ignored beginning in .NET Framework 4.5. For more information about SqlClient support for asynchronous programming, see [Asynchronous Programming](/dotnet/framework/data/adonet/asynchronous-programming).|  
 |Attestation Protocol|N/A|Gets or sets the value of Attestation Protocol.<br /><br />Valid values are:<br />`AAS`<br />`HGS`|  
 |AttachDBFilename<br /><br /> -or-<br /><br /> Extended Properties<br /><br /> -or-<br /><br /> Initial File Name|N/A|The name of the primary database file, including the full path name of an attachable database. AttachDBFilename is only supported for primary data files with an .mdf extension.<br /><br /> If the value of the AttachDBFileName key is specified in the connection string, the database is attached and becomes the default database for the connection.<br /><br /> If this key is not specified and if the database was previously attached, the database will not be reattached. The previously attached database will be used as the default database for the connection.<br /><br /> If this key is specified together with the AttachDBFileName key, the value of this key will be used as the alias. However, if the name is already used in another attached database, the connection will fail.<br /><br /> The path may be absolute or relative by using the DataDirectory substitution string. If DataDirectory is used, the database file must exist within a subdirectory of the directory pointed to by the substitution string. **Note:**  Remote server, HTTP, and UNC path names are not supported. <br /><br /> The database name must be specified with the keyword 'database' (or one of its aliases) as in the following:<br /><br /> <code>"AttachDbFileName=&#124;DataDirectory&#124;\data\YourDB.mdf;integrated security=true;database=YourDatabase"</code><br /><br /> An error will be generated if a log file exists in the same directory as the data file and the 'database' keyword is used when attaching the primary data file. In this case, remove the log file. Once the database is attached, a new log file will be automatically generated based on the physical path.|  
 |Authentication|N/A|The authentication method used for [Connecting to SQL Database By Using Azure Active Directory Authentication](https://azure.microsoft.com/documentation/articles/sql-database-aad-authentication/#7-connect-to-your-database-by-using-azure-active-directory-identities).<br /><br /> Valid values are:<br /><br /> `Active Directory Integrated`, `Active Directory Interactive`, `Active Directory Password`, `Sql Password`. Currently `Active Directory Integrated` and `Active Directory Interactive` modes of authentication are supported only for .NET Framework. |  
@@ -539,7 +536,6 @@ The connection string contains <see langword="Context Connection=true" />.
 |Connection Lifetime<br /><br /> -or-<br /><br /> Load Balance Timeout|0|When a connection is returned to the pool, its creation time is compared with the current time, and the connection is destroyed if that time span (in seconds) exceeds the value specified by `Connection Lifetime`. This is useful in clustered configurations to force load balancing between a running server and a server just brought online.<br /><br /> A value of zero (0) causes pooled connections to have the maximum connection timeout.|  
 |Connect Retry Count<br /><br /> -or-<br /><br />ConnectRetryCount|1|Controls the number of reconnection attempts after the client identifies an idle connection failure. Valid values are 0 to 255. The default is 1. 0 means do not attempt to reconnect (disable connection resiliency).<br /><br /> For additional information about idle connection resiliency, see [Technical Article - Idle Connection Resiliency](https://go.microsoft.com/fwlink/?LinkId=393996).|  
 |Connect Retry Interval<br /><br /> -or-<br /><br />ConnectRetryInterval|10|Specifies the time between each connection retry attempt (ConnectRetryCount). Valid values are 1 to 60 seconds (default=10), applied after the first reconnection attempt. When a broken connection is detected, the client immediately attempts to reconnect; this is the first reconnection attempt and only occurs if ConnectRetryCount is greater than 0. If the first reconnection attempt fails and ConnectRetryCount is greater than 1, the client waits ConnectRetryInterval to try the second and subsequent reconnection attempts.<br /><br /> For additional information about idle connection resiliency, see [Technical Article - Idle Connection Resiliency](https://go.microsoft.com/fwlink/?LinkId=393996).|  
-|Context Connection|'false'|`true` if an in-process connection to SQL Server should be made.|  
 |Current Language<br /><br /> -or-<br /><br /> Language|N/A|Sets the language used for database server warning or error messages.<br /><br /> The language name can be 128 characters or less.|  
 |Data Source<br /><br /> -or-<br /><br /> Server<br /><br /> -or-<br /><br /> Address<br /><br /> -or-<br /><br /> Addr<br /><br /> -or-<br /><br /> Network Address|N/A|The name or network address of the instance of SQL Server to which to connect. The port number can be specified after the server name:<br /><br /> `server=tcp:servername, portnumber`<br /><br /> When specifying a local instance, always use (local). To force a protocol, add one of the following prefixes:<br /><br /> `np:(local),  tcp:(local), lpc:(local)`<br /><br /> Beginning in .NET Framework 4.5, you can also connect to a LocalDB database as follows:<br /><br /> `server=(localdb)\\myInstance`<br /><br /> For more information about LocalDB, see [SqlClient Support for LocalDB](/dotnet/framework/data/adonet/sql/sqlclient-support-for-localdb).<br /><br /> **Data Source** must use the TCP format or the Named Pipes format.<br /><br /> TCP format is as follows:<br /><br /> -   tcp:\<host name>\\<instance name\><br />-   tcp:\<host name>,\<TCP/IP port number><br /><br /> The TCP format must start with the prefix "tcp:" and is followed by the database instance, as specified by a host name and an instance name. This format is not applicable when connecting to Azure SQL Database. TCP is automatically selected for connections to Azure SQL Database when no protocol is specified.<br /><br /> The host name MUST be specified in one of the following ways:<br /><br /> -   NetBIOSName<br />-   IPv4Address<br />-   IPv6Address<br /><br /> The instance name is used to resolve to a particular TCP/IP port number on which a database instance is hosted. Alternatively, specifying a TCP/IP port number directly is also allowed. If both instance name and port number are not present, the default database instance is used.<br /><br /> The Named Pipes format is as follows:<br /><br /> -   np:\\\\<host name\>\pipe\\<pipe name\><br /><br /> The Named Pipes format MUST start with the prefix "np:" and is followed by a named pipe name.<br /><br /> The host name MUST be specified in one of the following ways:<br /><br /> -   NetBIOSName<br />-   IPv4Address<br />-   IPv6Address<br /><br /> The pipe name is used to identify the database instance to which the .NET Framework application will be connected.<br /><br /> If the value of the **Network** key is specified, the prefixes "tcp:" and "np:" should not be specified. **Note:**  You can force the use of TCP instead of shared memory, either by prefixing **tcp:** to the server name in the connection string, or by using **localhost**.|  
 |Enclave Attestation Url|N/A|Gets or sets the enclave attestation Url to be used with enclave based Always Encrypted.|
@@ -652,8 +648,6 @@ The connection string contains <see langword="Context Connection=true" />.
   
 -   If <xref:Microsoft.Data.SqlClient.SqlConnection.Credential%2A> is set on an open connection.  
   
--   If <xref:Microsoft.Data.SqlClient.SqlConnection.Credential%2A> is set when `Context Connection=true`.  
-  
 -   If <xref:Microsoft.Data.SqlClient.SqlConnection.Credential%2A> is set when `Integrated Security = true`.  
   
 -   If <xref:Microsoft.Data.SqlClient.SqlConnection.Credential%2A> is set when the connection string uses `Password`.  
@@ -692,14 +686,7 @@ The connection string contains <see langword="Context Connection=true" />.
             <value>The name of the instance of SQL Server to which to connect. The default value is an empty string.</value>
             <remarks>
             <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
-  
-> [!NOTE]
->  The <xref:Microsoft.Data.SqlClient.SqlConnection.DataSource%2A> property returns `null` if the connection string for the <xref:Microsoft.Data.SqlClient.SqlConnection> is "context connection=true".  
-  
-   
-  
+
 ## Examples  
  The following example creates a <xref:Microsoft.Data.SqlClient.SqlConnection> and displays some of its read-only properties.  
   
@@ -1006,8 +993,6 @@ GO
  ]]></format>
             </remarks>
             <exception cref="T:System.InvalidOperationException">Calling <see cref="M:Microsoft.Data.SqlClient.SqlConnection.OpenAsync(System.Threading.CancellationToken)" /> more than once for the same instance before task completion.  
-  
- <see langword="Context Connection=true" /> is specified in the connection string.  
   
  A connection was not available from the connection pool before the connection time out elapsed.</exception>
             <exception cref="T:Microsoft.Data.SqlClient.SqlException">Any error returned by SQL Server that occurred while opening the connection.</exception>
