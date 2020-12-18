@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Stable Release 2.1.1] - 2020-12-18
+
+### Fixed
+- Fixed issue with System-Assigned Managed Identity in Azure Functions [#841](https://github.com/dotnet/SqlClient/pull/841)
+- Fixed issue with Kerberos Authentication for .NET Core in Unix environments [#848](https://github.com/dotnet/SqlClient/pull/848)
+- Fixed issue with TCP Keep Alive for .NET Core in Unix environments [#855](https://github.com/dotnet/SqlClient/pull/855)
+
+
 ## [Stable Release 2.1.0] - 2020-11-19
 
 ### Added
