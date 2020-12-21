@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System.Collections.Generic;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -38,6 +39,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (var connection = new SqlConnection(@"Data Source=(localdb)\MSSQLLOCALDB;Database=DOES_NOT_EXIST;Pooling=false;"))
             {
                 DataTestUtility.AssertThrowsWrapper<SqlException>(() => connection.Open());
+            }
+        }
+
+        [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
+        [ConditionalFact(nameof(IsLocalDBEnvironmentSet))]
+        public static void LocalDBLeadingWhiteSpacesTest()
+        {
+            string LocalDBString = @"(localdb)\MSSQLLocalDB";
+           // \u0020 is space unicode
+           // \u000A is line feed unicode
+            var DataSourcesWithLeadingWhiteSpaces = new string[] { " ", "    ", "\n", "\t", "\u0020", "\u000A"};
+            foreach (var whitespace in DataSourcesWithLeadingWhiteSpaces)
+            {
+                var builder = new SqlConnectionStringBuilder()
+                {
+                    DataSource = $"{whitespace}{LocalDBString}",
+                    IntegratedSecurity = true
+                };
+                OpenConnection(builder.ConnectionString);
+            }
+            using (var conn = new SqlConnection(@"server=   (localdb)\MSSQLLOCALDB;Integrated Security=true;"))
+            {
+                conn.Open();
+                Assert.Equal("Open", conn.State.ToString());
             }
         }
 

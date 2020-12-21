@@ -32,7 +32,10 @@ namespace Microsoft.Data
         {
             if (serverName == null)
                 return null;
-            serverName = serverName.TrimStart(); // it can start with spaces if specified in quotes
+            serverName = serverName.TrimStart(null); // it can start with spaces if specified in quotes
+                                                     // Default constructor for TrimStart is not in netstandard2.0
+                                                     // when the TrimStart(chars[]) passes null or empty array it will remove leading whitespaces
+                                                     // By passing null we enforce that behavior
             if (!serverName.StartsWith(const_localDbPrefix, StringComparison.OrdinalIgnoreCase))
                 return null;
             string instanceName = serverName.Substring(const_localDbPrefix.Length).Trim();
