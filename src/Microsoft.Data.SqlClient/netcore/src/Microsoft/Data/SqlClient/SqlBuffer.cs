@@ -863,6 +863,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+
+        // these variables store pre-boxed bool values to be used when returning a boolean
+        // in a object typed location, if these are not used a new value is boxed each time
+        // one is needed which leads to a lot of garbage which needs to be collected
         private static readonly object s_cachedTrueObject = true;
         private static readonly object s_cachedFalseObject = false;
 
@@ -879,7 +883,7 @@ namespace Microsoft.Data.SqlClient
                     case StorageType.Empty:
                         return DBNull.Value;
                     case StorageType.Boolean:
-                        return Boolean ? s_cachedTrueObject : s_cachedFalseObject;
+                        return Boolean ? s_cachedTrueObject : s_cachedFalseObject; // return pre-boxed values for perf
                     case StorageType.Byte:
                         return Byte;
                     case StorageType.DateTime:
