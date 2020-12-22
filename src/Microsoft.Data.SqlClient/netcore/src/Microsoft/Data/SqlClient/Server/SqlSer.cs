@@ -173,14 +173,12 @@ namespace Microsoft.Data.SqlClient.Server
     // The base serializer class.
     internal abstract class Serializer
     {
-        public abstract object Deserialize(Stream s);
-        public abstract void Serialize(Stream s, object o);
         protected Type _type;
 
-        protected Serializer(Type t)
-        {
-            _type = t;
-        }
+        public abstract object Deserialize(Stream s);
+        public abstract void Serialize(Stream s, object o);
+
+        protected Serializer(Type t) => _type = t;
     }
 
     internal sealed class NormalizedSerializer : Serializer

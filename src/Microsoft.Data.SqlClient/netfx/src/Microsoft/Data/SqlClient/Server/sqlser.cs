@@ -215,7 +215,7 @@ namespace Microsoft.Data.SqlClient.Server
             BinaryWriter w = new BinaryWriter(s);
             if (o is Microsoft.SqlServer.Server.IBinarySerialize)
             {
-                ((Microsoft.SqlServer.Server.IBinarySerialize)o).Write(w);
+                ((SqlServer.Server.IBinarySerialize)o).Write(w);
             }
             else
             {
@@ -233,7 +233,7 @@ namespace Microsoft.Data.SqlClient.Server
             BinaryReader r = new BinaryReader(s);
             if (instance is Microsoft.SqlServer.Server.IBinarySerialize)
             {
-                ((Microsoft.SqlServer.Server.IBinarySerialize)instance).Read(r);
+                ((SqlServer.Server.IBinarySerialize)instance).Read(r);
             }
             else
             {
@@ -290,9 +290,6 @@ namespace Microsoft.Data.SqlClient.Server
             return -1;
         }
 
-        public override void Write(byte[] buffer, int offset, int count)
-        {
-            _size += count;
-        }
+        public override void Write(byte[] buffer, int offset, int count) => _size += count;
     }
 }

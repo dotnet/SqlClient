@@ -25,8 +25,8 @@ namespace Microsoft.Data.SqlClient.Server
             FieldInfo = fi;
             _offset = offset;
         }
-        public FieldInfo FieldInfo { get; private set; }
-        public Normalizer Normalizer { get; private set; }
+        internal FieldInfo FieldInfo { get; private set; }
+        internal Normalizer Normalizer { get; private set; }
 
         // Sort fields by field offsets.
         public int CompareTo(object other)
