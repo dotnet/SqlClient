@@ -127,7 +127,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (_startExecutionTimestamp == 0)
             {
-                ADP.TimerCurrent(out _startExecutionTimestamp);
+                _startExecutionTimestamp = ADP.TimerCurrent();
                 return true;
             }
             return false;
@@ -138,7 +138,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(_startExecutionTimestamp != 0, "No network time expected outside execution period");
             if (_startNetworkServerTimestamp == 0)
             {
-                ADP.TimerCurrent(out _startNetworkServerTimestamp);
+                _startNetworkServerTimestamp = ADP.TimerCurrent();
             }
             _waitForReply = true;
         }
