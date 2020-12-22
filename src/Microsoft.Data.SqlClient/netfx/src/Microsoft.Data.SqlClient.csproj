@@ -103,6 +103,12 @@
     <Compile Include="..\..\src\Microsoft\Data\Common\ActivityCorrelator.cs">
       <Link>Microsoft\Data\Common\ActivityCorrelator.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\Common\DbConnectionPoolKey.cs">
+      <Link>Microsoft\Data\Common\DbConnectionPoolKey.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\Common\MultipartIdentifier.cs">
+      <Link>Microsoft\Data\Common\MultipartIdentifier.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\Sql\SqlNotificationRequest.cs">
       <Link>Microsoft\Data\Sql\SqlNotificationRequest.cs</Link>
     </Compile>
@@ -417,8 +423,6 @@
     <Compile Include="Misc\LocalAppContext.cs" />
     <Compile Include="Misc\AppContextDefaultValues.cs" />
     <Compile Include="Misc\PrivilegedConfigurationManager.cs" />
-    <Compile Include="Common\src\Microsoft\Data\Common\DbConnectionPoolKey.cs" />
-    <Compile Include="Common\src\Microsoft\Data\Common\MultipartIdentifier.cs" />
     <Compile Include="Common\src\Microsoft\Data\Common\NameValuePermission.cs" />
     <Compile Include="Microsoft\Data\Common\AdapterSwitches.cs" />
     <Compile Include="Microsoft\Data\Common\AdapterUtil.cs" />
