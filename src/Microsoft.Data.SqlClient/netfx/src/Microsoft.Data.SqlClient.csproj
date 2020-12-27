@@ -124,6 +124,12 @@
     <Compile Include="..\..\src\Microsoft\Data\ProviderBase\DbConnectionPoolOptions.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionPoolOptions.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.cs">
+      <Link>Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Windows.cs">
+      <Link>Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Windows.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\ProviderBase\DbConnectionPoolGroupProviderInfo.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionPoolGroupProviderInfo.cs</Link>
     </Compile>
@@ -386,6 +392,7 @@
     <Compile Include="Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.LoadType.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SqlDataRecord.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\TriggerAction.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectFactory.cs" />
     <Compile Include="Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProvider.cs" />
     <Compile Include="Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProviderBase.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlFileStream.cs" />
@@ -407,10 +414,16 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionCspProvider.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlCommand.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlCommandBuilder.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SqlCommand.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Microsoft\Data\SqlClient\SqlCommandBuilder.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlCommandSet.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlConnection.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SqlConnection.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionFactory.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionPoolGroupProviderInfo.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionPoolKey.cs" />
@@ -418,7 +431,9 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionStringBuilder.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionTimeoutErrorInternal.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlCredential.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlDataAdapter.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SqlDataAdapter.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlDataReader.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDataReaderSmi.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.cs" />
@@ -478,12 +493,13 @@
     <Compile Include="Microsoft\Data\ProviderBase\DbBuffer.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionClosed.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionFactory.cs" />
-    <Compile Include="Microsoft\Data\ProviderBase\SqlConnectionHelper.cs" />
+    <Compile Include="Microsoft\Data\ProviderBase\SqlConnectionHelper.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionInternal.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPool.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolGroup.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolCounters.cs" />
-    <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbMetaDataFactory.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\SqlParameterCollectionHelper.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\SqlParameterHelper.cs" />

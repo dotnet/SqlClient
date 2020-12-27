@@ -26,28 +26,19 @@ namespace Microsoft.Data.ProviderBase
             {
                 return true;
             }
-            var policy = poolGroupConnectionOptions.PoolBlockingPeriod;
 
-            switch (policy)
+            switch (poolGroupConnectionOptions.PoolBlockingPeriod)
             {
                 case PoolBlockingPeriod.Auto:
-                    {
-                        return !ADP.IsAzureSqlServerEndpoint(poolGroupConnectionOptions.DataSource);
-                    }
+                    return !ADP.IsAzureSqlServerEndpoint(poolGroupConnectionOptions.DataSource);
                 case PoolBlockingPeriod.AlwaysBlock:
-                    {
-                        return true; //Enabled
-                    }
+                    return true;
                 case PoolBlockingPeriod.NeverBlock:
-                    {
-                        return false; //Disabled
-                    }
+                    return false;
                 default:
-                    {
-                        //we should never get into this path.
-                        Debug.Fail("Unknown PoolBlockingPeriod. Please specify explicit results in above switch case statement.");
-                        return true;
-                    }
+                    Debug.Fail("Unknown PoolBlockingPeriod. Please specify explicit results in above switch case statement.");
+                    return true;
+
             }
         }
     }
