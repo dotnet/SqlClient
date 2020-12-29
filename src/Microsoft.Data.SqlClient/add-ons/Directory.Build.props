@@ -7,7 +7,6 @@
   <PropertyGroup>
     <ReferenceType Condition="'$(ReferenceType)'==''">Project</ReferenceType>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
-    <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
   </PropertyGroup>
   
