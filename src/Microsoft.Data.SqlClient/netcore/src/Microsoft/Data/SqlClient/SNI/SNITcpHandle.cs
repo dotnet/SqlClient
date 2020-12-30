@@ -364,6 +364,10 @@ namespace Microsoft.Data.SqlClient.SNI
                         if (ipAddresses[i] != null)
                         {
                             sockets[i] = new Socket(ipAddresses[i].AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+
+                            // enable keep-alive on socket
+                            SetKeepAliveValues(ref sockets[i]);
+
                             sockets[i].Connect(ipAddresses[i], port);
                             if (sockets[i] != null) // sockets[i] can be null if cancel callback is executed during connect()
                             {
