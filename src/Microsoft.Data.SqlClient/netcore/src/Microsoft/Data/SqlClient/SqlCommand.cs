@@ -65,7 +65,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         private CommandType _commandType;
-        private int _commandTimeout = ADP.DefaultCommandTimeout;
+        private int? _commandTimeout;
         private UpdateRowSource _updatedRowSource = UpdateRowSource.Both;
         private bool _designTimeInvisible;
 
@@ -572,7 +572,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                return _commandTimeout;
+                return _commandTimeout ?? DefaultCommandTimeout;
             }
             set
             {
@@ -592,10 +592,18 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ResetCommandTimeout/*'/>
         public void ResetCommandTimeout()
         {
-            if (ADP.DefaultCommandTimeout != _commandTimeout)
+            if (ADP.DefaultCommandTimeout != CommandTimeout)
             {
                 PropertyChanging();
-                _commandTimeout = ADP.DefaultCommandTimeout;
+                _commandTimeout = DefaultCommandTimeout;
+            }
+        }
+
+        private int DefaultCommandTimeout
+        {
+            get
+            {
+                return _activeConnection?.CommandTimeout ?? ADP.DefaultCommandTimeout;
             }
         }
 
@@ -1311,7 +1319,7 @@ namespace Microsoft.Data.SqlClient
             if (_stateObj == null)
             {
                 var reconnectionCompletionSource = _reconnectionCompletionSource;
-                if (reconnectionCompletionSource != null && reconnectionCompletionSource.Task.IsCanceled)
+                if (reconnectionCompletionSource != null && reconnectionCompletionSource.Task != null && reconnectionCompletionSource.Task.IsCanceled)
                 {
                     throw SQL.CR_ReconnectionCancelled();
                 }
@@ -1771,7 +1779,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 success = true;
-                return CompleteXmlReader(InternalEndExecuteReader(asyncResult, false, nameof(EndExecuteXmlReader)));
+                return CompleteXmlReader(InternalEndExecuteReader(asyncResult, false, nameof(EndExecuteXmlReader)), true);
             }
             catch (Exception e)
             {
@@ -2524,7 +2532,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="CancellationToken"]/*'/>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteScalarAsync[@name="CancellationToken"]/*'/>
         public override Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
         {
             _parentOperationStarted = true;

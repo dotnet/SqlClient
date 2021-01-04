@@ -3,14 +3,13 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using Microsoft.Data.Common;
 using System.Globalization;
 using System.Runtime.Versioning;
 using System.Security.Permissions;
 
 namespace Microsoft.Data.SqlClient
 {
-    using Microsoft.Data.Common;
-
     internal sealed class TdsParserStaticMethods
     {
 
@@ -92,9 +91,9 @@ namespace Microsoft.Data.SqlClient
         // Encrypt password to be sent to SQL Server
         // Note: The same logic is used in SNIPacketSetData (SniManagedWrapper) to encrypt passwords stored in SecureString
         //       If this logic changed, SNIPacketSetData needs to be changed as well
-        static internal Byte[] EncryptPassword(string password)
+        internal static byte[] ObfuscatePassword(string password)
         {
-            Byte[] bEnc = new Byte[password.Length << 1];
+            byte[] bEnc = new byte[password.Length << 1];
             int s;
             byte bLo;
             byte bHi;
@@ -104,8 +103,8 @@ namespace Microsoft.Data.SqlClient
                 s = (int)password[i];
                 bLo = (byte)(s & 0xff);
                 bHi = (byte)((s >> 8) & 0xff);
-                bEnc[i << 1] = (Byte)((((bLo & 0x0f) << 4) | (bLo >> 4)) ^ 0xa5);
-                bEnc[(i << 1) + 1] = (Byte)((((bHi & 0x0f) << 4) | (bHi >> 4)) ^ 0xa5);
+                bEnc[i << 1] = (byte)((((bLo & 0x0f) << 4) | (bLo >> 4)) ^ 0xa5);
+                bEnc[(i << 1) + 1] = (byte)((((bHi & 0x0f) << 4) | (bHi >> 4)) ^ 0xa5);
             }
             return bEnc;
         }
@@ -114,7 +113,7 @@ namespace Microsoft.Data.SqlClient
         [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
         static internal int GetCurrentProcessIdForTdsLoginOnly()
         {
-            return SafeNativeMethods.GetCurrentProcessId();
+            return Common.SafeNativeMethods.GetCurrentProcessId();
         }
 
 
@@ -172,8 +171,9 @@ namespace Microsoft.Data.SqlClient
 
             return nicAddress;
         }
+
         // translates remaining time in stateObj (from user specified timeout) to timeout value for SNI
-        static internal Int32 GetTimeoutMilliseconds(long timeoutTime)
+        internal static int GetTimeoutMilliseconds(long timeoutTime)
         {
             // User provided timeout t | timeout value for SNI | meaning
             // ------------------------+-----------------------+------------------------------
@@ -181,7 +181,7 @@ namespace Microsoft.Data.SqlClient
             //   t>0 && t<int.MaxValue |                     t |
             //          t>int.MaxValue |          int.MaxValue | must not exceed int.MaxValue
 
-            if (Int64.MaxValue == timeoutTime)
+            if (long.MaxValue == timeoutTime)
             {
                 return -1;  // infinite timeout
             }
@@ -192,24 +192,19 @@ namespace Microsoft.Data.SqlClient
             {
                 return 0;
             }
-            if (msecRemaining > (long)Int32.MaxValue)
+            if (msecRemaining > (long)int.MaxValue)
             {
-                return Int32.MaxValue;
+                return int.MaxValue;
             }
-            return (Int32)msecRemaining;
+            return (int)msecRemaining;
         }
 
-        static internal long GetTimeoutSeconds(int timeout)
-        {
-            return GetTimeout((long)timeout * 1000L);
-        }
-
-        static internal long GetTimeout(long timeoutMilliseconds)
+        internal static long GetTimeout(long timeoutMilliseconds)
         {
             long result;
             if (timeoutMilliseconds <= 0)
             {
-                result = Int64.MaxValue; // no timeout...
+                result = long.MaxValue; // no timeout...
             }
             else
             {
@@ -220,24 +215,24 @@ namespace Microsoft.Data.SqlClient
                 catch (OverflowException)
                 {
                     // In case of overflow, set to 'infinite' timeout
-                    result = Int64.MaxValue;
+                    result = long.MaxValue;
                 }
             }
             return result;
         }
 
-        static internal bool TimeoutHasExpired(long timeoutTime)
+        internal static bool TimeoutHasExpired(long timeoutTime)
         {
             bool result = false;
 
-            if (0 != timeoutTime && Int64.MaxValue != timeoutTime)
+            if (0 != timeoutTime && long.MaxValue != timeoutTime)
             {
                 result = ADP.TimerHasExpired(timeoutTime);
             }
             return result;
         }
 
-        static internal int NullAwareStringLength(string str)
+        internal static int NullAwareStringLength(string str)
         {
             if (str == null)
             {
@@ -249,7 +244,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        static internal int GetRemainingTimeout(int timeout, long start)
+        internal static int GetRemainingTimeout(int timeout, long start)
         {
             if (timeout <= 0)
             {
@@ -265,6 +260,5 @@ namespace Microsoft.Data.SqlClient
                 return checked((int)remaining);
             }
         }
-
     }
 }

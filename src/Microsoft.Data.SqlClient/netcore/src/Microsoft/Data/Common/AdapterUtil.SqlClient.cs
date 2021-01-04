@@ -609,11 +609,6 @@ namespace Microsoft.Data.Common
             return null;
         }
 
-        internal static void TimerCurrent(out long ticks)
-        {
-            ticks = DateTime.UtcNow.ToFileTimeUtc();
-        }
-
         internal static long TimerCurrent()
         {
             return DateTime.UtcNow.ToFileTimeUtc();

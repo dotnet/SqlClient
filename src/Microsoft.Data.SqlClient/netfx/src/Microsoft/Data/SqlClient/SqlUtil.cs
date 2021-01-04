@@ -189,6 +189,7 @@ namespace Microsoft.Data.SqlClient
             }
             if (!task.IsCompleted)
             {
+                task.ContinueWith(t => { var ignored = t.Exception; }); //Ensure the task does not leave an unobserved exception
                 if (onTimeout != null)
                 {
                     onTimeout();
@@ -333,6 +334,10 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_DeviceFlowWithUsernamePassword));
         }
+        static internal Exception ManagedIdentityWithPassword(string authenticationMode)
+        {
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_ManagedIdentityWithPassword, authenticationMode));
+        }
         static internal Exception SettingIntegratedWithCredential()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SettingIntegratedWithCredential));
@@ -344,6 +349,10 @@ namespace Microsoft.Data.SqlClient
         static internal Exception SettingDeviceFlowWithCredential()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SettingDeviceFlowWithCredential));
+        }
+        static internal Exception SettingManagedIdentityWithCredential(string authenticationMode)
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SettingManagedIdentityWithCredential, authenticationMode));
         }
         static internal Exception SettingCredentialWithIntegratedArgument()
         {
@@ -357,6 +366,10 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_SettingCredentialWithDeviceFlow));
         }
+        static internal Exception SettingCredentialWithManagedIdentityArgument(string authenticationMode)
+        {
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_SettingCredentialWithManagedIdentity, authenticationMode));
+        }
         static internal Exception SettingCredentialWithIntegratedInvalid()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SettingCredentialWithIntegrated));
@@ -368,6 +381,10 @@ namespace Microsoft.Data.SqlClient
         static internal Exception SettingCredentialWithDeviceFlowInvalid()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SettingCredentialWithDeviceFlow));
+        }
+        static internal Exception SettingCredentialWithManagedIdentityInvalid(string authenticationMode)
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SettingCredentialWithManagedIdentity, authenticationMode));
         }
         static internal Exception InvalidSQLServerVersionUnknown()
         {
@@ -772,7 +789,7 @@ namespace Microsoft.Data.SqlClient
         static internal Exception CannotCompleteDelegatedTransactionWithOpenResults(SqlInternalConnectionTds internalConnection, bool marsOn)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(TdsEnums.TIMEOUT_EXPIRED, (byte)0x00, TdsEnums.MIN_ERROR_CLASS, null, (StringsHelper.GetString(Strings.ADP_OpenReaderExists, marsOn? ADP.Command : ADP.Connection)), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
+            errors.Add(new SqlError(TdsEnums.TIMEOUT_EXPIRED, (byte)0x00, TdsEnums.MIN_ERROR_CLASS, null, (StringsHelper.GetString(Strings.ADP_OpenReaderExists, marsOn ? ADP.Command : ADP.Connection)), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
             return SqlException.CreateException(errors, null, internalConnection);
         }
         static internal SysTx.TransactionPromotionException PromotionFailed(Exception inner)
@@ -858,7 +875,7 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQLUDT_InvalidSqlType, typeName));
         }
-        
+
         static internal Exception UDTInvalidSize(int maxSize, int maxSupportedSize)
         {
             throw ADP.ArgumentOutOfRange(StringsHelper.GetString(Strings.SQLUDT_InvalidSize, maxSize, maxSupportedSize));
@@ -2070,6 +2087,16 @@ namespace Microsoft.Data.SqlClient
             SqlErrorCollection errors = new SqlErrorCollection();
             errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, StringsHelper.GetString(Strings.SQLCR_UnrecoverableClient), "", 0));
             SqlException exc = SqlException.CreateException(errors, "", connectionId);
+            return exc;
+        }
+        internal static Exception Azure_ManagedIdentityException(string msg)
+        {
+            SqlErrorCollection errors = new SqlErrorCollection
+            {
+                new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, msg, "", 0)
+            };
+            SqlException exc = SqlException.CreateException(errors, null);
+            exc._doNotReconnect = true; // disable open retry logic on this error
             return exc;
         }
 

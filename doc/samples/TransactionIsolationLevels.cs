@@ -487,7 +487,7 @@ namespace Microsoft.Data.SqlClient.Samples
     {
         internal static void Main(string[] args)
         {
-            String connString = "Data Source=(local);Initial Catalog=master;Integrated Security=True;Asynchronous Processing=true;";
+            String connString = "Data Source=(local);Initial Catalog=master;Integrated Security=True;";
 
             OperateDatabase.CreateDatabase(connString);
             Console.WriteLine();

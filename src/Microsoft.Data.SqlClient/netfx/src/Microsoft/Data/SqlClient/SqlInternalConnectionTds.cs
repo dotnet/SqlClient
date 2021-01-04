@@ -983,7 +983,7 @@ namespace Microsoft.Data.SqlClient
                 tdsReliabilitySection.Start();
 #endif //DEBUG
 
-                isAlive = _parser._physicalStateObj.IsConnectionAlive(throwOnException);
+            isAlive = _parser._physicalStateObj.IsConnectionAlive(throwOnException);
 
 #if DEBUG
             }
@@ -1567,13 +1567,15 @@ namespace Microsoft.Data.SqlClient
                 _sessionRecoveryRequested = true;
             }
 
-            // If the workflow being used is Active Directory Password/Integrated/Interactive/Service Principal/Device Code Flow and server's prelogin response
+            // If the workflow being used is Active Directory Authentication and server's prelogin response
             // for FEDAUTHREQUIRED option indicates Federated Authentication is required, we have to insert FedAuth Feature Extension
             // in Login7, indicating the intent to use Active Directory Authentication for SQL Server.
             if (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
+                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
+                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI
                 // Since AD Integrated may be acting like Windows integrated, additionally check _fedAuthRequired
                 || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _fedAuthRequired))
             {
@@ -1587,6 +1589,7 @@ namespace Microsoft.Data.SqlClient
                         fedAuthRequiredPreLoginResponse = _fedAuthRequired
                     };
             }
+
             if (_accessTokenInBytes != null)
             {
                 requestedFeatures |= TdsEnums.FeatureExtension.FedAuth;
@@ -1966,7 +1969,9 @@ namespace Microsoft.Data.SqlClient
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated ||
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive ||
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal ||
-                                       connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow;
+                                       connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow ||
+                                       connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity ||
+                                       connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI;
 
             // Check if the user had explicitly specified the TNIR option in the connection string or the connection string builder.
             // If the user has specified the option in the connection string explicitly, then we shouldn't disable TNIR.
@@ -2367,18 +2372,18 @@ namespace Microsoft.Data.SqlClient
                     {
                         tdsReliabilitySection.Start();
 #endif //DEBUG
-                        Task reconnectTask = parent.ValidateAndReconnect(() =>
-                        {
-                            ThreadHasParserLockForClose = false;
-                            _parserLock.Release();
-                            releaseConnectionLock = false;
-                        }, timeout);
-                        if (reconnectTask != null)
-                        {
-                            AsyncHelper.WaitForCompletion(reconnectTask, timeout);
-                            return true;
-                        }
-                        return false;
+                    Task reconnectTask = parent.ValidateAndReconnect(() =>
+                    {
+                        ThreadHasParserLockForClose = false;
+                        _parserLock.Release();
+                        releaseConnectionLock = false;
+                    }, timeout);
+                    if (reconnectTask != null)
+                    {
+                        AsyncHelper.WaitForCompletion(reconnectTask, timeout);
+                        return true;
+                    }
+                    return false;
 #if DEBUG
                     }
                     finally
@@ -2552,6 +2557,8 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert((ConnectionOptions.HasUserIdKeyword && ConnectionOptions.HasPasswordKeyword)
                          || _credential != null
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
+                         || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
+                         || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
                          || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _fedAuthRequired),
                          "Credentials aren't provided for calling MSAL");
@@ -2781,6 +2788,8 @@ namespace Microsoft.Data.SqlClient
                             break;
                         case SqlAuthenticationMethod.ActiveDirectoryInteractive:
                         case SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow:
+                        case SqlAuthenticationMethod.ActiveDirectoryManagedIdentity:
+                        case SqlAuthenticationMethod.ActiveDirectoryMSI:
                             if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
                             {
                                 fedAuthToken = _activeDirectoryAuthTimeoutRetryHelper.CachedToken;
@@ -3154,7 +3163,7 @@ namespace Microsoft.Data.SqlClient
                         }
 
                         // need to add more steps for phrase 2
-                        // get IPv4 + IPv6 + Port number 
+                        // get IPv4 + IPv6 + Port number
                         // not put them in the DNS cache at this point but need to store them somewhere
 
                         // generate pendingSQLDNSObject and turn on IsSQLDNSRetryEnabled flag

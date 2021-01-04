@@ -72,13 +72,13 @@ namespace Microsoft.Data.SqlClient.SNI
         internal void ReadAsyncCallback(SNIPacket packet, uint error)
         {
             ReadAsyncCallback(IntPtr.Zero, PacketHandle.FromManagedPacket(packet), error);
-            _sessionHandle.ReturnPacket(packet);
+            _sessionHandle?.ReturnPacket(packet);
         }
 
         internal void WriteAsyncCallback(SNIPacket packet, uint sniError)
         {
             WriteAsyncCallback(IntPtr.Zero, PacketHandle.FromManagedPacket(packet), sniError);
-            _sessionHandle.ReturnPacket(packet);
+            _sessionHandle?.ReturnPacket(packet);
         }
 
         protected override void RemovePacketFromPendingList(PacketHandle packet)

@@ -41,18 +41,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly bool SupportsLocalDb = false;
         public static readonly bool SupportsFileStream = false;
         public static readonly bool UseManagedSNIOnWindows = false;
-
+        public static readonly bool IsAzureSynapse = false;
         public static readonly string DNSCachingConnString = null;
         public static readonly string DNSCachingServerCR = null;  // this is for the control ring
         public static readonly string DNSCachingServerTR = null;  // this is for the tenant ring
         public static readonly bool IsDNSCachingSupportedCR = false;  // this is for the control ring
         public static readonly bool IsDNSCachingSupportedTR = false;  // this is for the tenant ring
+        public static readonly string UserManagedIdentityObjectId = null;
 
         public static readonly string EnclaveAzureDatabaseConnString = null;
-
+        public static bool ManagedIdentitySupported = true;
         public static string AADAccessToken = null;
+        public static string AADSystemIdentityAccessToken = null;
+        public static string AADUserIdentityAccessToken = null;
         public const string UdtTestDbName = "UdtTestDb";
         public const string AKVKeyName = "TestSqlClientAzureKeyVaultProvider";
+
         private const string ManagedNetworkingAppContextSwitch = "Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows";
 
         private static Dictionary<string, bool> AvailableDatabases;
@@ -79,9 +83,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             DNSCachingConnString = c.DNSCachingConnString;
             DNSCachingServerCR = c.DNSCachingServerCR;
             DNSCachingServerTR = c.DNSCachingServerTR;
+            IsAzureSynapse = c.IsAzureSynapse;
             IsDNSCachingSupportedCR = c.IsDNSCachingSupportedCR;
             IsDNSCachingSupportedTR = c.IsDNSCachingSupportedTR;
             EnclaveAzureDatabaseConnString = c.EnclaveAzureDatabaseConnString;
+            UserManagedIdentityObjectId = c.UserManagedIdentityObjectId;
 
             System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
 
@@ -243,21 +249,28 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsDNSCachingSetup() => !string.IsNullOrEmpty(DNSCachingConnString);
 
+        // Synapse: Always Encrypted is not supported with Azure Synapse.
+        //          Ref: https://feedback.azure.com/forums/307516-azure-synapse-analytics/suggestions/17858869-support-always-encrypted-in-sql-data-warehouse
         public static bool IsEnclaveAzureDatabaseSetup()
         {
-            return EnclaveEnabled && !string.IsNullOrEmpty(EnclaveAzureDatabaseConnString);
+            return EnclaveEnabled && !string.IsNullOrEmpty(EnclaveAzureDatabaseConnString) && IsNotAzureSynapse();
         }
 
-        public static bool IsUdtTestDatabasePresent() => IsDatabasePresent(UdtTestDbName);
+        public static bool IsNotAzureSynapse() => !IsAzureSynapse;
+
+        // Synapse: UDT Test Database not compatible with Azure Synapse.
+        public static bool IsUdtTestDatabasePresent() => IsDatabasePresent(UdtTestDbName) && IsNotAzureSynapse();
 
         public static bool AreConnStringsSetup()
         {
             return !string.IsNullOrEmpty(NPConnectionString) && !string.IsNullOrEmpty(TCPConnectionString);
         }
 
+        // Synapse: Always Encrypted is not supported with Azure Synapse.
+        //          Ref: https://feedback.azure.com/forums/307516-azure-synapse-analytics/suggestions/17858869-support-always-encrypted-in-sql-data-warehouse
         public static bool AreConnStringSetupForAE()
         {
-            return AEConnStrings.Count > 0;
+            return AEConnStrings.Count > 0 && IsNotAzureSynapse();
         }
 
         public static bool IsAADPasswordConnStrSetup()
@@ -280,19 +293,23 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return !AreConnStringsSetup() || !Utils.IsAzureSqlServer(new SqlConnectionStringBuilder((TCPConnectionString)).DataSource);
         }
 
+        // Synapse: Always Encrypted is not supported with Azure Synapse.
+        //          Ref: https://feedback.azure.com/forums/307516-azure-synapse-analytics/suggestions/17858869-support-always-encrypted-in-sql-data-warehouse
         public static bool IsAKVSetupAvailable()
         {
-            return !string.IsNullOrEmpty(AKVUrl) && !string.IsNullOrEmpty(AKVClientId) && !string.IsNullOrEmpty(AKVClientSecret);
+            return !string.IsNullOrEmpty(AKVUrl) && !string.IsNullOrEmpty(AKVClientId) && !string.IsNullOrEmpty(AKVClientSecret) && IsNotAzureSynapse();
         }
 
         public static bool IsUsingManagedSNI() => UseManagedSNIOnWindows;
 
         public static bool IsUsingNativeSNI() => !IsUsingManagedSNI();
 
+        // Synapse: UTF8 collations are not supported with Azure Synapse.
+        //          Ref: https://feedback.azure.com/forums/307516-azure-synapse-analytics/suggestions/40103791-utf-8-collations-should-be-supported-in-azure-syna
         public static bool IsUTF8Supported()
         {
             bool retval = false;
-            if (AreConnStringsSetup())
+            if (AreConnStringsSetup() && IsNotAzureSynapse())
             {
                 using (SqlConnection connection = new SqlConnection(TCPConnectionString))
                 using (SqlCommand command = new SqlCommand())
@@ -391,7 +408,38 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return (null != AADAccessToken) ? new string(AADAccessToken.ToCharArray()) : null;
         }
 
+        public static string GetSystemIdentityAccessToken()
+        {
+            if (true == ManagedIdentitySupported && null == AADSystemIdentityAccessToken && IsAADPasswordConnStrSetup())
+            {
+                AADSystemIdentityAccessToken = AADUtility.GetManagedIdentityToken().GetAwaiter().GetResult();
+                if (AADSystemIdentityAccessToken == null)
+                {
+                    ManagedIdentitySupported = false;
+                }
+            }
+            return (null != AADSystemIdentityAccessToken) ? new string(AADSystemIdentityAccessToken.ToCharArray()) : null;
+        }
+
+        public static string GetUserIdentityAccessToken()
+        {
+            if (true == ManagedIdentitySupported && null == AADUserIdentityAccessToken && IsAADPasswordConnStrSetup())
+            {
+                // Pass User Assigned Managed Identity Object Id here.
+                AADUserIdentityAccessToken = AADUtility.GetManagedIdentityToken(UserManagedIdentityObjectId).GetAwaiter().GetResult();
+                if (AADUserIdentityAccessToken == null)
+                {
+                    ManagedIdentitySupported = false;
+                }
+            }
+            return (null != AADUserIdentityAccessToken) ? new string(AADUserIdentityAccessToken.ToCharArray()) : null;
+        }
+
         public static bool IsAccessTokenSetup() => !string.IsNullOrEmpty(GetAccessToken());
+
+        public static bool IsSystemIdentityTokenSetup() => !string.IsNullOrEmpty(GetSystemIdentityAccessToken());
+
+        public static bool IsUserIdentityTokenSetup() => !string.IsNullOrEmpty(GetUserIdentityAccessToken());
 
         public static bool IsFileStreamSetup() => SupportsFileStream;
 

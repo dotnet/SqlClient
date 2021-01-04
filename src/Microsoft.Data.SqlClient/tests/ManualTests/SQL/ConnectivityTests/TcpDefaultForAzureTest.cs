@@ -33,8 +33,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             builder.ConnectTimeout = 1;
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // Cannot retrieve UseManagedSNI flag via reflection on UAP
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Named Pipes not supported for Azure Synapse
+        //          Expected protocol TCP Provider in the error message, but received: A network-related or instance-specific error occurred while establishing a connection to SQL Server.
+        //          The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. 
+        //          (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void NonAzureNoProtocolConnectionTest()
         {
             builder.DataSource = InvalidHostname;

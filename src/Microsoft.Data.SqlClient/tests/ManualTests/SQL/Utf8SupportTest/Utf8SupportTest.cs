@@ -8,7 +8,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class Utf8SupportTest
     {
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsUTF8Supported))]
+        // Synapse: 'CONNECTIONPROPERTY' is not a recognized built-in function name.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsUTF8Supported), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void CheckSupportUtf8ConnectionProperty()
         {
             using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
@@ -27,5 +28,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
         }
+
+        // TODO: Write tests using UTF8 collations
     }
 }
