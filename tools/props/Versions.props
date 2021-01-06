@@ -7,7 +7,7 @@
     <!-- Future Assembly Version values shall be Major.Minor.0.0; e.g. 3.0.0.0 -->
     <AssemblyVersion>2.0.20168.4</AssemblyVersion>
     <MicrosoftDotNetGenAPIPackageVersion>1.0.0-beta.18578.2</MicrosoftDotNetGenAPIPackageVersion>
-    <NugetPackageVersion Condition="'$(NugetPackageVersion)' == ''">2.1.0-dev</NugetPackageVersion>
+    <NugetPackageVersion Condition="'$(NugetPackageVersion)' == ''">3.0.0-dev</NugetPackageVersion>
     <Version>$(NugetPackageVersion)</Version>
   </PropertyGroup>
   <!-- NetFx project dependencies -->

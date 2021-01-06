@@ -6,7 +6,7 @@ You can contribute to Microsoft.Data.SqlClient with issues and PRs. Simply filin
 
 We use and recommend the following workflow:
 
-1. Create an issue for your work. 
+1. Create an issue for your work.
     - You can skip this step for trivial changes.
     - Reuse an existing issue on the topic, if there is one.
     - Get agreement from the team and the community that your proposed change is a good one.
@@ -15,8 +15,8 @@ We use and recommend the following workflow:
     - For any other improvements in the driver, add a Label "**Enhancement**" to your issue.
     - Clearly state that you are going to take on implementing it, if that's the case. You can request that the issue be assigned to you. Note: The issue filer and the implementer don't have to be the same person.
 2. Create a personal fork of the repository on GitHub (if you don't already have one).
-3. Create a branch off of master (`git checkout -b mybranch`). 
-    - Name the branch so that it clearly communicates your intentions, such as issue-123 or githubhandle-issue. 
+3. Create a branch off of master (`git checkout -b mybranch`).
+    - Name the branch so that it clearly communicates your intentions, such as issue-123 or githubhandle-issue.
     - Branches are useful since they isolate your changes from incoming changes from upstream. They also enable you to create multiple PRs from the same fork.
 4. Make and commit your changes.
     - Please follow our [Commit Messages](contributing.md#commit-messages) guidance.
@@ -41,7 +41,7 @@ If the CI build fails for any reason, the PR issue will be updated with a link t
 
 ## PR Feedback
 
-Microsoft team and community members will provide feedback on your change. Community feedback is highly valued. You will often see the absence of team feedback if the community has already provided good review feedback. 
+Microsoft team and community members will provide feedback on your change. Community feedback is highly valued. You will often see the absence of team feedback if the community has already provided good review feedback.
 
 1 or more Microsoft team members will review every PR prior to merge. They will often reply with "LGTM, modulo comments". That means that the PR will be merged once the feedback is resolved. "LGTM" == "looks good to me".
 
@@ -61,6 +61,16 @@ For testing PR changes and ensure they work fine, we maintain a public feed that
 
 **Add this feed to NuGet Sources**
 
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <packageSources>
+    <clear />
+    <add key="Microsoft.Data.SqlClient.Commits" value="https://pkgs.dev.azure.com/sqlclientdrivers-ci/sqlclient/_packaging/Microsoft.Data.SqlClient.Commits/nuget/v3/index.json" />
+  </packageSources>
+</configuration>
+```
+OR
 ```cmd
 nuget.exe sources Add -Name "Microsoft.Data.SqlClient.Commits" -Source "https://pkgs.dev.azure.com/sqlclientdrivers-ci/sqlclient/_packaging/Microsoft.Data.SqlClient.Commits/nuget/v3/index.json"
 ```
@@ -80,8 +90,26 @@ The package naming conventions follow SemVer 2.0.0 and also provide changeset in
 Package names will be like: `Microsoft.Data.SqlClient.1.1.0-build.19250.1-c21aa7c.nupkg`
 
 Breaking down:
-- `1.1.0-build` - Identitier for currently active driver version in Build.
+- `1.1.0-build` - Identifier for currently active driver version in Build.
 - `19250.1` - Unique identifier to keep latest PRs on top of the feed.
 - `c21aa7c` - Short Commit Id to identify merged commit in `master`.
 
 > Note: This public feed is only for testing and validating new PR changes. Packages from feed will be eventually removed when the maximum NuGet Package limit of **50** is reached. We do not recommend using packages from this feed in client applications.
+
+## Nightly builds
+
+We also maintain NuGet feed for Nightly builds that are generated when new changes are merged in the repository. To access Nightly builds, add below configuration to package sources:
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <packageSources>
+    <clear />
+    <add key="Microsoft.Data.SqlClient.dev" value="https://pkgs.dev.azure.com/sqlclientdrivers-ci/sqlclient/_packaging/Microsoft.Data.SqlClient.dev/nuget/v3/index.json" />
+  </packageSources>
+</configuration>
+```
+OR
+```cmd
+nuget.exe sources Add -Name "Microsoft.Data.SqlClient.dev" -Source "https://pkgs.dev.azure.com/sqlclientdrivers-ci/sqlclient/_packaging/Microsoft.Data.SqlClient.dev/nuget/v3/index.json"
+```
