@@ -133,18 +133,18 @@ namespace Microsoft.Data.SqlClient
         /// These represent logical groups of events that can be turned on and off independently
         /// Often each task has a keyword, but where tasks are determined by subsystem, keywords
         /// are determined by usefulness to end users to filter.
-        /// 
-        /// Generally users don't mind extra events if they are not high volume, so grouping low 
+        ///
+        /// Generally users don't mind extra events if they are not high volume, so grouping low
         /// volume events together in a single keywords is OK (users can post-filter by task if desired)
-        /// 
+        ///
         /// <remarks>
-        /// The visibility of the enum has to be public, otherwise there will be an ArgumentException 
+        /// The visibility of the enum has to be public, otherwise there will be an ArgumentException
         /// on calling related WriteEvent() method.
-        /// 
+        ///
         /// The Keywords class has to be a nested class.
         /// Each keyword must be a power of 2.
         /// </remarks>
-        /// 
+        ///
         /// </summary>
         #region Keywords
         public class Keywords
@@ -335,6 +335,15 @@ namespace Microsoft.Data.SqlClient
             if (Log.IsTraceEnabled())
             {
                 Trace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr));
+            }
+        }
+
+        [NonEvent]
+        internal void TryTraceEvent<T0, T1, T2, T3, T4>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4)
+        {
+            if (Log.IsTraceEnabled())
+            {
+                Trace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr, args4?.ToString() ?? NullStr));
             }
         }
 
@@ -737,6 +746,33 @@ namespace Microsoft.Data.SqlClient
             if (Log.IsCorrelationEnabled())
             {
                 CorrelationTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr));
+            }
+        }
+
+        [NonEvent]
+        internal void TryCorrelationTraceEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
+        {
+            if (Log.IsCorrelationEnabled())
+            {
+                CorrelationTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr));
+            }
+        }
+
+        [NonEvent]
+        internal void TryCorrelationTraceEvent<T0, T1, T2, T3, T4>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4)
+        {
+            if (Log.IsCorrelationEnabled())
+            {
+                CorrelationTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr, args4?.ToString() ?? NullStr));
+            }
+        }
+
+        [NonEvent]
+        internal void TryCorrelationTraceEvent<T0, T1, T2, T3, T4, T5>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4, T5 args5)
+        {
+            if (Log.IsCorrelationEnabled())
+            {
+                CorrelationTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr, args4?.ToString() ?? NullStr, args5?.ToString() ?? NullStr));
             }
         }
         #endregion
