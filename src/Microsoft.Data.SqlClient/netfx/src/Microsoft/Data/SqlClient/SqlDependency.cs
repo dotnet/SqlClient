@@ -241,29 +241,33 @@ namespace Microsoft.Data.SqlClient
         // END EventContextPair private class.
         // ----------------------------------------
 
-        // ----------------------------------------
-        // Private class for restricting allowed types from deserialization.
-        // ----------------------------------------
 
-        private class SqlDependencyProcessDispatcherSerializationBinder : SerializationBinder
+        //-----------------------------------------------
+        // Private Class to add ObjRef as DataContract
+        //-----------------------------------------------
+        [SecurityPermission(SecurityAction.Assert, Flags = SecurityPermissionFlag.RemotingConfiguration)]
+        [DataContract]
+        private class SqlClientObjRef : IExtensibleDataObject
         {
-            public override Type BindToType(string assemblyName, string typeName)
+            [DataMember]
+            private static ObjRef SqlObjRef;
+
+            public SqlClientObjRef(SqlDependencyProcessDispatcher dispatcher)
             {
-                // Deserializing an unexpected type can inject objects with malicious side effects.
-                // If the type is unexpected, throw an exception to stop deserialization.
-                if (typeName == nameof(SqlDependencyProcessDispatcher))
-                {
-                    return typeof(SqlDependencyProcessDispatcher);
-                }
-                else
-                {
-                    throw new ArgumentException("Unexpected type", nameof(typeName));
-                }
+                SqlObjRef = RemotingServices.Marshal(dispatcher);
+            }
+
+            private ExtensionDataObject _extensionData_Value;
+
+            public ExtensionDataObject ExtensionData
+            {
+                get => _extensionData_Value;
+                set => _extensionData_Value = value;
             }
         }
-        // ----------------------------------------
-        // END SqlDependencyProcessDispatcherSerializationBinder private class.
-        // ----------------------------------------
+        // ------------------------------------------
+        // End SqlClientObjRef private class.
+        // -------------------------------------------
 
         // ----------------
         // Instance members
@@ -306,9 +310,8 @@ namespace Microsoft.Data.SqlClient
         private static readonly string _typeName = (typeof(SqlDependencyProcessDispatcher)).FullName;
 
         // -----------
-        // BID members
+        // EventSource members
         // -----------
-
 
         private readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
         private static int _objectTypeCount; // EventSource Counter
@@ -336,7 +339,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDependency.xml' path='docs/members[@name="SqlDependency"]/ctorCommandOptionsTimeout/*' />
-        [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
+        [HostProtection(ExternalThreading = true)]
         public SqlDependency(SqlCommand command, string options, int timeout)
         {
             long scopeID = SqlClientEventSource.Log.TryNotificationScopeEnterEvent("<sc.SqlDependency|DEP> {0}, options: '{1}', timeout: '{2}'", ObjectID, options, timeout);
@@ -597,11 +600,13 @@ namespace Microsoft.Data.SqlClient
                             _processDispatcher = dependency.SingletonProcessDispatcher; // Set to static instance.
 
                             // Serialize and set in native.
-                            ObjRef objRef = GetObjRef(_processDispatcher);
-                            BinaryFormatter formatter = new BinaryFormatter();
-                            MemoryStream stream = new MemoryStream();
-                            GetSerializedObject(objRef, formatter, stream);
-                            SNINativeMethodWrapper.SetData(stream.GetBuffer()); // Native will be forced to synchronize and not overwrite.
+                            using (MemoryStream stream = new MemoryStream())
+                            {
+                                SqlClientObjRef objRef = new SqlClientObjRef(_processDispatcher);
+                                DataContractSerializer formatter = new DataContractSerializer(objRef.GetType());
+                                GetSerializedObject(objRef, formatter, stream);
+                                SNINativeMethodWrapper.SetData(stream.GetBuffer()); // Native will be forced to synchronize and not overwrite.
+                            }
                         }
                         else
                         {
@@ -628,10 +633,12 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG       // Possibly expensive, limit to debug.
                 SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP> AppDomain.CurrentDomain.FriendlyName: {0}", AppDomain.CurrentDomain.FriendlyName);
 #endif
-                BinaryFormatter formatter = new BinaryFormatter();
-                MemoryStream stream = new MemoryStream(nativeStorage);
-                _processDispatcher = GetDeserializedObject(formatter, stream); // Deserialize and set for appdomain.
-                SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP> processDispatcher obtained, ID: {0}", _processDispatcher.ObjectID);
+                using (MemoryStream stream = new MemoryStream(nativeStorage))
+                {
+                    DataContractSerializer formatter = new DataContractSerializer(typeof(SqlDependencyProcessDispatcher));
+                    _processDispatcher = GetDeserializedObject(formatter, stream); // Deserialize and set for appdomain.
+                    SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP> processDispatcher obtained, ID: {0}", _processDispatcher.ObjectID);
+                }
             }
         }
 
@@ -639,24 +646,16 @@ namespace Microsoft.Data.SqlClient
         // Static security asserted methods - limit scope of assert.
         // ---------------------------------------------------------
 
-        [SecurityPermission(SecurityAction.Assert, Flags = SecurityPermissionFlag.RemotingConfiguration)]
-        private static ObjRef GetObjRef(SqlDependencyProcessDispatcher _processDispatcher)
+        [SecurityPermission(SecurityAction.Assert, Flags = SecurityPermissionFlag.SerializationFormatter)]
+        private static void GetSerializedObject(SqlClientObjRef objRef, DataContractSerializer formatter, MemoryStream stream)
         {
-            return RemotingServices.Marshal(_processDispatcher);
+            formatter.WriteObject(stream, objRef);
         }
 
         [SecurityPermission(SecurityAction.Assert, Flags = SecurityPermissionFlag.SerializationFormatter)]
-        private static void GetSerializedObject(ObjRef objRef, BinaryFormatter formatter, MemoryStream stream)
+        private static SqlDependencyProcessDispatcher GetDeserializedObject(DataContractSerializer formatter, MemoryStream stream)
         {
-            formatter.Serialize(stream, objRef);
-        }
-
-        [SecurityPermission(SecurityAction.Assert, Flags = SecurityPermissionFlag.SerializationFormatter)]
-        private static SqlDependencyProcessDispatcher GetDeserializedObject(BinaryFormatter formatter, MemoryStream stream)
-        {
-            // Use a custom SerializationBinder to restrict deserialized types to SqlDependencyProcessDispatcher.
-            formatter.Binder = new SqlDependencyProcessDispatcherSerializationBinder();
-            object result = formatter.Deserialize(stream);
+            object result = formatter.ReadObject(stream);
             Debug.Assert(result.GetType() == typeof(SqlDependencyProcessDispatcher), "Unexpected type stored in native!");
             return (SqlDependencyProcessDispatcher)result;
         }

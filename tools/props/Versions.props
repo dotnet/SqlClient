@@ -52,10 +52,10 @@
   </PropertyGroup>
   <!-- Test Project Dependencies -->
   <PropertyGroup>
-    <MicrosoftDotNetPlatformAbstractionsVersion>3.1.1</MicrosoftDotNetPlatformAbstractionsVersion>
+    <MicrosoftDotNetPlatformAbstractionsVersion>3.1.6</MicrosoftDotNetPlatformAbstractionsVersion>
     <MicrosoftIdentityModelClientsActiveDirectoryVersion>5.2.6</MicrosoftIdentityModelClientsActiveDirectoryVersion>
-    <MicrosoftNETTestSdkVersion>15.9.0</MicrosoftNETTestSdkVersion>
-    <MicrosoftWindowsCompatibilityVersion>3.1.0</MicrosoftWindowsCompatibilityVersion>
+    <MicrosoftNETTestSdkVersion>16.8.3</MicrosoftNETTestSdkVersion>
+    <MicrosoftWindowsCompatibilityVersion>3.1.1</MicrosoftWindowsCompatibilityVersion>
     <NewtonsoftJsonVersion>12.0.3</NewtonsoftJsonVersion>
     <SystemRuntimeInteropServicesRuntimeInformationVersion>4.3.0</SystemRuntimeInteropServicesRuntimeInformationVersion>
     <SystemLinqExpressionsVersion>4.3.0</SystemLinqExpressionsVersion>

@@ -4,6 +4,7 @@
 
 using System;
 using System.IO;
+using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using Newtonsoft.Json;
 using Xunit;
@@ -33,9 +34,9 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(e.StackTrace, sqlEx.StackTrace);
         }
 
-
         [Fact]
-        [ActiveIssue("12161", TestPlatforms.AnyUnix)]
+        [ActiveIssue("12161", TargetFrameworkMonikers.Netcoreapp)]
+
         public static void SqlExcpetionSerializationTest()
         {
             var formatter = new BinaryFormatter();
