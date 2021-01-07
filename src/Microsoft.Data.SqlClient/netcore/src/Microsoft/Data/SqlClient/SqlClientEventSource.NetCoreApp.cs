@@ -125,7 +125,7 @@ namespace Microsoft.Data.SqlClient
                 };
 
             _numberOfActiveConnectionPoolGroups = _numberOfActiveConnectionPoolGroups ??
-                new PollingCounter("number-of-active-connection-pool-groups", this, () => _activeConnectionPoolsCounter)
+                new PollingCounter("number-of-active-connection-pool-groups", this, () => _activeConnectionPoolGroupsCounter)
                 {
                     DisplayName = "Number of active unique connection strings",
                     DisplayUnits = "count"
