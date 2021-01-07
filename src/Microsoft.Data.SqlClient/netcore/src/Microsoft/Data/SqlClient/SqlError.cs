@@ -28,12 +28,12 @@ namespace Microsoft.Data.SqlClient
             Exception = exception;
             if (errorClass != 0)
             {
-                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlError.SqlError|ERR> infoNumber={0}, errorState={1}, errorClass={2}, errorMessage='{3}', procedure='{4}', lineNumber={5}", infoNumber, (int)errorState, (int)errorClass, errorMessage, procedure ?? "None", (int)lineNumber);
+                SqlClientEventSource.Log.TryTraceEvent("SqlError.ctor | ERR | Info Number {0}, Error State {1}, Error Class {2}, Error Message '{3}', Procedure '{4}', Line Number {5}", infoNumber, (int)errorState, (int)errorClass, errorMessage, procedure ?? "None", (int)lineNumber);
             }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml' path='docs/members[@name="SqlError"]/ToString/*' />
-        // There is no exception stack included because the correct exception stack is only available 
+        // There is no exception stack included because the correct exception stack is only available
         // on SqlException, and to obtain that the SqlError would have to have backpointers all the
         // way back to SqlException.  If the user needs a call stack, they can obtain it on SqlException.
         public override string ToString()

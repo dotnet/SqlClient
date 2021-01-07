@@ -83,7 +83,7 @@ namespace Microsoft.Data.SqlClient
         private long _columnDataBytesRead;       // last byte read by user
         private long _columnDataCharsRead;       // last char read by user
         private char[] _columnDataChars;
-        private int _columnDataCharsIndex;      // Column index that is currently loaded in _columnDataChars 
+        private int _columnDataCharsIndex;      // Column index that is currently loaded in _columnDataChars
 
         private Task _currentTask;
         private Snapshot _snapshot;
@@ -759,8 +759,8 @@ namespace Microsoft.Data.SqlClient
         {
             AssertReaderState(requireData: true, permitAsync: true);
 
-            // VSTS DEVDIV2 380446: It is possible that read attempt we are cleaning after ended with partially 
-            // processed header (if it falls between network packets). In this case the first thing to do is to 
+            // VSTS DEVDIV2 380446: It is possible that read attempt we are cleaning after ended with partially
+            // processed header (if it falls between network packets). In this case the first thing to do is to
             // finish reading the header, otherwise code will start treating unread header as TDS payload.
             if (_stateObj._partialHeaderBytesRead > 0)
             {
@@ -816,7 +816,7 @@ namespace Microsoft.Data.SqlClient
 
                 Debug.Assert(TdsParser.IsValidTdsToken(token), $"Invalid token after performing CleanPartialRead: {token,-2:X2}");
             }
-#endif            
+#endif
             _sharedState._dataReady = false;
 
             return true;
@@ -844,7 +844,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/Close/*' />
         public override void Close()
         {
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlDataReader.Close|API> {0}", ObjectID);
+            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlDataReader.Close | API | Object Id {0}, Command Object Id {1}", ObjectID, Command?.ObjectID);
             SqlStatistics statistics = null;
             try
             {
@@ -903,7 +903,7 @@ namespace Microsoft.Data.SqlClient
                             if (_snapshot != null)
                             {
 #if DEBUG
-                                // The stack trace for replays will differ since they weren't captured during close                                
+                                // The stack trace for replays will differ since they weren't captured during close
                                 stateObj._permitReplayStackTraceToDiffer = true;
 #endif
                                 PrepareForAsyncContinuation();
@@ -911,7 +911,7 @@ namespace Microsoft.Data.SqlClient
 
                             SetTimeout(_defaultTimeoutMilliseconds);
 
-                            // Close can be called from async methods in error cases, 
+                            // Close can be called from async methods in error cases,
                             // in which case we need to switch to syncOverAsync
                             stateObj._syncOverAsync = true;
 
@@ -1442,7 +1442,7 @@ namespace Microsoft.Data.SqlClient
         public override DataTable GetSchemaTable()
         {
             SqlStatistics statistics = null;
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlDataReader.GetSchemaTable|API> {0}", ObjectID);
+            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlDataReader.GetSchemaTable | API | Object Id {0}, Command Object Id {1}", ObjectID, Command?.ObjectID);
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -1504,7 +1504,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    // Grab already read data    
+                    // Grab already read data
                     return _data[i].SqlXml.CreateReader();
                 }
             }
@@ -1549,7 +1549,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    // Grab already read data    
+                    // Grab already read data
                     data = _data[i].SqlBinary.Value;
                 }
 
@@ -1970,7 +1970,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    // Grab already read data    
+                    // Grab already read data
                     data = _data[i].SqlString.Value;
                 }
 
@@ -2191,7 +2191,7 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.NonSeqByteAccess(dataIndex, _columnDataCharsRead, nameof(GetChars));
             }
 
-            // If we start reading the new column, either dataIndex is 0 or 
+            // If we start reading the new column, either dataIndex is 0 or
             // _columnDataCharsRead is 0 and dataIndex > _columnDataCharsRead is true below.
             // In both cases we will clean decoder
             if (dataIndex == 0)
@@ -2222,7 +2222,7 @@ namespace Microsoft.Data.SqlClient
                 // Skip chars
 
                 // Clean decoder state: we do not reset it, but destroy to ensure
-                // that we do not start decoding the column with decoder from the old one                                                       
+                // that we do not start decoding the column with decoder from the old one
                 _stateObj._plpdecoder = null;
                 cch = dataIndex - _columnDataCharsRead;
                 cch = isUnicode ? (cch << 1) : cch;
@@ -2792,7 +2792,7 @@ namespace Microsoft.Data.SqlClient
         {
             // this block of type specific shortcuts uses RyuJIT jit behaviors to achieve fast implementations of the primitive types
             // RyuJIT will be able to determine at compilation time that the typeof(T)==typeof(<primitive>) options are constant
-            // and be able to remove all implementations which cannot be reached. this will eliminate non-specialized code for 
+            // and be able to remove all implementations which cannot be reached. this will eliminate non-specialized code for
             Type dataType = data.GetTypeFromStorageType(false);
             if (typeof(T) == typeof(int) && dataType == typeof(int))
             {
@@ -2968,7 +2968,7 @@ namespace Microsoft.Data.SqlClient
                         _data[fieldIndex].Clear();
                         if (fieldIndex > i && fieldIndex>0)
                         {
-                            // if we jumped an index forward because of a hidden column see if the buffer before the 
+                            // if we jumped an index forward because of a hidden column see if the buffer before the
                             // current one was populated by the seek forward and clear it if it was
                             _data[fieldIndex - 1].Clear();
                         }
@@ -3243,7 +3243,7 @@ namespace Microsoft.Data.SqlClient
         private bool TryNextResult(out bool more)
         {
             SqlStatistics statistics = null;
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlDataReader.NextResult|API> {0}", ObjectID);
+            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlDataReader.NextResult | API | Object Id {0}", ObjectID);
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -3404,7 +3404,7 @@ namespace Microsoft.Data.SqlClient
         private bool TryReadInternal(bool setTimeout, out bool more)
         {
             SqlStatistics statistics = null;
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlDataReader.Read|API> {0}", ObjectID);
+            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlDataReader.TryReadInternal | API | Object Id {0}", ObjectID);
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -3935,7 +3935,7 @@ namespace Microsoft.Data.SqlClient
                 // broken connection, so check state first.
                 if (parser.State == TdsParserState.OpenLoggedIn)
                 {
-                    SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlDataReader.RestoreServerSettings|Info|Correlation> ObjectID {0}, ActivityID '{1}'", ObjectID, ActivityCorrelator.Current);
+                    SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlDataReader.RestoreServerSettings | Info | Correlation | Object Id {0}, Activity Id '{1}'", ObjectID, ActivityCorrelator.Current);
                     Task executeTask = parser.TdsExecuteSQLBatch(_resetOptionsString, (_command != null) ? _command.CommandTimeout : 0, null, stateObj, sync: true);
                     Debug.Assert(executeTask == null, "Shouldn't get a task when doing sync writes");
 
@@ -4240,7 +4240,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/NextResultAsync/*' />
         public override Task<bool> NextResultAsync(CancellationToken cancellationToken)
         {
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlDataReader.NextResultAsync|API> {0}", ObjectID);
+            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlDataReader.NextResultAsync | API | Object Id {0}", ObjectID);
             try
             {
                 TaskCompletionSource<bool> source = new TaskCompletionSource<bool>();
@@ -4290,13 +4290,13 @@ namespace Microsoft.Data.SqlClient
             HasNextResultAsyncCallContext context = (HasNextResultAsyncCallContext)state;
             if (task != null)
             {
-                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDataReader.NextResultAsync> attempt retry {0}", ObjectID);
+                SqlClientEventSource.Log.TryTraceEvent("SqlDataReader.NextResultAsyncExecute | attempt retry {0}", ObjectID);
                 context._reader.PrepareForAsyncContinuation();
             }
 
             if (context._reader.TryNextResult(out bool more))
             {
-                // completed 
+                // completed
                 return more ? ADP.TrueTask : ADP.FalseTask;
             }
 
@@ -4575,7 +4575,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/ReadAsync/*' />
         public override Task<bool> ReadAsync(CancellationToken cancellationToken)
         {
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlDataReader.ReadAsync|API> {0}", ObjectID);
+            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlDataReader.ReadAsync | API | Object Id {0}", ObjectID);
             try
             {
                 if (IsClosed)
@@ -4730,7 +4730,7 @@ namespace Microsoft.Data.SqlClient
                 // If there are no more rows, or this is Sequential Access, then we are done
                 if (!hasMoreData || (reader._commandBehavior & CommandBehavior.SequentialAccess) == CommandBehavior.SequentialAccess)
                 {
-                    // completed 
+                    // completed
                     return hasMoreData ? ADP.TrueTask : ADP.FalseTask;
                 }
                 else
@@ -4750,7 +4750,7 @@ namespace Microsoft.Data.SqlClient
                     // if non-sequentialaccess then read entire row before returning
                     if (reader.TryReadColumn(reader._metaData.Length - 1, true))
                     {
-                        // completed 
+                        // completed
                         return ADP.TrueTask;
                     }
                 }
@@ -5459,7 +5459,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // This function is called directly if calling function already closed the reader, so _stateObj is null,
-        // in other cases parameterless version should be called 
+        // in other cases parameterless version should be called
         private void CleanupAfterAsyncInvocationInternal(TdsParserStateObject stateObj, bool resetNetworkPacketTaskSource = true)
         {
             if (resetNetworkPacketTaskSource)
