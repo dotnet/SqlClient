@@ -1526,7 +1526,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.OpenAsyncComplete | Info | Correlation | Activity Id {0}, Client Connection Id {1}", ActivityCorrelator.Current, connection.ClientConnectionId);
+                SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.OpenAsyncComplete | Info | Correlation | Activity Id {0}, Client Connection Id {1}", ActivityCorrelator.Current, connection?.ClientConnectionId);
                 s_diagnosticListener.WriteConnectionOpenAfter(operationId, connection);
             }
         }

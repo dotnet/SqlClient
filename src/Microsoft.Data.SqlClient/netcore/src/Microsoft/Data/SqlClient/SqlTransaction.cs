@@ -255,7 +255,7 @@ namespace Microsoft.Data.SqlClient
             Guid operationId = s_diagnosticListener.WriteTransactionRollbackBefore(_isolationLevel, _connection, InternalTransaction, transactionName);
 
             ZombieCheck();
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlTransaction.Rollback | API | Object Id {0}, Transaction Name='{1}', ActivityID {2}, Client Connection Id {3}", ObjectID, transactionName, ActivityCorrelator.Current, Connection.ClientConnectionId);
+            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlTransaction.Rollback | API | Object Id {0}, Transaction Name='{1}', ActivityID {2}, Client Connection Id {3}", ObjectID, transactionName, ActivityCorrelator.Current, Connection?.ClientConnectionId);
             SqlStatistics statistics = null;
             try
             {

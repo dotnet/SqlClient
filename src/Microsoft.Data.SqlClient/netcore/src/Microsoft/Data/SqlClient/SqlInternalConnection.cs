@@ -463,7 +463,7 @@ namespace Microsoft.Data.SqlClient
                 PropagateTransactionCookie(cookie);
 
                 _isEnlistedInTransaction = true;
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("SqlInternalConnection.EnlistNonNull | ADV | Object Id {0}, Client Connection Id {1}, Enlisted in transaction with transactionId=0x{2}", ObjectID, Connection?.ClientConnectionId, tx?.TransactionInformation?.LocalIdentifier);
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("SqlInternalConnection.EnlistNonNull | ADV | Object Id {0}, Client Connection Id {1}, Enlisted in transaction with transactionId {2}", ObjectID, Connection?.ClientConnectionId, tx?.TransactionInformation?.LocalIdentifier);
             }
 
             EnlistedTransaction = tx; // Tell the base class about our enlistment

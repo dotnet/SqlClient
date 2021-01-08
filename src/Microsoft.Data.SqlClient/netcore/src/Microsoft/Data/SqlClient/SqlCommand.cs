@@ -4583,7 +4583,7 @@ namespace Microsoft.Data.SqlClient
                     rpc.options = TdsEnums.RPC_NOMETADATA;
                     if (returnStream)
                     {
-                        SqlClientEventSource.Log.TryTraceEvent("SqlCommand.RunExecuteReaderTds | Info | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command executed as RPC, RPC Name '{4}' ", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, rpc.rpcName);
+                        SqlClientEventSource.Log.TryTraceEvent("SqlCommand.RunExecuteReaderTds | Info | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command executed as RPC, RPC Name '{4}' ", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, rpc?.rpcName);
                     }
 
                     Debug.Assert(_rpcArrayOf1[0] == rpc);
@@ -4601,7 +4601,7 @@ namespace Microsoft.Data.SqlClient
                     optionSettings = GetSetOptionsString(cmdBehavior);
                     if (returnStream)
                     {
-                        SqlClientEventSource.Log.TryTraceEvent("SqlCommand.RunExecuteReaderTds | Info | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command executed as RPC, RPC Name '{4}' ", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, rpc.rpcName);
+                        SqlClientEventSource.Log.TryTraceEvent("SqlCommand.RunExecuteReaderTds | Info | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command executed as RPC, RPC Name '{4}' ", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, rpc?.rpcName);
                     }
 
                     // turn set options ON
