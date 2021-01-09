@@ -13,34 +13,49 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class SqlCommandCRLTest
     {
+        private readonly string _exceedErrMsgPattern = RetryLogicTestHelper.s_ExceedErrMsgPattern;
+        private readonly string _cancelErrMsgPattern = RetryLogicTestHelper.s_CancelErrMsgPattern;
+
         #region Sync
         [Theory]
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCommand), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper))]
         public void RetryExecuteFail(string cnnString, SqlRetryLogicBaseProvider provider)
         {
-            int numberOfRetries = provider.RetryLogic.NumberOfTries;
-            int cancelAfterRetries = numberOfRetries + 1;
+            int numberOfTries = provider.RetryLogic.NumberOfTries;
+            int cancelAfterRetries = numberOfTries + 1;
+            int currentRetries = 0;
+            provider.Retrying += (s, e) => currentRetries = e.RetryCount;
             string query = "SELECT bad command";
 
             using (SqlConnection cnn = new SqlConnection(cnnString))
             using (SqlCommand cmd = CreateCommand(cnn, provider, cancelAfterRetries))
             {
                 cmd.CommandText = query;
-                Assert.Throws<AggregateException>(() => cmd.ExecuteScalar());
-                Assert.Equal(numberOfRetries, provider.RetryLogic.Current + 1);
+                var ex = Assert.Throws<AggregateException>(() => cmd.ExecuteScalar());
+                Assert.Equal(numberOfTries, currentRetries + 1);
+                Assert.Equal(numberOfTries, ex.InnerExceptions.Count);
+                Assert.Contains(string.Format(_exceedErrMsgPattern, numberOfTries), ex.Message);
 
-                Assert.Throws<AggregateException>(() => cmd.ExecuteReader());
-                Assert.Equal(numberOfRetries, provider.RetryLogic.Current + 1);
+                ex = Assert.Throws<AggregateException>(() => cmd.ExecuteReader());
+                Assert.Equal(numberOfTries, currentRetries + 1);
+                Assert.Equal(numberOfTries, ex.InnerExceptions.Count);
+                Assert.Contains(string.Format(_exceedErrMsgPattern, numberOfTries), ex.Message);
 
-                Assert.Throws<AggregateException>(() => cmd.ExecuteReader(CommandBehavior.Default));
-                Assert.Equal(numberOfRetries, provider.RetryLogic.Current + 1);
+                ex = Assert.Throws<AggregateException>(() => cmd.ExecuteReader(CommandBehavior.Default));
+                Assert.Equal(numberOfTries, currentRetries + 1);
+                Assert.Equal(numberOfTries, ex.InnerExceptions.Count);
+                Assert.Contains(string.Format(_exceedErrMsgPattern, numberOfTries), ex.Message);
 
-                Assert.Throws<AggregateException>(() => cmd.ExecuteNonQuery());
-                Assert.Equal(numberOfRetries, provider.RetryLogic.Current + 1);
+                ex = Assert.Throws<AggregateException>(() => cmd.ExecuteNonQuery());
+                Assert.Equal(numberOfTries, currentRetries + 1);
+                Assert.Equal(numberOfTries, ex.InnerExceptions.Count);
+                Assert.Contains(string.Format(_exceedErrMsgPattern, numberOfTries), ex.Message);
 
                 cmd.CommandText = query + " FOR XML AUTO";
-                Assert.Throws<AggregateException>(() => cmd.ExecuteXmlReader());
-                Assert.Equal(numberOfRetries, provider.RetryLogic.Current + 1);
+                ex = Assert.Throws<AggregateException>(() => cmd.ExecuteXmlReader());
+                Assert.Equal(numberOfTries, currentRetries + 1);
+                Assert.Equal(numberOfTries, ex.InnerExceptions.Count);
+                Assert.Contains(string.Format(_exceedErrMsgPattern, numberOfTries), ex.Message);
             }
         }
 
@@ -48,29 +63,41 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCommand), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper))]
         public void RetryExecuteCancel(string cnnString, SqlRetryLogicBaseProvider provider)
         {
-            int numberOfRetries = provider.RetryLogic.NumberOfTries;
-            int cancelAfterRetries = numberOfRetries - 1;
+            int numberOfTries = provider.RetryLogic.NumberOfTries;
+            int cancelAfterRetries = numberOfTries - 1;
+            int currentRetries = 0;
+            provider.Retrying += (s, e) => currentRetries = e.RetryCount;
             string query = "SELECT bad command";
 
             using (SqlConnection cnn = new SqlConnection(cnnString))
             using (SqlCommand cmd = CreateCommand(cnn, provider, cancelAfterRetries))
             {
                 cmd.CommandText = query;
-                Assert.Throws<AggregateException>(() => cmd.ExecuteScalar());
-                Assert.Equal(cancelAfterRetries, provider.RetryLogic.Current);
+                var ex = Assert.Throws<AggregateException>(() => cmd.ExecuteScalar());
+                Assert.Equal(cancelAfterRetries, currentRetries);
+                Assert.Equal(cancelAfterRetries, ex.InnerExceptions.Count);
+                Assert.Contains(string.Format(_cancelErrMsgPattern, currentRetries), ex.Message);
 
-                Assert.Throws<AggregateException>(() => cmd.ExecuteReader());
-                Assert.Equal(cancelAfterRetries, provider.RetryLogic.Current);
+                ex = Assert.Throws<AggregateException>(() => cmd.ExecuteReader());
+                Assert.Equal(cancelAfterRetries, currentRetries);
+                Assert.Equal(cancelAfterRetries, ex.InnerExceptions.Count);
+                Assert.Contains(string.Format(_cancelErrMsgPattern, currentRetries), ex.Message);
 
-                Assert.Throws<AggregateException>(() => cmd.ExecuteReader(CommandBehavior.Default));
-                Assert.Equal(cancelAfterRetries, provider.RetryLogic.Current);
+                ex = Assert.Throws<AggregateException>(() => cmd.ExecuteReader(CommandBehavior.Default));
+                Assert.Equal(cancelAfterRetries, currentRetries);
+                Assert.Equal(cancelAfterRetries, ex.InnerExceptions.Count);
+                Assert.Contains(string.Format(_cancelErrMsgPattern, currentRetries), ex.Message);
 
-                Assert.Throws<AggregateException>(() => cmd.ExecuteNonQuery());
-                Assert.Equal(cancelAfterRetries, provider.RetryLogic.Current);
+                ex = Assert.Throws<AggregateException>(() => cmd.ExecuteNonQuery());
+                Assert.Equal(cancelAfterRetries, currentRetries);
+                Assert.Equal(cancelAfterRetries, ex.InnerExceptions.Count);
+                Assert.Contains(string.Format(_cancelErrMsgPattern, currentRetries), ex.Message);
 
                 cmd.CommandText = query + " FOR XML AUTO";
-                Assert.Throws<AggregateException>(() => cmd.ExecuteXmlReader());
-                Assert.Equal(cancelAfterRetries, provider.RetryLogic.Current);
+                ex = Assert.Throws<AggregateException>(() => cmd.ExecuteXmlReader());
+                Assert.Equal(cancelAfterRetries, currentRetries);
+                Assert.Equal(cancelAfterRetries, ex.InnerExceptions.Count);
+                Assert.Contains(string.Format(_cancelErrMsgPattern, currentRetries), ex.Message);
             }
         }
 
@@ -79,8 +106,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCommand), parameters: new object[] { 5 }, MemberType = typeof(RetryLogicTestHelper))]
         public void RetryExecuteWithTransScope(string cnnString, SqlRetryLogicBaseProvider provider)
         {
-            int numberOfRetries = provider.RetryLogic.NumberOfTries;
-            int cancelAfterRetries = numberOfRetries + 1;
+            int numberOfTries = provider.RetryLogic.NumberOfTries;
+            int cancelAfterRetries = numberOfTries + 1;
+            int currentRetries = 0;
+            provider.Retrying += (s, e) => currentRetries = e.RetryCount;
             string query = "SELECT bad command";
 
             using (TransactionScope transScope = new TransactionScope())
@@ -89,20 +118,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 cmd.CommandText = query;
                 Assert.Throws<SqlException>(() => cmd.ExecuteScalar());
-                Assert.Equal(0, provider.RetryLogic.Current);
+                Assert.Equal(0, currentRetries);
 
                 Assert.Throws<SqlException>(() => cmd.ExecuteReader());
-                Assert.Equal(0, provider.RetryLogic.Current);
+                Assert.Equal(0, currentRetries);
 
                 Assert.Throws<SqlException>(() => cmd.ExecuteReader(CommandBehavior.Default));
-                Assert.Equal(0, provider.RetryLogic.Current);
+                Assert.Equal(0, currentRetries);
 
                 Assert.Throws<SqlException>(() => cmd.ExecuteNonQuery());
-                Assert.Equal(0, provider.RetryLogic.Current);
+                Assert.Equal(0, currentRetries);
 
                 cmd.CommandText = query + " FOR XML AUTO";
                 Assert.Throws<SqlException>(() => cmd.ExecuteXmlReader());
-                Assert.Equal(0, provider.RetryLogic.Current);
+                Assert.Equal(0, currentRetries);
 
                 transScope.Complete();
             }
@@ -112,8 +141,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCommand), parameters: new object[] { 5 }, MemberType = typeof(RetryLogicTestHelper))]
         public void RetryExecuteWithTrans(string cnnString, SqlRetryLogicBaseProvider provider)
         {
-            int numberOfRetries = provider.RetryLogic.NumberOfTries;
-            int cancelAfterRetries = numberOfRetries + 1;
+            int numberOfTries = provider.RetryLogic.NumberOfTries;
+            int cancelAfterRetries = numberOfTries + 1;
+            int currentRetries = 0;
+            provider.Retrying += (s, e) => currentRetries = e.RetryCount;
             string query = "SELECT bad command";
 
             using (SqlConnection cnn = new SqlConnection(cnnString))
@@ -123,20 +154,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 cmd.CommandText = query;
                 cmd.Transaction = tran;
                 Assert.Throws<SqlException>(() => cmd.ExecuteScalar());
-                Assert.Equal(0, provider.RetryLogic.Current);
+                Assert.Equal(0, currentRetries);
 
                 Assert.Throws<SqlException>(() => cmd.ExecuteReader());
-                Assert.Equal(0, provider.RetryLogic.Current);
+                Assert.Equal(0, currentRetries);
 
                 Assert.Throws<SqlException>(() => cmd.ExecuteReader(CommandBehavior.Default));
-                Assert.Equal(0, provider.RetryLogic.Current);
+                Assert.Equal(0, currentRetries);
 
                 Assert.Throws<SqlException>(() => cmd.ExecuteNonQuery());
-                Assert.Equal(0, provider.RetryLogic.Current);
+                Assert.Equal(0, currentRetries);
 
                 cmd.CommandText = query + " FOR XML AUTO";
                 Assert.Throws<SqlException>(() => cmd.ExecuteXmlReader());
-                Assert.Equal(0, provider.RetryLogic.Current);
+                Assert.Equal(0, currentRetries);
 
                 tran.Commit();
             }
@@ -146,8 +177,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyFilterDMLStatements), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper))]
         public void RetryExecuteUnauthorizedSqlStatementDML(string cnnString, SqlRetryLogicBaseProvider provider)
         {
-            int numberOfRetries = provider.RetryLogic.NumberOfTries;
-            int cancelAfterRetries = numberOfRetries + 1;
+            int numberOfTries = provider.RetryLogic.NumberOfTries;
+            int cancelAfterRetries = numberOfTries + 1;
+            int currentRetries = 0;
+            provider.Retrying += (s, e) => currentRetries = e.RetryCount;
 
             using (SqlConnection cnn = new SqlConnection(cnnString))
             using (SqlCommand cmd = CreateCommand(cnn, provider, cancelAfterRetries))
@@ -155,40 +188,40 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 #region unauthorized
                 cmd.CommandText = "UPDATE bad command";
                 Assert.Throws<SqlException>(() => cmd.ExecuteNonQuery());
-                Assert.Equal(0, provider.RetryLogic.Current);
+                Assert.Equal(0, currentRetries);
 
                 cmd.CommandText = "INSERT INTO bad command";
                 Assert.Throws<SqlException>(() => cmd.ExecuteNonQuery());
-                Assert.Equal(0, provider.RetryLogic.Current);
+                Assert.Equal(0, currentRetries);
 
                 cmd.CommandText = "DELETE FROM bad command";
                 Assert.Throws<SqlException>(() => cmd.ExecuteNonQuery());
-                Assert.Equal(0, provider.RetryLogic.Current);
+                Assert.Equal(0, currentRetries);
 
                 cmd.CommandText = "TRUNCATE TABLE bad command";
                 Assert.Throws<SqlException>(() => cmd.ExecuteNonQuery());
-                Assert.Equal(0, provider.RetryLogic.Current);
+                Assert.Equal(0, currentRetries);
                 #endregion
 
                 cmd.CommandText = "SELECT bad command";
                 Assert.Throws<AggregateException>(() => cmd.ExecuteNonQuery());
-                Assert.Equal(numberOfRetries, provider.RetryLogic.Current + 1);
+                Assert.Equal(numberOfTries, currentRetries + 1);
 
                 cmd.CommandText = "ALTER TABLE bad command";
                 Assert.Throws<AggregateException>(() => cmd.ExecuteNonQuery());
-                Assert.Equal(numberOfRetries, provider.RetryLogic.Current + 1);
+                Assert.Equal(numberOfTries, currentRetries + 1);
 
                 cmd.CommandText = "EXEC bad command";
                 Assert.Throws<AggregateException>(() => cmd.ExecuteNonQuery());
-                Assert.Equal(numberOfRetries, provider.RetryLogic.Current + 1);
+                Assert.Equal(numberOfTries, currentRetries + 1);
 
                 cmd.CommandText = "CREATE TABLE bad command";
                 Assert.Throws<AggregateException>(() => cmd.ExecuteNonQuery());
-                Assert.Equal(numberOfRetries, provider.RetryLogic.Current + 1);
+                Assert.Equal(numberOfTries, currentRetries + 1);
 
                 cmd.CommandText = "DROP TABLE bad command";
                 Assert.Throws<AggregateException>(() => cmd.ExecuteNonQuery());
-                Assert.Equal(numberOfRetries, provider.RetryLogic.Current + 1);
+                Assert.Equal(numberOfTries, currentRetries + 1);
             }
         }
 
@@ -198,6 +231,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyDropDB), parameters: new object[] { 5 }, MemberType = typeof(RetryLogicTestHelper))]
         public void DropDatabaseWithActiveConnection(string cnnString, SqlRetryLogicBaseProvider provider)
         {
+            int currentRetries = 0;
             string database = DataTestUtility.GetUniqueNameForSqlServer($"RetryLogic_{provider.RetryLogic.RetryIntervalEnumerator.GetType().Name}", false);
             var builder = new SqlConnectionStringBuilder(cnnString)
             {
@@ -225,6 +259,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     // kill the active connection to the database after the first faliure.
                     provider.Retrying += (s, e) =>
                     {
+                        currentRetries = e.RetryCount;
                         if (cnn2.State == ConnectionState.Open)
                         {
                             // in some reason closing connection doesn't eliminate the active connection to the database
@@ -242,7 +277,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     cmd.CommandText = $"DROP DATABASE [{database}]";
                     cmd.ExecuteNonQuery();
 
-                    Assert.True(provider.RetryLogic.Current > 0);
+                    Assert.True(currentRetries > 0);
                 }
                 catch (Exception e)
                 {
@@ -261,6 +296,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyLockedTable), parameters: new object[] { 10 }, MemberType = typeof(RetryLogicTestHelper))]
         public void UpdateALockedTable(string cnnString, SqlRetryLogicBaseProvider provider)
         {
+            int currentRetries = 0;
             string tableName = DataTestUtility.GetUniqueNameForSqlServer("Region");
             string fieldName = "RegionDescription";
 
@@ -285,6 +321,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                     provider.Retrying += (s, e) =>
                     {
+                        currentRetries = e.RetryCount;
                         // cancel the blocker task
                         tokenSource.Cancel();
                         cmd1.Cancel();
@@ -312,7 +349,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     DataTestUtility.DropTable(cnn2, tableName);
                 }
 
-                Assert.True(provider.RetryLogic.Current > 0);
+                Assert.True(currentRetries > 0);
             }
         }
 
@@ -323,41 +360,61 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCommand), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper))]
         public async void RetryExecuteAsyncFail(string cnnString, SqlRetryLogicBaseProvider provider)
         {
-            int numberOfRetries = provider.RetryLogic.NumberOfTries;
-            int cancelAfterRetries = numberOfRetries + 1;
+            int numberOfTries = provider.RetryLogic.NumberOfTries;
+            int cancelAfterRetries = numberOfTries + 1;
+            int currentRetries = 0;
+            provider.Retrying += (s, e) => currentRetries = e.RetryCount;
             string query = "SELECT bad command";
 
             using (SqlConnection cnn = new SqlConnection(cnnString))
             using (SqlCommand cmd = CreateCommand(cnn, provider, cancelAfterRetries))
             {
                 cmd.CommandText = query;
-                await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteScalarAsync());
-                Assert.Equal(numberOfRetries, provider.RetryLogic.Current + 1);
+                var ex = await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteScalarAsync());
+                Assert.Equal(numberOfTries, currentRetries + 1);
+                Assert.Equal(numberOfTries, ex.InnerExceptions.Count);
+                Assert.Contains(string.Format(_exceedErrMsgPattern, numberOfTries), ex.Message);
 
-                await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteReaderAsync());
-                Assert.Equal(numberOfRetries, provider.RetryLogic.Current + 1);
+                ex = await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteReaderAsync());
+                Assert.Equal(numberOfTries, currentRetries + 1);
+                Assert.Equal(numberOfTries, ex.InnerExceptions.Count);
+                Assert.Contains(string.Format(_exceedErrMsgPattern, numberOfTries), ex.Message);
 
-                await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteReaderAsync(CommandBehavior.Default));
-                Assert.Equal(numberOfRetries, provider.RetryLogic.Current + 1);
+                ex = await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteReaderAsync(CommandBehavior.Default));
+                Assert.Equal(numberOfTries, currentRetries + 1);
+                Assert.Equal(numberOfTries, ex.InnerExceptions.Count);
+                Assert.Contains(string.Format(_exceedErrMsgPattern, numberOfTries), ex.Message);
 
-                await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteReaderAsync(CommandBehavior.Default, CancellationToken.None));
-                Assert.Equal(numberOfRetries, provider.RetryLogic.Current + 1);
+                ex = await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteReaderAsync(CommandBehavior.Default, CancellationToken.None));
+                Assert.Equal(numberOfTries, currentRetries + 1);
+                Assert.Equal(numberOfTries, ex.InnerExceptions.Count);
+                Assert.Contains(string.Format(_exceedErrMsgPattern, numberOfTries), ex.Message);
 
-                await Assert.ThrowsAsync<AggregateException>(() => provider.ExecuteAsync(cmd, () => Task.Factory.FromAsync(cmd.BeginExecuteReader(), cmd.EndExecuteReader)));
-                Assert.Equal(numberOfRetries, provider.RetryLogic.Current + 1);
+                ex = await Assert.ThrowsAsync<AggregateException>(() => provider.ExecuteAsync(cmd, () => Task.Factory.FromAsync(cmd.BeginExecuteReader(), cmd.EndExecuteReader)));
+                Assert.Equal(numberOfTries, currentRetries + 1);
+                Assert.Equal(numberOfTries, ex.InnerExceptions.Count);
+                Assert.Contains(string.Format(_exceedErrMsgPattern, numberOfTries), ex.Message);
 
-                await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteNonQueryAsync());
-                Assert.Equal(numberOfRetries, provider.RetryLogic.Current + 1);
+                ex = await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteNonQueryAsync());
+                Assert.Equal(numberOfTries, currentRetries + 1);
+                Assert.Equal(numberOfTries, ex.InnerExceptions.Count);
+                Assert.Contains(string.Format(_exceedErrMsgPattern, numberOfTries), ex.Message);
 
-                await Assert.ThrowsAsync<AggregateException>(() => provider.ExecuteAsync(cmd, () => Task.Factory.FromAsync(cmd.BeginExecuteNonQuery(), cmd.EndExecuteNonQuery)));
-                Assert.Equal(numberOfRetries, provider.RetryLogic.Current + 1);
+                ex = await Assert.ThrowsAsync<AggregateException>(() => provider.ExecuteAsync(cmd, () => Task.Factory.FromAsync(cmd.BeginExecuteNonQuery(), cmd.EndExecuteNonQuery)));
+                Assert.Equal(numberOfTries, currentRetries + 1);
+                Assert.Equal(numberOfTries, ex.InnerExceptions.Count);
+                Assert.Contains(string.Format(_exceedErrMsgPattern, numberOfTries), ex.Message);
 
                 cmd.CommandText = query + " FOR XML AUTO";
-                await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteXmlReaderAsync());
-                Assert.Equal(numberOfRetries, provider.RetryLogic.Current + 1);
+                ex = await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteXmlReaderAsync());
+                Assert.Equal(numberOfTries, currentRetries + 1);
+                Assert.Equal(numberOfTries, ex.InnerExceptions.Count);
+                Assert.Contains(string.Format(_exceedErrMsgPattern, numberOfTries), ex.Message);
 
-                await Assert.ThrowsAsync<AggregateException>(() => provider.ExecuteAsync(cmd, () => Task.Factory.FromAsync(cmd.BeginExecuteXmlReader(), cmd.EndExecuteXmlReader)));
-                Assert.Equal(numberOfRetries, provider.RetryLogic.Current + 1);
+                ex = await Assert.ThrowsAsync<AggregateException>(() => provider.ExecuteAsync(cmd, () => Task.Factory.FromAsync(cmd.BeginExecuteXmlReader(), cmd.EndExecuteXmlReader)));
+                Assert.Equal(numberOfTries, currentRetries + 1);
+                Assert.Equal(numberOfTries, ex.InnerExceptions.Count);
+                Assert.Contains(string.Format(_exceedErrMsgPattern, numberOfTries), ex.Message);
             }
         }
 
@@ -365,41 +422,183 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCommand), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper))]
         public async void RetryExecuteAsyncCancel(string cnnString, SqlRetryLogicBaseProvider provider)
         {
-            int numberOfRetries = provider.RetryLogic.NumberOfTries;
-            int cancelAfterRetries = numberOfRetries - 1;
+            int numberOfTries = provider.RetryLogic.NumberOfTries;
+            int cancelAfterRetries = numberOfTries - 1;
+            int currentRetries = 0;
+            provider.Retrying += (s, e) => currentRetries = e.RetryCount;
             string query = "SELECT bad command";
 
             using (SqlConnection cnn = new SqlConnection(cnnString))
             using (SqlCommand cmd = CreateCommand(cnn, provider, cancelAfterRetries))
             {
                 cmd.CommandText = query;
-                await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteScalarAsync());
-                Assert.Equal(cancelAfterRetries, provider.RetryLogic.Current);
+                var ex = await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteScalarAsync());
+                Assert.Equal(cancelAfterRetries, currentRetries);
+                Assert.Equal(cancelAfterRetries, ex.InnerExceptions.Count);
+                Assert.Contains(string.Format(_cancelErrMsgPattern, currentRetries), ex.Message);
 
-                await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteReaderAsync());
-                Assert.Equal(cancelAfterRetries, provider.RetryLogic.Current);
+                ex = await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteReaderAsync());
+                Assert.Equal(cancelAfterRetries, currentRetries);
+                Assert.Equal(cancelAfterRetries, ex.InnerExceptions.Count);
+                Assert.Contains(string.Format(_cancelErrMsgPattern, currentRetries), ex.Message);
 
-                await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteReaderAsync(CommandBehavior.Default));
-                Assert.Equal(cancelAfterRetries, provider.RetryLogic.Current);
+                ex = await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteReaderAsync(CommandBehavior.Default));
+                Assert.Equal(cancelAfterRetries, currentRetries);
+                Assert.Equal(cancelAfterRetries, ex.InnerExceptions.Count);
+                Assert.Contains(string.Format(_cancelErrMsgPattern, currentRetries), ex.Message);
 
-                await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteReaderAsync(CommandBehavior.Default, CancellationToken.None));
-                Assert.Equal(cancelAfterRetries, provider.RetryLogic.Current);
-                
-                await Assert.ThrowsAsync<AggregateException>(() => provider.ExecuteAsync(cmd, () => Task.Factory.FromAsync(cmd.BeginExecuteReader(), cmd.EndExecuteReader)));
-                Assert.Equal(cancelAfterRetries, provider.RetryLogic.Current);
+                ex = await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteReaderAsync(CommandBehavior.Default, CancellationToken.None));
+                Assert.Equal(cancelAfterRetries, currentRetries);
+                Assert.Equal(cancelAfterRetries, ex.InnerExceptions.Count);
+                Assert.Contains(string.Format(_cancelErrMsgPattern, currentRetries), ex.Message);
 
-                await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteNonQueryAsync());
-                Assert.Equal(cancelAfterRetries, provider.RetryLogic.Current);
+                ex = await Assert.ThrowsAsync<AggregateException>(() => provider.ExecuteAsync(cmd, () => Task.Factory.FromAsync(cmd.BeginExecuteReader(), cmd.EndExecuteReader)));
+                Assert.Equal(cancelAfterRetries, currentRetries);
+                Assert.Equal(cancelAfterRetries, ex.InnerExceptions.Count);
+                Assert.Contains(string.Format(_cancelErrMsgPattern, currentRetries), ex.Message);
 
-                await Assert.ThrowsAsync<AggregateException>(() => provider.ExecuteAsync(cmd, () => Task.Factory.FromAsync(cmd.BeginExecuteNonQuery(), cmd.EndExecuteNonQuery)));
-                Assert.Equal(cancelAfterRetries, provider.RetryLogic.Current);
+                ex = await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteNonQueryAsync());
+                Assert.Equal(cancelAfterRetries, currentRetries);
+                Assert.Equal(cancelAfterRetries, ex.InnerExceptions.Count);
+                Assert.Contains(string.Format(_cancelErrMsgPattern, currentRetries), ex.Message);
+
+                ex = await Assert.ThrowsAsync<AggregateException>(() => provider.ExecuteAsync(cmd, () => Task.Factory.FromAsync(cmd.BeginExecuteNonQuery(), cmd.EndExecuteNonQuery)));
+                Assert.Equal(cancelAfterRetries, currentRetries);
+                Assert.Equal(cancelAfterRetries, ex.InnerExceptions.Count);
+                Assert.Contains(string.Format(_cancelErrMsgPattern, currentRetries), ex.Message);
 
                 cmd.CommandText = query + " FOR XML AUTO";
-                await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteXmlReaderAsync());
-                Assert.Equal(cancelAfterRetries, provider.RetryLogic.Current);
+                ex = await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteXmlReaderAsync());
+                Assert.Equal(cancelAfterRetries, currentRetries);
+                Assert.Equal(cancelAfterRetries, ex.InnerExceptions.Count);
+                Assert.Contains(string.Format(_cancelErrMsgPattern, currentRetries), ex.Message);
 
-                await Assert.ThrowsAsync<AggregateException>(() => provider.ExecuteAsync(cmd, () => Task.Factory.FromAsync(cmd.BeginExecuteXmlReader(), cmd.EndExecuteXmlReader)));
-                Assert.Equal(cancelAfterRetries, provider.RetryLogic.Current);
+                ex = await Assert.ThrowsAsync<AggregateException>(() => provider.ExecuteAsync(cmd, () => Task.Factory.FromAsync(cmd.BeginExecuteXmlReader(), cmd.EndExecuteXmlReader)));
+                Assert.Equal(cancelAfterRetries, currentRetries);
+                Assert.Equal(cancelAfterRetries, ex.InnerExceptions.Count);
+                Assert.Contains(string.Format(_cancelErrMsgPattern, currentRetries), ex.Message);
+            }
+        }
+        #endregion
+
+        #region Concurrent
+        [Theory]
+        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCommand), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper))]
+        public void ConcurrentExecution(string cnnString, SqlRetryLogicBaseProvider provider)
+        {
+            var cnnStr = new SqlConnectionStringBuilder(cnnString) { MultipleActiveResultSets = true, ConnectTimeout = 0 }.ConnectionString;
+            int numberOfTries = provider.RetryLogic.NumberOfTries;
+            string query = "SELECT bad command";
+            int retriesCount = 0;
+            int concurrentExecution = 5;
+            provider.Retrying += (s, e) => Interlocked.Increment(ref retriesCount);
+
+            using (SqlConnection cnn = new SqlConnection(cnnStr))
+            {
+                cnn.Open();
+
+                Parallel.For(0, concurrentExecution,
+                i =>
+                {
+                    using (SqlCommand cmd = cnn.CreateCommand())
+                    {
+                        cmd.RetryLogicProvider = provider;
+                        cmd.CommandText = query;
+                        Assert.Throws<AggregateException>(() => cmd.ExecuteScalar());
+                    }
+                });
+                Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
+
+                retriesCount = 0;
+                Parallel.For(0, concurrentExecution,
+                i =>
+                {
+                    using (SqlCommand cmd = cnn.CreateCommand())
+                    {
+                        cmd.RetryLogicProvider = provider;
+                        cmd.CommandText = query;
+                        Assert.Throws<AggregateException>(() => cmd.ExecuteNonQuery());
+                    }
+                });
+                Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
+
+                retriesCount = 0;
+                Parallel.For(0, concurrentExecution,
+                i =>
+                {
+                    using (SqlCommand cmd = cnn.CreateCommand())
+                    {
+                        cmd.RetryLogicProvider = provider;
+                        cmd.CommandText = query;
+                        Assert.Throws<AggregateException>(() => cmd.ExecuteReader());
+                    }
+                });
+                Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
+
+                retriesCount = 0;
+                Parallel.For(0, concurrentExecution,
+                i =>
+                {
+                    using (SqlCommand cmd = cnn.CreateCommand())
+                    {
+                        cmd.RetryLogicProvider = provider;
+                        cmd.CommandText = query + " FOR XML AUTO";
+                        Assert.Throws<AggregateException>(() => cmd.ExecuteXmlReader());
+                    }
+                });
+                Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
+
+                retriesCount = 0;
+                Parallel.For(0, concurrentExecution,
+                i =>
+                {
+                    using (SqlCommand cmd = cnn.CreateCommand())
+                    {
+                        cmd.RetryLogicProvider = provider;
+                        cmd.CommandText = query;
+                        Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteScalarAsync()).Wait();
+                    }
+                });
+                Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
+
+                retriesCount = 0;
+                Parallel.For(0, concurrentExecution,
+                i =>
+                {
+                    using (SqlCommand cmd = cnn.CreateCommand())
+                    {
+                        cmd.RetryLogicProvider = provider;
+                        cmd.CommandText = query;
+                        Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteNonQueryAsync()).Wait();
+                    }
+                });
+                Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
+
+                retriesCount = 0;
+                Parallel.For(0, concurrentExecution,
+                i =>
+                {
+                    using (SqlCommand cmd = cnn.CreateCommand())
+                    {
+                        cmd.RetryLogicProvider = provider;
+                        cmd.CommandText = query;
+                        Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteReaderAsync()).Wait();
+                    }
+                });
+                Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
+
+                retriesCount = 0;
+                Parallel.For(0, concurrentExecution,
+                i =>
+                {
+                    using (SqlCommand cmd = cnn.CreateCommand())
+                    {
+                        cmd.RetryLogicProvider = provider;
+                        cmd.CommandText = query + " FOR XML AUTO";
+                        Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteXmlReaderAsync()).Wait();
+                    }
+                });
+                Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
             }
         }
 
@@ -413,7 +612,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             cmd.RetryLogicProvider = provider;
             cmd.RetryLogicProvider.Retrying += (object s, SqlRetryingEventArgs e) =>
             {
-                if (e.RetryCount > cancelAfterRetries)
+                if (e.RetryCount >= cancelAfterRetries)
                 {
                     e.Cancel = true;
                 }

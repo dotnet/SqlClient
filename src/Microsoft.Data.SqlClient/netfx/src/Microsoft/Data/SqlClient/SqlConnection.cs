@@ -284,7 +284,11 @@ namespace Microsoft.Data.SqlClient
         // Retry Logic
         private SqlRetryLogicBaseProvider _retryLogicProvider;
 
-        ///
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetryLogicProvider/*' />
+        [
+        Browsable(false),
+        DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)
+        ]
         public SqlRetryLogicBaseProvider RetryLogicProvider
         {
             get

@@ -8,39 +8,27 @@ using System.Collections.Generic;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <summary>
-    /// Generates a sequence of the time intervals.
-    /// </summary>
-    public abstract class SqlRetryIntervalBaseEnumerator : IEnumerator<TimeSpan>
+    /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/SqlRetryIntervalBaseEnumerator/*' />
+    public abstract class SqlRetryIntervalBaseEnumerator : IEnumerator<TimeSpan>, ICloneable
     {
         private readonly TimeSpan _minValue = TimeSpan.Zero;
         private readonly TimeSpan _maxValue = TimeSpan.FromSeconds(120);
 
-        /// <summary>
-        /// The gap time of each interval
-        /// </summary>
+        /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/GapTimeInterval/*' />
         public TimeSpan GapTimeInterval { get; protected set; }
 
-        /// <summary>
-        /// Maximum time interval value.
-        /// </summary>
+        /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/MaxTimeInterval/*' />
         public TimeSpan MaxTimeInterval { get; protected set; }
-        
-        /// <summary>
-        /// Minimum time interval value.
-        /// </summary>
+
+        /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/MinTimeInterval/*' />
         public TimeSpan MinTimeInterval { get; protected set; }
 
-        /// <summary>
-        /// Gets the element in the collection at the current position of the enumerator.
-        /// </summary>
+        /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/Current/*' />
         public TimeSpan Current { get; private set; } = TimeSpan.Zero;
 
         object IEnumerator.Current => Current;
 
-        /// <summary>
-        /// Constructor
-        /// </summary>
+        /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/ctor1/*' />
         public SqlRetryIntervalBaseEnumerator()
         {
             GapTimeInterval = TimeSpan.Zero;
@@ -48,9 +36,7 @@ namespace Microsoft.Data.SqlClient
             MinTimeInterval = TimeSpan.Zero;
         }
 
-        /// <summary>
-        /// Constructor
-        /// </summary>
+        /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/ctor2/*' />
         public SqlRetryIntervalBaseEnumerator(TimeSpan timeInterval, TimeSpan maxTime, TimeSpan minTime)
         {
             Validate(timeInterval, maxTime, minTime);
@@ -59,20 +45,13 @@ namespace Microsoft.Data.SqlClient
             MinTimeInterval = minTime;
         }
 
-        /// <summary>
-        /// Sets the enumerator to its initial position, which is before the first element in the collection.
-        /// </summary>
+        /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/Reset/*' />
         public virtual void Reset()
         {
             Current = TimeSpan.Zero;
         }
 
-        /// <summary>
-        /// Validate the enumeration parameters.
-        /// </summary>
-        /// <param name="timeInterval">The gap time of each interval. Must be between 0 and 120 seconds.</param>
-        /// <param name="maxTimeInterval">Maximum time interval value. Must be between 0 and 120 seconds.</param>
-        /// <param name="minTimeInterval">Minimum time interval value. Must be between 0 and 120 seconds.</param>
+        /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/Validate/*' />
         protected virtual void Validate(TimeSpan timeInterval, TimeSpan maxTimeInterval, TimeSpan minTimeInterval)
         {
             if(minTimeInterval < _minValue || minTimeInterval > _maxValue )
@@ -96,16 +75,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// Calculate the next interval time.
-        /// </summary>
-        /// <returns>Next time interval</returns>
+        /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/GetNextInterval/*' />
         protected abstract TimeSpan GetNextInterval();
 
-        /// <summary>
-        /// Advances the enumerator to the next element of the collection.
-        /// </summary>
-        /// <returns>true if the enumerator was successfully advanced to the next element; false if the enumerator has passed the end of the collection.</returns>
+        /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/MoveNext/*' />
         public virtual bool MoveNext()
         {
             TimeSpan next = Current;
@@ -123,11 +96,15 @@ namespace Microsoft.Data.SqlClient
             return result;
         }
 
-        /// <summary>
-        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
-        /// </summary>
+        /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/Dispose/*' />
         public virtual void Dispose()
         {
+        }
+
+        /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/Clone/*' />
+        public virtual object Clone()
+        {
+            throw new NotImplementedException();
         }
     }
 }

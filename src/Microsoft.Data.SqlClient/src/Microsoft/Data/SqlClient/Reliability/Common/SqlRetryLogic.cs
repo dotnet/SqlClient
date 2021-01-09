@@ -90,5 +90,15 @@ namespace Microsoft.Data.SqlClient
             }
             return result;
         }
+
+        public override object Clone()
+        {
+            var newObj = new SqlRetryLogic(NumberOfTries,
+                                           RetryIntervalEnumerator.Clone() as SqlRetryIntervalBaseEnumerator,
+                                           TransientPredicate,
+                                           PreCondition);
+            newObj.RetryIntervalEnumerator.Reset();
+            return newObj;
+        }
     }
 }

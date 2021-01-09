@@ -610,7 +610,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        ///
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RetryLogicProvider/*' />
+        [
+        Browsable(false),
+        DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)
+        ]
         public SqlRetryLogicBaseProvider RetryLogicProvider
         {
             get

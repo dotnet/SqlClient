@@ -36,6 +36,17 @@ namespace Microsoft.Data.SqlClient
                 return newVlaue < MinTimeInterval ? MinTimeInterval : newVlaue;
             }
         }
+
+        public override void Reset()
+        {
+            base.Reset();
+            internalCounter = 1;
+        }
+
+        public override object Clone()
+        {   
+            return MemberwiseClone();
+        }
     }
 
     internal class SqlIncrementalIntervalEnumerator : SqlRetryIntervalBaseEnumerator
@@ -65,18 +76,37 @@ namespace Microsoft.Data.SqlClient
                 return interval < MinTimeInterval ? MinTimeInterval : interval;
             }
         }
+
+        public override object Clone()
+        {
+            return MemberwiseClone();
+        }
     }
 
     internal class SqlFixedIntervalEnumerator : SqlRetryIntervalBaseEnumerator
     {
-        public SqlFixedIntervalEnumerator(TimeSpan gapTimeInterval)
-            : base(gapTimeInterval, gapTimeInterval, gapTimeInterval)
+        private int maxRandom;
+        private int minRandom;
+
+        public SqlFixedIntervalEnumerator(TimeSpan gapTimeInterval, TimeSpan maxTimeInterval, TimeSpan minTimeInterval)
+            : base(gapTimeInterval, maxTimeInterval, minTimeInterval)
         {
+            var tempMax = GapTimeInterval.TotalMilliseconds * 1.2;
+            var tempMin = GapTimeInterval.TotalMilliseconds * 0.8;
+            maxRandom = tempMax < int.MaxValue ? Convert.ToInt32(tempMax) : int.MaxValue;
+            minRandom = tempMin < int.MaxValue ? Convert.ToInt32(tempMin) : Convert.ToInt32(int.MaxValue * 0.6);
         }
 
         protected override TimeSpan GetNextInterval()
         {
-            return GapTimeInterval;
+            var random = new Random();
+            var interval = TimeSpan.FromMilliseconds(random.Next(minRandom, maxRandom));
+            return interval;
+        }
+
+        public override object Clone()
+        {
+            return MemberwiseClone();
         }
     }
 
@@ -85,6 +115,11 @@ namespace Microsoft.Data.SqlClient
         protected override TimeSpan GetNextInterval()
         {
             return Current;
+        }
+
+        public override object Clone()
+        {
+            return MemberwiseClone();
         }
     }
 }

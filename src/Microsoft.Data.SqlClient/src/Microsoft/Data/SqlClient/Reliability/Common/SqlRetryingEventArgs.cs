@@ -7,17 +7,10 @@ using System.Collections.Generic;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <summary>
-    /// provide retry information on each attemp
-    /// </summary>
-    public class SqlRetryingEventArgs : EventArgs
+    /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryingEventArgs.xml' path='docs/members[@name="SqlRetryingEventArgs"]/SqlRetryingEventArgs/*' />
+    public sealed class SqlRetryingEventArgs : EventArgs
     {
-        /// <summary>
-        /// Contains information that is required for a retry.
-        /// </summary>
-        /// <param name="retryCount">The current retry attempt count.</param>
-        /// <param name="delay">The delay that indicates how long the current thread will be suspended before the next iteration is invoked.</param>
-        /// <param name="exceptions">The exceptions since the first retry that caused the retry conditions to occur.</param>
+        /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryingEventArgs.xml' path='docs/members[@name="SqlRetryingEventArgs"]/ctor/*' />
         public SqlRetryingEventArgs(int retryCount, TimeSpan delay, IList<Exception> exceptions)
         {
             RetryCount = retryCount;
@@ -25,25 +18,16 @@ namespace Microsoft.Data.SqlClient
             Exceptions = exceptions;
         }
 
-        /// <summary>
-        /// Retry-attempt-number, after the fisrt exception occurrence.
-        /// It starts from zero.
-        /// </summary>
+        /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryingEventArgs.xml' path='docs/members[@name="SqlRetryingEventArgs"]/RetryCount/*' />
         public int RetryCount { get; private set; }
 
-        /// <summary>
-        /// The current waiting time in millisecond.
-        /// </summary>
+        /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryingEventArgs.xml' path='docs/members[@name="SqlRetryingEventArgs"]/Delay/*' />
         public TimeSpan Delay { get; private set; }
 
-        /// <summary>
-        /// If set to true retry will intruppted immidiately.
-        /// </summary>
+        /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryingEventArgs.xml' path='docs/members[@name="SqlRetryingEventArgs"]/Cancel/*' />
         public bool Cancel { get; set; } = false;
 
-        /// <summary>
-        /// The list of exceptions since the first rettry.
-        /// </summary>
+        /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryingEventArgs.xml' path='docs/members[@name="SqlRetryingEventArgs"]/Exceptions/*' />
         public IList<Exception> Exceptions { get; private set; }
     }
 }

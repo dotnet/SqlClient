@@ -77,6 +77,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     207    // invalid column name
                };
 
+        internal static readonly string s_ExceedErrMsgPattern = SystemDataResourceManager.Instance.SqlRetryLogic_RetryExceeded;
+        internal static readonly string s_CancelErrMsgPattern = SystemDataResourceManager.Instance.SqlRetryLogic_RetryCanceled;
+
         public static void SetRetrySwitch(bool value)
         {
             AppContext.SetSwitch(RetryAppContextSwitch, value);
@@ -106,7 +109,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             SetRetrySwitch(true);
 
-            var floatingOption = new FloatingRetryLogicOption()
+            var floatingOption = new SqlRetryLogicOption()
             {
                 NumberOfTries = numberOfRetries,
                 DeltaTime = TimeSpan.FromMilliseconds(deltaTimeMillisecond),
@@ -158,7 +161,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromMilliseconds(100), FilterSqlStatements.None, null);
         }
 
-        private static IEnumerable<object[]> GetRetryStrategies(IFloatingRetryLogicOption retryLogicOption)
+        private static IEnumerable<object[]> GetRetryStrategies(SqlRetryLogicOption retryLogicOption)
         {
             yield return new object[] { SqlConfigurableRetryFactory.CreateExponentialRetryProvider(retryLogicOption) };
             yield return new object[] { SqlConfigurableRetryFactory.CreateIncrementalRetryProvider(retryLogicOption) };

@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -11,17 +12,23 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public class SqlConnectionCRLTest
     {
         private const string InvalidInitialCatalog = "InvalidInitialCatalog_for_retry";
+        private readonly string _exceedErrMsgPattern = RetryLogicTestHelper.s_ExceedErrMsgPattern;
+        private readonly string _cancelErrMsgPattern = RetryLogicTestHelper.s_CancelErrMsgPattern;
 
         #region Sync
         [Theory]
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCatalog), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper))]
         public void ConnectionRetryOpenInvalidCatalogFailed(string cnnString, SqlRetryLogicBaseProvider provider)
         {
-            int numberOfRetries = provider.RetryLogic.NumberOfTries;
-            int cancelAfterRetries = numberOfRetries + 1;
+            int numberOfTries = provider.RetryLogic.NumberOfTries;
+            int cancelAfterRetries = numberOfTries + 1;
+            int currentRetries = 0;
+            provider.Retrying += (s, e) => currentRetries = e.RetryCount;
             var cnn = CreateConnectionWithInvalidCatalog(cnnString, provider, cancelAfterRetries);
-            Assert.Throws<AggregateException>(() => cnn.Open());
-            Assert.Equal(numberOfRetries, provider.RetryLogic?.Current + 1);
+            var ex = Assert.Throws<AggregateException>(() => cnn.Open());
+            Assert.Equal(numberOfTries, currentRetries + 1);
+            Assert.Equal(numberOfTries, ex.InnerExceptions.Count);
+            Assert.Contains(string.Format(_exceedErrMsgPattern, numberOfTries), ex.Message);
         }
 
         [Theory]
@@ -29,9 +36,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void ConnectionCancelRetryOpenInvalidCatalog(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             int cancelAfterRetries = provider.RetryLogic.NumberOfTries - 1;
+            int currentRetries = 0;
+            provider.Retrying += (s, e) => currentRetries = e.RetryCount;
             var cnn = CreateConnectionWithInvalidCatalog(cnnString, provider, cancelAfterRetries);
-            Assert.Throws<AggregateException>(() => cnn.Open());
-            Assert.Equal(cancelAfterRetries, provider.RetryLogic.Current);
+            var ex = Assert.Throws<AggregateException>(() => cnn.Open());
+            Assert.Equal(cancelAfterRetries, currentRetries);
+            Assert.Equal(cancelAfterRetries, ex.InnerExceptions.Count);
+            Assert.Contains(string.Format(_cancelErrMsgPattern, currentRetries), ex.Message);
         }
 
         [ActiveIssue(14590, TestPlatforms.Windows)]
@@ -40,6 +51,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyLongRunner), parameters: new object[] { 10 }, MemberType = typeof(RetryLogicTestHelper))]
         public void CreateDatabaseWhileTryingToConnect(string cnnString, SqlRetryLogicBaseProvider provider)
         {
+            int currentRetries = 0;
             string database = DataTestUtility.GetUniqueNameForSqlServer($"RetryLogic_{provider.RetryLogic.RetryIntervalEnumerator.GetType().Name}", false);
             var builder = new SqlConnectionStringBuilder(cnnString)
             {
@@ -53,8 +65,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Task createDBTask = null;
                 try
                 {
-                    provider.Retrying += (object s, SqlRetryingEventArgs e) =>
+                    provider.Retrying += (s, e) =>
                     {
+                        currentRetries = e.RetryCount;
                         using (var cmd = cnn1.CreateCommand())
                         {
                             // Try to create database just after first faliure.
@@ -82,7 +95,39 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     DataTestUtility.DropDatabase(cnn1, database);
                 }
             }
-            Assert.True(provider.RetryLogic.Current > 0);
+            Assert.True(currentRetries > 0);
+        }
+
+        [Theory]
+        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCatalog), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper))]
+        public void ConcurrentExecution(string cnnString, SqlRetryLogicBaseProvider provider)
+        {
+            int numberOfTries = provider.RetryLogic.NumberOfTries;
+            int cancelAfterRetries = numberOfTries + 1;
+            int retriesCount = 0;
+            int concurrentExecution = 5;
+            provider.Retrying += (s, e) => Interlocked.Increment(ref retriesCount);
+
+            Parallel.For(0, concurrentExecution,
+            i =>
+            {
+                using (var cnn = CreateConnectionWithInvalidCatalog(cnnString, provider, cancelAfterRetries))
+                {
+                    Assert.Throws<AggregateException>(() => cnn.Open());
+                }
+            });
+            Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
+
+            retriesCount = 0;
+            Parallel.For(0, concurrentExecution,
+            i =>
+            {
+                using (var cnn = CreateConnectionWithInvalidCatalog(cnnString, provider, cancelAfterRetries))
+                {
+                    Assert.ThrowsAsync<AggregateException>(() => cnn.OpenAsync()).Wait();
+                }
+            });
+            Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
         }
 
         #endregion
@@ -92,22 +137,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCatalog), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper))]
         public async void ConnectionRetryOpenAsyncInvalidCatalogFailed(string cnnString, SqlRetryLogicBaseProvider provider)
         {
-            int numberOfRetries = provider.RetryLogic.NumberOfTries;
-            int cancelAfterRetries = numberOfRetries + 1;
+            int numberOfTries = provider.RetryLogic.NumberOfTries;
+            int cancelAfterRetries = numberOfTries + 1;
+            int currentRetries = 0;
+            provider.Retrying += (s, e) => currentRetries = e.RetryCount;
             var cnn = CreateConnectionWithInvalidCatalog(cnnString, provider, cancelAfterRetries);
-            await Assert.ThrowsAsync<AggregateException>(() => cnn.OpenAsync());
-            Assert.Equal(numberOfRetries, provider.RetryLogic.Current + 1);
+            var ex = await Assert.ThrowsAsync<AggregateException>(() => cnn.OpenAsync());
+            Assert.Equal(numberOfTries, currentRetries + 1);
+            Assert.Equal(numberOfTries, ex.InnerExceptions.Count);
+            Assert.Contains(string.Format(_exceedErrMsgPattern, numberOfTries), ex.Message);
         }
 
         [Theory]
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCatalog), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper))]
         public async void ConnectionCancelRetryOpenAsyncInvalidCatalog(string cnnString, SqlRetryLogicBaseProvider provider)
         {
-            int numberOfRetries = provider.RetryLogic.NumberOfTries;
-            int cancelAfterRetries = numberOfRetries - 1;
+            int numberOfTries = provider.RetryLogic.NumberOfTries;
+            int cancelAfterRetries = numberOfTries - 1;
+            int currentRetries = 0;
+            provider.Retrying += (s, e) => currentRetries = e.RetryCount;
             var cnn = CreateConnectionWithInvalidCatalog(cnnString, provider, cancelAfterRetries);
-            await Assert.ThrowsAsync<AggregateException>(() => cnn.OpenAsync());
-            Assert.Equal(cancelAfterRetries, provider.RetryLogic.Current);
+            var ex = await Assert.ThrowsAsync<AggregateException>(() => cnn.OpenAsync());
+            Assert.Equal(cancelAfterRetries, currentRetries);
+            Assert.Equal(cancelAfterRetries, ex.InnerExceptions.Count);
+            Assert.Contains(string.Format(_cancelErrMsgPattern, currentRetries), ex.Message);
         }
 
         #endregion
@@ -122,9 +175,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             SqlConnection cnn = new SqlConnection(builder.ConnectionString);
             cnn.RetryLogicProvider = provider;
-            cnn.RetryLogicProvider.Retrying += (object s, SqlRetryingEventArgs e) =>
+            cnn.RetryLogicProvider.Retrying += (s, e) =>
             {
-                if (e.RetryCount > cancelAfterRetries)
+                if (e.RetryCount >= cancelAfterRetries)
                 {
                     e.Cancel = true;
                 }

@@ -10,122 +10,29 @@ using System.Reflection;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <summary>
-    /// Provide fixed retry parameters.
-    /// </summary>
-    public interface IFixedRetryLogicOption
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicOption.xml' path='docs/members[@name="SqlRetryLogicOption"]/SqlRetryLogicOption/*' />
+    public sealed class SqlRetryLogicOption
     {
-        /// <summary>
-        /// Number of retries.
-        /// </summary>
-        int NumberOfTries { get; set; }
-
-        /// <summary>
-        /// The gap time of each interval.
-        /// </summary>
-        TimeSpan DeltaTime { get; set; }
-
-        /// <summary>
-        /// Authorized faults to apply retry strategy.
-        /// To use the internal list leave it null.
-        /// </summary>
-        IEnumerable<int> TransientErrors { get; set; }
-
-        /// <summary>
-        /// Pre-retry validation regarding the input string before checking the transient faults.
-        /// To skip this checking leave it null.
-        /// </summary>
-        /// <returns>True if the sender is authorized to retry the operation.</returns>
-        Predicate<string> AuthorizedSqlCondition { get; set; }
-    }
-
-    /// <summary>
-    /// Provide floating retry parameters like exponential and incremental.
-    /// </summary>
-    public interface IFloatingRetryLogicOption : IFixedRetryLogicOption
-    {
-        /// <summary>
-        /// Minimum allowed time interval with default value zero.
-        /// </summary>
-        TimeSpan MinTimeInterval { get; set; }
-
-        /// <summary>
-        /// Maximum allowed time interval.
-        /// </summary>
-        TimeSpan MaxTimeInterval { get; set; }
-    }
-
-    /// <summary>
-    /// Provide fixed retry parameters.
-    /// </summary>
-    public sealed class FixedRetryLogicOption : IFixedRetryLogicOption
-    {
-        /// <summary>
-        /// Number of retries.
-        /// </summary>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicOption.xml' path='docs/members[@name="SqlRetryLogicOption"]/NumberOfTries/*' />
         public int NumberOfTries { get; set; }
 
-        /// <summary>
-        /// The gap time of each interval.
-        /// </summary>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicOption.xml' path='docs/members[@name="SqlRetryLogicOption"]/DeltaTime/*' />
         public TimeSpan DeltaTime { get; set; }
 
-        /// <summary>
-        /// Authorized faults to apply retry strategy.
-        /// To use the internal list leave it null.
-        /// </summary>
-        public IEnumerable<int> TransientErrors { get; set; }
-
-        /// <summary>
-        /// Pre-retry validation regarding the input string before checking the transient faults.
-        /// To skip this checking leave it null.
-        /// </summary>
-        /// <returns>True if the sender is authorized to retry the operation.</returns>
-        public Predicate<string> AuthorizedSqlCondition { get; set; }
-    }
-
-    /// <summary>
-    /// Provide floating retry parameters like exponential and incremental.
-    /// </summary>
-    public sealed class FloatingRetryLogicOption : IFloatingRetryLogicOption
-    {
-        /// <summary>
-        /// Number of retries.
-        /// </summary>
-        public int NumberOfTries { get; set; }
-
-        /// <summary>
-        /// The gap time of each interval.
-        /// </summary>
-        public TimeSpan DeltaTime { get; set; }
-
-        /// <summary>
-        /// Minimum allowed time interval with default value zero.
-        /// </summary>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicOption.xml' path='docs/members[@name="SqlRetryLogicOption"]/MinTimeInterval/*' />
         public TimeSpan MinTimeInterval { get; set; } = TimeSpan.FromSeconds(0);
 
-        /// <summary>
-        /// Maximum allowed time interval.
-        /// </summary>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicOption.xml' path='docs/members[@name="SqlRetryLogicOption"]/MaxTimeInterval/*' />
         public TimeSpan MaxTimeInterval { get; set; }
 
-        /// <summary>
-        /// Authorized faults to apply retry strategy.
-        /// To use the internal list leave it null.
-        /// </summary>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicOption.xml' path='docs/members[@name="SqlRetryLogicOption"]/TransientErrors/*' />
         public IEnumerable<int> TransientErrors { get; set; }
 
-        /// <summary>
-        /// Pre-retry validation regarding the input string before checking the transient faults.
-        /// To skip this checking leave it null.
-        /// </summary>
-        /// <returns>True if the sender is authorized to retry the operation.</returns>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicOption.xml' path='docs/members[@name="SqlRetryLogicOption"]/AuthorizedSqlCondition/*' />
         public Predicate<string> AuthorizedSqlCondition { get; set; }
     }
 
-    /// <summary>
-    /// Provide different retry strategies.
-    /// </summary>
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/SqlConfigurableRetryFactory/*' />
     public sealed class SqlConfigurableRetryFactory
     {
         /// Default known transient error numbers.
@@ -157,39 +64,22 @@ namespace Microsoft.Data.SqlClient
                     0
                 };
 
-        /// <summary>
-        /// Provide an exponential retry strategy.
-        /// </summary>
-        public static SqlRetryLogicBaseProvider CreateExponentialRetryProvider(IFloatingRetryLogicOption retryLogicOption)
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/CreateExponentialRetryProvider/*' />
+        public static SqlRetryLogicBaseProvider CreateExponentialRetryProvider(SqlRetryLogicOption retryLogicOption)
             => InternalCreateRetryProvider(retryLogicOption,
                                            retryLogicOption != null ? new SqlExponentialIntervalEnumerator(retryLogicOption.DeltaTime, retryLogicOption.MaxTimeInterval, retryLogicOption.MinTimeInterval) : null);
 
-        /// <summary>
-        /// Provide an incrimental retry strategy.
-        /// </summary>
-        public static SqlRetryLogicBaseProvider CreateIncrementalRetryProvider(IFloatingRetryLogicOption retryLogicOption) 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/CreateIncrementalRetryProvider/*' />
+        public static SqlRetryLogicBaseProvider CreateIncrementalRetryProvider(SqlRetryLogicOption retryLogicOption) 
             => InternalCreateRetryProvider(retryLogicOption,
                                                retryLogicOption != null ? new SqlIncrementalIntervalEnumerator(retryLogicOption.DeltaTime, retryLogicOption.MaxTimeInterval, retryLogicOption.MinTimeInterval) : null);
 
-        /// <summary>
-        /// Provide a fixed linear retry strategy.
-        /// </summary>
-        public static SqlRetryLogicBaseProvider CreateFixedRetryProvider(IFixedRetryLogicOption retryLogicOption)
-        {
-            if (retryLogicOption == null)
-            {
-                throw new ArgumentNullException(nameof(retryLogicOption));
-            }
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/CreateFixedRetryProvider/*' />
+        public static SqlRetryLogicBaseProvider CreateFixedRetryProvider(SqlRetryLogicOption retryLogicOption)
+            => InternalCreateRetryProvider(retryLogicOption,
+                                               retryLogicOption != null ? new SqlFixedIntervalEnumerator(retryLogicOption.DeltaTime, retryLogicOption.MaxTimeInterval, retryLogicOption.MinTimeInterval) : null);
 
-            var retryLogic = new SqlRetryLogic(retryLogicOption.NumberOfTries,
-                                        new SqlFixedIntervalEnumerator(retryLogicOption.DeltaTime),
-                                        (e) => TransientErrorsCondition(e, retryLogicOption.TransientErrors ?? s_defaultTransientErrors),
-                                        retryLogicOption.AuthorizedSqlCondition);
-
-            return new SqlRetryLogicProvider(retryLogic);
-        }
-
-        private static SqlRetryLogicBaseProvider InternalCreateRetryProvider(IFloatingRetryLogicOption retryLogicOption, SqlRetryIntervalBaseEnumerator enumerator)
+        private static SqlRetryLogicBaseProvider InternalCreateRetryProvider(SqlRetryLogicOption retryLogicOption, SqlRetryIntervalBaseEnumerator enumerator)
         {
             Debug.Assert(enumerator != null, $"The '{nameof(enumerator)}' mustn't be null.");
 
@@ -205,9 +95,7 @@ namespace Microsoft.Data.SqlClient
             return new SqlRetryLogicProvider(retryLogic);
         }
 
-        /// <summary>
-        /// Provide a non retriable strategy.
-        /// </summary>
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/CreateNoneRetryProvider/*' />
         public static SqlRetryLogicBaseProvider CreateNoneRetryProvider()
         {
             var retryLogic = new SqlRetryLogic(new SqlNoneIntervalEnumerator(), _ => false);

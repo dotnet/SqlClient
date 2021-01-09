@@ -8,47 +8,22 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <summary>
-    /// Apply a retry logic on an operation.
-    /// </summary>
+    /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBaseProvider.xml' path='docs/members[@name="SqlRetryLogicBaseProvider"]/SqlRetryLogicBaseProvider/*' />
     public abstract class SqlRetryLogicBaseProvider
     {
-        /// <summary>
-        /// This event raises exactly before time delay in retry the operation again. 
-        /// </summary>
+        /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBaseProvider.xml' path='docs/members[@name="SqlRetryLogicBaseProvider"]/Retrying/*' />
         public EventHandler<SqlRetryingEventArgs> Retrying { get; set; }
 
-        /// <summary>
-        /// Defined retry logic
-        /// </summary>
+        /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBaseProvider.xml' path='docs/members[@name="SqlRetryLogicBaseProvider"]/RetryLogic/*' />
         public SqlRetryLogicBase RetryLogic { get; protected set; }
 
-        /// <summary>
-        /// Executes a function with a TResult type.
-        /// </summary>
-        /// <typeparam name="TResult">The function return type</typeparam>
-        /// <param name="sender">Sender object</param>
-        /// <param name="function">The operaiton is likly be in the retry logic if transient condition happens</param>
-        /// <returns>A TResult object or an exception</returns>
+        /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBaseProvider.xml' path='docs/members[@name="SqlRetryLogicBaseProvider"]/Execute/*' />
         public abstract TResult Execute<TResult>(object sender, Func<TResult> function);
 
-        /// <summary>
-        /// Executes a function with a generic Task and TResult type.
-        /// </summary>
-        /// <typeparam name="TResult">Inner function return type</typeparam>
-        /// <param name="sender">Sender object</param>
-        /// <param name="function">The operaiton is likly be in the retry logic if transient condition happens</param>
-        /// <param name="cancellationToken">The cancellation instruction</param>
-        /// <returns>A task representing TResult or an exception</returns>
+        /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBaseProvider.xml' path='docs/members[@name="SqlRetryLogicBaseProvider"]/ExecuteAsync1/*' />
         public abstract Task<TResult> ExecuteAsync<TResult>(object sender, Func<Task<TResult>> function, CancellationToken cancellationToken = default);
 
-        /// <summary>
-        /// Execute a function with a generic Task type.
-        /// </summary>
-        /// <param name="sender">Sender object</param>
-        /// <param name="function">The operaiton is likly be in the retry logic if transient condition happens</param>
-        /// <param name="cancellationToken">The cancellation instruction</param>
-        /// <returns>A Task or an exception</returns>
+        /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBaseProvider.xml' path='docs/members[@name="SqlRetryLogicBaseProvider"]/ExecuteAsync2/*' />
         public abstract Task ExecuteAsync(object sender, Func<Task> function, CancellationToken cancellationToken = default);
     }
 }

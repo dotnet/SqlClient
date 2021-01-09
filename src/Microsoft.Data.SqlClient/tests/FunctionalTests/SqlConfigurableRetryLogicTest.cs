@@ -12,10 +12,12 @@ namespace Microsoft.Data.SqlClient.Tests
         [Fact]
         public void InvalidExecute()
         {
-            IFixedRetryLogicOption option = new FixedRetryLogicOption()
+            SqlRetryLogicOption option = new SqlRetryLogicOption()
             {
                 NumberOfTries = 5,
-                DeltaTime = TimeSpan.FromSeconds(10)
+                DeltaTime = TimeSpan.FromSeconds(10),
+                MinTimeInterval = TimeSpan.Zero,
+                MaxTimeInterval = TimeSpan.FromSeconds(120)
             };
 
             SqlRetryLogicBaseProvider retryLogicProvider = SqlConfigurableRetryFactory.CreateFixedRetryProvider(option);
@@ -36,7 +38,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [Fact]
         public void ValidateRetryParameters()
         {
-            var option = new FloatingRetryLogicOption()
+            var option = new SqlRetryLogicOption()
             {
                 NumberOfTries = 10, // 1-60
                 MinTimeInterval = TimeSpan.FromMinutes(0), // 0-120
