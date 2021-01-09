@@ -32,7 +32,6 @@ namespace Microsoft.Data.Common
 
     internal static class ADP
     {
-
         // The class ADP defines the exceptions that are specific to the Adapters.f
         // The class contains functions that take the proper informational variables and then construct
         // the appropriate exception with an error string obtained from the resource Framework.txt.
@@ -41,6 +40,8 @@ namespace Microsoft.Data.Common
         // This class is used so that there will be compile time checking of error messages.
         // The resource Framework.txt will ensure proper string text based on the appropriate
         // locale.
+
+        internal const CompareOptions DefaultCompareOptions = CompareOptions.IgnoreKanaType | CompareOptions.IgnoreWidth | CompareOptions.IgnoreCase;
 
         static internal Task<T> CreatedTaskWithException<T>(Exception ex)
         {
@@ -2976,7 +2977,7 @@ namespace Microsoft.Data.Common
                 return true;
             }
             INullable nullable = (value as INullable);
-            return ((null != nullable) && nullable.IsNull);
+            return (null != nullable) && nullable.IsNull;
         }
 
         static internal void IsNullOrSqlType(object value, out bool isNull, out bool isSqlType)

@@ -755,7 +755,7 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlClientEventSource.Log.TryTraceEvent("<sc.SqlCommand.set_CommandText|API> {0}, String Value = '{1}'", ObjectID, value);
 
-                if (0 != ADP.SrcCompare(_commandText, value))
+                if (_commandText != value)
                 {
                     PropertyChanging();
                     _commandText = value;
