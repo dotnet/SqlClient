@@ -450,7 +450,7 @@ namespace Microsoft.Data.SqlClient
                             if (null == _statistics)
                             {
                                 _statistics = new SqlStatistics();
-                                ADP.TimerCurrent(out _statistics._openTimestamp);
+                                _statistics._openTimestamp = ADP.TimerCurrent();
                             }
                             // set statistics on the parser
                             // update timestamp;
@@ -470,7 +470,7 @@ namespace Microsoft.Data.SqlClient
                                 TdsParser parser = Parser;
                                 Debug.Assert(parser != null, "Where's the parser?");
                                 parser.Statistics = null;
-                                ADP.TimerCurrent(out _statistics._closeTimestamp);
+                                _statistics._closeTimestamp = ADP.TimerCurrent();
                             }
                         }
                     }
@@ -1474,7 +1474,7 @@ namespace Microsoft.Data.SqlClient
 
                         if (null != Statistics)
                         {
-                            ADP.TimerCurrent(out _statistics._closeTimestamp);
+                            _statistics._closeTimestamp = ADP.TimerCurrent();
                         }
                     }
 #if DEBUG
@@ -2104,7 +2104,7 @@ namespace Microsoft.Data.SqlClient
 
                         if (StatisticsEnabled)
                         {
-                            ADP.TimerCurrent(out _statistics._openTimestamp);
+                            _statistics._openTimestamp = ADP.TimerCurrent();
                             tdsInnerConnection.Parser.Statistics = _statistics;
                         }
                         else
@@ -2799,7 +2799,7 @@ namespace Microsoft.Data.SqlClient
                 if (ConnectionState.Open == State)
                 {
                     // update timestamp;
-                    ADP.TimerCurrent(out _statistics._openTimestamp);
+                    _statistics._openTimestamp = ADP.TimerCurrent();
                 }
             }
         }
@@ -2828,7 +2828,7 @@ namespace Microsoft.Data.SqlClient
             if (ConnectionState.Open == State)
             {
                 // update timestamp
-                ADP.TimerCurrent(out _statistics._closeTimestamp);
+                _statistics._closeTimestamp = ADP.TimerCurrent();
             }
             // delegate the rest of the work to the SqlStatistics class
             Statistics.UpdateStatistics();

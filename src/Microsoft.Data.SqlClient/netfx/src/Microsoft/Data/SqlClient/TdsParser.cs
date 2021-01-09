@@ -8762,7 +8762,7 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 userName = rec.userName;
-                encryptedPassword = TdsParserStaticMethods.EncryptPassword(rec.password);
+                encryptedPassword = TdsParserStaticMethods.ObfuscatePassword(rec.password);
                 encryptedPasswordLengthInBytes = encryptedPassword.Length;  // password in clear text is already encrypted and its length is in byte
             }
 
@@ -8772,7 +8772,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                encryptedChangePassword = TdsParserStaticMethods.EncryptPassword(rec.newPassword);
+                encryptedChangePassword = TdsParserStaticMethods.ObfuscatePassword(rec.newPassword);
                 encryptedChangePasswordLengthInBytes = encryptedChangePassword.Length;
             }
 

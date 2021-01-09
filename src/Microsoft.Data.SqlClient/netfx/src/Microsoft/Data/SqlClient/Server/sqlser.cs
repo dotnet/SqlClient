@@ -11,7 +11,6 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient.Server
 {
-
     internal class SerializationHelperSql9
     {
         // Don't let anyone create an instance of this class.
@@ -23,10 +22,7 @@ namespace Microsoft.Data.SqlClient.Server
         // in bytes.
         // Prevent inlining so that reflection calls are not moved to caller that may be in a different assembly that may have a different grant set.
         [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static int SizeInBytes(Type t)
-        {
-            return SizeInBytes(Activator.CreateInstance(t));
-        }
+        internal static int SizeInBytes(Type t) => SizeInBytes(Activator.CreateInstance(t));
 
         // Get the m_size of the serialized stream for this type, in bytes.
         internal static int SizeInBytes(object instance)
@@ -44,35 +40,29 @@ namespace Microsoft.Data.SqlClient.Server
             GetSerializer(instance.GetType()).Serialize(s, instance);
         }
 
-        internal static object Deserialize(Stream s, Type resultType)
-        {
-            return GetSerializer(resultType).Deserialize(s);
-        }
+        internal static object Deserialize(Stream s, Type resultType) => GetSerializer(resultType).Deserialize(s);
 
-        private static Format GetFormat(Type t)
-        {
-            return GetUdtAttribute(t).Format;
-        }
+        private static Format GetFormat(Type t) => GetUdtAttribute(t).Format;
 
-        //cache the relationship between a type and its serializer
-        //this is expensive to compute since it involves traversing the
-        //custom attributes of the type using reflection.
+        // Cache the relationship between a type and its serializer.
+        // This is expensive to compute since it involves traversing the
+        // custom attributes of the type using reflection.
         //
-        //use a per-thread cache, so that there are no synchronization
-        //issues when accessing cache entries from multiple threads.
+        // Use a per-thread cache, so that there are no synchronization
+        // issues when accessing cache entries from multiple threads.
         [ThreadStatic]
-        private static Hashtable m_types2Serializers;
+        private static Hashtable s_types2Serializers;
 
         private static Serializer GetSerializer(Type t)
         {
-            if (m_types2Serializers == null)
-                m_types2Serializers = new Hashtable();
+            if (s_types2Serializers == null)
+                s_types2Serializers = new Hashtable();
 
-            Serializer s = (Serializer)m_types2Serializers[t];
+            Serializer s = (Serializer)s_types2Serializers[t];
             if (s == null)
             {
-                s = (Serializer)GetNewSerializer(t);
-                m_types2Serializers[t] = s;
+                s = GetNewSerializer(t);
+                s_types2Serializers[t] = s;
             }
             return s;
         }
@@ -83,13 +73,13 @@ namespace Microsoft.Data.SqlClient.Server
 
             if (Format.Native == udtInfo.SerializationFormat)
             {
-                //In the native format, the user does not specify the
-                //max byte size, it is computed from the type definition
+                // In the native format, the user does not specify the
+                // max byte size, it is computed from the type definition
                 return SerializationHelperSql9.SizeInBytes(t);
             }
             else
             {
-                //In all other formats, the user specifies the maximum size in bytes.
+                // In all other formats, the user specifies the maximum size in bytes.
                 return udtInfo.MaxByteSize;
             }
         }
@@ -187,38 +177,31 @@ namespace Microsoft.Data.SqlClient.Server
     {
         public abstract object Deserialize(Stream s);
         public abstract void Serialize(Stream s, object o);
-        protected Type m_type;
+        protected Type _type;
 
         protected Serializer(Type t)
         {
-            this.m_type = t;
+            _type = t;
         }
     }
 
     internal sealed class NormalizedSerializer : Serializer
     {
-        BinaryOrderedUdtNormalizer m_normalizer;
-        bool m_isFixedSize;
-        int m_maxSize;
+        private BinaryOrderedUdtNormalizer _normalizer;
+        private bool _isFixedSize;
+        private int _maxSize;
 
         internal NormalizedSerializer(Type t) : base(t)
         {
             SqlUserDefinedTypeAttribute udtAttr = SerializationHelperSql9.GetUdtAttribute(t);
-            this.m_normalizer = new BinaryOrderedUdtNormalizer(t, true);
-            this.m_isFixedSize = udtAttr.IsFixedLength;
-            this.m_maxSize = this.m_normalizer.Size;
+            _normalizer = new BinaryOrderedUdtNormalizer(t, true);
+            _isFixedSize = udtAttr.IsFixedLength;
+            _maxSize = _normalizer.Size;
         }
 
-        public override void Serialize(Stream s, object o)
-        {
-            m_normalizer.NormalizeTopObject(o, s);
-        }
+        public override void Serialize(Stream s, object o) => _normalizer.NormalizeTopObject(o, s);
 
-        public override object Deserialize(Stream s)
-        {
-            object result = m_normalizer.DeNormalizeTopObject(this.m_type, s);
-            return result;
-        }
+        public override object Deserialize(Stream s) => _normalizer.DeNormalizeTopObject(_type, s);
     }
 
     internal sealed class BinarySerializeSerializer : Serializer
@@ -232,7 +215,7 @@ namespace Microsoft.Data.SqlClient.Server
             BinaryWriter w = new BinaryWriter(s);
             if (o is Microsoft.SqlServer.Server.IBinarySerialize)
             {
-                ((Microsoft.SqlServer.Server.IBinarySerialize)o).Write(w);
+                ((SqlServer.Server.IBinarySerialize)o).Write(w);
             }
             else
             {
@@ -240,15 +223,17 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
-        // Prevent inlining so that reflection calls are not moved to caller that may be in a different assembly that may have a different grant set.
+        // Prevent inlining so that reflection calls are not moved
+        // to a caller that may be in a different assembly that may
+        // have a different grant set.
         [MethodImpl(MethodImplOptions.NoInlining)]
         public override object Deserialize(Stream s)
         {
-            object instance = Activator.CreateInstance(m_type);
+            object instance = Activator.CreateInstance(_type);
             BinaryReader r = new BinaryReader(s);
             if (instance is Microsoft.SqlServer.Server.IBinarySerialize)
             {
-                ((Microsoft.SqlServer.Server.IBinarySerialize)instance).Read(r);
+                ((SqlServer.Server.IBinarySerialize)instance).Read(r);
             }
             else
             {
@@ -262,7 +247,7 @@ namespace Microsoft.Data.SqlClient.Server
     // to the stream.
     internal sealed class DummyStream : Stream
     {
-        private long m_size;
+        private long _size;
 
         public DummyStream()
         {
@@ -273,54 +258,21 @@ namespace Microsoft.Data.SqlClient.Server
             throw new Exception(StringsHelper.GetString(Strings.Sql_InternalError));
         }
 
-        public override bool CanRead
-        {
-            get
-            {
-                return false;
-            }
-        }
+        public override bool CanRead => false;
 
-        public override bool CanWrite
-        {
-            get
-            {
-                return true;
-            }
-        }
+        public override bool CanWrite => true;
 
-        public override bool CanSeek
-        {
-            get
-            {
-                return false;
-            }
-        }
+        public override bool CanSeek => false;
 
         public override long Position
         {
-            get
-            {
-                return this.m_size;
-            }
-            set
-            {
-                this.m_size = value;
-            }
+            get => _size;
+            set =>_size = value;
         }
 
-        public override long Length
-        {
-            get
-            {
-                return this.m_size;
-            }
-        }
+        public override long Length => _size;
 
-        public override void SetLength(long value)
-        {
-            this.m_size = value;
-        }
+        public override void SetLength(long value) => _size = value;
 
         public override long Seek(long value, SeekOrigin loc)
         {
@@ -338,9 +290,6 @@ namespace Microsoft.Data.SqlClient.Server
             return -1;
         }
 
-        public override void Write(byte[] buffer, int offset, int count)
-        {
-            this.m_size += count;
-        }
+        public override void Write(byte[] buffer, int offset, int count) => _size += count;
     }
 }

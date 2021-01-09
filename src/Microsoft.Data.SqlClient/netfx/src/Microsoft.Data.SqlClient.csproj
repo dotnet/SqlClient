@@ -103,6 +103,12 @@
     <Compile Include="..\..\src\Microsoft\Data\Common\ActivityCorrelator.cs">
       <Link>Microsoft\Data\Common\ActivityCorrelator.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\Common\DbConnectionPoolKey.cs">
+      <Link>Microsoft\Data\Common\DbConnectionPoolKey.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\Common\MultipartIdentifier.cs">
+      <Link>Microsoft\Data\Common\MultipartIdentifier.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\Sql\SqlNotificationRequest.cs">
       <Link>Microsoft\Data\Sql\SqlNotificationRequest.cs</Link>
     </Compile>
@@ -172,11 +178,20 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlFunctionAttribute.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlFunctionAttribute.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlMetaData.cs">
+      <Link>Microsoft\Data\SqlClient\Server\SqlMetaData.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlMethodAttribute.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlMethodAttribute.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlUserDefinedTypeAttribute.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlUserDefinedTypeAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlUserDefinedAggregateAttribute.cs">
+      <Link>Microsoft\Data\SqlClient\Server\SqlUserDefinedAggregateAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlRecordBuffer.cs">
+      <Link>Microsoft\Data\SqlClient\Server\SqlRecordBuffer.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\ColumnEncryptionKeyInfo.cs">
       <Link>Microsoft\Data\SqlClient\ColumnEncryptionKeyInfo.cs</Link>
@@ -355,8 +370,6 @@
     <Compile Include="Microsoft\Data\SqlClient\LocalDBConfig.cs" />
     <Compile Include="Microsoft\Data\SqlClient\AssemblyRef.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SqlDataRecord.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\Server\SqlMetaData.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\Server\SqlUserDefinedAggregateAttribute.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\TriggerAction.cs" />
     <Compile Include="Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProvider.cs" />
     <Compile Include="Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProviderBase.cs" />
@@ -441,8 +454,6 @@
     <Compile Include="Misc\LocalAppContext.cs" />
     <Compile Include="Misc\AppContextDefaultValues.cs" />
     <Compile Include="Misc\PrivilegedConfigurationManager.cs" />
-    <Compile Include="Common\src\Microsoft\Data\Common\DbConnectionPoolKey.cs" />
-    <Compile Include="Common\src\Microsoft\Data\Common\MultipartIdentifier.cs" />
     <Compile Include="Common\src\Microsoft\Data\Common\NameValuePermission.cs" />
     <Compile Include="Microsoft\Data\Common\AdapterSwitches.cs" />
     <Compile Include="Microsoft\Data\Common\AdapterUtil.cs" />
@@ -485,7 +496,6 @@
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiTypedGetterSetter.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiXetterAccessMap.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\Server\SqlRecordBuffer.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\ValueUtilsSmi.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\sqlser.cs" />
     <Compile Include="Microsoft\Data\Sql\SqlGenericUtil.cs" />

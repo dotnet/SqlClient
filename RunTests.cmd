@@ -5,12 +5,13 @@ echo Building .NET Core Tests
 call :pauseOnError msbuild /t:Clean
 
 :: ************** IMPORTANT NOTE BEFORE PROCEEDING WITH "PACKAGE" AND "NETSTANDARDPACKAGE" REFERENCE TYPES ***************
-:: CREATE A NUGET PACKAGE WITH BELOW COMMAND AND ADD TO LOCAL FOLDER + UPDATE NUGET CONFIG FILE TO READ FROM THAT LOCATION 
+:: CREATE A NUGET PACKAGE WITH BELOW COMMAND AND ADD TO LOCAL FOLDER + UPDATE NUGET CONFIG FILE TO READ FROM THAT LOCATION
 :: msbuild /p:configuration=Release
 
 :: REFERENCE TYPE "PACKAGE"
 call :pauseOnError msbuild /p:Configuration="Release" /t:BuildAKVNetFx /p:ReferenceType=Package
 call :pauseOnError msbuild /p:Configuration="Release" /t:BuildAKVNetCore /p:ReferenceType=Package
+call :pauseOnError msbuild /p:Configuration="Release" /t:BuildAKVNetSt /p:ReferenceType=Package
 
 call :pauseOnError msbuild /p:Configuration="Release" /t:BuildTestsNetCore /p:ReferenceType=Package
 call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" /p:Configuration="Release" /p:TestTargetOS="Windowsnetcoreapp" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests" /p:Platform="AnyCPU" /p:TargetNetCoreVersion=netcoreapp2.1 /p:ReferenceType=Package -l:trx;LogFileName=..\..\..\..\..\artifacts\Results\package-netcore2.1-functional-anycpu.xml
@@ -131,8 +132,9 @@ call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\M
 call :pauseOnError msbuild /p:Configuration="Release"
 call :pauseOnError msbuild /p:Configuration="Release" /t:BuildAKVNetFx
 call :pauseOnError msbuild /p:Configuration="Release" /t:BuildAKVNetCoreAllOS
+call :pauseOnError msbuild /p:Configuration="Release" /t:BuildAKVNetStAllOS
 call :pauseOnError msbuild /p:Configuration="Release" /t:GenerateAKVProviderNugetPackage
-call :pauseOnError msbuild /p:Configuration="Release" /t:BuildTestsNetCore 
+call :pauseOnError msbuild /p:Configuration="Release" /t:BuildTestsNetCore
 call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" /p:Configuration="Release" /p:TestTargetOS="Windowsnetcoreapp" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests" /p:Platform="AnyCPU" /p:TargetNetCoreVersion=netcoreapp2.1 /p:ReferenceType=Project -l:trx;LogFileName=..\..\..\..\..\artifacts\Results\project-netcore2.1-functional-anycpu.xml
 call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Configuration="Release" /p:TestTargetOS="Windowsnetcoreapp" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests"  /p:Platform="AnyCPU" /p:TargetNetCoreVersion=netcoreapp2.1 /p:ReferenceType=Project -l:trx;LogFileName=..\..\..\..\..\artifacts\Results\project-netcore2.1-manual-anycpu.xml
 
@@ -149,6 +151,7 @@ echo Building .NET Framework Tests
 call :pauseOnError msbuild /p:Configuration="Release"
 call :pauseOnError msbuild /p:Configuration="Release" /t:BuildAKVNetFx
 call :pauseOnError msbuild /p:Configuration="Release" /t:BuildAKVNetCoreAllOS
+call :pauseOnError msbuild /p:Configuration="Release" /t:BuildAKVNetStAllOS
 call :pauseOnError msbuild /p:Configuration="Release" /t:GenerateAKVProviderNugetPackage
 call :pauseOnError msbuild /p:Configuration="Release" /t:BuildTestsNetFx
 call :pauseOnError dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests" -l:trx;LogFileName=..\..\..\..\..\artifacts\Results\project-net46-functional-anycpu.xml
