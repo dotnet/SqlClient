@@ -20,9 +20,6 @@ class RetryLogicSample
 
     static void Main(string[] args)
     {
-        // Enable the retry logic 
-        AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.EnableRetryLogic", true);
-
         // 1. Define the retry logic parameters
         var options = new FloatingRetryLogicOption()
         {
