@@ -188,11 +188,8 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal override void HardConnectRequest()
         {
-            if (IsEnabled())
-            {
-                Interlocked.Increment(ref _activeHardConnectionsCounter);
-                Interlocked.Increment(ref _hardConnectsCounter);
-            }
+            Interlocked.Increment(ref _activeHardConnectionsCounter);
+            Interlocked.Increment(ref _hardConnectsCounter);
         }
 
         /// <summary>
@@ -201,11 +198,8 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal override void HardDisconnectRequest()
         {
-            if (IsEnabled())
-            {
-                Interlocked.Decrement(ref _activeHardConnectionsCounter);
-                Interlocked.Increment(ref _hardDisconnectsCounter);
-            }
+            Interlocked.Decrement(ref _activeHardConnectionsCounter);
+            Interlocked.Increment(ref _hardDisconnectsCounter);
         }
 
         /// <summary>
@@ -214,11 +208,8 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal override void SoftConnectRequest()
         {
-            if (IsEnabled())
-            {
-                Interlocked.Increment(ref _activeSoftConnectionsCounter);
-                Interlocked.Increment(ref _softConnectsCounter);
-            }
+            Interlocked.Increment(ref _activeSoftConnectionsCounter);
+            Interlocked.Increment(ref _softConnectsCounter);
         }
 
         /// <summary>
@@ -227,101 +218,170 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal override void SoftDisconnectRequest()
         {
-            if (IsEnabled())
-            {
-                Interlocked.Decrement(ref _activeSoftConnectionsCounter);
-                Interlocked.Increment(ref _softDisconnectsCounter);
-            }
+            Interlocked.Decrement(ref _activeSoftConnectionsCounter);
+            Interlocked.Increment(ref _softDisconnectsCounter);
         }
 
         /// <summary>
         /// The number of connections that are not using connection pooling
         /// </summary>
-        /// <param name="increment"></param>
         [NonEvent]
-        internal override void NonPooledConnectionRequest(bool increment = true)
+        internal override void EnterNonPooledConnection()
         {
-            Request(ref _nonPooledConnectionsCounter, increment);
+            Interlocked.Increment(ref _nonPooledConnectionsCounter);
+        }
+
+        /// <summary>
+        /// The number of connections that are not using connection pooling
+        /// </summary>
+        [NonEvent]
+        internal override void ExitNonPooledConnection()
+        {
+            Interlocked.Decrement(ref _nonPooledConnectionsCounter);
         }
 
         /// <summary>
         /// The number of connections that are managed by the connection pooler
         /// </summary>
-        /// <param name="increment"></param>
         [NonEvent]
-        internal override void PooledConnectionRequest(bool increment = true)
+        internal override void EnterPooledConnection()
         {
-            Request(ref _pooledConnectionsCounter, increment);
+            Interlocked.Increment(ref _pooledConnectionsCounter);
+        }
+
+        /// <summary>
+        /// The number of connections that are managed by the connection pooler
+        /// </summary>
+        [NonEvent]
+        internal override void ExitPooledConnection()
+        {
+            Interlocked.Decrement(ref _pooledConnectionsCounter);
         }
 
         /// <summary>
         /// The number of unique connection strings
         /// </summary>
-        /// <param name="increment"></param>
         [NonEvent]
-        internal override void ActiveConnectionPoolGroupRequest(bool increment = true)
+        internal override void EnterActiveConnectionPoolGroup()
         {
-            Request(ref _activeConnectionPoolGroupsCounter, increment);
+            Interlocked.Increment(ref _activeConnectionPoolGroupsCounter);
+        }
+
+        /// <summary>
+        /// The number of unique connection strings
+        /// </summary>
+        [NonEvent]
+        internal override void ExitActiveConnectionPoolGroup()
+        {
+            Interlocked.Decrement(ref _activeConnectionPoolGroupsCounter);
         }
 
         /// <summary>
         /// The number of unique connection strings waiting for pruning
         /// </summary>
-        /// <param name="increment"></param>
         [NonEvent]
-        internal override void InactiveConnectionPoolGroupRequest(bool increment = true)
+        internal override void EnterInactiveConnectionPoolGroup()
         {
-            Request(ref _inactiveConnectionPoolGroupsCounter, increment);
+            Interlocked.Increment(ref _inactiveConnectionPoolGroupsCounter);
+        }
+
+        /// <summary>
+        /// The number of unique connection strings waiting for pruning
+        /// </summary>
+        [NonEvent]
+        internal override void ExitInactiveConnectionPoolGroup()
+        {
+            Interlocked.Decrement(ref _inactiveConnectionPoolGroupsCounter);
         }
 
         /// <summary>
         /// The number of connection pools
         /// </summary>
-        /// <param name="increment"></param>
         [NonEvent]
-        internal override void ActiveConnectionPoolRequest(bool increment = true)
+        internal override void EnterActiveConnectionPool()
         {
-            Request(ref _activeConnectionPoolsCounter, increment);
+            Interlocked.Increment(ref _activeConnectionPoolsCounter);
         }
 
         /// <summary>
         /// The number of connection pools
         /// </summary>
-        /// <param name="increment"></param>
         [NonEvent]
-        internal override void InactiveConnectionPoolRequest(bool increment = true)
+        internal override void ExitActiveConnectionPool()
         {
-            Request(ref _inactiveConnectionPoolsCounter, increment);
+            Interlocked.Decrement(ref _activeConnectionPoolsCounter);
+        }
+
+        /// <summary>
+        /// The number of connection pools
+        /// </summary>
+        [NonEvent]
+        internal override void EnterInactiveConnectionPool()
+        {
+            Interlocked.Increment(ref _inactiveConnectionPoolsCounter);
+        }
+
+        /// <summary>
+        /// The number of connection pools
+        /// </summary>
+        [NonEvent]
+        internal override void ExitInactiveConnectionPool()
+        {
+            Interlocked.Decrement(ref _inactiveConnectionPoolsCounter);
         }
 
         /// <summary>
         /// The number of connections currently in-use
         /// </summary>
-        /// <param name="increment"></param>
         [NonEvent]
-        internal override void ActiveConnectionRequest(bool increment = true)
+        internal override void EnterActiveConnection()
         {
-            Request(ref _activeConnectionsCounter, increment);
+            Interlocked.Increment(ref _activeConnectionsCounter);
+        }
+
+        /// <summary>
+        /// The number of connections currently in-use
+        /// </summary>
+        [NonEvent]
+        internal override void ExitActiveConnection()
+        {
+            Interlocked.Decrement(ref _activeConnectionsCounter);
         }
 
         /// <summary>
         /// The number of connections currently available for use
         /// </summary>
-        /// <param name="increment"></param>
         [NonEvent]
-        internal override void FreeConnectionRequest(bool increment = true)
+        internal override void EnterFreeConnection()
         {
-            Request(ref _freeConnectionsCounter, increment);
+            Interlocked.Increment(ref _freeConnectionsCounter);
+        }
+
+        /// <summary>
+        /// The number of connections currently available for use
+        /// </summary>
+        [NonEvent]
+        internal override void ExitFreeConnection()
+        {
+            Interlocked.Decrement(ref _freeConnectionsCounter);
         }
 
         /// <summary>
         /// The number of connections currently waiting to be made ready for use
         /// </summary>
-        /// <param name="increment"></param>
         [NonEvent]
-        internal override void StasisConnectionRequest(bool increment = true)
+        internal override void EnterStasisConnection()
         {
-            Request(ref _stasisConnectionsCounter, increment);
+            Interlocked.Increment(ref _stasisConnectionsCounter);
+        }
+
+        /// <summary>
+        /// The number of connections currently waiting to be made ready for use
+        /// </summary>
+        [NonEvent]
+        internal override void ExitStasisConnection()
+        {
+            Interlocked.Decrement(ref _stasisConnectionsCounter);
         }
 
         /// <summary>
@@ -330,23 +390,7 @@ namespace Microsoft.Data.SqlClient
         [NonEvent]
         internal override void ReclaimedConnectionRequest()
         {
-            Request(ref _reclaimedConnectionsCounter, true);
-        }
-
-        [NonEvent]
-        private void Request(ref long counter, bool increment)
-        {
-            if (IsEnabled())
-            {
-                if (increment)
-                {
-                    Interlocked.Increment(ref counter);
-                }
-                else
-                {
-                    Interlocked.Decrement(ref counter);
-                }
-            }
+            Interlocked.Increment(ref _reclaimedConnectionsCounter);
         }
     }
 }

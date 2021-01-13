@@ -108,7 +108,7 @@ namespace Microsoft.Data.ProviderBase
                     }
 
                     connection = CreateNonPooledConnection(owningConnection, poolGroup, userOptions);
-                    SqlClientEventSource.Log.NonPooledConnectionRequest();
+                    SqlClientEventSource.Log.EnterNonPooledConnection();
                 }
                 else
                 {
@@ -212,7 +212,7 @@ namespace Microsoft.Data.ProviderBase
                 }
                 else
                 {
-                    SqlClientEventSource.Log.NonPooledConnectionRequest();
+                    SqlClientEventSource.Log.EnterNonPooledConnection();
                 }
             }
         }

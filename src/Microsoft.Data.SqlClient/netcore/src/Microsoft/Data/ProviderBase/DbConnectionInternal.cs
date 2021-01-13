@@ -219,7 +219,7 @@ namespace Microsoft.Data.ProviderBase
 #endif // DEBUG
 
             Activate(transaction);
-            SqlClientEventSource.Log.ActiveConnectionRequest();
+            SqlClientEventSource.Log.EnterActiveConnection();
         }
 
         internal virtual void CloseConnection(DbConnection owningObject, DbConnectionFactory connectionFactory)
@@ -314,7 +314,7 @@ namespace Microsoft.Data.ProviderBase
                             }
                             else
                             {
-                                SqlClientEventSource.Log.NonPooledConnectionRequest(false);
+                                SqlClientEventSource.Log.ExitNonPooledConnection();
                                 Dispose();
                             }
                         }
@@ -373,7 +373,7 @@ namespace Microsoft.Data.ProviderBase
                 // once and for all, or the server will have fits about us
                 // leaving connections open until the client-side GC kicks 
                 // in.
-                SqlClientEventSource.Log.NonPooledConnectionRequest(false);
+                SqlClientEventSource.Log.ExitNonPooledConnection();
                 Dispose();
             }
             // When _pooledCount is 0, the connection is a pooled connection
@@ -486,7 +486,7 @@ namespace Microsoft.Data.ProviderBase
         {
             _isInStasis = true;
             SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.SetInStasis|RES|CPOOL> {0}, Non-Pooled Connection has Delegated Transaction, waiting to Dispose.", ObjectID);
-            SqlClientEventSource.Log.StasisConnectionRequest();
+            SqlClientEventSource.Log.EnterStasisConnection();
         }
 
         private void TerminateStasis(bool returningToPool)
@@ -499,7 +499,7 @@ namespace Microsoft.Data.ProviderBase
             {
                 SqlClientEventSource.Log.TryPoolerTraceEvent("<prov.DbConnectionInternal.TerminateStasis|RES|CPOOL> {0}, Delegated Transaction has ended, connection is closed/leaked.  Disposing.", ObjectID);
             }
-            SqlClientEventSource.Log.StasisConnectionRequest(false);
+            SqlClientEventSource.Log.ExitStasisConnection();
             _isInStasis = false;
         }
     }
