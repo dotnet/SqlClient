@@ -64,6 +64,7 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
         <dependency id="System.Memory" version="4.5.4" exclude="Compile" />
         <dependency id="System.Security.Principal.Windows" version="4.7.0" exclude="Compile" />
         <dependency id="System.Text.Encoding.CodePages" version="4.7.0" exclude="Compile" />
+        <dependency id="System.Runtime.Caching" version="4.7.0" exclude="Compile" />
         <dependency id="Microsoft.Identity.Client" version="4.21.1" exclude="Compile"/>
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.8.0" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="6.8.0" />
@@ -75,6 +76,7 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
         <dependency id="System.Memory" version="4.5.4" exclude="Compile" />
         <dependency id="System.Security.Principal.Windows" version="4.7.0" exclude="Compile" />
         <dependency id="System.Text.Encoding.CodePages" version="4.7.0" exclude="Compile" />
+        <dependency id="System.Runtime.Caching" version="4.7.0" exclude="Compile" />
         <dependency id="Microsoft.Identity.Client" version="4.21.1" exclude="Compile"/>
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.8.0" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="6.8.0" />
