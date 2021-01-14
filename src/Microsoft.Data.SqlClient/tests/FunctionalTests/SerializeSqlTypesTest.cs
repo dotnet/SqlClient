@@ -9,6 +9,7 @@ using System.Data.SqlTypes;
 using Xunit;
 using System.IO;
 using System.Runtime.Serialization;
+using Microsoft.Data.SqlTypes;
 
 namespace Microsoft.Data.SqlClient.Tests
 {
@@ -27,7 +28,14 @@ namespace Microsoft.Data.SqlClient.Tests
                 Assert.Equal(expectedSerializedValue, serializedValue);
 
                 memoryStream.Position = 0;
-                T deserializedValue = (T)serializer.ReadObject(memoryStream);
+                var obj = serializer.ReadObject(memoryStream);
+                if (obj == null) 
+                {
+                    // Handle structs that serialize to xsi:nil, which returns null from ReadObject
+                    return default;
+                }
+
+                T deserializedValue = (T)obj;
                 return deserializedValue;
             }
         }
@@ -80,6 +88,15 @@ namespace Microsoft.Data.SqlClient.Tests
             SqlString sqlStringDeserialized = SerializeAndDeserialize<SqlString>(sqlString, "<string>abcdefghijklmnopqrstuvwxyz</string>");
             // Cannot use StrictEqual because information such as LCID is lost when the SqlString is serialized
             Assert.Equal(sqlString.Value, sqlStringDeserialized.Value);
+
+            SqlDateTime2 nullDateTime = SqlDateTime2.Null;
+            Assert.StrictEqual(nullDateTime, SerializeAndDeserialize(nullDateTime, @"<dateTime2 xsi:nil=""true"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance""/>"));
+
+            SqlDateTime2 minSqlDateTime = new SqlDateTime2(0);
+            Assert.StrictEqual(minSqlDateTime, SerializeAndDeserialize(minSqlDateTime, @"<dateTime2>0001-01-01T00:00:00.0000000</dateTime2>"));
+
+            SqlDateTime2 maxSqlDateTime = new SqlDateTime2(3155378975999999999);
+            Assert.StrictEqual(maxSqlDateTime, SerializeAndDeserialize(maxSqlDateTime, @"<dateTime2>9999-12-31T23:59:59.9999999</dateTime2>"));
         }
     }
 }

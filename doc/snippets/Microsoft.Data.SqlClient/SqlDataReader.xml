@@ -634,6 +634,25 @@
  ]]></format>
             </remarks>
         </GetSqlDateTime>
+      <GetSqlDateTime2>
+        <param name="i">The zero-based column ordinal.</param>
+        <summary>
+          Gets the value of the specified column as a <see cref="T:System.Data.SqlTypes.SqlDateTime2" />.
+        </summary>
+        <returns>
+          The value of the column expressed as a  <see cref="T:System.Data.SqlTypes.SqlDateTime2" />.
+        </returns>
+        <remarks>
+          <format type="text/markdown">
+            <![CDATA[  
+  
+## Remarks  
+ No conversions are performed; therefore, the data retrieved must already be a date/time value or Null, otherwise an exception is thrown.  
+  
+ ]]>
+          </format>
+        </remarks>
+      </GetSqlDateTime2>
         <GetSqlDecimal>
             <param name="i">The zero-based column ordinal.</param>
             <summary>Gets the value of the specified column as a <see cref="T:System.Data.SqlTypes.SqlDecimal" />.</summary>

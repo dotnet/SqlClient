@@ -57,6 +57,7 @@
       <Link>Common\System\Collections\DictionaryExtensions.cs</Link>
     </Compile>
     <Compile Include="DataCommon\AADUtility.cs" />
+    <Compile Include="SQL\DateTime2Test\DateTime2Test.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\OrderHint.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\OrderHintAsync.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\OrderHintDuplicateColumn.cs" />

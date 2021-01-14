@@ -2397,6 +2397,13 @@ namespace Microsoft.Data.SqlClient
             return _data[i].SqlDateTime;
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlDateTime2/*' />
+        virtual public SqlDateTime2 GetSqlDateTime2(int i)
+        {
+            ReadColumn(i);
+            return _data[i].SqlDateTime2;
+        }
+
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlDecimal/*' />
         virtual public SqlDecimal GetSqlDecimal(int i)
         {

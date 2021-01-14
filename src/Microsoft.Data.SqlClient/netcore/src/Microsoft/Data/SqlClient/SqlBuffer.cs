@@ -615,6 +615,40 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        internal SqlDateTime2 SqlDateTime2
+        {
+            get
+            {
+                if (IsNull)
+                {
+                    return SqlDateTime2.Null;
+                }
+
+                if (StorageType.DateTime2 == _type)
+                {
+                    return new SqlDateTime2(GetTicksFromDateTime2Info(_value._dateTime2Info));
+                }
+
+                if (StorageType.DateTime == _type)
+                {
+                    // also handle DATETIME without boxing to object first
+                    var dateTime = SqlTypeWorkarounds.SqlDateTimeToDateTime(_value._dateTimeInfo._daypart, _value._dateTimeInfo._timepart);
+
+                    return new SqlDateTime2(dateTime.Ticks);
+                }
+
+                if (StorageType.Date == _type)
+                {
+                    return (SqlDateTime2)DateTime.MinValue.AddDays(_value._int32);
+                }
+
+                // cannot use SqlValue, since that causes invalid cast exception since object cannot be dynamic cast to SqlDateTime2 - only explicit cast
+                // (SqlDateTime2)(object)dateTimeValue;
+                // So assume its called on some kind of DATE type, so DateTime property can handle it
+                return (SqlDateTime2)DateTime; 
+            }
+        }
+
         internal SqlDecimal SqlDecimal
         {
             get

@@ -527,5 +527,10 @@ namespace Microsoft.Data.Common
         {
             Transaction.Current = transaction;
         }
+
+        static internal Exception WrongType(Type got, Type expected)
+        {
+            return Argument(StringsHelper.GetString(Strings.SQL_WrongType, got.ToString(), expected.ToString()));
+        }
     }
 }

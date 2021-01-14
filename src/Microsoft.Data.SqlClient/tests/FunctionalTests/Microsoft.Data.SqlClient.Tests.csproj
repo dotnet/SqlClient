@@ -42,6 +42,7 @@
     <Compile Include="BaseProviderAsyncTest\MockDataReader.cs" />
     <Compile Include="SqlCredentialTest.cs" />
     <Compile Include="SqlDataRecordTest.cs" />
+    <Compile Include="SqlDateTime2Test.cs" />
     <Compile Include="SqlExceptionTest.cs" />
     <Compile Include="SqlFacetAttributeTest.cs" />
     <Compile Include="SqlParameterTest.cs" />

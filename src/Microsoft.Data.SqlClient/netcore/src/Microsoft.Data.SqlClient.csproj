@@ -464,6 +464,7 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlEnclaveAttestationParameters.cs" />
     <Compile Include="Microsoft\Data\SqlClient\EnclaveDelegate.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\SqlTypes\SqlDateTime2.cs" Link="Microsoft\Data\SQLTypes\SqlDateTime2.cs" />
   </ItemGroup>
   <!-- Windows only -->
   <ItemGroup Condition="'$(TargetsWindows)' == 'true'">

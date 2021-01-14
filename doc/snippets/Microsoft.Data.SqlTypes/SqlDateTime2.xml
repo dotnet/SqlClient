@@ -1,0 +1,72 @@
+﻿<docs>
+  <members name="SqlDateTime2">
+    <SqlFileStream>
+      <summary>Exposes SQL Server data that is stored as a DATETIME2.</summary>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[  
+
+## Remarks  
+The <xref:Microsoft.Data.SqlTypes.SqlDateTime2> class is used to work with `DATETIME2` data.  
+`DATETIME2`has a wider range than DATETIME and thus needs its own type.
+
+]]>
+        </format>
+      </remarks>
+    </SqlFileStream>
+    <ctor1>
+      <param name="isNull">Whether or not this instance should be considered null - true means null, false not null</param>
+      <summary>
+        Initializes a new instance of the <see cref="T:Microsoft.Data.SqlTypes.SqlDateTime2" /> struct.
+        Will initialize the datetime value to 0.
+      </summary>
+    </ctor1>
+    <ctor2>
+      <param name="ticks">Number of ticks to initialize this instance with - in the range of <see cref="T:Microsoft.DateTime.MinValue.Ticks"/> &amp;  <see cref="T:Microsoft.DateTime.MaxValue.Ticks"/></param>
+     
+      <summary>
+        Initializes a new instance of the <see cref="T:Microsoft.Data.SqlTypes.SqlDateTime2" /> class.
+      </summary>
+      <exception cref="T:System.ArgumentOutOfRangeException">
+        <paramref name="ticks" /> is not in the range of <see cref="T:Microsoft.DateTime.MinValue.Ticks"/> &amp;  <see cref="T:Microsoft.DateTime.MaxValue.Ticks"/>
+      </exception>
+    </ctor2>
+    <Value>
+      <summary>
+        Gets the <see cref="T:System.DateTime"/> representation of this instance.
+      </summary>
+      <exception cref="T:Microsoft.Data.SqlTypes.SqlNullValueException">
+       If this instance is null
+      </exception>
+    </Value>
+    <Null>
+      <summary>
+        Gets an instance representing the value NULL from the database.
+      </summary>
+    </Null>
+    <OperatorDateTime>
+      <summary>
+        Converts a DateTime into a SqlDateTime2
+      </summary>
+    </OperatorDateTime>
+    <OperatorDBNull>
+      <summary>
+        Converts a DBNull instance into a Null SqlDateTime2
+      </summary>
+    </OperatorDBNull>
+    <OperatorSqlDateTime>
+    <summary>
+      Converts a SqlDateTime2 into DateTime
+    </summary>
+      <exception cref="T:Microsoft.Data.SqlTypes.SqlNullValueException">
+        If the SqlDateTime2 instance has a null value
+      </exception>
+    </OperatorSqlDateTime>
+    <GetXsdType>
+      <summary>
+        returns a <see cref="T:System.Xml.XmlQualifiedName"/> for serialization purposes
+      </summary>
+      <param name="schemaSet">unused parameter</param>
+    </GetXsdType>
+  </members>
+</docs>

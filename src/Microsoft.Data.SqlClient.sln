@@ -159,6 +159,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Data.SqlClient.Se
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Data.SqlTypes", "Microsoft.Data.SqlTypes", "{5A7600BD-AED8-44AB-8F2A-7CB33A8D9C02}"
 	ProjectSection(SolutionItems) = preProject
+		..\doc\snippets\Microsoft.Data.SqlTypes\SqlDateTime2.xml = ..\doc\snippets\Microsoft.Data.SqlTypes\SqlDateTime2.xml
 		..\doc\snippets\Microsoft.Data.SqlTypes\SqlFileStream.xml = ..\doc\snippets\Microsoft.Data.SqlTypes\SqlFileStream.xml
 	EndProjectSection
 EndProject
