@@ -331,15 +331,15 @@ namespace Microsoft.Data.SqlClient
         private int _currentlyExecutingDescribeParameterEncryptionRPC;
 
         /// <summary>
-        /// A flag to indicate if EndExecute was already initiated by the Begin call.
-        /// </summary>
-        private volatile bool _internalEndExecuteInitiated;
-
-        /// <summary>
         /// A flag to indicate if we have in-progress describe parameter encryption RPC requests.
         /// Reset to false when completed.
         /// </summary>
-        internal bool IsDescribeParameterEncryptionRPCCurrentlyInProgress { get; set; }
+        internal bool IsDescribeParameterEncryptionRPCCurrentlyInProgress { get; private set; }
+
+        /// <summary>
+        /// A flag to indicate if EndExecute was already initiated by the Begin call.
+        /// </summary>
+        private volatile bool _internalEndExecuteInitiated;
 
         /// <summary>
         /// A flag to indicate whether we postponed caching the query metadata for this command.
@@ -454,7 +454,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DbConnection/*'/>
-        override protected DbConnection DbConnection
+        protected override DbConnection DbConnection
         {
             get
             {
@@ -533,7 +533,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DbTransaction/*'/>
-        override protected DbTransaction DbTransaction
+        protected override DbTransaction DbTransaction
         {
             get
             {
@@ -547,7 +547,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandText/*'/>
-        override public string CommandText
+        public override string CommandText
         {
             get
             {
@@ -569,7 +569,7 @@ namespace Microsoft.Data.SqlClient
         public SqlCommandColumnEncryptionSetting ColumnEncryptionSetting => _columnEncryptionSetting;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandTimeout/*'/>
-        override public int CommandTimeout
+        public override int CommandTimeout
         {
             get
             {
@@ -609,7 +609,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandType/*'/>
-        override public CommandType CommandType
+        public override CommandType CommandType
         {
             get
             {
@@ -670,7 +670,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DbParameterCollection/*'/>
-        override protected DbParameterCollection DbParameterCollection
+        protected override DbParameterCollection DbParameterCollection
         {
             get
             {
@@ -679,7 +679,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/UpdatedRowSource/*'/>
-        override public UpdateRowSource UpdatedRowSource
+        public override UpdateRowSource UpdatedRowSource
         {
             get
             {
@@ -744,7 +744,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Prepare/*'/>
-        override public void Prepare()
+        public override void Prepare()
         {
             // Reset _pendingCancel upon entry into any Execute - used to synchronize state
             // between entry into Execute* API and the thread obtaining the stateObject.
@@ -872,7 +872,7 @@ namespace Microsoft.Data.SqlClient
         // because immediately after checking the connection can be closed or removed via another thread.
         //
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Cancel/*'/>
-        override public void Cancel()
+        public override void Cancel()
         {
             long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlCommand.Cancel | API | Object Id {0}", ObjectID);
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.Cancel | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command Text '{4}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
@@ -964,13 +964,13 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CreateDbParameter/*'/>
-        override protected DbParameter CreateDbParameter()
+        protected override DbParameter CreateDbParameter()
         {
             return CreateParameter();
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Dispose/*'/>
-        override protected void Dispose(bool disposing)
+        protected override void Dispose(bool disposing)
         {
             if (disposing)
             { // release managed objects
@@ -981,7 +981,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteScalar/*'/>
-        override public object ExecuteScalar()
+        public override object ExecuteScalar()
         {
             // Reset _pendingCancel upon entry into any Execute - used to synchronize state
             // between entry into Execute* API and the thread obtaining the stateObject.
@@ -1064,8 +1064,8 @@ namespace Microsoft.Data.SqlClient
             return retResult;
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteScalar/*'/>
-        override public int ExecuteNonQuery()
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteNonQuery[@name="default"]/*'/>
+        public override int ExecuteNonQuery()
         {
             // Reset _pendingCancel upon entry into any Execute - used to synchronize state
             // between entry into Execute* API and the thread obtaining the stateObject.
@@ -1855,7 +1855,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteDbDataReader[@name="CommandBehavior"]/*'/>
-        override protected DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
+        protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
         {
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.ExecuteDbDataReader | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command Text '{4}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
             return ExecuteReader(behavior);
@@ -3259,6 +3259,7 @@ namespace Microsoft.Data.SqlClient
                     _parameters[i].HasReceivedMetadata = false;
                 }
             }
+
             if (keysToBeSentToEnclave != null)
             {
                 keysToBeSentToEnclave.Clear();
@@ -3970,7 +3971,6 @@ namespace Microsoft.Data.SqlClient
 
                     if (isRequestedByEnclave)
                     {
-
                         if (string.IsNullOrWhiteSpace(this.Connection.EnclaveAttestationUrl))
                         {
                             throw SQL.NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe(this._activeConnection.Parser.EnclaveType);
@@ -3996,6 +3996,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             throw SQL.InvalidEncryptionKeyOrdinalEnclaveMetadata(requestedKey, columnEncryptionKeyTable.Count);
                         }
+
                         if (keysToBeSentToEnclave == null)
                         {
                             keysToBeSentToEnclave = new Dictionary<int, SqlTceCipherInfoEntry>();
@@ -4525,6 +4526,7 @@ namespace Microsoft.Data.SqlClient
                         SqlClientEventSource.Log.TryTraceEvent("SqlCommand.RunExecuteReaderTds | Info | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command executed as SQLBATCH, Command Text '{4}' ", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
                     }
                     string text = GetCommandText(cmdBehavior) + GetResetOptionsString(cmdBehavior);
+
                     //If the query requires enclave computations, pass the enclavepackage in the SQLBatch TDS stream
                     if (requiresEnclaveComputations)
                     {
@@ -5553,11 +5555,12 @@ namespace Microsoft.Data.SqlClient
             SetUpRPCParameters(rpc, inSchema, parameters);
         }
 
+        //
         // build the RPC record header for sp_execute
         //
         // prototype for sp_execute is:
         // sp_execute(@handle int,param1value,param2value...)
-
+        //
         private _SqlRPC BuildExecute(bool inSchema)
         {
             Debug.Assert((int)_prepareHandle != -1, "Invalid call to sp_execute without a valid handle!");
@@ -6148,7 +6151,6 @@ namespace Microsoft.Data.SqlClient
 
         internal int ExecuteBatchRPCCommand()
         {
-
             Debug.Assert(BatchRPCMode, "Command is not in batch RPC Mode");
             Debug.Assert(_RPCList != null, "No batch commands specified");
 
