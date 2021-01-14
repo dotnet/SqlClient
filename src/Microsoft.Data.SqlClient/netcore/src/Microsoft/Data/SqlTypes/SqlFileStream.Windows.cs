@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlTypes
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/SqlFileStream/*' />
     public sealed partial class SqlFileStream : System.IO.Stream
     {
-        // NOTE: if we ever unseal this class, be sure to specify the Name, SafeFileHandle, and 
+        // NOTE: if we ever unseal this class, be sure to specify the Name, SafeFileHandle, and
         // TransactionContext accessors as virtual methods. Doing so now on a sealed class
         // generates a compiler error (CS0549)
 
@@ -31,8 +31,8 @@ namespace Microsoft.Data.SqlTypes
         // SQLBUVSTS# 193123 - disable lazy flushing of written data in order to prevent
         // potential exceptions during Close/Finalization. Since System.IO.FileStream will
         // not allow for a zero byte buffer, we'll create a one byte buffer which, in normal
-        // usage, will not be used and the user buffer will automatically flush directly to 
-        // the disk cache. In pathological scenarios where the client is writing a single 
+        // usage, will not be used and the user buffer will automatically flush directly to
+        // the disk cache. In pathological scenarios where the client is writing a single
         // byte at a time, we'll explicitly call flush ourselves.
         internal const int DefaultBufferSize = 1;
 
@@ -61,7 +61,7 @@ namespace Microsoft.Data.SqlTypes
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/ctor2/*' />
         public SqlFileStream(string path, byte[] transactionContext, FileAccess access, FileOptions options, long allocationSize)
         {
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlFileStream.ctor|API> {0} access={1} options={2} path='{3}'", ObjectID, (int)access, (int)options, path);
+            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlFileStream.ctor | API | Object Id {0} | Access {1} | Options {2} | Path '{3}'", ObjectID, (int)access, (int)options, path);
             try
             {
                 //-----------------------------------------------------------------
@@ -332,8 +332,8 @@ namespace Microsoft.Data.SqlTypes
             // SQLBUVSTS# 193123 - disable lazy flushing of written data in order to prevent
             // potential exceptions during Close/Finalization. Since System.IO.FileStream will
             // not allow for a zero byte buffer, we'll create a one byte buffer which, in normal
-            // usage, will not be used and the user buffer will automatically flush directly to 
-            // the disk cache. In pathological scenarios where the client is writing a single 
+            // usage, will not be used and the user buffer will automatically flush directly to
+            // the disk cache. In pathological scenarios where the client is writing a single
             // byte at a time, we'll explicitly call flush ourselves.
             if (count == 1)
             {
@@ -401,7 +401,7 @@ namespace Microsoft.Data.SqlTypes
             // potential exceptions during Close/Finalization. Since System.IO.FileStream will
             // not allow for a zero byte buffer, we'll create a one byte buffer which, in normal
             // usage, will cause System.IO.FileStream to utilize the user-supplied buffer and
-            // automatically flush the data directly to the disk cache. In pathological scenarios 
+            // automatically flush the data directly to the disk cache. In pathological scenarios
             // where the user is writing a single byte at a time, we'll explicitly call flush ourselves.
             if (count == 1)
             {
@@ -581,15 +581,14 @@ namespace Microsoft.Data.SqlTypes
                         ea->EaNameLength = (byte)(s_eaNameString.Length - 1); // Length does not include terminating null character.
                         ea->EaValueLength = (ushort)transactionContext.Length;
 
-                        // We could continue to do pointer math here, chose to use Span for convenience to 
+                        // We could continue to do pointer math here, chose to use Span for convenience to
                         // make sure we get the other members in the right place.
                         Span<byte> data = buffer.AsSpan(headerSize);
                         s_eaNameString.AsSpan().CopyTo(data);
                         data = data.Slice(s_eaNameString.Length);
                         transactionContext.AsSpan().CopyTo(data);
 
-                        (int status, IntPtr handle) = Interop.NtDll.CreateFile(
-                                                                                path: mappedPath.AsSpan(),
+                        (int status, IntPtr handle) = Interop.NtDll.CreateFile(path: mappedPath.AsSpan(),
                                                                                 rootDirectory: IntPtr.Zero,
                                                                                 createDisposition: dwCreateDisposition,
                                                                                 desiredAccess: nDesiredAccess,
@@ -599,8 +598,7 @@ namespace Microsoft.Data.SqlTypes
                                                                                 eaBuffer: b,
                                                                                 eaLength: (uint)fullSize);
 
-                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlFileStream.OpenSqlFileStream|ADV> {0}, desiredAccess=0x{1}, allocationSize={2}, " +
-                       "fileAttributes=0x{3}, shareAccess=0x{4}, dwCreateDisposition=0x{5}, createOptions=0x{ dwCreateOptions}", ObjectID, (int)nDesiredAccess, allocationSize, 0, (int)nShareAccess, dwCreateDisposition);
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent("SqlFileStream.OpenSqlFileStream | ADV | Object Id {0}, Desired Access 0x{1}, Allocation Size {2}, File Attributes 0, Share Access 0x{3}, Create Disposition 0x{4}, Create Options 0x{5}", ObjectID, (int)nDesiredAccess, allocationSize, (int)nShareAccess, dwCreateDisposition, dwCreateOptions);
 
                         retval = status;
                         hFile = new SafeFileHandle(handle, true);
@@ -635,7 +633,7 @@ namespace Microsoft.Data.SqlTypes
                             uint error = Interop.NtDll.RtlNtStatusToDosError(retval);
                             if (error == ERROR_MR_MID_NOT_FOUND)
                             {
-                                // status code could not be mapped to a Win32 error code 
+                                // status code could not be mapped to a Win32 error code
                                 error = (uint)retval;
                             }
 

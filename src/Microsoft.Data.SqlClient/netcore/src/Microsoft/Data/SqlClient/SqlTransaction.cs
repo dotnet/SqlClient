@@ -141,8 +141,8 @@ namespace Microsoft.Data.SqlClient
             ZombieCheck();
 
             SqlStatistics statistics = null;
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlTransaction.Commit|API> {0}", ObjectID);
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlTransaction.Commit|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
+            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlTransaction.Commit | API | Object Id {0}", ObjectID);
+            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlTransaction.Commit | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId);
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -153,7 +153,7 @@ namespace Microsoft.Data.SqlClient
             }
             catch (SqlException ex)
             {
-                // GitHub Issue #130 - When a timeout exception has occurred on transaction completion request, 
+                // GitHub Issue #130 - When a timeout exception has occurred on transaction completion request,
                 // this connection may not be in reusable state.
                 // We will abort this connection and make sure it does not go back to the pool.
                 var innerException = ex.InnerException as Win32Exception;
@@ -208,7 +208,7 @@ namespace Microsoft.Data.SqlClient
             if (IsYukonPartialZombie)
             {
                 // Put something in the trace in case a customer has an issue
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlTransaction.Rollback|ADV> {0} partial zombie no rollback required", ObjectID);
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("SqlTransaction.Rollback | ADV | Object Id {0}, partial zombie no rollback required", ObjectID);
                 _internalTransaction = null; // yukon zombification
             }
             else
@@ -216,8 +216,8 @@ namespace Microsoft.Data.SqlClient
                 ZombieCheck();
 
                 SqlStatistics statistics = null;
-                long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlTransaction.Rollback|API> {0}", ObjectID);
-                SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlTransaction.Rollback|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
+                long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlTransaction.Rollback | API | Object Id {0}", ObjectID);
+                SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlTransaction.Rollback | API | Correlation | Object Id {0}, ActivityID {1}, Client Connection Id {2}", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId);
                 try
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
@@ -255,7 +255,7 @@ namespace Microsoft.Data.SqlClient
             Guid operationId = s_diagnosticListener.WriteTransactionRollbackBefore(_isolationLevel, _connection, InternalTransaction, transactionName);
 
             ZombieCheck();
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlTransaction.Rollback|API> {0} transactionName='{1}'", ObjectID, transactionName);
+            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlTransaction.Rollback | API | Object Id {0}, Transaction Name='{1}', ActivityID {2}, Client Connection Id {3}", ObjectID, transactionName, ActivityCorrelator.Current, Connection?.ClientConnectionId);
             SqlStatistics statistics = null;
             try
             {
@@ -294,7 +294,7 @@ namespace Microsoft.Data.SqlClient
             ZombieCheck();
 
             SqlStatistics statistics = null;
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlTransaction.Save|API> {0} savePointName='{1}'", ObjectID, savePointName);
+            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlTransaction.Save | API | Object Id {0} | Save Point Name '{1}'", ObjectID, savePointName);
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -317,12 +317,12 @@ namespace Microsoft.Data.SqlClient
             // For Yukon, we have to defer "zombification" until
             //                 we get past the users' next rollback, else we'll
             //                 throw an exception there that is a breaking change.
-            //                 Of course, if the connection is already closed, 
+            //                 Of course, if the connection is already closed,
             //                 then we're free to zombify...
             SqlInternalConnection internalConnection = (_connection.InnerConnection as SqlInternalConnection);
             if (null != internalConnection && !_isFromAPI)
             {
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlTransaction.Zombie|ADV> {0} yukon deferred zombie", ObjectID);
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("SqlTransaction.Zombie | ADV | Object Id {0} yukon deferred zombie", ObjectID);
             }
             else
             {

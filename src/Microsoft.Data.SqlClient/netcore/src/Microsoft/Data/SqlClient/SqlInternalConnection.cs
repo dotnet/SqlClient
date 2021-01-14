@@ -78,7 +78,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         //  Get the internal transaction that should be hooked to a new outer transaction
-        //  during a BeginTransaction API call.  In some cases (i.e. connection is going to 
+        //  during a BeginTransaction API call.  In some cases (i.e. connection is going to
         //  be reset), CurrentTransaction should not be hooked up this way.
         virtual internal SqlInternalTransaction AvailableInternalTransaction
         {
@@ -236,7 +236,7 @@ namespace Microsoft.Data.SqlClient
 
         override protected void CleanupTransactionOnCompletion(Transaction transaction)
         {
-            // Note: unlocked, potentially multi-threaded code, so pull delegate to local to 
+            // Note: unlocked, potentially multi-threaded code, so pull delegate to local to
             //  ensure it doesn't change between test and call.
             SqlDelegatedTransaction delegatedTransaction = DelegatedTransaction;
             if (null != delegatedTransaction)
@@ -254,7 +254,7 @@ namespace Microsoft.Data.SqlClient
         {
             try
             {
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnection.Deactivate|ADV> {0} deactivating", ObjectID);
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("SqlInternalConnection.Deactivate | ADV | Object Id {0} deactivating, Client Connection Id {1}", ObjectID, Connection?.ClientConnectionId);
                 SqlReferenceCollection referenceCollection = (SqlReferenceCollection)ReferenceCollection;
                 if (null != referenceCollection)
                 {
@@ -288,12 +288,12 @@ namespace Microsoft.Data.SqlClient
 
         protected void Enlist(Transaction tx)
         {
-            // This method should not be called while the connection has a 
+            // This method should not be called while the connection has a
             // reference to an active delegated transaction.
             // Manual enlistment via SqlConnection.EnlistTransaction
             // should catch this case and throw an exception.
             //
-            // Automatic enlistment isn't possible because 
+            // Automatic enlistment isn't possible because
             // Sys.Tx keeps the connection alive until the transaction is completed.
             Debug.Assert(!IsNonPoolableTransactionRoot, "cannot defect an active delegated transaction!");  // potential race condition, but it's an assert
 
@@ -334,12 +334,11 @@ namespace Microsoft.Data.SqlClient
         private void EnlistNonNull(Transaction tx)
         {
             Debug.Assert(null != tx, "null transaction?");
-            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnection.EnlistNonNull|ADV> {0}, transaction {1}.", ObjectID, tx.GetHashCode());
+            SqlClientEventSource.Log.TryAdvancedTraceEvent("SqlInternalConnection.EnlistNonNull | ADV | Object {0}, Transaction Id {1}, attempting to delegate.", ObjectID, tx?.TransactionInformation?.LocalIdentifier);
             bool hasDelegatedTransaction = false;
 
             // Promotable transactions are only supported on Yukon
             // servers or newer.
-            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnection.EnlistNonNull|ADV> {0}, attempting to delegate", ObjectID);
             SqlDelegatedTransaction delegatedTransaction = new SqlDelegatedTransaction(this, tx);
 
             try
@@ -368,7 +367,7 @@ namespace Microsoft.Data.SqlClient
                 // our delegated transaction, and proceed to enlist
                 // in the promoted one.
 
-                // NOTE: Global Transactions is an Azure SQL DB only 
+                // NOTE: Global Transactions is an Azure SQL DB only
                 // feature where the Transaction Manager (TM) is not
                 // MS-DTC. Sys.Tx added APIs to support Non MS-DTC
                 // promoter types/TM in .NET 4.6.1. Following directions
@@ -386,7 +385,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (SysTxForGlobalTransactions.EnlistPromotableSinglePhase == null)
                     {
-                        // This could be a local Azure SQL DB transaction. 
+                        // This could be a local Azure SQL DB transaction.
                         hasDelegatedTransaction = tx.EnlistPromotableSinglePhase(delegatedTransaction);
                     }
                     else
@@ -403,7 +402,7 @@ namespace Microsoft.Data.SqlClient
                 if (hasDelegatedTransaction)
                 {
                     this.DelegatedTransaction = delegatedTransaction;
-                    SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnection.EnlistNonNull|ADV> {0}, delegated to transaction {1} with transactionId=0x{2}", ObjectID, null != CurrentTransaction ? CurrentTransaction.ObjectID : 0, null != CurrentTransaction ? CurrentTransaction.TransactionId : SqlInternalTransaction.NullTransactionId);
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent("SqlInternalConnection.EnlistNonNull | ADV | Object Id {0}, Client Connection Id {1} delegated to transaction {1} with transactionId {2}", ObjectID, Connection?.ClientConnectionId, delegatedTransaction?.ObjectID, delegatedTransaction?.Transaction?.TransactionInformation?.LocalIdentifier);
                 }
             }
             catch (SqlException e)
@@ -433,7 +432,7 @@ namespace Microsoft.Data.SqlClient
 
             if (!hasDelegatedTransaction)
             {
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnection.EnlistNonNull|ADV> {0}, delegation not possible, enlisting.", ObjectID);
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("SqlInternalConnection.EnlistNonNull | ADV | Object Id {0}, delegation not possible, enlisting.", ObjectID);
                 byte[] cookie = null;
 
                 if (_isGlobalTransaction)
@@ -464,23 +463,23 @@ namespace Microsoft.Data.SqlClient
                 PropagateTransactionCookie(cookie);
 
                 _isEnlistedInTransaction = true;
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnection.EnlistNonNull|ADV> {0}, enlisted with transaction {1} with transactionId=0x{2}", ObjectID, null != CurrentTransaction ? CurrentTransaction.ObjectID : 0, null != CurrentTransaction ? CurrentTransaction.TransactionId : SqlInternalTransaction.NullTransactionId);
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("SqlInternalConnection.EnlistNonNull | ADV | Object Id {0}, Client Connection Id {1}, Enlisted in transaction with transactionId {2}", ObjectID, Connection?.ClientConnectionId, tx?.TransactionInformation?.LocalIdentifier);
             }
 
             EnlistedTransaction = tx; // Tell the base class about our enlistment
 
 
-            // If we're on a Yukon or newer server, and we delegate the 
-            // transaction successfully, we will have done a begin transaction, 
+            // If we're on a Yukon or newer server, and we delegate the
+            // transaction successfully, we will have done a begin transaction,
             // which produces a transaction id that we should execute all requests
             // on.  The TdsParser or SmiEventSink will store this information as
             // the current transaction.
-            // 
+            //
             // Likewise, propagating a transaction to a Yukon or newer server will
-            // produce a transaction id that The TdsParser or SmiEventSink will 
+            // produce a transaction id that The TdsParser or SmiEventSink will
             // store as the current transaction.
             //
-            // In either case, when we're working with a Yukon or newer server 
+            // In either case, when we're working with a Yukon or newer server
             // we better have a current transaction by now.
 
             Debug.Assert(null != CurrentTransaction, "delegated/enlisted transaction with null current transaction?");
@@ -488,7 +487,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void EnlistNull()
         {
-            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnection.EnlistNull|ADV> {0}, unenlisting.", ObjectID);
+            SqlClientEventSource.Log.TryAdvancedTraceEvent("SqlInternalConnection.EnlistNull | ADV | Object Id {0}, unenlisting.", ObjectID);
             // We were in a transaction, but now we are not - so send
             // message to server with empty transaction - confirmed proper
             // behavior from Sameet Agarwal
@@ -506,13 +505,13 @@ namespace Microsoft.Data.SqlClient
             _isEnlistedInTransaction = false;
             EnlistedTransaction = null; // Tell the base class about our enlistment
 
-            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnection.EnlistNull|ADV> {0}, unenlisted.", ObjectID);
+            SqlClientEventSource.Log.TryAdvancedTraceEvent("SqlInternalConnection.EnlistNull | ADV | Object Id {0}, unenlisted.", ObjectID);
 
-            // The EnlistTransaction above will return an TransactionEnded event, 
+            // The EnlistTransaction above will return an TransactionEnded event,
             // which causes the TdsParser or SmiEventSink should to clear the
             // current transaction.
             //
-            // In either case, when we're working with a Yukon or newer server 
+            // In either case, when we're working with a Yukon or newer server
             // we better not have a current transaction at this point.
 
             Debug.Assert(null == CurrentTransaction, "unenlisted transaction with non-null current transaction?");   // verify it!

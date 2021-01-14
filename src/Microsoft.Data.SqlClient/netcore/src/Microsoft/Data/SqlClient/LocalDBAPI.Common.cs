@@ -38,7 +38,7 @@ namespace Microsoft.Data
                             {
                                 // SNI checks for LocalDBFormatMessage during DLL loading, so it is practically impossible to get this error.
                                 int hResult = Marshal.GetLastWin32Error();
-                                SqlClientEventSource.Log.TryTraceEvent("<sc.LocalDBAPI.LocalDBFormatMessage> GetProcAddress for LocalDBFormatMessage error 0x{0}", hResult);
+                                SqlClientEventSource.Log.TryTraceEvent("LocalDBAPI.LocalDBFormatMessage> GetProcAddress for LocalDBFormatMessage error 0x{0}", hResult);
                                 throw CreateLocalDBException(errorMessage: Strings.LocalDB_MethodNotFound);
                             }
                             s_localDBFormatMessage = Marshal.GetDelegateForFunctionPointer<LocalDBFormatMessageDelegate>(functionAddr);
@@ -68,14 +68,14 @@ namespace Microsoft.Data
                 uint len = (uint)buffer.Capacity;
 
 
-                // First try for current culture                
+                // First try for current culture
                 int hResult = LocalDBFormatMessage(hrLocalDB: hrCode, dwFlags: const_LOCALDB_TRUNCATE_ERR_MESSAGE, dwLanguageId: (uint)CultureInfo.CurrentCulture.LCID,
                                                  buffer: buffer, buflen: ref len);
                 if (hResult >= 0)
                     return buffer.ToString();
                 else
                 {
-                    // Message is not available for current culture, try default 
+                    // Message is not available for current culture, try default
                     buffer = new StringBuilder((int)const_ErrorMessageBufferSize);
                     len = (uint)buffer.Capacity;
                     hResult = LocalDBFormatMessage(hrLocalDB: hrCode, dwFlags: const_LOCALDB_TRUNCATE_ERR_MESSAGE, dwLanguageId: 0 /* thread locale with fallback to English */,

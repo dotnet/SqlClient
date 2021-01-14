@@ -7,22 +7,22 @@ using System;
 namespace Microsoft.Data.SqlClient
 {
     // these members were moved to a separate file in order
-    // to be able to skip them on platforms where AppDomain members are not supported 
+    // to be able to skip them on platforms where AppDomain members are not supported
     // for example, some mobile profiles on mono
     partial class SqlDependencyPerAppDomainDispatcher
     {
         private void SubscribeToAppDomainUnload()
         {
-            // If rude abort - we'll leak.  This is acceptable for now.  
+            // If rude abort - we'll leak.  This is acceptable for now.
             AppDomain.CurrentDomain.DomainUnload += new EventHandler(UnloadEventHandler);
         }
 
         private void UnloadEventHandler(object sender, EventArgs e)
         {
-            long scopeID = SqlClientEventSource.Log.TryNotificationScopeEnterEvent("<sc.SqlDependencyPerAppDomainDispatcher.UnloadEventHandler|DEP> {0}", ObjectID);
+            long scopeID = SqlClientEventSource.Log.TryNotificationScopeEnterEvent("SqlDependencyPerAppDomainDispatcher.UnloadEventHandler | DEP | Object Id {0}", ObjectID);
             try
             {
-                // Make non-blocking call to ProcessDispatcher to ThreadPool.QueueUserWorkItem to complete 
+                // Make non-blocking call to ProcessDispatcher to ThreadPool.QueueUserWorkItem to complete
                 // stopping of all start calls in this AppDomain.  For containers shared among various AppDomains,
                 // this will just be a ref-count subtract.  For non-shared containers, we will close the container
                 // and clean-up.

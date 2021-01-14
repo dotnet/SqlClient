@@ -15,7 +15,7 @@ namespace Microsoft.Data.SqlClient
         internal SqlConnectionPoolGroupProviderInfo(SqlConnectionString connectionOptions)
         {
             // This is for the case where the user specified the failover partner
-            // in the connection string and we have not yet connected to get the 
+            // in the connection string and we have not yet connected to get the
             // env change.
             _failoverPartner = connectionOptions.FailoverPartner;
 
@@ -53,7 +53,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else if (_alias != server)
                     {
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.SqlConnectionPoolGroupProviderInfo|INFO> alias change detected. Clearing PoolGroup");
+                        SqlClientEventSource.Log.TryTraceEvent("SqlConnectionPoolGroupProviderInfo.AliasCheck | Info | Alias change detected. Clearing PoolGroup.");
                         base.PoolGroup.Clear();
                         _alias = server;
                     }
@@ -66,7 +66,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (UseFailoverPartner != actualUseFailoverPartner)
             {
-                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlConnectionPoolGroupProviderInfo|INFO> Failover detected. failover partner='{0}'. Clearing PoolGroup", actualFailoverPartner);
+                SqlClientEventSource.Log.TryTraceEvent("SqlConnectionPoolGroupProviderInfo.FailoverCheck | Info | Failover detected. Failover partner '{0}'. Clearing PoolGroup", actualFailoverPartner);
                 base.PoolGroup.Clear();
                 _useFailoverPartner = actualUseFailoverPartner;
             }
@@ -74,7 +74,7 @@ namespace Microsoft.Data.SqlClient
             // primary data source, not the failover partner.
             if (!_useFailoverPartner && _failoverPartner != actualFailoverPartner)
             {
-                // NOTE: we optimistically generate the permission set to keep 
+                // NOTE: we optimistically generate the permission set to keep
                 //       lock short, but we only do this when we get a new
                 //       failover partner.
 
