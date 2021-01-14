@@ -355,7 +355,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static string GetUniqueNameForSqlServer(string prefix)
         {
             string extendedPrefix = string.Format(
-                "{0}_{1}@{2}",
+                "{0}_{1}_{2}@{3}",
                 prefix,
                 Environment.UserName,
                 Environment.MachineName,
