@@ -237,17 +237,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return unchecked((int)uval);
         }
 
+        //this method is only used for Randomizer constructor to avoid using overridable method inside constructor.
+        private void DeserializeInitializer()
+        {
+            string base64State = GetCurrentState().ToString();
+            Deserialize(Convert.FromBase64String(base64State), out _);
+        }
 
         /// <summary>
         /// deserialization constructor
         /// </summary>
         public Randomizer(StreamingContext context)
         {
-            string base64State = GetCurrentState().ToString();
-            int offset;
-            Deserialize(Convert.FromBase64String(base64State), out offset);
+            DeserializeInitializer();
         }
-
 
         /// <summary>
         /// use this method to create seeds for nested randomizers out of current one

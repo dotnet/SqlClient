@@ -202,9 +202,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }
             }
-            catch (SqlException e)
+            catch (SqlException)
             {
-                throw e;
+                // re-throwing exception in here will change the stack.
+                // we just throw caught exception.
+                throw;
             }
         }
 

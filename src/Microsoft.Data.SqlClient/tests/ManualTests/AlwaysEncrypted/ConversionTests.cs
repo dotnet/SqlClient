@@ -64,7 +64,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                                                           certStoreProvider);
             databaseObjects.Add(columnEncryptionKey);
 
-            foreach(string connectionStr in DataTestUtility.AEConnStringsSetup)
+            foreach (string connectionStr in DataTestUtility.AEConnStringsSetup)
             {
                 using (SqlConnection sqlConnection = new SqlConnection(connectionStr))
                 {
@@ -1343,7 +1343,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public void Dispose()
         {
             databaseObjects.Reverse();
-            foreach(string connectionStr in DataTestUtility.AEConnStringsSetup)
+            foreach (string connectionStr in DataTestUtility.AEConnStringsSetup)
             {
                 using (SqlConnection sqlConnection = new SqlConnection(connectionStr))
                 {
@@ -1351,6 +1351,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     databaseObjects.ForEach(o => o.Drop(sqlConnection));
                 }
             }
+            certificate?.Dispose();
         }
     }
 
@@ -1426,14 +1427,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 yield return new object[] { connStrAE, SqlDbType.DateTime2, SqlDbType.DateTime2 };
                 yield return new object[] { connStrAE, SqlDbType.DateTimeOffset, SqlDbType.DateTimeOffset };
                 yield return new object[] { connStrAE, SqlDbType.Float, SqlDbType.Float };
-                yield return new object[] { connStrAE, SqlDbType.Real, SqlDbType.Real};
+                yield return new object[] { connStrAE, SqlDbType.Real, SqlDbType.Real };
             }
         }
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
-    
+
     public class TestOutOfRangeValuesData : IEnumerable<object[]>
     {
         public IEnumerator<object[]> GetEnumerator()

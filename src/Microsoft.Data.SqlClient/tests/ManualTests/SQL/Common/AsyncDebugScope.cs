@@ -101,6 +101,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     _command.CompletePendingReadWithSuccess(true);
                 }
             }
+            _reader.Dispose();
+            _command.Dispose();
         }
     }
 }

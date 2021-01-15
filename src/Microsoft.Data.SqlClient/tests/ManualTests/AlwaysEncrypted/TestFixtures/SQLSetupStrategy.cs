@@ -252,6 +252,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     databaseObjects.ForEach(o => o.Drop(sqlConnection));
                 }
             }
+            certificate?.Dispose();
         }
     }
 
@@ -277,7 +278,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         public void Dispose()
         {
-            Fixture.Dispose();
+            akvFixture?.Dispose();
+            certStoreFixture?.Dispose();
+            Fixture?.Dispose();
         }
     }
 }
