@@ -217,7 +217,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
                     if (reportError)
                     {
-                        ReportTcpSNIError(0, SNICommon.ConnOpenFailedError, string.Empty);
+                        ReportTcpSNIError(0, SNICommon.ConnOpenFailedError, Strings.SNI_ERROR_40);
                     }
                     return;
                 }
@@ -259,7 +259,7 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 // Fail if above 64 to match legacy behavior
                 callerReportError = false;
-                ReportTcpSNIError(0, SNICommon.MultiSubnetFailoverWithMoreThan64IPs, string.Empty);
+                ReportTcpSNIError(0, SNICommon.MultiSubnetFailoverWithMoreThan64IPs, Strings.SNI_ERROR_47);
                 return availableSocket;
             }
 
@@ -288,7 +288,7 @@ namespace Microsoft.Data.SqlClient.SNI
             if (!(isInfiniteTimeOut ? connectTask.Wait(-1) : connectTask.Wait(ts)))
             {
                 callerReportError = false;
-                ReportTcpSNIError(0, SNICommon.ConnOpenFailedError, string.Empty);
+                ReportTcpSNIError(0, SNICommon.ConnOpenFailedError, Strings.SNI_ERROR_40);
                 return availableSocket;
             }
 
@@ -644,7 +644,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     else
                     {
                         // otherwise it is timeout for 0 or less than -1
-                        ReportTcpSNIError(0, SNICommon.ConnTimeoutError, string.Empty);
+                        ReportTcpSNIError(0, SNICommon.ConnTimeoutError, Strings.SNI_ERROR_11);
                         return TdsEnums.SNI_WAIT_TIMEOUT;
                     }
 

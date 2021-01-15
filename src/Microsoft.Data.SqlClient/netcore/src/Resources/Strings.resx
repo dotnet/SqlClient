@@ -931,7 +931,7 @@
     <value>Associating port with I/O completion mechanism failed</value>
   </data>
   <data name="SNI_ERROR_11" xml:space="preserve">
-    <value>Timeout error</value>
+    <value>Connection timed out.</value>
   </data>
   <data name="SNI_ERROR_12" xml:space="preserve">
     <value>No server name supplied</value>
