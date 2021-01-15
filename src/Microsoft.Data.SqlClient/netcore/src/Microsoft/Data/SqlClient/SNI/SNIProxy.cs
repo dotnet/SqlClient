@@ -379,7 +379,7 @@ namespace Microsoft.Data.SqlClient.SNI
             string hostName = details.ServerName;
             if (string.IsNullOrWhiteSpace(hostName))
             {
-                SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.TCP_PROV, 0, SNICommon.InvalidConnStringError, string.Empty);
+                SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.TCP_PROV, 0, SNICommon.InvalidConnStringError, Strings.SNI_ERROR_25);
                 return null;
             }
 
@@ -425,10 +425,11 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             if (parallel)
             {
-                SNICommon.ReportSNIError(SNIProviders.NP_PROV, 0, SNICommon.MultiSubnetFailoverWithNonTcpProtocol, string.Empty);
+                // Connecting to a SQL Server instance using the MultiSubnetFailover connection option is only supported when using the TCP protocol
+                SNICommon.ReportSNIError(SNIProviders.NP_PROV, 0, SNICommon.MultiSubnetFailoverWithNonTcpProtocol, Strings.SNI_ERROR_49);
                 return null;
             }
-            return new SNINpHandle(details.PipeHostName, details.PipeName, timerExpire, callbackObject);
+            return new SNINpHandle(details.PipeHostName, details.PipeName, timerExpire);
         }
 
         /// <summary>
@@ -632,7 +633,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
                 else
                 {
-                    SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBNoInstanceName, string.Empty);
+                    SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBNoInstanceName, Strings.SNI_ERROR_51);
                     error = true;
                     return null;
                 }
@@ -758,7 +759,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
         private void ReportSNIError(SNIProviders provider)
         {
-            SNILoadHandle.SingletonInstance.LastError = new SNIError(provider, 0, SNICommon.InvalidConnStringError, string.Empty);
+            SNILoadHandle.SingletonInstance.LastError = new SNIError(provider, 0, SNICommon.InvalidConnStringError, Strings.SNI_ERROR_25);
             IsBadDataSource = true;
         }
 
