@@ -84,7 +84,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
                 if (!_pipeStream.IsConnected || !_pipeStream.CanWrite || !_pipeStream.CanRead)
                 {
-                    SNICommon.ReportSNIError(SNIProviders.NP_PROV, 0, SNICommon.ConnOpenFailedError, Strings.SNI_ERROR_1);
+                    SNICommon.ReportSNIError(SNIProviders.NP_PROV, 0, SNICommon.ConnOpenFailedError, Strings.SNI_ERROR_40);
                     _status = TdsEnums.SNI_ERROR;
                     SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.SNINpHandle.SNINpHandle |SNI|ERR> Pipe stream is not connected or cannot write or read to/from it.");
                     return;
