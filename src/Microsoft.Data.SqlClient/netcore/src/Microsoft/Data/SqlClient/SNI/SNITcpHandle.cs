@@ -23,7 +23,6 @@ namespace Microsoft.Data.SqlClient.SNI
     internal sealed class SNITCPHandle : SNIPhysicalHandle
     {
         private readonly string _targetServer;
-        private readonly object _callbackObject;
         private readonly object _sendSync;
         private readonly Socket _socket;
         private NetworkStream _tcpStream;
@@ -114,13 +113,11 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="serverName">Server name</param>
         /// <param name="port">TCP port number</param>
         /// <param name="timerExpire">Connection timer expiration</param>
-        /// <param name="callbackObject">Callback object</param>
         /// <param name="parallel">Parallel executions</param>
         /// <param name="cachedFQDN">Key for DNS Cache</param>
         /// <param name="pendingDNSInfo">Used for DNS Cache</param>
-        public SNITCPHandle(string serverName, int port, long timerExpire, object callbackObject, bool parallel, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
+        public SNITCPHandle(string serverName, int port, long timerExpire, bool parallel, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
         {
-            _callbackObject = callbackObject;
             _targetServer = serverName;
             _sendSync = new object();
 
