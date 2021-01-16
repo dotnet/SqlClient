@@ -685,7 +685,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
             int commaIndex = _dataSourceAfterTrimmingProtocol.IndexOf(CommaSeparator);
 
-            int backSlashIndex = _dataSourceAfterTrimmingProtocol.IndexOf(PipeBeginning);
+            int backSlashIndex = _dataSourceAfterTrimmingProtocol.IndexOf(BackSlashCharacter);
 
             // Check the parameters. The parameters are Comma separated in the Data Source. The parameter we really care about is the port
             // If Comma exists, the try to get the port number
