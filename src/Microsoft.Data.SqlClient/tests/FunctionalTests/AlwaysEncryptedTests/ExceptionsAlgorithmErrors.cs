@@ -195,7 +195,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         public void TestExceptionsFromCustomKeyStore()
         {
             string[] errorMessages = {
-                string.Format("Failed to decrypt a column encryption key. Invalid key store provider name: 'DummyProvider'. Verify the properties of the column encryption key and its column master key in your database. The last 10 bytes of the encrypted column encryption key are: '{0}'.\r\nThe method or operation is not implemented.", BitConverter.ToString(CertFixture.encryptedCek, CertFixture.encryptedCek.Length-10, 10)),
+                string.Format("Failed to decrypt a column encryption key using key store provider: 'DummyProvider'. Verify the properties of the column encryption key and its column master key in your database. The last 10 bytes of the encrypted column encryption key are: '{0}'.\r\nThe method or operation is not implemented.", BitConverter.ToString(CertFixture.encryptedCek, CertFixture.encryptedCek.Length-10, 10)),
                 string.Format("The method or operation is not implemented.")
                 };
 
