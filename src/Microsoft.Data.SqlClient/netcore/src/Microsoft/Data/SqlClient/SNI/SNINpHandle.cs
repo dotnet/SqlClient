@@ -124,7 +124,7 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 try
                 {
-                    return (int)_sslStream?.SslProtocol;
+                    return (int)_sslStream.SslProtocol;
                 }
                 catch
                 {
