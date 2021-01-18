@@ -4,7 +4,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -13,20 +12,19 @@ namespace Microsoft.Data.SqlClient
     /// <summary>
     /// A delegate for communicating with secure enclave
     /// </summary>
-    internal partial class EnclaveDelegate
+    internal sealed partial class EnclaveDelegate
     {
-        private static readonly SqlAeadAes256CbcHmac256Factory SqlAeadAes256CbcHmac256Factory = new SqlAeadAes256CbcHmac256Factory();
-        private static readonly string GetAttestationInfoQueryString = String.Format(@"Select GetTrustedModuleIdentityAndAttestationInfo({0}) as attestationInfo", 0);
-        private static readonly string ClassName = "EnclaveDelegate";
-        private static readonly string GetDecryptedKeysToBeSentToEnclaveName = "GetDecryptedKeysToBeSentToEnclave";
-        private static readonly string ComputeQueryStringHashName = "ComputeQueryStringHash";
+        private static readonly SqlAeadAes256CbcHmac256Factory s_sqlAeadAes256CbcHmac256Factory = new SqlAeadAes256CbcHmac256Factory();
+        private static readonly EnclaveDelegate s_enclaveDelegate = new EnclaveDelegate();
 
-        private readonly Object _lock = new Object();
+        private readonly object _lock;
 
-        //singleton instance
-        internal static EnclaveDelegate Instance { get; } = new EnclaveDelegate();
+        public static EnclaveDelegate Instance => s_enclaveDelegate;
 
-        private EnclaveDelegate() { }
+        private EnclaveDelegate()
+        {
+            _lock = new object();
+        }
 
         private byte[] GetUintBytes(string enclaveType, int intValue, string variableName)
         {
@@ -54,24 +52,32 @@ namespace Microsoft.Data.SqlClient
 
             foreach (SqlTceCipherInfoEntry cipherInfo in keysTobeSentToEnclave.Values)
             {
-                SqlClientSymmetricKey sqlClientSymmetricKey = null;
-                SqlEncryptionKeyInfo? encryptionkeyInfoChosen = null;
-                SqlSecurityUtility.DecryptSymmetricKey(cipherInfo, serverName, out sqlClientSymmetricKey,
-                    out encryptionkeyInfoChosen);
+                SqlSecurityUtility.DecryptSymmetricKey(cipherInfo, serverName, out SqlClientSymmetricKey sqlClientSymmetricKey, out SqlEncryptionKeyInfo? encryptionkeyInfoChosen);
 
                 if (sqlClientSymmetricKey == null)
-                    throw SQL.NullArgumentInternal("sqlClientSymmetricKey", ClassName, GetDecryptedKeysToBeSentToEnclaveName);
+                {
+                    throw SQL.NullArgumentInternal(nameof(sqlClientSymmetricKey), nameof(EnclaveDelegate), nameof(GetDecryptedKeysToBeSentToEnclave));
+                }
                 if (cipherInfo.ColumnEncryptionKeyValues == null)
-                    throw SQL.NullArgumentInternal("ColumnEncryptionKeyValues", ClassName, GetDecryptedKeysToBeSentToEnclaveName);
+                {
+                    throw SQL.NullArgumentInternal(nameof(cipherInfo.ColumnEncryptionKeyValues), nameof(EnclaveDelegate), nameof(GetDecryptedKeysToBeSentToEnclave));
+                }
                 if (!(cipherInfo.ColumnEncryptionKeyValues.Count > 0))
+                {
                     throw SQL.ColumnEncryptionKeysNotFound();
+                }
 
                 //cipherInfo.CekId is always 0, hence used cipherInfo.ColumnEncryptionKeyValues[0].cekId. Even when cek has multiple ColumnEncryptionKeyValues
                 //the cekid and the plaintext value will remain the same, what varies is the encrypted cek value, since the cek can be encrypted by 
                 //multiple CMKs
-                decryptedKeysToBeSentToEnclave.Add(new ColumnEncryptionKeyInfo(sqlClientSymmetricKey.RootKey,
-                    cipherInfo.ColumnEncryptionKeyValues[0].databaseId,
-                    cipherInfo.ColumnEncryptionKeyValues[0].cekMdVersion, cipherInfo.ColumnEncryptionKeyValues[0].cekId));
+                decryptedKeysToBeSentToEnclave.Add(
+                    new ColumnEncryptionKeyInfo(
+                        sqlClientSymmetricKey.RootKey,
+                        cipherInfo.ColumnEncryptionKeyValues[0].databaseId,
+                        cipherInfo.ColumnEncryptionKeyValues[0].cekMdVersion, 
+                        cipherInfo.ColumnEncryptionKeyValues[0].cekId
+                    )
+                );
             }
             return decryptedKeysToBeSentToEnclave;
         }
@@ -130,17 +136,23 @@ namespace Microsoft.Data.SqlClient
         private byte[] EncryptBytePackage(byte[] bytePackage, byte[] sessionKey, string serverName)
         {
             if (sessionKey == null)
-                throw SQL.NullArgumentInternal("sessionKey", ClassName, "EncryptBytePackage");
+            {
+                throw SQL.NullArgumentInternal(nameof(sessionKey), nameof(EnclaveDelegate), nameof(EncryptBytePackage));
+            }
             if (sessionKey.Length == 0)
-                throw SQL.EmptyArgumentInternal("sessionKey", ClassName, "EncryptBytePackage");
+            {
+                throw SQL.EmptyArgumentInternal(nameof(sessionKey), nameof(EnclaveDelegate), nameof(EncryptBytePackage));
+            }
             //bytePackage is created internally in this class and is guaranteed to be non null and non empty
 
             try
             {
                 SqlClientSymmetricKey symmetricKey = new SqlClientSymmetricKey(sessionKey);
-                SqlClientEncryptionAlgorithm sqlClientEncryptionAlgorithm =
-                    SqlAeadAes256CbcHmac256Factory.Create(symmetricKey, SqlClientEncryptionType.Randomized,
-                        SqlAeadAes256CbcHmac256Algorithm.AlgorithmName);
+                SqlClientEncryptionAlgorithm sqlClientEncryptionAlgorithm = s_sqlAeadAes256CbcHmac256Factory.Create(
+                    symmetricKey, 
+                    SqlClientEncryptionType.Randomized,
+                    SqlAeadAes256CbcHmac256Algorithm.AlgorithmName
+                );
                 return sqlClientEncryptionAlgorithm.EncryptData(bytePackage);
             }
             catch (Exception e)
@@ -149,20 +161,36 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// Combine the array of given byte arrays into one
-        /// </summary>
-        /// <param name="byteArraysToCombine">byte arrays to be combined</param>
-        /// <returns></returns>
-        private byte[] CombineByteArrays(byte[][] byteArraysToCombine)
+        private byte[] CombineByteArrays(byte[] arr1, byte[] arr2)
         {
-            byte[] combinedArray = new byte[byteArraysToCombine.Sum(ba => ba.Length)];
-            int offset = 0;
-            foreach (byte[] byteArray in byteArraysToCombine)
-            {
-                Buffer.BlockCopy(byteArray, 0, combinedArray, offset, byteArray.Length);
-                offset += byteArray.Length;
-            }
+            // this complication avoids the usless allocation of a byte[][] to hold args
+            // it would be easier with spans so revisit if System.Memory is now a standard include
+            int length = arr1.Length + arr2.Length;
+            byte[] combinedArray = new byte[length];
+
+            Buffer.BlockCopy(arr1, 0, combinedArray, 0, arr1.Length);
+            Buffer.BlockCopy(arr2, 0, combinedArray, arr1.Length, arr2.Length);
+
+            return combinedArray;
+        }
+
+        private byte[] CombineByteArrays(byte[] arr1, byte[] arr2, byte[] arr3, byte[] arr4, byte[] arr5)
+        {
+            // this complication avoids the usless allocation of a byte[][] to hold args
+            // it would be easier with spans so revisit if System.Memory is now a standard include
+            int length = arr1.Length + arr2.Length + arr3.Length + arr4.Length + arr5.Length;
+            byte[] combinedArray = new byte[length];
+
+            Buffer.BlockCopy(arr1, 0, combinedArray, 0, arr1.Length);
+            int copied = arr1.Length;
+            Buffer.BlockCopy(arr2, 0, combinedArray, copied, arr2.Length);
+            copied += arr2.Length;
+            Buffer.BlockCopy(arr3, 0, combinedArray, copied, arr3.Length);
+            copied += arr3.Length;
+            Buffer.BlockCopy(arr4, 0, combinedArray, copied, arr4.Length);
+            copied += arr4.Length;
+            Buffer.BlockCopy(arr5, 0, combinedArray, copied, arr5.Length);
+
             return combinedArray;
         }
 
@@ -171,14 +199,13 @@ namespace Microsoft.Data.SqlClient
             // Validate the input parameters
             if (string.IsNullOrWhiteSpace(queryString))
             {
-                string argumentName = "queryString";
-                if (null == queryString)
+                if (queryString == null)
                 {
-                    throw SQL.NullArgumentInternal(argumentName, ClassName, ComputeQueryStringHashName);
+                    throw SQL.NullArgumentInternal(nameof(queryString), nameof(EnclaveDelegate), nameof(ComputeQueryStringHash));
                 }
                 else
                 {
-                    throw SQL.EmptyArgumentInternal(argumentName, ClassName, ComputeQueryStringHashName);
+                    throw SQL.EmptyArgumentInternal(nameof(queryString), nameof(EnclaveDelegate), nameof(ComputeQueryStringHash));
                 }
             }
 

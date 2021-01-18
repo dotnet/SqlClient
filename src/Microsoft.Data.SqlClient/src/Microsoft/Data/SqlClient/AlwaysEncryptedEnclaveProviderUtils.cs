@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Linq;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -29,27 +28,26 @@ namespace Microsoft.Data.SqlClient
         {
             Size = payload.Length;
 
-            int offset = 0;
-            int publicKeySize = BitConverter.ToInt32(payload, offset);
-            offset += sizeof(int);
+            int publicKeySize = BitConverter.ToInt32(payload, 0);
+            int publicKeySignatureSize = BitConverter.ToInt32(payload, 4);
 
-            int publicKeySignatureSize = BitConverter.ToInt32(payload, offset);
-            offset += sizeof(int);
-
-            PublicKey = payload.Skip(offset).Take(publicKeySize).ToArray();
-            offset += publicKeySize;
-
-            PublicKeySignature = payload.Skip(offset).Take(publicKeySignatureSize).ToArray();
-            offset += publicKeySignatureSize;
+            PublicKey = new byte[publicKeySize];
+            PublicKeySignature = new byte[publicKeySignatureSize];
+            Buffer.BlockCopy(payload, 8, PublicKey, 0, publicKeySize);
+            Buffer.BlockCopy(payload, 8 + publicKeySize, PublicKeySignature, 0, publicKeySignatureSize);
         }
     }
 
     internal enum EnclaveType
     {
         None = 0,
-
+        /// <summary>
+        /// Virtualization Based Security
+        /// </summary>
         Vbs = 1,
-
+        /// <summary>
+        /// Intel SGX based security
+        /// </summary>
         Sgx = 2
     }
 }

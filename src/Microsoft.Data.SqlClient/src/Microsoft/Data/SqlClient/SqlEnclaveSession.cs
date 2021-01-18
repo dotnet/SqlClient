@@ -4,8 +4,7 @@
 
 namespace Microsoft.Data.SqlClient
 {
-
-    /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveSession.xml' path='docs/members[@name="SqlEnclaveSession"]/SqlEnclaveSession/*' />
+    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlEnclaveSession.xml' path='docs/members[@name="SqlEnclaveSession"]/SqlEnclaveSession/*' />
     internal class SqlEnclaveSession
     {
 
@@ -14,10 +13,10 @@ namespace Microsoft.Data.SqlClient
 
         private readonly byte[] _sessionKey;
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveSession.xml' path='docs/members[@name="SqlEnclaveSession"]/SessionId/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlEnclaveSession.xml' path='docs/members[@name="SqlEnclaveSession"]/SessionId/*' />
         internal long SessionId { get; }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveSession.xml' path='docs/members[@name="SqlEnclaveSession"]/GetSessionKey/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlEnclaveSession.xml' path='docs/members[@name="SqlEnclaveSession"]/GetSessionKey/*' />
         internal byte[] GetSessionKey()
         {
             return Clone(_sessionKey);
@@ -41,13 +40,17 @@ namespace Microsoft.Data.SqlClient
             return returnValue;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveSession.xml' path='docs/members[@name="SqlEnclaveSession"]/ctor/*' />
-        internal SqlEnclaveSession(byte[] sessionKey, long sessionId/*, long counter*/)
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlEnclaveSession.xml' path='docs/members[@name="SqlEnclaveSession"]/ctor/*' />
+        internal SqlEnclaveSession(byte[] sessionKey, long sessionId)
         {
             if (null == sessionKey)
-            { throw SQL.NullArgumentInConstructorInternal(_sessionKeyName, _className); }
+            {
+                throw SQL.NullArgumentInConstructorInternal(_sessionKeyName, _className);
+            }
             if (0 == sessionKey.Length)
-            { throw SQL.EmptyArgumentInConstructorInternal(_sessionKeyName, _className); }
+            {
+                throw SQL.EmptyArgumentInConstructorInternal(_sessionKeyName, _className);
+            }
 
             _sessionKey = sessionKey;
             SessionId = sessionId;
