@@ -278,7 +278,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
                 if (_dataLength == 0)
                 {
-                    SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.TCP_PROV, 0, SNICommon.ConnTerminatedError, string.Empty);
+                    SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.TCP_PROV, 0, SNICommon.ConnTerminatedError, Strings.SNI_ERROR_2);
                     error = true;
                 }
             }

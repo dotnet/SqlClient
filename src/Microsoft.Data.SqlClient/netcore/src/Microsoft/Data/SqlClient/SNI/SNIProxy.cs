@@ -241,7 +241,6 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <summary>
         /// Create a SNI connection handle
         /// </summary>
-        /// <param name="callbackObject">Asynchronous I/O callback object</param>
         /// <param name="fullServerName">Full server name from connection string</param>
         /// <param name="ignoreSniOpenTimeout">Ignore open timeout</param>
         /// <param name="timerExpire">Timer expiration</param>
@@ -254,7 +253,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="cachedFQDN">Used for DNS Cache</param>
         /// <param name="pendingDNSInfo">Used for DNS Cache</param>
         /// <returns>SNI handle</returns>
-        internal SNIHandle CreateConnectionHandle(object callbackObject, string fullServerName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[] spnBuffer, bool flushCache, bool async, bool parallel, bool isIntegratedSecurity, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
+        internal SNIHandle CreateConnectionHandle(string fullServerName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[] spnBuffer, bool flushCache, bool async, bool parallel, bool isIntegratedSecurity, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
         {
             instanceName = new byte[1];
 
@@ -281,10 +280,10 @@ namespace Microsoft.Data.SqlClient.SNI
                 case DataSource.Protocol.Admin:
                 case DataSource.Protocol.None: // default to using tcp if no protocol is provided
                 case DataSource.Protocol.TCP:
-                    sniHandle = CreateTcpHandle(details, timerExpire, callbackObject, parallel, cachedFQDN, ref pendingDNSInfo);
+                    sniHandle = CreateTcpHandle(details, timerExpire, parallel, cachedFQDN, ref pendingDNSInfo);
                     break;
                 case DataSource.Protocol.NP:
-                    sniHandle = CreateNpHandle(details, timerExpire, callbackObject, parallel);
+                    sniHandle = CreateNpHandle(details, timerExpire, parallel);
                     break;
                 default:
                     Debug.Fail($"Unexpected connection protocol: {details._connectionProtocol}");
@@ -365,12 +364,11 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         /// <param name="details">Data source</param>
         /// <param name="timerExpire">Timer expiration</param>
-        /// <param name="callbackObject">Asynchronous I/O callback object</param>
         /// <param name="parallel">Should MultiSubnetFailover be used</param>
         /// <param name="cachedFQDN">Key for DNS Cache</param>
         /// <param name="pendingDNSInfo">Used for DNS Cache</param>
         /// <returns>SNITCPHandle</returns>
-        private SNITCPHandle CreateTcpHandle(DataSource details, long timerExpire, object callbackObject, bool parallel, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
+        private SNITCPHandle CreateTcpHandle(DataSource details, long timerExpire, bool parallel, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
         {
             // TCP Format:
             // tcp:<host name>\<instance name>
@@ -379,7 +377,7 @@ namespace Microsoft.Data.SqlClient.SNI
             string hostName = details.ServerName;
             if (string.IsNullOrWhiteSpace(hostName))
             {
-                SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.TCP_PROV, 0, SNICommon.InvalidConnStringError, string.Empty);
+                SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.TCP_PROV, 0, SNICommon.InvalidConnStringError, Strings.SNI_ERROR_25);
                 return null;
             }
 
@@ -408,7 +406,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 port = isAdminConnection ? DefaultSqlServerDacPort : DefaultSqlServerPort;
             }
 
-            return new SNITCPHandle(hostName, port, timerExpire, callbackObject, parallel, cachedFQDN, ref pendingDNSInfo);
+            return new SNITCPHandle(hostName, port, timerExpire, parallel, cachedFQDN, ref pendingDNSInfo);
         }
 
 
@@ -418,17 +416,17 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         /// <param name="details">Data source</param>
         /// <param name="timerExpire">Timer expiration</param>
-        /// <param name="callbackObject">Asynchronous I/O callback object</param>
         /// <param name="parallel">Should MultiSubnetFailover be used. Only returns an error for named pipes.</param>
         /// <returns>SNINpHandle</returns>
-        private SNINpHandle CreateNpHandle(DataSource details, long timerExpire, object callbackObject, bool parallel)
+        private SNINpHandle CreateNpHandle(DataSource details, long timerExpire, bool parallel)
         {
             if (parallel)
             {
-                SNICommon.ReportSNIError(SNIProviders.NP_PROV, 0, SNICommon.MultiSubnetFailoverWithNonTcpProtocol, string.Empty);
+                // Connecting to a SQL Server instance using the MultiSubnetFailover connection option is only supported when using the TCP protocol
+                SNICommon.ReportSNIError(SNIProviders.NP_PROV, 0, SNICommon.MultiSubnetFailoverWithNonTcpProtocol, Strings.SNI_ERROR_49);
                 return null;
             }
-            return new SNINpHandle(details.PipeHostName, details.PipeName, timerExpire, callbackObject);
+            return new SNINpHandle(details.PipeHostName, details.PipeName, timerExpire);
         }
 
         /// <summary>
@@ -632,7 +630,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
                 else
                 {
-                    SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBNoInstanceName, string.Empty);
+                    SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBNoInstanceName, Strings.SNI_ERROR_51);
                     error = true;
                     return null;
                 }
@@ -685,7 +683,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
             int commaIndex = _dataSourceAfterTrimmingProtocol.IndexOf(CommaSeparator);
 
-            int backSlashIndex = _dataSourceAfterTrimmingProtocol.IndexOf(PipeBeginning);
+            int backSlashIndex = _dataSourceAfterTrimmingProtocol.IndexOf(BackSlashCharacter);
 
             // Check the parameters. The parameters are Comma separated in the Data Source. The parameter we really care about is the port
             // If Comma exists, the try to get the port number
@@ -758,7 +756,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
         private void ReportSNIError(SNIProviders provider)
         {
-            SNILoadHandle.SingletonInstance.LastError = new SNIError(provider, 0, SNICommon.InvalidConnStringError, string.Empty);
+            SNILoadHandle.SingletonInstance.LastError = new SNIError(provider, 0, SNICommon.InvalidConnStringError, Strings.SNI_ERROR_25);
             IsBadDataSource = true;
         }
 

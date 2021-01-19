@@ -530,7 +530,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
                     if (!_packetEvent.Wait(timeoutInMilliseconds))
                     {
-                        SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.SMUX_PROV, 0, SNICommon.ConnTimeoutError, string.Empty);
+                        SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.SMUX_PROV, 0, SNICommon.ConnTimeoutError, Strings.SNI_ERROR_11);
                         return TdsEnums.SNI_WAIT_TIMEOUT;
                     }
                 }
