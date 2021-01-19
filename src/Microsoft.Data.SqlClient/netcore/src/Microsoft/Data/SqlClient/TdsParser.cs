@@ -340,6 +340,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (stateObj._attentionSent)
             {
+                SqlClientEventSource.Log.TryTraceEvent("TdsParser.ProcessPendingAck | INFO | Connection Object Id {0}, State Obj Id {1}, Processing Attention.", _connHandler._objectID, stateObj.ObjectID);
                 ProcessAttention(stateObj);
             }
         }
@@ -379,36 +380,8 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 _sniSpnBuffer = null;
-                switch (authType)
-                {
-                    case SqlAuthenticationMethod.ActiveDirectoryPassword:
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Password authentication");
-                        break;
-                    case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Integrated authentication");
-                        break;
-                    case SqlAuthenticationMethod.ActiveDirectoryInteractive:
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Interactive authentication");
-                        break;
-                    case SqlAuthenticationMethod.ActiveDirectoryServicePrincipal:
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Service Principal authentication");
-                        break;
-                    case SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow:
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Device Code Flow authentication");
-                        break;
-                    case SqlAuthenticationMethod.ActiveDirectoryManagedIdentity:
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Managed Identity authentication");
-                        break;
-                    case SqlAuthenticationMethod.ActiveDirectoryMSI:
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory MSI authentication");
-                        break;
-                    case SqlAuthenticationMethod.SqlPassword:
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> SQL Password authentication");
-                        break;
-                    default:
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> SQL authentication");
-                        break;
-                }
+                SqlClientEventSource.Log.TryTraceEvent("TdsParser.Connect | SEC | Connection Object Id {0}, Authentication Mode: {1}", _connHandler._objectID,
+                    authType == SqlAuthenticationMethod.NotSpecified ? SqlAuthenticationMethod.SqlPassword.ToString() : authType.ToString());
             }
 
             _sniSpnBuffer = null;
@@ -417,7 +390,7 @@ namespace Microsoft.Data.SqlClient
             if (integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
             {
                 LoadSSPILibrary();
-                SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> SSPI or Active Directory Authentication Library for SQL Server based integrated authentication");
+                SqlClientEventSource.Log.TryTraceEvent("TdsParser.Connect | SEC | SSPI or Active Directory Authentication Library loaded for SQL Server based integrated authentication");
             }
 
             byte[] instanceName = null;

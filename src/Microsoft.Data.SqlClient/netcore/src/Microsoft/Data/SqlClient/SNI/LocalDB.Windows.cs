@@ -26,7 +26,7 @@ namespace Microsoft.Data.SqlClient.SNI
         private IntPtr _startInstanceHandle = IntPtr.Zero;
 
         // Local Db api doc https://msdn.microsoft.com/en-us/library/hh217143.aspx
-        // HRESULT LocalDBStartInstance( [Input ] PCWSTR pInstanceName, [Input ] DWORD dwFlags,[Output] LPWSTR wszSqlConnection,[Input/Output] LPDWORD lpcchSqlConnection);  
+        // HRESULT LocalDBStartInstance( [Input ] PCWSTR pInstanceName, [Input ] DWORD dwFlags,[Output] LPWSTR wszSqlConnection,[Input/Output] LPDWORD lpcchSqlConnection);
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         internal delegate int LocalDBStartInstance(
                 [In] [MarshalAs(UnmanagedType.LPWStr)] string localDBInstanceName,
@@ -112,7 +112,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         private bool LoadUserInstanceDll()
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("<sc.SNI.LocalDB.Windows.LoadUserInstanceDll |SNI>");
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("SNI.LocalDB.Windows.LoadUserInstanceDll | SNI | INFO | SCOPE | Entering Scope {0}");
             try
             {
                 // Check in a non thread-safe way if the handle is already set for performance.

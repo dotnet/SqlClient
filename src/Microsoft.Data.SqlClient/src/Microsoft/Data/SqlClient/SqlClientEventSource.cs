@@ -415,7 +415,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsScopeEnabled())
             {
-                ScopeLeave(scopeId);
+                ScopeLeave(string.Format("Exiting Scope {0}", scopeId));
             }
         }
         #endregion
@@ -525,7 +525,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsNotificationScopeEnabled())
             {
-                NotificationScopeLeave(scopeId);
+                NotificationScopeLeave(string.Format("Exiting Notification Scope {0}", scopeId));
             }
         }
         #endregion
@@ -584,7 +584,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsPoolerScopeEnabled())
             {
-                PoolerScopeLeave(scopeId);
+                PoolerScopeLeave(string.Format("Exiting Pooler Scope {0}", scopeId));
             }
         }
         #endregion
@@ -664,6 +664,15 @@ namespace Microsoft.Data.SqlClient
         }
 
         [NonEvent]
+        internal void TryAdvancedTraceEvent<T0, T1, T2, T3, T4>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4)
+        {
+            if (Log.IsAdvancedTraceOn())
+            {
+                AdvancedTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr, args4?.ToString() ?? NullStr));
+            }
+        }
+
+        [NonEvent]
         internal void TryAdvancedTraceEvent<T0, T1, T2, T3, T4, T5>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4, T5 args5)
         {
             if (Log.IsAdvancedTraceOn())
@@ -696,16 +705,16 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsAdvancedTraceOn())
             {
-                AdvancedScopeLeave(scopeId);
+                AdvancedScopeLeave(string.Format("Exiting Advanced Scope {0}", scopeId));
             }
         }
 
         [NonEvent]
-        internal void TryAdvancedTraceBinEvent<T0, T1>(string message, T0 args0, T1 args1)
+        internal void TryAdvancedTraceBinEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args)
         {
             if (Log.IsAdvancedTraceOn())
             {
-                AdvancedTraceBin(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr));
+                AdvancedTraceBin(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args1?.ToString() ?? NullStr));
             }
         }
 
@@ -853,51 +862,11 @@ namespace Microsoft.Data.SqlClient
         }
 
         [NonEvent]
-        internal long TrySNIScopeEnterEvent<T0>(string message, T0 args0)
-        {
-            if (Log.IsSNIScopeEnabled())
-            {
-                return SNIScopeEnter(string.Format(message, args0?.ToString() ?? NullStr));
-            }
-            return 0;
-        }
-
-        [NonEvent]
-        internal long TrySNIScopeEnterEvent<T0, T1>(string message, T0 args0, T1 args1)
-        {
-            if (Log.IsSNIScopeEnabled())
-            {
-                return SNIScopeEnter(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr));
-            }
-            return 0;
-        }
-
-        [NonEvent]
-        internal long TrySNIScopeEnterEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
-        {
-            if (Log.IsSNIScopeEnabled())
-            {
-                return SNIScopeEnter(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr));
-            }
-            return 0;
-        }
-
-        [NonEvent]
-        internal long TrySNIScopeEnterEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
-        {
-            if (Log.IsSNIScopeEnabled())
-            {
-                return SNIScopeEnter(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr));
-            }
-            return 0;
-        }
-
-        [NonEvent]
         internal void TrySNIScopeLeaveEvent(long scopeId)
         {
             if (Log.IsSNIScopeEnabled())
             {
-                SNIScopeLeave(scopeId);
+                SNIScopeLeave(string.Format("Exiting SNI Scope {0}", scopeId));
             }
         }
         #endregion
@@ -924,148 +893,111 @@ namespace Microsoft.Data.SqlClient
         }
 
         [Event(TraceEventId, Level = EventLevel.Informational, Keywords = Keywords.Trace)]
-        internal void Trace(string message)
-        {
+        internal void Trace(string message) =>
             WriteEvent(TraceEventId, message);
-        }
 
         [Event(ScopeEnterId, Level = EventLevel.Informational, Opcode = EventOpcode.Start, Keywords = Keywords.Scope)]
         internal long ScopeEnter(string message)
         {
             long scopeId = Interlocked.Increment(ref s_nextScopeId);
-            WriteEvent(ScopeEnterId, message);
+            WriteEvent(ScopeEnterId, string.Format(message, scopeId));
             return scopeId;
         }
 
         [Event(ScopeExitId, Level = EventLevel.Informational, Opcode = EventOpcode.Stop, Keywords = Keywords.Scope)]
-        internal void ScopeLeave(long scopeId)
-        {
-            WriteEvent(ScopeExitId, scopeId);
-        }
+        internal void ScopeLeave(string message) =>
+            WriteEvent(ScopeExitId, message);
 
         [Event(NotificationTraceId, Level = EventLevel.Informational, Keywords = Keywords.NotificationTrace)]
-        internal void NotificationTrace(string message)
-        {
+        internal void NotificationTrace(string message) =>
             WriteEvent(NotificationTraceId, message);
-        }
 
         [Event(NotificationScopeEnterId, Level = EventLevel.Informational, Opcode = EventOpcode.Start, Keywords = Keywords.NotificationScope)]
         internal long NotificationScopeEnter(string message)
         {
             long scopeId = Interlocked.Increment(ref s_nextNotificationScopeId);
-            WriteEvent(NotificationScopeEnterId, message);
+            WriteEvent(NotificationScopeEnterId, string.Format(message, scopeId));
             return scopeId;
         }
 
         [Event(NotificationScopeExitId, Level = EventLevel.Informational, Opcode = EventOpcode.Stop, Keywords = Keywords.NotificationScope)]
-        internal void NotificationScopeLeave(long scopeId)
-        {
-            WriteEvent(NotificationScopeExitId, scopeId);
-        }
+        internal void NotificationScopeLeave(string message) =>
+            WriteEvent(NotificationScopeExitId, message);
 
         [Event(PoolerTraceId, Level = EventLevel.Informational, Keywords = Keywords.PoolerTrace)]
-        internal void PoolerTrace(string message)
-        {
+        internal void PoolerTrace(string message) =>
             WriteEvent(PoolerTraceId, message);
-        }
 
         [Event(PoolerScopeEnterId, Level = EventLevel.Informational, Opcode = EventOpcode.Start, Keywords = Keywords.PoolerScope)]
         internal long PoolerScopeEnter(string message)
         {
             long scopeId = Interlocked.Increment(ref s_nextPoolerScopeId);
-            WriteEvent(PoolerScopeEnterId, message);
+            WriteEvent(PoolerScopeEnterId, string.Format(message, scopeId));
             return scopeId;
         }
 
         [Event(PoolerScopeExitId, Level = EventLevel.Informational, Opcode = EventOpcode.Stop, Keywords = Keywords.PoolerScope)]
-        internal void PoolerScopeLeave(long scopeId)
-        {
-            WriteEvent(PoolerScopeExitId, scopeId);
-        }
+        internal void PoolerScopeLeave(string message) =>
+            WriteEvent(PoolerScopeExitId, message);
 
         [Event(AdvancedTraceId, Level = EventLevel.Verbose, Keywords = Keywords.AdvancedTrace)]
-        internal void AdvancedTrace(string message)
-        {
+        internal void AdvancedTrace(string message) =>
             WriteEvent(AdvancedTraceId, message);
-        }
 
         [Event(AdvancedScopeEnterId, Level = EventLevel.Verbose, Opcode = EventOpcode.Start, Keywords = Keywords.AdvancedTrace)]
         internal long AdvancedScopeEnter(string message)
         {
             long scopeId = Interlocked.Increment(ref s_nextScopeId);
-            WriteEvent(AdvancedScopeEnterId, message);
+            WriteEvent(AdvancedScopeEnterId, string.Format(message, scopeId));
             return scopeId;
         }
 
         [Event(AdvancedScopeExitId, Level = EventLevel.Verbose, Opcode = EventOpcode.Stop, Keywords = Keywords.AdvancedTrace)]
-        internal void AdvancedScopeLeave(long scopeId)
-        {
-            WriteEvent(AdvancedScopeExitId, scopeId);
-        }
+        internal void AdvancedScopeLeave(string message) =>
+            WriteEvent(AdvancedScopeExitId, message);
 
         [Event(AdvancedTraceBinId, Level = EventLevel.Verbose, Keywords = Keywords.AdvancedTraceBin)]
-        internal void AdvancedTraceBin(string message)
-        {
+        internal void AdvancedTraceBin(string message) =>
             WriteEvent(AdvancedTraceBinId, message);
-        }
 
         [Event(AdvancedTraceErrorId, Level = EventLevel.Error, Keywords = Keywords.AdvancedTrace)]
-        internal void AdvancedTraceError(string message)
-        {
+        internal void AdvancedTraceError(string message) =>
             WriteEvent(AdvancedTraceErrorId, message);
-        }
 
         [Event(CorrelationTraceId, Level = EventLevel.Informational, Keywords = Keywords.CorrelationTrace, Opcode = EventOpcode.Start)]
-        internal void CorrelationTrace(string message)
-        {
+        internal void CorrelationTrace(string message) =>
             WriteEvent(CorrelationTraceId, message);
-        }
 
         [Event(StateDumpEventId, Level = EventLevel.Verbose, Keywords = Keywords.StateDump)]
-        internal void StateDump(string message)
-        {
+        internal void StateDump(string message) =>
             WriteEvent(StateDumpEventId, message);
-        }
 
         [Event(SNITraceEventId, Level = EventLevel.Informational, Keywords = Keywords.SNITrace)]
-        internal void SNITrace(string message)
-        {
+        internal void SNITrace(string message) =>
             WriteEvent(SNITraceEventId, message);
-        }
 
         [Event(SNIScopeEnterId, Level = EventLevel.Informational, Opcode = EventOpcode.Start, Keywords = Keywords.SNIScope)]
         internal long SNIScopeEnter(string message)
         {
             long scopeId = Interlocked.Increment(ref s_nextSNIScopeId);
-            WriteEvent(SNIScopeEnterId, message);
+            WriteEvent(SNIScopeEnterId, string.Format(message, scopeId));
             return scopeId;
         }
 
         [Event(SNIScopeExitId, Level = EventLevel.Informational, Opcode = EventOpcode.Stop, Keywords = Keywords.SNIScope)]
-        internal void SNIScopeLeave(long scopeId)
-        {
-            WriteEvent(SNIScopeExitId, scopeId);
-        }
+        internal void SNIScopeLeave(string message) =>
+            WriteEvent(SNIScopeExitId, message);
         #endregion
     }
 
     internal readonly struct SNIEventScope : IDisposable
     {
-        private readonly long _scopeID;
+        private readonly long scopeId;
 
-        public SNIEventScope(long scopeID)
-        {
-            _scopeID = scopeID;
-        }
+        public SNIEventScope(long scopeID) => scopeId = scopeID;
+        public void Dispose() =>
+            SqlClientEventSource.Log.SNIScopeLeave(string.Format("Exiting SNI Scope {0}", scopeId));
 
-        public void Dispose()
-        {
-            SqlClientEventSource.Log.SNIScopeLeave(_scopeID);
-        }
-
-        public static SNIEventScope Create(string message)
-        {
-            return new SNIEventScope(SqlClientEventSource.Log.SNIScopeEnter(message));
-        }
+        public static SNIEventScope Create(string message) => new SNIEventScope(SqlClientEventSource.Log.SNIScopeEnter(message));
     }
 }

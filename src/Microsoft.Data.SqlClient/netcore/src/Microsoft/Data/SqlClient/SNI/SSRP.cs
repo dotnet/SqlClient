@@ -37,7 +37,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
                 catch (SocketException se)
                 {
-                    SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.SSRP.GetPortByInstanceName |SNI|ERR> SocketException Message = {0}", se.Message);
+                    SqlClientEventSource.Log.TrySNITraceEvent("SNI.SSRP.GetPortByInstanceName |SNI|ERR> SocketException Message = {0}", se.Message);
                     throw new Exception(SQLMessage.SqlServerBrowserNotAccessible(), se);
                 }
 

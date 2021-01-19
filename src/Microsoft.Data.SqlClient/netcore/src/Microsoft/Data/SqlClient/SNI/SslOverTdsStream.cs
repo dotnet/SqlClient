@@ -16,6 +16,7 @@ namespace Microsoft.Data.SqlClient.SNI
     internal sealed partial class SslOverTdsStream : Stream
     {
         private readonly Stream _stream;
+        private Guid _connectionId;
 
         private int _packetBytes = 0;
         private bool _encapsulate;
@@ -27,9 +28,11 @@ namespace Microsoft.Data.SqlClient.SNI
         /// Constructor
         /// </summary>
         /// <param name="stream">Underlying stream</param>
-        public SslOverTdsStream(Stream stream)
+        /// <param name="connectionId">Connection Id of parent stream handle</param>
+        public SslOverTdsStream(Stream stream, Guid connectionId)
         {
             _stream = stream;
+            _connectionId = connectionId;
             _encapsulate = true;
         }
 
@@ -39,7 +42,7 @@ namespace Microsoft.Data.SqlClient.SNI
         public void FinishHandshake()
         {
             _encapsulate = false;
-            SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.SslOverTdsStream.FinishHandshake |SNI|INFO> switched from encapsulation to passthrough mode");
+            SqlClientEventSource.Log.TrySNITraceEvent("SNI.SslOverTdsStream.FinishHandshake | SNI | INFO | Connection Id {0}, Switched from encapsulation to passthrough mode", _connectionId);
         }
 
         /// <summary>
@@ -58,6 +61,7 @@ namespace Microsoft.Data.SqlClient.SNI
             if (!(_stream is PipeStream))
             {
                 _stream.Flush();
+                SqlClientEventSource.Log.TrySNITraceEvent("SNI.SslOverTdsStream.Flush | SNI | INFO | Connection Id {0}, Flushed stream", _connectionId);
             }
         }
 
