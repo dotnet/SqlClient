@@ -284,12 +284,6 @@ namespace Microsoft.Data.SqlClient.SNI
             }
 
             callback(this, error ? TdsEnums.SNI_ERROR : TdsEnums.SNI_SUCCESS);
-#if DEBUG
-            if (!IsInvalid)
-            {
-                Debug.Fail("unreleased packet will be dropped to GC");
-            }
-#endif
         }
 
         /// <summary>
