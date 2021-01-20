@@ -81,13 +81,7 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 // clear the packet and drop it to GC because we no longer know how to return it to the correct owner
                 // this can only happen if a packet is in-flight when the _sessionHandle is cleared
-                try
-                {
-                    packet.Release();
-                }
-                catch
-                {
-                }
+                packet.Release();
             }
         }
 
@@ -103,13 +97,7 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 // clear the packet and drop it to GC because we no longer know how to return it to the correct owner
                 // this can only happen if a packet is in-flight when the _sessionHandle is cleared
-                try
-                {
-                    packet.Release();
-                }
-                catch
-                {
-                }
+                packet.Release();
             }
         }
 
