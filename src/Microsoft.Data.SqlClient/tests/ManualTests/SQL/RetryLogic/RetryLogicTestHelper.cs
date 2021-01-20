@@ -67,8 +67,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     10060,  // An error has occurred while establishing a connection to the server. When connecting to SQL Server, this failure may be caused by the fact that under the default settings SQL Server does not allow remote connections. (provider: TCP Provider, error: 0 - A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.) (Microsoft SQL Server, Error: 10060)
                     10054,  // The data value for one or more columns overflowed the type used by the provider.
                     10053,  // Could not convert the data value due to reasons other than sign mismatch or overflow.
-                    233,    // A connection was successfully established with the server, but then an error occurred during the login process. (provider: Shared Memory Provider, error: 0 - No process is on the other end of the pipe.) (Microsoft SQL Server, Error: 233)
                     997,    // A connection was successfully established with the server, but then an error occurred during the login process. (provider: Named Pipes Provider, error: 0 - Overlapped I/O operation is in progress)
+                    233,    // A connection was successfully established with the server, but then an error occurred during the login process. (provider: Shared Memory Provider, error: 0 - No process is on the other end of the pipe.) (Microsoft SQL Server, Error: 233)
                     64,
                     20,
                     0,
@@ -104,7 +104,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                                                           TimeSpan maxInterval,
                                                                           FilterSqlStatements unauthorizedStatemets,
                                                                           IEnumerable<int> transientErrors,
-                                                                          int deltaTimeMillisecond = 10)
+                                                                          int deltaTimeMillisecond = 10,
+                                                                          bool custome = true)
         {
             SetRetrySwitch(true);
 
@@ -113,8 +114,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 NumberOfTries = numberOfRetries,
                 DeltaTime = TimeSpan.FromMilliseconds(deltaTimeMillisecond),
                 MaxTimeInterval = maxInterval,
-                TransientErrors = transientErrors ?? s_defaultTransientErrors,
-                AuthorizedSqlCondition = RetryPreConditon(unauthorizedStatemets)
+                TransientErrors = transientErrors ?? (custome ? s_defaultTransientErrors : null),
+                AuthorizedSqlCondition = custome ? RetryPreConditon(unauthorizedStatemets) : null
             };
 
             foreach (var item in GetRetryStrategies(floatingOption))
@@ -124,12 +125,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static IEnumerable<object[]> GetConnectionAndRetryStrategyInvalidCatalog(int numberOfRetries)
         {
-            return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromSeconds(100), FilterSqlStatements.None, null, 200);
-        }
-
-        public static IEnumerable<object[]> GetConnectionAndRetryStrategy(int numberOfRetries)
-        {
-            return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromSeconds(10), FilterSqlStatements.None, null);
+            return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromSeconds(1), FilterSqlStatements.None, null, 250, false);
         }
 
         public static IEnumerable<object[]> GetConnectionAndRetryStrategyInvalidCommand(int numberOfRetries)
@@ -145,7 +141,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         //40613:    Database '%.*ls' on server '%.*ls' is not currently available. Please retry the connection later. If the problem persists, contact customer support, and provide them the session tracing ID of '%.*ls'.
         public static IEnumerable<object[]> GetConnectionAndRetryStrategyLongRunner(int numberOfRetries)
         {
-            return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromSeconds(120), FilterSqlStatements.None, null, 20 * 1000 );
+            return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromSeconds(120), FilterSqlStatements.None, null, 20 * 1000);
         }
 
         public static IEnumerable<object[]> GetConnectionAndRetryStrategyDropDB(int numberOfRetries)

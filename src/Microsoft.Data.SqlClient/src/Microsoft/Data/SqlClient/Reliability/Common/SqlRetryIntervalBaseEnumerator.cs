@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlClient
         public TimeSpan MinTimeInterval { get; protected set; }
 
         /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/Current/*' />
-        public TimeSpan Current { get; private set; } = TimeSpan.Zero;
+        public TimeSpan Current { get; protected set; } = TimeSpan.Zero;
 
         object IEnumerator.Current => Current;
 

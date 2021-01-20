@@ -612,6 +612,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             cmd.RetryLogicProvider = provider;
             cmd.RetryLogicProvider.Retrying += (object s, SqlRetryingEventArgs e) =>
             {
+                Assert.Equal(e.RetryCount, e.Exceptions.Count);
+                Assert.NotEqual(TimeSpan.Zero, e.Delay);
+
                 if (e.RetryCount >= cancelAfterRetries)
                 {
                     e.Cancel = true;

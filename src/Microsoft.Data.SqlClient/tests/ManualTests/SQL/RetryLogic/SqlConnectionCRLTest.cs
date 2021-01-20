@@ -134,7 +134,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         #region Async
         [Theory]
-        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCatalog), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper))]
+        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCatalog), parameters: new object[] { 5 }, MemberType = typeof(RetryLogicTestHelper))]
         public async void ConnectionRetryOpenAsyncInvalidCatalogFailed(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             int numberOfTries = provider.RetryLogic.NumberOfTries;
@@ -177,6 +177,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             cnn.RetryLogicProvider = provider;
             cnn.RetryLogicProvider.Retrying += (s, e) =>
             {
+                Assert.Equal(e.RetryCount, e.Exceptions.Count);
+                Assert.NotEqual(TimeSpan.Zero, e.Delay);
                 if (e.RetryCount >= cancelAfterRetries)
                 {
                     e.Cancel = true;

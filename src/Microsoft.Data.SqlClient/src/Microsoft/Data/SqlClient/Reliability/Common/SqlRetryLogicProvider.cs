@@ -206,15 +206,13 @@ namespace Microsoft.Data.SqlClient
             return new AggregateException(message, exceptions);
         }
 
-        private void OnRetrying(object sender, SqlRetryingEventArgs eventArgs) => Retrying?.Invoke(sender, eventArgs);
-
         private void ApplyRetryingEvent(object sender, SqlRetryLogicBase retryLogic, TimeSpan intervalTime, List<Exception> exceptions, Exception lastException)
         {
             if (Retrying != null)
             {
                 var retryEventArgs = new SqlRetryingEventArgs(retryLogic.Current, intervalTime, exceptions);
                 SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Running the retrying event.", _typeName, MethodBase.GetCurrentMethod().Name);
-                OnRetrying(sender, retryEventArgs);
+                Retrying?.Invoke(sender, retryEventArgs);
                 if (retryEventArgs.Cancel)
                 {
                     SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Retry attempt is canceled manually by user (current retry number = {2}).", _typeName, MethodBase.GetCurrentMethod().Name, retryLogic.Current);
