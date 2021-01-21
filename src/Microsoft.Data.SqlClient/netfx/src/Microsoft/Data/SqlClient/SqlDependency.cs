@@ -10,7 +10,6 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.Remoting;
 using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Runtime.Versioning;
 using System.Security.Permissions;
 using System.Text;
@@ -250,20 +249,14 @@ namespace Microsoft.Data.SqlClient
         private class SqlClientObjRef : IExtensibleDataObject
         {
             [DataMember]
-            private static ObjRef SqlObjRef;
+            private static ObjRef s_sqlObjRef;
 
             public SqlClientObjRef(SqlDependencyProcessDispatcher dispatcher)
             {
-                SqlObjRef = RemotingServices.Marshal(dispatcher);
+                s_sqlObjRef = RemotingServices.Marshal(dispatcher);
             }
 
-            private ExtensionDataObject _extensionData_Value;
-
-            public ExtensionDataObject ExtensionData
-            {
-                get => _extensionData_Value;
-                set => _extensionData_Value = value;
-            }
+            public ExtensionDataObject ExtensionData { get; set; }
         }
         // ------------------------------------------
         // End SqlClientObjRef private class.

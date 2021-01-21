@@ -35,28 +35,6 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Fact]
-        [ActiveIssue("12161", TargetFrameworkMonikers.Netcoreapp)]
-
-        public static void SqlExcpetionSerializationTest()
-        {
-            var formatter = new BinaryFormatter();
-            SqlException e = CreateException();
-            using (var stream = new MemoryStream())
-            {
-                try
-                {
-                    formatter.Serialize(stream, e);
-                    stream.Position = 0;
-                    var e2 = (SqlException)formatter.Deserialize(stream);
-                }
-                catch (Exception ex)
-                {
-                    Assert.False(true, $"Unexpected Exception occurred: {ex.Message}");
-                }
-            }
-        }
-
-        [Fact]
         public void JSONSerializationTest()
         {
             string clientConnectionId = "90cdab4d-2145-4c24-a354-c8ccff903542";
