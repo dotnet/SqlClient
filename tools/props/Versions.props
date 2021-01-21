@@ -52,7 +52,7 @@
   </PropertyGroup>
   <!-- Test Project Dependencies -->
   <PropertyGroup>
-    <MicrosoftDotNetPlatformAbstractionsVersion>3.1.6</MicrosoftDotNetPlatformAbstractionsVersion>
+    <MicrosoftDotNetPlatformAbstractionsVersion>3.1.1</MicrosoftDotNetPlatformAbstractionsVersion>
     <MicrosoftIdentityModelClientsActiveDirectoryVersion>5.2.6</MicrosoftIdentityModelClientsActiveDirectoryVersion>
     <MicrosoftNETTestSdkVersion>15.9.0</MicrosoftNETTestSdkVersion>
     <MicrosoftWindowsCompatibilityVersion>3.1.0</MicrosoftWindowsCompatibilityVersion>
