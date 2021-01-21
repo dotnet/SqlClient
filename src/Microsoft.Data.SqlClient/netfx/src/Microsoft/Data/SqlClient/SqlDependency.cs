@@ -240,7 +240,6 @@ namespace Microsoft.Data.SqlClient
         // END EventContextPair private class.
         // ----------------------------------------
 
-
         //-----------------------------------------------
         // Private Class to add ObjRef as DataContract
         //-----------------------------------------------
@@ -1317,7 +1316,6 @@ namespace Microsoft.Data.SqlClient
         {
             if (cmd != null)
             {
-                // Don't bother with BID if command null.
                 long scopeID = SqlClientEventSource.Log.TryNotificationScopeEnterEvent("<sc.SqlDependency.AddCommandInternal|DEP> {0}, SqlCommand: {1}", ObjectID, cmd.ObjectID);
                 try
                 {
