@@ -245,7 +245,7 @@ namespace Microsoft.Data.SqlClient
         //-----------------------------------------------
         [SecurityPermission(SecurityAction.Assert, Flags = SecurityPermissionFlag.RemotingConfiguration)]
         [DataContract]
-        private class SqlClientObjRef : IExtensibleDataObject
+        private class SqlClientObjRef
         {
             [DataMember]
             private static ObjRef s_sqlObjRef;
@@ -254,8 +254,6 @@ namespace Microsoft.Data.SqlClient
             {
                 s_sqlObjRef = RemotingServices.Marshal(dispatcher);
             }
-
-            public ExtensionDataObject ExtensionData { get; set; }
         }
         // ------------------------------------------
         // End SqlClientObjRef private class.
