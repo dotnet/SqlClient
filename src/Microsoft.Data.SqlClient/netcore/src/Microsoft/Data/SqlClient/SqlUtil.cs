@@ -2139,6 +2139,8 @@ namespace Microsoft.Data.SqlClient
     /// </summary>
     internal class ConcurrentQueueSemaphore
     {
+        private static readonly Action<Task, object> s_continuePop = ContinuePop;
+
         private readonly SemaphoreSlim _semaphore;
         private readonly ConcurrentQueue<TaskCompletionSource<bool>> _queue =
             new ConcurrentQueue<TaskCompletionSource<bool>>();
@@ -2152,17 +2154,26 @@ namespace Microsoft.Data.SqlClient
         {
             var tcs = new TaskCompletionSource<bool>();
             _queue.Enqueue(tcs);
-            _semaphore.WaitAsync().ContinueWith(t =>
-            {
-                if (_queue.TryDequeue(out TaskCompletionSource<bool> popped))
-                    popped.SetResult(true);
-            }, cancellationToken);
+            _semaphore.WaitAsync().ContinueWith(
+                continuationAction: s_continuePop,
+                state: _queue,
+                cancellationToken: cancellationToken
+            );
             return tcs.Task;
         }
 
         public void Release()
         {
             _semaphore.Release();
+        }
+
+        private static void ContinuePop(Task task, object state)
+        {
+            ConcurrentQueue<TaskCompletionSource<bool>> queue = (ConcurrentQueue<TaskCompletionSource<bool>>)state;
+            if (queue.TryDequeue(out TaskCompletionSource<bool> popped))
+            {
+                popped.SetResult(true);
+            }
         }
     }
 

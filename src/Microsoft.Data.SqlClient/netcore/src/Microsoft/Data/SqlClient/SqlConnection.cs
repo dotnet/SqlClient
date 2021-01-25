@@ -720,8 +720,15 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ServerProcessId/*' />
         public int ServerProcessId
         {
-            get => State.Equals(ConnectionState.Open) | State.Equals(ConnectionState.Executing) | State.Equals(ConnectionState.Fetching) ?
-                GetOpenTdsConnection().ServerProcessId : 0;
+            get
+            {
+                ConnectionState state = State;
+                if (state == ConnectionState.Open || state == ConnectionState.Executing || state == ConnectionState.Fetching)
+                {
+                    return GetOpenTdsConnection().ServerProcessId;
+                }
+                return 0;
+            }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/State/*' />
