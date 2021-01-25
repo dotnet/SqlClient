@@ -38,8 +38,8 @@ namespace Microsoft.Data.SqlClient
 
             byte[] exponent = new byte[RSAPublicKeyBlob.ExponentSize];
             byte[] modulus = new byte[RSAPublicKeyBlob.ModulusSize];
-            Buffer.BlockCopy(keyBlob, RSAPublicKeyBlob.ExponentOffset, exponent, RSAPublicKeyBlob.ExponentOffset, RSAPublicKeyBlob.ExponentSize);
-            Buffer.BlockCopy(keyBlob, RSAPublicKeyBlob.ModulusSize, modulus, RSAPublicKeyBlob.ModulusOffset, RSAPublicKeyBlob.ModulusSize);
+            Buffer.BlockCopy(keyBlob, RSAPublicKeyBlob.ExponentOffset, exponent, 0, RSAPublicKeyBlob.ExponentSize);
+            Buffer.BlockCopy(keyBlob, RSAPublicKeyBlob.ModulusSize, modulus, 0, RSAPublicKeyBlob.ModulusSize);
 
             return new RSAParameters()
             {
