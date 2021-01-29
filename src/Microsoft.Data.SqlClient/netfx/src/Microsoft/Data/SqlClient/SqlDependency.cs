@@ -249,10 +249,19 @@ namespace Microsoft.Data.SqlClient
         {
             [DataMember]
             private static ObjRef s_sqlObjRef;
+            internal static IRemotingTypeInfo _typeInfo;
 
-            public SqlClientObjRef(SqlDependencyProcessDispatcher dispatcher)
+            private SqlClientObjRef() { }
+
+            public SqlClientObjRef(SqlDependencyProcessDispatcher dispatcher) : base()
             {
                 s_sqlObjRef = RemotingServices.Marshal(dispatcher);
+                _typeInfo = s_sqlObjRef.TypeInfo;
+            }
+
+            internal static bool CanCastToSqlDependencyProcessDispatcher()
+            {
+                return _typeInfo.CanCastTo(typeof(SqlDependencyProcessDispatcher), s_sqlObjRef);
             }
         }
         // ------------------------------------------
@@ -625,8 +634,16 @@ namespace Microsoft.Data.SqlClient
 #endif
                 using (MemoryStream stream = new MemoryStream(nativeStorage))
                 {
-                    DataContractSerializer formatter = new DataContractSerializer(typeof(SqlDependencyProcessDispatcher));
-                    _processDispatcher = GetDeserializedObject(formatter, stream); // Deserialize and set for appdomain.
+                    DataContractSerializer formatter = new DataContractSerializer(typeof(SqlClientObjRef));
+                    if (SqlClientObjRef.CanCastToSqlDependencyProcessDispatcher())
+                    {
+                        // Deserialize and set for appdomain.
+                        _processDispatcher = GetDeserializedObject(formatter, stream); 
+                    }
+                    else
+                    {
+                        throw new ArgumentException("Unexpected type", nameof(SqlClientObjRef._typeInfo));
+                    }
                     SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP> processDispatcher obtained, ID: {0}", _processDispatcher.ObjectID);
                 }
             }
