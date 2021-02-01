@@ -76,22 +76,42 @@ namespace Microsoft.Data.SqlClient.SNI
 
         internal void ReadAsyncCallback(SNIPacket packet, uint error)
         {
-            ReadAsyncCallback(IntPtr.Zero, PacketHandle.FromManagedPacket(packet), error);
-            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.ReadAsyncCallback | Info | State Object Id {0}, Session Id {1}, Error code returned {2}", _objectID, _sessionHandle?.ConnectionId, error);
+            SNIHandle sessionHandle = _sessionHandle;
+            if (sessionHandle != null)
+            {
+                ReadAsyncCallback(IntPtr.Zero, PacketHandle.FromManagedPacket(packet), error);
+                SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.ReadAsyncCallback | Info | State Object Id {0}, Session Id {1}, Error code returned {2}", _objectID, _sessionHandle?.ConnectionId, error);
 #if DEBUG
-            SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObjectManaged.ReadAsyncCallback | TRC | State Object Id {0}, Session Id {1}, Packet Id = {2}, Error code returned {3}", _objectID, _sessionHandle?.ConnectionId, packet?._id, error);
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObjectManaged.ReadAsyncCallback | TRC | State Object Id {0}, Session Id {1}, Packet Id = {2}, Error code returned {3}", _objectID, _sessionHandle?.ConnectionId, packet?._id, error);
 #endif
-            _sessionHandle?.ReturnPacket(packet);
+                sessionHandle?.ReturnPacket(packet);
+            }
+            else
+            {
+                // clear the packet and drop it to GC because we no longer know how to return it to the correct owner
+                // this can only happen if a packet is in-flight when the _sessionHandle is cleared
+                packet.Release();
+            }
         }
 
         internal void WriteAsyncCallback(SNIPacket packet, uint sniError)
         {
-            WriteAsyncCallback(IntPtr.Zero, PacketHandle.FromManagedPacket(packet), sniError);
-            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.WriteAsyncCallback | Info | State Object Id {0}, Session Id {1}, Error code returned {2}", _objectID, _sessionHandle?.ConnectionId, sniError);
+            SNIHandle sessionHandle = _sessionHandle;
+            if (sessionHandle != null)
+            {
+                WriteAsyncCallback(IntPtr.Zero, PacketHandle.FromManagedPacket(packet), sniError);
+                SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.WriteAsyncCallback | Info | State Object Id {0}, Session Id {1}, Error code returned {2}", _objectID, _sessionHandle?.ConnectionId, sniError);
 #if DEBUG
-            SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObjectManaged.WriteAsyncCallback | TRC | State Object Id {0}, Session Id {1}, Packet Id = {2}, Error code returned {3}", _objectID, _sessionHandle?.ConnectionId, packet?._id, sniError);
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObjectManaged.WriteAsyncCallback | TRC | State Object Id {0}, Session Id {1}, Packet Id = {2}, Error code returned {3}", _objectID, _sessionHandle?.ConnectionId, packet?._id, sniError);
 #endif
-            _sessionHandle?.ReturnPacket(packet);
+                sessionHandle?.ReturnPacket(packet);
+            }
+            else
+            {
+                // clear the packet and drop it to GC because we no longer know how to return it to the correct owner
+                // this can only happen if a packet is in-flight when the _sessionHandle is cleared
+                packet.Release();
+            }
         }
 
         protected override void RemovePacketFromPendingList(PacketHandle packet)
@@ -117,7 +137,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             else
             {
-                SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.Dispose | Info | State Object Id {0}, sessionHandle not available, could not dispose session.", _objectID); 
+                SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.Dispose | Info | State Object Id {0}, sessionHandle not available, could not dispose session.", _objectID);
             }
         }
 
