@@ -2,7 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-// #define TRACE_HISTORY // this is used for advanced debugging when you need to trace the entire lifetime of a single packet, be very careful with it
+ // #define TRACE_HISTORY // this is used for advanced debugging when you need to trace the entire lifetime of a single packet, be very careful with it
 
 using System;
 using System.Buffers;
@@ -41,15 +41,15 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             public enum Direction
             {
-                Rent=0,
-                Return=1,
+                Rent = 0,
+                Return = 1,
             }
 
             public Direction Action;
             public int RefCount;
             public string Stack;
         }
-
+      
         internal List<History> _history = null;
 
         /// <summary>
@@ -62,7 +62,7 @@ namespace Microsoft.Data.SqlClient.SNI
             : this()
         {
 #if TRACE_HISTORY
-            _history = new List<Activity>();
+            _history = new List<History>();
 #endif
             _id = id;
             _owner = owner;
