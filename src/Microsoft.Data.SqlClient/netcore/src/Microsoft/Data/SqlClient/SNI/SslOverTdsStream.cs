@@ -29,7 +29,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         /// <param name="stream">Underlying stream</param>
         /// <param name="connectionId">Connection Id of parent stream handle</param>
-        public SslOverTdsStream(Stream stream, Guid connectionId)
+        public SslOverTdsStream(Stream stream, Guid connectionId = default)
         {
             _stream = stream;
             _connectionId = connectionId;
