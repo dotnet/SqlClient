@@ -33,6 +33,29 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(e.StackTrace, sqlEx.StackTrace);
         }
 
+#if !NET5_0
+        [Fact]
+        [ActiveIssue("12161", TestPlatforms.AnyUnix)]
+        public static void SqlExcpetionSerializationTest()
+        {
+            var formatter = new BinaryFormatter();
+            SqlException e = CreateException();
+            using (var stream = new MemoryStream())
+            {
+                try
+                {
+                    formatter.Serialize(stream, e);
+                    stream.Position = 0;
+                    var e2 = (SqlException)formatter.Deserialize(stream);
+                }
+                catch (Exception ex)
+                {
+                    Assert.False(true, $"Unexpected Exception occurred: {ex.Message}");
+                }
+            }
+        }
+#endif
+
         [Fact]
         public void JSONSerializationTest()
         {
