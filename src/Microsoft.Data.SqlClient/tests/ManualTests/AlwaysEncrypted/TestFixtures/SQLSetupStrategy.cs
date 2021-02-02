@@ -278,9 +278,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         public void Dispose()
         {
-            //Fixture?.Dispose();
-            akvFixture?.Dispose();
-            certStoreFixture?.Dispose();
+            try
+            {
+                akvFixture?.Dispose();
+            }
+            finally
+            {
+                certStoreFixture?.Dispose();
+            }
         }
     }
 }
