@@ -61,9 +61,9 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         {
             if (TheKeyHasNotBeenCached(keyIdentifierUri))
             {
-                ParseAKVPath(keyIdentifierUri, out Uri vaultUri, out string keyName);
+                ParseAKVPath(keyIdentifierUri, out Uri vaultUri, out string keyName, out string keyVersion);
                 CreateKeyClient(vaultUri);
-                FetchKey(vaultUri, keyName, keyIdentifierUri);
+                FetchKey(vaultUri, keyName, keyVersion, keyIdentifierUri);
             }
 
             bool TheKeyHasNotBeenCached(string k) => !_keyDictionary.ContainsKey(k) && !_keyFetchTaskDictionary.ContainsKey(k);
@@ -151,10 +151,11 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// </summary>
         /// <param name="vaultUri">The Azure Key Vault URI</param>
         /// <param name="keyName">The name of the Azure Key Vault key</param>
+        /// <param name="keyVersion">The version of the Azure Key Vault key</param>
         /// <param name="keyResourceUri">The Azure Key Vault key identifier</param>
-        private void FetchKey(Uri vaultUri, string keyName, string keyResourceUri)
+        private void FetchKey(Uri vaultUri, string keyName, string keyVersion, string keyResourceUri)
         {
-            Task<Azure.Response<KeyVaultKey>> fetchKeyTask = FetchKeyFromKeyVault(vaultUri, keyName);
+            Task<Azure.Response<KeyVaultKey>> fetchKeyTask = FetchKeyFromKeyVault(vaultUri, keyName, keyVersion);
             _keyFetchTaskDictionary.AddOrUpdate(keyResourceUri, fetchKeyTask, (k, v) => fetchKeyTask);
 
             fetchKeyTask
@@ -169,11 +170,12 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// </summary>
         /// <param name="vaultUri">The Azure Key Vault URI</param>
         /// <param name="keyName">Then name of the key</param>
+        /// <param name="keyVersion">Then version of the key</param>
         /// <returns></returns>
-        private Task<Azure.Response<KeyVaultKey>> FetchKeyFromKeyVault(Uri vaultUri, string keyName)
+        private Task<Azure.Response<KeyVaultKey>> FetchKeyFromKeyVault(Uri vaultUri, string keyName, string keyVersion)
         {
             _keyClientDictionary.TryGetValue(vaultUri, out KeyClient keyClient);
-            return keyClient.GetKeyAsync(keyName);
+            return keyClient.GetKeyAsync(keyName, keyVersion);
         }
 
         /// <summary>
@@ -209,11 +211,13 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <param name="masterKeyPath">The Azure Key Vault key identifier</param>
         /// <param name="vaultUri">The Azure Key Vault URI</param>
         /// <param name="masterKeyName">The name of the key</param>
-        private void ParseAKVPath(string masterKeyPath, out Uri vaultUri, out string masterKeyName)
+        /// <param name="masterKeyVersion">The version of the key</param>
+        private void ParseAKVPath(string masterKeyPath, out Uri vaultUri, out string masterKeyName, out string masterKeyVersion)
         {
             Uri masterKeyPathUri = new Uri(masterKeyPath);
             vaultUri = new Uri(masterKeyPathUri.GetLeftPart(UriPartial.Authority));
             masterKeyName = masterKeyPathUri.Segments[2];
+            masterKeyVersion = masterKeyPathUri.Segments.Length > 3 ? masterKeyPathUri.Segments[3] : null;
         }
     }
 }

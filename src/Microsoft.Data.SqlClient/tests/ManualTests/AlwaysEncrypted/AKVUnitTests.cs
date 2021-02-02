@@ -5,6 +5,10 @@
 using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
 using Azure.Identity;
 using Xunit;
+using Azure.Security.KeyVault.Keys;
+using Azure.Core;
+using System.Reflection;
+using System;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
@@ -51,6 +55,53 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             byte[] encryptedCekWithOldProvider = oldAkvProvider.EncryptColumnEncryptionKey(DataTestUtility.AKVUrl, EncryptionAlgorithm, s_columnEncryptionKey);
             byte[] decryptedCekWithNewProvider = newAkvProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, EncryptionAlgorithm, encryptedCekWithOldProvider);
             Assert.Equal(s_columnEncryptionKey, decryptedCekWithNewProvider);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        public static void ReturnSpecifiedVersionOfKeyWhenItIsNotTheMostRecentVersion()
+        {
+            Uri keyPathUri = new Uri(DataTestUtility.AKVOriginalUrl);
+            Uri vaultUri = new Uri(keyPathUri.GetLeftPart(UriPartial.Authority));
+
+            //If key version is not specified then we cannot test.
+            if (KeyIsVersioned(keyPathUri))
+            {
+                string keyName = keyPathUri.Segments[2];
+                string keyVersion = keyPathUri.Segments[3];
+                ClientSecretCredential clientSecretCredential = new ClientSecretCredential(DataTestUtility.AKVTenantId, DataTestUtility.AKVClientId, DataTestUtility.AKVClientSecret);
+                KeyClient keyClient = new KeyClient(vaultUri, clientSecretCredential);
+                KeyVaultKey currentVersionKey = keyClient.GetKey(keyName);
+                KeyVaultKey specifiedVersionKey = keyClient.GetKey(keyName, keyVersion);
+
+                //If specified versioned key is the most recent version of the key then we cannot test.
+                if (!KeyIsLatestVersion(specifiedVersionKey, currentVersionKey))
+                {
+                    SqlColumnEncryptionAzureKeyVaultProvider azureKeyProvider = new SqlColumnEncryptionAzureKeyVaultProvider(clientSecretCredential);
+                    // Perform an operation to initialize the internal caches
+                    azureKeyProvider.EncryptColumnEncryptionKey(DataTestUtility.AKVOriginalUrl, EncryptionAlgorithm, s_columnEncryptionKey);
+                    
+                    PropertyInfo keyCryptographerProperty = azureKeyProvider.GetType().GetProperty("KeyCryptographer", BindingFlags.NonPublic | BindingFlags.Instance);
+                    var keyCryptographer = keyCryptographerProperty.GetValue(azureKeyProvider);
+                    MethodInfo getKeyMethod = keyCryptographer.GetType().GetMethod("GetKey", BindingFlags.NonPublic | BindingFlags.Instance);
+                    KeyVaultKey key = (KeyVaultKey)getKeyMethod.Invoke(keyCryptographer, new[] { DataTestUtility.AKVOriginalUrl });
+
+                    Assert.Equal(keyVersion, key.Properties.Version);
+                }
+            }
+        }
+
+        static bool KeyIsVersioned(Uri keyPath) => keyPath.Segments.Length > 3;
+        static bool KeyIsLatestVersion(KeyVaultKey specifiedVersionKey, KeyVaultKey currentVersionKey) => currentVersionKey.Properties.Version == specifiedVersionKey.Properties.Version;
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        public static void ThrowWhenUrlHasLessThanThreeSegments()
+        {
+            SqlColumnEncryptionAzureKeyVaultProvider azureKeyProvider = new SqlColumnEncryptionAzureKeyVaultProvider(new SqlClientCustomTokenCredential());
+            string invalidKeyPath = "https://my-key-vault.vault.azure.net/keys";
+            Exception ex1 = Assert.Throws<ArgumentException>(() => azureKeyProvider.EncryptColumnEncryptionKey(invalidKeyPath, EncryptionAlgorithm, s_columnEncryptionKey));
+            Assert.Contains($"Invalid url specified: '{invalidKeyPath}'", ex1.Message);
+            Exception ex2 = Assert.Throws<ArgumentException>(() => azureKeyProvider.DecryptColumnEncryptionKey(invalidKeyPath, EncryptionAlgorithm, s_columnEncryptionKey));
+            Assert.Contains($"Invalid url specified: '{invalidKeyPath}'", ex2.Message);
         }
     }
 }

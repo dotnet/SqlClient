@@ -310,8 +310,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
                 throw new ArgumentException(errorMessage, Constants.AeParamMasterKeyPath);
             }
 
-
-            if (!Uri.TryCreate(masterKeyPath, UriKind.Absolute, out Uri parsedUri))
+            if (!Uri.TryCreate(masterKeyPath, UriKind.Absolute, out Uri parsedUri) || parsedUri.Segments.Length < 3)
             {
                 // Return an error indicating that the AKV url is invalid.
                 throw new ArgumentException(string.Format(CultureInfo.InvariantCulture, Strings.InvalidAkvUrlTemplate, masterKeyPath), Constants.AeParamMasterKeyPath);

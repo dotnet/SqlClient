@@ -15,6 +15,8 @@ using System.Threading.Tasks;
 using Microsoft.Identity.Client;
 using Microsoft.Data.SqlClient.TestUtilities;
 using Xunit;
+using Azure.Security.KeyVault.Keys;
+using Azure.Identity;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -32,6 +34,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string AADAccessToken = null;
         public static readonly string AKVBaseUrl = null;
         public static readonly string AKVUrl = null;
+        public static readonly string AKVOriginalUrl = null;
         public static readonly string AKVTenantId = null;
         public static readonly string AKVClientId = null;
         public static readonly string AKVClientSecret = null;
@@ -103,14 +106,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 AADAccessToken = GenerateAccessToken(AADAuthorityURL, username, password);
             }
 
-            string url = c.AzureKeyVaultURL;
-            if (!string.IsNullOrEmpty(url) && Uri.TryCreate(url, UriKind.Absolute, out Uri AKVBaseUri))
+            AKVOriginalUrl = c.AzureKeyVaultURL;
+            if (!string.IsNullOrEmpty(AKVOriginalUrl) && Uri.TryCreate(AKVOriginalUrl, UriKind.Absolute, out Uri AKVBaseUri))
             {
                 AKVBaseUri = new Uri(AKVBaseUri, "/");
                 AKVBaseUrl = AKVBaseUri.AbsoluteUri;
                 AKVUrl = (new Uri(AKVBaseUri, $"/keys/{AKVKeyName}")).AbsoluteUri;
             }
-            
+
             AKVTenantId = c.AzureKeyVaultTenantId;
             AKVClientId = c.AzureKeyVaultClientId;
             AKVClientSecret = c.AzureKeyVaultClientSecret;
