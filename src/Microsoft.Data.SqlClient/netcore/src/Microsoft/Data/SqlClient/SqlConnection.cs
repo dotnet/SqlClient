@@ -722,8 +722,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                ConnectionState state = State;
-                if (state == ConnectionState.Open || state == ConnectionState.Executing || state == ConnectionState.Fetching)
+                if ((State & (ConnectionState.Open | ConnectionState.Executing | ConnectionState.Fetching)) > 0)
                 {
                     return GetOpenTdsConnection().ServerProcessId;
                 }
