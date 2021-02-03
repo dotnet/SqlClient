@@ -135,7 +135,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error code</returns>
         public uint ReceiveAsync(ref SNIPacket packet)
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("SNIMarsConnection.ReceiveAsync | SNI | INFO | SCOPE | Entering Scope {0} ");
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("SNIMarsConnection.ReceiveAsync | SNI | INFO | SCOPE | Entering Scope {0}");
             try
             {
                 if (packet != null)
@@ -168,7 +168,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error status</returns>
         public uint CheckConnection()
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("SNIMarsConnection.CheckConnection | SNI | INFO | SCOPE | Entering Scope {0} ");
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("SNIMarsConnection.CheckConnection | SNI | INFO | SCOPE | Entering Scope {0}");
             try
             {
                 lock (this)
@@ -194,7 +194,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 {
                     handle.HandleReceiveError(packet);
 #if DEBUG
-                    SqlClientEventSource.Log.TrySNITraceEvent("SNIMarsConnection.HandleReceiveError | SNI | ERR | Trace | MARS Session Id {0}, Packet {1} has Completion Callback ", ConnectionId, packet?._id);
+                    SqlClientEventSource.Log.TrySNITraceEvent("SNIMarsConnection.HandleReceiveError | SNI | ERR | Trace | MARS Session Id {0}, Packet {1} has Completion Callback", ConnectionId, packet?._id);
                 }
                 else
                 {

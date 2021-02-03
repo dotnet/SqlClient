@@ -189,7 +189,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 {
                     muxedPacket = SetPacketSMUXHeader(packet);
                 }
-                SqlClientEventSource.Log.TrySNITraceEvent("SNIMarsHandle.Send | SNI | INFO | MARS Session Id {0}, _sequenceNumber {1}, _sendHighwater {2}, SMUX Packet is going to be sent. ", ConnectionId, _sequenceNumber, _sendHighwater);
+                SqlClientEventSource.Log.TrySNITraceEvent("SNIMarsHandle.Send | SNI | INFO | MARS Session Id {0}, _sequenceNumber {1}, _sendHighwater {2}, SMUX Packet is going to be sent.", ConnectionId, _sequenceNumber, _sendHighwater);
                 return _connection.Send(muxedPacket);
             }
             finally
@@ -258,7 +258,7 @@ namespace Microsoft.Data.SqlClient.SNI
                                 }
 
                                 _sendPacketQueue.Dequeue();
-                                SqlClientEventSource.Log.TrySNITraceEvent("SNIMarsHandle.SendPendingPackets | SNI | INFO | MARS Session Id {0}, _sendPacketQueue dequeued, count ", ConnectionId, _sendPacketQueue?.Count);
+                                SqlClientEventSource.Log.TrySNITraceEvent("SNIMarsHandle.SendPendingPackets | SNI | INFO | MARS Session Id {0}, _sendPacketQueue dequeued, count {1}", ConnectionId, _sendPacketQueue?.Count);
                                 continue;
                             }
                             else
@@ -288,7 +288,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error code</returns>
         public override uint SendAsync(SNIPacket packet, SNIAsyncCallback callback = null)
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("SNIMarsHandle.SendAsync | SNI | INFO | SCOPE | Entering Scope {0} ");
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("SNIMarsHandle.SendAsync | SNI | INFO | SCOPE | Entering Scope {0}");
             try
             {
                 lock (this)
@@ -297,7 +297,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
 
                 SendPendingPackets();
-                SqlClientEventSource.Log.TrySNITraceEvent("SNIMarsHandle.SendAsync | SNI | INFO | MARS Session Id {0}, _sendPacketQueue enqueued, count {1}, ", ConnectionId, _sendPacketQueue?.Count);
+                SqlClientEventSource.Log.TrySNITraceEvent("SNIMarsHandle.SendAsync | SNI | INFO | MARS Session Id {0}, _sendPacketQueue enqueued, count {1}", ConnectionId, _sendPacketQueue?.Count);
 
                 return TdsEnums.SNI_SUCCESS_IO_PENDING;
             }
@@ -314,7 +314,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error code</returns>
         public override uint ReceiveAsync(ref SNIPacket packet)
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("SNIMarsHandle.ReceiveAsync | SNI | INFO | SCOPE | Entering Scope {0} ");
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("SNIMarsHandle.ReceiveAsync | SNI | INFO | SCOPE | Entering Scope {0}");
             try
             {
                 lock (_receivedPacketQueue)
@@ -323,14 +323,14 @@ namespace Microsoft.Data.SqlClient.SNI
 
                     if (_connectionError != null)
                     {
-                        SqlClientEventSource.Log.TryTraceEvent("SNIMarsHandle.ReceiveAsync | SNI | ERR | MARS Session Id {0}, _asyncReceives {1}, _receiveHighwater {2}, _sendHighwater {3}, _receiveHighwaterLastAck {4}, _connectionError {5} ", ConnectionId, _asyncReceives, _receiveHighwater, _sendHighwater, _receiveHighwaterLastAck, _connectionError);
+                        SqlClientEventSource.Log.TryTraceEvent("SNIMarsHandle.ReceiveAsync | SNI | ERR | MARS Session Id {0}, _asyncReceives {1}, _receiveHighwater {2}, _sendHighwater {3}, _receiveHighwaterLastAck {4}, _connectionError {5}", ConnectionId, _asyncReceives, _receiveHighwater, _sendHighwater, _receiveHighwaterLastAck, _connectionError);
                         return SNICommon.ReportSNIError(_connectionError);
                     }
 
                     if (queueCount == 0)
                     {
                         _asyncReceives++;
-                        SqlClientEventSource.Log.TryTraceEvent("SNIMarsHandle.ReceiveAsync | SNI | Info | MARS Session Id {0}, queueCount 0, _asyncReceives {1}, _receiveHighwater {2}, _sendHighwater {3}, _receiveHighwaterLastAck {4} ", ConnectionId, _asyncReceives, _receiveHighwater, _sendHighwater, _receiveHighwaterLastAck);
+                        SqlClientEventSource.Log.TryTraceEvent("SNIMarsHandle.ReceiveAsync | SNI | Info | MARS Session Id {0}, queueCount 0, _asyncReceives {1}, _receiveHighwater {2}, _sendHighwater {3}, _receiveHighwaterLastAck {4}", ConnectionId, _asyncReceives, _receiveHighwater, _sendHighwater, _receiveHighwaterLastAck);
 
                         return TdsEnums.SNI_SUCCESS_IO_PENDING;
                     }
@@ -340,7 +340,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     if (queueCount == 1)
                     {
 #if DEBUG
-                        SqlClientEventSource.Log.TryTraceEvent("SNIMarsHandle.ReceiveAsync | SNI | Info | MARS Session Id {0}, packet dequeued {1}, packet Owner {2}, packet refCount {3}, received Packet Queue count {4} ", ConnectionId, packet?._id, packet?._owner, packet?._refCount, _receivedPacketQueue?.Count);
+                        SqlClientEventSource.Log.TryTraceEvent("SNIMarsHandle.ReceiveAsync | SNI | Info | MARS Session Id {0}, packet dequeued {1}, packet Owner {2}, packet refCount {3}, received Packet Queue count {4}", ConnectionId, packet?._id, packet?._owner, packet?._refCount, _receivedPacketQueue?.Count);
 #endif
                         _packetEvent.Reset();
                     }
@@ -351,7 +351,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     _receiveHighwater++;
                 }
 
-                SqlClientEventSource.Log.TryTraceEvent("SNIMarsHandle.ReceiveAsync | Info | MARS Session Id {0}, _asyncReceives {1}, _receiveHighwater {2}, _sendHighwater {3}, _receiveHighwaterLastAck {4}, queueCount {5} ", ConnectionId, _asyncReceives, _receiveHighwater, _sendHighwater, _receiveHighwaterLastAck, _receivedPacketQueue?.Count);
+                SqlClientEventSource.Log.TryTraceEvent("SNIMarsHandle.ReceiveAsync | Info | MARS Session Id {0}, _asyncReceives {1}, _receiveHighwater {2}, _sendHighwater {3}, _receiveHighwaterLastAck {4}, queueCount {5}", ConnectionId, _asyncReceives, _receiveHighwater, _sendHighwater, _receiveHighwaterLastAck, _receivedPacketQueue?.Count);
                 SendAckIfNecessary();
                 return TdsEnums.SNI_SUCCESS;
             }
@@ -366,7 +366,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         public void HandleReceiveError(SNIPacket packet)
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("SNIMarsHandle.HandleReceiveError | SNI | INFO | SCOPE | Entering Scope {0} ");
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("SNIMarsHandle.HandleReceiveError | SNI | INFO | SCOPE | Entering Scope {0}");
             try
             {
                 // SNIMarsHandle should only receive calls to this function from the SNIMarsConnection aggregator class
@@ -421,7 +421,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="highwater">Send highwater mark</param>
         public void HandleAck(uint highwater)
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("SNIMarsHandle.HandleAck | SNI | INFO | SCOPE | Entering Scope {0} ");
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("SNIMarsHandle.HandleAck | SNI | INFO | SCOPE | Entering Scope {0}");
             try
             {
                 lock (this)
@@ -482,7 +482,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 {
                     _receiveHighwater++;
                 }
-                SqlClientEventSource.Log.TryTraceEvent("SNIMarsHandle.HandleReceiveComplete | Info | MARS Session Id {0}, _asyncReceives {1}, _receiveHighwater {2}, _sendHighwater {3}, _receiveHighwaterLastAck {4} ", ConnectionId, _asyncReceives, _receiveHighwater, _sendHighwater, _receiveHighwaterLastAck);
+                SqlClientEventSource.Log.TryTraceEvent("SNIMarsHandle.HandleReceiveComplete | Info | MARS Session Id {0}, _asyncReceives {1}, _receiveHighwater {2}, _sendHighwater {3}, _receiveHighwaterLastAck {4}", ConnectionId, _asyncReceives, _receiveHighwater, _sendHighwater, _receiveHighwaterLastAck);
                 SendAckIfNecessary();
             }
             finally
@@ -520,7 +520,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error code</returns>
         public override uint Receive(out SNIPacket packet, int timeoutInMilliseconds)
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("SNIMarsHandle.Receive | SNI | INFO | SCOPE | Entering Scope {0} ");
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("SNIMarsHandle.Receive | SNI | INFO | SCOPE | Entering Scope {0}");
             try
             {
                 packet = null;
