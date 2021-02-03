@@ -82,7 +82,7 @@ namespace Microsoft.Data.SqlClient
             _language = null;
             if (_deltaDirty)
             {
-                _delta = new SessionStateRecord[_maxNumberOfSessionStates];
+                Array.Clear(_delta, 0, _delta.Length);
                 _deltaDirty = false;
             }
             _unrecoverableStatesCount = 0;
