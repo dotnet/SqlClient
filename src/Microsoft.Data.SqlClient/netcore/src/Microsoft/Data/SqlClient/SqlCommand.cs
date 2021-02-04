@@ -1370,6 +1370,7 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
+                CheckThrowSNIException();
                 statistics = SqlStatistics.StartTimer(Statistics);
                 int result = (int)InternalEndExecuteNonQuery(asyncResult, isInternal: false, endMethod: nameof(EndExecuteNonQuery));
                 success = true;
@@ -1778,6 +1779,7 @@ namespace Microsoft.Data.SqlClient
             int? sqlExceptionNumber = null;
             try
             {
+                CheckThrowSNIException();
                 success = true;
                 return CompleteXmlReader(InternalEndExecuteReader(asyncResult, false, nameof(EndExecuteXmlReader)), true);
             }
@@ -1972,6 +1974,7 @@ namespace Microsoft.Data.SqlClient
             int? sqlExceptionNumber = null;
             try
             {
+                CheckThrowSNIException();
                 success = true;
                 statistics = SqlStatistics.StartTimer(Statistics);
                 return InternalEndExecuteReader(asyncResult, false, nameof(EndExecuteReader));
