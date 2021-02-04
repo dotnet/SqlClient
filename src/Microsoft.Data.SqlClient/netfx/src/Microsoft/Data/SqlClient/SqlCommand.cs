@@ -2230,6 +2230,7 @@ namespace Microsoft.Data.SqlClient
             int? sqlExceptionNumber = null;
             try
             {
+                CheckThrowSNIException();
                 XmlReader result = CompleteXmlReader(InternalEndExecuteReader(asyncResult, ADP.EndExecuteXmlReader, isInternal: false), true);
                 success = true;
                 return result;
@@ -2486,6 +2487,7 @@ namespace Microsoft.Data.SqlClient
             int? sqlExceptionNumber = null;
             try
             {
+                CheckThrowSNIException();
                 statistics = SqlStatistics.StartTimer(Statistics);
                 SqlDataReader result = InternalEndExecuteReader(asyncResult, ADP.EndExecuteReader, isInternal: false);
                 success = true;
