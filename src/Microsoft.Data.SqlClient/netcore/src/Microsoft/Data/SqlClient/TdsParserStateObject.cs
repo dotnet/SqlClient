@@ -543,7 +543,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.NullBitmap.Initialize | INFO | ADV | State Object Id {0}, NBCROW bitmap received, column count = {1}", stateObj._objectID, columnsCount);
-                SqlClientEventSource.Log.TryAdvancedTraceBinEvent("TdsParserStateObject.NullBitmap.Initialize | INFO | ADV | State Object Id {0}, NBCROW bitmap data: ", stateObj._objectID, _nullBitmap, (ushort)_nullBitmap.Length);
+                SqlClientEventSource.Log.TryAdvancedTraceBinEvent("TdsParserStateObject.NullBitmap.Initialize | INFO | ADV | State Object Id {0}, Null Bitmap length {1}, NBCROW bitmap data: {2}", stateObj._objectID, (ushort)_nullBitmap.Length, _nullBitmap);
                 return true;
             }
 
@@ -3502,7 +3502,7 @@ namespace Microsoft.Data.SqlClient
                     _attentionSending = false;
                 }
 
-                SqlClientEventSource.Log.TryAdvancedTraceBinEvent("TdsParserStateObject.SendAttention | INFO | ADV | State Object Id {0}, Out Buffer {1}, Packet sent: {2}", _objectID, _outBuff, (ushort)_outBytesUsed);
+                SqlClientEventSource.Log.TryAdvancedTraceBinEvent("TdsParserStateObject.SendAttention | INFO | ADV | State Object Id {0}, Packet sent. Out Buffer {1}, Out Bytes Used: {2}", _objectID, _outBuff, (ushort)_outBytesUsed);
                 SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObject.SendAttention | Info | State Object Id {0}, Attention sent to the server.", _objectID);
 
                 AssertValidState();
