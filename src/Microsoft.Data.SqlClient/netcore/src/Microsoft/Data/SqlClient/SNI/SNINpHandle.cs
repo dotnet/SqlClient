@@ -429,7 +429,7 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 ReturnPacket(packet);
             }
-            SqlClientEventSource.Log.TrySNITraceEvent("SNINpHandle.ReportErrorAndReleasePacket | SNI | INFO | Connection Id {0}, Packet returned, error occurred: {1}", ConnectionId, sniException.Message);
+            SqlClientEventSource.Log.TrySNITraceEvent("SNINpHandle.ReportErrorAndReleasePacket | SNI | INFO | Connection Id {0}, Packet returned, error occurred: {1}", ConnectionId, sniException?.Message);
             return SNICommon.ReportSNIError(SNIProviders.NP_PROV, SNICommon.InternalExceptionError, sniException);
         }
 

@@ -303,7 +303,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
             }
 
-            SqlClientEventSource.Log.TryTraceEvent("SNIProxy.CreateConnectionHandle | Info | Session Id {0}, SNI Handle Type: {1}", sniHandle?.ConnectionId, sniHandle.GetType());
+            SqlClientEventSource.Log.TryTraceEvent("SNIProxy.CreateConnectionHandle | Info | Session Id {0}, SNI Handle Type: {1}", sniHandle?.ConnectionId, sniHandle?.GetType());
             return sniHandle;
         }
 
@@ -327,7 +327,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 postfix = DefaultSqlServerPort.ToString();
             }
 
-            SqlClientEventSource.Log.TryTraceEvent("SNIProxy.GetSqlServerSPN | Info | ServerName {0}, InstanceName {1}, Port {2}, postfix {3}", dataSource.ServerName, dataSource.InstanceName, dataSource.Port, postfix);
+            SqlClientEventSource.Log.TryTraceEvent("SNIProxy.GetSqlServerSPN | Info | ServerName {0}, InstanceName {1}, Port {2}, postfix {3}", dataSource?.ServerName, dataSource?.InstanceName, dataSource?.Port, postfix);
             return GetSqlServerSPN(hostName, postfix);
         }
 

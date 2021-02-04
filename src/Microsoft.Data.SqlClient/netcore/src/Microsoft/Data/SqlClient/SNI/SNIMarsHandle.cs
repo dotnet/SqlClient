@@ -454,7 +454,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 {
                     if (_sendHighwater != header.highwater)
                     {
-                        SqlClientEventSource.Log.TrySNITraceEvent("SNIMarsHandle.HandleReceiveComplete | SNI | INFO | MARS Session Id {0}, header.highwater {1}, _sendHighwater {2}, Handle Ack with header.highwater", ConnectionId, header.highwater, _sendHighwater);
+                        SqlClientEventSource.Log.TrySNITraceEvent("SNIMarsHandle.HandleReceiveComplete | SNI | INFO | MARS Session Id {0}, header.highwater {1}, _sendHighwater {2}, Handle Ack with header.highwater", ConnectionId, header?.highwater, _sendHighwater);
                         HandleAck(header.highwater);
                     }
 
@@ -464,7 +464,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         {
                             _receivedPacketQueue.Enqueue(packet);
                             _packetEvent.Set();
-                            SqlClientEventSource.Log.TrySNITraceEvent("SNIMarsHandle.HandleReceiveComplete | SNI | INFO | MARS Session Id {0}, _sequenceNumber {1}, _sendHighwater {2}, _receivedPacketQueue count {3}, packet event set", ConnectionId, _sequenceNumber, _sendHighwater, _receivedPacketQueue.Count);
+                            SqlClientEventSource.Log.TrySNITraceEvent("SNIMarsHandle.HandleReceiveComplete | SNI | INFO | MARS Session Id {0}, _sequenceNumber {1}, _sendHighwater {2}, _receivedPacketQueue count {3}, packet event set", ConnectionId, _sequenceNumber, _sendHighwater, _receivedPacketQueue?.Count);
                             return;
                         }
 
