@@ -36,7 +36,6 @@ namespace Microsoft.Data.SqlClient.SNI
         internal readonly SNIHandle _owner; // used in debug builds to check that packets are being returned to the correct pool
         internal string _traceTag; // used in debug builds to assist tracing what steps the packet has been through
 
-
 #if TRACE_HISTORY
         [DebuggerDisplay("{Action.ToString(),nq}")]
         internal struct History
@@ -80,7 +79,6 @@ namespace Microsoft.Data.SqlClient.SNI
             if (_data != null)
             {
                 SqlClientEventSource.Log.TrySNITraceEvent("SNIPacket.dtor | SNI | ERR | Finalizer called for unreleased SNIPacket, Connection Id {0}, Packet Id {1}, _refCount {2}, DataLeft {3}, tag {4}", _owner?.ConnectionId, _id, _refCount, DataLeft, _traceTag);
-                //Debug.Fail($@"finalizer called for unreleased SNIPacket, tag: {_traceTag}");
             }
         }
 

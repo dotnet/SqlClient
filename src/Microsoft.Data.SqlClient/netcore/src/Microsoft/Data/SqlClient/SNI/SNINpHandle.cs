@@ -134,7 +134,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
         public override uint CheckConnection()
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("SNINpHandle.CheckConnection | SNI | INFO | SCOPE | Entering Scope {0} ");
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("SNINpHandle.CheckConnection | SNI | INFO | SCOPE | Entering Scope {0}");
             try
             {
                 if (!_stream.CanWrite || !_stream.CanRead)
@@ -184,7 +184,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
         public override uint Receive(out SNIPacket packet, int timeout)
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("SNINpHandle.Receive | SNI | INFO | SCOPE | Entering Scope {0} ");
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("SNINpHandle.Receive | SNI | INFO | SCOPE | Entering Scope {0}");
             try
             {
                 SNIPacket errorPacket;
@@ -231,7 +231,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
         public override uint ReceiveAsync(ref SNIPacket packet)
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("SNINpHandle.ReceiveAsync | SNI | INFO | SCOPE | Entering Scope {0} ");
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("SNINpHandle.ReceiveAsync | SNI | INFO | SCOPE | Entering Scope {0}");
             try
             {
                 SNIPacket errorPacket;
@@ -266,7 +266,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
         public override uint Send(SNIPacket packet)
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("SNINpHandle.Send | SNI | INFO | SCOPE | Entering Scope {0} ");
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("SNINpHandle.Send | SNI | INFO | SCOPE | Entering Scope {0}");
             try
             {
                 bool releaseLock = false;
@@ -429,7 +429,7 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 ReturnPacket(packet);
             }
-            SqlClientEventSource.Log.TrySNITraceEvent("SNINpHandle.ReportErrorAndReleasePacket | SNI | INFO | Connection Id {0}, Packet returned, error occurred: {1} ", ConnectionId, sniException.Message);
+            SqlClientEventSource.Log.TrySNITraceEvent("SNINpHandle.ReportErrorAndReleasePacket | SNI | INFO | Connection Id {0}, Packet returned, error occurred: {1}", ConnectionId, sniException.Message);
             return SNICommon.ReportSNIError(SNIProviders.NP_PROV, SNICommon.InternalExceptionError, sniException);
         }
 
@@ -439,7 +439,7 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 ReturnPacket(packet);
             }
-            SqlClientEventSource.Log.TrySNITraceEvent("SNINpHandle.ReportErrorAndReleasePacket | SNI | INFO | Connection Id {0}, Packet returned, error occurred: {1} ", ConnectionId, errorMessage);
+            SqlClientEventSource.Log.TrySNITraceEvent("SNINpHandle.ReportErrorAndReleasePacket | SNI | INFO | Connection Id {0}, Packet returned, error occurred: {1}", ConnectionId, errorMessage);
             return SNICommon.ReportSNIError(SNIProviders.NP_PROV, nativeError, sniError, errorMessage);
         }
 

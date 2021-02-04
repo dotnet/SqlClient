@@ -47,7 +47,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             catch (Exception e)
             {
-                SqlClientEventSource.Log.TryTraceEvent("SNIProxy.EnableSsl | Err | Session Id {0}, SNI Handshake failed with exception: {1} ", handle?.ConnectionId, e?.Message);
+                SqlClientEventSource.Log.TryTraceEvent("SNIProxy.EnableSsl | Err | Session Id {0}, SNI Handshake failed with exception: {1}", handle?.ConnectionId, e?.Message);
                 return SNICommon.ReportSNIError(SNIProviders.SSL_PROV, SNICommon.HandshakeFailureError, e);
             }
         }
