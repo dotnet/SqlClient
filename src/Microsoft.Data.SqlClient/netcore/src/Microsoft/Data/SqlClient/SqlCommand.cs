@@ -1368,6 +1368,7 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
+                CheckThrowSNIException();
                 statistics = SqlStatistics.StartTimer(Statistics);
                 int result = (int)InternalEndExecuteNonQuery(asyncResult, isInternal: false, endMethod: nameof(EndExecuteNonQuery));
                 success = true;

@@ -1720,6 +1720,7 @@ namespace Microsoft.Data.SqlClient
             int? sqlExceptionNumber = null;
             try
             {
+                CheckThrowSNIException();
                 statistics = SqlStatistics.StartTimer(Statistics);
                 int result = (int)InternalEndExecuteNonQuery(asyncResult, ADP.EndExecuteNonQuery, isInternal: false);
                 success = true;
