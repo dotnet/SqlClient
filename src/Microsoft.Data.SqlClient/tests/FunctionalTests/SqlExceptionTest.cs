@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(e.StackTrace, sqlEx.StackTrace);
         }
 
-#if !NET5_0
+#if !NET5_AND_ABOVE
         [Fact]
         [ActiveIssue("12161", TestPlatforms.AnyUnix)]
         public static void SqlExcpetionSerializationTest()
