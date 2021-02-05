@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 	///	    <format type="text/markdown"><![CDATA[
     /// ## Remarks
     /// 
-    /// **SqlColumnEncryptionAzureKeyVaultProvider** is implemented for Microsoft.Data.SqlClient driver and supports .NET Framework 4.6+ and .NET Core 2.1+.
+    /// **SqlColumnEncryptionAzureKeyVaultProvider** is implemented for Microsoft.Data.SqlClient driver and supports .NET Framework 4.6.1+ and .NET Core 2.1+.
     /// The provider name identifier for this implementation is "AZURE_KEY_VAULT" and it is not registered in driver by default.
     /// Client applications must call <xref=Microsoft.Data.SqlClient.SqlConnection.RegisterColumnEncryptionKeyStoreProviders> API only once in the lifetime of driver to register this custom provider by implementing a custom Authentication Callback mechanism.
     /// 
@@ -117,10 +117,10 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         #region Public methods
 
         /// <summary>
-        /// Uses an asymmetric key identified by the key path to sign the masterkey metadata consisting of (masterKeyPath, allowEnclaveComputations bit, providerName).
+        /// Uses an asymmetric key identified by the key path to sign the master key metadata consisting of (masterKeyPath, allowEnclaveComputations bit, providerName).
         /// </summary>
         /// <param name="masterKeyPath">Complete path of an asymmetric key. Path format is specific to a key store provider.</param>
-        /// <param name="allowEnclaveComputations">Boolean indicating whether this key can be sent to trusted enclave</param>
+        /// <param name="allowEnclaveComputations">Boolean indicating whether this key can be sent to a trusted enclave</param>
         /// <returns>Encrypted column encryption key</returns>
         public override byte[] SignColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations)
         {
@@ -133,7 +133,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         }
 
         /// <summary>
-        /// Uses an asymmetric key identified by the key path to verify the masterkey metadata consisting of (masterKeyPath, allowEnclaveComputations bit, providerName).
+        /// Uses an asymmetric key identified by the key path to verify the master key metadata consisting of (masterKeyPath, allowEnclaveComputations bit, providerName).
         /// </summary>
         /// <param name="masterKeyPath">Complete path of an asymmetric key. Path format is specific to a key store provider.</param>
         /// <param name="allowEnclaveComputations">Boolean indicating whether this key can be sent to trusted enclave</param>
@@ -153,7 +153,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// This function uses the asymmetric key specified by the key path
         /// and decrypts an encrypted CEK with RSA encryption algorithm.
         /// </summary>
-        /// <param name="masterKeyPath">Complete path of an asymmetric key in AKV</param>
+        /// <param name="masterKeyPath">Complete path of an asymmetric key in Azure Key Vault</param>
         /// <param name="encryptionAlgorithm">Asymmetric Key Encryption Algorithm</param>
         /// <param name="encryptedColumnEncryptionKey">Encrypted Column Encryption Key</param>
         /// <returns>Plain text column encryption key</returns>
@@ -234,7 +234,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// This function uses the asymmetric key specified by the key path
         /// and encrypts CEK with RSA encryption algorithm.
         /// </summary>
-        /// <param name="masterKeyPath">Complete path of an asymmetric key in AKV</param>
+        /// <param name="masterKeyPath">Complete path of an asymmetric key in Azure Key Vault</param>
         /// <param name="encryptionAlgorithm">Asymmetric Key Encryption Algorithm</param>
         /// <param name="columnEncryptionKey">Plain text column encryption key</param>
         /// <returns>Encrypted column encryption key</returns>
@@ -253,7 +253,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 
             // Construct the encryptedColumnEncryptionKey
             // Format is 
-            //          s_firstVersion + keyPathLength + ciphertextLength + ciphertext + keyPath + signature
+            //          s_firstVersion + keyPathLength + ciphertextLength + keyPath + ciphertext + signature
 
             // Get the Unicode encoded bytes of cultureinvariant lower case masterKeyPath
             byte[] masterKeyPathBytes = Encoding.Unicode.GetBytes(masterKeyPath.ToLowerInvariant());
@@ -310,8 +310,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
                 throw new ArgumentException(errorMessage, Constants.AeParamMasterKeyPath);
             }
 
-
-            if (!Uri.TryCreate(masterKeyPath, UriKind.Absolute, out Uri parsedUri))
+            if (!Uri.TryCreate(masterKeyPath, UriKind.Absolute, out Uri parsedUri) || parsedUri.Segments.Length < 3)
             {
                 // Return an error indicating that the AKV url is invalid.
                 throw new ArgumentException(string.Format(CultureInfo.InvariantCulture, Strings.InvalidAkvUrlTemplate, masterKeyPath), Constants.AeParamMasterKeyPath);
