@@ -10,7 +10,7 @@
     <Platforms>AnyCPU;x86;x64</Platforms>
     <DefineConstants Condition="'$(TargetGroup)'=='netcoreapp'">$(DefineConstants);NETCOREAPP</DefineConstants>
     <DefineConstants Condition="'$(TargetGroup)'=='netfx'">$(DefineConstants);NETFRAMEWORK</DefineConstants>
-    <DefineConstants Condition="'$(TargetGroup)' == 'netcoreapp' AND (!$(TargetFramework.StartsWith('netcoreapp')) OR (!$(TargetNetCoreVersion.StartsWith('netcoreapp2.1')) AND !$(TargetNetCoreVersion.StartsWith('netcoreapp3.1'))))">$(DefineConstants);NET5_AND_ABOVE</DefineConstants>
+    <DefineConstants Condition="'$(TargetGroup)' == 'netcoreapp' AND (!$(TargetFramework.StartsWith('netcoreapp')) OR (!$(TargetNetCoreVersion.StartsWith('netcoreapp2.1')) AND !$(TargetNetCoreVersion.StartsWith('netcoreapp3.1'))))">$(DefineConstants);NET50_OR_LATER</DefineConstants>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform).$(AssemblyName)</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
   </PropertyGroup>
