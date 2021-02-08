@@ -242,7 +242,6 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         {
             // Validate the input parameters
             ValidateNonEmptyAKVPath(masterKeyPath, isSystemOp: true);
-            ValidateNotNullOrWhitespace(encryptionAlgorithm, nameof(encryptionAlgorithm));
             ValidateEncryptionAlgorithm(encryptionAlgorithm, isSystemOp: true);
             ValidateNotNull(columnEncryptionKey, nameof(columnEncryptionKey));
             ValidateNotEmpty(columnEncryptionKey, nameof(columnEncryptionKey));

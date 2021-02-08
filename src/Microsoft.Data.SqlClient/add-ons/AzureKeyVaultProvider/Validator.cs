@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         {
             if (string.IsNullOrWhiteSpace(parameter))
             {
-                throw new ArgumentException(name, Strings.NullOrWhitespaceArgument);
+                throw new ArgumentException(string.Format(Strings.NullOrWhitespaceArgument, name));
             }
         }
 
@@ -32,7 +32,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         {
             if (parameter.Count == 0)
             {
-                throw new ArgumentException(name, Strings.EmptyArgumentInternal);
+                throw new ArgumentException(string.Format(Strings.EmptyArgumentInternal, name));
             }
         }
 
@@ -42,7 +42,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             {
                 if (null == parameter)
                 {
-                    throw new ArgumentException(parameter, Strings.InvalidTrustedEndpointTemplate);
+                    throw new ArgumentException(Strings.InvalidTrustedEndpointTemplate);
                 }
             }
         }

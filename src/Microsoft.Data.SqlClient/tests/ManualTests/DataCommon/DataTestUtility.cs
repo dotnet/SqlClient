@@ -107,7 +107,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             AKVOriginalUrl = c.AzureKeyVaultURL;
-            if (!string.IsNullOrEmpty(AKVOriginalUrl) && Uri.TryCreate(AKVOriginalUrl, UriKind.Absolute, out Uri AKVBaseUri))
+            if (!string.IsNullOrEmpty(AKVOriginalUrl) && Uri.TryCreate(AKVOriginalUrl, UriKind.Absolute, out AKVBaseUri))
             {
                 AKVBaseUri = new Uri(AKVBaseUri, "/");
                 AKVBaseUrl = AKVBaseUri.AbsoluteUri;

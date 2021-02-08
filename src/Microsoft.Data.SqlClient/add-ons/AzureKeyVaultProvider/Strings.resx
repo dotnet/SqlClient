@@ -118,7 +118,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="InvalidTrustedEndpointTemplate" xml:space="preserve">
-    <value>Invalid trusted endpoint specified: '{0}'; a trusted endpoint must have a value.</value>
+    <value>Invalid trusted endpoint specified. A trusted endpoint must have a value.</value>
   </data>
   <data name="CipherTextLengthMismatch" xml:space="preserve">
     <value>CipherText length does not match the RSA key size.</value>
