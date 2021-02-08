@@ -635,15 +635,17 @@ namespace Microsoft.Data.SqlClient
                 using (MemoryStream stream = new MemoryStream(nativeStorage))
                 {
                     DataContractSerializer formatter = new DataContractSerializer(typeof(SqlClientObjRef));
+                    XmlDictionaryReader reader = XmlDictionaryReader.CreateBinaryReader(stream, XmlDictionaryReaderQuotas.Max);
                     if (SqlClientObjRef.CanCastToSqlDependencyProcessDispatcher())
                     {
                         // Deserialize and set for appdomain.
-                        _processDispatcher = GetDeserializedObject(formatter, stream); 
+                        _processDispatcher = GetDeserializedObject(formatter, reader); 
                     }
                     else
                     {
                         throw new ArgumentException("Unexpected type", nameof(SqlClientObjRef._typeInfo));
                     }
+                    reader.Close();
                     SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP> processDispatcher obtained, ID: {0}", _processDispatcher.ObjectID);
                 }
             }
@@ -660,11 +662,11 @@ namespace Microsoft.Data.SqlClient
         }
 
         [SecurityPermission(SecurityAction.Assert, Flags = SecurityPermissionFlag.SerializationFormatter)]
-        private static SqlDependencyProcessDispatcher GetDeserializedObject(DataContractSerializer formatter, MemoryStream stream)
+        private static SqlDependencyProcessDispatcher GetDeserializedObject(DataContractSerializer formatter, XmlDictionaryReader reader)
         {
-            object result = formatter.ReadObject(stream);
+            object result = formatter.ReadObject(reader,false);
             Debug.Assert(result.GetType() == typeof(SqlDependencyProcessDispatcher), "Unexpected type stored in native!");
-            return (SqlDependencyProcessDispatcher)result;
+            return result as SqlDependencyProcessDispatcher;
         }
 
         // -------------------------
