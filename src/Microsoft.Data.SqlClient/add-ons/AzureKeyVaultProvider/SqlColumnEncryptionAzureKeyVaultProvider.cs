@@ -101,16 +101,16 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// and an array of trusted endpoints.
         /// </summary>
         /// <param name="tokenCredential">Instance of an implementation of Token Credential that is capable of providing an OAuth Token</param>
-        /// <param name="trustedEndPoints">TrustedEndpoints are used to validate the master key path</param>
-        public SqlColumnEncryptionAzureKeyVaultProvider(TokenCredential tokenCredential, string[] trustedEndPoints)
+        /// <param name="trustedEndpoints">TrustedEndpoints are used to validate the master key path</param>
+        public SqlColumnEncryptionAzureKeyVaultProvider(TokenCredential tokenCredential, string[] trustedEndpoints)
         {
             ValidateNotNull(tokenCredential, nameof(tokenCredential));
-            ValidateNotNull(trustedEndPoints, nameof(trustedEndPoints));
-            ValidateNotEmpty(trustedEndPoints, nameof(trustedEndPoints));
-            ValidateNotNullOrWhitespaceForEach(trustedEndPoints, nameof(trustedEndPoints));
+            ValidateNotNull(trustedEndpoints, nameof(trustedEndpoints));
+            ValidateNotEmpty(trustedEndpoints, nameof(trustedEndpoints));
+            ValidateNotNullOrWhitespaceForEach(trustedEndpoints, nameof(trustedEndpoints));
 
             KeyCryptographer = new AzureSqlKeyCryptographer(tokenCredential);
-            TrustedEndPoints = trustedEndPoints;
+            TrustedEndPoints = trustedEndpoints;
         }
         #endregion
 

@@ -214,11 +214,11 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <summary>
         ///   Looks up a localized string similar to Invalid trusted endpoint specified: &apos;{0}&apos;; a trusted endpoint must have a value..
         /// </summary>
-        internal static string InvalidTrustedEndpointTemplate
+        internal static string NullOrWhitespaceForEach
         {
             get
             {
-                return ResourceManager.GetString("InvalidTrustedEndpointTemplate", resourceCulture);
+                return ResourceManager.GetString("NullOrWhitespaceForEach", resourceCulture);
             }
         }
 

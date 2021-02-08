@@ -38,12 +38,9 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 
         internal static void ValidateNotNullOrWhitespaceForEach(string[] parameters, string name)
         {
-            foreach (var parameter in parameters)
+            if (parameters.Any(s => string.IsNullOrWhiteSpace(s)))
             {
-                if (null == parameter)
-                {
-                    throw new ArgumentException(Strings.InvalidTrustedEndpointTemplate);
-                }
+                throw new ArgumentException(string.Format(Strings.NullOrWhitespaceForEach, name));
             }
         }
 
