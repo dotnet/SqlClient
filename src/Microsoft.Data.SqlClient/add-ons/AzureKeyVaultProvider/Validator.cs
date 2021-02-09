@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         {
             if (string.IsNullOrWhiteSpace(parameter))
             {
-                throw new ArgumentException(name, Strings.NullOrWhitespaceArgument);
+                throw new ArgumentException(string.Format(Strings.NullOrWhitespaceArgument, name));
             }
         }
 
@@ -32,18 +32,15 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         {
             if (parameter.Count == 0)
             {
-                throw new ArgumentException(name, Strings.EmptyArgumentInternal);
+                throw new ArgumentException(string.Format(Strings.EmptyArgumentInternal, name));
             }
         }
 
         internal static void ValidateNotNullOrWhitespaceForEach(string[] parameters, string name)
         {
-            foreach (var parameter in parameters)
+            if (parameters.Any(s => string.IsNullOrWhiteSpace(s)))
             {
-                if (null == parameter)
-                {
-                    throw new ArgumentException(parameter, Strings.InvalidTrustedEndpointTemplate);
-                }
+                throw new ArgumentException(string.Format(Strings.NullOrWhitespaceForEach, name));
             }
         }
 
