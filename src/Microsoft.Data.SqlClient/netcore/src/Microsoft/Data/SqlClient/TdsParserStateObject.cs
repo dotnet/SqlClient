@@ -2274,7 +2274,6 @@ namespace Microsoft.Data.SqlClient
             //    // lock protects against Close and Cancel
 
             //}
-            Thread.Sleep(10000);
             // we don't care about the return value here, we aren't going to make a choice using it we just 
             // need to set the state so that something else will pick it up
             OnTimeoutCore(TimeoutRunning, TimeoutExpiredAsync);
