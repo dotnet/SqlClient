@@ -22,6 +22,11 @@ namespace Microsoft.Data.SqlClient
 
     internal abstract class TdsParserStateObject
     {
+        private const int TimeoutStopped = 0;
+        private const int TimeoutRunning = 1;
+        private const int TimeoutExpiredAsync = 2;
+        private const int TimeoutExpiredSync = 3;
+
         private static int _objectTypeCount; // EventSource counter
         internal readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
 
@@ -113,12 +118,12 @@ namespace Microsoft.Data.SqlClient
         // Timeout variables
         private long _timeoutMilliseconds;
         private long _timeoutTime;                          // variable used for timeout computations, holds the value of the hi-res performance counter at which this request should expire
+        private int _timeoutState; // expected to be one of the constant values TimeoutStopped, TimeoutRunning, TimeoutExpiredAsync, TimeoutExpiredSync
         internal volatile bool _attentionSent;              // true if we sent an Attention to the server
         internal volatile bool _attentionSending;
-        internal bool _internalTimeout;                     // an internal timeout occurred
 
-        private readonly LastIOTimer _lastSuccessfulIOTimer;
-
+        private readonly LastIOTimer _lastSuccessfulIOTimer;                     
+                                                                                 
         // secure password information to be stored
         //  At maximum number of secure string that need to be stored is two; one for login password and the other for new change password
         private SecureString[] _securePasswords = new SecureString[2] { null, null };
@@ -760,7 +765,7 @@ namespace Microsoft.Data.SqlClient
                     // operations.
                     Parser.ProcessPendingAck(this);
                 }
-                _internalTimeout = false;
+                SetTimeoutStateStopped();
             }
         }
 
@@ -1042,7 +1047,7 @@ namespace Microsoft.Data.SqlClient
                             return false;
                         }
 
-                        if (_internalTimeout)
+                        if (IsTimeoutStateExpired)
                         {
                             ThrowExceptionAndWarning();
                             return true;
@@ -2247,11 +2252,54 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private void OnTimeout(object state)
+        public void SetTimeoutStateStopped()
         {
-            if (!_internalTimeout)
+            _timeoutState = TimeoutStopped;
+        }
+
+        public bool IsTimeoutStateExpired
+        {
+            get
             {
-                _internalTimeout = true;
+                int state = _timeoutState;
+                return state == TimeoutExpiredAsync || state == TimeoutExpiredSync;
+            }
+        }
+
+        private void OnTimeoutAsync(object state)
+        {
+            //if (!_internalTimeout)
+            //{
+            //    _internalTimeout = true;
+            //    // lock protects against Close and Cancel
+
+            //}
+            Thread.Sleep(10000);
+            // we don't care about the return value here, we aren't going to make a choice using it we just 
+            // need to set the state so that something else will pick it up
+            OnTimeoutCore(TimeoutRunning, TimeoutExpiredAsync);
+        }
+
+        private bool OnTimeoutSync()
+        {
+            return OnTimeoutCore(TimeoutRunning, TimeoutExpiredSync);
+        }
+
+        /// <summary>
+        /// attempts to change the timout state from the expected state to the target state and if it succeeds
+        /// will setup the the stateobject into the timeout expired state
+        /// </summary>
+        /// <param name="expectedState">the state that is the expected current state, state will change only if this is correct</param>
+        /// <param name="targetState">the state that will be changed to if the expected state is correct</param>
+        /// <returns>boolean value indicating whether the call changed the timeout state</returns>
+        private bool OnTimeoutCore(int expectedState, int targetState)
+        {
+            Debug.Assert(targetState == TimeoutExpiredAsync || targetState == TimeoutExpiredSync, "OnTimeoutCore must have an expiry state as the targetState");
+
+            bool retval = false;
+            if (Interlocked.CompareExchange(ref _timeoutState, targetState, expectedState) == expectedState)
+            {
+                retval = true;
                 // lock protects against Close and Cancel
                 lock (this)
                 {
@@ -2349,6 +2397,7 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
             }
+            return retval;
         }
 
         internal void ReadSni(TaskCompletionSource<object> completion)
@@ -2386,7 +2435,7 @@ namespace Microsoft.Data.SqlClient
                 if (_networkPacketTimeout == null)
                 {
                     _networkPacketTimeout = ADP.UnsafeCreateTimer(
-                        new TimerCallback(OnTimeout),
+                        new TimerCallback(OnTimeoutAsync),
                         null,
                         Timeout.Infinite,
                         Timeout.Infinite);
@@ -2396,6 +2445,8 @@ namespace Microsoft.Data.SqlClient
                 //  0 == Already timed out (NOTE: To simulate the same behavior as sync we will only timeout on 0 if we receive an IO Pending from SNI)
                 // >0 == Actual timeout remaining
                 int msecsRemaining = GetTimeoutRemaining();
+                int previousTimeoutState = Interlocked.CompareExchange(ref _timeoutState, TimeoutRunning, TimeoutStopped);
+                Debug.Assert(previousTimeoutState == TimeoutStopped, "previous timeout state was not Stopped");
                 if (msecsRemaining > 0)
                 {
                     ChangeNetworkPacketTimeout(msecsRemaining, Timeout.Infinite);
@@ -2445,12 +2496,15 @@ namespace Microsoft.Data.SqlClient
                         _networkPacketTaskSource.TrySetResult(null);
                     }
                     // Disable timeout timer on error
+                    Interlocked.Exchange(ref _timeoutState, TimeoutStopped);
                     ChangeNetworkPacketTimeout(Timeout.Infinite, Timeout.Infinite);
                 }
                 else if (msecsRemaining == 0)
-                { // Got IO Pending, but we have no time left to wait
-                    // Immediately schedule the timeout timer to fire
-                    ChangeNetworkPacketTimeout(0, Timeout.Infinite);
+                {
+                    // Got IO Pending, but we have no time left to wait
+                    // disable the timer and set the error state by calling OnTimeoutSync
+                    ChangeNetworkPacketTimeout(Timeout.Infinite, Timeout.Infinite);
+                    OnTimeoutSync();
                 }
                 // DO NOT HANDLE PENDING READ HERE - which is TdsEnums.SNI_SUCCESS_IO_PENDING state.
                 // That is handled by user who initiated async read, or by ReadNetworkPacket which is sync over async.
@@ -2565,13 +2619,13 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(_syncOverAsync, "Should never reach here with async on!");
                 bool fail = false;
 
-                if (_internalTimeout)
+                if (IsTimeoutStateExpired)
                 { // This is now our second timeout - time to give up.
                     fail = true;
                 }
                 else
                 {
-                    stateObj._internalTimeout = true;
+                    stateObj._timeoutState = TimeoutStopped;
                     Debug.Assert(_parser.Connection != null, "SqlConnectionInternalTds handler can not be null at this point.");
                     AddError(new SqlError(TdsEnums.TIMEOUT_EXPIRED, (byte)0x00, TdsEnums.MIN_ERROR_CLASS, _parser.Server, _parser.Connection.TimeoutErrorInternal.GetErrorMessage(), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
 
@@ -2793,6 +2847,20 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 ChangeNetworkPacketTimeout(Timeout.Infinite, Timeout.Infinite);
+
+                // the timer thread may be unreliable under high contention scenarios it cannot be
+                // assumed that the timeout has happened on the timer thread callback, check the timeout
+                // synchrnously and then call OnTimeoutSync to force an atomic change of state 
+                if (TimeoutHasExpired)
+                {
+                    OnTimeoutSync();
+                }
+
+                // try to change to the stopped state but only do so if currently in the running state
+                // and use cmpexch so that all changes out of the running state are atomic
+                int previousState = Interlocked.CompareExchange(ref _timeoutState, TimeoutRunning, TimeoutStopped);
+
+                ProcessSniPacket(packet, error);
 
                 ProcessSniPacket(packet, error);
             }
@@ -3862,7 +3930,7 @@ namespace Microsoft.Data.SqlClient
                 // Attention\Cancellation\Timeouts
                 Debug.Assert(!HasReceivedAttention && !_attentionSent && !_attentionSending, $"StateObj is still dealing with attention: Sent: {_attentionSent}, Received: {HasReceivedAttention}, Sending: {_attentionSending}");
                 Debug.Assert(!_cancelled, "StateObj still has cancellation set");
-                Debug.Assert(!_internalTimeout, "StateObj still has internal timeout set");
+                Debug.Assert(_timeoutState == TimeoutStopped, "StateObj still has internal timeout set");
                 // Errors and Warnings
                 Debug.Assert(!_hasErrorOrWarning, "StateObj still has stored errors or warnings");
             }
