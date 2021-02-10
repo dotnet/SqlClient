@@ -129,7 +129,6 @@ namespace Microsoft.Data.ProviderBase
                     if (pool != null)
                     {
                         DbConnectionFactory connectionFactory = pool.ConnectionFactory;
-                        SqlClientEventSource.Log.ExitActiveConnectionPool();
                         connectionFactory.QueuePoolForRelease(pool, true);
                     }
                 }
@@ -196,8 +195,8 @@ namespace Microsoft.Data.ProviderBase
                                     // else pool entry has been disabled so don't create new pools
                                     Debug.Assert(PoolGroupStateDisabled == _state, "state should be disabled");
 
-                                    // don't need to call connectionFactory.QueuePoolForRelease(newPool) because		
-                                    // pool callbacks were delayed and no risk of connections being created		
+                                    // don't need to call connectionFactory.QueuePoolForRelease(newPool) because
+                                    // pool callbacks were delayed and no risk of connections being created
                                     newPool.Shutdown();
                                 }
                             }
@@ -264,9 +263,7 @@ namespace Microsoft.Data.ProviderBase
                                 // pool into a list of pools to be released when they
                                 // are completely empty.
                                 DbConnectionFactory connectionFactory = pool.ConnectionFactory;
-
                                 connectionFactory.QueuePoolForRelease(pool, false);
-                                SqlClientEventSource.Log.ExitActiveConnectionPool();
                             }
                             else
                             {

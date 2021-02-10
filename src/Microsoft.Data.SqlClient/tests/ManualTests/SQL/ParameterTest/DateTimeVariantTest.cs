@@ -283,33 +283,35 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     xsql(conn, string.Format("create type dbo.{0} as table (f1 {1})", tvpTypeName, expectedBaseTypeName));
 
                     // Send TVP using SqlDataReader.
-                    SqlConnection connInput = new SqlConnection(s_connStr);
-                    connInput.Open();
-
-                    using (SqlCommand cmdInput = connInput.CreateCommand())
+                    using (SqlConnection connInput = new SqlConnection(s_connStr))
                     {
-                        cmdInput.CommandText = "select @p1 as f1";
-                        cmdInput.Parameters.Add("@p1", GetSqlDbType(expectedBaseTypeName));
-                        cmdInput.Parameters["@p1"].Value = paramValue;
+                        connInput.Open();
 
-                        using (SqlDataReader drInput = cmdInput.ExecuteReader(CommandBehavior.CloseConnection))
+                        using (SqlCommand cmdInput = connInput.CreateCommand())
                         {
-                            using (SqlCommand cmd = conn.CreateCommand())
+                            cmdInput.CommandText = "select @p1 as f1";
+                            cmdInput.Parameters.Add("@p1", GetSqlDbType(expectedBaseTypeName));
+                            cmdInput.Parameters["@p1"].Value = paramValue;
+
+                            using (SqlDataReader drInput = cmdInput.ExecuteReader(CommandBehavior.CloseConnection))
                             {
-                                cmd.CommandText = "select f1 from @tvpParam";
-                                SqlParameter p = cmd.Parameters.AddWithValue("@tvpParam", drInput);
-                                p.SqlDbType = SqlDbType.Structured;
-                                p.TypeName = string.Format("dbo.{0}", tvpTypeName);
-                                using (SqlDataReader dr = cmd.ExecuteReader())
+                                using (SqlCommand cmd = conn.CreateCommand())
                                 {
-                                    dr.Read();
-                                    VerifyReaderTypeAndValue("Test SqlDataReader Parameter To TVP [Data Type]", expectedBaseTypeName, expectedTypeName, dr[0], expectedTypeName, paramValue);
-                                    dr.Dispose();
+                                    cmd.CommandText = "select f1 from @tvpParam";
+                                    SqlParameter p = cmd.Parameters.AddWithValue("@tvpParam", drInput);
+                                    p.SqlDbType = SqlDbType.Structured;
+                                    p.TypeName = string.Format("dbo.{0}", tvpTypeName);
+                                    using (SqlDataReader dr = cmd.ExecuteReader())
+                                    {
+                                        dr.Read();
+                                        VerifyReaderTypeAndValue("Test SqlDataReader Parameter To TVP [Data Type]", expectedBaseTypeName, expectedTypeName, dr[0], expectedTypeName, paramValue);
+                                        dr.Dispose();
+                                    }
                                 }
                             }
                         }
+                        connInput.Close();
                     }
-                    connInput.Close();
                 }
             }
             catch (Exception e)
@@ -345,31 +347,33 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     xsql(conn, string.Format("create type dbo.{0} as table (f1 sql_variant)", tvpTypeName));
 
                     // Send TVP using SqlDataReader.
-                    SqlConnection connInput = new SqlConnection(s_connStr);
-                    connInput.Open();
-                    using (SqlCommand cmdInput = connInput.CreateCommand())
+                    using (SqlConnection connInput = new SqlConnection(s_connStr))
                     {
-                        cmdInput.CommandText = "select @p1 as f1";
-                        cmdInput.Parameters.Add("@p1", SqlDbType.Variant);
-                        cmdInput.Parameters["@p1"].Value = paramValue;
-                        using (SqlDataReader drInput = cmdInput.ExecuteReader(CommandBehavior.CloseConnection))
+                        connInput.Open();
+                        using (SqlCommand cmdInput = connInput.CreateCommand())
                         {
-                            using (SqlCommand cmd = conn.CreateCommand())
+                            cmdInput.CommandText = "select @p1 as f1";
+                            cmdInput.Parameters.Add("@p1", SqlDbType.Variant);
+                            cmdInput.Parameters["@p1"].Value = paramValue;
+                            using (SqlDataReader drInput = cmdInput.ExecuteReader(CommandBehavior.CloseConnection))
                             {
-                                cmd.CommandText = "select f1, sql_variant_property(f1,'BaseType') as BaseType from @tvpParam";
-                                SqlParameter p = cmd.Parameters.AddWithValue("@tvpParam", drInput);
-                                p.SqlDbType = SqlDbType.Structured;
-                                p.TypeName = string.Format("dbo.{0}", tvpTypeName);
-                                using (SqlDataReader dr = cmd.ExecuteReader())
+                                using (SqlCommand cmd = conn.CreateCommand())
                                 {
-                                    dr.Read();
-                                    VerifyReaderTypeAndValue("Test SqlDataReader Parameter To TVP [Variant Type]", "SqlDbType.Variant", dr, expectedTypeName, expectedBaseTypeName, paramValue);
-                                    dr.Dispose();
+                                    cmd.CommandText = "select f1, sql_variant_property(f1,'BaseType') as BaseType from @tvpParam";
+                                    SqlParameter p = cmd.Parameters.AddWithValue("@tvpParam", drInput);
+                                    p.SqlDbType = SqlDbType.Structured;
+                                    p.TypeName = string.Format("dbo.{0}", tvpTypeName);
+                                    using (SqlDataReader dr = cmd.ExecuteReader())
+                                    {
+                                        dr.Read();
+                                        VerifyReaderTypeAndValue("Test SqlDataReader Parameter To TVP [Variant Type]", "SqlDbType.Variant", dr, expectedTypeName, expectedBaseTypeName, paramValue);
+                                        dr.Dispose();
+                                    }
                                 }
                             }
                         }
+                        connInput.Close();
                     }
-                    connInput.Close();
                 }
             }
             catch (Exception e)
@@ -727,36 +731,38 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                     xsql(conn, string.Format("insert into {0}(f1) values(CAST('{1}' AS {2}));", bulkCopySrcTableName, value, expectedBaseTypeName));
 
-                    SqlConnection connInput = new SqlConnection(s_connStr);
-                    connInput.Open();
-                    using (SqlCommand cmdInput = connInput.CreateCommand())
+                    using (SqlConnection connInput = new SqlConnection(s_connStr))
                     {
-                        cmdInput.CommandText = string.Format("select * from {0}", bulkCopySrcTableName);
-                        using (SqlDataReader drInput = cmdInput.ExecuteReader())
+                        connInput.Open();
+                        using (SqlCommand cmdInput = connInput.CreateCommand())
                         {
-                            // Perform bulk copy to target.
-                            using (SqlBulkCopy bulkCopy = new SqlBulkCopy(conn))
+                            cmdInput.CommandText = string.Format("select * from {0}", bulkCopySrcTableName);
+                            using (SqlDataReader drInput = cmdInput.ExecuteReader())
                             {
-                                bulkCopy.BulkCopyTimeout = 60;
-                                bulkCopy.BatchSize = 1;
-                                bulkCopy.DestinationTableName = bulkCopyTableName;
-                                bulkCopy.WriteToServer(drInput);
-                            }
-
-                            // Verify target.
-                            using (SqlCommand cmd = conn.CreateCommand())
-                            {
-                                cmd.CommandText = string.Format("select f1 from {0}", bulkCopyTableName);
-                                using (SqlDataReader drVerify = cmd.ExecuteReader())
+                                // Perform bulk copy to target.
+                                using (SqlBulkCopy bulkCopy = new SqlBulkCopy(conn))
                                 {
-                                    drVerify.Read();
-                                    VerifyReaderTypeAndValue("SqlBulkCopy From SqlDataReader [Data Type]", expectedBaseTypeName, expectedTypeName, drVerify[0], expectedTypeName, paramValue);
-                                    drVerify.Dispose();
+                                    bulkCopy.BulkCopyTimeout = 60;
+                                    bulkCopy.BatchSize = 1;
+                                    bulkCopy.DestinationTableName = bulkCopyTableName;
+                                    bulkCopy.WriteToServer(drInput);
+                                }
+
+                                // Verify target.
+                                using (SqlCommand cmd = conn.CreateCommand())
+                                {
+                                    cmd.CommandText = string.Format("select f1 from {0}", bulkCopyTableName);
+                                    using (SqlDataReader drVerify = cmd.ExecuteReader())
+                                    {
+                                        drVerify.Read();
+                                        VerifyReaderTypeAndValue("SqlBulkCopy From SqlDataReader [Data Type]", expectedBaseTypeName, expectedTypeName, drVerify[0], expectedTypeName, paramValue);
+                                        drVerify.Dispose();
+                                    }
                                 }
                             }
                         }
+                        connInput.Close();
                     }
-                    connInput.Close();
                 }
             }
             catch (Exception e)
@@ -810,38 +816,40 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                     xsql(conn, string.Format("insert into {0}(f1) values(CAST('{1}' AS {2}));", bulkCopySrcTableName, value, expectedBaseTypeName));
 
-                    SqlConnection connInput = new SqlConnection(s_connStr);
-                    connInput.Open();
-                    using (SqlCommand cmdInput = connInput.CreateCommand())
+                    using (SqlConnection connInput = new SqlConnection(s_connStr))
                     {
-                        cmdInput.CommandText = string.Format("select * from {0}", bulkCopySrcTableName);
-                        using (SqlDataReader drInput = cmdInput.ExecuteReader())
+                        connInput.Open();
+                        using (SqlCommand cmdInput = connInput.CreateCommand())
                         {
+                            cmdInput.CommandText = string.Format("select * from {0}", bulkCopySrcTableName);
+                            using (SqlDataReader drInput = cmdInput.ExecuteReader())
                             {
-                                // Perform bulk copy to target.
-                                using (SqlBulkCopy bulkCopy = new SqlBulkCopy(conn))
                                 {
-                                    bulkCopy.BulkCopyTimeout = 60;
-                                    bulkCopy.BatchSize = 1;
-                                    bulkCopy.DestinationTableName = bulkCopyTableName;
-                                    bulkCopy.WriteToServer(drInput);
-                                }
-
-                                // Verify target.
-                                using (SqlCommand cmd = conn.CreateCommand())
-                                {
-                                    cmd.CommandText = string.Format("select f1, sql_variant_property(f1,'BaseType') as BaseType from {0}", bulkCopyTableName);
-                                    using (SqlDataReader drVerify = cmd.ExecuteReader())
+                                    // Perform bulk copy to target.
+                                    using (SqlBulkCopy bulkCopy = new SqlBulkCopy(conn))
                                     {
-                                        drVerify.Read();
-                                        VerifyReaderTypeAndValue("SqlBulkCopy From SqlDataReader [Variant Type]", "SqlDbType.Variant", drVerify, expectedTypeName, expectedBaseTypeName, paramValue);
-                                        drVerify.Dispose();
+                                        bulkCopy.BulkCopyTimeout = 60;
+                                        bulkCopy.BatchSize = 1;
+                                        bulkCopy.DestinationTableName = bulkCopyTableName;
+                                        bulkCopy.WriteToServer(drInput);
+                                    }
+
+                                    // Verify target.
+                                    using (SqlCommand cmd = conn.CreateCommand())
+                                    {
+                                        cmd.CommandText = string.Format("select f1, sql_variant_property(f1,'BaseType') as BaseType from {0}", bulkCopyTableName);
+                                        using (SqlDataReader drVerify = cmd.ExecuteReader())
+                                        {
+                                            drVerify.Read();
+                                            VerifyReaderTypeAndValue("SqlBulkCopy From SqlDataReader [Variant Type]", "SqlDbType.Variant", drVerify, expectedTypeName, expectedBaseTypeName, paramValue);
+                                            drVerify.Dispose();
+                                        }
                                     }
                                 }
                             }
                         }
+                        connInput.Close();
                     }
-                    connInput.Close();
 
                     conn.Close();
                 }
@@ -1288,7 +1296,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 return false;
             }
         }
-                
+
         private static bool IsExpectedInvalidOperationException(Exception e, string expectedBaseTypeName)
         {
             return ((e.GetType() == typeof(InvalidOperationException)) &&

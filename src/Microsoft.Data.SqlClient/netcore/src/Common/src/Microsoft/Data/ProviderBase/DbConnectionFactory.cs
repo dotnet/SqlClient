@@ -25,7 +25,7 @@ namespace Microsoft.Data.ProviderBase
         private static int _objectTypeCount; // EventSource counter
         internal int ObjectID { get; } = Interlocked.Increment(ref _objectTypeCount);
 
-        // s_pendingOpenNonPooled is an array of tasks used to throttle creation of non-pooled connections to 
+        // s_pendingOpenNonPooled is an array of tasks used to throttle creation of non-pooled connections to
         // a maximum of Environment.ProcessorCount at a time.
         private static uint s_pendingOpenNonPooledNext = 0;
         private static Task<DbConnectionInternal>[] s_pendingOpenNonPooled = new Task<DbConnectionInternal>[Environment.ProcessorCount];
@@ -307,7 +307,7 @@ namespace Microsoft.Data.ProviderBase
         {
             // when debugging this method, expect multiple threads at the same time
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<prov.DbConnectionFactory.PruneConnectionPoolGroups|RES|INFO|CPOOL> {0}", ObjectID);
-            
+
             // First, walk the pool release list and attempt to clear each
             // pool, when the pool is finally empty, we dispose of it.  If the
             // pool isn't empty, it's because there are active connections or
@@ -377,8 +377,8 @@ namespace Microsoft.Data.ProviderBase
                         // move idle entries from last prune pass to a queue for pending release
                         // otherwise process entry which may move it from active to idle
                         if (entry.Value.Prune())
-                        { // may add entries to _poolsToRelease
-                            SqlClientEventSource.Log.ExitActiveConnectionPoolGroup();
+                        {
+                            // may add entries to _poolsToRelease
                             QueuePoolGroupForRelease(entry.Value);
                         }
                         else
@@ -412,6 +412,7 @@ namespace Microsoft.Data.ProviderBase
                 _poolsToRelease.Add(pool);
             }
             SqlClientEventSource.Log.EnterInactiveConnectionPool();
+            SqlClientEventSource.Log.ExitActiveConnectionPool();
         }
 
         internal void QueuePoolGroupForRelease(DbConnectionPoolGroup poolGroup)
@@ -424,6 +425,7 @@ namespace Microsoft.Data.ProviderBase
                 _poolGroupsToRelease.Add(poolGroup);
             }
             SqlClientEventSource.Log.EnterInactiveConnectionPoolGroup();
+            SqlClientEventSource.Log.ExitActiveConnectionPoolGroup();
         }
 
         virtual protected DbConnectionInternal CreateConnection(DbConnectionOptions options, DbConnectionPoolKey poolKey, object poolGroupProviderInfo, DbConnectionPool pool, DbConnection owningConnection, DbConnectionOptions userOptions)
