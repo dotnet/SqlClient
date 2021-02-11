@@ -369,6 +369,12 @@ namespace Microsoft.Data.SqlClient
                     _readerState = reader._sharedState;
                 }
                 _owner.Target = value;
+
+                _networkPacketTimeout = value == null ? null : ADP.UnsafeCreateTimer(
+                    new TimerCallback(OnTimeout),
+                    new WeakReference(value),
+                    Timeout.Infinite,
+                    Timeout.Infinite);
             }
         }
 
@@ -2249,6 +2255,16 @@ namespace Microsoft.Data.SqlClient
 
         private void OnTimeout(object state)
         {
+            WeakReference timerOwner = (WeakReference)state;
+            if (_owner.Target == null ||
+                timerOwner.Target == null ||
+                !object.ReferenceEquals(_owner.Target, timerOwner.Target))
+            {
+                // The timer is firing so late that other things have moved on and the timeout is no longer relevant (high load / thread starvation)
+                SqlClientEventSource.Log.TryTraceEvent("TdsParser.OnTimeout | Info | OnTimeout fired without an owner or with a different owner than originally created with.");
+                return;
+            }
+
             if (!_internalTimeout)
             {
                 _internalTimeout = true;
@@ -2382,15 +2398,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 Debug.Assert(completion != null, "Async on but null asyncResult passed");
-
-                if (_networkPacketTimeout == null)
-                {
-                    _networkPacketTimeout = ADP.UnsafeCreateTimer(
-                        new TimerCallback(OnTimeout),
-                        null,
-                        Timeout.Infinite,
-                        Timeout.Infinite);
-                }
+                Debug.Assert(_networkPacketTimeout != null, "_networkPacketTimeout should not be null");
 
                 // -1 == Infinite
                 //  0 == Already timed out (NOTE: To simulate the same behavior as sync we will only timeout on 0 if we receive an IO Pending from SNI)
