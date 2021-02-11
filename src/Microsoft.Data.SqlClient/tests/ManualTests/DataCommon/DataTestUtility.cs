@@ -108,13 +108,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Console.WriteLine($"App Context switch {ManagedNetworkingAppContextSwitch} enabled on {Environment.OSVersion}");
             }
 
-            if (IsAADPasswordConnStrSetup() && IsAADAuthorityURLSetup())
-            {
-                string username = RetrieveValueFromConnStr(AADPasswordConnectionString, new string[] { "User ID", "UID" });
-                string password = RetrieveValueFromConnStr(AADPasswordConnectionString, new string[] { "Password", "PWD" });
-                AADAccessToken = GenerateAccessToken(AADAuthorityURL, username, password);
-            }
-
             AKVOriginalUrl = c.AzureKeyVaultURL;
             if (!string.IsNullOrEmpty(AKVOriginalUrl) && Uri.TryCreate(AKVOriginalUrl, UriKind.Absolute, out AKVBaseUri))
             {
