@@ -851,6 +851,7 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 session = _physicalStateObj;
+                _physicalStateObj.Owner = owner;
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParser.GetSession|ADV> {0} getting physical session {1}", ObjectID, session.ObjectID);
             }
             Debug.Assert(session._outputPacketNumber == 1, "The packet number is expected to be 1");
