@@ -242,7 +242,7 @@ namespace Microsoft.Data.SqlClient
         {
             LiveId = FEDAUTHLIB_LIVEID,
             SecurityToken = FEDAUTHLIB_SECURITYTOKEN,
-            MSAL = FEDAUTHLIB_MSAL, // For later support
+            MSAL = FEDAUTHLIB_MSAL,
             Default = FEDAUTHLIB_RESERVED
         }
 
@@ -251,6 +251,7 @@ namespace Microsoft.Data.SqlClient
         public const byte MSALWORKFLOW_ACTIVEDIRECTORYINTERACTIVE = 0x03;
         public const byte MSALWORKFLOW_ACTIVEDIRECTORYSERVICEPRINCIPAL = 0x01; // Using the Password byte as that is the closest we have
         public const byte MSALWORKFLOW_ACTIVEDIRECTORYDEVICECODEFLOW = 0x03; // Using the Interactive byte as that is the closest we have
+        public const byte MSALWORKFLOW_ACTIVEDIRECTORYMANAGEDIDENTITY = 0x03; // Using the Interactive byte as that's supported for Identity based authentication
 
         public enum ActiveDirectoryWorkflow : byte
         {
@@ -259,6 +260,7 @@ namespace Microsoft.Data.SqlClient
             Interactive = MSALWORKFLOW_ACTIVEDIRECTORYINTERACTIVE,
             ServicePrincipal = MSALWORKFLOW_ACTIVEDIRECTORYSERVICEPRINCIPAL,
             DeviceCodeFlow = MSALWORKFLOW_ACTIVEDIRECTORYDEVICECODEFLOW,
+            ManagedIdentity = MSALWORKFLOW_ACTIVEDIRECTORYMANAGEDIDENTITY,
         }
 
         // The string used for username in the error message when Authentication = Active Directory Integrated with FedAuth is used, if authentication fails.
@@ -1135,6 +1137,12 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryDeviceCodeFlow/*'/>
         ActiveDirectoryDeviceCodeFlow,
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryManagedIdentity/*'/>
+        ActiveDirectoryManagedIdentity,
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryMSI/*'/>
+        ActiveDirectoryMSI
     }
     // This enum indicates the state of TransparentNetworkIPResolution
     // The first attempt when TNIR is on should be sequential. If the first attempt failes next attempts should be parallel.

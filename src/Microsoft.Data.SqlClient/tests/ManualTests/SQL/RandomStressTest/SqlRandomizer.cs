@@ -661,7 +661,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             Process currentProcess = Process.GetCurrentProcess();
             string extendedPrefix = string.Format(
-                "{0}_{1}@{2}",
+                "{0}_{1}_{2}@{3}",
                 prefix,
                 currentProcess.ProcessName,
                 currentProcess.MachineName,

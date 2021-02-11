@@ -23,7 +23,6 @@ namespace Microsoft.Data.SqlClient.SNI
     internal sealed class SNITCPHandle : SNIPhysicalHandle
     {
         private readonly string _targetServer;
-        private readonly object _callbackObject;
         private readonly object _sendSync;
         private readonly Socket _socket;
         private NetworkStream _tcpStream;
@@ -114,13 +113,11 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="serverName">Server name</param>
         /// <param name="port">TCP port number</param>
         /// <param name="timerExpire">Connection timer expiration</param>
-        /// <param name="callbackObject">Callback object</param>
         /// <param name="parallel">Parallel executions</param>
         /// <param name="cachedFQDN">Key for DNS Cache</param>
         /// <param name="pendingDNSInfo">Used for DNS Cache</param>
-        public SNITCPHandle(string serverName, int port, long timerExpire, object callbackObject, bool parallel, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
+        public SNITCPHandle(string serverName, int port, long timerExpire, bool parallel, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
         {
-            _callbackObject = callbackObject;
             _targetServer = serverName;
             _sendSync = new object();
 
@@ -143,7 +140,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 bool reportError = true;
 
                 // We will always first try to connect with serverName as before and let the DNS server to resolve the serverName.
-                // If the DSN resolution fails, we will try with IPs in the DNS cache if existed. We try with IPv4 first and followed by IPv6 if 
+                // If the DSN resolution fails, we will try with IPs in the DNS cache if existed. We try with IPv4 first and followed by IPv6 if
                 // IPv4 fails. The exceptions will be throw to upper level and be handled as before.
                 try
                 {
@@ -160,14 +157,14 @@ namespace Microsoft.Data.SqlClient.SNI
                 {
                     // Retry with cached IP address
                     if (ex is SocketException || ex is ArgumentException || ex is AggregateException)
-                    {                       
+                    {
                         if (hasCachedDNSInfo == false)
                         {
                             throw;
                         }
                         else
                         {
-                            int portRetry = String.IsNullOrEmpty(cachedDNSInfo.Port) ? port : Int32.Parse(cachedDNSInfo.Port); 
+                            int portRetry = String.IsNullOrEmpty(cachedDNSInfo.Port) ? port : Int32.Parse(cachedDNSInfo.Port);
 
                             try
                             {
@@ -180,9 +177,9 @@ namespace Microsoft.Data.SqlClient.SNI
                                     _socket = Connect(cachedDNSInfo.AddrIPv4, portRetry, ts, isInfiniteTimeOut, cachedFQDN, ref pendingDNSInfo);
                                 }
                             }
-                            catch(Exception exRetry)
+                            catch (Exception exRetry)
                             {
-                                if (exRetry is SocketException || exRetry is ArgumentNullException 
+                                if (exRetry is SocketException || exRetry is ArgumentNullException
                                     || exRetry is ArgumentException || exRetry is ArgumentOutOfRangeException || exRetry is AggregateException)
                                 {
                                     if (parallel)
@@ -199,7 +196,7 @@ namespace Microsoft.Data.SqlClient.SNI
                                     throw;
                                 }
                             }
-                        }                        
+                        }
                     }
                     else
                     {
@@ -217,16 +214,16 @@ namespace Microsoft.Data.SqlClient.SNI
 
                     if (reportError)
                     {
-                        ReportTcpSNIError(0, SNICommon.ConnOpenFailedError, string.Empty);
+                        ReportTcpSNIError(0, SNICommon.ConnOpenFailedError, Strings.SNI_ERROR_40);
                     }
                     return;
                 }
 
                 _socket.NoDelay = true;
-                _tcpStream = new NetworkStream(_socket, true);
+                _tcpStream = new SNINetworkStream(_socket, true);
 
                 _sslOverTdsStream = new SslOverTdsStream(_tcpStream);
-                _sslStream = new SslStream(_sslOverTdsStream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate), null);
+                _sslStream = new SNISslStream(_sslOverTdsStream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate));
             }
             catch (SocketException se)
             {
@@ -259,7 +256,7 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 // Fail if above 64 to match legacy behavior
                 callerReportError = false;
-                ReportTcpSNIError(0, SNICommon.MultiSubnetFailoverWithMoreThan64IPs, string.Empty);
+                ReportTcpSNIError(0, SNICommon.MultiSubnetFailoverWithMoreThan64IPs, Strings.SNI_ERROR_47);
                 return availableSocket;
             }
 
@@ -288,7 +285,7 @@ namespace Microsoft.Data.SqlClient.SNI
             if (!(isInfiniteTimeOut ? connectTask.Wait(-1) : connectTask.Wait(ts)))
             {
                 callerReportError = false;
-                ReportTcpSNIError(0, SNICommon.ConnOpenFailedError, string.Empty);
+                ReportTcpSNIError(0, SNICommon.ConnOpenFailedError, Strings.SNI_ERROR_40);
                 return availableSocket;
             }
 
@@ -331,7 +328,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
 
             CancellationTokenSource cts = null;
-            
+
             void Cancel()
             {
                 for (int i = 0; i < sockets.Length; ++i)
@@ -355,7 +352,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
 
             Socket availableSocket = null;
-            try 
+            try
             {
                 for (int i = 0; i < sockets.Length; ++i)
                 {
@@ -364,6 +361,10 @@ namespace Microsoft.Data.SqlClient.SNI
                         if (ipAddresses[i] != null)
                         {
                             sockets[i] = new Socket(ipAddresses[i].AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+
+                            // enable keep-alive on socket
+                            SetKeepAliveValues(ref sockets[i]);
+
                             sockets[i].Connect(ipAddresses[i], port);
                             if (sockets[i] != null) // sockets[i] can be null if cancel callback is executed during connect()
                             {
@@ -566,45 +567,45 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             bool releaseLock = false;
             try
-            {
-                // is the packet is marked out out-of-band (attention packets only) it must be
-                // sent immediately even if a send of recieve operation is already in progress
-                // because out of band packets are used to cancel ongoing operations
-                // so try to take the lock if possible but continue even if it can't be taken
-                if (packet.IsOutOfBand)
                 {
-                    Monitor.TryEnter(this, ref releaseLock);
-                }
-                else
-                {
-                    Monitor.Enter(this);
-                    releaseLock = true;
-                }
+                    // is the packet is marked out out-of-band (attention packets only) it must be
+                    // sent immediately even if a send of recieve operation is already in progress
+                    // because out of band packets are used to cancel ongoing operations
+                    // so try to take the lock if possible but continue even if it can't be taken
+                    if (packet.IsOutOfBand)
+                    {
+                        Monitor.TryEnter(this, ref releaseLock);
+                    }
+                    else
+                    {
+                        Monitor.Enter(this);
+                        releaseLock = true;
+                    }
 
-                // this lock ensures that two packets are not being written to the transport at the same time
-                // so that sending a standard and an out-of-band packet are both written atomically no data is 
-                // interleaved
-                lock (_sendSync)
-                {
-                    try
+                    // this lock ensures that two packets are not being written to the transport at the same time
+                    // so that sending a standard and an out-of-band packet are both written atomically no data is
+                    // interleaved
+                    lock (_sendSync)
                     {
-                        packet.WriteToStream(_stream);
-                        return TdsEnums.SNI_SUCCESS;
-                    }
-                    catch (ObjectDisposedException ode)
-                    {
-                        return ReportTcpSNIError(ode);
-                    }
-                    catch (SocketException se)
-                    {
-                        return ReportTcpSNIError(se);
-                    }
-                    catch (IOException ioe)
-                    {
-                        return ReportTcpSNIError(ioe);
+                        try
+                        {
+                            packet.WriteToStream(_stream);
+                            return TdsEnums.SNI_SUCCESS;
+                        }
+                        catch (ObjectDisposedException ode)
+                        {
+                            return ReportTcpSNIError(ode);
+                        }
+                        catch (SocketException se)
+                        {
+                            return ReportTcpSNIError(se);
+                        }
+                        catch (IOException ioe)
+                        {
+                            return ReportTcpSNIError(ioe);
+                        }
                     }
                 }
-            }
             finally
             {
                 if (releaseLock)
@@ -633,13 +634,14 @@ namespace Microsoft.Data.SqlClient.SNI
                         _socket.ReceiveTimeout = timeoutInMilliseconds;
                     }
                     else if (timeoutInMilliseconds == -1)
-                    {   // SqlCient internally represents infinite timeout by -1, and for TcpClient this is translated to a timeout of 0 
+                    {
+                        // SqlClient internally represents infinite timeout by -1, and for TcpClient this is translated to a timeout of 0
                         _socket.ReceiveTimeout = 0;
                     }
                     else
                     {
                         // otherwise it is timeout for 0 or less than -1
-                        ReportTcpSNIError(0, SNICommon.ConnTimeoutError, string.Empty);
+                        ReportTcpSNIError(0, SNICommon.ConnTimeoutError, Strings.SNI_ERROR_11);
                         return TdsEnums.SNI_WAIT_TIMEOUT;
                     }
 
@@ -706,12 +708,17 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error code</returns>
         public override uint SendAsync(SNIPacket packet, SNIAsyncCallback callback = null)
         {
-            SNIAsyncCallback cb = callback ?? _sendCallback;
-            lock (this)
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("<sc.SNI.SNIMarsHandle.SendAsync |SNI|INFO|SCOPE>");
+            try
             {
+                SNIAsyncCallback cb = callback ?? _sendCallback;
                 packet.WriteToStreamAsync(_stream, cb, SNIProviders.TCP_PROV);
+                return TdsEnums.SNI_SUCCESS_IO_PENDING;
             }
-            return TdsEnums.SNI_SUCCESS_IO_PENDING;
+            finally
+            {
+                SqlClientEventSource.Log.TrySNIScopeLeaveEvent(scopeID);
+            }
         }
 
         /// <summary>
@@ -745,15 +752,15 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             try
             {
-                // _socket.Poll method with argument SelectMode.SelectRead returns 
+                // _socket.Poll method with argument SelectMode.SelectRead returns
                 //      True : if Listen has been called and a connection is pending, or
                 //      True : if data is available for reading, or
                 //      True : if the connection has been closed, reset, or terminated, i.e no active connection.
                 //      False : otherwise.
                 // _socket.Available property returns the number of bytes of data available to read.
                 //
-                // Since _socket.Connected alone doesn't guarantee if the connection is still active, we use it in 
-                // combination with _socket.Poll method and _socket.Available == 0 check. When both of them 
+                // Since _socket.Connected alone doesn't guarantee if the connection is still active, we use it in
+                // combination with _socket.Poll method and _socket.Available == 0 check. When both of them
                 // return true we can safely determine that the connection is no longer active.
                 if (!_socket.Connected || (_socket.Poll(100, SelectMode.SelectRead) && _socket.Available == 0))
                 {
@@ -815,7 +822,7 @@ namespace Microsoft.Data.SqlClient.SNI
         internal static void SetKeepAliveValues(ref Socket socket)
         {
 
-#if NETCORE3
+#if NETCOREAPP31_AND_ABOVE
             socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
             socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveInterval, 1);
             socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveTime, 30);

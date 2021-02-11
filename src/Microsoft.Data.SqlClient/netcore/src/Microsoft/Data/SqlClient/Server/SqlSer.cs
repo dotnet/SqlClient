@@ -173,14 +173,12 @@ namespace Microsoft.Data.SqlClient.Server
     // The base serializer class.
     internal abstract class Serializer
     {
-        public abstract object Deserialize(Stream s);
-        public abstract void Serialize(Stream s, object o);
         protected Type _type;
 
-        protected Serializer(Type t)
-        {
-            _type = t;
-        }
+        public abstract object Deserialize(Stream s);
+        public abstract void Serialize(Stream s, object o);
+
+        protected Serializer(Type t) => _type = t;
     }
 
     internal sealed class NormalizedSerializer : Serializer
@@ -197,10 +195,7 @@ namespace Microsoft.Data.SqlClient.Server
             _maxSize = _normalizer.Size;
         }
 
-        public override void Serialize(Stream s, object o)
-        {
-            _normalizer.NormalizeTopObject(o, s);
-        }
+        public override void Serialize(Stream s, object o) => _normalizer.NormalizeTopObject(o, s);
 
         public override object Deserialize(Stream s) => _normalizer.DeNormalizeTopObject(_type, s);
     }
@@ -253,22 +248,13 @@ namespace Microsoft.Data.SqlClient.Server
 
         public override long Position
         {
-            get
-            {
-                return _size;
-            }
-            set
-            {
-                _size = value;
-            }
+            get => _size;
+            set => _size = value;
         }
 
         public override long Length => _size;
 
-        public override void SetLength(long value)
-        {
-            _size = value;
-        }
+        public override void SetLength(long value) => _size = value;
 
         public override long Seek(long value, SeekOrigin loc)
         {

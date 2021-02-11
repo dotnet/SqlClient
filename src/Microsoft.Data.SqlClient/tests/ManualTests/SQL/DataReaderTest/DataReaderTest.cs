@@ -69,7 +69,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
 
         // Checks for the IsColumnSet bit in the GetSchemaTable for Sparse columns
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // TODO Synapse:  Cannot find data type 'xml'.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void CheckSparseColumnBit()
         {
             const int sparseColumns = 4095;
@@ -130,6 +131,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        // Synapse: Statement 'Drop Database' is not supported in this version of SQL Server.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public static void CollatedDataReaderTest()
         {
@@ -210,7 +212,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return columnSetPresent;
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Enforced unique constraints are not supported. To create an unenforced unique constraint you must include the NOT ENFORCED syntax as part of your statement.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void CheckHiddenColumns()
         {
             // hidden columns can be found by using CommandBehavior.KeyInfo or at the sql level

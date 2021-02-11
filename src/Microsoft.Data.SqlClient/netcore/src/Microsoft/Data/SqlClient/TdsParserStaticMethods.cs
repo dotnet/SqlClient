@@ -119,7 +119,6 @@ namespace Microsoft.Data.SqlClient
             return (int)msecRemaining;
         }
 
-
         internal static long GetTimeout(long timeoutMilliseconds)
         {
             long result;

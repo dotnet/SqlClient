@@ -16,32 +16,34 @@ namespace Microsoft.Data.SqlClient.Server
     // a particular field.
     internal sealed class FieldInfoEx : IComparable
     {
-        internal readonly int Offset;
-        internal readonly FieldInfo FieldInfo;
-        internal readonly Normalizer Normalizer;
+        private readonly int _offset;
 
         internal FieldInfoEx(FieldInfo fi, int offset, Normalizer normalizer)
         {
-            FieldInfo = fi;
-            Offset = offset;
             Debug.Assert(normalizer != null, "normalizer argument should not be null!");
             Normalizer = normalizer;
+            FieldInfo = fi;
+            _offset = offset;
         }
+        internal FieldInfo FieldInfo { get; private set; }
+        internal Normalizer Normalizer { get; private set; }
 
         // Sort fields by field offsets.
         public int CompareTo(object other)
         {
             FieldInfoEx otherF = other as FieldInfoEx;
             if (otherF == null)
+            {
                 return -1;
-            return Offset.CompareTo(otherF.Offset);
+            }
+            return _offset.CompareTo(otherF._offset);
         }
     }
 
     // The most complex normalizer, a udt normalizer
     internal sealed class BinaryOrderedUdtNormalizer : Normalizer
     {
-        internal readonly FieldInfoEx[] FieldsToNormalize;
+        private readonly FieldInfoEx[] _fieldsToNormalize;
         private int _size;
         private byte[] _padBuffer;
         internal readonly object NullInstance;
@@ -69,18 +71,18 @@ namespace Microsoft.Data.SqlClient.Server
             // get all the fields
             FieldInfo[] fields = GetFields(t);
 
-            FieldsToNormalize = new FieldInfoEx[fields.Length];
+            _fieldsToNormalize = new FieldInfoEx[fields.Length];
 
             int i = 0;
 
             foreach (FieldInfo fi in fields)
             {
                 int offset = Marshal.OffsetOf(fi.DeclaringType, fi.Name).ToInt32();
-                FieldsToNormalize[i++] = new FieldInfoEx(fi, offset, GetNormalizer(fi.FieldType));
+                _fieldsToNormalize[i++] = new FieldInfoEx(fi, offset, GetNormalizer(fi.FieldType));
             }
 
             //sort by offset
-            Array.Sort(FieldsToNormalize);
+            Array.Sort(_fieldsToNormalize);
             //if this is not a top-level udt, do setup for null values.
             //null values need to compare less than all other values,
             //so prefix a null byte indicator.
@@ -138,8 +140,10 @@ namespace Microsoft.Data.SqlClient.Server
                 }
             }
             if (result == null)
+            {
                 result = Activator.CreateInstance(t);
-            foreach (FieldInfoEx myField in FieldsToNormalize)
+            }
+            foreach (FieldInfoEx myField in _fieldsToNormalize)
             {
                 myField.Normalizer.DeNormalize(myField.FieldInfo, result, s);
             }
@@ -173,7 +177,7 @@ namespace Microsoft.Data.SqlClient.Server
                 }
             }
 
-            foreach (FieldInfoEx myField in FieldsToNormalize)
+            foreach (FieldInfoEx myField in _fieldsToNormalize)
             {
                 myField.Normalizer.Normalize(myField.FieldInfo, inner, s);
             }
@@ -189,10 +193,14 @@ namespace Microsoft.Data.SqlClient.Server
             get
             {
                 if (_size != 0)
+                {
                     return _size;
+                }
                 if (IsNullable && !_isTopLevelUdt)
+                {
                     _size = 1;
-                foreach (FieldInfoEx myField in FieldsToNormalize)
+                }
+                foreach (FieldInfoEx myField in _fieldsToNormalize)
                 {
                     _size += myField.Normalizer.Size;
                 }
@@ -238,7 +246,9 @@ namespace Microsoft.Data.SqlClient.Server
                 n = new BinaryOrderedUdtNormalizer(t, false);
             }
             if (n == null)
+            {
                 throw new Exception(StringsHelper.GetString(Strings.SQL_CannotCreateNormalizer, t.FullName));
+            }
             n._skipNormalize = false;
             return n;
         }
@@ -250,15 +260,14 @@ namespace Microsoft.Data.SqlClient.Server
         protected void FlipAllBits(byte[] b)
         {
             for (int i = 0; i < b.Length; i++)
+            {
                 b[i] = (byte)~b[i];
+            }
         }
 
         protected object GetValue(FieldInfo fi, object obj) => fi.GetValue(obj);
 
-        protected void SetValue(FieldInfo fi, object recvr, object value)
-        {
-            fi.SetValue(recvr, value);
-        }
+        protected void SetValue(FieldInfo fi, object recvr, object value) => fi.SetValue(recvr, value);
 
         internal abstract int Size { get; }
     }

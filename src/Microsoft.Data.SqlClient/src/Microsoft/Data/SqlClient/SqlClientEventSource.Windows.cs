@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient
             // If registration fails, all write and unregister commands will be a no-op.
 
             // If managed networking is enabled, don't call native wrapper methods
-#if netcoreapp
+#if NETCOREAPP || NETSTANDARD
             if (AppContext.TryGetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", out bool isEnabled) && isEnabled)
             {
                 return;

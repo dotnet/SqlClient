@@ -22,7 +22,6 @@ namespace Microsoft.Data.SqlClient.SNI
         private const int MAX_PIPE_INSTANCES = 255;
 
         private readonly string _targetServer;
-        private readonly object _callbackObject;
         private readonly object _sendSync;
 
         private Stream _stream;
@@ -38,7 +37,7 @@ namespace Microsoft.Data.SqlClient.SNI
         private int _bufferSize = TdsEnums.DEFAULT_LOGIN_PACKET_SIZE;
         private readonly Guid _connectionId = Guid.NewGuid();
 
-        public SNINpHandle(string serverName, string pipeName, long timerExpire, object callbackObject)
+        public SNINpHandle(string serverName, string pipeName, long timerExpire)
         {
             long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("<sc.SNI.SNINpHandle.SNINpHandle |SNI|INFO|SCOPE> Constructor");
             SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.SNINpHandle.SNINpHandle |SNI|INFO> Constructor. server name = {0}, pipe name = {1}", serverName, pipeName);
@@ -46,7 +45,6 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 _sendSync = new object();
                 _targetServer = serverName;
-                _callbackObject = callbackObject;
 
                 try
                 {
@@ -86,14 +84,14 @@ namespace Microsoft.Data.SqlClient.SNI
 
                 if (!_pipeStream.IsConnected || !_pipeStream.CanWrite || !_pipeStream.CanRead)
                 {
-                    SNICommon.ReportSNIError(SNIProviders.NP_PROV, 0, SNICommon.ConnOpenFailedError, string.Empty);
+                    SNICommon.ReportSNIError(SNIProviders.NP_PROV, 0, SNICommon.ConnOpenFailedError, Strings.SNI_ERROR_40);
                     _status = TdsEnums.SNI_ERROR;
                     SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.SNINpHandle.SNINpHandle |SNI|ERR> Pipe stream is not connected or cannot write or read to/from it.");
                     return;
                 }
 
                 _sslOverTdsStream = new SslOverTdsStream(_pipeStream);
-                _sslStream = new SslStream(_sslOverTdsStream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate), null);
+                _sslStream = new SNISslStream(_sslOverTdsStream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate));
 
                 _stream = _pipeStream;
                 _status = TdsEnums.SNI_SUCCESS;
@@ -286,7 +284,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     }
 
                     // this lock ensures that two packets are not being written to the transport at the same time
-                    // so that sending a standard and an out-of-band packet are both written atomically no data is 
+                    // so that sending a standard and an out-of-band packet are both written atomically no data is
                     // interleaved
                     lock (_sendSync)
                     {

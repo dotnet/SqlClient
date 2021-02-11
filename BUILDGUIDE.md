@@ -25,7 +25,7 @@ Once the environment is setup properly, execute the desired set of commands belo
 ```
 
 ```bash
-> msbuild /p:Platform=x86
+> msbuild /p:Platform=Win32
 # Builds the .NET Framework  (NetFx) driver for Win32 (x86) platform on Windows.
 ```
 
@@ -74,22 +74,22 @@ Once the environment is setup properly, execute the desired set of commands belo
 
 ## Run Functional Tests
 
-Windows (`netfx x86`):  
+Windows (`netfx x86`):
 ```bash
 > dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" /p:Platform="Win32" /p:Configuration="Release" /p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests"
 ```
 
-Windows (`netfx x64`):  
+Windows (`netfx x64`):
 ```bash
 > dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" /p:Platform="x64" /p:Configuration="Release" /p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests"
 ```
 
-Windows (`netcoreapp`):  
+Windows (`netcoreapp`):
 ```bash
 > dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="Windowsnetcoreapp" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests"
 ```
 
-Unix (`netcoreapp`):  
+Unix (`netcoreapp`):
 ```bash
 > dotnet test "src/Microsoft.Data.SqlClient/tests/FunctionalTests/Microsoft.Data.SqlClient.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="Unixnetcoreapp" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonlinuxtests&category!=nonuaptests"
 ```
@@ -119,25 +119,26 @@ Manual Tests require the below setup to run:
 |SupportsIntegratedSecurity | (Optional) Whether or not the USER running tests has integrated security access to the target SQL Server.| `true` OR `false`|
 |SupportsFileStream | (Optional) Whether or not FileStream is enabled on SQL Server| `true` OR `false`|
 |UseManagedSNIOnWindows | (Optional) Enables testing with Managed SNI on Windows| `true` OR `false`|
+|IsAzureSynpase | (Optional) When set to 'true', test suite runs compatible tests for Azure Synapse/Parallel Data Warehouse. | `true` OR `false`|
 
 Commands to run tests:
 
-Windows (`netfx x86`):  
+Windows (`netfx x86`):
 ```bash
 > dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Platform="Win32" /p:Configuration="Release" /p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests"
 ```
 
-Windows (`netfx x64`):  
+Windows (`netfx x64`):
 ```bash
 > dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Platform="x64" /p:Configuration="Release" /p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests"
 ```
 
-Windows (`netcoreapp`):  
+Windows (`netcoreapp`):
 ```bash
 > dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="Windowsnetcoreapp" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests"
 ```
 
-Unix (`netcoreapp`):  
+Unix (`netcoreapp`):
 ```bash
 > dotnet test "src/Microsoft.Data.SqlClient/tests/ManualTests/Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="Unixnetcoreapp" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonlinuxtests&category!=nonuaptests"
 ```
@@ -157,7 +158,7 @@ Tests can be built and run with custom "Reference Type" property that enables di
 - "NetStandardPackage" => Build and run tests with Microsoft.Data.SqlClient as Package Reference via .NET Standard Library
 
 > ************** IMPORTANT NOTE BEFORE PROCEEDING WITH "PACKAGE" AND "NETSTANDARDPACKAGE" REFERENCE TYPES ***************
-> CREATE A NUGET PACKAGE WITH BELOW COMMAND AND ADD TO LOCAL FOLDER + UPDATE NUGET CONFIG FILE TO READ FROM THAT LOCATION 
+> CREATE A NUGET PACKAGE WITH BELOW COMMAND AND ADD TO LOCAL FOLDER + UPDATE NUGET CONFIG FILE TO READ FROM THAT LOCATION
 > ```
 > > msbuild /p:configuration=Release
 > ```
@@ -264,3 +265,17 @@ There may be times where connection cannot be made to SQL Server, we found below
     <TargetsWindows>false</TargetsWindows>
     <TargetsUnix>true</TargetsUnix>
   ```
+
+## Collecting Code Coverage
+
+### Using VSTest
+
+```bash
+dotnet test <test_properties...> --collect:"Code Coverage"
+```
+
+### Using Coverlet Collector
+
+```bash
+dotnet test <test_properties...> --collect:"XPlat Code Coverage"
+```

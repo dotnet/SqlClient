@@ -13,6 +13,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class BaseProviderAsyncTest
     {
+        private static void AssertTaskFaults(Task t)
+        {
+            Assert.ThrowsAny<Exception>(() => t.Wait(TimeSpan.FromMilliseconds(1)));
+        }
+
         [Fact]
         public static void TestDbConnection()
         {
@@ -37,8 +42,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 Fail = true
             };
-            connectionFail.OpenAsync().ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnFaulted).Wait();
-            connectionFail.OpenAsync(source.Token).ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnFaulted).Wait();
+            AssertTaskFaults(connectionFail.OpenAsync());
+            AssertTaskFaults(connectionFail.OpenAsync(source.Token));
 
             // Verify base implementation does not call Open when passed an already cancelled cancellation token
             source.Cancel();
@@ -90,14 +95,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 Fail = true
             };
-            commandFail.ExecuteNonQueryAsync().ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnFaulted).Wait();
-            commandFail.ExecuteNonQueryAsync(source.Token).ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnFaulted).Wait();
-            commandFail.ExecuteReaderAsync().ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnFaulted).Wait();
-            commandFail.ExecuteReaderAsync(CommandBehavior.SequentialAccess).ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnFaulted).Wait();
-            commandFail.ExecuteReaderAsync(source.Token).ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnFaulted).Wait();
-            commandFail.ExecuteReaderAsync(CommandBehavior.SequentialAccess, source.Token).ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnFaulted).Wait();
-            commandFail.ExecuteScalarAsync().ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnFaulted).Wait();
-            commandFail.ExecuteScalarAsync(source.Token).ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnFaulted).Wait();
+            AssertTaskFaults(commandFail.ExecuteNonQueryAsync());
+            AssertTaskFaults(commandFail.ExecuteNonQueryAsync(source.Token));
+            AssertTaskFaults(commandFail.ExecuteReaderAsync());
+            AssertTaskFaults(commandFail.ExecuteReaderAsync(CommandBehavior.SequentialAccess));
+            AssertTaskFaults(commandFail.ExecuteReaderAsync(source.Token));
+            AssertTaskFaults(commandFail.ExecuteReaderAsync(CommandBehavior.SequentialAccess, source.Token));
+            AssertTaskFaults(commandFail.ExecuteScalarAsync());
+            AssertTaskFaults(commandFail.ExecuteScalarAsync(source.Token));
 
             // Verify base implementation does not call Open when passed an already cancelled cancellation token
             source.Cancel();
@@ -116,17 +121,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             source = new CancellationTokenSource();
             Task.Factory.StartNew(() => { command.WaitForWaitingForCancel(); source.Cancel(); });
             Task result = command.ExecuteNonQueryAsync(source.Token);
-            Assert.True(result.IsFaulted, "Task result should be faulted");
+            Assert.True(result.Exception != null, "Task result should be faulted");
 
             source = new CancellationTokenSource();
             Task.Factory.StartNew(() => { command.WaitForWaitingForCancel(); source.Cancel(); });
             result = command.ExecuteReaderAsync(source.Token);
-            Assert.True(result.IsFaulted, "Task result should be faulted");
+            Assert.True(result.Exception != null, "Task result should be faulted");
 
             source = new CancellationTokenSource();
             Task.Factory.StartNew(() => { command.WaitForWaitingForCancel(); source.Cancel(); });
             result = command.ExecuteScalarAsync(source.Token);
-            Assert.True(result.IsFaulted, "Task result should be faulted");
+            Assert.True(result.Exception != null, "Task result should be faulted");
         }
 
         [Fact]
@@ -155,9 +160,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             GetFieldValueAsync<object>(reader, 2, DBNull.Value);
             GetFieldValueAsync<DBNull>(reader, 2, DBNull.Value);
-            reader.GetFieldValueAsync<int?>(2).ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnFaulted).Wait();
-            reader.GetFieldValueAsync<string>(2).ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnFaulted).Wait();
-            reader.GetFieldValueAsync<bool>(2).ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnFaulted).Wait();
+            AssertTaskFaults(reader.GetFieldValueAsync<int?>(2));
+            AssertTaskFaults(reader.GetFieldValueAsync<string>(2));
+            AssertTaskFaults(reader.GetFieldValueAsync<bool>(2));
             AssertEqualsWithDescription("GetValue", reader.LastCommand, "Last command was not as expected");
 
             result = reader.ReadAsync();
@@ -174,12 +179,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.False(result.Result, "Should NOT have received a Result from NextResultAsync");
 
             MockDataReader readerFail = new MockDataReader { Results = query.GetEnumerator(), Fail = true };
-            readerFail.ReadAsync().ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnFaulted).Wait();
-            readerFail.ReadAsync(source.Token).ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnFaulted).Wait();
-            readerFail.NextResultAsync().ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnFaulted).Wait();
-            readerFail.NextResultAsync(source.Token).ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnFaulted).Wait();
-            readerFail.GetFieldValueAsync<object>(0).ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnFaulted).Wait();
-            readerFail.GetFieldValueAsync<object>(0, source.Token).ContinueWith((t) => { }, TaskContinuationOptions.OnlyOnFaulted).Wait();
+            AssertTaskFaults(readerFail.ReadAsync());
+            AssertTaskFaults(readerFail.ReadAsync(source.Token));
+            AssertTaskFaults(readerFail.NextResultAsync());
+            AssertTaskFaults(readerFail.NextResultAsync(source.Token));
+            AssertTaskFaults(readerFail.GetFieldValueAsync<object>(0));
+            AssertTaskFaults(readerFail.GetFieldValueAsync<object>(0, source.Token));
 
             source.Cancel();
             reader.LastCommand = "Nothing";

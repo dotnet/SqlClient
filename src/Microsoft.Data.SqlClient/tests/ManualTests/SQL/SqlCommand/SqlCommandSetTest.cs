@@ -11,7 +11,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         private static Assembly mds = Assembly.GetAssembly(typeof(SqlConnection));
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: The statement failed. Column 'ByteArrayColumn' has a data type that cannot participate in a columnstore index.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void TestByteArrayParameters()
         {
             string tableName = DataTestUtility.GetUniqueNameForSqlServer("CMD");

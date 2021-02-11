@@ -27,7 +27,6 @@ class Program
         // you can work with individual items.
         Console.WriteLine(builder.Password);
         builder.Password = "new@1Password";
-        builder.AsynchronousProcessing = true;
 
         // You can refer to connection keys using strings, 
         // as well. When you use this technique (the default

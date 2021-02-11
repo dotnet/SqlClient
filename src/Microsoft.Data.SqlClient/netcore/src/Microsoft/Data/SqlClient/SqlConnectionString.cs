@@ -20,16 +20,18 @@ namespace Microsoft.Data.SqlClient
 
         internal static partial class DEFAULT
         {
+            private const string _emptyString = "";
             internal const ApplicationIntent ApplicationIntent = DbConnectionStringDefaults.ApplicationIntent;
             internal const string Application_Name = TdsEnums.SQL_PROVIDER_NAME;
-            internal const string AttachDBFilename = "";
+            internal const string AttachDBFilename = _emptyString;
+            internal const int Command_Timeout = ADP.DefaultCommandTimeout;
             internal const int Connect_Timeout = ADP.DefaultConnectionTimeout;
-            internal const string Current_Language = "";
-            internal const string Data_Source = "";
+            internal const string Current_Language = _emptyString;
+            internal const string Data_Source = _emptyString;
             internal const bool Encrypt = false;
             internal const bool Enlist = true;
-            internal const string FailoverPartner = "";
-            internal const string Initial_Catalog = "";
+            internal const string FailoverPartner = _emptyString;
+            internal const string Initial_Catalog = _emptyString;
             internal const bool Integrated_Security = false;
             internal const int Load_Balance_Timeout = 0; // default of 0 means don't use
             internal const bool MARS = false;
@@ -37,19 +39,19 @@ namespace Microsoft.Data.SqlClient
             internal const int Min_Pool_Size = 0;
             internal const bool MultiSubnetFailover = DbConnectionStringDefaults.MultiSubnetFailover;
             internal const int Packet_Size = 8000;
-            internal const string Password = "";
+            internal const string Password = _emptyString;
             internal const bool Persist_Security_Info = false;
             internal const bool Pooling = true;
             internal const bool TrustServerCertificate = false;
-            internal const string Type_System_Version = "";
-            internal const string User_ID = "";
+            internal const string Type_System_Version = _emptyString;
+            internal const string User_ID = _emptyString;
             internal const bool User_Instance = false;
             internal const bool Replication = false;
             internal const int Connect_Retry_Count = 1;
             internal const int Connect_Retry_Interval = 10;
             internal static readonly SqlAuthenticationMethod Authentication = SqlAuthenticationMethod.NotSpecified;
             internal const SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Disabled;
-            internal const string EnclaveAttestationUrl = "";
+            internal const string EnclaveAttestationUrl = _emptyString;
             internal static readonly SqlConnectionAttestationProtocol AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified;
         }
 
@@ -61,12 +63,14 @@ namespace Microsoft.Data.SqlClient
             internal const string Application_Name = "application name";
             internal const string AsynchronousProcessing = "asynchronous processing";
             internal const string AttachDBFilename = "attachdbfilename";
-#if netcoreapp
+#if NETCOREAPP
             internal const string PoolBlockingPeriod = "pool blocking period";
 #endif
             internal const string ColumnEncryptionSetting = "column encryption setting";
             internal const string EnclaveAttestationUrl = "enclave attestation url";
             internal const string AttestationProtocol = "attestation protocol";
+
+            internal const string Command_Timeout = "command timeout";
             internal const string Connect_Timeout = "connect timeout";
             internal const string Connection_Reset = "connection reset";
             internal const string Context_Connection = "context connection";
@@ -137,7 +141,7 @@ namespace Microsoft.Data.SqlClient
             // network library
             internal const string NET = "net";
             internal const string NETWORK = "network";
-#if netcoreapp
+#if NETCOREAPP
             // pool blocking period
             internal const string POOLBLOCKINGPERIOD = "poolblockingperiod";
 #endif
@@ -155,7 +159,7 @@ namespace Microsoft.Data.SqlClient
             // make sure to update SynonymCount value below when adding or removing synonyms
         }
 
-#if netcoreapp
+#if NETCOREAPP
         internal const int SynonymCount = 25;
 #else
         internal const int SynonymCount = 24;
@@ -210,6 +214,7 @@ namespace Microsoft.Data.SqlClient
         private readonly string _enclaveAttestationUrl;
         private readonly SqlConnectionAttestationProtocol _attestationProtocol;
 
+        private readonly int _commandTimeout;
         private readonly int _connectTimeout;
         private readonly int _loadBalanceTimeout;
         private readonly int _maxPoolSize;
@@ -223,7 +228,7 @@ namespace Microsoft.Data.SqlClient
         private readonly string _attachDBFileName;
         private readonly string _currentLanguage;
         private readonly string _dataSource;
-        private readonly string _localDBInstance; // created based on datasource, set to NULL if datasource is not LocalDB 
+        private readonly string _localDBInstance; // created based on datasource, set to NULL if datasource is not LocalDB
         private readonly string _failoverPartner;
         private readonly string _initialCatalog;
         private readonly string _password;
@@ -253,7 +258,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             _integratedSecurity = ConvertValueToIntegratedSecurity();
-#if netcoreapp
+#if NETCOREAPP
             _poolBlockingPeriod = ConvertValueToPoolBlockingPeriod();
 #endif
             _encrypt = ConvertValueToBoolean(KEY.Encrypt, DEFAULT.Encrypt);
@@ -265,6 +270,7 @@ namespace Microsoft.Data.SqlClient
             _userInstance = ConvertValueToBoolean(KEY.User_Instance, DEFAULT.User_Instance);
             _multiSubnetFailover = ConvertValueToBoolean(KEY.MultiSubnetFailover, DEFAULT.MultiSubnetFailover);
 
+            _commandTimeout = ConvertValueToInt32(KEY.Command_Timeout, DEFAULT.Command_Timeout);
             _connectTimeout = ConvertValueToInt32(KEY.Connect_Timeout, DEFAULT.Connect_Timeout);
             _loadBalanceTimeout = ConvertValueToInt32(KEY.Load_Balance_Timeout, DEFAULT.Load_Balance_Timeout);
             _maxPoolSize = ConvertValueToInt32(KEY.Max_Pool_Size, DEFAULT.Max_Pool_Size);
@@ -295,8 +301,6 @@ namespace Microsoft.Data.SqlClient
             _userID = ConvertValueToString(KEY.User_ID, DEFAULT.User_ID);
             _workstationId = ConvertValueToString(KEY.Workstation_Id, null);
 
-
-
             if (_loadBalanceTimeout < 0)
             {
                 throw ADP.InvalidConnectionOptionValue(KEY.Load_Balance_Timeout);
@@ -305,6 +309,11 @@ namespace Microsoft.Data.SqlClient
             if (_connectTimeout < 0)
             {
                 throw ADP.InvalidConnectionOptionValue(KEY.Connect_Timeout);
+            }
+
+            if (_commandTimeout < 0)
+            {
+                throw ADP.InvalidConnectionOptionValue(KEY.Command_Timeout);
             }
 
             if (_maxPoolSize < 1)
@@ -325,7 +334,6 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.InvalidPacketSizeValue();
             }
-
 
             ValidateValueLength(_applicationName, TdsEnums.MAXLEN_APPNAME, KEY.Application_Name);
             ValidateValueLength(_currentLanguage, TdsEnums.MAXLEN_LANGUAGE, KEY.Current_Language);
@@ -467,6 +475,16 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.DeviceFlowWithUsernamePassword();
             }
+
+            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity && HasPasswordKeyword)
+            {
+                throw SQL.ManagedIdentityWithPassword(DbConnectionStringBuilderUtil.ActiveDirectoryManagedIdentityString);
+            }
+
+            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI && HasPasswordKeyword)
+            {
+                throw SQL.ManagedIdentityWithPassword(DbConnectionStringBuilderUtil.ActiveDirectoryMSIString);
+            }
         }
 
         // This c-tor is used to create SSE and user instance connection strings when user instance is set to true
@@ -490,9 +508,10 @@ namespace Microsoft.Data.SqlClient
             _pooling = connectionOptions._pooling;
             _replication = connectionOptions._replication;
             _userInstance = userInstance;
+            _commandTimeout = connectionOptions._commandTimeout;
             _connectTimeout = connectionOptions._connectTimeout;
             _loadBalanceTimeout = connectionOptions._loadBalanceTimeout;
-#if netcoreapp
+#if NETCOREAPP
             _poolBlockingPeriod = connectionOptions._poolBlockingPeriod;
 #endif
             _maxPoolSize = connectionOptions._maxPoolSize;
@@ -545,6 +564,7 @@ namespace Microsoft.Data.SqlClient
         internal bool Replication { get { return _replication; } }
         internal bool UserInstance { get { return _userInstance; } }
 
+        internal int CommandTimeout { get { return _commandTimeout; } }
         internal int ConnectTimeout { get { return _connectTimeout; } }
         internal int LoadBalanceTimeout { get { return _loadBalanceTimeout; } }
         internal int MaxPoolSize { get { return _maxPoolSize; } }
@@ -630,9 +650,10 @@ namespace Microsoft.Data.SqlClient
                     { KEY.Application_Name, KEY.Application_Name },
                     { KEY.AsynchronousProcessing, KEY.AsynchronousProcessing },
                     { KEY.AttachDBFilename, KEY.AttachDBFilename },
-#if netcoreapp
+#if NETCOREAPP
                     { KEY.PoolBlockingPeriod, KEY.PoolBlockingPeriod},
 #endif
+                    { KEY.Command_Timeout, KEY.Command_Timeout },
                     { KEY.Connect_Timeout, KEY.Connect_Timeout },
                     { KEY.Connection_Reset, KEY.Connection_Reset },
                     { KEY.Context_Connection, KEY.Context_Connection },
@@ -682,7 +703,7 @@ namespace Microsoft.Data.SqlClient
                     { SYNONYM.MULTIPLEACTIVERESULTSETS, KEY.MARS },
                     { SYNONYM.MULTISUBNETFAILOVER, KEY.MultiSubnetFailover },
                     { SYNONYM.NETWORK_ADDRESS, KEY.Data_Source },
-#if netcoreapp
+#if NETCOREAPP
                     { SYNONYM.POOLBLOCKINGPERIOD, KEY.PoolBlockingPeriod},
 #endif
                     { SYNONYM.SERVER, KEY.Data_Source },

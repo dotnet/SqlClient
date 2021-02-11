@@ -20,7 +20,6 @@ namespace Microsoft.Data.SqlClient.SNI
         private const int DefaultSqlServerPort = 1433;
         private const int DefaultSqlServerDacPort = 1434;
         private const string SqlServerSpnHeader = "MSSQLSvc";
-        private const int MaxTokenSize = 0;
 
         internal class SspiClientContextResult
         {
@@ -96,7 +95,8 @@ namespace Microsoft.Data.SqlClient.SNI
                 inSecurityBufferArray = Array.Empty<SecurityBuffer>();
             }
 
-            int tokenSize = MaxTokenSize;
+            int tokenSize = NegotiateStreamPal.QueryMaxTokenSize(securityPackage);
+
             SecurityBuffer outSecurityBuffer = new SecurityBuffer(tokenSize, SecurityBufferType.SECBUFFER_TOKEN);
 
             ContextFlagsPal requestedContextFlags = ContextFlagsPal.Connection
@@ -119,7 +119,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 statusCode.ErrorCode == SecurityStatusPalErrorCode.CompAndContinue)
             {
                 inSecurityBufferArray = new SecurityBuffer[] { outSecurityBuffer };
-                statusCode = new SecurityStatusPal(SecurityStatusPalErrorCode.OK);
+                statusCode = NegotiateStreamPal.CompleteAuthToken(ref securityContext, inSecurityBufferArray);
                 outSecurityBuffer.token = null;
             }
 
@@ -241,7 +241,6 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <summary>
         /// Create a SNI connection handle
         /// </summary>
-        /// <param name="callbackObject">Asynchronous I/O callback object</param>
         /// <param name="fullServerName">Full server name from connection string</param>
         /// <param name="ignoreSniOpenTimeout">Ignore open timeout</param>
         /// <param name="timerExpire">Timer expiration</param>
@@ -254,7 +253,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="cachedFQDN">Used for DNS Cache</param>
         /// <param name="pendingDNSInfo">Used for DNS Cache</param>
         /// <returns>SNI handle</returns>
-        internal SNIHandle CreateConnectionHandle(object callbackObject, string fullServerName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[] spnBuffer, bool flushCache, bool async, bool parallel, bool isIntegratedSecurity, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
+        internal SNIHandle CreateConnectionHandle(string fullServerName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[] spnBuffer, bool flushCache, bool async, bool parallel, bool isIntegratedSecurity, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
         {
             instanceName = new byte[1];
 
@@ -281,10 +280,10 @@ namespace Microsoft.Data.SqlClient.SNI
                 case DataSource.Protocol.Admin:
                 case DataSource.Protocol.None: // default to using tcp if no protocol is provided
                 case DataSource.Protocol.TCP:
-                    sniHandle = CreateTcpHandle(details, timerExpire, callbackObject, parallel, cachedFQDN, ref pendingDNSInfo);
+                    sniHandle = CreateTcpHandle(details, timerExpire, parallel, cachedFQDN, ref pendingDNSInfo);
                     break;
                 case DataSource.Protocol.NP:
-                    sniHandle = CreateNpHandle(details, timerExpire, callbackObject, parallel);
+                    sniHandle = CreateNpHandle(details, timerExpire, parallel);
                     break;
                 default:
                     Debug.Fail($"Unexpected connection protocol: {details._connectionProtocol}");
@@ -365,21 +364,20 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         /// <param name="details">Data source</param>
         /// <param name="timerExpire">Timer expiration</param>
-        /// <param name="callbackObject">Asynchronous I/O callback object</param>
         /// <param name="parallel">Should MultiSubnetFailover be used</param>
         /// <param name="cachedFQDN">Key for DNS Cache</param>
         /// <param name="pendingDNSInfo">Used for DNS Cache</param>
         /// <returns>SNITCPHandle</returns>
-        private SNITCPHandle CreateTcpHandle(DataSource details, long timerExpire, object callbackObject, bool parallel, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
+        private SNITCPHandle CreateTcpHandle(DataSource details, long timerExpire, bool parallel, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
         {
-            // TCP Format: 
+            // TCP Format:
             // tcp:<host name>\<instance name>
             // tcp:<host name>,<TCP/IP port number>
 
             string hostName = details.ServerName;
             if (string.IsNullOrWhiteSpace(hostName))
             {
-                SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.TCP_PROV, 0, SNICommon.InvalidConnStringError, string.Empty);
+                SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.TCP_PROV, 0, SNICommon.InvalidConnStringError, Strings.SNI_ERROR_25);
                 return null;
             }
 
@@ -408,7 +406,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 port = isAdminConnection ? DefaultSqlServerDacPort : DefaultSqlServerPort;
             }
 
-            return new SNITCPHandle(hostName, port, timerExpire, callbackObject, parallel, cachedFQDN, ref pendingDNSInfo);
+            return new SNITCPHandle(hostName, port, timerExpire, parallel, cachedFQDN, ref pendingDNSInfo);
         }
 
 
@@ -418,17 +416,17 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         /// <param name="details">Data source</param>
         /// <param name="timerExpire">Timer expiration</param>
-        /// <param name="callbackObject">Asynchronous I/O callback object</param>
         /// <param name="parallel">Should MultiSubnetFailover be used. Only returns an error for named pipes.</param>
         /// <returns>SNINpHandle</returns>
-        private SNINpHandle CreateNpHandle(DataSource details, long timerExpire, object callbackObject, bool parallel)
+        private SNINpHandle CreateNpHandle(DataSource details, long timerExpire, bool parallel)
         {
             if (parallel)
             {
-                SNICommon.ReportSNIError(SNIProviders.NP_PROV, 0, SNICommon.MultiSubnetFailoverWithNonTcpProtocol, string.Empty);
+                // Connecting to a SQL Server instance using the MultiSubnetFailover connection option is only supported when using the TCP protocol
+                SNICommon.ReportSNIError(SNIProviders.NP_PROV, 0, SNICommon.MultiSubnetFailoverWithNonTcpProtocol, Strings.SNI_ERROR_49);
                 return null;
             }
-            return new SNINpHandle(details.PipeHostName, details.PipeName, timerExpire, callbackObject);
+            return new SNINpHandle(details.PipeHostName, details.PipeName, timerExpire);
         }
 
         /// <summary>
@@ -474,7 +472,7 @@ namespace Microsoft.Data.SqlClient.SNI
         }
 
         /// <summary>
-        /// Gets the Local db Named pipe data source if the input is a localDB server. 
+        /// Gets the Local db Named pipe data source if the input is a localDB server.
         /// </summary>
         /// <param name="fullServerName">The data source</param>
         /// <param name="error">Set true when an error occurred while getting LocalDB up</param>
@@ -529,7 +527,7 @@ namespace Microsoft.Data.SqlClient.SNI
         internal Protocol _connectionProtocol = Protocol.None;
 
         /// <summary>
-        /// Provides the HostName of the server to connect to for TCP protocol. 
+        /// Provides the HostName of the server to connect to for TCP protocol.
         /// This information is also used for finding the SPN of SqlServer
         /// </summary>
         internal string ServerName { get; private set; }
@@ -632,7 +630,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
                 else
                 {
-                    SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBNoInstanceName, string.Empty);
+                    SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBNoInstanceName, Strings.SNI_ERROR_51);
                     error = true;
                     return null;
                 }
@@ -685,7 +683,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
             int commaIndex = _dataSourceAfterTrimmingProtocol.IndexOf(CommaSeparator);
 
-            int backSlashIndex = _dataSourceAfterTrimmingProtocol.IndexOf(PipeBeginning);
+            int backSlashIndex = _dataSourceAfterTrimmingProtocol.IndexOf(BackSlashCharacter);
 
             // Check the parameters. The parameters are Comma separated in the Data Source. The parameter we really care about is the port
             // If Comma exists, the try to get the port number
@@ -733,7 +731,7 @@ namespace Microsoft.Data.SqlClient.SNI
             // Instance Name Handling. Only if we found a '\' and we did not find a port in the Data Source
             else if (backSlashIndex > -1)
             {
-                // This means that there will not be any part separated by comma. 
+                // This means that there will not be any part separated by comma.
                 InstanceName = tokensByCommaAndSlash[1].Trim();
 
                 if (string.IsNullOrWhiteSpace(InstanceName))
@@ -758,7 +756,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
         private void ReportSNIError(SNIProviders provider)
         {
-            SNILoadHandle.SingletonInstance.LastError = new SNIError(provider, 0, SNICommon.InvalidConnStringError, string.Empty);
+            SNILoadHandle.SingletonInstance.LastError = new SNIError(provider, 0, SNICommon.InvalidConnStringError, Strings.SNI_ERROR_25);
             IsBadDataSource = true;
         }
 
@@ -781,7 +779,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     string[] tokensByBackSlash = _dataSourceAfterTrimmingProtocol.Split(BackSlashCharacter);
 
                     // The datasource is of the format \\host\pipe\sql\query [0]\[1]\[2]\[3]\[4]\[5]
-                    // It would at least have 6 parts. 
+                    // It would at least have 6 parts.
                     // Another valid Sql named pipe for an named instance is \\.\pipe\MSSQL$MYINSTANCE\sql\query
                     if (tokensByBackSlash.Length < 6)
                     {

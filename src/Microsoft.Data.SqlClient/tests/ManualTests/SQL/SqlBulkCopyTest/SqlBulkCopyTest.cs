@@ -11,6 +11,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         private string _connStr = null;
         private static bool IsAzureServer() => !DataTestUtility.IsNotAzureServer();
+        private static bool IsNotAzureSynapse => DataTestUtility.IsNotAzureSynapse();
         private static bool AreConnectionStringsSetup() => DataTestUtility.AreConnStringsSetup();
 
         public SqlBulkCopyTest()
@@ -24,7 +25,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return stringin;
         }
 
-        [ConditionalFact(nameof(AreConnectionStringsSetup), nameof(IsAzureServer))]
+        // Synapse: Promote Transaction not supported by Azure Synapse
+        [ConditionalFact(nameof(AreConnectionStringsSetup), nameof(IsNotAzureSynapse), nameof(IsAzureServer))]
         public void AzureDistributedTransactionTest()
         {
             AzureDistributedTransaction.Test();
@@ -246,31 +248,37 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             DestinationTableNameWithSpecialChar.Test(_connStr, AddGuid("SqlBulkCopyTest_DestinationTableNameWithSpecialChar"));
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // TODO Synapse: Remove dependency on Northwind database
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void OrderHintTest()
         {
             OrderHint.Test(_connStr, AddGuid("SqlBulkCopyTest_OrderHint"), AddGuid("SqlBulkCopyTest_OrderHint2"));
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Cannot create more than one clustered index on table '<table_name>'.
+        // Drop the existing clustered index 'ClusteredIndex_fe3d8c967ac142468ec4f81ff1faaa50' before creating another.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void OrderHintAsyncTest()
         {
             OrderHintAsync.Test(_connStr, AddGuid("SqlBulkCopyTest_OrderHintAsync"), AddGuid("SqlBulkCopyTest_OrderHintAsync2"));
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Remove dependency on Northwind database.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void OrderHintMissingTargetColumnTest()
         {
             OrderHintMissingTargetColumn.Test(_connStr, AddGuid("SqlBulkCopyTest_OrderHintMissingTargetColumn"));
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Remove dependency on Northwind database.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void OrderHintDuplicateColumnTest()
         {
             OrderHintDuplicateColumn.Test(_connStr, AddGuid("SqlBulkCopyTest_OrderHintDuplicateColumn"));
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: 111212;Operation cannot be performed within a transaction.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void OrderHintTransactionTest()
         {
             OrderHintTransaction.Test(_connStr, AddGuid("SqlBulkCopyTest_OrderHintTransaction"));

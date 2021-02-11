@@ -2729,7 +2729,6 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
-
         //
         //  Semantics support routines
         //

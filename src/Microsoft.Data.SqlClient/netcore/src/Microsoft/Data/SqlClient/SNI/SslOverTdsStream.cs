@@ -3,11 +3,8 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Buffers;
 using System.IO;
 using System.IO.Pipes;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClient.SNI
 {
@@ -16,7 +13,7 @@ namespace Microsoft.Data.SqlClient.SNI
     /// transported in TDS packet type 0x12. Once SSL handshake has completed, SSL
     /// packets are sent transparently.
     /// </summary>
-    internal sealed class SslOverTdsStream : Stream
+    internal sealed partial class SslOverTdsStream : Stream
     {
         private readonly Stream _stream;
 
@@ -42,197 +39,14 @@ namespace Microsoft.Data.SqlClient.SNI
         public void FinishHandshake()
         {
             _encapsulate = false;
-        }
-
-        /// <summary>
-        /// Read buffer
-        /// </summary>
-        /// <param name="buffer">Buffer</param>
-        /// <param name="offset">Offset</param>
-        /// <param name="count">Byte count</param>
-        /// <returns>Bytes read</returns>
-        public override int Read(byte[] buffer, int offset, int count) =>
-            ReadInternal(buffer, offset, count, CancellationToken.None, async: false).GetAwaiter().GetResult();
-
-        /// <summary>
-        /// Write Buffer
-        /// </summary>
-        /// <param name="buffer"></param>
-        /// <param name="offset"></param>
-        /// <param name="count"></param>
-        public override void Write(byte[] buffer, int offset, int count)
-            => WriteInternal(buffer, offset, count, CancellationToken.None, async: false).Wait();
-
-        /// <summary>
-        /// Write Buffer Asynchronously
-        /// </summary>
-        /// <param name="buffer"></param>
-        /// <param name="offset"></param>
-        /// <param name="count"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken token)
-            => WriteInternal(buffer, offset, count, token, async: true);
-
-        /// <summary>
-        /// Read Buffer Asynchronously
-        /// </summary>
-        /// <param name="buffer"></param>
-        /// <param name="offset"></param>
-        /// <param name="count"></param>
-        /// <param name="token"></param>
-        /// <returns></returns>
-        public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken token)
-            => ReadInternal(buffer, offset, count, token, async: true);
-
-        /// <summary>
-        /// Read Internal is called synchronously when async is false
-        /// </summary>
-        private async Task<int> ReadInternal(byte[] buffer, int offset, int count, CancellationToken token, bool async)
-        {
-            int readBytes = 0;
-            byte[] packetData = null;
-            byte[] readTarget = buffer;
-            int readOffset = offset;
-            if (_encapsulate)
-            {
-                packetData = ArrayPool<byte>.Shared.Rent(count < TdsEnums.HEADER_LEN ? TdsEnums.HEADER_LEN : count);
-                readTarget = packetData;
-                readOffset = 0;
-                if (_packetBytes == 0)
-                {
-                    // Account for split packets
-                    while (readBytes < TdsEnums.HEADER_LEN)
-                    {
-                        var readBytesForHeader = async ?
-                            await _stream.ReadAsync(packetData, readBytes, TdsEnums.HEADER_LEN - readBytes, token).ConfigureAwait(false) :
-                            _stream.Read(packetData, readBytes, TdsEnums.HEADER_LEN - readBytes);
-
-                        if (readBytesForHeader == 0)
-                        {
-                            throw new EndOfStreamException("End of stream reached");
-                        }
-
-                        readBytes += readBytesForHeader;
-                    }
-
-                    _packetBytes = (packetData[TdsEnums.HEADER_LEN_FIELD_OFFSET] << 8) | packetData[TdsEnums.HEADER_LEN_FIELD_OFFSET + 1];
-                    _packetBytes -= TdsEnums.HEADER_LEN;
-                }
-
-                if (count > _packetBytes)
-                {
-                    count = _packetBytes;
-                }
-            }
-
-            readBytes = async ?
-                await _stream.ReadAsync(readTarget, readOffset, count, token).ConfigureAwait(false) :
-                _stream.Read(readTarget, readOffset, count);
-
-            if (_encapsulate)
-            {
-                _packetBytes -= readBytes;
-            }
-            if (packetData != null)
-            {
-                Buffer.BlockCopy(packetData, 0, buffer, offset, readBytes);
-                ArrayPool<byte>.Shared.Return(packetData, clearArray: true);
-            }
-            return readBytes;
-        }
-
-        /// <summary>
-        /// The internal write method calls Sync APIs when Async flag is false
-        /// </summary>
-        private async Task WriteInternal(byte[] buffer, int offset, int count, CancellationToken token, bool async)
-        {
-            int currentCount = 0;
-            int currentOffset = offset;
-
-            while (count > 0)
-            {
-                // During the SSL negotiation phase, SSL is tunneled over TDS packet type 0x12. After
-                // negotiation, the underlying socket only sees SSL frames.
-                //
-                if (_encapsulate)
-                {
-                    if (count > PACKET_SIZE_WITHOUT_HEADER)
-                    {
-                        currentCount = PACKET_SIZE_WITHOUT_HEADER;
-                    }
-                    else
-                    {
-                        currentCount = count;
-                    }
-
-                    count -= currentCount;
-
-                    // Prepend buffer data with TDS prelogin header
-                    int combinedLength = TdsEnums.HEADER_LEN + currentCount;
-                    byte[] combinedBuffer = ArrayPool<byte>.Shared.Rent(combinedLength);
-
-                    // We can only send 4088 bytes in one packet. Header[1] is set to 1 if this is a 
-                    // partial packet (whether or not count != 0).
-                    combinedBuffer[7] = 0; // touch this first for the jit bounds check
-                    combinedBuffer[0] = PRELOGIN_PACKET_TYPE;
-                    combinedBuffer[1] = (byte)(count > 0 ? 0 : 1);
-                    combinedBuffer[2] = (byte)((currentCount + TdsEnums.HEADER_LEN) / 0x100);
-                    combinedBuffer[3] = (byte)((currentCount + TdsEnums.HEADER_LEN) % 0x100);
-                    combinedBuffer[4] = 0;
-                    combinedBuffer[5] = 0;
-                    combinedBuffer[6] = 0;
-
-                    Array.Copy(buffer, currentOffset, combinedBuffer, TdsEnums.HEADER_LEN, (combinedLength - TdsEnums.HEADER_LEN));
-
-                    if (async)
-                    {
-                        await _stream.WriteAsync(combinedBuffer, 0, combinedLength, token).ConfigureAwait(false);
-                    }
-                    else
-                    {
-                        _stream.Write(combinedBuffer, 0, combinedLength);
-                    }
-
-                    Array.Clear(combinedBuffer, 0, combinedLength);
-                    ArrayPool<byte>.Shared.Return(combinedBuffer);
-                }
-                else
-                {
-                    currentCount = count;
-                    count = 0;
-
-                    if (async)
-                    {
-                        await _stream.WriteAsync(buffer, currentOffset, currentCount, token).ConfigureAwait(false);
-                    }
-                    else
-                    {
-                        _stream.Write(buffer, currentOffset, currentCount);
-                    }
-                }
-
-                if (async)
-                {
-                    await _stream.FlushAsync().ConfigureAwait(false);
-                }
-                else
-                {
-                    _stream.Flush();
-                }
-
-                currentOffset += currentCount;
-            }
+            SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.SslOverTdsStream.FinishHandshake |SNI|INFO> switched from encapsulation to passthrough mode");
         }
 
         /// <summary>
         /// Set stream length. 
         /// </summary>
         /// <param name="value">Length</param>
-        public override void SetLength(long value)
-        {
-            throw new NotSupportedException();
-        }
+        public override void SetLength(long value) => throw new NotSupportedException();
 
         /// <summary>
         /// Flush stream
@@ -252,14 +66,8 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         public override long Position
         {
-            get
-            {
-                throw new NotSupportedException();
-            }
-            set
-            {
-                throw new NotSupportedException();
-            }
+            get => throw new NotSupportedException();
+            set => throw new NotSupportedException();
         }
 
         /// <summary>
@@ -268,44 +76,40 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="offset">Offset</param>
         /// <param name="origin">Origin</param>
         /// <returns>Position</returns>
-        public override long Seek(long offset, SeekOrigin origin)
-        {
-            throw new NotSupportedException();
-        }
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
 
         /// <summary>
         /// Check if stream can be read from
         /// </summary>
-        public override bool CanRead
-        {
-            get { return _stream.CanRead; }
-        }
+        public override bool CanRead => _stream.CanRead;
 
         /// <summary>
         /// Check if stream can be written to
         /// </summary>
-        public override bool CanWrite
-        {
-            get { return _stream.CanWrite; }
-        }
+        public override bool CanWrite => _stream.CanWrite;
 
         /// <summary>
         /// Check if stream can be seeked
         /// </summary>
-        public override bool CanSeek
-        {
-            get { return false; } // Seek not supported
-        }
+        public override bool CanSeek => false;
 
         /// <summary>
         /// Get stream length
         /// </summary>
-        public override long Length
+        public override long Length => throw new NotSupportedException();
+
+        private static void SetupPreLoginPacketHeader(byte[] buffer, int dataLength, int remainingLength)
         {
-            get
-            {
-                throw new NotSupportedException();
-            }
+            // We can only send 4088 bytes in one packet. Header[1] is set to 1 if this is a 
+            // partial packet (whether or not count != 0).
+            buffer[7] = 0; // touch this first for the jit bounds check
+            buffer[0] = PRELOGIN_PACKET_TYPE;
+            buffer[1] = (byte)(remainingLength > 0 ? 0 : 1);
+            buffer[2] = (byte)((dataLength + TdsEnums.HEADER_LEN) / 0x100);
+            buffer[3] = (byte)((dataLength + TdsEnums.HEADER_LEN) % 0x100);
+            buffer[4] = 0;
+            buffer[5] = 0;
+            buffer[6] = 0;
         }
     }
 }

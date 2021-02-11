@@ -156,9 +156,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             string dummyPathWithOnlyHost = @"https://www.microsoft.com";
             string invalidUrlErrorMessage = $@"Invalid url specified: '{dummyPathWithOnlyHost}'";
             string dummyPathWithInvalidKey = @"https://www.microsoft.vault.azure.com/keys/dummykey/dummykeyid";
-            string invalidTrustedEndpointErrorMessage = $@"Invalid Azure Key Vault key path specified: '{dummyPathWithInvalidKey}'. 
-Valid trusted endpoints: vault.azure.net, vault.azure.cn, vault.usgovcloudapi.net, vault.microsoftazure.de, managedhsm.azure.net, 
-managedhsm.azure.cn, managedhsm.usgovcloudapi.net, managedhsm.microsoftazure.de.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
+            string invalidTrustedEndpointErrorMessage = $@"Invalid Azure Key Vault key path specified: '{dummyPathWithInvalidKey}'. Valid trusted endpoints: vault.azure.net, vault.azure.cn, vault.usgovcloudapi.net, vault.microsoftazure.de, managedhsm.azure.net, managedhsm.azure.cn, managedhsm.usgovcloudapi.net, managedhsm.microsoftazure.de.\s+\(?Parameter (name: )?'?masterKeyPath('\))?";
 
             Exception ex = Assert.Throws<ArgumentException>(
                 () => fixture.AkvStoreProvider.EncryptColumnEncryptionKey(dummyPathWithOnlyHost, MasterKeyEncAlgo, cek));

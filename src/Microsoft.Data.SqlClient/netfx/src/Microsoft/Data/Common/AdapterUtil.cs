@@ -2271,11 +2271,6 @@ namespace Microsoft.Data.Common
             return false;
         }
 
-        static internal void TimerCurrent(out long ticks)
-        {
-            ticks = DateTime.UtcNow.ToFileTimeUtc();
-        }
-
         static internal long TimerCurrent()
         {
             return DateTime.UtcNow.ToFileTimeUtc();

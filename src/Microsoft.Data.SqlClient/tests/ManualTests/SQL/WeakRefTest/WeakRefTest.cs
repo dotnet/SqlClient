@@ -41,7 +41,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TransactionGCConnectionClose,
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // TODO Synapse: Remove dependency on Northwind database
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestReaderNonMars()
         {
             string connString =

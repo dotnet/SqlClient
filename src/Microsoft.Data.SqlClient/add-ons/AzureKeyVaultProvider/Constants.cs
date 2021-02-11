@@ -29,7 +29,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             @"managedhsm.azure.cn", // Azure China HSM vault
             @"managedhsm.usgovcloudapi.net", // US Government HSM vault
             @"managedhsm.microsoftazure.de" // Azure Germany HSM vault
-            };
+        };
 
         /// <summary>
         /// Always Encrypted Parameter names for exec handling
@@ -38,6 +38,5 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         internal const string AeParamEncryptionAlgorithm = "encryptionAlgorithm";
         internal const string AeParamMasterKeyPath = "masterKeyPath";
         internal const string AeParamEncryptedCek = "encryptedColumnEncryptionKey";
-
     }
 }
