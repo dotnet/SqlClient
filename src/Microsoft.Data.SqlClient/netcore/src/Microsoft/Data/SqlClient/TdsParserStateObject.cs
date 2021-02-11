@@ -41,6 +41,18 @@ namespace Microsoft.Data.SqlClient
             AttentionReceived = 1 << 5    // NOTE: Received is not volatile as it is only ever accessed\modified by TryRun its callees (i.e. single threaded access)
         }
 
+        private sealed class TimeoutState
+        {
+            private readonly int _value;
+
+            public TimeoutState(int value)
+            {
+                _value = value;
+            }
+
+            public int IdentityValue => _value;
+        }
+
         private const int AttentionTimeoutSeconds = 5;
 
         private static readonly ContextCallback s_readAdyncCallbackComplete = ReadAsyncCallbackComplete;
@@ -120,7 +132,6 @@ namespace Microsoft.Data.SqlClient
         private long _timeoutTime;                          // variable used for timeout computations, holds the value of the hi-res performance counter at which this request should expire
         private int _timeoutState; // expected to be one of the constant values TimeoutStopped, TimeoutRunning, TimeoutExpiredAsync, TimeoutExpiredSync
         private int _timeoutIdentitySource;
-        private TimeoutState _spareTimeoutState;
         private volatile int _timeoutIdentityValue;
         internal volatile bool _attentionSent;              // true if we sent an Attention to the server
         internal volatile bool _attentionSending;
@@ -2269,16 +2280,10 @@ namespace Microsoft.Data.SqlClient
                 return state == TimeoutExpiredAsync || state == TimeoutExpiredSync;
             }
         }
-
-        private sealed class TimeoutState
-        {
-            public int IdentityValue { get; set; }
-        }
-
         private void OnTimeoutAsync(object state)
         {
 #if DEBUG
-            Thread.Sleep(13000);
+            //Thread.Sleep(13000);
 #endif
             int currentIdentityValue = _timeoutIdentityValue;
             TimeoutState timeoutState = (TimeoutState)state;
@@ -2292,8 +2297,6 @@ namespace Microsoft.Data.SqlClient
             {
                 Debug.WriteLine($"OnTimeoutAsync called with identity state={timeoutState.IdentityValue} but current identity is {currentIdentityValue} so it is being ignored");
             }
-            timeoutState.IdentityValue = 0;
-            Interlocked.CompareExchange(ref _spareTimeoutState, timeoutState, null);
         }
 
         private bool OnTimeoutSync()
@@ -2459,11 +2462,10 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 _networkPacketTimeout?.Dispose();
-                TimeoutState state = Interlocked.Exchange(ref _spareTimeoutState, null) ?? new TimeoutState();
-                state.IdentityValue = _timeoutIdentityValue;
+
                 _networkPacketTimeout = ADP.UnsafeCreateTimer(
                     new TimerCallback(OnTimeoutAsync),
-                    state,
+                    new TimeoutState(_timeoutIdentityValue),
                     Timeout.Infinite,
                     Timeout.Infinite
                 );
