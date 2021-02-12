@@ -392,11 +392,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 _owner.Target = value;
 
-                _networkPacketTimeout = value == null ? null : ADP.UnsafeCreateTimer(
-                    new TimerCallback(OnTimeout),
-                    new WeakReference(value),
-                    Timeout.Infinite,
-                    Timeout.Infinite);
+                _networkPacketTimeout = value == null ? null : new Timer(OnTimeout, null, Timeout.Infinite, Timeout.Infinite);
             }
         }
 
