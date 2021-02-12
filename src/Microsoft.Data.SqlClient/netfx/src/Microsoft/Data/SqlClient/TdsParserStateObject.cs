@@ -109,6 +109,12 @@ namespace Microsoft.Data.SqlClient
         internal bool _internalTimeout = false;               // an internal timeout occurred
         private readonly LastIOTimer _lastSuccessfulIOTimer;
 
+        // Below 2 properties are used to enforce timeout delays in code to 
+        // reproduce issues related to theadpool starvation and timeout delay.
+        // It should always be set to false by default, and only be enabled during testing.
+        internal bool _enforceTimeoutDelay = false;
+        internal int _enforcedTimeoutDelayInMilliSeconds = 5000;
+
         // secure password information to be stored
         //  At maximum number of secure string that need to be stored is two; one for login password and the other for new change password
         private SecureString[] _securePasswords = new SecureString[2] { null, null };
@@ -2332,6 +2338,10 @@ namespace Microsoft.Data.SqlClient
 
         private void OnTimeout(object state)
         {
+            if (_enforceTimeoutDelay)
+            {
+                Thread.Sleep(_enforcedTimeoutDelayInMilliSeconds);
+            }
             WeakReference timerOwner = (WeakReference)state;
             if (_owner.Target == null ||
                 timerOwner.Target == null ||

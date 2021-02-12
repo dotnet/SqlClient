@@ -122,7 +122,7 @@ namespace Microsoft.Data.SqlClient
         // Below 2 properties are used to enforce timeout delays in code to 
         // reproduce issues related to theadpool starvation and timeout delay.
         // It should always be set to false by default, and only be enabled during testing.
-        internal bool _enforceTimeoutDelay = true;
+        internal bool _enforceTimeoutDelay = false;
         internal int _enforcedTimeoutDelayInMilliSeconds = 5000;
 
         // secure password information to be stored
