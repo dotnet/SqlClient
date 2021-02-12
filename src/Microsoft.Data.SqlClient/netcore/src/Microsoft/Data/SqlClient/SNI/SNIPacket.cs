@@ -75,7 +75,7 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             if (_data != null)
             {
-                //Debug.Fail($@"finalizer called for unreleased SNIPacket, tag: {_traceTag}");
+                Debug.Fail($@"finalizer called for unreleased SNIPacket, tag: {_traceTag}");
             }
         }
 
