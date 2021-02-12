@@ -3568,6 +3568,7 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG
                     if (!_skipSendAttention)
                     {
+#endif
                         // Take lock and send attention
                         bool releaseLock = false;
                         if ((mustTakeWriteLock) && (!_parser.Connection.ThreadHasParserLockForClose))
@@ -3597,7 +3598,9 @@ namespace Microsoft.Data.SqlClient
                                 _parser.Connection._parserLock.Release();
                             }
                         }
-                    }
+#if DEBUG
+                }
+#endif
 
                     SetTimeoutSeconds(AttentionTimeoutSeconds); // Initialize new attention timeout of 5 seconds.
                     _attentionSent = true;
