@@ -136,8 +136,14 @@ namespace Microsoft.Data.SqlClient
         internal volatile bool _attentionSent;              // true if we sent an Attention to the server
         internal volatile bool _attentionSending;
 
-        private readonly LastIOTimer _lastSuccessfulIOTimer;                     
-                                                                                 
+        // Below 2 properties are used to enforce timeout delays in code to 
+        // reproduce issues related to theadpool starvation and timeout delay.
+        // It should always be set to false by default, and only be enabled during testing.
+        internal bool _enforceTimeoutDelay = false;
+        internal int _enforcedTimeoutDelayInMilliSeconds = 5000;
+
+        private readonly LastIOTimer _lastSuccessfulIOTimer;
+
         // secure password information to be stored
         //  At maximum number of secure string that need to be stored is two; one for login password and the other for new change password
         private SecureString[] _securePasswords = new SecureString[2] { null, null };
@@ -1466,7 +1472,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // The entire int16 is in the packet and in the buffer, so just return it
                 // and take care of the counters.
-                buffer = _inBuff.AsSpan(_inBytesUsed,2);
+                buffer = _inBuff.AsSpan(_inBytesUsed, 2);
                 _inBytesUsed += 2;
                 _inBytesPacket -= 2;
             }
@@ -1500,7 +1506,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             AssertValidState();
-            value = (buffer[3] << 24) + (buffer[2] <<16) + (buffer[1] << 8) + buffer[0];
+            value = (buffer[3] << 24) + (buffer[2] << 16) + (buffer[1] << 8) + buffer[0];
             return true;
 
         }
@@ -2282,9 +2288,11 @@ namespace Microsoft.Data.SqlClient
         }
         private void OnTimeoutAsync(object state)
         {
-#if DEBUG
-            //Thread.Sleep(13000);
-#endif
+            if (_enforceTimeoutDelay)
+            {
+                Thread.Sleep(_enforcedTimeoutDelayInMilliSeconds);
+            }
+
             int currentIdentityValue = _timeoutIdentityValue;
             TimeoutState timeoutState = (TimeoutState)state;
             if (timeoutState.IdentityValue == _timeoutIdentityValue)
@@ -3557,11 +3565,9 @@ namespace Microsoft.Data.SqlClient
                     // Set _attentionSending to true before sending attention and reset after setting _attentionSent
                     // This prevents a race condition between receiving the attention ACK and setting _attentionSent
                     _attentionSending = true;
-
 #if DEBUG
                     if (!_skipSendAttention)
                     {
-#endif
                         // Take lock and send attention
                         bool releaseLock = false;
                         if ((mustTakeWriteLock) && (!_parser.Connection.ThreadHasParserLockForClose))
@@ -3591,9 +3597,7 @@ namespace Microsoft.Data.SqlClient
                                 _parser.Connection._parserLock.Release();
                             }
                         }
-#if DEBUG
                     }
-#endif
 
                     SetTimeoutSeconds(AttentionTimeoutSeconds); // Initialize new attention timeout of 5 seconds.
                     _attentionSent = true;

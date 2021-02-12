@@ -13,13 +13,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
 {
     internal static class ConnectionPoolHelper
     {
-        private static Assembly s_systemDotData = Assembly.Load(new AssemblyName(typeof(SqlConnection).GetTypeInfo().Assembly.FullName));
-        private static Type s_dbConnectionPool = s_systemDotData.GetType("Microsoft.Data.ProviderBase.DbConnectionPool");
-        private static Type s_dbConnectionPoolGroup = s_systemDotData.GetType("Microsoft.Data.ProviderBase.DbConnectionPoolGroup");
-        private static Type s_dbConnectionPoolIdentity = s_systemDotData.GetType("Microsoft.Data.ProviderBase.DbConnectionPoolIdentity");
-        private static Type s_dbConnectionFactory = s_systemDotData.GetType("Microsoft.Data.ProviderBase.DbConnectionFactory");
-        private static Type s_sqlConnectionFactory = s_systemDotData.GetType("Microsoft.Data.SqlClient.SqlConnectionFactory");
-        private static Type s_dbConnectionPoolKey = s_systemDotData.GetType("Microsoft.Data.Common.DbConnectionPoolKey");
+        private static Assembly s_MicrosoftDotData = Assembly.Load(new AssemblyName(typeof(SqlConnection).GetTypeInfo().Assembly.FullName));
+        private static Type s_dbConnectionPool = s_MicrosoftDotData.GetType("Microsoft.Data.ProviderBase.DbConnectionPool");
+        private static Type s_dbConnectionPoolGroup = s_MicrosoftDotData.GetType("Microsoft.Data.ProviderBase.DbConnectionPoolGroup");
+        private static Type s_dbConnectionPoolIdentity = s_MicrosoftDotData.GetType("Microsoft.Data.ProviderBase.DbConnectionPoolIdentity");
+        private static Type s_dbConnectionFactory = s_MicrosoftDotData.GetType("Microsoft.Data.ProviderBase.DbConnectionFactory");
+        private static Type s_sqlConnectionFactory = s_MicrosoftDotData.GetType("Microsoft.Data.SqlClient.SqlConnectionFactory");
+        private static Type s_dbConnectionPoolKey = s_MicrosoftDotData.GetType("Microsoft.Data.Common.DbConnectionPoolKey");
         private static Type s_dictStringPoolGroup = typeof(Dictionary<,>).MakeGenericType(s_dbConnectionPoolKey, s_dbConnectionPoolGroup);
         private static Type s_dictPoolIdentityPool = typeof(ConcurrentDictionary<,>).MakeGenericType(s_dbConnectionPoolIdentity, s_dbConnectionPool);
         private static PropertyInfo s_dbConnectionPoolCount = s_dbConnectionPool.GetProperty("Count", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -122,7 +122,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
             VerifyObjectIsPool(pool);
             return (int)s_dbConnectionPoolCount.GetValue(pool, null);
         }
-
 
         private static void VerifyObjectIsPool(object pool)
         {
