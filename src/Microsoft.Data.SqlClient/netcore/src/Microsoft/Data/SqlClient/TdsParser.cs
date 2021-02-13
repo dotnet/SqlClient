@@ -332,7 +332,23 @@ namespace Microsoft.Data.SqlClient
             // IMPORTANT - this decrements the connection wide open result count for all
             // operations not under a transaction!  Do not call if you intend to modify the
             // count for a transaction!
-            Interlocked.Decrement(ref _nonTransactedOpenResultCount);
+            int initialValue, newValue;
+            // Wrapping the decrement logic and verifying with interlocked to ensure
+            // parallel threads don't interfere with each other.
+            do
+            {
+                initialValue = _nonTransactedOpenResultCount;
+                // Never decrement below zero. This could happen in race conditions where
+                // we are processing DONE from an attention packet and DONE from results
+                // in parallel threads.
+                if (initialValue == 0)
+                {
+                    break;
+                }
+
+                newValue = initialValue - 1;
+            }
+            while (initialValue != Interlocked.CompareExchange(ref _nonTransactedOpenResultCount, newValue, initialValue));
             Debug.Assert(_nonTransactedOpenResultCount >= 0, "Unexpected result count state");
         }
 
@@ -2911,11 +2927,11 @@ namespace Microsoft.Data.SqlClient
             ushort status;
             int count;
 
-            // This is added back since removing it from here introduces regressions in Managed SNI.
-            // It forces SqlDataReader.ReadAsync() method to run synchronously,
-            // and will block the calling thread until data is fed from SQL Server.
-            // TODO Investigate better solution to support non-blocking ReadAsync().
-            stateObj._syncOverAsync = true;
+            if (LocalAppContextSwitches.MakeReadAsyncBlocking)
+            {
+                // Don't retry TryProcessDone
+                stateObj._syncOverAsync = true;
+            }
 
             // status
             // command

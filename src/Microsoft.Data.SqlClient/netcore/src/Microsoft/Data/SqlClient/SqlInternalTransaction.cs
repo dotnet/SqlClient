@@ -323,12 +323,25 @@ namespace Microsoft.Data.SqlClient
 
         internal int DecrementAndObtainOpenResultCount()
         {
-            int openResultCount = Interlocked.Decrement(ref _openResultCount);
-            if (openResultCount < 0)
+            int initialValue, newValue;
+            // Wrapping the decrement logic and verifying with interlocked to ensure
+            // parallel threads don't interfere with each other.
+            do
             {
-                throw SQL.OpenResultCountExceeded();
+                initialValue = _openResultCount;
+                // Never decrement below zero. This could happen in race conditions where
+                // we are processing DONE from an attention packet and DONE from results
+                // in parallel threads.
+                if (initialValue == 0)
+                {
+                    newValue = initialValue;
+                    break;
+                }
+
+                newValue = initialValue - 1;
             }
-            return openResultCount;
+            while (initialValue != Interlocked.CompareExchange(ref _openResultCount, newValue, initialValue));
+            return newValue;
         }
 
         internal void Dispose()
