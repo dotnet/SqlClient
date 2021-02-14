@@ -62,20 +62,27 @@ namespace Microsoft.Data.SqlTypes
             const int SQLTicksPerHour = SQLTicksPerMinute * 60;
             const int SQLTicksPerDay = SQLTicksPerHour * 24;
             const int MinDay = -53690;                // Jan 1 1753
-            const int MaxDay = 2958463;               // Dec 31 9999 is this many days from Jan 1 1900
+            const uint MaxDay = 2958463;               // Dec 31 9999 is this many days from Jan 1 1900
+            const uint MaxTime = SQLTicksPerDay - 1; // = 25919999,  11:59:59:997PM
             const int MinTime = 0;                    // 00:00:0:000PM
-            const int MaxTime = SQLTicksPerDay - 1; // = 25919999,  11:59:59:997PM
+            const long BaseDateTicks = 599266080000000000L;//new DateTime(1900, 1, 1).Ticks;
 
-            if (daypart < MinDay || daypart > MaxDay || timepart < MinTime || timepart > MaxTime)
+            if ((uint)daypart > MaxDay || (uint)timepart > MaxTime || daypart < MinDay || timepart < MinTime)
             {
-                throw new OverflowException(SQLResource.DateTimeOverflowMessage);
+                ThrowOverflowException();
             }
 
-            long baseDateTicks = new DateTime(1900, 1, 1).Ticks;
             long dayticks = daypart * TimeSpan.TicksPerDay;
-            long timeticks = ((long)(timepart / SQLTicksPerMillisecond + 0.5)) * TimeSpan.TicksPerMillisecond;
+            double timePartPerMs = timepart / SQLTicksPerMillisecond;
+            double int1 = timePartPerMs + 0.5;
+            long timeticks1 = ((long)int1) * TimeSpan.TicksPerMillisecond;
+            long ticks1 = BaseDateTicks + dayticks + timeticks1;
+            return new DateTime(ticks1);
+        }
 
-            return new DateTime(baseDateTicks + dayticks + timeticks);
+        private static void ThrowOverflowException()
+        {
+            throw new OverflowException(SQLResource.DateTimeOverflowMessage);
         }
         #endregion
 
