@@ -28,6 +28,7 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(retryLogic != null, $"The '{nameof(retryLogic)}' cannot be null.");
             AppContext.TryGetSwitch(EnableRetryLogicSwitch, out enableRetryLogic);
+            SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.SqlRetryLogicProvider|INFO> AppContext switch \"{1}\"={2}.", _typeName, EnableRetryLogicSwitch, enableRetryLogic);
             RetryLogic = retryLogic;
         }
 

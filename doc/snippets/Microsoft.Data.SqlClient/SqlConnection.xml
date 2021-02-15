@@ -1061,6 +1061,9 @@ To apply the retry logic do the following steps before opening the connection:
 > [NOTE!]
 > Detecting the retriable exception is a vital part of the retry pattern. Before applying the retry logic it is necessary to put the exceptions under scrutiny and choose a best fit retry provider. First of all, log the exceptions and find the transient faults.  
 
+> [NOTE!]
+> The connection **timeout** process starts after applying the retry time delay by start attempting to open a connection, and there is no timing overlap between these two processes.
+
 ## Example
 The following sample tries to open a connection to an invalid database to simulate a condition that the database service is not available temporarily. You should manually create the database while the <xref:Microsoft.Data.SqlClient.SqlConnection> tries to establish the connection.  
 

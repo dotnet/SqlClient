@@ -2799,6 +2799,9 @@ To apply the retry logic do the following steps before executing the command:
 > [NOTE!]
 > Detecting the retriable exception is a vital part of the retry pattern. Before applying the retry logic it is necessary to put the exceptions under scrutiny and choose a best fit retry provider. First of all, log the exceptions and find the transient faults.  
 
+> [NOTE!]
+> The command **timeout** process starts after applying the retry time delay by start attempting to execute a command, and there is no timing overlap between these two processes.
+
 ## Example
 The following sample creates a database and establishes an active connection to it. And while the database has an active connection tries to drop it with a new <xref:Microsoft.Data.SqlClient.SqlConnection> and a <xref:Microsoft.Data.SqlClient.SqlCommand> that uses a <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider>. You should kill the active connection through the database to unblock the second command before excceeding the number of retries.  
 The blocking connection simulates a situation like a command is still running in the database and it's likely to finish.  
