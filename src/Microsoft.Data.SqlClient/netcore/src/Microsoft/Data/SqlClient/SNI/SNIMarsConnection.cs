@@ -75,7 +75,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     return TdsEnums.SNI_SUCCESS_IO_PENDING;
                 }
                 SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.SNIMarsConnection.StartReceive |SNI|ERR> Connection not useable.");
-                return SNICommon.ReportSNIError(SNIProviders.SMUX_PROV, 0, SNICommon.ConnNotUsableError, string.Empty);
+                return SNICommon.ReportSNIError(SNIProviders.SMUX_PROV, 0, SNICommon.ConnNotUsableError, Strings.SNI_ERROR_19);
             }
             finally
             {
@@ -293,7 +293,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
                         if (!_sessions.ContainsKey(_currentHeader.sessionId))
                         {
-                            SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.SMUX_PROV, 0, SNICommon.InvalidParameterError, string.Empty);
+                            SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.SMUX_PROV, 0, SNICommon.InvalidParameterError, Strings.SNI_ERROR_5);
                             HandleReceiveError(packet);
                             _lowerHandle.Dispose();
                             _lowerHandle = null;
