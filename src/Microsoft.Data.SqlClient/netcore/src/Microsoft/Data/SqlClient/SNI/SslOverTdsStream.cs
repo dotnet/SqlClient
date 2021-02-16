@@ -28,6 +28,12 @@ namespace Microsoft.Data.SqlClient.SNI
         /// Constructor
         /// </summary>
         /// <param name="stream">Underlying stream</param>
+        public SslOverTdsStream(Stream stream) : this(stream, default) { }
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="stream">Underlying stream</param>
         /// <param name="connectionId">Connection Id of parent stream handle</param>
         public SslOverTdsStream(Stream stream, Guid connectionId = default)
         {
