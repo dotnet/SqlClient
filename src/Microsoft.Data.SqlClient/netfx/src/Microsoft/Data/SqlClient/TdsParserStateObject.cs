@@ -24,10 +24,7 @@ namespace Microsoft.Data.SqlClient
 
     sealed internal class TdsParserStateObject
     {
-        private const int TimeoutStopped = 0;
-        private const int TimeoutRunning = 1;
-        private const int TimeoutExpiredAsync = 2;
-        private const int TimeoutExpiredSync = 3;
+
 
         private const int AttentionTimeoutSeconds = 5;
 
@@ -40,6 +37,11 @@ namespace Microsoft.Data.SqlClient
 
         private sealed class TimeoutState
         {
+            public const int Stopped = 0;
+            public const int Running = 1;
+            public const int ExpiredAsync = 2;
+            public const int ExpiredSync = 3;
+
             private readonly int _value;
 
             public TimeoutState(int value)
@@ -2356,7 +2358,7 @@ namespace Microsoft.Data.SqlClient
 
         public void SetTimeoutStateStopped()
         {
-            Interlocked.Exchange(ref _timeoutState, TimeoutStopped);
+            Interlocked.Exchange(ref _timeoutState, TimeoutState.Stopped);
             _timeoutIdentityValue = 0;
         }
 
@@ -2365,7 +2367,7 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 int state = _timeoutState;
-                return state == TimeoutExpiredAsync || state == TimeoutExpiredSync;
+                return state == TimeoutState.ExpiredAsync || state == TimeoutState.ExpiredSync;
             }
         }
 
@@ -2382,7 +2384,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // the return value is not useful here because no choice is going to be made using it 
                 // we only want to make this call to set the state knowing that it will be seen later
-                OnTimeoutCore(TimeoutRunning, TimeoutExpiredAsync);
+                OnTimeoutCore(TimeoutState.Running, TimeoutState.ExpiredAsync);
             }
             else
             {
@@ -2392,7 +2394,7 @@ namespace Microsoft.Data.SqlClient
 
         private bool OnTimeoutSync()
         {
-            return OnTimeoutCore(TimeoutRunning, TimeoutExpiredSync);
+            return OnTimeoutCore(TimeoutState.Running, TimeoutState.ExpiredSync);
         }
 
         /// <summary>
@@ -2404,7 +2406,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns>boolean value indicating whether the call changed the timeout state</returns>
         private bool OnTimeoutCore(int expectedState, int targetState)
         {
-            Debug.Assert(targetState == TimeoutExpiredAsync || targetState == TimeoutExpiredSync, "OnTimeoutCore must have an expiry state as the targetState");
+            Debug.Assert(targetState == TimeoutState.ExpiredAsync || targetState == TimeoutState.ExpiredSync, "OnTimeoutCore must have an expiry state as the targetState");
 
             bool retval = false;
             if (Interlocked.CompareExchange(ref _timeoutState, targetState, expectedState) == expectedState)
@@ -2545,8 +2547,8 @@ namespace Microsoft.Data.SqlClient
                 // if the state is currently stopped then change it to running and allocate a new identity value from 
                 // the identity source. The identity value is used to correlate timer callback events to the currently
                 // running timeout and prevents a late timer callback affecting a result it does not relate to
-                int previousTimeoutState = Interlocked.CompareExchange(ref _timeoutState, TimeoutRunning, TimeoutStopped);
-                if (previousTimeoutState == TimeoutStopped)
+                int previousTimeoutState = Interlocked.CompareExchange(ref _timeoutState, TimeoutState.Running, TimeoutState.Stopped);
+                if (previousTimeoutState == TimeoutState.Stopped)
                 {
                     Debug.Assert(_timeoutIdentityValue == 0, "timer was previously stopped without resetting the _identityValue");
                     _timeoutIdentityValue = Interlocked.Increment(ref _timeoutIdentitySource);
@@ -2566,7 +2568,7 @@ namespace Microsoft.Data.SqlClient
                 // >0 == Actual timeout remaining
                 int msecsRemaining = GetTimeoutRemaining();
 
-                Debug.Assert(previousTimeoutState == TimeoutStopped, "previous timeout state was not Stopped");
+                Debug.Assert(previousTimeoutState == TimeoutState.Stopped, "previous timeout state was not Stopped");
                 if (msecsRemaining > 0)
                 {
                     ChangeNetworkPacketTimeout(msecsRemaining, Timeout.Infinite);
@@ -2983,11 +2985,11 @@ namespace Microsoft.Data.SqlClient
 
                 // try to change to the stopped state but only do so if currently in the running state
                 // and use cmpexch so that all changes out of the running state are atomic
-                int previousState = Interlocked.CompareExchange(ref _timeoutState, TimeoutRunning, TimeoutStopped);
+                int previousState = Interlocked.CompareExchange(ref _timeoutState, TimeoutState.Running, TimeoutState.Stopped);
 
                 // if the state is anything other than running then this query has reached an end so
                 // set the correlation _timeoutIdentityValue to 0 to prevent late callbacks executing
-                if (_timeoutState != TimeoutRunning)
+                if (_timeoutState != TimeoutState.Running)
                 {
                     _timeoutIdentityValue = 0;
                 }
@@ -4127,7 +4129,7 @@ namespace Microsoft.Data.SqlClient
                 // Attention\Cancellation\Timeouts
                 Debug.Assert(!_attentionReceived && !_attentionSent && !_attentionSending, $"StateObj is still dealing with attention: Sent: {_attentionSent}, Received: {_attentionReceived}, Sending: {_attentionSending}");
                 Debug.Assert(!_cancelled, "StateObj still has cancellation set");
-                Debug.Assert(_timeoutState == TimeoutStopped, "StateObj still has internal timeout set");
+                Debug.Assert(_timeoutState == TimeoutState.Stopped, "StateObj still has internal timeout set");
                 // Errors and Warnings
                 Debug.Assert(!_hasErrorOrWarning, "StateObj still has stored errors or warnings");
             }
