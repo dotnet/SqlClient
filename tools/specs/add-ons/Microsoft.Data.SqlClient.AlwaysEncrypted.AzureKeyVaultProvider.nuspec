@@ -24,7 +24,7 @@ Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyStoreProvider.SqlColumnEncrypti
     <copyright>© Microsoft Corporation. All rights reserved.</copyright>
     <tags>sqlclient microsoft.data.sqlclient azurekeyvaultprovider akvprovider alwaysencrypted</tags>
     <dependencies>
-      <group targetFramework="net461">
+      <group targetFramework="net46">
         <dependency id="Microsoft.Data.SqlClient" version="[1.0.19269.1,)" />
         <dependency id="Microsoft.Azure.KeyVault" version="[3.0.4,4.0.0)" />
         <dependency id="Microsoft.Azure.KeyVault.WebKey" version="[3.0.4,4.0.0)" />
