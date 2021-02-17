@@ -332,23 +332,7 @@ namespace Microsoft.Data.SqlClient
             // IMPORTANT - this decrements the connection wide open result count for all
             // operations not under a transaction!  Do not call if you intend to modify the
             // count for a transaction!
-            int initialValue, newValue;
-            // Wrapping the decrement logic and verifying with interlocked to ensure
-            // parallel threads don't interfere with each other.
-            do
-            {
-                initialValue = _nonTransactedOpenResultCount;
-                // Never decrement below zero. This could happen in race conditions where
-                // we are processing DONE from an attention packet and DONE from results
-                // in parallel threads.
-                if (initialValue == 0)
-                {
-                    break;
-                }
-
-                newValue = initialValue - 1;
-            }
-            while (initialValue != Interlocked.CompareExchange(ref _nonTransactedOpenResultCount, newValue, initialValue));
+            Interlocked.Decrement(ref _nonTransactedOpenResultCount);
             Debug.Assert(_nonTransactedOpenResultCount >= 0, "Unexpected result count state");
         }
 
