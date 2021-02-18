@@ -47,8 +47,9 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="keysTobeSentToEnclave">Keys that need to sent to the enclave</param>
         /// <param name="serverName"></param>
+        /// <param name="connection"></param>
         /// <returns></returns>
-        private List<ColumnEncryptionKeyInfo> GetDecryptedKeysToBeSentToEnclave(Dictionary<int, SqlTceCipherInfoEntry> keysTobeSentToEnclave, string serverName)
+        private List<ColumnEncryptionKeyInfo> GetDecryptedKeysToBeSentToEnclave(Dictionary<int, SqlTceCipherInfoEntry> keysTobeSentToEnclave, string serverName, SqlConnection connection)
         {
             List<ColumnEncryptionKeyInfo> decryptedKeysToBeSentToEnclave = new List<ColumnEncryptionKeyInfo>();
 
@@ -57,7 +58,7 @@ namespace Microsoft.Data.SqlClient
                 SqlClientSymmetricKey sqlClientSymmetricKey = null;
                 SqlEncryptionKeyInfo? encryptionkeyInfoChosen = null;
                 SqlSecurityUtility.DecryptSymmetricKey(cipherInfo, serverName, out sqlClientSymmetricKey,
-                    out encryptionkeyInfoChosen);
+                    out encryptionkeyInfoChosen, connection);
 
                 if (sqlClientSymmetricKey == null)
                     throw SQL.NullArgumentInternal("sqlClientSymmetricKey", ClassName, GetDecryptedKeysToBeSentToEnclaveName);

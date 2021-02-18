@@ -167,14 +167,14 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Encrypts the plaintext.
         /// </summary>
-        internal static byte[] EncryptWithKey(byte[] plainText, SqlCipherMetadata md, string serverName)
+        internal static byte[] EncryptWithKey(byte[] plainText, SqlCipherMetadata md, string serverName, SqlConnection connection)
         {
             Debug.Assert(serverName != null, @"serverName should not be null in EncryptWithKey.");
 
             // Initialize cipherAlgo if not already done.
             if (!md.IsAlgorithmInitialized())
             {
-                SqlSecurityUtility.DecryptSymmetricKey(md, serverName);
+                SqlSecurityUtility.DecryptSymmetricKey(md, serverName, connection);
             }
 
             Debug.Assert(md.IsAlgorithmInitialized(), "Encryption Algorithm is not initialized");
@@ -206,14 +206,14 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Decrypts the ciphertext.
         /// </summary>
-        internal static byte[] DecryptWithKey(byte[] cipherText, SqlCipherMetadata md, string serverName)
+        internal static byte[] DecryptWithKey(byte[] cipherText, SqlCipherMetadata md, string serverName, SqlConnection connection)
         {
             Debug.Assert(serverName != null, @"serverName should not be null in DecryptWithKey.");
 
             // Initialize cipherAlgo if not already done.
             if (!md.IsAlgorithmInitialized())
             {
-                SqlSecurityUtility.DecryptSymmetricKey(md, serverName);
+                SqlSecurityUtility.DecryptSymmetricKey(md, serverName,connection);
             }
 
             Debug.Assert(md.IsAlgorithmInitialized(), "Decryption Algorithm is not initialized");
@@ -240,14 +240,14 @@ namespace Microsoft.Data.SqlClient
         /// <para> Decrypts the symmetric key and saves it in metadata. In addition, initializes
         /// the SqlClientEncryptionAlgorithm for rapid decryption.</para>
         /// </summary>
-        internal static void DecryptSymmetricKey(SqlCipherMetadata md, string serverName)
+        internal static void DecryptSymmetricKey(SqlCipherMetadata md, string serverName, SqlConnection connection)
         {
             Debug.Assert(md != null, "md should not be null in DecryptSymmetricKey.");
 
             SqlClientSymmetricKey symKey = null;
             SqlEncryptionKeyInfo? encryptionkeyInfoChosen = null;
 
-            DecryptSymmetricKey(md.EncryptionInfo, serverName, out symKey, out encryptionkeyInfoChosen);
+            DecryptSymmetricKey(md.EncryptionInfo, serverName, out symKey, out encryptionkeyInfoChosen, connection);
 
             // Given the symmetric key instantiate a SqlClientEncryptionAlgorithm object and cache it in metadata
             md.CipherAlgorithm = null;
@@ -263,7 +263,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Decrypts the symmetric key and saves it in metadata.
         /// </summary>
-        internal static void DecryptSymmetricKey(SqlTceCipherInfoEntry? sqlTceCipherInfoEntry, string serverName, out SqlClientSymmetricKey sqlClientSymmetricKey, out SqlEncryptionKeyInfo? encryptionkeyInfoChosen)
+        internal static void DecryptSymmetricKey(SqlTceCipherInfoEntry? sqlTceCipherInfoEntry, string serverName, out SqlClientSymmetricKey sqlClientSymmetricKey, out SqlEncryptionKeyInfo? encryptionkeyInfoChosen, SqlConnection connection)
         {
             Debug.Assert(serverName != null, @"serverName should not be null in DecryptSymmetricKey.");
             Debug.Assert(sqlTceCipherInfoEntry.HasValue, "sqlTceCipherInfoEntry should not be null in DecryptSymmetricKey.");
@@ -279,7 +279,7 @@ namespace Microsoft.Data.SqlClient
             {
                 try
                 {
-                    if (cache.GetKey(keyInfo, serverName, out sqlClientSymmetricKey))
+                    if (cache.GetKey(keyInfo, serverName, out sqlClientSymmetricKey, connection))
                     {
                         encryptionkeyInfoChosen = keyInfo;
                         break;
@@ -316,7 +316,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Verifies Column Master Key Signature.
         /// </summary>
-        internal static void VerifyColumnMasterKeySignature(string keyStoreName, string keyPath, string serverName, bool isEnclaveEnabled, byte[] CMKSignature)
+        internal static void VerifyColumnMasterKeySignature(string keyStoreName, string keyPath, string serverName, bool isEnclaveEnabled, byte[] CMKSignature, SqlConnection connection)
         {
             bool isValidSignature = false;
 
@@ -330,31 +330,8 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.ColumnMasterKeySignatureNotFound(keyPath);
                 }
 
-                // Check against the trusted key paths
-                //
-                // Get the List corresponding to the connected server
-                IList<string> trustedKeyPaths;
-                if (SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.TryGetValue(serverName, out trustedKeyPaths))
-                {
-                    // If the list is null or is empty or if the keyPath doesn't exist in the trusted key paths, then throw an exception.
-                    if ((trustedKeyPaths == null) || (trustedKeyPaths.Count() == 0) ||
-                        // (trustedKeyPaths.Where(s => s.Equals(keyInfo.keyPath, StringComparison.InvariantCultureIgnoreCase)).Count() == 0)) {
-                        (trustedKeyPaths.Any(
-                            s => s.Equals(keyPath, StringComparison.InvariantCultureIgnoreCase)) == false))
-                    {
-                        // throw an exception since the key path is not in the trusted key paths list for this server
-                        throw SQL.UntrustedKeyPath(keyPath, serverName);
-                    }
-                }
-
-                // Key Not found, attempt to look up the provider and verify CMK Signature
-                SqlColumnEncryptionKeyStoreProvider provider;
-                if (!SqlConnection.TryGetColumnEncryptionKeyStoreProvider(keyStoreName, out provider))
-                {
-                    throw SQL.InvalidKeyStoreProviderName(keyStoreName,
-                        SqlConnection.GetColumnEncryptionSystemKeyStoreProviders(),
-                        SqlConnection.GetColumnEncryptionCustomKeyStoreProviders());
-                }
+                // Key Not found in, attempt to look up the provider and verify CMK Signature
+                SqlColumnEncryptionKeyStoreProvider provider = TryGetEncryptionKeyStoreProvider(serverName, keyPath, keyStoreName, connection);
 
                 bool? signatureVerificationResult = ColumnMasterKeyMetadataSignatureVerificationCache.GetSignatureVerificationResult(keyStoreName, keyPath, isEnclaveEnabled, CMKSignature);
 
@@ -381,6 +358,36 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.ColumnMasterKeySignatureVerificationFailed(keyPath);
             }
+        }
+
+        internal static SqlColumnEncryptionKeyStoreProvider TryGetEncryptionKeyStoreProvider(string serverName, string keyPath, string keyStoreName, SqlConnection connection)
+        {
+            // Check against the trusted key paths
+            //
+            // Get the List corresponding to the connected server
+            IList<string> trustedKeyPaths;
+            if (SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.TryGetValue(serverName, out trustedKeyPaths))
+            {
+                // If the list is null or is empty or if the keyPath doesn't exist in the trusted key paths, then throw an exception.
+                if ((trustedKeyPaths == null) || (trustedKeyPaths.Count() == 0) ||
+                    // (trustedKeyPaths.Where(s => s.Equals(keyInfo.keyPath, StringComparison.InvariantCultureIgnoreCase)).Count() == 0)) {
+                    (trustedKeyPaths.Any(
+                        s => s.Equals(keyPath, StringComparison.InvariantCultureIgnoreCase)) == false))
+                {
+                    // throw an exception since the key path is not in the trusted key paths list for this server
+                    throw SQL.UntrustedKeyPath(keyPath, serverName);
+                }
+            }
+
+            // Key Not found, attempt to look up the provider
+            if (!SqlConnection.TryGetColumnEncryptionKeyStoreProvider(keyStoreName, out SqlColumnEncryptionKeyStoreProvider provider, connection))
+            {
+                throw SQL.InvalidKeyStoreProviderName(keyStoreName,
+                    SqlConnection.GetColumnEncryptionSystemKeyStoreProviders(),
+                    SqlConnection.GetColumnEncryptionCustomKeyStoreProviders(connection));
+            }
+
+            return provider;
         }
     }
 }

@@ -5977,7 +5977,7 @@ namespace Microsoft.Data.SqlClient
                         try
                         {
                             // CipherInfo is present, decrypt and read
-                            byte[] unencryptedBytes = SqlSecurityUtility.DecryptWithKey(b, md.cipherMD, _connHandler.ConnectionOptions.DataSource);
+                            byte[] unencryptedBytes = SqlSecurityUtility.DecryptWithKey(b, md.cipherMD, _connHandler.ConnectionOptions.DataSource, _connHandler.Connection);
 
                             if (unencryptedBytes != null)
                             {
@@ -9291,7 +9291,7 @@ namespace Microsoft.Data.SqlClient
                         }
 
                         Debug.Assert(serializedValue != null, "serializedValue should not be null in TdsExecuteRPC.");
-                        encryptedValue = SqlSecurityUtility.EncryptWithKey(serializedValue, param.CipherMetadata, _connHandler.ConnectionOptions.DataSource);
+                        encryptedValue = SqlSecurityUtility.EncryptWithKey(serializedValue, param.CipherMetadata, _connHandler.ConnectionOptions.DataSource, _connHandler.Connection);
                     }
                     catch (Exception e)
                     {
@@ -10169,7 +10169,7 @@ namespace Microsoft.Data.SqlClient
                         _SqlMetaData md = metadataCollection[col];
                         if (md.isEncrypted)
                         {
-                            SqlSecurityUtility.DecryptSymmetricKey(md.cipherMD, serverName);
+                            SqlSecurityUtility.DecryptSymmetricKey(md.cipherMD, serverName, _connHandler.Connection);
                         }
                     }
                 }
@@ -10519,7 +10519,8 @@ namespace Microsoft.Data.SqlClient
             return SqlSecurityUtility.EncryptWithKey(
                     serializedValue,
                     metadata.cipherMD,
-                    _connHandler.ConnectionOptions.DataSource);
+                    _connHandler.ConnectionOptions.DataSource, 
+                    _connHandler.Connection);
         }
 
         internal Task WriteBulkCopyValue(object value, SqlMetaDataPriv metadata, TdsParserStateObject stateObj, bool isSqlType, bool isDataFeed, bool isNull)

@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// <para> Retrieves Symmetric Key (in plaintext) given the encryption material.</para>
         /// </summary>
-        internal bool GetKey(SqlEncryptionKeyInfo keyInfo, string serverName, out SqlClientSymmetricKey encryptionKey)
+        internal bool GetKey(SqlEncryptionKeyInfo keyInfo, string serverName, out SqlClientSymmetricKey encryptionKey, SqlConnection connection)
         {
             Debug.Assert(serverName != null, @"serverName should not be null.");
 
@@ -77,14 +77,9 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 
-                // Key Not found, attempt to look up the provider and decrypt CEK
-                SqlColumnEncryptionKeyStoreProvider provider;
-                if (!SqlConnection.TryGetColumnEncryptionKeyStoreProvider(keyInfo.keyStoreName, out provider))
-                {
-                    throw SQL.UnrecognizedKeyStoreProviderName(keyInfo.keyStoreName,
-                            SqlConnection.GetColumnEncryptionSystemKeyStoreProviders(),
-                            SqlConnection.GetColumnEncryptionCustomKeyStoreProviders());
-                }
+                // Key Not found in cache, attempt to look up the provider and decrypt CEK
+                SqlColumnEncryptionKeyStoreProvider provider = 
+                    SqlSecurityUtility.TryGetEncryptionKeyStoreProvider(serverName, keyInfo.keyPath, keyInfo.keyStoreName, connection);
 
                 // Decrypt the CEK
                 // We will simply bubble up the exception from the DecryptColumnEncryptionKey function.
