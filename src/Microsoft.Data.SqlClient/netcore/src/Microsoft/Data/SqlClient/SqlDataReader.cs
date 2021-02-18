@@ -834,11 +834,18 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/Dispose/*' />
         protected override void Dispose(bool disposing)
         {
-            if (disposing)
+            try
             {
-                Close();
+                if (disposing)
+                {
+                    Close();
+                }
+                base.Dispose(disposing);
             }
-            base.Dispose(disposing);
+            catch(SqlException ex)
+            {
+                SqlClientEventSource.Log.TryTraceEvent("SqlDataReader.Dispose | ERR | Error: {0}", ex);
+            }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/Close/*' />
@@ -923,10 +930,6 @@ namespace Microsoft.Data.SqlClient
                         }
                     }
                 }
-            }
-            catch (SqlException ex)
-            {
-                SqlClientEventSource.Log.TryTraceEvent("SqlDataReader.Close | ERR | Error Stack: {0}, Error Message: {1}", ex, ex.Message);
             }
             finally
             {
