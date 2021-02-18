@@ -264,7 +264,7 @@ namespace Microsoft.Data.SqlClient
                 return _typeInfo.CanCastTo(typeof(SqlDependencyProcessDispatcher), s_sqlObjRef);
             }
 
-            internal ObjRef GetObjRef() 
+            internal ObjRef GetObjRef()
             {
                 return s_sqlObjRef;
             }
@@ -608,8 +608,8 @@ namespace Microsoft.Data.SqlClient
                             using (MemoryStream stream = new MemoryStream())
                             {
                                 SqlClientObjRef objRef = new SqlClientObjRef(_processDispatcher);
-                                DataContractSerializer formatter = new DataContractSerializer(objRef.GetType());
-                                GetSerializedObject(objRef, formatter, stream);
+                                DataContractSerializer serializer = new DataContractSerializer(objRef.GetType());
+                                GetSerializedObject(objRef, serializer, stream);
                                 SNINativeMethodWrapper.SetData(stream.ToArray()); // Native will be forced to synchronize and not overwrite.
                             }
                         }
@@ -640,15 +640,15 @@ namespace Microsoft.Data.SqlClient
 #endif
                 using (MemoryStream stream = new MemoryStream(nativeStorage))
                 {
-                    DataContractSerializer formatter = new DataContractSerializer(typeof(SqlClientObjRef));
+                    DataContractSerializer serializer = new DataContractSerializer(typeof(SqlClientObjRef));
                     if (SqlClientObjRef.CanCastToSqlDependencyProcessDispatcher())
                     {
                         // Deserialize and set for appdomain.
-                        _processDispatcher = GetDeserializedObject(formatter, stream);
+                        _processDispatcher = GetDeserializedObject(serializer, stream);
                     }
                     else
                     {
-                        throw new ArgumentException("Unexpected type", nameof(SqlClientObjRef._typeInfo));
+                        throw new ArgumentException(Strings.SqlDependency_UnexpectedValueOnDeserialize);
                     }
                     SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP> processDispatcher obtained, ID: {0}", _processDispatcher.ObjectID);
                 }
@@ -660,18 +660,16 @@ namespace Microsoft.Data.SqlClient
         // ---------------------------------------------------------
 
         [SecurityPermission(SecurityAction.Assert, Flags = SecurityPermissionFlag.SerializationFormatter)]
-        private static void GetSerializedObject(SqlClientObjRef objRef, DataContractSerializer formatter, MemoryStream stream)
+        private static void GetSerializedObject(SqlClientObjRef objRef, DataContractSerializer serializer, MemoryStream stream)
         {
-            formatter.WriteObject(stream, objRef);
+            serializer.WriteObject(stream, objRef);
         }
 
         [SecurityPermission(SecurityAction.Assert, Flags = SecurityPermissionFlag.SerializationFormatter)]
-        private static SqlDependencyProcessDispatcher GetDeserializedObject(DataContractSerializer formatter, MemoryStream stream)
+        private static SqlDependencyProcessDispatcher GetDeserializedObject(DataContractSerializer serializer, MemoryStream stream)
         {
-            object refResult = formatter.ReadObject(stream);
+            object refResult = serializer.ReadObject(stream);
             var result = RemotingServices.Unmarshal((refResult as SqlClientObjRef).GetObjRef());
-
-            Debug.Assert(result.GetType() == typeof(SqlDependencyProcessDispatcher), "Unexpected type stored in native!");
             return result as SqlDependencyProcessDispatcher;
         }
 
