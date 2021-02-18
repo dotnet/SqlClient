@@ -13,6 +13,7 @@ namespace Microsoft.Data.SqlClient.SNI
     internal sealed class LocalDB
     {
         private static readonly LocalDB Instance = new LocalDB();
+        private const string s_className = nameof(LocalDB);
 
         //HKEY_LOCAL_MACHINE
         private const string LocalDBInstalledVersionRegistryKey = "SOFTWARE\\Microsoft\\Microsoft SQL Server Local DB\\Installed Versions\\";
@@ -102,7 +103,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         private bool LoadUserInstanceDll()
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("LocalDB.Windows.LoadUserInstanceDll | SNI | INFO | SCOPE | Entering Scope {0}");
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent(s_className);
             try
             {
                 // Check in a non thread-safe way if the handle is already set for performance.
@@ -190,7 +191,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns></returns>
         private string GetUserInstanceDllPath(out LocalDBErrorState errorState)
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("LocalDB.Windows.GetUserInstanceDllPath | SNI | SCOPE | INFO | Entering Scope {0} ");
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent(s_className);
             try
             {
                 string dllPath = null;

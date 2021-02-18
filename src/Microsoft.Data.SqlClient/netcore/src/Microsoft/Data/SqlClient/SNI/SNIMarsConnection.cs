@@ -14,6 +14,8 @@ namespace Microsoft.Data.SqlClient.SNI
     /// </summary>
     internal class SNIMarsConnection
     {
+        private const string s_className = nameof(SNIMarsConnection);
+
         private readonly Guid _connectionId = Guid.NewGuid();
         private readonly Dictionary<int, SNIMarsHandle> _sessions = new Dictionary<int, SNIMarsHandle>();
         private readonly byte[] _headerBytes = new byte[SNISMUXHeader.HEADER_LENGTH];
@@ -44,7 +46,7 @@ namespace Microsoft.Data.SqlClient.SNI
         public SNIMarsConnection(SNIHandle lowerHandle)
         {
             _lowerHandle = lowerHandle;
-            SqlClientEventSource.Log.TrySNITraceEvent("SNIMarsConnection.ctor | SNI | INFO | Trace | Created MARS Session Id {0}", ConnectionId);
+            SqlClientEventSource.Log.TrySNITraceEvent(s_className, " | SNI | INFO | ", "Created MARS Session Id {0}", args0: ConnectionId);
             _lowerHandle.SetAsyncCallbacks(HandleReceiveComplete, HandleSendComplete);
         }
 
@@ -55,7 +57,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 ushort sessionId = _nextSessionId++;
                 SNIMarsHandle handle = new SNIMarsHandle(this, sessionId, callbackObject, async);
                 _sessions.Add(sessionId, handle);
-                SqlClientEventSource.Log.TrySNITraceEvent("SNIMarsConnection.CreateMarsSession | SNI | INFO | Trace | MARS Session Id {0}, SNI MARS Handle Id {1}, created new MARS Session {2}", ConnectionId, handle?.ConnectionId, sessionId);
+                SqlClientEventSource.Log.TrySNITraceEvent(s_className, " | SNI | INFO | ", "MARS Session Id {0}, SNI MARS Handle Id {1}, created new MARS Session {2}", args0: ConnectionId, args1: handle?.ConnectionId, args2: sessionId);
                 return handle;
             }
         }
@@ -66,17 +68,17 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns></returns>
         public uint StartReceive()
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("SNIMarsConnection.StartReceive | SNI | INFO | SCOPE | Entering Scope {0}");
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent(s_className);
             try
             {
                 SNIPacket packet = null;
 
                 if (ReceiveAsync(ref packet) == TdsEnums.SNI_SUCCESS_IO_PENDING)
                 {
-                    SqlClientEventSource.Log.TrySNITraceEvent("SNIMarsConnection.StartReceive | SNI | INFO | Trace | MARS Session Id {0}, Success IO pending.", ConnectionId);
+                    SqlClientEventSource.Log.TrySNITraceEvent(s_className, " | SNI | INFO | ", "MARS Session Id {0}, Success IO pending.", args0: ConnectionId);
                     return TdsEnums.SNI_SUCCESS_IO_PENDING;
                 }
-                SqlClientEventSource.Log.TrySNITraceEvent("SNIMarsConnection.StartReceive | SNI | ERR | MARS Session Id {0}, Connection not usable.", ConnectionId);
+                SqlClientEventSource.Log.TrySNITraceEvent(s_className, " | SNI | ERR | ", "MARS Session Id {0}, Connection not usable.", args0: ConnectionId);
                 return SNICommon.ReportSNIError(SNIProviders.SMUX_PROV, 0, SNICommon.ConnNotUsableError, Strings.SNI_ERROR_19);
             }
             finally
@@ -92,7 +94,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error code</returns>
         public uint Send(SNIPacket packet)
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("SNIMarsConnection.Send | SNI | INFO | SCOPE | Entering Scope {0}");
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent(s_className);
             try
             {
                 lock (this)
@@ -114,7 +116,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error code</returns>
         public uint SendAsync(SNIPacket packet, SNIAsyncCallback callback)
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("SNIMarsConnection.SendAsync | SNI | INFO | SCOPE | Entering Scope {0}");
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent(s_className);
             try
             {
                 lock (this)
@@ -135,14 +137,14 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error code</returns>
         public uint ReceiveAsync(ref SNIPacket packet)
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("SNIMarsConnection.ReceiveAsync | SNI | INFO | SCOPE | Entering Scope {0}");
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent(s_className);
             try
             {
                 if (packet != null)
                 {
                     ReturnPacket(packet);
 #if DEBUG
-                    SqlClientEventSource.Log.TrySNITraceEvent("SNIMarsConnection.ReceiveAsync | SNI | INFO | Trace | MARS Session Id {0}, Packet {1} returned", ConnectionId, packet?._id);
+                    SqlClientEventSource.Log.TrySNITraceEvent(s_className, " | SNI | INFO | ", "MARS Session Id {0}, Packet {1} returned", args0: ConnectionId, args1: packet?._id);
 #endif
                     packet = null;
                 }
@@ -151,7 +153,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 {
                     var response = _lowerHandle.ReceiveAsync(ref packet);
 #if DEBUG
-                    SqlClientEventSource.Log.TrySNITraceEvent("SNIMarsConnection.ReceiveAsync | SNI | INFO | Trace | MARS Session Id {0}, Received new packet {1}", ConnectionId, packet?._id);
+                    SqlClientEventSource.Log.TrySNITraceEvent(s_className, " | SNI | INFO | ", "MARS Session Id {0}, Received new packet {1}", args0: ConnectionId, args1: packet?._id);
 #endif
                     return response;
                 }
@@ -168,7 +170,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error status</returns>
         public uint CheckConnection()
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("SNIMarsConnection.CheckConnection | SNI | INFO | SCOPE | Entering Scope {0}");
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent(s_className);
             try
             {
                 lock (this)
@@ -194,11 +196,11 @@ namespace Microsoft.Data.SqlClient.SNI
                 {
                     handle.HandleReceiveError(packet);
 #if DEBUG
-                    SqlClientEventSource.Log.TrySNITraceEvent("SNIMarsConnection.HandleReceiveError | SNI | ERR | Trace | MARS Session Id {0}, Packet {1} has Completion Callback", ConnectionId, packet?._id);
+                    SqlClientEventSource.Log.TrySNITraceEvent(s_className, " | SNI | ERR | ", "MARS Session Id {0}, Packet {1} has Completion Callback", args0: ConnectionId, args1: packet?._id);
                 }
                 else
                 {
-                    SqlClientEventSource.Log.TrySNITraceEvent("SNIMarsConnection.HandleReceiveError | SNI | ERR | Trace | MARS Session Id {0}, Packet {1} does not have Completion Callback, error not handled.", ConnectionId, packet?._id);
+                    SqlClientEventSource.Log.TrySNITraceEvent(s_className, " | SNI | ERR | ", "MARS Session Id {0}, Packet {1} does not have Completion Callback, error not handled.", args0: ConnectionId, args1: packet?._id);
 #endif
                 }
             }
@@ -223,7 +225,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="sniErrorCode">SNI error code</param>
         public void HandleReceiveComplete(SNIPacket packet, uint sniErrorCode)
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("SNIMarsConnection.HandleReceiveComplete | SNI | INFO | SCOPE | Entering Scope {0} ");
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent(s_className);
             try
             {
                 SNISMUXHeader currentHeader = null;
@@ -235,7 +237,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     lock (this)
                     {
                         HandleReceiveError(packet);
-                        SqlClientEventSource.Log.TrySNITraceEvent("SNIMarsConnection.HandleReceiveComplete | SNI | ERR | MARS Session Id {0}, Handled receive error code: {1}", _lowerHandle?.ConnectionId, sniErrorCode);
+                        SqlClientEventSource.Log.TrySNITraceEvent(s_className, " | SNI | ERR | ", "MARS Session Id {0}, Handled receive error code: {1}", args0: _lowerHandle?.ConnectionId, args1: sniErrorCode);
                         return;
                     }
                 }
@@ -258,7 +260,7 @@ namespace Microsoft.Data.SqlClient.SNI
                                 if (bytesTaken == 0)
                                 {
                                     sniErrorCode = ReceiveAsync(ref packet);
-                                    SqlClientEventSource.Log.TrySNITraceEvent("SNIMarsConnection.HandleReceiveComplete | SNI | INFO | Trace | MARS Session Id {0}, Non-SMUX Header SNI Packet received with code {1}", ConnectionId, sniErrorCode);
+                                    SqlClientEventSource.Log.TrySNITraceEvent(s_className, " | SNI | INFO | ", "MARS Session Id {0}, Non-SMUX Header SNI Packet received with code {1}", args0: ConnectionId, args1: sniErrorCode);
 
                                     if (sniErrorCode == TdsEnums.SNI_SUCCESS_IO_PENDING)
                                     {
@@ -266,7 +268,7 @@ namespace Microsoft.Data.SqlClient.SNI
                                     }
 
                                     HandleReceiveError(packet);
-                                    SqlClientEventSource.Log.TrySNITraceEvent("SNIMarsConnection.HandleReceiveComplete | SNI | ERR | MARS Session Id {0}, Handled receive error code: {1}", _lowerHandle?.ConnectionId, sniErrorCode);
+                                    SqlClientEventSource.Log.TrySNITraceEvent(s_className, " | SNI | ERR | ", "MARS Session Id {0}, Handled receive error code: {1}", args0: _lowerHandle?.ConnectionId, args1: sniErrorCode);
                                     return;
                                 }
                             }
@@ -275,7 +277,7 @@ namespace Microsoft.Data.SqlClient.SNI
                             _dataBytesLeft = (int)_currentHeader.length;
                             _currentPacket = _lowerHandle.RentPacket(headerSize: 0, dataSize: (int)_currentHeader.length);
 #if DEBUG
-                            SqlClientEventSource.Log.TrySNITraceEvent("SNIMarsConnection.HandleReceiveComplete | SNI | INFO | MARS Session Id {0}, _dataBytesLeft {1}, _currentPacket {2}, Reading data of length: _currentHeader.length {3}", _lowerHandle?.ConnectionId, _dataBytesLeft, currentPacket?._id, _currentHeader?.length);
+                            SqlClientEventSource.Log.TrySNITraceEvent(s_className, " | SNI | INFO | ", "MARS Session Id {0}, _dataBytesLeft {1}, _currentPacket {2}, Reading data of length: _currentHeader.length {3}", args0: _lowerHandle?.ConnectionId, args1: _dataBytesLeft, args2: currentPacket?._id, args3: _currentHeader?.length);
 #endif
                         }
 
@@ -292,7 +294,7 @@ namespace Microsoft.Data.SqlClient.SNI
                                 if (_dataBytesLeft > 0)
                                 {
                                     sniErrorCode = ReceiveAsync(ref packet);
-                                    SqlClientEventSource.Log.TrySNITraceEvent("SNIMarsConnection.HandleReceiveComplete | SNI | INFO | Trace | MARS Session Id {0}, SMUX DATA Header SNI Packet received with code {1}, _dataBytesLeft {2}", ConnectionId, sniErrorCode, _dataBytesLeft);
+                                    SqlClientEventSource.Log.TrySNITraceEvent(s_className, " | SNI | INFO | ", "MARS Session Id {0}, SMUX DATA Header SNI Packet received with code {1}, _dataBytesLeft {2}", args0: ConnectionId, args1: sniErrorCode, args2: _dataBytesLeft);
 
                                     if (sniErrorCode == TdsEnums.SNI_SUCCESS_IO_PENDING)
                                     {
@@ -300,7 +302,7 @@ namespace Microsoft.Data.SqlClient.SNI
                                     }
 
                                     HandleReceiveError(packet);
-                                    SqlClientEventSource.Log.TrySNITraceEvent("SNIMarsConnection.HandleReceiveComplete | SNI | ERR | MARS Session Id {0}, Handled receive error code: {1}", _lowerHandle?.ConnectionId, sniErrorCode);
+                                    SqlClientEventSource.Log.TrySNITraceEvent(s_className, " | SNI | ERR | ", "MARS Session Id {0}, Handled receive error code: {1}", args0: _lowerHandle?.ConnectionId, args1: sniErrorCode);
                                     return;
                                 }
                             }
@@ -312,7 +314,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         {
                             SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.SMUX_PROV, 0, SNICommon.InvalidParameterError, Strings.SNI_ERROR_5);
                             HandleReceiveError(packet);
-                            SqlClientEventSource.Log.TrySNITraceEvent("SNIMarsConnection.HandleReceiveComplete | SNI | ERR | Current Header Session Id {0} not found, MARS Session Id {1} will be destroyed, New SNI error created: {2}", _currentHeader?.sessionId, _lowerHandle?.ConnectionId, sniErrorCode);
+                            SqlClientEventSource.Log.TrySNITraceEvent(s_className, " | SNI | ERR | ", "Current Header Session Id {0} not found, MARS Session Id {1} will be destroyed, New SNI error created: {2}", args0: _currentHeader?.sessionId, args1: _lowerHandle?.ConnectionId, args2: sniErrorCode);
                             _lowerHandle.Dispose();
                             _lowerHandle = null;
                             return;
@@ -321,19 +323,19 @@ namespace Microsoft.Data.SqlClient.SNI
                         if (_currentHeader.flags == (byte)SNISMUXFlags.SMUX_FIN)
                         {
                             _sessions.Remove(_currentHeader.sessionId);
-                            SqlClientEventSource.Log.TrySNITraceEvent("SNIMarsConnection.HandleReceiveComplete | SNI | FIN | MARS Session Id {0}, SMUX_FIN flag received, Current Header Session Id {1} removed", _lowerHandle?.ConnectionId, _currentHeader?.sessionId);
+                            SqlClientEventSource.Log.TrySNITraceEvent(s_className, " | SNI | FIN | ", "MARS Session Id {0}, SMUX_FIN flag received, Current Header Session Id {1} removed", args0: _lowerHandle?.ConnectionId, args1: _currentHeader?.sessionId);
                         }
                         else
                         {
                             currentSession = _sessions[_currentHeader.sessionId];
-                            SqlClientEventSource.Log.TrySNITraceEvent("SNIMarsConnection.HandleReceiveComplete | SNI | INFO | MARS Session Id {0}, Current Session assigned to Session Id {1}", _lowerHandle?.ConnectionId, _currentHeader?.sessionId);
+                            SqlClientEventSource.Log.TrySNITraceEvent(s_className, " | SNI | INFO | ", "MARS Session Id {0}, Current Session assigned to Session Id {1}", args0: _lowerHandle?.ConnectionId, args1: _currentHeader?.sessionId);
                         }
                     }
 
                     if (currentHeader.flags == (byte)SNISMUXFlags.SMUX_DATA)
                     {
                         currentSession.HandleReceiveComplete(currentPacket, currentHeader);
-                        SqlClientEventSource.Log.TrySNITraceEvent("SNIMarsConnection.HandleReceiveComplete | SNI | INFO | SMUX_DATA | MARS Session Id {0}, Current Session {1} completed receiving Data", _lowerHandle?.ConnectionId, _currentHeader?.sessionId);
+                        SqlClientEventSource.Log.TrySNITraceEvent(s_className, " | SNI | INFO | SMUX_DATA | ", "MARS Session Id {0}, Current Session {1} completed receiving Data", args0: _lowerHandle?.ConnectionId, args1: _currentHeader?.sessionId);
                     }
 
                     if (_currentHeader.flags == (byte)SNISMUXFlags.SMUX_ACK)
@@ -341,16 +343,16 @@ namespace Microsoft.Data.SqlClient.SNI
                         try
                         {
                             currentSession.HandleAck(currentHeader.highwater);
-                            SqlClientEventSource.Log.TrySNITraceEvent("SNIMarsConnection.HandleReceiveComplete | SNI | INFO | SMUX_ACK | MARS Session Id {0}, Current Session {1} handled ack", _lowerHandle?.ConnectionId, _currentHeader?.sessionId);
+                            SqlClientEventSource.Log.TrySNITraceEvent(s_className, " | SNI | INFO | SMUX_ACK | ", "MARS Session Id {0}, Current Session {1} handled ack", args0: _lowerHandle?.ConnectionId, args1: _currentHeader?.sessionId);
                         }
                         catch (Exception e)
                         {
-                            SqlClientEventSource.Log.TrySNITraceEvent("SNIMarsConnection.HandleReceiveComplete | SNI | ERR | MARS Session Id {0}, Exception occurred: {2}", _currentHeader?.sessionId, e?.Message);
+                            SqlClientEventSource.Log.TrySNITraceEvent(s_className, " | SNI | ERR | ", "MARS Session Id {0}, Exception occurred: {2}", args0: _currentHeader?.sessionId, args1: e?.Message);
                             SNICommon.ReportSNIError(SNIProviders.SMUX_PROV, SNICommon.InternalExceptionError, e);
                         }
 #if DEBUG
                         Debug.Assert(_currentPacket == currentPacket, "current and _current are not the same");
-                        SqlClientEventSource.Log.TrySNITraceEvent("SNIMarsConnection.HandleReceiveComplete | SNI | INFO | SMUX_ACK | MARS Session Id {0}, Current Packet {1} returned", _lowerHandle?.ConnectionId, currentPacket?._id);
+                        SqlClientEventSource.Log.TrySNITraceEvent(s_className, " | SNI | INFO | SMUX_ACK | ", "MARS Session Id {0}, Current Packet {1} returned", args0: _lowerHandle?.ConnectionId, args1: currentPacket?._id);
 #endif
                         ReturnPacket(currentPacket);
                         currentPacket = null;
@@ -369,7 +371,7 @@ namespace Microsoft.Data.SqlClient.SNI
                             }
 
                             HandleReceiveError(packet);
-                            SqlClientEventSource.Log.TrySNITraceEvent("SNIMarsConnection.HandleReceiveComplete | SNI | ERR | MARS Session Id {0}, packet.DataLeft 0, SNI error {2}", _lowerHandle?.ConnectionId, sniErrorCode);
+                            SqlClientEventSource.Log.TrySNITraceEvent(s_className, " | SNI | ERR | ", "MARS Session Id {0}, packet.DataLeft 0, SNI error {2}", args0: _lowerHandle?.ConnectionId, args1: sniErrorCode);
                             return;
                         }
                     }
@@ -386,7 +388,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         public uint EnableSsl(uint options)
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("SNIMarsConnection.EnableSsl | SNI | INFO | SCOPE | Entering Scope {0}");
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent(s_className);
             try
             {
                 return _lowerHandle.EnableSsl(options);
@@ -402,7 +404,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         public void DisableSsl()
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("SNIMarsConnection.DisableSsl | SNI | INFO | SCOPE | Entering Scope {0}");
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent(s_className);
             try
             {
                 _lowerHandle.DisableSsl();
@@ -429,7 +431,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         public void KillConnection()
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("SNIMarsConnection.KillConnection | SNI | INFO | SCOPE | Entering Scope {0}");
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent(s_className);
             try
             {
                 _lowerHandle.KillConnection();

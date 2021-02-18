@@ -4,6 +4,7 @@
 
 using System;
 using System.Diagnostics.Tracing;
+using System.Text;
 using System.Threading;
 
 namespace Microsoft.Data.SqlClient
@@ -267,6 +268,9 @@ namespace Microsoft.Data.SqlClient
         internal bool IsSNIScopeEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.SNIScope);
         #endregion
 
+        private string GetFormattedMessage(string className, string memberName, string infoType, string message) => 
+            new StringBuilder(className).Append(".").Append(memberName).Append(infoType).Append(message).ToString();
+
         #region overloads
         //Never use event writer directly as they are not checking for enabled/disabled situations. Always use overloads.
 
@@ -274,7 +278,7 @@ namespace Microsoft.Data.SqlClient
 
         #region Traces without if statements
         [NonEvent]
-        internal void TraceEvent<T0, T1>(string message, T0 args0, T1 args1)
+        internal void TraceEvent<T0, T1>(string message, T0 args0, T1 args1, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
         {
             Trace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr));
         }
@@ -361,11 +365,13 @@ namespace Microsoft.Data.SqlClient
 
         #region Scope
         [NonEvent]
-        internal long TryScopeEnterEvent(string message)
+        internal long TryScopeEnterEvent(string className, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
         {
             if (Log.IsScopeEnabled())
             {
-                return ScopeEnter(message);
+                StringBuilder sb = new StringBuilder(className);
+                sb.Append(".").Append(memberName).Append(" | INFO | SCOPE | Entering Scope {0}");
+                return SNIScopeEnter(sb.ToString());
             }
             return 0;
         }
@@ -415,7 +421,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsScopeEnabled())
             {
-                ScopeLeave(string.Format("Exiting Scope {0}", scopeId));
+                ScopeLeave(string.Format("Exit Scope {0}", scopeId));
             }
         }
         #endregion
@@ -525,7 +531,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsNotificationScopeEnabled())
             {
-                NotificationScopeLeave(string.Format("Exiting Notification Scope {0}", scopeId));
+                NotificationScopeLeave(string.Format("Exit Notification Scope {0}", scopeId));
             }
         }
         #endregion
@@ -584,7 +590,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsPoolerScopeEnabled())
             {
-                PoolerScopeLeave(string.Format("Exiting Pooler Scope {0}", scopeId));
+                PoolerScopeLeave(string.Format("Exit Pooler Scope {0}", scopeId));
             }
         }
         #endregion
@@ -705,7 +711,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsAdvancedTraceOn())
             {
-                AdvancedScopeLeave(string.Format("Exiting Advanced Scope {0}", scopeId));
+                AdvancedScopeLeave(string.Format("Exit Advanced Scope {0}", scopeId));
             }
         }
 
@@ -796,67 +802,78 @@ namespace Microsoft.Data.SqlClient
 
         #region SNI Trace
         [NonEvent]
-        internal void TrySNITraceEvent(string message)
+        internal void TrySNITraceEvent(string className, string infoType, string message, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
         {
             if (Log.IsSNITraceEnabled())
             {
-                SNITrace(string.Format(message));
+                SNITrace(GetFormattedMessage(className, memberName, infoType, message));
             }
         }
 
         [NonEvent]
-        internal void TrySNITraceEvent<T0>(string message, T0 args0)
+        internal void TrySNITraceEvent<T0>(string className, string infoType, string message, T0 args0, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
         {
             if (Log.IsSNITraceEnabled())
             {
-                SNITrace(string.Format(message, args0?.ToString() ?? NullStr));
+                SNITrace(GetFormattedMessage(className, memberName, infoType, string.Format(message, args0?.ToString() ?? NullStr)));
             }
         }
 
         [NonEvent]
-        internal void TrySNITraceEvent<T0, T1>(string message, T0 args0, T1 args1)
+        internal void TrySNITraceEvent<T0, T1>(string className, string infoType, string message, T0 args0, T1 args1, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
         {
             if (Log.IsSNITraceEnabled())
             {
-                SNITrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr));
+                SNITrace(GetFormattedMessage(className, memberName, infoType, string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr)));
             }
         }
 
         [NonEvent]
-        internal void TrySNITraceEvent<T0, T1, T2>(string message, T0 args0, T1 args1, T2 args2)
+        internal void TrySNITraceEvent<T0, T1, T2>(string className, string infoType, string message, T0 args0, T1 args1, T2 args2, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
         {
             if (Log.IsSNITraceEnabled())
             {
-                SNITrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr));
+                SNITrace(GetFormattedMessage(className, memberName, infoType, string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr)));
             }
         }
 
         [NonEvent]
-        internal void TrySNITraceEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
+        internal void TrySNITraceEvent<T0, T1, T2, T3>(string className, string infoType, string message, T0 args0, T1 args1, T2 args2, T3 args3, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
         {
             if (Log.IsSNITraceEnabled())
             {
-                SNITrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr));
+                SNITrace(GetFormattedMessage(className, memberName, infoType, string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr)));
             }
         }
 
         [NonEvent]
-        internal void TrySNITraceEvent<T0, T1, T2, T3, T4>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4)
+        internal void TrySNITraceEvent<T0, T1, T2, T3, T4>(string className, string infoType, string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
         {
             if (Log.IsSNITraceEnabled())
             {
-                SNITrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr, args4?.ToString() ?? NullStr));
+                SNITrace(GetFormattedMessage(className, memberName, infoType, string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr, args4?.ToString() ?? NullStr)));
+            }
+        }
+
+        [NonEvent]
+        internal void TrySNITraceEvent<T0, T1, T2, T3, T4, T5>(string className, string infoType, string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4, T5 args5, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
+        {
+            if (Log.IsSNITraceEnabled())
+            {
+                SNITrace(GetFormattedMessage(className, memberName, infoType, string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr, args4?.ToString() ?? NullStr, args5?.ToString() ?? NullStr)));
             }
         }
         #endregion
 
         #region SNI Scope
         [NonEvent]
-        internal long TrySNIScopeEnterEvent(string message)
+        internal long TrySNIScopeEnterEvent(string className, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
         {
             if (Log.IsSNIScopeEnabled())
             {
-                return SNIScopeEnter(message);
+                StringBuilder sb = new StringBuilder(className);
+                sb.Append(".").Append(memberName).Append(" | SNI | INFO | SCOPE | Entering Scope {0}");
+                return SNIScopeEnter(sb.ToString());
             }
             return 0;
         }
@@ -866,7 +883,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsSNIScopeEnabled())
             {
-                SNIScopeLeave(string.Format("Exiting SNI Scope {0}", scopeId));
+                SNIScopeLeave(string.Format("Exit SNI Scope {0}", scopeId));
             }
         }
         #endregion
@@ -992,11 +1009,11 @@ namespace Microsoft.Data.SqlClient
 
     internal readonly struct SNIEventScope : IDisposable
     {
-        private readonly long scopeId;
+        private readonly long _scopeId;
 
-        public SNIEventScope(long scopeID) => scopeId = scopeID;
+        public SNIEventScope(long scopeID) => _scopeId = scopeID;
         public void Dispose() =>
-            SqlClientEventSource.Log.SNIScopeLeave(string.Format("Exiting SNI Scope {0}", scopeId));
+            SqlClientEventSource.Log.SNIScopeLeave(string.Format("Exit SNI Scope {0}", _scopeId));
 
         public static SNIEventScope Create(string message) => new SNIEventScope(SqlClientEventSource.Log.SNIScopeEnter(message));
     }
