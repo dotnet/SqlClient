@@ -2966,7 +2966,7 @@ namespace Microsoft.Data.SqlClient
                     if ((sequentialAccess) && (i < maximumColumn))
                     {
                         _data[fieldIndex].Clear();
-                        if (fieldIndex > i && fieldIndex>0)
+                        if (fieldIndex > i && fieldIndex > 0)
                         {
                             // if we jumped an index forward because of a hidden column see if the buffer before the
                             // current one was populated by the seek forward and clear it if it was
@@ -4250,34 +4250,34 @@ namespace Microsoft.Data.SqlClient
                     source.SetException(ADP.ExceptionWithStackTrace(ADP.DataReaderClosed()));
                     return source.Task;
                 }
-
-                IDisposable registration = null;
-                if (cancellationToken.CanBeCanceled)
+                using (IDisposable registration = cancellationToken.CanBeCanceled ? cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command) : (IDisposable)null)
                 {
-                    if (cancellationToken.IsCancellationRequested)
+                    if (null != registration)
                     {
-                        source.SetCanceled();
+                        if (cancellationToken.IsCancellationRequested)
+                        {
+                            source.SetCanceled();
+                            return source.Task;
+                        }
+                    }
+
+                    Task original = Interlocked.CompareExchange(ref _currentTask, source.Task, null);
+                    if (original != null)
+                    {
+                        source.SetException(ADP.ExceptionWithStackTrace(SQL.PendingBeginXXXExists()));
                         return source.Task;
                     }
-                    registration = cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command);
-                }
 
-                Task original = Interlocked.CompareExchange(ref _currentTask, source.Task, null);
-                if (original != null)
-                {
-                    source.SetException(ADP.ExceptionWithStackTrace(SQL.PendingBeginXXXExists()));
-                    return source.Task;
-                }
+                    // Check if cancellation due to close is requested (this needs to be done after setting _currentTask)
+                    if (_cancelAsyncOnCloseToken.IsCancellationRequested)
+                    {
+                        source.SetCanceled();
+                        _currentTask = null;
+                        return source.Task;
+                    }
 
-                // Check if cancellation due to close is requested (this needs to be done after setting _currentTask)
-                if (_cancelAsyncOnCloseToken.IsCancellationRequested)
-                {
-                    source.SetCanceled();
-                    _currentTask = null;
-                    return source.Task;
+                    return InvokeAsyncCall(new HasNextResultAsyncCallContext(this, source, registration));
                 }
-
-                return InvokeAsyncCall(new HasNextResultAsyncCallContext(this, source, registration));
             }
             finally
             {
@@ -4515,7 +4515,7 @@ namespace Microsoft.Data.SqlClient
                 if (!isContinuation)
                 {
                     // This is the first async operation which is happening - setup the _currentTask and timeout
-                    Debug.Assert(context._source==null, "context._source should not be non-null when trying to change to async");
+                    Debug.Assert(context._source == null, "context._source should not be non-null when trying to change to async");
                     source = new TaskCompletionSource<int>();
                     Task original = Interlocked.CompareExchange(ref _currentTask, source.Task, null);
                     if (original != null)
@@ -4681,31 +4681,28 @@ namespace Microsoft.Data.SqlClient
                     return source.Task;
                 }
 
-                IDisposable registration = null;
-                if (cancellationToken.CanBeCanceled)
+                using (IDisposable registration = cancellationToken.CanBeCanceled ? cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command) : (IDisposable)null)
                 {
-                    registration = cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command);
+                    ReadAsyncCallContext context = null;
+                    if (_connection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
+                    {
+                        context = Interlocked.Exchange(ref sqlInternalConnection.CachedDataReaderReadAsyncContext, null);
+                    }
+                    if (context is null)
+                    {
+                        context = new ReadAsyncCallContext();
+                    }
+
+                    Debug.Assert(context._reader == null && context._source == null && context._disposable == null, "cached ReadAsyncCallContext was not properly disposed");
+
+                    context.Set(this, source, registration);
+                    context._hasMoreData = more;
+                    context._hasReadRowToken = rowTokenRead;
+
+                    PrepareAsyncInvocation(useSnapshot: true);
+
+                    return InvokeAsyncCall(context);
                 }
-
-                ReadAsyncCallContext context = null;
-                if (_connection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
-                {
-                    context = Interlocked.Exchange(ref sqlInternalConnection.CachedDataReaderReadAsyncContext, null);
-                }
-                if (context is null)
-                {
-                    context = new ReadAsyncCallContext();
-                }
-
-                Debug.Assert(context._reader == null && context._source == null && context._disposable == null, "cached ReadAsyncCallContext was not properly disposed");
-
-                context.Set(this, source, registration);
-                context._hasMoreData = more;
-                context._hasReadRowToken = rowTokenRead;
-
-                PrepareAsyncInvocation(useSnapshot: true);
-
-                return InvokeAsyncCall(context);
             }
             finally
             {
@@ -4859,31 +4856,29 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // Setup cancellations
-                IDisposable registration = null;
-                if (cancellationToken.CanBeCanceled)
+                using (IDisposable registration = cancellationToken.CanBeCanceled ? cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command) : (IDisposable)null)
                 {
-                    registration = cancellationToken.Register(SqlCommand.s_cancelIgnoreFailure, _command);
+
+                    IsDBNullAsyncCallContext context = null;
+                    if (_connection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
+                    {
+                        context = Interlocked.Exchange(ref sqlInternalConnection.CachedDataReaderIsDBNullContext, null);
+                    }
+                    if (context is null)
+                    {
+                        context = new IsDBNullAsyncCallContext();
+                    }
+
+                    Debug.Assert(context._reader == null && context._source == null && context._disposable == null, "cached ISDBNullAsync context not properly disposed");
+
+                    context.Set(this, source, registration);
+                    context._columnIndex = i;
+
+                    // Setup async
+                    PrepareAsyncInvocation(useSnapshot: true);
+
+                    return InvokeAsyncCall(context);
                 }
-
-                IsDBNullAsyncCallContext context = null;
-                if (_connection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
-                {
-                    context = Interlocked.Exchange(ref sqlInternalConnection.CachedDataReaderIsDBNullContext, null);
-                }
-                if (context is null)
-                {
-                    context = new IsDBNullAsyncCallContext();
-                }
-
-                Debug.Assert(context._reader == null && context._source == null && context._disposable == null, "cached ISDBNullAsync context not properly disposed");
-
-                context.Set(this, source, registration);
-                context._columnIndex = i;
-
-                // Setup async
-                PrepareAsyncInvocation(useSnapshot: true);
-
-                return InvokeAsyncCall(context);
             }
         }
 
@@ -5006,16 +5001,13 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Setup cancellations
-            IDisposable registration = null;
-            if (cancellationToken.CanBeCanceled)
+            using (IDisposable registration = cancellationToken.CanBeCanceled ? cancellationToken.Register(s => ((SqlCommand)s).CancelIgnoreFailure(), _command) : (IDisposable)null)
             {
-                registration = cancellationToken.Register(s => ((SqlCommand)s).CancelIgnoreFailure(), _command);
+                // Setup async
+                PrepareAsyncInvocation(useSnapshot: true);
+
+                return InvokeAsyncCall(new GetFieldValueAsyncCallContext<T>(this, source, registration, i));
             }
-
-            // Setup async
-            PrepareAsyncInvocation(useSnapshot: true);
-
-            return InvokeAsyncCall(new GetFieldValueAsyncCallContext<T>(this, source, registration, i));
         }
 
         private static Task<T> GetFieldValueAsyncExecute<T>(Task task, object state)
@@ -5112,8 +5104,8 @@ namespace Microsoft.Data.SqlClient
                 _source = null;
                 _reader = null;
                 IDisposable copyDisposable = _disposable;
-                _disposable = null;
                 copyDisposable?.Dispose();
+                _disposable = null;
             }
 
             internal abstract Func<Task, object, Task<T>> Execute { get; }

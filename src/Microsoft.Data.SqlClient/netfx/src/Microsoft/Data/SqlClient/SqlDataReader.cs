@@ -4793,55 +4793,56 @@ namespace Microsoft.Data.SqlClient
                     return source.Task;
                 }
 
-                IDisposable registration = null;
-                if (cancellationToken.CanBeCanceled)
+                using (IDisposable registration = cancellationToken.CanBeCanceled ? cancellationToken.Register(_command.CancelIgnoreFailure) : (IDisposable)null)
                 {
-                    if (cancellationToken.IsCancellationRequested)
+                    if (null != registration)
                     {
-                        source.SetCanceled();
+                        if (cancellationToken.IsCancellationRequested)
+                        {
+                            source.SetCanceled();
+                            return source.Task;
+                        }
+                    }
+
+                    Task original = Interlocked.CompareExchange(ref _currentTask, source.Task, null);
+                    if (original != null)
+                    {
+                        source.SetException(ADP.ExceptionWithStackTrace(SQL.PendingBeginXXXExists()));
                         return source.Task;
                     }
-                    registration = cancellationToken.Register(_command.CancelIgnoreFailure);
-                }
 
-                Task original = Interlocked.CompareExchange(ref _currentTask, source.Task, null);
-                if (original != null)
-                {
-                    source.SetException(ADP.ExceptionWithStackTrace(SQL.PendingBeginXXXExists()));
-                    return source.Task;
-                }
-
-                // Check if cancellation due to close is requested (this needs to be done after setting _currentTask)
-                if (_cancelAsyncOnCloseToken.IsCancellationRequested)
-                {
-                    source.SetCanceled();
-                    _currentTask = null;
-                    return source.Task;
-                }
-
-                PrepareAsyncInvocation(useSnapshot: true);
-
-                Func<Task, Task<bool>> moreFunc = null;
-
-                moreFunc = (t) =>
-                {
-                    if (t != null)
+                    // Check if cancellation due to close is requested (this needs to be done after setting _currentTask)
+                    if (_cancelAsyncOnCloseToken.IsCancellationRequested)
                     {
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDataReader.NextResultAsync> attempt retry {0}", ObjectID);
-                        PrepareForAsyncContinuation();
+                        source.SetCanceled();
+                        _currentTask = null;
+                        return source.Task;
                     }
 
-                    bool more;
-                    if (TryNextResult(out more))
+                    PrepareAsyncInvocation(useSnapshot: true);
+
+                    Func<Task, Task<bool>> moreFunc = null;
+
+                    moreFunc = (t) =>
                     {
-                        // completed
-                        return more ? ADP.TrueTask : ADP.FalseTask;
-                    }
+                        if (t != null)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDataReader.NextResultAsync> attempt retry {0}", ObjectID);
+                            PrepareForAsyncContinuation();
+                        }
 
-                    return ContinueRetryable(moreFunc);
-                };
+                        bool more;
+                        if (TryNextResult(out more))
+                        {
+                            // completed
+                            return more ? ADP.TrueTask : ADP.FalseTask;
+                        }
 
-                return InvokeRetryable(moreFunc, source, registration);
+                        return ContinueRetryable(moreFunc);
+                    };
+
+                    return InvokeRetryable(moreFunc, source, registration);
+                }
             }
             finally
             {
@@ -5187,55 +5188,52 @@ namespace Microsoft.Data.SqlClient
                     return source.Task;
                 }
 
-                IDisposable registration = null;
-                if (cancellationToken.CanBeCanceled)
+                using (IDisposable registration = cancellationToken.CanBeCanceled ? cancellationToken.Register(_command.CancelIgnoreFailure) : (IDisposable)null)
                 {
-                    registration = cancellationToken.Register(_command.CancelIgnoreFailure);
-                }
+                    PrepareAsyncInvocation(useSnapshot: true);
 
-                PrepareAsyncInvocation(useSnapshot: true);
-
-                Func<Task, Task<bool>> moreFunc = null;
-                moreFunc = (t) =>
-                {
-                    if (t != null)
+                    Func<Task, Task<bool>> moreFunc = null;
+                    moreFunc = (t) =>
                     {
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDataReader.ReadAsync> attempt retry {0}", ObjectID);
-                        PrepareForAsyncContinuation();
-                    }
-
-                    if (rowTokenRead || TryReadInternal(true, out more))
-                    {
-
-                        // If there are no more rows, or this is Sequential Access, then we are done
-                        if (!more || (_commandBehavior & CommandBehavior.SequentialAccess) == CommandBehavior.SequentialAccess)
+                        if (t != null)
                         {
-                            // completed
-                            return more ? ADP.TrueTask : ADP.FalseTask;
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDataReader.ReadAsync> attempt retry {0}", ObjectID);
+                            PrepareForAsyncContinuation();
                         }
-                        else
-                        {
-                            // First time reading the row token - update the snapshot
-                            if (!rowTokenRead)
-                            {
-                                rowTokenRead = true;
-                                _snapshot = null;
-                                PrepareAsyncInvocation(useSnapshot: true);
-                            }
 
-                            // if non-sequentialaccess then read entire row before returning
-                            if (TryReadColumn(_metaData.Length - 1, true))
+                        if (rowTokenRead || TryReadInternal(true, out more))
+                        {
+
+                            // If there are no more rows, or this is Sequential Access, then we are done
+                            if (!more || (_commandBehavior & CommandBehavior.SequentialAccess) == CommandBehavior.SequentialAccess)
                             {
                                 // completed
-                                return ADP.TrueTask;
+                                return more ? ADP.TrueTask : ADP.FalseTask;
+                            }
+                            else
+                            {
+                                // First time reading the row token - update the snapshot
+                                if (!rowTokenRead)
+                                {
+                                    rowTokenRead = true;
+                                    _snapshot = null;
+                                    PrepareAsyncInvocation(useSnapshot: true);
+                                }
+
+                                // if non-sequentialaccess then read entire row before returning
+                                if (TryReadColumn(_metaData.Length - 1, true))
+                                {
+                                    // completed
+                                    return ADP.TrueTask;
+                                }
                             }
                         }
-                    }
 
-                    return ContinueRetryable(moreFunc);
-                };
+                        return ContinueRetryable(moreFunc);
+                    };
 
-                return InvokeRetryable(moreFunc, source, registration);
+                    return InvokeRetryable(moreFunc, source, registration);
+                }
             }
             finally
             {
@@ -5336,36 +5334,33 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // Setup cancellations
-                IDisposable registration = null;
-                if (cancellationToken.CanBeCanceled)
+                using (IDisposable registration = cancellationToken.CanBeCanceled ? cancellationToken.Register(_command.CancelIgnoreFailure) : (IDisposable)null)
                 {
-                    registration = cancellationToken.Register(_command.CancelIgnoreFailure);
+                    // Setup async
+                    PrepareAsyncInvocation(useSnapshot: true);
+
+                    // Setup the retryable function
+                    Func<Task, Task<bool>> moreFunc = null;
+                    moreFunc = (t) =>
+                    {
+                        if (t != null)
+                        {
+                            PrepareForAsyncContinuation();
+                        }
+
+                        if (TryReadColumnHeader(i))
+                        {
+                            return _data[i].IsNull ? ADP.TrueTask : ADP.FalseTask;
+                        }
+                        else
+                        {
+                            return ContinueRetryable(moreFunc);
+                        }
+                    };
+
+                    // Go!
+                    return InvokeRetryable(moreFunc, source, registration);
                 }
-
-                // Setup async
-                PrepareAsyncInvocation(useSnapshot: true);
-
-                // Setup the retryable function
-                Func<Task, Task<bool>> moreFunc = null;
-                moreFunc = (t) =>
-                {
-                    if (t != null)
-                    {
-                        PrepareForAsyncContinuation();
-                    }
-
-                    if (TryReadColumnHeader(i))
-                    {
-                        return _data[i].IsNull ? ADP.TrueTask : ADP.FalseTask;
-                    }
-                    else
-                    {
-                        return ContinueRetryable(moreFunc);
-                    }
-                };
-
-                // Go!
-                return InvokeRetryable(moreFunc, source, registration);
             }
         }
 
@@ -5461,36 +5456,33 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Setup cancellations
-            IDisposable registration = null;
-            if (cancellationToken.CanBeCanceled)
+            using (IDisposable registration = cancellationToken.CanBeCanceled ? cancellationToken.Register(_command.CancelIgnoreFailure) : (IDisposable)null)
             {
-                registration = cancellationToken.Register(_command.CancelIgnoreFailure);
+                // Setup async
+                PrepareAsyncInvocation(useSnapshot: true);
+
+                // Setup the retryable function
+                Func<Task, Task<T>> moreFunc = null;
+                moreFunc = (t) =>
+                {
+                    if (t != null)
+                    {
+                        PrepareForAsyncContinuation();
+                    }
+
+                    if (TryReadColumn(i, setTimeout: false))
+                    {
+                        return Task.FromResult<T>(GetFieldValueFromSqlBufferInternal<T>(_data[i], _metaData[i]));
+                    }
+                    else
+                    {
+                        return ContinueRetryable(moreFunc);
+                    }
+                };
+
+                // Go!
+                return InvokeRetryable(moreFunc, source, registration);
             }
-
-            // Setup async
-            PrepareAsyncInvocation(useSnapshot: true);
-
-            // Setup the retryable function
-            Func<Task, Task<T>> moreFunc = null;
-            moreFunc = (t) =>
-            {
-                if (t != null)
-                {
-                    PrepareForAsyncContinuation();
-                }
-
-                if (TryReadColumn(i, setTimeout: false))
-                {
-                    return Task.FromResult<T>(GetFieldValueFromSqlBufferInternal<T>(_data[i], _metaData[i]));
-                }
-                else
-                {
-                    return ContinueRetryable(moreFunc);
-                }
-            };
-
-            // Go!
-            return InvokeRetryable(moreFunc, source, registration);
         }
 
 #if DEBUG
