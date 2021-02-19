@@ -2288,6 +2288,7 @@ namespace Microsoft.Data.SqlClient
                 return state == TimeoutState.ExpiredAsync || state == TimeoutState.ExpiredSync;
             }
         }
+
         private void OnTimeoutAsync(object state)
         {
 #if TEST_ENABLED
@@ -2889,9 +2890,9 @@ namespace Microsoft.Data.SqlClient
 
                 ChangeNetworkPacketTimeout(Timeout.Infinite, Timeout.Infinite);
 
-                // the timer thread may be unreliable under high contention scenarios it cannot be
-                // assumed that the timeout has happened on the timer thread callback, check the timeout
-                // synchrnously and then call OnTimeoutSync to force an atomic change of state 
+                // The timer thread may be unreliable under high contention scenarios. It cannot be
+                // assumed that the timeout has happened on the timer thread callback. Check the timeout
+                // synchrnously and then call OnTimeoutSync to force an atomic change of state. 
                 if (TimeoutHasExpired)
                 {
                     OnTimeoutSync();

@@ -24,8 +24,6 @@ namespace Microsoft.Data.SqlClient
 
     sealed internal class TdsParserStateObject
     {
-
-
         private const int AttentionTimeoutSeconds = 5;
 
         // Ticks to consider a connection "good" after a successful I/O (10,000 ticks = 1 ms)
@@ -2979,9 +2977,9 @@ namespace Microsoft.Data.SqlClient
 
                 ChangeNetworkPacketTimeout(Timeout.Infinite, Timeout.Infinite);
 
-                // the timer thread may be unreliable under high contention scenarios it cannot be
-                // assumed that the timeout has happened on the timer thread callback, check the timeout
-                // synchrnously and then call OnTimeoutSync to force an atomic change of state 
+                // The timer thread may be unreliable under high contention scenarios. It cannot be
+                // assumed that the timeout has happened on the timer thread callback. Check the timeout
+                // synchrnously and then call OnTimeoutSync to force an atomic change of state.
                 if (TimeoutHasExpired)
                 {
                     OnTimeoutSync();
