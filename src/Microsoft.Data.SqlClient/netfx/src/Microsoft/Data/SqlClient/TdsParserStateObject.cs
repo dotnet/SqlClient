@@ -127,13 +127,11 @@ namespace Microsoft.Data.SqlClient
         internal bool _attentionReceived = false;               // NOTE: Received is not volatile as it is only ever accessed\modified by TryRun its callees (i.e. single threaded access)
         internal volatile bool _attentionSending = false;
 
-#if TEST_ENABLED
         // Below 2 properties are used to enforce timeout delays in code to 
         // reproduce issues related to theadpool starvation and timeout delay.
         // It should always be set to false by default, and only be enabled during testing.
         internal bool _enforceTimeoutDelay = false;
         internal int _enforcedTimeoutDelayInMilliSeconds = 5000;
-#endif
 
         private readonly LastIOTimer _lastSuccessfulIOTimer;
 
@@ -2373,13 +2371,11 @@ namespace Microsoft.Data.SqlClient
 
         private void OnTimeoutAsync(object state)
         {
-
-#if TEST_ENABLED
             if (_enforceTimeoutDelay)
             {
                 Thread.Sleep(_enforcedTimeoutDelayInMilliSeconds);
             }
-#endif
+
             int currentIdentityValue = _timeoutIdentityValue;
             TimeoutState timeoutState = (TimeoutState)state;
             if (timeoutState.IdentityValue == _timeoutIdentityValue)

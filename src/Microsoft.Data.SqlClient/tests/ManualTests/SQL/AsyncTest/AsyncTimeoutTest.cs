@@ -92,15 +92,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 sqlConnection.Open();
                 if (timeoutDelay != 0)
                 {
-                    try
-                    {
-
-                        ConnectionHelper.SetEnforcedTimeout(sqlConnection, true, timeoutDelay);
-                    }
-                    catch
-                    {
-                        Assert.False(true, "Driver does not support explicit timeout delay support. Build all configurations with `/p:TestEnabled=true` property specified.");
-                    }
+                    ConnectionHelper.SetEnforcedTimeout(sqlConnection, true, timeoutDelay);
                 }
                 switch (commonObj)
                 {

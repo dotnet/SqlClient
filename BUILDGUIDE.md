@@ -25,11 +25,6 @@ Once the environment is setup properly, execute the desired set of commands belo
 ```
 
 ```bash
-> msbuild /p:Configuration=Release /p:TestEnabled=true
-# Builds the driver in 'Release' Configuration with explicit code changes enabled for testing.
-```
-
-```bash
 > msbuild /p:Platform=Win32
 # Builds the .NET Framework  (NetFx) driver for Win32 (x86) platform on Windows.
 ```
