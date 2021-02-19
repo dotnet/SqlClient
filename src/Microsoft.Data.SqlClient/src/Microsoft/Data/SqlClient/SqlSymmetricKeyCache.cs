@@ -77,9 +77,14 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 
-                // Key Not found in cache, attempt to look up the provider and decrypt CEK
-                SqlColumnEncryptionKeyStoreProvider provider = 
-                    SqlSecurityUtility.TryGetEncryptionKeyStoreProvider(serverName, keyInfo.keyPath, keyInfo.keyStoreName, connection);
+                // Key Not found, attempt to look up the provider and decrypt CEK
+                SqlColumnEncryptionKeyStoreProvider provider;
+                if (!SqlConnection.TryGetColumnEncryptionKeyStoreProvider(keyInfo.keyStoreName, out provider,connection))
+                {
+                    throw SQL.UnrecognizedKeyStoreProviderName(keyInfo.keyStoreName,
+                            SqlConnection.GetColumnEncryptionSystemKeyStoreProviders(),
+                            SqlConnection.GetColumnEncryptionCustomKeyStoreProviders(connection));
+                }
 
                 // Decrypt the CEK
                 // We will simply bubble up the exception from the DecryptColumnEncryptionKey function.

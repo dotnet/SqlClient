@@ -270,8 +270,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisterColumnEncryptionKeyStoreProviders/*' />
         public static void RegisterColumnEncryptionKeyStoreProviders(IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders)
         {
-
-            // Return when the provided dictionary is null.
+            // Throw when the provided dictionary is null.
             if (customProviders == null)
             {
                 throw SQL.NullCustomKeyStoreProviderDictionary();
@@ -323,7 +322,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisterColumnEncryptionKeyStoreProvidersOnConnection/*' />
         public void RegisterColumnEncryptionKeyStoreProvidersOnConnection(IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders)
         {
-            // Return when the provided dictionary is null.
+            // Throw when the provided dictionary is null.
             if (customProviders == null)
             {
                 throw SQL.NullCustomKeyStoreProviderDictionary();
