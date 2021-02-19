@@ -1301,7 +1301,7 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG
                 // There is an exception here for MARS as its possible that another thread has closed the connection just as we see an error
                 Debug.Assert(SniContext.Undefined != stateObj.DebugOnlyCopyOfSniContext || ((_fMARS) && ((_state == TdsParserState.Closed) || (_state == TdsParserState.Broken))), "SniContext must not be None");
-                SqlClientEventSource.Log.TrySNITraceEvent("<sc.TdsParser.ProcessSNIError|ERR> SNIContext must not be None = {0}, _fMARS = {1}, TDS Parser State = {2}", stateObj.DebugOnlyCopyOfSniContext, _fMARS, _state);
+                SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.ProcessSNIError|ERR> SNIContext must not be None = {0}, _fMARS = {1}, TDS Parser State = {2}", stateObj.DebugOnlyCopyOfSniContext, _fMARS, _state);
 
 #endif
                 SNIErrorDetails details = GetSniErrorDetails();

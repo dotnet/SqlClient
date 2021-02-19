@@ -16,6 +16,7 @@ namespace Microsoft.Data.SqlClient
         internal static readonly SqlClientEventSource Log = new SqlClientEventSource();
 
         private const string NullStr = "null";
+        private const string SqlCommand_ClassName = nameof(SqlCommand);
 
         #region Event IDs
         // Initialized static Scope IDs
@@ -227,6 +228,26 @@ namespace Microsoft.Data.SqlClient
             /// Task that tracks SqlCommand execution.
             /// </summary>
             public const EventTask ExecuteCommand = (EventTask)1;
+
+            /// <summary>
+            /// Task that tracks trace scope.
+            /// </summary>
+            public const EventTask Scope = (EventTask)2;
+
+            /// <summary>
+            /// Task that tracks trace scope.
+            /// </summary>
+            public const EventTask PoolerScope = (EventTask)3;
+
+            /// <summary>
+            /// Task that tracks trace scope.
+            /// </summary>
+            public const EventTask NotificationScope = (EventTask)4;
+
+            /// <summary>
+            /// Task that tracks trace scope.
+            /// </summary>
+            public const EventTask SNIScope = (EventTask)5;
         }
         #endregion
 
@@ -268,8 +289,8 @@ namespace Microsoft.Data.SqlClient
         internal bool IsSNIScopeEnabled() => Log.IsEnabled(EventLevel.Informational, Keywords.SNIScope);
         #endregion
 
-        private string GetFormattedMessage(string className, string memberName, string infoType, string message) => 
-            new StringBuilder(className).Append(".").Append(memberName).Append(infoType).Append(message).ToString();
+        private string GetFormattedMessage(string className, string memberName, string eventType, string message) =>
+            new StringBuilder(className).Append(".").Append(memberName).Append(eventType).Append(message).ToString();
 
         #region overloads
         //Never use event writer directly as they are not checking for enabled/disabled situations. Always use overloads.
@@ -422,6 +443,28 @@ namespace Microsoft.Data.SqlClient
             if (Log.IsScopeEnabled())
             {
                 ScopeLeave(string.Format("Exit Scope {0}", scopeId));
+            }
+        }
+        #endregion
+
+        #region Execution Trace
+        [NonEvent]
+        internal void TryBeginExecuteEvent(int objectId, object connectionId, string commandText, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
+        {
+            if (Log.IsExecutionTraceEnabled())
+            {
+                BeginExecute(GetFormattedMessage(SqlCommand_ClassName, memberName, EventType.INFO,
+                    string.Format("Object Id {0}, Client Connection Id {1}, Command Text {2}", objectId, connectionId, commandText)));
+            }
+        }
+
+        [NonEvent]
+        internal void TryEndExecuteEvent(int objectId, object connectionId, int compositeState, int sqlExceptionNumber, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
+        {
+            if (Log.IsExecutionTraceEnabled())
+            {
+                EndExecute(GetFormattedMessage(SqlCommand_ClassName, memberName, EventType.INFO,
+                    string.Format("Object Id {0}, Client Connection Id {1}, Composite State {2}, Sql Exception Number {3}", objectId, connectionId, compositeState, sqlExceptionNumber)));
             }
         }
         #endregion
@@ -802,65 +845,65 @@ namespace Microsoft.Data.SqlClient
 
         #region SNI Trace
         [NonEvent]
-        internal void TrySNITraceEvent(string className, string infoType, string message, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
+        internal void TrySNITraceEvent(string className, string eventType, string message, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
         {
             if (Log.IsSNITraceEnabled())
             {
-                SNITrace(GetFormattedMessage(className, memberName, infoType, message));
+                SNITrace(GetFormattedMessage(className, memberName, eventType, message));
             }
         }
 
         [NonEvent]
-        internal void TrySNITraceEvent<T0>(string className, string infoType, string message, T0 args0, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
+        internal void TrySNITraceEvent<T0>(string className, string eventType, string message, T0 args0, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
         {
             if (Log.IsSNITraceEnabled())
             {
-                SNITrace(GetFormattedMessage(className, memberName, infoType, string.Format(message, args0?.ToString() ?? NullStr)));
+                SNITrace(GetFormattedMessage(className, memberName, eventType, string.Format(message, args0?.ToString() ?? NullStr)));
             }
         }
 
         [NonEvent]
-        internal void TrySNITraceEvent<T0, T1>(string className, string infoType, string message, T0 args0, T1 args1, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
+        internal void TrySNITraceEvent<T0, T1>(string className, string eventType, string message, T0 args0, T1 args1, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
         {
             if (Log.IsSNITraceEnabled())
             {
-                SNITrace(GetFormattedMessage(className, memberName, infoType, string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr)));
+                SNITrace(GetFormattedMessage(className, memberName, eventType, string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr)));
             }
         }
 
         [NonEvent]
-        internal void TrySNITraceEvent<T0, T1, T2>(string className, string infoType, string message, T0 args0, T1 args1, T2 args2, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
+        internal void TrySNITraceEvent<T0, T1, T2>(string className, string eventType, string message, T0 args0, T1 args1, T2 args2, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
         {
             if (Log.IsSNITraceEnabled())
             {
-                SNITrace(GetFormattedMessage(className, memberName, infoType, string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr)));
+                SNITrace(GetFormattedMessage(className, memberName, eventType, string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr)));
             }
         }
 
         [NonEvent]
-        internal void TrySNITraceEvent<T0, T1, T2, T3>(string className, string infoType, string message, T0 args0, T1 args1, T2 args2, T3 args3, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
+        internal void TrySNITraceEvent<T0, T1, T2, T3>(string className, string eventType, string message, T0 args0, T1 args1, T2 args2, T3 args3, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
         {
             if (Log.IsSNITraceEnabled())
             {
-                SNITrace(GetFormattedMessage(className, memberName, infoType, string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr)));
+                SNITrace(GetFormattedMessage(className, memberName, eventType, string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr)));
             }
         }
 
         [NonEvent]
-        internal void TrySNITraceEvent<T0, T1, T2, T3, T4>(string className, string infoType, string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
+        internal void TrySNITraceEvent<T0, T1, T2, T3, T4>(string className, string eventType, string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
         {
             if (Log.IsSNITraceEnabled())
             {
-                SNITrace(GetFormattedMessage(className, memberName, infoType, string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr, args4?.ToString() ?? NullStr)));
+                SNITrace(GetFormattedMessage(className, memberName, eventType, string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr, args4?.ToString() ?? NullStr)));
             }
         }
 
         [NonEvent]
-        internal void TrySNITraceEvent<T0, T1, T2, T3, T4, T5>(string className, string infoType, string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4, T5 args5, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
+        internal void TrySNITraceEvent<T0, T1, T2, T3, T4, T5>(string className, string eventType, string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4, T5 args5, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
         {
             if (Log.IsSNITraceEnabled())
             {
-                SNITrace(GetFormattedMessage(className, memberName, infoType, string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr, args4?.ToString() ?? NullStr, args5?.ToString() ?? NullStr)));
+                SNITrace(GetFormattedMessage(className, memberName, eventType, string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr, args4?.ToString() ?? NullStr, args5?.ToString() ?? NullStr)));
             }
         }
         #endregion
@@ -892,28 +935,18 @@ namespace Microsoft.Data.SqlClient
 
         #region Write Events
         [Event(BeginExecuteEventId, Keywords = Keywords.ExecutionTrace, Task = Tasks.ExecuteCommand, Opcode = EventOpcode.Start)]
-        internal void BeginExecute(int objectId, string dataSource, string database, string commandText)
-        {
-            if (Log.IsExecutionTraceEnabled())
-            {
-                WriteEvent(BeginExecuteEventId, objectId, dataSource, database, commandText);
-            }
-        }
+        internal void BeginExecute(string message) =>
+            WriteEvent(BeginExecuteEventId, message);
 
         [Event(EndExecuteEventId, Keywords = Keywords.ExecutionTrace, Task = Tasks.ExecuteCommand, Opcode = EventOpcode.Stop)]
-        internal void EndExecute(int objectId, int compositeState, int sqlExceptionNumber)
-        {
-            if (Log.IsExecutionTraceEnabled())
-            {
-                WriteEvent(EndExecuteEventId, objectId, compositeState, sqlExceptionNumber);
-            }
-        }
+        internal void EndExecute(string message) =>
+            WriteEvent(EndExecuteEventId, message);
 
         [Event(TraceEventId, Level = EventLevel.Informational, Keywords = Keywords.Trace)]
         internal void Trace(string message) =>
             WriteEvent(TraceEventId, message);
 
-        [Event(ScopeEnterId, Level = EventLevel.Informational, Opcode = EventOpcode.Start, Keywords = Keywords.Scope)]
+        [Event(ScopeEnterId, Level = EventLevel.Informational, Task = Tasks.Scope, Opcode = EventOpcode.Start, Keywords = Keywords.Scope)]
         internal long ScopeEnter(string message)
         {
             long scopeId = Interlocked.Increment(ref s_nextScopeId);
@@ -921,7 +954,7 @@ namespace Microsoft.Data.SqlClient
             return scopeId;
         }
 
-        [Event(ScopeExitId, Level = EventLevel.Informational, Opcode = EventOpcode.Stop, Keywords = Keywords.Scope)]
+        [Event(ScopeExitId, Level = EventLevel.Informational, Task = Tasks.Scope, Opcode = EventOpcode.Stop, Keywords = Keywords.Scope)]
         internal void ScopeLeave(string message) =>
             WriteEvent(ScopeExitId, message);
 
@@ -929,7 +962,7 @@ namespace Microsoft.Data.SqlClient
         internal void NotificationTrace(string message) =>
             WriteEvent(NotificationTraceId, message);
 
-        [Event(NotificationScopeEnterId, Level = EventLevel.Informational, Opcode = EventOpcode.Start, Keywords = Keywords.NotificationScope)]
+        [Event(NotificationScopeEnterId, Level = EventLevel.Informational, Task = Tasks.NotificationScope, Opcode = EventOpcode.Start, Keywords = Keywords.NotificationScope)]
         internal long NotificationScopeEnter(string message)
         {
             long scopeId = Interlocked.Increment(ref s_nextNotificationScopeId);
@@ -937,7 +970,7 @@ namespace Microsoft.Data.SqlClient
             return scopeId;
         }
 
-        [Event(NotificationScopeExitId, Level = EventLevel.Informational, Opcode = EventOpcode.Stop, Keywords = Keywords.NotificationScope)]
+        [Event(NotificationScopeExitId, Level = EventLevel.Informational, Task = Tasks.NotificationScope, Opcode = EventOpcode.Stop, Keywords = Keywords.NotificationScope)]
         internal void NotificationScopeLeave(string message) =>
             WriteEvent(NotificationScopeExitId, message);
 
@@ -945,7 +978,7 @@ namespace Microsoft.Data.SqlClient
         internal void PoolerTrace(string message) =>
             WriteEvent(PoolerTraceId, message);
 
-        [Event(PoolerScopeEnterId, Level = EventLevel.Informational, Opcode = EventOpcode.Start, Keywords = Keywords.PoolerScope)]
+        [Event(PoolerScopeEnterId, Level = EventLevel.Informational, Task = Tasks.PoolerScope, Opcode = EventOpcode.Start, Keywords = Keywords.PoolerScope)]
         internal long PoolerScopeEnter(string message)
         {
             long scopeId = Interlocked.Increment(ref s_nextPoolerScopeId);
@@ -953,7 +986,7 @@ namespace Microsoft.Data.SqlClient
             return scopeId;
         }
 
-        [Event(PoolerScopeExitId, Level = EventLevel.Informational, Opcode = EventOpcode.Stop, Keywords = Keywords.PoolerScope)]
+        [Event(PoolerScopeExitId, Level = EventLevel.Informational, Task = Tasks.PoolerScope, Opcode = EventOpcode.Stop, Keywords = Keywords.PoolerScope)]
         internal void PoolerScopeLeave(string message) =>
             WriteEvent(PoolerScopeExitId, message);
 
@@ -981,7 +1014,7 @@ namespace Microsoft.Data.SqlClient
         internal void AdvancedTraceError(string message) =>
             WriteEvent(AdvancedTraceErrorId, message);
 
-        [Event(CorrelationTraceId, Level = EventLevel.Informational, Keywords = Keywords.CorrelationTrace, Opcode = EventOpcode.Start)]
+        [Event(CorrelationTraceId, Level = EventLevel.Informational, Keywords = Keywords.CorrelationTrace)]
         internal void CorrelationTrace(string message) =>
             WriteEvent(CorrelationTraceId, message);
 
@@ -993,7 +1026,7 @@ namespace Microsoft.Data.SqlClient
         internal void SNITrace(string message) =>
             WriteEvent(SNITraceEventId, message);
 
-        [Event(SNIScopeEnterId, Level = EventLevel.Informational, Opcode = EventOpcode.Start, Keywords = Keywords.SNIScope)]
+        [Event(SNIScopeEnterId, Level = EventLevel.Informational, Task = Tasks.SNIScope, Opcode = EventOpcode.Start, Keywords = Keywords.SNIScope)]
         internal long SNIScopeEnter(string message)
         {
             long scopeId = Interlocked.Increment(ref s_nextSNIScopeId);
@@ -1001,12 +1034,18 @@ namespace Microsoft.Data.SqlClient
             return scopeId;
         }
 
-        [Event(SNIScopeExitId, Level = EventLevel.Informational, Opcode = EventOpcode.Stop, Keywords = Keywords.SNIScope)]
+        [Event(SNIScopeExitId, Level = EventLevel.Informational, Task = Tasks.SNIScope, Opcode = EventOpcode.Stop, Keywords = Keywords.SNIScope)]
         internal void SNIScopeLeave(string message) =>
             WriteEvent(SNIScopeExitId, message);
         #endregion
     }
 
+    internal static class EventType
+    {
+        public const string INFO = " | INFO | ";
+        public const string ERR = " | ERR | ";
+    }
+    
     internal readonly struct SNIEventScope : IDisposable
     {
         private readonly long _scopeId;

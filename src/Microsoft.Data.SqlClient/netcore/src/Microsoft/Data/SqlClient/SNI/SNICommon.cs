@@ -101,6 +101,8 @@ namespace Microsoft.Data.SqlClient.SNI
 
     internal class SNICommon
     {
+        private const string s_className = nameof(SNICommon);
+    
         // Each error number maps to SNI_ERROR_* in String.resx
         internal const int ConnTerminatedError = 2;
         internal const int InvalidParameterError = 5;
@@ -141,7 +143,7 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 if (policyErrors == SslPolicyErrors.None)
                 {
-                    SqlClientEventSource.Log.TrySNITraceEvent("SNICommon.ValidateSslServerCertificate | SNI | INFO | targetServerName {0}, SSL Server certificate not validated as PolicyErrors set to None.", targetServerName);
+                    SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.INFO, "targetServerName {0}, SSL Server certificate not validated as PolicyErrors set to None.", args0: targetServerName);
                     return true;
                 }
 
@@ -152,7 +154,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     // Verify that target server name matches subject in the certificate
                     if (targetServerName.Length > certServerName.Length)
                     {
-                        SqlClientEventSource.Log.TrySNITraceEvent("SNICommon.ValidateSslServerCertificate | SNI | ERR | targetServerName {0}, Target Server name is of greater length than Subject in Certificate.", targetServerName);
+                        SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR, "targetServerName {0}, Target Server name is of greater length than Subject in Certificate.", args0: targetServerName);
                         return false;
                     }
                     else if (targetServerName.Length == certServerName.Length)
@@ -160,7 +162,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         // Both strings have the same length, so targetServerName must be a FQDN
                         if (!targetServerName.Equals(certServerName, StringComparison.OrdinalIgnoreCase))
                         {
-                            SqlClientEventSource.Log.TrySNITraceEvent("SNICommon.ValidateSslServerCertificate | SNI | ERR | targetServerName {0}, Target Server name does not match Subject in Certificate.", targetServerName);
+                            SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR, "targetServerName {0}, Target Server name does not match Subject in Certificate.", args0: targetServerName);
                             return false;
                         }
                     }
@@ -168,7 +170,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     {
                         if (string.Compare(targetServerName, 0, certServerName, 0, targetServerName.Length, StringComparison.OrdinalIgnoreCase) != 0)
                         {
-                            SqlClientEventSource.Log.TrySNITraceEvent("SNICommon.ValidateSslServerCertificate | SNI | ERR | targetServerName {0}, Target Server name does not match Subject in Certificate.", targetServerName);
+                            SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR, "targetServerName {0}, Target Server name does not match Subject in Certificate.", args0: targetServerName);
                             return false;
                         }
 
@@ -178,7 +180,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         // (Names have different lengths, so the target server can't be a FQDN.)
                         if (certServerName[targetServerName.Length] != '.')
                         {
-                            SqlClientEventSource.Log.TrySNITraceEvent("SNICommon.ValidateSslServerCertificate | SNI | ERR | targetServerName {0}, Target Server name does not match Subject in Certificate.", targetServerName);
+                            SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR, "targetServerName {0}, Target Server name does not match Subject in Certificate.", args0: targetServerName);
                             return false;
                         }
                     }
@@ -186,10 +188,10 @@ namespace Microsoft.Data.SqlClient.SNI
                 else
                 {
                     // Fail all other SslPolicy cases besides RemoteCertificateNameMismatch
-                    SqlClientEventSource.Log.TrySNITraceEvent("SNICommon.ValidateSslServerCertificate | SNI | ERR | targetServerName {0}, SslPolicyError {1}, SSL Policy invalidated certificate.", targetServerName, policyErrors);
+                    SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR, "targetServerName {0}, SslPolicyError {1}, SSL Policy invalidated certificate.", args0: targetServerName, args1: policyErrors);
                     return false;
                 }
-                SqlClientEventSource.Log.TrySNITraceEvent("SNICommon.ValidateSslServerCertificate | SNI | INFO | targetServerName {0}, Client certificate validated successfully.", targetServerName);
+                SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.INFO, "targetServerName {0}, Client certificate validated successfully.", args0: targetServerName);
                 return true;
             }
             finally
@@ -208,7 +210,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns></returns>
         internal static uint ReportSNIError(SNIProviders provider, uint nativeError, uint sniError, string errorMessage)
         {
-            SqlClientEventSource.Log.TrySNITraceEvent("SNICommon.ReportSNIError | SNI | ERR | Provider = {0}, native Error = {1}, SNI Error = {2}, Error Message = {3}", provider, nativeError, sniError, errorMessage);
+            SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR, "Provider = {0}, native Error = {1}, SNI Error = {2}, Error Message = {3}", args0: provider, args1: nativeError, args2: sniError, args3: errorMessage);
             return ReportSNIError(new SNIError(provider, nativeError, sniError, errorMessage));
         }
 
@@ -221,7 +223,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns></returns>
         internal static uint ReportSNIError(SNIProviders provider, uint sniError, Exception sniException)
         {
-            SqlClientEventSource.Log.TrySNITraceEvent("SNICommon.ReportSNIError | SNI | ERR | Provider = {0}, SNI Error = {1}, Exception = {2}", provider, sniError, sniException.Message);
+            SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR, "Provider = {0}, SNI Error = {1}, Exception = {2}", args0: provider, args1: sniError, args2: sniException?.Message);
             return ReportSNIError(new SNIError(provider, sniError, sniException));
         }
 
