@@ -24,6 +24,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public Table End2EndSmokeTable { get; private set; }
         public Table TrustedMasterKeyPathsTestTable { get; private set; }
         public Table SqlNullValuesTable { get; private set; }
+        public Table CustomKeyStoreProviderTestTable { get; private set; }
         public Table TabIntSource { get; private set; }
         public Table TabTinyIntTarget { get; private set; }
         public Table TabIntSourceDirect { get; private set; }
@@ -57,6 +58,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public SQLSetupStrategy()
         {
             certificate = CertificateUtility.CreateCertificate();
+            keyPath = string.Concat(StoreLocation.CurrentUser.ToString(), "/", StoreName.My.ToString(), "/", certificate.Thumbprint);
         }
 
         protected SQLSetupStrategy(string customKeyPath) => keyPath = customKeyPath;
@@ -131,6 +133,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             SqlNullValuesTable = new SqlNullValuesTable(GenerateUniqueName("SqlNullValuesTable"), columnEncryptionKeys[0]);
             tables.Add(SqlNullValuesTable);
+
+            CustomKeyStoreProviderTestTable = new ApiTestTable(GenerateUniqueName("CustomKeyStoreProviderTestTable"), columnEncryptionKeys[2], columnEncryptionKeys[0]);
+            tables.Add(CustomKeyStoreProviderTestTable);
 
             TabNVarCharMaxSource = new BulkCopyTruncationTables(GenerateUniqueName("TabNVarCharMaxSource"), columnEncryptionKeys[0]);
             tables.Add(TabNVarCharMaxSource);

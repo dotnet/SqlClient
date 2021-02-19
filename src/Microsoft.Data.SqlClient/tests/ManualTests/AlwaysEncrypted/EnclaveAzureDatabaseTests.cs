@@ -18,10 +18,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     {
         private ColumnMasterKey akvColumnMasterKey;
         private ColumnEncryptionKey akvColumnEncryptionKey;
-        private SqlColumnEncryptionAzureKeyVaultProvider sqlColumnEncryptionAzureKeyVaultProvider; 
+        private SqlColumnEncryptionAzureKeyVaultProvider sqlColumnEncryptionAzureKeyVaultProvider;
         private List<DbObject> databaseObjects = new List<DbObject>();
         private List<string> connStrings = new List<string>();
-             
+
         public EnclaveAzureDatabaseTests()
         {
             if (DataTestUtility.IsEnclaveAzureDatabaseSetup())
@@ -29,21 +29,25 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 // Initialize AKV provider
                 sqlColumnEncryptionAzureKeyVaultProvider = new SqlColumnEncryptionAzureKeyVaultProvider(AADUtility.AzureActiveDirectoryAuthenticationCallback);
 
-                if (!SQLSetupStrategyAzureKeyVault.isAKVProviderRegistered) 
-                {                    
+                if (!SQLSetupStrategyAzureKeyVault.isAKVProviderRegistered)
+                {
+                    // this provider is required in ApiShould.TestCustomKeyStoreProviderRegistration()
+                    DummyKeyStoreProvider dummyProvider = new DummyKeyStoreProvider();
+
                     // Register AKV provider
                     SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders: new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>(capacity: 1, comparer: StringComparer.OrdinalIgnoreCase)
                     {
-                        { SqlColumnEncryptionAzureKeyVaultProvider.ProviderName, sqlColumnEncryptionAzureKeyVaultProvider}
+                        { SqlColumnEncryptionAzureKeyVaultProvider.ProviderName, sqlColumnEncryptionAzureKeyVaultProvider},
+                        { "DummyProvider", dummyProvider}
                     });
 
                     SQLSetupStrategyAzureKeyVault.isAKVProviderRegistered = true;
-                }               
+                }
 
                 akvColumnMasterKey = new AkvColumnMasterKey(DatabaseHelper.GenerateUniqueName("AKVCMK"), akvUrl: DataTestUtility.AKVUrl, sqlColumnEncryptionAzureKeyVaultProvider, DataTestUtility.EnclaveEnabled);
                 databaseObjects.Add(akvColumnMasterKey);
 
-                akvColumnEncryptionKey= new ColumnEncryptionKey(DatabaseHelper.GenerateUniqueName("AKVCEK"),
+                akvColumnEncryptionKey = new ColumnEncryptionKey(DatabaseHelper.GenerateUniqueName("AKVCEK"),
                                                               akvColumnMasterKey,
                                                               sqlColumnEncryptionAzureKeyVaultProvider);
                 databaseObjects.Add(akvColumnEncryptionKey);
@@ -65,7 +69,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         databaseObjects.ForEach(o => o.Create(connection));
                     }
                 }
-            }            
+            }
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsEnclaveAzureDatabaseSetup))]
@@ -180,5 +184,5 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 }
             }
         }
-    }    
+    }
 }

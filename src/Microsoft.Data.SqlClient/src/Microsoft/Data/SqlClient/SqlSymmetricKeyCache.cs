@@ -79,7 +79,7 @@ namespace Microsoft.Data.SqlClient
 
                 // Key Not found, attempt to look up the provider and decrypt CEK
                 SqlColumnEncryptionKeyStoreProvider provider;
-                if (!SqlConnection.TryGetColumnEncryptionKeyStoreProvider(keyInfo.keyStoreName, out provider,connection))
+                if (!SqlConnection.TryGetColumnEncryptionKeyStoreProvider(keyInfo.keyStoreName, out provider, connection))
                 {
                     throw SQL.UnrecognizedKeyStoreProviderName(keyInfo.keyStoreName,
                             SqlConnection.GetColumnEncryptionSystemKeyStoreProviders(),

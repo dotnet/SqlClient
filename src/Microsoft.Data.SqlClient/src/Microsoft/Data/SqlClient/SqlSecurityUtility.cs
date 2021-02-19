@@ -349,7 +349,7 @@ namespace Microsoft.Data.SqlClient
 
                 // Key Not found, attempt to look up the provider and verify CMK Signature
                 SqlColumnEncryptionKeyStoreProvider provider;
-                if (!SqlConnection.TryGetColumnEncryptionKeyStoreProvider(keyStoreName, out provider,connection))
+                if (!SqlConnection.TryGetColumnEncryptionKeyStoreProvider(keyStoreName, out provider, connection))
                 {
                     throw SQL.InvalidKeyStoreProviderName(keyStoreName,
                         SqlConnection.GetColumnEncryptionSystemKeyStoreProviders(),

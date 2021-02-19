@@ -10,6 +10,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals;
 using Xunit;
@@ -24,11 +25,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         private SQLSetupStrategy fixture;
 
         private readonly string tableName;
+        private readonly string customKeyStoreProviderTableName;
 
         public ApiShould(PlatformSpecificTestContext context)
         {
             fixture = context.Fixture;
             tableName = fixture.ApiTestTable.Name;
+            customKeyStoreProviderTableName = fixture.CustomKeyStoreProviderTestTable.Name;
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
@@ -2111,6 +2114,91 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                        commandType: initalValue,
                        cancelAfter: cancellationTime);
                 }
+            }
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void TestCustomKeyStoreProviderRegistration(string connectionString)
+        {
+            if (!SQLSetupStrategyAzureKeyVault.isAKVProviderRegistered)
+            {
+                SqlColumnEncryptionAzureKeyVaultProvider sqlColumnEncryptionAzureKeyVaultProvider =
+                    new SqlColumnEncryptionAzureKeyVaultProvider(AADUtility.AzureActiveDirectoryAuthenticationCallback);
+
+                DummyKeyStoreProvider dummyProvider = new DummyKeyStoreProvider();
+
+                SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders:
+                    new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>(capacity: 2, comparer: StringComparer.OrdinalIgnoreCase)
+                    {
+                        { "AZURE_KEY_VAULT", sqlColumnEncryptionAzureKeyVaultProvider},
+                        { "DummyProvider", dummyProvider}
+                    });
+
+                SQLSetupStrategyAzureKeyVault.isAKVProviderRegistered = true;
+            }
+
+            Dictionary<string, SqlColumnEncryptionKeyStoreProvider> requiredProvider =
+                new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>()
+                {
+                    { "DummyProvider", new DummyKeyStoreProvider() }
+                };
+
+            Dictionary<string, SqlColumnEncryptionKeyStoreProvider> notRequiredProvider =
+                new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>()
+                {
+                    { "DummyProvider2", new DummyKeyStoreProvider2() }
+                };
+
+            string dummyProviderNotImplementedExpectedMessage = "Unable to verify a column master key signature. Error " +
+                "message: The method or operation is not implemented.";
+            string providerNotFoundExpectedMessage = "Invalid key store provider name: 'DummyProvider'. A key store " +
+                "provider name must denote either a system key store provider or a registered custom key store provider." +
+                " Valid system key store provider names are: 'MSSQL_CERTIFICATE_STORE', 'MSSQL_CNG_STORE', " +
+                "'MSSQL_CSP_PROVIDER'. Valid (currently registered) custom key store provider names are: 'DummyProvider2'.";
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+
+                // will use DummyProvider in global cache
+                // provider will be found but it will throw when its methods are called
+                Exception ex = Assert.Throws<InvalidOperationException>(
+                      () => ExecuteQueryThatRequiresCustomKeyStoreProvider(connection));
+                Assert.Contains(dummyProviderNotImplementedExpectedMessage, ex.Message);
+
+                // register the not required provider in instance cache
+                // it should not fall back to the global cache so the right provider will not be found
+                connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(notRequiredProvider);
+                ex = Assert.Throws<InvalidOperationException>(
+                     () => ExecuteQueryThatRequiresCustomKeyStoreProvider(connection));
+                Assert.Contains(providerNotFoundExpectedMessage, ex.Message);
+
+                // register required provider in instance cache
+                // if the instance cache is not empty, it is always checked for the provider.
+                // => if the provider is found, it must have been retrieved from the instance cache and not the global cache
+                connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(requiredProvider);
+                ex = Assert.Throws<InvalidOperationException>(
+                    () => ExecuteQueryThatRequiresCustomKeyStoreProvider(connection));
+                Assert.Contains(dummyProviderNotImplementedExpectedMessage, ex.Message);
+
+                // not required provider wil replace the previous entry so required provider will not be found 
+                connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(notRequiredProvider);
+                ex = Assert.Throws<InvalidOperationException>(
+                    () => ExecuteQueryThatRequiresCustomKeyStoreProvider(connection));
+                Assert.Contains(providerNotFoundExpectedMessage, ex.Message);
+            }
+        }
+
+        private void ExecuteQueryThatRequiresCustomKeyStoreProvider(SqlConnection connection)
+        {
+            using (SqlCommand command = new SqlCommand(
+                null, connection, null, SqlCommandColumnEncryptionSetting.Enabled))
+            {
+                command.CommandText = $"SELECT * FROM [{customKeyStoreProviderTableName}] " +
+                                      $"WHERE CustomerID > @id";
+                command.Parameters.AddWithValue(@"id", 9);
+                command.ExecuteReader();
             }
         }
 
