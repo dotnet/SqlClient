@@ -377,35 +377,5 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.ColumnMasterKeySignatureVerificationFailed(keyPath);
             }
         }
-
-        internal static SqlColumnEncryptionKeyStoreProvider TryGetColumnEncryptionKeyStoreProvider(string serverName, string keyPath, string keyStoreName, SqlConnection connection)
-        {
-            // Check against the trusted key paths
-            //
-            // Get the List corresponding to the connected server
-            IList<string> trustedKeyPaths;
-            if (SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.TryGetValue(serverName, out trustedKeyPaths))
-            {
-                // If the list is null or is empty or if the keyPath doesn't exist in the trusted key paths, then throw an exception.
-                if ((trustedKeyPaths == null) || (trustedKeyPaths.Count() == 0) ||
-                        // (trustedKeyPaths.Where(s => s.Equals(keyInfo.keyPath, StringComparison.InvariantCultureIgnoreCase)).Count() == 0)) {
-                        (trustedKeyPaths.Any(
-                                s => s.Equals(keyPath, StringComparison.InvariantCultureIgnoreCase)) == false))
-                {
-                    // throw an exception since the key path is not in the trusted key paths list for this server
-                    throw SQL.UntrustedKeyPath(keyPath, serverName);
-                }
-            }
-
-            // Key Not found, attempt to look up the provider
-            if (!SqlConnection.TryGetColumnEncryptionKeyStoreProvider(keyStoreName, out SqlColumnEncryptionKeyStoreProvider provider, connection))
-            {
-                throw SQL.InvalidKeyStoreProviderName(keyStoreName,
-                        SqlConnection.GetColumnEncryptionSystemKeyStoreProviders(),
-                        SqlConnection.GetColumnEncryptionCustomKeyStoreProviders(connection));
-            }
-
-            return provider;
-        }
     }
 }
