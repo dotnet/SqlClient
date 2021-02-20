@@ -2147,7 +2147,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Dictionary<string, SqlColumnEncryptionKeyStoreProvider> notRequiredProvider =
                 new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>()
                 {
-                    { "DummyProvider2", new DummyKeyStoreProvider2() }
+                    { "DummyProvider2", new DummyKeyStoreProvider() }
                 };
 
             string dummyProviderNotImplementedExpectedMessage = "Unable to verify a column master key signature. Error " +

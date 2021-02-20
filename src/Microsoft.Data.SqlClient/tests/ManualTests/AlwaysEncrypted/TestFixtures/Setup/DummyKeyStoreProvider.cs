@@ -18,17 +18,4 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
             throw new NotImplementedException();
         }
     }
-
-    internal class DummyKeyStoreProvider2 : SqlColumnEncryptionKeyStoreProvider
-    {
-        public override byte[] DecryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] encryptedColumnEncryptionKey)
-        {
-            throw new NotImplementedException();
-        }
-
-        public override byte[] EncryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] columnEncryptionKey)
-        {
-            throw new NotImplementedException();
-        }
-    }
 }
