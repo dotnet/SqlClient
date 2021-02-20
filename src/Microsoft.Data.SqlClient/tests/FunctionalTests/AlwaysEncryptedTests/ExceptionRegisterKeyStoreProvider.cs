@@ -112,17 +112,17 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
                 connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(singleKeyStoreProvider);
                 FieldInfo field = connection.GetType().GetField("_CustomColumnEncryptionKeyStoreProviders",
                     BindingFlags.NonPublic | BindingFlags.Instance);
-                ReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> registeredProvidersInInstanceCache =
+                ReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> instanceCache =
                     field.GetValue(connection) as ReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider>;
 
-                Assert.True(registeredProvidersInInstanceCache.Count == 1);
-                Assert.True(registeredProvidersInInstanceCache.ContainsKey("DummyProvider1"));
+                Assert.True(instanceCache.Count == 1);
+                Assert.True(instanceCache.ContainsKey("DummyProvider1"));
 
                 connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(multipleKeyStoreProviders);
-                registeredProvidersInInstanceCache = field.GetValue(connection) as ReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider>;
-                Assert.True(registeredProvidersInInstanceCache.Count == 2);
-                Assert.True(registeredProvidersInInstanceCache.ContainsKey("DummyProvider2"));
-                Assert.True(registeredProvidersInInstanceCache.ContainsKey("DummyProvider3"));
+                instanceCache = field.GetValue(connection) as ReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider>;
+                Assert.True(instanceCache.Count == 2);
+                Assert.True(instanceCache.ContainsKey("DummyProvider2"));
+                Assert.True(instanceCache.ContainsKey("DummyProvider3"));
             }
         }
 

@@ -167,14 +167,12 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Encrypts the plaintext.
         /// </summary>
-        internal static byte[] EncryptWithKey(byte[] plainText, SqlCipherMetadata md, string serverName, SqlConnection connection)
+        internal static byte[] EncryptWithKey(byte[] plainText, SqlCipherMetadata md, SqlConnection connection)
         {
-            Debug.Assert(serverName != null, @"serverName should not be null in EncryptWithKey.");
-
             // Initialize cipherAlgo if not already done.
             if (!md.IsAlgorithmInitialized())
             {
-                DecryptSymmetricKey(md, serverName, connection);
+                DecryptSymmetricKey(md, connection);
             }
 
             Debug.Assert(md.IsAlgorithmInitialized(), "Encryption Algorithm is not initialized");
@@ -206,14 +204,12 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Decrypts the ciphertext.
         /// </summary>
-        internal static byte[] DecryptWithKey(byte[] cipherText, SqlCipherMetadata md, string serverName, SqlConnection connection)
+        internal static byte[] DecryptWithKey(byte[] cipherText, SqlCipherMetadata md, SqlConnection connection)
         {
-            Debug.Assert(serverName != null, @"serverName should not be null in DecryptWithKey.");
-
             // Initialize cipherAlgo if not already done.
             if (!md.IsAlgorithmInitialized())
             {
-                DecryptSymmetricKey(md, serverName, connection);
+                DecryptSymmetricKey(md, connection);
             }
 
             Debug.Assert(md.IsAlgorithmInitialized(), "Decryption Algorithm is not initialized");
@@ -240,14 +236,14 @@ namespace Microsoft.Data.SqlClient
         /// <para> Decrypts the symmetric key and saves it in metadata. In addition, initializes
         /// the SqlClientEncryptionAlgorithm for rapid decryption.</para>
         /// </summary>
-        internal static void DecryptSymmetricKey(SqlCipherMetadata md, string serverName, SqlConnection connection)
+        internal static void DecryptSymmetricKey(SqlCipherMetadata md, SqlConnection connection)
         {
             Debug.Assert(md != null, "md should not be null in DecryptSymmetricKey.");
 
             SqlClientSymmetricKey symKey = null;
             SqlEncryptionKeyInfo encryptionkeyInfoChosen = null;
 
-            DecryptSymmetricKey(md.EncryptionInfo, serverName, out symKey, out encryptionkeyInfoChosen, connection);
+            DecryptSymmetricKey(md.EncryptionInfo, out symKey, out encryptionkeyInfoChosen, connection);
 
             // Given the symmetric key instantiate a SqlClientEncryptionAlgorithm object and cache it in metadata
             md.CipherAlgorithm = null;
@@ -263,9 +259,8 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Decrypts the symmetric key and saves it in metadata.
         /// </summary>
-        internal static void DecryptSymmetricKey(SqlTceCipherInfoEntry sqlTceCipherInfoEntry, string serverName, out SqlClientSymmetricKey sqlClientSymmetricKey, out SqlEncryptionKeyInfo encryptionkeyInfoChosen, SqlConnection connection)
+        internal static void DecryptSymmetricKey(SqlTceCipherInfoEntry sqlTceCipherInfoEntry, out SqlClientSymmetricKey sqlClientSymmetricKey, out SqlEncryptionKeyInfo encryptionkeyInfoChosen, SqlConnection connection)
         {
-            Debug.Assert(serverName != null, @"serverName should not be null in DecryptSymmetricKey.");
             Debug.Assert(sqlTceCipherInfoEntry != null, "sqlTceCipherInfoEntry should not be null in DecryptSymmetricKey.");
             Debug.Assert(sqlTceCipherInfoEntry.ColumnEncryptionKeyValues != null,
                     "sqlTceCipherInfoEntry.ColumnEncryptionKeyValues should not be null in DecryptSymmetricKey.");
@@ -279,7 +274,7 @@ namespace Microsoft.Data.SqlClient
             {
                 try
                 {
-                    if (cache.GetKey(keyInfo, serverName, out sqlClientSymmetricKey, connection))
+                    if (cache.GetKey(keyInfo, out sqlClientSymmetricKey, connection))
                     {
                         encryptionkeyInfoChosen = keyInfo;
                         break;

@@ -41,8 +41,9 @@ namespace Microsoft.Data.SqlClient
         /// <param name="queryText"></param>
         /// <param name="enclaveType">enclave type</param>
         /// <param name="enclaveSessionParameters">The set of parameters required for enclave session.</param>
+        /// <param name="connection"></param>
         /// <returns></returns>
-        internal EnclavePackage GenerateEnclavePackage(SqlConnectionAttestationProtocol attestationProtocol, Dictionary<int, SqlTceCipherInfoEntry> keysTobeSentToEnclave, string queryText, string enclaveType, EnclaveSessionParameters enclaveSessionParameters)
+        internal EnclavePackage GenerateEnclavePackage(SqlConnectionAttestationProtocol attestationProtocol, Dictionary<int, SqlTceCipherInfoEntry> keysTobeSentToEnclave, string queryText, string enclaveType, EnclaveSessionParameters enclaveSessionParameters, SqlConnection connection)
         {
 
             SqlEnclaveSession sqlEnclaveSession = null;
@@ -58,7 +59,7 @@ namespace Microsoft.Data.SqlClient
                 throw new RetryableEnclaveQueryExecutionException(e.Message, e);
             }
 
-            List<ColumnEncryptionKeyInfo> decryptedKeysToBeSentToEnclave = GetDecryptedKeysToBeSentToEnclave(keysTobeSentToEnclave, enclaveSessionParameters.ServerName);
+            List<ColumnEncryptionKeyInfo> decryptedKeysToBeSentToEnclave = GetDecryptedKeysToBeSentToEnclave(keysTobeSentToEnclave, connection);
             byte[] queryStringHashBytes = ComputeQueryStringHash(queryText);
             byte[] keyBytePackage = GenerateBytePackageForKeys(counter, queryStringHashBytes, decryptedKeysToBeSentToEnclave);
             byte[] sessionKey = sqlEnclaveSession.GetSessionKey();
@@ -87,7 +88,7 @@ namespace Microsoft.Data.SqlClient
 
             if (throwIfNull && sqlEnclaveSession == null)
             {
-                    throw SQL.NullEnclaveSessionDuringQueryExecution(enclaveType, enclaveSessionParameters.AttestationUrl);
+                throw SQL.NullEnclaveSessionDuringQueryExecution(enclaveType, enclaveSessionParameters.AttestationUrl);
             }
         }
 
@@ -253,18 +254,18 @@ namespace Microsoft.Data.SqlClient
         /// Decrypt the keys that need to be sent to the enclave
         /// </summary>
         /// <param name="keysTobeSentToEnclave">Keys that need to sent to the enclave</param>
-        /// <param name="serverName"></param>
+        /// <param name="connection">Connection executing the query</param>
         /// <returns></returns>
-        private List<ColumnEncryptionKeyInfo> GetDecryptedKeysToBeSentToEnclave(Dictionary<int, SqlTceCipherInfoEntry> keysTobeSentToEnclave, string serverName)
+        private List<ColumnEncryptionKeyInfo> GetDecryptedKeysToBeSentToEnclave(Dictionary<int, SqlTceCipherInfoEntry> keysTobeSentToEnclave, SqlConnection connection)
         {
             List<ColumnEncryptionKeyInfo> decryptedKeysToBeSentToEnclave = new List<ColumnEncryptionKeyInfo>();
 
             foreach (SqlTceCipherInfoEntry cipherInfo in keysTobeSentToEnclave.Values)
             {
                 SqlClientSymmetricKey sqlClientSymmetricKey = null;
-                SqlEncryptionKeyInfo? encryptionkeyInfoChosen = null;
-                SqlSecurityUtility.DecryptSymmetricKey(cipherInfo, serverName, out sqlClientSymmetricKey,
-                    out encryptionkeyInfoChosen);
+                SqlEncryptionKeyInfo encryptionkeyInfoChosen = null;
+                SqlSecurityUtility.DecryptSymmetricKey(cipherInfo, out sqlClientSymmetricKey,
+                    out encryptionkeyInfoChosen, connection);
 
                 if (sqlClientSymmetricKey == null)
                     throw SQL.NullArgumentInternal("sqlClientSymmetricKey", ClassName, GetDecryptedKeysToBeSentToEnclaveName);

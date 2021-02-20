@@ -5977,7 +5977,7 @@ namespace Microsoft.Data.SqlClient
                         try
                         {
                             // CipherInfo is present, decrypt and read
-                            byte[] unencryptedBytes = SqlSecurityUtility.DecryptWithKey(b, md.cipherMD, _connHandler.ConnectionOptions.DataSource, _connHandler.Connection);
+                            byte[] unencryptedBytes = SqlSecurityUtility.DecryptWithKey(b, md.cipherMD, _connHandler.Connection);
 
                             if (unencryptedBytes != null)
                             {
@@ -9291,7 +9291,7 @@ namespace Microsoft.Data.SqlClient
                         }
 
                         Debug.Assert(serializedValue != null, "serializedValue should not be null in TdsExecuteRPC.");
-                        encryptedValue = SqlSecurityUtility.EncryptWithKey(serializedValue, param.CipherMetadata, _connHandler.ConnectionOptions.DataSource, _connHandler.Connection);
+                        encryptedValue = SqlSecurityUtility.EncryptWithKey(serializedValue, param.CipherMetadata, _connHandler.Connection);
                     }
                     catch (Exception e)
                     {
@@ -10158,7 +10158,7 @@ namespace Microsoft.Data.SqlClient
         /// decrypt the CEK and keep it ready for encryption.
         /// </summary>
         /// <returns></returns>
-        internal void LoadColumnEncryptionKeys(_SqlMetaDataSet metadataCollection, string serverName)
+        internal void LoadColumnEncryptionKeys(_SqlMetaDataSet metadataCollection, SqlConnection connection)
         {
             if (IsColumnEncryptionSupported && ShouldEncryptValuesForBulkCopy())
             {
@@ -10169,7 +10169,7 @@ namespace Microsoft.Data.SqlClient
                         _SqlMetaData md = metadataCollection[col];
                         if (md.isEncrypted)
                         {
-                            SqlSecurityUtility.DecryptSymmetricKey(md.cipherMD, serverName, _connHandler.Connection);
+                            SqlSecurityUtility.DecryptSymmetricKey(md.cipherMD, connection);
                         }
                     }
                 }
@@ -10519,7 +10519,6 @@ namespace Microsoft.Data.SqlClient
             return SqlSecurityUtility.EncryptWithKey(
                     serializedValue,
                     metadata.cipherMD,
-                    _connHandler.ConnectionOptions.DataSource,
                     _connHandler.Connection);
         }
 

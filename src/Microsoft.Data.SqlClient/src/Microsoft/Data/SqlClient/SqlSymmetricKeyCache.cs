@@ -33,10 +33,10 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// <para> Retrieves Symmetric Key (in plaintext) given the encryption material.</para>
         /// </summary>
-        internal bool GetKey(SqlEncryptionKeyInfo keyInfo, string serverName, out SqlClientSymmetricKey encryptionKey, SqlConnection connection)
+        internal bool GetKey(SqlEncryptionKeyInfo keyInfo, out SqlClientSymmetricKey encryptionKey, SqlConnection connection)
         {
+            string serverName = connection.DataSource;
             Debug.Assert(serverName != null, @"serverName should not be null.");
-
             StringBuilder cacheLookupKeyBuilder = new StringBuilder(serverName, capacity: serverName.Length + SqlSecurityUtility.GetBase64LengthFromByteLength(keyInfo.encryptedKey.Length) + keyInfo.keyStoreName.Length + 2/*separators*/);
 
 #if DEBUG

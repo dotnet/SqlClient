@@ -4090,7 +4090,7 @@ namespace Microsoft.Data.SqlClient
 
                                     // Decrypt the symmetric key.(This will also validate and throw if needed).
                                     Debug.Assert(_activeConnection != null, @"_activeConnection should not be null");
-                                    SqlSecurityUtility.DecryptSymmetricKey(sqlParameter.CipherMetadata, this._activeConnection.DataSource, _activeConnection);
+                                    SqlSecurityUtility.DecryptSymmetricKey(sqlParameter.CipherMetadata, _activeConnection);
 
                                     // This is effective only for BatchRPCMode even though we set it for non-BatchRPCMode also,
                                     // since for non-BatchRPCMode mode, paramoptions gets thrown away and reconstructed in BuildExecuteSql.
@@ -5175,7 +5175,7 @@ namespace Microsoft.Data.SqlClient
 
                             // Get the key information from the parameter and decrypt the value.
                             rec.cipherMD.EncryptionInfo = thisParam.CipherMetadata.EncryptionInfo;
-                            byte[] unencryptedBytes = SqlSecurityUtility.DecryptWithKey(rec.value.ByteArray, rec.cipherMD, _activeConnection.DataSource, _activeConnection);
+                            byte[] unencryptedBytes = SqlSecurityUtility.DecryptWithKey(rec.value.ByteArray, rec.cipherMD, _activeConnection);
 
                             if (unencryptedBytes != null)
                             {

@@ -57,7 +57,7 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlClientSymmetricKey sqlClientSymmetricKey = null;
                 SqlEncryptionKeyInfo encryptionkeyInfoChosen = null;
-                SqlSecurityUtility.DecryptSymmetricKey(cipherInfo, serverName, out sqlClientSymmetricKey,
+                SqlSecurityUtility.DecryptSymmetricKey(cipherInfo, out sqlClientSymmetricKey,
                     out encryptionkeyInfoChosen, connection);
 
                 if (sqlClientSymmetricKey == null)
