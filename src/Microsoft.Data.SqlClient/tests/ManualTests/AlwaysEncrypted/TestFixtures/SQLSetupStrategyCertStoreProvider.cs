@@ -12,7 +12,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     {
         public SqlColumnEncryptionCertificateStoreProvider CertStoreProvider;
         public CspColumnMasterKey CspColumnMasterKey;
-        public DummyProviderMasterKey DummyMasterKey;
+        public DummyMasterKeyForCertStoreProvider DummyMasterKey;
 
         public SQLSetupStrategyCertStoreProvider() : base()
         {
@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         internal override void SetupDatabase()
         {
             CspColumnMasterKey = new CspColumnMasterKey(GenerateUniqueName("CMK"), certificate.Thumbprint, CertStoreProvider, DataTestUtility.EnclaveEnabled);
-            DummyMasterKey = new DummyProviderMasterKey(GenerateUniqueName("DummyCMK"), certificate.Thumbprint, CertStoreProvider, DataTestUtility.EnclaveEnabled);
+            DummyMasterKey = new DummyMasterKeyForCertStoreProvider(GenerateUniqueName("DummyCMK"), certificate.Thumbprint, CertStoreProvider, DataTestUtility.EnclaveEnabled);
             databaseObjects.Add(CspColumnMasterKey);
             databaseObjects.Add(DummyMasterKey);
 

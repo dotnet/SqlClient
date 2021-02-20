@@ -15,6 +15,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         public Table AKVTestTable { get; private set; }
         public SqlColumnEncryptionAzureKeyVaultProvider AkvStoreProvider;
+        public DummyMasterKeyForAKVProvider DummyMasterKey;
 
         public SQLSetupStrategyAzureKeyVault() : base()
         {
@@ -41,9 +42,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         internal override void SetupDatabase()
         {
             ColumnMasterKey akvColumnMasterKey = new AkvColumnMasterKey(GenerateUniqueName("AKVCMK"), akvUrl: DataTestUtility.AKVUrl, AkvStoreProvider, DataTestUtility.EnclaveEnabled);
+            DummyMasterKey = new DummyMasterKeyForAKVProvider(GenerateUniqueName("DummyCMK"), DataTestUtility.AKVUrl, AkvStoreProvider, DataTestUtility.EnclaveEnabled);
+
             databaseObjects.Add(akvColumnMasterKey);
+            databaseObjects.Add(DummyMasterKey);
 
             List<ColumnEncryptionKey> akvColumnEncryptionKeys = CreateColumnEncryptionKeys(akvColumnMasterKey, 2, AkvStoreProvider);
+            List<ColumnEncryptionKey> dummyColumnEncryptionKeys = CreateColumnEncryptionKeys(DummyMasterKey, 1, AkvStoreProvider);
+            akvColumnEncryptionKeys.AddRange(dummyColumnEncryptionKeys);
             databaseObjects.AddRange(akvColumnEncryptionKeys);
 
             List<Table> tables = CreateTables(akvColumnEncryptionKeys);
