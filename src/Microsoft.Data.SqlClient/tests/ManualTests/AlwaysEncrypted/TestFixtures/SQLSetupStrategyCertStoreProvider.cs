@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         internal override void SetupDatabase()
         {
             CspColumnMasterKey = new CspColumnMasterKey(GenerateUniqueName("CMK"), certificate.Thumbprint, CertStoreProvider, DataTestUtility.EnclaveEnabled);
-            DummyMasterKey = new DummyMasterKeyForCertStoreProvider(GenerateUniqueName("DummyCMK"), certificate.Thumbprint, CertStoreProvider, DataTestUtility.EnclaveEnabled);
+            DummyMasterKey = new DummyMasterKeyForCertStoreProvider(GenerateUniqueName("DummyCMK"), certificate.Thumbprint, CertStoreProvider, false);
             databaseObjects.Add(CspColumnMasterKey);
             databaseObjects.Add(DummyMasterKey);
 

@@ -2150,9 +2150,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     { "DummyProvider2", new DummyKeyStoreProvider() }
                 };
 
-            string dummyProviderNotImplementedExpectedMessage = "Unable to verify a column master key signature. Error " +
-                "message: The method or operation is not implemented.";
-            string providerNotFoundExpectedMessage = "Invalid key store provider name: 'DummyProvider'. A key store " +
+            string failedToDecryptErrorMessage = "Failed to decrypt a column encryption key using key store provider: " +
+                "'DummyProvider'. Verify the properties of the column encryption key and its column master key in your database.";
+            string providerNotImplementedMessage = "The method or operation is not implemented.";
+            string providerNotFoundMessage = "Invalid key store provider name: 'DummyProvider'. A key store " +
                 "provider name must denote either a system key store provider or a registered custom key store provider." +
                 " Valid system key store provider names are: 'MSSQL_CERTIFICATE_STORE', 'MSSQL_CNG_STORE', " +
                 "'MSSQL_CSP_PROVIDER'. Valid (currently registered) custom key store provider names are: 'DummyProvider2'.";
@@ -2163,30 +2164,32 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                 // will use DummyProvider in global cache
                 // provider will be found but it will throw when its methods are called
-                Exception ex = Assert.Throws<InvalidOperationException>(
+                Exception ex = Assert.Throws<SqlException>(
                       () => ExecuteQueryThatRequiresCustomKeyStoreProvider(connection));
-                Assert.Contains(dummyProviderNotImplementedExpectedMessage, ex.Message);
+                Assert.Contains(failedToDecryptErrorMessage, ex.Message);
+                Assert.Contains(providerNotImplementedMessage, ex.Message);
 
-                // register the not required provider in instance cache
+                // not required provider in instance cache
                 // it should not fall back to the global cache so the right provider will not be found
                 connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(notRequiredProvider);
-                ex = Assert.Throws<InvalidOperationException>(
+                ex = Assert.Throws<ArgumentException>(
                      () => ExecuteQueryThatRequiresCustomKeyStoreProvider(connection));
-                Assert.Contains(providerNotFoundExpectedMessage, ex.Message);
+                Assert.Contains(providerNotFoundMessage, ex.Message);
 
-                // register required provider in instance cache
+                // required provider in instance cache
                 // if the instance cache is not empty, it is always checked for the provider.
                 // => if the provider is found, it must have been retrieved from the instance cache and not the global cache
                 connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(requiredProvider);
-                ex = Assert.Throws<InvalidOperationException>(
+                ex = Assert.Throws<SqlException>(
                     () => ExecuteQueryThatRequiresCustomKeyStoreProvider(connection));
-                Assert.Contains(dummyProviderNotImplementedExpectedMessage, ex.Message);
+                Assert.Contains(failedToDecryptErrorMessage, ex.Message);
+                Assert.Contains(providerNotImplementedMessage, ex.Message);
 
-                // not required provider wil replace the previous entry so required provider will not be found 
+                // not required provider will replace the previous entry so required provider will not be found 
                 connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(notRequiredProvider);
-                ex = Assert.Throws<InvalidOperationException>(
+                ex = Assert.Throws<ArgumentException>(
                     () => ExecuteQueryThatRequiresCustomKeyStoreProvider(connection));
-                Assert.Contains(providerNotFoundExpectedMessage, ex.Message);
+                Assert.Contains(providerNotFoundMessage, ex.Message);
             }
         }
 
@@ -2195,7 +2198,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             using (SqlCommand command = new SqlCommand(
                 null, connection, null, SqlCommandColumnEncryptionSetting.Enabled))
             {
-                command.CommandText = $"SELECT * FROM [{customKeyStoreProviderTableName}] WHERE CustomerID > @id";
+                command.CommandText = $"SELECT * FROM [{customKeyStoreProviderTableName}] WHERE CustomerID = @id";
                 command.Parameters.AddWithValue(@"id", 9);
                 command.ExecuteReader();
             }

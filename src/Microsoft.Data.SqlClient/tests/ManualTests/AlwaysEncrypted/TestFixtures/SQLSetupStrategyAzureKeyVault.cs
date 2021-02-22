@@ -42,7 +42,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         internal override void SetupDatabase()
         {
             ColumnMasterKey akvColumnMasterKey = new AkvColumnMasterKey(GenerateUniqueName("AKVCMK"), akvUrl: DataTestUtility.AKVUrl, AkvStoreProvider, DataTestUtility.EnclaveEnabled);
-            DummyMasterKey = new DummyMasterKeyForAKVProvider(GenerateUniqueName("DummyCMK"), DataTestUtility.AKVUrl, AkvStoreProvider, DataTestUtility.EnclaveEnabled);
+            DummyMasterKey = new DummyMasterKeyForAKVProvider(GenerateUniqueName("DummyCMK"), DataTestUtility.AKVUrl, AkvStoreProvider, false);
 
             databaseObjects.Add(akvColumnMasterKey);
             databaseObjects.Add(DummyMasterKey);
