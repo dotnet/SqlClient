@@ -187,7 +187,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             try
             {
-                await connection.OpenAsync();
                 using (var command = connection.CreateCommand())
                 {
                     Task timeBombTask = default;
