@@ -174,7 +174,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            lock (_GlobalCustomColumnEncryptionKeyStoreProviders)
+            lock (_GlobalCustomColumnEncryptionKeyProvidersLock)
             {
                 // Provider list can only be set once
                 if (_GlobalCustomColumnEncryptionKeyStoreProviders != null)
