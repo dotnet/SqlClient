@@ -10918,6 +10918,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Unexpected type detected on deserialize..
+        /// </summary>
+        internal static string SqlDependency_UnexpectedValueOnDeserialize {
+            get {
+                return ResourceManager.GetString("SqlDependency_UnexpectedValueOnDeserialize", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The process cannot access the file specified because it has been opened in another transaction..
         /// </summary>
         internal static string SqlFileStream_FileAlreadyInTransaction {

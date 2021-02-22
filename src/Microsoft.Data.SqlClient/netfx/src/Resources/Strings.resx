@@ -4602,6 +4602,9 @@
   <data name="Azure_RetryFailure" xml:space="preserve">
     <value>Failed after 5 retries.</value>
   </data>
+  <data name="SqlDependency_UnexpectedValueOnDeserialize" xml:space="preserve">
+    <value>Unexpected type detected on deserialize.</value>
+  </data>
   <data name="SqlRetryLogic_InvalidRange" xml:space="preserve">
     <value>Value '{0}' is out of range. Must be between {1} and {2}.</value>
   </data>
