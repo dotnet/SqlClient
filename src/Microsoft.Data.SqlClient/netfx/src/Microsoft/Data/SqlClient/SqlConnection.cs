@@ -65,7 +65,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private static ReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> _GlobalCustomColumnEncryptionKeyStoreProviders;
 
-        /// Instance-level custom providers. It can be provided by the user and can be set more than once. 
+        /// Instance-level custom providers. It can  be provided by the user and can be set more than once. 
         private ReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> _CustomColumnEncryptionKeyStoreProviders;
 
         // Lock to control setting of _GlobalCustomColumnEncryptionKeyStoreProviders
@@ -270,7 +270,7 @@ namespace Microsoft.Data.SqlClient
             lock (_GlobalCustomColumnEncryptionKeyProvidersLock)
             {
                 // If custom provider is not set, then return false
-                if (_GlobalCustomColumnEncryptionKeyProvidersLock == null)
+                if (_GlobalCustomColumnEncryptionKeyStoreProviders == null)
                 {
                     return false;
                 }
