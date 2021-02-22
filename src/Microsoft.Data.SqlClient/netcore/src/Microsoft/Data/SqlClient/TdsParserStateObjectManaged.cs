@@ -51,7 +51,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
         internal override void CreatePhysicalSNIHandle(string serverName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[] spnBuffer, bool flushCache, bool async, bool parallel, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo, bool isIntegratedSecurity)
         {
-            _sessionHandle = SNIProxy.GetInstance().CreateConnectionHandle(this, serverName, ignoreSniOpenTimeout, timerExpire, out instanceName, ref spnBuffer, flushCache, async, parallel, isIntegratedSecurity, cachedFQDN, ref pendingDNSInfo);
+            _sessionHandle = SNIProxy.GetInstance().CreateConnectionHandle(serverName, ignoreSniOpenTimeout, timerExpire, out instanceName, ref spnBuffer, flushCache, async, parallel, isIntegratedSecurity, cachedFQDN, ref pendingDNSInfo);
             if (_sessionHandle == null)
             {
                 _parser.ProcessSNIError(this);
@@ -71,14 +71,34 @@ namespace Microsoft.Data.SqlClient.SNI
 
         internal void ReadAsyncCallback(SNIPacket packet, uint error)
         {
-            ReadAsyncCallback(IntPtr.Zero, PacketHandle.FromManagedPacket(packet), error);
-            _sessionHandle?.ReturnPacket(packet);
+            SNIHandle sessionHandle = _sessionHandle;
+            if (sessionHandle != null)
+            {
+                ReadAsyncCallback(IntPtr.Zero, PacketHandle.FromManagedPacket(packet), error);
+                sessionHandle?.ReturnPacket(packet);
+            }
+            else
+            {
+                // clear the packet and drop it to GC because we no longer know how to return it to the correct owner
+                // this can only happen if a packet is in-flight when the _sessionHandle is cleared
+                packet.Release();
+            }
         }
 
         internal void WriteAsyncCallback(SNIPacket packet, uint sniError)
         {
-            WriteAsyncCallback(IntPtr.Zero, PacketHandle.FromManagedPacket(packet), sniError);
-            _sessionHandle?.ReturnPacket(packet);
+            SNIHandle sessionHandle = _sessionHandle;
+            if (sessionHandle != null)
+            {
+                WriteAsyncCallback(IntPtr.Zero, PacketHandle.FromManagedPacket(packet), sniError);
+                sessionHandle?.ReturnPacket(packet);
+            }
+            else
+            {
+                // clear the packet and drop it to GC because we no longer know how to return it to the correct owner
+                // this can only happen if a packet is in-flight when the _sessionHandle is cleared
+                packet.Release();
+            }
         }
 
         protected override void RemovePacketFromPendingList(PacketHandle packet)
