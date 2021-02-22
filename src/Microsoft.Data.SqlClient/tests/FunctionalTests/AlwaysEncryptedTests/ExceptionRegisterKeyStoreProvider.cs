@@ -134,8 +134,8 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
             Assembly assembly = Assembly.GetAssembly(typeof(SqlConnection));
             Type SqlSecurityUtilityType = assembly.GetType("Microsoft.Data.SqlClient.SqlSecurityUtility");
-            // calling this method simulates a query that requires a custom key store provider with the given name
-            MethodInfo TryGetProviderMethod = SqlSecurityUtilityType.GetMethod("TryGetColumnEncryptionKeyStoreProvider",
+            // calling this method simulates a query that requires a custom key store provider
+            MethodInfo TryGetProviderMethod = SqlSecurityUtilityType.GetMethod("VerifyColumnMasterKeySignature",
                 BindingFlags.Static | BindingFlags.NonPublic);
 
             string providerNotFoundExpectedMessage = "Invalid key store provider name: 'CustomProvider'. A key store " +
@@ -147,13 +147,13 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             {
                 // no providers registered
                 Exception e = Assert.Throws<TargetInvocationException>(
-                () => TryGetProviderMethod.Invoke(null, new object[] { "serverName", "keyPath", "CustomProvider", connection }));
+                () => TryGetProviderMethod.Invoke(null, new object[] { "CustomProvider", "keyPath", "serverName", true, new byte[] { 1 }, connection }));
                 Assert.Contains(string.Format(providerNotFoundExpectedMessage, ""), e.InnerException.Message);
 
                 // 1 provider in global cache
                 SqlConnection.RegisterColumnEncryptionKeyStoreProviders(singleKeyStoreProvider);
                 e = Assert.Throws<TargetInvocationException>(
-                   () => TryGetProviderMethod.Invoke(null, new object[] { "serverName", "keyPath", "CustomProvider", connection }));
+                   () => TryGetProviderMethod.Invoke(null, new object[] { "CustomProvider", "keyPath", "serverName", true, new byte[] { 1 }, connection }));
                 Assert.Contains(string.Format(providerNotFoundExpectedMessage, "'DummyProvider1'"), e.InnerException.Message);
 
                 Utility.ClearSqlConnectionGlobalProviders();
@@ -161,14 +161,14 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
                 // more than 1 provider in global cache
                 SqlConnection.RegisterColumnEncryptionKeyStoreProviders(multipleKeyStoreProviders);
                 e = Assert.Throws<TargetInvocationException>(
-                   () => TryGetProviderMethod.Invoke(null, new object[] { "serverName", "keyPath", "CustomProvider", connection }));
+                   () => TryGetProviderMethod.Invoke(null, new object[] { "CustomProvider", "keyPath", "serverName", true, new byte[] { 1 }, connection }));
                 Assert.Contains(string.Format(providerNotFoundExpectedMessage, "'DummyProvider2', 'DummyProvider3'"), e.InnerException.Message);
 
                 // register a provider on the connection
                 // error message should not contain the 2 providers in the global cache as only the instance-level cache is used
                 connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(singleKeyStoreProvider);
                 e = Assert.Throws<TargetInvocationException>(
-                    () => TryGetProviderMethod.Invoke(null, new object[] { "serverName", "keyPath", "CustomProvider", connection }));
+                    () => TryGetProviderMethod.Invoke(null, new object[] { "CustomProvider", "keyPath", "serverName", true, new byte[] { 1 }, connection }));
                 Assert.Contains(string.Format(providerNotFoundExpectedMessage, "'DummyProvider1'"), e.InnerException.Message);
             }
         }
