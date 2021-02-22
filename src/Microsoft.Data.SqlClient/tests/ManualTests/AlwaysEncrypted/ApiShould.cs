@@ -2195,8 +2195,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             using (SqlCommand command = new SqlCommand(
                 null, connection, null, SqlCommandColumnEncryptionSetting.Enabled))
             {
-                command.CommandText = $"SELECT * FROM [{customKeyStoreProviderTableName}] " +
-                                      $"WHERE CustomerID > @id";
+                command.CommandText = $"SELECT * FROM [{customKeyStoreProviderTableName}] WHERE CustomerID > @id";
                 command.Parameters.AddWithValue(@"id", 9);
                 command.ExecuteReader();
             }
