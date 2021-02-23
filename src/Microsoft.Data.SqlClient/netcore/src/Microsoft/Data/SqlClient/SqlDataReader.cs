@@ -834,11 +834,18 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/Dispose/*' />
         protected override void Dispose(bool disposing)
         {
-            if (disposing)
+            try
             {
-                Close();
+                if (disposing)
+                {
+                    Close();
+                }
+                base.Dispose(disposing);
             }
-            base.Dispose(disposing);
+            catch(SqlException ex)
+            {
+                SqlClientEventSource.Log.TryTraceEvent("SqlDataReader.Dispose | ERR | Error Message: {0}, Stack Trace: {1}", ex.Message, ex.StackTrace);
+            }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/Close/*' />
@@ -2966,7 +2973,7 @@ namespace Microsoft.Data.SqlClient
                     if ((sequentialAccess) && (i < maximumColumn))
                     {
                         _data[fieldIndex].Clear();
-                        if (fieldIndex > i && fieldIndex>0)
+                        if (fieldIndex > i && fieldIndex > 0)
                         {
                             // if we jumped an index forward because of a hidden column see if the buffer before the
                             // current one was populated by the seek forward and clear it if it was
@@ -4515,7 +4522,7 @@ namespace Microsoft.Data.SqlClient
                 if (!isContinuation)
                 {
                     // This is the first async operation which is happening - setup the _currentTask and timeout
-                    Debug.Assert(context._source==null, "context._source should not be non-null when trying to change to async");
+                    Debug.Assert(context._source == null, "context._source should not be non-null when trying to change to async");
                     source = new TaskCompletionSource<int>();
                     Task original = Interlocked.CompareExchange(ref _currentTask, source.Task, null);
                     if (original != null)
