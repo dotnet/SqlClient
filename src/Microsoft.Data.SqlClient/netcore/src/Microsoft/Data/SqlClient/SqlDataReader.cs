@@ -844,7 +844,7 @@ namespace Microsoft.Data.SqlClient
             }
             catch(SqlException ex)
             {
-                SqlClientEventSource.Log.TryTraceEvent("SqlDataReader.Dispose | ERR | Error: {0}", ex);
+                SqlClientEventSource.Log.TryTraceEvent("SqlDataReader.Dispose | ERR | Error Message: {0}, Stack Trace: {1}", ex.Message, ex.StackTrace);
             }
         }
 
