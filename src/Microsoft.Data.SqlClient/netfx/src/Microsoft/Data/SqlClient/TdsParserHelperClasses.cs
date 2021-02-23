@@ -1343,18 +1343,13 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    internal class MultiPartTableName
+    internal struct MultiPartTableName
     {
         private string _multipartName;
         private string _serverName;
         private string _catalogName;
         private string _schemaName;
         private string _tableName;
-
-        internal MultiPartTableName()
-        {
-
-        }
 
         internal MultiPartTableName(string[] parts)
         {
