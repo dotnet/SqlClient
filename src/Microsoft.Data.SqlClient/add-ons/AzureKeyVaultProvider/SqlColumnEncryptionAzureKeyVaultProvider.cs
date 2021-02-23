@@ -3,10 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Diagnostics;
-using System.Globalization;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Azure.Core;
@@ -187,22 +184,14 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             // validate the ciphertext length
             if (cipherTextLength != keySizeInBytes)
             {
-                throw new ArgumentException(string.Format(CultureInfo.InvariantCulture, Strings.InvalidCiphertextLengthTemplate,
-                                                            cipherTextLength,
-                                                            keySizeInBytes,
-                                                            masterKeyPath),
-                                            Constants.AeParamEncryptedCek);
+                throw ADP.InvalidCipherTextLength(cipherTextLength, keySizeInBytes, masterKeyPath);
             }
 
             // Validate the signature length
             int signatureLength = encryptedColumnEncryptionKey.Length - currentIndex - cipherTextLength;
             if (signatureLength != keySizeInBytes)
             {
-                throw new ArgumentException(string.Format(CultureInfo.InvariantCulture, Strings.InvalidSignatureLengthTemplate,
-                                                            signatureLength,
-                                                            keySizeInBytes,
-                                                            masterKeyPath),
-                                            Constants.AeParamEncryptedCek);
+                throw ADP.InvalidSignatureLengthTemplate(signatureLength, keySizeInBytes, masterKeyPath);
             }
 
             // Get ciphertext
@@ -217,14 +206,12 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 
             if (null == message)
             {
-                throw new CryptographicException(Strings.NullHash);
+                throw ADP.NullHashFound();
             }
 
             if (!KeyCryptographer.VerifyData(message, signature, masterKeyPath))
             {
-                throw new ArgumentException(string.Format(CultureInfo.InvariantCulture, Strings.InvalidSignatureTemplate,
-                                                            masterKeyPath),
-                                            Constants.AeParamEncryptedCek);
+                throw ADP.InvalidSignatureTemplate(masterKeyPath);
             }
 
             return KeyCryptographer.UnwrapKey(s_keyWrapAlgorithm, cipherText, masterKeyPath);
@@ -264,7 +251,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 
             if (cipherText.Length != keySizeInBytes)
             {
-                throw new CryptographicException(Strings.CipherTextLengthMismatch);
+                throw ADP.CipherTextLengthMismatch();
             }
 
             // Compute message
@@ -276,7 +263,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 
             if (signature.Length != keySizeInBytes)
             {
-                throw new CryptographicException(Strings.HashLengthMismatch);
+                throw ADP.HashLengthMismatch();
             }
 
             ValidateSignature(masterKeyPath, message, signature);
@@ -288,7 +275,6 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 
         #region Private methods
 
-
         /// <summary>
         /// Checks if the Azure Key Vault key path is Empty or Null (and raises exception if they are).
         /// </summary>
@@ -297,22 +283,13 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             // throw appropriate error if masterKeyPath is null or empty
             if (string.IsNullOrWhiteSpace(masterKeyPath))
             {
-                string errorMessage = null == masterKeyPath
-                                      ? Strings.NullAkvPath
-                                      : string.Format(CultureInfo.InvariantCulture, Strings.InvalidAkvPathTemplate, masterKeyPath);
-
-                if (isSystemOp)
-                {
-                    throw new ArgumentNullException(Constants.AeParamMasterKeyPath, errorMessage);
-                }
-
-                throw new ArgumentException(errorMessage, Constants.AeParamMasterKeyPath);
+                ADP.InvalidAKVPath(masterKeyPath, isSystemOp);
             }
 
             if (!Uri.TryCreate(masterKeyPath, UriKind.Absolute, out Uri parsedUri) || parsedUri.Segments.Length < 3)
             {
                 // Return an error indicating that the AKV url is invalid.
-                throw new ArgumentException(string.Format(CultureInfo.InvariantCulture, Strings.InvalidAkvUrlTemplate, masterKeyPath), Constants.AeParamMasterKeyPath);
+                throw ADP.InvalidAKVUrl(masterKeyPath);
             }
 
             // A valid URI.
@@ -326,14 +303,14 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             }
 
             // Return an error indicating that the AKV url is invalid.
-            throw new ArgumentException(string.Format(CultureInfo.InvariantCulture, Strings.InvalidAkvKeyPathTrustedTemplate, masterKeyPath, string.Join(", ", TrustedEndPoints.ToArray())), Constants.AeParamMasterKeyPath);
+            throw ADP.InvalidAKVUrlTrustedEndpoints(masterKeyPath, string.Join(", ", TrustedEndPoints.ToArray()));
         }
 
         private void ValidateSignature(string masterKeyPath, byte[] message, byte[] signature)
         {
             if (!KeyCryptographer.VerifyData(message, signature, masterKeyPath))
             {
-                throw new CryptographicException(Strings.InvalidSignature);
+                throw ADP.InvalidSignature();
             }
         }
 

@@ -7,11 +7,8 @@ using Azure.Security.KeyVault.Keys;
 using Azure.Security.KeyVault.Keys.Cryptography;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Globalization;
 using System.Threading.Tasks;
 using static Azure.Security.KeyVault.Keys.Cryptography.SignatureAlgorithm;
-
 
 namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 {
@@ -89,7 +86,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             }
 
             // Not a public exception - not likely to occur.
-            throw new KeyNotFoundException($"The key with identifier {keyIdentifierUri} was not found.");
+            throw ADP.MasterKeyNotFound(keyIdentifierUri);
         }
 
         /// <summary>
@@ -187,7 +184,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         {
             if (key.KeyType != KeyType.Rsa && key.KeyType != KeyType.RsaHsm)
             {
-                throw new FormatException(string.Format(CultureInfo.InvariantCulture, Strings.NonRsaKeyTemplate, key.KeyType));
+                throw ADP.NonRsaKeyFormat(key.KeyType.ToString());
             }
 
             return key;
