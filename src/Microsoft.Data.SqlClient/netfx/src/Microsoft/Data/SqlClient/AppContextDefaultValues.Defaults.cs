@@ -22,10 +22,7 @@ namespace System
                 case ".NETCore":
                 case ".NETFramework":
                     {
-                        if (version <= 40702)
-                        {
-                            LocalAppContext.DefineSwitchDefault(LocalAppContextSwitches.MakeReadAsyncBlockingString, true);
-                        }
+                        LocalAppContext.DefineSwitchDefault(LocalAppContextSwitches.MakeReadAsyncBlockingString, true);
                         break;
                     }
             }
