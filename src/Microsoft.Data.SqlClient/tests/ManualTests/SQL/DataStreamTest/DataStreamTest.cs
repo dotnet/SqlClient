@@ -2012,7 +2012,6 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
             catch (SqlException)
             {
                 // In case of error, stop the proxy and dump its logs (hopefully this will help with debugging
-                // re-throwing exception will change the stack. we just throw the caught exception.
                 proxy.Stop();
                 throw;
             }
