@@ -7383,6 +7383,7 @@ namespace Microsoft.Data.SqlClient
 
         private byte[] SerializeEncodingChar(string s, int numChars, int offset, Encoding encoding)
         {
+#if NETFRAMEWORK || NETSTANDARD2_0
             char[] charData;
             byte[] byteData = null;
 
@@ -7397,33 +7398,38 @@ namespace Microsoft.Data.SqlClient
             encoding.GetBytes(charData, 0, charData.Length, byteData, 0);
 
             return byteData;
+#else
+            return encoding.GetBytes(s, offset, numChars);
+#endif
         }
 
         private Task WriteEncodingChar(string s, int numChars, int offset, Encoding encoding, TdsParserStateObject stateObj, bool canAccumulate = true)
         {
-            char[] charData;
-            byte[] byteData;
-
             // if hitting 7.0 server, encoding will be null in metadata for columns or return values since
             // 7.0 has no support for multiple code pages in data - single code page support only
             if (encoding == null)
                 encoding = _defaultEncoding;
 
-            charData = s.ToCharArray(offset, numChars);
-
             // Optimization: if the entire string fits in the current buffer, then copy it directly
             int bytesLeft = stateObj._outBuff.Length - stateObj._outBytesUsed;
-            if ((numChars <= bytesLeft) && (encoding.GetMaxByteCount(charData.Length) <= bytesLeft))
+            if ((numChars <= bytesLeft) && (encoding.GetMaxByteCount(numChars) <= bytesLeft))
             {
-                int bytesWritten = encoding.GetBytes(charData, 0, charData.Length, stateObj._outBuff, stateObj._outBytesUsed);
+                int bytesWritten = encoding.GetBytes(s, offset, numChars, stateObj._outBuff, stateObj._outBytesUsed);
                 stateObj._outBytesUsed += bytesWritten;
                 return null;
             }
             else
             {
-                byteData = encoding.GetBytes(charData, 0, numChars);
+#if NETFRAMEWORK || NETSTANDARD2_0
+                var charData = s.ToCharArray(offset, numChars);
+                var byteData = encoding.GetBytes(charData, 0, numChars);
                 Debug.Assert(byteData != null, "no data from encoding");
                 return stateObj.WriteByteArray(byteData, byteData.Length, 0, canAccumulate);
+#else
+                var byteData = encoding.GetBytes(s, offset, numChars);
+                Debug.Assert(byteData != null, "no data from encoding");
+                return stateObj.WriteByteArray(byteData, byteData.Length, 0, canAccumulate);
+#endif
             }
         }
 
