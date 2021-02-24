@@ -90,7 +90,7 @@
             </format>
             </remarks>
             <exception cref="T:System.ArgumentNullException">The `function` parameter couldn't be `null`.</exception>
-            <exception cref="T:System.AggregateException">The collection of exceptions after the failed retry logic attempts.</exception>
+            <exception cref="T:System.AggregateException">The collection of SqlExceptions after the failed retry logic attempts.</exception>
         </ExecuteAsync2>
     </members>
 </docs>

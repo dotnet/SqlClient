@@ -2,15 +2,15 @@
 <docs>
     <members name="SqlRetryIntervalBaseEnumerator">
         <SqlRetryIntervalBaseEnumerator>
-            <summary>Generates a sequence of the time intervals. This class cannot be inherited.</summary>
+            <summary>Generates a sequence of time intervals. This class cannot be inherited.</summary>
         </SqlRetryIntervalBaseEnumerator>
         <ctor1>
             <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlRetryIntervalBaseEnumerator" /> class with default value zero for the gap time, minimum, and maximum interval time.</summary>
         </ctor1>
         <ctor2>
             <param name="timeInterval">The gap time used to calculate the time delay before each attempt.</param>
-            <param name="maxTime">The maximum time that allowed as a gap time.</param>
-            <param name="minTime">The minimum time that allowed as a gap time.</param>
+            <param name="maxTime">The maximum time allowed as a gap time.</param>
+            <param name="minTime">The minimum time allowed as a gap time.</param>
             <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlRetryIntervalBaseEnumerator" /> class.</summary>
             <exception cref="T:System.ArgumentOutOfRangeException">The supplied arguments failed <see cref="T:Microsoft.Data.SqlClient.SqlRetryIntervalBaseEnumerator.Validate" /> validation.</exception>
         </ctor2>

@@ -2,9 +2,9 @@ using System;
 // <Snippet1>
 using Microsoft.Data.SqlClient;
 
-/// Detecting the retriable exception is a vital part of the retry pattern.
-/// Before applying the retry logic it is necessary to put the exceptions under scrutiny and choose a best fit retry provider.
-/// First of all, log the exceptions and find the transient faults.
+/// Detecting retriable exceptions is a vital part of the retry pattern.
+/// Before applying retry logic it is important to investigate exceptions and choose a retry provider that best fits your scenario.
+/// First, log your exceptions and find transient faults.
 /// The purpose of this sample is to illustrate how to use this feature and the condition might not be realistic.
 class RetryLogicSample
 {
@@ -60,12 +60,12 @@ class RetryLogicSample
 
         try
         {
-            // Assume the database is creating and other services is going to connect to it.
+            // Assume the database is creating and other services are going to connect to it.
             RetryConnection(provider);
         }
         catch
         {
-            // exception throws if connecting to the database doesn't successful.
+            // exception throws if connecting to the database isn't successful.
             throw;
         }
     }

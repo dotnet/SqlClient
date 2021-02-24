@@ -5,9 +5,9 @@ using Microsoft.Data.SqlClient;
 class RetryLogicSample
 {
 // <Snippet1>
-/// Detecting the retriable exception is a vital part of the retry pattern.
-/// Before applying the retry logic it is necessary to put the exceptions under scrutiny and choose a best fit retry provider.
-/// First of all, log the exceptions and find the transient faults.
+/// Detecting retriable exceptions is a vital part of the retry pattern.
+/// Before applying retry logic it is important to investigate exceptions and choose a retry provider that best fits your scenario.
+/// First, log your exceptions and find transient faults.
 /// The purpose of this sample is to illustrate how to use this feature and the condition might not be realistic.
 
     private const string DefaultDB = "Northwind";
@@ -51,11 +51,11 @@ class RetryLogicSample
                 }
 
                 // This is not a good practice to do time-consuming tasks inside the retrying event and blocking the running task.
-                // Use the parallel programming patterns to mitigate it.
+                // Use parallel programming patterns to mitigate it.
                 if (e.RetryCount == provider.RetryLogic.NumberOfTries - 1)
                 {
                     Console.WriteLine("This is the last chance to execute the command before throwing the exception.");
-                    Console.WriteLine("Press Enter when you be ready:");
+                    Console.WriteLine("Press Enter when you're ready:");
                     Console.ReadLine();
                     Console.WriteLine("continue ...");
                 }
@@ -66,12 +66,12 @@ class RetryLogicSample
 
         try
         {
-            // Assume the database is creating and other services is going to connect to it.
+            // Assume the database is creating and other services are going to connect to it.
             RetryCommand(provider);
         }
         catch
         {
-            // exception throws if connecting to the database doesn't successful.
+            // exception is thrown if connecting to the database isn't successful.
             throw;
         }
     }
@@ -112,7 +112,7 @@ class RetryLogicSample
             if (e.RetryCount == 1)
             {
                 FindActiveSessions(s_generalConnection, dbName);
-                Console.WriteLine($" Before exceeding the {provider.RetryLogic.NumberOfTries} attempts.");
+                Console.WriteLine($"Before exceeding {provider.RetryLogic.NumberOfTries} attempts.");
             }
         };
 
@@ -122,16 +122,16 @@ class RetryLogicSample
         ExecuteCommand(s_generalConnection, string.Format(CreateDatabaseFormat, dbName));
         Console.WriteLine($"The '{dbName}' database is created.");
 
-        // Open a connection to the new created database to block droping it.
+        // Open a connection to the newly created database to block dropping it.
         using var blockingCnn = new SqlConnection(string.Format(CnnStringFormat, dbName));
         blockingCnn.Open();
-        Console.WriteLine($"Established a connection to the '{dbName}' to block droping it.");
+        Console.WriteLine($"Established a connection to the '{dbName}' to block dropping it.");
 
         Console.WriteLine($"Dropping `{dbName}`...");
         // Try to drop the new database.
         RetryCommandSync(provider, dbName);
 
-        Console.WriteLine("Command is executed successfully.");
+        Console.WriteLine("Command executed successfully.");
 
         provider.Retrying -= retryEvent;
     }
@@ -159,7 +159,7 @@ class RetryLogicSample
             if (e.RetryCount == 1)
             {
                 FindActiveSessions(s_generalConnection, dbName);
-                Console.WriteLine($" Before exceeding the {provider.RetryLogic.NumberOfTries} attempts.");
+                Console.WriteLine($"Before exceeding {provider.RetryLogic.NumberOfTries} attempts.");
             }
         };
 
@@ -169,16 +169,16 @@ class RetryLogicSample
         ExecuteCommand(s_generalConnection, string.Format(CreateDatabaseFormat, dbName));
         Console.WriteLine($"The '{dbName}' database is created.");
 
-        // Open a connection to the new created database to block droping it.
+        // Open a connection to the newly created database to block dropping it.
         using var blockingCnn = new SqlConnection(string.Format(CnnStringFormat, dbName));
         blockingCnn.Open();
-        Console.WriteLine($"Established a connection to the '{dbName}' to block its droping.");
+        Console.WriteLine($"Established a connection to the '{dbName}' to block its dropping.");
 
         Console.WriteLine("Dropping the database...");
         // Try to drop the new database.
         RetryCommandAsync(provider, dbName).Wait();
 
-        Console.WriteLine("Command is executed successfully.");
+        Console.WriteLine("Command executed successfully.");
 
         provider.Retrying -= retryEvent;
     }
@@ -206,7 +206,7 @@ class RetryLogicSample
             if (e.RetryCount == 1)
             {
                 FindActiveSessions(s_generalConnection, dbName);
-                Console.WriteLine($" Before exceeding the {provider.RetryLogic.NumberOfTries} attempts.");
+                Console.WriteLine($"Before exceeding {provider.RetryLogic.NumberOfTries} attempts.");
             }
         };
 
@@ -216,16 +216,16 @@ class RetryLogicSample
         ExecuteCommand(s_generalConnection, string.Format(CreateDatabaseFormat, dbName));
         Console.WriteLine($"The '{dbName}' database is created.");
 
-        // Open a connection to the new created database to block droping it.
+        // Open a connection to the newly created database to block dropping it.
         using var blockingCnn = new SqlConnection(string.Format(CnnStringFormat, dbName));
         blockingCnn.Open();
-        Console.WriteLine($"Established a connection to the '{dbName}' to block its droping.");
+        Console.WriteLine($"Established a connection to the '{dbName}' to block its dropping.");
 
         Console.WriteLine("Dropping the database...");
         // Try to drop the new database.
         RetryCommandBeginExecuteAsync(provider, dbName).Wait();
 
-        Console.WriteLine("Command is executed successfully.");
+        Console.WriteLine("Command executed successfully.");
 
         provider.Retrying -= retryEvent;
     }
@@ -234,8 +234,8 @@ class RetryLogicSample
     {
         using var cmd = s_generalConnection.CreateCommand();
         cmd.CommandText = string.Format(DropDatabaseFormat, dbName);
-        // Execute the BeginExecuteXXX and EndExecuteXXX functions by Task.Factory.FromAsync() function.
-        // Apply the retry logic by the ExecuteAsync function of the configurable retry logic provider.
+        // Execute the BeginExecuteXXX and EndExecuteXXX functions by using Task.Factory.FromAsync().
+        // Apply the retry logic by using the ExecuteAsync function of the configurable retry logic provider.
         Console.WriteLine("The first attempt, before getting into the retry logic.");
         await provider.ExecuteAsync(cmd, () => Task.Factory.FromAsync(cmd.BeginExecuteNonQuery(), cmd.EndExecuteNonQuery));
     }
