@@ -72,7 +72,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="sendBuff">Send buffer</param>
         /// <param name="serverName">Service Principal Name buffer</param>
         /// <returns>SNI error code</returns>
-        internal void GenSspiClientContext(SspiClientContextStatus sspiClientContextStatus, byte[] receivedBuff, ref byte[] sendBuff, byte[] serverName)
+        internal void GenSspiClientContext(SspiClientContextStatus sspiClientContextStatus, byte[] receivedBuff, ref byte[] sendBuff, byte[][] serverName)
         {
             SafeDeleteContext securityContext = sspiClientContextStatus.SecurityContext;
             ContextFlagsPal contextFlags = sspiClientContextStatus.ContextFlags;
@@ -104,12 +104,15 @@ namespace Microsoft.Data.SqlClient.SNI
                 | ContextFlagsPal.Delegate
                 | ContextFlagsPal.MutualAuth;
 
-            string serverSPN = System.Text.Encoding.UTF8.GetString(serverName);
-
+            string[] serverSPNs = new string[serverName.Length];
+            for (int i = 0; i < serverName.Length; i++)
+            {
+                serverSPNs[i] = System.Text.Encoding.UTF8.GetString(serverName[i]);
+            }
             SecurityStatusPal statusCode = NegotiateStreamPal.InitializeSecurityContext(
                        credentialsHandle,
                        ref securityContext,
-                       serverSPN,
+                       serverSPNs,
                        requestedContextFlags,
                        inSecurityBufferArray,
                        outSecurityBuffer,
@@ -253,7 +256,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="cachedFQDN">Used for DNS Cache</param>
         /// <param name="pendingDNSInfo">Used for DNS Cache</param>
         /// <returns>SNI handle</returns>
-        internal SNIHandle CreateConnectionHandle(string fullServerName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[] spnBuffer, bool flushCache, bool async, bool parallel, bool isIntegratedSecurity, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
+        internal SNIHandle CreateConnectionHandle(string fullServerName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[][] spnBuffer, bool flushCache, bool async, bool parallel, bool isIntegratedSecurity, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
         {
             instanceName = new byte[1];
 
@@ -294,7 +297,7 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 try
                 {
-                    spnBuffer = GetSqlServerSPN(details);
+                    spnBuffer = GetSqlServerSPNs(details);
                 }
                 catch (Exception e)
                 {
@@ -305,7 +308,7 @@ namespace Microsoft.Data.SqlClient.SNI
             return sniHandle;
         }
 
-        private static byte[] GetSqlServerSPN(DataSource dataSource)
+        private static byte[][] GetSqlServerSPNs(DataSource dataSource)
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(dataSource.ServerName));
 
@@ -325,10 +328,10 @@ namespace Microsoft.Data.SqlClient.SNI
                 postfix = DefaultSqlServerPort.ToString();
             }
 
-            return GetSqlServerSPN(hostName, postfix);
+            return GetSqlServerSPNs(hostName, postfix);
         }
 
-        private static byte[] GetSqlServerSPN(string hostNameOrAddress, string portOrInstanceName)
+        private static byte[][] GetSqlServerSPNs(string hostNameOrAddress, string portOrInstanceName)
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(hostNameOrAddress));
             IPHostEntry hostEntry = null;
@@ -351,12 +354,14 @@ namespace Microsoft.Data.SqlClient.SNI
             if (!string.IsNullOrWhiteSpace(portOrInstanceName))
             {
                 serverSpn += ":" + portOrInstanceName;
+                return new byte[][] { Encoding.UTF8.GetBytes(serverSpn) };
             }
             else
             {
-                serverSpn += $":{DefaultSqlServerPort}";
+                string serverSpnWithDefaultPort = serverSpn + $":{DefaultSqlServerPort}";
+                // Try both SPNs with and without Port
+                return new byte[][] { Encoding.UTF8.GetBytes(serverSpn), Encoding.UTF8.GetBytes(serverSpnWithDefaultPort) };
             }
-            return Encoding.UTF8.GetBytes(serverSpn);
         }
 
         /// <summary>

@@ -135,7 +135,8 @@ namespace System.Net.Security
             }
             catch (Exception ex)
             {
-                if (NetEventSource.IsEnabled) NetEventSource.Error(null, ex);
+                if (NetEventSource.IsEnabled)
+                    NetEventSource.Error(null, ex);
                 return new SecurityStatusPal(SecurityStatusPalErrorCode.InternalError, ex);
             }
         }
@@ -143,7 +144,7 @@ namespace System.Net.Security
         internal static SecurityStatusPal InitializeSecurityContext(
             SafeFreeCredentials credentialsHandle,
             ref SafeDeleteContext securityContext,
-            string spn,
+            string[] spns,
             ContextFlagsPal requestedContextFlags,
             SecurityBuffer[] inSecurityBufferArray,
             SecurityBuffer outSecurityBuffer,
@@ -156,20 +157,27 @@ namespace System.Net.Security
             }
 
             SafeFreeNegoCredentials negoCredentialsHandle = (SafeFreeNegoCredentials)credentialsHandle;
+            SecurityStatusPal status = default;
 
-            if (negoCredentialsHandle.IsDefault && string.IsNullOrEmpty(spn))
+            foreach (string spn in spns)
             {
-                throw new PlatformNotSupportedException(Strings.net_nego_not_supported_empty_target_with_defaultcreds);
-            }
+                if (negoCredentialsHandle.IsDefault && string.IsNullOrEmpty(spn))
+                {
+                    throw new PlatformNotSupportedException(Strings.net_nego_not_supported_empty_target_with_defaultcreds);
+                }
 
-            SecurityStatusPal status = EstablishSecurityContext(
-                negoCredentialsHandle,
-                ref securityContext,
-                spn,
-                requestedContextFlags,
-                ((inSecurityBufferArray != null && inSecurityBufferArray.Length != 0) ? inSecurityBufferArray[0] : null),
-                outSecurityBuffer,
-                ref contextFlags);
+                status = EstablishSecurityContext(
+                    negoCredentialsHandle,
+                    ref securityContext,
+                    spn,
+                    requestedContextFlags,
+                    ((inSecurityBufferArray != null && inSecurityBufferArray.Length != 0) ? inSecurityBufferArray[0] : null),
+                    outSecurityBuffer,
+                    ref contextFlags);
+
+                if (status.ErrorCode != SecurityStatusPalErrorCode.InternalError)
+                    break;
+            }
 
             // Confidentiality flag should not be set if not requested
             if (status.ErrorCode == SecurityStatusPalErrorCode.CompleteNeeded)
@@ -180,7 +188,6 @@ namespace System.Net.Security
                     throw new PlatformNotSupportedException(Strings.net_nego_protection_level_not_supported);
                 }
             }
-
             return status;
         }
 
@@ -224,7 +231,7 @@ namespace System.Net.Security
                     new SafeFreeNegoCredentials(false, string.Empty, string.Empty, string.Empty) :
                     new SafeFreeNegoCredentials(ntlmOnly, credential.UserName, credential.Password, credential.Domain);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw new Win32Exception(NTE_FAIL, ex.Message);
             }
