@@ -4379,7 +4379,18 @@ namespace Microsoft.Data.SqlClient
                 _stateObj._nullBitmapInfo = _snapshotNullBitmapInfo;
                 _stateObj._cleanupMetaData = _snapshotCleanupMetaData;
                 _stateObj._cleanupAltMetaDataSetArray = _snapshotCleanupAltMetaDataSetArray;
-                _stateObj._hasOpenResult = _snapshotHasOpenResult;
+
+                // Make sure to go through the appropriate increment/decrement methods if changing HasOpenResult
+                if (!_stateObj._hasOpenResult && _snapshotHasOpenResult)
+                {
+                    _stateObj.IncrementAndObtainOpenResultCount(_stateObj._executedUnderTransaction);
+                }
+                else if (_stateObj._hasOpenResult && !_snapshotHasOpenResult)
+                {
+                    _stateObj.DecrementOpenResultCount();
+                }
+                //else _stateObj._hasOpenResult is already == _snapshotHasOpenResult
+
                 _stateObj._receivedColMetaData = _snapshotReceivedColumnMetadata;
                 _stateObj._attentionReceived = _snapshotAttentionReceived;
 

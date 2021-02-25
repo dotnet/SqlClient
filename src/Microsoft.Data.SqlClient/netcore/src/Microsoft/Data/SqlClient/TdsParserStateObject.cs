@@ -4276,6 +4276,15 @@ namespace Microsoft.Data.SqlClient
                 _stateObj._cleanupMetaData = _snapshotCleanupMetaData;
                 _stateObj._cleanupAltMetaDataSetArray = _snapshotCleanupAltMetaDataSetArray;
 
+                // Make sure to go through the appropriate increment/decrement methods if changing the OpenResult flag
+                if (!_stateObj.HasOpenResult && _state.HasFlag(SnapshottedStateFlags.OpenResult))
+                {
+                    _stateObj.IncrementAndObtainOpenResultCount(_stateObj._executedUnderTransaction);
+                }
+                else if (_stateObj.HasOpenResult && !_state.HasFlag(SnapshottedStateFlags.OpenResult))
+                {
+                    _stateObj.DecrementOpenResultCount();
+                }
                 _stateObj._snapshottedState = _state;
 
                 // Reset partially read state (these only need to be maintained if doing async without snapshot)
