@@ -199,6 +199,9 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
                 string.Format("The method or operation is not implemented.")
                 };
 
+            // Clear out the existing providers (to ensure test reliability)
+            Utility.ClearSqlConnectionProviders();
+            
             IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders = new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>();
             customProviders.Add("DummyProvider", new DummyKeyStoreProvider());
             SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders);
@@ -214,6 +217,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             Exception encryptEx = Assert.Throws<TargetInvocationException>(() => Utility.EncryptWithKey(plainText, cipherMD, "localhost"));
             Assert.Equal(errorMessages[0], encryptEx.InnerException.Message);
 
+            Utility.ClearSqlConnectionProviders();
         }
     }
 
