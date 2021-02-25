@@ -141,12 +141,11 @@ namespace Microsoft.Data.SqlClient
         internal override void CreatePhysicalSNIHandle(string serverName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[][] spnBuffer, bool flushCache, bool async, bool fParallel, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo, bool isIntegratedSecurity)
         {
             // We assume that the loadSSPILibrary has been called already. now allocate proper length of buffer
-            spnBuffer = null;
+            spnBuffer = new byte[1][];
             if (isIntegratedSecurity)
             {
                 // now allocate proper length of buffer
-                byte[] localSpnBuffer = new byte[SNINativeMethodWrapper.SniMaxComposedSpnLength];
-                spnBuffer = new byte[][] { localSpnBuffer };
+                spnBuffer[0] = new byte[SNINativeMethodWrapper.SniMaxComposedSpnLength];
             }
 
             SNINativeMethodWrapper.ConsumerInfo myInfo = CreateConsumerInfo(async);
