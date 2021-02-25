@@ -347,7 +347,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         }
                         catch (Exception e)
                         {
-                            SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR, "MARS Session Id {0}, Exception occurred: {2}", args0: _currentHeader?.sessionId, args1: e?.Message);
+                            SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR, "SMUX_ACK | MARS Session Id {0}, Exception occurred: {2}", args0: _currentHeader?.sessionId, args1: e?.Message);
                             SNICommon.ReportSNIError(SNIProviders.SMUX_PROV, SNICommon.InternalExceptionError, e);
                         }
 #if DEBUG
