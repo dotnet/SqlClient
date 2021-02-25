@@ -454,7 +454,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 connectionDrill.Open();
             }
+            
             SqlConnection.ClearAllPools();
+            ActiveDirectoryAuthenticationProvider.ClearUserTokenCache();
 
             Stopwatch firstConnectionTime = new Stopwatch();
             Stopwatch secondConnectionTime = new Stopwatch();
