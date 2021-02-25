@@ -252,7 +252,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                 com.Transaction = trans;
                                 using (SqlDataReader reader = com.ExecuteReader())
                                 {
-
                                     Utf8String[] expectedValues = {
                                         new Utf8String("this"),
                                         new Utf8String("is"),
