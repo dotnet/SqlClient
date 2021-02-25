@@ -30,7 +30,6 @@ namespace Microsoft.Data.SqlClient.SNI
 
             set
             {
-                SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.SNILoadHandle.LastError |SNI|INFO|SETTER > Last Error Value = {0}", value);
                 _lastError.Value = value;
             }
         }

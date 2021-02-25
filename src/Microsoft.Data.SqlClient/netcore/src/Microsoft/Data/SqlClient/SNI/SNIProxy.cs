@@ -30,10 +30,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
         internal static readonly SNIProxy s_singleton = new SNIProxy();
 
-        internal static SNIProxy GetInstance()
-        {
-            return s_singleton;
-        }
+        internal static SNIProxy GetInstance() => s_singleton;
 
         /// <summary>
         /// Enable SSL on a connection
@@ -45,10 +42,12 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             try
             {
+                SqlClientEventSource.Log.TryTraceEvent("SNIProxy.EnableSsl | Info | Session Id {0}", handle?.ConnectionId);
                 return handle.EnableSsl(options);
             }
             catch (Exception e)
             {
+                SqlClientEventSource.Log.TryTraceEvent("SNIProxy.EnableSsl | Err | Session Id {0}, SNI Handshake failed with exception: {1}", handle?.ConnectionId, e?.Message);
                 return SNICommon.ReportSNIError(SNIProviders.SSL_PROV, SNICommon.HandshakeFailureError, e);
             }
         }
@@ -60,6 +59,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error code</returns>
         internal uint DisableSsl(SNIHandle handle)
         {
+            SqlClientEventSource.Log.TryTraceEvent("SNIProxy.DisableSsl | Info | Session Id {0}", handle?.ConnectionId);
             handle.DisableSsl();
             return TdsEnums.SNI_SUCCESS;
         }
@@ -104,7 +104,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 | ContextFlagsPal.Delegate
                 | ContextFlagsPal.MutualAuth;
 
-            string serverSPN = System.Text.Encoding.UTF8.GetString(serverName);
+            string serverSPN = Encoding.UTF8.GetString(serverName);
 
             SecurityStatusPal statusCode = NegotiateStreamPal.InitializeSecurityContext(
                        credentialsHandle,
@@ -211,7 +211,7 @@ namespace Microsoft.Data.SqlClient.SNI
         internal uint GetConnectionId(SNIHandle handle, ref Guid clientConnectionId)
         {
             clientConnectionId = handle.ConnectionId;
-
+            SqlClientEventSource.Log.TryTraceEvent("SNIProxy.GetConnectionId | Info | Session Id {0}", clientConnectionId);
             return TdsEnums.SNI_SUCCESS;
         }
 
@@ -235,6 +235,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 result = handle.SendAsync(packet);
             }
 
+            SqlClientEventSource.Log.TryTraceEvent("SNIProxy.WritePacket | Info | Session Id {0}, SendAsync Result {1}", handle?.ConnectionId, result);
             return result;
         }
 
@@ -302,6 +303,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
             }
 
+            SqlClientEventSource.Log.TryTraceEvent("SNIProxy.CreateConnectionHandle | Info | Session Id {0}, SNI Handle Type: {1}", sniHandle?.ConnectionId, sniHandle?.GetType());
             return sniHandle;
         }
 
@@ -325,6 +327,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 postfix = DefaultSqlServerPort.ToString();
             }
 
+            SqlClientEventSource.Log.TryTraceEvent("SNIProxy.GetSqlServerSPN | Info | ServerName {0}, InstanceName {1}, Port {2}, postfix {3}", dataSource?.ServerName, dataSource?.InstanceName, dataSource?.Port, postfix);
             return GetSqlServerSPN(hostName, postfix);
         }
 
@@ -356,6 +359,9 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 serverSpn += $":{DefaultSqlServerPort}";
             }
+
+            SqlClientEventSource.Log.TryAdvancedTraceEvent("SNIProxy.GetSqlServerSPN | Info | ServerSPN {0}", serverSpn);
+
             return Encoding.UTF8.GetBytes(serverSpn);
         }
 

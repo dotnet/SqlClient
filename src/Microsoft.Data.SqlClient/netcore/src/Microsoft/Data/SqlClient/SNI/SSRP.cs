@@ -13,6 +13,7 @@ namespace Microsoft.Data.SqlClient.SNI
 {
     internal class SSRP
     {
+        private const string s_className = nameof(SSRP);
         private const char SemicolonSeparator = ';';
         private const int SqlServerBrowserPort = 1434;
 
@@ -26,7 +27,7 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(browserHostName), "browserHostName should not be null, empty, or whitespace");
             Debug.Assert(!string.IsNullOrWhiteSpace(instanceName), "instanceName should not be null, empty, or whitespace");
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("<sc.SNI.SSRP.GetPortByInstanceName |SNI|SCOPE>");
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent(s_className);
             try
             {
                 byte[] instanceInfoRequest = CreateInstanceInfoRequest(instanceName);
@@ -37,7 +38,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
                 catch (SocketException se)
                 {
-                    SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.SSRP.GetPortByInstanceName |SNI|ERR> SocketException Message = {0}", se.Message);
+                    SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR, "SocketException Message = {0}", args0: se?.Message);
                     throw new Exception(SQLMessage.SqlServerBrowserNotAccessible(), se);
                 }
 
@@ -73,7 +74,7 @@ namespace Microsoft.Data.SqlClient.SNI
         private static byte[] CreateInstanceInfoRequest(string instanceName)
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(instanceName), "instanceName should not be null, empty, or whitespace");
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("<sc.SNI.SSRP.CreateInstanceInfoRequest |SNI|SCOPE>");
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent(s_className);
             try
             {
                 const byte ClntUcastInst = 0x04;
@@ -150,28 +151,39 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>response packet from UDP server</returns>
         private static byte[] SendUDPRequest(string browserHostname, int port, byte[] requestPacket)
         {
-            Debug.Assert(!string.IsNullOrWhiteSpace(browserHostname), "browserhostname should not be null, empty, or whitespace");
-            Debug.Assert(port >= 0 && port <= 65535, "Invalid port");
-            Debug.Assert(requestPacket != null && requestPacket.Length > 0, "requestPacket should not be null or 0-length array");
-
-            const int sendTimeOutMs = 1000;
-            const int receiveTimeOutMs = 1000;
-
-            IPAddress address = null;
-            bool isIpAddress = IPAddress.TryParse(browserHostname, out address);
-
-            byte[] responsePacket = null;
-            using (UdpClient client = new UdpClient(!isIpAddress ? AddressFamily.InterNetwork : address.AddressFamily))
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent(s_className);
+            try
             {
-                Task<int> sendTask = client.SendAsync(requestPacket, requestPacket.Length, browserHostname, port);
-                Task<UdpReceiveResult> receiveTask = null;
-                if (sendTask.Wait(sendTimeOutMs) && (receiveTask = client.ReceiveAsync()).Wait(receiveTimeOutMs))
-                {
-                    responsePacket = receiveTask.Result.Buffer;
-                }
-            }
+                Debug.Assert(!string.IsNullOrWhiteSpace(browserHostname), "browserhostname should not be null, empty, or whitespace");
+                Debug.Assert(port >= 0 && port <= 65535, "Invalid port");
+                Debug.Assert(requestPacket != null && requestPacket.Length > 0, "requestPacket should not be null or 0-length array");
 
-            return responsePacket;
+                const int sendTimeOutMs = 1000;
+                const int receiveTimeOutMs = 1000;
+
+                IPAddress address = null;
+                bool isIpAddress = IPAddress.TryParse(browserHostname, out address);
+
+                byte[] responsePacket = null;
+                using (UdpClient client = new UdpClient(!isIpAddress ? AddressFamily.InterNetwork : address.AddressFamily))
+                {
+                    Task<int> sendTask = client.SendAsync(requestPacket, requestPacket.Length, browserHostname, port);
+                    Task<UdpReceiveResult> receiveTask = null;
+                    
+                    SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.INFO, "Waiting for UDP Client to fetch Port info.");
+                    if (sendTask.Wait(sendTimeOutMs) && (receiveTask = client.ReceiveAsync()).Wait(receiveTimeOutMs))
+                    {
+                        SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.INFO, "Received Port info from UDP Client.");
+                        responsePacket = receiveTask.Result.Buffer;
+                    }
+                }
+
+                return responsePacket;
+            }
+            finally
+            {
+                SqlClientEventSource.Log.TrySNIScopeLeaveEvent(scopeID);
+            }
         }
     }
 }
