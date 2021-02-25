@@ -1084,7 +1084,7 @@ namespace Microsoft.Data.SqlClient
                             {
                                 _sharedState._dataReady = true;      // set _sharedState._dataReady to not confuse CleanPartialRead
                             }
-                            _stateObj._internalTimeout = false;
+                            _stateObj.SetTimeoutStateStopped();
                             if (_sharedState._dataReady)
                             {
                                 cleanDataFailed = true;
