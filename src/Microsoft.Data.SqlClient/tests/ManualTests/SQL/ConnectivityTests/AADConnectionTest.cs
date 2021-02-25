@@ -447,30 +447,34 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
         public static void ConnectionSpeed()
         {
+            var connString = DataTestUtility.AADPasswordConnectionString;
+            
             //Ensure server endpoints are warm
-            using (var connectionDrill = new SqlConnection(DataTestUtility.AADPasswordConnectionString))
+            using (var connectionDrill = new SqlConnection(connString))
             {
                 connectionDrill.Open();
             }
             SqlConnection.ClearAllPools();
 
-            using (var connectionDrill = new SqlConnection(DataTestUtility.AADPasswordConnectionString))
+            Stopwatch firstConnectionTime = new Stopwatch();
+            Stopwatch secondConnectionTime = new Stopwatch();
+
+            using (var connectionDrill = new SqlConnection(connString))
             {
-                Stopwatch firstConnectionTime = new Stopwatch();
                 firstConnectionTime.Start();
                 connectionDrill.Open();
                 firstConnectionTime.Stop();
-                using (var connectionDrill2 = new SqlConnection(DataTestUtility.AADPasswordConnectionString))
+                using (var connectionDrill2 = new SqlConnection(connString))
                 {
-                    Stopwatch secondConnectionTime = new Stopwatch();
                     secondConnectionTime.Start();
                     connectionDrill2.Open();
                     secondConnectionTime.Stop();
-                    // Subsequent AAD connections within a short timeframe should use an auth token cached from the connection pool
-                    // Second connection speed in tests was typically 10-15% of the first connection time. Using 30% since speeds may vary.
-                    Assert.True(secondConnectionTime.ElapsedMilliseconds / firstConnectionTime.ElapsedMilliseconds < .30, $"Second AAD connection too slow ({secondConnectionTime.ElapsedMilliseconds}ms)! (More than 30% of the first ({firstConnectionTime.ElapsedMilliseconds}ms).)");
                 }
             }
+            
+            // Subsequent AAD connections within a short timeframe should use an auth token cached from the connection pool
+            // Second connection speed in tests was typically 10-15% of the first connection time. Using 30% since speeds may vary.
+            Assert.True(((double)secondConnectionTime.ElapsedMilliseconds / firstConnectionTime.ElapsedMilliseconds) < 0.30, $"Second AAD connection too slow ({secondConnectionTime.ElapsedMilliseconds}ms)! (More than 30% of the first ({firstConnectionTime.ElapsedMilliseconds}ms).)");
         }
 
         #region Managed Identity Authentication tests
