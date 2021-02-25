@@ -322,16 +322,11 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 postfix = dataSource.InstanceName;
             }
-            // For handling tcp:<hostname> format
-            else if (dataSource._connectionProtocol == DataSource.Protocol.TCP)
-            {
-                postfix = DefaultSqlServerPort.ToString();
-            }
 
-            return GetSqlServerSPNs(hostName, postfix);
+            return GetSqlServerSPNs(hostName, postfix, dataSource._connectionProtocol);
         }
 
-        private static byte[][] GetSqlServerSPNs(string hostNameOrAddress, string portOrInstanceName)
+        private static byte[][] GetSqlServerSPNs(string hostNameOrAddress, string portOrInstanceName, DataSource.Protocol protocol)
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(hostNameOrAddress));
             IPHostEntry hostEntry = null;
@@ -350,18 +345,22 @@ namespace Microsoft.Data.SqlClient.SNI
                 // If the DNS lookup failed, then resort to using the user provided hostname to construct the SPN.
                 fullyQualifiedDomainName = hostEntry?.HostName ?? hostNameOrAddress;
             }
+
             string serverSpn = SqlServerSpnHeader + "/" + fullyQualifiedDomainName;
+
             if (!string.IsNullOrWhiteSpace(portOrInstanceName))
             {
                 serverSpn += ":" + portOrInstanceName;
-                return new byte[][] { Encoding.UTF8.GetBytes(serverSpn) };
             }
-            else
+            else if (protocol == DataSource.Protocol.None || protocol == DataSource.Protocol.TCP) // Default is TCP
             {
                 string serverSpnWithDefaultPort = serverSpn + $":{DefaultSqlServerPort}";
-                // Try both SPNs with and without Port
+                // Set both SPNs with and without Port as Port is optional for default instance
                 return new byte[][] { Encoding.UTF8.GetBytes(serverSpn), Encoding.UTF8.GetBytes(serverSpnWithDefaultPort) };
             }
+            // else Named Pipes do not need to valid port
+
+            return new byte[][] { Encoding.UTF8.GetBytes(serverSpn) };
         }
 
         /// <summary>
