@@ -177,6 +177,8 @@ namespace System.Net.Security
 
                 if (status.ErrorCode != SecurityStatusPalErrorCode.InternalError)
                     break;
+                else 
+                    securityContext = null; // Reset security context to be generated again
             }
 
             // Confidentiality flag should not be set if not requested
