@@ -146,7 +146,7 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             Debug.Assert(packet.ReservedHeaderSize == SNISMUXHeader.HEADER_LENGTH, "mars handle attempting to smux packet without smux reservation");
 
-            SetupSMUXHeader(packet.Length, SNISMUXFlags.SMUX_DATA);
+            SetupSMUXHeader(packet.DataLength, SNISMUXFlags.SMUX_DATA);
             _currentHeader.Write(packet.GetHeaderBuffer(SNISMUXHeader.HEADER_LENGTH));
             packet.SetHeaderActive();
 #if DEBUG

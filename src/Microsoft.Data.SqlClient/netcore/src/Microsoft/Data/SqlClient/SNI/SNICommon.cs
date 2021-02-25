@@ -90,8 +90,7 @@ namespace Microsoft.Data.SqlClient.SNI
     /// <summary>
     /// SMUX packet flags
     /// </summary>
-    [Flags]
-    internal enum SNISMUXFlags
+    internal enum SNISMUXFlags : uint
     {
         SMUX_SYN = 1,       // Begin SMUX connection
         SMUX_ACK = 2,       // Acknowledge SMUX packets
