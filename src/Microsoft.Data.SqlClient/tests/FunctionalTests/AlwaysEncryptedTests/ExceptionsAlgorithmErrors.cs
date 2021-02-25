@@ -233,7 +233,10 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
         public CertFixture()
         {
-            certificate = Utility.CreateCertificate();
+            if(certificate == null)
+            {
+                certificate = Utility.CreateCertificate();
+            }
             thumbprint = certificate.Thumbprint;
             certificatePath = string.Format("CurrentUser/My/{0}", thumbprint);
             cek = Utility.GenerateRandomBytes(32);

@@ -15,7 +15,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     {
         internal const string ColumnEncryptionAlgorithmName = @"AEAD_AES_256_CBC_HMAC_SHA256";
 
-        protected internal readonly X509Certificate2 certificate;
+        protected static X509Certificate2 certificate;
         public string keyPath { get; internal set; }
         public Table ApiTestTable { get; private set; }
         public Table BulkCopyAEErrorMessageTestTable { get; private set; }
@@ -56,7 +56,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         public SQLSetupStrategy()
         {
-            certificate = CertificateUtility.CreateCertificate();
+            if(certificate == null)
+            {
+                certificate = CertificateUtility.CreateCertificate();
+            }
         }
 
         protected SQLSetupStrategy(string customKeyPath) => keyPath = customKeyPath;
