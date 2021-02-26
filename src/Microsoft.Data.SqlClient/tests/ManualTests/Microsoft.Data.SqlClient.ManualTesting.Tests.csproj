@@ -66,6 +66,7 @@
     <Compile Include="SQL\DataClassificationTest\DataClassificationTest.cs" />
     <Compile Include="TracingTests\EventSourceTest.cs" />
     <Compile Include="SQL\AdapterTest\AdapterTest.cs" />
+    <Compile Include="SQL\AsyncTest\AsyncTimeoutTest.cs" />
     <Compile Include="SQL\AsyncTest\BeginExecAsyncTest.cs" />
     <Compile Include="SQL\AsyncTest\BeginExecReaderAsyncTest.cs" />
     <Compile Include="SQL\AsyncTest\XmlReaderAsyncTest.cs" />

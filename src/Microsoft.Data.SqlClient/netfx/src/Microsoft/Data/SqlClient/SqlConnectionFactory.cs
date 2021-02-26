@@ -206,44 +206,18 @@ namespace Microsoft.Data.SqlClient
             return poolingOptions;
         }
 
-        // SxS (VSDD 545786): metadata files are opened from <.NetRuntimeFolder>\CONFIG\<metadatafilename.xml>
-        // this operation is safe in SxS because the file is opened in read-only mode and each NDP runtime accesses its own copy of the metadata
-        // under the runtime folder.
-        [ResourceExposure(ResourceScope.None)]
-        [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
         override protected DbMetaDataFactory CreateMetaDataFactory(DbConnectionInternal internalConnection, out bool cacheMetaDataFactory)
         {
             Debug.Assert(internalConnection != null, "internalConnection may not be null.");
-            cacheMetaDataFactory = false;
 
-            if (internalConnection is SqlInternalConnectionSmi)
-            {
-                throw SQL.NotAvailableOnContextConnection();
-            }
+            Stream xmlStream = System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("Microsoft.Data.SqlClient.SqlMetaData.xml");
+            cacheMetaDataFactory = true;
 
-            NameValueCollection settings = (NameValueCollection)PrivilegedConfigurationManager.GetSection("Microsoft.Data.SqlClient");
-            Stream XMLStream = null;
-            if (settings != null)
-            {
-                string[] values = settings.GetValues(_metaDataXml);
-                if (values != null)
-                {
-                    XMLStream = ADP.GetXmlStreamFromValues(values, _metaDataXml);
-                }
-            }
+            Debug.Assert(xmlStream != null, nameof(xmlStream) + " may not be null.");
 
-            // if the xml was not obtained from machine.config use the embedded XML resource
-            if (XMLStream == null)
-            {
-                XMLStream = System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("Microsoft.Data.SqlClient.SqlMetaData.xml");
-                cacheMetaDataFactory = true;
-            }
-            Debug.Assert(XMLStream != null, "XMLstream may not be null.");
-
-            return new SqlMetaDataFactory(XMLStream,
+            return new SqlMetaDataFactory(xmlStream,
                                           internalConnection.ServerVersion,
                                           internalConnection.ServerVersion); //internalConnection.ServerVersionNormalized);
-
         }
 
         override internal DbConnectionPoolGroupProviderInfo CreateConnectionPoolGroupProviderInfo(DbConnectionOptions connectionOptions)
