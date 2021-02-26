@@ -45,13 +45,12 @@
   </PropertyGroup>
   <!-- AKV Provider project dependencies -->
   <PropertyGroup>
-    <MicrosoftAzureKeyVaultVersion>[3.0.4,4.0.0)</MicrosoftAzureKeyVaultVersion>
-    <MicrosoftAzureKeyVaultWebKeyVersion>[3.0.4,4.0.0)</MicrosoftAzureKeyVaultWebKeyVersion>
-    <MicrosoftRestClientRuntimeVersion>[2.3.20,3.0.0)</MicrosoftRestClientRuntimeVersion>
-    <MicrosoftRestClientRuntimeAzureVersion>[3.3.19,4.0.0)</MicrosoftRestClientRuntimeAzureVersion>
+    <AzureCoreVersion>[1.2.2,2.0.0)</AzureCoreVersion>
+    <AzureSecurityKeyVaultKeysVersion>[4.0.3,5.0.0)</AzureSecurityKeyVaultKeysVersion>
   </PropertyGroup>
   <!-- Test Project Dependencies -->
   <PropertyGroup>
+    <AzureIdentityVersion>1.1.1</AzureIdentityVersion>
     <MicrosoftDotNetPlatformAbstractionsVersion>3.1.1</MicrosoftDotNetPlatformAbstractionsVersion>
     <MicrosoftIdentityModelClientsActiveDirectoryVersion>5.2.6</MicrosoftIdentityModelClientsActiveDirectoryVersion>
     <MicrosoftNETTestSdkVersion>15.9.0</MicrosoftNETTestSdkVersion>
@@ -62,6 +61,7 @@
     <SystemDataOdbcVersion21>4.5.0</SystemDataOdbcVersion21>
     <SystemDataOdbcVersion>4.6.0</SystemDataOdbcVersion>
     <SystemNetSocketsVersion>4.3.0</SystemNetSocketsVersion>
+    <SystemIdentityModelTokensJwtVersion>6.8.0</SystemIdentityModelTokensJwtVersion>
     <XunitVersion>2.4.1</XunitVersion>
     <MicrosoftDotNetRemoteExecutorVersion>5.0.0-beta.20206.4</MicrosoftDotNetRemoteExecutorVersion>
     <MicrosoftNETCoreRuntimeCoreCLRVersion>2.0.8</MicrosoftNETCoreRuntimeCoreCLRVersion>

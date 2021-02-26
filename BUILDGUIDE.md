@@ -112,6 +112,7 @@ Manual Tests require the below setup to run:
 |AADSecurePrincipalId | (Optional) The Application Id of a registered application which has been granted permission to the database defined in the AADPasswordConnectionString. | {Application ID} |
 |AADSecurePrincipalSecret | (Optional) A Secret defined for a registered application which has been granted permission to the database defined in the AADPasswordConnectionString. | {Secret} |
 |AzureKeyVaultURL | (Optional) Azure Key Vault Identifier URL | `https://{keyvaultname}.vault.azure.net/` |
+|AzureKeyVaultTenantId | (Optional) The Azure Active Directory tenant (directory) Id of the service principal. | _{Tenant ID of Active Directory}_ |
 |AzureKeyVaultClientId | (Optional) "Application (client) ID" of an Active Directory registered application, granted access to the Azure Key Vault specified in `AZURE_KEY_VAULT_URL`. Requires the key permissions Get, List, Import, Decrypt, Encrypt, Unwrap, Wrap, Verify, and Sign. | _{Client Application ID}_ |
 |AzureKeyVaultClientSecret | (Optional) "Client Secret" of the Active Directory registered application, granted access to the Azure Key Vault specified in `AZURE_KEY_VAULT_URL` | _{Client Application Secret}_ |
 |SupportsLocalDb | (Optional) Whether or not a LocalDb instance of SQL Server is installed on the machine running the tests. |`true` OR `false`|
