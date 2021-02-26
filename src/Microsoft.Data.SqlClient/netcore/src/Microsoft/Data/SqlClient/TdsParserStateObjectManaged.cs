@@ -35,14 +35,15 @@ namespace Microsoft.Data.SqlClient.SNI
 
         protected override void CreateSessionHandle(TdsParserStateObject physicalConnection, bool async)
         {
-            Debug.Assert(physicalConnection is TdsParserStateObjectManaged, "Expected a stateObject of type " + this.GetType());
+            Debug.Assert(physicalConnection is TdsParserStateObjectManaged, "Expected a stateObject of type " + GetType());
             TdsParserStateObjectManaged managedSNIObject = physicalConnection as TdsParserStateObjectManaged;
-
             _sessionHandle = managedSNIObject.CreateMarsSession(this, async);
+            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.CreateSessionHandle | Info | State Object Id {0}, Session Id {1}", _objectID, _sessionHandle?.ConnectionId);
         }
 
         internal SNIMarsHandle CreateMarsSession(object callbackObject, bool async)
         {
+            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.CreateMarsSession | Info | State Object Id {0}, Session Id {1}, Async = {2}", _objectID, _sessionHandle?.ConnectionId, async);
             return _marsConnection.CreateMarsSession(callbackObject, async);
         }
 
@@ -56,10 +57,14 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 _parser.ProcessSNIError(this);
             }
-            else if (async)
+            else
             {
-                // Create call backs and allocate to the session handle
-                _sessionHandle.SetAsyncCallbacks(ReadAsyncCallback, WriteAsyncCallback);
+                SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.CreatePhysicalSNIHandle | Info | State Object Id {0}, Session Id {1}, ServerName {2}, Async = {3}", _objectID, _sessionHandle?.ConnectionId, serverName, async);
+                if (async)
+                {
+                    // Create call backs and allocate to the session handle
+                    _sessionHandle.SetAsyncCallbacks(ReadAsyncCallback, WriteAsyncCallback);
+                }
             }
         }
 
@@ -75,6 +80,10 @@ namespace Microsoft.Data.SqlClient.SNI
             if (sessionHandle != null)
             {
                 ReadAsyncCallback(IntPtr.Zero, PacketHandle.FromManagedPacket(packet), error);
+                SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.ReadAsyncCallback | Info | State Object Id {0}, Session Id {1}, Error code returned {2}", _objectID, _sessionHandle?.ConnectionId, error);
+#if DEBUG
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObjectManaged.ReadAsyncCallback | TRC | State Object Id {0}, Session Id {1}, Packet Id = {2}, Error code returned {3}", _objectID, _sessionHandle?.ConnectionId, packet?._id, error);
+#endif
                 sessionHandle?.ReturnPacket(packet);
             }
             else
@@ -91,6 +100,10 @@ namespace Microsoft.Data.SqlClient.SNI
             if (sessionHandle != null)
             {
                 WriteAsyncCallback(IntPtr.Zero, PacketHandle.FromManagedPacket(packet), sniError);
+                SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.WriteAsyncCallback | Info | State Object Id {0}, Session Id {1}, Error code returned {2}", _objectID, _sessionHandle?.ConnectionId, sniError);
+#if DEBUG
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObjectManaged.WriteAsyncCallback | TRC | State Object Id {0}, Session Id {1}, Packet Id = {2}, Error code returned {3}", _objectID, _sessionHandle?.ConnectionId, packet?._id, sniError);
+#endif
                 sessionHandle?.ReturnPacket(packet);
             }
             else
@@ -108,6 +121,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
         internal override void Dispose()
         {
+            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.Dispose | Info | State Object Id {0}, Session Id {1}, Disposing session Handle and counters.", _objectID, _sessionHandle?.ConnectionId);
             SNIHandle sessionHandle = _sessionHandle;
 
             _sessionHandle = null;
@@ -117,8 +131,13 @@ namespace Microsoft.Data.SqlClient.SNI
 
             if (null != sessionHandle)
             {
+                SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.Dispose | Info | State Object Id {0}, Session Id {1}, sessionHandle is available, disposing session.", _objectID, _sessionHandle?.ConnectionId);
                 sessionHandle.Dispose();
                 DecrementPendingCallbacks(true); // Will dispose of GC handle.
+            }
+            else
+            {
+                SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.Dispose | Info | State Object Id {0}, sessionHandle not available, could not dispose session.", _objectID);
             }
         }
 
@@ -142,6 +161,10 @@ namespace Microsoft.Data.SqlClient.SNI
                 throw ADP.ClosedConnectionError();
             }
             error = SNIProxy.GetInstance().ReadSyncOverAsync(handle, out SNIPacket packet, timeoutRemaining);
+            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.ReadSyncOverAsync | Info | State Object Id {0}, Session Id {1}", _objectID, _sessionHandle?.ConnectionId);
+#if DEBUG
+            SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObjectManaged.ReadSyncOverAsync | TRC | State Object Id {0}, Session Id {1}, Packet {2} received, Packet owner Id {3}, Packet dataLeft {4}", _objectID, _sessionHandle?.ConnectionId, packet?._id, packet?._owner.ConnectionId, packet?.DataLeft);
+#endif
             return PacketHandle.FromManagedPacket(packet);
         }
 
@@ -152,6 +175,10 @@ namespace Microsoft.Data.SqlClient.SNI
         internal override void ReleasePacket(PacketHandle syncReadPacket)
         {
             SNIPacket packet = syncReadPacket.ManagedPacket;
+            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.ReleasePacket | Info | State Object Id {0}, Session Id {1}, Packet DataLeft {2}", _objectID, _sessionHandle?.ConnectionId, packet?.DataLeft);
+#if DEBUG
+            SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObjectManaged.ReleasePacket | TRC | State Object Id {0}, Session Id {1}, Packet {2} will be released, Packet Owner Id {3}, Packet dataLeft {4}", _objectID, _sessionHandle?.ConnectionId, packet?._id, packet?._owner.ConnectionId, packet?.DataLeft);
+#endif
             if (packet != null)
             {
                 SNIHandle handle = Handle;
@@ -168,6 +195,7 @@ namespace Microsoft.Data.SqlClient.SNI
         internal override PacketHandle ReadAsync(SessionHandle handle, out uint error)
         {
             error = SNIProxy.GetInstance().ReadAsync(handle.ManagedHandle, out SNIPacket packet);
+            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.ReadAsync | Info | State Object Id {0}, Session Id {1}, Packet DataLeft {2}", _objectID, _sessionHandle?.ConnectionId, packet?.DataLeft);
             return PacketHandle.FromManagedPacket(packet);
         }
 
@@ -178,6 +206,8 @@ namespace Microsoft.Data.SqlClient.SNI
             Debug.Assert(packetHandle.ManagedPacket.IsActive, "rental packet is not active a serious pooling error may have occurred");
 #endif
             SetPacketData(packetHandle, SQL.AttentionHeader, TdsEnums.HEADER_LEN);
+            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.CreateAndSetAttentionPacket | Info | State Object Id {0}, Session Id {1}", _objectID, _sessionHandle?.ConnectionId);
+
             packetHandle.ManagedPacket.IsOutOfBand = true;
             return packetHandle;
         }
@@ -223,6 +253,8 @@ namespace Microsoft.Data.SqlClient.SNI
         internal override uint EnableMars(ref uint info)
         {
             _marsConnection = new SNIMarsConnection(Handle);
+            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.EnableMars | Info | State Object Id {0}, Session Id {1}", _objectID, _sessionHandle?.ConnectionId);
+
             if (_marsConnection.StartReceive() == TdsEnums.SNI_SUCCESS_IO_PENDING)
             {
                 return TdsEnums.SNI_SUCCESS;
@@ -241,8 +273,9 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 _sspiClientContextStatus = new SspiClientContextStatus();
             }
-            
+
             SNIProxy.GetInstance().GenSspiClientContext(_sspiClientContextStatus, receivedBuff, ref sendBuff, _sniSpnBuffer);
+            SqlClientEventSource.Log.TryTraceEvent("SNIProxy.GenerateSspiClientContext | Info | Session Id {0}", _sessionHandle?.ConnectionId);
             sendLength = (uint)(sendBuff != null ? sendBuff.Length : 0);
             return 0;
         }

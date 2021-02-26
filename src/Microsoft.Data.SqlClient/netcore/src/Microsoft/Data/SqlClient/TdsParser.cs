@@ -340,6 +340,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (stateObj._attentionSent)
             {
+                SqlClientEventSource.Log.TryTraceEvent("TdsParser.ProcessPendingAck | INFO | Connection Object Id {0}, State Obj Id {1}, Processing Attention.", _connHandler._objectID, stateObj.ObjectID);
                 ProcessAttention(stateObj);
             }
         }
@@ -379,36 +380,8 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 _sniSpnBuffer = null;
-                switch (authType)
-                {
-                    case SqlAuthenticationMethod.ActiveDirectoryPassword:
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Password authentication");
-                        break;
-                    case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Integrated authentication");
-                        break;
-                    case SqlAuthenticationMethod.ActiveDirectoryInteractive:
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Interactive authentication");
-                        break;
-                    case SqlAuthenticationMethod.ActiveDirectoryServicePrincipal:
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Service Principal authentication");
-                        break;
-                    case SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow:
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Device Code Flow authentication");
-                        break;
-                    case SqlAuthenticationMethod.ActiveDirectoryManagedIdentity:
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Managed Identity authentication");
-                        break;
-                    case SqlAuthenticationMethod.ActiveDirectoryMSI:
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory MSI authentication");
-                        break;
-                    case SqlAuthenticationMethod.SqlPassword:
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> SQL Password authentication");
-                        break;
-                    default:
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> SQL authentication");
-                        break;
-                }
+                SqlClientEventSource.Log.TryTraceEvent("TdsParser.Connect | SEC | Connection Object Id {0}, Authentication Mode: {1}", _connHandler._objectID,
+                    authType == SqlAuthenticationMethod.NotSpecified ? SqlAuthenticationMethod.SqlPassword.ToString() : authType.ToString());
             }
 
             _sniSpnBuffer = null;
@@ -417,7 +390,7 @@ namespace Microsoft.Data.SqlClient
             if (integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
             {
                 LoadSSPILibrary();
-                SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> SSPI or Active Directory Authentication Library for SQL Server based integrated authentication");
+                SqlClientEventSource.Log.TryTraceEvent("TdsParser.Connect | SEC | SSPI or Active Directory Authentication Library loaded for SQL Server based integrated authentication");
             }
 
             byte[] instanceName = null;
@@ -1328,7 +1301,7 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG
                 // There is an exception here for MARS as its possible that another thread has closed the connection just as we see an error
                 Debug.Assert(SniContext.Undefined != stateObj.DebugOnlyCopyOfSniContext || ((_fMARS) && ((_state == TdsParserState.Closed) || (_state == TdsParserState.Broken))), "SniContext must not be None");
-                SqlClientEventSource.Log.TrySNITraceEvent("<sc.TdsParser.ProcessSNIError|ERR> SNIContext must not be None = {0}, _fMARS = {1}, TDS Parser State = {2}", stateObj.DebugOnlyCopyOfSniContext, _fMARS, _state);
+                SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.ProcessSNIError|ERR> SNIContext must not be None = {0}, _fMARS = {1}, TDS Parser State = {2}", stateObj.DebugOnlyCopyOfSniContext, _fMARS, _state);
 
 #endif
                 SNIErrorDetails details = GetSniErrorDetails();
@@ -1896,7 +1869,7 @@ namespace Microsoft.Data.SqlClient
                 // If there is data ready, but we didn't exit the loop, then something is wrong
                 Debug.Assert(!dataReady, "dataReady not expected - did we forget to skip the row?");
 
-                if (stateObj._internalTimeout)
+                if (stateObj.IsTimeoutStateExpired)
                 {
                     runBehavior = RunBehavior.Attention;
                 }
@@ -2520,7 +2493,7 @@ namespace Microsoft.Data.SqlClient
                     stateObj._attentionSent = false;
                     stateObj.HasReceivedAttention = false;
 
-                    if (RunBehavior.Clean != (RunBehavior.Clean & runBehavior) && !stateObj._internalTimeout)
+                    if (RunBehavior.Clean != (RunBehavior.Clean & runBehavior) && !stateObj.IsTimeoutStateExpired)
                     {
                         // Add attention error to collection - if not RunBehavior.Clean!
                         stateObj.AddError(new SqlError(0, 0, TdsEnums.MIN_ERROR_CLASS, _server, SQLMessage.OperationCancelled(), "", 0));
@@ -2911,11 +2884,11 @@ namespace Microsoft.Data.SqlClient
             ushort status;
             int count;
 
-            // This is added back since removing it from here introduces regressions in Managed SNI.
-            // It forces SqlDataReader.ReadAsync() method to run synchronously,
-            // and will block the calling thread until data is fed from SQL Server.
-            // TODO Investigate better solution to support non-blocking ReadAsync().
-            stateObj._syncOverAsync = true;
+            if (LocalAppContextSwitches.MakeReadAsyncBlocking)
+            {
+                // Don't retry TryProcessDone
+                stateObj._syncOverAsync = true;
+            }
 
             // status
             // command
@@ -7383,6 +7356,7 @@ namespace Microsoft.Data.SqlClient
 
         private byte[] SerializeEncodingChar(string s, int numChars, int offset, Encoding encoding)
         {
+#if NETFRAMEWORK || NETSTANDARD2_0
             char[] charData;
             byte[] byteData = null;
 
@@ -7397,33 +7371,38 @@ namespace Microsoft.Data.SqlClient
             encoding.GetBytes(charData, 0, charData.Length, byteData, 0);
 
             return byteData;
+#else
+            return encoding.GetBytes(s, offset, numChars);
+#endif
         }
 
         private Task WriteEncodingChar(string s, int numChars, int offset, Encoding encoding, TdsParserStateObject stateObj, bool canAccumulate = true)
         {
-            char[] charData;
-            byte[] byteData;
-
             // if hitting 7.0 server, encoding will be null in metadata for columns or return values since
             // 7.0 has no support for multiple code pages in data - single code page support only
             if (encoding == null)
                 encoding = _defaultEncoding;
 
-            charData = s.ToCharArray(offset, numChars);
-
             // Optimization: if the entire string fits in the current buffer, then copy it directly
             int bytesLeft = stateObj._outBuff.Length - stateObj._outBytesUsed;
-            if ((numChars <= bytesLeft) && (encoding.GetMaxByteCount(charData.Length) <= bytesLeft))
+            if ((numChars <= bytesLeft) && (encoding.GetMaxByteCount(numChars) <= bytesLeft))
             {
-                int bytesWritten = encoding.GetBytes(charData, 0, charData.Length, stateObj._outBuff, stateObj._outBytesUsed);
+                int bytesWritten = encoding.GetBytes(s, offset, numChars, stateObj._outBuff, stateObj._outBytesUsed);
                 stateObj._outBytesUsed += bytesWritten;
                 return null;
             }
             else
             {
-                byteData = encoding.GetBytes(charData, 0, numChars);
+#if NETFRAMEWORK || NETSTANDARD2_0
+                var charData = s.ToCharArray(offset, numChars);
+                var byteData = encoding.GetBytes(charData, 0, numChars);
                 Debug.Assert(byteData != null, "no data from encoding");
                 return stateObj.WriteByteArray(byteData, byteData.Length, 0, canAccumulate);
+#else
+                var byteData = encoding.GetBytes(s, offset, numChars);
+                Debug.Assert(byteData != null, "no data from encoding");
+                return stateObj.WriteByteArray(byteData, byteData.Length, 0, canAccumulate);
+#endif
             }
         }
 

@@ -4,10 +4,8 @@
 
 using System;
 using System.Diagnostics;
-using System.Collections.Concurrent;
 using System.Threading;
 using System.Linq;
-using System.Text;
 
 namespace Microsoft.Data.SqlClient.SNI
 {
@@ -40,16 +38,18 @@ namespace Microsoft.Data.SqlClient.SNI
             else
             {
                 Debug.Assert(packet != null, "dequeue returned null SNIPacket");
-                Debug.Assert(!packet.IsActive, "SNIPacket _refcount must be 1 or a lifetime issue has occured, trace with the #TRACE_HISTORY define");
+                Debug.Assert(!packet.IsActive, "SNIPacket _refcount must be 1 or a lifetime issue has occurred, trace with the #TRACE_HISTORY define");
                 Debug.Assert(packet.IsInvalid, "dequeue returned valid packet");
                 GC.ReRegisterForFinalize(packet);
             }
+#if TRACE_HISTORY
             if (packet._history != null)
             {
                 packet._history.Add(new SNIPacket.History { Action = SNIPacket.History.Direction.Rent, Stack = GetStackParts(), RefCount = packet._refCount });
             }
+#endif
             Interlocked.Add(ref packet._refCount, 1);
-            Debug.Assert(packet.IsActive, "SNIPacket _refcount must be 1 or a lifetime issue has occured, trace with the #TRACE_HISTORY define");
+            Debug.Assert(packet.IsActive, "SNIPacket _refcount must be 1 or a lifetime issue has occurred, trace with the #TRACE_HISTORY define");
 #endif
             packet.Allocate(headerSize, dataSize);
             return packet;
@@ -57,21 +57,23 @@ namespace Microsoft.Data.SqlClient.SNI
 
         public override void ReturnPacket(SNIPacket packet)
         {
-            Debug.Assert(packet != null, "releasing null SNIPacket");
 #if DEBUG
-            Debug.Assert(packet.IsActive, "SNIPacket _refcount must be 1 or a lifetime issue has occured, trace with the #TRACE_HISTORY define");
+            Debug.Assert(packet != null, "releasing null SNIPacket");
+            Debug.Assert(packet.IsActive, "SNIPacket _refcount must be 1 or a lifetime issue has occurred, trace with the #TRACE_HISTORY define");
             Debug.Assert(ReferenceEquals(packet._owner, this), "releasing SNIPacket that belongs to another physical handle");
-#endif
             Debug.Assert(!packet.IsInvalid, "releasing already released SNIPacket");
+#endif
 
             packet.Release();
 #if DEBUG
             Interlocked.Add(ref packet._refCount, -1);
             packet._traceTag = null;
+#if TRACE_HISTORY
             if (packet._history != null)
             {
                 packet._history.Add(new SNIPacket.History { Action = SNIPacket.History.Direction.Return, Stack = GetStackParts(), RefCount = packet._refCount });
             }
+#endif
             GC.SuppressFinalize(packet);
 #endif
             _pool.Return(packet);

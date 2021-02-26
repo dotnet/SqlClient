@@ -474,5 +474,10 @@ namespace Microsoft.Data.ProviderBase
         abstract internal bool SetInnerConnectionFrom(DbConnection owningObject, DbConnectionInternal to, DbConnectionInternal from);
 
         abstract internal void SetInnerConnectionTo(DbConnection owningObject, DbConnectionInternal to);
+
+        virtual internal void Unload()
+        {
+            _pruningTimer.Dispose();
+        }
     }
 }

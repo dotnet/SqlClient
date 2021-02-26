@@ -7413,10 +7413,7 @@ namespace Microsoft.Data.SqlClient
 
         private void WriteBeginExecuteEvent()
         {
-            if (Connection != null)
-            {
-                SqlClientEventSource.Log.BeginExecute(GetHashCode(), Connection.DataSource, Connection.Database, CommandText);
-            }
+            SqlClientEventSource.Log.TryBeginExecuteEvent(ObjectID, Connection?.ClientConnectionId, CommandText);
         }
 
         /// <summary>
@@ -7443,7 +7440,7 @@ namespace Microsoft.Data.SqlClient
 
                 int compositeState = successFlag | isSqlExceptionFlag | synchronousFlag;
 
-                SqlClientEventSource.Log.EndExecute(GetHashCode(), compositeState, sqlExceptionNumber.GetValueOrDefault());
+                SqlClientEventSource.Log.TryEndExecuteEvent(ObjectID, Connection?.ClientConnectionId, compositeState, sqlExceptionNumber.GetValueOrDefault());
             }
         }
 
