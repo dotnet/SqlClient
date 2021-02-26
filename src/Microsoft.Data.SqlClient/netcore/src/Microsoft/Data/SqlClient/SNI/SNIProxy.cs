@@ -72,7 +72,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="sendBuff">Send buffer</param>
         /// <param name="serverName">Service Principal Name buffer</param>
         /// <returns>SNI error code</returns>
-        internal void GenSspiClientContext(SspiClientContextStatus sspiClientContextStatus, byte[] receivedBuff, ref byte[] sendBuff, byte[] serverName)
+        internal void GenSspiClientContext(SspiClientContextStatus sspiClientContextStatus, byte[] receivedBuff, ref byte[] sendBuff, byte[][] serverName)
         {
             SafeDeleteContext securityContext = sspiClientContextStatus.SecurityContext;
             ContextFlagsPal contextFlags = sspiClientContextStatus.ContextFlags;
@@ -104,12 +104,15 @@ namespace Microsoft.Data.SqlClient.SNI
                 | ContextFlagsPal.Delegate
                 | ContextFlagsPal.MutualAuth;
 
-            string serverSPN = Encoding.UTF8.GetString(serverName);
-
+            string[] serverSPNs = new string[serverName.Length];
+            for (int i = 0; i < serverName.Length; i++)
+            {
+                serverSPNs[i] = Encoding.UTF8.GetString(serverName[i]);
+            }
             SecurityStatusPal statusCode = NegotiateStreamPal.InitializeSecurityContext(
                        credentialsHandle,
                        ref securityContext,
-                       serverSPN,
+                       serverSPNs,
                        requestedContextFlags,
                        inSecurityBufferArray,
                        outSecurityBuffer,
@@ -254,7 +257,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="cachedFQDN">Used for DNS Cache</param>
         /// <param name="pendingDNSInfo">Used for DNS Cache</param>
         /// <returns>SNI handle</returns>
-        internal SNIHandle CreateConnectionHandle(string fullServerName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[] spnBuffer, bool flushCache, bool async, bool parallel, bool isIntegratedSecurity, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
+        internal SNIHandle CreateConnectionHandle(string fullServerName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[][] spnBuffer, bool flushCache, bool async, bool parallel, bool isIntegratedSecurity, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
         {
             instanceName = new byte[1];
 
@@ -295,7 +298,7 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 try
                 {
-                    spnBuffer = GetSqlServerSPN(details);
+                    spnBuffer = GetSqlServerSPNs(details);
                 }
                 catch (Exception e)
                 {
@@ -307,7 +310,7 @@ namespace Microsoft.Data.SqlClient.SNI
             return sniHandle;
         }
 
-        private static byte[] GetSqlServerSPN(DataSource dataSource)
+        private static byte[][] GetSqlServerSPNs(DataSource dataSource)
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(dataSource.ServerName));
 
@@ -321,17 +324,12 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 postfix = dataSource.InstanceName;
             }
-            // For handling tcp:<hostname> format
-            else if (dataSource._connectionProtocol == DataSource.Protocol.TCP)
-            {
-                postfix = DefaultSqlServerPort.ToString();
-            }
 
             SqlClientEventSource.Log.TryTraceEvent("SNIProxy.GetSqlServerSPN | Info | ServerName {0}, InstanceName {1}, Port {2}, postfix {3}", dataSource?.ServerName, dataSource?.InstanceName, dataSource?.Port, postfix);
-            return GetSqlServerSPN(hostName, postfix);
+            return GetSqlServerSPNs(hostName, postfix, dataSource._connectionProtocol);
         }
 
-        private static byte[] GetSqlServerSPN(string hostNameOrAddress, string portOrInstanceName)
+        private static byte[][] GetSqlServerSPNs(string hostNameOrAddress, string portOrInstanceName, DataSource.Protocol protocol)
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(hostNameOrAddress));
             IPHostEntry hostEntry = null;
@@ -350,19 +348,24 @@ namespace Microsoft.Data.SqlClient.SNI
                 // If the DNS lookup failed, then resort to using the user provided hostname to construct the SPN.
                 fullyQualifiedDomainName = hostEntry?.HostName ?? hostNameOrAddress;
             }
+
             string serverSpn = SqlServerSpnHeader + "/" + fullyQualifiedDomainName;
+
             if (!string.IsNullOrWhiteSpace(portOrInstanceName))
             {
                 serverSpn += ":" + portOrInstanceName;
             }
-            else
+            else if (protocol == DataSource.Protocol.None || protocol == DataSource.Protocol.TCP) // Default is TCP
             {
-                serverSpn += $":{DefaultSqlServerPort}";
+                string serverSpnWithDefaultPort = serverSpn + $":{DefaultSqlServerPort}";
+                // Set both SPNs with and without Port as Port is optional for default instance
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("SNIProxy.GetSqlServerSPN | Info | ServerSPNs {0} and {1}", serverSpn, serverSpnWithDefaultPort);
+                return new byte[][] { Encoding.UTF8.GetBytes(serverSpn), Encoding.UTF8.GetBytes(serverSpnWithDefaultPort) };
             }
+            // else Named Pipes do not need to valid port
 
             SqlClientEventSource.Log.TryAdvancedTraceEvent("SNIProxy.GetSqlServerSPN | Info | ServerSPN {0}", serverSpn);
-
-            return Encoding.UTF8.GetBytes(serverSpn);
+            return new byte[][] { Encoding.UTF8.GetBytes(serverSpn) };
         }
 
         /// <summary>
