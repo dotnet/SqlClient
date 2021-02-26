@@ -114,7 +114,7 @@ namespace Microsoft.Data.SqlClient
 
         private bool _isDenali = false;
 
-        private byte[] _sniSpnBuffer = null;
+        private byte[][] _sniSpnBuffer = null;
 
         // SqlStatistics
         private SqlStatistics _statistics = null;
