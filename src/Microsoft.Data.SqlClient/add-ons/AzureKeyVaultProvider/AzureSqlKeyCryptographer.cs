@@ -73,15 +73,13 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <returns></returns>
         internal KeyVaultKey GetKey(string keyIdentifierUri)
         {
-            if (_keyDictionary.ContainsKey(keyIdentifierUri))
+            if (_keyDictionary.TryGetValue(keyIdentifierUri, out KeyVaultKey key))
             {
-                _keyDictionary.TryGetValue(keyIdentifierUri, out KeyVaultKey key);
                 return key;
             }
 
-            if (_keyFetchTaskDictionary.ContainsKey(keyIdentifierUri))
+            if (_keyFetchTaskDictionary.TryGetValue(keyIdentifierUri, out Task<Azure.Response<KeyVaultKey>> task))
             {
-                _keyFetchTaskDictionary.TryGetValue(keyIdentifierUri, out Task<Azure.Response<KeyVaultKey>> task);
                 return Task.Run(() => task).GetAwaiter().GetResult();
             }
 
@@ -131,9 +129,8 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 
         private CryptographyClient GetCryptographyClient(string keyIdentifierUri)
         {
-            if (_cryptoClientDictionary.ContainsKey(keyIdentifierUri))
+            if (_cryptoClientDictionary.TryGetValue(keyIdentifierUri, out CryptographyClient client))
             {
-                _cryptoClientDictionary.TryGetValue(keyIdentifierUri, out CryptographyClient client);
                 return client;
             }
 
