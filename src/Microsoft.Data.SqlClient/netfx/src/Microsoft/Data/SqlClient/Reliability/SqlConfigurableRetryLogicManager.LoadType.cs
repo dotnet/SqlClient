@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient
         /// Performs a case-sensitive search to resolve the specified type name.
         /// </summary>
         /// <param name="fullyQualifiedName"></param>
-        /// <returns>Resolved type if could resolve the type; otherwise, the `SqlConfigurableRetryFactory` type.</returns>
+        /// <returns>Resolved type if it could resolve the type; otherwise, the `SqlConfigurableRetryFactory` type.</returns>
         private static Type LoadType(string fullyQualifiedName)
         {
             string methodName = MethodBase.GetCurrentMethod().Name;

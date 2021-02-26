@@ -1936,9 +1936,9 @@
     <value>Value '{0}' is out of range. Must be between {1} and {2}.</value>
   </data>
   <data name="SqlRetryLogic_RetryCanceled" xml:space="preserve">
-    <value>The retry manually has been canceled by user at {0} attempt.</value>
+    <value>The retry has been canceled at attempt {0}.</value>
   </data>
   <data name="SqlRetryLogic_RetryExceeded" xml:space="preserve">
-    <value>The number of retries has been exceeded from the maximum {0} attempt(s).</value>
+    <value>The number of retries has exceeded the maximum of {0} attempt(s).</value>
   </data>
 </root>

@@ -2,44 +2,44 @@
 <docs>
     <members name="SqlRetryLogicOption">
         <SqlRetryLogicOption>
-            <summary>Provides the retry logic parameters to create an instance of the <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider" /> class by <see cref="T:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory" /> methods.</summary>
+            <summary>Provides the retry logic parameters to create an instance of the <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider" /> class by using <see cref="T:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory" /> methods.</summary>
         </SqlRetryLogicOption>
         <remarks>
 				<format type="text/markdown"><![CDATA[
 
 ## Example
-The following sample declares a <xref:Microsoft.Data.SqlClient.SqlRetryLogicOption> object that is configured to apply the retry logic for the error number **102** for a maximum of **5** times and **3** to **60** seconds gap time between each run. It will just work for the `Select` SQL statement if it assigns to a <xref:Microsoft.Data.SqlClient.SqlCommand.RetryLogicProvider>.  
+The following sample declares a <xref:Microsoft.Data.SqlClient.SqlRetryLogicOption> object that is configured to apply retry logic for the error number **102** for a maximum of **5** times and **3** to **60** seconds gap time between each run. It will only work for the `Select` SQL statements assigned to the <xref:Microsoft.Data.SqlClient.SqlCommand.RetryLogicProvider>.  
 
 [!code-csharp[SqlConfigurableRetryLogic_SqlRetryLogicOptions#1](~/../sqlclient/doc/samples/SqlConfigurableRetryLogic_SqlRetryLogicOptions.cs#1)]
 
 ]]></format>
 			</remarks>
         <NumberOfTries>
-            <summary>Sets the expected number of attempts when a **transient error** occurs included with the first attempt.</summary>
+            <summary>Sets the number of times to try and execute the function.</summary>
             <value>
-            <see langword="int" /> that must be between 1 and 60; 1 means to attempt just one time and if it encountered an error it wouldn't do retry.</value>
+            <see langword="int" /> between 1 and 60; 1 means to execute one time and if an error is encountered, don't retry.</value>
         </NumberOfTries>
         <DeltaTime>
-            <summary>Sets the gap interval time as a <see cref="T:System.TimeSpan" /> object.</summary>
+            <summary>Sets the gap time interval as a <see cref="T:System.TimeSpan" /> object.</summary>
             <value>
-            <see cref="T:System.TimeSpan" /> The upcomming gap time before next attempt to execute; it must be between 0 and 120 seconds.</value>
+            <see cref="T:System.TimeSpan" /> The upcoming gap time before the next execution attempt; must be between 0 and 120 seconds.</value>
         </DeltaTime>
         <MinTimeInterval>
-            <summary>Sets the allowed minimum gap interval time as a <see cref="T:System.TimeSpan" /> object.</summary>
+            <summary>Sets the minimum allowed gap time interval as a <see cref="T:System.TimeSpan" /> object.</summary>
             <value>
-            <see cref="T:System.TimeSpan" /> The mininum upcomming gap time before next attempt to execute; the default value is **zero** and must be between 0 and 120 seconds.</value>
+            <see cref="T:System.TimeSpan" /> The minimum upcoming gap time before the next execution attempt; the default value is **zero** and must be between 0 and 120 seconds.</value>
         </MinTimeInterval>
         <MaxTimeInterval>
-            <summary>Sets the allowed maximum gap interval time as a <see cref="T:System.TimeSpan" /> object.</summary>
+            <summary>Sets the allowed maximum gap time interval as a <see cref="T:System.TimeSpan" /> object.</summary>
             <value>
-            <see cref="T:System.TimeSpan" /> The maximum upcomming gap time before next attempt to execute; it must be between 0 and 120 seconds.</value>
+            <see cref="T:System.TimeSpan" /> The maximum upcoming gap time interval before the next execution attempt; must be between 0 and 120 seconds.</value>
         </MaxTimeInterval>
         <TransientErrors>
-            <summary>Sets the list of transient error numbers to apply the retry logic when happens.</summary>
-            <value>List of <see cref="T:Microsoft.Data.SqlClient.SqlException.Number" />; Set <see langword="null" /> to use the internal list of exception from <see cref="T:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory" /> object.</value>
+            <summary>Sets the list of transient error numbers on which to retry when they occur.</summary>
+            <value>List of <see cref="T:Microsoft.Data.SqlClient.SqlException.Number" />; Set to <see langword="null" /> to use the internal list of exceptions from the <see cref="T:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory" /> object.</value>
         </TransientErrors>
         <AuthorizedSqlCondition>
-            <summary>Sets a pre-retry validation function regarding the <see cref="T:Microsoft.Data.SqlClient.SqlCommand.CommandText" /> to skip the special SQL statements.</summary>
+            <summary>Sets a pre-retry validation function on the <see cref="T:Microsoft.Data.SqlClient.SqlCommand.CommandText" /> to only include specific SQL statements.</summary>
             <value>
             <see cref="T:System.Predicate" /> The pre-retry validation delegate function; <see langword="true" /> if the `CommandText` is authorized to retry the operation.</value>
         </AuthorizedSqlCondition>

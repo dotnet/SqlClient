@@ -2817,14 +2817,14 @@ The blocking connection simulates a situation like a command still running in th
 [!code-csharp[SqlConfigurableRetryLogic_SqlCommand#3](~/../sqlclient/doc/samples/SqlConfigurableRetryLogic_SqlCommand.cs#2)]
 
 ### How to use with legacy asynchronous commands
-Except assigning the provider to the command and executing the command it's possible to run it directly by the following <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider> methods:  
+Besides assigning the provider to the command and executing the command, it's possible to run it directly using the following <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider> methods:  
 - <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.Execute>
 - <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.ExecuteAsync>
 
 [!code-csharp[SqlConfigurableRetryLogic_SqlCommand#4](~/../sqlclient/doc/samples/SqlConfigurableRetryLogic_SqlCommand.cs#2)]
 
 > [NOTE!]
-> The Asynchronous Programming Model (APM) is the legacy pattern that uses a pair of methods starting with `Begin` and `End`, and an interface called `IAsyncResult`. It's not recommended to use this pattern in new applications. These methods are for backwards compatibility.  
+> The Asynchronous Programming Model (APM) is a legacy pattern that uses a pair of methods starting with `Begin` and `End`, and an interface called `IAsyncResult`. It's not recommended to use this pattern in new applications. These methods are for backwards compatibility.  
 
 ]]></format>
 			</remarks>

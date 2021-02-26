@@ -34,7 +34,7 @@ class RetryLogicSample
         // 2. Create a retry provider
         var provider = SqlConfigurableRetryFactory.CreateExponentialRetryProvider(options);
 
-        // define the retrying event to report the execution attempts
+        // define the retrying event to report execution attempts
         provider.Retrying += (object s, SqlRetryingEventArgs e) =>
             {
                 int attempts = e.RetryCount + 1;
@@ -50,7 +50,7 @@ class RetryLogicSample
                     Console.WriteLine($"{e.Exceptions[e.Exceptions.Count - 1].Message}\n");
                 }
 
-                // This is not a good practice to do time-consuming tasks inside the retrying event and blocking the running task.
+                // It is not good practice to do time-consuming tasks inside the retrying event which blocks the running task.
                 // Use parallel programming patterns to mitigate it.
                 if (e.RetryCount == provider.RetryLogic.NumberOfTries - 1)
                 {
@@ -122,10 +122,10 @@ class RetryLogicSample
         ExecuteCommand(s_generalConnection, string.Format(CreateDatabaseFormat, dbName));
         Console.WriteLine($"The '{dbName}' database is created.");
 
-        // Open a connection to the newly created database to block dropping it.
+        // Open a connection to the newly created database to block it from being dropped.
         using var blockingCnn = new SqlConnection(string.Format(CnnStringFormat, dbName));
         blockingCnn.Open();
-        Console.WriteLine($"Established a connection to the '{dbName}' to block dropping it.");
+        Console.WriteLine($"Established a connection to '{dbName}' to block it from being dropped.");
 
         Console.WriteLine($"Dropping `{dbName}`...");
         // Try to drop the new database.
@@ -152,7 +152,7 @@ class RetryLogicSample
         // Change this if you already have a database with the same name in your database.
         string dbName = "RetryCommand_TestDatabase";
 
-        // Subscribe a new event on retry event and discover the active sessions on a database
+        // Subscribe to the retry event and discover active sessions in a database
         EventHandler<SqlRetryingEventArgs> retryEvent = (object s, SqlRetryingEventArgs e) =>
         {
             // Run just at first execution
@@ -169,10 +169,10 @@ class RetryLogicSample
         ExecuteCommand(s_generalConnection, string.Format(CreateDatabaseFormat, dbName));
         Console.WriteLine($"The '{dbName}' database is created.");
 
-        // Open a connection to the newly created database to block dropping it.
+        // Open a connection to the newly created database to block it from being dropped.
         using var blockingCnn = new SqlConnection(string.Format(CnnStringFormat, dbName));
         blockingCnn.Open();
-        Console.WriteLine($"Established a connection to the '{dbName}' to block its dropping.");
+        Console.WriteLine($"Established a connection to '{dbName}' to block it from being dropped.");
 
         Console.WriteLine("Dropping the database...");
         // Try to drop the new database.
@@ -199,7 +199,7 @@ class RetryLogicSample
         // Change this if you already have a database with the same name in your database.
         string dbName = "RetryCommand_TestDatabase";
 
-        // Subscribe a new event on retry event and discover the active sessions on a database
+        // Subscribe to the retry event and discover the active sessions in a database
         EventHandler<SqlRetryingEventArgs> retryEvent = (object s, SqlRetryingEventArgs e) =>
         {
             // Run just at first execution
@@ -216,10 +216,10 @@ class RetryLogicSample
         ExecuteCommand(s_generalConnection, string.Format(CreateDatabaseFormat, dbName));
         Console.WriteLine($"The '{dbName}' database is created.");
 
-        // Open a connection to the newly created database to block dropping it.
+        // Open a connection to the newly created database to block it from being dropped.
         using var blockingCnn = new SqlConnection(string.Format(CnnStringFormat, dbName));
         blockingCnn.Open();
-        Console.WriteLine($"Established a connection to the '{dbName}' to block its dropping.");
+        Console.WriteLine($"Established a connection to '{dbName}' to block it from being dropped.");
 
         Console.WriteLine("Dropping the database...");
         // Try to drop the new database.

@@ -5,7 +5,7 @@
             <summary>Generates a sequence of time intervals. This class cannot be inherited.</summary>
         </SqlRetryIntervalBaseEnumerator>
         <ctor1>
-            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlRetryIntervalBaseEnumerator" /> class with default value zero for the gap time, minimum, and maximum interval time.</summary>
+            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlRetryIntervalBaseEnumerator" /> class with a default value of zero for the gap time, minimum, and maximum interval time.</summary>
         </ctor1>
         <ctor2>
             <param name="timeInterval">The gap time used to calculate the time delay before each attempt.</param>
@@ -18,10 +18,10 @@
             <summary>The default gap time of each interval.</summary>
         </GapTimeInterval>
         <MinTimeInterval>
-            <summary>The Minimum allowed time interval value.</summary>
+            <summary>The minimum allowed time interval value.</summary>
         </MinTimeInterval>
         <MaxTimeInterval>
-            <summary>The Maximum allowed time interval value.</summary>
+            <summary>The maximum allowed time interval value.</summary>
         </MaxTimeInterval>
         <Current>
             <summary>Gets the element in the collection at the current position of the enumerator.</summary>

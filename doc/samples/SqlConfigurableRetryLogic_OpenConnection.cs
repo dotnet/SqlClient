@@ -15,7 +15,7 @@ class RetryLogicSample
     // For general use
     private static SqlConnection s_generalConnection = new SqlConnection(string.Format(CnnStringFormat, DefaultDB));
 
-    /*static*/ void Main(string[] args)
+    static void Main(string[] args)
     {
         // 1. Define the retry logic parameters
         var options = new FloatingRetryLogicOption()
@@ -44,8 +44,8 @@ class RetryLogicSample
                     Console.WriteLine($"{e.Exceptions[e.Exceptions.Count - 1].Message}\n");
                 }
 
-                // This is not a good practice to do time-consuming tasks inside the retrying event and blocking the running task.
-                // Use the parallel programming patterns to mitigate it.
+                // It is not a good practice to do time-consuming tasks inside the retrying event which blocks the running task.
+                // Use parallel programming patterns to mitigate it.
                 if (e.RetryCount == provider.RetryLogic.NumberOfTries - 1)
                 {
                     Console.WriteLine("This is the last chance to execute the command before throwing the exception.");
@@ -65,7 +65,7 @@ class RetryLogicSample
         }
         catch
         {
-            // exception throws if connecting to the database isn't successful.
+            // exception is thrown if connecting to the database isn't successful.
             throw;
         }
     }
@@ -87,7 +87,7 @@ class RetryLogicSample
         // 3. Assign the `provider` to the connection
         cnn.RetryLogicProvider = provider;
         Console.WriteLine($"Connecting to the [{dbName}] ...");
-        // Manually execute the following command in SSMS to create the invalid database while the SqlConnection is attemptting to connect to it.
+        // Manually execute the following command in SSMS to create the invalid database while the SqlConnection is attempting to connect to it.
         // >> CREATE DATABASE Invalid_DB_Open;
         Console.WriteLine($"Manually, run the 'CREATE DATABASE {dbName};' in the SQL Server before exceeding the {provider.RetryLogic.NumberOfTries} attempts.");
         // the connection tries to connect to the database 5 times
