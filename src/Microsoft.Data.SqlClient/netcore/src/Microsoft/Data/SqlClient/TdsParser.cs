@@ -1896,7 +1896,7 @@ namespace Microsoft.Data.SqlClient
                 // If there is data ready, but we didn't exit the loop, then something is wrong
                 Debug.Assert(!dataReady, "dataReady not expected - did we forget to skip the row?");
 
-                if (stateObj._internalTimeout)
+                if (stateObj.IsTimeoutStateExpired)
                 {
                     runBehavior = RunBehavior.Attention;
                 }
@@ -2520,7 +2520,7 @@ namespace Microsoft.Data.SqlClient
                     stateObj._attentionSent = false;
                     stateObj.HasReceivedAttention = false;
 
-                    if (RunBehavior.Clean != (RunBehavior.Clean & runBehavior) && !stateObj._internalTimeout)
+                    if (RunBehavior.Clean != (RunBehavior.Clean & runBehavior) && !stateObj.IsTimeoutStateExpired)
                     {
                         // Add attention error to collection - if not RunBehavior.Clean!
                         stateObj.AddError(new SqlError(0, 0, TdsEnums.MIN_ERROR_CLASS, _server, SQLMessage.OperationCancelled(), "", 0));
