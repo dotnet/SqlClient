@@ -326,7 +326,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
 
             SqlClientEventSource.Log.TryTraceEvent("SNIProxy.GetSqlServerSPN | Info | ServerName {0}, InstanceName {1}, Port {2}, postfix {3}", dataSource?.ServerName, dataSource?.InstanceName, dataSource?.Port, postfix);
-            return GetSqlServerSPN(hostName, postfix, dataSource._connectionProtocol);
+            return GetSqlServerSPNs(hostName, postfix, dataSource._connectionProtocol);
         }
 
         private static byte[][] GetSqlServerSPNs(string hostNameOrAddress, string portOrInstanceName, DataSource.Protocol protocol)
