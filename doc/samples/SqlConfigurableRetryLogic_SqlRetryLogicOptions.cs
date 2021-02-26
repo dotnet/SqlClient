@@ -10,7 +10,7 @@ using Microsoft.Data.SqlClient;
             var RetryLogicOption = new SqlRetryLogicOption()
             {
                 NumberOfTries = 5,
-                // Declare the error number 102 as a transient error to apply the retry logic when occured.
+                // Declare the error number 102 as a transient error to apply the retry logic when it occurs.
                 TransientErrors = new int[] { 102 },
                 // When a SqlCommand executes out of a transaction, 
                 // the retry logic will apply if it contains a 'select' keyword.

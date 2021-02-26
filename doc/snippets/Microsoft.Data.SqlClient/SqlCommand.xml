@@ -2779,7 +2779,7 @@ You must set the value for this property before the command is executed for it t
 				object bound to this command.
 			</summary>
 			<value>
-				When set to null (default), the default non-retriable provider will be applied.
+				When set to null (default), the default non-retriable provider will be used.
 			</value>
 			<remarks>
 				<format type="text/markdown"><![CDATA[
@@ -2788,8 +2788,8 @@ You must set the value for this property before the command is executed for it t
 You must set the value for this property before the command is executed for it to take effect.  
 
 To apply the retry logic do the following steps before executing the command:
-1. Define the configuration parameters by <xref:Microsoft.Data.SqlClient.FixedRetryLogicOption> or <xref:Microsoft.Data.SqlClient.FloatingRetryLogicOption>.
-2. Create a <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider> by one of the following static methods of the <xref:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory> class:  
+1. Define the configuration parameters by using <xref:Microsoft.Data.SqlClient.FixedRetryLogicOption> or <xref:Microsoft.Data.SqlClient.FloatingRetryLogicOption>.
+2. Create a <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider> by using one of the following static methods of the <xref:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory> class:  
 	- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.CreateFixedRetryProvider>  
 	- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.CreateIncrementalRetryProvider>  
 	- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.CreateExponentialRetryProvider>  
@@ -2797,14 +2797,14 @@ To apply the retry logic do the following steps before executing the command:
 3. Assign the <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider> object to the `RetryLogicProvider` property.
 
 > [NOTE!]
-> Detecting the retriable exception is a vital part of the retry pattern. Before applying the retry logic it is necessary to put the exceptions under scrutiny and choose a best fit retry provider. First of all, log the exceptions and find the transient faults.  
+> Detecting retriable exceptions is a vital part of the retry pattern. Before applying retry logic it is important to investigate exceptions and choose a retry provider that best fits your scenario. First, log your exceptions and find transient faults.  
 
 > [NOTE!]
-> The command **timeout** process starts after applying the retry time delay by start attempting to execute a command, and there is no timing overlap between these two processes.
+> The command **timeout** restarts for each execution of a command within the retry logic and after applying the retry time delay. There is no timing overlap between these two actions.
 
 ## Example
-The following sample creates a database and establishes an active connection to it. And while the database has an active connection tries to drop it with a new <xref:Microsoft.Data.SqlClient.SqlConnection> and a <xref:Microsoft.Data.SqlClient.SqlCommand> that uses a <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider>. You should kill the active connection through the database to unblock the second command before excceeding the number of retries.  
-The blocking connection simulates a situation like a command is still running in the database and it's likely to finish.  
+The following sample creates a database and establishes an active connection to it. While the database has an active connection, it tries to drop it with a new <xref:Microsoft.Data.SqlClient.SqlConnection> and a <xref:Microsoft.Data.SqlClient.SqlCommand> that uses a <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider>. You should kill the active connection through the database to unblock the second command before exceeding the number of retries.  
+The blocking connection simulates a situation like a command still running in the database and unlikely to finish.  
 
 [!code-csharp[SqlConfigurableRetryLogic_SqlCommand#1](~/../sqlclient/doc/samples/SqlConfigurableRetryLogic_SqlCommand.cs#1)]
 
@@ -2816,15 +2816,15 @@ The blocking connection simulates a situation like a command is still running in
 
 [!code-csharp[SqlConfigurableRetryLogic_SqlCommand#3](~/../sqlclient/doc/samples/SqlConfigurableRetryLogic_SqlCommand.cs#2)]
 
-### How to use with old-fashion asynvhoronous commands
-Except assigning the provider to the command and executing the command it's possible to run it directly by the following <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider> methods:  
+### How to use with legacy asynchronous commands
+Besides assigning the provider to the command and executing the command, it's possible to run it directly using the following <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider> methods:  
 - <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.Execute>
 - <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.ExecuteAsync>
 
 [!code-csharp[SqlConfigurableRetryLogic_SqlCommand#4](~/../sqlclient/doc/samples/SqlConfigurableRetryLogic_SqlCommand.cs#2)]
 
 > [NOTE!]
-> The Asynchronous Programming Model (APM) is the oldest pattern that uses a pair of methods starting with `Begin` and `End`, and an interface called `IAsyncResult`. It's strongly recommended to avoid the use of this obsolete pattern. These methods just support backward compatibility.  
+> The Asynchronous Programming Model (APM) is a legacy pattern that uses a pair of methods starting with `Begin` and `End`, and an interface called `IAsyncResult`. It's not recommended to use this pattern in new applications. These methods are for backwards compatibility.  
 
 ]]></format>
 			</remarks>

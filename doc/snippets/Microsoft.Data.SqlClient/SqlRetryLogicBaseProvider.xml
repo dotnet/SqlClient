@@ -2,95 +2,95 @@
 <docs>
     <members name="SqlRetryLogicBaseProvider">
         <SqlRetryLogicBaseProvider>
-            <summary>Applies a retry logic on an operation through the `Execute` or `ExecuteAsync` functions.</summary>
+            <summary>Applies retry logic on an operation through the `Execute` or `ExecuteAsync` function.</summary>
         </SqlRetryLogicBaseProvider>
         <Retrying>
-            <summary>Occurs exactly before applying the calculated delay time and executing the function as a next attempt.</summary>
+            <summary>Occurs before applying the calculated delay time and executing the function on a next attempt.</summary>
             <value>
             <see cref="System.EventHandler" /> with event argument of <see cref="T:Microsoft.Data.SqlClient.SqlRetryingEventArgs" /> object can be subscribed.</value>
             <remarks>
             <format type="text/markdown"><![CDATA[  
 
 > [IMPORTAMT!]
-> Don't block the main execution by a time consumer action when an event occurs. For instance, if you like to log data in a file, run it in a new thread to avoid blocking the main execution line.  
+> Don't block execution with a time consuming action when an event occurs. For instance, if you log data to a file, run it in a new thread to avoid blocking the main execution thread.  
 
 ]]>
             </format>
             </remarks>
         </Retrying>
         <RetryLogic>
-            <summary>Defines a retry logic to make the decision in the encounter with intermittent exceptions.</summary>
+            <summary>Defines the retry logic used to decide when to retry based on the encountered exception.</summary>
             <remarks>
             <format type="text/markdown"><![CDATA[  
 
 > [NOTE!]
-> The `RetryLogic` property assigns to `SqlRetryLogicBaseProvider` creation and it's value uses as a template internally. Don't use it to study the status of the retry logic during and after the execution, instead of that, to collect these data use the <xref=E:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.Retrying> event.  
+> The `RetryLogic` property is assigned at `SqlRetryLogicBaseProvider` creation and its value is used as a template internally. Don't use it to monitor the status of the retry logic during and after execution. Instead, use the <xref=E:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.Retrying> event to collect data about retry executions.  
 
 ]]>
             </format>
             </remarks>
         </RetryLogic>
         <Execute>
-            <typeparam name = "TResult">The object that the `function` returns when execute.</typeparam>
+            <typeparam name = "TResult">The object that the `function` returns when executed.</typeparam>
             <param name="sender">The source of the event.</param>
-            <param name="function">The operaiton is likly be in the retry logic if transient condition happens.</param>
-            <summary>Executes a function and applies the retry logic if it's enabled.
+            <param name="function">The operation to re-execute if a transient condition occurs.</param>
+            <summary>Executes a function and applies retry logic, if enabled.
             
-            Exceptions will be reported via an aggregate exception if the execution doesn't successful through the retry logic attempts.
+            Exceptions will be reported via an aggregate exception if the execution isn't successful via retry attempts.
             </summary>
-            <returns>The return value of the `function` if it runs exception-free, otherwise returns an exception.</returns>
+            <returns>The return value of the `function` if it runs without exception.</returns>
             <remarks>
             <format type="text/markdown"><![CDATA[  
 
 > [NOTE!]
-> The type of exception depends on the `function`'s internal implementation. But if the exception comes from the retry logic attempts it will be an <xref:System.AggregateException> that consists of all happen exceptions during the failed attempts.  
+> The type of exception depends on the `function`'s internal implementation. But if the exception is due to all retry attempts failing, it will be an <xref:System.AggregateException> that consists of all exceptions that happened during the failed attempts.  
 
 ]]>
             </format>
             </remarks>
-            <exception cref="T:System.ArgumentNullException">The `function` parameter couldn't be `null`.</exception>
-            <exception cref="T:System.AggregateException">The collection of exceptions after the failed retry logic attempts.</exception>
+            <exception cref="T:System.ArgumentNullException">The `function` parameter can't be `null`.</exception>
+            <exception cref="T:System.AggregateException">The collection of exceptions after all retry attempts have failed.</exception>
         </Execute>
         <ExecuteAsync1>
-            <typeparam name = "TResult">The object that the `function` returns in a Task when execute.</typeparam>
+            <typeparam name = "TResult">The object that the `function` returns in a Task when executed.</typeparam>
             <param name="sender">The source of the event.</param>
-            <param name="function">The operaiton is likly be in the retry logic if transient condition happens.</param>
+            <param name="function">The operation to re-execute if a transient condition occurs.</param>
             <param name="cancellationToken">The cancellation instruction.</param>
-            <summary>Executes a function and applies the retry logic if it's enabled. The cancellation token can be used to request that the operation be abandoned before the execution attempts exceeded.
+            <summary>Executes a function and applies retry logic, if enabled. The cancellation token can be used to request that the operation be abandoned before the execution attempts are exceeded.
             
-            Exceptions will be reported via the returned Task object or an aggregate exception if the execution doesn't successful through the retry logic attempts.</summary>
-            <returns>The return value of the `function` that represents in a Task if it runs exception-free, otherwise returns an exception.</returns>
+            Exceptions will be reported via the returned Task object, which will contain an aggregate exception if execution fails for all retry attempts.</summary>
+            <returns>A task representing the asynchronous operation. The results of the task will be the return value of the `function`, if it runs without exception.</returns>
             <remarks>
             <format type="text/markdown"><![CDATA[  
 
 > [NOTE!]
-> If the exception comes from the retry logic attempts it will be an <xref:System.AggregateException> that consists of all happen exceptions during the failed attempts.  
+> If the exception comes from all retry attempts failing, it will be an <xref:System.AggregateException> that consists of all exceptions from the failed attempts.  
 
 ]]>
             </format>
             </remarks>
-            <exception cref="T:System.ArgumentNullException">The `function` parameter couldn't be `null`.</exception>
-            <exception cref="T:System.AggregateException">The collection of exceptions after the failed retry logic attempts.</exception>
+            <exception cref="T:System.ArgumentNullException">The `function` parameter can't be `null`.</exception>
+            <exception cref="T:System.AggregateException">The collection of exceptions after failed retry attempts.</exception>
         </ExecuteAsync1>
         <ExecuteAsync2>
             <param name="sender">The source of the event.</param>
-            <param name="function">The operaiton is likly be in the retry logic if transient condition happens.</param>
+            <param name="function">The operation to re-execute if a transient condition occurs.</param>
             <param name="cancellationToken">The cancellation instruction.</param>
-            <summary>Executes a function and applies the retry logic if it's enabled. The cancellation token can be used to request that the operation be abandoned before the execution attempts exceeded.
+            <summary>Executes a function and applies retry logic, if enabled. The cancellation token can be used to request that the operation be abandoned before the execution attempts are exceeded.
             
-            Exceptions will be reported via the returned Task object or an aggregate exception if the execution doesn't successful through the retry logic attempts.</summary>
+            Exceptions will be reported via the returned Task object, which will contain an aggregate exception if execution fails for all retry attempts.</summary>
             <returns>A Task or an exception.</returns>
             <remarks>
             <format type="text/markdown"><![CDATA[  
 
 > [NOTE!]
-> If the exception comes from the retry logic attempts it will be an <xref:System.AggregateException> that consists of all happen exceptions during the failed attempts.  
+> If the exception comes from all retry attempts failing, it will be an <xref:System.AggregateException> that consists of all exceptions from the failed attempts.  
 
 ]]>
             </format>
             </remarks>
-            <exception cref="T:System.ArgumentNullException">The `function` parameter couldn't be `null`.</exception>
-            <exception cref="T:System.AggregateException">The collection of exceptions after the failed retry logic attempts.</exception>
+            <exception cref="T:System.ArgumentNullException">The `function` parameter can't be `null`.</exception>
+            <exception cref="T:System.AggregateException">The collection of exceptions after failed retry attempts.</exception>
         </ExecuteAsync2>
     </members>
 </docs>

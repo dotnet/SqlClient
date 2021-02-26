@@ -40,55 +40,55 @@ The following table shows the inner transient error list.
             </remarks>
         </SqlConfigurableRetryFactory>
         <CreateExponentialRetryProvider>
-            <param name="retryLogicOption">An object of <see cref="T:Microsoft.Data.SqlClient.FloatingRetryLogicOption" /> carries the configurations for the object creation.</param>
+            <param name="retryLogicOption">An object of <see cref="T:Microsoft.Data.SqlClient.FloatingRetryLogicOption" /> containing the configuration for the object.</param>
             <summary>Provides an exponential time interval retry logic provider.</summary>
             <returns>A <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider" /> object.</returns>
             <remarks>
 				<format type="text/markdown"><![CDATA[
 
 > [NOTE!]
-> The inner enumerator includes the randomization to prevent multiple instances of the client sending subsequent retry attempts at the same time.
+> The inner enumerator includes randomization to prevent multiple instances of the client from performing subsequent retry attempts at the same time.
 
 ]]></format>
 			</remarks>
             <exception cref="T:System.ArgumentNullException">If the `retryLogicOption` parameter was null.</exception>
         </CreateExponentialRetryProvider>
         <CreateIncrementalRetryProvider>
-            <param name="retryLogicOption">An object of <see cref="T:Microsoft.Data.SqlClient.FloatingRetryLogicOption" /> carries the configurations for the object creation.</param>
+            <param name="retryLogicOption">An object of <see cref="T:Microsoft.Data.SqlClient.FloatingRetryLogicOption" /> containing the configuration for the object.</param>
             <summary>Provides an incremental time interval retry logic provider.</summary>
             <returns>A <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider" /> object.</returns>
             <remarks>
 				<format type="text/markdown"><![CDATA[
 
 > [NOTE!]
-> The inner enumerator includes the randomization to prevent multiple instances of the client sending subsequent retry attempts at the same time.
+> The inner enumerator includes randomization to prevent multiple instances of the client from performing subsequent retry attempts at the same time.
 
 ]]></format>
 			</remarks>
             <exception cref="T:System.ArgumentNullException">If the `retryLogicOption` parameter was null.</exception>
         </CreateIncrementalRetryProvider>
         <CreateFixedRetryProvider>
-            <param name="retryLogicOption">An object of <see cref="T:Microsoft.Data.SqlClient.FixedRetryLogicOption" /> carries the configurations for the object creation.</param>
+            <param name="retryLogicOption">An object of <see cref="T:Microsoft.Data.SqlClient.FixedRetryLogicOption" /> containing the configuration for the object.</param>
             <summary>Provides a fixed interval time retry logic provider.</summary>
             <returns>A <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider" /> object.</returns>
             <remarks>
 				<format type="text/markdown"><![CDATA[
 
 > [NOTE!]
-> The inner enumerator includes the randomization to prevent multiple instances of the client sending subsequent retry attempts at the same time.
+> The inner enumerator includes randomization to prevent multiple instances of the client from performing subsequent retry attempts at the same time.
 
 ]]></format>
 			</remarks>
             <exception cref="T:System.ArgumentNullException">If the `retryLogicOption` parameter was null.</exception>
         </CreateFixedRetryProvider>
         <CreateNoneRetryProvider>
-            <summary>Provides a none retryable provider with a <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBase.TransientPredicate" /> that returns <see langword="false" />.</summary>
+            <summary>Provides a non-retriable provider with a <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBase.TransientPredicate" /> that returns <see langword="false" />.</summary>
             <returns>A <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider" /> object.</returns>
             <remarks>
             <format type="text/markdown"><![CDATA[  
 
 > [NOTE!]
-> The returned provider of this function acts like a normal executor without any possibility to apply the retry logic.  
+> The returned provider of this function performs a single execution without any retry logic.  
 
 ]]>
             </format>
