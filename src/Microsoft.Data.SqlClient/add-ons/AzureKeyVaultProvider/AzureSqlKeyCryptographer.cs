@@ -172,7 +172,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         private Task<Azure.Response<KeyVaultKey>> FetchKeyFromKeyVault(Uri vaultUri, string keyName, string keyVersion)
         {
             _keyClientDictionary.TryGetValue(vaultUri, out KeyClient keyClient);
-            return keyClient.GetKeyAsync(keyName, keyVersion);
+           return keyClient?.GetKeyAsync(keyName, keyVersion);
         }
 
         /// <summary>

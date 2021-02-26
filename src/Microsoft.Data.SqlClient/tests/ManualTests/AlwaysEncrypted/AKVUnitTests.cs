@@ -42,7 +42,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public static void TokenCredentialRotationTest()
         {
-            // SqlClientCustomTokenCredential implements legacy authentication callback to request access token at client-side.
+            // SqlClientCustomTokenCredential implements a legacy authentication callback to request the access token from the client-side.
             SqlColumnEncryptionAzureKeyVaultProvider oldAkvProvider = new SqlColumnEncryptionAzureKeyVaultProvider(new SqlClientCustomTokenCredential());
 
             ClientSecretCredential clientSecretCredential = new ClientSecretCredential(DataTestUtility.AKVTenantId, DataTestUtility.AKVClientId, DataTestUtility.AKVClientSecret);

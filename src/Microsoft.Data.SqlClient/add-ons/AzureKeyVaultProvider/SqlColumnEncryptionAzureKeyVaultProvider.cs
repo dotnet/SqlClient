@@ -32,9 +32,9 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 	///	    <format type="text/markdown"><![CDATA[
     /// ## Remarks
     /// 
-    /// **SqlColumnEncryptionAzureKeyVaultProvider** is implemented for Microsoft.Data.SqlClient driver and supports .NET Framework 4.6.1+ and .NET Core 2.1+.
+    /// **SqlColumnEncryptionAzureKeyVaultProvider** is implemented for Microsoft.Data.SqlClient and supports .NET Framework 4.6.1+ and .NET Core 2.1+.
     /// The provider name identifier for this implementation is "AZURE_KEY_VAULT" and it is not registered in driver by default.
-    /// Client applications must call <xref=Microsoft.Data.SqlClient.SqlConnection.RegisterColumnEncryptionKeyStoreProviders> API only once in the lifetime of driver to register this custom provider by implementing a custom Authentication Callback mechanism.
+    /// Client applications must call the <xref=Microsoft.Data.SqlClient.SqlConnection.RegisterColumnEncryptionKeyStoreProviders> API only once in the lifetime of the driver to register this custom provider by implementing a custom Authentication Callback mechanism.
     /// 
     /// Once the provider is registered, it can used to perform Always Encrypted operations by creating Column Master Key using Azure Key Vault Key Identifier URL.
     /// 
