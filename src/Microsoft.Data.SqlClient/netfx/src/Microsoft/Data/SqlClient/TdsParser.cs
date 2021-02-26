@@ -3301,7 +3301,7 @@ namespace Microsoft.Data.SqlClient
 
             if (LocalAppContextSwitches.MakeReadAsyncBlocking)
             {
-                // Can't retry TryProcessDone
+                // Don't retry TryProcessDone
                 stateObj._syncOverAsync = true;
             }
 

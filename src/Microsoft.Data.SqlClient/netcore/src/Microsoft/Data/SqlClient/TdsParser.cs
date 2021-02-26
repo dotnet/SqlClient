@@ -2884,11 +2884,11 @@ namespace Microsoft.Data.SqlClient
             ushort status;
             int count;
 
-            // This is added back since removing it from here introduces regressions in Managed SNI.
-            // It forces SqlDataReader.ReadAsync() method to run synchronously,
-            // and will block the calling thread until data is fed from SQL Server.
-            // TODO Investigate better solution to support non-blocking ReadAsync().
-            stateObj._syncOverAsync = true;
+            if (LocalAppContextSwitches.MakeReadAsyncBlocking)
+            {
+                // Don't retry TryProcessDone
+                stateObj._syncOverAsync = true;
+            }
 
             // status
             // command
