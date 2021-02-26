@@ -18,7 +18,7 @@ class RetryLogicSample
     static void Main(string[] args)
     {
         // 1. Define the retry logic parameters
-        var options = new FloatingRetryLogicOption()
+        var options = new SqlRetryLogicOption()
         {
             NumberOfTries = 5,
             MaxTimeInterval = TimeSpan.FromSeconds(20),

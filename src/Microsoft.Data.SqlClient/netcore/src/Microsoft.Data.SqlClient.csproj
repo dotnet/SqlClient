@@ -342,7 +342,11 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.CreateProvider.cs">
       <Link>Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.CreateProvider.NetCoreApp.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\AppConfigManager.cs">
+      <Link>Microsoft\Data\SqlClient\Reliability\AppConfigManager.NetCoreApp.cs</Link>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.NetCoreApp.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Reliability\SqlAppContextSwitchManager.NetCoreApp.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netcoreapp' AND '$(BuildSimulator)' == 'true'">
     <Compile Include="Microsoft\Data\SqlClient\SimulatorEnclaveProvider.NetCoreApp.cs" />
@@ -500,6 +504,9 @@
     <Compile Include="Microsoft\Data\SqlClient\EnclaveDelegate.cs" />
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.cs">
       <Link>Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryUtil.cs">
+      <Link>Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryUtil.cs</Link>
     </Compile>
   </ItemGroup>
   <!-- Windows only -->

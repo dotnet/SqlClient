@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient
         private const int counterDefaultValue = 0;
         private const int maxAttempts = 60;
 
-        private readonly string _typeName = nameof(SqlRetryLogic);
+        private const string TypeName = nameof(SqlRetryLogic);
 
         public Predicate<string> PreCondition { get; private set; }
 
@@ -29,7 +29,7 @@ namespace Microsoft.Data.SqlClient
             if (!(numberOfTries > counterDefaultValue && numberOfTries <= maxAttempts))
             {
                 // The 'numberOfTries' should be between 1 and 60.
-                throw new ArgumentOutOfRangeException(nameof(numberOfTries), StringsHelper.GetString(Strings.SqlRetryLogic_InvalidRange, numberOfTries, counterDefaultValue + 1, maxAttempts));
+                throw SqlCRLUtil.ArgumentOutOfRange(nameof(numberOfTries), numberOfTries, counterDefaultValue + 1, maxAttempts);
             }
 
             NumberOfTries = numberOfTries;
@@ -67,11 +67,13 @@ namespace Microsoft.Data.SqlClient
                 // it doesn't mind if the enumerator gets to the last value till the number of attempts ends.
                 RetryIntervalEnumerator.MoveNext();
                 intervalTime = RetryIntervalEnumerator.Current;
-                SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Next gap time will be '{2}' before the next retry number {3}", _typeName, MethodBase.GetCurrentMethod().Name, intervalTime, Current);
+                SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Next gap time will be '{2}' before the next retry number {3}",
+                                                       TypeName, MethodBase.GetCurrentMethod().Name, intervalTime, Current);
             }
             else
             {
-                SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Current retry ({2}) has reached to the maximum attempts (total attempts except the first run = {3}).", _typeName, MethodBase.GetCurrentMethod().Name, Current, NumberOfTries - 1);
+                SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Current retry ({2}) has reached to the maximum attempts (total attempts except the first run = {3}).",
+                                                       TypeName, MethodBase.GetCurrentMethod().Name, Current, NumberOfTries - 1);
             }
             return result;
         }
@@ -86,7 +88,8 @@ namespace Microsoft.Data.SqlClient
                         && command.Transaction == null // check SqlTransaction on a SqlCommand
                         && (PreCondition == null || PreCondition.Invoke(command.CommandText)); // if it contains an invalid command to retry
 
-                SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> (retry condition = '{2}') Avoids retry if it runs in a transaction or is skipped in the command's statement checking.", _typeName, MethodBase.GetCurrentMethod().Name, result);
+                SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> (retry condition = '{2}') Avoids retry if it runs in a transaction or is skipped in the command's statement checking.",
+                                                       TypeName, MethodBase.GetCurrentMethod().Name, result);
             }
             return result;
         }

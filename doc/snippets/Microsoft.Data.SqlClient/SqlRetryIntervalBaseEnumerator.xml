@@ -2,7 +2,7 @@
 <docs>
     <members name="SqlRetryIntervalBaseEnumerator">
         <SqlRetryIntervalBaseEnumerator>
-            <summary>Generates a sequence of time intervals. This class cannot be inherited.</summary>
+            <summary>Generates a sequence of time intervals.</summary>
         </SqlRetryIntervalBaseEnumerator>
         <ctor1>
             <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlRetryIntervalBaseEnumerator" /> class with a default value of zero for the gap time, minimum, and maximum interval time.</summary>

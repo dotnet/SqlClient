@@ -22,7 +22,7 @@ namespace Microsoft.Data.SqlClient
         public TimeSpan DeltaTime { get; set; }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicOption.xml' path='docs/members[@name="SqlRetryLogicOption"]/MinTimeInterval/*' />
-        public TimeSpan MinTimeInterval { get; set; } = TimeSpan.FromSeconds(0);
+        public TimeSpan MinTimeInterval { get; set; } = TimeSpan.Zero;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicOption.xml' path='docs/members[@name="SqlRetryLogicOption"]/MaxTimeInterval/*' />
         public TimeSpan MaxTimeInterval { get; set; }

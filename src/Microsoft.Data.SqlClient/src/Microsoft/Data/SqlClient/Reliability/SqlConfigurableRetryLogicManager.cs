@@ -8,26 +8,12 @@ using System.Diagnostics;
 namespace Microsoft.Data.SqlClient
 {
     /// <summary>
-    /// Configurable retry logic manager
+    /// Configurable retry logic manager;
+    /// Receive the default providers by a loader and feeds connections and commands.
     /// </summary>
-    internal partial class SqlConfigurableRetryLogicManager : SqlConfigurableRetryLogicManagerBase
+    internal sealed partial class SqlConfigurableRetryLogicManager
     {
-        private static readonly string s_typeName = typeof(SqlConfigurableRetryLogicManager).Name;
-
-        private static readonly Lazy<SqlConfigurableRetryLogicManager> s_instance =
-            new Lazy<SqlConfigurableRetryLogicManager>(() => new SqlConfigurableRetryLogicManager());
-
-        private SqlRetryLogicBaseProvider s_connectionProvoder = null;
-        private SqlRetryLogicBaseProvider s_commandProvider = null;
-
-        /// <summary>
-        /// The default none retry provider will apply if a parameter passes by null.
-        /// </summary>
-        private void AssignProviders(SqlRetryLogicBaseProvider cnnProvider = null, SqlRetryLogicBaseProvider cmdProvider = null)
-        {
-            s_connectionProvoder = cnnProvider ?? SqlConfigurableRetryFactory.CreateNoneRetryProvider();
-            s_commandProvider = cmdProvider ?? SqlConfigurableRetryFactory.CreateNoneRetryProvider();
-        }
+        private const string TypeName = nameof(SqlConfigurableRetryLogicManager);
 
         /// <summary>
         /// Default Retry provider for SqlConnections
@@ -39,16 +25,16 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Requested the {1} value."
-                                                            , s_typeName, nameof(ConnectionProvider));
-                    return s_instance.Value.s_connectionProvoder;
+                                                            , TypeName, nameof(ConnectionProvider));
+                    return s_loader.Value.ConnectionProvider;
                 }
                 catch (Exception e)
                 {
                     StackTrace stackTrace = new StackTrace();
                     SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> An exception occurred in access to the instance of the class, and the default none-retriable provider will apply: {2}"
-                                                            , s_typeName, nameof(ConnectionProvider), e);
+                                                            , TypeName, nameof(ConnectionProvider), e);
                     SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.{0}.{1}|ADV|INFO> An exception occurred in access to the instance of the class, and the default none-retriable provider will apply: {2}"
-                                                            , s_typeName, nameof(ConnectionProvider), stackTrace);
+                                                            , TypeName, nameof(ConnectionProvider), stackTrace);
                     return SqlConfigurableRetryFactory.CreateNoneRetryProvider();
                 }
             }
@@ -64,34 +50,69 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Requested the {1} value."
-                                                            , s_typeName, nameof(CommandProvider));
-                    return s_instance.Value.s_commandProvider;
+                                                            , TypeName, nameof(CommandProvider));
+                    return s_loader.Value.CommandProvider;
                 }
                 catch (Exception e)
                 {
                     StackTrace stackTrace = new StackTrace();
                     SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> An exception occurred in access to the instance of the class, and the default none-retriable provider will apply: {2}"
-                                                            , s_typeName, nameof(CommandProvider), e);
+                                                            , TypeName, nameof(CommandProvider), e);
                     SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.{0}.{1}|ADV|INFO> An exception occurred in access to the instance of the class, and the default none-retriable provider will apply: {2}"
-                                                            , s_typeName, nameof(CommandProvider), stackTrace);
+                                                            , TypeName, nameof(CommandProvider), stackTrace);
                     return SqlConfigurableRetryFactory.CreateNoneRetryProvider();
                 }
             }
         }
+
     }
 
-    internal class SqlConfigurableRetryLogicManagerBase
+    /// <summary>
+    /// Configurable retry logic loader
+    /// </summary>
+    internal sealed partial class SqlConfigurableRetryLogicLoader
     {
-        public SqlConfigurableRetryLogicManagerBase()
+        private const string TypeName = nameof(SqlConfigurableRetryLogicLoader);
+
+        /// <summary>
+        /// The default none retry provider will apply if a parameter passes by null.
+        /// </summary>
+        private void AssignProviders(SqlRetryLogicBaseProvider cnnProvider = null, SqlRetryLogicBaseProvider cmdProvider = null)
         {
-            ApplyContextSwitches();
+            //Console.WriteLine($"AssignProviders: from {System.Diagnostics.Process.GetCurrentProcess().Id} process.");
+            ConnectionProvider = cnnProvider ?? SqlConfigurableRetryFactory.CreateNoneRetryProvider();
+            CommandProvider = cmdProvider ?? SqlConfigurableRetryFactory.CreateNoneRetryProvider();
         }
 
         /// <summary>
-        /// To support the AppContext's set switch through the config file for .NET Core; 
-        /// .Net Framework supports it internally through the configuration file by 'AppContextSwitchOverrides' element under 'runtime' section
+        /// Default Retry provider for SqlConnections
         /// </summary>
-        protected virtual void ApplyContextSwitches()
-        { /* No action is required for .Net Framework & .Net Standard */ }
+        internal SqlRetryLogicBaseProvider ConnectionProvider { get; private set; }
+
+        /// <summary>
+        /// Default Retry provider for SqlCommands
+        /// </summary>
+        internal SqlRetryLogicBaseProvider CommandProvider { get; private set; }
+    }
+
+    internal interface IAppContextSwitchOverridesSection
+    {
+        string Value { get; set; }
+    }
+
+    internal interface ISqlConfigurableRetryConnectionSection
+    {
+        TimeSpan DeltaTime { get; set; }
+        TimeSpan MaxTimeInterval { get; set; }
+        TimeSpan MinTimeInterval { get; set; }
+        int NumberOfTries { get; set; }
+        string RetryLogicType { get; set; }
+        string RetryMethod { get; set; }
+        string TransientErrors { get; set; }
+    }
+
+    internal interface ISqlConfigurableRetryCommandSection : ISqlConfigurableRetryConnectionSection
+    {
+        string AuthorizedSqlCondition { get; set; }
     }
 }

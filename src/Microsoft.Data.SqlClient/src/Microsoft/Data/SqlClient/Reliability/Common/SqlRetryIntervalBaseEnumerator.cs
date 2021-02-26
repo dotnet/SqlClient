@@ -56,22 +56,22 @@ namespace Microsoft.Data.SqlClient
         {
             if(minTimeInterval < _minValue || minTimeInterval > _maxValue )
             {
-                throw new ArgumentOutOfRangeException(nameof(minTimeInterval), StringsHelper.GetString(Strings.SqlRetryLogic_InvalidRange, minTimeInterval, _minValue, _maxValue));
+                throw SqlCRLUtil.ArgumentOutOfRange(nameof(minTimeInterval), minTimeInterval, _minValue, _maxValue);
             }
 
             if (maxTimeInterval < _minValue || maxTimeInterval > _maxValue)
             {
-                throw new ArgumentOutOfRangeException(nameof(maxTimeInterval), StringsHelper.GetString(Strings.SqlRetryLogic_InvalidRange, maxTimeInterval, _minValue, _maxValue));
+                throw SqlCRLUtil.ArgumentOutOfRange(nameof(maxTimeInterval), maxTimeInterval, _minValue, _maxValue);
             }
 
             if (timeInterval < _minValue || timeInterval > _maxValue)
             {
-                throw new ArgumentOutOfRangeException(nameof(timeInterval), StringsHelper.GetString(Strings.SqlRetryLogic_InvalidRange, timeInterval, _minValue, _maxValue));
+                throw SqlCRLUtil.ArgumentOutOfRange(nameof(timeInterval), timeInterval, _minValue, _maxValue);
             }
 
             if (maxTimeInterval < minTimeInterval)
             {
-                throw new ArgumentOutOfRangeException(nameof(maxTimeInterval), StringsHelper.GetString(Strings.SqlRetryLogic_InvalidRange, maxTimeInterval, minTimeInterval, _maxValue));
+                throw SqlCRLUtil.ArgumentOutOfRange(nameof(maxTimeInterval), maxTimeInterval, minTimeInterval, _maxValue);
             }
         }
 

@@ -8,9 +8,9 @@ using System.Reflection;
 namespace Microsoft.Data.SqlClient
 {
     /// <summary>
-    /// Configurable retry logic manager
+    /// Configurable retry logic loader
     /// </summary>
-    internal partial class SqlConfigurableRetryLogicManager : SqlConfigurableRetryLogicManagerBase
+    internal sealed partial class SqlConfigurableRetryLogicLoader
     {
         /// <summary>
         /// Performs a case-sensitive search to resolve the specified type name.
@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlClient
 
             var result = Type.GetType(fullyQualifiedName);
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> The '{2}' type is resolved."
-                                                   , s_typeName, methodName, result?.FullName ?? NullConst);
+                                                   , TypeName, methodName, result?.FullName);
             return result != null ? result : typeof(SqlConfigurableRetryFactory);
         }
     }
