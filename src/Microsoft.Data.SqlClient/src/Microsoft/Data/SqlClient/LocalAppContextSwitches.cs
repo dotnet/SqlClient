@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                return AppContext.TryGetSwitch(MakeReadAsyncBlockingString, out _makeReadAsyncBlocking) ? _makeReadAsyncBlocking : true;
+                return AppContext.TryGetSwitch(MakeReadAsyncBlockingString, out _makeReadAsyncBlocking) ? _makeReadAsyncBlocking : false;
             }
         }
     }
