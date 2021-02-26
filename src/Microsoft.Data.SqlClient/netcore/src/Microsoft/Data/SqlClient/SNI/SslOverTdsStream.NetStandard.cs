@@ -14,13 +14,14 @@ namespace Microsoft.Data.SqlClient.SNI
     {
         public override int Read(byte[] buffer, int offset, int count)
         {
-            if (!_encapsulate)
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent(s_className);
+            try
             {
-                return _stream.Read(buffer, offset, count);
-            }
+                if (!_encapsulate)
+                {
+                    return _stream.Read(buffer, offset, count);
+                }
 
-            using (SNIEventScope.Create("<sc.SNI.SslOverTdsStream.Read |SNI|INFO|SCOPE> reading encapsulated bytes"))
-            {
                 if (_packetBytes > 0)
                 {
                     // there are queued bytes from a previous packet available
@@ -65,18 +66,22 @@ namespace Microsoft.Data.SqlClient.SNI
                     return packetBytesRead;
                 }
             }
-
+            finally
+            {
+                SqlClientEventSource.Log.TrySNIScopeLeaveEvent(scopeID);                
+            }
         }
 
         public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            if (!_encapsulate)
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent(s_className);
+            try
             {
-                return await _stream.ReadAsync(buffer, offset, count, cancellationToken);
-            }
+                if (!_encapsulate)
+                {
+                    return await _stream.ReadAsync(buffer, offset, count, cancellationToken);
+                }
 
-            using (SNIEventScope.Create("<sc.SNI.SslOverTdsStream.ReadAsync |SNI|INFO|SCOPE> reading encapsulated bytes"))
-            {
                 if (_packetBytes > 0)
                 {
                     // there are queued bytes from a previous packet available
@@ -121,21 +126,26 @@ namespace Microsoft.Data.SqlClient.SNI
                     return packetBytesRead;
                 }
             }
+            finally
+            {
+                SqlClientEventSource.Log.TrySNIScopeLeaveEvent(scopeID);                
+            }
         }
 
         public override void Write(byte[] buffer, int offset, int count)
         {
-            // During the SSL negotiation phase, SSL is tunnelled over TDS packet type 0x12. After
-            // negotiation, the underlying socket only sees SSL frames.
-            if (!_encapsulate)
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent(s_className);
+            try
             {
-                _stream.Write(buffer, offset, count);
-                _stream.Flush();
-                return;
-            }
+                // During the SSL negotiation phase, SSL is tunnelled over TDS packet type 0x12. After
+                // negotiation, the underlying socket only sees SSL frames.
+                if (!_encapsulate)
+                {
+                    _stream.Write(buffer, offset, count);
+                    _stream.Flush();
+                    return;
+                }
 
-            using (SNIEventScope.Create("<sc.SNI.SslOverTdsStream.Write |SNI|INFO|SCOPE> writing encapsulated bytes"))
-            {
                 int remainingBytes = count;
                 int dataOffset = offset;
                 byte[] packetBuffer = null;
@@ -169,23 +179,28 @@ namespace Microsoft.Data.SqlClient.SNI
                     ArrayPool<byte>.Shared.Return(packetBuffer, clearArray: true);
                 }
             }
+            finally
+            {
+                SqlClientEventSource.Log.TrySNIScopeLeaveEvent(scopeID);                
+            }
         }
 
         public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            if (!_encapsulate)
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent(s_className);
+            try
             {
-                await _stream.WriteAsync(buffer, offset, count).ConfigureAwait(false);
-                Task flushTask = _stream.FlushAsync();
-                if (flushTask.Status == TaskStatus.RanToCompletion)
+                if (!_encapsulate)
                 {
-                    await flushTask.ConfigureAwait(false);
+                    await _stream.WriteAsync(buffer, offset, count).ConfigureAwait(false);
+                    Task flushTask = _stream.FlushAsync();
+                    if (flushTask.Status == TaskStatus.RanToCompletion)
+                    {
+                        await flushTask.ConfigureAwait(false);
+                    }
+                    return;
                 }
-                return;
-            }
 
-            using (SNIEventScope.Create("<sc.SNI.SslOverTdsStream.WriteAsync |SNI|INFO|SCOPE> writing encapsulated bytes"))
-            {
                 int remainingBytes = count;
                 int dataOffset = offset;
                 byte[] packetBuffer = null;
@@ -218,6 +233,10 @@ namespace Microsoft.Data.SqlClient.SNI
                 {
                     ArrayPool<byte>.Shared.Return(packetBuffer, clearArray: true);
                 }
+            }
+            finally
+            {
+                SqlClientEventSource.Log.TrySNIScopeLeaveEvent(scopeID);                
             }
         }
     }

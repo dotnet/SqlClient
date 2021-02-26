@@ -26,7 +26,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void CancelAsyncConnections()
         {
-            string connectionString = DataTestUtility.TCPConnectionString;
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
+            builder.MultipleActiveResultSets = false;
+            RunCancelAsyncConnections(builder, false);
+            RunCancelAsyncConnections(builder, true);
+            builder.MultipleActiveResultSets = true;
+            RunCancelAsyncConnections(builder, false);
+            RunCancelAsyncConnections(builder, true);
+        }
+
+        private void RunCancelAsyncConnections(SqlConnectionStringBuilder connectionStringBuilder, bool makeAsyncBlocking)
+        {
+            SqlConnection.ClearAllPools();
+            AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.MakeReadAsyncBlocking", makeAsyncBlocking);
+
             _watch = Stopwatch.StartNew();
             _random = new Random(4); // chosen via fair dice role.
             ParallelLoopResult results = new ParallelLoopResult();
@@ -38,7 +51,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     results = Parallel.For(
                         fromInclusive: 0,
                         toExclusive: NumberOfTasks,
-                        (int i) => DoManyAsync(connectionString).GetAwaiter().GetResult());
+                        (int i) => DoManyAsync(connectionStringBuilder).GetAwaiter().GetResult());
                 }
             }
             catch (Exception ex)
@@ -78,18 +91,26 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // This is the the main body that our Tasks run
-        private async Task DoManyAsync(string connectionString)
+        private async Task DoManyAsync(SqlConnectionStringBuilder connectionStringBuilder)
         {
             Interlocked.Increment(ref _start);
             Interlocked.Increment(ref _inFlight);
 
-            // First poison
-            await DoOneAsync(connectionString, poison: true);
-
-            for (int i = 0; i < NumberOfNonPoisoned && _continue; i++)
+            using (SqlConnection marsConnection = new SqlConnection(connectionStringBuilder.ToString()))
             {
-                // now run some without poisoning
-                await DoOneAsync(connectionString);
+                if (connectionStringBuilder.MultipleActiveResultSets)
+                {
+                    await marsConnection.OpenAsync();
+                }
+
+                // First poison
+                await DoOneAsync(marsConnection, connectionStringBuilder.ToString(), poison: true);
+
+                for (int i = 0; i < NumberOfNonPoisoned && _continue; i++)
+                {
+                    // now run some without poisoning
+                    await DoOneAsync(marsConnection, connectionStringBuilder.ToString());
+                }
             }
 
             Interlocked.Decrement(ref _inFlight);
@@ -100,95 +121,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         // if we are poisoning we will 
         //   1 - Interject some sleeps in the sql statement so that it will run long enough that we can cancel it
         //   2 - Setup a time bomb task that will cancel the command a random amount of time later
-        private async Task DoOneAsync(string connectionString, bool poison = false)
+        private async Task DoOneAsync(SqlConnection marsConnection, string connectionString, bool poison = false)
         {
             try
             {
+                StringBuilder builder = new StringBuilder();
+                for (int i = 0; i < 4; i++)
+                {
+                    builder.AppendLine("SELECT name FROM sys.tables");
+                    if (poison && i < 3)
+                    {
+                        builder.AppendLine("WAITFOR DELAY '00:00:01'");
+                    }
+                }
+
                 using (var connection = new SqlConnection(connectionString))
                 {
-                    StringBuilder builder = new StringBuilder();
-                    for (int i = 0; i < 4; i++)
+                    if (marsConnection != null && marsConnection.State == System.Data.ConnectionState.Open)
                     {
-                        builder.AppendLine("SELECT name FROM sys.tables");
-                        if (poison && i < 3)
-                        {
-                            builder.AppendLine("WAITFOR DELAY '00:00:01'");
-                        }
+                        await RunCommand(marsConnection, builder.ToString(), poison);
                     }
-
-                    int rowsRead = 0;
-                    int resultRead = 0;
-
-                    try
+                    else
                     {
                         await connection.OpenAsync();
-                        using (var command = connection.CreateCommand())
-                        {
-                            Task timeBombTask = default;
-                            try
-                            {
-                                // Setup our time bomb
-                                if (poison)
-                                {
-                                    timeBombTask = TimeBombAsync(command);
-                                }
-
-                                command.CommandText = builder.ToString();
-
-                                // Attempt to read all of the data
-                                using (var reader = await command.ExecuteReaderAsync())
-                                {
-                                    try
-                                    {
-                                        do
-                                        {
-                                            resultRead++;
-                                            while (await reader.ReadAsync() && _continue)
-                                            {
-                                                rowsRead++;
-                                            }
-                                        }
-                                        while (await reader.NextResultAsync() && _continue);
-                                    }
-                                    catch when (poison)
-                                    {
-                                        //  This looks a little strange, we failed to read above so this should fail too
-                                        //  But consider the case where this code is elsewhere (in the Dispose method of a class holding this logic)
-                                        try
-                                        {
-                                            while (await reader.NextResultAsync())
-                                            {
-                                            }
-                                        }
-                                        catch
-                                        {
-                                            Interlocked.Increment(ref _poisonCleanUpExceptions);
-                                        }
-
-                                        throw;
-                                    }
-                                }
-                            }
-                            finally
-                            {
-                                // Make sure to clean up our time bomb
-                                // It is unlikely, but the timebomb may get delayed in the Task Queue
-                                // And we don't want it running after we dispose the command
-                                if (timeBombTask != default)
-                                {
-                                    await timeBombTask;
-                                }
-                            }
-                        }
-                    }
-                    finally
-                    {
-                        Interlocked.Add(ref _rowsRead, rowsRead);
-                        Interlocked.Add(ref _resultRead, resultRead);
-                        if (poison)
-                        {
-                            Interlocked.Increment(ref _poisonedEnded);
-                        }
+                        await RunCommand(connection, builder.ToString(), poison);
                     }
                 }
             }
@@ -220,6 +176,83 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         }
                     }
                     Interlocked.Increment(ref _found);
+                }
+            }
+        }
+
+        private async Task RunCommand(SqlConnection connection, string commandText, bool poison)
+        {
+            int rowsRead = 0;
+            int resultRead = 0;
+
+            try
+            {
+                using (var command = connection.CreateCommand())
+                {
+                    Task timeBombTask = default;
+                    try
+                    {
+                        // Setup our time bomb
+                        if (poison)
+                        {
+                            timeBombTask = TimeBombAsync(command);
+                        }
+
+                        command.CommandText = commandText;
+
+                        // Attempt to read all of the data
+                        using (var reader = await command.ExecuteReaderAsync())
+                        {
+                            try
+                            {
+                                do
+                                {
+                                    resultRead++;
+                                    while (await reader.ReadAsync() && _continue)
+                                    {
+                                        rowsRead++;
+                                    }
+                                }
+                                while (await reader.NextResultAsync() && _continue);
+                            }
+                            catch when (poison)
+                            {
+                                //  This looks a little strange, we failed to read above so this should fail too
+                                //  But consider the case where this code is elsewhere (in the Dispose method of a class holding this logic)
+                                try
+                                {
+                                    while (await reader.NextResultAsync())
+                                    {
+                                    }
+                                }
+                                catch
+                                {
+                                    Interlocked.Increment(ref _poisonCleanUpExceptions);
+                                }
+
+                                throw;
+                            }
+                        }
+                    }
+                    finally
+                    {
+                        // Make sure to clean up our time bomb
+                        // It is unlikely, but the timebomb may get delayed in the Task Queue
+                        // And we don't want it running after we dispose the command
+                        if (timeBombTask != default)
+                        {
+                            await timeBombTask;
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                Interlocked.Add(ref _rowsRead, rowsRead);
+                Interlocked.Add(ref _resultRead, resultRead);
+                if (poison)
+                {
+                    Interlocked.Increment(ref _poisonedEnded);
                 }
             }
         }

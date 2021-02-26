@@ -19,6 +19,7 @@ namespace Microsoft.Data.SqlClient
     {
         private const string OriginalClientConnectionIdKey = "OriginalClientConnectionId";
         private const string RoutingDestinationKey = "RoutingDestination";
+        private const int SqlExceptionHResult = unchecked((int)0x80131904);
 
         private SqlErrorCollection _errors;
         [System.Runtime.Serialization.OptionalFieldAttribute(VersionAdded = 4)]
@@ -26,7 +27,7 @@ namespace Microsoft.Data.SqlClient
 
         private SqlException(string message, SqlErrorCollection errorCollection, Exception innerException, Guid conId) : base(message, innerException)
         {
-            HResult = HResults.SqlException;
+            HResult = SqlExceptionHResult;
             _errors = errorCollection;
             _clientConnectionId = conId;
         }
@@ -35,7 +36,7 @@ namespace Microsoft.Data.SqlClient
         private SqlException(SerializationInfo si, StreamingContext sc) : base(si, sc)
         {
             _errors = (SqlErrorCollection)si.GetValue("Errors", typeof(SqlErrorCollection));
-            HResult = HResults.SqlException;
+            HResult = SqlExceptionHResult;
             foreach (SerializationEntry siEntry in si)
             {
                 if (nameof(ClientConnectionId) == siEntry.Name)
