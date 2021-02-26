@@ -136,7 +136,9 @@ namespace System.Net.Security
             catch (Exception ex)
             {
                 if (NetEventSource.IsEnabled)
+                {
                     NetEventSource.Error(null, ex);
+                }
                 return new SecurityStatusPal(SecurityStatusPalErrorCode.InternalError, ex);
             }
         }
@@ -176,9 +178,13 @@ namespace System.Net.Security
                     ref contextFlags);
 
                 if (status.ErrorCode != SecurityStatusPalErrorCode.InternalError)
-                    break;
-                else 
-                    securityContext = null; // Reset security context to be generated again
+                {
+                    break; // Successful case, exit the loop with current SPN.
+                }
+                else
+                {
+                    securityContext = null; // Reset security context to be generated again for next SPN.
+                }
             }
 
             // Confidentiality flag should not be set if not requested
