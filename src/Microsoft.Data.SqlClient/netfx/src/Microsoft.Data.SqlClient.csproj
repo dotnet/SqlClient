@@ -91,6 +91,9 @@
   </ItemGroup>
   <!-- Contains common items shared between NetFx and NetCore -->
   <ItemGroup>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\LocalAppContextSwitches.cs">
+      <Link>Microsoft\Data\SqlClient\LocalAppContextSwitches.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientEventSource.cs">
       <Link>Microsoft\Data\SqlClient\SqlClientEventSource.cs</Link>
     </Compile>
@@ -337,11 +340,10 @@
     <Compile Include="Microsoft\Data\Interop\SNINativeManagedWrapperX86.cs" />
     <Compile Include="Microsoft\Data\Interop\SNINativeMethodWrapper.cs" />
     <Compile Include="Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\AppContextDefaultValues.Defaults.cs" />
     <Compile Include="Microsoft\Data\SqlClient\assemblycache.cs" />
     <Compile Include="Microsoft\Data\SqlClient\AzureAttestationBasedEnclaveProvider.cs" />
     <Compile Include="Microsoft\Data\SqlClient\EnclaveDelegate.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\LocalAppContextSwitches.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\LocalAppContextSwitches.netfx.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBConfig.cs" />
     <Compile Include="Microsoft\Data\SqlClient\AssemblyRef.cs" />
@@ -426,10 +428,6 @@
     <Compile Include="Microsoft\Data\Common\GreenMethods.cs" />
     <Compile Include="Microsoft\Data\Common\SQLResource.cs" />
     <Compile Include="Misc\ExternDll.cs" />
-    <Compile Include="Misc\HResults.cs" />
-    <Compile Include="Misc\LocalAppContext.cs" />
-    <Compile Include="Misc\AppContextDefaultValues.cs" />
-    <Compile Include="Misc\PrivilegedConfigurationManager.cs" />
     <Compile Include="Common\src\Microsoft\Data\Common\NameValuePermission.cs" />
     <Compile Include="Microsoft\Data\Common\AdapterSwitches.cs" />
     <Compile Include="Microsoft\Data\Common\AdapterUtil.cs" />

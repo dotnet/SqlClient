@@ -18,19 +18,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     {
         private ColumnMasterKey akvColumnMasterKey;
         private ColumnEncryptionKey akvColumnEncryptionKey;
-        private SqlColumnEncryptionAzureKeyVaultProvider sqlColumnEncryptionAzureKeyVaultProvider; 
+        private SqlColumnEncryptionAzureKeyVaultProvider sqlColumnEncryptionAzureKeyVaultProvider;
         private List<DbObject> databaseObjects = new List<DbObject>();
         private List<string> connStrings = new List<string>();
-             
+
         public EnclaveAzureDatabaseTests()
         {
             if (DataTestUtility.IsEnclaveAzureDatabaseSetup())
             {
                 // Initialize AKV provider
-                sqlColumnEncryptionAzureKeyVaultProvider = new SqlColumnEncryptionAzureKeyVaultProvider(AADUtility.AzureActiveDirectoryAuthenticationCallback);
+                sqlColumnEncryptionAzureKeyVaultProvider = new SqlColumnEncryptionAzureKeyVaultProvider(new SqlClientCustomTokenCredential());
 
-                if (!SQLSetupStrategyAzureKeyVault.isAKVProviderRegistered) 
-                {                    
+                if (!SQLSetupStrategyAzureKeyVault.isAKVProviderRegistered)
+                {
                     // Register AKV provider
                     SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders: new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>(capacity: 1, comparer: StringComparer.OrdinalIgnoreCase)
                     {
@@ -38,7 +38,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     });
 
                     SQLSetupStrategyAzureKeyVault.isAKVProviderRegistered = true;
-                }               
+                }
 
                 akvColumnMasterKey = new AkvColumnMasterKey(DatabaseHelper.GenerateUniqueName("AKVCMK"), akvUrl: DataTestUtility.AKVUrl, sqlColumnEncryptionAzureKeyVaultProvider, DataTestUtility.EnclaveEnabled);
                 databaseObjects.Add(akvColumnMasterKey);
@@ -65,7 +65,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         databaseObjects.ForEach(o => o.Create(connection));
                     }
                 }
-            }            
+            }
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsEnclaveAzureDatabaseSetup))]
@@ -180,5 +180,5 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 }
             }
         }
-    }    
+    }
 }

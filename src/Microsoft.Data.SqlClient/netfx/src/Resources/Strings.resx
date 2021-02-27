@@ -4602,4 +4602,7 @@
   <data name="Azure_RetryFailure" xml:space="preserve">
     <value>Failed after 5 retries.</value>
   </data>
+  <data name="SqlDependency_UnexpectedValueOnDeserialize" xml:space="preserve">
+    <value>Unexpected type detected on deserialize.</value>
+  </data>
 </root>

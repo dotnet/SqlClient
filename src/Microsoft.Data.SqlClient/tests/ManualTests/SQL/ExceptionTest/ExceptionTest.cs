@@ -131,11 +131,25 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static bool CheckThatExceptionsAreDistinctButHaveSameData(SqlException e1, SqlException e2)
         {
             Assert.True(e1 != e2, "FAILED: verification of exception cloning in subsequent connection attempts");
-
             Assert.False((e1 == null) || (e2 == null), "FAILED: One of exceptions is null, another is not");
 
             bool equal = (e1.Message == e2.Message) && (e1.HelpLink == e2.HelpLink) && (e1.InnerException == e2.InnerException)
-                && (e1.Source == e2.Source) && (e1.Data.Count == e2.Data.Count) && (e1.Errors == e2.Errors);
+                && (e1.Source == e2.Source) && (e1.Data.Count == e2.Data.Count) && (e1.Errors.Count == e2.Errors.Count);
+
+            for (int i = 0; i < e1.Errors.Count; i++)
+            {
+                equal = e1.Errors[i].Number == e2.Errors[i].Number
+                    && e1.Errors[i].Message == e2.Errors[i].Message
+                    && e1.Errors[i].LineNumber == e2.Errors[i].LineNumber
+                    && e1.Errors[i].State == e2.Errors[i].State
+                    && e1.Errors[i].Class == e2.Errors[i].Class
+                    && e1.Errors[i].Server == e2.Errors[i].Server
+                    && e1.Errors[i].Procedure == e2.Errors[i].Procedure
+                    && e1.Errors[i].Source == e2.Errors[i].Source;
+                if (!equal)
+                    break;
+            }
+
             IDictionaryEnumerator enum1 = e1.Data.GetEnumerator();
             IDictionaryEnumerator enum2 = e2.Data.GetEnumerator();
             while (equal)
@@ -147,7 +161,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
 
             Assert.True(equal, string.Format("FAILED: exceptions do not contain the same data (besides call stack):\nFirst: {0}\nSecond: {1}\n", e1, e2));
-
             return true;
         }
 

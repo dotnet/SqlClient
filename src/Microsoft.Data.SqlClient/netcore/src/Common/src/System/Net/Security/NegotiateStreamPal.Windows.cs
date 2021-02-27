@@ -70,7 +70,7 @@ namespace System.Net.Security
         internal static SecurityStatusPal InitializeSecurityContext(
             SafeFreeCredentials credentialsHandle,
             ref SafeDeleteContext securityContext,
-            string spn,
+            string[] spn,
             ContextFlagsPal requestedContextFlags,
             SecurityBuffer[] inSecurityBufferArray,
             SecurityBuffer outSecurityBuffer,
@@ -81,7 +81,7 @@ namespace System.Net.Security
                 GlobalSSPI.SSPIAuth,
                 credentialsHandle,
                 ref securityContext,
-                spn,
+                spn[0],
                 ContextFlagsAdapterPal.GetInteropFromContextFlagsPal(requestedContextFlags),
                 Interop.SspiCli.Endianness.SECURITY_NETWORK_DREP,
                 inSecurityBufferArray,
