@@ -14,12 +14,14 @@
   <ItemGroup Condition="!$(ReferenceType.Contains('NetStandard'))">
     <Compile Include="SqlConnectionStringBuilderPoolBlockingTest.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="AlwaysEncryptedTests\ExceptionsAlgorithmErrors.cs" />
-    <Compile Include="AlwaysEncryptedTests\ExceptionsCertStore.cs" />
+  <ItemGroup Condition="'OsGroup'=='Windows'">
     <Compile Include="AlwaysEncryptedTests\SqlColumnEncryptionCertificateStoreProviderShould.cs" />
     <Compile Include="AlwaysEncryptedTests\SqlColumnEncryptionCngProviderShould.cs" />
     <Compile Include="AlwaysEncryptedTests\SqlColumnEncryptionCspProviderShould.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AlwaysEncryptedTests\ExceptionsAlgorithmErrors.cs" />
+    <Compile Include="AlwaysEncryptedTests\ExceptionsCertStore.cs" />
     <Compile Include="AlwaysEncryptedTests\ConnectionStringBuilderShould.cs" />
     <Compile Include="AlwaysEncryptedTests\DummyKeyStoreProvider.cs" />
     <Compile Include="AlwaysEncryptedTests\ExceptionRegisterKeyStoreProvider.cs" />

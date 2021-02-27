@@ -183,33 +183,20 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
         public static void AddKeyToCsp(string containerName)
         {
-#if NET50_OR_LATER
-if (OperatingSystem.IsWindows())
-    {
-#endif
+
             CspParameters cspParams = new CspParameters();
             cspParams.KeyContainerName = containerName;
             RSACryptoServiceProvider rsaAlg = new RSACryptoServiceProvider(KEY_SIZE, cspParams);
             rsaAlg.PersistKeyInCsp = true;
-#if NET50_OR_LATER
-}
-#endif
         }
 
         public static void RemoveKeyFromCsp(string containerName)
         {
-#if NET50_OR_LATER
-if (OperatingSystem.IsWindows())
-    {
-#endif
             CspParameters cspParams = new CspParameters();
             cspParams.KeyContainerName = containerName;
             RSACryptoServiceProvider rsaAlg = new RSACryptoServiceProvider(cspParams);
             rsaAlg.PersistKeyInCsp = false;
             rsaAlg.Clear();
-#if NET50_OR_LATER
-}
-#endif
         }
     }
 }
