@@ -105,7 +105,7 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> {2}",
                                                        TypeName, methodName, e);
             }
-            SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Due to the exception occurrence, the default none-retriable logic will apply",
+            SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Due to an exception, the default non-retriable logic will be applied.",
                                                     TypeName, methodName);
             // Return default provider if an exception occured.
             return SqlConfigurableRetryFactory.CreateNoneRetryProvider();
@@ -113,7 +113,7 @@ namespace Microsoft.Data.SqlClient
 
         private static SqlRetryLogicBaseProvider ResolveRetryLogicProvider(string configurableRetryType, string retryMethod, SqlRetryLogicOption option)
         {
-            var methodName = MethodBase.GetCurrentMethod().Name;
+            string methodName = MethodBase.GetCurrentMethod().Name;
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Entry point.", TypeName, methodName);
 
             if (string.IsNullOrEmpty(retryMethod))
@@ -124,7 +124,7 @@ namespace Microsoft.Data.SqlClient
             Type type = null;
             try
             {
-                // Resolve an Type object from the given type name
+                // Resolve a Type object from the given type name
                 // Different implementation in .NET Framework & .NET Core
                 type = LoadType(configurableRetryType);
             }
@@ -133,11 +133,11 @@ namespace Microsoft.Data.SqlClient
                 // Try to use the 'SqlConfigurableRetryFactory' as a default type to discover the retry methods
                 // if there was any problem to resolve the 'configurableRetryType' type.
                 type = typeof(SqlConfigurableRetryFactory);
-                SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Unable to load the '{2}' type; Tries to use the internal `{3}` type: {4}",
+                SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Unable to load the '{2}' type; Trying to use the internal `{3}` type: {4}",
                                                        TypeName, methodName, configurableRetryType, type.FullName, e);
             }
 
-            // Run the function by the resolved values to get the SqlRetryLogicBaseProvider object
+            // Run the function by using the resolved values to get the SqlRetryLogicBaseProvider object
             try
             {
                 // Create an instance from the discovered type by its default constructor
@@ -153,12 +153,12 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
-                // According to invoke a function dinamically, any type of exceptions can happens here;
-                // The manin exception and its stack trace will be acceccible through the inner exception.
-                // i.e: Openning a connection or executing a command while invoking a function 
+                // In order to invoke a function dynamically, any type of exception can occur here;
+                // The main exception and its stack trace will be accessible through the inner exception.
+                // i.e: Opening a connection or executing a command while invoking a function 
                 // runs the application to the `TargetInvocationException`.
-                // And using an isolated zone like a specific AppDomain makes an infinit loop.
-                throw new Exception($"Exception is occured to run the `{type.FullName}.{retryMethod}()` method.", e);
+                // And using an isolated zone like a specific AppDomain results in an infinite loop.
+                throw new Exception($"Exception occurred when running the `{type.FullName}.{retryMethod}()` method.", e);
             }
 
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Unable to resolve a valid provider; Returns `null`.", TypeName, methodName);
@@ -180,7 +180,7 @@ namespace Microsoft.Data.SqlClient
                     throw new InvalidOperationException($"Failed to resolve the '{retryMethodName}' method from `{typeof(SqlConfigurableRetryFactory).FullName}` type.");
                 }
 
-                SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> The `{2}.{3}()` method is discovered by `{4}` method name."
+                SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> The `{2}.{3}()` method has been discovered as the `{4}` method name."
                                                       , TypeName, methodName, internalMethod.ReflectedType.FullName, internalMethod.Name, retryMethodName);
                 object[] internalFuncParams = PrepareParamValues(internalMethod.GetParameters(), option, retryMethodName);
                 SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Parameters are prepared to invoke the `{2}.{3}()` method."
@@ -189,18 +189,18 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Searches for the public MethodInfo from the specified type by the given method name
-            // It is a case-sensitive search
+            // The search is case-sensitive
             MethodInfo method = type.GetMethod(retryMethodName);
             if (method == null)
             {
                 throw new InvalidOperationException($"Failed to resolve the '{retryMethodName}' method from `{type.FullName}` type.");
             }
-            SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> The `{2}` method metadata is extracted from the `{3}` type by `{4}` method name."
+            SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> The `{2}` method metadata has been extracted from the `{3}` type by using the `{4}` method name."
                                                     , TypeName, methodName, method.Name, type.FullName, retryMethodName);
 
             if (!typeof(SqlRetryLogicBaseProvider).IsAssignableFrom(method.ReturnType))
             {
-                throw new InvalidCastException($"Invalid return type; It must be as `{typeof(SqlRetryLogicBaseProvider).FullName}` type.");
+                throw new InvalidCastException($"Invalid return type; Return type must be of `{typeof(SqlRetryLogicBaseProvider).FullName}` type.");
             }
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> The return type of the `{2}.{3}()` method is valid."
                                                     , TypeName, methodName, type.FullName, method.Name);
@@ -236,9 +236,9 @@ namespace Microsoft.Data.SqlClient
             object[] funcParams = new object[parameterInfos.Length];
             for (int i = 0; i < parameterInfos.Length; i++)
             {
-                var paramInfo = parameterInfos[i];
+                ParameterInfo paramInfo = parameterInfos[i];
 
-                // Create parameters with default values that are not as SqlRetryLogicOption type.
+                // Create parameters with default values that are not a SqlRetryLogicOption type.
                 if (paramInfo.HasDefaultValue && paramInfo.ParameterType != typeof(SqlRetryLogicOption))
                 {
                     funcParams[i] = paramInfo.DefaultValue;
@@ -273,7 +273,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Used to log the attempts
+        /// Used to log attempts
         /// </summary>
         private static void OnRetryingEvent(object sender, SqlRetryingEventArgs args)
         {

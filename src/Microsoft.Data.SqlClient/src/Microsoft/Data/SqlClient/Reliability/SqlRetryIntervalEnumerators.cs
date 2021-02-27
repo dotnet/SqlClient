@@ -28,9 +28,9 @@ namespace Microsoft.Data.SqlClient
             var newTimeMilliseconds = MinTimeInterval.TotalMilliseconds + delta;
             newTimeMilliseconds = newTimeMilliseconds < MaxTimeInterval.TotalMilliseconds ? newTimeMilliseconds 
                 : random.NextDouble() * (MaxTimeInterval.TotalMilliseconds * 0.2) + (MaxTimeInterval.TotalMilliseconds * 0.8);
-            var newVlaue = TimeSpan.FromMilliseconds(newTimeMilliseconds);
+            var newValue = TimeSpan.FromMilliseconds(newTimeMilliseconds);
 
-            Current = newVlaue < MinTimeInterval ? MinTimeInterval : newVlaue;
+            Current = newValue < MinTimeInterval ? MinTimeInterval : newValue ;
             return Current;
         }
 

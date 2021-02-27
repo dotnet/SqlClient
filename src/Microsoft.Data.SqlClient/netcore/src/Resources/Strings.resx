@@ -1942,6 +1942,6 @@
     <value>The number of retries has exceeded the maximum of {0} attempt(s).</value>
   </data>
   <data name="SqlAppContextSwitchManager_InvalidValue" xml:space="preserve">
-    <value>Exception occurs while trying to set the AppContext Switch '{0}'={1}.</value>
+    <value>Exception occurred while trying to set the AppContext Switch '{0}'={1}.</value>
   </data>
 </root>

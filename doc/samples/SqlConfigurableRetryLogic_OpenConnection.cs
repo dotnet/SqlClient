@@ -60,7 +60,7 @@ class RetryLogicSample
 
         try
         {
-            // Assume the database is creating and other services are going to connect to it.
+            // Assume the database is being created and other services are going to connect to it.
             RetryConnection(provider);
         }
         catch

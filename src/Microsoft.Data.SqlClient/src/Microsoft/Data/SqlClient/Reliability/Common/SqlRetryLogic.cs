@@ -72,7 +72,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Current retry ({2}) has reached to the maximum attempts (total attempts except the first run = {3}).",
+                SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Current retry ({2}) has reached the maximum attempts (total attempts excluding the first run = {3}).",
                                                        TypeName, MethodBase.GetCurrentMethod().Name, Current, NumberOfTries - 1);
             }
             return result;

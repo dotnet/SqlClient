@@ -31,7 +31,7 @@ namespace Microsoft.Data.SqlClient
             catch(Exception e)
             {
                 // Doesn't throw an error for invalid config files
-                SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO>: Unable to load section `{2}`. ConfigurationManager failed to load due to the configuration errors: {3}",
+                SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO>: Unable to load section `{2}`. ConfigurationManager failed to load due to configuration errors: {3}",
                                                        TypeName, methodName, name, e);
             }
             if (section != null )
