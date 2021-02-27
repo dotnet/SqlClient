@@ -9,9 +9,9 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-    public class SqlConnectionCRLTest
+    public class SqlConnectionReliabilityTest
     {
-        private const string InvalidInitialCatalog = "InvalidInitialCatalog_for_retry";
+        internal const string InvalidInitialCatalog = "InvalidInitialCatalog_for_retry";
         private readonly string _exceedErrMsgPattern = RetryLogicTestHelper.s_ExceedErrMsgPattern;
         private readonly string _cancelErrMsgPattern = RetryLogicTestHelper.s_CancelErrMsgPattern;
 
@@ -85,10 +85,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         cnn2.Open();
                     }
                 }
-                catch (Exception e)
-                {
-                    Assert.Null(e);
-                }
                 finally
                 {
                     createDBTask?.Wait();
@@ -128,6 +124,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             });
             Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(RetryLogicTestHelper.GetNoneRetriableProvider), MemberType = typeof(RetryLogicTestHelper))]
+        public void DefaultOpenWithoutRetry(string connectionString, SqlRetryLogicBaseProvider cnnProvider)
+        {
+            var cnnString = new SqlConnectionStringBuilder(connectionString)
+            {
+                InitialCatalog = InvalidInitialCatalog
+            }.ConnectionString;
+
+            Assert.Throws<SqlException>(() => new SqlConnection(cnnString).Open());
+            Assert.ThrowsAsync<SqlException>(() => new SqlConnection(cnnString).OpenAsync()).Wait();
+
+            using(var cnn = new SqlConnection(cnnString))
+            {
+                cnn.RetryLogicProvider = cnnProvider;
+                Assert.Throws<SqlException>(() => cnn.Open());
+                cnn.RetryLogicProvider = cnnProvider;
+                Assert.ThrowsAsync<SqlException>(() => cnn.OpenAsync()).Wait();
+            }
         }
 
         #endregion

@@ -106,7 +106,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (function == null)
             {
-                throw SqlCRLUtil.ArgumentNull(nameof(function));
+                throw SqlReliabilityUtil.ArgumentNull(nameof(function));
             }
 
             SqlRetryLogicBase retryLogic = null;
@@ -196,16 +196,11 @@ namespace Microsoft.Data.SqlClient
 
         private Exception CreateException(IList<Exception> exceptions, SqlRetryLogicBase retryLogic, bool manualCancellation = false)
         {
-            AggregateException result = null;
-            if (manualCancellation)
-            {
-                result = SqlCRLUtil.RetryCancelledException(exceptions, retryLogic.Current);
-            }
-            else
+            AggregateException result = SqlReliabilityUtil.ConfigurableRetryFail(exceptions, retryLogic, manualCancellation);
+            if (!manualCancellation)
             {
                 SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|ERR|THROW> Exiting retry scope (exceeded the max allowed attempts = {2}).",
                                                        TypeName, MethodBase.GetCurrentMethod().Name, retryLogic.NumberOfTries);
-                result = SqlCRLUtil.RetryExceededException(exceptions, retryLogic.NumberOfTries);
             }
             _retryLogicPool.Add(retryLogic);
             return result;

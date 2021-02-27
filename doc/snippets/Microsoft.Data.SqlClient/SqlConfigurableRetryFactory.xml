@@ -52,6 +52,12 @@ The following table shows the inner transient error list.
 ]]></format>
 			</remarks>
             <exception cref="T:System.ArgumentNullException">If the `retryLogicOption` parameter was null.</exception>
+            <exception cref="T:System.ArgumentOutOfRangeException">If at least one of the following conditions occurs:
+- `NumberOfTries` is less than 1 or bigger than 60.
+- `DeltaTime` is bigger than 120 seconds.
+- `MinTimeInterval` is bigger than 120 seconds.
+- `MaxTimeInterval` is bigger than 120 seconds.
+            </exception>
         </CreateExponentialRetryProvider>
         <CreateIncrementalRetryProvider>
             <param name="retryLogicOption">An object of <see cref="T:Microsoft.Data.SqlClient.FloatingRetryLogicOption" /> containing the configuration for the object.</param>
@@ -66,6 +72,12 @@ The following table shows the inner transient error list.
 ]]></format>
 			</remarks>
             <exception cref="T:System.ArgumentNullException">If the `retryLogicOption` parameter was null.</exception>
+            <exception cref="T:System.ArgumentOutOfRangeException">If at least one of the following conditions occurs:
+- `NumberOfTries` is less than 1 or bigger than 60.
+- `DeltaTime` is bigger than 120 seconds.
+- `MinTimeInterval` is bigger than 120 seconds.
+- `MaxTimeInterval` is bigger than 120 seconds.
+            </exception>
         </CreateIncrementalRetryProvider>
         <CreateFixedRetryProvider>
             <param name="retryLogicOption">An object of <see cref="T:Microsoft.Data.SqlClient.FixedRetryLogicOption" /> containing the configuration for the object.</param>
@@ -80,6 +92,12 @@ The following table shows the inner transient error list.
 ]]></format>
 			</remarks>
             <exception cref="T:System.ArgumentNullException">If the `retryLogicOption` parameter was null.</exception>
+            <exception cref="T:System.ArgumentOutOfRangeException">If at least one of the following conditions occurs:
+- `NumberOfTries` is less than 1 or bigger than 60.
+- `DeltaTime` is bigger than 120 seconds.
+- `MinTimeInterval` is bigger than 120 seconds.
+- `MaxTimeInterval` is bigger than 120 seconds.
+            </exception>
         </CreateFixedRetryProvider>
         <CreateNoneRetryProvider>
             <summary>Provides a non-retriable provider with a <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBase.TransientPredicate" /> that returns <see langword="false" />.</summary>

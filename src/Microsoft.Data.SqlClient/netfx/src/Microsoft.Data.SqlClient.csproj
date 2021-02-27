@@ -367,8 +367,8 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\AppConfigManager.cs">
       <Link>Microsoft\Data\SqlClient\Reliability\AppConfigManager.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryUtil.cs">
-      <Link>Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryUtil.cs</Link>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlUtil.cs">
+      <Link>Microsoft\Data\SqlClient\SqlUtil.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>

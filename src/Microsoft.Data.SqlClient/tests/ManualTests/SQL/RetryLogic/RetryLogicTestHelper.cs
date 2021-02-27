@@ -44,7 +44,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
     public class RetryLogicTestHelper
     {
-        private const string RetryAppContextSwitch = "Switch.Microsoft.Data.SqlClient.EnableRetryLogic";
+        internal const string RetryAppContextSwitch = "Switch.Microsoft.Data.SqlClient.EnableRetryLogic";
 
         private static readonly HashSet<int> s_defaultTransientErrors
            = new HashSet<int>
@@ -154,6 +154,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static IEnumerable<object[]> GetConnectionAndRetryStrategyLockedTable(int numberOfRetries)
         {
             return GetConnectionAndRetryStrategy(numberOfRetries, TimeSpan.FromMilliseconds(100), FilterSqlStatements.None, null);
+        }
+
+        public static IEnumerable<object[]> GetNoneRetriableProvider()
+        {
+            yield return new object[] { DataTestUtility.TCPConnectionString, null };
+            yield return new object[] { DataTestUtility.TCPConnectionString, SqlConfigurableRetryFactory.CreateNoneRetryProvider() };
         }
 
         private static IEnumerable<object[]> GetRetryStrategies(SqlRetryLogicOption retryLogicOption)

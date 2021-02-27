@@ -56,22 +56,22 @@ namespace Microsoft.Data.SqlClient
         {
             if(minTimeInterval < _minValue || minTimeInterval > _maxValue )
             {
-                throw SqlCRLUtil.ArgumentOutOfRange(nameof(minTimeInterval), minTimeInterval, _minValue, _maxValue);
+                throw SqlReliabilityUtil.ArgumentOutOfRange(nameof(minTimeInterval), minTimeInterval, _minValue, _maxValue);
             }
 
             if (maxTimeInterval < _minValue || maxTimeInterval > _maxValue)
             {
-                throw SqlCRLUtil.ArgumentOutOfRange(nameof(maxTimeInterval), maxTimeInterval, _minValue, _maxValue);
+                throw SqlReliabilityUtil.ArgumentOutOfRange(nameof(maxTimeInterval), maxTimeInterval, _minValue, _maxValue);
             }
 
             if (timeInterval < _minValue || timeInterval > _maxValue)
             {
-                throw SqlCRLUtil.ArgumentOutOfRange(nameof(timeInterval), timeInterval, _minValue, _maxValue);
+                throw SqlReliabilityUtil.ArgumentOutOfRange(nameof(timeInterval), timeInterval, _minValue, _maxValue);
             }
 
             if (maxTimeInterval < minTimeInterval)
             {
-                throw SqlCRLUtil.ArgumentOutOfRange(nameof(maxTimeInterval), maxTimeInterval, minTimeInterval, _maxValue);
+                throw SqlReliabilityUtil.ArgumentOutOfRange(nameof(maxTimeInterval), maxTimeInterval, minTimeInterval, _maxValue);
             }
         }
 

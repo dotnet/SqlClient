@@ -11,7 +11,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-    public class SqlCommandCRLTest
+    public class SqlCommandReliabilityTest
     {
         private readonly string _exceedErrMsgPattern = RetryLogicTestHelper.s_ExceedErrMsgPattern;
         private readonly string _cancelErrMsgPattern = RetryLogicTestHelper.s_CancelErrMsgPattern;
@@ -279,10 +279,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                     Assert.True(currentRetries > 0);
                 }
-                catch (Exception e)
-                {
-                    Assert.Null(e);
-                }
                 finally
                 {
                     // additional try to drop the database if it still exists.
@@ -340,10 +336,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     cmd2.CommandText = $"UPDATE {tableName} SET {fieldName} = 'updated';";
                     cmd2.ExecuteNonQuery();
                 }
-                catch (Exception e)
-                {
-                    Assert.Null(e);
-                }
                 finally
                 {
                     DataTestUtility.DropTable(cnn2, tableName);
@@ -353,6 +345,34 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(RetryLogicTestHelper.GetNoneRetriableProvider), MemberType = typeof(RetryLogicTestHelper))]
+        public void NoneRetriableExecuteFail(string cnnString, SqlRetryLogicBaseProvider provider)
+        {
+            string query = "SELECT bad command";
+
+            using (SqlConnection cnn = new SqlConnection(cnnString))
+            using (SqlCommand cmd = new SqlCommand())
+            {
+                cnn.Open();
+                cmd.Connection = cnn;
+                cmd.CommandText = query;
+                cmd.RetryLogicProvider = provider;
+                Assert.Throws<SqlException>(() => cmd.ExecuteScalar());
+                Assert.Throws<SqlException>(() => cmd.ExecuteReader());
+                Assert.Throws<SqlException>(() => cmd.ExecuteReader(CommandBehavior.Default));
+                Assert.Throws<SqlException>(() => cmd.ExecuteNonQuery());
+
+                Assert.ThrowsAsync<SqlException>(() => cmd.ExecuteScalarAsync()).Wait();
+                Assert.ThrowsAsync<SqlException>(() => cmd.ExecuteReaderAsync()).Wait();
+                Assert.ThrowsAsync<SqlException>(() => cmd.ExecuteReaderAsync(CommandBehavior.Default)).Wait();
+                Assert.ThrowsAsync<SqlException>(() => cmd.ExecuteNonQueryAsync()).Wait();
+
+                cmd.CommandText = query + " FOR XML AUTO";
+                Assert.Throws<SqlException>(() => cmd.ExecuteXmlReader());
+                Assert.ThrowsAsync<SqlException>(() => cmd.ExecuteXmlReaderAsync()).Wait();
+            }
+        }
         #endregion
 
         #region Async

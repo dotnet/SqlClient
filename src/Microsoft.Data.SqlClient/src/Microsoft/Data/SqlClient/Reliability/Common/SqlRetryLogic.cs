@@ -29,7 +29,7 @@ namespace Microsoft.Data.SqlClient
             if (!(numberOfTries > counterDefaultValue && numberOfTries <= maxAttempts))
             {
                 // The 'numberOfTries' should be between 1 and 60.
-                throw SqlCRLUtil.ArgumentOutOfRange(nameof(numberOfTries), numberOfTries, counterDefaultValue + 1, maxAttempts);
+                throw SqlReliabilityUtil.ArgumentOutOfRange(nameof(numberOfTries), numberOfTries, counterDefaultValue + 1, maxAttempts);
             }
 
             NumberOfTries = numberOfTries;

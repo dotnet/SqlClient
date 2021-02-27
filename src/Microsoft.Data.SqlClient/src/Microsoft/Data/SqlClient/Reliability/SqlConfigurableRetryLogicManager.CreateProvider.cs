@@ -68,7 +68,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (configSection == null)
                 {
-                    throw SqlCRLUtil.ArgumentNull(nameof(configSection));
+                    throw SqlReliabilityUtil.ArgumentNull(nameof(configSection));
                 }
 
                 // Create a SqlRetryLogicOption object from the discovered retry logic values

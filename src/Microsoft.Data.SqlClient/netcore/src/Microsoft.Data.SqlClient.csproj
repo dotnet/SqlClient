@@ -505,8 +505,8 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.cs">
       <Link>Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryUtil.cs">
-      <Link>Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryUtil.cs</Link>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlUtil.cs">
+      <Link>Microsoft\Data\SqlClient\SqlUtil.cs</Link>
     </Compile>
   </ItemGroup>
   <!-- Windows only -->

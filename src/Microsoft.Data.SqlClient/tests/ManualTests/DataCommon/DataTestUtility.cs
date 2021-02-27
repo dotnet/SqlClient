@@ -345,8 +345,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return RetrieveValueFromConnStr(TCPConnectionString, new string[] { "Password", "PWD" }) != string.Empty;
         }
 
-        // the name length will be no more then (16 + prefix.Length + escapeLeft.Length + escapeRight.Length)
-        // some providers does not support names (Oracle supports up to 30)
+        /// <summary>
+        /// Generate a unique name to use in Sql Server; 
+        /// some providers does not support names (Oracle supports up to 30).
+        /// </summary>
+        /// <param name="prefix">The name length will be no more then (16 + prefix.Length + escapeLeft.Length + escapeRight.Length).</param>
+        /// <param name="withBracket">Name without brackets.</param>
+        /// <returns>Unique name by considering the Sql Server naming rules.</returns>
         public static string GetUniqueName(string prefix, bool withBracket = true)
         {
             string escapeLeft = withBracket ? "[" : string.Empty;
@@ -360,7 +365,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return uniqueName;
         }
 
-        // SQL Server supports long names (up to 128 characters), add extra info for troubleshooting
+        /// <summary>
+        /// Uses environment values `UserName` and `MachineName` in addition to the specified `prefix` and current date
+        /// to generate a unique name to use in Sql Server; 
+        /// SQL Server supports long names (up to 128 characters), add extra info for troubleshooting.
+        /// </summary>
+        /// <param name="prefix">Add the prefix to the generate string.</param>
+        /// <param name="withBracket">Database name must be pass with brackets by default.</param>
+        /// <returns>Unique name by considering the Sql Server naming rules.</returns>
         public static string GetUniqueNameForSqlServer(string prefix, bool withBracket = true)
         {
             string extendedPrefix = string.Format(
