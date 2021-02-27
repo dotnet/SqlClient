@@ -4602,4 +4602,7 @@
   <data name="Azure_RetryFailure" xml:space="preserve">
     <value>5회 다시 시도한 후에 실패했습니다.</value>
   </data>
+  <data name="SqlDependency_UnexpectedValueOnDeserialize" xml:space="preserve">
+    <value>Unexpected type detected on deserialize.</value>
+  </data>
 </root>

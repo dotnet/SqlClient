@@ -29,7 +29,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         private const decimal SmallMoneyMinValue = -214748.3648M;
         private const int MaxLength = 10000;
         private int NumberOfRows = DataTestUtility.EnclaveEnabled ? 10 : 100;
-        private readonly X509Certificate2 certificate;
+        private static X509Certificate2 certificate;
         private ColumnMasterKey columnMasterKey;
         private ColumnEncryptionKey columnEncryptionKey;
         private SqlColumnEncryptionCertificateStoreProvider certStoreProvider = new SqlColumnEncryptionCertificateStoreProvider();
@@ -55,7 +55,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         public ConversionTests()
         {
-            certificate = CertificateUtility.CreateCertificate();
+            if(certificate == null)
+            {
+                certificate = CertificateUtility.CreateCertificate();
+            }
             columnMasterKey = new CspColumnMasterKey(DatabaseHelper.GenerateUniqueName("CMK"), certificate.Thumbprint, certStoreProvider, DataTestUtility.EnclaveEnabled);
             databaseObjects.Add(columnMasterKey);
 

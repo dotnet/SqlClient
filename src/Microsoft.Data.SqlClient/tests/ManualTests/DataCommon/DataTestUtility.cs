@@ -15,6 +15,8 @@ using System.Threading.Tasks;
 using Microsoft.Identity.Client;
 using Microsoft.Data.SqlClient.TestUtilities;
 using Xunit;
+using Azure.Security.KeyVault.Keys;
+using Azure.Identity;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -31,6 +33,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string AADServicePrincipalSecret = null;
         public static readonly string AKVBaseUrl = null;
         public static readonly string AKVUrl = null;
+        public static readonly string AKVOriginalUrl = null;
+        public static readonly string AKVTenantId = null;
         public static readonly string AKVClientId = null;
         public static readonly string AKVClientSecret = null;
         public static List<string> AEConnStrings = new List<string>();
@@ -42,6 +46,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly bool SupportsFileStream = false;
         public static readonly bool UseManagedSNIOnWindows = false;
         public static readonly bool IsAzureSynapse = false;
+        public static Uri AKVBaseUri = null;
+
         public static readonly string DNSCachingConnString = null;
         public static readonly string DNSCachingServerCR = null;  // this is for the control ring
         public static readonly string DNSCachingServerTR = null;  // this is for the tenant ring
@@ -102,14 +108,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Console.WriteLine($"App Context switch {ManagedNetworkingAppContextSwitch} enabled on {Environment.OSVersion}");
             }
 
-            string url = c.AzureKeyVaultURL;
-            if (!string.IsNullOrEmpty(url) && Uri.TryCreate(url, UriKind.Absolute, out Uri AKVBaseUri))
+            AKVOriginalUrl = c.AzureKeyVaultURL;
+            if (!string.IsNullOrEmpty(AKVOriginalUrl) && Uri.TryCreate(AKVOriginalUrl, UriKind.Absolute, out AKVBaseUri))
             {
                 AKVBaseUri = new Uri(AKVBaseUri, "/");
                 AKVBaseUrl = AKVBaseUri.AbsoluteUri;
                 AKVUrl = (new Uri(AKVBaseUri, $"/keys/{AKVKeyName}")).AbsoluteUri;
             }
 
+            AKVTenantId = c.AzureKeyVaultTenantId;
             AKVClientId = c.AzureKeyVaultClientId;
             AKVClientSecret = c.AzureKeyVaultClientSecret;
 
@@ -297,7 +304,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         //          Ref: https://feedback.azure.com/forums/307516-azure-synapse-analytics/suggestions/17858869-support-always-encrypted-in-sql-data-warehouse
         public static bool IsAKVSetupAvailable()
         {
-            return !string.IsNullOrEmpty(AKVUrl) && !string.IsNullOrEmpty(AKVClientId) && !string.IsNullOrEmpty(AKVClientSecret) && IsNotAzureSynapse();
+            return !string.IsNullOrEmpty(AKVUrl) && !string.IsNullOrEmpty(AKVClientId) && !string.IsNullOrEmpty(AKVClientSecret) && !string.IsNullOrEmpty(AKVTenantId) && IsNotAzureSynapse();
         }
 
         public static bool IsUsingManagedSNI() => UseManagedSNIOnWindows;
