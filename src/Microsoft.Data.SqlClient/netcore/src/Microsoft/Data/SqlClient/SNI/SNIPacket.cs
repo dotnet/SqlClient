@@ -336,6 +336,5 @@ namespace Microsoft.Data.SqlClient.SNI
 
             return copyLength;
         }
-
     }
 }

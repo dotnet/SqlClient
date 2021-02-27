@@ -306,7 +306,7 @@ namespace Microsoft.Data.SqlClient.SNI
                                 {
                                     // if the data in the packet being processed is exactly and only the data that is going to sent
                                     // on to the parser then don't copy it to a new packet just forward the current packet once we've
-                                    // fiddled the data pointer so that it skips the header data when
+                                    // fiddled the data pointer so that it skips the header data
                                     _partial = packet;
                                     packet = null;
                                     _partial.SetDataToRemainingContents();
@@ -388,7 +388,7 @@ namespace Microsoft.Data.SqlClient.SNI
                                     _headerCount = 0;
                                     _state = State.Header;
 
-                                    if (packet==null || packet.DataLeft == 0)
+                                    if (packet == null || packet.DataLeft == 0)
                                     {
                                         if (packet != null)
                                         {

@@ -65,7 +65,6 @@ namespace Microsoft.Data.SqlClient.SNI
             Interlocked.Add(ref packet._refCount, -1);
             packet._traceTag = null;
             packet.AddHistory(false);
-            //packet.PushPath(new StackTrace().ToString());
             GC.SuppressFinalize(packet);
 #endif
             _pool.Return(packet);

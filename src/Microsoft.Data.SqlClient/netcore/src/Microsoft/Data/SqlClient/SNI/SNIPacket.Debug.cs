@@ -6,8 +6,8 @@
                       // return problems
 
 //#define TRACE_PATH  // this is used for advanced debugging when you need to see what functions the packet passes through. In each location you want to trace
-                    // add a call to PushPath or PushPathStack and then when you hit a breakpoint or assertion failure inspect the _path variable
-                    // to see the pushed entries since the packet was rented. 
+                    // add a call to PushPath or PushPathStack e.g. packet.PushPath(new StackTrace().ToString()); and then when you hit a breakpoint or
+                    // assertion failure inspect the _path variable to see the pushed entries since the packet was rented. 
 
 using System;
 using System.Collections.Generic;
@@ -182,7 +182,6 @@ namespace Microsoft.Data.SqlClient.SNI
             );
         }
 #endif
-
     }
 #endif
 }
