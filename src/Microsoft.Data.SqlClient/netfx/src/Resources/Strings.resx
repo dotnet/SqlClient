@@ -4614,4 +4614,7 @@
   <data name="SqlRetryLogic_RetryExceeded" xml:space="preserve">
     <value>The number of retries has exceeded the maximum of {0} attempt(s).</value>
   </data>
+  <data name="SqlRetryLogic_InvalidMinMaxPair" xml:space="preserve">
+    <value>'{0}' is not less than '{1}'; '{2}' cannot be greater than '{3}'.</value>
+  </data>
 </root>

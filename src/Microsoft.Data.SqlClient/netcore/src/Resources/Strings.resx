@@ -1944,4 +1944,7 @@
   <data name="SqlAppContextSwitchManager_InvalidValue" xml:space="preserve">
     <value>Exception occurred while trying to set the AppContext Switch '{0}'={1}.</value>
   </data>
+  <data name="SqlRetryLogic_InvalidMinMaxPair" xml:space="preserve">
+    <value>'{0}' is not less than '{1}'; '{2}' cannot be greater than '{3}'.</value>
+  </data>
 </root>

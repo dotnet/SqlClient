@@ -71,7 +71,7 @@ namespace Microsoft.Data.SqlClient
 
             if (maxTimeInterval < minTimeInterval)
             {
-                throw SqlReliabilityUtil.ArgumentOutOfRange(nameof(maxTimeInterval), maxTimeInterval, minTimeInterval, _maxValue);
+                throw SqlReliabilityUtil.InvalidMinAndMaxPair(nameof(minTimeInterval), minTimeInterval, nameof(maxTimeInterval), maxTimeInterval);
             }
         }
 

@@ -79,7 +79,6 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private void AssignProviders(SqlRetryLogicBaseProvider cnnProvider = null, SqlRetryLogicBaseProvider cmdProvider = null)
         {
-            //Console.WriteLine($"AssignProviders: from {System.Diagnostics.Process.GetCurrentProcess().Id} process.");
             ConnectionProvider = cnnProvider ?? SqlConfigurableRetryFactory.CreateNoneRetryProvider();
             CommandProvider = cmdProvider ?? SqlConfigurableRetryFactory.CreateNoneRetryProvider();
         }

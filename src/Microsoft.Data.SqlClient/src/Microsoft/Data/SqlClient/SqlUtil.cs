@@ -25,5 +25,8 @@ namespace Microsoft.Data.SqlClient
 
         internal static ArgumentNullException ArgumentNull(string paramName)
             => new ArgumentNullException(paramName);
+
+        internal static ArgumentOutOfRangeException InvalidMinAndMaxPair(string minParamName, TimeSpan minValue, string maxParamName, TimeSpan maxValue)
+            => new ArgumentOutOfRangeException(minParamName, StringsHelper.GetString(Strings.SqlRetryLogic_InvalidMinMaxPair, minValue, maxValue , minParamName, maxParamName));
     }
 }

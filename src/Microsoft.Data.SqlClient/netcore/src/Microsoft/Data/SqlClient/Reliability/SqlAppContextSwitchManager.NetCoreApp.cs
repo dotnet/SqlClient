@@ -25,8 +25,6 @@ namespace Microsoft.Data.SqlClient
             if (appContextSwitches != null)
             {
                 ApplySwitchValues(appContextSwitches.Value?.Split('=', ';'));
-                SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Successfully assigned the AppContext switches.",
-                                                       TypeName, methodName);
             }
 
             SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Exit point.", TypeName, methodName);
