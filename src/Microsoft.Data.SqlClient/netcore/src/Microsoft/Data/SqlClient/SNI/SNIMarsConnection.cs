@@ -26,6 +26,8 @@ namespace Microsoft.Data.SqlClient.SNI
 
         public int ProtocolVersion => _lowerHandle.ProtocolVersion;
 
+        public object DemuxerSync => this;
+
         /// <summary>
         /// Constructor
         /// </summary>
@@ -34,10 +36,9 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             _connectionId = Guid.NewGuid();
             _sessions = new Dictionary<int, SNIMarsHandle>();
-            _state = State.Header;
+            _demuxState = DemuxState.Header;
             _headerCount = 0;
             _headerBytes = new byte[SNISMUXHeader.HEADER_LENGTH];
-            _header = new SNISMUXHeader();
             _nextSessionId = 0;
             _lowerHandle = lowerHandle;
             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "Created MARS Session Id {0}", args0: ConnectionId);
@@ -46,7 +47,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
         public SNIMarsHandle CreateMarsSession(object callbackObject, bool async)
         {
-            lock (this)
+            lock (DemuxerSync)
             {
                 ushort sessionId = _nextSessionId++;
                 SNIMarsHandle handle = new SNIMarsHandle(this, sessionId, callbackObject, async);
@@ -85,7 +86,7 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             using (TrySNIEventScope.Create(nameof(SNIMarsConnection)))
             {
-                lock (this)
+                lock (DemuxerSync)
                 {
                     return _lowerHandle.Send(packet);
                 }
@@ -102,7 +103,7 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             using (TrySNIEventScope.Create(nameof(SNIMarsConnection)))
             {
-                lock (this)
+                lock (DemuxerSync)
                 {
                     return _lowerHandle.SendAsync(packet, callback);
                 }
@@ -127,7 +128,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     packet = null;
                 }
 
-                lock (this)
+                lock (DemuxerSync)
                 {
                     var response = _lowerHandle.ReceiveAsync(ref packet);
 #if DEBUG
@@ -146,7 +147,7 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             using (TrySNIEventScope.Create(nameof(SNIMarsConnection)))
             {
-                lock (this)
+                lock (DemuxerSync)
                 {
                     return _lowerHandle.CheckConnection();
                 }
@@ -158,8 +159,8 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         public void HandleReceiveError(SNIPacket packet)
         {
-            Debug.Assert(Monitor.IsEntered(this), "HandleReceiveError was called without being locked.");
-            if (!Monitor.IsEntered(this))
+            Debug.Assert(Monitor.IsEntered(DemuxerSync), "HandleReceiveError was called without demuxer lock being taken.");
+            if (!Monitor.IsEntered(DemuxerSync))
             {
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.ERR, "MARS Session Id {0}, function was called without being locked.", args0: ConnectionId);
             }
@@ -230,16 +231,18 @@ namespace Microsoft.Data.SqlClient.SNI
         }
 #endif
 
-        private enum State : uint
+        private enum DemuxState : uint
         {
             Header = 1,
             Payload = 2,
             Dispatch = 3
         }
 
-        private enum LoopState : uint
+        private enum State : uint
         {
-            Run,
+            Demux,
+            HandleAck,
+            HandleData,
             Recieve,
             Finish,
             Error
@@ -247,10 +250,10 @@ namespace Microsoft.Data.SqlClient.SNI
 
 
         // the following variables are used only inside HandleRecieveComplete
-        // all access to these variables must be performed under lock(this) because
+        // all access to these variables must be performed under lock(DemuxerSync) because
         // RecieveAsync can immediately return a new packet causing reentrant behaviour 
         // without the lock.
-        private State _state;
+        private DemuxState _demuxState;
 
         private byte[] _headerBytes;
         private int _headerCount;
@@ -258,6 +261,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
         private int _payloadLength;
         private int _payloadCount;
+
         private SNIPacket _partial;
 
         public void HandleReceiveComplete(SNIPacket packet, uint sniErrorCode)
@@ -266,7 +270,7 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 if (sniErrorCode != TdsEnums.SNI_SUCCESS)
                 {
-                    lock (this)
+                    lock (DemuxerSync)
                     {
                         HandleReceiveError(packet);
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.ERR, "MARS Session Id {0}, Handled receive error code: {1}", args0: _lowerHandle?.ConnectionId, args1: sniErrorCode);
@@ -274,166 +278,253 @@ namespace Microsoft.Data.SqlClient.SNI
                     }
                 }
 
-                LoopState loopState = LoopState.Run;
-                lock (this)
+                State state = State.Demux;
+                State nextState = State.Demux;
+                
+                SNISMUXHeader handleHeader = default;
+                SNIMarsHandle handleSession = null;
+                SNIPacket handlePacket = null;
+
+                while (state != State.Error && state != State.Finish)
                 {
-                    while (loopState == LoopState.Run)
+                    switch (state)
                     {
-                        switch (_state)
-                        {
-                            case State.Header:
-                                int taken = packet.TakeData(_headerBytes, _headerCount, SNISMUXHeader.HEADER_LENGTH - _headerCount);
-                                _headerCount += taken;
-                                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "MARS Session Id {0}, took {1} header bytes", args0: _lowerHandle?.ConnectionId, args1: packet.DataLeft,args2: taken);
-                                if (_headerCount == SNISMUXHeader.HEADER_LENGTH)
+                        case State.Demux:
+                            lock (DemuxerSync)
+                            {
+                                switch (_demuxState)
                                 {
-                                    _header.Read(_headerBytes);
-                                    _payloadLength = (int)_header.length;
-                                    _payloadCount = 0;
-                                    _partial = RentPacket(headerSize: 0, dataSize: _payloadLength);
-                                    _state = State.Payload;
-                                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "MARS Session Id {0}, header complete, _payloadLength {1}", args0: _lowerHandle?.ConnectionId, args1: _payloadLength);
-                                    goto case State.Payload;
-                                }
-                                else
-                                {
-                                    loopState = LoopState.Recieve;
-                                }
-                                break;
-
-                            case State.Payload:
-                                if (packet.DataLeft == _payloadLength && _partial == null)
-                                {
-                                    // if the data in the packet being processed is exactly and only the data that is going to sent
-                                    // on to the parser then don't copy it to a new packet just forward the current packet once we've
-                                    // fiddled the data pointer so that it skips the header data
-                                    _partial = packet;
-                                    packet = null;
-                                    _partial.SetDataToRemainingContents();
-                                    _state = State.Dispatch;
-                                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "MARS Session Id {0}, forwarding packet contents", args0: _lowerHandle?.ConnectionId, args1: _header?.sessionId);
-                                    goto case State.Dispatch;
-                                }
-                                else
-                                {
-                                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "MARS Session Id {0}, reconstructing packet contents", args0: _lowerHandle?.ConnectionId, args1: _header?.sessionId);
-                                    int wanted = _payloadLength - _payloadCount;
-                                    int transferred = SNIPacket.TransferData(packet, _partial, wanted);
-                                    _payloadCount += transferred;
-                                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "MARS Session Id {0}, took {1} payload bytes", args0: _lowerHandle?.ConnectionId, args1: transferred);
-
-                                    if (_payloadCount == _payloadLength)
-                                    {
-                                        // payload is complete so dispatch the current packet
-                                        _state = State.Dispatch;
-                                        goto case State.Dispatch;
-                                    }
-                                    else if (packet.DataLeft == 0)
-                                    {
-                                        // no more data in this packet so wait for a new one
-                                        loopState = LoopState.Recieve;
-                                    }
-                                    else
-                                    {
-                                        // start the loop again and decode the next packet in the input
-                                        _headerCount = 0;
-                                        _state = State.Header;
-                                    }
-                                }
-
-                                break;
-
-                            case State.Dispatch:
-                                if (_sessions.TryGetValue(_header.sessionId, out SNIMarsHandle session))
-                                {
-                                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "MARS Session Id {0}, Current Session assigned to Session Id {1}", args0: _lowerHandle?.ConnectionId, args1: _header?.sessionId);
-                                    switch ((SNISMUXFlags)_header.flags)
-                                    {
-                                        case SNISMUXFlags.SMUX_DATA:
-                                            session.HandleReceiveComplete(_partial, _header);
-                                            // do not return the _partial packet, the receiver is responsible for returning the 
-                                            // packet once it has been used because it can take sync and async paths from here
-                                            _partial = null;
-                                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "SMUX_DATA | MARS Session Id {0}, Current Session {1} completed receiving Data", args0: _lowerHandle?.ConnectionId, args1: _header?.sessionId);
-                                            break;
-
-                                        case SNISMUXFlags.SMUX_ACK:
-                                            ReturnPacket(_partial);
-                                            _partial = null;
-                                            try
-                                            {
-                                                session.HandleAck(_header.highwater);
-                                                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "SMUX_ACK | MARS Session Id {0}, Current Session {1} handled ack", args0: _lowerHandle?.ConnectionId, args1: _header?.sessionId);
-                                            }
-                                            catch (Exception e)
-                                            {
-                                                SNICommon.ReportSNIError(SNIProviders.SMUX_PROV, SNICommon.InternalExceptionError, e);
-                                            }
-                                            break;
-
-                                        case SNISMUXFlags.SMUX_FIN:
-                                            ReturnPacket(_partial);
-                                            _partial = null;
-                                            _sessions.Remove(_header.sessionId);
-                                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "SMUX_FIN | MARS Session Id {0}, SMUX_FIN flag received, Current Header Session Id {1} removed", args0: _lowerHandle?.ConnectionId, args1: _header?.sessionId);
-                                            break;
-
-                                        default:
-                                            Debug.Fail("unknown smux packet flag");
-                                            break;
-                                    }
-
-                                    // partial packet has been fully reconstructed and dispatched so change to header state 
-                                    // to be ready to decode another smux header
-                                    _headerCount = 0;
-                                    _state = State.Header;
-
-                                    if (packet == null || packet.DataLeft == 0)
-                                    {
-                                        if (packet != null)
+                                    case DemuxState.Header:
+                                        int taken = packet.TakeData(_headerBytes, _headerCount, SNISMUXHeader.HEADER_LENGTH - _headerCount);
+                                        _headerCount += taken;
+                                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "MARS Session Id {0}, took {1} header bytes", args0: _lowerHandle?.ConnectionId, args1: packet.DataLeft, args2: taken);
+                                        if (_headerCount == SNISMUXHeader.HEADER_LENGTH)
                                         {
-                                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "MARS Session Id {0}, run out of data , queuing receive", args0: _lowerHandle?.ConnectionId, args1: _header?.sessionId);
+                                            _header.Read(_headerBytes);
+                                            _payloadLength = (int)_header.Length;
+                                            _payloadCount = 0;
+                                            _demuxState = DemuxState.Payload;
+                                            state = State.Demux;
+                                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "MARS Session Id {0}, header complete, _payloadLength {1}", args0: _lowerHandle?.ConnectionId, args1: _payloadLength);
+                                            goto case DemuxState.Payload;
                                         }
-                                        // no more data in this packet or the packet has been forwarded so exit 
-                                        // the loop and wait for a new packet to be recieved
-                                        loopState = LoopState.Recieve;
-                                    }
+                                        else
+                                        {
+                                            state = State.Recieve;
+                                        }
+                                        break;
+
+                                    case DemuxState.Payload:
+                                        if (packet.DataLeft == _payloadLength && _partial == null)
+                                        {
+                                            // if the data in the packet being processed is exactly and only the data that is going to sent
+                                            // on to the parser then don't copy it to a new packet just forward the current packet once we've
+                                            // fiddled the data pointer so that it skips the header data
+                                            _partial = packet;
+                                            packet = null;
+                                            _partial.SetDataToRemainingContents();
+                                            _demuxState = DemuxState.Dispatch;
+                                            state = State.Demux;
+                                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "MARS Session Id {0}, forwarding packet contents", args0: _lowerHandle?.ConnectionId, args1: _header.SessionId);
+                                            goto case DemuxState.Dispatch;
+                                        }
+                                        else
+                                        {
+                                            if (_partial == null)
+                                            {
+                                                _partial = RentPacket(headerSize: 0, dataSize: _payloadLength);
+                                            }
+                                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "MARS Session Id {0}, reconstructing packet contents", args0: _lowerHandle?.ConnectionId, args1: _header.SessionId);
+                                            int wanted = _payloadLength - _payloadCount;
+                                            int transferred = SNIPacket.TransferData(packet, _partial, wanted);
+                                            _payloadCount += transferred;
+                                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "MARS Session Id {0}, took {1} payload bytes", args0: _lowerHandle?.ConnectionId, args1: transferred);
+
+                                            if (_payloadCount == _payloadLength)
+                                            {
+                                                // payload is complete so dispatch the current packet
+                                                _demuxState = DemuxState.Dispatch;
+                                                state = State.Recieve;
+                                                goto case DemuxState.Dispatch;
+                                            }
+                                            else if (packet.DataLeft == 0)
+                                            {
+                                                // no more data in the delivered packet so wait for a new one
+                                                _demuxState = DemuxState.Payload;
+                                                state = State.Recieve;
+                                            }
+                                            else
+                                            {
+                                                // data left in the delivered packet so start the demux loop 
+                                                // again and decode the next packet in the input
+                                                _headerCount = 0;
+                                                _demuxState = DemuxState.Header;
+                                                state = State.Demux;
+                                            }
+                                        }
+
+                                        break;
+
+                                    case DemuxState.Dispatch:
+                                        if (_sessions.TryGetValue(_header.SessionId, out SNIMarsHandle session))
+                                        {
+                                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "MARS Session Id {0}, Current Session assigned to Session Id {1}", args0: _lowerHandle?.ConnectionId, args1: _header.SessionId);
+                                            switch ((SNISMUXFlags)_header.Flags)
+                                            {
+                                                case SNISMUXFlags.SMUX_DATA:
+                                                    handleSession = session;
+                                                    session = null;
+                                                    handleHeader = _header.Clone();
+                                                    handlePacket = _partial;
+                                                    _partial = null;
+                                                    // move to the state for sending the data to the mars handle and setup
+                                                    // the state that should be moved to after that operation has succeeded
+                                                    state = State.HandleData;
+                                                    if (packet != null && packet.DataLeft > 0)
+                                                    {
+                                                        nextState = State.Demux;
+                                                    }
+                                                    else
+                                                    {
+                                                        nextState = State.Recieve;
+                                                    }
+                                                    break;
+
+                                                case SNISMUXFlags.SMUX_ACK:
+                                                    handleSession = session;
+                                                    session = null;
+                                                    handleHeader = _header.Clone();
+                                                    ReturnPacket(_partial);
+                                                    _partial = null;
+                                                    // move to the state for sending the data to the mars handle and setup
+                                                    // the state that should be moved to after that operation has succeeded
+                                                    state = State.HandleAck;
+                                                    if (packet != null && packet.DataLeft > 0)
+                                                    {
+                                                        nextState = State.Demux;
+                                                    }
+                                                    else
+                                                    {
+                                                        nextState = State.Recieve;
+                                                    }
+                                                    break;
+
+                                                case SNISMUXFlags.SMUX_FIN:
+                                                    ReturnPacket(_partial);
+                                                    _partial = null;
+                                                    _sessions.Remove(_header.SessionId);
+                                                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "SMUX_FIN | MARS Session Id {0}, SMUX_FIN flag received, Current Header Session Id {1} removed", args0: _lowerHandle?.ConnectionId, args1: _header.SessionId);
+                                                    break;
+
+                                                default:
+                                                    Debug.Fail("unknown smux packet flag");
+                                                    break;
+                                            }
+
+                                            // a full packet has been decoded and queued for sending by setting the state or the 
+                                            // handle it was sent to no longer exists and the handle has been dropped. Now reset the
+                                            // demuxer state ready to recode another packet
+                                            _header.Clear();
+                                            _headerCount = 0;
+                                            _demuxState = DemuxState.Header;
+
+                                            // if the state is set to demux more data and there is no data left then change
+                                            // the state to request more data
+                                            if (state == State.Demux && (packet == null || packet.DataLeft == 0))
+                                            {
+                                                if (packet != null)
+                                                {
+                                                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "MARS Session Id {0}, run out of data , queuing receive", args0: _lowerHandle?.ConnectionId, args1: _header.SessionId);
+                                                }
+                                                state = State.Recieve;
+                                            }
+
+                                        }
+                                        else
+                                        {
+                                            SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.SMUX_PROV, 0, SNICommon.InvalidParameterError, string.Empty);
+                                            HandleReceiveError(packet);
+                                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.ERR, "Current Header Session Id {0} not found, MARS Session Id {1} will be destroyed, New SNI error created: {2}", args0: _header.SessionId, args1: _lowerHandle?.ConnectionId, args2: sniErrorCode);
+                                            packet = null;
+                                            _lowerHandle.Dispose();
+                                            _lowerHandle = null;
+                                            state = State.Error;
+                                        }
+                                        break;
+                                }
+                            }
+                            break;
+
+                        case State.HandleAck:
+                            Debug.Assert(handleSession != null, "dispatching ack to null SNIMarsHandle");
+                            Debug.Assert(!Monitor.IsEntered(DemuxerSync), "do not dispatch ack to session handle while holding the demuxer lock");
+                            try
+                            {
+                                handleSession.HandleAck(handleHeader.Highwater);
+                                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "SMUX_ACK | MARS Session Id {0}, Current Session {1} handled ack", args0: _lowerHandle?.ConnectionId, args1: _header.SessionId);
+                            }
+                            catch (Exception e)
+                            {
+                                SNICommon.ReportSNIError(SNIProviders.SMUX_PROV, SNICommon.InternalExceptionError, e);
+                            }
+                            finally
+                            {
+                                handleHeader = default;
+                                handleSession = null;
+                            }
+                            state = nextState;
+                            nextState = State.Finish;
+                            break;
+
+                        case State.HandleData:
+                            Debug.Assert(handleSession != null, "dispatching data to null SNIMarsHandle");
+                            Debug.Assert(handlePacket != null, "dispatching null data to SNIMarsHandle");
+                            Debug.Assert(!Monitor.IsEntered(DemuxerSync), "do not dispatch data to session handle while holding the demuxer lock");
+                            // do not ReturnPacket(handlePacket) the receiver is responsible for returning the packet 
+                            // once it has been used because it can take sync and async paths from to the receiver and 
+                            // only the reciever can make the decision on when it is completed and can be returned
+                            try
+                            {
+                                handleSession.HandleReceiveComplete(handlePacket, handleHeader);
+                                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "SMUX_DATA | MARS Session Id {0}, Current Session {1} completed receiving Data", args0: _lowerHandle?.ConnectionId, args1: _header.SessionId);
+                            }
+                            finally
+                            {
+                                handleHeader = default;
+                                handleSession = null;
+                                handlePacket = null;
+                            }
+                            state = nextState;
+                            nextState = State.Finish;
+                            break;
+
+                        case State.Recieve:
+                            if (packet != null)
+                            {
+                                Debug.Assert(packet.DataLeft == 0, "loop exit with data remaining");
+                                ReturnPacket(packet);
+                                packet = null;
+                            }
+
+                            lock (DemuxerSync)
+                            {
+                                uint receiveResult = ReceiveAsync(ref packet);
+                                if (receiveResult == TdsEnums.SNI_SUCCESS_IO_PENDING)
+                                {
+                                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "MARS Session Id {0}, SMUX DATA Header SNI Packet received with code {1}", args0: ConnectionId, args1: receiveResult);
+                                    packet = null;
                                 }
                                 else
                                 {
-                                    SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.SMUX_PROV, 0, SNICommon.InvalidParameterError, string.Empty);
                                     HandleReceiveError(packet);
-                                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.ERR, "Current Header Session Id {0} not found, MARS Session Id {1} will be destroyed, New SNI error created: {2}", args0: _header?.sessionId, args1: _lowerHandle?.ConnectionId, args2: sniErrorCode);
-                                    packet = null;
-                                    _lowerHandle.Dispose();
-                                    _lowerHandle = null;
-                                    loopState = LoopState.Error;
+                                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.ERR, "MARS Session Id {0}, Handled receive error code: {1}", args0: _lowerHandle?.ConnectionId, args1: receiveResult);
                                 }
-                                break;
-                        }
+                            }
+                            state = State.Finish;
+                            break;
                     }
                 }
 
-                if (loopState == LoopState.Recieve)
-                {
-                    if (packet != null)
-                    {
-                        Debug.Assert(packet.DataLeft == 0, "loop exit with data remaining");
-                        ReturnPacket(packet);
-                        packet = null;
-                    }
-
-                    if (ReceiveAsync(ref packet) == TdsEnums.SNI_SUCCESS_IO_PENDING)
-                    {
-                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "MARS Session Id {0}, SMUX DATA Header SNI Packet received with code {1}", args0: ConnectionId, args1: TdsEnums.SNI_SUCCESS_IO_PENDING);
-                        packet = null;
-                    }
-                    else
-                    {
-                        HandleReceiveError(packet);
-                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.ERR, "MARS Session Id {0}, Handled receive error code: {1}", args0: _lowerHandle?.ConnectionId, args1: sniErrorCode);
-                    }
-                }
             }
         }
 
