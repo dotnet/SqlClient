@@ -49,10 +49,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             try
             {
-#if NET50_OR_LATER
-if (OperatingSystem.IsWindows())
-    {
-#endif
                 const int KEYSIZE = 2048;
                 int providerType = GetProviderKey(providerName);
 
@@ -64,9 +60,6 @@ if (OperatingSystem.IsWindows())
                 //key in the container.
                 RSACryptoServiceProvider rsaAlg = new RSACryptoServiceProvider(KEYSIZE, cspParams);
                 rsaAlg.PersistKeyInCsp = true;
-#if NET50_OR_LATER
-}
-#endif
             }
             catch (CryptographicException e)
             {
@@ -88,10 +81,6 @@ if (OperatingSystem.IsWindows())
         {
             try
             {
-#if NET50_OR_LATER
-if (OperatingSystem.IsWindows())
-    {
-#endif
                 int providerType = GetProviderKey(providerName);
 
                 // Create a new instance of CspParameters.
@@ -107,9 +96,6 @@ if (OperatingSystem.IsWindows())
 
                 //Call Clear to release resources and delete the key from the container.
                 rsaAlg.Clear();
-#if NET50_OR_LATER
-}
-#endif
             }
             catch (CryptographicException e)
             {
@@ -175,22 +161,11 @@ if (OperatingSystem.IsWindows())
             X509Store certStore = null;
             try
             {
-#if NET50_OR_LATER
-if (OperatingSystem.IsWindows())
-    {
-#endif
                 certStore = new X509Store(StoreName.My, certificateStoreLocation);
                 certStore.Open(OpenFlags.ReadOnly);
                 X509Certificate2Collection certCollection = certStore.Certificates.Find(X509FindType.FindBySubjectName, certificateName, validOnly: false);
                 Debug.Assert(certCollection != null && certCollection.Count > 0);
                 return certCollection[0];
-#if NET50_OR_LATER
-}
-else{
-return null;
-}
-#endif
-
             }
             finally
             {
@@ -206,10 +181,6 @@ return null;
         /// </summary>
         internal static string GetCspPathFromCertificate(X509Certificate2 certificate)
         {
-#if NET50_OR_LATER
-if (OperatingSystem.IsWindows())
-    {
-#endif
             if (certificate.PrivateKey is RSACryptoServiceProvider csp)
             {
                 return string.Concat(csp.CspKeyContainerInfo.ProviderName, @"/", csp.CspKeyContainerInfo.KeyContainerName);
@@ -218,13 +189,6 @@ if (OperatingSystem.IsWindows())
             {
                 return null;
             }
-#if NET50_OR_LATER
-}
-else
-{
-return null;
-}
-#endif
         }
 
         /// <summary>
