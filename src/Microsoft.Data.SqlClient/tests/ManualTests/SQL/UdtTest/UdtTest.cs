@@ -294,8 +294,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         {
                             if(e.Message.Contains("Rerun the transaction"))
                                 rerun = true;
-                            else 
-                                throw e;
                         }
                     }
                     while(rerun);

@@ -7,9 +7,15 @@ using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Xunit;
+#if NET50_OR_LATER
+using System.Runtime.Versioning;
+#endif
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
+#if NET50_OR_LATER
+    [SupportedOSPlatform("windows")]
+#endif
     [PlatformSpecific(TestPlatforms.Windows)]
     class CertificateUtilityWin
     {
