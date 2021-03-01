@@ -1354,7 +1354,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     databaseObjects.ForEach(o => o.Drop(sqlConnection));
                 }
             }
-            certificate?.Dispose();
         }
     }
 

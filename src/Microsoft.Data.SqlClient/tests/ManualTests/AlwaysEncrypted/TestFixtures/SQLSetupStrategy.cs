@@ -255,7 +255,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     databaseObjects.ForEach(o => o.Drop(sqlConnection));
                 }
             }
-            certificate?.Dispose();
         }
     }
 
@@ -273,12 +272,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             {
                 certStoreFixture = new SQLSetupStrategyCertStoreProvider();
             }
-#if !NET46
             else
             {
                 akvFixture = new SQLSetupStrategyAzureKeyVault();
             }
-#endif
         }
 
         public void Dispose()

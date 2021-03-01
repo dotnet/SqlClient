@@ -6,6 +6,7 @@
     <TargetGroup Condition="$(TargetGroup) == ''">netcoreapp</TargetGroup>
     <Configurations>Debug;Release;net461-Release;net461-Debug;netcoreapp2.1-Debug;netcoreapp2.1-Release;netcoreapp3.1-Debug;netcoreapp3.1-Release</Configurations>
     <Platforms>AnyCPU;x86;x64</Platforms>
+    <DefineConstants Condition="'$(TargetGroup)'=='netfx'">$(DefineConstants);NETFX</DefineConstants>
     <DefineConstants Condition="'$(TargetGroup)'=='netcoreapp'">$(DefineConstants);NETCOREAPP</DefineConstants>
     <DefineConstants Condition="'$(TargetGroup)' == 'netcoreapp' AND !$(TargetFramework.StartsWith('netcoreapp'))">$(DefineConstants);NET50_OR_LATER</DefineConstants>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform).$(AssemblyName)</IntermediateOutputPath>
