@@ -57,6 +57,7 @@ The following table shows the inner transient error list.
 - `DeltaTime` is bigger than 120 seconds.
 - `MinTimeInterval` is bigger than 120 seconds.
 - `MaxTimeInterval` is bigger than 120 seconds.
+- `MinTimeInterval` is not less than `MaxTimeInterval`.
             </exception>
         </CreateExponentialRetryProvider>
         <CreateIncrementalRetryProvider>
@@ -77,6 +78,7 @@ The following table shows the inner transient error list.
 - `DeltaTime` is bigger than 120 seconds.
 - `MinTimeInterval` is bigger than 120 seconds.
 - `MaxTimeInterval` is bigger than 120 seconds.
+- `MinTimeInterval` is not less than `MaxTimeInterval`.
             </exception>
         </CreateIncrementalRetryProvider>
         <CreateFixedRetryProvider>
@@ -97,6 +99,7 @@ The following table shows the inner transient error list.
 - `DeltaTime` is bigger than 120 seconds.
 - `MinTimeInterval` is bigger than 120 seconds.
 - `MaxTimeInterval` is bigger than 120 seconds.
+- `MinTimeInterval` is not less than `MaxTimeInterval`.
             </exception>
         </CreateFixedRetryProvider>
         <CreateNoneRetryProvider>

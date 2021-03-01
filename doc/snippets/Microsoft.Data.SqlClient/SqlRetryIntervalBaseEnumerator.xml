@@ -32,7 +32,7 @@
         <Validate>
             <param name="timeInterval">The gap time of each interval. Must be between 0 and 120 seconds.</param>
             <param name="maxTimeInterval">Maximum time interval value. Must be between 0 and 120 seconds.</param>
-            <param name="minTimeInterval">Minimum time interval value. Must be between 0 and 120 seconds.</param>
+            <param name="minTimeInterval">Minimum time interval value. Must be less than maximum time interval and between 0 and 120 seconds.</param>
             <summary>Validate the enumeration parameters.</summary>
             <exception cref="T:System.ArgumentOutOfRangeException">The supplied arguments failed validation.</exception>
         </Validate>
