@@ -25,10 +25,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             int currentRetries = 0;
             provider.Retrying += (s, e) => currentRetries = e.RetryCount;
             using (var cnn = CreateConnectionWithInvalidCatalog(cnnString, provider, cancelAfterRetries))
-            { var ex = Assert.Throws<AggregateException>(() => cnn.Open()); }
-            Assert.Equal(numberOfTries, currentRetries + 1);
-            Assert.Equal(numberOfTries, ex.InnerExceptions.Count);
-            Assert.Contains(string.Format(_exceedErrMsgPattern, numberOfTries), ex.Message);
+            {
+                var ex = Assert.Throws<AggregateException>(() => cnn.Open());
+                Assert.Equal(numberOfTries, currentRetries + 1);
+                Assert.Equal(numberOfTries, ex.InnerExceptions.Count);
+                Assert.Contains(string.Format(_exceedErrMsgPattern, numberOfTries), ex.Message);
+            }
         }
 
         [Theory]
@@ -39,10 +41,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             int currentRetries = 0;
             provider.Retrying += (s, e) => currentRetries = e.RetryCount;
             using (var cnn = CreateConnectionWithInvalidCatalog(cnnString, provider, cancelAfterRetries))
-            { var ex = Assert.Throws<AggregateException>(() => cnn.Open()); }
-            Assert.Equal(cancelAfterRetries, currentRetries);
-            Assert.Equal(cancelAfterRetries, ex.InnerExceptions.Count);
-            Assert.Contains(string.Format(_cancelErrMsgPattern, currentRetries), ex.Message);
+            {
+                var ex = Assert.Throws<AggregateException>(() => cnn.Open());
+                Assert.Equal(cancelAfterRetries, currentRetries);
+                Assert.Equal(cancelAfterRetries, ex.InnerExceptions.Count);
+                Assert.Contains(string.Format(_cancelErrMsgPattern, currentRetries), ex.Message);
+            }
         }
 
         [ActiveIssue(14590, TestPlatforms.Windows)]
@@ -159,10 +163,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             int currentRetries = 0;
             provider.Retrying += (s, e) => currentRetries = e.RetryCount;
             using (var cnn = CreateConnectionWithInvalidCatalog(cnnString, provider, cancelAfterRetries))
-            { var ex = await Assert.ThrowsAsync<AggregateException>(() => cnn.OpenAsync()); }
-            Assert.Equal(numberOfTries, currentRetries + 1);
-            Assert.Equal(numberOfTries, ex.InnerExceptions.Count);
-            Assert.Contains(string.Format(_exceedErrMsgPattern, numberOfTries), ex.Message);
+            {
+                var ex = await Assert.ThrowsAsync<AggregateException>(() => cnn.OpenAsync());
+                Assert.Equal(numberOfTries, currentRetries + 1);
+                Assert.Equal(numberOfTries, ex.InnerExceptions.Count);
+                Assert.Contains(string.Format(_exceedErrMsgPattern, numberOfTries), ex.Message);
+            }
         }
 
         [Theory]
@@ -174,10 +180,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             int currentRetries = 0;
             provider.Retrying += (s, e) => currentRetries = e.RetryCount;
             using (var cnn = CreateConnectionWithInvalidCatalog(cnnString, provider, cancelAfterRetries))
-            { var ex = await Assert.ThrowsAsync<AggregateException>(() => cnn.OpenAsync()); }
-            Assert.Equal(cancelAfterRetries, currentRetries);
-            Assert.Equal(cancelAfterRetries, ex.InnerExceptions.Count);
-            Assert.Contains(string.Format(_cancelErrMsgPattern, currentRetries), ex.Message);
+            {
+                var ex = await Assert.ThrowsAsync<AggregateException>(() => cnn.OpenAsync());
+                Assert.Equal(cancelAfterRetries, currentRetries);
+                Assert.Equal(cancelAfterRetries, ex.InnerExceptions.Count);
+                Assert.Contains(string.Format(_cancelErrMsgPattern, currentRetries), ex.Message);
+            }
         }
 
         #endregion
