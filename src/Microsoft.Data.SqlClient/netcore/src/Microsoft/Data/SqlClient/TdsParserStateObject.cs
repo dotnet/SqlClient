@@ -36,6 +36,23 @@ namespace Microsoft.Data.SqlClient
             AttentionReceived = 1 << 5    // NOTE: Received is not volatile as it is only ever accessed\modified by TryRun its callees (i.e. single threaded access)
         }
 
+        private sealed class TimeoutState
+        {
+            public const int Stopped = 0;
+            public const int Running = 1;
+            public const int ExpiredAsync = 2;
+            public const int ExpiredSync = 3;
+
+            private readonly int _value;
+
+            public TimeoutState(int value)
+            {
+                _value = value;
+            }
+
+            public int IdentityValue => _value;
+        }
+
         private const int AttentionTimeoutSeconds = 5;
 
         private static readonly ContextCallback s_readAdyncCallbackComplete = ReadAsyncCallbackComplete;
@@ -48,7 +65,7 @@ namespace Microsoft.Data.SqlClient
         private const long CheckConnectionWindow = 50000;
 
 
-        protected readonly TdsParser _parser;                            // TdsParser pointer  
+        protected readonly TdsParser _parser;                            // TdsParser pointer
         private readonly WeakReference _owner = new WeakReference(null);   // the owner of this session, used to track when it's been orphaned
         internal SqlDataReader.SharedState _readerState;                    // susbset of SqlDataReader state (if it is the owner) necessary for parsing abandoned results in TDS
         private int _activateCount;                     // 0 when we're in the pool, 1 when we're not, all others are an error
@@ -113,9 +130,17 @@ namespace Microsoft.Data.SqlClient
         // Timeout variables
         private long _timeoutMilliseconds;
         private long _timeoutTime;                          // variable used for timeout computations, holds the value of the hi-res performance counter at which this request should expire
+        private int _timeoutState; // expected to be one of the constant values TimeoutStopped, TimeoutRunning, TimeoutExpiredAsync, TimeoutExpiredSync
+        private int _timeoutIdentitySource;
+        private volatile int _timeoutIdentityValue;
         internal volatile bool _attentionSent;              // true if we sent an Attention to the server
         internal volatile bool _attentionSending;
-        internal bool _internalTimeout;                     // an internal timeout occurred
+
+        // Below 2 properties are used to enforce timeout delays in code to 
+        // reproduce issues related to theadpool starvation and timeout delay.
+        // It should always be set to false by default, and only be enabled during testing.
+        internal bool _enforceTimeoutDelay = false;
+        internal int _enforcedTimeoutDelayInMilliSeconds = 5000;
 
         private readonly LastIOTimer _lastSuccessfulIOTimer;
 
@@ -238,8 +263,8 @@ namespace Microsoft.Data.SqlClient
         // instead of blocking it will fail.
         internal static bool _failAsyncPends = false;
 
-        // If this is set and an async read is made, then 
-        // we will switch to syncOverAsync mode for the 
+        // If this is set and an async read is made, then
+        // we will switch to syncOverAsync mode for the
         // remainder of the async operation.
         internal static bool _forceSyncOverAsyncAfterFirstPend = false;
 
@@ -542,8 +567,8 @@ namespace Microsoft.Data.SqlClient
                     return false;
                 }
 
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParserStateObject.NullBitmap.Initialize|INFO|ADV> {0}, NBCROW bitmap received, column count = {1}", stateObj.ObjectID, columnsCount);
-                SqlClientEventSource.Log.TryAdvancedTraceBinEvent("<sc.TdsParserStateObject.NullBitmap.Initialize|INFO|ADV> NBCROW bitmap data: ", _nullBitmap, (ushort)_nullBitmap.Length);
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.NullBitmap.Initialize | INFO | ADV | State Object Id {0}, NBCROW bitmap received, column count = {1}", stateObj._objectID, columnsCount);
+                SqlClientEventSource.Log.TryAdvancedTraceBinEvent("TdsParserStateObject.NullBitmap.Initialize | INFO | ADV | State Object Id {0}, Null Bitmap length {1}, NBCROW bitmap data: {2}", stateObj._objectID, (ushort)_nullBitmap.Length, _nullBitmap);
                 return true;
             }
 
@@ -567,7 +592,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             /// <summary>
-            /// If this method returns true, the value is guaranteed to be null. This is not true vice versa: 
+            /// If this method returns true, the value is guaranteed to be null. This is not true vice versa:
             /// if the bitmap value is false (if this method returns false), the value can be either null or non-null - no guarantee in this case.
             /// To determine whether it is null or not, read it from the TDS (per NBCROW design spec, for IMAGE/TEXT/NTEXT columns server might send
             /// bitmap = 0, when the actual value is null).
@@ -677,12 +702,12 @@ namespace Microsoft.Data.SqlClient
         internal void CancelRequest()
         {
             ResetBuffer();    // clear out unsent buffer
-            // If the first sqlbulkcopy timeout, _outputPacketNumber may not be 1, 
-            // the next sqlbulkcopy (same connection string) requires this to be 1, hence reset 
+            // If the first sqlbulkcopy timeout, _outputPacketNumber may not be 1,
+            // the next sqlbulkcopy (same connection string) requires this to be 1, hence reset
             // it here when exception happens in the first sqlbulkcopy
             ResetPacketCounters();
 
-            // VSDD#907507, if bulkcopy write timeout happens, it already sent the attention, 
+            // VSDD#907507, if bulkcopy write timeout happens, it already sent the attention,
             // so no need to send it again
             if (!_bulkCopyWriteTimeout)
             {
@@ -760,11 +785,11 @@ namespace Microsoft.Data.SqlClient
                     // operations.
                     Parser.ProcessPendingAck(this);
                 }
-                _internalTimeout = false;
+                SetTimeoutStateStopped();
             }
         }
 
-        internal abstract void CreatePhysicalSNIHandle(string serverName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[] spnBuffer, bool flushCache, bool async, bool fParallel, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo, bool isIntegratedSecurity = false);
+        internal abstract void CreatePhysicalSNIHandle(string serverName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[][] spnBuffer, bool flushCache, bool async, bool fParallel, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo, bool isIntegratedSecurity = false);
 
         internal abstract void AssignPendingDNSInfo(string userProtocol, string DNSCacheKey, ref SQLDNSInfo pendingDNSInfo);
 
@@ -806,7 +831,7 @@ namespace Microsoft.Data.SqlClient
 
         protected abstract void RemovePacketFromPendingList(PacketHandle pointer);
 
-        internal abstract uint GenerateSspiClientContext(byte[] receivedBuff, uint receivedLength, ref byte[] sendBuff, ref uint sendLength, byte[] _sniSpnBuffer);
+        internal abstract uint GenerateSspiClientContext(byte[] receivedBuff, uint receivedLength, ref byte[] sendBuff, ref uint sendLength, byte[][] _sniSpnBuffer);
 
         internal bool Deactivate()
         {
@@ -859,6 +884,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // If we were not executed under a transaction - decrement the global count
                 // on the parser.
+                SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObject.DecrementOpenResultCount | INFO | State Object Id {0}, Processing Attention.", _objectID);
                 _parser.DecrementNonTransactedOpenResultCount();
             }
             else
@@ -873,7 +899,7 @@ namespace Microsoft.Data.SqlClient
         internal int DecrementPendingCallbacks(bool release)
         {
             int remaining = Interlocked.Decrement(ref _pendingCallbacks);
-            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> {0}, after decrementing _pendingCallbacks: {1}", ObjectID, _pendingCallbacks);
+            SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.DecrementPendingCallbacks | ADV | State Object Id {0}, after decrementing _pendingCallbacks: {1}", _objectID, _pendingCallbacks);
             FreeGcHandle(remaining, release);
             // NOTE: TdsParserSessionPool may call DecrementPendingCallbacks on a TdsParserStateObject which is already disposed
             // This is not dangerous (since the stateObj is no longer in use), but we need to add a workaround in the assert for it
@@ -926,7 +952,7 @@ namespace Microsoft.Data.SqlClient
         internal int IncrementPendingCallbacks()
         {
             int remaining = Interlocked.Increment(ref _pendingCallbacks);
-            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParserStateObject.IncrementPendingCallbacks|ADV> {0}, after incrementing _pendingCallbacks: {1}", ObjectID, _pendingCallbacks);
+            SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.IncrementPendingCallbacks | ADV | State Object Id {0}, after incrementing _pendingCallbacks: {1}", _objectID, _pendingCallbacks);
             Debug.Assert(0 < remaining && remaining <= 3, $"_pendingCallbacks values is invalid after incrementing: {remaining}");
             return remaining;
         }
@@ -1000,7 +1026,7 @@ namespace Microsoft.Data.SqlClient
             // if the header splits buffer reads - special case!
             if ((_partialHeaderBytesRead > 0) || (_inBytesUsed + _inputHeaderLen > _inBytesRead))
             {
-                // VSTS 219884: when some kind of MITM (man-in-the-middle) tool splits the network packets, the message header can be split over 
+                // VSTS 219884: when some kind of MITM (man-in-the-middle) tool splits the network packets, the message header can be split over
                 // several network packets.
                 // Note: cannot use ReadByteArray here since it uses _inBytesPacket which is not set yet.
                 do
@@ -1042,7 +1068,7 @@ namespace Microsoft.Data.SqlClient
                             return false;
                         }
 
-                        if (_internalTimeout)
+                        if (IsTimeoutStateExpired)
                         {
                             ThrowExceptionAndWarning();
                             return true;
@@ -1447,7 +1473,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // The entire int16 is in the packet and in the buffer, so just return it
                 // and take care of the counters.
-                buffer = _inBuff.AsSpan(_inBytesUsed,2);
+                buffer = _inBuff.AsSpan(_inBytesUsed, 2);
                 _inBytesUsed += 2;
                 _inBytesPacket -= 2;
             }
@@ -1481,7 +1507,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             AssertValidState();
-            value = (buffer[3] << 24) + (buffer[2] <<16) + (buffer[1] << 8) + buffer[0];
+            value = (buffer[3] << 24) + (buffer[2] << 16) + (buffer[1] << 8) + buffer[0];
             return true;
 
         }
@@ -2216,7 +2242,7 @@ namespace Microsoft.Data.SqlClient
         internal void OnConnectionClosed()
         {
             // the stateObj is not null, so the async invocation that registered this callback
-            // via the SqlReferenceCollection has not yet completed.  We will look for a 
+            // via the SqlReferenceCollection has not yet completed.  We will look for a
             // _networkPacketTaskSource and mark it faulted.  If we don't find it, then
             // TdsParserStateObject.ReadSni will abort when it does look to see if the parser
             // is open.  If we do, then when the call that created it completes and a continuation
@@ -2230,7 +2256,7 @@ namespace Microsoft.Data.SqlClient
             Parser.State = TdsParserState.Broken;
             Parser.Connection.BreakConnection();
 
-            // Ensure that changing state occurs before checking _networkPacketTaskSource 
+            // Ensure that changing state occurs before checking _networkPacketTaskSource
             Interlocked.MemoryBarrier();
 
             // then check for networkPacketTaskSource
@@ -2247,11 +2273,62 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private void OnTimeout(object state)
+        public void SetTimeoutStateStopped()
         {
-            if (!_internalTimeout)
+            Interlocked.Exchange(ref _timeoutState, TimeoutState.Stopped);
+            _timeoutIdentityValue = 0;
+        }
+
+        public bool IsTimeoutStateExpired
+        {
+            get
             {
-                _internalTimeout = true;
+                int state = _timeoutState;
+                return state == TimeoutState.ExpiredAsync || state == TimeoutState.ExpiredSync;
+            }
+        }
+
+        private void OnTimeoutAsync(object state)
+        {
+            if (_enforceTimeoutDelay)
+            {
+                Thread.Sleep(_enforcedTimeoutDelayInMilliSeconds);
+            }
+
+            int currentIdentityValue = _timeoutIdentityValue;
+            TimeoutState timeoutState = (TimeoutState)state;
+            if (timeoutState.IdentityValue == _timeoutIdentityValue)
+            {
+                // the return value is not useful here because no choice is going to be made using it 
+                // we only want to make this call to set the state knowing that it will be seen later
+                OnTimeoutCore(TimeoutState.Running, TimeoutState.ExpiredAsync);
+            }
+            else
+            {
+                Debug.WriteLine($"OnTimeoutAsync called with identity state={timeoutState.IdentityValue} but current identity is {currentIdentityValue} so it is being ignored");
+            }
+        }
+
+        private bool OnTimeoutSync()
+        {
+            return OnTimeoutCore(TimeoutState.Running, TimeoutState.ExpiredSync);
+        }
+
+        /// <summary>
+        /// attempts to change the timout state from the expected state to the target state and if it succeeds
+        /// will setup the the stateobject into the timeout expired state
+        /// </summary>
+        /// <param name="expectedState">the state that is the expected current state, state will change only if this is correct</param>
+        /// <param name="targetState">the state that will be changed to if the expected state is correct</param>
+        /// <returns>boolean value indicating whether the call changed the timeout state</returns>
+        private bool OnTimeoutCore(int expectedState, int targetState)
+        {
+            Debug.Assert(targetState == TimeoutState.ExpiredAsync || targetState == TimeoutState.ExpiredSync, "OnTimeoutCore must have an expiry state as the targetState");
+
+            bool retval = false;
+            if (Interlocked.CompareExchange(ref _timeoutState, targetState, expectedState) == expectedState)
+            {
+                retval = true;
                 // lock protects against Close and Cancel
                 lock (this)
                 {
@@ -2327,7 +2404,7 @@ namespace Microsoft.Data.SqlClient
                                                 }
                                             }
 
-                                            // Ensure that the connection is no longer usable 
+                                            // Ensure that the connection is no longer usable
                                             // This is needed since the timeout error added above is non-fatal (and so throwing it won't break the connection)
                                             _parser.State = TdsParserState.Broken;
                                             _parser.Connection.BreakConnection();
@@ -2349,6 +2426,7 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
             }
+            return retval;
         }
 
         internal void ReadSni(TaskCompletionSource<object> completion)
@@ -2383,19 +2461,32 @@ namespace Microsoft.Data.SqlClient
             {
                 Debug.Assert(completion != null, "Async on but null asyncResult passed");
 
-                if (_networkPacketTimeout == null)
+                // if the state is currently stopped then change it to running and allocate a new identity value from 
+                // the identity source. The identity value is used to correlate timer callback events to the currently
+                // running timeout and prevents a late timer callback affecting a result it does not relate to
+                int previousTimeoutState = Interlocked.CompareExchange(ref _timeoutState, TimeoutState.Running, TimeoutState.Stopped);
+                if (previousTimeoutState == TimeoutState.Stopped)
                 {
-                    _networkPacketTimeout = ADP.UnsafeCreateTimer(
-                        new TimerCallback(OnTimeout),
-                        null,
-                        Timeout.Infinite,
-                        Timeout.Infinite);
+                    Debug.Assert(_timeoutIdentityValue == 0, "timer was previously stopped without resetting the _identityValue");
+                    _timeoutIdentityValue = Interlocked.Increment(ref _timeoutIdentitySource);
                 }
+
+                _networkPacketTimeout?.Dispose();
+
+                _networkPacketTimeout = ADP.UnsafeCreateTimer(
+                    new TimerCallback(OnTimeoutAsync),
+                    new TimeoutState(_timeoutIdentityValue),
+                    Timeout.Infinite,
+                    Timeout.Infinite
+                );
+                
 
                 // -1 == Infinite
                 //  0 == Already timed out (NOTE: To simulate the same behavior as sync we will only timeout on 0 if we receive an IO Pending from SNI)
                 // >0 == Actual timeout remaining
                 int msecsRemaining = GetTimeoutRemaining();
+
+                Debug.Assert(previousTimeoutState == TimeoutState.Stopped, "previous timeout state was not Stopped");
                 if (msecsRemaining > 0)
                 {
                     ChangeNetworkPacketTimeout(msecsRemaining, Timeout.Infinite);
@@ -2445,12 +2536,15 @@ namespace Microsoft.Data.SqlClient
                         _networkPacketTaskSource.TrySetResult(null);
                     }
                     // Disable timeout timer on error
+                    SetTimeoutStateStopped();
                     ChangeNetworkPacketTimeout(Timeout.Infinite, Timeout.Infinite);
                 }
                 else if (msecsRemaining == 0)
-                { // Got IO Pending, but we have no time left to wait
-                    // Immediately schedule the timeout timer to fire
-                    ChangeNetworkPacketTimeout(0, Timeout.Infinite);
+                {
+                    // Got IO Pending, but we have no time left to wait
+                    // disable the timer and set the error state by calling OnTimeoutSync
+                    ChangeNetworkPacketTimeout(Timeout.Infinite, Timeout.Infinite);
+                    OnTimeoutSync();
                 }
                 // DO NOT HANDLE PENDING READ HERE - which is TdsEnums.SNI_SUCCESS_IO_PENDING state.
                 // That is handled by user who initiated async read, or by ReadNetworkPacket which is sync over async.
@@ -2506,7 +2600,7 @@ namespace Microsoft.Data.SqlClient
                     if ((error != TdsEnums.SNI_SUCCESS) && (error != TdsEnums.SNI_WAIT_TIMEOUT))
                     {
                         // Connection is dead
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.IsConnectionAlive|Info> received error {0} on idle connection", (int)error);
+                        SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObject.IsConnectionAlive | Info | State Object Id {0}, received error {1} on idle connection", _objectID, (int)error);
                         isAlive = false;
                         if (throwOnException)
                         {
@@ -2526,7 +2620,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Checks to see if the underlying connection is still valid (used by idle connection resiliency - for active connections) 
+        /// Checks to see if the underlying connection is still valid (used by idle connection resiliency - for active connections)
         /// NOTE: This is not safe to do on a connection that is currently in use
         /// NOTE: This will mark the connection as broken if it is found to be dead
         /// </summary>
@@ -2565,13 +2659,13 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(_syncOverAsync, "Should never reach here with async on!");
                 bool fail = false;
 
-                if (_internalTimeout)
+                if (IsTimeoutStateExpired)
                 { // This is now our second timeout - time to give up.
                     fail = true;
                 }
                 else
                 {
-                    stateObj._internalTimeout = true;
+                    stateObj.SetTimeoutStateStopped();
                     Debug.Assert(_parser.Connection != null, "SqlConnectionInternalTds handler can not be null at this point.");
                     AddError(new SqlError(TdsEnums.TIMEOUT_EXPIRED, (byte)0x00, TdsEnums.MIN_ERROR_CLASS, _parser.Server, _parser.Connection.TimeoutErrorInternal.GetErrorMessage(), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
 
@@ -2788,11 +2882,31 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(CheckPacket(packet, source) && source != null, "AsyncResult null on callback");
 
                 if (_parser.MARSOn)
-                { // Only take reset lock on MARS and Async.
+                { 
+                    // Only take reset lock on MARS and Async.
                     CheckSetResetConnectionState(error, CallbackType.Read);
                 }
 
                 ChangeNetworkPacketTimeout(Timeout.Infinite, Timeout.Infinite);
+
+                // The timer thread may be unreliable under high contention scenarios. It cannot be
+                // assumed that the timeout has happened on the timer thread callback. Check the timeout
+                // synchrnously and then call OnTimeoutSync to force an atomic change of state. 
+                if (TimeoutHasExpired)
+                {
+                    OnTimeoutSync();
+                }
+
+                // try to change to the stopped state but only do so if currently in the running state
+                // and use cmpexch so that all changes out of the running state are atomic
+                int previousState = Interlocked.CompareExchange(ref _timeoutState, TimeoutState.Running, TimeoutState.Stopped);
+
+                // if the state is anything other than running then this query has reached an end so
+                // set the correlation _timeoutIdentityValue to 0 to prevent late callbacks executing
+                if (_timeoutState != TimeoutState.Running)
+                {
+                    _timeoutIdentityValue = 0;
+                }
 
                 ProcessSniPacket(packet, error);
             }
@@ -2875,7 +2989,7 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(_parser.State == TdsParserState.Broken || _parser.State == TdsParserState.Closed || _parser.Connection.IsConnectionDoomed, "Failed to capture exception while the connection was still healthy");
 
                 // The safest thing to do is to ensure that the connection is broken and attempt to cancel the task
-                // This must be done from another thread to not block the callback thread                
+                // This must be done from another thread to not block the callback thread
                 Task.Factory.StartNew(() =>
                 {
                     _parser.State = TdsParserState.Broken;
@@ -2895,7 +3009,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (sniError != TdsEnums.SNI_SUCCESS)
                 {
-                    SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.WriteAsyncCallback|Info> write async returned error code {0}", (int)sniError);
+                    SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObject.WriteAsyncCallback | Info | State Object Id {0}, Write async returned error code {1}", _objectID, (int)sniError);
                     try
                     {
                         AddError(_parser.ProcessSNIError(this));
@@ -3075,7 +3189,7 @@ namespace Microsoft.Data.SqlClient
         // Takes a span or a byte array and writes it to the buffer
         // If you pass in a span and a null array then the span wil be used.
         // If you pass in a non-null array then the array will be used and the span is ignored.
-        // if the span cannot be written into the current packet then the remaining contents of the span are copied to a 
+        // if the span cannot be written into the current packet then the remaining contents of the span are copied to a
         //  new heap allocated array that will used to callback into the method to continue the write operation.
         private Task WriteBytes(ReadOnlySpan<byte> b, int len, int offsetBuffer, bool canAccumulate = true, TaskCompletionSource<object> completion = null, byte[] array = null)
         {
@@ -3371,7 +3485,7 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG
             else if (!sync && !canAccumulate && SqlCommand.DebugForceAsyncWriteDelay > 0)
             {
-                // Executed synchronously - callback will not be called 
+                // Executed synchronously - callback will not be called
                 TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
                 uint error = sniError;
                 new Timer(obj =>
@@ -3385,7 +3499,7 @@ namespace Microsoft.Data.SqlClient
 
                         if (error != TdsEnums.SNI_SUCCESS)
                         {
-                            SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.WritePacket|Info> write async returned error code {0}", (int)error);
+                            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObject.SNIWritePacket | Info | State Object Id {0}, Write async returned error code {1}", _objectID, (int)error);
                             AddError(_parser.ProcessSNIError(this));
                             ThrowExceptionAndWarning();
                         }
@@ -3420,7 +3534,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.WritePacket|Info> write async returned error code {0}", (int)sniError);
+                    SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObject.SNIWritePacket | Info | State Object Id {0}, Write async returned error code {1}", _objectID, (int)sniError);
                     AddError(_parser.ProcessSNIError(this));
                     ThrowExceptionAndWarning(callerHasConnectionLock);
                 }
@@ -3454,7 +3568,6 @@ namespace Microsoft.Data.SqlClient
                     // Set _attentionSending to true before sending attention and reset after setting _attentionSent
                     // This prevents a race condition between receiving the attention ACK and setting _attentionSent
                     _attentionSending = true;
-
 #if DEBUG
                     if (!_skipSendAttention)
                     {
@@ -3476,9 +3589,9 @@ namespace Microsoft.Data.SqlClient
                             }
 
                             uint sniError;
-                            _parser._asyncWrite = false; // stop async write 
+                            _parser._asyncWrite = false; // stop async write
                             SNIWritePacket(attnPacket, out sniError, canAccumulate: false, callerHasConnectionLock: false);
-                            SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.SendAttention|INFO> Send Attention ASync.");
+                            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObject.SendAttention | Info | State Object Id {0}, Sent Attention.", _objectID);
                         }
                         finally
                         {
@@ -3489,7 +3602,7 @@ namespace Microsoft.Data.SqlClient
                             }
                         }
 #if DEBUG
-                    }
+                }
 #endif
 
                     SetTimeoutSeconds(AttentionTimeoutSeconds); // Initialize new attention timeout of 5 seconds.
@@ -3500,8 +3613,8 @@ namespace Microsoft.Data.SqlClient
                     _attentionSending = false;
                 }
 
-                SqlClientEventSource.Log.TryAdvancedTraceBinEvent("<sc.TdsParser.WritePacket|INFO|ADV>  Packet sent", _outBuff, (ushort)_outBytesUsed);
-                SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.SendAttention|INFO> Attention sent to the server.");
+                SqlClientEventSource.Log.TryAdvancedTraceBinEvent("TdsParserStateObject.SendAttention | INFO | ADV | State Object Id {0}, Packet sent. Out Buffer {1}, Out Bytes Used: {2}", _objectID, _outBuff, (ushort)_outBytesUsed);
+                SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObject.SendAttention | Info | State Object Id {0}, Attention sent to the server.", _objectID);
 
                 AssertValidState();
             }
@@ -3862,7 +3975,7 @@ namespace Microsoft.Data.SqlClient
                 // Attention\Cancellation\Timeouts
                 Debug.Assert(!HasReceivedAttention && !_attentionSent && !_attentionSending, $"StateObj is still dealing with attention: Sent: {_attentionSent}, Received: {HasReceivedAttention}, Sending: {_attentionSending}");
                 Debug.Assert(!_cancelled, "StateObj still has cancellation set");
-                Debug.Assert(!_internalTimeout, "StateObj still has internal timeout set");
+                Debug.Assert(_timeoutState == TimeoutState.Stopped, "StateObj still has internal timeout set");
                 // Errors and Warnings
                 Debug.Assert(!_hasErrorOrWarning, "StateObj still has stored errors or warnings");
             }
@@ -4163,6 +4276,15 @@ namespace Microsoft.Data.SqlClient
                 _stateObj._cleanupMetaData = _snapshotCleanupMetaData;
                 _stateObj._cleanupAltMetaDataSetArray = _snapshotCleanupAltMetaDataSetArray;
 
+                // Make sure to go through the appropriate increment/decrement methods if changing the OpenResult flag
+                if (!_stateObj.HasOpenResult && _state.HasFlag(SnapshottedStateFlags.OpenResult))
+                {
+                    _stateObj.IncrementAndObtainOpenResultCount(_stateObj._executedUnderTransaction);
+                }
+                else if (_stateObj.HasOpenResult && !_state.HasFlag(SnapshottedStateFlags.OpenResult))
+                {
+                    _stateObj.DecrementOpenResultCount();
+                }
                 _stateObj._snapshottedState = _state;
 
                 // Reset partially read state (these only need to be maintained if doing async without snapshot)

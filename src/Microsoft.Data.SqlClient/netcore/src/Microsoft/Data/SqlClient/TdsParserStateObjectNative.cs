@@ -80,12 +80,12 @@ namespace Microsoft.Data.SqlClient
 
             if (string.IsNullOrEmpty(userProtocol))
             {
-                
+
                 result = SNINativeMethodWrapper.SniGetProviderNumber(Handle, ref providerNumber);
                 Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetProviderNumber");
                 _parser.isTcpProtocol = (providerNumber == SNINativeMethodWrapper.ProviderEnum.TCP_PROV);
             }
-            else if (userProtocol == TdsEnums.TCP) 
+            else if (userProtocol == TdsEnums.TCP)
             {
                 _parser.isTcpProtocol = true;
             }
@@ -138,14 +138,14 @@ namespace Microsoft.Data.SqlClient
             return myInfo;
         }
 
-        internal override void CreatePhysicalSNIHandle(string serverName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[] spnBuffer, bool flushCache, bool async, bool fParallel, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo, bool isIntegratedSecurity)
+        internal override void CreatePhysicalSNIHandle(string serverName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[][] spnBuffer, bool flushCache, bool async, bool fParallel, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo, bool isIntegratedSecurity)
         {
             // We assume that the loadSSPILibrary has been called already. now allocate proper length of buffer
-            spnBuffer = null;
+            spnBuffer = new byte[1][];
             if (isIntegratedSecurity)
             {
                 // now allocate proper length of buffer
-                spnBuffer = new byte[SNINativeMethodWrapper.SniMaxComposedSpnLength];
+                spnBuffer[0] = new byte[SNINativeMethodWrapper.SniMaxComposedSpnLength];
             }
 
             SNINativeMethodWrapper.ConsumerInfo myInfo = CreateConsumerInfo(async);
@@ -172,7 +172,7 @@ namespace Microsoft.Data.SqlClient
             SQLDNSInfo cachedDNSInfo;
             bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out cachedDNSInfo);
 
-            _sessionHandle = new SNIHandle(myInfo, serverName, spnBuffer, ignoreSniOpenTimeout, checked((int)timeout), out instanceName, flushCache, !async, fParallel, cachedDNSInfo);
+            _sessionHandle = new SNIHandle(myInfo, serverName, spnBuffer[0], ignoreSniOpenTimeout, checked((int)timeout), out instanceName, flushCache, !async, fParallel, cachedDNSInfo);
         }
 
         protected override uint SNIPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize)
@@ -385,8 +385,8 @@ namespace Microsoft.Data.SqlClient
         internal override uint SetConnectionBufferSize(ref uint unsignedPacketSize)
             => SNINativeMethodWrapper.SNISetInfo(Handle, SNINativeMethodWrapper.QTypes.SNI_QUERY_CONN_BUFSIZE, ref unsignedPacketSize);
 
-        internal override uint GenerateSspiClientContext(byte[] receivedBuff, uint receivedLength, ref byte[] sendBuff, ref uint sendLength, byte[] _sniSpnBuffer)
-            => SNINativeMethodWrapper.SNISecGenClientContext(Handle, receivedBuff, receivedLength, sendBuff, ref sendLength, _sniSpnBuffer);
+        internal override uint GenerateSspiClientContext(byte[] receivedBuff, uint receivedLength, ref byte[] sendBuff, ref uint sendLength, byte[][] _sniSpnBuffer)
+            => SNINativeMethodWrapper.SNISecGenClientContext(Handle, receivedBuff, receivedLength, sendBuff, ref sendLength, _sniSpnBuffer[0]);
 
         internal override uint WaitForSSLHandShakeToComplete(out int protocolVersion)
         {
@@ -421,7 +421,7 @@ namespace Microsoft.Data.SqlClient
                 protocolVersion = (int)SslProtocols.Ssl2;
 #pragma warning restore CS0618 // Type or member is obsolete : SSL is depricated
             }
-            else if(nativeProtocol.HasFlag(NativeProtocols.SP_PROT_NONE))
+            else if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_NONE))
             {
                 protocolVersion = (int)SslProtocols.None;
             }

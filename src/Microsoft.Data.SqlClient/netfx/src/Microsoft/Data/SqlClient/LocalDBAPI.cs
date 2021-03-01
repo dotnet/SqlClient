@@ -300,7 +300,7 @@ namespace Microsoft.Data
                     if (s_configurableInstances == null)
                     {
                         Dictionary<string, InstanceInfo> tempConfigurableInstances = new Dictionary<string, InstanceInfo>(StringComparer.OrdinalIgnoreCase);
-                        object section = PrivilegedConfigurationManager.GetSection("system.data.localdb");
+                        object section = ConfigurationManager.GetSection("system.data.localdb");
                         if (section != null) // if no section just skip creation
                         {
                             // validate section type
