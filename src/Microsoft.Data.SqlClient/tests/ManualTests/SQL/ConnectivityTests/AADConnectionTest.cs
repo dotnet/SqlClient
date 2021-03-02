@@ -184,27 +184,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void testADPasswordAuthentication()
         {
             // Connect to Azure DB with password and retrieve user name.
-            try
+            using (SqlConnection conn = new SqlConnection(DataTestUtility.AADPasswordConnectionString))
             {
-                using (SqlConnection conn = new SqlConnection(DataTestUtility.AADPasswordConnectionString))
+                conn.Open();
+                using (SqlCommand sqlCommand = new SqlCommand
+                (
+                    cmdText: $"SELECT SUSER_SNAME();",
+                    connection: conn,
+                    transaction: null
+                ))
                 {
-                    conn.Open();
-                    using (SqlCommand sqlCommand = new SqlCommand
-                    (
-                        cmdText: $"SELECT SUSER_SNAME();",
-                        connection: conn,
-                        transaction: null
-                    ))
-                    {
-                        string customerId = (string)sqlCommand.ExecuteScalar();
-                        string expected = DataTestUtility.RetrieveValueFromConnStr(DataTestUtility.AADPasswordConnectionString, new string[] { "User ID", "UID" });
-                        Assert.Equal(expected, customerId);
-                    }
+                    string customerId = (string)sqlCommand.ExecuteScalar();
+                    string expected = DataTestUtility.RetrieveValueFromConnStr(DataTestUtility.AADPasswordConnectionString, new string[] { "User ID", "UID" });
+                    Assert.Equal(expected, customerId);
                 }
-            }
-            catch (SqlException e)
-            {
-                throw e;
             }
         }
 

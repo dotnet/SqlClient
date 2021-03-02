@@ -7,6 +7,9 @@ using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
 using Xunit;
+#if NET50_OR_LATER
+using System.Runtime.Versioning;
+#endif
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
@@ -14,6 +17,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     /// Always Encrypted public CspProvider Manual tests.
     /// TODO: These tests are marked as Windows only for now but should be run for all platforms once the Master Key is accessible to this app from Azure Key Vault.
     /// </summary>
+#if NET50_OR_LATER
+    [SupportedOSPlatform("windows")]
+#endif
     [PlatformSpecific(TestPlatforms.Windows)]
     public class CspProviderExt
     {
@@ -81,9 +87,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         DatabaseHelper.InsertCustomerData(sqlConn, tableName, customer);
 
                         // Test INPUT parameter on an encrypted parameter
-                        using (SqlCommand sqlCommand = new SqlCommand(string.Format(@"SELECT CustomerId, FirstName, LastName FROM [{0}] WHERE FirstName = @firstName", tableName),
+                        using (SqlCommand sqlCommand = new SqlCommand(@"SELECT CustomerId, FirstName, LastName FROM [@tableName] WHERE FirstName = @firstName",
                                                                     sqlConn, null, SqlCommandColumnEncryptionSetting.Enabled))
                         {
+                            sqlCommand.Parameters.AddWithValue(@"tableName", tableName);
                             SqlParameter customerFirstParam = sqlCommand.Parameters.AddWithValue(@"firstName", @"Microsoft");
                             customerFirstParam.Direction = System.Data.ParameterDirection.Input;
 
@@ -173,9 +180,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         DatabaseHelper.InsertCustomerData(sqlConn, tableName, customer);
 
                         // Test INPUT parameter on an encrypted parameter
-                        using (SqlCommand sqlCommand = new SqlCommand(string.Format(@"SELECT CustomerId, FirstName, LastName FROM [{0}] WHERE FirstName = @firstName", tableName),
+                        using (SqlCommand sqlCommand = new SqlCommand(@"SELECT CustomerId, FirstName, LastName FROM [@tableName] WHERE FirstName = @firstName",
                                                                     sqlConn, null, SqlCommandColumnEncryptionSetting.Enabled))
                         {
+                            sqlCommand.Parameters.AddWithValue(@"tableName", tableName);
                             SqlParameter customerFirstParam = sqlCommand.Parameters.AddWithValue(@"firstName", @"Microsoft");
                             customerFirstParam.Direction = System.Data.ParameterDirection.Input;
 

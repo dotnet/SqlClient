@@ -292,13 +292,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         }
                         catch (SqlException e)
                         {
-                            if(e.Message.Contains("Rerun the transaction"))
+                            if (e.Message.Contains("Rerun the transaction"))
+                            {
                                 rerun = true;
-                            else 
-                                throw e;
+                            }
+                            else
+                            {
+                                throw;
+                            }
                         }
                     }
-                    while(rerun);
+                    while (rerun);
                 }
             }
         }

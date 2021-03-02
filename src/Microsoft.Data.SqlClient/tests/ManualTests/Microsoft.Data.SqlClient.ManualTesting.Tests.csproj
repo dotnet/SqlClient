@@ -2,19 +2,36 @@
   <PropertyGroup>
     <ProjectGuid>{45DB5F86-7AE3-45C6-870D-F9357B66BDB5}</ProjectGuid>
     <AssemblyName>ManualTests</AssemblyName>
-    <TargetGroup Condition="$(TargetFramework.StartsWith('netcoreapp'))">netcoreapp</TargetGroup>
     <TargetGroup Condition="$(TargetFramework.StartsWith('net4'))">netfx</TargetGroup>
+    <TargetGroup Condition="$(TargetGroup) == ''">netcoreapp</TargetGroup>
+    <OSGroup Condition="'$(OSGroup)' == ''">$(OS)</OSGroup>
+    <TargetsWindows Condition="'$(OSGroup)'=='Windows_NT'">true</TargetsWindows>
+    <TargetsUnix Condition="'$(OSGroup)'=='Unix'">true</TargetsUnix>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <CodeAnalysisRuleSet>Microsoft.Data.SqlClient.ManualTesting.Tests.ruleset</CodeAnalysisRuleSet>
     <Configurations>Debug;Release;net461-Release;net461-Debug;netcoreapp2.1-Debug;netcoreapp2.1-Release;netcoreapp3.1-Debug;netcoreapp3.1-Release</Configurations>
     <Platforms>AnyCPU;x86;x64</Platforms>
     <DefineConstants Condition="'$(TargetGroup)'=='netcoreapp'">$(DefineConstants);NETCOREAPP</DefineConstants>
     <DefineConstants Condition="'$(TargetGroup)'=='netfx'">$(DefineConstants);NETFRAMEWORK</DefineConstants>
+    <DefineConstants Condition="'$(TargetGroup)' == 'netcoreapp' AND !$(TargetFramework.StartsWith('netcoreapp'))">$(DefineConstants);NET50_OR_LATER</DefineConstants>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform).$(AssemblyName)</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
   </PropertyGroup>
-  <!-- Azure Key Vault provider is not compatible with .NET Framework 4.6 and can only be used with .NET Framework 4.6.1 and above. -->
-  <ItemGroup Condition="$(TargetFramework) != 'net46'">
+  <ItemGroup Condition="!$(ReferenceType.Contains('NetStandard'))">
+    <Compile Include="AlwaysEncrypted\CoreCryptoTests.cs" />
+    <Compile Include="AlwaysEncrypted\ConversionTests.cs" />
+    <Compile Include="AlwaysEncrypted\ExceptionsGenericError.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CryptoVector.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CryptoNativeBaselineReader.cs" />
+    <Compile Include="AlwaysEncrypted\TestTrustedMasterKeyPaths.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetsWindows)' == 'true' and !$(ReferenceType.Contains('NetStandard'))">
+    <Compile Include="AlwaysEncrypted\CspProviderExt.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CertificateUtilityWin.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CspProviderColumnMasterKey.cs" />
+    <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyCspExt.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <Compile Include="DataCommon\SqlClientCustomTokenCredential.cs" />
     <Compile Include="AlwaysEncrypted\AKVTests.cs" />
     <Compile Include="AlwaysEncrypted\AKVUnitTests.cs" />
@@ -23,20 +40,6 @@
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\AKVTestTable.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\AkvColumnMasterKey.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyAzureKeyVault.cs" />
-  </ItemGroup>
-  <ItemGroup Condition="!$(ReferenceType.Contains('NetStandard'))">
-    <Compile Include="AlwaysEncrypted\CoreCryptoTests.cs" />
-    <Compile Include="AlwaysEncrypted\CspProviderExt.cs" />
-    <Compile Include="AlwaysEncrypted\ConversionTests.cs" />
-    <Compile Include="AlwaysEncrypted\ExceptionsGenericError.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CryptoNativeBaselineReader.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CryptoVector.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CspProviderColumnMasterKey.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CertificateUtilityWin.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyCspExt.cs" />
-    <Compile Include="AlwaysEncrypted\TestTrustedMasterKeyPaths.cs" />
-  </ItemGroup>
-  <ItemGroup>
     <Compile Include="AlwaysEncrypted\ApiShould.cs" />
     <Compile Include="AlwaysEncrypted\BulkCopyAE.cs" />
     <Compile Include="AlwaysEncrypted\BulkCopyAEErrorMessage.cs" />
@@ -59,7 +62,7 @@
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ColumnMasterKey.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\ColumnEncryptionKey.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CspColumnMasterKey.cs" />
-    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CertificateUtility.cs" />   
+    <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CertificateUtility.cs" />
     <Compile Include="$(CommonTestPath)\System\Collections\DictionaryExtensions.cs">
       <Link>Common\System\Collections\DictionaryExtensions.cs</Link>
     </Compile>

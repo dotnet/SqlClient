@@ -209,7 +209,7 @@ Tests can be built and run with custom Target Frameworks. See the below examples
 ```bash
 > msbuild /t:BuildTestsNetCore /p:TargetNetCoreVersion=netcoreapp3.1
 # Build the tests for custom TargetFramework (.NET Core)
-# Applicable values: netcoreapp2.1 | netcoreapp2.2 | netcoreapp3.1 | netcoreapp5.0
+# Applicable values: netcoreapp2.1 | netcoreapp2.2 | netcoreapp3.1 | net5.0
 ```
 
 ### Running Tests:
@@ -221,7 +221,7 @@ Tests can be built and run with custom Target Frameworks. See the below examples
 
 > dotnet test /p:TargetNetCoreVersion=netcoreapp3.1 ...
 # Use above property to run Functional Tests with custom TargetFramework (.NET Core)
-# Applicable values: netcoreapp2.1 | netcoreapp2.2 | netcoreapp3.1 | netcoreapp5.0
+# Applicable values: netcoreapp2.1 | netcoreapp2.2 | netcoreapp3.1 | net5.0
 ```
 
 ## Using Managed SNI on Windows

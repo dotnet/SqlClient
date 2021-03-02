@@ -272,17 +272,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             {
                 certStoreFixture = new SQLSetupStrategyCertStoreProvider();
             }
-#if !NET46
             else
             {
                 akvFixture = new SQLSetupStrategyAzureKeyVault();
             }
-#endif
         }
 
         public void Dispose()
         {
-            Fixture.Dispose();
+            try
+            {
+                akvFixture?.Dispose();
+            }
+            finally
+            {
+                certStoreFixture?.Dispose();
+            }
         }
     }
 }

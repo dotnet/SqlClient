@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 
@@ -282,13 +283,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     _current = null;
 
-                    if (t_currentScope != this)
-                    {
-                        // every creation of scope in test must be balanced with Dispose call, use 'using' to enforce that!
-                        // nested scopes are allowed, child scope must be disposed before the parent one
-                        throw new InvalidOperationException("Unbalanced call to scope.Dispose");
-                    }
-
+                    // every creation of scope in test must be balanced with Dispose call, use 'using' to enforce that!
+                    // nested scopes are allowed, child scope must be disposed before the parent one
+                    // throw new InvalidOperationException("Unbalanced call to scope.Dispose");
+                    Trace.Assert(t_currentScope == this, "Unbalanced call to scope.Dispose");
                     t_currentScope = _previousScope;
                 }
             }
