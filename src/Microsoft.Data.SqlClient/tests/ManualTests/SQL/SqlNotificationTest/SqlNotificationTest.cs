@@ -175,7 +175,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 updateCompleted.Set();
 
                 Assert.True(notificationReceived.Wait(CALLBACK_TIMEOUT), "Notification not received within the timeout period");
-                notificationReceived.Reset();
             }
             finally
             {
