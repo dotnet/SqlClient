@@ -12776,7 +12776,6 @@ namespace Microsoft.Data.SqlClient
                            _defaultCodePage,
                            _defaultLCID,
                            TraceObjectClass(_defaultEncoding),
-                           "",
                            _encryptionOption,
                            null == _currentTransaction ? "(null)" : _currentTransaction.TraceString(),
                            null == _pendingTransaction ? "(null)" : _pendingTransaction.TraceString(),
