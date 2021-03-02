@@ -5,11 +5,11 @@
 using System;
 using System.Collections.Generic;
 
-// This file will use to merge code from NetFx and NetCore SqlUtil.cs in future.
+// This file will be used to merge code from the NetFx and NetCore SqlUtil.cs in the future.
 namespace Microsoft.Data.SqlClient
 {
     /// <summary>
-    /// Defines the exceptions are specific to the Configurable Retry Logic.
+    /// Defines exceptions that are specific to Configurable Retry Logic.
     /// </summary>
     internal static class SqlReliabilityUtil
     {

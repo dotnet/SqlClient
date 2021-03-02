@@ -42,8 +42,8 @@ namespace Microsoft.Data.SqlClient
 
     /// <summary>
     /// Configurable retry logic loader
-    /// This class doesn't suppose to throws an exception outside;
-    /// All the thrown exceptions have been handled internally and logged by Event Source.
+    /// This class shouldn't throw exceptions;
+    /// All exceptions should be handled internally and logged with Event Source.
     /// </summary>
     internal sealed partial class SqlConfigurableRetryLogicLoader
     {
@@ -94,7 +94,7 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Successfully created a {2} object to use on creating a retry logic provider from the section '{3}'.",
                                                        TypeName, methodName, nameof(SqlRetryLogicOption), sectionName);
 
-                // Extract the SqlRetryLogicBaseProvider object by the given information
+                // Extract the SqlRetryLogicBaseProvider object from the given information
                 var provider = ResolveRetryLogicProvider(configSection.RetryLogicType, configSection.RetryMethod, retryOption);
                 SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Successfully created a {2} object from the section '{3}'.",
                                                        TypeName, methodName, nameof(SqlRetryLogicBaseProvider), sectionName);
@@ -130,8 +130,8 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
-                // Try to use the 'SqlConfigurableRetryFactory' as a default type to discover the retry methods
-                // if there was any problem to resolve the 'configurableRetryType' type.
+                // Try to use 'SqlConfigurableRetryFactory' as a default type to discover retry methods
+                // if there is a problem, resolve using the 'configurableRetryType' type.
                 type = typeof(SqlConfigurableRetryFactory);
                 SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Unable to load the '{2}' type; Trying to use the internal `{3}` type: {4}",
                                                        TypeName, methodName, configurableRetryType, type.FullName, e);
