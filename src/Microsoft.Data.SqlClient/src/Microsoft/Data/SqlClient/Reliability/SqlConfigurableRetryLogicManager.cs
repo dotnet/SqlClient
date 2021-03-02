@@ -30,11 +30,14 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (Exception e)
                 {
-                    StackTrace stackTrace = new StackTrace();
                     SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> An exception occurred in access to the instance of the class, and the default non-retriable provider will apply: {2}"
                                                             , TypeName, nameof(ConnectionProvider), e);
-                    SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.{0}.{1}|ADV|INFO> An exception occurred in access to the instance of the class, and the default non-retriable provider will apply: {2}"
+                    if (SqlClientEventSource.Log.IsAdvancedTraceOn())
+                    {
+                        StackTrace stackTrace = new StackTrace();
+                        SqlClientEventSource.Log.AdvancedTraceEvent("<sc.{0}.{1}|ADV|INFO> An exception occurred in access to the instance of the class, and the default non-retriable provider will apply: {2}"
                                                             , TypeName, nameof(ConnectionProvider), stackTrace);
+                    }
                     return SqlConfigurableRetryFactory.CreateNoneRetryProvider();
                 }
             }
@@ -55,11 +58,14 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (Exception e)
                 {
-                    StackTrace stackTrace = new StackTrace();
                     SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> An exception occurred in access to the instance of the class, and the default non-retriable provider will apply: {2}"
                                                             , TypeName, nameof(CommandProvider), e);
-                    SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.{0}.{1}|ADV|INFO> An exception occurred in access to the instance of the class, and the default non-retriable provider will apply: {2}"
-                                                            , TypeName, nameof(CommandProvider), stackTrace);
+                    if (SqlClientEventSource.Log.IsAdvancedTraceOn())
+                    {
+                        StackTrace stackTrace = new StackTrace();
+                        SqlClientEventSource.Log.AdvancedTraceEvent("<sc.{0}.{1}|ADV|INFO> An exception occurred in access to the instance of the class, and the default non-retriable provider will apply: {2}"
+                                                                , TypeName, nameof(CommandProvider), stackTrace);
+                    }
                     return SqlConfigurableRetryFactory.CreateNoneRetryProvider();
                 }
             }
