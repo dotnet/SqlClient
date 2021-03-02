@@ -12788,8 +12788,8 @@ namespace Microsoft.Data.SqlClient
         {
             return string.Format(/*IFormatProvider*/ null,
                            StateTraceFormatString,
-                           null == _physicalStateObj ? bool.TrueString : bool.FalseString,
-                           null == _pMarsPhysicalConObj ? bool.TrueString : bool.FalseString,
+                           null == _physicalStateObj ? "(null)" : _physicalStateObj.ObjectID.ToString((IFormatProvider)null),
+                           null == _pMarsPhysicalConObj ? "(null)" : _pMarsPhysicalConObj.ObjectID.ToString((IFormatProvider)null),
                            _state,
                            _server,
                            _fResetConnection ? bool.TrueString : bool.FalseString,
