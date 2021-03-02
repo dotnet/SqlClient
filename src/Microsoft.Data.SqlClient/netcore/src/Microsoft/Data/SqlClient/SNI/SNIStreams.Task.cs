@@ -2,14 +2,17 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System.Net.Security;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Net.Sockets;
+
 
 namespace Microsoft.Data.SqlClient.SNI
 {
+    // NetCore2.1:
+    // DO NOT OVERRIDE ValueTask versions of ReadAsync and WriteAsync because the underlying SslStream implements them
+    // by calling the Task versions which are already overridden meaning that if a caller uses Task WriteAsync this would
+    // call ValueTask WriteAsync which then called TaskWriteAsync introducing a lock cycle and never return
+
     internal sealed partial class SNISslStream
     {
         public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)

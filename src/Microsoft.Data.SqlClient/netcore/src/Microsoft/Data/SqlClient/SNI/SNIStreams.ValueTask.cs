@@ -2,16 +2,12 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System.Net.Security;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Net.Sockets;
 using System;
 
 namespace Microsoft.Data.SqlClient.SNI
 {
-
     internal sealed partial class SNISslStream
     {
         public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
