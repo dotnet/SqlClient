@@ -36,10 +36,8 @@ Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyStoreProvider.SqlColumnEncrypti
       </group>
       <group targetFramework="netstandard2.0">
         <dependency id="Microsoft.Data.SqlClient" version="2.1.0" />
-        <dependency id="Microsoft.Azure.KeyVault" version="[3.0.4,4.0.0)" />
-        <dependency id="Microsoft.Azure.KeyVault.WebKey" version="[3.0.4,4.0.0)" />
-        <dependency id="Microsoft.Rest.ClientRuntime" version="[2.3.20,3.0.0)" />
-        <dependency id="Microsoft.Rest.ClientRuntime.Azure" version="[3.3.19,4.0.0)" />
+        <dependency id="Azure.Core" version="[1.2.2,2.0.0)" />
+        <dependency id="Azure.Security.KeyVault.Keys" version="[4.0.3,5.0.0)" />
       </group>
     </dependencies>
     <frameworkAssemblies>
