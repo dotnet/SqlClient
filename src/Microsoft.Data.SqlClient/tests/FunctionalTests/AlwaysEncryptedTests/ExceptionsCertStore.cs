@@ -76,13 +76,19 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
         public ExceptionCertFixture()
         {
-            certificate = Utility.CreateCertificate();
+            if(certificate == null)
+            {
+                certificate = Utility.CreateCertificate();
+            }
             thumbprint = certificate.Thumbprint;
             certificatePath = string.Format("CurrentUser/My/{0}", thumbprint);
             cek = Utility.GenerateRandomBytes(32);
             encryptedCek = certStoreProvider.EncryptColumnEncryptionKey(certificatePath, "RSA_OAEP", cek);
 #if NET46
-            masterKeyCertificateNPK = Utility.CreateCertificateWithNoPrivateKey();
+            if(masterKeyCertificateNPK == null)
+            {
+                masterKeyCertificateNPK = Utility.CreateCertificateWithNoPrivateKey();
+            }
             thumbprintNPK = masterKeyCertificateNPK.Thumbprint;
             masterKeyPathNPK = "CurrentUser/My/" + thumbprintNPK;
 #endif
