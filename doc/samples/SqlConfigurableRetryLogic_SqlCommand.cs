@@ -71,9 +71,11 @@ class RetryLogicSample
         }
         catch
         {
+            s_generalConnection.Close();
             // exception is thrown if connecting to the database isn't successful.
             throw;
         }
+        s_generalConnection.Close();
     }
 
     private static void ExecuteCommand(SqlConnection cn, string command)
