@@ -53,6 +53,10 @@ namespace Microsoft.Data.SqlClient
                                                string cmdSectionName = SqlConfigurableRetryCommandSection.Name)
         {
 #if !NETFRAMEWORK
+            // Just only one subscription to this event is required.
+            // This class isn't supposed to be called more than one time;
+            // SqlConfigurableRetryLogicManager manages a single instance of this class.
+            System.Runtime.Loader.AssemblyLoadContext.Default.Resolving -= Default_Resolving;
             System.Runtime.Loader.AssemblyLoadContext.Default.Resolving += Default_Resolving;
 #endif
             AssignProviders(CreateRetryLogicProvider(cnnSectionName, connectionRetryConfigs),
