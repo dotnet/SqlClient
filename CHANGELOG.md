@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Stable Release 2.1.2] - 2021-03-03
+
+### Fixed
+- Fixed issue connecting with instance name from Unix environment [#874](https://github.com/dotnet/SqlClient/pull/874)
+- Fixed wrong data issues by reworking timeout timer to ensure it's guaranteed execution [#929](https://github.com/dotnet/SqlClient/pull/929)
+- Fixed vulnerability by prohibiting `DtdProcessing` on `XmlTextReader` instance in .NET Core [#885](https://github.com/dotnet/SqlClient/pull/885)
+- Fixed Kerberos authentication when SPN did not contain port [#935](https://github.com/dotnet/SqlClient/pull/935)
+- Fixed missing error messages in Managed SNI [#883](https://github.com/dotnet/SqlClient/pull/883)
+- Fixed missing `System.Runtime.Caching` dependency for .NET Standard assemblies [#878](https://github.com/dotnet/SqlClient/pull/878)
+- Fixed event source tracing issues [#941](https://github.com/dotnet/SqlClient/pull/941)
+
+### Changes
+- Enabled Read Async blocking for all supported .NET Framework versions by default [#928](https://github.com/dotnet/SqlClient/pull/928)
+
+
 ## [Stable Release 2.1.1] - 2020-12-18
 
 ### Fixed
