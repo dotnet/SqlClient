@@ -3,6 +3,8 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Diagnostics;
+using System.Reflection;
+using System.Runtime.Loader;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -10,6 +12,12 @@ namespace Microsoft.Data.SqlClient
     {
         public SqlDiagnosticListener(string name) : base(name)
         {
+            AssemblyLoadContext.GetLoadContext(Assembly.GetExecutingAssembly()).Unloading += SqlDiagnosticListener_Unloading;
+        }
+
+        private void SqlDiagnosticListener_Unloading(AssemblyLoadContext obj)
+        {
+            Dispose();
         }
     }
 }

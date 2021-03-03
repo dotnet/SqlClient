@@ -242,48 +242,67 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     p.UdtTypeName = "Utf8String";
                     p.Value = DBNull.Value;
 
-                    using (SqlTransaction trans = conn.BeginTransaction())
+                    bool rerun = false;
+                    do
                     {
-                        com.Transaction = trans;
-                        using (SqlDataReader reader = com.ExecuteReader())
+                        try
                         {
-
-                            Utf8String[] expectedValues = {
-                                new Utf8String("this"),
-                                new Utf8String("is"),
-                                new Utf8String("a"),
-                                new Utf8String("test")
-                            };
-
-                            int currentValue = 0;
-                            do
+                            using (SqlTransaction trans = conn.BeginTransaction())
                             {
-                                while (reader.Read())
+                                com.Transaction = trans;
+                                using (SqlDataReader reader = com.ExecuteReader())
                                 {
-                                    DataTestUtility.AssertEqualsWithDescription(1, reader.FieldCount, "Unexpected FieldCount.");
-                                    if (currentValue < expectedValues.Length)
-                                    {
-                                        DataTestUtility.AssertEqualsWithDescription(expectedValues[currentValue], reader.GetValue(0), "Unexpected Value.");
-                                        DataTestUtility.AssertEqualsWithDescription(expectedValues[currentValue], reader.GetSqlValue(0), "Unexpected SQL Value.");
-                                    }
-                                    else
-                                    {
-                                        DataTestUtility.AssertEqualsWithDescription(DBNull.Value, reader.GetValue(0), "Unexpected Value.");
+                                    Utf8String[] expectedValues = {
+                                        new Utf8String("this"),
+                                        new Utf8String("is"),
+                                        new Utf8String("a"),
+                                        new Utf8String("test")
+                                    };
 
-                                        Utf8String sqlValue = (Utf8String)reader.GetSqlValue(0);
-                                        INullable iface = sqlValue as INullable;
-                                        Assert.True(iface != null, "Expected interface cast to return a non-null value.");
-                                        Assert.True(iface.IsNull, "Expected interface cast to have IsNull==true.");
-                                    }
+                                    int currentValue = 0;
+                                    do
+                                    {
+                                        while (reader.Read())
+                                        {
+                                            DataTestUtility.AssertEqualsWithDescription(1, reader.FieldCount, "Unexpected FieldCount.");
+                                            if (currentValue < expectedValues.Length)
+                                            {
+                                                DataTestUtility.AssertEqualsWithDescription(expectedValues[currentValue], reader.GetValue(0), "Unexpected Value.");
+                                                DataTestUtility.AssertEqualsWithDescription(expectedValues[currentValue], reader.GetSqlValue(0), "Unexpected SQL Value.");
+                                            }
+                                            else
+                                            {
+                                                DataTestUtility.AssertEqualsWithDescription(DBNull.Value, reader.GetValue(0), "Unexpected Value.");
 
-                                    currentValue++;
-                                    Assert.True(currentValue <= (expectedValues.Length + 1), "Expected to only hit one extra result.");
+                                                Utf8String sqlValue = (Utf8String)reader.GetSqlValue(0);
+                                                INullable iface = sqlValue as INullable;
+                                                Assert.True(iface != null, "Expected interface cast to return a non-null value.");
+                                                Assert.True(iface.IsNull, "Expected interface cast to have IsNull==true.");
+                                            }
+
+                                            currentValue++;
+                                            Assert.True(currentValue <= (expectedValues.Length + 1), "Expected to only hit one extra result.");
+                                        }
+                                    }
+                                    while (reader.NextResult());
+                                    DataTestUtility.AssertEqualsWithDescription(currentValue, (expectedValues.Length + 1), "Did not hit all expected values.");
+                                    rerun = false;
                                 }
                             }
-                            while (reader.NextResult());
-                            DataTestUtility.AssertEqualsWithDescription(currentValue, (expectedValues.Length + 1), "Did not hit all expected values.");
+                        }
+                        catch (SqlException e)
+                        {
+                            if (e.Message.Contains("Rerun the transaction"))
+                            {
+                                rerun = true;
+                            }
+                            else
+                            {
+                                throw;
+                            }
                         }
                     }
+                    while (rerun);
                 }
             }
         }

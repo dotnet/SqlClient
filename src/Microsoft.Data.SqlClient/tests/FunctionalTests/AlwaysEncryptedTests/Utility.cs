@@ -349,7 +349,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         }
 
         /// <summary>
-        /// Create a self-signed certificate without private key. NET46 only.
+        /// Create a self-signed certificate without private key. NET461 only.
         /// </summary>
         internal static X509Certificate2 CreateCertificateWithNoPrivateKey()
         {

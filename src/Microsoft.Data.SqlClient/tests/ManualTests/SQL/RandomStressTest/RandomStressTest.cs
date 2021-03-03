@@ -12,7 +12,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-    public class RandomStressTest
+    public class RandomStressTest : IDisposable
     {
         private static readonly TimeSpan TimeLimitDefault = new TimeSpan(0, 0, 10);
         private const int ThreadCountDefault = 4;
@@ -358,6 +358,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     throw;
                 }
             }
+        }
+
+        public void Dispose()
+        {
+            _endEvent?.Dispose();
         }
     }
 }

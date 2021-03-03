@@ -11,12 +11,15 @@ using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient
 {
-    sealed internal class SqlConnectionFactory : DbConnectionFactory
+    sealed internal partial class SqlConnectionFactory : DbConnectionFactory
     {
 
         private const string _metaDataXml = "MetaDataXml";
 
-        private SqlConnectionFactory() : base() { }
+        private SqlConnectionFactory() : base()
+        {
+            SubscribeToAssemblyLoadContextUnload();
+        }
 
         public static readonly SqlConnectionFactory SingletonInstance = new SqlConnectionFactory();
 
@@ -306,6 +309,20 @@ namespace Microsoft.Data.SqlClient
                                           internalConnection.ServerVersion,
                                           internalConnection.ServerVersion);
         }
+
+        private void Unload(object sender, EventArgs e)
+        {
+            try
+            {
+                Unload();
+            }
+            finally
+            {
+                ClearAllPools();
+            }
+        }
+
+        partial void SubscribeToAssemblyLoadContextUnload();
     }
 }
 

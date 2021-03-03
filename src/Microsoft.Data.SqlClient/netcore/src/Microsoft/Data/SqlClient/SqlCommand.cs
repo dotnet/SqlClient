@@ -1001,6 +1001,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
+                WriteBeginExecuteEvent();
                 SqlDataReader ds;
                 ds = RunExecuteReader(0, RunBehavior.ReturnImmediately, returnStream: true);
                 success = true;
@@ -1081,6 +1082,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
+                WriteBeginExecuteEvent();
                 InternalExecuteNonQuery(completion: null, sendToPipe: false, timeout: CommandTimeout, out _, methodName: nameof(ExecuteNonQuery));
                 return _rowsAffected;
             }
@@ -1571,7 +1573,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
-
+                WriteBeginExecuteEvent();
                 // use the reader to consume metadata
                 SqlDataReader ds;
                 ds = RunExecuteReader(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, returnStream: true);
@@ -1646,6 +1648,7 @@ namespace Microsoft.Data.SqlClient
                 if (!inRetry)
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
+                    WriteBeginExecuteEvent();
                 }
 
                 bool usedCache;
@@ -1893,6 +1896,7 @@ namespace Microsoft.Data.SqlClient
             Exception e = null;
             try
             {
+                WriteBeginExecuteEvent();
                 statistics = SqlStatistics.StartTimer(Statistics);
                 return RunExecuteReader(behavior, RunBehavior.ReturnImmediately, returnStream: true);
             }
@@ -2071,7 +2075,7 @@ namespace Microsoft.Data.SqlClient
                 if (!inRetry)
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
-
+                    WriteBeginExecuteEvent();
                     ValidateAsyncCommand(); // Special case - done outside of try/catches to prevent putting a stateObj
                                             // back into pool when we should not.
                 }
@@ -6272,6 +6276,11 @@ namespace Microsoft.Data.SqlClient
             return clone;
         }
 
+        private void WriteBeginExecuteEvent()
+        {
+            SqlClientEventSource.Log.TryBeginExecuteEvent(ObjectID, Connection?.ClientConnectionId, CommandText);
+        }
+
         private void WriteEndExecuteEvent(bool success, int? sqlExceptionNumber, bool synchronous)
         {
             if (SqlClientEventSource.Log.IsExecutionTraceEnabled())
@@ -6290,7 +6299,7 @@ namespace Microsoft.Data.SqlClient
 
                 int compositeState = successFlag | isSqlExceptionFlag | synchronousFlag;
 
-                SqlClientEventSource.Log.EndExecute(GetHashCode(), compositeState, sqlExceptionNumber.GetValueOrDefault());
+                SqlClientEventSource.Log.TryEndExecuteEvent(ObjectID, Connection?.ClientConnectionId, compositeState, sqlExceptionNumber.GetValueOrDefault());
             }
         }
     }
