@@ -104,7 +104,7 @@ namespace Microsoft.Data.SqlClient
         private static readonly Action<object> s_openAsyncCancel = OpenAsyncCancel;
         private static readonly Action<Task<object>, object> s_openAsyncComplete = OpenAsyncComplete;
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RetryLogicProvider/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetryLogicProvider/*' />
         public SqlRetryLogicBaseProvider RetryLogicProvider
         {
             get
@@ -1463,8 +1463,8 @@ namespace Microsoft.Data.SqlClient
 
         private Task InternalOpenAsync(CancellationToken cancellationToken)
         {
-            long scopeID = SqlClientEventSource.Log.TryPoolerScopeEnterEvent("<sc.SqlConnection.InternalOpenAsync|API> {0}", ObjectID);
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlConnection.InternalOpenAsync|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
+            long scopeID = SqlClientEventSource.Log.TryPoolerScopeEnterEvent("SqlConnection.InternalOpenAsync | API | Object Id {0}", ObjectID);
+            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.InternalOpenAsync | API | Correlation | Object Id {0}, Activity Id {1}", ObjectID, ActivityCorrelator.Current);
             try
             {
                 Guid operationId = s_diagnosticListener.WriteConnectionOpenBefore(this);

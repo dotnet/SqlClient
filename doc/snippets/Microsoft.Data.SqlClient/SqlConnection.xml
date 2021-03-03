@@ -1049,17 +1049,17 @@ GO
 ## Remarks
 You must set the value for this property before opening the connection to take effect.  
 
-To apply the retry logic do the following steps before opening the connection:
+To apply the retry logic, do the following steps before opening the connection:
 1. Define the configuration parameters by using <xref:Microsoft.Data.SqlClient.FixedRetryLogicOption> or <xref:Microsoft.Data.SqlClient.FloatingRetryLogicOption>.
 2. Create a <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider> by using one of the following static methods of the <xref:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory> class:  
-	- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.CreateFixedRetryProvider>  
-	- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.CreateIncrementalRetryProvider>  
-	- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.CreateExponentialRetryProvider>  
-	- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.CreateNoneRetryProvider>  
+	- <xref:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory.CreateFixedRetryProvider>  
+	- <xref:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory.CreateIncrementalRetryProvider>  
+	- <xref:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory.CreateExponentialRetryProvider>  
+	- <xref:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory.CreateNoneRetryProvider>  
 3. Assign the <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider> object to the `RetryLogicProvider` property.
 
 > [NOTE!]
-> Detecting retriable exceptions is a vital part of the retry pattern. Before applying retry logic it is important to investigate exceptions and choose a retry provider that best fits your scenario. First, log your exceptions and find transient faults.  
+> Detecting retriable exceptions is a vital part of the retry pattern. Before applying retry logic, it is important to investigate exceptions and choose a retry provider that best fits your scenario. First, log your exceptions and find transient faults.  
 
 > [NOTE!]
 > The connection **timeout** restarts for each execution of a connection open. There is no timing overlap between these two actions.

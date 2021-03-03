@@ -1682,7 +1682,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBaseProvider.xml' path='docs/members[@name="SqlRetryLogicBaseProvider"]/Retrying/*' />
         public System.EventHandler<SqlRetryingEventArgs> Retrying { get { throw null; } set { } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBaseProvider.xml' path='docs/members[@name="SqlRetryLogicBaseProvider"]/RetryLogic/*' />
-        public SqlRetryLogicBase RetryLogic { get{ throw null; } protected set { } }
+        public SqlRetryLogicBase RetryLogic { get { throw null; } protected set { } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBaseProvider.xml' path='docs/members[@name="SqlRetryLogicBaseProvider"]/Execute/*' />
         public abstract TResult Execute<TResult>(object sender, System.Func<TResult> function);
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBaseProvider.xml' path='docs/members[@name="SqlRetryLogicBaseProvider"]/ExecuteAsync1/*' />
