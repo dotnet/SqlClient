@@ -221,6 +221,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             AsyncCancelDoesNotWait(np_connStr).Wait();
         }
 
+        // Synapse: WAITFOR not supported + ';' not supported.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public static void AsyncCancelDoesNotWait2()
+        {
+            AsyncCancelDoesNotWait2(tcp_connStr);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public static void AsyncCancelDoesNotWaitNP2()
+        {
+            AsyncCancelDoesNotWait2(np_connStr);
+        }
+
+
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void TCPAttentionPacketTestTransaction()
         {
@@ -556,6 +571,47 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 Assert.NotNull(exception);
                 Assert.InRange((ended - started).TotalSeconds, cancelSeconds, delaySeconds - 1);
+            }
+        }
+
+        private static void AsyncCancelDoesNotWait2(string connStr)
+        {
+            const int delaySeconds = 30;
+            const int cancelSeconds = 1;
+
+            var cancellationTokenSource = new CancellationTokenSource();
+            DateTime started = DateTime.UtcNow;
+            DateTime ended = DateTime.UtcNow;
+            Exception exception = null;
+
+            Task executing = ExecuteWaitForAsync(cancellationTokenSource.Token, connStr, delaySeconds);
+
+            cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(cancelSeconds));
+
+            try
+            {
+                executing.Wait();
+            }
+            catch (Exception ex)
+            {
+                exception = ex;
+            }
+            ended = DateTime.UtcNow;
+
+            Assert.NotNull(exception);
+            Assert.InRange((ended - started).TotalSeconds, cancelSeconds, delaySeconds - 1);
+        }
+
+        private static async Task ExecuteWaitForAsync(CancellationToken cancellationToken, string connectionString, int delaySeconds)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync().ConfigureAwait(false);
+                using (var command = new SqlCommand($"WAITFOR DELAY '00:00:{delaySeconds:D2}'", connection))
+                {
+                    command.CommandTimeout = delaySeconds + 10;
+                    await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                }
             }
         }
     }
