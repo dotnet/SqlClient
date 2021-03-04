@@ -11557,6 +11557,42 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to &apos;{0}&apos; is not less than &apos;{1}&apos;; &apos;{2}&apos; cannot be greater than &apos;{3}&apos;..
+        /// </summary>
+        internal static string SqlRetryLogic_InvalidMinMaxPair {
+            get {
+                return ResourceManager.GetString("SqlRetryLogic_InvalidMinMaxPair", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Value &apos;{0}&apos; is out of range. Must be between {1} and {2}..
+        /// </summary>
+        internal static string SqlRetryLogic_InvalidRange {
+            get {
+                return ResourceManager.GetString("SqlRetryLogic_InvalidRange", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The retry has been canceled at attempt {0}..
+        /// </summary>
+        internal static string SqlRetryLogic_RetryCanceled {
+            get {
+                return ResourceManager.GetString("SqlRetryLogic_RetryCanceled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The number of retries has exceeded the maximum of {0} attempt(s)..
+        /// </summary>
+        internal static string SqlRetryLogic_RetryExceeded {
+            get {
+                return ResourceManager.GetString("SqlRetryLogic_RetryExceeded", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Connecting to a mirrored SQL Server instance using the ApplicationIntent ReadOnly connection option is not supported..
         /// </summary>
         internal static string SQLROR_FailoverNotSupported {

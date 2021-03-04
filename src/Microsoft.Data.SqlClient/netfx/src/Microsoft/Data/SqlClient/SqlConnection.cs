@@ -281,6 +281,30 @@ namespace Microsoft.Data.SqlClient
         private ClientCertificateRetrievalCallback _clientCertificateRetrievalCallback;
         private SqlClientOriginalNetworkAddressInfo _originalNetworkAddressInfo;
 
+        // Retry Logic
+        private SqlRetryLogicBaseProvider _retryLogicProvider;
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetryLogicProvider/*' />
+        [
+        Browsable(false),
+        DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)
+        ]
+        public SqlRetryLogicBaseProvider RetryLogicProvider
+        {
+            get
+            {
+                if (_retryLogicProvider == null)
+                {
+                    _retryLogicProvider = SqlConfigurableRetryLogicManager.ConnectionProvider;
+                }
+                return _retryLogicProvider;
+            }
+            set
+            {
+                _retryLogicProvider = value;
+            }
+        }
+
         // Transient Fault handling flag. This is needed to convey to the downstream mechanism of connection establishment, if Transient Fault handling should be used or not
         // The downstream handling of Connection open is the same for idle connection resiliency. Currently we want to apply transient fault handling only to the connections opened
         // using SqlConnection.Open() method.
@@ -1574,7 +1598,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
 
-                    if (!TryOpen(null, overrides))
+                    if (!RetryLogicProvider.Execute(this, () => TryOpen(null, overrides)))
                     {
                         throw ADP.InternalError(ADP.InternalErrorCode.SynchronousConnectReturnedPending);
                     }
@@ -1809,6 +1833,11 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsync/*' />
         public override Task OpenAsync(CancellationToken cancellationToken)
+        {
+            return RetryLogicProvider.ExecuteAsync(this, () => InternalOpenAsync(cancellationToken), cancellationToken);
+        }
+
+        private Task InternalOpenAsync(CancellationToken cancellationToken)
         {
             long scopeID = SqlClientEventSource.Log.TryPoolerScopeEnterEvent("<sc.SqlConnection.OpenAsync|API> {0}", ObjectID);
             SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlConnection.OpenAsync|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);

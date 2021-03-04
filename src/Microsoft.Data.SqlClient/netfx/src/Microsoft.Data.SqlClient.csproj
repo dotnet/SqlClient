@@ -334,6 +334,42 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SmiRecordBuffer.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiRecordBuffer.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\Common\SqlRetryingEventArgs.cs">
+      <Link>Microsoft\Data\SqlClient\Reliability\SqlRetryingEventArgs.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\Common\SqlRetryIntervalBaseEnumerator.cs">
+      <Link>Microsoft\Data\SqlClient\Reliability\SqlRetryIntervalBaseEnumerator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\Common\SqlRetryLogic.cs">
+      <Link>Microsoft\Data\SqlClient\Reliability\SqlRetryLogic.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\Common\SqlRetryLogicBase.cs">
+      <Link>Microsoft\Data\SqlClient\Reliability\SqlRetryLogicBase.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\Common\SqlRetryLogicBaseProvider.cs">
+      <Link>Microsoft\Data\SqlClient\Reliability\SqlRetryLogicBaseProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\Common\SqlRetryLogicProvider.cs">
+      <Link>Microsoft\Data\SqlClient\Reliability\SqlRetryLogicProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryFactory.cs">
+      <Link>Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryFactory.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\SqlRetryIntervalEnumerators.cs">
+      <Link>Microsoft\Data\SqlClient\Reliability\SqlRetryIntervalEnumerators.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.cs">
+      <Link>Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.CreateProvider.cs">
+      <Link>Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.CreateProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\AppConfigManager.cs">
+      <Link>Microsoft\Data\SqlClient\Reliability\AppConfigManager.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlUtil.cs">
+      <Link>Microsoft\Data\SqlClient\SqlUtil.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Microsoft\Data\Interop\SNINativeManagedWrapperX64.cs" />
@@ -347,6 +383,7 @@
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBConfig.cs" />
     <Compile Include="Microsoft\Data\SqlClient\AssemblyRef.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.LoadType.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SqlDataRecord.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\TriggerAction.cs" />
     <Compile Include="Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProvider.cs" />

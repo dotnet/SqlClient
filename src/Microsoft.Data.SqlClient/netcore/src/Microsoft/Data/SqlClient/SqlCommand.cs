@@ -323,6 +323,7 @@ namespace Microsoft.Data.SqlClient
         private _SqlRPC[] _sqlRPCParameterEncryptionReqArray;
         private List<SqlParameterCollection> _parameterCollectionList;
         private int _currentlyExecutingBatch;
+        private SqlRetryLogicBaseProvider _retryLogicProvider;
 
         /// <summary>
         /// This variable is used to keep track of which RPC batch's results are being read when reading the results of
@@ -471,6 +472,23 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 return (SqlInternalConnectionTds)_activeConnection.InnerConnection;
+            }
+        }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RetryLogicProvider/*' />
+        public SqlRetryLogicBaseProvider RetryLogicProvider
+        {
+            get
+            {
+                if (_retryLogicProvider == null)
+                {
+                    _retryLogicProvider = SqlConfigurableRetryLogicManager.CommandProvider;
+                }
+                return _retryLogicProvider;
+            }
+            set
+            {
+                _retryLogicProvider = value;
             }
         }
 
@@ -1003,7 +1021,7 @@ namespace Microsoft.Data.SqlClient
                 statistics = SqlStatistics.StartTimer(Statistics);
                 WriteBeginExecuteEvent();
                 SqlDataReader ds;
-                ds = RunExecuteReader(0, RunBehavior.ReturnImmediately, returnStream: true);
+                ds = RetryLogicProvider.Execute(this, () => RunExecuteReader(0, RunBehavior.ReturnImmediately, returnStream: true));
                 success = true;
 
                 return CompleteExecuteScalar(ds, false);
@@ -1083,7 +1101,7 @@ namespace Microsoft.Data.SqlClient
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
                 WriteBeginExecuteEvent();
-                InternalExecuteNonQuery(completion: null, sendToPipe: false, timeout: CommandTimeout, out _, methodName: nameof(ExecuteNonQuery));
+                RetryLogicProvider.Execute(this, () => InternalExecuteNonQuery(completion: null, sendToPipe: false, timeout: CommandTimeout, out _, methodName: nameof(ExecuteNonQuery)));
                 return _rowsAffected;
             }
             catch (Exception ex)
@@ -1576,7 +1594,7 @@ namespace Microsoft.Data.SqlClient
                 WriteBeginExecuteEvent();
                 // use the reader to consume metadata
                 SqlDataReader ds;
-                ds = RunExecuteReader(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, returnStream: true);
+                ds = RetryLogicProvider.Execute(this, () => RunExecuteReader(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, returnStream: true));
                 success = true;
                 return CompleteXmlReader(ds);
             }
@@ -1898,7 +1916,7 @@ namespace Microsoft.Data.SqlClient
             {
                 WriteBeginExecuteEvent();
                 statistics = SqlStatistics.StartTimer(Statistics);
-                return RunExecuteReader(behavior, RunBehavior.ReturnImmediately, returnStream: true);
+                return RetryLogicProvider.Execute(this, () => RunExecuteReader(behavior, RunBehavior.ReturnImmediately, returnStream: true));
             }
             catch (Exception ex)
             {
@@ -2384,7 +2402,12 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteNonQueryAsync[@name="CancellationToken"]/*'/>
         public override Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
         {
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.ExecuteNonQueryAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command Text '{4}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
+            return RetryLogicProvider.ExecuteAsync(this, () => InternalExecuteNonQueryAsync(cancellationToken), cancellationToken);
+        }
+
+        private Task<int> InternalExecuteNonQueryAsync(CancellationToken cancellationToken)
+        {
+            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.InternalExecuteNonQueryAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command Text '{4}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
             Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
 
             TaskCompletionSource<int> source = new TaskCompletionSource<int>();
@@ -2471,8 +2494,13 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="commandBehaviorAndCancellationToken"]/*'/>
         new public Task<SqlDataReader> ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
         {
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.ExecuteReaderAsync | API | Correlation | Object Id {0}, Behavior {1}, Activity Id {2}, Client Connection Id {3}, SPID {4}, Command Text '{5}'", ObjectID, (int)behavior, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
-            SqlClientEventSource.Log.TryTraceEvent("SqlCommand.ExecuteReaderAsync | API> {0}, Client Connection Id {1}, SPID {2}, Command Text = '{3}'", ObjectID, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
+            return RetryLogicProvider.ExecuteAsync(this, () => InternalExecuteReaderAsync(behavior, cancellationToken), cancellationToken);
+        }
+
+        private Task<SqlDataReader> InternalExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+        {
+            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.InternalExecuteReaderAsync | API | Correlation | Object Id {0}, Behavior {1}, Activity Id {2}, Client Connection Id {3}, SPID {4}, Command Text '{5}'", ObjectID, (int)behavior, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
+            SqlClientEventSource.Log.TryTraceEvent("SqlCommand.InternalExecuteReaderAsync | API> {0}, Client Connection Id {1}, SPID {2}, Command Text = '{3}'", ObjectID, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
             Guid operationId = default(Guid);
             if (!_parentOperationStarted)
             {
@@ -2541,8 +2569,13 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteScalarAsync[@name="CancellationToken"]/*'/>
         public override Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
         {
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.ExecuteScalarAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command Text '{4}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
-            SqlClientEventSource.Log.TryTraceEvent("SqlCommand.ExecuteScalarAsync | API> {0}, Client Connection Id {1}, SPID {2}, Command Text = '{3}'", ObjectID, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
+            return RetryLogicProvider.ExecuteAsync(this, () => InternalExecuteScalarAsync(cancellationToken), cancellationToken);
+        }
+
+        private Task<object> InternalExecuteScalarAsync(CancellationToken cancellationToken)
+        {
+            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.InternalExecuteScalarAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command Text '{4}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
+            SqlClientEventSource.Log.TryTraceEvent("SqlCommand.InternalExecuteScalarAsync | API> {0}, Client Connection Id {1}, SPID {2}, Command Text = '{3}'", ObjectID, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
             _parentOperationStarted = true;
             Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
 
@@ -2632,7 +2665,12 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReaderAsync[@name="CancellationToken"]/*'/>
         public Task<XmlReader> ExecuteXmlReaderAsync(CancellationToken cancellationToken)
         {
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.ExecuteXmlReaderAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command Text '{4}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
+            return RetryLogicProvider.ExecuteAsync(this, () => InternalExecuteXmlReaderAsync(cancellationToken), cancellationToken);
+        }
+
+        private Task<XmlReader> InternalExecuteXmlReaderAsync(CancellationToken cancellationToken)
+        {
+            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.InternalExecuteXmlReaderAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command Text '{4}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
             Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
 
             TaskCompletionSource<XmlReader> source = new TaskCompletionSource<XmlReader>();

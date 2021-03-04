@@ -309,6 +309,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsUsingManagedSNI() => UseManagedSNIOnWindows;
 
+        public static bool IsNotUsingManagedSNIOnWindows() => !UseManagedSNIOnWindows;
+
         public static bool IsUsingNativeSNI() => !IsUsingManagedSNI();
 
         // Synapse: UTF8 collations are not supported with Azure Synapse.
@@ -343,12 +345,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return RetrieveValueFromConnStr(TCPConnectionString, new string[] { "Password", "PWD" }) != string.Empty;
         }
 
-        // the name length will be no more then (16 + prefix.Length + escapeLeft.Length + escapeRight.Length)
-        // some providers does not support names (Oracle supports up to 30)
-        public static string GetUniqueName(string prefix)
+        /// <summary>
+        /// Generate a unique name to use in Sql Server; 
+        /// some providers does not support names (Oracle supports up to 30).
+        /// </summary>
+        /// <param name="prefix">The name length will be no more then (16 + prefix.Length + escapeLeft.Length + escapeRight.Length).</param>
+        /// <param name="withBracket">Name without brackets.</param>
+        /// <returns>Unique name by considering the Sql Server naming rules.</returns>
+        public static string GetUniqueName(string prefix, bool withBracket = true)
         {
-            string escapeLeft = "[";
-            string escapeRight = "]";
+            string escapeLeft = withBracket ? "[" : string.Empty;
+            string escapeRight = withBracket ? "]" : string.Empty;
             string uniqueName = string.Format("{0}{1}_{2}_{3}{4}",
                 escapeLeft,
                 prefix,
@@ -358,8 +365,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return uniqueName;
         }
 
-        // SQL Server supports long names (up to 128 characters), add extra info for troubleshooting
-        public static string GetUniqueNameForSqlServer(string prefix)
+        /// <summary>
+        /// Uses environment values `UserName` and `MachineName` in addition to the specified `prefix` and current date
+        /// to generate a unique name to use in Sql Server; 
+        /// SQL Server supports long names (up to 128 characters), add extra info for troubleshooting.
+        /// </summary>
+        /// <param name="prefix">Add the prefix to the generate string.</param>
+        /// <param name="withBracket">Database name must be pass with brackets by default.</param>
+        /// <returns>Unique name by considering the Sql Server naming rules.</returns>
+        public static string GetUniqueNameForSqlServer(string prefix, bool withBracket = true)
         {
             string extendedPrefix = string.Format(
                 "{0}_{1}_{2}@{3}",
@@ -367,7 +381,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Environment.UserName,
                 Environment.MachineName,
                 DateTime.Now.ToString("yyyy_MM_dd", CultureInfo.InvariantCulture));
-            string name = GetUniqueName(extendedPrefix);
+            string name = GetUniqueName(extendedPrefix, withBracket);
             if (name.Length > 128)
             {
                 throw new ArgumentOutOfRangeException("the name is too long - SQL Server names are limited to 128");
@@ -394,6 +408,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void DropStoredProcedure(SqlConnection sqlConnection, string spName)
         {
             using (SqlCommand cmd = new SqlCommand(string.Format("IF (OBJECT_ID('{0}') IS NOT NULL) \n DROP PROCEDURE {0}", spName), sqlConnection))
+            {
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        /// <summary>
+        /// Drops specified database on provided connection.
+        /// </summary>
+        /// <param name="sqlConnection">Open connection to be used.</param>
+        /// <param name="dbName">Database name without brackets.</param>
+        public static void DropDatabase(SqlConnection sqlConnection, string dbName)
+        {
+            using (SqlCommand cmd = new SqlCommand(string.Format("IF (EXISTS(SELECT 1 FROM sys.databases WHERE name = '{0}')) \nBEGIN \n ALTER DATABASE [{0}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE \n DROP DATABASE [{0}] \nEND", dbName), sqlConnection))
             {
                 cmd.ExecuteNonQuery();
             }

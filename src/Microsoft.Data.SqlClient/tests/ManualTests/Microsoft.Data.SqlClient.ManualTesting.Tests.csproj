@@ -190,6 +190,9 @@
     <Compile Include="SQL\RandomStressTest\SqlRandomTypeInfoCollection.cs" />
     <Compile Include="SQL\RandomStressTest\SqlRandomTypesForSqlServer.cs" />
     <Compile Include="SQL\RandomStressTest\RandomStressTest.cs" />
+    <Compile Include="SQL\RetryLogic\RetryLogicTestHelper.cs" />
+    <Compile Include="SQL\RetryLogic\SqlConnectionReliabilityTest.cs" />
+    <Compile Include="SQL\RetryLogic\SqlCommandReliabilityTest.cs" />
     <Compile Include="SQL\SplitPacketTest\SplitPacketTest.cs" />
     <Compile Include="SQL\SqlNotificationTest\SqlNotificationTest.cs" />
     <Compile Include="SQL\TransactionTest\TransactionTest.cs" />

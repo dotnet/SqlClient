@@ -60,6 +60,9 @@ namespace Microsoft.Data.SqlClient
         internal bool _suppressStateChangeForReconnection;
         private int _reconnectCount;
 
+        // Retry Logic
+        private SqlRetryLogicBaseProvider _retryLogicProvider;
+
         // diagnostics listener
         private static readonly SqlDiagnosticListener s_diagnosticListener = new SqlDiagnosticListener(SqlClientDiagnosticListenerExtensions.DiagnosticListenerName);
 
@@ -100,6 +103,23 @@ namespace Microsoft.Data.SqlClient
 
         private static readonly Action<object> s_openAsyncCancel = OpenAsyncCancel;
         private static readonly Action<Task<object>, object> s_openAsyncComplete = OpenAsyncComplete;
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetryLogicProvider/*' />
+        public SqlRetryLogicBaseProvider RetryLogicProvider
+        {
+            get
+            {
+                if (_retryLogicProvider == null)
+                {
+                    _retryLogicProvider = SqlConfigurableRetryLogicManager.ConnectionProvider;
+                }
+                return _retryLogicProvider;
+            }
+            set
+            {
+                _retryLogicProvider = value;
+            }
+        }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionKeyCacheTtl/*' />
         public static TimeSpan ColumnEncryptionKeyCacheTtl { get; set; } = TimeSpan.FromHours(2);
@@ -1185,8 +1205,7 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
-
-                    if (!TryOpen(null, overrides))
+                    if (!RetryLogicProvider.Execute(this, () => TryOpen(null, overrides)))
                     {
                         throw ADP.InternalError(ADP.InternalErrorCode.SynchronousConnectReturnedPending);
                     }
@@ -1439,8 +1458,13 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsync/*' />
         public override Task OpenAsync(CancellationToken cancellationToken)
         {
-            long scopeID = SqlClientEventSource.Log.TryPoolerScopeEnterEvent("SqlConnection.OpenAsync | API | Object Id {0}", ObjectID);
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.OpenAsync | API | Correlation | Object Id {0}, Activity Id {1}", ObjectID, ActivityCorrelator.Current);
+            return RetryLogicProvider.ExecuteAsync(this, () => InternalOpenAsync(cancellationToken), cancellationToken);
+        }
+
+        private Task InternalOpenAsync(CancellationToken cancellationToken)
+        {
+            long scopeID = SqlClientEventSource.Log.TryPoolerScopeEnterEvent("SqlConnection.InternalOpenAsync | API | Object Id {0}", ObjectID);
+            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.InternalOpenAsync | API | Correlation | Object Id {0}, Activity Id {1}", ObjectID, ActivityCorrelator.Current);
             try
             {
                 Guid operationId = s_diagnosticListener.WriteConnectionOpenBefore(this);
@@ -1471,7 +1495,6 @@ namespace Microsoft.Data.SqlClient
                         result.SetCanceled();
                         return result.Task;
                     }
-
 
                     bool completed;
 
