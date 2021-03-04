@@ -22,7 +22,7 @@ namespace Microsoft.Data.SqlClient.Tests
 {
     public class DiagnosticTest : RemoteExecutorTestBase
     {
-        private const string BadConnectionString = "data source = bad; initial catalog = bad; uid = bad; password = bad; connection timeout = 1;";
+        private const string BadConnectionString = "data source = bad; initial catalog = bad; integrated security = true; connection timeout = 1;";
         private static readonly string s_tcpConnStr = Environment.GetEnvironmentVariable("TEST_TCP_CONN_STR") ?? string.Empty;
         
         public static bool IsConnectionStringConfigured() => s_tcpConnStr != string.Empty;

@@ -21,9 +21,9 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.ArgumentNull(nameof(userId));
             }
 
-            if (userId.Length > TdsEnums.MAXLEN_USERNAME)
+            if (userId.Length > TdsEnums.MAXLEN_CLIENTID)
             {
-                throw ADP.InvalidArgumentLength(nameof(userId), TdsEnums.MAXLEN_USERNAME);
+                throw ADP.InvalidArgumentLength(nameof(userId), TdsEnums.MAXLEN_CLIENTID);
             }
 
             if (password == null)
@@ -31,9 +31,9 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.ArgumentNull(nameof(password));
             }
 
-            if (password.Length > TdsEnums.MAXLEN_PASSWORD)
+            if (password.Length > TdsEnums.MAXLEN_CLIENTSECRET)
             {
-                throw ADP.InvalidArgumentLength(nameof(password), TdsEnums.MAXLEN_PASSWORD);
+                throw ADP.InvalidArgumentLength(nameof(password), TdsEnums.MAXLEN_CLIENTSECRET);
             }
 
             if (!password.IsReadOnly())
