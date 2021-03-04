@@ -1025,11 +1025,7 @@ namespace Microsoft.Data.SqlClient
         }
         static internal Exception BulkLoadCannotConvertValue(Type sourcetype, MetaType metatype, int ordinal, int rowNumber, bool isEncrypted, string columnName, string value, Exception e)
         {
-            string quotedValue = string.Empty;
-            if (!isEncrypted)
-            {
-                quotedValue = string.Format(" '{0}'", (value.Length > 100 ? value.Substring(0, 100) : value));
-            }
+            string quotedValue = isEncrypted ? string.Empty : $" '{value}'";
             if (rowNumber == -1)
             {
                 return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_BulkLoadCannotConvertValueWithoutRowNo, quotedValue, sourcetype.Name, metatype.TypeName, ordinal, columnName), e);
