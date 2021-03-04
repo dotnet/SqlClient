@@ -20,7 +20,8 @@ namespace AKVEnclaveExample
 
         static void Main(string[] args)
         {
-            // Initialize Token Credential instance with preferred implementation: https://docs.microsoft.com/dotnet/api/azure.core.tokencredential
+            // Initialize Token Credential instance using InteractiveBrowserCredential. For other authentication options,
+            // see classes derived from TokenCredential: https://docs.microsoft.com/dotnet/api/azure.core.tokencredential
             InteractiveBrowserCredential interactiveBrowserCredential = new InteractiveBrowserCredential();
             
             // Initialize AKV provider
