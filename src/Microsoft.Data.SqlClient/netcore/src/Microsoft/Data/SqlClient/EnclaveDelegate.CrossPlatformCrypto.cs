@@ -103,8 +103,8 @@ namespace Microsoft.Data.SqlClient
 #if ENCLAVE_SIMULATOR
                     case SqlConnectionAttestationProtocol.SIM:
                         SimulatorEnclaveProvider simulatorEnclaveProvider = new SimulatorEnclaveProvider();
-                        EnclaveProviders[attestationProtocol] = (SqlColumnEncryptionEnclaveProvider)simulatorEnclaveProvider;
-                        sqlColumnEncryptionEnclaveProvider = EnclaveProviders[attestationProtocol];
+                        s_enclaveProviders[attestationProtocol] = (SqlColumnEncryptionEnclaveProvider)simulatorEnclaveProvider;
+                        sqlColumnEncryptionEnclaveProvider = s_enclaveProviders[attestationProtocol];
                         break;
 #endif
 
