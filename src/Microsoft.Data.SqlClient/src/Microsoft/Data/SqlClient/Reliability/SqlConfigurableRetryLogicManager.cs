@@ -15,6 +15,8 @@ namespace Microsoft.Data.SqlClient
     {
         private const string TypeName = nameof(SqlConfigurableRetryLogicManager);
 
+        private SqlConfigurableRetryLogicManager() {/*prevent external object creation*/}
+
         /// <summary>
         /// Default Retry provider for SqlConnections
         /// </summary>
