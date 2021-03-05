@@ -18,7 +18,7 @@ namespace Microsoft.Data.SqlTypes
         private const long _maxTicks = 3155378975999999999; // DateTime.MaxValue.Ticks
 
         private bool _notNull;    // false if null - has to be _notNull and not _isNull - otherwise default(SqlDateTime2) will return a SqlDateTime2 with _isNull=false and that would make XmlSerialization fail
-        private long _ticks; // Ticks representation similar to DateTime.Tics
+        private long _ticks; // Ticks representation similar to DateTime.Ticks
         
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlDateTime2.xml' path='docs/members[@name="SqlDateTime2"]/ctor1/*' />
         private SqlDateTime2(bool isNull)
