@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
     /// <remarks>
 	///	    <format type="text/markdown"><![CDATA[
     /// ## Remarks
-    /// For more information, see: [Using the Azure Key Vault Provider](https://docs.microsoft.com/sql/connect/ado-net/sql/sqlclient-support-always-encrypted#using-the-azure-key-vault-provider) 
+    /// For more information, see: [Using the Azure Key Vault Provider](/sql/connect/ado-net/sql/sqlclient-support-always-encrypted#using-the-azure-key-vault-provider) 
     /// ]]></format>
     /// </remarks>
     public class SqlColumnEncryptionAzureKeyVaultProvider : SqlColumnEncryptionKeyStoreProvider
