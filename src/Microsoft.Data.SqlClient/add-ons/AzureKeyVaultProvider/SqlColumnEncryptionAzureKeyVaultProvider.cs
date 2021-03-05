@@ -312,13 +312,4 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 
         #endregion
     }
-
-    /// <summary>
-    /// The authentication callback delegate which is to be implemented by the client code
-    /// </summary>
-    /// <param name="authority"> Identifier of the authority, a URL. </param>
-    /// <param name="resource"> Identifier of the target resource that is the recipient of the requested token, a URL. </param>
-    /// <param name="scope"> The scope of the authentication request. </param>
-    /// <returns> access token </returns>
-    public delegate Task<string> AuthenticationCallback(string authority, string resource, string scope);
 }
