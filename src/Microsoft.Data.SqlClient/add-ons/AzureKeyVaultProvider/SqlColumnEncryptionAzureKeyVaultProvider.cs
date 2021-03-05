@@ -14,36 +14,26 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 {
     /// <summary>
     /// Implementation of column master key store provider that allows client applications to access data when a 
-    /// column master key is stored in Microsoft Azure Key Vault. For more information on Always Encrypted, please refer to: https://aka.ms/AlwaysEncrypted.
+    /// column master key is stored in Microsoft Azure Key Vault. 
+    ///
+    /// For more information on Always Encrypted, please refer to: https://aka.ms/AlwaysEncrypted.
     ///
     /// A Column Encryption Key encrypted with certificate store provider should be decryptable by this provider and vice versa.
     /// 
-    /// Envelope Format for the encrypted column encryption key  
-    ///           version + keyPathLength + ciphertextLength + keyPath + ciphertext +  signature
+    /// Envelope Format for the encrypted column encryption key :
+    ///           version + keyPathLength + ciphertextLength + keyPath + ciphertext + signature
     /// 
-    /// version: A single byte indicating the format version.
-    /// keyPathLength: Length of the keyPath.
-    /// ciphertextLength: ciphertext length
-    /// keyPath: keyPath used to encrypt the column encryption key. This is only used for troubleshooting purposes and is not verified during decryption.
-    /// ciphertext: Encrypted column encryption key
-    /// signature: Signature of the entire byte array. Signature is validated before decrypting the column encryption key.
+    /// - version: A single byte indicating the format version.
+    /// - keyPathLength: Length of the keyPath.
+    /// - ciphertextLength: ciphertext length
+    /// - keyPath: keyPath used to encrypt the column encryption key. This is only used for troubleshooting purposes and is not verified during decryption.
+    /// - ciphertext: Encrypted column encryption key
+    /// - signature: Signature of the entire byte array. Signature is validated before decrypting the column encryption key.
     /// </summary>
     /// <remarks>
 	///	    <format type="text/markdown"><![CDATA[
     /// ## Remarks
-    /// 
-    /// **SqlColumnEncryptionAzureKeyVaultProvider** is implemented for Microsoft.Data.SqlClient and supports .NET Framework 4.6.1+ and .NET Core 2.1+.
-    /// The provider name identifier for this implementation is "AZURE_KEY_VAULT" and it is not registered in driver by default.
-    /// Client applications must call the <xref=Microsoft.Data.SqlClient.SqlConnection.RegisterColumnEncryptionKeyStoreProviders> API only once in the lifetime of the driver to register this custom provider by implementing a custom Authentication Callback mechanism.
-    /// 
-    /// Once the provider is registered, it can used to perform Always Encrypted operations by creating Column Master Key using Azure Key Vault Key Identifier URL.
-    /// 
-    /// ## Example
-    /// 
-    /// Sample C# applications to demonstrate Always Encrypted use with Azure Key Vault are available at links below:
-    /// 
-    /// - [Example: Using Azure Key Vault with Always Encrypted](~/connect/ado-net/sql/azure-key-vault-example.md)
-    /// - [Example: Using Azure Key Vault with Always Encrypted with enclaves enabled](~/connect/ado-net/sql/azure-key-vault-enclave-example.md)
+    /// For more information, see: [Using the Azure Key Vault Provider](/sql/connect/ado-net/sql/sqlclient-support-always-encrypted#using-the-azure-key-vault-provider) 
     /// ]]></format>
     /// </remarks>
     public class SqlColumnEncryptionAzureKeyVaultProvider : SqlColumnEncryptionKeyStoreProvider
@@ -322,13 +312,4 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 
         #endregion
     }
-
-    /// <summary>
-    /// The authentication callback delegate which is to be implemented by the client code
-    /// </summary>
-    /// <param name="authority"> Identifier of the authority, a URL. </param>
-    /// <param name="resource"> Identifier of the target resource that is the recipient of the requested token, a URL. </param>
-    /// <param name="scope"> The scope of the authentication request. </param>
-    /// <returns> access token </returns>
-    public delegate Task<string> AuthenticationCallback(string authority, string resource, string scope);
 }
