@@ -586,7 +586,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             Task executing = ExecuteWaitForAsync(cancellationTokenSource.Token, connStr, delaySeconds);
 
-            cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(cancelSeconds));
+            cancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(cancelSeconds+1));
 
             try
             {
