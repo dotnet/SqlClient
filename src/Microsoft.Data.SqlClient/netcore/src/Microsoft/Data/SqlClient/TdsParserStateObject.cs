@@ -294,6 +294,7 @@ namespace Microsoft.Data.SqlClient
             // Construct a physical connection
             Debug.Assert(null != parser, "no parser?");
             _parser = parser;
+            _onTimeoutAsync = OnTimeoutAsync;
 
             // For physical connection, initialize to default login packet size.
             SetPacketSize(TdsEnums.DEFAULT_LOGIN_PACKET_SIZE);
