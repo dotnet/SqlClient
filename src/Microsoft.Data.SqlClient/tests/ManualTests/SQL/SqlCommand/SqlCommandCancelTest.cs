@@ -607,7 +607,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (var connection = new SqlConnection(connectionString))
             {
                 await connection.OpenAsync().ConfigureAwait(false);
-                using (var command = new SqlCommand($"WAITFOR DELAY '00:00:{delaySeconds:D2}'", connection))
+                using (var command = new SqlCommand(@"
+WHILE 1 = 1
+BEGIN
+    DECLARE @x INT = 1
+END", connection))
                 {
                     command.CommandTimeout = delaySeconds + 10;
                     await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
