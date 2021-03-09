@@ -535,7 +535,7 @@ False
    
   
 ## Examples  
- The following example explicitly disables the Multiple Active Result Sets feature.  
+ The following example explicitly enables the Multiple Active Result Sets feature.  
   
  [!code-csharp[SqlConnectionStringBuilder_MultipleActiveResultSets.MARS#1](~/../sqlclient/doc/samples/SqlConnectionStringBuilder_MultipleActiveResultSets.cs#1)]
   
