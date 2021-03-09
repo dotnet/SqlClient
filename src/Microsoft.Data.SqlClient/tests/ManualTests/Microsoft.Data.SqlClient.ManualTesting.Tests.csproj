@@ -24,6 +24,7 @@
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CryptoVector.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CryptoNativeBaselineReader.cs" />
     <Compile Include="AlwaysEncrypted\TestTrustedMasterKeyPaths.cs" />
+    <Compile Include="SQL\RetryLogic\SqlConfigurationManagerReliabilityTest.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetsWindows)' == 'true' and !$(ReferenceType.Contains('NetStandard'))">
     <Compile Include="AlwaysEncrypted\CspProviderExt.cs" />
@@ -69,7 +70,6 @@
     <Compile Include="DataCommon\AADUtility.cs" />
     <None Include="SQL\RetryLogic\Resources\CustomConfigurableRetryLogic.cs" />
     <Compile Include="SQL\RetryLogic\RetryLogicConfigHelper.cs" />
-    <Compile Include="SQL\RetryLogic\SqlConfigurationManagerReliabilityTest.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\OrderHint.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\OrderHintAsync.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\OrderHintDuplicateColumn.cs" />

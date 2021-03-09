@@ -152,7 +152,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             s_commandCRLTest.NoneRetriableExecuteFail(TcpCnnString, cmdProvider);
         }
 
-        [Theory]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [InlineData("InvalidRetrylogicTypeName")]
         [InlineData("")]
         [InlineData(null)]
@@ -180,7 +180,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [Theory]
         [MemberData(nameof(RetryLogicConfigHelper.GetIivalidTimes), MemberType = typeof(RetryLogicConfigHelper))]
-        public void OutOfRangeDeltaTime(TimeSpan deltaTime, TimeSpan minTime, TimeSpan maxTime)
+        public void OutOfRangeTime(TimeSpan deltaTime, TimeSpan minTime, TimeSpan maxTime)
         {
             RetryLogicConfigs cnnCfg = RetryLogicConfigHelper.CreateRandomConfig(RetryLogicConfigHelper.RetryMethodName_Fix);
             cnnCfg.DeltaTime = deltaTime;

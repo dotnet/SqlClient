@@ -105,7 +105,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                                                           FilterSqlStatements unauthorizedStatemets,
                                                                           IEnumerable<int> transientErrors,
                                                                           int deltaTimeMillisecond = 10,
-                                                                          bool custome = true)
+                                                                          bool custom = true)
         {
             SetRetrySwitch(true);
 
@@ -114,8 +114,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 NumberOfTries = numberOfRetries,
                 DeltaTime = TimeSpan.FromMilliseconds(deltaTimeMillisecond),
                 MaxTimeInterval = maxInterval,
-                TransientErrors = transientErrors ?? (custome ? s_defaultTransientErrors : null),
-                AuthorizedSqlCondition = custome ? RetryPreConditon(unauthorizedStatemets) : null
+                TransientErrors = transientErrors ?? (custom ? s_defaultTransientErrors : null),
+                AuthorizedSqlCondition = custom ? RetryPreConditon(unauthorizedStatemets) : null
             };
 
             foreach (var item in GetRetryStrategies(floatingOption))
