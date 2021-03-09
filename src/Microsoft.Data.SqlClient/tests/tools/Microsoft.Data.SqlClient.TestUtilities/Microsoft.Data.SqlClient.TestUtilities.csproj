@@ -10,7 +10,6 @@
   </PropertyGroup>
   <Target Name="CopyConfig" BeforeTargets="Compile">
     <Copy SourceFiles="config.default.json" DestinationFiles="config.json" Condition="!Exists('config.json')" />
-    <Message Text ="copied config.default.json" Importance="high" />
   </Target>
   <ItemGroup>
     <None Update="config.json">
