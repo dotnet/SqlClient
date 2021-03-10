@@ -4,7 +4,7 @@ The following Microsoft.Data.SqlClient 1.1 stable releases have been shipped:
 
 | Release Date | Version | Notes |
 | :-- | :-- | :--: |
-| 2021/03/09 | 1.1.4 | [release notes](1.1.4.md) |
+| 2021/03/10 | 1.1.4 | [release notes](1.1.4.md) |
 | 2020/05/15 | 1.1.3 | [release notes](1.1.3.md) |
 | 2020/04/15 | 1.1.2 | [release notes](1.1.2.md) |
 | 2020/02/14 | 1.1.1 | [release notes](1.1.1.md) |
