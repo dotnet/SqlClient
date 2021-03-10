@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Stable Release 1.1.4] - 2021-03-10
+
+### Fixed
+- Fixed wrong results issues by changing the timeout timer to ensure a correct execution state [#950](https://github.com/dotnet/SqlClient/pull/950)
+- Fixed MARS header contains errors issue against .NET Framework 4.8+ [#959](https://github.com/dotnet/SqlClient/pull/959)
+
+
 ## [Stable Release 1.1.3] - 2020-05-15
 
 ### Fixed
