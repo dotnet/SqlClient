@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Stable Release 1.1.4] - 2021-03-10
+
+### Fixed
+- Fixed wrong results issues by changing the timeout timer to ensure a correct execution state [#950](https://github.com/dotnet/SqlClient/pull/950)
+- Fixed MARS header contains errors issue against .NET Framework 4.8+ [#959](https://github.com/dotnet/SqlClient/pull/959)
+
+
 ## [Stable Release 2.1.2] - 2021-03-03
 
 ### Fixed
@@ -15,7 +22,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Fixed missing `System.Runtime.Caching` dependency for .NET Standard assemblies [#878](https://github.com/dotnet/SqlClient/pull/878)
 - Fixed event source tracing issues [#941](https://github.com/dotnet/SqlClient/pull/941)
 - Fixed MARS header contains errors issue against .NET Framework 4.8.1 [#928](https://github.com/dotnet/SqlClient/pull/928)
-
 
 
 ## [Stable Release 2.1.1] - 2020-12-18
