@@ -12,7 +12,9 @@ This guide is meant to cover all namespace changes needed in client applications
 | <s>`using System.Data.Sql;`</s> <br>`using Microsoft.Data.Sql;`</s> | Applicable Classes:<br>`SqlNotificationRequest`<br> |
 | <s>`using System.Data;`</s> <br>`using Microsoft.Data;`</s> | Applicable Classes:<br>`OperationAbortedException`|
 
-## Web.config
+## Configuration
+
+For .NET Framework projects it may be necessary to include the following in your App.config or Web.config file:
 
 ``` xml
 <configuration>
