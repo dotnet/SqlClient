@@ -2124,7 +2124,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             if (!SQLSetupStrategyAzureKeyVault.isAKVProviderRegistered)
             {
                 SqlColumnEncryptionAzureKeyVaultProvider sqlColumnEncryptionAzureKeyVaultProvider =
-                    new SqlColumnEncryptionAzureKeyVaultProvider(AADUtility.AzureActiveDirectoryAuthenticationCallback);
+                    new SqlColumnEncryptionAzureKeyVaultProvider(new SqlClientCustomTokenCredential());
 
                 DummyKeyStoreProvider dummyProvider = new DummyKeyStoreProvider();
 
