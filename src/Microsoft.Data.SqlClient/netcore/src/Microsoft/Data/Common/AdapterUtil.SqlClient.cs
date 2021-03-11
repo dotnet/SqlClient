@@ -759,7 +759,7 @@ namespace Microsoft.Data.Common
         {
             int length = dataSource.Length;
             // remove server port
-            int foundIndex = dataSource.LastIndexOf(',', length - 1, length - 1);
+            int foundIndex = dataSource.LastIndexOf(',');
             if (foundIndex >= 0)
             {
                 length = foundIndex;
@@ -784,7 +784,7 @@ namespace Microsoft.Data.Common
                 string endpoint = AzureSqlServerEndpoints[index];
                 if (length > endpoint.Length)
                 {
-                    if (string.CompareOrdinal(dataSource, length - endpoint.Length, endpoint, 0, endpoint.Length) == 0)
+                    if (string.Compare(dataSource, length - endpoint.Length, endpoint, 0, endpoint.Length, StringComparison.OrdinalIgnoreCase) == 0)
                     {
                         return true;
                     }
