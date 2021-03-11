@@ -31,6 +31,7 @@
     <Compile Include="AlwaysEncryptedTests\TestFixtures.cs" />
     <Compile Include="AlwaysEncryptedTests\Utility.cs" />
     <Compile Include="MultipartIdentifierTests.cs" />
+    <Compile Include="SqlConfigurableRetryLogicTest.cs" />
     <Compile Include="SqlCommandBuilderTest.cs" />
     <Compile Include="SqlBulkCopyTest.cs" />
     <Compile Include="SqlClientMetaDataCollectionNamesTest.cs" />

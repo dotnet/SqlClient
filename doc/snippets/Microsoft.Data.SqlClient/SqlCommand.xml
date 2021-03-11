@@ -2772,6 +2772,63 @@ You must set the value for this property before the command is executed for it t
 ]]></format>
 			</remarks>
 		</Notification>
+		<RetryLogicProvider>
+			<summary>
+				Gets or sets a value that specifies the
+				<see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider" />
+				object bound to this command.
+			</summary>
+			<value>
+				When set to null (default), the default non-retriable provider will be used.
+			</value>
+			<remarks>
+				<format type="text/markdown"><![CDATA[
+
+## Remarks
+You must set the value for this property before the command is executed for it to take effect.  
+
+To apply the retry logic, do the following steps before executing the command:
+1. Define the configuration parameters by using <xref:Microsoft.Data.SqlClient.FixedRetryLogicOption> or <xref:Microsoft.Data.SqlClient.FloatingRetryLogicOption>.
+2. Create a <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider> by using one of the following static methods of the <xref:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory> class:  
+	- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.CreateFixedRetryProvider>  
+	- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.CreateIncrementalRetryProvider>  
+	- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.CreateExponentialRetryProvider>  
+	- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.CreateNoneRetryProvider>  
+3. Assign the <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider> object to the `RetryLogicProvider` property.
+
+> [NOTE!]
+> Detecting retriable exceptions is a vital part of the retry pattern. Before applying retry logic, it is important to investigate exceptions and choose a retry provider that best fits your scenario. First, log your exceptions and find transient faults.  
+
+> [NOTE!]
+> The command **timeout** restarts for each execution of a command within the retry logic and after applying the retry time delay. There is no timing overlap between these two actions.
+
+## Example
+The following sample creates a database and establishes an active connection to it. While the database has an active connection, it tries to drop it with a new <xref:Microsoft.Data.SqlClient.SqlConnection> and a <xref:Microsoft.Data.SqlClient.SqlCommand> that uses a <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider>. You should kill the active connection through the database to unblock the second command before exceeding the number of retries.  
+The blocking connection simulates a situation like a command still running in the database and unlikely to finish.  
+
+[!code-csharp[SqlConfigurableRetryLogic_SqlCommand#1](~/../sqlclient/doc/samples/SqlConfigurableRetryLogic_SqlCommand.cs#1)]
+
+### How to use with synchronous commands
+
+[!code-csharp[SqlConfigurableRetryLogic_SqlCommand#2](~/../sqlclient/doc/samples/SqlConfigurableRetryLogic_SqlCommand.cs#2)]
+
+### How to use with asynchoronous commands
+
+[!code-csharp[SqlConfigurableRetryLogic_SqlCommand#3](~/../sqlclient/doc/samples/SqlConfigurableRetryLogic_SqlCommand.cs#3)]
+
+### How to use with legacy asynchronous commands
+Besides assigning the provider to the command and executing the command, it's possible to run it directly using the following <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider> methods:  
+- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.Execute>
+- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.ExecuteAsync>
+
+[!code-csharp[SqlConfigurableRetryLogic_SqlCommand#4](~/../sqlclient/doc/samples/SqlConfigurableRetryLogic_SqlCommand.cs#4)]
+
+> [NOTE!]
+> The Asynchronous Programming Model (APM) is a legacy pattern that uses a pair of methods starting with `Begin` and `End`, and an interface called `IAsyncResult`. It's not recommended to use this pattern in new applications. These methods are for backwards compatibility.  
+
+]]></format>
+			</remarks>
+		</RetryLogicProvider>
 		<NotificationAutoEnlist>
 			<summary>
 				Gets or sets a value indicating whether the application should automatically receive query notifications from a common

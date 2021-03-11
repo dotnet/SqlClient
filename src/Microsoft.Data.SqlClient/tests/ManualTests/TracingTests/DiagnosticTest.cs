@@ -213,7 +213,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
-                        cmd.CommandText = "select * from sys.objects for xml auto, xmldata;";
+                        cmd.CommandText = "select top 10 * from sys.objects for xml auto, xmldata;";
 
                         conn.Open();
                         XmlReader reader = cmd.ExecuteXmlReader();
@@ -401,7 +401,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     using (SqlCommand cmd = new SqlCommand())
                     {
                         cmd.Connection = conn;
-                        cmd.CommandText = "select * from sys.objects for xml auto, xmldata;";
+                        cmd.CommandText = "select TOP 10 * from sys.objects for xml auto, xmldata;";
 
                         conn.Open();
                         XmlReader reader = await cmd.ExecuteXmlReaderAsync();

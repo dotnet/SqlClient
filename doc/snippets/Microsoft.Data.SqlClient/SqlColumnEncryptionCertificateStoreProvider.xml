@@ -26,7 +26,7 @@
             <param name="masterKeyPath">The master key path.</param>
             <param name="encryptionAlgorithm">The encryption algorithm. Currently, the only valid value is: <c>RSA_OAEP</c>
             </param>
-            <param name="columnEncryptionKey">The encrypted column encryption key.</param>
+            <param name="columnEncryptionKey">The plaintext column encryption key.</param>
             <summary>Encrypts a column encryption key using the certificate with the specified key path and using the specified algorithm. The format of the key path should be 
                 "Local Machine/My/&lt;certificate_thumbprint&gt;" or "Current User/My/&lt;certificate_thumbprint&gt;".
             </summary>
