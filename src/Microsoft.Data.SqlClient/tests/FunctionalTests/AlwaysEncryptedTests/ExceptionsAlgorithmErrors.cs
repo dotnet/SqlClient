@@ -140,7 +140,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         public void TestUnknownCustomKeyStoreProvider()
         {
             // Clear out the existing providers (to ensure test reliability)
-            ClearSqlConnectionProviders();
+            ClearSqlConnectionGlobalProviders();
 
             string errorMessage = "Failed to decrypt a column encryption key. Invalid key store provider name: 'Dummy_Provider'. A key store provider name must denote either a system key store provider or a registered custom key store provider.";
             Object cipherMD = GetSqlCipherMetadata(0, 1, null, 1, 0x03);
@@ -154,7 +154,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             Exception encryptEx = Assert.Throws<TargetInvocationException>(() => EncryptWithKey(plainText, cipherMD, "localhost"));
             Assert.Contains(errorMessage, encryptEx.InnerException.Message);
 
-            ClearSqlConnectionProviders();
+            ClearSqlConnectionGlobalProviders();
         }
 
         [Fact]
@@ -202,7 +202,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             string errorMessage = "Failed to decrypt a column encryption key";
 
             // Clear out the existing providers (to ensure test reliability)
-            ClearSqlConnectionProviders();
+            ClearSqlConnectionGlobalProviders();
             
             IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders = new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>();
             customProviders.Add("DummyProvider", new DummyKeyStoreProvider());
@@ -218,8 +218,8 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
             Exception encryptEx = Assert.Throws<TargetInvocationException>(() => EncryptWithKey(cipherText, cipherMD, "localhost"));
             Assert.Contains(errorMessage, encryptEx.InnerException.Message);
-            
-            ClearSqlConnectionProviders();
+
+            ClearSqlConnectionGlobalProviders();
         }
     }
 
