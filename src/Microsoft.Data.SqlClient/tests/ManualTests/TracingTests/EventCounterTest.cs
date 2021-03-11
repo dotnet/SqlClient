@@ -1,7 +1,7 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
-
+using System;
 using System.Diagnostics;
 using System.Reflection;
 using System.Transactions;
@@ -146,6 +146,69 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(0, SqlClientEventSourceProps.StasisConnections);
         }
 
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public void EventCounter_ReclaimedConnectionsCounter_Functional()
+        {
+            SqlConnection.ClearAllPools();
+            var stringBuilder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { Pooling = true, MaxPoolSize = 1};
+
+            long rc = SqlClientEventSourceProps.ReclaimedConnections;
+            
+            InternalConnectionWrapper internalConnection = CreateEmancipatedConnection(stringBuilder.ToString());
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();       
+
+            using (SqlConnection conn = new SqlConnection(stringBuilder.ToString()))
+            {
+                conn.Open();
+
+                // when calling open, the connection is reclaimed. 
+                Assert.Equal(rc + 1, SqlClientEventSourceProps.ReclaimedConnections);
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public void EventCounter_ConnectionPoolGroupsCounter_Functional()
+        {
+            SqlConnection.ClearAllPools();
+
+            var stringBuilder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { Pooling = true};
+
+            long acpg = SqlClientEventSourceProps.ActiveConnectionPoolGroups;
+            long iacpg = SqlClientEventSourceProps.InactiveConnectionPoolGroups;         
+
+            using (SqlConnection conn = new SqlConnection(stringBuilder.ToString())) {
+                conn.Open();
+
+                // when calling open, we have 1 more active connection pool group
+                Assert.Equal(acpg + 1, SqlClientEventSourceProps.ActiveConnectionPoolGroups);       
+
+                conn.Close();
+            }
+
+            SqlConnection.ClearAllPools();
+
+            // poolGroup state is changed from Active to Idle
+            PruneConnectionPoolGroups();
+
+            // poolGroup state is changed from Idle to Disabled
+            PruneConnectionPoolGroups();
+            Assert.Equal(acpg, SqlClientEventSourceProps.ActiveConnectionPoolGroups);
+            Assert.Equal(iacpg + 1, SqlClientEventSourceProps.InactiveConnectionPoolGroups);
+                        
+            // Remove poolGroup from poolGroupsToRelease list
+             PruneConnectionPoolGroups();
+             Assert.Equal(iacpg, SqlClientEventSourceProps.ActiveConnectionPoolGroups);
+        }
+
+        private static InternalConnectionWrapper CreateEmancipatedConnection(string connectionString)
+        {
+           SqlConnection connection = new SqlConnection(connectionString);
+           connection.Open();
+           return new InternalConnectionWrapper(connection);
+        }
+
         private void ClearConnectionPools()
         {
             //ClearAllPoos kills all the existing pooled connection thus deactivating all the active pools
@@ -208,6 +271,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly FieldInfo _activeConnectionsCounter;
         private static readonly FieldInfo _freeConnectionsCounter;
         private static readonly FieldInfo _stasisConnectionsCounter;
+        private static readonly FieldInfo _reclaimedConnectionsCounter;
 
         static SqlClientEventSourceProps()
         {
@@ -264,6 +328,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             _stasisConnectionsCounter =
                 sqlClientEventSourceType.GetField(nameof(_stasisConnectionsCounter), _bindingFlags);
             Debug.Assert(_stasisConnectionsCounter != null);
+            _reclaimedConnectionsCounter =
+                sqlClientEventSourceType.GetField(nameof(_reclaimedConnectionsCounter), _bindingFlags);
+            Debug.Assert(_reclaimedConnectionsCounter != null);
         }
 
         public static long ActiveHardConnections => (long)_activeHardConnectionsCounter.GetValue(_log)!;
@@ -295,5 +362,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static long FreeConnections => (long)_freeConnectionsCounter.GetValue(_log)!;
 
         public static long StasisConnections => (long)_stasisConnectionsCounter.GetValue(_log)!;
+
+        public static long ReclaimedConnections => (long)_reclaimedConnectionsCounter.GetValue(_log)!;
     }
 }
