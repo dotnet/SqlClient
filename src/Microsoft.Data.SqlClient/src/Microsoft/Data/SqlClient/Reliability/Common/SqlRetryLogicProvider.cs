@@ -20,23 +20,19 @@ namespace Microsoft.Data.SqlClient
         private readonly ConcurrentBag<SqlRetryLogicBase> _retryLogicPool = new ConcurrentBag<SqlRetryLogicBase>();
 
         // safety switch for the preview version
-        private const string EnableRetryLogicSwitch = "Switch.Microsoft.Data.SqlClient.EnableRetryLogic";
-        private readonly bool enableRetryLogic = false;
+        internal const string EnableRetryLogicSwitch = "Switch.Microsoft.Data.SqlClient.EnableRetryLogic";
 
         /// <summary>Creates an instance of this type.</summary>
         public SqlRetryLogicProvider(SqlRetryLogicBase retryLogic)
         {
             Debug.Assert(retryLogic != null, $"The '{nameof(retryLogic)}' cannot be null.");
-            AppContext.TryGetSwitch(EnableRetryLogicSwitch, out enableRetryLogic);
-            SqlClientEventSource.Log.TryTraceEvent(@"<sc.{0}.SqlRetryLogicProvider|INFO> AppContext switch ""{1}""={2}.",
-                                                   TypeName, EnableRetryLogicSwitch, enableRetryLogic);
             RetryLogic = retryLogic;
         }
 
         private SqlRetryLogicBase GetRetryLogic()
         {
             SqlRetryLogicBase retryLogic = null;
-            if (enableRetryLogic && !_retryLogicPool.TryTake(out retryLogic))
+            if (!_retryLogicPool.TryTake(out retryLogic))
             {
                 retryLogic = RetryLogic.Clone() as SqlRetryLogicBase;
             }
@@ -74,7 +70,7 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
-                if (enableRetryLogic && RetryLogic.RetryCondition(sender) && RetryLogic.TransientPredicate(e))
+                if (RetryLogic.RetryCondition(sender) && RetryLogic.TransientPredicate(e))
                 {
                     retryLogic = retryLogic ?? GetRetryLogic();
                     SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.Execute<TResult>|INFO> Found an action eligible for the retry policy (retried attempts = {1}).",
@@ -120,7 +116,7 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
-                if (enableRetryLogic && RetryLogic.RetryCondition(sender) && RetryLogic.TransientPredicate(e))
+                if (RetryLogic.RetryCondition(sender) && RetryLogic.TransientPredicate(e))
                 {
                     retryLogic = retryLogic ?? GetRetryLogic();
                     SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.ExecuteAsync<TResult>|INFO> Found an action eligible for the retry policy (retried attempts = {1}).",
@@ -165,7 +161,7 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception e)
             {
-                if (enableRetryLogic && RetryLogic.RetryCondition(sender) && RetryLogic.TransientPredicate(e))
+                if (RetryLogic.RetryCondition(sender) && RetryLogic.TransientPredicate(e))
                 {
                     retryLogic = retryLogic ?? GetRetryLogic();
                     SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.ExecuteAsync|INFO> Found an action eligible for the retry policy (retried attempts = {1}).",
