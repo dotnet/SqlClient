@@ -57,7 +57,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         public SQLSetupStrategy()
         {
-            if(certificate == null)
+            if (certificate == null)
             {
                 certificate = CertificateUtility.CreateCertificate();
             }
@@ -137,7 +137,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             SqlNullValuesTable = new SqlNullValuesTable(GenerateUniqueName("SqlNullValuesTable"), columnEncryptionKeys[0]);
             tables.Add(SqlNullValuesTable);
 
-            CustomKeyStoreProviderTestTable = new ApiTestTable(GenerateUniqueName("CustomKeyStoreProviderTestTable"), columnEncryptionKeys[2], columnEncryptionKeys[0]);
+            CustomKeyStoreProviderTestTable = new ApiTestTable(GenerateUniqueName("CustomKeyStoreProviderTestTable"), columnEncryptionKeys[2], columnEncryptionKeys[0], useDeterministicEncryption: true);
             tables.Add(CustomKeyStoreProviderTestTable);
 
             TabNVarCharMaxSource = new BulkCopyTruncationTables(GenerateUniqueName("TabNVarCharMaxSource"), columnEncryptionKeys[0]);
