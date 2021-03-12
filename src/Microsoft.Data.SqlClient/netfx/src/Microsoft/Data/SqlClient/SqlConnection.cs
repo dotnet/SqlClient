@@ -61,7 +61,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <summary>
         /// Global custom provider list should be provided by the user. We shallow copy the user supplied dictionary into a ReadOnlyDictionary.
-        /// Global custom provider list can only supplied once per application.
+        /// Global custom provider list can only be supplied once per application.
         /// </summary>
         private static ReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> _GlobalCustomColumnEncryptionKeyStoreProviders;
 
