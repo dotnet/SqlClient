@@ -207,7 +207,6 @@ namespace Microsoft.Data.SqlClient
             foreach (string key in customProviders.Keys)
             {
                 // Validate the provider name
-                //
                 // Check for null or empty
                 if (string.IsNullOrWhiteSpace(key))
                 {
