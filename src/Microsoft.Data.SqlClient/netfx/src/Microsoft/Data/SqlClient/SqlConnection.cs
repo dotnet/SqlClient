@@ -291,8 +291,10 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// This function returns a list of custom provider dictionary currently registered.
+        /// This function returns a list of the names of the custom providers currently registered. If the 
+        /// instance-level cache is not empty, that cache is used, else the global cache is used.
         /// </summary>
+        /// <param name="connection">The connection requiring the provider</param>
         /// <returns>Combined list of provider names</returns>
         internal static List<string> GetColumnEncryptionCustomKeyStoreProviders(SqlConnection connection)
         {
