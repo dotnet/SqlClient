@@ -250,8 +250,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns>Combined list of provider names</returns>
         internal static List<string> GetColumnEncryptionSystemKeyStoreProviders()
         {
-            HashSet<string> providerNames = new HashSet<string>(_SystemColumnEncryptionKeyStoreProviders.Keys);
-            return providerNames.ToList();
+            return _SystemColumnEncryptionKeyStoreProviders.Keys.ToList();
         }
 
         /// <summary>
@@ -265,13 +264,11 @@ namespace Microsoft.Data.SqlClient
             if (connection._CustomColumnEncryptionKeyStoreProviders != null &&
                 connection._CustomColumnEncryptionKeyStoreProviders.Count > 0)
             {
-                HashSet<string> providerNames = new HashSet<string>(connection._CustomColumnEncryptionKeyStoreProviders.Keys);
-                return providerNames.ToList();
+                return connection._CustomColumnEncryptionKeyStoreProviders.Keys.ToList();
             }
             if (_GlobalCustomColumnEncryptionKeyStoreProviders != null)
             {
-                HashSet<string> providerNames = new HashSet<string>(_GlobalCustomColumnEncryptionKeyStoreProviders.Keys);
-                return providerNames.ToList();
+                return _GlobalCustomColumnEncryptionKeyStoreProviders.Keys.ToList();
             }
             return new List<string>();
         }

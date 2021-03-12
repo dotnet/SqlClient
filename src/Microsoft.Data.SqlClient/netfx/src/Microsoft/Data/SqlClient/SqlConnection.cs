@@ -61,11 +61,11 @@ namespace Microsoft.Data.SqlClient
 
         /// <summary>
         /// Global custom provider list should be provided by the user. We shallow copy the user supplied dictionary into a ReadOnlyDictionary.
-        /// Global custom provider list can only supplied once per application.
+        /// Global custom provider list can only be supplied once per application.
         /// </summary>
         private static ReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> _GlobalCustomColumnEncryptionKeyStoreProviders;
 
-        /// Instance-level custom providers. It can  be provided by the user and can be set more than once. 
+        /// Instance-level list of custom key store providers. It can be set more than once by the user.
         private ReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> _CustomColumnEncryptionKeyStoreProviders;
 
         // Lock to control setting of _GlobalCustomColumnEncryptionKeyStoreProviders
@@ -207,7 +207,6 @@ namespace Microsoft.Data.SqlClient
             foreach (string key in customProviders.Keys)
             {
                 // Validate the provider name
-                //
                 // Check for null or empty
                 if (string.IsNullOrWhiteSpace(key))
                 {
@@ -301,13 +300,11 @@ namespace Microsoft.Data.SqlClient
             if (connection._CustomColumnEncryptionKeyStoreProviders != null &&
                connection._CustomColumnEncryptionKeyStoreProviders.Count > 0)
             {
-                HashSet<string> providerNames = new HashSet<string>(connection._CustomColumnEncryptionKeyStoreProviders.Keys);
-                return providerNames.ToList();
+                return connection._CustomColumnEncryptionKeyStoreProviders.Keys.ToList();
             }
             if (_GlobalCustomColumnEncryptionKeyStoreProviders != null)
             {
-                HashSet<string> providerNames = new HashSet<string>(_GlobalCustomColumnEncryptionKeyStoreProviders.Keys);
-                return providerNames.ToList();
+                return _GlobalCustomColumnEncryptionKeyStoreProviders.Keys.ToList();
             }
             return new List<string>();
         }
