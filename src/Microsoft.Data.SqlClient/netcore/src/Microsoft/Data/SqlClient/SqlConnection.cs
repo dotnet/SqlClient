@@ -267,8 +267,7 @@ namespace Microsoft.Data.SqlClient
             }
             if (_GlobalCustomColumnEncryptionKeyStoreProviders != null)
             {
-                HashSet<string> providerNames = new HashSet<string>(_GlobalCustomColumnEncryptionKeyStoreProviders.Keys);
-                return providerNames.ToList();
+                return _GlobalCustomColumnEncryptionKeyStoreProviders.Keys.ToList();
             }
             return new List<string>();
         }
