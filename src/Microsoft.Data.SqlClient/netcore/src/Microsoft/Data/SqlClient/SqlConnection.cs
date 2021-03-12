@@ -250,8 +250,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns>Combined list of provider names</returns>
         internal static List<string> GetColumnEncryptionSystemKeyStoreProviders()
         {
-            HashSet<string> providerNames = new HashSet<string>(_SystemColumnEncryptionKeyStoreProviders.Keys);
-            return providerNames.ToList();
+            return _SystemColumnEncryptionKeyStoreProviders.Keys.ToList();
         }
 
         /// <summary>
