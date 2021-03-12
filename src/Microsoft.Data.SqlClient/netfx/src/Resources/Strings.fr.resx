@@ -4603,18 +4603,18 @@
     <value>Échec après 5 tentatives.</value>
   </data>
   <data name="SqlDependency_UnexpectedValueOnDeserialize" xml:space="preserve">
-    <value>Unexpected type detected on deserialize.</value>
+    <value>Type inattendu détecté pendant la désérialisation.</value>
   </data>
   <data name="SqlRetryLogic_InvalidRange" xml:space="preserve">
-    <value>Value '{0}' is out of range. Must be between {1} and {2}.</value>
+    <value>La valeur « {0} » est hors limites. Doit être comprise entre {1} et {2}.</value>
   </data>
   <data name="SqlRetryLogic_RetryCanceled" xml:space="preserve">
-    <value>The retry has been canceled at attempt {0}.</value>
+    <value>La nouvelle tentative a été annulée à l'essai {0}.</value>
   </data>
   <data name="SqlRetryLogic_RetryExceeded" xml:space="preserve">
-    <value>The number of retries has exceeded the maximum of {0} attempt(s).</value>
+    <value>Le nombre de nouvelles tentatives a dépassé le nombre maximal de {0} essai(s).</value>
   </data>
   <data name="SqlRetryLogic_InvalidMinMaxPair" xml:space="preserve">
-    <value>'{0}' is not less than '{1}'; '{2}' cannot be greater than '{3}'.</value>
+    <value>« {0} » n'est pas inférieur à « {1} ». « {2} » ne peut pas être supérieur à « {3} ».</value>
   </data>
 </root>
