@@ -183,6 +183,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
         public static void AddKeyToCsp(string containerName)
         {
+
             CspParameters cspParams = new CspParameters();
             cspParams.KeyContainerName = containerName;
             RSACryptoServiceProvider rsaAlg = new RSACryptoServiceProvider(KEY_SIZE, cspParams);

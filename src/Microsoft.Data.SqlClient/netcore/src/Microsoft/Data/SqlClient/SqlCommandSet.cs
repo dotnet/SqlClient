@@ -116,7 +116,7 @@ namespace Microsoft.Data.SqlClient
         internal void Append(SqlCommand command)
         {
             ADP.CheckArgumentNull(command, nameof(command));
-            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlCommandSet.Append|API> {0}, command={1}, parameterCount={2}", ObjectID, command.ObjectID, command.Parameters.Count);
+            SqlClientEventSource.Log.TryTraceEvent("SqlCommandSet.Append | API | Object Id {0}, Command '{1}', Parameter Count {2}", ObjectID, command.ObjectID, command.Parameters.Count);
             string cmdText = command.CommandText;
             if (string.IsNullOrEmpty(cmdText))
             {
@@ -248,7 +248,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void Clear()
         {
-            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlCommandSet.Clear|API> {0}", ObjectID);
+            SqlClientEventSource.Log.TryTraceEvent("SqlCommandSet.Clear | API | Object Id {0}", ObjectID);
             DbCommand batchCommand = BatchCommand;
             if (null != batchCommand)
             {
@@ -264,7 +264,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void Dispose()
         {
-            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlCommandSet.Dispose|API> {0}", ObjectID);
+            SqlClientEventSource.Log.TryTraceEvent("SqlCommandSet.Dispose | API | Object Id {0}", ObjectID);
             SqlCommand command = _batchCommand;
             _commandList = null;
             _batchCommand = null;
@@ -278,7 +278,7 @@ namespace Microsoft.Data.SqlClient
         internal int ExecuteNonQuery()
         {
             ValidateCommandBehavior(nameof(ExecuteNonQuery), CommandBehavior.Default);
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlCommandSet.ExecuteNonQuery|API> {0}", ObjectID);
+            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlCommandSet.ExecuteNonQuery | API | Object Id {0}, Commands executed in Batch RPC mode", ObjectID);
 
             try
             {

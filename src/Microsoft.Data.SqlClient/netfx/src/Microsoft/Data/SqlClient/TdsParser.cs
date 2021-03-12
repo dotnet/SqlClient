@@ -2262,7 +2262,7 @@ namespace Microsoft.Data.SqlClient
                 // If there is data ready, but we didn't exit the loop, then something is wrong
                 Debug.Assert(!dataReady, "dataReady not expected - did we forget to skip the row?");
 
-                if (stateObj._internalTimeout)
+                if (stateObj.IsTimeoutStateExpired)
                 {
                     runBehavior = RunBehavior.Attention;
                 }
@@ -2891,7 +2891,7 @@ namespace Microsoft.Data.SqlClient
                     stateObj._attentionSent = false;
                     stateObj._attentionReceived = false;
 
-                    if (RunBehavior.Clean != (RunBehavior.Clean & runBehavior) && !stateObj._internalTimeout)
+                    if (RunBehavior.Clean != (RunBehavior.Clean & runBehavior) && !stateObj.IsTimeoutStateExpired)
                     {
                         // Add attention error to collection - if not RunBehavior.Clean!
                         stateObj.AddError(new SqlError(0, 0, TdsEnums.MIN_ERROR_CLASS, _server, SQLMessage.OperationCancelled(), "", 0));
@@ -3301,7 +3301,7 @@ namespace Microsoft.Data.SqlClient
 
             if (LocalAppContextSwitches.MakeReadAsyncBlocking)
             {
-                // Can't retry TryProcessDone
+                // Don't retry TryProcessDone
                 stateObj._syncOverAsync = true;
             }
 
@@ -8142,6 +8142,7 @@ namespace Microsoft.Data.SqlClient
 
         private byte[] SerializeEncodingChar(string s, int numChars, int offset, Encoding encoding)
         {
+#if NETFRAMEWORK || NETSTANDARD2_0
             char[] charData;
             byte[] byteData = null;
 
@@ -8156,33 +8157,38 @@ namespace Microsoft.Data.SqlClient
             encoding.GetBytes(charData, 0, charData.Length, byteData, 0);
 
             return byteData;
+#else
+            return encoding.GetBytes(s, offset, numChars);
+#endif
         }
 
         private Task WriteEncodingChar(string s, int numChars, int offset, Encoding encoding, TdsParserStateObject stateObj, bool canAccumulate = true)
         {
-            char[] charData;
-            byte[] byteData;
-
             // if hitting 7.0 server, encoding will be null in metadata for columns or return values since
             // 7.0 has no support for multiple code pages in data - single code page support only
             if (encoding == null)
                 encoding = _defaultEncoding;
 
-            charData = s.ToCharArray(offset, numChars);
-
             // Optimization: if the entire string fits in the current buffer, then copy it directly
             int bytesLeft = stateObj._outBuff.Length - stateObj._outBytesUsed;
-            if ((numChars <= bytesLeft) && (encoding.GetMaxByteCount(charData.Length) <= bytesLeft))
+            if ((numChars <= bytesLeft) && (encoding.GetMaxByteCount(numChars) <= bytesLeft))
             {
-                int bytesWritten = encoding.GetBytes(charData, 0, charData.Length, stateObj._outBuff, stateObj._outBytesUsed);
+                int bytesWritten = encoding.GetBytes(s, offset, numChars, stateObj._outBuff, stateObj._outBytesUsed);
                 stateObj._outBytesUsed += bytesWritten;
                 return null;
             }
             else
             {
-                byteData = encoding.GetBytes(charData, 0, numChars);
+#if NETFRAMEWORK || NETSTANDARD2_0
+                var charData = s.ToCharArray(offset, numChars);
+                var byteData = encoding.GetBytes(charData, 0, numChars);
                 Debug.Assert(byteData != null, "no data from encoding");
                 return stateObj.WriteByteArray(byteData, byteData.Length, 0, canAccumulate);
+#else
+                var byteData = encoding.GetBytes(s, offset, numChars);
+                Debug.Assert(byteData != null, "no data from encoding");
+                return stateObj.WriteByteArray(byteData, byteData.Length, 0, canAccumulate);
+#endif
             }
         }
 
@@ -13667,33 +13673,33 @@ namespace Microsoft.Data.SqlClient
                                         + "         _defaultCodePage = {6}\n\t"
                                         + "         _defaultLCID = {7}\n\t"
                                         + "         _defaultEncoding = {8}\n\t"
-                                        + "         _encryptionOption = {10}\n\t"
-                                        + "         _currentTransaction = {11}\n\t"
-                                        + "         _pendingTransaction = {12}\n\t"
-                                        + "         _retainedTransactionId = {13}\n\t"
-                                        + "         _nonTransactedOpenResultCount = {14}\n\t"
-                                        + "         _connHandler = {15}\n\t"
-                                        + "         _fMARS = {16}\n\t"
-                                        + "         _sessionPool = {17}\n\t"
-                                        + "         _isShiloh = {18}\n\t"
-                                        + "         _isShilohSP1 = {19}\n\t"
-                                        + "         _isYukon = {20}\n\t"
-                                        + "         _sniSpnBuffer = {21}\n\t"
-                                        + "         _errors = {22}\n\t"
-                                        + "         _warnings = {23}\n\t"
-                                        + "         _attentionErrors = {24}\n\t"
-                                        + "         _attentionWarnings = {25}\n\t"
-                                        + "         _statistics = {26}\n\t"
-                                        + "         _statisticsIsInTransaction = {27}\n\t"
-                                        + "         _fPreserveTransaction = {28}"
-                                        + "         _fParallel = {29}"
+                                        + "         _encryptionOption = {9}\n\t"
+                                        + "         _currentTransaction = {10}\n\t"
+                                        + "         _pendingTransaction = {11}\n\t"
+                                        + "         _retainedTransactionId = {12}\n\t"
+                                        + "         _nonTransactedOpenResultCount = {13}\n\t"
+                                        + "         _connHandler = {14}\n\t"
+                                        + "         _fMARS = {15}\n\t"
+                                        + "         _sessionPool = {16}\n\t"
+                                        + "         _isShiloh = {17}\n\t"
+                                        + "         _isShilohSP1 = {18}\n\t"
+                                        + "         _isYukon = {19}\n\t"
+                                        + "         _sniSpnBuffer = {20}\n\t"
+                                        + "         _errors = {21}\n\t"
+                                        + "         _warnings = {22}\n\t"
+                                        + "         _attentionErrors = {23}\n\t"
+                                        + "         _attentionWarnings = {24}\n\t"
+                                        + "         _statistics = {25}\n\t"
+                                        + "         _statisticsIsInTransaction = {26}\n\t"
+                                        + "         _fPreserveTransaction = {27}"
+                                        + "         _fParallel = {28}"
                                         ;
         internal string TraceString()
         {
             return string.Format(/*IFormatProvider*/ null,
                             StateTraceFormatString,
-                            null == _physicalStateObj ? bool.TrueString : bool.FalseString,
-                            null == _pMarsPhysicalConObj ? bool.TrueString : bool.FalseString,
+                            null == _physicalStateObj ? "(null)" : _physicalStateObj.ObjectID.ToString((IFormatProvider)null),
+                            null == _pMarsPhysicalConObj ? "(null)" : _pMarsPhysicalConObj.ObjectID.ToString((IFormatProvider)null),
                             _state,
                             _server,
                             _fResetConnection ? bool.TrueString : bool.FalseString,
@@ -13701,7 +13707,6 @@ namespace Microsoft.Data.SqlClient
                             _defaultCodePage,
                             _defaultLCID,
                             TraceObjectClass(_defaultEncoding),
-                            "",
                             _encryptionOption,
                             null == _currentTransaction ? "(null)" : _currentTransaction.TraceString(),
                             null == _pendingTransaction ? "(null)" : _pendingTransaction.TraceString(),

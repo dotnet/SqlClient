@@ -7,9 +7,15 @@ using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Xunit;
+#if NET50_OR_LATER
+using System.Runtime.Versioning;
+#endif
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
+#if NET50_OR_LATER
+    [SupportedOSPlatform("windows")]
+#endif
     [PlatformSpecific(TestPlatforms.Windows)]
     class CertificateUtilityWin
     {
@@ -165,7 +171,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 certStore.Open(OpenFlags.ReadOnly);
                 X509Certificate2Collection certCollection = certStore.Certificates.Find(X509FindType.FindBySubjectName, certificateName, validOnly: false);
                 Debug.Assert(certCollection != null && certCollection.Count > 0);
-
                 return certCollection[0];
             }
             finally

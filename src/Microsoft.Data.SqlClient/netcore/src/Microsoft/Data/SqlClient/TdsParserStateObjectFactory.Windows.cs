@@ -39,13 +39,13 @@ namespace Microsoft.Data.SqlClient
         {
             if (UseManagedSNI)
             {
-                SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParserStateObjectFactory.CreateTdsParserStateObject|INFO> Found AppContext switch '{0}' enabled, managed networking implementation will be used."
+                SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectFactory.CreateTdsParserStateObject | Info | Found AppContext switch '{0}' enabled, managed networking implementation will be used."
                    , UseManagedNetworkingOnWindows);
                 return new TdsParserStateObjectManaged(parser);
             }
             else
             {
-                SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParserStateObjectFactory.CreateTdsParserStateObject|INFO> AppContext switch '{0}' not enabled, native networking implementation will be used."
+                SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectFactory.CreateTdsParserStateObject | Info | AppContext switch '{0}' not enabled, native networking implementation will be used."
                    , UseManagedNetworkingOnWindows);
                 return new TdsParserStateObjectNative(parser);
             }

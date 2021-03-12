@@ -88,6 +88,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     _reader.CompletePendingReadWithSuccess(true);
                 }
+                _reader.Dispose();
             }
 
             if (_command != null)
@@ -100,6 +101,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     _command.CompletePendingReadWithSuccess(true);
                 }
+                _command.Dispose();
             }
         }
     }

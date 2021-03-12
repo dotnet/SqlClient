@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(e.StackTrace, sqlEx.StackTrace);
         }
 
-
+#if !NET50_OR_LATER
         [Fact]
         [ActiveIssue("12161", TestPlatforms.AnyUnix)]
         public static void SqlExcpetionSerializationTest()
@@ -54,6 +54,7 @@ namespace Microsoft.Data.SqlClient.Tests
                 }
             }
         }
+#endif
 
         [Fact]
         public void JSONSerializationTest()

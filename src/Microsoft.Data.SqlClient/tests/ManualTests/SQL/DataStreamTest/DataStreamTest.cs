@@ -2009,11 +2009,11 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                 }
                 proxy.Stop();
             }
-            catch (SqlException ex)
+            catch (SqlException)
             {
                 // In case of error, stop the proxy and dump its logs (hopefully this will help with debugging
                 proxy.Stop();
-                throw ex;
+                throw;
             }
         }
 

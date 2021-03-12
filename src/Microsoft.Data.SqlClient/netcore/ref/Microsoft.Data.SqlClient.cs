@@ -598,6 +598,8 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ResetCommandTimeout/*'/>
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(System.ComponentModel.DesignerSerializationVisibility.Content)]
         public void ResetCommandTimeout() { }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RetryLogicProvider/*' />
+        public SqlRetryLogicBaseProvider RetryLogicProvider { get { throw null; } set { } }
     }
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/SqlCommandBuilder/*'/>
     public sealed class SqlCommandBuilder : System.Data.Common.DbCommandBuilder
@@ -793,9 +795,10 @@ namespace Microsoft.Data.SqlClient
         public void ResetStatistics() { }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetrieveStatistics/*'/>
         public System.Collections.IDictionary RetrieveStatistics() { throw null; }
-
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetrieveInternalInfo/*'/>
         public System.Collections.Generic.IDictionary<string, object> RetrieveInternalInfo() { throw null; }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetryLogicProvider/*' />
+        public SqlRetryLogicBaseProvider RetryLogicProvider { get { throw null; } set { } }
     }
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionColumnEncryptionSetting.xml' path='docs/members[@name="SqlConnectionColumnEncryptionSetting"]/SqlConnectionColumnEncryptionSetting/*'/>
     public enum SqlConnectionColumnEncryptionSetting
@@ -1607,6 +1610,113 @@ namespace Microsoft.Data.SqlClient
         public void Rollback(string transactionName) { }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Save/*'/>
         public void Save(string savePointName) { }
+    }
+    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryingEventArgs.xml' path='docs/members[@name="SqlRetryingEventArgs"]/SqlRetryingEventArgs/*' />
+    public sealed class SqlRetryingEventArgs : System.EventArgs
+    {
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryingEventArgs.xml' path='docs/members[@name="SqlRetryingEventArgs"]/ctor/*' />
+        public SqlRetryingEventArgs(int retryCount, System.TimeSpan delay, System.Collections.Generic.IList<System.Exception> exceptions) { }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryingEventArgs.xml' path='docs/members[@name="SqlRetryingEventArgs"]/RetryCount/*' />
+        public int RetryCount { get { throw null; } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryingEventArgs.xml' path='docs/members[@name="SqlRetryingEventArgs"]/Delay/*' />
+        public System.TimeSpan Delay { get { throw null; } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryingEventArgs.xml' path='docs/members[@name="SqlRetryingEventArgs"]/Cancel/*' />
+        public bool Cancel { get { throw null; } set { } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryingEventArgs.xml' path='docs/members[@name="SqlRetryingEventArgs"]/Exceptions/*' />
+        public System.Collections.Generic.IList<System.Exception> Exceptions { get { throw null; } }
+    }
+    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/SqlRetryIntervalBaseEnumerator/*' />
+    public abstract class SqlRetryIntervalBaseEnumerator : System.Collections.Generic.IEnumerator<System.TimeSpan>, System.ICloneable
+    {
+        private readonly System.TimeSpan _minValue = System.TimeSpan.Zero;
+        private readonly System.TimeSpan _maxValue = System.TimeSpan.FromSeconds(120);
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/GapTimeInterval/*' />
+        public System.TimeSpan GapTimeInterval { get { throw null; } protected set { } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/MaxTimeInterval/*' />
+        public System.TimeSpan MaxTimeInterval { get { throw null; } protected set { } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/MinTimeInterval/*' />
+        public System.TimeSpan MinTimeInterval { get { throw null; } protected set { } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/Current/*' />
+        public System.TimeSpan Current { get { throw null; } protected set { } }
+        object System.Collections.IEnumerator.Current { get { throw null; } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/ctor1/*' />
+        public SqlRetryIntervalBaseEnumerator() { }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/ctor2/*' />
+        public SqlRetryIntervalBaseEnumerator(System.TimeSpan timeInterval, System.TimeSpan maxTime, System.TimeSpan minTime) { }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/Reset/*' />
+        public virtual void Reset() { }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/Validate/*' />
+        protected virtual void Validate(System.TimeSpan timeInterval, System.TimeSpan maxTimeInterval, System.TimeSpan minTimeInterval) { }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/GetNextInterval/*' />
+        protected abstract System.TimeSpan GetNextInterval();
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/MoveNext/*' />
+        public virtual bool MoveNext() { throw null; }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/Dispose/*' />
+        public virtual void Dispose() { }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/Clone/*' />
+        public virtual object Clone() { throw null; }
+    }
+    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBase.xml' path='docs/members[@name="SqlRetryLogicBase"]/SqlRetryLogicBase/*' />
+    public abstract class SqlRetryLogicBase : System.ICloneable
+    {
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBase.xml' path='docs/members[@name="SqlRetryLogicBase"]/NumberOfTries/*' />
+        public int NumberOfTries { get { throw null; } protected set { } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBase.xml' path='docs/members[@name="SqlRetryLogicBase"]/Current/*' />
+        public int Current { get { throw null; } protected set { } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBase.xml' path='docs/members[@name="SqlRetryLogicBase"]/RetryIntervalEnumerator/*' />
+        public SqlRetryIntervalBaseEnumerator RetryIntervalEnumerator { get { throw null; } protected set { } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBase.xml' path='docs/members[@name="SqlRetryLogicBase"]/TransientPredicate/*' />
+        public System.Predicate<System.Exception> TransientPredicate { get { throw null; } protected set { } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBase.xml' path='docs/members[@name="SqlRetryLogicBase"]/RetryCondition/*' />
+        public virtual bool RetryCondition(object sender) { throw null; }
+        ///<include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBase.xml' path='docs/members[@name="SqlRetryLogicBase"]/TryNextInterval/*' />
+        public abstract bool TryNextInterval(out System.TimeSpan intervalTime);
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBase.xml' path='docs/members[@name="SqlRetryLogicBase"]/Reset/*' />
+        public abstract void Reset();
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBase.xml' path='docs/members[@name="SqlRetryLogicBase"]/Clone/*' />
+        public virtual object Clone() { throw null; }
+    }
+    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBaseProvider.xml' path='docs/members[@name="SqlRetryLogicBaseProvider"]/SqlRetryLogicBaseProvider/*' />
+    public abstract class SqlRetryLogicBaseProvider
+    {
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBaseProvider.xml' path='docs/members[@name="SqlRetryLogicBaseProvider"]/Retrying/*' />
+        public System.EventHandler<SqlRetryingEventArgs> Retrying { get { throw null; } set { } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBaseProvider.xml' path='docs/members[@name="SqlRetryLogicBaseProvider"]/RetryLogic/*' />
+        public SqlRetryLogicBase RetryLogic { get { throw null; } protected set { } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBaseProvider.xml' path='docs/members[@name="SqlRetryLogicBaseProvider"]/Execute/*' />
+        public abstract TResult Execute<TResult>(object sender, System.Func<TResult> function);
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBaseProvider.xml' path='docs/members[@name="SqlRetryLogicBaseProvider"]/ExecuteAsync1/*' />
+        public abstract System.Threading.Tasks.Task<TResult> ExecuteAsync<TResult>(object sender, System.Func<System.Threading.Tasks.Task<TResult>> function, System.Threading.CancellationToken cancellationToken = default);
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBaseProvider.xml' path='docs/members[@name="SqlRetryLogicBaseProvider"]/ExecuteAsync2/*' />
+        public abstract System.Threading.Tasks.Task ExecuteAsync(object sender, System.Func<System.Threading.Tasks.Task> function, System.Threading.CancellationToken cancellationToken = default);
+    }
+    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicOption.xml' path='docs/members[@name="SqlRetryLogicOption"]/SqlRetryLogicOption/*' />
+    public sealed class SqlRetryLogicOption
+    {
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicOption.xml' path='docs/members[@name="SqlRetryLogicOption"]/NumberOfTries/*' />
+        public int NumberOfTries { get { throw null; } set { } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicOption.xml' path='docs/members[@name="SqlRetryLogicOption"]/DeltaTime/*' />
+        public System.TimeSpan DeltaTime { get { throw null; } set { } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicOption.xml' path='docs/members[@name="SqlRetryLogicOption"]/MinTimeInterval/*' />
+        public System.TimeSpan MinTimeInterval { get { throw null; } set { } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicOption.xml' path='docs/members[@name="SqlRetryLogicOption"]/MaxTimeInterval/*' />
+        public System.TimeSpan MaxTimeInterval { get { throw null; } set { } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicOption.xml' path='docs/members[@name="SqlRetryLogicOption"]/TransientErrors/*' />
+        public System.Collections.Generic.IEnumerable<int> TransientErrors { get { throw null; } set { } }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicOption.xml' path='docs/members[@name="SqlRetryLogicOption"]/AuthorizedSqlCondition/*' />
+        public System.Predicate<string> AuthorizedSqlCondition { get { throw null; } set { } }
+    }
+    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/SqlConfigurableRetryFactory/*' />
+    public sealed class SqlConfigurableRetryFactory
+    {
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/CreateExponentialRetryProvider/*' />
+        public static SqlRetryLogicBaseProvider CreateExponentialRetryProvider(SqlRetryLogicOption retryLogicOption) { throw null; }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/CreateIncrementalRetryProvider/*' />
+        public static SqlRetryLogicBaseProvider CreateIncrementalRetryProvider(SqlRetryLogicOption retryLogicOption) { throw null; }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/CreateFixedRetryProvider/*' />
+        public static SqlRetryLogicBaseProvider CreateFixedRetryProvider(SqlRetryLogicOption retryLogicOption) { throw null; }
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/CreateNoneRetryProvider/*' />
+        public static SqlRetryLogicBaseProvider CreateNoneRetryProvider() { throw null; }
     }
 }
 namespace Microsoft.Data.SqlClient.Server

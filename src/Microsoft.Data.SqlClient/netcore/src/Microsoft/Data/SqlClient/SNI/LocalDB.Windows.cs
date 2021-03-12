@@ -13,6 +13,7 @@ namespace Microsoft.Data.SqlClient.SNI
     internal sealed class LocalDB
     {
         private static readonly LocalDB Instance = new LocalDB();
+        private const string s_className = nameof(LocalDB);
 
         //HKEY_LOCAL_MACHINE
         private const string LocalDBInstalledVersionRegistryKey = "SOFTWARE\\Microsoft\\Microsoft SQL Server Local DB\\Installed Versions\\";
@@ -26,7 +27,7 @@ namespace Microsoft.Data.SqlClient.SNI
         private IntPtr _startInstanceHandle = IntPtr.Zero;
 
         // Local Db api doc https://msdn.microsoft.com/en-us/library/hh217143.aspx
-        // HRESULT LocalDBStartInstance( [Input ] PCWSTR pInstanceName, [Input ] DWORD dwFlags,[Output] LPWSTR wszSqlConnection,[Input/Output] LPDWORD lpcchSqlConnection);  
+        // HRESULT LocalDBStartInstance( [Input ] PCWSTR pInstanceName, [Input ] DWORD dwFlags,[Output] LPWSTR wszSqlConnection,[Input/Output] LPDWORD lpcchSqlConnection);
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         internal delegate int LocalDBStartInstance(
                 [In] [MarshalAs(UnmanagedType.LPWStr)] string localDBInstanceName,
@@ -64,27 +65,36 @@ namespace Microsoft.Data.SqlClient.SNI
             switch (errorState)
             {
                 case LocalDBErrorState.NO_INSTALLATION:
-                    SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.LocalDB.Windows.MapLocalDBErrorStateToCode |SNI|ERR > LocalDB is not installed. Error State ={0}", errorState);
                     return SNICommon.LocalDBNoInstallation;
-
                 case LocalDBErrorState.INVALID_CONFIG:
-                    SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.LocalDB.Windows.MapLocalDBErrorStateToCode |SNI|ERR > Invalid configuration. Error State ={0}", errorState);
                     return SNICommon.LocalDBInvalidConfig;
-
                 case LocalDBErrorState.NO_SQLUSERINSTANCEDLL_PATH:
-                    SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.LocalDB.Windows.MapLocalDBErrorStateToCode |SNI|ERR > No SQL user instance path. Error State ={0}", errorState);
                     return SNICommon.LocalDBNoSqlUserInstanceDllPath;
-
                 case LocalDBErrorState.INVALID_SQLUSERINSTANCEDLL_PATH:
-                    SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.LocalDB.Windows.MapLocalDBErrorStateToCode |SNI|ERR > Invalid SQL user instance path. Error State ={0}", errorState);
                     return SNICommon.LocalDBInvalidSqlUserInstanceDllPath;
-
                 case LocalDBErrorState.NONE:
                     return 0;
-
                 default:
-                    SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.LocalDB.Windows.MapLocalDBErrorStateToCode |SNI|ERR > Invalid configuration. Error State ={0}", errorState);
                     return SNICommon.LocalDBInvalidConfig;
+            }
+        }
+
+        internal static string MapLocalDBErrorStateToErrorMessage(LocalDBErrorState errorState)
+        {
+            switch (errorState)
+            {
+                case LocalDBErrorState.NO_INSTALLATION:
+                    return Strings.SNI_ERROR_52;
+                case LocalDBErrorState.INVALID_CONFIG:
+                    return Strings.SNI_ERROR_53;
+                case LocalDBErrorState.NO_SQLUSERINSTANCEDLL_PATH:
+                    return Strings.SNI_ERROR_54;
+                case LocalDBErrorState.INVALID_SQLUSERINSTANCEDLL_PATH:
+                    return Strings.SNI_ERROR_55;
+                case LocalDBErrorState.NONE:
+                    return Strings.SNI_ERROR_50;
+                default:
+                    return Strings.SNI_ERROR_53;
             }
         }
 
@@ -93,7 +103,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         private bool LoadUserInstanceDll()
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("<sc.SNI.LocalDB.Windows.LoadUserInstanceDll |SNI>");
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent(s_className);
             try
             {
                 // Check in a non thread-safe way if the handle is already set for performance.
@@ -117,16 +127,16 @@ namespace Microsoft.Data.SqlClient.SNI
                     // If there was no DLL path found, then there is an error.
                     if (dllPath == null)
                     {
-                        SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, MapLocalDBErrorStateToCode(registryQueryErrorState), string.Empty);
-                        SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.LocalDB.Windows.LoadUserInstanceDll |SNI|ERR >User instance DLL path is null.");
+                        SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, MapLocalDBErrorStateToCode(registryQueryErrorState), MapLocalDBErrorStateToErrorMessage(registryQueryErrorState));
+                        SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR, "User instance DLL path is null.");
                         return false;
                     }
 
                     // In case the registry had an empty path for dll
                     if (string.IsNullOrWhiteSpace(dllPath))
                     {
-                        SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBInvalidSqlUserInstanceDllPath, string.Empty);
-                        SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.LocalDB.Windows.LoadUserInstanceDll |SNI|ERR > User instance DLL path is invalid. DLL path ={0}", dllPath);
+                        SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBInvalidSqlUserInstanceDllPath, Strings.SNI_ERROR_55);
+                        SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR, "User instance DLL path is invalid. DLL path = {0}", dllPath);
                         return false;
                     }
 
@@ -135,8 +145,8 @@ namespace Microsoft.Data.SqlClient.SNI
 
                     if (libraryHandle.IsInvalid)
                     {
-                        SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBFailedToLoadDll, string.Empty);
-                        SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.LocalDB.Windows.LoadUserInstanceDll |SNI|ERR > Library Handle is invalid. Could not load the dll.");
+                        SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBFailedToLoadDll, Strings.SNI_ERROR_56);
+                        SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR, "Library Handle is invalid. Could not load the dll.");
                         libraryHandle.Dispose();
                         return false;
                     }
@@ -146,8 +156,8 @@ namespace Microsoft.Data.SqlClient.SNI
 
                     if (_startInstanceHandle == IntPtr.Zero)
                     {
-                        SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBBadRuntime, string.Empty);
-                        SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.LocalDB.Windows.LoadUserInstanceDll |SNI|ERR > Was not able to load the PROC from DLL. Bad Runtime.");
+                        SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBBadRuntime, Strings.SNI_ERROR_57);
+                        SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR, "Was not able to load the PROC from DLL. Bad Runtime.");
                         libraryHandle.Dispose();
                         return false;
                     }
@@ -157,14 +167,14 @@ namespace Microsoft.Data.SqlClient.SNI
 
                     if (localDBStartInstanceFunc == null)
                     {
-                        SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBBadRuntime, string.Empty);
+                        SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBBadRuntime, Strings.SNI_ERROR_57);
                         libraryHandle.Dispose();
                         _startInstanceHandle = IntPtr.Zero;
                         return false;
                     }
 
                     _sqlUserInstanceLibraryHandle = libraryHandle;
-                    SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.LocalDB.Windows.LoadUserInstanceDll |SNI|INFO > User Instance DLL was loaded successfully.");
+                    SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.INFO, "User Instance DLL was loaded successfully.");
                     return true;
                 }
             }
@@ -181,7 +191,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns></returns>
         private string GetUserInstanceDllPath(out LocalDBErrorState errorState)
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent("<sc.SNI.LocalDB.Windows.GetUserInstanceDllPath |SNI|SCOPE|INFO > GetUserInstanceDllPath");
+            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent(s_className);
             try
             {
                 string dllPath = null;
@@ -190,7 +200,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     if (key == null)
                     {
                         errorState = LocalDBErrorState.NO_INSTALLATION;
-                        SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.LocalDB.Windows.GetUserInstanceDllPath |SNI|ERR > not installed. Error state ={0}.", errorState);
+                        SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR, "No installation found.");
                         return null;
                     }
 
@@ -205,7 +215,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         if (!Version.TryParse(subKey, out currentKeyVersion))
                         {
                             errorState = LocalDBErrorState.INVALID_CONFIG;
-                            SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.LocalDB.Windows.GetUserInstanceDllPath |SNI|ERR > Invalid Configuration. state ={0}.", errorState);
+                            SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR, "Invalid Configuration.");
                             return null;
                         }
 
@@ -219,7 +229,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     if (latestVersion.Equals(zeroVersion))
                     {
                         errorState = LocalDBErrorState.INVALID_CONFIG;
-                        SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.LocalDB.Windows.GetUserInstanceDllPath |SNI|ERR > Invalid Configuration. state ={0}.", errorState);
+                        SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR, "Invalid Configuration.");
                         return null;
                     }
 
@@ -232,7 +242,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         if (instanceAPIPathRegistryObject == null)
                         {
                             errorState = LocalDBErrorState.NO_SQLUSERINSTANCEDLL_PATH;
-                            SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.LocalDB.Windows.GetUserInstanceDllPath |SNI|ERR > No SQL user instance DLL. Instance API Path Registry Object Error. state ={0}.", errorState);
+                            SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR, "No SQL user instance DLL. Instance API Path Registry Object Error.");
                             return null;
                         }
 
@@ -241,7 +251,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         if (valueKind != RegistryValueKind.String)
                         {
                             errorState = LocalDBErrorState.INVALID_SQLUSERINSTANCEDLL_PATH;
-                            SqlClientEventSource.Log.TrySNITraceEvent("<sc.SNI.LocalDB.Windows.GetUserInstanceDllPath |SNI|ERR > No SQL user instance DLL. state ={0}. Registry value kind error.", errorState);
+                            SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR, "Invalid SQL user instance DLL path. Registry value kind mismatch.");
                             return null;
                         }
 
