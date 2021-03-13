@@ -407,7 +407,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         internal static void ClearSqlConnectionGlobalProviders()
         {
             SqlConnection conn = new SqlConnection();
-            FieldInfo field = conn.GetType().GetField("_GlobalCustomColumnEncryptionKeyStoreProviders", BindingFlags.Static | BindingFlags.NonPublic);
+            FieldInfo field = conn.GetType().GetField("s_globalCustomColumnEncryptionKeyStoreProviders", BindingFlags.Static | BindingFlags.NonPublic);
             Assert.True(null != field);
             field.SetValue(conn, null);
         }

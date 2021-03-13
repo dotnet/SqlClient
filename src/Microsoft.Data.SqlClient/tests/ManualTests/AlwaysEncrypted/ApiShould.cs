@@ -22,23 +22,23 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
     /// </summary>
     public class ApiShould : IClassFixture<PlatformSpecificTestContext>, IDisposable
     {
-        private SQLSetupStrategy fixture;
+        private SQLSetupStrategy _fixture;
 
-        private readonly string tableName;
-        private readonly string customKeyStoreProviderTableName;
+        private readonly string _tableName;
+        private readonly string _customKeyStoreProviderTableName;
 
         public ApiShould(PlatformSpecificTestContext context)
         {
-            fixture = context.Fixture;
-            tableName = fixture.ApiTestTable.Name;
-            customKeyStoreProviderTableName = fixture.CustomKeyStoreProviderTestTable.Name;
+            _fixture = context.Fixture;
+            _tableName = _fixture.ApiTestTable.Name;
+            _customKeyStoreProviderTableName = _fixture.CustomKeyStoreProviderTestTable.Name;
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProviderWithBooleanVariable))]
         public void TestSqlTransactionCommitRollbackWithTransparentInsert(string connection, bool isCommitted)
         {
-            CleanUpTable(connection, tableName);
+            CleanUpTable(connection, _tableName);
 
             using (SqlConnection sqlConnection = new SqlConnection(connection))
             {
@@ -77,7 +77,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestSqlTransactionRollbackToSavePoint(string connection)
         {
-            CleanUpTable(connection, tableName);
+            CleanUpTable(connection, _tableName);
 
             using (SqlConnection sqlConnection = new SqlConnection(connection))
             {
@@ -123,7 +123,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void SqlParameterProperties(string connection)
         {
-            string tableName = fixture.SqlParameterPropertiesTable.Name;
+            string tableName = _fixture.SqlParameterPropertiesTable.Name;
             const string firstColumnName = @"firstColumn";
             const string secondColumnName = @"secondColumn";
             const string thirdColumnName = @"thirdColumn";
@@ -333,7 +333,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         private void VerifyRecordAbsent(SqlConnection sqlConnection, Customer customer, SqlTransaction sqlTransaction = null)
         {
             using (SqlCommand sqlCommand = new SqlCommand(
-                cmdText: $"SELECT * FROM [{tableName}] WHERE CustomerId = @CustomerId and FirstName = @FirstName;",
+                cmdText: $"SELECT * FROM [{_tableName}] WHERE CustomerId = @CustomerId and FirstName = @FirstName;",
                 connection: sqlConnection,
                 transaction: sqlTransaction,
                 columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
@@ -351,7 +351,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         private void VerifyRecordPresent(SqlConnection sqlConnection, Customer customer, SqlTransaction sqlTransaction = null)
         {
             using (SqlCommand sqlCommand = new SqlCommand(
-                cmdText: $"SELECT * FROM [{tableName}] WHERE CustomerId = @CustomerId and FirstName = @FirstName;",
+                cmdText: $"SELECT * FROM [{_tableName}] WHERE CustomerId = @CustomerId and FirstName = @FirstName;",
                 connection: sqlConnection,
                 transaction: sqlTransaction,
                 columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
@@ -379,7 +379,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         private void InsertCustomerRecord(SqlConnection sqlConnection, SqlTransaction sqlTransaction, Customer customer)
         {
             using (SqlCommand sqlCommand = new SqlCommand(
-                $"INSERT INTO [{tableName}] (CustomerId, FirstName, LastName) VALUES (@CustomerId, @FirstName, @LastName);",
+                $"INSERT INTO [{_tableName}] (CustomerId, FirstName, LastName) VALUES (@CustomerId, @FirstName, @LastName);",
                 connection: sqlConnection,
                 transaction: sqlTransaction,
                 columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
@@ -396,14 +396,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestSqlDataAdapterFillDataTable(string connection)
         {
-            CleanUpTable(connection, tableName);
+            CleanUpTable(connection, _tableName);
 
             const string DummyParamName = "@dummyParam";
             int numberOfRows = 100;
 
             IList<object> values = GetValues(dataHint: 71);
 
-            InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
+            InsertRows(tableName: _tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
             var encryptionEnabledConnectionString = new SqlConnectionStringBuilder(connection)
             {
@@ -416,7 +416,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                 // Create a command with an encrypted parameter to confirm that parameters work ocrrectly for Fill.
                 using (SqlCommand cmd = new SqlCommand(
-                    cmdText: $"select * from [{tableName}] where FirstName != {DummyParamName} and CustomerId = @CustomerId",
+                    cmdText: $"select * from [{_tableName}] where FirstName != {DummyParamName} and CustomerId = @CustomerId",
                     connection: sqlConnection))
                 {
                     if (DataTestUtility.EnclaveEnabled)
@@ -449,14 +449,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                         // Use the Fill overload which fills in a dataset.
                         DataSet dataSet = new DataSet();
-                        sqlDataAdapter.Fill(dataSet, tableName);
+                        sqlDataAdapter.Fill(dataSet, _tableName);
                         Assert.Single(dataSet.Tables);
                         Assert.Equal(numberOfRows, dataSet.Tables[0].Rows.Count);
                         TestDataAdapterFillResults(dataSet.Tables[0], values);
 
                         // Use the Fill overload which lets you specify the max number of records to be fetched.
                         dataSet = new DataSet();
-                        sqlDataAdapter.Fill(dataSet, 0, 1, tableName);
+                        sqlDataAdapter.Fill(dataSet, 0, 1, _tableName);
                         Assert.Single(dataSet.Tables);
                         Assert.Single(dataSet.Tables[0].Rows);
                         TestDataAdapterFillResults(dataSet.Tables[0], values);
@@ -469,13 +469,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProviderWithSchemaType))]
         public void TestSqlDataAdapterFillSchema(string connection, SchemaType schemaType)
         {
-            CleanUpTable(connection, tableName);
+            CleanUpTable(connection, _tableName);
 
             IList<object> values = GetValues(dataHint: 44);
             int numberOfRows = 42;
 
             // Insert a bunch of rows in to the table.
-            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
+            int rowsAffected = InsertRows(tableName: _tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
             using (SqlConnection sqlConnection = new SqlConnection(connection))
             {
@@ -516,7 +516,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProviderWithBooleanVariable))]
         public void TestExecuteNonQuery(string connection, bool isAsync)
         {
-            CleanUpTable(connection, tableName);
+            CleanUpTable(connection, _tableName);
 
             Parallel.For(0, 10, i =>
             {
@@ -527,7 +527,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     int numberOfRows = 10 + i;
 
                     // Insert a bunch of rows in to the table.
-                    int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
+                    int rowsAffected = InsertRows(tableName: _tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
                     Assert.Equal(numberOfRows, rowsAffected);
                     rowsAffected = -1;
@@ -539,7 +539,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                             // Update the set of rows that were inserted just now. And verify the rows affected as returned by ExecuteNonQuery.
                             using (SqlCommand sqlCommand = new SqlCommand(
-                                cmdText: $"UPDATE [{tableName}] SET FirstName = @FirstName WHERE CustomerId = @CustomerId",
+                                cmdText: $"UPDATE [{_tableName}] SET FirstName = @FirstName WHERE CustomerId = @CustomerId",
                                 connection: sqlConnection,
                                 transaction: null,
                                 columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
@@ -584,7 +584,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProviderWithBooleanVariable))]
         public void TestExecuteScalar(string connection, bool isAsync)
         {
-            CleanUpTable(connection, tableName);
+            CleanUpTable(connection, _tableName);
 
             Parallel.For(0, 10, i =>
             {
@@ -592,7 +592,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 int numberOfRows = 10 + i;
 
                 // Insert a bunch of rows in to the table.
-                int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
+                int rowsAffected = InsertRows(tableName: _tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
                 using (SqlConnection sqlConnection = new SqlConnection(connection))
                 {
@@ -601,7 +601,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     // Do a select * from the table and check on the first column of the first row for the expected value.
                     using (SqlCommand sqlCommand = new SqlCommand
                     (
-                        cmdText: $"select CustomerId, FirstName, LastName from [{tableName}] where CustomerId = @CustomerId",
+                        cmdText: $"select CustomerId, FirstName, LastName from [{_tableName}] where CustomerId = @CustomerId",
                         connection: sqlConnection,
                         transaction: null,
                         columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
@@ -636,9 +636,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProviderWithIntegers))]
         public void TestSqlDataAdapterBatchUpdate(string connection, int numberofRows)
         {
-            CleanUpTable(connection, tableName);
+            CleanUpTable(connection, _tableName);
 
-            DataTable dataTable = CreateDataTable(tableName: tableName, numberofRows: numberofRows);
+            DataTable dataTable = CreateDataTable(tableName: _tableName, numberofRows: numberofRows);
 
             using (SqlConnection sqlConnection = new SqlConnection(connection))
             {
@@ -681,14 +681,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestExecuteReader(string connection)
         {
-            CleanUpTable(connection, tableName);
+            CleanUpTable(connection, _tableName);
 
             Parallel.For(0, 10, i =>
             {
                 IList<object> values = GetValues(dataHint: 45 + i + 1);
                 int numberOfRows = 10 + i;
                 // Insert a bunch of rows in to the table.
-                int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
+                int rowsAffected = InsertRows(tableName: _tableName, numberofRows: numberOfRows, values: values, connection: connection);
                 Assert.True(numberOfRows == rowsAffected, "Two values failed");
 
                 using (SqlConnection sqlConnection = new SqlConnection(connection))
@@ -697,7 +697,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                     // Update the set of rows that were inserted just now. And verify the rows affected as returned by ExecuteNonQuery.
                     using (SqlCommand sqlCommand = new SqlCommand(
-                        cmdText: $"SELECT CustomerId, FirstName, LastName FROM [{tableName}] WHERE FirstName=@FirstName AND CustomerId=@CustomerId ",
+                        cmdText: $"SELECT CustomerId, FirstName, LastName FROM [{_tableName}] WHERE FirstName=@FirstName AND CustomerId=@CustomerId ",
                         connection: sqlConnection,
                         transaction: null,
                         columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
@@ -743,7 +743,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             string[] dataType = new string[3] { @"System.Int32", @"System.String", @"System.String" };
             string[] columnSizes = new string[3] { @"4", @"50", @"50" };
 
-            CleanUpTable(connection, tableName);
+            CleanUpTable(connection, _tableName);
 
             Parallel.For(0, 1, i =>
             {
@@ -751,7 +751,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 Assert.False(values == null || values.Count < 3, @"values should not be null and count should be >= 3.");
                 int numberOfRows = 10 + i;
                 // Insert a bunch of rows in to the table.
-                int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
+                int rowsAffected = InsertRows(tableName: _tableName, numberofRows: numberOfRows, values: values, connection: connection);
                 Assert.Equal(rowsAffected, numberOfRows);
 
                 using (SqlConnection sqlConnection = new SqlConnection(connection))
@@ -760,7 +760,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                     // select the set of rows that were inserted just now.
                     using (SqlCommand sqlCommand = new SqlCommand(
-                        cmdText: $"SELECT CustomerId, FirstName, LastName FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                        cmdText: $"SELECT CustomerId, FirstName, LastName FROM [{_tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
                         connection: sqlConnection,
                         transaction: null,
                         columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
@@ -860,7 +860,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestPrepareWithExecuteNonQuery(string connection)
         {
-            CleanUpTable(connection, tableName);
+            CleanUpTable(connection, _tableName);
 
             IList<object> values = GetValues(dataHint: 52);
 
@@ -869,7 +869,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             int numberOfRows = 10;
 
             // Insert a bunch of rows in to the table.
-            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
+            int rowsAffected = InsertRows(tableName: _tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
             Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
 
@@ -877,7 +877,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             {
                 sqlConnection.Open();
                 using (SqlCommand sqlCommand =
-                    new SqlCommand($"UPDATE [{tableName}] SET LastName = @LastName WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                    new SqlCommand($"UPDATE [{_tableName}] SET LastName = @LastName WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
                     sqlConnection,
                     transaction: null,
                     columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
@@ -909,20 +909,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestAsyncWriteDelayWithExecuteNonQueryAsync(string connection)
         {
-            CleanUpTable(connection, tableName);
+            CleanUpTable(connection, _tableName);
 
             IList<object> values = GetValues(dataHint: 53);
             Assert.True(values != null && values.Count >= 3, @"values should not be null and count should be >= 3.");
             int numberOfRows = 10;
 
             // Insert a bunch of rows in to the table.
-            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
+            int rowsAffected = InsertRows(tableName: _tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
             using (SqlConnection sqlconnection = new SqlConnection(connection))
             {
                 sqlconnection.Open();
 
-                using (SqlCommand sqlCommand = new SqlCommand($"UPDATE [{tableName}] SET LastName = @LastName WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                using (SqlCommand sqlCommand = new SqlCommand($"UPDATE [{_tableName}] SET LastName = @LastName WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
                     sqlconnection,
                     transaction: null,
                     columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
@@ -963,7 +963,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestAsyncWriteDelayWithExecuteReaderAsync(string connection)
         {
-            CleanUpTable(connection, tableName);
+            CleanUpTable(connection, _tableName);
 
             IList<object> values = GetValues(dataHint: 53);
 
@@ -972,7 +972,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             int numberOfRows = 10;
 
             // Insert a bunch of rows in to the table.
-            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
+            int rowsAffected = InsertRows(tableName: _tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
             Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
 
@@ -980,7 +980,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             {
                 sqlConnection.Open();
 
-                using (SqlCommand sqlCommand = new SqlCommand($"UPDATE [{tableName}] SET LastName = @LastName WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                using (SqlCommand sqlCommand = new SqlCommand($"UPDATE [{_tableName}] SET LastName = @LastName WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
                     connection: sqlConnection,
                     transaction: null,
                     columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
@@ -1030,7 +1030,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestPrepareWithExecuteNonQueryAsync(string connection)
         {
-            CleanUpTable(connection, tableName);
+            CleanUpTable(connection, _tableName);
 
             IList<object> values = GetValues(dataHint: 53);
 
@@ -1039,7 +1039,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             int numberOfRows = 10;
 
             // Insert a bunch of rows in to the table.
-            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
+            int rowsAffected = InsertRows(tableName: _tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
             Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
 
@@ -1047,7 +1047,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             {
                 sqlConnection.Open();
                 using (SqlCommand sqlCommand = new SqlCommand(
-                    $"UPDATE [{tableName}] SET LastName = @LastName WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                    $"UPDATE [{_tableName}] SET LastName = @LastName WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
                     sqlConnection,
                     transaction: null,
                     columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
@@ -1085,14 +1085,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProviderWithCommandBehaviorSet2))]
         public void TestPrepareWithExecuteReaderAsync(string connection, CommandBehavior commandBehavior)
         {
-            CleanUpTable(connection, tableName);
+            CleanUpTable(connection, _tableName);
 
             IList<object> values = GetValues(dataHint: 54);
             Assert.True(values != null && values.Count <= 3, @"values should not be null and count should be >= 3.");
             int numberOfRows = 10;
 
             // Insert a bunch of rows in to the table.
-            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
+            int rowsAffected = InsertRows(tableName: _tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
             Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
 
@@ -1100,7 +1100,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             {
                 sqlConnection.Open();
 
-                using (SqlCommand sqlCommand = new SqlCommand($"SELECT * FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                using (SqlCommand sqlCommand = new SqlCommand($"SELECT * FROM [{_tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
                     sqlConnection,
                     transaction: null,
                     columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
@@ -1147,7 +1147,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestSqlDataReaderAPIs(string connection)
         {
-            CleanUpTable(connection, tableName);
+            CleanUpTable(connection, _tableName);
 
             SqlCommandColumnEncryptionSetting value = SqlCommandColumnEncryptionSetting.Enabled;
             char[] textValue = null;
@@ -1159,7 +1159,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.True(values != null && values.Count >= 3, @"values should not be null and count should be >= 3.");
 
             // Insert a bunch of rows in to the table.
-            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
+            int rowsAffected = InsertRows(tableName: _tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
             Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
 
@@ -1168,7 +1168,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 sqlConnection.Open();
 
                 using (SqlCommand sqlCommand = new SqlCommand(string.Format(value == SqlCommandColumnEncryptionSetting.Enabled
-                            ? commandTextForEncryptionEnabled : commandTextForEncryptionDisabledResultSetOnly, tableName),
+                            ? commandTextForEncryptionEnabled : commandTextForEncryptionDisabledResultSetOnly, _tableName),
                             sqlConnection,
                             transaction: null,
                             columnEncryptionSetting: value))
@@ -1275,7 +1275,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     }
                 }
 
-                using (SqlCommand sqlCommand = new SqlCommand($"INSERT INTO [{tableName}] VALUES (@CustomerId, @FirstName, @LastName /*, @BinaryColumn, @NvarcharMaxColumn*/)",
+                using (SqlCommand sqlCommand = new SqlCommand($"INSERT INTO [{_tableName}] VALUES (@CustomerId, @FirstName, @LastName /*, @BinaryColumn, @NvarcharMaxColumn*/)",
                     sqlConnection,
                     transaction: null,
                     columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
@@ -1293,7 +1293,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 }
 
                 using (SqlCommand sqlCommand =
-                            new SqlCommand($"SELECT * FROM [{tableName}] WHERE LastName = @LastName AND CustomerId = @CustomerId",
+                            new SqlCommand($"SELECT * FROM [{_tableName}] WHERE LastName = @LastName AND CustomerId = @CustomerId",
                             sqlConnection,
                             transaction: null,
                             columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
@@ -1324,7 +1324,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 }
 
                 using (SqlCommand sqlCommand =
-                           new SqlCommand($"UPDATE [{tableName}] SET FirstName = @FirstName WHERE CustomerId = @CustomerId",
+                           new SqlCommand($"UPDATE [{_tableName}] SET FirstName = @FirstName WHERE CustomerId = @CustomerId",
                            sqlConnection,
                            transaction: null,
                            columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
@@ -1344,7 +1344,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestSqlDataReaderAPIsWithSequentialAccess(string connection)
         {
-            CleanUpTable(connection, tableName);
+            CleanUpTable(connection, _tableName);
 
             CommandBehavior value = CommandBehavior.SequentialAccess;
             char[] textValue = null;
@@ -1357,14 +1357,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             int numberOfRows = 10;
 
             // Insert a bunch of rows in to the table.
-            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
+            int rowsAffected = InsertRows(tableName: _tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
             Assert.Equal(rowsAffected, numberOfRows);
 
             using (SqlConnection sqlConnection = new SqlConnection(connection))
             {
                 sqlConnection.Open();
-                using (SqlCommand sqlCommand = new SqlCommand($"SELECT CustomerId, FirstName, LastName  FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                using (SqlCommand sqlCommand = new SqlCommand($"SELECT CustomerId, FirstName, LastName  FROM [{_tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
                     sqlConnection,
                     transaction: null,
                     columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
@@ -1415,7 +1415,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 }
 
                 // We use different commands for every API test, since SequentialAccess does not let you access a column more than once.
-                using (SqlCommand sqlCommand = new SqlCommand($@"SELECT CustomerId, FirstName, LastName FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                using (SqlCommand sqlCommand = new SqlCommand($@"SELECT CustomerId, FirstName, LastName FROM [{_tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
                     sqlConnection,
                     transaction: null,
                     columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
@@ -1437,7 +1437,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 }
 
                 // We use different commands for every API test, since SequentialAccess does not let you access a column more than once.
-                using (SqlCommand sqlCommand = new SqlCommand($"SELECT CustomerId, FirstName, LastName  FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                using (SqlCommand sqlCommand = new SqlCommand($"SELECT CustomerId, FirstName, LastName  FROM [{_tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
                     sqlConnection,
                     transaction: null,
                     columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
@@ -1462,7 +1462,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                 // We use different commands for every API test, since SequentialAccess does not let you access a column more than once.
                 using (SqlCommand sqlCommand =
-                   new SqlCommand($"SELECT CustomerId, FirstName, LastName  FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                   new SqlCommand($"SELECT CustomerId, FirstName, LastName  FROM [{_tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
                    sqlConnection, transaction: null, columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
                 {
                     sqlCommand.Parameters.Add(@"CustomerId", SqlDbType.Int);
@@ -1487,7 +1487,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 }
 
                 // We use different commands for every API test, since SequentialAccess does not let you access a column more than once.
-                using (SqlCommand sqlCommand = new SqlCommand($@"SELECT CustomerId, FirstName, LastName FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                using (SqlCommand sqlCommand = new SqlCommand($@"SELECT CustomerId, FirstName, LastName FROM [{_tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
                     sqlConnection,
                     transaction: null,
                     columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
@@ -1527,7 +1527,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 // We use different commands for every API test, since SequentialAccess does not let you access a column more than once.
                 using (SqlCommand sqlCommand =
                 new SqlCommand(
-                    $"SELECT CustomerId, FirstName, LastName  FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                    $"SELECT CustomerId, FirstName, LastName  FROM [{_tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
                     sqlConnection,
                     transaction: null,
                     columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
@@ -1558,7 +1558,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 }
 
                 // We use different commands for every API test, since SequentialAccess does not let you access a column more than once.
-                using (SqlCommand sqlCommand = new SqlCommand($@"SELECT CustomerId, FirstName, LastName FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                using (SqlCommand sqlCommand = new SqlCommand($@"SELECT CustomerId, FirstName, LastName FROM [{_tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
                     sqlConnection,
                     transaction: null,
                     columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
@@ -1590,7 +1590,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                 // We use different commands for every API test, since SequentialAccess does not let you access a column more than once.
                 using (SqlCommand sqlCommand =
-                    new SqlCommand($"SELECT CustomerId, FirstName, LastName  FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                    new SqlCommand($"SELECT CustomerId, FirstName, LastName  FROM [{_tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
                     sqlConnection, transaction: null,
                     columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
                 {
@@ -1620,7 +1620,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                 // We use different commands for every API test, since SequentialAccess does not let you access a column more than once.
                 using (SqlCommand sqlCommand =
-                    new SqlCommand($"SELECT CustomerId, FirstName, LastName  FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                    new SqlCommand($"SELECT CustomerId, FirstName, LastName  FROM [{_tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
                     sqlConnection, transaction: null,
                     columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
                 {
@@ -1649,7 +1649,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                 // We use different commands for every API test, since SequentialAccess does not let you access a column more than once.
                 using (SqlCommand sqlCommand =
-                    new SqlCommand($"SELECT CustomerId, FirstName, LastName  FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                    new SqlCommand($"SELECT CustomerId, FirstName, LastName  FROM [{_tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
                     sqlConnection, transaction: null,
                     columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
                 {
@@ -1673,7 +1673,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                 // We use different commands for every API test, since SequentialAccess does not let you access a column more than once.
                 using (SqlCommand sqlCommand =
-                        new SqlCommand($"SELECT * FROM [{tableName}] WHERE LastName = @LastName AND CustomerId = @CustomerId",
+                        new SqlCommand($"SELECT * FROM [{_tableName}] WHERE LastName = @LastName AND CustomerId = @CustomerId",
                         sqlConnection, transaction: null,
                         columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
                 {
@@ -1686,7 +1686,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                 // We use different commands for every API test, since SequentialAccess does not let you access a column more than once.
                 using (SqlCommand sqlCommand =
-                        new SqlCommand($"UPDATE [{tableName}] SET FirstName = @FirstName WHERE CustomerId = @CustomerId",
+                        new SqlCommand($"UPDATE [{_tableName}] SET FirstName = @FirstName WHERE CustomerId = @CustomerId",
                         sqlConnection,
                         transaction: null,
                         columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
@@ -1701,7 +1701,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 }
 
                 // We use different commands for every API test, since SequentialAccess does not let you access a column more than once.
-                using (SqlCommand sqlCommand = new SqlCommand($"INSERT INTO [{tableName}] VALUES (@CustomerId, @FirstName, @LastName )",
+                using (SqlCommand sqlCommand = new SqlCommand($"INSERT INTO [{_tableName}] VALUES (@CustomerId, @FirstName, @LastName )",
                     sqlConnection, transaction: null,
                     columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
                 {
@@ -1718,7 +1718,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                 // We use different commands for every API test, since SequentialAccess does not let you access a column more than once.
                 using (SqlCommand sqlCommand =
-                        new SqlCommand($"SELECT * FROM [{tableName}] WHERE LastName = @LastName AND CustomerId = @CustomerId",
+                        new SqlCommand($"SELECT * FROM [{_tableName}] WHERE LastName = @LastName AND CustomerId = @CustomerId",
                         sqlConnection,
                         transaction: null,
                         columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
@@ -1740,7 +1740,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                 // We use different commands for every API test, since SequentialAccess does not let you access a column more than once.
                 using (SqlCommand sqlCommand =
-                        new SqlCommand($"SELECT * FROM [{tableName}] WHERE LastName = @LastName AND CustomerId = @CustomerId",
+                        new SqlCommand($"SELECT * FROM [{_tableName}] WHERE LastName = @LastName AND CustomerId = @CustomerId",
                         sqlConnection,
                         transaction: null,
                         columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
@@ -1772,7 +1772,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProviderWithCommandBehaviorSet2))]
         public void TestSqlCommandSequentialAccessCodePaths(string connection, CommandBehavior value)
         {
-            CleanUpTable(connection, tableName);
+            CleanUpTable(connection, _tableName);
 
             CommandBehavior commandBehavior = (CommandBehavior)value;
             IList<object> values = GetValues(dataHint: 57);
@@ -1782,7 +1782,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             int numberOfRows = 100;
 
             //Insert a bunch of rows in to the table.
-            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
+            int rowsAffected = InsertRows(tableName: _tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
             Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
 
@@ -1790,7 +1790,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             {
                 sqlConnection.Open();
                 // Test SqlDataReader.GetStream() on encrypted column, throw an exception.
-                using (SqlCommand sqlCommand = new SqlCommand($"SELECT * FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                using (SqlCommand sqlCommand = new SqlCommand($"SELECT * FROM [{_tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
                     sqlConnection,
                     transaction: null,
                     columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
@@ -1816,13 +1816,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestExecuteXmlReader(string connection)
         {
-            CleanUpTable(connection, tableName);
+            CleanUpTable(connection, _tableName);
 
             IList<object> values = GetValues(dataHint: 60);
             int numberOfRows = 10;
 
             // Insert a bunch of rows in to the table.	
-            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
+            int rowsAffected = InsertRows(tableName: _tableName, numberofRows: numberOfRows, values: values, connection: connection);
             Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
 
             using (SqlConnection sqlConnection = new SqlConnection(connection))
@@ -1830,7 +1830,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 sqlConnection.Open();
 
                 // select the set of rows that were inserted just now.	
-                using (SqlCommand sqlCommand = new SqlCommand($"SELECT LastName FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId FOR XML AUTO;", sqlConnection, transaction: null, columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
+                using (SqlCommand sqlCommand = new SqlCommand($"SELECT LastName FROM [{_tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId FOR XML AUTO;", sqlConnection, transaction: null, columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
                 {
                     if (DataTestUtility.EnclaveEnabled)
                     {
@@ -1857,7 +1857,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProviderWithCommandBehaviorSet1))]
         public void TestBeginAndEndExecuteReaderWithAsyncCallback(string connection, CommandBehavior commandbehavior)
         {
-            CleanUpTable(connection, tableName);
+            CleanUpTable(connection, _tableName);
 
             var test = commandbehavior;
             IList<object> values = GetValues(dataHint: 51);
@@ -1865,14 +1865,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             int numberOfRows = 10;
             // Insert a bunch of rows in to the table.
-            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
+            int rowsAffected = InsertRows(tableName: _tableName, numberofRows: numberOfRows, values: values, connection: connection);
             Assert.Equal(rowsAffected, numberOfRows);
 
             using (SqlConnection sqlConnection = new SqlConnection(connection))
             {
                 sqlConnection.Open();
 
-                using (SqlCommand sqlCommand = new SqlCommand($@"SELECT * FROM {tableName} WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                using (SqlCommand sqlCommand = new SqlCommand($@"SELECT * FROM {_tableName} WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
                     sqlConnection,
                     transaction: null,
                     columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
@@ -1895,7 +1895,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProviderWithExecutionMethod))]
         public void TestSqlCommandCancel(string connection, string value, int number)
         {
-            CleanUpTable(connection, tableName);
+            CleanUpTable(connection, _tableName);
 
             string executeMethod = value;
             Assert.True(!string.IsNullOrWhiteSpace(executeMethod), @"executeMethod should not be null or empty");
@@ -1907,14 +1907,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.True(values != null && values.Count >= 3, @"values should not be null and count should be >= 3.");
 
             int numberOfRows = 300;
-            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
+            int rowsAffected = InsertRows(tableName: _tableName, numberofRows: numberOfRows, values: values, connection: connection);
             Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
 
             using (SqlConnection sqlConnection = new SqlConnection(connection))
             {
                 sqlConnection.Open();
 
-                using (SqlCommand sqlCommand = new SqlCommand($@"SELECT * FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                using (SqlCommand sqlCommand = new SqlCommand($@"SELECT * FROM [{_tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
                     sqlConnection,
                     transaction: null,
                     columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
@@ -1939,10 +1939,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     threads[1] = new Thread(new ParameterizedThreadStart(Thread_Cancel));
 
                     // Start the execute thread.
-                    threads[0].Start(new TestCommandCancelParams(sqlCommand, tableName, numberOfCancelCalls));
+                    threads[0].Start(new TestCommandCancelParams(sqlCommand, _tableName, numberOfCancelCalls));
 
                     // Start the thread which cancels the above command started by the execute thread.
-                    threads[1].Start(new TestCommandCancelParams(sqlCommand, tableName, numberOfCancelCalls));
+                    threads[1].Start(new TestCommandCancelParams(sqlCommand, _tableName, numberOfCancelCalls));
 
                     // Wait for the threads to finish.
                     threads[0].Join();
@@ -1986,10 +1986,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     threads[1] = new Thread(new ParameterizedThreadStart(Thread_Cancel));
 
                     // Start the execute thread.
-                    threads[0].Start(new TestCommandCancelParams(sqlCommand, tableName, numberOfCancelCalls));
+                    threads[0].Start(new TestCommandCancelParams(sqlCommand, _tableName, numberOfCancelCalls));
 
                     // Start the thread which cancels the above command started by the execute thread.
-                    threads[1].Start(new TestCommandCancelParams(sqlCommand, tableName, numberOfCancelCalls));
+                    threads[1].Start(new TestCommandCancelParams(sqlCommand, _tableName, numberOfCancelCalls));
 
                     // Wait for the threads to finish.
                     threads[0].Join();
@@ -2032,10 +2032,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     threads[1] = new Thread(new ParameterizedThreadStart(Thread_Cancel));
 
                     // Start the execute thread.
-                    threads[0].Start(new TestCommandCancelParams(sqlCommand, tableName, numberOfCancelCalls));
+                    threads[0].Start(new TestCommandCancelParams(sqlCommand, _tableName, numberOfCancelCalls));
 
                     // Start the thread which cancels the above command started by the execute thread.
-                    threads[1].Start(new TestCommandCancelParams(sqlCommand, tableName, numberOfCancelCalls));
+                    threads[1].Start(new TestCommandCancelParams(sqlCommand, _tableName, numberOfCancelCalls));
 
                     // Wait for the threads to finish.
                     threads[0].Join();
@@ -2071,20 +2071,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProviderWithCancellationTime))]
         public void TestSqlCommandCancellationToken(string connection, int initalValue, int cancellationTime)
         {
-            CleanUpTable(connection, tableName);
+            CleanUpTable(connection, _tableName);
 
             IList<object> values = GetValues(dataHint: 59);
             int numberOfRows = 10;
 
             // Insert a bunch of rows in to the table.
-            int rowsAffected = InsertRows(tableName: tableName, numberofRows: numberOfRows, values: values, connection: connection);
+            int rowsAffected = InsertRows(tableName: _tableName, numberofRows: numberOfRows, values: values, connection: connection);
 
             Assert.True(rowsAffected == numberOfRows, "number of rows affected is unexpected.");
 
             using (SqlConnection sqlConnection = new SqlConnection(connection))
             {
                 sqlConnection.Open();
-                using (SqlCommand sqlCommand = new SqlCommand($@"SELECT CustomerId, FirstName, LastName FROM [{tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
+                using (SqlCommand sqlCommand = new SqlCommand($@"SELECT CustomerId, FirstName, LastName FROM [{_tableName}] WHERE FirstName = @FirstName AND CustomerId = @CustomerId",
                     connection: sqlConnection,
                     transaction: null,
                     columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
@@ -2153,10 +2153,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             string failedToDecryptErrorMessage = "Failed to decrypt a column encryption key using key store provider: " +
                 "'DummyProvider'. Verify the properties of the column encryption key and its column master key in your database.";
             string providerNotImplementedMessage = "The method or operation is not implemented.";
-            string providerNotFoundMessage = "Invalid key store provider name: 'DummyProvider'. A key store " +
-                "provider name must denote either a system key store provider or a registered custom key store provider." +
-                " Valid system key store provider names are: 'MSSQL_CERTIFICATE_STORE', 'MSSQL_CNG_STORE', " +
-                "'MSSQL_CSP_PROVIDER'. Valid (currently registered) custom key store provider names are: 'DummyProvider2'.";
+            string providerNotFoundMessage = string.Format(
+                SystemDataResourceManager.Instance.TCE_InvalidKeyStoreProviderName,
+                "DummyProvider", "'MSSQL_CERTIFICATE_STORE', 'MSSQL_CNG_STORE', 'MSSQL_CSP_PROVIDER'", "'DummyProvider2'");
 
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
@@ -2198,7 +2197,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             using (SqlCommand command = new SqlCommand(
                 null, connection, null, SqlCommandColumnEncryptionSetting.Enabled))
             {
-                command.CommandText = $"SELECT * FROM [{customKeyStoreProviderTableName}] WHERE CustomerID = @id";
+                command.CommandText = $"SELECT * FROM [{_customKeyStoreProviderTableName}] WHERE CustomerID = @id";
                 command.Parameters.AddWithValue(@"id", 9);
                 command.ExecuteReader();
             }
@@ -2213,7 +2212,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 // Set the SELECT command.
                 SelectCommand = new SqlCommand
             (
-                cmdText: $"SELECT CustomerId, FirstName, LastName  FROM [{tableName}]",
+                cmdText: $"SELECT CustomerId, FirstName, LastName  FROM [{_tableName}]",
                 connection: sqlConnection,
                 transaction: null,
                 columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled
@@ -2222,7 +2221,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 // Set the UPDATE command and parameters.
                 UpdateCommand = new SqlCommand
             (
-                cmdText: $"UPDATE [{tableName}] SET FirstName=@FirstName WHERE CustomerId=@CustomerId",
+                cmdText: $"UPDATE [{_tableName}] SET FirstName=@FirstName WHERE CustomerId=@CustomerId",
                 connection: sqlConnection,
                 transaction: null,
                 columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled
@@ -2235,7 +2234,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             // Set the INSERT command and parameter.
             adapter.InsertCommand = new SqlCommand
             (
-                cmdText: $"INSERT INTO [{tableName}] (FirstName, LastName) VALUES (@FirstName, @LastName);",
+                cmdText: $"INSERT INTO [{_tableName}] (FirstName, LastName) VALUES (@FirstName, @LastName);",
                 connection: sqlConnection,
                 transaction: null,
                 columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled
@@ -2247,7 +2246,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             // Set the DELETE command and parameter.
             adapter.DeleteCommand = new SqlCommand(
-                cmdText: $"DELETE FROM [{tableName}] WHERE CustomerId=@CustomerId",
+                cmdText: $"DELETE FROM [{_tableName}] WHERE CustomerId=@CustomerId",
                 connection: sqlConnection,
                 transaction: null,
                 columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled
@@ -2774,7 +2773,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 {
                     sqlConnection.Open();
 
-                    Table.DeleteData(fixture.ApiTestTable.Name, sqlConnection);
+                    Table.DeleteData(_fixture.ApiTestTable.Name, sqlConnection);
                 }
             }
         }

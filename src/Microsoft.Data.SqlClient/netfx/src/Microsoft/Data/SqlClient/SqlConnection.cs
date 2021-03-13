@@ -51,7 +51,7 @@ namespace Microsoft.Data.SqlClient
         static private readonly object EventInfoMessage = new object();
 
         // System column encryption key store providers are added by default
-        static private readonly Dictionary<string, SqlColumnEncryptionKeyStoreProvider> _SystemColumnEncryptionKeyStoreProviders
+        static private readonly Dictionary<string, SqlColumnEncryptionKeyStoreProvider> s_systemColumnEncryptionKeyStoreProviders
             = new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>(capacity: 1, comparer: StringComparer.OrdinalIgnoreCase)
         {
             {SqlColumnEncryptionCertificateStoreProvider.ProviderName, new SqlColumnEncryptionCertificateStoreProvider()},
@@ -63,10 +63,10 @@ namespace Microsoft.Data.SqlClient
         /// Global custom provider list should be provided by the user. We shallow copy the user supplied dictionary into a ReadOnlyDictionary.
         /// Global custom provider list can only be supplied once per application.
         /// </summary>
-        private static ReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> _GlobalCustomColumnEncryptionKeyStoreProviders;
+        private static IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> s_globalCustomColumnEncryptionKeyStoreProviders;
 
         /// Instance-level list of custom key store providers. It can be set more than once by the user.
-        private ReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> _CustomColumnEncryptionKeyStoreProviders;
+        private IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> _customColumnEncryptionKeyStoreProviders;
 
         // Lock to control setting of _GlobalCustomColumnEncryptionKeyStoreProviders
         private static readonly Object _GlobalCustomColumnEncryptionKeyProvidersLock = new Object();
@@ -144,40 +144,12 @@ namespace Microsoft.Data.SqlClient
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisterColumnEncryptionKeyStoreProviders/*' />
         static public void RegisterColumnEncryptionKeyStoreProviders(IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders)
         {
-            // Return when the provided dictionary is null.
-            if (customProviders == null)
-            {
-                throw SQL.NullCustomKeyStoreProviderDictionary();
-            }
-
-            // Validate that custom provider list doesn't contain any of system provider list
-            foreach (string key in customProviders.Keys)
-            {
-                // Validate the provider name
-                //
-                // Check for null or empty
-                if (string.IsNullOrWhiteSpace(key))
-                {
-                    throw SQL.EmptyProviderName();
-                }
-
-                // Check if the name starts with MSSQL_, since this is reserved namespace for system providers.
-                if (key.StartsWith(ADP.ColumnEncryptionSystemProviderNamePrefix, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    throw SQL.InvalidCustomKeyStoreProviderName(key, ADP.ColumnEncryptionSystemProviderNamePrefix);
-                }
-
-                // Validate the provider value
-                if (customProviders[key] == null)
-                {
-                    throw SQL.NullProviderValue(key);
-                }
-            }
+            ValidateCustomProviders(customProviders);
 
             lock (_GlobalCustomColumnEncryptionKeyProvidersLock)
             {
                 // Provider list can only be set once
-                if (_GlobalCustomColumnEncryptionKeyStoreProviders != null)
+                if (s_globalCustomColumnEncryptionKeyStoreProviders != null)
                 {
                     throw SQL.CanOnlyCallOnce();
                 }
@@ -189,15 +161,30 @@ namespace Microsoft.Data.SqlClient
                     new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>(customProviders, StringComparer.OrdinalIgnoreCase);
 
                 // Set the dictionary to the ReadOnly dictionary.
-                _GlobalCustomColumnEncryptionKeyStoreProviders = 
-                    new ReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider>(customColumnEncryptionKeyStoreProviders);
+                s_globalCustomColumnEncryptionKeyStoreProviders = customColumnEncryptionKeyStoreProviders;
             }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisterColumnEncryptionKeyStoreProvidersOnConnection/*' />
         public void RegisterColumnEncryptionKeyStoreProvidersOnConnection(IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders)
         {
-            // Return when the provided dictionary is null.
+            ValidateCustomProviders(customProviders);
+
+            // Create a temporary dictionary and then add items from the provided dictionary.
+            // Dictionary constructor does shallow copying by simply copying the provider name and provider reference pairs
+            // in the provided customerProviders dictionary.
+            Dictionary<string, SqlColumnEncryptionKeyStoreProvider> customColumnEncryptionKeyStoreProviders =
+                new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>(customProviders, StringComparer.OrdinalIgnoreCase);
+
+            // Set the dictionary to the ReadOnly dictionary.
+            // This method can be called more than once. Re-registering a new collection will replace the 
+            // old collection of providers.
+            _customColumnEncryptionKeyStoreProviders = customColumnEncryptionKeyStoreProviders;
+        }
+
+        private static void ValidateCustomProviders(IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders)
+        {
+            // Throw when the provided dictionary is null.
             if (customProviders == null)
             {
                 throw SQL.NullCustomKeyStoreProviderDictionary();
@@ -225,18 +212,6 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.NullProviderValue(key);
                 }
             }
-
-            // Create a temporary dictionary and then add items from the provided dictionary.
-            // Dictionary constructor does shallow copying by simply copying the provider name and provider reference pairs
-            // in the provided customerProviders dictionary.
-            Dictionary<string, SqlColumnEncryptionKeyStoreProvider> customColumnEncryptionKeyStoreProviders =
-                new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>(customProviders, StringComparer.OrdinalIgnoreCase);
-
-            // Set the dictionary to the ReadOnly dictionary.
-            // This method can be called more than once. Re-registering a new collection will replace the 
-            // old collection of providers.
-            _CustomColumnEncryptionKeyStoreProviders =
-                new ReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider>(customColumnEncryptionKeyStoreProviders);
         }
 
         /// <summary>
@@ -254,28 +229,28 @@ namespace Microsoft.Data.SqlClient
             columnKeyStoreProvider = null;
 
             // Search in the sytem provider list.
-            if (_SystemColumnEncryptionKeyStoreProviders.TryGetValue(providerName, out columnKeyStoreProvider))
+            if (s_systemColumnEncryptionKeyStoreProviders.TryGetValue(providerName, out columnKeyStoreProvider))
             {
                 return true;
             }
 
             // instance-level custom provider cache takes precedence over global cache
-            if (connection._CustomColumnEncryptionKeyStoreProviders != null &&
-                connection._CustomColumnEncryptionKeyStoreProviders.Count > 0)
+            if (connection._customColumnEncryptionKeyStoreProviders != null &&
+                connection._customColumnEncryptionKeyStoreProviders.Count > 0)
             {
-                return connection._CustomColumnEncryptionKeyStoreProviders.TryGetValue(providerName, out columnKeyStoreProvider);
+                return connection._customColumnEncryptionKeyStoreProviders.TryGetValue(providerName, out columnKeyStoreProvider);
             }
 
             lock (_GlobalCustomColumnEncryptionKeyProvidersLock)
             {
                 // If custom provider is not set, then return false
-                if (_GlobalCustomColumnEncryptionKeyStoreProviders == null)
+                if (s_globalCustomColumnEncryptionKeyStoreProviders == null)
                 {
                     return false;
                 }
 
                 // Search in the custom provider list
-                return _GlobalCustomColumnEncryptionKeyStoreProviders.TryGetValue(providerName, out columnKeyStoreProvider);
+                return s_globalCustomColumnEncryptionKeyStoreProviders.TryGetValue(providerName, out columnKeyStoreProvider);
             }
         }
 
@@ -285,7 +260,7 @@ namespace Microsoft.Data.SqlClient
         /// <returns>Combined list of provider names</returns>
         internal static List<string> GetColumnEncryptionSystemKeyStoreProviders()
         {
-            HashSet<string> providerNames = new HashSet<string>(_SystemColumnEncryptionKeyStoreProviders.Keys);
+            HashSet<string> providerNames = new HashSet<string>(s_systemColumnEncryptionKeyStoreProviders.Keys);
             return providerNames.ToList();
         }
 
@@ -297,14 +272,14 @@ namespace Microsoft.Data.SqlClient
         /// <returns>Combined list of provider names</returns>
         internal static List<string> GetColumnEncryptionCustomKeyStoreProviders(SqlConnection connection)
         {
-            if (connection._CustomColumnEncryptionKeyStoreProviders != null &&
-               connection._CustomColumnEncryptionKeyStoreProviders.Count > 0)
+            if (connection._customColumnEncryptionKeyStoreProviders != null &&
+               connection._customColumnEncryptionKeyStoreProviders.Count > 0)
             {
-                return connection._CustomColumnEncryptionKeyStoreProviders.Keys.ToList();
+                return connection._customColumnEncryptionKeyStoreProviders.Keys.ToList();
             }
-            if (_GlobalCustomColumnEncryptionKeyStoreProviders != null)
+            if (s_globalCustomColumnEncryptionKeyStoreProviders != null)
             {
-                return _GlobalCustomColumnEncryptionKeyStoreProviders.Keys.ToList();
+                return s_globalCustomColumnEncryptionKeyStoreProviders.Keys.ToList();
             }
             return new List<string>();
         }
