@@ -776,7 +776,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 if (eventSource.Name.Equals("Microsoft.Data.SqlClient.EventSource"))
                 {
-                    // Collect all traces for better code coverage
+                    //// Collect all traces for better code coverage
                     EnableEvents(eventSource, EventLevel.Informational, EventKeywords.All);
                 }
             }

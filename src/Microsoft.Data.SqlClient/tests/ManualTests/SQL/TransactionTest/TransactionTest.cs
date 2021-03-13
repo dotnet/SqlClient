@@ -246,12 +246,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                     DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() =>
                     {
-                        SqlConnection con1 = new SqlConnection(_connectionString);
-                        con1.Open();
+                        using (SqlConnection con1 = new SqlConnection(_connectionString))
+                        {
+                            con1.Open();
 
-                        SqlCommand command = new SqlCommand("sql", con1);
-                        command.Transaction = tx;
-                        command.ExecuteNonQuery();
+                            SqlCommand command = new SqlCommand("sql", con1);
+                            command.Transaction = tx;
+                            command.ExecuteNonQuery();
+                        }
                     }, transactionConflictErrorMessage);
 
                     DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() =>

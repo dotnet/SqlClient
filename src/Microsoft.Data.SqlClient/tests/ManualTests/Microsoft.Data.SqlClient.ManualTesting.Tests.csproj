@@ -245,6 +245,10 @@
     <Compile Include="TracingTests\DiagnosticTest.cs" />
     <Compile Include="TracingTests\FakeDiagnosticListenerObserver.cs" />
   </ItemGroup>
+  <!--.Net core 3.0 & .Net standard 2.1 and above-->
+  <ItemGroup Condition="'$(TargetGroup)'=='netcoreapp' AND !$(TargetFramework.StartsWith('netcoreapp2'))">
+    <Compile Include="TracingTests\EventCounterTest.cs" />
+  </ItemGroup>
   <ItemGroup>
     <None Include="ProviderAgnostic\MultipleResultsTest\MultipleResultsTest.bsl" />
     <None Include="SQL\ParameterTest\SqlParameterTest_DebugMode.bsl" />
