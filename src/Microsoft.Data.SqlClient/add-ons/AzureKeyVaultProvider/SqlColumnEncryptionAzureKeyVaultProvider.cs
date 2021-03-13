@@ -273,7 +273,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             // throw appropriate error if masterKeyPath is null or empty
             if (string.IsNullOrWhiteSpace(masterKeyPath))
             {
-                ADP.InvalidAKVPath(masterKeyPath, isSystemOp);
+                throw ADP.InvalidAKVPath(masterKeyPath, isSystemOp);
             }
 
             if (!Uri.TryCreate(masterKeyPath, UriKind.Absolute, out Uri parsedUri) || parsedUri.Segments.Length < 3)
