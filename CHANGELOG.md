@@ -17,7 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Fixed
 - Fixed wrong results issues by changing the timeout timer to ensure a correct execution state [#906](https://github.com/dotnet/SqlClient/pull/906)
-- Fixed Kerberos authentication issues when configured SPN did not contain default port [#930](https://github.com/dotnet/SqlClient/pull/930)
+- Fixed Kerberos authentication issues when configured Server Principal Name (SPN) didn't contain default port [#930](https://github.com/dotnet/SqlClient/pull/930)
 - Fixed MARS header errors when `MakeReadAsyncBlocking` App Context switch is set to `false` [#910](https://github.com/dotnet/SqlClient/pull/910) [#922](https://github.com/dotnet/SqlClient/pull/922)
 - Fixed unwanted exceptions being thrown from `SqlDataReader` `Dispose` [#920](https://github.com/dotnet/SqlClient/pull/920)
 - Fixed issues connecting to SQL Server instance with instance name specified from Unix environment [#870](https://github.com/dotnet/SqlClient/pull/870)
@@ -28,7 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Fixed event source trace string issue [#940](https://github.com/dotnet/SqlClient/pull/940)
 
 ### Changes
-- Changed App Context switch `MakeReadAsyncBlocking` default to false [#937](https://github.com/dotnet/SqlClient/pull/937)
+- Changed App Context switch `MakeReadAsyncBlocking` default to `false` [#937](https://github.com/dotnet/SqlClient/pull/937)
 - Replaced usage of `BinaryFormatter` with `DataContractSerializer` [#869](https://github.com/dotnet/SqlClient/pull/869)
 - Prohibited `DtdProcessing` on `XmlTextReader` instance in .NET Core [#884](https://github.com/dotnet/SqlClient/pull/884)
 - Improved performance by reducing memory allocations in `SerializeEncodingChar`/`WriteEncodingChar` and some options boxing [#785](https://github.com/dotnet/SqlClient/pull/785)
