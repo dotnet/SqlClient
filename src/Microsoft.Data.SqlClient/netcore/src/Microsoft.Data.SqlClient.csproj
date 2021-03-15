@@ -294,6 +294,12 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\SqlRetryIntervalEnumerators.cs">
       <Link>Microsoft\Data\SqlClient\Reliability\SqlRetryIntervalEnumerators.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.cs">
+      <Link>Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlUtil.cs">
+      <Link>Microsoft\Data\SqlClient\SqlUtil.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netstandard' OR '$(TargetGroup)' == 'netcoreapp' OR '$(IsUAPAssembly)' == 'true'">
     <Compile Include="Microsoft.Data.SqlClient.TypeForwards.cs" />
@@ -506,12 +512,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlEnclaveAttestationParameters.cs" />
     <Compile Include="Microsoft\Data\SqlClient\EnclaveDelegate.cs" />
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.cs">
-      <Link>Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlUtil.cs">
-      <Link>Microsoft\Data\SqlClient\SqlUtil.cs</Link>
-    </Compile>
   </ItemGroup>
   <!-- Windows only -->
   <ItemGroup Condition="'$(TargetsWindows)' == 'true'">

@@ -66,6 +66,7 @@
     <MicrosoftDotNetRemoteExecutorVersion>5.0.0-beta.20206.4</MicrosoftDotNetRemoteExecutorVersion>
     <MicrosoftNETCoreRuntimeCoreCLRVersion>2.0.8</MicrosoftNETCoreRuntimeCoreCLRVersion>
     <MicrosoftSqlServerSqlManagementObjectsVersion>161.41011.9</MicrosoftSqlServerSqlManagementObjectsVersion>
+    <ConfigurationManagerVersion>5.0.0</ConfigurationManagerVersion>
   </PropertyGroup>
   <PropertyGroup>
     <TestAKVProviderVersion>$(NugetPackageVersion)</TestAKVProviderVersion>

@@ -31,9 +31,6 @@ The following table shows the inner transient error list.
 |10053|Could not convert the data value due to reasons other than sign mismatch or overflow.|
 |997|A connection was successfully established with the server, but then an error occurred during the login process. (provider: Named Pipes Provider, error: 0 - Overlapped I/O operation is in progress)|
 |233|A connection was successfully established with the server, but then an error occurred during the login process. (provider: Shared Memory Provider, error: 0 - No process is on the other end of the pipe.) (Microsoft SQL Server, Error: 233)|
-|64||A connection was successfully established with the server, but then an error occurred during the login process. (provider: SSL Provider, error: 0 - The specified network name is no longer available.)|
-|20||
-|0||
 
 ]]>
             </format>

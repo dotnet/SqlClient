@@ -24,6 +24,7 @@
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CryptoVector.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CryptoNativeBaselineReader.cs" />
     <Compile Include="AlwaysEncrypted\TestTrustedMasterKeyPaths.cs" />
+    <Compile Include="SQL\RetryLogic\SqlConfigurationManagerReliabilityTest.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetsWindows)' == 'true' and !$(ReferenceType.Contains('NetStandard'))">
     <Compile Include="AlwaysEncrypted\CspProviderExt.cs" />
@@ -67,6 +68,8 @@
       <Link>Common\System\Collections\DictionaryExtensions.cs</Link>
     </Compile>
     <Compile Include="DataCommon\AADUtility.cs" />
+    <None Include="SQL\RetryLogic\Resources\CustomConfigurableRetryLogic.cs" />
+    <Compile Include="SQL\RetryLogic\RetryLogicConfigHelper.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\OrderHint.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\OrderHintAsync.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\OrderHintDuplicateColumn.cs" />
@@ -296,6 +299,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="$(MicrosoftIdentityModelClientsActiveDirectoryVersion)" />
+    <PackageReference Condition="'$(TargetGroup)'=='netfx'" Include="System.Configuration.ConfigurationManager" Version="$(ConfigurationManagerVersion)" />
     <PackageReference Include="System.Runtime.Caching" Version="$(SystemRuntimeCachingVersion)" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNETTestSdkVersion)" />
     <PackageReference Include="System.Linq.Expressions" Version="$(SystemLinqExpressionsVersion)" />
@@ -306,5 +310,19 @@
   </ItemGroup>
   <ItemGroup>
     <None Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(BinFolder)$(Configuration).AnyCPU\Microsoft.Data.SqlClient\netfx\**\*SNI*.dll" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <!--These files are compiled by 'netcoreapp2.1'target framework-->
+  <ItemGroup Condition="'$(TargetGroup)'=='netcoreapp' AND $(ReferenceType)=='Project'">
+      <ContentWithTargetPath Include="SQL\RetryLogic\Resources\netcoreapp\ClassLibrary_CustomConfigurableRetryLogic.dll">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <TargetPath>ClassLibrary_CustomConfigurableRetryLogic.dll</TargetPath>
+      </ContentWithTargetPath>
+  </ItemGroup>
+  <!--These files are compiled by 'net461' target framework-->
+  <ItemGroup Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'">
+      <ContentWithTargetPath Include="SQL\RetryLogic\Resources\netfx\ClassLibrary_CustomConfigurableRetryLogic.dll">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <TargetPath>ClassLibrary_CustomConfigurableRetryLogic.dll</TargetPath>
+      </ContentWithTargetPath>
   </ItemGroup>
 </Project>
