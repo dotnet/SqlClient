@@ -7,8 +7,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
     public class ApiTestTable : Table
     {
         private const string ColumnEncryptionAlgorithmName = @"AEAD_AES_256_CBC_HMAC_SHA_256";
-        private ColumnEncryptionKey columnEncryptionKey1;
-        private ColumnEncryptionKey columnEncryptionKey2;
+        public ColumnEncryptionKey columnEncryptionKey1;
+        public ColumnEncryptionKey columnEncryptionKey2;
         private bool useDeterministicEncryption;
 
         public ApiTestTable(string tableName, ColumnEncryptionKey columnEncryptionKey1, ColumnEncryptionKey columnEncryptionKey2, bool useDeterministicEncryption = false) : base(tableName)

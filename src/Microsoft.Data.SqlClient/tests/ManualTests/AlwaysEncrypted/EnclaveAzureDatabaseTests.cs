@@ -38,7 +38,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders: new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>(capacity: 1, comparer: StringComparer.OrdinalIgnoreCase)
                     {
                         { SqlColumnEncryptionAzureKeyVaultProvider.ProviderName, sqlColumnEncryptionAzureKeyVaultProvider},
-                        { "DummyProvider", dummyProvider}
+                        { DummyKeyStoreProvider.Name, dummyProvider}
                     });
 
                     SQLSetupStrategyAzureKeyVault.isAKVProviderRegistered = true;

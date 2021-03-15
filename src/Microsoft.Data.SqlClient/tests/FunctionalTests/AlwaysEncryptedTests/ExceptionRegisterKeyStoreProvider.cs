@@ -4,7 +4,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Reflection;
 using Xunit;
 
@@ -78,15 +77,17 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         [Fact]
         public void TestCanSetGlobalProvidersOnlyOnce()
         {
-            // Clear out the existing providers (to ensure test-rerunability)
             Utility.ClearSqlConnectionGlobalProviders();
-            // Verify the provider can be set only once.
-            IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders = new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>();
-            customProviders = new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>();
-            customProviders.Add(new KeyValuePair<string, SqlColumnEncryptionKeyStoreProvider>(@"DummyProvider", new DummyKeyStoreProvider()));
+
+            IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders =
+                new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>()
+                {
+                    { DummyKeyStoreProvider.Name, new DummyKeyStoreProvider() }
+                };
             SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders);
 
-            InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders));
+            InvalidOperationException e = Assert.Throws<InvalidOperationException>(
+                () => SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders));
             string expectedMessage = SystemDataResourceManager.Instance.TCE_CanOnlyCallOnce;
             Assert.Contains(expectedMessage, e.Message);
 
@@ -115,19 +116,23 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             using (SqlConnection connection = new SqlConnection())
             {
                 connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(singleKeyStoreProvider);
-                FieldInfo field = connection.GetType().GetField("_customColumnEncryptionKeyStoreProviders",
-                    BindingFlags.NonPublic | BindingFlags.Instance);
-                IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> instanceCache =
-                    field.GetValue(connection) as IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider>;
-
+                IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> instanceCache = 
+                    GetInstanceCacheFromConnection(connection);
                 Assert.Single(instanceCache);
                 Assert.True(instanceCache.ContainsKey(dummyProviderName1));
 
                 connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(multipleKeyStoreProviders);
-                instanceCache = field.GetValue(connection) as IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider>;
+                instanceCache = GetInstanceCacheFromConnection(connection);
                 Assert.Equal(2, instanceCache.Count);
                 Assert.True(instanceCache.ContainsKey(dummyProviderName2));
                 Assert.True(instanceCache.ContainsKey(dummyProviderName3));
+            }
+
+            IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> GetInstanceCacheFromConnection(SqlConnection conn)
+            {
+                FieldInfo instanceCacheField = conn.GetType().GetField(
+                    "_customColumnEncryptionKeyStoreProviders", BindingFlags.NonPublic | BindingFlags.Instance);
+                return instanceCacheField.GetValue(conn) as IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider>;
             }
         }
     }

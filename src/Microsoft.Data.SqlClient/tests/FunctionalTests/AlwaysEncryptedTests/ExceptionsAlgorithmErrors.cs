@@ -205,7 +205,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             ClearSqlConnectionGlobalProviders();
             
             IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders = new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>();
-            customProviders.Add("DummyProvider", new DummyKeyStoreProvider());
+            customProviders.Add(DummyKeyStoreProvider.Name, new DummyKeyStoreProvider());
             SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders);
 
             object cipherMD = GetSqlCipherMetadata(0, 1, null, 1, 0x01);

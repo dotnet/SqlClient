@@ -6,7 +6,6 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
@@ -69,7 +68,7 @@ namespace Microsoft.Data.SqlClient
         private IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> _customColumnEncryptionKeyStoreProviders;
 
         // Lock to control setting of _GlobalCustomColumnEncryptionKeyStoreProviders
-        private static readonly Object _GlobalCustomColumnEncryptionKeyProvidersLock = new Object();
+        private static readonly object s_globalCustomColumnEncryptionKeyProvidersLock = new object();
 
         /// <summary>
         /// Dictionary object holding trusted key paths for various SQL Servers.
@@ -146,7 +145,7 @@ namespace Microsoft.Data.SqlClient
         {
             ValidateCustomProviders(customProviders);
 
-            lock (_GlobalCustomColumnEncryptionKeyProvidersLock)
+            lock (s_globalCustomColumnEncryptionKeyProvidersLock)
             {
                 // Provider list can only be set once
                 if (s_globalCustomColumnEncryptionKeyStoreProviders != null)
@@ -241,7 +240,7 @@ namespace Microsoft.Data.SqlClient
                 return connection._customColumnEncryptionKeyStoreProviders.TryGetValue(providerName, out columnKeyStoreProvider);
             }
 
-            lock (_GlobalCustomColumnEncryptionKeyProvidersLock)
+            lock (s_globalCustomColumnEncryptionKeyProvidersLock)
             {
                 // If custom provider is not set, then return false
                 if (s_globalCustomColumnEncryptionKeyStoreProviders == null)

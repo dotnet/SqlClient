@@ -26,10 +26,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 // this provider is required in ApiShould.TestCustomKeyStoreProviderRegistration()
                 DummyKeyStoreProvider dummyProvider = new DummyKeyStoreProvider();
 
-                Dictionary<string, SqlColumnEncryptionKeyStoreProvider> customAkvKeyStoreProviders = new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>(capacity: 1, comparer: StringComparer.OrdinalIgnoreCase)
+                Dictionary<string, SqlColumnEncryptionKeyStoreProvider> customAkvKeyStoreProviders = 
+                    new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>(capacity: 1, comparer: StringComparer.OrdinalIgnoreCase)
                 {
                     {SqlColumnEncryptionAzureKeyVaultProvider.ProviderName, AkvStoreProvider},
-                    { "DummyProvider", dummyProvider}
+                    { DummyKeyStoreProvider.Name, dummyProvider}
                 };
 
                 SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders: customAkvKeyStoreProviders);

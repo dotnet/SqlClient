@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
 
         public DummyMasterKeyForCertStoreProvider(string name, string certificateThumbprint, SqlColumnEncryptionKeyStoreProvider certStoreProvider, bool allowEnclaveComputations) : base(name)
         {
-            KeyStoreProviderName = "DummyProvider";
+            KeyStoreProviderName = DummyKeyStoreProvider.Name;
             Thumbprint = certificateThumbprint;
             KeyPath = string.Concat(CertificateStoreLocation.ToString(), "/", CertificateStoreName.ToString(), "/", Thumbprint);
 
@@ -31,7 +31,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
 
         public DummyMasterKeyForAKVProvider(string name, string akvUrl, SqlColumnEncryptionKeyStoreProvider akvProvider, bool allowEnclaveComputations) : base(name)
         {
-            KeyStoreProviderName = "DummyProvider";
+            KeyStoreProviderName = DummyKeyStoreProvider.Name;
             KeyPath = akvUrl;
 
             byte[] cmkSign = akvProvider.SignColumnMasterKeyMetadata(KeyPath, allowEnclaveComputations);

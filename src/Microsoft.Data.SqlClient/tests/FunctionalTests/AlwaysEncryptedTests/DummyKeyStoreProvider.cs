@@ -11,6 +11,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
     /// </summary>
     internal class DummyKeyStoreProvider : SqlColumnEncryptionKeyStoreProvider
     {
+        public const string Name = "DummyProvider";
         public override byte[] DecryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] encryptedColumnEncryptionKey)
         {
             throw new NotImplementedException();

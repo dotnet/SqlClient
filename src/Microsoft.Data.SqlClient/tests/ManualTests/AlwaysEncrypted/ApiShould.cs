@@ -25,13 +25,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         private SQLSetupStrategy _fixture;
 
         private readonly string _tableName;
-        private readonly string _customKeyStoreProviderTableName;
 
         public ApiShould(PlatformSpecificTestContext context)
         {
             _fixture = context.Fixture;
             _tableName = _fixture.ApiTestTable.Name;
-            _customKeyStoreProviderTableName = _fixture.CustomKeyStoreProviderTestTable.Name;
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
@@ -2119,7 +2117,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
-        public void TestCustomKeyStoreProviderRegistration(string connectionString)
+        public void TestCustomKeyStoreProviderDuringAeQuery(string connectionString)
         {
             if (!SQLSetupStrategyAzureKeyVault.isAKVProviderRegistered)
             {
@@ -2131,8 +2129,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders:
                     new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>(capacity: 2, comparer: StringComparer.OrdinalIgnoreCase)
                     {
-                        { "AZURE_KEY_VAULT", sqlColumnEncryptionAzureKeyVaultProvider},
-                        { "DummyProvider", dummyProvider}
+                        { SqlColumnEncryptionAzureKeyVaultProvider.ProviderName, sqlColumnEncryptionAzureKeyVaultProvider},
+                        { DummyKeyStoreProvider.Name, dummyProvider}
                     });
 
                 SQLSetupStrategyAzureKeyVault.isAKVProviderRegistered = true;
@@ -2141,21 +2139,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Dictionary<string, SqlColumnEncryptionKeyStoreProvider> requiredProvider =
                 new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>()
                 {
-                    { "DummyProvider", new DummyKeyStoreProvider() }
+                    { DummyKeyStoreProvider.Name, new DummyKeyStoreProvider() }
                 };
 
+            string notRequiredProviderName = "DummyProvider2";
             Dictionary<string, SqlColumnEncryptionKeyStoreProvider> notRequiredProvider =
                 new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>()
                 {
-                    { "DummyProvider2", new DummyKeyStoreProvider() }
+                    { notRequiredProviderName, new DummyKeyStoreProvider() }
                 };
 
-            string failedToDecryptErrorMessage = "Failed to decrypt a column encryption key using key store provider: " +
-                "'DummyProvider'. Verify the properties of the column encryption key and its column master key in your database.";
-            string providerNotImplementedMessage = "The method or operation is not implemented.";
-            string providerNotFoundMessage = string.Format(
-                SystemDataResourceManager.Instance.TCE_InvalidKeyStoreProviderName,
-                "DummyProvider", "'MSSQL_CERTIFICATE_STORE', 'MSSQL_CNG_STORE', 'MSSQL_CSP_PROVIDER'", "'DummyProvider2'");
+            ApiTestTable customKeyStoreProviderTable = _fixture.CustomKeyStoreProviderTestTable as ApiTestTable;
+            string cekHexWithHyphens = BitConverter.ToString(customKeyStoreProviderTable.columnEncryptionKey1.EncryptedValue);
+            int lengthOfTenBytesWithHyphens = 29;
+            string lastTenBytesCek = cekHexWithHyphens.Substring(cekHexWithHyphens.Length - lengthOfTenBytesWithHyphens);
+
+            string failedToDecryptMessage = string.Format(SystemDataResourceManager.Instance.TCE_KeyDecryptionFailed,
+                DummyKeyStoreProvider.Name, lastTenBytesCek);
+            string providerNotFoundMessage = string.Format(SystemDataResourceManager.Instance.TCE_UnrecognizedKeyStoreProviderName,
+                DummyKeyStoreProvider.Name, 
+                "'MSSQL_CERTIFICATE_STORE', 'MSSQL_CNG_STORE', 'MSSQL_CSP_PROVIDER'", 
+                $"'{notRequiredProviderName}'");
 
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
@@ -2165,15 +2169,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 // provider will be found but it will throw when its methods are called
                 Exception ex = Assert.Throws<SqlException>(
                       () => ExecuteQueryThatRequiresCustomKeyStoreProvider(connection));
-                Assert.Contains(failedToDecryptErrorMessage, ex.Message);
-                Assert.Contains(providerNotImplementedMessage, ex.Message);
+                Assert.Contains(failedToDecryptMessage, ex.Message);
+                Assert.True(ex.InnerException is NotImplementedException);
 
                 // not required provider in instance cache
                 // it should not fall back to the global cache so the right provider will not be found
                 connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(notRequiredProvider);
                 ex = Assert.Throws<ArgumentException>(
                      () => ExecuteQueryThatRequiresCustomKeyStoreProvider(connection));
-                Assert.Contains(providerNotFoundMessage, ex.Message);
+                Assert.Equal(providerNotFoundMessage, ex.Message);
 
                 // required provider in instance cache
                 // if the instance cache is not empty, it is always checked for the provider.
@@ -2181,25 +2185,26 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(requiredProvider);
                 ex = Assert.Throws<SqlException>(
                     () => ExecuteQueryThatRequiresCustomKeyStoreProvider(connection));
-                Assert.Contains(failedToDecryptErrorMessage, ex.Message);
-                Assert.Contains(providerNotImplementedMessage, ex.Message);
+                Assert.Contains(failedToDecryptMessage, ex.Message);
+                Assert.True(ex.InnerException is NotImplementedException);
 
                 // not required provider will replace the previous entry so required provider will not be found 
                 connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(notRequiredProvider);
                 ex = Assert.Throws<ArgumentException>(
                     () => ExecuteQueryThatRequiresCustomKeyStoreProvider(connection));
-                Assert.Contains(providerNotFoundMessage, ex.Message);
+                Assert.Equal(providerNotFoundMessage, ex.Message);
             }
-        }
 
-        private void ExecuteQueryThatRequiresCustomKeyStoreProvider(SqlConnection connection)
-        {
-            using (SqlCommand command = new SqlCommand(
-                null, connection, null, SqlCommandColumnEncryptionSetting.Enabled))
+            void ExecuteQueryThatRequiresCustomKeyStoreProvider(SqlConnection connection)
             {
-                command.CommandText = $"SELECT * FROM [{_customKeyStoreProviderTableName}] WHERE CustomerID = @id";
-                command.Parameters.AddWithValue(@"id", 9);
-                command.ExecuteReader();
+                using (SqlCommand command = new SqlCommand(
+                    null, connection, null, SqlCommandColumnEncryptionSetting.Enabled))
+                {
+                    command.CommandText =
+                        $"SELECT * FROM [{_fixture.CustomKeyStoreProviderTestTable.Name}] WHERE CustomerID = @id";
+                    command.Parameters.AddWithValue(@"id", 9);
+                    command.ExecuteReader();
+                }
             }
         }
 
