@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
-## [Preview Release 3.0.0-preview1.xxxxx.x] - 2021-03-15
+## [Preview Release 3.0.0-preview1.21075.2] - 2021-03-15
 
 ### Breaking Changes over stable release v2.1
 - The minimum supported .NET Framework version has been increased to v4.6.1. .NET Framework v4.6.0 is no longer supported. [#899](https://github.com/dotnet/SqlClient/pull/899)
