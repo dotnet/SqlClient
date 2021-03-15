@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## [Preview Release 3.0.0-preview1.xxxxx.x] - 2021-03-15
 
 ### Breaking Changes over stable release v2.1
-- The minimum supported .NET Framework version has been upgraded to v4.6.1. .NET Framework v4.6 is no longer supported. [#899](https://github.com/dotnet/SqlClient/pull/899)
+- The minimum supported .NET Framework version has been increased to v4.6.1. .NET Framework v4.6.0 is no longer supported. [#899](https://github.com/dotnet/SqlClient/pull/899)
 
 ### Added
 - Added support for Configurable Retry Logic [#693](https://github.com/dotnet/SqlClient/pull/693) [#966](https://github.com/dotnet/SqlClient/pull/966)
