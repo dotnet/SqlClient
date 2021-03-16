@@ -3,7 +3,6 @@
 
 using System;
 using System.Linq;
-
 using Microsoft.Cci.Differs;
 using Microsoft.Cci.Mappings;
 
