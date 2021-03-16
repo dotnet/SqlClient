@@ -4,6 +4,40 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Preview Release 3.0.0-preview1.21075.2] - 2021-03-15
+
+### Breaking Changes over stable release v2.1
+- The minimum supported .NET Framework version has been increased to v4.6.1. .NET Framework v4.6.0 is no longer supported. [#899](https://github.com/dotnet/SqlClient/pull/899)
+
+### Added
+- Added support for Configurable Retry Logic [#693](https://github.com/dotnet/SqlClient/pull/693) [#966](https://github.com/dotnet/SqlClient/pull/966)
+- Added support for Event counters in .NET Core 3.1+ and .NET Standard 2.1+ [#719](https://github.com/dotnet/SqlClient/pull/719)
+- Added support for Assembly Context Unloading in .NET Core [#913](https://github.com/dotnet/SqlClient/pull/913)
+- Added missing `System.Runtime.Caching` dependency for .NET Standard assemblies [#877](https://github.com/dotnet/SqlClient/pull/877)
+
+### Fixed
+- Fixed wrong results issues by changing the timeout timer to ensure a correct execution state [#906](https://github.com/dotnet/SqlClient/pull/906)
+- Fixed Kerberos authentication issues when configured Server Principal Name (SPN) didn't contain default port [#930](https://github.com/dotnet/SqlClient/pull/930)
+- Fixed MARS header errors when `MakeReadAsyncBlocking` App Context switch is set to `false` [#910](https://github.com/dotnet/SqlClient/pull/910) [#922](https://github.com/dotnet/SqlClient/pull/922)
+- Fixed unwanted exceptions being thrown from `SqlDataReader.Dispose` [#920](https://github.com/dotnet/SqlClient/pull/920)
+- Fixed issues connecting to SQL Server instance with instance name specified from Unix environment [#870](https://github.com/dotnet/SqlClient/pull/870)
+- Fixed TCP Keep Alive issues in .NET Core [#854](https://github.com/dotnet/SqlClient/pull/854)
+- Fixed Kerberos Authentication issues caused due to regression [#845](https://github.com/dotnet/SqlClient/pull/845)
+- Fixed issues with System-Assigned Managed Identity in Azure Functions [#829](https://github.com/dotnet/SqlClient/pull/829)
+- Fixed missing error messages in Managed SNI [#882](https://github.com/dotnet/SqlClient/pull/882)
+- Fixed event source trace string issue [#940](https://github.com/dotnet/SqlClient/pull/940)
+
+### Changes
+- Changed App Context switch `MakeReadAsyncBlocking` default to `false` [#937](https://github.com/dotnet/SqlClient/pull/937)
+- Replaced usage of `BinaryFormatter` with `DataContractSerializer` [#869](https://github.com/dotnet/SqlClient/pull/869)
+- Prohibited `DtdProcessing` on `XmlTextReader` instance in .NET Core [#884](https://github.com/dotnet/SqlClient/pull/884)
+- Improved performance by reducing memory allocations in `SerializeEncodingChar`/`WriteEncodingChar` and some options boxing [#785](https://github.com/dotnet/SqlClient/pull/785)
+- Improved performance by preventing orphaned active packets being GC'ed without clear [#888](https://github.com/dotnet/SqlClient/pull/888)
+- Various performance improvements [#889](https://github.com/dotnet/SqlClient/pull/889) [#900](https://github.com/dotnet/SqlClient/pull/900)
+- Partial event source tracing improvements in .NET Core [#867](https://github.com/dotnet/SqlClient/pull/867) [#897](https://github.com/dotnet/SqlClient/pull/897)
+- Changes to share common files between NetFx and NetCore source code [#827](https://github.com/dotnet/SqlClient/pull/827) [#835](https://github.com/dotnet/SqlClient/pull/835) [#838](https://github.com/dotnet/SqlClient/pull/838) [#881](https://github.com/dotnet/SqlClient/pull/881)
+
+
 ## [Stable Release 1.1.4] - 2021-03-10
 
 ### Fixed
