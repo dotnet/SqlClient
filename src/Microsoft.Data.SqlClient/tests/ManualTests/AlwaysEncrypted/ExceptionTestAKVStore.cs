@@ -61,7 +61,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public void NullColumnEncryptionKey()
         {
             Exception ex1 = Assert.Throws<ArgumentNullException>(() => fixture.AkvStoreProvider.EncryptColumnEncryptionKey(DataTestUtility.AKVUrl, MasterKeyEncAlgo, null));
-            Assert.Matches($@"Value cannot be null..\s+\(?Parameter (name: )?'?columnEncryptionKey('\))?", ex1.Message);
+            Assert.Matches($@"Value cannot be null.\s+\(?Parameter (name: )?'?columnEncryptionKey('\))?", ex1.Message);
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
@@ -84,6 +84,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             byte[] encrypteCekLocal = ColumnEncryptionKey.GenerateInvalidEncryptedCek(encryptedCek, ColumnEncryptionKey.ECEKCorruption.ALGORITHM_VERSION);
             Exception ex1 = Assert.Throws<ArgumentException>(() => fixture.AkvStoreProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, MasterKeyEncAlgo, encrypteCekLocal));
             Assert.Matches($@"Specified encrypted column encryption key contains an invalid encryption algorithm version '10'. Expected version is '01'.\s+\(?Parameter (name: )?'?encryptedColumnEncryptionKey('\))?", ex1.Message);
+
+            Exception ex2 = Assert.Throws<ArgumentException>(() => fixture.AkvStoreProvider.EncryptColumnEncryptionKey(DataTestUtility.AKVUrl, "RSA_CORRUPT", encryptedCek));
+            Assert.Contains("Invalid key encryption algorithm specified: 'RSA_CORRUPT'. Expected value: 'RSA_OAEP' or 'RSA-OAEP'.", ex2.Message);
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
@@ -150,6 +153,29 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.Matches($@"Internal error. Azure Key Vault key path cannot be null.\s+\(?Parameter (name: )?'?masterKeyPath('\))?", ex2.Message);
         }
 
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData(" ")]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        public void SignInvalidAKVPath(string masterKeyPath)
+        {
+            Exception ex = Assert.Throws<ArgumentException>(() =>
+            {
+                SqlColumnEncryptionAzureKeyVaultProvider azureKeyProvider = new SqlColumnEncryptionAzureKeyVaultProvider(
+                    new SqlClientCustomTokenCredential());
+                azureKeyProvider.SignColumnMasterKeyMetadata(masterKeyPath, false);
+            });
+
+            if (masterKeyPath == null)
+            {
+                Assert.Matches("Internal error. Azure Key Vault key path cannot be null.", ex.Message);
+            }
+            else
+            {
+                Assert.Matches("Invalid Azure Key Vault key path specified", ex.Message);
+            }
+        }
+
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void InvalidCertificatePath()
         {
@@ -166,12 +192,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 () => fixture.AkvStoreProvider.EncryptColumnEncryptionKey(dummyPathWithInvalidKey, MasterKeyEncAlgo, cek));
             Assert.Matches(invalidTrustedEndpointErrorMessage, ex.Message);
 
-           ex = Assert.Throws<ArgumentException>(
-                () => fixture.AkvStoreProvider.DecryptColumnEncryptionKey(dummyPathWithOnlyHost, MasterKeyEncAlgo, encryptedCek));
-            Assert.Matches(invalidUrlErrorMessage, ex.Message);       
-            
-           ex = Assert.Throws<ArgumentException>(
-                () => fixture.AkvStoreProvider.DecryptColumnEncryptionKey(dummyPathWithInvalidKey, MasterKeyEncAlgo, encryptedCek));
+            ex = Assert.Throws<ArgumentException>(
+                 () => fixture.AkvStoreProvider.DecryptColumnEncryptionKey(dummyPathWithOnlyHost, MasterKeyEncAlgo, encryptedCek));
+            Assert.Matches(invalidUrlErrorMessage, ex.Message);
+
+            ex = Assert.Throws<ArgumentException>(
+                 () => fixture.AkvStoreProvider.DecryptColumnEncryptionKey(dummyPathWithInvalidKey, MasterKeyEncAlgo, encryptedCek));
             Assert.Matches(invalidTrustedEndpointErrorMessage, ex.Message);
         }
 
@@ -185,11 +211,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.True(cmkSignature != null);
 
             // Expect failed verification for a toggle of enclaveEnabled bit
-            if (fixture.AkvStoreProvider.VerifyColumnMasterKeyMetadata(DataTestUtility.AKVUrl, allowEnclaveComputations: !fEnclaveEnabled, signature: cmkSignature))
-            {
-                Exception ex1 = Assert.Throws<ArgumentException>(() => { });
-                Assert.Contains(@"Unable to verify Column Master Key signature using key store provider", ex1.Message);
-            }
+            Assert.False(fixture.AkvStoreProvider.VerifyColumnMasterKeyMetadata(DataTestUtility.AKVUrl, allowEnclaveComputations: !fEnclaveEnabled, signature: cmkSignature));
 
             // Prepare another cipherText buffer
             byte[] tamperedCmkSignature = new byte[cmkSignature.Length];
@@ -208,11 +230,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 tamperedCmkSignature[startingByteIndex + randomIndexInCipherText[0]] = (byte)(cmkSignature[startingByteIndex + randomIndexInCipherText[0]] + 1);
 
                 // Expect failed verification for invalid signature bytes
-                if (fixture.AkvStoreProvider.VerifyColumnMasterKeyMetadata(DataTestUtility.AKVUrl, allowEnclaveComputations: fEnclaveEnabled, signature: tamperedCmkSignature))
-                {
-                    Exception ex1 = Assert.Throws<ArgumentException>(() => { });
-                    Assert.Contains(@"Unable to verify Column Master Key signature using key store provider", ex1.Message);
-                }
+                Assert.False(fixture.AkvStoreProvider.VerifyColumnMasterKeyMetadata(DataTestUtility.AKVUrl, allowEnclaveComputations: fEnclaveEnabled, signature: tamperedCmkSignature));
 
                 // Fix up the corrupted byte
                 tamperedCmkSignature[startingByteIndex + randomIndexInCipherText[0]] = cmkSignature[startingByteIndex + randomIndexInCipherText[0]];
@@ -229,6 +247,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             {
                 SqlColumnEncryptionAzureKeyVaultProvider azureKeyProvider = new SqlColumnEncryptionAzureKeyVaultProvider(
                     new SqlClientCustomTokenCredential(), trustedEndpoints);
+            });
+            Assert.Matches("One or more of the elements in trustedEndpoints are null or empty or consist of only whitespace.", ex.Message);
+        }
+
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData(" ")]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        public void InvalidTrustedEndpoint(string trustedEndpoint)
+        {
+            Exception ex = Assert.Throws<ArgumentException>(() =>
+            {
+                SqlColumnEncryptionAzureKeyVaultProvider azureKeyProvider = new SqlColumnEncryptionAzureKeyVaultProvider(
+                    new SqlClientCustomTokenCredential(), trustedEndpoint);
             });
             Assert.Matches("One or more of the elements in trustedEndpoints are null or empty or consist of only whitespace.", ex.Message);
         }

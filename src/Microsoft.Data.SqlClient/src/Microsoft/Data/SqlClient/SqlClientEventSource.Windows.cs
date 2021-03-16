@@ -8,7 +8,7 @@ using System.Diagnostics.Tracing;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal partial class SqlClientEventSource : EventSource
+    internal partial class SqlClientEventSource : SqlClientEventSourceBase
     {
         private bool _traceLoggingProviderEnabled = false;
 
@@ -29,6 +29,7 @@ namespace Microsoft.Data.SqlClient
 
         protected override void OnEventCommand(EventCommandEventArgs e)
         {
+            base.OnEventCommand(e);
             // Internally, EventListener.EnableEvents sends an event command, with a reserved value of 0, -2, or -3.
             // When a command is sent via EnableEvents or SendCommand, check if it is a user-defined value
             // to enable or disable event tracing in sni.dll.

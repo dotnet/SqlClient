@@ -4603,6 +4603,18 @@
     <value>5 次重试后失败。</value>
   </data>
   <data name="SqlDependency_UnexpectedValueOnDeserialize" xml:space="preserve">
-    <value>Unexpected type detected on deserialize.</value>
+    <value>反序列化时检测到意外的类型。</value>
+  </data>
+  <data name="SqlRetryLogic_InvalidRange" xml:space="preserve">
+    <value>值“{0}”超出了范围。必须介于 {1} 和 {2} 之间。</value>
+  </data>
+  <data name="SqlRetryLogic_RetryCanceled" xml:space="preserve">
+    <value>重试操作已在第 {0} 次尝试时被取消。</value>
+  </data>
+  <data name="SqlRetryLogic_RetryExceeded" xml:space="preserve">
+    <value>重试次数已超过最大尝试次数(即 {0})。</value>
+  </data>
+  <data name="SqlRetryLogic_InvalidMinMaxPair" xml:space="preserve">
+    <value>“{0}”不小于“{1}”；“{2}”不能大于“{3}”。</value>
   </data>
 </root>

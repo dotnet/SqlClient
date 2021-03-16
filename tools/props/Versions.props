@@ -5,7 +5,7 @@
     <!-- This Assembly version corresponds to version of Microsoft.Data.SqlClient v2.0.0 Assembly. -->
     <!-- Should only be changed in future when a non-backwards compatible driver is released. -->
     <!-- Future Assembly Version values shall be Major.Minor.0.0; e.g. 3.0.0.0 -->
-    <AssemblyVersion>2.0.20168.4</AssemblyVersion>
+    <AssemblyVersion>3.0.0.0</AssemblyVersion>
     <NugetPackageVersion Condition="'$(NugetPackageVersion)' == ''">3.0.0-dev</NugetPackageVersion>
     <Version>$(NugetPackageVersion)</Version>
   </PropertyGroup>
@@ -65,6 +65,7 @@
     <MicrosoftDotNetRemoteExecutorVersion>5.0.0-beta.20206.4</MicrosoftDotNetRemoteExecutorVersion>
     <MicrosoftNETCoreRuntimeCoreCLRVersion>2.0.8</MicrosoftNETCoreRuntimeCoreCLRVersion>
     <MicrosoftSqlServerSqlManagementObjectsVersion>161.41011.9</MicrosoftSqlServerSqlManagementObjectsVersion>
+    <ConfigurationManagerVersion>5.0.0</ConfigurationManagerVersion>
   </PropertyGroup>
   <PropertyGroup>
     <TestAKVProviderVersion>$(NugetPackageVersion)</TestAKVProviderVersion>

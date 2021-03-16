@@ -14,17 +14,17 @@ namespace Microsoft.Data.SqlClient.Samples
 
         // ********* Provide details here ***********
         static readonly string s_akvUrl = "https://{KeyVaultName}.vault.azure.net/keys/{Key}/{KeyIdentifier}";
-        static readonly string s_clientId = "{Application_Client_ID}";
-        static readonly string s_clientSecret = "{Application_Client_Secret}";
-        static readonly string s_tenantId = "{Azure_Key_Vault_Active_Directory_Tenant_Id}";
         static readonly string s_connectionString = "Server={Server}; Database={database}; Integrated Security=true; Column Encryption Setting=Enabled;";
         // ******************************************
 
         public static void Main(string[] args)
         {
+            // Initialize Token Credential instance using InteractiveBrowserCredential. For other authentication options,
+            // see classes derived from TokenCredential: https://docs.microsoft.com/dotnet/api/azure.core.tokencredential
+            InteractiveBrowserCredential interactiveBrowserCredential = new InteractiveBrowserCredential();
+            
             // Initialize AKV provider
-            ClientSecretCredential clientSecretCredential = new ClientSecretCredential(s_tenantId, s_clientId, s_clientSecret);
-            SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new SqlColumnEncryptionAzureKeyVaultProvider(clientSecretCredential);
+            SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new SqlColumnEncryptionAzureKeyVaultProvider(interactiveBrowserCredential);
 
             // Register AKV provider
             SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders: new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>(capacity: 1, comparer: StringComparer.OrdinalIgnoreCase)

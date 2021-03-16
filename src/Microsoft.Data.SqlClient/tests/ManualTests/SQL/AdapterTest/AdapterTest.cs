@@ -91,7 +91,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void PrepUnprepTest()
         {
             // share the connection
-            using (SqlCommand cmd = new SqlCommand("select * from shippers", new SqlConnection(DataTestUtility.TCPConnectionString)))
+            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlCommand cmd = new SqlCommand("select * from shippers", connection))
             using (SqlDataAdapter sqlAdapter = new SqlDataAdapter())
             {
                 cmd.Connection.Open();
@@ -183,7 +184,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 ExecuteNonQueryCommand("CREATE TABLE " + tableName + " (c0_bigint bigint, c1_variant sql_variant)");
 
                 // good test for null values and unicode strings
-                using (SqlCommand cmd = new SqlCommand(null, new SqlConnection(DataTestUtility.TCPConnectionString)))
+                using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+                using (SqlCommand cmd = new SqlCommand(null, conn))
                 using (SqlDataAdapter sqlAdapter = new SqlDataAdapter())
                 {
                     cmd.Connection.Open();
