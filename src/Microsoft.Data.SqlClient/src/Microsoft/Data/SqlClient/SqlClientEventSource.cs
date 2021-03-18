@@ -9,8 +9,67 @@ using System.Threading;
 
 namespace Microsoft.Data.SqlClient
 {
+    internal abstract class SqlClientEventSourceBase : EventSource
+    {
+        protected override void OnEventCommand(EventCommandEventArgs command)
+        {
+            base.OnEventCommand(command);
+            EventCommandMethodCall(command);
+        }
+
+        protected virtual void EventCommandMethodCall(EventCommandEventArgs command) { }
+
+        #region not implemented for .Net core 2.1, .Net standard 2.0 and lower
+        internal virtual void HardConnectRequest() { /*no-op*/ }
+
+        internal virtual void HardDisconnectRequest() { /*no-op*/ }
+
+        internal virtual void SoftConnectRequest() { /*no-op*/ }
+
+        internal virtual void SoftDisconnectRequest() { /*no-op*/ }
+
+        internal virtual void EnterNonPooledConnection() { /*no-op*/ }
+
+        internal virtual void ExitNonPooledConnection() { /*no-op*/ }
+
+        internal virtual void EnterPooledConnection() { /*no-op*/ }
+
+        internal virtual void ExitPooledConnection() { /*no-op*/ }
+
+        internal virtual void EnterActiveConnectionPoolGroup() { /*no-op*/ }
+
+        internal virtual void ExitActiveConnectionPoolGroup() { /*no-op*/ }
+
+        internal virtual void EnterInactiveConnectionPoolGroup() { /*no-op*/ }
+
+        internal virtual void ExitInactiveConnectionPoolGroup() { /*no-op*/ }
+
+        internal virtual void EnterActiveConnectionPool() { /*no-op*/ }
+
+        internal virtual void ExitActiveConnectionPool() { /*no-op*/ }
+
+        internal virtual void EnterInactiveConnectionPool() { /*no-op*/ }
+
+        internal virtual void ExitInactiveConnectionPool() { /*no-op*/ }
+
+        internal virtual void EnterActiveConnection() { /*no-op*/ }
+
+        internal virtual void ExitActiveConnection() { /*no-op*/ }
+
+        internal virtual void EnterFreeConnection() { /*no-op*/ }
+
+        internal virtual void ExitFreeConnection() { /*no-op*/ }
+
+        internal virtual void EnterStasisConnection() { /*no-op*/ }
+
+        internal virtual void ExitStasisConnection() { /*no-op*/ }
+
+        internal virtual void ReclaimedConnectionRequest() { /*no-op*/ }
+        #endregion
+    }
+
     [EventSource(Name = "Microsoft.Data.SqlClient.EventSource")]
-    internal partial class SqlClientEventSource : EventSource
+    internal partial class SqlClientEventSource : SqlClientEventSourceBase
     {
         // Defines the singleton instance for the Resources ETW provider
         internal static readonly SqlClientEventSource Log = new SqlClientEventSource();

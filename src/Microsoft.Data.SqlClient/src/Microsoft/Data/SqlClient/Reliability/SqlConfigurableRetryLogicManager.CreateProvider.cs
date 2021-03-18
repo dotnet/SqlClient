@@ -59,8 +59,8 @@ namespace Microsoft.Data.SqlClient
             System.Runtime.Loader.AssemblyLoadContext.Default.Resolving -= Default_Resolving;
             System.Runtime.Loader.AssemblyLoadContext.Default.Resolving += Default_Resolving;
 #endif
-            AssignProviders(CreateRetryLogicProvider(cnnSectionName, connectionRetryConfigs),
-                            CreateRetryLogicProvider(cmdSectionName, commandRetryConfigs));
+            AssignProviders(connectionRetryConfigs == null ? null : CreateRetryLogicProvider(cnnSectionName, connectionRetryConfigs),
+                            commandRetryConfigs == null ? null : CreateRetryLogicProvider(cmdSectionName, commandRetryConfigs));
         }
 
         private static SqlRetryLogicBaseProvider CreateRetryLogicProvider(string sectionName, ISqlConfigurableRetryConnectionSection configSection)
@@ -70,11 +70,6 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                if (configSection == null)
-                {
-                    throw SqlReliabilityUtil.ArgumentNull(nameof(configSection));
-                }
-
                 // Create a SqlRetryLogicOption object from the discovered retry logic values
                 var retryOption = new SqlRetryLogicOption()
                 {

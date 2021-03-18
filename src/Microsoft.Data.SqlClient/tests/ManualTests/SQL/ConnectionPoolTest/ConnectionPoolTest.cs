@@ -46,31 +46,41 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// <param name="connectionString"></param>
         private static void BasicConnectionPoolingTest(string connectionString)
         {
-            SqlConnection connection = new SqlConnection(connectionString);
-            connection.Open();
-            InternalConnectionWrapper internalConnection = new InternalConnectionWrapper(connection);
-            ConnectionPoolWrapper connectionPool = new ConnectionPoolWrapper(connection);
-            connection.Close();
+            InternalConnectionWrapper internalConnection;
+            ConnectionPoolWrapper connectionPool;
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                internalConnection = new InternalConnectionWrapper(connection);
+                connectionPool = new ConnectionPoolWrapper(connection);
+                connection.Close();
+            }
 
-            SqlConnection connection2 = new SqlConnection(connectionString);
-            connection2.Open();
-            Assert.True(internalConnection.IsInternalConnectionOf(connection2), "New connection does not use same internal connection");
-            Assert.True(connectionPool.ContainsConnection(connection2), "New connection is in a different pool");
-            connection2.Close();
+            using (SqlConnection connection2 = new SqlConnection(connectionString))
+            {
+                connection2.Open();
+                Assert.True(internalConnection.IsInternalConnectionOf(connection2), "New connection does not use same internal connection");
+                Assert.True(connectionPool.ContainsConnection(connection2), "New connection is in a different pool");
+                connection2.Close();
+            }
 
-            SqlConnection connection3 = new SqlConnection(connectionString + ";App=SqlConnectionPoolUnitTest;");
-            connection3.Open();
-            Assert.False(internalConnection.IsInternalConnectionOf(connection3), "Connection with different connection string uses same internal connection");
-            Assert.False(connectionPool.ContainsConnection(connection3), "Connection with different connection string uses same connection pool");
-            connection3.Close();
+            using (SqlConnection connection3 = new SqlConnection(connectionString + ";App=SqlConnectionPoolUnitTest;"))
+            {
+                connection3.Open();
+                Assert.False(internalConnection.IsInternalConnectionOf(connection3), "Connection with different connection string uses same internal connection");
+                Assert.False(connectionPool.ContainsConnection(connection3), "Connection with different connection string uses same connection pool");
+                connection3.Close();
+            }
 
             connectionPool.Cleanup();
 
-            SqlConnection connection4 = new SqlConnection(connectionString);
-            connection4.Open();
-            Assert.True(internalConnection.IsInternalConnectionOf(connection4), "New connection does not use same internal connection");
-            Assert.True(connectionPool.ContainsConnection(connection4), "New connection is in a different pool");
-            connection4.Close();
+            using (SqlConnection connection4 = new SqlConnection(connectionString))
+            {
+                connection4.Open();
+                Assert.True(internalConnection.IsInternalConnectionOf(connection4), "New connection does not use same internal connection");
+                Assert.True(connectionPool.ContainsConnection(connection4), "New connection is in a different pool");
+                connection4.Close();
+            }
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAADPasswordConnStrSetup), nameof(DataTestUtility.IsAADAuthorityURLSetup))]
@@ -154,18 +164,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SqlConnection.ClearAllPools();
             Assert.True(0 == ConnectionPoolWrapper.AllConnectionPools().Length, "Pools exist after clearing all pools");
 
-            SqlConnection connection = new SqlConnection(connectionString);
-            connection.Open();
-            ConnectionPoolWrapper pool = new ConnectionPoolWrapper(connection);
-            connection.Close();
-            ConnectionPoolWrapper[] allPools = ConnectionPoolWrapper.AllConnectionPools();
-            DataTestUtility.AssertEqualsWithDescription(1, allPools.Length, "Incorrect number of pools exist.");
-            Assert.True(allPools[0].Equals(pool), "Saved pool is not in the list of all pools");
-            DataTestUtility.AssertEqualsWithDescription(1, pool.ConnectionCount, "Saved pool has incorrect number of connections");
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                ConnectionPoolWrapper pool = new ConnectionPoolWrapper(connection);
+                connection.Close();
+                ConnectionPoolWrapper[] allPools = ConnectionPoolWrapper.AllConnectionPools();
+                DataTestUtility.AssertEqualsWithDescription(1, allPools.Length, "Incorrect number of pools exist.");
+                Assert.True(allPools[0].Equals(pool), "Saved pool is not in the list of all pools");
+                DataTestUtility.AssertEqualsWithDescription(1, pool.ConnectionCount, "Saved pool has incorrect number of connections");
 
-            SqlConnection.ClearAllPools();
-            Assert.True(0 == ConnectionPoolWrapper.AllConnectionPools().Length, "Pools exist after clearing all pools");
-            DataTestUtility.AssertEqualsWithDescription(0, pool.ConnectionCount, "Saved pool has incorrect number of connections.");
+                SqlConnection.ClearAllPools();
+                Assert.True(0 == ConnectionPoolWrapper.AllConnectionPools().Length, "Pools exist after clearing all pools");
+                DataTestUtility.AssertEqualsWithDescription(0, pool.ConnectionCount, "Saved pool has incorrect number of connections.");
+            }
         }
 
         /// <summary>

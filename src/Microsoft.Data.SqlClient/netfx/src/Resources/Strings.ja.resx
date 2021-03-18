@@ -4603,18 +4603,18 @@
     <value>5 回の再試行後に失敗しました。</value>
   </data>
   <data name="SqlDependency_UnexpectedValueOnDeserialize" xml:space="preserve">
-    <value>Unexpected type detected on deserialize.</value>
+    <value>逆シリアル化で予期しない型が検出されました。</value>
   </data>
   <data name="SqlRetryLogic_InvalidRange" xml:space="preserve">
-    <value>Value '{0}' is out of range. Must be between {1} and {2}.</value>
+    <value>値 '{0}' は範囲外です。{1} と {2} の間でなければなりません。</value>
   </data>
   <data name="SqlRetryLogic_RetryCanceled" xml:space="preserve">
-    <value>The retry has been canceled at attempt {0}.</value>
+    <value>再試行は {0} 回目にキャンセルされました。</value>
   </data>
   <data name="SqlRetryLogic_RetryExceeded" xml:space="preserve">
-    <value>The number of retries has exceeded the maximum of {0} attempt(s).</value>
+    <value>再試行の数が上限の {0} 回を超えました。</value>
   </data>
   <data name="SqlRetryLogic_InvalidMinMaxPair" xml:space="preserve">
-    <value>'{0}' is not less than '{1}'; '{2}' cannot be greater than '{3}'.</value>
+    <value>'{0}' が '{1}' 未満ではありません。'{2}' は '{3}' よりも大きくできません。</value>
   </data>
 </root>

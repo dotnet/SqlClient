@@ -475,6 +475,21 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        private bool? _isRetryEnabled;
+        private bool IsRetryEnabled
+        {
+            get
+            {
+                if (_isRetryEnabled == null)
+                {
+                    bool result;
+                    result = AppContext.TryGetSwitch(SqlRetryLogicProvider.EnableRetryLogicSwitch, out result) ? result : false;
+                    _isRetryEnabled = result;
+                }
+                return (bool)_isRetryEnabled;
+            }
+        }
+
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RetryLogicProvider/*' />
         public SqlRetryLogicBaseProvider RetryLogicProvider
         {
@@ -998,6 +1013,9 @@ namespace Microsoft.Data.SqlClient
             base.Dispose(disposing);
         }
 
+        private SqlDataReader RunExecuteReaderWithRetry(CommandBehavior cmdBehavior, RunBehavior runBehavior, bool returnStream, [CallerMemberName] string method = "")
+            => RetryLogicProvider.Execute(this, () => RunExecuteReader(cmdBehavior, runBehavior, returnStream, method));
+
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteScalar/*'/>
         public override object ExecuteScalar()
         {
@@ -1021,7 +1039,9 @@ namespace Microsoft.Data.SqlClient
                 statistics = SqlStatistics.StartTimer(Statistics);
                 WriteBeginExecuteEvent();
                 SqlDataReader ds;
-                ds = RetryLogicProvider.Execute(this, () => RunExecuteReader(0, RunBehavior.ReturnImmediately, returnStream: true));
+                ds = IsRetryEnabled ? 
+                    RunExecuteReaderWithRetry(0, RunBehavior.ReturnImmediately, returnStream: true) : 
+                    RunExecuteReader(0, RunBehavior.ReturnImmediately, returnStream: true, method: nameof(ExecuteScalar));
                 success = true;
 
                 return CompleteExecuteScalar(ds, false);
@@ -1083,6 +1103,14 @@ namespace Microsoft.Data.SqlClient
             return retResult;
         }
 
+        private Task InternalExecuteNonQueryWithRetry(bool sendToPipe, int timeout, out bool usedCache, bool asyncWrite, bool inRetry, [CallerMemberName] string methodName = "")
+        {
+            bool innerUsedCache = false;
+            Task result = RetryLogicProvider.Execute(this, () => InternalExecuteNonQuery(completion: null, sendToPipe, timeout, out innerUsedCache, asyncWrite, inRetry, methodName));
+            usedCache = innerUsedCache;
+            return result;
+        }
+
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteNonQuery[@name="default"]/*'/>
         public override int ExecuteNonQuery()
         {
@@ -1101,7 +1129,14 @@ namespace Microsoft.Data.SqlClient
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
                 WriteBeginExecuteEvent();
-                RetryLogicProvider.Execute(this, () => InternalExecuteNonQuery(completion: null, sendToPipe: false, timeout: CommandTimeout, out _, methodName: nameof(ExecuteNonQuery)));
+                if (IsRetryEnabled)
+                {
+                    InternalExecuteNonQueryWithRetry(sendToPipe: false, timeout: CommandTimeout, out _, asyncWrite: false, inRetry: false);
+                }
+                else
+                {
+                    InternalExecuteNonQuery(completion: null, sendToPipe: false, timeout: CommandTimeout, out _);
+                }
                 return _rowsAffected;
             }
             catch (Exception ex)
@@ -1594,7 +1629,9 @@ namespace Microsoft.Data.SqlClient
                 WriteBeginExecuteEvent();
                 // use the reader to consume metadata
                 SqlDataReader ds;
-                ds = RetryLogicProvider.Execute(this, () => RunExecuteReader(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, returnStream: true));
+                ds = IsRetryEnabled ?
+                    RunExecuteReaderWithRetry(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, returnStream: true):
+                    RunExecuteReader(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, returnStream: true);
                 success = true;
                 return CompleteXmlReader(ds);
             }
@@ -1916,7 +1953,9 @@ namespace Microsoft.Data.SqlClient
             {
                 WriteBeginExecuteEvent();
                 statistics = SqlStatistics.StartTimer(Statistics);
-                return RetryLogicProvider.Execute(this, () => RunExecuteReader(behavior, RunBehavior.ReturnImmediately, returnStream: true));
+                return IsRetryEnabled ?
+                    RunExecuteReaderWithRetry(behavior, RunBehavior.ReturnImmediately, returnStream: true) : 
+                    RunExecuteReader(behavior, RunBehavior.ReturnImmediately, returnStream: true);
             }
             catch (Exception ex)
             {
@@ -2401,9 +2440,12 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteNonQueryAsync[@name="CancellationToken"]/*'/>
         public override Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
-        {
-            return RetryLogicProvider.ExecuteAsync(this, () => InternalExecuteNonQueryAsync(cancellationToken), cancellationToken);
-        }
+            => IsRetryEnabled ? 
+                InternalExecuteNonQueryWithRetryAsync(cancellationToken) : 
+                InternalExecuteNonQueryAsync(cancellationToken);
+
+        private Task<int> InternalExecuteNonQueryWithRetryAsync(CancellationToken cancellationToken)
+            => RetryLogicProvider.ExecuteAsync(this, () => InternalExecuteNonQueryAsync(cancellationToken), cancellationToken);
 
         private Task<int> InternalExecuteNonQueryAsync(CancellationToken cancellationToken)
         {
@@ -2493,9 +2535,12 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="commandBehaviorAndCancellationToken"]/*'/>
         new public Task<SqlDataReader> ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
-        {
-            return RetryLogicProvider.ExecuteAsync(this, () => InternalExecuteReaderAsync(behavior, cancellationToken), cancellationToken);
-        }
+            => IsRetryEnabled ?
+                InternalExecuteReaderWithRetryAsync(behavior, cancellationToken) : 
+                InternalExecuteReaderAsync(behavior, cancellationToken);
+
+        private Task<SqlDataReader> InternalExecuteReaderWithRetryAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+            => RetryLogicProvider.ExecuteAsync(this, () => InternalExecuteReaderAsync(behavior, cancellationToken), cancellationToken);
 
         private Task<SqlDataReader> InternalExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
         {
@@ -2568,9 +2613,12 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteScalarAsync[@name="CancellationToken"]/*'/>
         public override Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
-        {
-            return RetryLogicProvider.ExecuteAsync(this, () => InternalExecuteScalarAsync(cancellationToken), cancellationToken);
-        }
+            => IsRetryEnabled ? 
+                InternalExecuteScalarWithRetryAsync(cancellationToken) : 
+                InternalExecuteScalarAsync(cancellationToken);
+
+        private Task<object> InternalExecuteScalarWithRetryAsync(CancellationToken cancellationToken)
+            => RetryLogicProvider.ExecuteAsync(this, () => InternalExecuteScalarAsync(cancellationToken), cancellationToken);
 
         private Task<object> InternalExecuteScalarAsync(CancellationToken cancellationToken)
         {
@@ -2664,9 +2712,12 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReaderAsync[@name="CancellationToken"]/*'/>
         public Task<XmlReader> ExecuteXmlReaderAsync(CancellationToken cancellationToken)
-        {
-            return RetryLogicProvider.ExecuteAsync(this, () => InternalExecuteXmlReaderAsync(cancellationToken), cancellationToken);
-        }
+            => IsRetryEnabled ? 
+                InternalExecuteXmlReaderWithRetryAsync(cancellationToken) : 
+                InternalExecuteXmlReaderAsync(cancellationToken);
+
+        private Task<XmlReader> InternalExecuteXmlReaderWithRetryAsync(CancellationToken cancellationToken)
+            => RetryLogicProvider.ExecuteAsync(this, () => InternalExecuteXmlReaderAsync(cancellationToken), cancellationToken);
 
         private Task<XmlReader> InternalExecuteXmlReaderAsync(CancellationToken cancellationToken)
         {
