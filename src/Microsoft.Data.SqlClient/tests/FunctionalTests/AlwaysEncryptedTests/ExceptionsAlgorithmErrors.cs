@@ -209,8 +209,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         [PlatformSpecific(TestPlatforms.Windows)]
         public void TestExceptionsFromCustomKeyStore()
         {
-            string expectedMessage = string.Format(SystemDataResourceManager.Instance.TCE_KeyDecryptionFailed, 
-                "DummyProvider", BitConverter.ToString(CertFixture.encryptedCek, CertFixture.encryptedCek.Length - 10, 10));
+            string expectedMessage = "Failed to decrypt a column encryption key";
 
             // Clear out the existing providers (to ensure test reliability)
             ClearSqlConnectionGlobalProviders();
