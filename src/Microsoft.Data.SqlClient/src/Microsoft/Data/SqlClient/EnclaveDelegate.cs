@@ -53,7 +53,7 @@ namespace Microsoft.Data.SqlClient
 
             foreach (SqlTceCipherInfoEntry cipherInfo in keysTobeSentToEnclave.Values)
             {
-                SqlSecurityUtility.DecryptSymmetricKey(cipherInfo, serverName, out SqlClientSymmetricKey sqlClientSymmetricKey, out SqlEncryptionKeyInfo encryptionkeyInfoChosen);
+                SqlSecurityUtility.DecryptSymmetricKey(cipherInfo, out SqlClientSymmetricKey sqlClientSymmetricKey, out SqlEncryptionKeyInfo encryptionkeyInfoChosen, connection);
 
                 if (sqlClientSymmetricKey == null)
                 {

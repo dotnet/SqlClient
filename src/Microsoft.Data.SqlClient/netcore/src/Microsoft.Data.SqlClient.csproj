@@ -524,7 +524,6 @@
     <Compile Include="Interop\SNINativeMethodWrapper.Common.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlCredential.cs" />
     <Compile Include="Microsoft\Data\SqlClient\AlwaysEncryptedHelperClasses.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlSecurityUtility.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlQueryMetadataCache.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlEnclaveAttestationParameters.cs" />
