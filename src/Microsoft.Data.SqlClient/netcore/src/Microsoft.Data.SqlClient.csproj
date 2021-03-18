@@ -319,6 +319,12 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\AlwaysEncryptedAttestationException.cs">
       <Link>Microsoft\Data\SqlClient\AlwaysEncryptedAttestationException.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.cs">
+      <Link>Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\AlwaysEncryptedKeyConverter.cs">
+      <Link>Microsoft\Data\SqlClient\AlwaysEncryptedKeyConverter.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\EnclaveProviderBase.cs">
       <Link>Microsoft\Data\SqlClient\EnclaveProviderBase.cs</Link>
     </Compile>
@@ -327,11 +333,12 @@
     </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlEnclaveAttestationParameters.NetCoreApp.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\EnclaveDelegate.NetCoreApp.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\EnclaveDelegate.CrossPlatformCrypto.cs" />
     <Compile Include="Microsoft\Data\SqlClient\AzureAttestationBasedEnclaveProvider.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProvider.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProvider.cs">
+      <Link>Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProvider.cs</Link>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProviderBase.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.cs" />
 	</ItemGroup>
   <!-- netcoreapp 3.1 & netstandard 2.1 and above -->
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetFramework)' != 'netcoreapp2.1' AND '$(TargetFramework)' != 'netstandard2.0'">
@@ -419,6 +426,12 @@
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionInternal.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPool.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\EnclaveDelegate.cs">
+      <Link>Microsoft\Data\SqlClient\EnclaveDelegate.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\EnclavePackage.cs">
+      <Link>Microsoft\Data\SqlClient\EnclavePackage.cs</Link>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SqlNorm.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SqlSer.cs" />
@@ -451,6 +464,9 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlEnums.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlError.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlErrorCollection.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlEnclaveSession.cs">
+      <Link>Microsoft\Data\SqlClient\SqlEnclaveSession.cs</Link>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlException.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInfoMessageEvent.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnection.cs" />
@@ -506,12 +522,15 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlCredential.cs" />
     <Compile Include="Microsoft\Data\SqlClient\AlwaysEncryptedHelperClasses.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlSecurityUtility.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\EnclavePackage.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlEnclaveSession.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlQueryMetadataCache.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlEnclaveAttestationParameters.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\EnclaveDelegate.cs" />
+	  <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.cs">
+		  <Link>Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.cs</Link>
+	  </Compile>
+	  <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlUtil.cs">
+		  <Link>Microsoft\Data\SqlClient\SqlUtil.cs</Link>
+	  </Compile>
   </ItemGroup>
   <!-- Windows only -->
   <ItemGroup Condition="'$(TargetsWindows)' == 'true'">
