@@ -11,7 +11,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     public class SQLSetupStrategyAzureKeyVault : SQLSetupStrategy
     {
-        internal static bool isAKVProviderRegistered = false;
+        internal static bool IsAKVProviderRegistered = false;
 
         public Table AKVTestTable { get; private set; }
         public SqlColumnEncryptionAzureKeyVaultProvider AkvStoreProvider;
@@ -20,24 +20,26 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public SQLSetupStrategyAzureKeyVault() : base()
         {
             AkvStoreProvider = new SqlColumnEncryptionAzureKeyVaultProvider(new SqlClientCustomTokenCredential());
-
-            if (!isAKVProviderRegistered)
+            if (!IsAKVProviderRegistered)
             {
-                // this provider is required in ApiShould.TestCustomKeyStoreProviderRegistration()
-                DummyKeyStoreProvider dummyProvider = new DummyKeyStoreProvider();
-
-                Dictionary<string, SqlColumnEncryptionKeyStoreProvider> customAkvKeyStoreProviders = 
-                    new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>(capacity: 1, comparer: StringComparer.OrdinalIgnoreCase)
-                {
-                    {SqlColumnEncryptionAzureKeyVaultProvider.ProviderName, AkvStoreProvider},
-                    { DummyKeyStoreProvider.Name, dummyProvider}
-                };
-
-                SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders: customAkvKeyStoreProviders);
-                isAKVProviderRegistered = true;
+                RegisterGlobalProviders(AkvStoreProvider);
             }
-
             SetupDatabase();
+        }
+
+        public static void RegisterGlobalProviders(SqlColumnEncryptionAzureKeyVaultProvider akvProvider)
+        {
+            DummyKeyStoreProvider dummyProvider = new DummyKeyStoreProvider();
+
+            Dictionary<string, SqlColumnEncryptionKeyStoreProvider> customKeyStoreProviders =
+                new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>(capacity: 2, comparer: StringComparer.OrdinalIgnoreCase)
+            {
+                    {SqlColumnEncryptionAzureKeyVaultProvider.ProviderName, akvProvider},
+                    { DummyKeyStoreProvider.Name, dummyProvider}
+            };
+
+            SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders: customKeyStoreProviders);
+            IsAKVProviderRegistered = true;
         }
 
         internal override void SetupDatabase()

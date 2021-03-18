@@ -26,22 +26,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             if (DataTestUtility.IsEnclaveAzureDatabaseSetup())
             {
-                // Initialize AKV provider
                 sqlColumnEncryptionAzureKeyVaultProvider = new SqlColumnEncryptionAzureKeyVaultProvider(new SqlClientCustomTokenCredential());
-
-                if (!SQLSetupStrategyAzureKeyVault.isAKVProviderRegistered)
+                if (!SQLSetupStrategyAzureKeyVault.IsAKVProviderRegistered)
                 {
-                    // this provider is required in ApiShould.TestCustomKeyStoreProviderRegistration()
-                    DummyKeyStoreProvider dummyProvider = new DummyKeyStoreProvider();
-
-                    // Register AKV provider
-                    SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders: new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>(capacity: 2, comparer: StringComparer.OrdinalIgnoreCase)
-                    {
-                        { SqlColumnEncryptionAzureKeyVaultProvider.ProviderName, sqlColumnEncryptionAzureKeyVaultProvider},
-                        { DummyKeyStoreProvider.Name, dummyProvider}
-                    });
-
-                    SQLSetupStrategyAzureKeyVault.isAKVProviderRegistered = true;
+                    SQLSetupStrategyAzureKeyVault.RegisterGlobalProviders(sqlColumnEncryptionAzureKeyVaultProvider);
                 }
 
                 akvColumnMasterKey = new AkvColumnMasterKey(DatabaseHelper.GenerateUniqueName("AKVCMK"), akvUrl: DataTestUtility.AKVUrl, sqlColumnEncryptionAzureKeyVaultProvider, DataTestUtility.EnclaveEnabled);

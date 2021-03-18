@@ -80,8 +80,8 @@ namespace Microsoft.Data.SqlClient
                     {SqlColumnEncryptionCspProvider.ProviderName, new SqlColumnEncryptionCspProvider()}
                 };
 
-        // Lock to control setting of _GlobalCustomColumnEncryptionKeyStoreProviders
-        private static readonly object _GlobalCustomColumnEncryptionKeyProvidersLock = new object();
+        // Lock to control setting of s_globalCustomColumnEncryptionKeyStoreProviders
+        private static readonly object s_globalCustomColumnEncryptionKeyProvidersLock = new object();
         // status of invariant culture environment check
         private static CultureCheckState _cultureCheckState;
 
@@ -231,7 +231,7 @@ namespace Microsoft.Data.SqlClient
                 return connection._customColumnEncryptionKeyStoreProviders.TryGetValue(providerName, out columnKeyStoreProvider);
             }
 
-            lock (_GlobalCustomColumnEncryptionKeyProvidersLock)
+            lock (s_globalCustomColumnEncryptionKeyProvidersLock)
             {
                 // If custom provider is not set, then return false
                 if (s_globalCustomColumnEncryptionKeyStoreProviders == null)
@@ -290,7 +290,7 @@ namespace Microsoft.Data.SqlClient
         {
             ValidateCustomProviders(customProviders);
 
-            lock (_GlobalCustomColumnEncryptionKeyProvidersLock)
+            lock (s_globalCustomColumnEncryptionKeyProvidersLock)
             {
                 // Provider list can only be set once
                 if (s_globalCustomColumnEncryptionKeyStoreProviders != null)

@@ -2119,21 +2119,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestCustomKeyStoreProviderDuringAeQuery(string connectionString)
         {
-            if (!SQLSetupStrategyAzureKeyVault.isAKVProviderRegistered)
+            if (!SQLSetupStrategyAzureKeyVault.IsAKVProviderRegistered)
             {
                 SqlColumnEncryptionAzureKeyVaultProvider sqlColumnEncryptionAzureKeyVaultProvider =
                     new SqlColumnEncryptionAzureKeyVaultProvider(new SqlClientCustomTokenCredential());
-
-                DummyKeyStoreProvider dummyProvider = new DummyKeyStoreProvider();
-
-                SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders:
-                    new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>(capacity: 2, comparer: StringComparer.OrdinalIgnoreCase)
-                    {
-                        { SqlColumnEncryptionAzureKeyVaultProvider.ProviderName, sqlColumnEncryptionAzureKeyVaultProvider},
-                        { DummyKeyStoreProvider.Name, dummyProvider}
-                    });
-
-                SQLSetupStrategyAzureKeyVault.isAKVProviderRegistered = true;
+                SQLSetupStrategyAzureKeyVault.RegisterGlobalProviders(sqlColumnEncryptionAzureKeyVaultProvider);
             }
 
             Dictionary<string, SqlColumnEncryptionKeyStoreProvider> requiredProvider =
@@ -2156,8 +2146,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             string failedToDecryptMessage = string.Format(SystemDataResourceManager.Instance.TCE_KeyDecryptionFailed,
                 DummyKeyStoreProvider.Name, lastTenBytesCek);
             string providerNotFoundMessage = string.Format(SystemDataResourceManager.Instance.TCE_UnrecognizedKeyStoreProviderName,
-                DummyKeyStoreProvider.Name, 
-                "'MSSQL_CERTIFICATE_STORE', 'MSSQL_CNG_STORE', 'MSSQL_CSP_PROVIDER'", 
+                DummyKeyStoreProvider.Name,
+                "'MSSQL_CERTIFICATE_STORE', 'MSSQL_CNG_STORE', 'MSSQL_CSP_PROVIDER'",
                 $"'{notRequiredProviderName}'");
 
             using (SqlConnection connection = new SqlConnection(connectionString))
