@@ -311,7 +311,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Verifies Column Master Key Signature.
         /// </summary>
-        internal static void VerifyColumnMasterKeySignature(string keyStoreName, string keyPath, string serverName, bool isEnclaveEnabled, byte[] CMKSignature, SqlConnection connection)
+        internal static void VerifyColumnMasterKeySignature(string keyStoreName, string keyPath, bool isEnclaveEnabled, byte[] CMKSignature, SqlConnection connection)
         {
             bool isValidSignature = false;
 
@@ -329,6 +329,7 @@ namespace Microsoft.Data.SqlClient
                 //
                 // Get the List corresponding to the connected server
                 IList<string> trustedKeyPaths;
+                string serverName = connection.DataSource;
                 if (SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.TryGetValue(serverName, out trustedKeyPaths))
                 {
                     // If the list is null or is empty or if the keyPath doesn't exist in the trusted key paths, then throw an exception.

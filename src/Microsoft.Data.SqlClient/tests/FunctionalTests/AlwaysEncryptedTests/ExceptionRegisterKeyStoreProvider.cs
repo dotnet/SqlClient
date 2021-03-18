@@ -97,9 +97,9 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         [Fact]
         public void TestCanSetInstanceProvidersMoreThanOnce()
         {
-            string dummyProviderName1 = "DummyProvider1";
-            string dummyProviderName2 = "DummyProvider2";
-            string dummyProviderName3 = "DummyProvider3";
+            const string dummyProviderName1 = "DummyProvider1";
+            const string dummyProviderName2 = "DummyProvider2";
+            const string dummyProviderName3 = "DummyProvider3";
             IDictionary<string, SqlColumnEncryptionKeyStoreProvider> singleKeyStoreProvider =
                 new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>()
                 {
@@ -116,7 +116,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             using (SqlConnection connection = new SqlConnection())
             {
                 connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(singleKeyStoreProvider);
-                IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> instanceCache = 
+                IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> instanceCache =
                     GetInstanceCacheFromConnection(connection);
                 Assert.Single(instanceCache);
                 Assert.True(instanceCache.ContainsKey(dummyProviderName1));

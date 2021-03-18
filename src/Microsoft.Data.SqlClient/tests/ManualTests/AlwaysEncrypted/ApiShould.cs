@@ -2150,9 +2150,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 };
 
             ApiTestTable customKeyStoreProviderTable = _fixture.CustomKeyStoreProviderTestTable as ApiTestTable;
-            string cekHexWithHyphens = BitConverter.ToString(customKeyStoreProviderTable.columnEncryptionKey1.EncryptedValue);
-            int lengthOfTenBytesWithHyphens = 29;
-            string lastTenBytesCek = cekHexWithHyphens.Substring(cekHexWithHyphens.Length - lengthOfTenBytesWithHyphens);
+            byte[] encryptedCek = customKeyStoreProviderTable.columnEncryptionKey1.EncryptedValue;
+            string lastTenBytesCek = BitConverter.ToString(encryptedCek, encryptedCek.Length - 10, 10);
 
             string failedToDecryptMessage = string.Format(SystemDataResourceManager.Instance.TCE_KeyDecryptionFailed,
                 DummyKeyStoreProvider.Name, lastTenBytesCek);

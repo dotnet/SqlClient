@@ -309,12 +309,12 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             return SqlCipherMetadataConstructor.Invoke(parameters);
         }
 
-        internal static byte[] DecryptWithKey(byte[] cipherText, Object cipherMd, string serverName)
+        internal static byte[] DecryptWithKey(byte[] cipherText, Object cipherMd)
         {
             return (byte[])SqlSecurityUtilDecryptWithKey.Invoke(null, new Object[] { cipherText, cipherMd, new SqlConnection() });
         }
 
-        internal static byte[] EncryptWithKey(byte[] plainText, Object cipherMd, string serverName)
+        internal static byte[] EncryptWithKey(byte[] plainText, Object cipherMd)
         {
             return (byte[])SqlSecurityUtilEncryptWithKey.Invoke(null, new Object[] { plainText, cipherMd, new SqlConnection() });
         }

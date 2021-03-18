@@ -4027,8 +4027,7 @@ namespace Microsoft.Data.SqlClient
                             ds.GetBytes((int)DescribeParameterEncryptionResultSet1.KeySignature, 0, keySignature, 0, keySignatureLength);
                         }
 
-                        string servername = this._activeConnection.DataSource;
-                        SqlSecurityUtility.VerifyColumnMasterKeySignature(providerName, keyPath, servername, isRequestedByEnclave, keySignature, _activeConnection);
+                        SqlSecurityUtility.VerifyColumnMasterKeySignature(providerName, keyPath, isRequestedByEnclave, keySignature, _activeConnection);
 
                         int requestedKey = currentOrdinal;
                         SqlTceCipherInfoEntry cipherInfo;

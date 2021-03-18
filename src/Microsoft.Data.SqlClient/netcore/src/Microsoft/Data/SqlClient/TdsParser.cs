@@ -7883,7 +7883,7 @@ namespace Microsoft.Data.SqlClient
             return len;
         }
 
-        internal void TdsLogin(SqlLogin rec, TdsEnums.FeatureExtension requestedFeatures, SessionData recoverySessionData, FederatedAuthenticationFeatureExtensionData? fedAuthFeatureExtensionData)
+        internal void TdsLogin(SqlLogin rec, TdsEnums.FeatureExtension requestedFeatures, SessionData recoverySessionData, FederatedAuthenticationFeatureExtensionData fedAuthFeatureExtensionData)
         {
             _physicalStateObj.SetTimeoutSeconds(rec.timeout);
 
@@ -8021,7 +8021,7 @@ namespace Microsoft.Data.SqlClient
                 if ((requestedFeatures & TdsEnums.FeatureExtension.FedAuth) != 0)
                 {
                     Debug.Assert(fedAuthFeatureExtensionData != null, "fedAuthFeatureExtensionData should not null.");
-                    length += WriteFedAuthFeatureRequest(fedAuthFeatureExtensionData.Value, write: false);
+                    length += WriteFedAuthFeatureRequest(fedAuthFeatureExtensionData, write: false);
                 }
                 if ((requestedFeatures & TdsEnums.FeatureExtension.Tce) != 0)
                 {
@@ -8288,7 +8288,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.TdsLogin|SEC> Sending federated authentication feature request");
                         Debug.Assert(fedAuthFeatureExtensionData != null, "fedAuthFeatureExtensionData should not null.");
-                        WriteFedAuthFeatureRequest(fedAuthFeatureExtensionData.Value, write: true);
+                        WriteFedAuthFeatureRequest(fedAuthFeatureExtensionData, write: true);
                     }
                     if ((requestedFeatures & TdsEnums.FeatureExtension.Tce) != 0)
                     {
