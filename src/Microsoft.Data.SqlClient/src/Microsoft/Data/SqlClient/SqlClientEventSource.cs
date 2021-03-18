@@ -508,7 +508,7 @@ namespace Microsoft.Data.SqlClient
 
         #region Execution Trace
         [NonEvent]
-        internal void TryBeginExecuteEvent(int objectId, object connectionId, string commandText, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
+        internal void TryBeginExecuteEvent(int objectId, Guid? connectionId, string commandText, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
         {
             if (Log.IsExecutionTraceEnabled())
             {
@@ -518,7 +518,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         [NonEvent]
-        internal void TryEndExecuteEvent(int objectId, object connectionId, int compositeState, int sqlExceptionNumber, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
+        internal void TryEndExecuteEvent(int objectId, Guid? connectionId, int compositeState, int sqlExceptionNumber, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
         {
             if (Log.IsExecutionTraceEnabled())
             {

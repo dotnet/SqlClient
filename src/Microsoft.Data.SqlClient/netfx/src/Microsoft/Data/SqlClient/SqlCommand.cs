@@ -121,7 +121,7 @@ namespace Microsoft.Data.SqlClient
 
         private Dictionary<int, SqlTceCipherInfoEntry> keysToBeSentToEnclave;
         private bool requiresEnclaveComputations = false;
-        internal EnclaveDelegate.EnclavePackage enclavePackage = null;
+        internal EnclavePackage enclavePackage = null;
         private SqlEnclaveAttestationParameters enclaveAttestationParameters = null;
         private byte[] customData = null;
         private int customDataLength = 0;

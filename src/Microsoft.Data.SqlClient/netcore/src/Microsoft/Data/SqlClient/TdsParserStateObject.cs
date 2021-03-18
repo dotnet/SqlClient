@@ -135,6 +135,7 @@ namespace Microsoft.Data.SqlClient
         private volatile int _timeoutIdentityValue;
         internal volatile bool _attentionSent;              // true if we sent an Attention to the server
         internal volatile bool _attentionSending;
+        private readonly TimerCallback _onTimeoutAsync;
 
         // Below 2 properties are used to enforce timeout delays in code to 
         // reproduce issues related to theadpool starvation and timeout delay.
@@ -293,6 +294,7 @@ namespace Microsoft.Data.SqlClient
             // Construct a physical connection
             Debug.Assert(null != parser, "no parser?");
             _parser = parser;
+            _onTimeoutAsync = OnTimeoutAsync;
 
             // For physical connection, initialize to default login packet size.
             SetPacketSize(TdsEnums.DEFAULT_LOGIN_PACKET_SIZE);
@@ -309,6 +311,7 @@ namespace Microsoft.Data.SqlClient
             // Construct a MARS session
             Debug.Assert(null != parser, "no parser?");
             _parser = parser;
+            _onTimeoutAsync = OnTimeoutAsync;
             SniContext = SniContext.Snix_GetMarsSession;
 
             Debug.Assert(null != _parser._physicalStateObj, "no physical session?");
@@ -2474,7 +2477,7 @@ namespace Microsoft.Data.SqlClient
                 _networkPacketTimeout?.Dispose();
 
                 _networkPacketTimeout = ADP.UnsafeCreateTimer(
-                    new TimerCallback(OnTimeoutAsync),
+                    _onTimeoutAsync,
                     new TimeoutState(_timeoutIdentityValue),
                     Timeout.Infinite,
                     Timeout.Infinite

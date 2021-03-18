@@ -7,10 +7,7 @@ using System.Collections.Generic;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <summary>
-    /// A delegate for communicating with secure enclave
-    /// </summary>
-    internal partial class EnclaveDelegate
+    internal sealed partial class EnclaveDelegate
     {
         internal byte[] GetSerializedAttestationParameters(
             SqlEnclaveAttestationParameters sqlEnclaveAttestationParameters, string enclaveType)
