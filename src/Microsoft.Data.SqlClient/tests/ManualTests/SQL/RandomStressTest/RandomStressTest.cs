@@ -64,7 +64,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             if (_randPool.ReproMode)
             {
-                _runningThreads = 1;
                 TestThread();
             }
             else
@@ -75,6 +74,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     t.Start();
                 }
             }
+
+            _endEvent.WaitOne();
         }
 
         private void NextConnection(ref SqlConnection con, Randomizer rand)
@@ -82,6 +83,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             if (con != null)
             {
                 con.Close();
+                con.Dispose();
             }
 
             string connString = _connectionStrings[rand.Next(_connectionStrings.Length)];
@@ -92,6 +94,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void TestThread()
         {
+            Interlocked.Increment(ref _runningThreads);
             try
             {
                 using (var rootScope = _randPool.RootScope<SqlRandomizer>())
@@ -132,6 +135,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         if (con != null)
                         {
                             con.Close();
+                            con.Dispose();
                         }
                     }
                 }

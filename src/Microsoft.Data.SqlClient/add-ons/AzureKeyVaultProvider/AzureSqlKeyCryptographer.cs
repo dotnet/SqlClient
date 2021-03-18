@@ -135,7 +135,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             }
 
             CryptographyClient cryptographyClient = new CryptographyClient(GetKey(keyIdentifierUri).Id, TokenCredential);
-            _cryptoClientDictionary.AddOrUpdate(keyIdentifierUri, cryptographyClient, (k, v) => cryptographyClient);
+            _cryptoClientDictionary.TryAdd(keyIdentifierUri, cryptographyClient);
 
             return cryptographyClient;
         }
@@ -195,7 +195,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         {
             if (!_keyClientDictionary.ContainsKey(vaultUri))
             {
-                _keyClientDictionary.AddOrUpdate(vaultUri, new KeyClient(vaultUri, TokenCredential), (k, v) => new KeyClient(vaultUri, TokenCredential));
+                _keyClientDictionary.TryAdd(vaultUri, new KeyClient(vaultUri, TokenCredential));
             }
         }
 

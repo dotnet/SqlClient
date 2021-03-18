@@ -283,6 +283,20 @@ namespace Microsoft.Data.SqlClient
 
         // Retry Logic
         private SqlRetryLogicBaseProvider _retryLogicProvider;
+        private bool? _isRetryEnabled;
+        private bool IsRetryEnabled
+        {
+            get
+            {
+                if (_isRetryEnabled == null)
+                {
+                    bool result;
+                    result = AppContext.TryGetSwitch(SqlRetryLogicProvider.EnableRetryLogicSwitch, out result) ? result : false;
+                    _isRetryEnabled = result;
+                }
+                return (bool)_isRetryEnabled;
+            }
+        }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetryLogicProvider/*' />
         [
@@ -1572,6 +1586,9 @@ namespace Microsoft.Data.SqlClient
             Open(SqlConnectionOverrides.None);
         }
 
+        private bool TryOpenWithRetry(TaskCompletionSource<DbConnectionInternal> retry, SqlConnectionOverrides overrides)
+            => RetryLogicProvider.Execute(this, () => TryOpen(retry, overrides));
+
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenWithOverrides/*' />
         public void Open(SqlConnectionOverrides overrides)
         {
@@ -1598,7 +1615,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
 
-                    if (!RetryLogicProvider.Execute(this, () => TryOpen(null, overrides)))
+                    if (!(IsRetryEnabled ? TryOpenWithRetry(null, overrides) : TryOpen(null, overrides)))
                     {
                         throw ADP.InternalError(ADP.InternalErrorCode.SynchronousConnectReturnedPending);
                     }
@@ -1831,11 +1848,14 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(_currentCompletion == null, "After waiting for an async call to complete, there should be no completion source");
         }
 
+        private Task InternalOpenWithRetryAsync(CancellationToken cancellationToken)
+            => RetryLogicProvider.ExecuteAsync(this, () => InternalOpenAsync(cancellationToken), cancellationToken);
+
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsync/*' />
         public override Task OpenAsync(CancellationToken cancellationToken)
-        {
-            return RetryLogicProvider.ExecuteAsync(this, () => InternalOpenAsync(cancellationToken), cancellationToken);
-        }
+            => IsRetryEnabled ? 
+                InternalOpenWithRetryAsync(cancellationToken) : 
+                InternalOpenAsync(cancellationToken);
 
         private Task InternalOpenAsync(CancellationToken cancellationToken)
         {

@@ -12,6 +12,25 @@ This guide is meant to cover all namespace changes needed in client applications
 | <s>`using System.Data.Sql;`</s> <br>`using Microsoft.Data.Sql;`</s> | Applicable Classes:<br>`SqlNotificationRequest`<br> |
 | <s>`using System.Data;`</s> <br>`using Microsoft.Data;`</s> | Applicable Classes:<br>`OperationAbortedException`|
 
+## Configuration
+
+For .NET Framework projects it may be necessary to include the following in your App.config or Web.config file:
+
+``` xml
+<configuration>
+    ...
+    <system.data>
+        <DbProviderFactories>
+            <add name="SqlClient Data Provider"
+                invariant="Microsoft.Data.SqlClient"
+                description=".Net Framework Data Provider for SqlServer" 
+                type="Microsoft.Data.SqlClient.SqlClientFactory, Microsoft.Data.SqlClient" />
+        </DbProviderFactories>
+    </system.data>
+    ...
+</configuration>
+```
+
 ## Contribute to this Cheat Sheet
 
 We would love the SqlClient community to help enhance this cheat sheet by contributing experiences and challenges faced when porting their applications.

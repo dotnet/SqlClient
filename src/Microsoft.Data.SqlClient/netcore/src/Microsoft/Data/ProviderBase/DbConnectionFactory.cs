@@ -108,6 +108,7 @@ namespace Microsoft.Data.ProviderBase
                     }
 
                     connection = CreateNonPooledConnection(owningConnection, poolGroup, userOptions);
+                    SqlClientEventSource.Log.EnterNonPooledConnection();
                 }
                 else
                 {
@@ -208,6 +209,10 @@ namespace Microsoft.Data.ProviderBase
                     // So the best thing to do now is to destroy the newly created connection
                     task.Result.DoomThisConnection();
                     task.Result.Dispose();
+                }
+                else
+                {
+                    SqlClientEventSource.Log.EnterNonPooledConnection();
                 }
             }
         }

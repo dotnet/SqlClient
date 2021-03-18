@@ -78,17 +78,6 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to &apos;{0}&apos; cannot be null or empty or consist of only whitespace..
-        /// </summary>
-        internal static string NullOrWhitespaceArgument
-        {
-            get
-            {
-                return ResourceManager.GetString("NullOrWhitespaceArgument", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to Internal error. Empty &apos;{0}&apos; specified..
         /// </summary>
         internal static string EmptyArgumentInternal
