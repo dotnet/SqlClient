@@ -2,11 +2,14 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
+
 namespace Microsoft.Data.ProviderBase
 {
-    sealed internal partial class DbConnectionPoolIdentity
+    [Serializable] // Serializable so SqlDependencyProcessDispatcher can marshall cross domain to SqlDependency.
+    internal sealed partial class DbConnectionPoolIdentity
     {
-        public static readonly DbConnectionPoolIdentity NoIdentity = new DbConnectionPoolIdentity(string.Empty, false, true);
+        public static readonly DbConnectionPoolIdentity s_noIdentity = new DbConnectionPoolIdentity(string.Empty, false, true);
 
         private readonly string _sidString;
         private readonly bool _isRestricted;
@@ -18,22 +21,21 @@ namespace Microsoft.Data.ProviderBase
             _sidString = sidString;
             _isRestricted = isRestricted;
             _isNetwork = isNetwork;
-            _hashCode = sidString == null ? 0 : sidString.GetHashCode();
+            _hashCode = sidString?.GetHashCode() ?? 0;
         }
 
-        internal bool IsRestricted
-        {
-            get { return _isRestricted; }
-        }
+        internal bool IsRestricted => _isRestricted;
 
-
-        override public bool Equals(object value)
+        public override bool Equals(object value)
         {
-            bool result = ((this == NoIdentity) || (this == value));
-            if (!result && (null != value))
+            bool result = ReferenceEquals(this, s_noIdentity) || ReferenceEquals(this, value);
+            if (!result && (!(value is null)))
             {
-                DbConnectionPoolIdentity that = ((DbConnectionPoolIdentity)value);
-                result = ((_sidString == that._sidString) && (_isRestricted == that._isRestricted) && (_isNetwork == that._isNetwork));
+                DbConnectionPoolIdentity that = (DbConnectionPoolIdentity)value;
+                result = 
+                    string.Equals(_sidString,that._sidString,System.StringComparison.Ordinal) && 
+                    (_isRestricted == that._isRestricted) && 
+                    (_isNetwork == that._isNetwork);
             }
             return result;
         }
