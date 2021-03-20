@@ -8885,6 +8885,150 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        internal async Task TdsExecuteSQLBatchExperimental(string text, int timeout, SqlNotificationRequest notificationRequest, TdsParserStateObject stateObj, bool sync, bool callerHasConnectionLock = false, byte[] enclavePackage = null)
+        {
+            if (TdsParserState.Broken == State || TdsParserState.Closed == State)
+            {
+                return;
+            }
+
+            if (stateObj.BcpLock)
+            {
+                throw SQL.ConnectionLockedForBcpEvent();
+            }
+
+            // Promote, Commit and Rollback requests for
+            // delegated transactions often happen while there is an open result
+            // set, so we need to handle them by using a different MARS session,
+            // otherwise we'll write on the physical state objects while someone
+            // else is using it.  When we don't have MARS enabled, we need to
+            // lock the physical state object to synchronize it's use at least
+            // until we increment the open results count.  Once it's been
+            // incremented the delegated transaction requests will fail, so they
+            // won't stomp on anything.
+
+            // Only need to take the lock if neither the thread nor the caller claims to already have it
+            bool needToTakeParserLock = (!callerHasConnectionLock) && (!_connHandler.ThreadHasParserLockForClose);
+            Debug.Assert(!_connHandler.ThreadHasParserLockForClose || sync, "Thread shouldn't claim to have the parser lock if we are doing async writes");     // Since we have the possibility of pending with async writes, make sure the thread doesn't claim to already have the lock
+            Debug.Assert(needToTakeParserLock || _connHandler._parserLock.ThreadMayHaveLock(), "Thread or caller claims to have connection lock, but lock is not taken");
+
+            bool releaseConnectionLock = false;
+            if (needToTakeParserLock)
+            {
+                _connHandler._parserLock.Wait(canReleaseFromAnyThread: !sync);
+                releaseConnectionLock = true;
+            }
+
+            // Switch the writing mode
+            // NOTE: We are not turning off async writes when we complete since SqlBulkCopy uses this method and expects _asyncWrite to not change
+            _asyncWrite = !sync;
+
+            try
+            {
+                // Check that the connection is still alive
+                if ((_state == TdsParserState.Closed) || (_state == TdsParserState.Broken))
+                {
+                    throw ADP.ClosedConnectionError();
+                }
+
+                // This validation step MUST be done after locking the connection to guarantee we don't
+                //  accidentally execute after the transaction has completed on a different thread.
+                _connHandler.CheckEnlistedTransactionBinding();
+
+                stateObj.SetTimeoutSeconds(timeout);
+
+                if ((!_fMARS) && (_physicalStateObj.HasOpenResult))
+                {
+                    SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.TdsExecuteSQLBatch|ERR> Potential multi-threaded misuse of connection, non-MARs connection with an open result {0}", ObjectID);
+                }
+                stateObj.SniContext = SniContext.Snix_Execute;
+
+                WriteRPCBatchHeaders(stateObj, notificationRequest);
+
+                stateObj._outputMessageType = TdsEnums.MT_SQL;
+
+                WriteEnclaveInfo(stateObj, enclavePackage);
+
+                // TODO: these methods should always returns a Task - in sync mode these tasks will be completed,
+                // and await does nothing
+                if (WriteString(text, text.Length, 0, stateObj) is Task writeStringTask)
+                {
+                    await writeStringTask.ConfigureAwait(false);
+                }
+
+                if (stateObj.ExecuteFlush() is Task flushTask)
+                {
+                    await flushTask.ConfigureAwait(false);
+                }
+
+                stateObj.SniContext = SniContext.Snix_Read;
+
+                // The above replaces all the following callback-based API:
+
+                // if (executeTask == null)
+                // {
+                //     stateObj.SniContext = SniContext.Snix_Read;
+                // }
+                // else
+                // {
+                //     Debug.Assert(!sync, "Should not have gotten a Task when writing in sync mode");
+                //
+                //     // Need to wait for flush - continuation will unlock the connection
+                //     bool taskReleaseConnectionLock = releaseConnectionLock;
+                //     releaseConnectionLock = false;
+                //     return executeTask.ContinueWith(
+                //         (task, state) =>
+                //         {
+                //             Debug.Assert(!task.IsCanceled, "Task should not be canceled");
+                //             var parameters = (Tuple<TdsParser, TdsParserStateObject, SqlInternalConnectionTds>)state;
+                //             TdsParser parser = parameters.Item1;
+                //             TdsParserStateObject tdsParserStateObject = parameters.Item2;
+                //             SqlInternalConnectionTds internalConnectionTds = parameters.Item3;
+                //             try
+                //             {
+                //                 if (task.IsFaulted)
+                //                 {
+                //                     parser.FailureCleanup(tdsParserStateObject, task.Exception.InnerException);
+                //                     throw task.Exception.InnerException;
+                //                 }
+                //                 else
+                //                 {
+                //                     tdsParserStateObject.SniContext = SniContext.Snix_Read;
+                //                 }
+                //             }
+                //             finally
+                //             {
+                //                 internalConnectionTds?._parserLock.Release();
+                //             }
+                //         },
+                //         Tuple.Create(this, stateObj, taskReleaseConnectionLock ? _connHandler : null),
+                //         TaskScheduler.Default
+                //     );
+                // }
+                //
+                // // Finished sync
+                // return null;
+            }
+            catch (Exception e)
+            {
+                if (!ADP.IsCatchableExceptionType(e))
+                {
+                    throw;
+                }
+
+                FailureCleanup(stateObj, e);
+
+                throw;
+            }
+            finally
+            {
+                if (releaseConnectionLock)
+                {
+                    _connHandler._parserLock.Release();
+                }
+            }
+        }
+
         internal Task TdsExecuteRPC(SqlCommand cmd, _SqlRPC[] rpcArray, int timeout, bool inSchema, SqlNotificationRequest notificationRequest, TdsParserStateObject stateObj, bool isCommandProc, bool sync = true,
             TaskCompletionSource<object> completion = null, int startRpc = 0, int startParam = 0)
         {

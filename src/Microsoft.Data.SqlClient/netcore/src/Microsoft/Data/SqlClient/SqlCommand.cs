@@ -805,7 +805,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     // Validate the command outside of the try/catch to avoid putting the _stateObj on error
-                    ValidateCommand(isAsync: false);
+                    ValidateCommand();
 
                     bool processFinallyBlock = true;
                     try
@@ -1112,7 +1112,9 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteNonQuery[@name="default"]/*'/>
-        public override int ExecuteNonQuery()
+        public override int ExecuteNonQuery() => ExecuteNonQuery(isAsync: false).GetAwaiter().GetResult();
+
+        private async Task<int> ExecuteNonQuery(bool isAsync, CancellationToken cancellationToken = default)
         {
             // Reset _pendingCancel upon entry into any Execute - used to synchronize state
             // between entry into Execute* API and the thread obtaining the stateObject.
@@ -1131,11 +1133,14 @@ namespace Microsoft.Data.SqlClient
                 WriteBeginExecuteEvent();
                 if (IsRetryEnabled)
                 {
-                    InternalExecuteNonQueryWithRetry(sendToPipe: false, timeout: CommandTimeout, out _, asyncWrite: false, inRetry: false);
+                    throw new NotImplementedException();
+                    // InternalExecuteNonQueryWithRetry(sendToPipe: false, timeout: CommandTimeout, out _, asyncWrite: false, inRetry: false);
                 }
                 else
                 {
-                    InternalExecuteNonQuery(completion: null, sendToPipe: false, timeout: CommandTimeout, out _);
+                    // InternalExecuteNonQuery(completion: null, sendToPipe: false, timeout: CommandTimeout, out _);
+                    await InternalExecuteNonQueryExperimental(sendToPipe: false, timeout: CommandTimeout, usedCache: out _, isAsync)
+                        .ConfigureAwait(false);
                 }
                 return _rowsAffected;
             }
@@ -1549,7 +1554,7 @@ namespace Microsoft.Data.SqlClient
             // returns false for empty command text
             if (!inRetry)
             {
-                ValidateCommand(isAsync, methodName);
+                ValidateCommand(methodName);
             }
 
             CheckNotificationStateAndAutoEnlist(); // Only call after validate - requires non null connection!
@@ -1604,6 +1609,76 @@ namespace Microsoft.Data.SqlClient
             }
 
             Debug.Assert(isAsync || null == _stateObj, "non-null state object in InternalExecuteNonQuery");
+            return task;
+        }
+
+        private Task InternalExecuteNonQueryExperimental(bool sendToPipe, int timeout, out bool usedCache, bool isAsync, bool inRetry = false, [CallerMemberName] string methodName = "")
+        {
+            usedCache = false;
+
+            SqlStatistics statistics = Statistics;
+            _rowsAffected = -1;
+
+            // this function may throw for an invalid connection
+            // returns false for empty command text
+            if (!inRetry)
+            {
+                ValidateCommand(methodName);
+            }
+
+            CheckNotificationStateAndAutoEnlist(); // Only call after validate - requires non null connection!
+
+            Task task = null;
+
+            // Always Encrypted generally operates only on parameterized queries. However enclave based Always encrypted also supports unparameterized queries
+            // We skip this block for enclave based always encrypted so that we can make a call to SQL Server to get the encryption information
+            if (!ShouldUseEnclaveBasedWorkflow && !BatchRPCMode && (CommandType.Text == CommandType) && (0 == GetParameterCount(_parameters)))
+            {
+                Debug.Assert(!sendToPipe, "Trying to send non-context command to pipe");
+
+                if (null != statistics)
+                {
+                    if (!IsDirty && IsPrepared)
+                    {
+                        statistics.SafeIncrement(ref statistics._preparedExecs);
+                    }
+                    else
+                    {
+                        statistics.SafeIncrement(ref statistics._unpreparedExecs);
+                    }
+                }
+
+                // We should never get here for a retry since we only have retries for parameters.
+                Debug.Assert(!inRetry);
+                SqlClientEventSource.Log.TryTraceEvent("SqlCommand.InternalExecuteNonQuery | INFO | Object Id {0}, RPC execute method name {1}, isAsync {2}, inRetry {3}", ObjectID, methodName, isAsync, inRetry);
+
+                task = RunExecuteNonQueryTdsExperimental(methodName, isAsync, timeout);
+            }
+            else
+            {
+                throw new NotImplementedException();
+                // // otherwise, use a full-fledged execute that can handle params and stored procs
+                // Debug.Assert(!sendToPipe, "Trying to send non-context command to pipe");
+                // SqlClientEventSource.Log.TryTraceEvent("SqlCommand.InternalExecuteNonQuery | INFO | Object Id {0}, RPC execute method name {1}, isAsync {2}, inRetry {3}", ObjectID, methodName, isAsync, inRetry);
+                //
+                // SqlDataReader reader = RunExecuteReader(0, RunBehavior.UntilDone, false, completion, timeout, out task, out usedCache, asyncWrite, inRetry, methodName);
+                // if (null != reader)
+                // {
+                //     if (task != null)
+                //     {
+                //         task = AsyncHelper.CreateContinuationTaskWithState(task,
+                //             state: reader,
+                //             onSuccess: state => ((SqlDataReader)state).Close()
+                //         );
+                //     }
+                //     else
+                //     {
+                //         reader.Close();
+                //     }
+                // }
+            }
+
+            // Debug.Assert(isAsync || null == _stateObj, "non-null state object in InternalExecuteNonQuery");
             return task;
         }
 
@@ -2440,9 +2515,10 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteNonQueryAsync[@name="CancellationToken"]/*'/>
         public override Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
-            => IsRetryEnabled ? 
-                InternalExecuteNonQueryWithRetryAsync(cancellationToken) : 
-                InternalExecuteNonQueryAsync(cancellationToken);
+            => ExecuteNonQuery(isAsync: true, cancellationToken);
+            // => IsRetryEnabled ?
+            //     InternalExecuteNonQueryWithRetryAsync(cancellationToken) :
+            //     InternalExecuteNonQueryAsync(cancellationToken);
 
         private Task<int> InternalExecuteNonQueryWithRetryAsync(CancellationToken cancellationToken)
             => RetryLogicProvider.ExecuteAsync(this, () => InternalExecuteNonQueryAsync(cancellationToken), cancellationToken);
@@ -2894,7 +2970,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // validate that we have a valid connection
-            ValidateCommand(false /*not async*/, nameof(DeriveParameters));
+            ValidateCommand(nameof(DeriveParameters));
 
             // Use common parser for SqlClient and OleDb - parse into 4 parts - Server, Catalog, Schema, ProcedureName
             string[] parsedSProc = MultipartIdentifier.ParseMultipartIdentifier(CommandText, "[\"", "]\"", Strings.SQL_SqlCommandCommandText, false);
@@ -3295,6 +3371,86 @@ namespace Microsoft.Data.SqlClient
                 }
             }
             return null;
+        }
+
+        private async Task RunExecuteNonQueryTdsExperimental(string methodName, bool isAsync, int timeout)
+        {
+            bool processFinallyBlock = true;
+            try
+            {
+                Task reconnectTask = _activeConnection.ValidateAndReconnect(null, timeout);
+
+                if (reconnectTask != null)
+                {
+                    throw new NotImplementedException();
+                    // long reconnectionStart = ADP.TimerCurrent();
+                    // if (isAsync)
+                    // {
+                    //     TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
+                    //     _activeConnection.RegisterWaitingForReconnect(completion.Task);
+                    //     _reconnectionCompletionSource = completion;
+                    //     RunExecuteNonQueryTdsSetupReconnnectContinuation(methodName, isAsync, timeout, asyncWrite, reconnectTask, reconnectionStart, completion);
+                    //     return completion.Task;
+                    // }
+                    // else
+                    // {
+                    //     AsyncHelper.WaitForCompletion(reconnectTask, timeout, () => { throw SQL.CR_ReconnectTimeout(); });
+                    //     timeout = TdsParserStaticMethods.GetRemainingTimeout(timeout, reconnectionStart);
+                    // }
+                }
+
+                if (isAsync)
+                {
+                    _activeConnection.AddWeakReference(this, SqlReferenceCollection.CommandTag);
+                }
+
+                GetStateObject();
+
+                // Reset the encryption state in case it has been set by a previous command.
+                ResetEncryptionState();
+
+                // we just send over the raw text with no annotation
+                // no parameters are sent over
+                // no data reader is returned
+                // use this overload for "batch SQL" tds token type
+                SqlClientEventSource.Log.TryTraceEvent("SqlCommand.RunExecuteNonQueryTds | Info | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command executed as SQLBATCH, Command Text '{4}' ", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
+                await _stateObj.Parser.TdsExecuteSQLBatchExperimental(this.CommandText, timeout, this.Notification, _stateObj, sync: !isAsync)
+                    .ConfigureAwait(false);
+
+                NotifyDependency();
+                if (isAsync)
+                {
+                    _activeConnection.GetOpenTdsConnection(methodName).IncrementAsyncCount();
+
+                    // The current async path seems to read a single package asynchronously by calling ReadSni before
+                    // starting to parse, assuming that the response will be contained in this packet
+                    // (see BeginExecuteNonQueryInternalReadStage).
+                    // For now I replicated the same mechanism, though ideally async wouldn't have a different flow or
+                    // need any TaskCompletionSource.
+                    var completion = new TaskCompletionSource<object>();
+                    _stateObj.ReadSni(completion);
+                    await completion.Task.ConfigureAwait(false);
+                }
+
+                bool dataReady;
+                Debug.Assert(_stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
+                bool result = _stateObj.Parser.TryRun(RunBehavior.UntilDone, this, null, null, _stateObj, out dataReady);
+                if (!result)
+                { throw SQL.SynchronousCallMayNotPend(); }
+            }
+            catch (Exception e)
+            {
+                processFinallyBlock = ADP.IsCatchableExceptionType(e);
+                throw;
+            }
+            finally
+            {
+                if (processFinallyBlock /*&& !isAsync*/)
+                {
+                    // When executing Async, we need to keep the _stateObj alive...
+                    PutStateObject();
+                }
+            }
         }
 
         // This is in its own method to avoid always allocating the lambda in RunExecuteNonQueryTds, cannot use ContinueTaskWithState because of MarshalByRef and the CompareExchange
@@ -4312,7 +4468,7 @@ namespace Microsoft.Data.SqlClient
             // returns false for empty command text
             if (!inRetry)
             {
-                ValidateCommand(isAsync, method);
+                ValidateCommand(method);
             }
 
             CheckNotificationStateAndAutoEnlist(); // Only call after validate - requires non null connection!
@@ -4971,7 +5127,7 @@ namespace Microsoft.Data.SqlClient
 
         // validates that a command has commandText and a non-busy open connection
         // throws exception for error case, returns false if the commandText is empty
-        private void ValidateCommand(bool isAsync, [CallerMemberName] string method = "")
+        private void ValidateCommand([CallerMemberName] string method = "")
         {
             if (null == _activeConnection)
             {
