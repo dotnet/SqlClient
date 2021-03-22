@@ -35,7 +35,7 @@ namespace CustomCRL_Doc
             // </Snippet1>
 
             // <Snippet2>
-            // Create a custom retry provider
+            // Create a custom retry logic provider
             SqlRetryLogicBaseProvider provider = CustomRetry.CreateCustomProvider(options);
             // </Snippet2>
 
@@ -43,9 +43,9 @@ namespace CustomCRL_Doc
             {
                 // <Snippet3>
                 // Assumes that connection is a valid SqlConnection object 
-                // Assign a retry provider to the connection
+                // Set the retry logic provider on the connection instance
                 connection.RetryLogicProvider = provider;
-                // Establishing the connection will retry if one of the given transient failure or TimeoutException occurs.
+                // Establishing the connection will trigger retry if one of the given transient failure occurs.
                 connection.Open();
                 // </Snippet3>
             }

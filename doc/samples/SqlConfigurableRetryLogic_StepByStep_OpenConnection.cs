@@ -26,7 +26,7 @@ class RetryLogicSample
         // </Snippet1>
 
         // <Snippet2>
-        // Create a retry provider
+        // Create a retry logic provider
         SqlRetryLogicBaseProvider provider = SqlConfigurableRetryFactory.CreateExponentialRetryProvider(options);
         // </Snippet2>
 
@@ -34,7 +34,7 @@ class RetryLogicSample
         {
             // <Snippet3>
             // Assumes that connection is a valid SqlConnection object 
-            // Assign a retry provider to the connection
+            // Set the retry logic provider on the connection instance
             connection.RetryLogicProvider = provider;
             // Establishing the connection will retry if a transient failure occurs.
             connection.Open();
