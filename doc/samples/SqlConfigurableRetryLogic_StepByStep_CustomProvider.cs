@@ -24,7 +24,7 @@ namespace CustomCRL_Doc
             {
                 // Tries 5 times before throwing an exception
                 NumberOfTries = 5,
-                // Prefered gap time to delay before retry
+                // Preferred gap time to delay before retry
                 DeltaTime = TimeSpan.FromSeconds(1),
                 // Maximum gap time for each delay time before retry
                 MaxTimeInterval = TimeSpan.FromSeconds(20),
@@ -85,7 +85,7 @@ namespace CustomCRL_Doc
                     }
                 }
             }
-            // Other type of exceptions can be assess separately
+            // Other types of exceptions can be assessed separately
             else if (e is TimeoutException)
             {
                 result = true;
@@ -98,11 +98,11 @@ namespace CustomCRL_Doc
     // <Snippet6>
     public class CustomEnumerator : SqlRetryIntervalBaseEnumerator
     {
-        // Set the maximum acceptable time to 4 minuts
+        // Set the maximum acceptable time to 4 minutes
         private readonly TimeSpan _maxValue = TimeSpan.FromMinutes(4);
 
         public CustomEnumerator(TimeSpan timeInterval, TimeSpan maxTime, TimeSpan minTime)
-            :base(timeInterval, maxTime, minTime) {}
+            : base(timeInterval, maxTime, minTime) {}
 
         // Return fixed time on each request
         protected override TimeSpan GetNextInterval()
@@ -177,7 +177,7 @@ namespace CustomCRL_Doc
             {
                 // Increase the number of attempts
                 Current++;
-                // It doesn't mind if the enumerator gets to the last value till the number of attempts ends.
+                // It doesn't matter if the enumerator gets to the last value until the number of attempts end.
                 RetryIntervalEnumerator.MoveNext();
                 // Receive the current time from enumerator
                 intervalTime = RetryIntervalEnumerator.Current;
@@ -198,11 +198,11 @@ namespace CustomCRL_Doc
 
         public override TResult Execute<TResult>(object sender, Func<TResult> function)
         {
-            // Create a list to save transient exceptions to report later if it was necessary
+            // Create a list to save transient exceptions to report later if necessary
             IList<Exception> exceptions = new List<Exception>();
             // Prepare it before reusing
             RetryLogic.Reset();
-            // Create an infinite loop to keep attempt for defined maximum number of tries
+            // Create an infinite loop to attempt the defined maximum number of tries
             do
             {
                 try

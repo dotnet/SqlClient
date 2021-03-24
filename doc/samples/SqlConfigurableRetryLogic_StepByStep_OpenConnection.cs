@@ -1,7 +1,7 @@
 using System;
 using Microsoft.Data.SqlClient;
 
-/// The purpose of this sample is to illustrate how to use this feature and the condition might not be realistic.
+// The purpose of this sample is to illustrate how to use this feature and the condition might not be realistic.
 class RetryLogicSample
 {
     private const string CnnStringFormat = "Server=localhost; Initial Catalog=Northwind; Integrated Security=true; pooling=false;";
@@ -18,7 +18,7 @@ class RetryLogicSample
         {
             // Tries 5 times before throwing an exception
             NumberOfTries = 5,
-            // Prefered gap time to delay before retry
+            // Preferred gap time to delay before retry
             DeltaTime = TimeSpan.FromSeconds(1),
             // Maximum gap time for each delay time before retry
             MaxTimeInterval = TimeSpan.FromSeconds(20)
