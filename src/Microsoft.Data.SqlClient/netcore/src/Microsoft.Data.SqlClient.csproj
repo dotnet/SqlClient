@@ -525,12 +525,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlQueryMetadataCache.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlEnclaveAttestationParameters.cs" />
-	  <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.cs">
-		  <Link>Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.cs</Link>
-	  </Compile>
-	  <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlUtil.cs">
-		  <Link>Microsoft\Data\SqlClient\SqlUtil.cs</Link>
-	  </Compile>
   </ItemGroup>
   <!-- Windows only -->
   <ItemGroup Condition="'$(TargetsWindows)' == 'true'">
