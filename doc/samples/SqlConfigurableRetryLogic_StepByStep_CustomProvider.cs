@@ -9,11 +9,10 @@ namespace CustomCRL_Doc
 {
     class Program
     {
-        private const string CnnStringFormat = "Server=localhost; Initial Catalog=Northwind__; Integrated Security=true; pooling=false; Timeout=1";
+        private const string CnnStringFormat = "Server=localhost; Initial Catalog=Northwind; Integrated Security=true; pooling=false; Timeout=1";
 
         static void Main(string[] args)
         {
-            AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.EnableRetryLogic", true);
             RetryConnection(CnnStringFormat);
         }
 
