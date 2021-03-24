@@ -346,6 +346,10 @@ False
             </remarks>
             <exception cref="T:System.ArgumentNullException">To set the value to null, use <see cref="F:System.DBNull.Value" />.</exception>
         </DataSource>
+        <IPAddressPreference>
+            <summary>Set/Get the value of IP address preference.</summary>
+            <returns>Returns IP address preference.</returns>
+        </IPAddressPreference>
         <EnclaveAttestationUrl>
             <summary>Gets or sets the enclave attestation Url to be used with enclave based Always Encrypted.</summary>
             <value>The enclave attestation Url.</value>
