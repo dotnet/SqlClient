@@ -164,9 +164,9 @@ namespace Microsoft.Data.SqlClient
         }
 
 #if NETCOREAPP
-        internal const int SynonymCount = 25;
+        internal const int SynonymCount = 26;
 #else
-        internal const int SynonymCount = 24;
+        internal const int SynonymCount = 25;
 #endif
         internal const int DeprecatedSynonymCount = 3;
 
