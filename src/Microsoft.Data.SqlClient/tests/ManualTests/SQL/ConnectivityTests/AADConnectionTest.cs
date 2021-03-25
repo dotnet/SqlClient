@@ -491,7 +491,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
             string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, removeKeys) +
-                $"Authentication=Active Directory Managed Identity; User Id={DataTestUtility.UserManagedIdentityObjectId};";
+                $"Authentication=Active Directory Managed Identity; User Id={DataTestUtility.UserManagedIdentityClientId};";
             ConnectAndDisconnect(connStr);
         }
 
@@ -543,7 +543,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD", "Trusted_Connection", "Integrated Security" };
             string connectionString = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.TCPConnectionString, removeKeys)
-                + $"Authentication=Active Directory Managed Identity; User Id={DataTestUtility.UserManagedIdentityObjectId}";
+                + $"Authentication=Active Directory Managed Identity; User Id={DataTestUtility.UserManagedIdentityClientId}";
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             {

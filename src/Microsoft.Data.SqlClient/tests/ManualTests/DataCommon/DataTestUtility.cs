@@ -53,7 +53,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string DNSCachingServerTR = null;  // this is for the tenant ring
         public static readonly bool IsDNSCachingSupportedCR = false;  // this is for the control ring
         public static readonly bool IsDNSCachingSupportedTR = false;  // this is for the tenant ring
-        public static readonly string UserManagedIdentityObjectId = null;
+        public static readonly string UserManagedIdentityClientId = null;
 
         public static readonly string EnclaveAzureDatabaseConnString = null;
         public static bool ManagedIdentitySupported = true;
@@ -93,7 +93,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             IsDNSCachingSupportedCR = c.IsDNSCachingSupportedCR;
             IsDNSCachingSupportedTR = c.IsDNSCachingSupportedTR;
             EnclaveAzureDatabaseConnString = c.EnclaveAzureDatabaseConnString;
-            UserManagedIdentityObjectId = c.UserManagedIdentityObjectId;
+            UserManagedIdentityClientId = c.UserManagedIdentityClientId;
 
             System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
 
@@ -459,8 +459,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             if (true == ManagedIdentitySupported && null == AADUserIdentityAccessToken && IsAADPasswordConnStrSetup())
             {
-                // Pass User Assigned Managed Identity Object Id here.
-                AADUserIdentityAccessToken = AADUtility.GetManagedIdentityToken(UserManagedIdentityObjectId).GetAwaiter().GetResult();
+                // Pass User Assigned Managed Identity Client Id here.
+                AADUserIdentityAccessToken = AADUtility.GetManagedIdentityToken(UserManagedIdentityClientId).GetAwaiter().GetResult();
                 if (AADUserIdentityAccessToken == null)
                 {
                     ManagedIdentitySupported = false;
