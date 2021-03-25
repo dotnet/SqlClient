@@ -2771,7 +2771,8 @@ namespace Microsoft.Data.SqlClient
                         authority: fedAuthInfo.stsurl,
                         serverName: ConnectionOptions.DataSource,
                         databaseName: ConnectionOptions.InitialCatalog)
-                        .WithConnectionId(_clientConnectionId);
+                        .WithConnectionId(_clientConnectionId)
+                        .WithConnectionTimeout(ConnectionOptions.ConnectTimeout * 1000);
                     switch (ConnectionOptions.Authentication)
                     {
                         case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
