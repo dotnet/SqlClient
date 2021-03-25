@@ -2796,11 +2796,14 @@ To apply the retry logic, do the following steps before executing the command:
 	- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.CreateNoneRetryProvider>  
 3. Assign the <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider> object to the `RetryLogicProvider` property.
 
-> [NOTE!]
+> [!NOTE]
 > Detecting retriable exceptions is a vital part of the retry pattern. Before applying retry logic, it is important to investigate exceptions and choose a retry provider that best fits your scenario. First, log your exceptions and find transient faults.  
 
-> [NOTE!]
+> [!NOTE]
 > The command **timeout** restarts for each execution of a command within the retry logic and after applying the retry time delay. There is no timing overlap between these two actions.
+
+> [!NOTE]
+> The default retry logic provider is not enabled unless it was configured in application configuration file. For more information, see [Configurable retry logic and configuration file](/sql/connect/ado-net/configurable-retry-logic-config-file).
 
 ## Example
 The following sample creates a database and establishes an active connection to it. While the database has an active connection, it tries to drop it with a new <xref:Microsoft.Data.SqlClient.SqlConnection> and a <xref:Microsoft.Data.SqlClient.SqlCommand> that uses a <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider>. You should kill the active connection through the database to unblock the second command before exceeding the number of retries.  
@@ -2823,7 +2826,7 @@ Besides assigning the provider to the command and executing the command, it's po
 
 [!code-csharp[SqlConfigurableRetryLogic_SqlCommand#4](~/../sqlclient/doc/samples/SqlConfigurableRetryLogic_SqlCommand.cs#4)]
 
-> [NOTE!]
+> [!NOTE]
 > The Asynchronous Programming Model (APM) is a legacy pattern that uses a pair of methods starting with `Begin` and `End`, and an interface called `IAsyncResult`. It's not recommended to use this pattern in new applications. These methods are for backwards compatibility.  
 
 ]]></format>
