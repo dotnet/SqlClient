@@ -4524,6 +4524,9 @@
   <data name="TCE_DbConnectionString_AttestationProtocol" xml:space="preserve">
     <value>Specifies an attestation protocol for its corresponding enclave attestation service.</value>
   </data>
+  <data name="TCE_DbConnectionString_IPAddressPreference" xml:space="preserve">
+    <value>Specifies an IP address preference when connecting to SQL instances.</value>
+  </data>
   <data name="TCE_EnclaveTypeNotSupported" xml:space="preserve">
     <value>The enclave type '{0}' returned from the server is not supported.</value>
   </data>
