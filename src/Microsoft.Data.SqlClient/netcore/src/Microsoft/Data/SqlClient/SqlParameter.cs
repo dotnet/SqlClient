@@ -848,10 +848,8 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/System.ICloneable.Clone/*' />
         object ICloneable.Clone() => new SqlParameter(this);
-
 
         private object CoercedValue
         {
@@ -1623,7 +1621,6 @@ namespace Microsoft.Data.SqlClient
                 maxLen = -1;
             }
 
-
             int localeId = LocaleId;
             if (localeId == 0 && mt.IsCharType)
             {
@@ -2078,7 +2075,6 @@ namespace Microsoft.Data.SqlClient
             }
             return 0;
         }
-
 
         // Coerced Value is also used in SqlBulkCopy.ConvertValue(object value, _SqlMetaData metadata)
         internal static object CoerceValue(object value, MetaType destinationType, out bool coercedToDataFeed, out bool typeChanged, bool allowStreaming = true)
