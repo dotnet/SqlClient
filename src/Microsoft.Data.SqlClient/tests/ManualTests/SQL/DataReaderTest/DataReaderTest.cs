@@ -288,5 +288,24 @@ insert into [{tempTableName}] (first_name,last_name) values ('Joe','Smith')
             // hidden field
             Assert.Contains("user_id", names, StringComparer.Ordinal);
         }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void CheckNullRowVersionIsBDNull()
+        {
+            using (SqlConnection con = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                con.Open();
+                using (SqlCommand command = con.CreateCommand())
+                {
+                    command.CommandText = "select cast(null as rowversion) rv";
+                    using (SqlDataReader reader = command.ExecuteReader())
+                    {
+                        reader.Read();
+                        Assert.True(reader.IsDBNull(0));
+                        Assert.Equal(reader[0], DBNull.Value);
+                    }
+                }
+            }
+        }
     }
 }
