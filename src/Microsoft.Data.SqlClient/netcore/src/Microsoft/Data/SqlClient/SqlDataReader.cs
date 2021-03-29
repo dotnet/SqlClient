@@ -1499,7 +1499,7 @@ namespace Microsoft.Data.SqlClient
                 // Wrap the sequential stream in an XmlReader
                 _currentStream = new SqlSequentialStream(this, i);
                 _lastColumnWithDataChunkRead = i;
-                return SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(_currentStream, closeInput: true);
+                return SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(_currentStream, closeInput: true, async: false);
             }
             else
             {
@@ -1509,7 +1509,7 @@ namespace Microsoft.Data.SqlClient
                 if (_data[i].IsNull)
                 {
                     // A 'null' stream
-                    return SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(new MemoryStream(Array.Empty<byte>(), writable: false), closeInput: true);
+                    return SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(new MemoryStream(Array.Empty<byte>(), writable: false), closeInput: true, async: false);
                 }
                 else
                 {
@@ -2794,10 +2794,10 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.SynchronousCallMayNotPend();
             }
 
-            return GetFieldValueFromSqlBufferInternal<T>(_data[i], _metaData[i]);
+            return GetFieldValueFromSqlBufferInternal<T>(_data[i], _metaData[i], isAsync: false);
         }
 
-        private T GetFieldValueFromSqlBufferInternal<T>(SqlBuffer data, _SqlMetaData metaData)
+        private T GetFieldValueFromSqlBufferInternal<T>(SqlBuffer data, _SqlMetaData metaData, bool isAsync)
         {
             // this block of type specific shortcuts uses RyuJIT jit behaviors to achieve fast implementations of the primitive types
             // RyuJIT will be able to determine at compilation time that the typeof(T)==typeof(<primitive>) options are constant
@@ -2860,14 +2860,14 @@ namespace Microsoft.Data.SqlClient
                     // Wrap the sequential stream in an XmlReader
                     _currentStream = new SqlSequentialStream(this, metaData.ordinal);
                     _lastColumnWithDataChunkRead = metaData.ordinal;
-                    return (T)(object)SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(_currentStream, closeInput: true);
+                    return (T)(object)SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(_currentStream, closeInput: true, async: isAsync);
                 }
                 else
                 {
                     if (data.IsNull)
                     {
                         // A 'null' stream
-                        return (T)(object)SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(new MemoryStream(Array.Empty<byte>(), writable: false), closeInput: true);
+                        return (T)(object)SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(new MemoryStream(Array.Empty<byte>(), writable: false), closeInput: true, async: isAsync);
                     }
                     else
                     {
@@ -5047,7 +5047,7 @@ namespace Microsoft.Data.SqlClient
                     var metaData = _metaData;
                     if ((data != null) && (metaData != null))
                     {
-                        return Task.FromResult<T>(GetFieldValueFromSqlBufferInternal<T>(data[i], metaData[i]));
+                        return Task.FromResult<T>(GetFieldValueFromSqlBufferInternal<T>(data[i], metaData[i], isAsync:false));
                     }
                     else
                     {
@@ -5153,13 +5153,13 @@ namespace Microsoft.Data.SqlClient
             {
                 if (reader.IsCommandBehavior(CommandBehavior.SequentialAccess) && reader._sharedState._dataReady && reader.TryReadColumnInternal(context._columnIndex, readHeaderOnly: true))
                 {
-                    return Task.FromResult<T>(reader.GetFieldValueFromSqlBufferInternal<T>(reader._data[columnIndex], reader._metaData[columnIndex]));
+                    return Task.FromResult<T>(reader.GetFieldValueFromSqlBufferInternal<T>(reader._data[columnIndex], reader._metaData[columnIndex], isAsync: true));
                 }
             }
 
             if (reader.TryReadColumn(columnIndex, setTimeout: false))
             {
-                return Task.FromResult<T>(reader.GetFieldValueFromSqlBufferInternal<T>(reader._data[columnIndex], reader._metaData[columnIndex]));
+                return Task.FromResult<T>(reader.GetFieldValueFromSqlBufferInternal<T>(reader._data[columnIndex], reader._metaData[columnIndex], isAsync:false));
             }
             else
             {

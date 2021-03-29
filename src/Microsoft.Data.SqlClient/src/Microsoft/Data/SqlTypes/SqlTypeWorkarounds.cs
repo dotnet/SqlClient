@@ -31,7 +31,7 @@ namespace Microsoft.Data.SqlTypes
             SqlCompareOptions.IgnoreNonSpace | SqlCompareOptions.IgnoreKanaType |
             SqlCompareOptions.BinarySort | SqlCompareOptions.BinarySort2;
 
-        internal static XmlReader SqlXmlCreateSqlXmlReader(Stream stream, bool closeInput = false, bool async = false)
+        internal static XmlReader SqlXmlCreateSqlXmlReader(Stream stream, bool closeInput, bool async)
         {
             Debug.Assert(closeInput || !async, "Currently we do not have pre-created settings for !closeInput+async");
 
@@ -42,7 +42,7 @@ namespace Microsoft.Data.SqlTypes
             return XmlReader.Create(stream, settingsToUse);
         }
 
-        internal static XmlReader SqlXmlCreateSqlXmlReader(TextReader textReader, bool closeInput = false, bool async = false)
+        internal static XmlReader SqlXmlCreateSqlXmlReader(TextReader textReader, bool closeInput, bool async)
         {
             Debug.Assert(closeInput || !async, "Currently we do not have pre-created settings for !closeInput+async");
 
