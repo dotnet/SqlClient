@@ -43,7 +43,7 @@ The following table shows the inner transient error list.
             <remarks>
 				<format type="text/markdown"><![CDATA[
 
-> [NOTE!]
+> [!NOTE]
 > The inner enumerator includes randomization to prevent multiple instances of the client from performing subsequent retry attempts at the same time.
 
 ]]></format>
@@ -64,7 +64,7 @@ The following table shows the inner transient error list.
             <remarks>
 				<format type="text/markdown"><![CDATA[
 
-> [NOTE!]
+> [!NOTE]
 > The inner enumerator includes randomization to prevent multiple instances of the client from performing subsequent retry attempts at the same time.
 
 ]]></format>
@@ -85,7 +85,7 @@ The following table shows the inner transient error list.
             <remarks>
 				<format type="text/markdown"><![CDATA[
 
-> [NOTE!]
+> [!NOTE]
 > The inner enumerator includes randomization to prevent multiple instances of the client from performing subsequent retry attempts at the same time.
 
 ]]></format>
@@ -105,7 +105,7 @@ The following table shows the inner transient error list.
             <remarks>
             <format type="text/markdown"><![CDATA[  
 
-> [NOTE!]
+> [!NOTE]
 > The returned provider of this function performs a single execution without any retry logic.  
 
 ]]>

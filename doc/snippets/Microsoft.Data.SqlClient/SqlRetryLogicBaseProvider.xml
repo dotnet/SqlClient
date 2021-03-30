@@ -23,7 +23,7 @@
             <remarks>
             <format type="text/markdown"><![CDATA[  
 
-> [NOTE!]
+> [!NOTE]
 > The `RetryLogic` property is assigned at `SqlRetryLogicBaseProvider` creation and its value is used as a template internally. Don't use it to monitor the status of the retry logic during and after execution. Instead, use the <xref=E:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.Retrying> event to collect data about retry executions.  
 
 ]]>
@@ -42,7 +42,7 @@
             <remarks>
             <format type="text/markdown"><![CDATA[  
 
-> [NOTE!]
+> [!NOTE]
 > The type of exception depends on the `function`'s internal implementation. But if the exception is due to all retry attempts failing, it will be an <xref:System.AggregateException> that consists of all exceptions that happened during the failed attempts.  
 
 ]]>
@@ -63,7 +63,7 @@
             <remarks>
             <format type="text/markdown"><![CDATA[  
 
-> [NOTE!]
+> [!NOTE]
 > If the exception comes from all retry attempts failing, it will be an <xref:System.AggregateException> that consists of all exceptions from the failed attempts.  
 
 ]]>
@@ -83,7 +83,7 @@
             <remarks>
             <format type="text/markdown"><![CDATA[  
 
-> [NOTE!]
+> [!NOTE]
 > If the exception comes from all retry attempts failing, it will be an <xref:System.AggregateException> that consists of all exceptions from the failed attempts.  
 
 ]]>
