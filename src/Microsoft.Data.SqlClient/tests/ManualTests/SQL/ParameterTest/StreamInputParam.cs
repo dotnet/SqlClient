@@ -467,8 +467,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     try
                     {
                         t.Wait();
-                        Console.WriteLine("FAIL: Expected AggregateException on Task wait for Cancelled Task!");
-                        Console.WriteLine("t.Status: " + t.Status);
+                        Console.WriteLine("FAIL: Expected AggregateException on Task wait for Cancelled Task! Task Status: " + t.Status);
                     }
                     catch (AggregateException ae)
                     {
@@ -515,8 +514,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     try
                     {
                         t.Wait();
-                        Console.WriteLine("FAIL: Expected AggregateException on Task wait for Cancelled Task!");
-                        Console.WriteLine("t.Status: " + t.Status);
+                        Console.WriteLine("FAIL: Expected AggregateException on Task wait for Cancelled Task! Task Status: " + t.Status);
                     }
                     catch (AggregateException ae)
                     {
@@ -556,8 +554,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     try
                     {
                         t.Wait();
-                        Console.WriteLine("FAIL: Expected AggregateException on Task wait for Cancelled Task!");
-                        Console.WriteLine("t.Status: " + t.Status);
+                        Console.WriteLine("FAIL: Expected AggregateException on Task wait for Cancelled Task! Task Status: " + t.Status);
                     }
                     catch (AggregateException ae)
                     {
@@ -643,13 +640,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         try
                         {
                             t.Wait();
-                            throw new Exception("Expected AggregateException on Task wait for Cancelled Task!");
+                            Console.WriteLine("FAIL: Expected AggregateException on Task wait for Cancelled Task! Task Status: " + t.Status);
                         }
                         catch (AggregateException ae)
                         {
                             if (!ae.InnerException.Message.Contains("Operation cancelled by user."))
                             {
-                                Console.WriteLine("Unexpected exception message: " + ae.InnerException.Message);
+                                Console.WriteLine("FAIL: Unexpected exception message: " + ae.InnerException.Message);
                             }
                         }
                         finally
