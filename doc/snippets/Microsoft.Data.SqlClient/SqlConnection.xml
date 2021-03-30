@@ -1065,7 +1065,7 @@ To apply the retry logic, do the following steps before opening the connection:
 > The connection **timeout** restarts for each execution of a connection open. There is no timing overlap between these two actions.
 
 > [!NOTE]
-> The default retry logic provider is not enabled unless it was configured in application configuration file. For more information, see [Configurable retry logic and configuration file](/sql/connect/ado-net/configurable-retry-logic-config-file).
+> The default retry logic provider is not enabled unless it is configured in an application configuration file. For more information, see [Configurable retry logic and configuration file](/sql/connect/ado-net/configurable-retry-logic-config-file-sqlclient).
 
 ## Example
 The following sample tries to open a connection to an invalid database to simulate a condition that the database service is temporarily unavailable . You should manually create the database while the <xref:Microsoft.Data.SqlClient.SqlConnection> tries to establish the connection.  

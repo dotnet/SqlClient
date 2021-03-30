@@ -77,7 +77,7 @@ namespace CustomCRL_Doc
             {
                 foreach (SqlError item in ex.Errors)
                 {
-                    // Check each error numbers if it was listed as a retriable error number
+                    // Check each error number to see if it is a retriable error number
                     if (retriableConditions.Contains(item.Number))
                     {
                         result = true;
@@ -85,7 +85,7 @@ namespace CustomCRL_Doc
                     }
                 }
             }
-            // Other types of exceptions can be assessed separately
+            // Other types of exceptions can also be assessed
             else if (e is TimeoutException)
             {
                 result = true;
@@ -110,7 +110,7 @@ namespace CustomCRL_Doc
             return GapTimeInterval;
         }
 
-        // Override the validate method to apply the new time range validation
+        // Override the validate method with the new time range validation
         protected override void Validate(TimeSpan timeInterval, TimeSpan maxTimeInterval, TimeSpan minTimeInterval)
         {
             if (minTimeInterval < TimeSpan.Zero || minTimeInterval > _maxValue)
@@ -139,7 +139,7 @@ namespace CustomCRL_Doc
     // <Snippet7>
     public class CustomRetryLogic : SqlRetryLogicBase
     {
-        // Maximum number of acceptable attempts
+        // Maximum number of attempts
         private const int maxAttempts = 20;
 
         public CustomRetryLogic(int numberOfTries,
@@ -152,7 +152,7 @@ namespace CustomCRL_Doc
                 throw new ArgumentOutOfRangeException(nameof(numberOfTries));
             }
 
-            // Assign the given parameters to the relevant properties
+            // Assign parameters to the relevant properties
             NumberOfTries = numberOfTries;
             RetryIntervalEnumerator = enumerator;
             TransientPredicate = transientPredicate;
@@ -170,14 +170,15 @@ namespace CustomCRL_Doc
         {
             intervalTime = TimeSpan.Zero;
             // First try has occurred before starting the retry process. 
-            // Check if it's still allowed to do retry
+            // Check if retry is still allowed
             bool result = Current < NumberOfTries - 1;
 
             if (result)
             {
                 // Increase the number of attempts
                 Current++;
-                // It doesn't matter if the enumerator gets to the last value until the number of attempts end.
+                // It's okay if the RetryIntervalEnumerator gets to the last value before we've reached our maximum number of attempts.
+                // MoveNext() will simply leave the enumerator on the final interval value and we will repeat that for the final attempts.
                 RetryIntervalEnumerator.MoveNext();
                 // Receive the current time from enumerator
                 intervalTime = RetryIntervalEnumerator.Current;
@@ -210,15 +211,15 @@ namespace CustomCRL_Doc
                     // Try to invoke the function
                     return function.Invoke();
                 }
-                // Catch any type of exceptions for further investigations
+                // Catch any type of exception for further investigation
                 catch (Exception e)
                 {
                     // Ask the RetryLogic object if this exception is a transient error
                     if (RetryLogic.TransientPredicate(e))
                     {
-                        // Add the exception to the list of retriable exceptions
+                        // Add the exception to the list of exceptions we've retried on
                         exceptions.Add(e);
-                        // Ask the RetryLogic for the next delay time before next attempt to run the function
+                        // Ask the RetryLogic for the next delay time before the next attempt to run the function
                         if (RetryLogic.TryNextInterval(out TimeSpan gapTime))
                         {
                             Console.WriteLine($"Wait for {gapTime} before next try");
@@ -227,7 +228,7 @@ namespace CustomCRL_Doc
                         }
                         else
                         {
-                            // Number of attempts has exceeded from the maximum number of tries
+                            // Number of attempts has exceeded the maximum number of tries
                             throw new AggregateException("The number of retries has exceeded the maximum number of attempts.", exceptions);
                         }
                     }
