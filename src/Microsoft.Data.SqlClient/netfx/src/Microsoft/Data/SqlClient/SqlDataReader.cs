@@ -1739,7 +1739,7 @@ namespace Microsoft.Data.SqlClient
                 // Wrap the sequential stream in an XmlReader
                 _currentStream = new SqlSequentialStream(this, i);
                 _lastColumnWithDataChunkRead = i;
-                return SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(_currentStream, closeInput: true);
+                return SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(_currentStream, closeInput: true, async: false);
             }
             else
             {
@@ -1749,7 +1749,7 @@ namespace Microsoft.Data.SqlClient
                 if (_data[i].IsNull)
                 {
                     // A 'null' stream
-                    return SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(new MemoryStream(new byte[0], writable: false), closeInput: true);
+                    return SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(new MemoryStream(new byte[0], writable: false), closeInput: true, async: false);
                 }
                 else
                 {
@@ -3234,14 +3234,16 @@ namespace Microsoft.Data.SqlClient
                         { // covers IsNull and when there is data which is present but is a clr null somehow
                             return (T)(object)SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(
                                 new MemoryStream(Array.Empty<byte>(), writable: false),
-                                closeInput: true
+                                closeInput: true,
+                                async: false
                             );
                         }
                         else if (clrValue.GetType() == typeof(string))
                         {
                             return (T)(object)SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(
                                 new StringReader(clrValue as string),
-                                closeInput: true
+                                closeInput: true,
+                                async: false
                             );
                         }
                         else

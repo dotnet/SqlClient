@@ -1044,7 +1044,7 @@ namespace Microsoft.Data.SqlClient
                 stream = ValueUtilsSmi.GetStream(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal], bypassTypeCheck: true);
             }
 
-            return SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(stream);
+            return SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(stream, closeInput: false, async: false);
         }
 
         //
