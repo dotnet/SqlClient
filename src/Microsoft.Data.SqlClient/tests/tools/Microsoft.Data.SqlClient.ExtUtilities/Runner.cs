@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Linq;
 
 namespace Microsoft.Data.SqlClient.ExtUtilities
 {
@@ -16,9 +17,9 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
         ///      [0] = CreateDatabase, DropDatabase
         ///      [1] = Name of Database
         /// </param>
-        public static void Main(string [] args)
+        public static void Main(string[] args)
         {
-            if (args == null || args.Length < 1)
+            if (!args.Any() || args.Length < 1)
             {
                 throw new ArgumentException("Utility name not provided.");
             }
