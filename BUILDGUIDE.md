@@ -148,6 +148,48 @@ Unix (`netcoreapp`):
 > dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="Windowsnetcoreapp" --no-build -v n --filter "FullyQualifiedName=Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.CspProviderExt.TestKeysFromCertificatesCreatedWithMultipleCryptoProviders"
 ```
 
+## Run Performance Tests
+
+### Pre-Requisites for running performance tests:
+Performance Tests require the below setup to run:
+* SQL Server with enabled Shared Memory, TCP and Named Pipes Protocols and access to the Client OS.
+* Database "NORTHWIND" present in SQL Server, created using SQL script [createNorthwindDb.sql](tools/testsql/createNorthwindDb.sql). To setup an Azure Database with "NORTHWIND" tables, use SQL Script: [createNorthwindAzureDb.sql](tools/testsql/createNorthwindAzureDb.sql).
+* Make a copy of the configuration file [config.default.json](src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.json) and rename it to `config.json`. Update the values in `config.json`:
+
+|Property|Description|Value|
+|------|--------|-------------------|
+|TCPConnectionString | Connection String for a TCP enabled SQL Server instance. | `Server={servername};Database={Database_Name};Trusted_Connection=True;` <br/> OR `Data Source={servername};Initial Catalog={Database_Name};Integrated Security=True;`|
+|NPConnectionString | Connection String for a Named Pipes enabled SQL Server instance.| `Server=\\{servername}\pipe\sql\query;Database={Database_Name};Trusted_Connection=True;` <br/> OR <br/> `Data Source=np:{servername};Initial Catalog={Database_Name};Integrated Security=True;`|
+|TCPConnectionStringHGSVBS | (Optional) Connection String for a TCP enabled SQL Server with Host Guardian Service (HGS) attestation protocol configuration. | `Server=tcp:{servername}; Database={Database_Name}; UID={UID}; PWD={PWD}; Attestation Protocol = HGS; Enclave Attestation Url = {AttestationURL};`|
+|UseManagedSNIOnWindows | (Optional) Enables testing with Managed SNI on Windows| `true` OR `false`|
+
+Commands to run tests:
+
+Windows (`netfx x86`):
+```bash
+> dotnet test "src\Microsoft.Data.SqlClient\tests\PerformanceTests\Microsoft.Data.SqlClient.Performance.Tests.csproj" /p:Platform="Win32" /p:Configuration="Release" /p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests"
+```
+
+Windows (`netfx x64`):
+```bash
+> dotnet test "src\Microsoft.Data.SqlClient\tests\PerformanceTests\Microsoft.Data.SqlClient.Performance.Tests.csproj" /p:Platform="x64" /p:Configuration="Release" /p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests"
+```
+
+Windows (`netcoreapp`):
+```bash
+> dotnet test "src\Microsoft.Data.SqlClient\tests\PerformanceTests\Microsoft.Data.SqlClient.Performance.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="Windowsnetcoreapp" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests"
+```
+
+Unix (`netcoreapp`):
+```bash
+> dotnet test "src/Microsoft.Data.SqlClient/tests/PerformanceTests/Microsoft.Data.SqlClient.Performance.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="Unixnetcoreapp" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonlinuxtests&category!=nonuaptests"
+```
+
+## Run A Single Test
+```bash
+> dotnet test "src\Microsoft.Data.SqlClient\tests\PerformanceTests\Microsoft.Data.SqlClient.Performance.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="Windowsnetcoreapp" --no-build -v n --filter "FullyQualifiedName=Microsoft.Data.SqlClient.Performance.Tests.SqlCommandReliabilityTest.RetryExecuteFail"
+```
+
 ## Testing with Custom ReferenceType
 
 Tests can be built and run with custom "Reference Type" property that enables different styles of testing:

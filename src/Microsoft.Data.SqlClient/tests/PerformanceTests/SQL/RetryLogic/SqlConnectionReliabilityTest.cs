@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace Microsoft.Data.SqlClient.ManualTesting.Tests
+namespace Microsoft.Data.SqlClient.Performance.Tests
 {
     public class SqlConnectionReliabilityTest
     {
@@ -51,12 +51,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [ActiveIssue(14590, TestPlatforms.Windows)]
         // avoid creating a new database in Azure
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureServer))]
+        [ConditionalTheory(typeof(PerfTestUtility), nameof(PerfTestUtility.IsNotAzureServer))]
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyLongRunner), parameters: new object[] { 10 }, MemberType = typeof(RetryLogicTestHelper))]
         public void CreateDatabaseWhileTryingToConnect(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             int currentRetries = 0;
-            string database = DataTestUtility.GetUniqueNameForSqlServer($"RetryLogic_{provider.RetryLogic.RetryIntervalEnumerator.GetType().Name}", false);
+            string database = PerfTestUtility.GetUniqueNameForSqlServer($"RetryLogic_{provider.RetryLogic.RetryIntervalEnumerator.GetType().Name}", false);
             var builder = new SqlConnectionStringBuilder(cnnString)
             {
                 InitialCatalog = database,
@@ -92,7 +92,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 finally
                 {
                     createDBTask?.Wait();
-                    DataTestUtility.DropDatabase(cnn1, database);
+                    PerfTestUtility.DropDatabase(cnn1, database);
                 }
             }
             Assert.True(currentRetries > 0);
@@ -130,7 +130,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalTheory(typeof(PerfTestUtility), nameof(PerfTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(RetryLogicTestHelper.GetNoneRetriableCondition), MemberType = typeof(RetryLogicTestHelper))]
         public void DefaultOpenWithoutRetry(string connectionString, SqlRetryLogicBaseProvider cnnProvider)
         {

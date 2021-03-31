@@ -7,7 +7,7 @@ using Xunit;
 using System.Data;
 using System.Threading.Tasks;
 
-namespace Microsoft.Data.SqlClient.ManualTesting.Tests
+namespace Microsoft.Data.SqlClient.Performance.Tests
 {
     public class SqlConfigurationManagerReliabilityTest
     {
@@ -18,12 +18,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string s_upperCaseRetryMethodName_Inc = RetryLogicConfigHelper.RetryMethodName_Inc.ToUpper();
         private static readonly string s_upperCaseRetryMethodName_Exp = RetryLogicConfigHelper.RetryMethodName_Exp.ToUpper();
 
-        private static string TcpCnnString => DataTestUtility.TCPConnectionString;
-        private static string InvalidTcpCnnString => new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+        private static string TcpCnnString => PerfTestUtility.TCPConnectionString;
+        private static string InvalidTcpCnnString => new SqlConnectionStringBuilder(PerfTestUtility.TCPConnectionString)
         { InitialCatalog = SqlConnectionReliabilityTest.InvalidInitialCatalog, ConnectTimeout = 1 }.ConnectionString;
 
         #region Internal Functions
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalTheory(typeof(PerfTestUtility), nameof(PerfTestUtility.AreConnStringsSetup))]
         [InlineData(RetryLogicConfigHelper.RetryMethodName_Fix, RetryLogicConfigHelper.RetryMethodName_Inc)]
         [InlineData(RetryLogicConfigHelper.RetryMethodName_Inc, RetryLogicConfigHelper.RetryMethodName_Exp)]
         [InlineData(RetryLogicConfigHelper.RetryMethodName_Exp, RetryLogicConfigHelper.RetryMethodName_Fix)]
@@ -50,7 +50,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             s_commandCRLTest.RetryExecuteUnauthorizedSqlStatementDML(TcpCnnString, cmdProvider);
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalTheory(typeof(PerfTestUtility), nameof(PerfTestUtility.AreConnStringsSetup))]
         [InlineData(RetryLogicConfigHelper.RetryMethodName_Fix, RetryLogicConfigHelper.RetryMethodName_Inc)]
         [InlineData(RetryLogicConfigHelper.RetryMethodName_Inc, RetryLogicConfigHelper.RetryMethodName_Exp)]
         [InlineData(RetryLogicConfigHelper.RetryMethodName_Exp, RetryLogicConfigHelper.RetryMethodName_Fix)]
@@ -71,14 +71,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         #endregion
 
         #region External Functions
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [InlineData("ClassLibrary.StaticCustomConfigurableRetryLogic, ClassLibrary_CustomConfigurableRetryLogic", "GetDefaultRetry_static")]
-        [InlineData("ClassLibrary.StructCustomConfigurableRetryLogic, ClassLibrary_CustomConfigurableRetryLogic", "GetDefaultRetry_static")]
-        [InlineData("ClassLibrary.StructCustomConfigurableRetryLogic, ClassLibrary_CustomConfigurableRetryLogic", "GetDefaultRetry")]
-        [InlineData("ClassLibrary.CustomConfigurableRetryLogic, ClassLibrary_CustomConfigurableRetryLogic", "GetDefaultRetry_static")]
-        [InlineData("ClassLibrary.CustomConfigurableRetryLogic, ClassLibrary_CustomConfigurableRetryLogic", "GetDefaultRetry")]
-        [InlineData("ClassLibrary.CustomConfigurableRetryLogic, ClassLibrary_CustomConfigurableRetryLogic, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null", "GetDefaultRetry")]
-        [InlineData("ClassLibrary.CustomConfigurableRetryLogicEx, ClassLibrary_CustomConfigurableRetryLogic", "GetDefaultRetry")]
+        [ConditionalTheory(typeof(PerfTestUtility), nameof(PerfTestUtility.AreConnStringsSetup))]
+        [InlineData("ConfigurableRetryLogic.Sample.StaticCustomConfigurableRetryLogic, ExternalConfigurableRetryLogic", "GetDefaultRetry_static")]
+        [InlineData("ConfigurableRetryLogic.Sample.StructCustomConfigurableRetryLogic, ExternalConfigurableRetryLogic", "GetDefaultRetry_static")]
+        [InlineData("ConfigurableRetryLogic.Sample.StructCustomConfigurableRetryLogic, ExternalConfigurableRetryLogic", "GetDefaultRetry")]
+        [InlineData("ConfigurableRetryLogic.Sample.CustomConfigurableRetryLogic, ExternalConfigurableRetryLogic", "GetDefaultRetry_static")]
+        [InlineData("ConfigurableRetryLogic.Sample.CustomConfigurableRetryLogic, ExternalConfigurableRetryLogic", "GetDefaultRetry")]
+        [InlineData("ConfigurableRetryLogic.Sample.CustomConfigurableRetryLogic, ExternalConfigurableRetryLogic, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null", "GetDefaultRetry")]
+        [InlineData("ConfigurableRetryLogic.Sample.CustomConfigurableRetryLogicEx, ExternalConfigurableRetryLogic", "GetDefaultRetry")]
         public void LoadCustomMethod(string typeName, string methodName)
         {
             bool switchValue = true;
@@ -100,17 +100,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TestCommandExecuteAsync(cmdProvider, cmdCfg).Wait();
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [InlineData("ClassLibrary.Invalid, ClassLibrary_CustomConfigurableRetryLogic", "GetDefaultRetry_static")]
-        [InlineData("ClassLibrary.Invalid, ClassLibrary_CustomConfigurableRetryLogic", "GetDefaultRetry")]
-        [InlineData("ClassLibrary.CustomConfigurableRetryLogic, ClassLibrary_Invalid", "GetDefaultRetry_static")]
-        [InlineData("ClassLibrary.StaticCustomConfigurableRetryLogic, ClassLibrary_Invalid", "GetDefaultRetry_static")]
-        [InlineData("ClassLibrary.StructCustomConfigurableRetryLogic, ClassLibrary_Invalid", "GetDefaultRetry")]
+        [ConditionalTheory(typeof(PerfTestUtility), nameof(PerfTestUtility.AreConnStringsSetup))]
+        [InlineData("ClassLibrary.Invalid, ExternalConfigurableRetryLogic", "GetDefaultRetry_static")]
+        [InlineData("ClassLibrary.Invalid, ExternalConfigurableRetryLogic", "GetDefaultRetry")]
+        [InlineData("ConfigurableRetryLogic.Sample.CustomConfigurableRetryLogic, ClassLibrary_Invalid", "GetDefaultRetry_static")]
+        [InlineData("ConfigurableRetryLogic.Sample.StaticCustomConfigurableRetryLogic, ClassLibrary_Invalid", "GetDefaultRetry_static")]
+        [InlineData("ConfigurableRetryLogic.Sample.StructCustomConfigurableRetryLogic, ClassLibrary_Invalid", "GetDefaultRetry")]
         // Type and method name are case sensitive.
-        [InlineData("ClassLibrary.StaticCustomConfigurableRetryLogic, ClassLibrary_CustomConfigurableRetryLogic", "GETDEFAULTRETRY_STATIC")]
-        [InlineData("ClassLibrary.STRUCTCUSTOMCONFIGURABLERETRYLOGIC, ClassLibrary_CustomConfigurableRetryLogic", "GetDefaultRetry")]
-        [InlineData("CLASSLIBRARY.CustomConfigurableRetryLogic, ClassLibrary_CustomConfigurableRetryLogic", "GetDefaultRetry_static")]
-        [InlineData("ClassLibrary.CustomConfigurableRetryLogic, ClassLibrary_CustomConfigurableRetryLogic", "getdefaultretry")]
+        [InlineData("ConfigurableRetryLogic.Sample.StaticCustomConfigurableRetryLogic, ExternalConfigurableRetryLogic", "GETDEFAULTRETRY_STATIC")]
+        [InlineData("ConfigurableRetryLogic.Sample.STRUCTCUSTOMCONFIGURABLERETRYLOGIC, ExternalConfigurableRetryLogic", "GetDefaultRetry")]
+        [InlineData("CONFIGURABLERETRYLOGIC.SAMPLE.CustomConfigurableRetryLogic, ExternalConfigurableRetryLogic", "GetDefaultRetry_static")]
+        [InlineData("ConfigurableRetryLogic.Sample.CustomConfigurableRetryLogic, ExternalConfigurableRetryLogic", "getdefaultretry")]
         public void LoadInvalidCustomRetryLogicType(string typeName, string methodName)
         {
             bool switchValue = true;
@@ -133,7 +133,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         #endregion
 
         #region Invalid Configurations
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalTheory(typeof(PerfTestUtility), nameof(PerfTestUtility.AreConnStringsSetup))]
         [InlineData("InvalidMethodName")]
         [InlineData("Fix")]
         [InlineData(null)]
@@ -152,7 +152,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             s_commandCRLTest.NoneRetriableExecuteFail(TcpCnnString, cmdProvider);
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalTheory(typeof(PerfTestUtility), nameof(PerfTestUtility.AreConnStringsSetup))]
         [InlineData("InvalidRetrylogicTypeName")]
         [InlineData("")]
         [InlineData(null)]

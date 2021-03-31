@@ -49,14 +49,20 @@
     <ManualTests Include="**/tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj"/>
     <ManualTests Include="**/tools/CoreFx.Private.TestUtilities/CoreFx.Private.TestUtilities.csproj" />
     <ManualTests Include="**/ManualTests/Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" />
+
+    <PerformanceTests Condition="$(ReferenceType.Contains('NetStandard'))" Include="**/NSLibrary/Microsoft.Data.SqlClient.NSLibrary.csproj" />
+    <PerformanceTests Include="**/tools/Microsoft.DotNet.XUnitExtensions/Microsoft.DotNet.XUnitExtensions.csproj" />
+    <PerformanceTests Include="**/tools/CoreFx.Private.TestUtilities/CoreFx.Private.TestUtilities.csproj" />
+    <PerformanceTests Include="**/CustomConfigurableRetryLogic/ConfigurableRetryLogic.Sample.csproj" />
+    <PerformanceTests Include="**/PerformanceTests/Microsoft.Data.SqlClient.Performance.Tests.csproj" />
   </ItemGroup>
 
   <!-- Top Level Build targets -->
   <Target Name="Restore" DependsOnTargets="RestoreNetCore;RestoreNetFx" />
   <Target Name="BuildAll" DependsOnTargets="BuildNetFx;BuildNetCore" />
   <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildNetFx;BuildNetCoreAllOS;GenerateNugetPackage" />
-  <Target Name="BuildTestsNetCore" DependsOnTargets="RestoreTestsNetCore;BuildAKVNetCore;BuildFunctionalTestsNetCore;BuildManualTestsNetCore" />
-  <Target Name="BuildTestsNetFx" DependsOnTargets="RestoreTestsNetFx;BuildAKVNetFx;BuildFunctionalTestsNetFx;BuildManualTestsNetFx;" />
+  <Target Name="BuildTestsNetCore" DependsOnTargets="RestoreTestsNetCore;BuildAKVNetCore;BuildFunctionalTestsNetCore;BuildManualTestsNetCore;BuildPerfTestsNetCore" />
+  <Target Name="BuildTestsNetFx" DependsOnTargets="RestoreTestsNetFx;BuildAKVNetFx;BuildFunctionalTestsNetFx;BuildManualTestsNetFx;BuildPerfTestsNetFx" />
 
   <Target Name="RestoreNetCore">
     <MSBuild Projects="@(NetCoreDriver)" Targets="restore" Properties="TestTargetOS=$(TestOS)netcoreapp" />
@@ -65,6 +71,7 @@
   <Target Name="RestoreTestsNetCore">
     <MSBuild Projects="@(ManualTests)" Targets="restore" Properties="TestTargetOS=$(TestOS)netcoreapp" />
     <MSBuild Projects="@(FunctionalTests)" Targets="restore" Properties="TestTargetOS=$(TestOS)netcoreapp" />
+    <MSBuild Projects="@(PerformanceTests)" Targets="restore" Properties="TestTargetOS=$(TestOS)netcoreapp" />
   </Target>
 
   <Target Name="RestoreNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
@@ -74,6 +81,7 @@
   <Target Name="RestoreTestsNetFx">
     <MSBuild Projects="@(ManualTests)" Targets="restore" Properties="TestTargetOS=$(TestOS)netfx" />
     <MSBuild Projects="@(FunctionalTests)" Targets="restore" Properties="TestTargetOS=$(TestOS)netfx" />
+    <MSBuild Projects="@(PerformanceTests)" Targets="restore" Properties="TestTargetOS=$(TestOS)netfx" />
   </Target>
 
   <Target Name="BuildNetFx" DependsOnTargets="RestoreNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
@@ -102,12 +110,22 @@
     <MSBuild Projects="@(ManualTests)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=$(Platform);" Condition="$(ReferenceType.Contains('Package'))"/>
   </Target>
 
+  <Target Name="BuildPerfTestsNetCore" DependsOnTargets="RestoreTestsNetCore">
+    <!-- Only build platform specific builds for Package reference types -->
+    <MSBuild Projects="@(PerformanceTests)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=AnyCPU;" Condition="!$(ReferenceType.Contains('Package'))"/>
+    <MSBuild Projects="@(PerformanceTests)" Properties="TestTargetOS=$(TestOS)netcoreapp;$(TestProjectProperties);Platform=$(Platform);" Condition="$(ReferenceType.Contains('Package'))"/>
+  </Target>
+
   <Target Name="BuildFunctionalTestsNetFx" DependsOnTargets="RestoreTestsNetFx;BuildNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
     <MSBuild Projects="@(FunctionalTests)" Properties="TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=$(Platform);" />
   </Target>
 
   <Target Name="BuildManualTestsNetFx" DependsOnTargets="RestoreTestsNetFx;BuildNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
     <MSBuild Projects="@(ManualTests)" Properties="TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=$(Platform);" />
+  </Target>
+
+  <Target Name="BuildPerfTestsNetFx" DependsOnTargets="RestoreTestsNetFx;BuildNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
+    <MSBuild Projects="@(PerformanceTests)" Properties="TestTargetOS=$(TestOS)netfx;$(TestProjectProperties);Platform=$(Platform);" />
   </Target>
 
   <Target Name="Clean">

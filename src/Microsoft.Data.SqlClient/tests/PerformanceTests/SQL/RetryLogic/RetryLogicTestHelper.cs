@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Microsoft.Data.SqlClient.ManualTesting.Tests
+namespace Microsoft.Data.SqlClient.Performance.Tests
 {
     /// Define the SQL command type by filtering purpose.
     [Flags]
@@ -87,7 +87,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static IEnumerable<object[]> GetConnectionStrings()
         {
             var builder = new SqlConnectionStringBuilder();
-            foreach (var cnnString in DataTestUtility.ConnectionStrings)
+            foreach (var cnnString in PerfTestUtility.ConnectionStrings)
             {
                 builder.Clear();
                 builder.ConnectionString = cnnString;
@@ -159,12 +159,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static IEnumerable<object[]> GetNoneRetriableCondition()
         {
             RetryLogicTestHelper.SetRetrySwitch(true);
-            yield return new object[] { DataTestUtility.TCPConnectionString, null};
-            yield return new object[] { DataTestUtility.TCPConnectionString, SqlConfigurableRetryFactory.CreateNoneRetryProvider()};
+            yield return new object[] { PerfTestUtility.TCPConnectionString, null};
+            yield return new object[] { PerfTestUtility.TCPConnectionString, SqlConfigurableRetryFactory.CreateNoneRetryProvider()};
 
             RetryLogicTestHelper.SetRetrySwitch(false);
-            yield return new object[] { DataTestUtility.TCPConnectionString, null};
-            yield return new object[] { DataTestUtility.TCPConnectionString, SqlConfigurableRetryFactory.CreateNoneRetryProvider()};
+            yield return new object[] { PerfTestUtility.TCPConnectionString, null};
+            yield return new object[] { PerfTestUtility.TCPConnectionString, SqlConfigurableRetryFactory.CreateNoneRetryProvider()};
 
             var option = new SqlRetryLogicOption()
             {
@@ -173,7 +173,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 MaxTimeInterval = TimeSpan.FromSeconds(2)
             };
             foreach (var provider in GetRetryStrategies(option))
-                yield return new object[] { DataTestUtility.TCPConnectionString, provider[0]};
+                yield return new object[] { PerfTestUtility.TCPConnectionString, provider[0]};
         }
 
         private static IEnumerable<object[]> GetRetryStrategies(SqlRetryLogicOption retryLogicOption)
