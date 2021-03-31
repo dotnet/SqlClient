@@ -116,9 +116,10 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="port">TCP port number</param>
         /// <param name="timerExpire">Connection timer expiration</param>
         /// <param name="parallel">Parallel executions</param>
+        /// <param name="ipPreference">IP address preference</param>
         /// <param name="cachedFQDN">Key for DNS Cache</param>
-        /// <param name="pendingDNSInfo">Used for DNS Cache</param>
-        public SNITCPHandle(string serverName, int port, long timerExpire, bool parallel, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
+        /// <param name="pendingDNSInfo">Used for DNS Cache</param>        
+        public SNITCPHandle(string serverName, int port, long timerExpire, bool parallel, SqlConnectionIPAddressPreference ipPreference, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
         {
             long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent(s_className);
             SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.INFO, "Connection Id {0}, Setting server name = {1}", args0: _connectionId, args1: serverName);
@@ -157,7 +158,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         }
                         else
                         {
-                            _socket = Connect(serverName, port, ts, isInfiniteTimeOut, cachedFQDN, ref pendingDNSInfo);
+                            _socket = Connect(serverName, port, ts, isInfiniteTimeOut, ipPreference, cachedFQDN, ref pendingDNSInfo);
                         }
                     }
                     catch (Exception ex)
@@ -175,15 +176,26 @@ namespace Microsoft.Data.SqlClient.SNI
                                 int portRetry = string.IsNullOrEmpty(cachedDNSInfo.Port) ? port : int.Parse(cachedDNSInfo.Port);
                                 SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.INFO, "Connection Id {0}, Retrying with cached DNS IP Address {1} and port {2}", args0: _connectionId, args1: cachedDNSInfo.AddrIPv4, args2: cachedDNSInfo.Port);
 
+                                string cachedIPA;
+                                string cachedIPB;
+
+                                if (SqlConnectionIPAddressPreference.IPv6First == ipPreference) {
+                                    cachedIPA = cachedDNSInfo.AddrIPv6;
+                                    cachedIPB = cachedDNSInfo.AddrIPv4;
+                                } else {
+                                    cachedIPA = cachedDNSInfo.AddrIPv4;
+                                    cachedIPB = cachedDNSInfo.AddrIPv6;
+                                }
+
                                 try
                                 {
                                     if (parallel)
                                     {
-                                        _socket = TryConnectParallel(cachedDNSInfo.AddrIPv4, portRetry, ts, isInfiniteTimeOut, ref reportError, cachedFQDN, ref pendingDNSInfo);
+                                        _socket = TryConnectParallel(cachedIPA, portRetry, ts, isInfiniteTimeOut, ref reportError, cachedFQDN, ref pendingDNSInfo);
                                     }
                                     else
                                     {
-                                        _socket = Connect(cachedDNSInfo.AddrIPv4, portRetry, ts, isInfiniteTimeOut, cachedFQDN, ref pendingDNSInfo);
+                                        _socket = Connect(cachedIPA, portRetry, ts, isInfiniteTimeOut, ipPreference, cachedFQDN, ref pendingDNSInfo);
                                     }
                                 }
                                 catch (Exception exRetry)
@@ -194,11 +206,11 @@ namespace Microsoft.Data.SqlClient.SNI
                                         SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.INFO, "Connection Id {0}, Retrying exception {1}", args0: _connectionId, args1: exRetry?.Message);
                                         if (parallel)
                                         {
-                                            _socket = TryConnectParallel(cachedDNSInfo.AddrIPv6, portRetry, ts, isInfiniteTimeOut, ref reportError, cachedFQDN, ref pendingDNSInfo);
+                                            _socket = TryConnectParallel(cachedIPB, portRetry, ts, isInfiniteTimeOut, ref reportError, cachedFQDN, ref pendingDNSInfo);
                                         }
                                         else
                                         {
-                                            _socket = Connect(cachedDNSInfo.AddrIPv6, portRetry, ts, isInfiniteTimeOut, cachedFQDN, ref pendingDNSInfo);
+                                            _socket = Connect(cachedIPB, portRetry, ts, isInfiniteTimeOut, ipPreference, cachedFQDN, ref pendingDNSInfo);
                                         }
                                     }
                                     else
@@ -320,34 +332,25 @@ namespace Microsoft.Data.SqlClient.SNI
         // Connect to server with hostName and port.
         // The IP information will be collected temporarily as the pendingDNSInfo but is not stored in the DNS cache at this point.
         // Only write to the DNS cache when we receive IsSupported flag as true in the Feature Ext Ack from server.
-        private static Socket Connect(string serverName, int port, TimeSpan timeout, bool isInfiniteTimeout, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
+        private static Socket Connect(string serverName, int port, TimeSpan timeout, bool isInfiniteTimeout, SqlConnectionIPAddressPreference ipPreference, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
         {
             IPAddress[] ipAddresses = Dns.GetHostAddresses(serverName);
 
             string IPv4String = null;
-            string IPv6String = null;
-
-            IPAddress serverIPv4 = null;
-            IPAddress serverIPv6 = null;
-            foreach (IPAddress ipAddress in ipAddresses)
-            {
-                if (ipAddress.AddressFamily == AddressFamily.InterNetwork)
-                {
-                    serverIPv4 = ipAddress;
-                    IPv4String = ipAddress.ToString();
-                }
-                else if (ipAddress.AddressFamily == AddressFamily.InterNetworkV6)
-                {
-                    serverIPv6 = ipAddress;
-                    IPv6String = ipAddress.ToString();
-                }
-            }
-            ipAddresses = new IPAddress[] { serverIPv4, serverIPv6 };
+            string IPv6String = null;         
+            
             Socket[] sockets = new Socket[2];
+            AddressFamily[] preferedIPFamilies = new AddressFamily[2];
 
-            if (IPv4String != null || IPv6String != null)
+            if (ipPreference == SqlConnectionIPAddressPreference.IPv6First)
             {
-                pendingDNSInfo = new SQLDNSInfo(cachedFQDN, IPv4String, IPv6String, port.ToString());
+                preferedIPFamilies[0] = AddressFamily.InterNetworkV6;
+                preferedIPFamilies[1] = AddressFamily.InterNetwork;
+            }
+            else
+            {
+                preferedIPFamilies[0] = AddressFamily.InterNetwork;
+                preferedIPFamilies[1] = AddressFamily.InterNetworkV6;
             }
 
             CancellationTokenSource cts = null;
@@ -380,43 +383,76 @@ namespace Microsoft.Data.SqlClient.SNI
             Socket availableSocket = null;
             try
             {
-                for (int i = 0; i < sockets.Length; ++i)
+                // We go through the IP list twice.
+                // In the first traversal, we only try to connect with the preferedIPFamilies[0].
+                // In the second traversal, we only try to connect with the preferedIPFamilies[1].
+                // For UsePlatformDefault preference, we do traveral once.
+                for (int i = 0; i < preferedIPFamilies.Length; ++i)
                 {
-                    try
+
+                    foreach (IPAddress ipAddress in ipAddresses)
                     {
-                        if (ipAddresses[i] != null)
+                        try
                         {
-                            sockets[i] = new Socket(ipAddresses[i].AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-
-                            // enable keep-alive on socket
-                            SetKeepAliveValues(ref sockets[i]);
-
-                            SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.INFO, "Connecting to IP address {0} and port {1}", args0: ipAddresses[i], args1: port);
-                            sockets[i].Connect(ipAddresses[i], port);
-                            if (sockets[i] != null) // sockets[i] can be null if cancel callback is executed during connect()
+                            if (ipAddress != null)
                             {
-                                if (sockets[i].Connected)
+                                if (ipAddress.AddressFamily != preferedIPFamilies[i] && ipPreference != SqlConnectionIPAddressPreference.UsePlatformDefault)
                                 {
-                                    availableSocket = sockets[i];
-                                    break;
+                                    continue;
                                 }
-                                else
+
+                                sockets[i] = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+
+                                // enable keep-alive on socket
+                                SetKeepAliveValues(ref sockets[i]);
+
+                                SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.INFO, "Connecting to IP address {0} and port {1}", args0: ipAddress, args1: port);
+                                sockets[i].Connect(ipAddress, port);
+                                if (sockets[i] != null) // sockets[i] can be null if cancel callback is executed during connect()
                                 {
-                                    sockets[i].Dispose();
-                                    sockets[i] = null;
+                                    if (sockets[i].Connected)
+                                    {
+                                        availableSocket = sockets[i];
+                                        if (ipAddress.AddressFamily == AddressFamily.InterNetwork)
+                                        {
+                                            IPv4String = ipAddress.ToString();
+                                        }
+                                        else if (ipAddress.AddressFamily == AddressFamily.InterNetworkV6)
+                                        {
+                                            IPv6String = ipAddress.ToString();
+                                        }
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        sockets[i].Dispose();
+                                        sockets[i] = null;
+                                    }
                                 }
                             }
                         }
+                        catch (Exception e)
+                        {
+                            SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR, "THIS EXCEPTION IS BEING SWALLOWED: {0}", args0: e?.Message);
+                        }
                     }
-                    catch (Exception e)
+
+                    // If we have already got an valid Socket, we won't do the second traversal.
+                    if (availableSocket != null || ipPreference == SqlConnectionIPAddressPreference.UsePlatformDefault) 
                     {
-                        SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR, "THIS EXCEPTION IS BEING SWALLOWED: {0}", args0: e?.Message);
+                        break;
                     }
                 }
             }
             finally
             {
                 cts?.Dispose();
+            }
+
+            // we only record the ip we can connect with successfully.
+            if (IPv4String != null || IPv6String != null)
+            {
+                pendingDNSInfo = new SQLDNSInfo(cachedFQDN, IPv4String, IPv6String, port.ToString());
             }
 
             return availableSocket;
