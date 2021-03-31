@@ -469,23 +469,23 @@ End Module
             <value>The list of trusted master key paths for the column encryption.</value>
             <remarks>To be added.</remarks>
         </ColumnEncryptionTrustedMasterKeyPaths>
-		<CommandTimeout>
-			<summary>
-				Gets the default wait time (in seconds) before terminating the attempt to execute a command and generating an error. The default is 30 seconds.
-			</summary>
-			<value>
-				The time in seconds to wait for the command to execute. The default is 30 seconds.
-			</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
+        <CommandTimeout>
+           <summary>
+             Gets the default wait time (in seconds) before terminating the attempt to execute a command and generating an error. The default is 30 seconds.
+           </summary>
+           <value>
+             The time in seconds to wait for the command to execute. The default is 30 seconds.
+           </value>
+           <remarks>
+                 <format type="text/markdown"><![CDATA[  
+        
 ## Remarks  
 
  You can set the default wait time by using the `Command Timeout` keyword in the connection string. A value of 0 indicates no limit (an attempt to execute a command will wait indefinitely).
   
  ]]></format>
-            </remarks>
-		</CommandTimeout>
+           </remarks>
+        </CommandTimeout>
         <ConnectionString>
             <summary>Gets or sets the string used to open a SQL Server database.</summary>
             <value>The connection string that includes the source database name, and other parameters needed to establish the initial connection. The default value is an empty string.</value>
@@ -1021,7 +1021,7 @@ GO
             </remarks>
         </PacketSize>
         <RegisterColumnEncryptionKeyStoreProviders>
-            <param name="customProviders">Custom column encryption key provider dictionary</param>
+            <param name="customProviders">Dictionary of custom column encryption key store providers</param>
             <summary>Registers the column encryption key store providers. This function should only be called once in an app. This does shallow copying of the dictionary so that the app cannot alter the custom provider list once it has been set.</summary>
             <remarks>
             <format type="text/markdown"><![CDATA[  
@@ -1034,7 +1034,42 @@ GO
  ```
   ]]></format>
             </remarks>
+          <exception cref="T:System.ArgumentNullException">
+            A null dictionary was provided.
+
+            -or-
+
+            A string key in the dictionary was null or empty.
+
+            -or-
+
+            A <see cref="T:Microsoft.Data.SqlClient.SqlColumnEncryptionKeyStoreProvider" /> value in the dictionary was null.
+          </exception>
+          <exception cref="T:System.ArgumentException">
+            A string key in the dictionary started with "MSSQL_". This prefix is reserved for system providers.
+          </exception>
+          <exception cref="T:System.InvalidOperationException">
+            This function was called more than once.
+          </exception>
         </RegisterColumnEncryptionKeyStoreProviders>
+        <RegisterColumnEncryptionKeyStoreProvidersOnConnection>
+            <param name="customProviders">Dictionary of custom column encryption key providers</param>
+            <summary>Registers the encryption key store providers on the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> instance. If this function has been called, any providers registered using the static <see cref="T:Microsoft.Data.SqlClient.SqlConnection.RegisterColumnEncryptionKeyStoreProviders" /> methods will be ignored. This function can be called more than once. This does shallow copying of the dictionary so that the app cannot alter the custom provider list once it has been set.</summary>
+            <exception cref="T:System.ArgumentNullException">
+                A null dictionary was provided.
+
+                -or-
+
+                A string key in the dictionary was null or empty.
+
+                -or-
+
+                An EncryptionKeyStoreProvider value in the dictionary was null.
+              </exception>
+              <exception cref="T:System.ArgumentException">
+                A string key in the dictionary started with "MSSQL_". This prefix is reserved for system providers.
+              </exception>
+        </RegisterColumnEncryptionKeyStoreProvidersOnConnection>
         <RetryLogicProvider>
 			<summary> Gets or sets a value that specifies the 
 				<see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider" />
