@@ -3831,8 +3831,15 @@ namespace Microsoft.Data.SqlClient
 
                         _sharedState._nextColumnDataToRead = _sharedState._nextColumnHeaderToRead;
                         _sharedState._nextColumnHeaderToRead++;  // We read this one
-
                         _sharedState._columnDataBytesRemaining = (long)dataLength;
+
+                        if (isNull && columnMetaData.type != SqlDbType.Timestamp)
+                        {
+                            TdsParser.GetNullSqlValue(_data[_sharedState._nextColumnDataToRead],
+                                columnMetaData,
+                                _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
+                                _parser.Connection);
+                        }
                     }
                     else
                     {
