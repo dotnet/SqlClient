@@ -2,7 +2,7 @@
     <members name="SqlConnectionIPAddressPreference">
         <SqlConnectionIPAddressPreference>
             <summary>
-                Specifies a value for Attestation Protocol.
+                Specifies a value for IP address preference when doing TCP connection.
             </summary>
         </SqlConnectionIPAddressPreference>
         <IPv4First>
