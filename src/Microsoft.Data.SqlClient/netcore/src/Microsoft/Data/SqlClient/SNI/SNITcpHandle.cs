@@ -327,28 +327,8 @@ namespace Microsoft.Data.SqlClient.SNI
             string IPv4String = null;
             string IPv6String = null;
 
-            IPAddress serverIPv4 = null;
-            IPAddress serverIPv6 = null;
-            foreach (IPAddress ipAddress in ipAddresses)
-            {
-                if (ipAddress.AddressFamily == AddressFamily.InterNetwork)
-                {
-                    serverIPv4 = ipAddress;
-                    IPv4String = ipAddress.ToString();
-                }
-                else if (ipAddress.AddressFamily == AddressFamily.InterNetworkV6)
-                {
-                    serverIPv6 = ipAddress;
-                    IPv6String = ipAddress.ToString();
-                }
-            }
-            ipAddresses = new IPAddress[] { serverIPv4, serverIPv6 };
             Socket[] sockets = new Socket[2];
-
-            if (IPv4String != null || IPv6String != null)
-            {
-                pendingDNSInfo = new SQLDNSInfo(cachedFQDN, IPv4String, IPv6String, port.ToString());
-            }
+            AddressFamily[] preferedIPFamilies = new AddressFamily[] { AddressFamily.InterNetwork, AddressFamily.InterNetworkV6 };
 
             CancellationTokenSource cts = null;
 
@@ -380,43 +360,71 @@ namespace Microsoft.Data.SqlClient.SNI
             Socket availableSocket = null;
             try
             {
-                for (int i = 0; i < sockets.Length; ++i)
+                // We go through the IP list twice.
+                // In the first traversal, we only try to connect with the preferedIPFamilies[0].
+                // In the second traversal, we only try to connect with the preferedIPFamilies[1].
+                for (int i = 0; i < preferedIPFamilies.Length; ++i)
                 {
-                    try
+                    foreach (IPAddress ipAddress in ipAddresses)
                     {
-                        if (ipAddresses[i] != null)
+                        try
                         {
-                            sockets[i] = new Socket(ipAddresses[i].AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-
-                            // enable keep-alive on socket
-                            SetKeepAliveValues(ref sockets[i]);
-
-                            SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.INFO, "Connecting to IP address {0} and port {1}", args0: ipAddresses[i], args1: port);
-                            sockets[i].Connect(ipAddresses[i], port);
-                            if (sockets[i] != null) // sockets[i] can be null if cancel callback is executed during connect()
+                            if (ipAddress != null && ipAddress.AddressFamily == preferedIPFamilies[i])
                             {
-                                if (sockets[i].Connected)
+                                sockets[i] = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+
+                                // enable keep-alive on socket
+                                SetKeepAliveValues(ref sockets[i]);
+
+                                SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.INFO, "Connecting to IP address {0} and port {1}", args0: ipAddress, args1: port);
+                                sockets[i].Connect(ipAddress, port);
+                                if (sockets[i] != null) // sockets[i] can be null if cancel callback is executed during connect()
                                 {
-                                    availableSocket = sockets[i];
-                                    break;
-                                }
-                                else
-                                {
-                                    sockets[i].Dispose();
-                                    sockets[i] = null;
+                                    if (sockets[i].Connected)
+                                    {
+                                        availableSocket = sockets[i];
+
+                                        if (ipAddress.AddressFamily == AddressFamily.InterNetwork)
+                                        {
+                                            IPv4String = ipAddress.ToString();
+                                        }
+                                        else if (ipAddress.AddressFamily == AddressFamily.InterNetworkV6)
+                                        {
+                                            IPv6String = ipAddress.ToString();
+                                        }
+
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        sockets[i].Dispose();
+                                        sockets[i] = null;
+                                    }
                                 }
                             }
                         }
+                        catch (Exception e)
+                        {
+                            SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR, "THIS EXCEPTION IS BEING SWALLOWED: {0}", args0: e?.Message);
+                        }
                     }
-                    catch (Exception e)
+
+                    // If we have already got an valid Socket, we won't do the second traversal.
+                    if (availableSocket != null) 
                     {
-                        SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR, "THIS EXCEPTION IS BEING SWALLOWED: {0}", args0: e?.Message);
-                    }
+                        break;
+                    }                    
                 }
             }
             finally
             {
                 cts?.Dispose();
+            }
+
+            // we only record the ip we can connect with successfully.
+            if (IPv4String != null || IPv6String != null)
+            {
+                pendingDNSInfo = new SQLDNSInfo(cachedFQDN, IPv4String, IPv6String, port.ToString());
             }
 
             return availableSocket;
