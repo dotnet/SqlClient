@@ -4,9 +4,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Data;
 using System.Data.SqlTypes;
+using System.Diagnostics;
 using System.Globalization;
 
 namespace Microsoft.Data.SqlClient.Server
@@ -74,13 +74,14 @@ namespace Microsoft.Data.SqlClient.Server
         private static readonly IList<SmiExtendedMetaData> s_emptyFieldList = new List<SmiExtendedMetaData>().AsReadOnly();
 
         // Precision to max length lookup table
-        private static byte[] s_maxLenFromPrecision = new byte[] {5,5,5,5,5,5,5,5,5,9,9,9,9,9,
+        private static readonly byte[] s_maxLenFromPrecision = new byte[] {5,5,5,5,5,5,5,5,5,9,9,9,9,9,
             9,9,9,9,9,13,13,13,13,13,13,13,13,13,17,17,17,17,17,17,17,17,17,17};
 
         // Scale offset to max length lookup table
-        private static byte[] s_maxVarTimeLenOffsetFromScale = new byte[] { 2, 2, 2, 1, 1, 0, 0, 0 };
+        private static readonly byte[] s_maxVarTimeLenOffsetFromScale = new byte[] { 2, 2, 2, 1, 1, 0, 0, 0 };
 
         // Defaults
+        //    SmiMetaData(SqlDbType,                  MaxLen,                     Prec, Scale,  CompareOptions)
         internal static readonly SmiMetaData DefaultBigInt = new SmiMetaData(SqlDbType.BigInt, 8, 19, 0, SqlCompareOptions.None);     // SqlDbType.BigInt
         internal static readonly SmiMetaData DefaultBinary = new SmiMetaData(SqlDbType.Binary, 1, 0, 0, SqlCompareOptions.None);     // SqlDbType.Binary
         internal static readonly SmiMetaData DefaultBit = new SmiMetaData(SqlDbType.Bit, 1, 1, 0, SqlCompareOptions.None);     // SqlDbType.Bit
@@ -115,65 +116,72 @@ namespace Microsoft.Data.SqlClient.Server
         // No default for generic UDT
 
         // character defaults hook thread-local culture to get collation
-        internal static SmiMetaData DefaultChar
-            => new SmiMetaData(
+        internal static SmiMetaData DefaultChar =>
+            new SmiMetaData(
                 DefaultChar_NoCollation.SqlDbType,
                 DefaultChar_NoCollation.MaxLength,
                 DefaultChar_NoCollation.Precision,
                 DefaultChar_NoCollation.Scale,
                 CultureInfo.CurrentCulture.LCID,
                 SqlCompareOptions.IgnoreCase | SqlCompareOptions.IgnoreKanaType | SqlCompareOptions.IgnoreWidth,
-                null);
+                null
+            );
 
-        internal static SmiMetaData DefaultNChar
-            => new SmiMetaData(
+
+        internal static SmiMetaData DefaultNChar =>
+            new SmiMetaData(
                 DefaultNChar_NoCollation.SqlDbType,
                 DefaultNChar_NoCollation.MaxLength,
                 DefaultNChar_NoCollation.Precision,
                 DefaultNChar_NoCollation.Scale,
                 CultureInfo.CurrentCulture.LCID,
                 SqlCompareOptions.IgnoreCase | SqlCompareOptions.IgnoreKanaType | SqlCompareOptions.IgnoreWidth,
-                null);
+                null
+            );
 
-        internal static SmiMetaData DefaultNText
-            => new SmiMetaData(
+        internal static SmiMetaData DefaultNText => 
+            new SmiMetaData(
                 DefaultNText_NoCollation.SqlDbType,
                 DefaultNText_NoCollation.MaxLength,
                 DefaultNText_NoCollation.Precision,
                 DefaultNText_NoCollation.Scale,
                 CultureInfo.CurrentCulture.LCID,
                 SqlCompareOptions.IgnoreCase | SqlCompareOptions.IgnoreKanaType | SqlCompareOptions.IgnoreWidth,
-                null);
+                null
+            );
 
-        internal static SmiMetaData DefaultNVarChar
-            => new SmiMetaData(
+        internal static SmiMetaData DefaultNVarChar => 
+            new SmiMetaData(
                 DefaultNVarChar_NoCollation.SqlDbType,
                 DefaultNVarChar_NoCollation.MaxLength,
                 DefaultNVarChar_NoCollation.Precision,
                 DefaultNVarChar_NoCollation.Scale,
                 CultureInfo.CurrentCulture.LCID,
                 SqlCompareOptions.IgnoreCase | SqlCompareOptions.IgnoreKanaType | SqlCompareOptions.IgnoreWidth,
-                null);
+                null
+            );
 
-        internal static SmiMetaData DefaultText
-            => new SmiMetaData(
+        internal static SmiMetaData DefaultText =>
+            new SmiMetaData(
                 DefaultText_NoCollation.SqlDbType,
                 DefaultText_NoCollation.MaxLength,
                 DefaultText_NoCollation.Precision,
                 DefaultText_NoCollation.Scale,
                 CultureInfo.CurrentCulture.LCID,
                 SqlCompareOptions.IgnoreCase | SqlCompareOptions.IgnoreKanaType | SqlCompareOptions.IgnoreWidth,
-                null);
+                null
+            );
 
-        internal static SmiMetaData DefaultVarChar
-            => new SmiMetaData(
+        internal static SmiMetaData DefaultVarChar =>
+            new SmiMetaData(
                 DefaultVarChar_NoCollation.SqlDbType,
                 DefaultVarChar_NoCollation.MaxLength,
                 DefaultVarChar_NoCollation.Precision,
                 DefaultVarChar_NoCollation.Scale,
                 CultureInfo.CurrentCulture.LCID,
                 SqlCompareOptions.IgnoreCase | SqlCompareOptions.IgnoreKanaType | SqlCompareOptions.IgnoreWidth,
-                null);
+                null
+            );
 
         // The one and only constructor for use by outside code.
         //
@@ -220,7 +228,8 @@ namespace Microsoft.Data.SqlClient.Server
             byte scale,
             long localeId,
             SqlCompareOptions compareOptions,
-            Type userDefinedType)
+            Type userDefinedType
+        )
             : this(
                 dbType,
                 maxLength,
@@ -231,7 +240,8 @@ namespace Microsoft.Data.SqlClient.Server
                 userDefinedType,
                 false,
                 null,
-                null)
+                null
+            )
         {
         }
 
@@ -246,7 +256,8 @@ namespace Microsoft.Data.SqlClient.Server
             Type userDefinedType,
             bool isMultiValued,
             IList<SmiExtendedMetaData> fieldTypes,
-            SmiMetaDataPropertyCollection extendedProperties)
+            SmiMetaDataPropertyCollection extendedProperties
+        )
             : this(
                 dbType,
                 maxLength,
@@ -258,7 +269,8 @@ namespace Microsoft.Data.SqlClient.Server
                 null,
                 isMultiValued,
                 fieldTypes,
-                extendedProperties)
+                extendedProperties
+            )
         {
         }
 
@@ -274,7 +286,8 @@ namespace Microsoft.Data.SqlClient.Server
             string udtAssemblyQualifiedName,
             bool isMultiValued,
             IList<SmiExtendedMetaData> fieldTypes,
-            SmiMetaDataPropertyCollection extendedProperties)
+            SmiMetaDataPropertyCollection extendedProperties
+        )
         {
             Debug.Assert(IsSupportedDbType(dbType), "Invalid SqlDbType: " + dbType);
 
@@ -329,11 +342,11 @@ namespace Microsoft.Data.SqlClient.Server
                 case SqlDbType.Udt:
                     // For SqlParameter, both userDefinedType and udtAssemblyQualifiedName can be NULL,
                     // so we are checking only maxLength if it will be used (i.e. userDefinedType is NULL)
-                    Debug.Assert((null != userDefinedType) || (0 <= maxLength || UnlimitedMaxLengthIndicator == maxLength),
+                    Debug.Assert((userDefinedType != null) || (0 <= maxLength || UnlimitedMaxLengthIndicator == maxLength),
                              $"SmiMetaData.ctor: Udt name={udtAssemblyQualifiedName}, maxLength={maxLength}");
                     // Type not validated until matched to a server.  Could be null if extended metadata supplies three-part name!
                     _clrType = userDefinedType;
-                    if (null != userDefinedType)
+                    if (userDefinedType != null)
                     {
                         _maxLength = SerializationHelperSql9.GetUdtMaxLength(userDefinedType);
                     }
@@ -344,7 +357,7 @@ namespace Microsoft.Data.SqlClient.Server
                     _udtAssemblyQualifiedName = udtAssemblyQualifiedName;
                     break;
                 case SqlDbType.Structured:
-                    if (null != fieldTypes)
+                    if (fieldTypes != null)
                     {
                         _fieldMetaData = (new List<SmiExtendedMetaData>(fieldTypes)).AsReadOnly();
                     }
@@ -371,7 +384,7 @@ namespace Microsoft.Data.SqlClient.Server
                     break;
             }
 
-            if (null != extendedProperties)
+            if (extendedProperties != null)
             {
                 extendedProperties.SetReadOnly();
                 _extendedProperties = extendedProperties;
@@ -381,8 +394,8 @@ namespace Microsoft.Data.SqlClient.Server
             //  1) not null
             //  2) read only
             //  3) same number of columns in each list (0 count acceptable for properties that are "unused")
-            Debug.Assert(null != _extendedProperties && _extendedProperties.IsReadOnly, "SmiMetaData.ctor: _extendedProperties is " + (null != _extendedProperties ? "writable" : "null"));
-            Debug.Assert(null != _fieldMetaData && _fieldMetaData.IsReadOnly, "SmiMetaData.ctor: _fieldMetaData is " + (null != _fieldMetaData ? "writable" : "null"));
+            Debug.Assert(_extendedProperties != null && _extendedProperties.IsReadOnly, "SmiMetaData.ctor: _extendedProperties is " + (_extendedProperties !=  null? "writable" : "null"));
+            Debug.Assert(_fieldMetaData != null && _fieldMetaData.IsReadOnly, "SmiMetaData.ctor: _fieldMetaData is " + (_fieldMetaData != null ? "writable" : "null"));
 #if DEBUG
             ((SmiDefaultFieldsProperty)_extendedProperties[SmiPropertySelector.DefaultFields]).CheckCount(_fieldMetaData.Count);
             ((SmiOrderProperty)_extendedProperties[SmiPropertySelector.SortOrder]).CheckCount(_fieldMetaData.Count);
@@ -496,7 +509,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             get
             {
-                string result = null;
+                string result;
                 if (SqlDbType.Udt == _databaseType)
                 {
                     Debug.Assert(string.Empty == s_typeNameByDatabaseType[(int)_databaseType], "unexpected udt?");
@@ -505,7 +518,7 @@ namespace Microsoft.Data.SqlClient.Server
                 else
                 {
                     result = s_typeNameByDatabaseType[(int)_databaseType];
-                    Debug.Assert(null != result, "unknown type name?");
+                    Debug.Assert(result != null, "unknown type name?");
                 }
                 return result;
             }
@@ -559,7 +572,8 @@ namespace Microsoft.Data.SqlClient.Server
             long maxLength,
             byte precision,
             byte scale,
-            SqlCompareOptions compareOptions)
+            SqlCompareOptions compareOptions
+        )
         {
             _databaseType = sqlDbType;
             _maxLength = maxLength;
@@ -578,7 +592,7 @@ namespace Microsoft.Data.SqlClient.Server
         // static array of default-valued metadata ordered by corresponding SqlDbType.
         // NOTE: INDEXED BY SqlDbType ENUM!  MUST UPDATE THIS ARRAY WHEN UPDATING SqlDbType!
         //   ONLY ACCESS THIS GLOBAL FROM GetDefaultForType!
-        private static SmiMetaData[] s_defaultValues =
+        private static readonly SmiMetaData[] s_defaultValues =
             {
                 DefaultBigInt,                 // SqlDbType.BigInt
                 DefaultBinary,                 // SqlDbType.Binary
@@ -620,7 +634,7 @@ namespace Microsoft.Data.SqlClient.Server
         // static array of type names ordered by corresponding SqlDbType.
         // NOTE: INDEXED BY SqlDbType ENUM!  MUST UPDATE THIS ARRAY WHEN UPDATING SqlDbType!
         //   ONLY ACCESS THIS GLOBAL FROM get_TypeName!
-        private static string[] s_typeNameByDatabaseType =
+        private static readonly string[] s_typeNameByDatabaseType =
             {
                 "bigint",               // SqlDbType.BigInt
                 "binary",               // SqlDbType.Binary
@@ -675,56 +689,52 @@ namespace Microsoft.Data.SqlClient.Server
             _extendedProperties = smdDflt._extendedProperties;  // This is ok due to immutability
         }
 
-        internal string TraceString()
-        {
-            return TraceString(0);
-        }
+        internal string TraceString() => TraceString(0);
 
         virtual internal string TraceString(int indent)
         {
-            string indentStr = new String(' ', indent);
-            string fields = String.Empty;
-            if (null != _fieldMetaData)
+            string indentStr = new string(' ', indent);
+            string fields = string.Empty;
+            if (_fieldMetaData != null)
             {
                 foreach (SmiMetaData fieldMd in _fieldMetaData)
                 {
-                    fields = String.Format(CultureInfo.InvariantCulture,
-                                "{0}{1}\n\t", fields, fieldMd.TraceString(indent + 5));
+                    fields = string.Format(CultureInfo.InvariantCulture,"{0}{1}\n\t", fields, fieldMd.TraceString(indent + 5));
                 }
             }
 
             string properties = string.Empty;
-            if (null != _extendedProperties)
+            if (_extendedProperties != null)
             {
                 foreach (SmiMetaDataProperty property in _extendedProperties.Values)
                 {
-                    properties = String.Format(CultureInfo.InvariantCulture,
-                                "{0}{1}                   {2}\n\t", properties, indentStr, property.TraceString());
+                    properties = string.Format(CultureInfo.InvariantCulture,"{0}{1}                   {2}\n\t", properties, indentStr, property.TraceString());
                 }
             }
 
-            return String.Format(CultureInfo.InvariantCulture, "\n\t"
-                               + "{0}            SqlDbType={1:g}\n\t"
-                               + "{0}            MaxLength={2:d}\n\t"
-                               + "{0}            Precision={3:d}\n\t"
-                               + "{0}                Scale={4:d}\n\t"
-                               + "{0}             LocaleId={5:x}\n\t"
-                               + "{0}       CompareOptions={6:g}\n\t"
-                               + "{0}                 Type={7}\n\t"
-                               + "{0}          MultiValued={8}\n\t"
-                               + "{0}               fields=\n\t{9}"
-                               + "{0}           properties=\n\t{10}",
-                                indentStr,
-                                SqlDbType,
-                                MaxLength,
-                                Precision,
-                                Scale,
-                                LocaleId,
-                                CompareOptions,
-                                (null != Type) ? Type.ToString() : "<null>",
-                                IsMultiValued,
-                                fields,
-                                properties);
+            return string.Format(CultureInfo.InvariantCulture, "\n\t"
+                + "{0}            SqlDbType={1:g}\n\t"
+                + "{0}            MaxLength={2:d}\n\t"
+                + "{0}            Precision={3:d}\n\t"
+                + "{0}                Scale={4:d}\n\t"
+                + "{0}             LocaleId={5:x}\n\t"
+                + "{0}       CompareOptions={6:g}\n\t"
+                + "{0}                 Type={7}\n\t"
+                + "{0}          MultiValued={8}\n\t"
+                + "{0}               fields=\n\t{9}"
+                + "{0}           properties=\n\t{10}",
+                indentStr,
+                SqlDbType,
+                MaxLength,
+                Precision,
+                Scale,
+                LocaleId,
+                CompareOptions,
+                Type?.ToString() ?? "<null>",
+                IsMultiValued,
+                fields,
+                properties
+            );
 
         }
     }
@@ -735,12 +745,12 @@ namespace Microsoft.Data.SqlClient.Server
     //
     internal class SmiExtendedMetaData : SmiMetaData
     {
-        private string _name;           // context-dependent identifier, i.e. parameter name for parameters, column name for columns, etc.
+        private readonly string _name;           // context-dependent identifier, i.e. parameter name for parameters, column name for columns, etc.
 
         // three-part name for typed xml schema and for udt names
-        private string _typeSpecificNamePart1;
-        private string _typeSpecificNamePart2;
-        private string _typeSpecificNamePart3;
+        private readonly string _typeSpecificNamePart1;
+        private readonly string _typeSpecificNamePart2;
+        private readonly string _typeSpecificNamePart3;
 
         internal SmiExtendedMetaData(
             SqlDbType dbType,
@@ -753,7 +763,8 @@ namespace Microsoft.Data.SqlClient.Server
             string name,
             string typeSpecificNamePart1,
             string typeSpecificNamePart2,
-            string typeSpecificNamePart3)
+            string typeSpecificNamePart3
+        )
             : this(
                 dbType,
                 maxLength,
@@ -768,7 +779,8 @@ namespace Microsoft.Data.SqlClient.Server
                 name,
                 typeSpecificNamePart1,
                 typeSpecificNamePart2,
-                typeSpecificNamePart3)
+                typeSpecificNamePart3
+            )
         {
         }
 
@@ -787,7 +799,8 @@ namespace Microsoft.Data.SqlClient.Server
             string name,
             string typeSpecificNamePart1,
             string typeSpecificNamePart2,
-            string typeSpecificNamePart3)
+            string typeSpecificNamePart3
+        )
             : this(
                 dbType,
                 maxLength,
@@ -803,7 +816,8 @@ namespace Microsoft.Data.SqlClient.Server
                 name,
                 typeSpecificNamePart1,
                 typeSpecificNamePart2,
-                typeSpecificNamePart3)
+                typeSpecificNamePart3
+            )
         {
         }
 
@@ -823,7 +837,8 @@ namespace Microsoft.Data.SqlClient.Server
             string name,
             string typeSpecificNamePart1,
             string typeSpecificNamePart2,
-            string typeSpecificNamePart3)
+            string typeSpecificNamePart3
+        )
             : base(
                 dbType,
                 maxLength,
@@ -835,7 +850,8 @@ namespace Microsoft.Data.SqlClient.Server
                 udtAssemblyQualifiedName,
                 isMultiValued,
                 fieldMetaData,
-                extendedProperties)
+                extendedProperties
+            )
         {
             Debug.Assert(null == name || MaxNameLength >= name.Length, "Name is too long");
 
@@ -855,18 +871,19 @@ namespace Microsoft.Data.SqlClient.Server
 
         internal override string TraceString(int indent)
         {
-            return String.Format(CultureInfo.InvariantCulture,
-                                 "{2}                 Name={0}"
-                                + "{1}"
-                                + "{2}TypeSpecificNamePart1='{3}'\n\t"
-                                + "{2}TypeSpecificNamePart2='{4}'\n\t"
-                                + "{2}TypeSpecificNamePart3='{5}'\n\t",
-                                (null != _name) ? _name : "<null>",
-                                base.TraceString(indent),
-                                new String(' ', indent),
-                                (null != TypeSpecificNamePart1) ? TypeSpecificNamePart1 : "<null>",
-                                (null != TypeSpecificNamePart2) ? TypeSpecificNamePart2 : "<null>",
-                                (null != TypeSpecificNamePart3) ? TypeSpecificNamePart3 : "<null>");
+            return string.Format(CultureInfo.InvariantCulture,
+                "{2}                 Name={0}"
+                + "{1}"
+                + "{2}TypeSpecificNamePart1='{3}'\n\t"
+                + "{2}TypeSpecificNamePart2='{4}'\n\t"
+                + "{2}TypeSpecificNamePart3='{5}'\n\t",
+                _name ?? "<null>",
+                base.TraceString(indent),
+                new string(' ', indent),
+                TypeSpecificNamePart1 ?? "<null>",
+                TypeSpecificNamePart2 ?? "<null>",
+                TypeSpecificNamePart3 ?? "<null>"
+            );
         }
     }
 
@@ -876,7 +893,7 @@ namespace Microsoft.Data.SqlClient.Server
     //  Sealed because we don't need to derive from it yet.
     internal sealed class SmiParameterMetaData : SmiExtendedMetaData
     {
-        private ParameterDirection _direction;
+        private readonly ParameterDirection _direction;
 
         // SMI V200 ctor.
         internal SmiParameterMetaData(
@@ -894,7 +911,8 @@ namespace Microsoft.Data.SqlClient.Server
             string typeSpecificNamePart1,
             string typeSpecificNamePart2,
             string typeSpecificNamePart3,
-            ParameterDirection direction)
+            ParameterDirection direction
+        )
             : this(
                 dbType,
                 maxLength,
@@ -911,7 +929,8 @@ namespace Microsoft.Data.SqlClient.Server
                 typeSpecificNamePart1,
                 typeSpecificNamePart2,
                 typeSpecificNamePart3,
-                direction)
+                direction
+            )
         {
         }
 
@@ -932,7 +951,8 @@ namespace Microsoft.Data.SqlClient.Server
             string typeSpecificNamePart1,
             string typeSpecificNamePart2,
             string typeSpecificNamePart3,
-            ParameterDirection direction)
+            ParameterDirection direction
+        )
             : base(
                 dbType,
                 maxLength,
@@ -948,7 +968,8 @@ namespace Microsoft.Data.SqlClient.Server
                 name,
                 typeSpecificNamePart1,
                 typeSpecificNamePart2,
-                typeSpecificNamePart3)
+                typeSpecificNamePart3
+            )
         {
             Debug.Assert(ParameterDirection.Input == direction
                        || ParameterDirection.Output == direction
@@ -961,11 +982,12 @@ namespace Microsoft.Data.SqlClient.Server
 
         internal override string TraceString(int indent)
         {
-            return String.Format(CultureInfo.InvariantCulture, "{0}"
-                                + "{1}            Direction={2:g}\n\t",
-                                base.TraceString(indent),
-                                new String(' ', indent),
-                                Direction);
+            return string.Format(CultureInfo.InvariantCulture, "{0}"
+                + "{1}            Direction={2:g}\n\t",
+                base.TraceString(indent),
+                new string(' ', indent),
+                Direction
+            );
         }
     }
 
@@ -981,15 +1003,15 @@ namespace Microsoft.Data.SqlClient.Server
     internal class SmiStorageMetaData : SmiExtendedMetaData
     {
         // AllowsDBNull is the only value required to be specified.
-        private bool _allowsDBNull;  // could the column return nulls? equivalent to TDS's IsNullable bit
-        private string _serverName;  // underlying column's server
-        private string _catalogName; // underlying column's database
-        private string _schemaName;  // underlying column's schema
-        private string _tableName;   // underlying column's table
-        private string _columnName;  // underlying column's name
-        private SqlBoolean _isKey;   // Is this one of a set of key columns that uniquely identify an underlying table?
-        private bool _isIdentity;    // Is this from an identity column
-        private bool _isColumnSet;   // Is this column the XML representation of a columnset?
+        private readonly bool _allowsDBNull;  // could the column return nulls? equivalent to TDS's IsNullable bit
+        private readonly string _serverName;  // underlying column's server
+        private readonly string _catalogName; // underlying column's database
+        private readonly string _schemaName;  // underlying column's schema
+        private readonly string _tableName;   // underlying column's table
+        private readonly string _columnName;  // underlying column's name
+        private readonly SqlBoolean _isKey;   // Is this one of a set of key columns that uniquely identify an underlying table?
+        private readonly bool _isIdentity;    // Is this from an identity column
+        private readonly bool _isColumnSet;   // Is this column the XML representation of a columnset?
 
         internal SmiStorageMetaData(
             SqlDbType dbType,
@@ -1010,7 +1032,8 @@ namespace Microsoft.Data.SqlClient.Server
             string tableName,
             string columnName,
             SqlBoolean isKey,
-            bool isIdentity)
+            bool isIdentity
+        )
             : this(
                 dbType,
                 maxLength,
@@ -1033,7 +1056,8 @@ namespace Microsoft.Data.SqlClient.Server
                 tableName,
                 columnName,
                 isKey,
-                isIdentity)
+                isIdentity
+            )
         {
         }
 
@@ -1060,7 +1084,8 @@ namespace Microsoft.Data.SqlClient.Server
             string tableName,
             string columnName,
             SqlBoolean isKey,
-            bool isIdentity)
+            bool isIdentity
+        )
             : this(
                 dbType,
                 maxLength,
@@ -1085,7 +1110,8 @@ namespace Microsoft.Data.SqlClient.Server
                 columnName,
                 isKey,
                 isIdentity,
-                false)
+                false
+            )
         {
         }
 
@@ -1114,7 +1140,8 @@ namespace Microsoft.Data.SqlClient.Server
             string columnName,
             SqlBoolean isKey,
             bool isIdentity,
-            bool isColumnSet)
+            bool isColumnSet
+        )
             : base(
                 dbType,
                 maxLength,
@@ -1130,7 +1157,8 @@ namespace Microsoft.Data.SqlClient.Server
                 name,
                 typeSpecificNamePart1,
                 typeSpecificNamePart2,
-                typeSpecificNamePart3)
+                typeSpecificNamePart3
+             )
         {
             _allowsDBNull = allowsDBNull;
             _serverName = serverName;
@@ -1163,25 +1191,26 @@ namespace Microsoft.Data.SqlClient.Server
 
         internal override string TraceString(int indent)
         {
-            return String.Format(CultureInfo.InvariantCulture, "{0}"
-                                + "{1}         AllowsDBNull={2}\n\t"
-                                + "{1}           ServerName='{3}'\n\t"
-                                + "{1}          CatalogName='{4}'\n\t"
-                                + "{1}           SchemaName='{5}'\n\t"
-                                + "{1}            TableName='{6}'\n\t"
-                                + "{1}           ColumnName='{7}'\n\t"
-                                + "{1}                IsKey={8}\n\t"
-                                + "{1}           IsIdentity={9}\n\t",
-                                base.TraceString(indent),
-                                new String(' ', indent),
-                                AllowsDBNull,
-                                (null != ServerName) ? ServerName : "<null>",
-                                (null != CatalogName) ? CatalogName : "<null>",
-                                (null != SchemaName) ? SchemaName : "<null>",
-                                (null != TableName) ? TableName : "<null>",
-                                (null != ColumnName) ? ColumnName : "<null>",
-                                IsKey,
-                                IsIdentity);
+            return string.Format(CultureInfo.InvariantCulture, "{0}"
+                + "{1}         AllowsDBNull={2}\n\t"
+                + "{1}           ServerName='{3}'\n\t"
+                + "{1}          CatalogName='{4}'\n\t"
+                + "{1}           SchemaName='{5}'\n\t"
+                + "{1}            TableName='{6}'\n\t"
+                + "{1}           ColumnName='{7}'\n\t"
+                + "{1}                IsKey={8}\n\t"
+                + "{1}           IsIdentity={9}\n\t",
+                base.TraceString(indent),
+                new string(' ', indent),
+                AllowsDBNull,
+                ServerName ?? "<null>",
+                CatalogName ?? "<null>",
+                SchemaName ?? "<null>",
+                TableName ?? "<null>",
+                ColumnName ?? "<null>",
+                IsKey,
+                IsIdentity
+            );
         }
     }
 
@@ -1192,10 +1221,10 @@ namespace Microsoft.Data.SqlClient.Server
     //  Maps to full COLMETADATA + COLINFO + TABNAME tokens on TDS.
     internal class SmiQueryMetaData : SmiStorageMetaData
     {
-        private bool _isReadOnly;
-        private SqlBoolean _isExpression;
-        private SqlBoolean _isAliased;
-        private SqlBoolean _isHidden;
+        private readonly bool _isReadOnly;
+        private readonly SqlBoolean _isExpression;
+        private readonly SqlBoolean _isAliased;
+        private readonly SqlBoolean _isHidden;
 
         internal SmiQueryMetaData(
             SqlDbType dbType,
@@ -1220,7 +1249,8 @@ namespace Microsoft.Data.SqlClient.Server
             bool isReadOnly,
             SqlBoolean isExpression,
             SqlBoolean isAliased,
-            SqlBoolean isHidden)
+            SqlBoolean isHidden
+        )
             : this(
                 dbType,
                 maxLength,
@@ -1247,7 +1277,8 @@ namespace Microsoft.Data.SqlClient.Server
                 isReadOnly,
                 isExpression,
                 isAliased,
-                isHidden)
+                isHidden
+            )
         {
         }
 
@@ -1278,7 +1309,8 @@ namespace Microsoft.Data.SqlClient.Server
             bool isReadOnly,
             SqlBoolean isExpression,
             SqlBoolean isAliased,
-            SqlBoolean isHidden)
+            SqlBoolean isHidden
+        )
             : this(
                 dbType,
                 maxLength,
@@ -1307,7 +1339,8 @@ namespace Microsoft.Data.SqlClient.Server
                 isReadOnly,
                 isExpression,
                 isAliased,
-                isHidden)
+                isHidden
+            )
         {
         }
 
@@ -1340,7 +1373,8 @@ namespace Microsoft.Data.SqlClient.Server
             bool isReadOnly,
             SqlBoolean isExpression,
             SqlBoolean isAliased,
-            SqlBoolean isHidden)
+            SqlBoolean isHidden
+        )
             : base(
                 dbType,
                 maxLength,
@@ -1365,7 +1399,8 @@ namespace Microsoft.Data.SqlClient.Server
                 columnName,
                 isKey,
                 isIdentity,
-                isColumnSet)
+                isColumnSet
+            )
         {
             _isReadOnly = isReadOnly;
             _isExpression = isExpression;
@@ -1380,5 +1415,22 @@ namespace Microsoft.Data.SqlClient.Server
         internal SqlBoolean IsAliased => _isAliased;
 
         internal SqlBoolean IsHidden => _isHidden;
+
+        internal override string TraceString(int indent)
+        {
+            return string.Format(CultureInfo.InvariantCulture, "{0}"
+                + "{1}           IsReadOnly={2}\n\t"
+                + "{1}         IsExpression={3}\n\t"
+                + "{1}            IsAliased={4}\n\t"
+                + "{1}             IsHidden={5}",
+                base.TraceString(indent),
+                new string(' ', indent),
+                AllowsDBNull,
+                IsExpression,
+                IsAliased,
+                IsHidden
+            );
+        }
+
     }
 }

@@ -1,7 +1,7 @@
 using System;
 using Microsoft.Data.SqlClient;
 
-// The purpose of this sample is to illustrate how to use this feature and the condition might not be realistic.
+// The purpose of this sample is to illustrate how to use this feature and the example conditions might not be realistic.
 class RetryLogicSample
 {
     private const string CnnStringFormat = "Server=localhost; Initial Catalog=Northwind; Integrated Security=true; pooling=false;";

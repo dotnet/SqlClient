@@ -374,7 +374,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             customProviders.Remove(@"MsSqL_MyStore");
 
             // Clear any providers set by other tests.
-            Utility.ClearSqlConnectionProviders();
+            Utility.ClearSqlConnectionGlobalProviders();
         }
 
         [Theory]

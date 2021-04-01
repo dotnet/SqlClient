@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Microsoft.Data.SqlClient.TestUtilities;
 using Microsoft.SqlServer.Management.Common;
 
@@ -35,7 +36,7 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
         /// </param>
         public static void Run(string[] args)
         {
-            if (args == null || args.Length < 2)
+            if (!args.Any() || args.Length < 2)
             {
                 throw new InvalidArgumentException("Incomplete arguments provided.");
             }
@@ -162,9 +163,9 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
                 string dropScript = $"IF EXISTS (select * from sys.databases where name = '{dbName}') BEGIN DROP DATABASE [{dbName}] END;";
                 context.ExecuteNonQuery(dropScript);
             }
-            catch
+            catch (ExecutionFailureException ex)
             {
-                Console.WriteLine($"FAILED to drop database '{dbName}'");
+                Console.WriteLine($"FAILED to drop database '{dbName}'. Error message: {ex.Message}");
             }
         }
 
@@ -176,7 +177,15 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
             try
             {
                 createScript = createScript.Replace(DB_Northwind, dbName);
-                context.ExecuteNonQuery(createScript);
+                try
+                {
+                    context.ExecuteNonQuery(createScript);
+                }
+                catch (ExecutionFailureException ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    throw;
+                }
             }
             catch (Exception)
             {
