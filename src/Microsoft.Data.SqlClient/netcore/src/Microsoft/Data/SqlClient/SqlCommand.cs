@@ -3084,6 +3084,12 @@ namespace Microsoft.Data.SqlClient
                         p.TypeName = r[colNames[(int)ProcParamsColIndex.TypeCatalogName]] + "." +
                             r[colNames[(int)ProcParamsColIndex.TypeSchemaName]] + "." +
                             r[colNames[(int)ProcParamsColIndex.TypeName]];
+
+                        // the constructed type name above is incorrectly formatted, it should be a 2 part name not 3
+                        // for compatibility we can't change this because the bug has existed for a long time and been 
+                        // worked around by users, so identify that it is present and catch it later in the execution
+                        // process once users can no longer interact with with the parameter type name
+                        p.IsDerivedParameterTypeName = true;
                     }
 
                     // XmlSchema name for Xml types
@@ -5534,6 +5540,23 @@ namespace Microsoft.Data.SqlClient
                         {
                             options |= TdsEnums.RPC_PARAM_DEFAULT;
                         }
+
+                        // detect incorrectly derived type names unchanged by the caller and fix them
+                        if (parameter.IsDerivedParameterTypeName)
+                        {
+                            string[] parts = MultipartIdentifier.ParseMultipartIdentifier(parameter.TypeName, "[\"", "]\"", Strings.SQL_TDSParserTableName, false);
+                            if (parts != null && parts.Length == 4) // will always return int[4] right justified
+                            {
+                                if (
+                                    parts[3] != null && // name must not be null
+                                    parts[2] != null && // schema must not be null
+                                    parts[1] != null // server should not be null or we don't need to remove it
+                                )
+                                {
+                                    parameter.TypeName = QuoteIdentifier(parts.AsSpan(2, 2));
+                                }
+                            }
+                        }
                     }
 
                     rpc.userParamMap[userParamCount] = ((((long)options) << 32) | (long)index);
@@ -5974,7 +5997,30 @@ namespace Microsoft.Data.SqlClient
         private static string ParseAndQuoteIdentifier(string identifier, bool isUdtTypeName)
         {
             string[] strings = SqlParameter.ParseTypeName(identifier, isUdtTypeName);
-            return ADP.BuildMultiPartName(strings);
+            return QuoteIdentifier(strings);
+        }
+
+        private static string QuoteIdentifier(ReadOnlySpan<string> strings)
+        {
+            StringBuilder bld = new StringBuilder();
+
+            // Stitching back together is a little tricky. Assume we want to build a full multi-part name
+            //  with all parts except trimming separators for leading empty names (null or empty strings,
+            //  but not whitespace). Separators in the middle should be added, even if the name part is 
+            //  null/empty, to maintain proper location of the parts.
+            for (int i = 0; i < strings.Length; i++)
+            {
+                if (0 < bld.Length)
+                {
+                    bld.Append('.');
+                }
+                if (null != strings[i] && 0 != strings[i].Length)
+                {
+                    ADP.AppendQuotedString(bld, "[", "]", strings[i]);
+                }
+            }
+
+            return bld.ToString();
         }
 
         // returns set option text to turn on format only and key info on and off
