@@ -625,7 +625,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         byte[] binarydata = new byte[dataSize];
                         rand.NextBytes(binarydata);
                         MemoryStream ms = new MemoryStream(binarydata, false);
-                        // Included a daly to make a room for cancellation command
+                        // Include a delay to allow time for cancellation
                         cmd.CommandText = "WAITFOR DELAY '00:00:05'; insert into #blobs (Id, blob) values (1, @blob)";
 
                         cmd.Parameters.Add("@blob", SqlDbType.VarBinary, dataSize);
