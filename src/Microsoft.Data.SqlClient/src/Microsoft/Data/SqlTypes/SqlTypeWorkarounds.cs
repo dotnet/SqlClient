@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Xml;
+using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.SqlTypes
 {
@@ -82,10 +83,8 @@ namespace Microsoft.Data.SqlTypes
             return new DateTime(totalTicks);
         }
 
-        private static void ThrowOverflowException()
-        {
-            throw new OverflowException(SQLResource.DateTimeOverflowMessage);
-        }
+        private static Exception ThrowOverflowException() => throw SQL.DateTimeOverflow();
+
         #endregion
 
         #region Work around inability to access SqlMoney.ctor(long, int) and SqlMoney.ToSqlInternalRepresentation

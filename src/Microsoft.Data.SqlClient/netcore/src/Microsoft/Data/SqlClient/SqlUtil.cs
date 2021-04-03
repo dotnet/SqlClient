@@ -740,6 +740,11 @@ namespace Microsoft.Data.SqlClient
             return ADP.TypeLoad(System.StringsHelper.GetString(Strings.SQLUDT_Unexpected, exceptionText));
         }
 
+        internal static Exception DateTimeOverflow()
+        {
+            throw new OverflowException(SqlTypes.SQLResource.DateTimeOverflowMessage);
+        }
+
         //
         // SQL.SqlDependency
         //
