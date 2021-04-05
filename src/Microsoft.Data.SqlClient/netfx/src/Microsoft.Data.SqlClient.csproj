@@ -154,6 +154,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\EnclaveDelegate.cs">
       <Link>Microsoft\Data\SqlClient\EnclaveDelegate.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\EnclaveDelegate.Crypto.cs">
+      <Link>Microsoft\Data\SqlClient\EnclaveDelegate.Crypto.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\EnclavePackage.cs">
       <Link>Microsoft\Data\SqlClient\EnclavePackage.cs</Link>
     </Compile>
@@ -404,7 +407,6 @@
     <Compile Include="Microsoft\Data\Interop\SNINativeMethodWrapper.cs" />
     <Compile Include="Microsoft\Data\SqlClient\assemblycache.cs" />
     <Compile Include="Microsoft\Data\SqlClient\AzureAttestationBasedEnclaveProvider.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\EnclaveDelegate.CngCryto.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalAppContextSwitches.netfx.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBConfig.cs" />
@@ -430,19 +432,29 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionCspProvider.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlCommand.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlCommandBuilder.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SqlCommand.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Microsoft\Data\SqlClient\SqlCommandBuilder.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlCommandSet.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlConnection.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SqlConnection.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionFactory.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlConnectionHelper.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SqlConnectionHelper.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionPoolGroupProviderInfo.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionPoolKey.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionString.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionStringBuilder.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionTimeoutErrorInternal.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlCredential.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlDataAdapter.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SqlDataAdapter.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlDataReader.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDataReaderSmi.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.cs" />
