@@ -22,7 +22,7 @@ namespace Microsoft.Data.SqlClient
 
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveAttestationParameters.xml' path='docs/members[@name="SqlEnclaveAttestationParameters"]/ClientDiffieHellmanKey/*' />
-        internal ECDiffieHellmanCng ClientDiffieHellmanKey { get; }
+        internal ECDiffieHellman ClientDiffieHellmanKey { get; }
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveAttestationParameters.xml' path='docs/members[@name="SqlEnclaveAttestationParameters"]/GetInput/*' />
         internal byte[] GetInput()
@@ -54,7 +54,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlEnclaveAttestationParameters.xml' path='docs/members[@name="SqlEnclaveAttestationParameters"]/ctor/*' />
-        internal SqlEnclaveAttestationParameters(int protocol, byte[] input, ECDiffieHellmanCng clientDiffieHellmanKey)
+        internal SqlEnclaveAttestationParameters(int protocol, byte[] input, ECDiffieHellman clientDiffieHellmanKey)
         {
             if (null == clientDiffieHellmanKey)
             { throw SQL.NullArgumentInConstructorInternal(_clientDiffieHellmanKeyName, _className); }

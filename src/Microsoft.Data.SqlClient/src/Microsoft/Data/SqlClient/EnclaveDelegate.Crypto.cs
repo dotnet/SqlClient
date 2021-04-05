@@ -195,7 +195,7 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.NullArgumentInternal(nameof(attestationProtocolInputLengthBytes), nameof(EnclaveDelegate), nameof(GetSerializedAttestationParameters));
             }
 
-            byte[] clientDHPublicKey = KeyConverter.ECDHPublicKeyToECCKeyBlob(sqlEnclaveAttestationParameters.ClientDiffieHellmanKey.PublicKey);
+            byte[] clientDHPublicKey = KeyConverter.GetECDiffieHellmanPublicKeyBlob(sqlEnclaveAttestationParameters.ClientDiffieHellmanKey);
 
             clientDHPublicKeyLengthBytes = GetUintBytes(enclaveType, clientDHPublicKey.Length, "clientDHPublicKeyLength");
 

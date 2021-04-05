@@ -94,14 +94,12 @@ namespace Microsoft.Data.SqlClient
         // Gets the information that SqlClient subsequently uses to initiate the process of attesting the enclave and to establish a secure session with the enclave.
         internal override SqlEnclaveAttestationParameters GetAttestationParameters(string attestationUrl, byte[] customData, int customDataLength)
         {
-            ECDiffieHellmanCng clientDHKey = new ECDiffieHellmanCng(DiffieHellmanKeySize);
-            clientDHKey.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
-            clientDHKey.HashAlgorithm = CngAlgorithm.Sha256;
+            ECDiffieHellman clientDHKey = KeyConverter.CreateECDiffieHellman(DiffieHellmanKeySize);
             return new SqlEnclaveAttestationParameters(VsmHGSProtocolId, new byte[] { }, clientDHKey);
         }
 
         // When overridden in a derived class, performs enclave attestation, generates a symmetric key for the session, creates a an enclave session and stores the session information in the cache.
-        internal override void CreateEnclaveSession(byte[] attestationInfo, ECDiffieHellmanCng clientDHKey, EnclaveSessionParameters enclaveSessionParameters, byte[] customData, int customDataLength, out SqlEnclaveSession sqlEnclaveSession, out long counter)
+        internal override void CreateEnclaveSession(byte[] attestationInfo, ECDiffieHellman clientDHKey, EnclaveSessionParameters enclaveSessionParameters, byte[] customData, int customDataLength, out SqlEnclaveSession sqlEnclaveSession, out long counter)
         {
             sqlEnclaveSession = null;
             counter = 0;
@@ -287,22 +285,19 @@ namespace Microsoft.Data.SqlClient
         private void VerifyEnclaveReportSignature(EnclaveReportPackage enclaveReportPackage, X509Certificate2 healthReportCert)
         {
             // Check if report is formatted correctly
-            UInt32 calculatedSize = Convert.ToUInt32(enclaveReportPackage.PackageHeader.GetSizeInPayload()) + enclaveReportPackage.PackageHeader.SignedStatementSize + enclaveReportPackage.PackageHeader.SignatureSize;
+            uint calculatedSize = Convert.ToUInt32(enclaveReportPackage.PackageHeader.GetSizeInPayload()) + enclaveReportPackage.PackageHeader.SignedStatementSize + enclaveReportPackage.PackageHeader.SignatureSize;
 
             if (calculatedSize != enclaveReportPackage.PackageHeader.PackageSize)
             {
                 throw new ArgumentException(Strings.VerifyEnclaveReportFormatFailed);
             }
 
-            // IDK_S is contained in healthReport cert public key
-            RSA rsacsp = healthReportCert.GetRSAPublicKey();
-            RSAParameters rsaparams = rsacsp.ExportParameters(includePrivateParameters: false);
-            RSACng rsacng = new RSACng();
-            rsacng.ImportParameters(rsaparams);
-
-            if (!rsacng.VerifyData(enclaveReportPackage.ReportAsBytes, enclaveReportPackage.SignatureBlob, HashAlgorithmName.SHA256, RSASignaturePadding.Pss))
+            using (RSA rsa = KeyConverter.GetRSAFromCertificate(healthReportCert))
             {
-                throw new ArgumentException(Strings.VerifyEnclaveReportFailed);
+                if (!rsa.VerifyData(enclaveReportPackage.ReportAsBytes, enclaveReportPackage.SignatureBlob, HashAlgorithmName.SHA256, RSASignaturePadding.Pss))
+                {
+                    throw new ArgumentException(Strings.VerifyEnclaveReportFailed);
+                }
             }
         }
 
@@ -342,26 +337,28 @@ namespace Microsoft.Data.SqlClient
         {
             if (actual < expected)
             {
-                string exceptionMessage = String.Format(Strings.VerifyEnclavePolicyFailedFormat, property, actual, expected);
+                string exceptionMessage = string.Format(Strings.VerifyEnclavePolicyFailedFormat, property, actual, expected);
                 throw new ArgumentException(exceptionMessage);
             }
         }
 
         // Derives the shared secret between the client and enclave.
-        private byte[] GetSharedSecret(EnclavePublicKey enclavePublicKey, EnclaveDiffieHellmanInfo enclaveDHInfo, ECDiffieHellmanCng clientDHKey)
+        private byte[] GetSharedSecret(EnclavePublicKey enclavePublicKey, EnclaveDiffieHellmanInfo enclaveDHInfo, ECDiffieHellman clientDHKey)
         {
             // Perform signature verification. The enclave's DiffieHellman public key was signed by the enclave's RSA public key.
-            CngKey cngkey = CngKey.Import(enclavePublicKey.PublicKey, CngKeyBlobFormat.GenericPublicBlob);
-            RSACng rsacng = new RSACng(cngkey);
-            if (!rsacng.VerifyData(enclaveDHInfo.PublicKey, enclaveDHInfo.PublicKeySignature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1))
+            using (RSA rsa = KeyConverter.CreateRSAFromPublicKeyBlob(enclavePublicKey.PublicKey))
             {
-                throw new ArgumentException(Strings.GetSharedSecretFailed);
+                if (!rsa.VerifyData(enclaveDHInfo.PublicKey, enclaveDHInfo.PublicKeySignature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1))
+                {
+                    throw new ArgumentException(Strings.GetSharedSecretFailed);
+                }
             }
 
-            CngKey key = CngKey.Import(enclaveDHInfo.PublicKey, CngKeyBlobFormat.GenericPublicBlob);
-            return clientDHKey.DeriveKeyMaterial(key);
+            using (ECDiffieHellman ecdh = KeyConverter.CreateECDiffieHellmanFromPublicKeyBlob(enclaveDHInfo.PublicKey))
+            {
+                return KeyConverter.DeriveKey(clientDHKey, ecdh.PublicKey);
+            }
         }
-
         #endregion
     }
 }
