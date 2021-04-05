@@ -251,6 +251,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         public void Dispose()
         {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
             databaseObjects.Reverse();
             foreach (string value in DataTestUtility.AEConnStringsSetup)
             {
@@ -285,9 +291,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         public void Dispose()
         {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+
             try
             {
-                akvFixture?.Dispose();
+                if (disposing)
+                {
+                    akvFixture?.Dispose();
+                }
             }
             finally
             {
