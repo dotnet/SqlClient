@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// <para> Retrieves Symmetric Key (in plaintext) given the encryption material.</para>
         /// </summary>
-        internal bool GetKey(SqlEncryptionKeyInfo keyInfo, out SqlClientSymmetricKey encryptionKey, SqlConnection connection)
+        internal bool GetKey(SqlEncryptionKeyInfo keyInfo, out SqlClientSymmetricKey encryptionKey, SqlConnection connection, SqlCommand command)
         {
             string serverName = connection.DataSource;
             Debug.Assert(serverName != null, @"serverName should not be null.");
@@ -61,29 +61,14 @@ namespace Microsoft.Data.SqlClient
             {
                 Debug.Assert(SqlConnection.ColumnEncryptionTrustedMasterKeyPaths != null, @"SqlConnection.ColumnEncryptionTrustedMasterKeyPaths should not be null");
 
-                // Check against the trusted key paths
-                //
-                // Get the List corresponding to the connected server
-                IList<string> trustedKeyPaths;
-                if (SqlConnection.ColumnEncryptionTrustedMasterKeyPaths.TryGetValue(serverName, out trustedKeyPaths))
-                {
-                    // If the list is null or is empty or if the keyPath doesn't exist in the trusted key paths, then throw an exception.
-                    if ((trustedKeyPaths == null) || (trustedKeyPaths.Count() == 0) ||
-                        // (trustedKeyPaths.Where(s => s.Equals(keyInfo.keyPath, StringComparison.InvariantCultureIgnoreCase)).Count() == 0)) {
-                        (trustedKeyPaths.Any(s => s.Equals(keyInfo.keyPath, StringComparison.InvariantCultureIgnoreCase)) == false))
-                    {
-                        // throw an exception since the key path is not in the trusted key paths list for this server
-                        throw SQL.UntrustedKeyPath(keyInfo.keyPath, serverName);
-                    }
-                }
+                SqlSecurityUtility.ThrowIfKeyPathIsNotTrustedForServer(serverName, keyInfo.keyPath);
 
                 // Key Not found, attempt to look up the provider and decrypt CEK
-                SqlColumnEncryptionKeyStoreProvider provider;
-                if (!SqlConnection.TryGetColumnEncryptionKeyStoreProvider(keyInfo.keyStoreName, out provider, connection))
+                if (!SqlSecurityUtility.TryGetColumnEncryptionKeyStoreProvider(keyInfo.keyStoreName, out SqlColumnEncryptionKeyStoreProvider provider, connection, command))
                 {
                     throw SQL.UnrecognizedKeyStoreProviderName(keyInfo.keyStoreName,
-                            SqlConnection.GetColumnEncryptionSystemKeyStoreProviders(),
-                            SqlConnection.GetColumnEncryptionCustomKeyStoreProviders(connection));
+                            SqlConnection.GetColumnEncryptionSystemKeyStoreProvidersNames(),
+                            SqlSecurityUtility.GetListOfProviderNamesFromCacheThatWasSearched(connection, command));
                 }
 
                 // Decrypt the CEK
