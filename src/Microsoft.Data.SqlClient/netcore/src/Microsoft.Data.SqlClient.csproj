@@ -351,11 +351,15 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\EnclaveDelegate.Crypto.cs">
       <Link>Microsoft\Data\SqlClient\EnclaveDelegate.Crypto.cs</Link>
     </Compile>
-    <Compile Include="Microsoft\Data\SqlClient\AzureAttestationBasedEnclaveProvider.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\AzureAttestationBasedEnclaveProvider.cs">
+      <Link>Microsoft\Data\SqlClient\AzureAttestationBasedEnclaveProvider.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProvider.cs">
       <Link>Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProvider.cs</Link>
     </Compile>
-    <Compile Include="Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProviderBase.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProviderBase.cs">
+      <Link>Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProviderBase.cs</Link>
+    </Compile>
   </ItemGroup>
   <!-- netcoreapp 3.1 & netstandard 2.1 and above -->
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetFramework)' != 'netcoreapp2.1' AND '$(TargetFramework)' != 'netstandard2.0'">
