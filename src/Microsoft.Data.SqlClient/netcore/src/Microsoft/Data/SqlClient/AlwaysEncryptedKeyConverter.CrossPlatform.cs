@@ -9,9 +9,6 @@ using System.Security.Cryptography.X509Certificates;
 
 namespace Microsoft.Data.SqlClient
 {
-
-#if !NETFRAMEWORK
-    // Contains methods to convert cryptography keys between different formats.
     internal sealed partial class KeyConverter
     {        
         // Magic numbers identifying blob types
@@ -179,72 +176,4 @@ namespace Microsoft.Data.SqlClient
             return certificate.GetRSAPublicKey();
         }
     }
-
-#endif 
-
-#if NETFRAMEWORK
-    internal sealed partial class KeyConverter
-    {
-        internal static RSA CreateRSAFromPublicKeyBlob(byte[] keyBlob)
-        {
-            CngKey key = CngKey.Import(keyBlob, CngKeyBlobFormat.GenericPublicBlob);
-            return new RSACng(key);
-
-        }
-
-        internal static ECDiffieHellman CreateECDiffieHellmanFromPublicKeyBlob(byte[] keyBlob)
-        {
-            CngKey key = CngKey.Import(keyBlob, CngKeyBlobFormat.GenericPublicBlob);
-            return new ECDiffieHellmanCng(key);
-
-        }
-
-        internal static ECDiffieHellman CreateECDiffieHellman(int keySize)
-        {
-            // Cng sets the key size and hash algorithm at creation and these parameters
-            // are then used later when DeriveKeyMaterial is called
-            ECDiffieHellmanCng clientDHKey = new ECDiffieHellmanCng(keySize);
-            clientDHKey.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
-            clientDHKey.HashAlgorithm = CngAlgorithm.Sha256;
-            return clientDHKey;
-        }
-
-        public static byte[] GetECDiffieHellmanPublicKeyBlob(ECDiffieHellman ecDiffieHellman)
-        {
-            if (ecDiffieHellman is ECDiffieHellmanCng cng)
-            {
-                return cng.Key.Export(CngKeyBlobFormat.EccPublicBlob);
-            }
-            else
-            {
-                throw new InvalidOperationException();
-            }
-        }
-
-        internal static byte[] DeriveKey(ECDiffieHellman ecDiffieHellman, ECDiffieHellmanPublicKey publicKey)
-        {
-            if (ecDiffieHellman is ECDiffieHellmanCng cng)
-            {
-                return cng.DeriveKeyMaterial(publicKey);
-            }
-            else
-            {
-                throw new InvalidOperationException();
-            }
-        }
-
-        internal static RSA GetRSAFromCertificate(X509Certificate2 certificate)
-        {
-            RSAParameters parameters;
-            using (RSA rsaCsp = certificate.GetRSAPublicKey())
-            {
-                parameters = rsaCsp.ExportParameters(includePrivateParameters: false);
-                
-            }
-            RSACng rsaCng = new RSACng();
-            rsaCng.ImportParameters(parameters);
-            return rsaCng;
-        }
-    }
-#endif
 }

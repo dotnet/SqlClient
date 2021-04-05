@@ -337,9 +337,7 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.cs">
       <Link>Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\AlwaysEncryptedKeyConverter.cs">
-      <Link>Microsoft\Data\SqlClient\AlwaysEncryptedKeyConverter.cs</Link>
-    </Compile>
+    <Compile Include="Microsoft\Data\SqlClient\AlwaysEncryptedKeyConverter.CrossPlatform.cs" />
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\EnclaveProviderBase.cs">
       <Link>Microsoft\Data\SqlClient\EnclaveProviderBase.cs</Link>
     </Compile>
