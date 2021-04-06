@@ -742,7 +742,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception DateTimeOverflow()
         {
-            throw new OverflowException(SqlTypes.SQLResource.DateTimeOverflowMessage);
+            return new OverflowException(SqlTypes.SQLResource.DateTimeOverflowMessage);
         }
 
         //
