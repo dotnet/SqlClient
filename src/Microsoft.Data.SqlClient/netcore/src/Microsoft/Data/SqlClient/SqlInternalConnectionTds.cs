@@ -1118,7 +1118,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else if (internalTransaction.OpenResultsCount != 0)
                     {
-                        //throw SQL.CannotCompleteDelegatedTransactionWithOpenResults(this);
+                        throw SQL.CannotCompleteDelegatedTransactionWithOpenResults(this, _parser.MARSOn);
                     }
                 }
 
