@@ -6,6 +6,7 @@ using System;
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Xml;
 using Microsoft.Data.SqlClient;
@@ -83,6 +84,10 @@ namespace Microsoft.Data.SqlTypes
             return new DateTime(totalTicks);
         }
 
+        // this method is split out of SqlDateTimeToDateTime for performance reasons
+        // it is faster to make a method call than it is to incorporate the asm for this
+        // method in the calling method.
+        [MethodImpl(MethodImplOptions.NoInlining)]
         private static Exception ThrowOverflowException() => throw SQL.DateTimeOverflow();
 
         #endregion
