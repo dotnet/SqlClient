@@ -382,7 +382,7 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(keyStoreName), "Provider name is invalid");
 
-            // Search in the sytem provider list.
+            // Search in the system provider list.
             if (SqlConnection.s_systemColumnEncryptionKeyStoreProviders.TryGetValue(keyStoreName, out provider))
             {
                 return true;

@@ -121,7 +121,7 @@ namespace Microsoft.Data.SqlClient
                     // In this case, just fail the cache lookup.
                     try
                     {
-                        SqlSecurityUtility.DecryptSymmetricKey(cipherMdCopy, sqlCommand.Connection);
+                        SqlSecurityUtility.DecryptSymmetricKey(cipherMdCopy, sqlCommand.Connection, sqlCommand);
                     }
                     catch (Exception ex)
                     {

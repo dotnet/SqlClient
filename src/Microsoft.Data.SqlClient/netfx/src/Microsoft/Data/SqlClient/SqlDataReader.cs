@@ -4118,7 +4118,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (!_parser.TryReadSqlValue(_data[_sharedState._nextColumnDataToRead], columnMetaData, (int)_sharedState._columnDataBytesRemaining, _stateObj,
                                              _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
-                                             columnMetaData.column))
+                                             columnMetaData.column, _command))
                 { // will read UDTs as VARBINARY.
                     return false;
                 }

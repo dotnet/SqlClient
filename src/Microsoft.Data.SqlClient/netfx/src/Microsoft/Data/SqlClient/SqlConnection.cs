@@ -50,8 +50,8 @@ namespace Microsoft.Data.SqlClient
         static private readonly object EventInfoMessage = new object();
 
         // System column encryption key store providers are added by default
-        static private readonly Dictionary<string, SqlColumnEncryptionKeyStoreProvider> s_systemColumnEncryptionKeyStoreProviders
-            = new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>(capacity: 1, comparer: StringComparer.OrdinalIgnoreCase)
+        internal static Dictionary<string, SqlColumnEncryptionKeyStoreProvider> s_systemColumnEncryptionKeyStoreProviders
+            = new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>(capacity: 3, comparer: StringComparer.OrdinalIgnoreCase)
         {
             {SqlColumnEncryptionCertificateStoreProvider.ProviderName, new SqlColumnEncryptionCertificateStoreProvider()},
             {SqlColumnEncryptionCngProvider.ProviderName, new SqlColumnEncryptionCngProvider()},
@@ -218,26 +218,14 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="providerName">Provider Name to be searched in System Provider diction and Custom provider dictionary.</param>
         /// <param name="columnKeyStoreProvider">If the provider is found, returns the corresponding SqlColumnEncryptionKeyStoreProvider instance.</param>
-        /// <param name="connection">The connection requiring the provider</param>
         /// <returns>true if the provider is found, else returns false</returns>
-        static internal bool TryGetColumnEncryptionKeyStoreProvider(string providerName, out SqlColumnEncryptionKeyStoreProvider columnKeyStoreProvider, SqlConnection connection)
+        internal bool TryGetColumnEncryptionKeyStoreProvider(string providerName, out SqlColumnEncryptionKeyStoreProvider columnKeyStoreProvider)
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(providerName), "Provider name is invalid");
-
-            // Initialize the out parameter
             columnKeyStoreProvider = null;
-
-            // Search in the sytem provider list.
-            if (s_systemColumnEncryptionKeyStoreProviders.TryGetValue(providerName, out columnKeyStoreProvider))
+            if (_customColumnEncryptionKeyStoreProviders != null && _customColumnEncryptionKeyStoreProviders.Count > 0)
             {
-                return true;
-            }
-
-            // instance-level custom provider cache takes precedence over global cache
-            if (connection._customColumnEncryptionKeyStoreProviders != null &&
-                connection._customColumnEncryptionKeyStoreProviders.Count > 0)
-            {
-                return connection._customColumnEncryptionKeyStoreProviders.TryGetValue(providerName, out columnKeyStoreProvider);
+                return _customColumnEncryptionKeyStoreProviders.TryGetValue(providerName, out columnKeyStoreProvider);
             }
 
             lock (s_globalCustomColumnEncryptionKeyProvidersLock)
@@ -257,7 +245,7 @@ namespace Microsoft.Data.SqlClient
         /// This function returns a list of system providers currently supported by this driver.
         /// </summary>
         /// <returns>Combined list of provider names</returns>
-        internal static List<string> GetColumnEncryptionSystemKeyStoreProviders()
+        internal static List<string> GetColumnEncryptionSystemKeyStoreProvidersNames()
         {
             return s_systemColumnEncryptionKeyStoreProviders.Keys.ToList();
         }
@@ -266,14 +254,13 @@ namespace Microsoft.Data.SqlClient
         /// This function returns a list of the names of the custom providers currently registered. If the 
         /// instance-level cache is not empty, that cache is used, else the global cache is used.
         /// </summary>
-        /// <param name="connection">The connection requiring the provider</param>
         /// <returns>Combined list of provider names</returns>
-        internal static List<string> GetColumnEncryptionCustomKeyStoreProviders(SqlConnection connection)
+        internal List<string> GetColumnEncryptionCustomKeyStoreProvidersNames()
         {
-            if (connection._customColumnEncryptionKeyStoreProviders != null &&
-               connection._customColumnEncryptionKeyStoreProviders.Count > 0)
+            if (_customColumnEncryptionKeyStoreProviders != null &&
+                         _customColumnEncryptionKeyStoreProviders.Count > 0)
             {
-                return connection._customColumnEncryptionKeyStoreProviders.Keys.ToList();
+                return _customColumnEncryptionKeyStoreProviders.Keys.ToList();
             }
             if (s_globalCustomColumnEncryptionKeyStoreProviders != null)
             {
