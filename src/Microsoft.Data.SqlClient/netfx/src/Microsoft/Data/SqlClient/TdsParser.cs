@@ -4646,7 +4646,7 @@ namespace Microsoft.Data.SqlClient
 
         internal bool TryProcessTceCryptoMetadata(TdsParserStateObject stateObj,
             SqlMetaDataPriv col,
-            SqlTceCipherInfoTable? cipherTable,
+            SqlTceCipherInfoTable cipherTable,
             SqlCommandColumnEncryptionSetting columnEncryptionSetting,
             bool isReturnValue)
         {
@@ -4657,7 +4657,7 @@ namespace Microsoft.Data.SqlClient
             UInt32 userType;
 
             // For return values there is not cipher table and no ordinal.
-            if (cipherTable.HasValue)
+            if (cipherTable != null)
             {
                 if (!stateObj.TryReadUInt16(out index))
                 {
@@ -4665,9 +4665,9 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // validate the index (ordinal passed)
-                if (index >= cipherTable.Value.Size)
+                if (index >= cipherTable.Size)
                 {
-                    SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.TryProcessTceCryptoMetadata|TCE> Incorrect ordinal received {0}, max tab size: {1}", index, cipherTable.Value.Size);
+                    SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.TryProcessTceCryptoMetadata|TCE> Incorrect ordinal received {0}, max tab size: {1}", index, cipherTable.Size);
                     throw SQL.ParsingErrorValue(ParsingErrorState.TceInvalidOrdinalIntoCipherInfoTable, index);
                 }
             }
@@ -4733,7 +4733,7 @@ namespace Microsoft.Data.SqlClient
                 _connHandler != null && _connHandler.ConnectionOptions != null &&
                 _connHandler.ConnectionOptions.ColumnEncryptionSetting == SqlConnectionColumnEncryptionSetting.Enabled))
             {
-                col.cipherMD = new SqlCipherMetadata(cipherTable.HasValue ? (SqlTceCipherInfoEntry?)cipherTable.Value[index] : null,
+                col.cipherMD = new SqlCipherMetadata(cipherTable != null ? (SqlTceCipherInfoEntry)cipherTable[index] : null,
                                                         index,
                                                         cipherAlgorithmId: cipherAlgorithmId,
                                                         cipherAlgorithmName: cipherAlgorithmName,
@@ -5243,7 +5243,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// <para> Parses the TDS message to read a single CIPHER_INFO table.</para>
         /// </summary>
-        internal bool TryProcessCipherInfoTable(TdsParserStateObject stateObj, out SqlTceCipherInfoTable? cipherTable)
+        internal bool TryProcessCipherInfoTable(TdsParserStateObject stateObj, out SqlTceCipherInfoTable cipherTable)
         {
             // Read count
             short tableSize = 0;
@@ -5280,7 +5280,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(cColumns > 0, "should have at least 1 column in metadata!");
 
             // Read the cipher info table first
-            SqlTceCipherInfoTable? cipherTable = null;
+            SqlTceCipherInfoTable cipherTable = null;
             if (_serverSupportsColumnEncryption)
             {
                 if (!TryProcessCipherInfoTable(stateObj, out cipherTable))
@@ -5496,7 +5496,7 @@ namespace Microsoft.Data.SqlClient
             return true;
         }
 
-        private bool TryCommonProcessMetaData(TdsParserStateObject stateObj, _SqlMetaData col, SqlTceCipherInfoTable? cipherTable, bool fColMD, SqlCommandColumnEncryptionSetting columnEncryptionSetting)
+        private bool TryCommonProcessMetaData(TdsParserStateObject stateObj, _SqlMetaData col, SqlTceCipherInfoTable cipherTable, bool fColMD, SqlCommandColumnEncryptionSetting columnEncryptionSetting)
         {
             byte byteLen;
             UInt32 userType;
@@ -5583,7 +5583,7 @@ namespace Microsoft.Data.SqlClient
             if (fColMD && _serverSupportsColumnEncryption && col.isEncrypted)
             {
                 // If the column is encrypted, we should have a valid cipherTable
-                if (cipherTable.HasValue && !TryProcessTceCryptoMetadata(stateObj, col, cipherTable.Value, columnEncryptionSetting, isReturnValue: false))
+                if (cipherTable != null && !TryProcessTceCryptoMetadata(stateObj, col, cipherTable, columnEncryptionSetting, isReturnValue: false))
                 {
                     return false;
                 }
@@ -6732,7 +6732,7 @@ namespace Microsoft.Data.SqlClient
                         try
                         {
                             // CipherInfo is present, decrypt and read
-                            byte[] unencryptedBytes = SqlSecurityUtility.DecryptWithKey(b, md.cipherMD, _connHandler.ConnectionOptions.DataSource);
+                            byte[] unencryptedBytes = SqlSecurityUtility.DecryptWithKey(b, md.cipherMD, _connHandler.Connection);
 
                             if (unencryptedBytes != null)
                             {
@@ -8697,7 +8697,7 @@ namespace Microsoft.Data.SqlClient
         internal void TdsLogin(SqlLogin rec,
                                TdsEnums.FeatureExtension requestedFeatures,
                                SessionData recoverySessionData,
-                               FederatedAuthenticationFeatureExtensionData? fedAuthFeatureExtensionData,
+                               FederatedAuthenticationFeatureExtensionData fedAuthFeatureExtensionData,
                                SqlClientOriginalNetworkAddressInfo originalNetworkAddressInfo)
         {
             _physicalStateObj.SetTimeoutSeconds(rec.timeout);
@@ -8859,7 +8859,7 @@ namespace Microsoft.Data.SqlClient
                     if ((requestedFeatures & TdsEnums.FeatureExtension.FedAuth) != 0)
                     {
                         Debug.Assert(fedAuthFeatureExtensionData != null, "fedAuthFeatureExtensionData should not null.");
-                        length += WriteFedAuthFeatureRequest(fedAuthFeatureExtensionData.Value, write: false);
+                        length += WriteFedAuthFeatureRequest(fedAuthFeatureExtensionData, write: false);
                     }
                     if ((requestedFeatures & TdsEnums.FeatureExtension.Tce) != 0)
                     {
@@ -9136,7 +9136,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.TdsLogin|SEC> Sending federated authentication feature request");
                         Debug.Assert(fedAuthFeatureExtensionData != null, "fedAuthFeatureExtensionData should not null.");
-                        WriteFedAuthFeatureRequest(fedAuthFeatureExtensionData.Value, write: true);
+                        WriteFedAuthFeatureRequest(fedAuthFeatureExtensionData, write: true);
                     };
                     if ((requestedFeatures & TdsEnums.FeatureExtension.Tce) != 0)
                     {
@@ -10033,7 +10033,7 @@ namespace Microsoft.Data.SqlClient
                                         }
 
                                         Debug.Assert(serializedValue != null, "serializedValue should not be null in TdsExecuteRPC.");
-                                        encryptedValue = SqlSecurityUtility.EncryptWithKey(serializedValue, param.CipherMetadata, _connHandler.ConnectionOptions.DataSource);
+                                        encryptedValue = SqlSecurityUtility.EncryptWithKey(serializedValue, param.CipherMetadata, _connHandler.Connection);
                                     }
                                     catch (Exception e)
                                     {
@@ -11065,7 +11065,7 @@ namespace Microsoft.Data.SqlClient
         /// decrypt the CEK and keep it ready for encryption.
         /// </summary>
         /// <returns></returns>
-        internal void LoadColumnEncryptionKeys(_SqlMetaDataSet metadataCollection, string serverName)
+        internal void LoadColumnEncryptionKeys(_SqlMetaDataSet metadataCollection, SqlConnection connection)
         {
             if (_serverSupportsColumnEncryption && ShouldEncryptValuesForBulkCopy())
             {
@@ -11076,7 +11076,7 @@ namespace Microsoft.Data.SqlClient
                         _SqlMetaData md = metadataCollection[col];
                         if (md.isEncrypted)
                         {
-                            SqlSecurityUtility.DecryptSymmetricKey(md.cipherMD, serverName);
+                            SqlSecurityUtility.DecryptSymmetricKey(md.cipherMD, connection);
                         }
                     }
                 }
@@ -11124,14 +11124,14 @@ namespace Microsoft.Data.SqlClient
             //     Note- Cek table (with 0 entries) will be present if TCE
             //     was enabled and server supports it!
             // OR if encryption was disabled in connection options
-            if (!metadataCollection.cekTable.HasValue ||
+            if (metadataCollection.cekTable == null ||
                 !ShouldEncryptValuesForBulkCopy())
             {
                 WriteShort(0x00, stateObj);
                 return;
             }
 
-            SqlTceCipherInfoTable cekTable = metadataCollection.cekTable.Value;
+            SqlTceCipherInfoTable cekTable = metadataCollection.cekTable;
             ushort count = (ushort)cekTable.Size;
 
             WriteShort(count, stateObj);
@@ -11437,7 +11437,7 @@ namespace Microsoft.Data.SqlClient
             return SqlSecurityUtility.EncryptWithKey(
                     serializedValue,
                     metadata.cipherMD,
-                    _connHandler.ConnectionOptions.DataSource);
+                    _connHandler.Connection);
         }
 
         internal Task WriteBulkCopyValue(object value, SqlMetaDataPriv metadata, TdsParserStateObject stateObj, bool isSqlType, bool isDataFeed, bool isNull)

@@ -108,7 +108,7 @@ namespace Microsoft.Data.SqlClient
         private TdsParser _parser;
         private SqlLoginAck _loginAck;
         private SqlCredential _credential;
-        private FederatedAuthenticationFeatureExtensionData? _fedAuthFeatureExtensionData;
+        private FederatedAuthenticationFeatureExtensionData _fedAuthFeatureExtensionData;
 
         // Connection Resiliency
         private bool _sessionRecoveryRequested;
@@ -2564,7 +2564,7 @@ namespace Microsoft.Data.SqlClient
 
                         Debug.Assert(_fedAuthFeatureExtensionData != null, "_fedAuthFeatureExtensionData must not be null when _federatedAuthenticationRequested == true");
 
-                        switch (_fedAuthFeatureExtensionData.Value.libraryType)
+                        switch (_fedAuthFeatureExtensionData.libraryType)
                         {
                             case TdsEnums.FedAuthLibrary.MSAL:
                             case TdsEnums.FedAuthLibrary.SecurityToken:
@@ -2579,7 +2579,7 @@ namespace Microsoft.Data.SqlClient
                             default:
                                 Debug.Fail("Unknown _fedAuthLibrary type");
                                 SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Attempting to use unknown federated authentication library", ObjectID);
-                                throw SQL.ParsingErrorLibraryType(ParsingErrorState.FedAuthFeatureAckUnknownLibraryType, (int)_fedAuthFeatureExtensionData.Value.libraryType);
+                                throw SQL.ParsingErrorLibraryType(ParsingErrorState.FedAuthFeatureAckUnknownLibraryType, (int)_fedAuthFeatureExtensionData.libraryType);
                         }
                         _federatedAuthenticationAcknowledged = true;
 

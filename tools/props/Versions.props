@@ -6,7 +6,6 @@
     <!-- Should only be changed in future when a non-backwards compatible driver is released. -->
     <!-- Future Assembly Version values shall be Major.Minor.0.0; e.g. 3.0.0.0 -->
     <AssemblyVersion>3.0.0.0</AssemblyVersion>
-    <MicrosoftDotNetGenAPIPackageVersion>1.0.0-beta.18578.2</MicrosoftDotNetGenAPIPackageVersion>
     <NugetPackageVersion Condition="'$(NugetPackageVersion)' == ''">3.0.0-dev</NugetPackageVersion>
     <Version>$(NugetPackageVersion)</Version>
   </PropertyGroup>

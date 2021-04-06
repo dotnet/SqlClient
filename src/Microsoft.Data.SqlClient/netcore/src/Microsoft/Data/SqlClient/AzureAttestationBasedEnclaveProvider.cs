@@ -215,7 +215,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (Exception exception)
                 {
-                    throw new AlwaysEncryptedAttestationException(String.Format(Strings.FailToParseAttestationInfo, exception.Message));
+                    throw new AlwaysEncryptedAttestationException(string.Format(Strings.FailToParseAttestationInfo, exception.Message));
                 }
             }
         }
@@ -313,7 +313,7 @@ namespace Microsoft.Data.SqlClient
 
             if (!isSignatureValid)
             {
-                throw new AlwaysEncryptedAttestationException(String.Format(Strings.AttestationTokenSignatureValidationFailed, exceptionMessage));
+                throw new AlwaysEncryptedAttestationException(string.Format(Strings.AttestationTokenSignatureValidationFailed, exceptionMessage));
             }
 
             // Validate claims in the token
@@ -349,7 +349,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (Exception exception)
                 {
-                    throw new AlwaysEncryptedAttestationException(String.Format(Strings.GetAttestationTokenSigningKeysFailed, GetInnerMostExceptionMessage(exception)), exception);
+                    throw new AlwaysEncryptedAttestationException(string.Format(Strings.GetAttestationTokenSigningKeysFailed, GetInnerMostExceptionMessage(exception)), exception);
                 }
 
                 OpenIdConnectConfigurationCache.Add(url, openIdConnectConfig, DateTime.UtcNow.AddDays(1));
@@ -381,7 +381,7 @@ namespace Microsoft.Data.SqlClient
 
             if (isDefaultPort)
             {
-                issuerUrls.Add(String.Concat(issuerUrl, ":", port.ToString()));
+                issuerUrls.Add(string.Concat(issuerUrl, ":", port.ToString()));
             }
 
             return issuerUrls;
@@ -428,7 +428,7 @@ namespace Microsoft.Data.SqlClient
             }
             catch (Exception exception)
             {
-                throw new AlwaysEncryptedAttestationException(String.Format(Strings.InvalidAttestationToken, GetInnerMostExceptionMessage(exception)));
+                throw new AlwaysEncryptedAttestationException(string.Format(Strings.InvalidAttestationToken, GetInnerMostExceptionMessage(exception)));
             }
 
             return isSignatureValid;
@@ -456,7 +456,7 @@ namespace Microsoft.Data.SqlClient
         private void ValidateAttestationClaims(EnclaveType enclaveType, string attestationToken, EnclavePublicKey enclavePublicKey, byte[] nonce)
         {
             // Read the json token
-            JsonWebToken token = null;
+            JsonWebToken token;
             try
             {
                 JsonWebTokenHandler tokenHandler = new JsonWebTokenHandler();
@@ -464,7 +464,7 @@ namespace Microsoft.Data.SqlClient
             }
             catch (ArgumentException argumentException)
             {
-                throw new AlwaysEncryptedAttestationException(String.Format(Strings.FailToParseAttestationToken, argumentException.Message));
+                throw new AlwaysEncryptedAttestationException(string.Format(Strings.FailToParseAttestationToken, argumentException.Message));
             }
 
             // Get all the claims from the token
@@ -492,7 +492,7 @@ namespace Microsoft.Data.SqlClient
             bool hasClaim = claims.TryGetValue(claimName, out claimData);
             if (!hasClaim)
             {
-                throw new AlwaysEncryptedAttestationException(String.Format(Strings.MissingClaimInAttestationToken, claimName));
+                throw new AlwaysEncryptedAttestationException(string.Format(Strings.MissingClaimInAttestationToken, claimName));
             }
 
             // Get the Base64Url of the actual data and compare it with claim
@@ -506,14 +506,13 @@ namespace Microsoft.Data.SqlClient
                 throw new AlwaysEncryptedAttestationException(Strings.InvalidArgumentToBase64UrlDecoder);
             }
 
-            bool hasValidClaim = String.Equals(encodedActualData, claimData, StringComparison.Ordinal);
+            bool hasValidClaim = string.Equals(encodedActualData, claimData, StringComparison.Ordinal);
             if (!hasValidClaim)
             {
-                throw new AlwaysEncryptedAttestationException(String.Format(Strings.InvalidClaimInAttestationToken, claimName, claimData));
+                throw new AlwaysEncryptedAttestationException(string.Format(Strings.InvalidClaimInAttestationToken, claimName, claimData));
             }
         }
 
-        // Derives the shared secret between the client and enclave.
         private byte[] GetSharedSecret(EnclavePublicKey enclavePublicKey, byte[] nonce, EnclaveType enclaveType, EnclaveDiffieHellmanInfo enclaveDHInfo, ECDiffieHellman clientDHKey)
         {
             byte[] enclaveRsaPublicKey = enclavePublicKey.PublicKey;
