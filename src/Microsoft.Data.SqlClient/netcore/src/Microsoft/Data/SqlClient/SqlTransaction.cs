@@ -142,7 +142,7 @@ namespace Microsoft.Data.SqlClient
 
             SqlStatistics statistics = null;
             long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlTransaction.Commit | API | Object Id {0}", ObjectID);
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlTransaction.Commit | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId);
+            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlTransaction.Commit | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId);
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
