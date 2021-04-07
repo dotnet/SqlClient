@@ -2436,7 +2436,6 @@ namespace Microsoft.Data.SqlClient
 
         internal void ReadSni(TaskCompletionSource<object> completion)
         {
-
             Debug.Assert(_networkPacketTaskSource == null || ((_asyncReadWithoutSnapshot) && (_networkPacketTaskSource.Task.IsCompleted)), "Pending async call or failed to replay snapshot when calling ReadSni");
             _networkPacketTaskSource = completion;
 
@@ -2470,6 +2469,7 @@ namespace Microsoft.Data.SqlClient
                 // the identity source. The identity value is used to correlate timer callback events to the currently
                 // running timeout and prevents a late timer callback affecting a result it does not relate to
                 int previousTimeoutState = Interlocked.CompareExchange(ref _timeoutState, TimeoutState.Running, TimeoutState.Stopped);
+                Debug.Assert(previousTimeoutState == TimeoutState.Stopped, "previous timeout state was not Stopped");
                 if (previousTimeoutState == TimeoutState.Stopped)
                 {
                     Debug.Assert(_timeoutIdentityValue == 0, "timer was previously stopped without resetting the _identityValue");
@@ -2490,8 +2490,6 @@ namespace Microsoft.Data.SqlClient
                 //  0 == Already timed out (NOTE: To simulate the same behavior as sync we will only timeout on 0 if we receive an IO Pending from SNI)
                 // >0 == Actual timeout remaining
                 int msecsRemaining = GetTimeoutRemaining();
-
-                Debug.Assert(previousTimeoutState == TimeoutState.Stopped, "previous timeout state was not Stopped");
                 if (msecsRemaining > 0)
                 {
                     ChangeNetworkPacketTimeout(msecsRemaining, Timeout.Infinite);
@@ -2904,7 +2902,7 @@ namespace Microsoft.Data.SqlClient
 
                 // try to change to the stopped state but only do so if currently in the running state
                 // and use cmpexch so that all changes out of the running state are atomic
-                int previousState = Interlocked.CompareExchange(ref _timeoutState, TimeoutState.Running, TimeoutState.Stopped);
+                int previousState = Interlocked.CompareExchange(ref _timeoutState, TimeoutState.Stopped, TimeoutState.Running);
 
                 // if the state is anything other than running then this query has reached an end so
                 // set the correlation _timeoutIdentityValue to 0 to prevent late callbacks executing
