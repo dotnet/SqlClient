@@ -635,17 +635,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                     finally
                     {
-                        try
-                        {
-                            transaction.Rollback();
-                        }
-                        catch
-                        {
-                            // ignore rollback failure exceptions to preserve original thrown error in test result
-                        }
+                        transaction.Rollback();
                     }
                 }
-
             }
         }
 
@@ -691,23 +683,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                         p.TypeName = customerAddressTypeIncorrectName; // force using the incorrect name by manually setting it
 
-                        Assert.Throws<SqlException>(
+                        SqlException exception = Assert.Throws<SqlException>(
                             () => cmd.ExecuteNonQuery()
                         );
+                        Assert.Contains("Database name is not allowed", exception.Message);
                     }
                     finally
                     {
-                        try
-                        {
-                            transaction.Rollback();
-                        }
-                        catch
-                        {
-                            // ignore rollback failure exceptions to preserve original thrown error in test result
-                        }
+                        transaction.Rollback();
                     }
                 }
-
             }
         }
     }
