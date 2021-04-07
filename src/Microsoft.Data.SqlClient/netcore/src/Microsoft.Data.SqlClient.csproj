@@ -345,7 +345,7 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.NetStandard.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.NetStandard.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\ConcurrentQueueSemaphore.NetStandard.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIStreams.NetStandard.cs" />    
+    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIStreams.Task.cs" />    
     <Compile Include="Microsoft\Data\SqlClient\SNI\SslOverTdsStream.NetStandard.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetFramework)' != 'netstandard2.0'">
