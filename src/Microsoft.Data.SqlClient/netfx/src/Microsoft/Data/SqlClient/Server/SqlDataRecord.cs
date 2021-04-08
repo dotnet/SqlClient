@@ -40,14 +40,14 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetName/*' />
-        public virtual String GetName(int ordinal)
+        public virtual string GetName(int ordinal)
         {
             EnsureSubclassOverride();
             return GetSqlMetaData(ordinal).Name;
         }
 
         /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetDataTypeName/*' />
-        public virtual String GetDataTypeName(int ordinal)
+        public virtual string GetDataTypeName(int ordinal)
         {
             EnsureSubclassOverride();
             SqlMetaData metaData = GetSqlMetaData(ordinal);
@@ -77,7 +77,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetValue/*' />
-        public virtual Object GetValue(int ordinal)
+        public virtual object GetValue(int ordinal)
         {
             EnsureSubclassOverride();
             SmiMetaData metaData = GetSmiMetaData(ordinal);
@@ -110,7 +110,7 @@ namespace Microsoft.Data.SqlClient.Server
             EnsureSubclassOverride();
             if (null == values)
             {
-                throw ADP.ArgumentNull("values");
+                throw ADP.ArgumentNull(nameof(values));
             }
 
             int copyLength = (values.Length < FieldCount) ? values.Length : FieldCount;
@@ -134,7 +134,7 @@ namespace Microsoft.Data.SqlClient.Server
                     names[i] = GetSqlMetaData(i).Name;
                 }
 
-                _fieldNameLookup = new FieldNameLookup(names, -1);  // UNDONE: is this correct LCID?
+                _fieldNameLookup = new FieldNameLookup(names, -1);
             }
 
             return _fieldNameLookup.GetOrdinal(name);
@@ -151,7 +151,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/ItemName/*' />
-        public virtual object this[String name]
+        public virtual object this[string name]
         {
             get
             {
@@ -203,21 +203,21 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetInt16/*' />
-        public virtual Int16 GetInt16(int ordinal)
+        public virtual short GetInt16(int ordinal)
         {
             EnsureSubclassOverride();
             return ValueUtilsSmi.GetInt16(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
         }
 
         /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetInt32/*' />
-        public virtual Int32 GetInt32(int ordinal)
+        public virtual int GetInt32(int ordinal)
         {
             EnsureSubclassOverride();
             return ValueUtilsSmi.GetInt32(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
         }
 
         /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetInt64/*' />
-        public virtual Int64 GetInt64(int ordinal)
+        public virtual long GetInt64(int ordinal)
         {
             EnsureSubclassOverride();
             return ValueUtilsSmi.GetInt64(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
@@ -253,7 +253,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetDecimal/*' />
-        public virtual Decimal GetDecimal(int ordinal)
+        public virtual decimal GetDecimal(int ordinal)
         {
             EnsureSubclassOverride();
             return ValueUtilsSmi.GetDecimal(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
@@ -278,13 +278,6 @@ namespace Microsoft.Data.SqlClient.Server
         {
             EnsureSubclassOverride();
             return ValueUtilsSmi.GetTimeSpan(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
-        }
-
-        /// <include file='..\..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient.Server\SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/System.Data.IDataRecord.GetData/*' />
-        [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Never)] // MDAC 69508
-        IDataReader IDataRecord.GetData(int ordinal)
-        {
-            throw ADP.NotSupported();
         }
 
         /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/IsDBNull/*' />
@@ -329,7 +322,7 @@ namespace Microsoft.Data.SqlClient.Server
             EnsureSubclassOverride();
             if (null == values)
             {
-                throw ADP.ArgumentNull("values");
+                throw ADP.ArgumentNull(nameof(values));
             }
 
 
@@ -461,10 +454,10 @@ namespace Microsoft.Data.SqlClient.Server
             EnsureSubclassOverride();
             if (null == values)
             {
-                throw ADP.ArgumentNull("values");
+                throw ADP.ArgumentNull(nameof(values));
             }
 
-            // SQLBUDT #346883 Allow values array longer than FieldCount, just ignore the extra cells.
+            // Allow values array longer than FieldCount, just ignore the extra cells.
             int copyLength = (values.Length > FieldCount) ? FieldCount : values.Length;
 
             ExtendedClrTypeCode[] typeCodes = new ExtendedClrTypeCode[copyLength];
@@ -556,21 +549,21 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetInt16/*' />
-        public virtual void SetInt16(int ordinal, System.Int16 value)
+        public virtual void SetInt16(int ordinal, short value)
         {
             EnsureSubclassOverride();
             ValueUtilsSmi.SetInt16(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value);
         }
 
         /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetInt32/*' />
-        public virtual void SetInt32(int ordinal, System.Int32 value)
+        public virtual void SetInt32(int ordinal, int value)
         {
             EnsureSubclassOverride();
             ValueUtilsSmi.SetInt32(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value);
         }
 
         /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetInt64/*' />
-        public virtual void SetInt64(int ordinal, System.Int64 value)
+        public virtual void SetInt64(int ordinal, long value)
         {
             EnsureSubclassOverride();
             ValueUtilsSmi.SetInt64(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value);
@@ -597,7 +590,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetDecimal/*' />
-        public virtual void SetDecimal(int ordinal, Decimal value)
+        public virtual void SetDecimal(int ordinal, decimal value)
         {
             EnsureSubclassOverride();
             ValueUtilsSmi.SetDecimal(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value);
@@ -757,7 +750,7 @@ namespace Microsoft.Data.SqlClient.Server
             // Initial consistency check
             if (null == metaData)
             {
-                throw ADP.ArgumentNull("metadata");
+                throw ADP.ArgumentNull(nameof(metaData));
             }
 
             _columnMetaData = new SqlMetaData[metaData.Length];
@@ -767,7 +760,7 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 if (null == metaData[i])
                 {
-                    throw ADP.ArgumentNull("metadata[" + i + "]");
+                    throw ADP.ArgumentNull($"{nameof(metaData)}[{i}]");
                 }
                 _columnMetaData[i] = metaData[i];
                 _columnSmiMetaData[i] = MetaDataUtilsSmi.SqlMetaDataToSmiExtendedMetaData(_columnMetaData[i]);
@@ -876,6 +869,12 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 throw SQL.SubclassMustOverride();
             }
+        }
+
+        /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/System.Data.IDataRecord.GetData/*' />
+        IDataReader System.Data.IDataRecord.GetData(int ordinal)
+        {
+            throw ADP.NotSupported();
         }
     }
 }

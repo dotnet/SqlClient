@@ -550,6 +550,7 @@ namespace Microsoft.Data.SqlClient.Server
             EnsureSubclassOverride();
             ValueUtilsSmi.SetString(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value);
         }
+
         /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetDecimal/*' />
         public virtual void SetDecimal(int ordinal, decimal value)
         {
