@@ -148,8 +148,8 @@ namespace Microsoft.Data.SqlClient.SNI
 
                     SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.INFO, "Connection Id {0}, Connecting to serverName {1} and port {2}", args0: _connectionId, args1: serverName, args2: port);
                     // We will always first try to connect with serverName as before and let the DNS server to resolve the serverName.
-                    // If the DSN resolution fails, we will try with IPs in the DNS cache if existed. We try with IPv4 first and followed by IPv6 if
-                    // IPv4 fails. The exceptions will be throw to upper level and be handled as before.
+                    // If the DSN resolution fails, we will try with IPs in the DNS cache if existed. We try with cached IPs based on IPAddressPreference.
+                    // The exceptions will be throw to upper level and be handled as before.
                     try
                     {
                         if (parallel)
