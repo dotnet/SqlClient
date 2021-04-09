@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="masterKeyPath">Complete path of a certificate</param>
         /// <param name="encryptionAlgorithm">Asymmetric Key Encryption Algorithm</param>
-        /// <param name="columnEncryptionKey">Plain text column encryption key</param>
+        /// <param name="columnEncryptionKey">The plaintext column encryption key</param>
         /// <returns>Encrypted column encryption key</returns>
         public override byte[] EncryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] columnEncryptionKey)
         {

@@ -27,7 +27,7 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     <copyright>© Microsoft Corporation. All rights reserved.</copyright>
     <tags>sqlclient microsoft.data.sqlclient</tags>
     <dependencies>
-      <group targetFramework="net46">
+      <group targetFramework="net461">
         <dependency id="Microsoft.Data.SqlClient.SNI" version="2.1.1" />
         <dependency id="Microsoft.Identity.Client" version="4.21.1" />
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.8.0" />
@@ -83,11 +83,11 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
       </group>
     </dependencies>
     <frameworkAssemblies>
-      <frameworkAssembly assemblyName="mscorlib" targetFramework="net46" />
-      <frameworkAssembly assemblyName="System.Data" targetFramework="net46" />
+      <frameworkAssembly assemblyName="mscorlib" targetFramework="net461" />
+      <frameworkAssembly assemblyName="System.Data" targetFramework="net461" />
     </frameworkAssemblies>
     <references>
-      <group targetFramework="net46">
+      <group targetFramework="net461">
           <reference file="Microsoft.Data.SqlClient.dll" />
           <reference file="Microsoft.Data.SqlClient.pdb" />
           <reference file="Microsoft.Data.SqlClient.xml" />
@@ -118,9 +118,9 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     <file src="..\icons\dotnet.png" target="" />
 
     <!-- ref NetFx -->
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$\Microsoft.Data.SqlClient\ref\net46\Microsoft.Data.SqlClient.dll" target="ref\net46\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$\Microsoft.Data.SqlClient\ref\net46\Microsoft.Data.SqlClient.pdb" target="ref\net46\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$\Microsoft.Data.SqlClient\ref\net46\Microsoft.Data.SqlClient.xml" target="ref\net46\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$\Microsoft.Data.SqlClient\ref\net461\Microsoft.Data.SqlClient.dll" target="ref\net461\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$\Microsoft.Data.SqlClient\ref\net461\Microsoft.Data.SqlClient.pdb" target="ref\net461\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$\Microsoft.Data.SqlClient\ref\net461\Microsoft.Data.SqlClient.xml" target="ref\net461\" exclude="" />
 
     <!-- ref NetCore -->
     <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\netcoreapp2.1\Microsoft.Data.SqlClient.dll" target="ref\netcoreapp2.1\" exclude="" />
@@ -141,21 +141,21 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\netstandard2.1\Microsoft.Data.SqlClient.xml" target="ref\netstandard2.1\" exclude="" />
 
     <!-- Localized Resource Files for NetFx -->
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\de\Microsoft.Data.SqlClient.resources.dll" target="lib\net46\de\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\es\Microsoft.Data.SqlClient.resources.dll" target="lib\net46\es\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\fr\Microsoft.Data.SqlClient.resources.dll" target="lib\net46\fr\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\it\Microsoft.Data.SqlClient.resources.dll" target="lib\net46\it\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\ja\Microsoft.Data.SqlClient.resources.dll" target="lib\net46\ja\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\ko\Microsoft.Data.SqlClient.resources.dll" target="lib\net46\ko\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\pt-BR\Microsoft.Data.SqlClient.resources.dll" target="lib\net46\pt-BR\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\ru\Microsoft.Data.SqlClient.resources.dll" target="lib\net46\ru\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\zh-Hans\Microsoft.Data.SqlClient.resources.dll" target="lib\net46\zh-Hans\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\zh-Hant\Microsoft.Data.SqlClient.resources.dll" target="lib\net46\zh-Hant\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\de\Microsoft.Data.SqlClient.resources.dll" target="lib\net461\de\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\es\Microsoft.Data.SqlClient.resources.dll" target="lib\net461\es\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\fr\Microsoft.Data.SqlClient.resources.dll" target="lib\net461\fr\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\it\Microsoft.Data.SqlClient.resources.dll" target="lib\net461\it\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\ja\Microsoft.Data.SqlClient.resources.dll" target="lib\net461\ja\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\ko\Microsoft.Data.SqlClient.resources.dll" target="lib\net461\ko\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\pt-BR\Microsoft.Data.SqlClient.resources.dll" target="lib\net461\pt-BR\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\ru\Microsoft.Data.SqlClient.resources.dll" target="lib\net461\ru\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\zh-Hans\Microsoft.Data.SqlClient.resources.dll" target="lib\net461\zh-Hans\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\zh-Hant\Microsoft.Data.SqlClient.resources.dll" target="lib\net461\zh-Hant\" exclude="" />
 
     <!-- lib NetFx -->
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.dll" target="lib\net46\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.pdb" target="lib\net46\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.xml" target="lib\net46\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.dll" target="lib\net461\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.pdb" target="lib\net461\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.xml" target="lib\net461\" exclude="" />
 
     <!-- lib NetCore -->
     <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\netcoreapp2.1\Microsoft.Data.SqlClient.dll" target="lib\netcoreapp2.1\" exclude="" />
@@ -176,8 +176,8 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\netstandard2.1\Microsoft.Data.SqlClient.xml" target="lib\netstandard2.1\" exclude="" />
 
     <!-- runtimes NetFx -->
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.dll" target="runtimes\win\lib\net46\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.pdb" target="runtimes\win\lib\net46\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.dll" target="runtimes\win\lib\net461\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.pdb" target="runtimes\win\lib\net461\" exclude="" />
 
     <!-- runtimes NetCore -->
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\netcoreapp2.1\Microsoft.Data.SqlClient.dll" target="runtimes\win\lib\netcoreapp2.1\" exclude="" />

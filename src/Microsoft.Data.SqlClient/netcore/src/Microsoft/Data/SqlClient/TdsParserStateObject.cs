@@ -135,6 +135,7 @@ namespace Microsoft.Data.SqlClient
         private volatile int _timeoutIdentityValue;
         internal volatile bool _attentionSent;              // true if we sent an Attention to the server
         internal volatile bool _attentionSending;
+        private readonly TimerCallback _onTimeoutAsync;
 
         // Below 2 properties are used to enforce timeout delays in code to 
         // reproduce issues related to theadpool starvation and timeout delay.
@@ -293,6 +294,7 @@ namespace Microsoft.Data.SqlClient
             // Construct a physical connection
             Debug.Assert(null != parser, "no parser?");
             _parser = parser;
+            _onTimeoutAsync = OnTimeoutAsync;
 
             // For physical connection, initialize to default login packet size.
             SetPacketSize(TdsEnums.DEFAULT_LOGIN_PACKET_SIZE);
@@ -309,6 +311,7 @@ namespace Microsoft.Data.SqlClient
             // Construct a MARS session
             Debug.Assert(null != parser, "no parser?");
             _parser = parser;
+            _onTimeoutAsync = OnTimeoutAsync;
             SniContext = SniContext.Snix_GetMarsSession;
 
             Debug.Assert(null != _parser._physicalStateObj, "no physical session?");
@@ -789,7 +792,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal abstract void CreatePhysicalSNIHandle(string serverName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[] spnBuffer, bool flushCache, bool async, bool fParallel, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo, bool isIntegratedSecurity = false);
+        internal abstract void CreatePhysicalSNIHandle(string serverName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[][] spnBuffer, bool flushCache, bool async, bool fParallel, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo, bool isIntegratedSecurity = false);
 
         internal abstract void AssignPendingDNSInfo(string userProtocol, string DNSCacheKey, ref SQLDNSInfo pendingDNSInfo);
 
@@ -831,7 +834,7 @@ namespace Microsoft.Data.SqlClient
 
         protected abstract void RemovePacketFromPendingList(PacketHandle pointer);
 
-        internal abstract uint GenerateSspiClientContext(byte[] receivedBuff, uint receivedLength, ref byte[] sendBuff, ref uint sendLength, byte[] _sniSpnBuffer);
+        internal abstract uint GenerateSspiClientContext(byte[] receivedBuff, uint receivedLength, ref byte[] sendBuff, ref uint sendLength, byte[][] _sniSpnBuffer);
 
         internal bool Deactivate()
         {
@@ -1049,6 +1052,7 @@ namespace Microsoft.Data.SqlClient
                         _messageStatus = _partialHeaderBuffer[1];
                         _spid = _partialHeaderBuffer[TdsEnums.SPID_OFFSET] << 8 |
                                   _partialHeaderBuffer[TdsEnums.SPID_OFFSET + 1];
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.TryProcessHeader | ADV | State Object Id {0}, Client Connection Id {1}, Server process Id (SPID) {2}", _objectID, _parser?.Connection?.ClientConnectionId, _spid);
                     }
                     else
                     {
@@ -1086,6 +1090,7 @@ namespace Microsoft.Data.SqlClient
                                               _inBuff[_inBytesUsed + TdsEnums.HEADER_LEN_FIELD_OFFSET + 1]) - _inputHeaderLen;
                 _spid = _inBuff[_inBytesUsed + TdsEnums.SPID_OFFSET] << 8 |
                                               _inBuff[_inBytesUsed + TdsEnums.SPID_OFFSET + 1];
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.TryProcessHeader | ADV | State Object Id {0}, Client Connection Id {1}, Server process Id (SPID) {2}", _objectID, _parser?.Connection?.ClientConnectionId, _spid);
                 _inBytesUsed += _inputHeaderLen;
 
                 AssertValidState();
@@ -2431,7 +2436,6 @@ namespace Microsoft.Data.SqlClient
 
         internal void ReadSni(TaskCompletionSource<object> completion)
         {
-
             Debug.Assert(_networkPacketTaskSource == null || ((_asyncReadWithoutSnapshot) && (_networkPacketTaskSource.Task.IsCompleted)), "Pending async call or failed to replay snapshot when calling ReadSni");
             _networkPacketTaskSource = completion;
 
@@ -2465,6 +2469,7 @@ namespace Microsoft.Data.SqlClient
                 // the identity source. The identity value is used to correlate timer callback events to the currently
                 // running timeout and prevents a late timer callback affecting a result it does not relate to
                 int previousTimeoutState = Interlocked.CompareExchange(ref _timeoutState, TimeoutState.Running, TimeoutState.Stopped);
+                Debug.Assert(previousTimeoutState == TimeoutState.Stopped, "previous timeout state was not Stopped");
                 if (previousTimeoutState == TimeoutState.Stopped)
                 {
                     Debug.Assert(_timeoutIdentityValue == 0, "timer was previously stopped without resetting the _identityValue");
@@ -2474,7 +2479,7 @@ namespace Microsoft.Data.SqlClient
                 _networkPacketTimeout?.Dispose();
 
                 _networkPacketTimeout = ADP.UnsafeCreateTimer(
-                    new TimerCallback(OnTimeoutAsync),
+                    _onTimeoutAsync,
                     new TimeoutState(_timeoutIdentityValue),
                     Timeout.Infinite,
                     Timeout.Infinite
@@ -2485,8 +2490,6 @@ namespace Microsoft.Data.SqlClient
                 //  0 == Already timed out (NOTE: To simulate the same behavior as sync we will only timeout on 0 if we receive an IO Pending from SNI)
                 // >0 == Actual timeout remaining
                 int msecsRemaining = GetTimeoutRemaining();
-
-                Debug.Assert(previousTimeoutState == TimeoutState.Stopped, "previous timeout state was not Stopped");
                 if (msecsRemaining > 0)
                 {
                     ChangeNetworkPacketTimeout(msecsRemaining, Timeout.Infinite);
@@ -2899,7 +2902,7 @@ namespace Microsoft.Data.SqlClient
 
                 // try to change to the stopped state but only do so if currently in the running state
                 // and use cmpexch so that all changes out of the running state are atomic
-                int previousState = Interlocked.CompareExchange(ref _timeoutState, TimeoutState.Running, TimeoutState.Stopped);
+                int previousState = Interlocked.CompareExchange(ref _timeoutState, TimeoutState.Stopped, TimeoutState.Running);
 
                 // if the state is anything other than running then this query has reached an end so
                 // set the correlation _timeoutIdentityValue to 0 to prevent late callbacks executing

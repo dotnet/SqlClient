@@ -4602,4 +4602,19 @@
   <data name="Azure_RetryFailure" xml:space="preserve">
     <value>Error después de 5 reintentos.</value>
   </data>
+  <data name="SqlDependency_UnexpectedValueOnDeserialize" xml:space="preserve">
+    <value>Se ha detectado un tipo inesperado al realizar la deserialización.</value>
+  </data>
+  <data name="SqlRetryLogic_InvalidRange" xml:space="preserve">
+    <value>El valor "{0}" no está en el rango; debe estar comprendido entre {1} y {2}.</value>
+  </data>
+  <data name="SqlRetryLogic_RetryCanceled" xml:space="preserve">
+    <value>El reintento se ha cancelado en el intento número {0}.</value>
+  </data>
+  <data name="SqlRetryLogic_RetryExceeded" xml:space="preserve">
+    <value>El número de reintentos ha superado el máximo permitido, que es de {0}.</value>
+  </data>
+  <data name="SqlRetryLogic_InvalidMinMaxPair" xml:space="preserve">
+    <value>"{0}" no es menor que "{1}"; "{2}" no puede ser mayor que "{3}".</value>
+  </data>
 </root>

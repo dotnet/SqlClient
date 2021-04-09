@@ -10,8 +10,6 @@
 
 namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 {
-    using System;
-
     /// <summary>
     ///   A strongly-typed resource class, for looking up localized strings, etc.
     /// </summary>
@@ -71,55 +69,22 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <summary>
         ///   Looks up a localized string similar to CipherText length does not match the RSA key size..
         /// </summary>
-        internal static string CiphertextLengthMismatch
+        internal static string CipherTextLengthMismatch
         {
             get
             {
-                return ResourceManager.GetString("CiphertextLengthMismatch", resourceCulture);
+                return ResourceManager.GetString("CipherTextLengthMismatch", resourceCulture);
             }
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to Empty column encryption key specified..
+        ///   Looks up a localized string similar to Internal error. Empty &apos;{0}&apos; specified..
         /// </summary>
-        internal static string EmptyCek
+        internal static string EmptyArgumentInternal
         {
             get
             {
-                return ResourceManager.GetString("EmptyCek", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Empty encrypted column encryption key specified..
-        /// </summary>
-        internal static string EmptyCekv
-        {
-            get
-            {
-                return ResourceManager.GetString("EmptyCekv", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Internal error: Empty encrypted column encryption key specified..
-        /// </summary>
-        internal static string EmptyCekvInternal
-        {
-            get
-            {
-                return ResourceManager.GetString("EmptyCekvInternal", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to encryptedColumnEncryptionKey length should not be zero..
-        /// </summary>
-        internal static string EncryptedCekEmpty
-        {
-            get
-            {
-                return ResourceManager.GetString("EncryptedCekEmpty", resourceCulture);
+                return ResourceManager.GetString("EmptyArgumentInternal", resourceCulture);
             }
         }
 
@@ -234,24 +199,13 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to trustedEndPoints cannot be null or empty..
-        /// </summary>
-        internal static string InvalidTrustedEndpointsList
-        {
-            get
-            {
-                return ResourceManager.GetString("InvalidTrustedEndpointsList", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to Invalid trusted endpoint specified: &apos;{0}&apos;; a trusted endpoint must have a value..
         /// </summary>
-        internal static string InvalidTrustedEndpointTemplate
+        internal static string NullOrWhitespaceForEach
         {
             get
             {
-                return ResourceManager.GetString("InvalidTrustedEndpointTemplate", resourceCulture);
+                return ResourceManager.GetString("NullOrWhitespaceForEach", resourceCulture);
             }
         }
 
@@ -296,39 +250,6 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             get
             {
                 return ResourceManager.GetString("NullAlgorithmInternal", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Column encryption key cannot be null..
-        /// </summary>
-        internal static string NullCek
-        {
-            get
-            {
-                return ResourceManager.GetString("NullCek", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Encrypted column encryption key cannot be null..
-        /// </summary>
-        internal static string NullCekv
-        {
-            get
-            {
-                return ResourceManager.GetString("NullCekv", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Internal error: Encrypted column encryption key cannot be null..
-        /// </summary>
-        internal static string NullCekvInternal
-        {
-            get
-            {
-                return ResourceManager.GetString("NullCekvInternal", resourceCulture);
             }
         }
 

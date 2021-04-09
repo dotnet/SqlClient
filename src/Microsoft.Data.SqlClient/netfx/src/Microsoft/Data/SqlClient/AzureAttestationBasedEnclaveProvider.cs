@@ -133,6 +133,7 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Internal Class
+
         // A model class representing the deserialization of the byte payload the client
         // receives from SQL Server while setting up a session.
         // Protocol format:
@@ -280,6 +281,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        // Performs Attestation per the protocol used by Azure Attestation Service
         private void VerifyAzureAttestationInfo(string attestationUrl, EnclaveType enclaveType, string attestationToken, EnclavePublicKey enclavePublicKey, byte[] nonce)
         {
             bool shouldForceUpdateSigningKeys = false;
@@ -318,6 +320,7 @@ namespace Microsoft.Data.SqlClient
             ValidateAttestationClaims(enclaveType, attestationToken, enclavePublicKey, nonce);
         }
 
+        // Returns the innermost exception value
         private static string GetInnerMostExceptionMessage(Exception exception)
         {
             Exception exLocal = exception;
@@ -329,6 +332,8 @@ namespace Microsoft.Data.SqlClient
             return exLocal.Message;
         }
 
+        // For the given attestation url it downloads the token signing keys from the well-known openid configuration end point.
+        // It also caches that information for 1 day to avoid DDOS attacks.
         private OpenIdConnectConfiguration GetOpenIdConfigForSigningKeys(string url, bool forceUpdate)
         {
             OpenIdConnectConfiguration openIdConnectConfig = OpenIdConnectConfigurationCache[url] as OpenIdConnectConfiguration;
@@ -353,12 +358,16 @@ namespace Microsoft.Data.SqlClient
             return openIdConnectConfig;
         }
 
+        // Return the attestation instance url for given attestation url
+        // such as for https://sql.azure.attest.com/attest/SgxEnclave?api-version=2017-11-01
+        // It will return https://sql.azure.attest.com
         private string GetAttestationInstanceUrl(string attestationUrl)
         {
             Uri attestationUri = new Uri(attestationUrl);
             return attestationUri.GetLeftPart(UriPartial.Authority);
         }
 
+        // Generate the list of valid issuer Url's (in case if tokenIssuerUrl is using default port)
         private static ICollection<string> GenerateListOfIssuers(string tokenIssuerUrl)
         {
             List<string> issuerUrls = new List<string>();
@@ -378,6 +387,7 @@ namespace Microsoft.Data.SqlClient
             return issuerUrls;
         }
 
+        // Verifies the attestation token is signed by correct signing keys.
         private bool VerifyTokenSignature(string attestationToken, string tokenIssuerUrl, ICollection<SecurityKey> issuerSigningKeys, out bool isKeySigningExpired, out string exceptionMessage)
         {
             exceptionMessage = string.Empty;
@@ -424,6 +434,7 @@ namespace Microsoft.Data.SqlClient
             return isSignatureValid;
         }
 
+        // Computes the SHA256 hash of the byte array
         private byte[] ComputeSHA256(byte[] data)
         {
             byte[] result = null;
@@ -441,6 +452,7 @@ namespace Microsoft.Data.SqlClient
             return result;
         }
 
+        // Validate the claims in the attestation token
         private void ValidateAttestationClaims(EnclaveType enclaveType, string attestationToken, EnclavePublicKey enclavePublicKey, byte[] nonce)
         {
             // Read the json token
@@ -472,6 +484,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        // Validate the claim value against the actual data
         private void ValidateClaim(Dictionary<string, string> claims, string claimName, byte[] actualData)
         {
             // Get required claim data

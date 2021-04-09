@@ -7,13 +7,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.Caching;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using Microsoft.Azure.KeyVault;
-using Microsoft.Azure.KeyVault.Models;
-using Microsoft.Azure.KeyVault.WebKey;
-using Microsoft.Rest.Azure;
-
+using System.Threading.Tasks;
+using Azure;
+using Azure.Identity;
+using Azure.Security.KeyVault.Keys;
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     class CertificateUtility
@@ -133,52 +133,45 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             if (DataTestUtility.IsAKVSetupAvailable())
             {
-                KeyVaultClient keyVaultClient = keyVaultClient = new KeyVaultClient(AADUtility.AzureActiveDirectoryAuthenticationCallback);
-                IPage<KeyItem> keys = keyVaultClient.GetKeysAsync(DataTestUtility.AKVBaseUrl).Result;
-                bool testAKVKeyExists = false;
-                while (true)
-                {
-                    foreach (KeyItem ki in keys)
-                    {
-                        if (ki.Identifier.Name.Equals(DataTestUtility.AKVKeyName))
-                        {
-                            testAKVKeyExists = true;
-                        }
-                    }
-
-                    if (!string.IsNullOrEmpty(keys.NextPageLink))
-                    {
-                        keys = keyVaultClient.GetKeysNextAsync(keys.NextPageLink).Result;
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-
-                if (!testAKVKeyExists)
-                {
-                    RSAParameters p = certificate.GetRSAPrivateKey().ExportParameters(true);
-                    KeyBundle kb = new KeyBundle()
-                    {
-                        Key = new Azure.KeyVault.WebKey.JsonWebKey
-                        {
-                            Kty = JsonWebKeyType.Rsa,
-                            D = p.D,
-                            DP = p.DP,
-                            DQ = p.DQ,
-                            P = p.P,
-                            Q = p.Q,
-                            QI = p.InverseQ,
-                            N = p.Modulus,
-                            E = p.Exponent,
-                        },
-                    };
-                    keyVaultClient.ImportKeyAsync(DataTestUtility.AKVBaseUrl, DataTestUtility.AKVKeyName, kb);
-                }
+                SetupAKVKeysAsync().Wait();
             }
 
             return certificate;
+        }
+
+        private static async Task SetupAKVKeysAsync()
+        {
+            ClientSecretCredential clientSecretCredential = new ClientSecretCredential(DataTestUtility.AKVTenantId, DataTestUtility.AKVClientId, DataTestUtility.AKVClientSecret);
+            KeyClient keyClient = new KeyClient(DataTestUtility.AKVBaseUri, clientSecretCredential);
+            AsyncPageable<KeyProperties> keys = keyClient.GetPropertiesOfKeysAsync();
+            IAsyncEnumerator<KeyProperties> enumerator = keys.GetAsyncEnumerator();
+
+            bool testAKVKeyExists = false;
+            try
+            {
+                while (await enumerator.MoveNextAsync())
+                {
+                    KeyProperties keyProperties = enumerator.Current;
+                    if (keyProperties.Name.Equals(DataTestUtility.AKVKeyName))
+                    {
+                        testAKVKeyExists = true;
+                    }
+                }
+            }
+            finally
+            {
+                await enumerator.DisposeAsync();
+            }
+
+            if (!testAKVKeyExists)
+            {
+                var rsaKeyOptions = new CreateRsaKeyOptions(DataTestUtility.AKVKeyName, hardwareProtected: false)
+                {
+                    KeySize = 2048,
+                    ExpiresOn = DateTimeOffset.Now.AddYears(1)
+                };
+                keyClient.CreateRsaKey(rsaKeyOptions);
+            }
         }
 
         /// <summary>

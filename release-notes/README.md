@@ -4,6 +4,7 @@ The latest stable release is [Microsoft.Data.SqlClient 2.1](2.1).
 
 ## Release Information
 
+- [Microsoft.Data.SqlClient 3.0](3.0)
 - [Microsoft.Data.SqlClient 2.1](2.1)
 - [Microsoft.Data.SqlClient 2.0](2.0)
 - [Microsoft.Data.SqlClient 1.1](1.1)
@@ -11,10 +12,11 @@ The latest stable release is [Microsoft.Data.SqlClient 2.1](2.1).
 
 # Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider Release Notes
 
-The latest stable release is [Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 1.2](add-ons/AzureKeyVaultProvider/1.2).
+The latest stable release is [Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 2.0](add-ons/AzureKeyVaultProvider/2.0).
 
 ## Release Information
 
+- [Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 2.0](add-ons/AzureKeyVaultProvider/2.0)
 - [Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 1.2](add-ons/AzureKeyVaultProvider/1.2)
 - [Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 1.1](add-ons/AzureKeyVaultProvider/1.1)
 - [Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider 1.0](add-ons/AzureKeyVaultProvider/1.0)

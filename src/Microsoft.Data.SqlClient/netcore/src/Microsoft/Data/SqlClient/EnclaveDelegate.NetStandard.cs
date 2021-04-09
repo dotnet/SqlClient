@@ -7,10 +7,7 @@ using System.Collections.Generic;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <summary>
-    /// A delegate for communicating with secure enclave
-    /// </summary>
-    internal partial class EnclaveDelegate
+    internal sealed partial class EnclaveDelegate
     {
         internal byte[] GetSerializedAttestationParameters(
             SqlEnclaveAttestationParameters sqlEnclaveAttestationParameters, string enclaveType)
@@ -39,7 +36,7 @@ namespace Microsoft.Data.SqlClient
             throw new PlatformNotSupportedException();
         }
 
-        internal EnclavePackage GenerateEnclavePackage(SqlConnectionAttestationProtocol attestationProtocol, Dictionary<int, SqlTceCipherInfoEntry> keysTobeSentToEnclave, string queryText, string enclaveType, EnclaveSessionParameters enclaveSessionParameters)
+        internal EnclavePackage GenerateEnclavePackage(SqlConnectionAttestationProtocol attestationProtocol, Dictionary<int, SqlTceCipherInfoEntry> keysTobeSentToEnclave, string queryText, string enclaveType, EnclaveSessionParameters enclaveSessionParameters, SqlConnection connection)
         {
             throw new PlatformNotSupportedException();
         }

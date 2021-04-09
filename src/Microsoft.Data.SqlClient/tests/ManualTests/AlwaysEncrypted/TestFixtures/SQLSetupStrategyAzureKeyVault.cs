@@ -11,35 +11,48 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     public class SQLSetupStrategyAzureKeyVault : SQLSetupStrategy
     {
-        internal static bool isAKVProviderRegistered = false;
+        internal static bool IsAKVProviderRegistered = false;
 
         public Table AKVTestTable { get; private set; }
         public SqlColumnEncryptionAzureKeyVaultProvider AkvStoreProvider;
+        public DummyMasterKeyForAKVProvider DummyMasterKey;
 
         public SQLSetupStrategyAzureKeyVault() : base()
         {
-            AkvStoreProvider = new SqlColumnEncryptionAzureKeyVaultProvider(authenticationCallback: AADUtility.AzureActiveDirectoryAuthenticationCallback);
-
-            if (!isAKVProviderRegistered)
+            AkvStoreProvider = new SqlColumnEncryptionAzureKeyVaultProvider(new SqlClientCustomTokenCredential());
+            if (!IsAKVProviderRegistered)
             {
-                Dictionary<string, SqlColumnEncryptionKeyStoreProvider> customAkvKeyStoreProviders = new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>(capacity: 1, comparer: StringComparer.OrdinalIgnoreCase)
-                {
-                    {SqlColumnEncryptionAzureKeyVaultProvider.ProviderName, AkvStoreProvider}
-                };
-
-                SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders: customAkvKeyStoreProviders);
-                isAKVProviderRegistered = true;
+                RegisterGlobalProviders(AkvStoreProvider);
             }
-
             SetupDatabase();
+        }
+
+        public static void RegisterGlobalProviders(SqlColumnEncryptionAzureKeyVaultProvider akvProvider)
+        {
+            DummyKeyStoreProvider dummyProvider = new DummyKeyStoreProvider();
+
+            Dictionary<string, SqlColumnEncryptionKeyStoreProvider> customKeyStoreProviders =
+                new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>(capacity: 2, comparer: StringComparer.OrdinalIgnoreCase)
+            {
+                    {SqlColumnEncryptionAzureKeyVaultProvider.ProviderName, akvProvider},
+                    { DummyKeyStoreProvider.Name, dummyProvider}
+            };
+
+            SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders: customKeyStoreProviders);
+            IsAKVProviderRegistered = true;
         }
 
         internal override void SetupDatabase()
         {
             ColumnMasterKey akvColumnMasterKey = new AkvColumnMasterKey(GenerateUniqueName("AKVCMK"), akvUrl: DataTestUtility.AKVUrl, AkvStoreProvider, DataTestUtility.EnclaveEnabled);
+            DummyMasterKey = new DummyMasterKeyForAKVProvider(GenerateUniqueName("DummyCMK"), DataTestUtility.AKVUrl, AkvStoreProvider, false);
+
             databaseObjects.Add(akvColumnMasterKey);
+            databaseObjects.Add(DummyMasterKey);
 
             List<ColumnEncryptionKey> akvColumnEncryptionKeys = CreateColumnEncryptionKeys(akvColumnMasterKey, 2, AkvStoreProvider);
+            List<ColumnEncryptionKey> dummyColumnEncryptionKeys = CreateColumnEncryptionKeys(DummyMasterKey, 1, AkvStoreProvider);
+            akvColumnEncryptionKeys.AddRange(dummyColumnEncryptionKeys);
             databaseObjects.AddRange(akvColumnEncryptionKeys);
 
             List<Table> tables = CreateTables(akvColumnEncryptionKeys);

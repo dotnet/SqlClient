@@ -231,6 +231,7 @@ namespace Microsoft.Data.ProviderBase
             int activateCount = Interlocked.Decrement(ref _activateCount);
 #endif // DEBUG
 
+            SqlClientEventSource.Log.ExitActiveConnection();
 
             if (!_connectionIsDoomed && Pool.UseLoadBalancing)
             {

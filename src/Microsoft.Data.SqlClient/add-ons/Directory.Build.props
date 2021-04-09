@@ -16,7 +16,6 @@
   <ItemGroup>
     <EmbeddedFiles Include="$(GeneratedAssemblyInfoFile)"/>
   </ItemGroup>
-
   <Choose>
     <!-- Set Default Target Framework when building for Debug and Release configurations. (Visual Studio) -->
     <When Condition="'$(TestTargetOS)' == '' AND ('$(Configuration)' == 'Debug' OR '$(Configuration)' == 'Release')">
@@ -30,7 +29,7 @@
           <TargetFramework Condition="'$(TestTargetOS)' == 'Windowsnetstandard' OR '$(TestTargetOS)' == 'Unixnetstandard'">netstandard2.0</TargetFramework>
           <TargetFramework Condition="'$(TestTargetOS)' == 'Windowsnetcoreapp' OR '$(TestTargetOS)' == 'Unixnetcoreapp'">netcoreapp2.1</TargetFramework>
           <TargetFramework Condition="('$(TestTargetOS)' == 'Windowsnetcoreapp' OR '$(TestTargetOS)' == 'Unixnetcoreapp') AND ($(ReferenceType)=='NetStandard' AND $(TargetNetStandardVersion)=='netstandard2.1')">netcoreapp3.1</TargetFramework>
-          <TargetFramework Condition="'$(TestTargetOS)' == 'Windowsnetfx'">net46</TargetFramework>
+          <TargetFramework Condition="'$(TestTargetOS)' == 'Windowsnetfx'">net461</TargetFramework>
       </PropertyGroup>
     </When>
     <!-- Set Target Framework when TestTargetOS is empty and Configuration is neither Debug nor Release. (Visual Studio) -->

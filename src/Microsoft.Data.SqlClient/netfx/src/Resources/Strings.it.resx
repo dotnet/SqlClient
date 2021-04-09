@@ -4602,4 +4602,19 @@
   <data name="Azure_RetryFailure" xml:space="preserve">
     <value>L'operazione non è riuscita dopo 5 tentativi.</value>
   </data>
+  <data name="SqlDependency_UnexpectedValueOnDeserialize" xml:space="preserve">
+    <value>Tipo imprevisto rilevato durante la deserializzazione.</value>
+  </data>
+  <data name="SqlRetryLogic_InvalidRange" xml:space="preserve">
+    <value>Il valore '{0}' non è compreso nell'intervallo. Deve essere compreso tra {1} e {2}.</value>
+  </data>
+  <data name="SqlRetryLogic_RetryCanceled" xml:space="preserve">
+    <value>Il tentativo è stato annullato al tentativo {0}.</value>
+  </data>
+  <data name="SqlRetryLogic_RetryExceeded" xml:space="preserve">
+    <value>Il numero di tentativi supera il limite massimo di {0} tentativi.</value>
+  </data>
+  <data name="SqlRetryLogic_InvalidMinMaxPair" xml:space="preserve">
+    <value>'{0}' non è minore di '{1}'; '{2}' non può essere maggiore di '{3}'.</value>
+  </data>
 </root>

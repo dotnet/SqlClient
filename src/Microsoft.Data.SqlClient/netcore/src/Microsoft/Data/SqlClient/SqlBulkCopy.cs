@@ -2550,7 +2550,7 @@ namespace Microsoft.Data.SqlClient
                 // Load encryption keys now (if needed)
                 _parser.LoadColumnEncryptionKeys(
                     internalResults[MetaDataResultId].MetaData,
-                    _connection.DataSource);
+                    _connection);
 
                 Task task = CopyRowsAsync(0, _savedBatchSize, cts); // This is copying 1 batch of rows and setting _hasMoreRowToCopy = true/false.
 
