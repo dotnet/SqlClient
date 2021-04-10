@@ -6,9 +6,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Data.SqlClient;
 
-namespace ClassLibrary
+// These types have been created just to test the configurable retry logic manager in the Manual tests project.
+namespace Microsoft.Data.SqlClient.Tests
 {
     public class CustomConfigurableRetryLogic
     {
@@ -27,8 +27,8 @@ namespace ClassLibrary
     {
         public SqlRetryLogicBaseProvider GetDefaultRetry(SqlRetryLogicOption option = null)
         {
+            // Trying to get access to a provider inside a custom implementation.
             SqlRetryLogicBaseProvider provider = new SqlCommand().RetryLogicProvider;
-            Console.WriteLine(provider.RetryLogic.NumberOfTries);
             return new CustomRetryLogicProvider(option?.NumberOfTries ?? 1);
         }
     }

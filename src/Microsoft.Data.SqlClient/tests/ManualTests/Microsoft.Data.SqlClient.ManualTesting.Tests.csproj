@@ -70,8 +70,10 @@
       <Link>Common\System\Collections\DictionaryExtensions.cs</Link>
     </Compile>
     <Compile Include="DataCommon\AADUtility.cs" />
-    <None Include="SQL\RetryLogic\Resources\CustomConfigurableRetryLogic.cs" />
     <Compile Include="SQL\RetryLogic\RetryLogicConfigHelper.cs" />
+    <Compile Include="SQL\RetryLogic\RetryLogicTestHelper.cs" />
+    <Compile Include="SQL\RetryLogic\SqlCommandReliabilityTest.cs" />
+    <Compile Include="SQL\RetryLogic\SqlConnectionReliabilityTest.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\OrderHint.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\OrderHintAsync.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\OrderHintDuplicateColumn.cs" />
@@ -195,9 +197,6 @@
     <Compile Include="SQL\RandomStressTest\SqlRandomTypeInfoCollection.cs" />
     <Compile Include="SQL\RandomStressTest\SqlRandomTypesForSqlServer.cs" />
     <Compile Include="SQL\RandomStressTest\RandomStressTest.cs" />
-    <Compile Include="SQL\RetryLogic\RetryLogicTestHelper.cs" />
-    <Compile Include="SQL\RetryLogic\SqlConnectionReliabilityTest.cs" />
-    <Compile Include="SQL\RetryLogic\SqlCommandReliabilityTest.cs" />
     <Compile Include="SQL\SplitPacketTest\SplitPacketTest.cs" />
     <Compile Include="SQL\SqlNotificationTest\SqlNotificationTest.cs" />
     <Compile Include="SQL\TransactionTest\TransactionTest.cs" />
@@ -292,6 +291,7 @@
     <ProjectReference Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
     <ProjectReference Condition="$(ReferenceType.Contains('NetStandard'))" Include="$(TestsPath)NSLibrary\Microsoft.Data.SqlClient.NSLibrary.csproj" />
     <PackageReference Condition="$(ReferenceType)=='Package'" Include="Microsoft.Data.SqlClient" Version="$(TestMicrosoftDataSqlClientVersion)" />
+    <ProjectReference Include="$(TestsPath)CustomConfigurableRetryLogic\CustomRetryLogicProvider.csproj" />
   </ItemGroup>
   <!-- Azure Key Vault provider is not compatible with .NET Framework 4.6 and can only be used with .NET Framework 4.6.1 and above. -->
   <ItemGroup Condition="$(TargetFramework) != 'net46'">
@@ -312,19 +312,5 @@
   </ItemGroup>
   <ItemGroup>
     <None Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(BinFolder)$(Configuration).AnyCPU\Microsoft.Data.SqlClient\netfx\**\*SNI*.dll" CopyToOutputDirectory="PreserveNewest" />
-  </ItemGroup>
-  <!--These files are compiled by 'netcoreapp2.1'target framework-->
-  <ItemGroup Condition="'$(TargetGroup)'=='netcoreapp' AND $(ReferenceType)=='Project'">
-      <ContentWithTargetPath Include="SQL\RetryLogic\Resources\netcoreapp\ClassLibrary_CustomConfigurableRetryLogic.dll">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        <TargetPath>ClassLibrary_CustomConfigurableRetryLogic.dll</TargetPath>
-      </ContentWithTargetPath>
-  </ItemGroup>
-  <!--These files are compiled by 'net461' target framework-->
-  <ItemGroup Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'">
-      <ContentWithTargetPath Include="SQL\RetryLogic\Resources\netfx\ClassLibrary_CustomConfigurableRetryLogic.dll">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        <TargetPath>ClassLibrary_CustomConfigurableRetryLogic.dll</TargetPath>
-      </ContentWithTargetPath>
   </ItemGroup>
 </Project>
