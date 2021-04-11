@@ -2869,11 +2869,11 @@ namespace Microsoft.Data.SqlClient
             if (null != Statistics)
             {
                 UpdateStatistics();
-                return Statistics.GetHashtable();
+                return Statistics.GetDictionary();
             }
             else
             {
-                return new SqlStatistics().GetHashtable();
+                return new SqlStatistics().GetDictionary();
             }
         }
 
