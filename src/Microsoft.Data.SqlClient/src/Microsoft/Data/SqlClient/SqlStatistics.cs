@@ -30,6 +30,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        internal static ValueSqlStatisticsScope TimedScope(SqlStatistics statistics)
+        {
+            return new ValueSqlStatisticsScope(statistics);
+        }
+
         // internal values that are not exposed through properties
         internal long _closeTimestamp;
         internal long _openTimestamp;
@@ -333,6 +338,24 @@ namespace Microsoft.Data.SqlClient
 
                 IEnumerator IEnumerable.GetEnumerator() => _collection.GetEnumerator();
             }
+        }
+    }
+
+    // This is a ref struct to prevent it being included in async closures accidentally. 
+    // Async functions should manage the timer directly using the Start and Stop method
+    // in their invoke and completion functions
+    internal readonly ref struct ValueSqlStatisticsScope // : IDisposable // ref structs cannot implement interfaces but the compiler will use pattern matching to implement dispose on them
+    {
+        private readonly SqlStatistics _statistics;
+
+        public ValueSqlStatisticsScope(SqlStatistics statistics)
+        {
+            _statistics = SqlStatistics.StartTimer(statistics);
+        }
+
+        public void Dispose()
+        {
+            SqlStatistics.StopTimer(_statistics);
         }
     }
 }
