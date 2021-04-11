@@ -66,30 +66,17 @@ namespace Microsoft.Data.SqlClient
         private bool _waitForDoneAfterRow;
         private bool _waitForReply;
 
-
-        internal bool WaitForDoneAfterRow
-        {
-            get
-            {
-                return _waitForDoneAfterRow;
-            }
-            set
-            {
-                _waitForDoneAfterRow = value;
-            }
-        }
-
-        internal bool WaitForReply
-        {
-            get
-            {
-                return _waitForReply;
-            }
-        }
-
         internal SqlStatistics()
         {
         }
+
+        internal bool WaitForDoneAfterRow
+        {
+            get => _waitForDoneAfterRow;
+            set => _waitForDoneAfterRow = value;
+        }
+
+        internal bool WaitForReply => _waitForReply;
 
         internal void ContinueOnNewConnection()
         {
@@ -208,7 +195,9 @@ namespace Microsoft.Data.SqlClient
         internal long SafeIncrement(ref long value)
         {
             if (value < long.MaxValue)
+            {
                 value++;
+            }
             return value;
         }
 
@@ -294,13 +283,21 @@ namespace Microsoft.Data.SqlClient
             private void ValidateCopyToArguments(Array array, int arrayIndex)
             {
                 if (array == null)
+                {
                     throw new ArgumentNullException(nameof(array));
+                }
                 if (array.Rank != 1)
+                {
                     throw new ArgumentException(Strings.Arg_RankMultiDimNotSupported);
+                }
                 if (arrayIndex < 0)
+                {
                     throw new ArgumentOutOfRangeException(nameof(arrayIndex), Strings.ArgumentOutOfRange_NeedNonNegNum);
+                }
                 if (array.Length - arrayIndex < Count)
+                {
                     throw new ArgumentException(Strings.Arg_ArrayPlusOffTooSmall);
+                }
             }
 
             private sealed class Collection : ICollection
@@ -344,18 +341,12 @@ namespace Microsoft.Data.SqlClient
     // This is a ref struct to prevent it being included in async closures accidentally. 
     // Async functions should manage the timer directly using the Start and Stop method
     // in their invoke and completion functions
-    internal readonly ref struct ValueSqlStatisticsScope // : IDisposable // ref structs cannot implement interfaces but the compiler will use pattern matching to implement dispose on them
+    internal readonly ref struct ValueSqlStatisticsScope // : IDisposable // ref structs cannot implement interfaces but the compiler will use pattern matching to allow use of using on them
     {
         private readonly SqlStatistics _statistics;
 
-        public ValueSqlStatisticsScope(SqlStatistics statistics)
-        {
-            _statistics = SqlStatistics.StartTimer(statistics);
-        }
+        public ValueSqlStatisticsScope(SqlStatistics statistics) => _statistics = SqlStatistics.StartTimer(statistics);
 
-        public void Dispose()
-        {
-            SqlStatistics.StopTimer(_statistics);
-        }
+        public void Dispose() => SqlStatistics.StopTimer(_statistics);
     }
 }
