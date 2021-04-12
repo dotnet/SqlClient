@@ -22,16 +22,10 @@ namespace Microsoft.SqlServer.TDS.Servers
         public bool IsEnabledTransientError { get; set; }
 
         /// <summary>
-        /// Delay server response (in seconds)
-        /// </summary>
-        public int TimeDelay { get; set; }
-
-        /// <summary>
         /// Constructor to initialize
         /// </summary>
         public TransientFaultTDSServerArguments()
         {
-            TimeDelay = 0;
             Number = 0;
             Message = string.Empty;
             IsEnabledTransientError = false;

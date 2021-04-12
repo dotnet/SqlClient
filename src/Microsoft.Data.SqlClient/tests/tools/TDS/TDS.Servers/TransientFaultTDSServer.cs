@@ -72,11 +72,8 @@ namespace Microsoft.SqlServer.TDS.Servers
                 // Cast to transient fault TDS server arguments
                 TransientFaultTDSServerArguments ServerArguments = Arguments as TransientFaultTDSServerArguments;
 
-                // Add delay for time requested - mock Serverless DB starting time
-                Thread.Sleep(ServerArguments.TimeDelay);
-
                 // Check if we're still going to raise transient error
-                if (ServerArguments.IsEnabledTransientError && RequestCounter < 3)
+                if (ServerArguments.IsEnabledTransientError && RequestCounter < 1) // Fail first time, then connect
                 {
                     uint errorNumber = ServerArguments.Number;
                     string errorMessage = ServerArguments.Message;
@@ -113,16 +110,15 @@ namespace Microsoft.SqlServer.TDS.Servers
             return base.OnLogin7Request(session, request);
         }
 
-        public static TransientFaultTDSServer StartTestServer(bool isEnabledTransientFault, bool enableLog, int timeDelay, uint errorNumber, [CallerMemberName] string methodName = "")
-         => StartServerWithQueryEngine(null, isEnabledTransientFault, enableLog, timeDelay, errorNumber, methodName);
+        public static TransientFaultTDSServer StartTestServer(bool isEnabledTransientFault, bool enableLog, uint errorNumber, [CallerMemberName] string methodName = "")
+         => StartServerWithQueryEngine(null, isEnabledTransientFault, enableLog, errorNumber, methodName);
 
-        public static TransientFaultTDSServer StartServerWithQueryEngine(QueryEngine engine, bool isEnabledTransientFault, bool enableLog, int timeDelay, uint errorNumber, [CallerMemberName] string methodName = "")
+        public static TransientFaultTDSServer StartServerWithQueryEngine(QueryEngine engine, bool isEnabledTransientFault, bool enableLog, uint errorNumber, [CallerMemberName] string methodName = "")
         {
             TransientFaultTDSServerArguments args = new TransientFaultTDSServerArguments()
             {
                 Log = enableLog ? Console.Out : null,
                 IsEnabledTransientError = isEnabledTransientFault,
-                TimeDelay = timeDelay * 1000, // convert to Milliseconds
                 Number = errorNumber,
                 Message = GetErrorMessage(errorNumber)
             };
