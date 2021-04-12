@@ -94,7 +94,6 @@ namespace Microsoft.Data.SqlClient
 
         internal static RSA CreateRSAFromPublicKeyBlob(byte[] keyBlob)
         {
-
             Debug.Assert(keyBlob.Length == RSAPublicKeyBlob.Size, $"RSA public key blob was not the expected length. Actual: {keyBlob.Length}. Expected: {RSAPublicKeyBlob.Size}");
 
             byte[] exponent = new byte[RSAPublicKeyBlob.ExponentSize];

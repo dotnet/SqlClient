@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
@@ -15,20 +14,18 @@ namespace Microsoft.Data.SqlClient
         {
             CngKey key = CngKey.Import(keyBlob, CngKeyBlobFormat.GenericPublicBlob);
             return new RSACng(key);
-
         }
 
         internal static ECDiffieHellman CreateECDiffieHellmanFromPublicKeyBlob(byte[] keyBlob)
         {
             CngKey key = CngKey.Import(keyBlob, CngKeyBlobFormat.GenericPublicBlob);
             return new ECDiffieHellmanCng(key);
-
         }
 
         internal static ECDiffieHellman CreateECDiffieHellman(int keySize)
         {
-            // Cng sets the key size and hash algorithm at creation and these parameters
-            // are then used later when DeriveKeyMaterial is called
+            // Cng sets the key size and hash algorithm at creation time and these
+            // parameters are then used later when DeriveKeyMaterial is called
             ECDiffieHellmanCng clientDHKey = new ECDiffieHellmanCng(keySize);
             clientDHKey.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
             clientDHKey.HashAlgorithm = CngAlgorithm.Sha256;
@@ -65,7 +62,6 @@ namespace Microsoft.Data.SqlClient
             using (RSA rsaCsp = certificate.GetRSAPublicKey())
             {
                 parameters = rsaCsp.ExportParameters(includePrivateParameters: false);
-                
             }
             RSACng rsaCng = new RSACng();
             rsaCng.ImportParameters(parameters);
