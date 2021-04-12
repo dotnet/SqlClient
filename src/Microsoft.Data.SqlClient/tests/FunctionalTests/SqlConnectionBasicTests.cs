@@ -6,12 +6,19 @@ using System;
 using System.Data.Common;
 using System.Reflection;
 using System.Security;
+using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
 {
     public class SqlConnectionBasicTests
     {
+        private static Assembly s_MicrosoftDotData = Assembly.Load(new AssemblyName(typeof(SqlConnection).GetTypeInfo().Assembly.FullName));
+        private static Type s_sqlConnection = s_MicrosoftDotData.GetType("Microsoft.Data.SqlClient.SqlConnection");
+        private static PropertyInfo s_sqlConnectionInternalConnection = s_sqlConnection.GetProperty("InnerConnection", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static Type s_dbConnectionInternal = s_MicrosoftDotData.GetType("Microsoft.Data.ProviderBase.DbConnectionInternal");
+        private static MethodInfo s_dbConnectionInternalIsConnectionAlive = s_dbConnectionInternal.GetMethod("IsConnectionAlive", BindingFlags.Instance | BindingFlags.NonPublic);
+
         [Fact]
         public void ConnectionTest()
         {
@@ -36,6 +43,39 @@ namespace Microsoft.Data.SqlClient.Tests
                 using (SqlConnection connection = new SqlConnection(builder.ConnectionString))
                 {
                     connection.Open();
+                }
+            }
+        }
+
+        [ConditionalFact(typeof(PlatformDetection), nameof(PlatformDetection.IsNotArmProcess))]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public void TransientFaultTest()
+        {
+            using (TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, true, 10, 40613))
+            {
+                SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder()
+                {
+                    DataSource = "localhost," + server.Port,
+                    ConnectTimeout = 90,
+                    IntegratedSecurity = true,
+                    ConnectRetryCount = 3
+                };
+
+                using (SqlConnection connection = new SqlConnection(builder.ConnectionString))
+                {
+                    try
+                    {
+                        connection.Open();
+                    }
+                    catch (Exception e)
+                    {
+                        if (null != connection)
+                        {
+                            var innerConnection = s_sqlConnectionInternalConnection.GetValue(connection, null);
+                            Assert.False((bool)s_dbConnectionInternalIsConnectionAlive.Invoke(innerConnection, new object[] { false }), "Inner connection found open");
+                        }
+                        Assert.False(true, e.Message);
+                    }
                 }
             }
         }
