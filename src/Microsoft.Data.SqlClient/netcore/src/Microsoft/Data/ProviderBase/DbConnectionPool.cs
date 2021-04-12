@@ -779,7 +779,7 @@ namespace Microsoft.Data.ProviderBase
                 CheckPoolBlockingPeriod(e);
 
                 // Close associated Parser if connection already established.
-                if (newObj != null && newObj.IsConnectionAlive())
+                if (newObj?.IsConnectionAlive() == true)
                 {
                     newObj.Dispose();
                 }
