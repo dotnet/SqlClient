@@ -59,6 +59,7 @@ namespace Microsoft.Data.SqlClient.Tests
                     try
                     {
                         connection.Open();
+                        Assert.Equal(ConnectionState.Open, connection.State);
                     }
                     catch (Exception e)
                     {
