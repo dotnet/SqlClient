@@ -8,8 +8,8 @@ namespace Microsoft.Data.SqlClient
     {
         static SqlAuthenticationProviderManager()
         {
-            s_instance = new SqlAuthenticationProviderManager();
-            SetDefaultAuthProviders(s_instance);
+            Instance = new SqlAuthenticationProviderManager();
+            SetDefaultAuthProviders(Instance);
         }
     }
 }

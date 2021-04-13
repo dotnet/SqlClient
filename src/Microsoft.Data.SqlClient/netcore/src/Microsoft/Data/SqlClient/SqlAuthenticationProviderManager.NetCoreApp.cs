@@ -33,8 +33,8 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.TryTraceEvent("static SqlAuthenticationProviderManager: Unable to load custom SqlAuthenticationProviders or SqlClientAuthenticationProviders. ConfigurationManager failed to load due to configuration errors: {0}", e);
             }
 
-            s_instance = new SqlAuthenticationProviderManager(configurationSection);
-            SetDefaultAuthProviders(s_instance);
+            Instance = new SqlAuthenticationProviderManager(configurationSection);
+            SetDefaultAuthProviders(Instance);
         }
 
         /// <summary>

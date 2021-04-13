@@ -13,13 +13,13 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/GetProvider/*'/>
         public static SqlAuthenticationProvider GetProvider(SqlAuthenticationMethod authenticationMethod)
         {
-            return SqlAuthenticationProviderManager.s_instance.GetProvider(authenticationMethod);
+            return SqlAuthenticationProviderManager.Instance.GetProvider(authenticationMethod);
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/SetProvider/*'/>
         public static bool SetProvider(SqlAuthenticationMethod authenticationMethod, SqlAuthenticationProvider provider)
         {
-            return SqlAuthenticationProviderManager.s_instance.SetProvider(authenticationMethod, provider);
+            return SqlAuthenticationProviderManager.Instance.SetProvider(authenticationMethod, provider);
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/BeforeLoad/*'/>

@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient
         private readonly SqlClientLogger _sqlAuthLogger = new SqlClientLogger();
         private readonly string _applicationClientId = ActiveDirectoryAuthentication.AdoClientId;
 
-        public static readonly SqlAuthenticationProviderManager s_instance;
+        public static readonly SqlAuthenticationProviderManager Instance;
 
         /// <summary>
         /// Sets default supported Active Directory Authentication providers by the driver 

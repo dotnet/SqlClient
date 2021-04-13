@@ -471,7 +471,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             _activeDirectoryAuthTimeoutRetryHelper = new ActiveDirectoryAuthenticationTimeoutRetryHelper();
-            _sqlAuthenticationProviderManager = SqlAuthenticationProviderManager.s_instance;
+            _sqlAuthenticationProviderManager = SqlAuthenticationProviderManager.Instance;
 
             _identity = identity;
             Debug.Assert(newSecurePassword != null || newPassword != null, "cannot have both new secure change password and string based change password to be null");

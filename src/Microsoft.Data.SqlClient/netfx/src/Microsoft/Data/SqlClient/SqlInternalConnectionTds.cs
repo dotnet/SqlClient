@@ -486,7 +486,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             _activeDirectoryAuthTimeoutRetryHelper = new ActiveDirectoryAuthenticationTimeoutRetryHelper();
-            _sqlAuthenticationProviderManager = SqlAuthenticationProviderManager.s_instance;
+            _sqlAuthenticationProviderManager = SqlAuthenticationProviderManager.Instance;
 
             _serverCallback = serverCallback;
             _clientCallback = clientCallback;
