@@ -28,8 +28,23 @@ namespace Microsoft.Data.SqlClient
         private readonly SqlClientLogger _sqlAuthLogger = new SqlClientLogger();
         private readonly string _applicationClientId = ActiveDirectoryAuthentication.AdoClientId;
 
-        public static readonly SqlAuthenticationProviderManager Instance;
+        public static readonly SqlAuthenticationProviderManager s_instance;
 
+        /// <summary>
+        /// Sets default supported Active Directory Authentication providers by the driver 
+        /// on the SqlAuthenticationProviderManager instance.
+        /// </summary>
+        private static void SetDefaultAuthProviders()
+        {
+            var activeDirectoryAuthProvider = new ActiveDirectoryAuthenticationProvider(s_instance._applicationClientId);
+            s_instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryIntegrated, activeDirectoryAuthProvider);
+            s_instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, activeDirectoryAuthProvider);
+            s_instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive, activeDirectoryAuthProvider);
+            s_instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal, activeDirectoryAuthProvider);
+            s_instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, activeDirectoryAuthProvider);
+            s_instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity, activeDirectoryAuthProvider);
+            s_instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryMSI, activeDirectoryAuthProvider);
+        }
         /// <summary>
         /// Constructor.
         /// </summary>
