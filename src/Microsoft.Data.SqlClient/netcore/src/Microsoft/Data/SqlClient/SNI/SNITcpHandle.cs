@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Security;
@@ -342,84 +343,66 @@ namespace Microsoft.Data.SqlClient.SNI
                     IPv6String = ipAddress.ToString();
                 }
             }
-            ipAddresses = new IPAddress[] { serverIPv4, serverIPv6 };
-            Socket[] sockets = new Socket[2];
-
+            ipAddresses = new[] { serverIPv4, serverIPv6 };
+            
             if (IPv4String != null || IPv6String != null)
             {
                 pendingDNSInfo = new SQLDNSInfo(cachedFQDN, IPv4String, IPv6String, port.ToString());
             }
+            
+            Stopwatch timeTaken = Stopwatch.StartNew();
 
-            CancellationTokenSource cts = null;
-
-            void Cancel()
+            foreach (IPAddress ipAddress in ipAddresses)
             {
-                for (int i = 0; i < sockets.Length; ++i)
+                var socket =
+                    new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp) {Blocking = false};
+
+                bool thisSocketSelected = false;
+
+                // enable keep-alive on socket
+                SetKeepAliveValues(ref socket);
+
+                SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.INFO,
+                    "Connecting to IP address {0} and port {1}", ipAddress, port);
+
+                try
                 {
+                    socket.Connect(ipAddress, port);
+                    throw new InternalException(
+                        $"Call to {nameof(Socket.Connect)} must throw {nameof(SocketException)} with {SocketError.WouldBlock.ToString()} error code");
+                }
+                catch (SocketException socketException) when (socketException.SocketErrorCode ==
+                                                              SocketError.WouldBlock)
+                {
+                    // https://github.com/dotnet/SqlClient/issues/826#issuecomment-736224118
+
+                    var timeLeft = timeout - timeTaken.Elapsed;
+
+                    if (timeLeft <= TimeSpan.Zero)
+                        return null;
                     try
                     {
-                        if (sockets[i] != null && !sockets[i].Connected)
-                        {
-                            sockets[i].Dispose();
-                            sockets[i] = null;
-                        }
+                        int connectionTimeout = isInfiniteTimeout? -1 : (int)(timeLeft.TotalMilliseconds * 1000);
+                        Socket.Select(null, new List<Socket> {socket}, null,
+                            connectionTimeout);
                     }
-                    catch (Exception e)
+                    catch (SocketException) { }
+
+                    if (socket.Connected)
                     {
-                        SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR, "THIS EXCEPTION IS BEING SWALLOWED: {0}", args0: e?.Message);
+                        thisSocketSelected = true;
+                        socket.Blocking = true;
+                        return socket;
                     }
+                }
+                finally
+                {
+                    if (!thisSocketSelected)
+                        socket.Dispose();
                 }
             }
 
-            if (!isInfiniteTimeout)
-            {
-                cts = new CancellationTokenSource(timeout);
-                cts.Token.Register(Cancel);
-            }
-
-            Socket availableSocket = null;
-            try
-            {
-                for (int i = 0; i < sockets.Length; ++i)
-                {
-                    try
-                    {
-                        if (ipAddresses[i] != null)
-                        {
-                            sockets[i] = new Socket(ipAddresses[i].AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-
-                            // enable keep-alive on socket
-                            SetKeepAliveValues(ref sockets[i]);
-
-                            SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.INFO, "Connecting to IP address {0} and port {1}", args0: ipAddresses[i], args1: port);
-                            sockets[i].Connect(ipAddresses[i], port);
-                            if (sockets[i] != null) // sockets[i] can be null if cancel callback is executed during connect()
-                            {
-                                if (sockets[i].Connected)
-                                {
-                                    availableSocket = sockets[i];
-                                    break;
-                                }
-                                else
-                                {
-                                    sockets[i].Dispose();
-                                    sockets[i] = null;
-                                }
-                            }
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR, "THIS EXCEPTION IS BEING SWALLOWED: {0}", args0: e?.Message);
-                    }
-                }
-            }
-            finally
-            {
-                cts?.Dispose();
-            }
-
-            return availableSocket;
+            return null;
         }
 
         private static Task<Socket> ParallelConnectAsync(IPAddress[] serverAddresses, int port)
