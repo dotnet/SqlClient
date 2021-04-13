@@ -327,7 +327,7 @@ namespace Microsoft.Data.SqlClient.SNI
             string IPv4String = null;
             string IPv6String = null;
 
-            Socket[] sockets = new Socket[2];
+            Socket[] sockets = new Socket[ipAddresses.Length];
             AddressFamily[] preferedIPFamilies = new AddressFamily[] { AddressFamily.InterNetwork, AddressFamily.InterNetworkV6 };
 
             CancellationTokenSource cts = null;
