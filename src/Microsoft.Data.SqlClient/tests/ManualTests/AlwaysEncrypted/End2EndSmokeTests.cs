@@ -11,7 +11,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
-    public class End2EndSmokeTests : IClassFixture<PlatformSpecificTestContext>, IDisposable
+    public sealed class End2EndSmokeTests : IClassFixture<PlatformSpecificTestContext>, IDisposable
     {
         private SQLSetupStrategy fixture;
 
