@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
@@ -323,32 +324,16 @@ namespace Microsoft.Data.SqlClient.SNI
         // Only write to the DNS cache when we receive IsSupported flag as true in the Feature Ext Ack from server.
         private static Socket Connect(string serverName, int port, TimeSpan timeout, bool isInfiniteTimeout, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
         {
-            IPAddress[] ipAddresses = Dns.GetHostAddresses(serverName);
-
-            string IPv4String = null;
-            string IPv6String = null;
-
-            IPAddress serverIPv4 = null;
-            IPAddress serverIPv6 = null;
-            foreach (IPAddress ipAddress in ipAddresses)
-            {
-                if (ipAddress.AddressFamily == AddressFamily.InterNetwork)
-                {
-                    serverIPv4 = ipAddress;
-                    IPv4String = ipAddress.ToString();
-                }
-                else if (ipAddress.AddressFamily == AddressFamily.InterNetworkV6)
-                {
-                    serverIPv6 = ipAddress;
-                    IPv6String = ipAddress.ToString();
-                }
-            }
-            ipAddresses = new[] { serverIPv4, serverIPv6 };
+            // keeping IEnumerable to enumerate entire array only if needed
+            IEnumerable<IPAddress> ipAddresses = Dns.GetHostAddresses(serverName);
             
-            if (IPv4String != null || IPv6String != null)
-            {
-                pendingDNSInfo = new SQLDNSInfo(cachedFQDN, IPv4String, IPv6String, port.ToString());
-            }
+            // First, we try to connect all AddressFamily.InterNetwork
+            // and then all AddressFamily.InterNetworkV6.
+            // Keeping address families inlined in entire method because parameter pendingDNSInfo is bound on them.
+            ipAddresses = ipAddresses
+                .Where(address => address.AddressFamily == AddressFamily.InterNetworkV6 ||
+                                  address.AddressFamily == AddressFamily.InterNetwork)
+                .OrderBy(address => address.AddressFamily == AddressFamily.InterNetworkV6);
             
             Stopwatch timeTaken = Stopwatch.StartNew();
 
@@ -378,7 +363,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
                     var timeLeft = timeout - timeTaken.Elapsed;
 
-                    if (timeLeft <= TimeSpan.Zero)
+                    if (timeLeft <= TimeSpan.Zero && !isInfiniteTimeout)
                         return null;
                     try
                     {
@@ -392,6 +377,13 @@ namespace Microsoft.Data.SqlClient.SNI
                     {
                         thisSocketSelected = true;
                         socket.Blocking = true;
+                        string iPv4String = null;
+                        string iPv6String = null;
+                        string ipAddressString = ipAddress.ToString();
+                        if (socket.AddressFamily == AddressFamily.InterNetwork)
+                            iPv4String = ipAddressString;
+                        else iPv6String = ipAddressString;
+                        pendingDNSInfo = new SQLDNSInfo(cachedFQDN, iPv4String, iPv6String, port.ToString());
                         return socket;
                     }
                 }
