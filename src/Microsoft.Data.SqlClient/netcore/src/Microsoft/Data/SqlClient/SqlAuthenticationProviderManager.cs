@@ -34,16 +34,19 @@ namespace Microsoft.Data.SqlClient
         /// Sets default supported Active Directory Authentication providers by the driver 
         /// on the SqlAuthenticationProviderManager instance.
         /// </summary>
-        private static void SetDefaultAuthProviders()
+        private static void SetDefaultAuthProviders(SqlAuthenticationProviderManager instance)
         {
-            var activeDirectoryAuthProvider = new ActiveDirectoryAuthenticationProvider(s_instance._applicationClientId);
-            s_instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryIntegrated, activeDirectoryAuthProvider);
-            s_instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, activeDirectoryAuthProvider);
-            s_instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive, activeDirectoryAuthProvider);
-            s_instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal, activeDirectoryAuthProvider);
-            s_instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, activeDirectoryAuthProvider);
-            s_instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity, activeDirectoryAuthProvider);
-            s_instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryMSI, activeDirectoryAuthProvider);
+            if (instance != null)
+            {
+                var activeDirectoryAuthProvider = new ActiveDirectoryAuthenticationProvider(instance._applicationClientId);
+                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryIntegrated, activeDirectoryAuthProvider);
+                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, activeDirectoryAuthProvider);
+                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive, activeDirectoryAuthProvider);
+                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal, activeDirectoryAuthProvider);
+                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, activeDirectoryAuthProvider);
+                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity, activeDirectoryAuthProvider);
+                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryMSI, activeDirectoryAuthProvider);
+            }
         }
         /// <summary>
         /// Constructor.

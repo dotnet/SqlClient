@@ -7,9 +7,9 @@ namespace Microsoft.Data.SqlClient
     internal partial class SqlAuthenticationProviderManager
     {
         static SqlAuthenticationProviderManager()
-        {            
+        {
             s_instance = new SqlAuthenticationProviderManager();
-            SetDefaultAuthProviders();
+            SetDefaultAuthProviders(s_instance);
         }
     }
 }

@@ -34,7 +34,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             s_instance = new SqlAuthenticationProviderManager(configurationSection);
-            SetDefaultAuthProviders();
+            SetDefaultAuthProviders(s_instance);
         }
 
         /// <summary>
