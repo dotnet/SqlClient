@@ -164,7 +164,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             AggregateException e = Assert.Throws<AggregateException>(() => ConnectAndDisconnect(connStr));
 
             string expectedMessage = "ID3242: The security token could not be authenticated or authorized.";
-            Assert.Contains(expectedMessage, e.InnerException.InnerException.InnerException.Message);
+            Assert.Contains(expectedMessage, e.InnerException.InnerException.Message);
         }
 
 
