@@ -616,7 +616,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             });
             Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
 
-            // TODO: there is a known issue by ExecuteXmlReaderAsync that should be solved first- issue #971
+            // TODO: there is a known issue by ExecuteXmlReaderAsync that should be solved first- issue #44
             /*
             retriesCount = 0;
             Parallel.For(0, concurrentExecution,
@@ -634,7 +634,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
             */
         }
-
         #endregion
 
         #region private members
