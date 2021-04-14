@@ -327,7 +327,13 @@ namespace Microsoft.Data.SqlClient.SNI
             string IPv4String = null;
             string IPv6String = null;
 
-            Socket[] sockets = new Socket[2];
+            // Returning null socket is handled by the caller function.
+            if(ipAddresses == null || ipAddresses.Length == 0)
+            {
+                return null;
+            }
+
+            Socket[] sockets = new Socket[ipAddresses.Length];
             AddressFamily[] preferedIPFamilies = new AddressFamily[] { AddressFamily.InterNetwork, AddressFamily.InterNetworkV6 };
 
             CancellationTokenSource cts = null;
@@ -360,6 +366,8 @@ namespace Microsoft.Data.SqlClient.SNI
             Socket availableSocket = null;
             try
             {
+                int n = 0; // Socket index
+
                 // We go through the IP list twice.
                 // In the first traversal, we only try to connect with the preferedIPFamilies[0].
                 // In the second traversal, we only try to connect with the preferedIPFamilies[1].
@@ -371,18 +379,18 @@ namespace Microsoft.Data.SqlClient.SNI
                         {
                             if (ipAddress != null && ipAddress.AddressFamily == preferedIPFamilies[i])
                             {
-                                sockets[i] = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                                sockets[n] = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
                                 // enable keep-alive on socket
-                                SetKeepAliveValues(ref sockets[i]);
+                                SetKeepAliveValues(ref sockets[n]);
 
                                 SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.INFO, "Connecting to IP address {0} and port {1}", args0: ipAddress, args1: port);
-                                sockets[i].Connect(ipAddress, port);
-                                if (sockets[i] != null) // sockets[i] can be null if cancel callback is executed during connect()
+                                sockets[n].Connect(ipAddress, port);
+                                if (sockets[n] != null) // sockets[i] can be null if cancel callback is executed during connect()
                                 {
-                                    if (sockets[i].Connected)
+                                    if (sockets[n].Connected)
                                     {
-                                        availableSocket = sockets[i];
+                                        availableSocket = sockets[n];
 
                                         if (ipAddress.AddressFamily == AddressFamily.InterNetwork)
                                         {
@@ -397,10 +405,11 @@ namespace Microsoft.Data.SqlClient.SNI
                                     }
                                     else
                                     {
-                                        sockets[i].Dispose();
-                                        sockets[i] = null;
+                                        sockets[n].Dispose();
+                                        sockets[n] = null;
                                     }
                                 }
+                                n++;
                             }
                         }
                         catch (Exception e)
