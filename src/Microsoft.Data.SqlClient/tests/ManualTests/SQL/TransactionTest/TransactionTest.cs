@@ -10,6 +10,88 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class TransactionTest
     {
+        public static TheoryData<string> ConnectionStrings =>
+            new TheoryData<string>
+            {
+                new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+                {
+                    Pooling = false,
+                    MultipleActiveResultSets = false
+                }.ConnectionString
+                , new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+                {
+                    MultipleActiveResultSets = false,
+                    Pooling = true,
+                    MaxPoolSize = 1
+                }.ConnectionString
+                , new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+                {
+                    MultipleActiveResultSets = true
+                }.ConnectionString
+            };
+
+        // Synapse: Enforced unique constraints are not supported. To create an unenforced unique constraint you must include the NOT ENFORCED syntax as part of your statement.
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [MemberData(nameof(ConnectionStrings))]
+        public static void ReadNextQueryAfterTxAborted(string connString)
+        {
+            using (System.Transactions.TransactionScope scope = new System.Transactions.TransactionScope())
+            {
+                using (SqlConnection sqlConnection = new SqlConnection(connString))
+                {
+                    SqlCommand cmd = new SqlCommand("SELECT 1", sqlConnection);
+                    sqlConnection.Open();
+                    var reader = cmd.ExecuteReader();
+                    scope.Dispose();
+                }
+
+                using (SqlConnection sqlConnection = new SqlConnection(connString))
+                using (SqlCommand cmd = new SqlCommand("SELECT 2", sqlConnection))
+                {
+                    sqlConnection.Open();
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        bool result = reader.Read();
+                        Assert.True(result);
+                        if (result)
+                        {
+                            Assert.Equal(2, reader.GetValue(0));
+                        }
+                    }
+                }
+
+                using (SqlConnection sqlConnection = new SqlConnection(connString))
+                using (SqlCommand cmd = new SqlCommand("SELECT 3", sqlConnection))
+                {
+                    sqlConnection.Open();
+                    using (SqlDataReader reader = cmd.ExecuteReaderAsync().Result)
+                    {
+                        bool result = reader.ReadAsync().Result;
+                        Assert.True(result);
+                        if (result)
+                        {
+                            Assert.Equal(3, reader.GetValue(0));
+                        }
+                    }
+                }
+
+                using (SqlConnection sqlConnection = new SqlConnection(connString))
+                using (SqlCommand cmd = new SqlCommand("SELECT TOP(1) 4 Clm0 FROM sysobjects FOR XML AUTO", sqlConnection))
+                {
+                    sqlConnection.Open();
+                    using (System.Xml.XmlReader reader = cmd.ExecuteXmlReader())
+                    {
+                        bool result = reader.Read();
+                        Assert.True(result);
+                        if (result)
+                        {
+                            Assert.Equal("4", reader[0]);
+                        }
+                    }
+                }
+            }
+        }
+
         // Synapse: Enforced unique constraints are not supported. To create an unenforced unique constraint you must include the NOT ENFORCED syntax as part of your statement.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestMain()

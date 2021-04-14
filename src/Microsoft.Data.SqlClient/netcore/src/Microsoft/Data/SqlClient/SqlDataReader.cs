@@ -3563,7 +3563,7 @@ namespace Microsoft.Data.SqlClient
 
                 return true;
             }
-            catch (System.OutOfMemoryException e)
+            catch (OutOfMemoryException e)
             {
                 _isClosed = true;
                 SqlConnection con = _connection;
@@ -3573,7 +3573,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 throw;
             }
-            catch (System.StackOverflowException e)
+            catch (StackOverflowException e)
             {
                 _isClosed = true;
                 SqlConnection con = _connection;
@@ -3583,6 +3583,9 @@ namespace Microsoft.Data.SqlClient
                 }
                 throw;
             }
+            /* Even though ThreadAbortException exists in .NET Core, 
+             * since Abort is not supported, the common language runtime won't ever throw ThreadAbortException.
+             * just to keep a common codebase!*/
             catch (System.Threading.ThreadAbortException e)
             {
                 _isClosed = true;
