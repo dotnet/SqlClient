@@ -2160,28 +2160,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                       () => ExecuteQueryThatRequiresCustomKeyStoreProvider(connection));
                 Assert.Contains(failedToDecryptMessage, ex.Message);
                 Assert.True(ex.InnerException is NotImplementedException);
-
-                // not required provider in instance cache
-                // it should not fall back to the global cache so the right provider will not be found
-                connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(notRequiredProvider);
-                ex = Assert.Throws<ArgumentException>(
-                     () => ExecuteQueryThatRequiresCustomKeyStoreProvider(connection));
-                Assert.Equal(providerNotFoundMessage, ex.Message);
-
-                // required provider in instance cache
-                // if the instance cache is not empty, it is always checked for the provider.
-                // => if the provider is found, it must have been retrieved from the instance cache and not the global cache
-                connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(requiredProvider);
-                ex = Assert.Throws<SqlException>(
-                    () => ExecuteQueryThatRequiresCustomKeyStoreProvider(connection));
-                Assert.Contains(failedToDecryptMessage, ex.Message);
-                Assert.True(ex.InnerException is NotImplementedException);
-
-                // not required provider will replace the previous entry so required provider will not be found 
-                connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(notRequiredProvider);
-                ex = Assert.Throws<ArgumentException>(
-                    () => ExecuteQueryThatRequiresCustomKeyStoreProvider(connection));
-                Assert.Equal(providerNotFoundMessage, ex.Message);
             }
 
             void ExecuteQueryThatRequiresCustomKeyStoreProvider(SqlConnection connection)
