@@ -4279,16 +4279,26 @@ namespace Microsoft.Data.SqlClient
                     _sharedState._nextColumnDataToRead = _sharedState._nextColumnHeaderToRead;
                     _sharedState._nextColumnHeaderToRead++;  // We read this one
 
-                    if (isNull && columnMetaData.type != SqlDbType.Timestamp /* Maintain behavior for known bug (Dev10 479607) rejected as breaking change - See comments in GetNullSqlValue for timestamp */)
+                    if (isNull)
                     {
-                        TdsParser.GetNullSqlValue(_data[_sharedState._nextColumnDataToRead],
-                            columnMetaData,
-                            _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
-                            _parser.Connection);
-
-                        if (!readHeaderOnly)
+                        if (columnMetaData.type == SqlDbType.Timestamp)
                         {
-                            _sharedState._nextColumnDataToRead++;
+                            if (!LocalAppContextSwitches.LegacyRowVersionNullBehaviour)
+                            {
+                                _data[i].SetToNullOfType(SqlBuffer.StorageType.SqlBinary);
+                            }
+                        }
+                        else
+                        {
+                            TdsParser.GetNullSqlValue(_data[_sharedState._nextColumnDataToRead],
+                                columnMetaData,
+                                _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
+                                _parser.Connection);
+
+                            if (!readHeaderOnly)
+                            {
+                                _sharedState._nextColumnDataToRead++;
+                            }
                         }
                     }
                     else
