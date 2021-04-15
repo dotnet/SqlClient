@@ -331,10 +331,9 @@ namespace Microsoft.Data.SqlClient.SNI
             // and then all AddressFamily.InterNetworkV6.
             // Keeping address families inlined in entire method because parameter pendingDNSInfo is bound on them.
             ipAddresses = ipAddresses
-                .Where(address => address.AddressFamily == AddressFamily.InterNetworkV6 ||
-                                  address.AddressFamily == AddressFamily.InterNetwork)
-                .OrderBy(address => address.AddressFamily == AddressFamily.InterNetworkV6);
-            
+                .Where (address => address.AddressFamily==AddressFamily.InterNetwork)
+                .Concat(ipAddresses.Where(address => address.AddressFamily==AddressFamily.InterNetworkV6));
+
             Stopwatch timeTaken = Stopwatch.StartNew();
 
             foreach (IPAddress ipAddress in ipAddresses)
@@ -367,7 +366,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         return null;
                     try
                     {
-                        int connectionTimeout = isInfiniteTimeout? -1 : (int)(timeLeft.TotalMilliseconds * 1000);
+                        int connectionTimeout = isInfiniteTimeout? -1 : checked((int)(timeLeft.TotalMilliseconds * 1000));
                         Socket.Select(null, new List<Socket> {socket}, null,
                             connectionTimeout);
                     }
