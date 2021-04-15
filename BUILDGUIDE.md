@@ -242,11 +242,11 @@ To use this feature, you must enable the following AppContext switch at applicat
 
 **"Switch.Microsoft.Data.SqlClient.EnableRetryLogic"**
 
-## Enabling row version null behaviour
+## Enabling row version null behavior
 
 `SqlDataReader` returns a `DBNull` value instead of an empty `byte[]`. To active the legacy behavior, you must enable the following AppContext switch that is cached on first check for the entire process:
 
-**"Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehaviour"**
+**"Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehavior"**
 
 ## Debugging SqlClient on Linux from Windows
 
