@@ -13,12 +13,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static TheoryData<string> ConnectionStrings =>
             new TheoryData<string>
             {
+                // Active issue 14588
+                //new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+                //{
+                //    Pooling = false,
+                //    MultipleActiveResultSets = false
+                //}.ConnectionString
                 new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
-                {
-                    Pooling = false,
-                    MultipleActiveResultSets = false
-                }.ConnectionString
-                , new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
                 {
                     MultipleActiveResultSets = false,
                     Pooling = true,
