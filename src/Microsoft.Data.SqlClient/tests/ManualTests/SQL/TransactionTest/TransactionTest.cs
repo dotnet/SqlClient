@@ -30,8 +30,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }.ConnectionString
             };
 
-        // Synapse: Enforced unique constraints are not supported. To create an unenforced unique constraint you must include the NOT ENFORCED syntax as part of your statement.
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(ConnectionStrings))]
         public static void ReadNextQueryAfterTxAborted(string connString)
         {
@@ -42,6 +41,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     SqlCommand cmd = new SqlCommand("SELECT 1", sqlConnection);
                     sqlConnection.Open();
                     var reader = cmd.ExecuteReader();
+                    // Disposing Transaction Scope before completing read triggers GitHub issue #980 use-case that leads to wrong data in future rounds.
                     scope.Dispose();
                 }
 
