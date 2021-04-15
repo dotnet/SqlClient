@@ -450,7 +450,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ParameterName/*' />
         public override string ParameterName
         {
-            get => _parameterName ?? ADP.StrEmpty;
+            get => _parameterName ?? string.Empty;
             set
             {
                 if (
@@ -655,7 +655,7 @@ namespace Microsoft.Data.SqlClient
         ]
         public string UdtTypeName
         {
-            get => _udtTypeName ?? ADP.StrEmpty;
+            get => _udtTypeName ?? string.Empty;
             set => _udtTypeName = value;
         }
 
@@ -666,7 +666,7 @@ namespace Microsoft.Data.SqlClient
         ]
         public string TypeName
         {
-            get => _typeName ?? ADP.StrEmpty;
+            get => _typeName ?? string.Empty;
             set
             {
                 _typeName = value;
@@ -807,7 +807,7 @@ namespace Microsoft.Data.SqlClient
         [ResCategory("Update")]
         public override string SourceColumn
         {
-            get => _sourceColumn ?? ADP.StrEmpty;
+            get => _sourceColumn ?? string.Empty;
             set => _sourceColumn = value;
         }
 
