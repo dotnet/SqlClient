@@ -53,10 +53,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         bool result = reader.Read();
                         Assert.True(result);
-                        if (result)
-                        {
-                            Assert.Equal(2, reader.GetValue(0));
-                        }
+                        Assert.Equal(2, reader.GetValue(0));
                     }
                 }
 
@@ -68,10 +65,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         bool result = reader.ReadAsync().Result;
                         Assert.True(result);
-                        if (result)
-                        {
-                            Assert.Equal(3, reader.GetValue(0));
-                        }
+                        Assert.Equal(3, reader.GetValue(0));
                     }
                 }
 
@@ -83,10 +77,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         bool result = reader.Read();
                         Assert.True(result);
-                        if (result)
-                        {
-                            Assert.Equal("4", reader[0]);
-                        }
+                        Assert.Equal("4", reader[0]);
                     }
                 }
             }
