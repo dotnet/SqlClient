@@ -5,6 +5,7 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Security;
+using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -36,6 +37,9 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/DatabaseName/*'/>
         public string DatabaseName { get; }
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/ConnectionTimeout/*'/>
+        public int ConnectionTimeout = ADP.DefaultConnectionTimeout;
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/ctor/*'/>
         protected SqlAuthenticationParameters(
             SqlAuthenticationMethod authenticationMethod,
@@ -45,7 +49,8 @@ namespace Microsoft.Data.SqlClient
             string authority,
             string userId,
             string password,
-            Guid connectionId)
+            Guid connectionId, 
+            int connectionTimeout)
         {
             AuthenticationMethod = authenticationMethod;
             ServerName = serverName;
@@ -55,6 +60,7 @@ namespace Microsoft.Data.SqlClient
             UserId = userId;
             Password = password;
             ConnectionId = connectionId;
+            ConnectionTimeout = connectionTimeout;
         }
 
         /// <summary>
@@ -70,6 +76,7 @@ namespace Microsoft.Data.SqlClient
             private string _userId;
             private string _password;
             private Guid _connectionId = Guid.NewGuid();
+            private int _connectionTimeout = ADP.DefaultConnectionTimeout;
 
             /// <summary>
             /// Implicitly converts to <see cref="SqlAuthenticationParameters"/>.
@@ -84,7 +91,8 @@ namespace Microsoft.Data.SqlClient
                     authority: builder._authority,
                     userId: builder._userId,
                     password: builder._password,
-                    connectionId: builder._connectionId);
+                    connectionId: builder._connectionId,
+                    connectionTimeout: builder._connectionTimeout);
             }
 
             /// <summary>
@@ -129,6 +137,15 @@ namespace Microsoft.Data.SqlClient
             public Builder WithConnectionId(Guid connectionId)
             {
                 _connectionId = connectionId;
+                return this;
+            }
+
+            /// <summary>
+            /// Set connection timeout.
+            /// </summary>
+            public Builder WithConnectionTimeout(int timeout)
+            {
+                _connectionTimeout = timeout;
                 return this;
             }
 

@@ -366,7 +366,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public void Dispose()
         {
-            _endEvent?.Dispose();
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _endEvent?.Dispose();
+            }
         }
     }
 }

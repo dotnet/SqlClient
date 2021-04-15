@@ -656,7 +656,11 @@ namespace Microsoft.Data.SqlClient
         public string TypeName
         {
             get => _typeName ?? ADP.StrEmpty;
-            set => _typeName = value;
+            set
+            {
+                _typeName = value;
+                IsDerivedParameterTypeName = false;
+            }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Value/*' />
@@ -954,6 +958,8 @@ namespace Microsoft.Data.SqlClient
         internal bool SizeInferred => 0 == _size;
 
         internal INullable ValueAsINullable => _valueAsINullable;
+
+        internal bool IsDerivedParameterTypeName { get; set; }
 
         private void CloneHelper(SqlParameter destination)
         {

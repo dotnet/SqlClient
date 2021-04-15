@@ -70,9 +70,9 @@ namespace Microsoft.Data.SqlClient
     }
 
     /// <summary>
-    /// Struct encapsulating the data to be sent to the server as part of Federated Authentication Feature Extension.
+    /// Class encapsulating the data to be sent to the server as part of Federated Authentication Feature Extension.
     /// </summary>
-    internal struct FederatedAuthenticationFeatureExtensionData
+    internal class FederatedAuthenticationFeatureExtensionData
     {
         internal TdsEnums.FedAuthLibrary libraryType;
         internal bool fedAuthRequiredPreLoginResponse;

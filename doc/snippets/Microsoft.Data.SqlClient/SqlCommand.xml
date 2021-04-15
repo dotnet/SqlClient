@@ -2803,7 +2803,7 @@ To apply the retry logic, do the following steps before executing the command:
 > The command **timeout** restarts for each execution of a command within the retry logic and after applying the retry time delay. There is no timing overlap between these two actions.
 
 > [!NOTE]
-> The default retry logic provider is not enabled unless it was configured in application configuration file. For more information, see [Configurable retry logic and configuration file](/sql/connect/ado-net/configurable-retry-logic-config-file).
+> The default retry logic provider is not enabled unless it is configured in an application configuration file. For more information, see [Configurable retry logic configuration file](/sql/connect/ado-net/configurable-retry-logic-config-file-sqlclient).
 
 ## Example
 The following sample creates a database and establishes an active connection to it. While the database has an active connection, it tries to drop it with a new <xref:Microsoft.Data.SqlClient.SqlConnection> and a <xref:Microsoft.Data.SqlClient.SqlCommand> that uses a <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider>. You should kill the active connection through the database to unblock the second command before exceeding the number of retries.  

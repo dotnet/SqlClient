@@ -467,8 +467,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     try
                     {
                         t.Wait();
-                        Console.WriteLine("FAIL: Expected AggregateException on Task wait for Cancelled Task!");
-                        Console.WriteLine("t.Status: " + t.Status);
+                        Console.WriteLine("FAIL: Expected AggregateException on Task wait for Cancelled Task! Task Status: " + t.Status);
                     }
                     catch (AggregateException ae)
                     {
@@ -515,8 +514,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     try
                     {
                         t.Wait();
-                        Console.WriteLine("FAIL: Expected AggregateException on Task wait for Cancelled Task!");
-                        Console.WriteLine("t.Status: " + t.Status);
+                        Console.WriteLine("FAIL: Expected AggregateException on Task wait for Cancelled Task! Task Status: " + t.Status);
                     }
                     catch (AggregateException ae)
                     {
@@ -556,8 +554,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     try
                     {
                         t.Wait();
-                        Console.WriteLine("FAIL: Expected AggregateException on Task wait for Cancelled Task!");
-                        Console.WriteLine("t.Status: " + t.Status);
+                        Console.WriteLine("FAIL: Expected AggregateException on Task wait for Cancelled Task! Task Status: " + t.Status);
                     }
                     catch (AggregateException ae)
                     {
@@ -628,28 +625,23 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         byte[] binarydata = new byte[dataSize];
                         rand.NextBytes(binarydata);
                         MemoryStream ms = new MemoryStream(binarydata, false);
-                        cmd.CommandText = "insert into #blobs (Id, blob) values (1, @blob)";
+                        // Include a delay to allow time for cancellation
+                        cmd.CommandText = "WAITFOR DELAY '00:00:05'; insert into #blobs (Id, blob) values (1, @blob)";
 
                         cmd.Parameters.Add("@blob", SqlDbType.VarBinary, dataSize);
                         cmd.Parameters["@blob"].Direction = ParameterDirection.Input;
                         cmd.Parameters["@blob"].Value = ms;
 
-                        Task t = func(cmd, cts.Token);
-                        if (!t.IsCompleted)
-                        {
-                            cts.Cancel();
-                        }
-
                         try
                         {
-                            t.Wait();
-                            throw new Exception("Expected AggregateException on Task wait for Cancelled Task!");
+                            Task.WaitAll(func(cmd, cts.Token), Task.Run(() => cts.Cancel()));
+                            Console.WriteLine("FAIL: Expected AggregateException on Task wait for Cancelled Task!");
                         }
                         catch (AggregateException ae)
                         {
                             if (!ae.InnerException.Message.Contains("Operation cancelled by user."))
                             {
-                                Console.WriteLine("Unexpected exception message: " + ae.InnerException.Message);
+                                Console.WriteLine("FAIL: Unexpected exception message: " + ae.InnerException.Message);
                             }
                         }
                         finally

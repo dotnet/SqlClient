@@ -588,6 +588,113 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 () => create(-2),
                 errorMessage);
         }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUdtTestDatabasePresent), nameof(DataTestUtility.AreConnStringsSetup))]
+        public void UDTParams_DeriveParameters_CheckAutoFixSuccess()
+        {
+            // the type and sproc must be commited to the database or this test will deadlock with a schema lock violation
+            // if you are missing these database entities then you should look for an updated version of the database creation script
+
+            string sprocName = "sp_insert_customers";
+            string typeName = "CustomerAddress";
+            string customerAddressTypeIncorrectName = $"{DataTestUtility.UdtTestDbName}.dbo.{typeName.Trim('[', ']')}";
+            string customerAddressTypeCorrectedName = $"[dbo].[{typeName.Trim('[', ']')}]";
+            string customerParameterName = "@customers";
+
+            Address addr = Address.Parse("123 baker st || Redmond");
+            DataTable table = new DataTable();
+            table.Columns.Add();
+            table.Columns.Add();
+            table.Rows.Add("john", addr);
+
+            using (SqlConnection connection = new SqlConnection(_connStr))
+            {
+                connection.Open();
+                using (SqlTransaction transaction = connection.BeginTransaction())
+                using (SqlCommand cmd = new SqlCommand(sprocName, connection, transaction))
+                {
+                    try
+                    {
+                        cmd.CommandType = CommandType.StoredProcedure;
+
+                        SqlCommandBuilder.DeriveParameters(cmd);
+
+                        Assert.NotNull(cmd.Parameters);
+                        Assert.Equal(2, cmd.Parameters.Count); // [return_value, table]
+
+                        SqlParameter p = cmd.Parameters[1];
+
+                        Assert.Equal(customerParameterName, p.ParameterName);
+                        Assert.Equal(SqlDbType.Structured, p.SqlDbType);
+                        Assert.Equal(customerAddressTypeIncorrectName, p.TypeName); // the 3 part name is incorrect but needs to be maintained for compatibility
+                        p.Value = table;
+
+                        cmd.ExecuteNonQuery();
+
+                        Assert.Equal(customerAddressTypeCorrectedName, p.TypeName); // check that the auto fix has been applied correctly
+                    }
+                    finally
+                    {
+                        transaction.Rollback();
+                    }
+                }
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUdtTestDatabasePresent), nameof(DataTestUtility.AreConnStringsSetup))]
+        public void UDTParams_DeriveParameters_CheckAutoFixOverride()
+        {
+            // the type and sproc must be commited to the database or this test will deadlock with a schema lock violation
+            // if you are missing these database entities then you should look for an updated version of the database creation script
+
+            string sprocName = "sp_insert_customers";
+            string typeName = "CustomerAddress";
+            string customerAddressTypeIncorrectName = $"{DataTestUtility.UdtTestDbName}.dbo.{typeName.Trim('[', ']')}";
+            string customerAddressTypeCorrectedName = $"[dbo].[{typeName.Trim('[', ']')}]";
+            string customerParameterName = "@customers";
+
+            Address addr = Address.Parse("123 baker st || Redmond");
+            DataTable table = new DataTable();
+            table.Columns.Add();
+            table.Columns.Add();
+            table.Rows.Add("john", addr);
+
+            using (SqlConnection connection = new SqlConnection(_connStr))
+            {
+                connection.Open();
+                using (SqlTransaction transaction = connection.BeginTransaction())
+                using (SqlCommand cmd = new SqlCommand(sprocName, connection, transaction))
+                {
+                    try
+                    {
+                        cmd.CommandType = CommandType.StoredProcedure;
+
+                        SqlCommandBuilder.DeriveParameters(cmd);
+
+                        Assert.NotNull(cmd.Parameters);
+                        Assert.Equal(2, cmd.Parameters.Count); // [return_value, table]
+
+                        SqlParameter p = cmd.Parameters[1];
+
+                        Assert.Equal(customerParameterName, p.ParameterName);
+                        Assert.Equal(SqlDbType.Structured, p.SqlDbType);
+                        Assert.Equal(customerAddressTypeIncorrectName, p.TypeName); // the 3 part name is incorrect but needs to be maintained for compatibility
+                        p.Value = table;
+
+                        p.TypeName = customerAddressTypeIncorrectName; // force using the incorrect name by manually setting it
+
+                        SqlException exception = Assert.Throws<SqlException>(
+                            () => cmd.ExecuteNonQuery()
+                        );
+                        Assert.Contains("Database name is not allowed", exception.Message);
+                    }
+                    finally
+                    {
+                        transaction.Rollback();
+                    }
+                }
+            }
+        }
     }
 }
 

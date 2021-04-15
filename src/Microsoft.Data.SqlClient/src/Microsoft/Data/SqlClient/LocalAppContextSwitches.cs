@@ -10,13 +10,39 @@ namespace Microsoft.Data.SqlClient
     internal static partial class LocalAppContextSwitches
     {
         internal const string MakeReadAsyncBlockingString = @"Switch.Microsoft.Data.SqlClient.MakeReadAsyncBlocking";
+        internal const string LegacyRowVersionNullString = @"Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehaviour";
+
         private static bool _makeReadAsyncBlocking;
+        private static bool? s_legacyRowVersionNullBehaviour;
+
         public static bool MakeReadAsyncBlocking
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
                 return AppContext.TryGetSwitch(MakeReadAsyncBlockingString, out _makeReadAsyncBlocking) ? _makeReadAsyncBlocking : false;
+            }
+        }
+
+        /// <summary>
+        /// In System.Data.SqlClient and Microsoft.Data.SqlClient prior to 3.0.0 a field with type Timestamp/RowVersion
+        /// would return an empty byte array. This switch contols whether to preserve that behaviour on newer versions
+        /// of Microsoft.Data.SqlClient, if this switch returns false an appropriate null value will be returned
+        /// </summary>
+        public static bool LegacyRowVersionNullBehaviour
+        {
+            get
+            {
+                if (s_legacyRowVersionNullBehaviour == null)
+                {
+                    bool value = false;
+                    if (AppContext.TryGetSwitch(LegacyRowVersionNullString, out bool providedValue))
+                    {
+                         value = providedValue;
+                    }
+                    s_legacyRowVersionNullBehaviour = value;
+                }
+                return s_legacyRowVersionNullBehaviour.Value;
             }
         }
     }
