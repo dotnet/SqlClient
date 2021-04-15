@@ -210,9 +210,7 @@ namespace Microsoft.Data.SqlClient
 
         private MetaType _metaType;
         private SqlCollation _collation;
-        private string _xmlSchemaCollectionDatabase;
-        private string _xmlSchemaCollectionOwningSchema;
-        private string _xmlSchemaCollectionName;
+        private SqlMetaDataXmlSchemaCollection _xmlSchemaCollection;
         private string _udtTypeName;
         private string _typeName;
         private Exception _udtLoadError;
@@ -332,9 +330,13 @@ namespace Microsoft.Data.SqlClient
             SourceVersion = sourceVersion;
             SourceColumnNullMapping = sourceColumnNullMapping;
             Value = value;
-            XmlSchemaCollectionDatabase = xmlSchemaCollectionDatabase;
-            XmlSchemaCollectionOwningSchema = xmlSchemaCollectionOwningSchema;
-            XmlSchemaCollectionName = xmlSchemaCollectionName;
+            if (!string.IsNullOrEmpty(xmlSchemaCollectionDatabase) || !string.IsNullOrEmpty(xmlSchemaCollectionOwningSchema) || !string.IsNullOrEmpty(xmlSchemaCollectionName))
+            {
+                EnsureXmlSchemaCollectionExists();
+                _xmlSchemaCollection.Database = xmlSchemaCollectionDatabase;
+                _xmlSchemaCollection.OwningSchema = xmlSchemaCollectionOwningSchema;
+                _xmlSchemaCollection.Name = xmlSchemaCollectionName;
+            }
         }
 
         private SqlParameter(SqlParameter source) : this()
@@ -405,24 +407,36 @@ namespace Microsoft.Data.SqlClient
         [ResCategory("XML")]
         public string XmlSchemaCollectionDatabase
         {
-            get => _xmlSchemaCollectionDatabase ?? ADP.StrEmpty;
-            set => _xmlSchemaCollectionDatabase = value;
+            get => _xmlSchemaCollection?.Database ?? string.Empty;
+            set
+            {
+                EnsureXmlSchemaCollectionExists();
+                _xmlSchemaCollection.Database = value;
+            }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/XmlSchemaCollectionOwningSchema/*' />
         [ResCategory("XML")]
         public string XmlSchemaCollectionOwningSchema
         {
-            get => _xmlSchemaCollectionOwningSchema ?? ADP.StrEmpty;
-            set => _xmlSchemaCollectionOwningSchema = value;
+            get => _xmlSchemaCollection?.OwningSchema ?? string.Empty;
+            set
+            {
+                EnsureXmlSchemaCollectionExists();
+                _xmlSchemaCollection.OwningSchema = value;
+            }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/XmlSchemaCollectionName/*' />
         [ResCategory("XML")]
         public string XmlSchemaCollectionName
         {
-            get => _xmlSchemaCollectionName ?? ADP.StrEmpty;
-            set => _xmlSchemaCollectionName = value;
+            get => _xmlSchemaCollection?.Name ?? string.Empty;
+            set
+            {
+                EnsureXmlSchemaCollectionExists();
+                _xmlSchemaCollection.Name = value;
+            }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ForceColumnEncryption/*' />
@@ -981,9 +995,11 @@ namespace Microsoft.Data.SqlClient
 
             destination._metaType = _metaType;
             destination._collation = _collation;
-            destination._xmlSchemaCollectionDatabase = _xmlSchemaCollectionDatabase;
-            destination._xmlSchemaCollectionOwningSchema = _xmlSchemaCollectionOwningSchema;
-            destination._xmlSchemaCollectionName = _xmlSchemaCollectionName;
+            if (_xmlSchemaCollection != null)
+            {
+                destination.EnsureXmlSchemaCollectionExists();
+                destination._xmlSchemaCollection.CopyFrom(_xmlSchemaCollection);
+            }
             destination._udtTypeName = _udtTypeName;
             destination._typeName = _typeName;
             destination._udtLoadError = _udtLoadError;
@@ -1017,6 +1033,14 @@ namespace Microsoft.Data.SqlClient
                 _parent = value;
             }
             return parent;
+        }
+
+        private void EnsureXmlSchemaCollectionExists()
+        {
+            if (_xmlSchemaCollection is null)
+            {
+                _xmlSchemaCollection = new SqlMetaDataXmlSchemaCollection();
+            }
         }
 
         internal void FixStreamDataForNonPLP()
