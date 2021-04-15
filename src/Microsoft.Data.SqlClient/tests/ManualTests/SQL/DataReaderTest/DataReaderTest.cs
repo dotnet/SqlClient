@@ -298,7 +298,7 @@ insert into [{tempTableName}] (first_name,last_name) values ('Joe','Smith')
         {
             lock (s_rowVersionLock)
             {
-                bool? originalValue = SetLegacyRowVersionNullBehaviour(false);
+                bool? originalValue = SetLegacyRowVersionNullBehavior(false);
                 try
                 {
                     using (SqlConnection con = new SqlConnection(DataTestUtility.TCPConnectionString))
@@ -318,7 +318,7 @@ insert into [{tempTableName}] (first_name,last_name) values ('Joe','Smith')
                 }
                 finally
                 {
-                    SetLegacyRowVersionNullBehaviour(originalValue);
+                    SetLegacyRowVersionNullBehavior(originalValue);
                 }
             }
         }
@@ -328,7 +328,7 @@ insert into [{tempTableName}] (first_name,last_name) values ('Joe','Smith')
         {
             lock (s_rowVersionLock)
             {
-                bool? originalValue = SetLegacyRowVersionNullBehaviour(true);
+                bool? originalValue = SetLegacyRowVersionNullBehavior(true);
                 try
                 {
                     using (SqlConnection con = new SqlConnection(DataTestUtility.TCPConnectionString))
@@ -351,15 +351,15 @@ insert into [{tempTableName}] (first_name,last_name) values ('Joe','Smith')
                 }
                 finally
                 {
-                    SetLegacyRowVersionNullBehaviour(originalValue);
+                    SetLegacyRowVersionNullBehavior(originalValue);
                 }
             }
         }
 
-        private static bool? SetLegacyRowVersionNullBehaviour(bool? value)
+        private static bool? SetLegacyRowVersionNullBehavior(bool? value)
         {
             Type switchesType = typeof(SqlCommand).Assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
-            FieldInfo switchField = switchesType.GetField("s_legacyRowVersionNullBehaviour", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            FieldInfo switchField = switchesType.GetField("s_LegacyRowVersionNullBehavior", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
             bool? originalValue = (bool?)switchField.GetValue(null);
             switchField.SetValue(null, value);
             return originalValue;
