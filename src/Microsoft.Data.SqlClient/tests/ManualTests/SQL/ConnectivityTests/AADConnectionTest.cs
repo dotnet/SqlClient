@@ -164,7 +164,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             AggregateException e = Assert.Throws<AggregateException>(() => ConnectAndDisconnect(connStr));
 
             string expectedMessage = "ID3242: The security token could not be authenticated or authorized.";
-            Assert.Contains(expectedMessage, e.InnerException.InnerException.InnerException.Message);
+            Assert.Contains(expectedMessage, e.InnerException.InnerException.Message);
         }
 
 
@@ -388,7 +388,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             AggregateException e = Assert.Throws<AggregateException>(() => ConnectAndDisconnect(connStrWithNoCred));
 
-            string expectedMessage = "Response: {\"error\":\"invalid_request\",\"error_description\":\"Identity not found\"}";
+            string expectedMessage = "ManagedIdentityCredential authentication unavailable, the requested identity has not been assigned to this resource.";
             Assert.Contains(expectedMessage, e.GetBaseException().Message);
         }
 
@@ -491,7 +491,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
             string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, removeKeys) +
-                $"Authentication=Active Directory Managed Identity; User Id={DataTestUtility.UserManagedIdentityObjectId};";
+                $"Authentication=Active Directory Managed Identity; User Id={DataTestUtility.UserManagedIdentityClientId};";
             ConnectAndDisconnect(connStr);
         }
 
@@ -543,7 +543,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD", "Trusted_Connection", "Integrated Security" };
             string connectionString = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.TCPConnectionString, removeKeys)
-                + $"Authentication=Active Directory Managed Identity; User Id={DataTestUtility.UserManagedIdentityObjectId}";
+                + $"Authentication=Active Directory Managed Identity; User Id={DataTestUtility.UserManagedIdentityClientId}";
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             {

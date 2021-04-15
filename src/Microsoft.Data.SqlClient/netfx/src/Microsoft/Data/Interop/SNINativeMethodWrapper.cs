@@ -1075,32 +1075,6 @@ namespace Microsoft.Data.SqlClient
                 : IntPtr.Zero;
             native_consumerInfo.ConsumerKey = consumerInfo.key;
         }
-
-        internal static bool RegisterTraceProvider(int eventKeyword)
-        {
-            // Registers the TraceLogging provider, enabling it to generate events.
-            // Return true if enabled, otherwise false.
-            if (s_is64bitProcess)
-            {
-                return SNINativeManagedWrapperX64.RegisterTraceProviderWrapper(eventKeyword);
-            }
-            else
-            {
-                return SNINativeManagedWrapperX86.RegisterTraceProviderWrapper(eventKeyword);
-            }
-        }
-
-        internal static void UnregisterTraceProvider()
-        {
-            if (s_is64bitProcess)
-            {
-                SNINativeManagedWrapperX64.UnregisterTraceProviderWrapper();
-            }
-            else
-            {
-                SNINativeManagedWrapperX86.UnregisterTraceProviderWrapper();
-            }
-        }
     }
 }
 

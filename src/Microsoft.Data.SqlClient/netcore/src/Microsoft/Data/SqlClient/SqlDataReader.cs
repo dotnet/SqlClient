@@ -3412,6 +3412,8 @@ namespace Microsoft.Data.SqlClient
         {
             SqlStatistics statistics = null;
             long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlDataReader.TryReadInternal | API | Object Id {0}", ObjectID);
+            RuntimeHelpers.PrepareConstrainedRegions();
+
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -3560,6 +3562,39 @@ namespace Microsoft.Data.SqlClient
 #endif
 
                 return true;
+            }
+            catch (OutOfMemoryException e)
+            {
+                _isClosed = true;
+                SqlConnection con = _connection;
+                if (con != null)
+                {
+                    con.Abort(e);
+                }
+                throw;
+            }
+            catch (StackOverflowException e)
+            {
+                _isClosed = true;
+                SqlConnection con = _connection;
+                if (con != null)
+                {
+                    con.Abort(e);
+                }
+                throw;
+            }
+            /* Even though ThreadAbortException exists in .NET Core, 
+             * since Abort is not supported, the common language runtime won't ever throw ThreadAbortException.
+             * just to keep a common codebase!*/
+            catch (System.Threading.ThreadAbortException e)
+            {
+                _isClosed = true;
+                SqlConnection con = _connection;
+                if (con != null)
+                {
+                    con.Abort(e);
+                }
+                throw;
             }
             finally
             {

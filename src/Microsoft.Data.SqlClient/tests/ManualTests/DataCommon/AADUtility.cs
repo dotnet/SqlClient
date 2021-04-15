@@ -26,8 +26,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return result.AccessToken;
         }
 
-        public static async Task<string> GetManagedIdentityToken(string objectId = null) =>
-            await new MockManagedIdentityTokenProvider().AcquireTokenAsync(objectId).ConfigureAwait(false);
+        public static async Task<string> GetManagedIdentityToken(string clientId = null) =>
+            await new MockManagedIdentityTokenProvider().AcquireTokenAsync(clientId).ConfigureAwait(false);
 
     }
 
@@ -59,20 +59,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         internal readonly int _retryTimeoutInSeconds = DefaultRetryTimeout;
         internal readonly int _maxRetryCount = DefaultMaxRetryCount;
 
-        public async Task<string> AcquireTokenAsync(string objectId = null)
+        public async Task<string> AcquireTokenAsync(string clientId = null)
         {
             // Use the httpClient specified in the constructor. If it was not specified in the constructor, use the default httpClient.
             HttpClient httpClient = s_defaultHttpClient;
 
             try
             {
-                // If user assigned managed identity is specified, include object ID parameter in request
-                string objectIdParameter = objectId != null
-                    ? $"&object_id={objectId}"
+                // If user assigned managed identity is specified, include client Id parameter in request
+                string clientIdParameter = !string.IsNullOrEmpty(clientId)
+                    ? $"&client_id={clientId}"
                     : string.Empty;
 
                 // Craft request as per the MSI protocol
-                var requestUrl = $"{AzureVmImdsEndpoint}?resource={Resource}{objectIdParameter}{AzureVmImdsApiVersion}";
+                var requestUrl = $"{AzureVmImdsEndpoint}?resource={Resource}{clientIdParameter}{AzureVmImdsApiVersion}";
 
                 HttpResponseMessage response = null;
 

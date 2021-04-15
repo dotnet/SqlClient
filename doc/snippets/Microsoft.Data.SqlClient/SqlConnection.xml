@@ -1052,24 +1052,6 @@ GO
             This function was called more than once.
           </exception>
         </RegisterColumnEncryptionKeyStoreProviders>
-        <RegisterColumnEncryptionKeyStoreProvidersOnConnection>
-            <param name="customProviders">Dictionary of custom column encryption key providers</param>
-            <summary>Registers the encryption key store providers on the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> instance. If this function has been called, any providers registered using the static <see cref="T:Microsoft.Data.SqlClient.SqlConnection.RegisterColumnEncryptionKeyStoreProviders" /> methods will be ignored. This function can be called more than once. This does shallow copying of the dictionary so that the app cannot alter the custom provider list once it has been set.</summary>
-            <exception cref="T:System.ArgumentNullException">
-                A null dictionary was provided.
-
-                -or-
-
-                A string key in the dictionary was null or empty.
-
-                -or-
-
-                An EncryptionKeyStoreProvider value in the dictionary was null.
-              </exception>
-              <exception cref="T:System.ArgumentException">
-                A string key in the dictionary started with "MSSQL_". This prefix is reserved for system providers.
-              </exception>
-        </RegisterColumnEncryptionKeyStoreProvidersOnConnection>
         <RetryLogicProvider>
 			<summary> Gets or sets a value that specifies the 
 				<see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider" />
