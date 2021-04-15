@@ -227,6 +227,7 @@ namespace Microsoft.Data.SqlClient
         {
             _isNull = true;
             _actualSize = -1;
+            _direction = ParameterDirection.Input;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbType/*' />
@@ -276,16 +277,12 @@ namespace Microsoft.Data.SqlClient
             DataRowVersion sourceVersion,
             object value
         ) 
-            : this()
+            : this(parameterName, dbType, size, sourceColumn)
         {
-            ParameterName = parameterName;
-            SqlDbType = dbType;
-            Size = size;
             Direction = direction;
             IsNullable = isNullable;
             PrecisionInternal = precision;
             ScaleInternal = scale;
-            SourceColumn = sourceColumn;
             SourceVersion = sourceVersion;
             Value = value;
         }
@@ -712,11 +709,7 @@ namespace Microsoft.Data.SqlClient
         ]
         public override ParameterDirection Direction
         {
-            get
-            {
-                ParameterDirection direction = _direction;
-                return (direction != 0) ? direction : ParameterDirection.Input;
-            }
+            get => _direction;
             set
             {
                 if (_direction != value)

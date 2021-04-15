@@ -244,6 +244,7 @@ namespace Microsoft.Data.SqlClient
         {
             _isNull = true;
             _actualSize = -1;
+            _direction = ParameterDirection.Input;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbType/*' />
@@ -725,11 +726,7 @@ namespace Microsoft.Data.SqlClient
         ]
         public override ParameterDirection Direction
         {
-            get
-            {
-                ParameterDirection direction = _direction;
-                return (direction != 0) ? direction : ParameterDirection.Input;
-            }
+            get => _direction;
             set
             {
                 if (_direction != value)
