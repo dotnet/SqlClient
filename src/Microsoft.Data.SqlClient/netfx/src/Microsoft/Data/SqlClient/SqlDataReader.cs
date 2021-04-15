@@ -4283,7 +4283,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (columnMetaData.type == SqlDbType.Timestamp)
                         {
-                            if (!LocalAppContextSwitches.LegacyRowVersionNullBehaviour)
+                            if (!LocalAppContextSwitches.LegacyRowVersionNullBehavior)
                             {
                                 _data[i].SetToNullOfType(SqlBuffer.StorageType.SqlBinary);
                             }

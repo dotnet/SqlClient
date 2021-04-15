@@ -10,10 +10,10 @@ namespace Microsoft.Data.SqlClient
     internal static partial class LocalAppContextSwitches
     {
         internal const string MakeReadAsyncBlockingString = @"Switch.Microsoft.Data.SqlClient.MakeReadAsyncBlocking";
-        internal const string LegacyRowVersionNullString = @"Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehaviour";
+        internal const string LegacyRowVersionNullString = @"Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehavior";
 
         private static bool _makeReadAsyncBlocking;
-        private static bool? s_legacyRowVersionNullBehaviour;
+        private static bool? s_LegacyRowVersionNullBehavior;
 
         public static bool MakeReadAsyncBlocking
         {
@@ -29,20 +29,20 @@ namespace Microsoft.Data.SqlClient
         /// would return an empty byte array. This switch contols whether to preserve that behaviour on newer versions
         /// of Microsoft.Data.SqlClient, if this switch returns false an appropriate null value will be returned
         /// </summary>
-        public static bool LegacyRowVersionNullBehaviour
+        public static bool LegacyRowVersionNullBehavior
         {
             get
             {
-                if (s_legacyRowVersionNullBehaviour == null)
+                if (s_LegacyRowVersionNullBehavior == null)
                 {
                     bool value = false;
                     if (AppContext.TryGetSwitch(LegacyRowVersionNullString, out bool providedValue))
                     {
                          value = providedValue;
                     }
-                    s_legacyRowVersionNullBehaviour = value;
+                    s_LegacyRowVersionNullBehavior = value;
                 }
-                return s_legacyRowVersionNullBehaviour.Value;
+                return s_LegacyRowVersionNullBehavior.Value;
             }
         }
     }
