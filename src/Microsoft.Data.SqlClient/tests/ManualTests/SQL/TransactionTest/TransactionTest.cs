@@ -10,15 +10,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class TransactionTest
     {
-        public static TheoryData<string> ConnectionStrings =>
+        public static TheoryData<string> PoolEnabledConnectionStrings =>
             new TheoryData<string>
             {
-                // Active issue 14588
-                //new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
-                //{
-                //    Pooling = false,
-                //    MultipleActiveResultSets = false
-                //}.ConnectionString
                 new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
                 {
                     MultipleActiveResultSets = false,
@@ -27,13 +21,38 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }.ConnectionString
                 , new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
                 {
+                    Pooling = true,
+                    MultipleActiveResultSets = true
+                }.ConnectionString
+            };
+
+        public static TheoryData<string> PoolDisabledConnectionStrings =>
+            new TheoryData<string>
+            {
+                new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+                {
+                    Pooling = false,
+                    MultipleActiveResultSets = false
+                }.ConnectionString
+                , new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+                {
+                    Pooling = false,
                     MultipleActiveResultSets = true
                 }.ConnectionString
             };
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(ConnectionStrings))]
-        public static void ReadNextQueryAfterTxAborted(string connString)
+        [MemberData(nameof(PoolEnabledConnectionStrings))]
+        public static void ReadNextQueryAfterTxAbortedPoolEnabled(string connString)
+            => ReadNextQueryAfterTxAbortedTest(connString);
+
+        // Azure SQL has no DTC support
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]        
+        [MemberData(nameof(PoolDisabledConnectionStrings))]
+        public static void ReadNextQueryAfterTxAbortedPoolDisabled(string connString)
+            => ReadNextQueryAfterTxAbortedTest(connString);
+
+        private static void ReadNextQueryAfterTxAbortedTest(string connString)
         {
             using (System.Transactions.TransactionScope scope = new System.Transactions.TransactionScope())
             {
