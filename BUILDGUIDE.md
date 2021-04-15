@@ -244,7 +244,7 @@ To use this feature, you must enable the following AppContext switch at applicat
 
 ## Enabling row version null behaviour
 
-`SqlDataReader` returns a `DBNull` value instead of an empty `byte[]`. To active the legacy behaviour, you must enable the following AppContext switch that is cached on first check for the entire process:
+`SqlDataReader` returns a `DBNull` value instead of an empty `byte[]`. To active the legacy behavior, you must enable the following AppContext switch that is cached on first check for the entire process:
 
 **"Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehaviour"**
 

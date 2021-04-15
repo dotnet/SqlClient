@@ -6,29 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Preview Release 3.0.0-preview2.21105.1] - 2021-04-15
 
-### Breaking Changes over Preview V3.0.0-preview1
-- `User Id` now accepts `Client Id` instead of `Object Id` for **User-Assigned Managed Identity**.
-- **SqlDataReader** now returns a `DBNull` value instead of an empty `byte[]`. To active the legacy behaviour, you must enable the following AppContext switch: 
-**"Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehaviour"**
+### Breaking Changes over preview release v3.0.0-preview1
+- `User Id` connection property now accepts `Client Id` instead of `Object Id` for **User-Assigned Managed Identity** [#1010](https://github.com/dotnet/SqlClient/pull/1010)
+- `SqlDataReader` now returns a `DBNull` value instead of an empty `byte[]`. Legacy behavior can be enabled by setting `AppContext` switch **Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehaviour** [#998](https://github.com/dotnet/SqlClient/pull/998)
 
 ### Added
-- Added support for Azure Identity [#1010](https://github.com/dotnet/SqlClient/pull/1010)
+- **Microsoft.Data.SqlClient** now depends on **Azure.Identity** library to acquire token for "Active Directory Managed Identity/MSI" and "Active Directory Service Principal" authentication modes. [#1010](https://github.com/dotnet/SqlClient/pull/1010)
+- Upgraded Native SNI dependency to **v3.0.0-preview1** along with enhanced event tracing support [#1006](https://github.com/dotnet/SqlClient/pull/1006)
 
 ### Fixed
-- Fixed wrong data blended with transactions in .NET Core by marking a connection with open result sets to be doomed [#1023](https://github.com/dotnet/SqlClient/pull/1023)
+- Fixed wrong data blended with transactions in .NET Core by marking a connection with open result to be doomed [#1023](https://github.com/dotnet/SqlClient/pull/1023)
 - Fixed derived parameters containing typename incorrectly [#1020](https://github.com/dotnet/SqlClient/pull/1020)
-- Fixed socket array length to avoid possible out of bounds errors [#1031](https://github.com/dotnet/SqlClient/pull/1031)
-- Fixed **rowversion** null behaviour to return `DBNull` instead of an empty `byte[]` [#998](https://github.com/dotnet/SqlClient/pull/998)
-- Fixed IP connection resolving logic in .NET Core [#1016](https://github.com/dotnet/SqlClient/pull/1016)
+- Fixed server connection leak possibilities when an exception occurs in pooling layer [#890](https://github.com/dotnet/SqlClient/pull/890)
+- Fixed IP connection resolving logic in .NET Core [#1016](https://github.com/dotnet/SqlClient/pull/1016) [#1031](https://github.com/dotnet/SqlClient/pull/1031)
 
-### Changes
-- Added timeout support in azure authentication by adding `ConnectionTimeout` property to `SqlAuthenticationParameters` type.
-- Improved event tracing in **SNI.dll** just like managed code without additional requirements [#1006](https://github.com/dotnet/SqlClient/pull/1006)
-- Improved resource management by fixing the possible server connection leak in pooling layer when an exception occurs [#890](https://github.com/dotnet/SqlClient/pull/890)
-- Improved the `SqlDateTime` to `DateTime` conversion [#912](https://github.com/dotnet/SqlClient/pull/912)
+### Changed
+- Performance improvements in `SqlDateTime` to `DateTime` internal conversion method [#912](https://github.com/dotnet/SqlClient/pull/912)
 - Improved memory allocation by avoiding unnecessary context switching [1008](https://github.com/dotnet/SqlClient/pull/1008)
 - Various performance improvements [#963](https://github.com/dotnet/SqlClient/pull/963) [#996](https://github.com/dotnet/SqlClient/pull/996) [#1004](https://github.com/dotnet/SqlClient/pull/1004) [#1012](https://github.com/dotnet/SqlClient/pull/1012) [#1017](https://github.com/dotnet/SqlClient/pull/1017)
-- Partial event source tracing improvements [#1018](https://github.com/dotnet/SqlClient/pull/1018)
+- Event source tracing improvements [#1018](https://github.com/dotnet/SqlClient/pull/1018)
 - Changes to share common files between NetFx and NetCore source code [#871](https://github.com/dotnet/SqlClient/pull/871) [#887](https://github.com/dotnet/SqlClient/pull/887)
 
 ## [Preview Release 3.0.0-preview1.21075.2] - 2021-03-15
