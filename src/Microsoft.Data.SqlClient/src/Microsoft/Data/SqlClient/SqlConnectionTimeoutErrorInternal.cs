@@ -45,7 +45,9 @@ namespace Microsoft.Data.SqlClient
         {
             //Debug.Assert(swDuration.IsRunning == true, "The stop operation of the stopwatch cannot be called when it is not running.");
             if (_swDuration.IsRunning == true)
+            {
                 _swDuration.Stop();
+            }
         }
 
         internal long GetMilliSecondDuration()
@@ -58,23 +60,21 @@ namespace Microsoft.Data.SqlClient
 
     internal class SqlConnectionTimeoutErrorInternal
     {
-        private SqlConnectionTimeoutPhaseDuration[] _phaseDurations = null;
-        private SqlConnectionTimeoutPhaseDuration[] _originalPhaseDurations = null;
+        private SqlConnectionTimeoutPhaseDuration[] _phaseDurations;
+        private SqlConnectionTimeoutPhaseDuration[] _originalPhaseDurations;
+        private SqlConnectionTimeoutErrorPhase _currentPhase;
+        private SqlConnectionInternalSourceType _currentSourceType;
+        private bool _isFailoverScenario;
 
-        private SqlConnectionTimeoutErrorPhase _currentPhase = SqlConnectionTimeoutErrorPhase.Undefined;
-        private SqlConnectionInternalSourceType _currentSourceType = SqlConnectionInternalSourceType.Principle;
-        private bool _isFailoverScenario = false;
-
-        internal SqlConnectionTimeoutErrorPhase CurrentPhase
-        {
-            get { return _currentPhase; }
-        }
+        internal SqlConnectionTimeoutErrorPhase CurrentPhase => _currentPhase;
 
         public SqlConnectionTimeoutErrorInternal()
         {
             _phaseDurations = new SqlConnectionTimeoutPhaseDuration[(int)SqlConnectionTimeoutErrorPhase.Count];
             for (int i = 0; i < _phaseDurations.Length; i++)
+            {
                 _phaseDurations[i] = null;
+            }
         }
 
         public void SetFailoverScenario(bool useFailoverServer)
@@ -100,7 +100,9 @@ namespace Microsoft.Data.SqlClient
         {
             _currentPhase = SqlConnectionTimeoutErrorPhase.PreLoginBegin;
             for (int i = 0; i < _phaseDurations.Length; i++)
+            {
                 _phaseDurations[i] = null;
+            }
         }
 
         internal void SetAndBeginPhase(SqlConnectionTimeoutErrorPhase timeoutErrorPhase)
@@ -133,20 +135,23 @@ namespace Microsoft.Data.SqlClient
                 case SqlConnectionTimeoutErrorPhase.PreLoginBegin:
                     errorBuilder = new StringBuilder(SQLMessage.Timeout_PreLogin_Begin());
                     durationString = SQLMessage.Duration_PreLogin_Begin(
-                        _phaseDurations[(int)SqlConnectionTimeoutErrorPhase.PreLoginBegin].GetMilliSecondDuration());
+                        _phaseDurations[(int)SqlConnectionTimeoutErrorPhase.PreLoginBegin].GetMilliSecondDuration()
+                    );
                     break;
                 case SqlConnectionTimeoutErrorPhase.InitializeConnection:
                     errorBuilder = new StringBuilder(SQLMessage.Timeout_PreLogin_InitializeConnection());
                     durationString = SQLMessage.Duration_PreLogin_Begin(
                         _phaseDurations[(int)SqlConnectionTimeoutErrorPhase.PreLoginBegin].GetMilliSecondDuration() +
-                        _phaseDurations[(int)SqlConnectionTimeoutErrorPhase.InitializeConnection].GetMilliSecondDuration());
+                        _phaseDurations[(int)SqlConnectionTimeoutErrorPhase.InitializeConnection].GetMilliSecondDuration()
+                    );
                     break;
                 case SqlConnectionTimeoutErrorPhase.SendPreLoginHandshake:
                     errorBuilder = new StringBuilder(SQLMessage.Timeout_PreLogin_SendHandshake());
                     durationString = SQLMessage.Duration_PreLoginHandshake(
                         _phaseDurations[(int)SqlConnectionTimeoutErrorPhase.PreLoginBegin].GetMilliSecondDuration() +
                         _phaseDurations[(int)SqlConnectionTimeoutErrorPhase.InitializeConnection].GetMilliSecondDuration(),
-                        _phaseDurations[(int)SqlConnectionTimeoutErrorPhase.SendPreLoginHandshake].GetMilliSecondDuration());
+                        _phaseDurations[(int)SqlConnectionTimeoutErrorPhase.SendPreLoginHandshake].GetMilliSecondDuration()
+                    );
                     break;
                 case SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake:
                     errorBuilder = new StringBuilder(SQLMessage.Timeout_PreLogin_ConsumeHandshake());
@@ -154,7 +159,8 @@ namespace Microsoft.Data.SqlClient
                         _phaseDurations[(int)SqlConnectionTimeoutErrorPhase.PreLoginBegin].GetMilliSecondDuration() +
                         _phaseDurations[(int)SqlConnectionTimeoutErrorPhase.InitializeConnection].GetMilliSecondDuration(),
                         _phaseDurations[(int)SqlConnectionTimeoutErrorPhase.SendPreLoginHandshake].GetMilliSecondDuration() +
-                        _phaseDurations[(int)SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake].GetMilliSecondDuration());
+                        _phaseDurations[(int)SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake].GetMilliSecondDuration()
+                    );
                     break;
                 case SqlConnectionTimeoutErrorPhase.LoginBegin:
                     errorBuilder = new StringBuilder(SQLMessage.Timeout_Login_Begin());
@@ -163,7 +169,8 @@ namespace Microsoft.Data.SqlClient
                         _phaseDurations[(int)SqlConnectionTimeoutErrorPhase.InitializeConnection].GetMilliSecondDuration(),
                         _phaseDurations[(int)SqlConnectionTimeoutErrorPhase.SendPreLoginHandshake].GetMilliSecondDuration() +
                         _phaseDurations[(int)SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake].GetMilliSecondDuration(),
-                        _phaseDurations[(int)SqlConnectionTimeoutErrorPhase.LoginBegin].GetMilliSecondDuration());
+                        _phaseDurations[(int)SqlConnectionTimeoutErrorPhase.LoginBegin].GetMilliSecondDuration()
+                    );
                     break;
                 case SqlConnectionTimeoutErrorPhase.ProcessConnectionAuth:
                     errorBuilder = new StringBuilder(SQLMessage.Timeout_Login_ProcessConnectionAuth());
@@ -173,7 +180,8 @@ namespace Microsoft.Data.SqlClient
                         _phaseDurations[(int)SqlConnectionTimeoutErrorPhase.SendPreLoginHandshake].GetMilliSecondDuration() +
                         _phaseDurations[(int)SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake].GetMilliSecondDuration(),
                         _phaseDurations[(int)SqlConnectionTimeoutErrorPhase.LoginBegin].GetMilliSecondDuration(),
-                        _phaseDurations[(int)SqlConnectionTimeoutErrorPhase.ProcessConnectionAuth].GetMilliSecondDuration());
+                        _phaseDurations[(int)SqlConnectionTimeoutErrorPhase.ProcessConnectionAuth].GetMilliSecondDuration()
+                    );
                     break;
                 case SqlConnectionTimeoutErrorPhase.PostLogin:
                     errorBuilder = new StringBuilder(SQLMessage.Timeout_PostLogin());
@@ -184,7 +192,8 @@ namespace Microsoft.Data.SqlClient
                         _phaseDurations[(int)SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake].GetMilliSecondDuration(),
                         _phaseDurations[(int)SqlConnectionTimeoutErrorPhase.LoginBegin].GetMilliSecondDuration(),
                         _phaseDurations[(int)SqlConnectionTimeoutErrorPhase.ProcessConnectionAuth].GetMilliSecondDuration(),
-                        _phaseDurations[(int)SqlConnectionTimeoutErrorPhase.PostLogin].GetMilliSecondDuration());
+                        _phaseDurations[(int)SqlConnectionTimeoutErrorPhase.PostLogin].GetMilliSecondDuration()
+                    );
                     break;
                 default:
                     errorBuilder = new StringBuilder(SQLMessage.Timeout());
@@ -212,7 +221,8 @@ namespace Microsoft.Data.SqlClient
                         _originalPhaseDurations[(int)SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake].GetMilliSecondDuration(),
                         _originalPhaseDurations[(int)SqlConnectionTimeoutErrorPhase.LoginBegin].GetMilliSecondDuration(),
                         _originalPhaseDurations[(int)SqlConnectionTimeoutErrorPhase.ProcessConnectionAuth].GetMilliSecondDuration(),
-                        _originalPhaseDurations[(int)SqlConnectionTimeoutErrorPhase.PostLogin].GetMilliSecondDuration());
+                        _originalPhaseDurations[(int)SqlConnectionTimeoutErrorPhase.PostLogin].GetMilliSecondDuration()
+                    );
                 }
             }
 
