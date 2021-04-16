@@ -388,7 +388,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             AggregateException e = Assert.Throws<AggregateException>(() => ConnectAndDisconnect(connStrWithNoCred));
 
-            string expectedMessage = "ManagedIdentityCredential authentication unavailable, the requested identity has not been assigned to this resource.";
+            string expectedMessage = "ManagedIdentityCredential authentication unavailable";
             Assert.Contains(expectedMessage, e.GetBaseException().Message);
         }
 
