@@ -4584,24 +4584,6 @@
   <data name="SQL_SettingManagedIdentityWithCredential" xml:space="preserve">
     <value>"Authentication={0}" kann nicht verwendet werden, wenn die Eigenschaft "Credential" festgelegt wurde.</value>
   </data>
-  <data name="Azure_GenericErrorMessage" xml:space="preserve">
-    <value>Das Zugriffstoken konnte nicht abgerufen werden.</value>
-  </data>
-  <data name="Azure_IdentityEndpointNotListening" xml:space="preserve">
-    <value>Mit dem Endpunkt der verwalteten Identität kann keine Verbindung hergestellt werden. Stellen Sie sicher, dass Sie eine Azure-Ressource mit eingerichteter Identität ausführen.</value>
-  </data>
-  <data name="Azure_ManagedIdentityUsed" xml:space="preserve">
-    <value>Es wurde versucht, ein Token mithilfe einer verwalteten Identität abzurufen.</value>
-  </data>
-  <data name="Azure_MetadataEndpointNotListening" xml:space="preserve">
-    <value>Mit dem Instance Metadata Service (IMDS) kann keine Verbindung hergestellt werden. Die Anforderung an den Tokenendpunkt der verwalteten Identität wird übersprungen.</value>
-  </data>
-  <data name="Azure_NonRetryableError" xml:space="preserve">
-    <value>Es wurde ein nicht wiederholbarer Fehler empfangen.</value>
-  </data>
-  <data name="Azure_RetryFailure" xml:space="preserve">
-    <value>Fehler nach 5 Wiederholungen.</value>
-  </data>
   <data name="SqlDependency_UnexpectedValueOnDeserialize" xml:space="preserve">
     <value>Unerwarteter Typ beim Deserialisieren erkannt.</value>
   </data>

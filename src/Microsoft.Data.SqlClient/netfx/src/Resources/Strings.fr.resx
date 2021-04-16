@@ -4584,24 +4584,6 @@
   <data name="SQL_SettingManagedIdentityWithCredential" xml:space="preserve">
     <value>Impossible d'utiliser « Authentication={0} », si la propriété Credential a été définie.</value>
   </data>
-  <data name="Azure_GenericErrorMessage" xml:space="preserve">
-    <value>Impossible d'acquérir le jeton d'accès.</value>
-  </data>
-  <data name="Azure_IdentityEndpointNotListening" xml:space="preserve">
-    <value>Connexion impossible au point de terminaison d'identité managée. Vérifiez que vous exécutez une ressource Azure avec une identité configurée.</value>
-  </data>
-  <data name="Azure_ManagedIdentityUsed" xml:space="preserve">
-    <value>Tentative d'obtention d'un jeton à l'aide d'une identité managée.</value>
-  </data>
-  <data name="Azure_MetadataEndpointNotListening" xml:space="preserve">
-    <value>Connexion impossible à Instance Metadata Service (IMDS). Demande ignorée pour le point de terminaison de jeton d'identité managé.</value>
-  </data>
-  <data name="Azure_NonRetryableError" xml:space="preserve">
-    <value>Une erreur irrécupérable a été reçue.</value>
-  </data>
-  <data name="Azure_RetryFailure" xml:space="preserve">
-    <value>Échec après 5 tentatives.</value>
-  </data>
   <data name="SqlDependency_UnexpectedValueOnDeserialize" xml:space="preserve">
     <value>Type inattendu détecté pendant la désérialisation.</value>
   </data>
