@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Preview Release 3.0.0-preview2.21106.5] - 2021-04-16
+
+### Breaking Changes over preview release v3.0.0-preview1
+- `User Id` connection property now requires `Client Id` instead of `Object Id` for **User-Assigned Managed Identity** [#1010](https://github.com/dotnet/SqlClient/pull/1010)
+- `SqlDataReader` now returns a `DBNull` value instead of an empty `byte[]`. Legacy behavior can be enabled by setting `AppContext` switch **Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehavior** [#998](https://github.com/dotnet/SqlClient/pull/998)
+
+### Added
+- **Microsoft.Data.SqlClient** now depends on **Azure.Identity** library to acquire a token for "Active Directory Managed Identity/MSI" and "Active Directory Service Principal" authentication modes. [#1010](https://github.com/dotnet/SqlClient/pull/1010)
+- Upgraded Native SNI dependency to **v3.0.0-preview1** along with enhanced event tracing support [#1006](https://github.com/dotnet/SqlClient/pull/1006)
+
+### Fixed
+- Fixed wrong data blended with transactions in .NET Core by marking a connection as doomed if the transaction completes or aborts while there is an open result set[#1023](https://github.com/dotnet/SqlClient/pull/1023)
+- Fixed derived parameters containing incorrect typename [#1020](https://github.com/dotnet/SqlClient/pull/1020)
+- Fixed server connection leak possibilities when an exception occurs in pooling layer [#890](https://github.com/dotnet/SqlClient/pull/890)
+- Fixed IP connection resolving logic in .NET Core [#1016](https://github.com/dotnet/SqlClient/pull/1016) [#1031](https://github.com/dotnet/SqlClient/pull/1031)
+
+### Changed
+- Performance improvements in `SqlDateTime` to `DateTime` internal conversion method [#912](https://github.com/dotnet/SqlClient/pull/912)
+- Improved memory allocation by avoiding unnecessary context switching [1008](https://github.com/dotnet/SqlClient/pull/1008)
+- Updated `Microsoft.Identity.Client` version from **4.21.1** to **4.22.0** [#1036](https://github.com/dotnet/SqlClient/pull/1036)
+- Various performance improvements [#963](https://github.com/dotnet/SqlClient/pull/963) [#996](https://github.com/dotnet/SqlClient/pull/996) [#1004](https://github.com/dotnet/SqlClient/pull/1004) [#1012](https://github.com/dotnet/SqlClient/pull/1012) [#1017](https://github.com/dotnet/SqlClient/pull/1017)
+- Event source tracing improvements [#1018](https://github.com/dotnet/SqlClient/pull/1018)
+- Changes to share common files between NetFx and NetCore source code [#871](https://github.com/dotnet/SqlClient/pull/871) [#887](https://github.com/dotnet/SqlClient/pull/887)
+
 ## [Preview Release 3.0.0-preview1.21075.2] - 2021-03-15
 
 ### Breaking Changes over stable release v2.1
@@ -27,7 +51,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Fixed missing error messages in Managed SNI [#882](https://github.com/dotnet/SqlClient/pull/882)
 - Fixed event source trace string issue [#940](https://github.com/dotnet/SqlClient/pull/940)
 
-### Changes
+### Changed
 - Changed App Context switch `MakeReadAsyncBlocking` default to `false` [#937](https://github.com/dotnet/SqlClient/pull/937)
 - Replaced usage of `BinaryFormatter` with `DataContractSerializer` [#869](https://github.com/dotnet/SqlClient/pull/869)
 - Prohibited `DtdProcessing` on `XmlTextReader` instance in .NET Core [#884](https://github.com/dotnet/SqlClient/pull/884)
@@ -80,7 +104,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Fixed Bulk Copy Async deadlock issues with custom `IDataReader` when using `SqlDataReader` internally [#779](https://github.com/dotnet/SqlClient/pull/779)
 - Fixed a serialization issue with `SqlException` in .NET Core [#780](https://github.com/dotnet/SqlClient/pull/780)
 
-### Changes
+### Changed
 - Updated versions of `Microsoft.IdentityModel` package dependencies [#794](https://github.com/dotnet/SqlClient/pull/794)
 
 
@@ -96,7 +120,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Fixed unobserved exception issue when a timeout occurs before a faulted task completes with an exception [#688](https://github.com/dotnet/SqlClient/pull/688) [#773](https://github.com/dotnet/SqlClient/pull/773)
 - Fixed an issue where driver continues to prompt for credentials when using Azure Active Directory authentication [#770](https://github.com/dotnet/SqlClient/pull/770)
 
-### Changes
+### Changed
 - Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `v2.1.1` and removed symbols from `Microsoft.Data.SqlClient.SNI.runtime`, which are now published to Microsoft Symbols Server [#764](https://github.com/dotnet/SqlClient/pull/764)
 - Updated `Microsoft.Identity.Client` dependency version to `v4.21.1` [#765](https://github.com/dotnet/SqlClient/pull/765)
 - Performance improvements when establishing an encrypted channel by removing sync over async method calls [#541](https://github.com/dotnet/SqlClient/pull/541)
@@ -136,7 +160,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Fixed SPN generation issue when no port is provided [#629](https://github.com/dotnet/SqlClient/pull/629)
 - Fixed missing null checks for `SqlErrors` in `SqlException` for .NET Framework implementation [#698](https://github.com/dotnet/SqlClient/pull/698)
 
-### Changes
+### Changed
 - Performance improvements by fixing unnecessary allocations with EventSource implementation [#684](https://github.com/dotnet/SqlClient/pull/684)
 - Reverted changes to return empty DataTable from GetSchemaTable to return null as before. [#696](https://github.com/dotnet/SqlClient/pull/696)
 - Removed multiple `CacheConnectionStringProperties` calls when setting `ConnectionString` properties [#683](https://github.com/dotnet/SqlClient/pull/683)
@@ -164,7 +188,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Fixed Object null reference issue when failover partner is set [#588](https://github.com/dotnet/SqlClient/pull/588)
 - Fixed `applicationintent` connection string property issue [#585](https://github.com/dotnet/SqlClient/pull/585)
 
-### Changes
+### Changed
 - Raise warning message when insecure TLS protocols are in use [#591](https://github.com/dotnet/SqlClient/pull/591)
 
 ### Breaking Changes
@@ -184,7 +208,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Fixed unsafe cast in `SqlException` for `SerializationEntry.Value`
 - Fixed null reference exceptions in `SqlDelegatedTransaction` methods [#563](https://github.com/dotnet/SqlClient/pull/563)
 
-### Changes
+### Changed
 - Standardized connection string properties for enhanced user experience [#534](https://github.com/dotnet/SqlClient/pull/534)
 - Improved performance by reducing eventsource tracing related to allocations from TVP write methods [#557](https://github.com/dotnet/SqlClient/pull/557) [#564](https://github.com/dotnet/SqlClient/pull/564)
 
@@ -213,7 +237,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Fixed wrong application domain selected when starting `SqlDependencyListener` [#410](https://github.com/dotnet/SqlClient/pull/410)
 - Added missing refs for `RowCopied` property in `SqlBulkCopy` [#508](https://github.com/dotnet/SqlClient/pull/508)
 
-### Changes
+### Changed
 - Improved performance by removing unwanted method calls in Event Source tracing [#506](https://github.com/dotnet/SqlClient/pull/506)
 - Removed Diagnostic Source and Configuration Manager dependencies from .NET Standard implementation [#535](https://github.com/dotnet/SqlClient/pull/535)
 - Removed redundant calls to `DbConnectionPoolKey.GetType()` [#512](https://github.com/dotnet/SqlClient/pull/512)
@@ -252,7 +276,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Fixed concurrent connection speed issues when connecting with Azure Active Directory Authentication modes in .NET Core [#466](https://github.com/dotnet/SqlClient/pull/466)
 - Fixed issues with `Password` persistence in Connection String [#453](https://github.com/dotnet/SqlClient/pull/453)
 
-### Changes
+### Changed
 - Updated all driver assemblies to be CLS Compliant [#396](https://github.com/dotnet/SqlClient/pull/396)
 - Updated Bulk Copy error messages to also include Column, Row and non-encrypted Data information [#437](https://github.com/dotnet/SqlClient/pull/437)
 - Updated error messages for "Always Encrypted - Secure Enclaves" to handle 'Attestation Protocol' and fixed typos [#421](https://github.com/dotnet/SqlClient/pull/421) [#397](https://github.com/dotnet/SqlClient/pull/397)
@@ -288,7 +312,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Fixed `ConnectionTime` and `ClientConnectionId` reported by `SqlStatistics` when connection is closed [#341](https://github.com/dotnet/SqlClient/pull/341)
 - Fixed deadlock issues by reverting async changes to `SNIPacket` [#349](https://github.com/dotnet/SqlClient/pull/349)
 
-### Changes
+### Changed
 - Improved performance of Managed SNI by removing double fetch of domain name [#366](https://github.com/dotnet/SqlClient/pull/366)
 - Improved performance of Async Method Allocations in Managed SNI [#328](https://github.com/dotnet/SqlClient/pull/328)
 - Improved performance of Managed SNI by enhancing utilization of resources [#173](https://github.com/dotnet/SqlClient/pull/173) - Ported [dotnet/corefx#35363](https://github.com/dotnet/corefx/pull/35363) and [dotnet/corefx#40732](https://github.com/dotnet/corefx/pull/40732)
@@ -310,7 +334,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Fixed driver behavior to abort connection when encountering `SqlException` on `SqlTransaction.Commit` [#299](https://github.com/dotnet/SqlClient/pull/299)
 - Fixed driver behavior to not throw exception on invalid *app.config* files [#319](https://github.com/dotnet/SqlClient/pull/319)
 
-### Changes
+### Changed
 - Improved async read performance by adding multi-packet target buffer caching [#285](https://github.com/dotnet/SqlClient/pull/285)
 - Improved performance of `TdsParserStateObject` and `SqlDataReader` snapshot mechanisms [#198](https://github.com/dotnet/SqlClient/pull/198)
 - Updated `SqlDataReader.Close` documentation [#314](https://github.com/dotnet/SqlClient/pull/314)
@@ -332,7 +356,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Exception message grammar: "An SqlParameter [...] is not contained by this `SqlParameterCollection`" [#159](https://github.com/dotnet/SqlClient/issues/159)
 - Fixing incorrect event id and opcode for the `SqlEventSource` [#241](https://github.com/dotnet/SqlClient/pull/241)
 
-### Changes
+### Changed
 - Update dependency to Microsoft.Data.SqlClient.SNI v1.1.0 [#276](https://github.com/dotnet/SqlClient/pull/276)
 - Correct timeout remarks for async command methods [#264](https://github.com/dotnet/SqlClient/pull/264)
 - Improve `SqlBulkCopy` truncation error message [#256](https://github.com/dotnet/SqlClient/issues/256)
@@ -347,7 +371,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Added `SqlFileStream` support for .NET Framework with `Microsoft.Data.SqlTypes.SqlFileStream` class introduced. [#210](https://github.com/dotnet/SqlClient/pull/210)
 - Added support for Visual Studio Intellisense with XML Documentation. [#210](https://github.com/dotnet/SqlClient/pull/210)
 
-### Changes
+### Changed
 - Synchronized ref definitions with driver classes. [#180](https://github.com/dotnet/SqlClient/pull/180)
 - Updated `SNINativeMethodWrapper` to provide the underlying error in the inner exception when we fail to load SNI.dll. [#225](https://github.com/dotnet/SqlClient/pull/225)
 - Added .editorconfig file and set formatting rules. [#193](https://github.com/dotnet/SqlClient/pull/193)
