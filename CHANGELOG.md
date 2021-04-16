@@ -11,12 +11,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - `SqlDataReader` now returns a `DBNull` value instead of an empty `byte[]`. Legacy behavior can be enabled by setting `AppContext` switch **Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehavior** [#998](https://github.com/dotnet/SqlClient/pull/998)
 
 ### Added
-- **Microsoft.Data.SqlClient** now depends on **Azure.Identity** library to acquire token for "Active Directory Managed Identity/MSI" and "Active Directory Service Principal" authentication modes. [#1010](https://github.com/dotnet/SqlClient/pull/1010)
+- **Microsoft.Data.SqlClient** now depends on **Azure.Identity** library to acquire a token for "Active Directory Managed Identity/MSI" and "Active Directory Service Principal" authentication modes. [#1010](https://github.com/dotnet/SqlClient/pull/1010)
 - Upgraded Native SNI dependency to **v3.0.0-preview1** along with enhanced event tracing support [#1006](https://github.com/dotnet/SqlClient/pull/1006)
 
 ### Fixed
-- Fixed wrong data blended with transactions in .NET Core by marking a connection with open result to be doomed [#1023](https://github.com/dotnet/SqlClient/pull/1023)
-- Fixed derived parameters containing typename incorrectly [#1020](https://github.com/dotnet/SqlClient/pull/1020)
+- Fixed wrong data blended with transactions in .NET Core by marking a connection as doomed if the transaction completes or aborts while there is an open result set[#1023](https://github.com/dotnet/SqlClient/pull/1023)
+- Fixed derived parameters containing incorrect typename [#1020](https://github.com/dotnet/SqlClient/pull/1020)
 - Fixed server connection leak possibilities when an exception occurs in pooling layer [#890](https://github.com/dotnet/SqlClient/pull/890)
 - Fixed IP connection resolving logic in .NET Core [#1016](https://github.com/dotnet/SqlClient/pull/1016) [#1031](https://github.com/dotnet/SqlClient/pull/1031)
 
