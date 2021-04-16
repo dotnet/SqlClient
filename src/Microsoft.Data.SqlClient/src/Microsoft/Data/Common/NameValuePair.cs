@@ -2,15 +2,14 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
+using System.Diagnostics;
+using System.Runtime.Serialization;
+
 namespace Microsoft.Data.Common
 {
-
-    using System;
-    using System.Diagnostics;
-    using System.Runtime.Serialization;
-
-    [Serializable] // MDAC 83147
-    sealed internal class NameValuePair
+    [Serializable]
+    internal sealed class NameValuePair
     {
         readonly private string _name;
         readonly private string _value;
@@ -20,7 +19,7 @@ namespace Microsoft.Data.Common
 
         internal NameValuePair(string name, string value, int length)
         {
-            System.Diagnostics.Debug.Assert(!ADP.IsEmpty(name), "empty keyname");
+            Debug.Assert(!string.IsNullOrEmpty(name), "empty keyname");
             _name = name;
             _value = value;
             _length = length;
@@ -30,27 +29,17 @@ namespace Microsoft.Data.Common
         {
             get
             {
-                // this property won't exist when deserialized from Everett to Whidbey
-                // it shouldn't matter for DbConnectionString/DbDataPermission
-                // which should only use Length during construction
-                // not deserialization or post-ctor runtime
                 Debug.Assert(0 < _length, "NameValuePair zero Length usage");
                 return _length;
             }
         }
-        internal string Name
-        {
-            get
-            {
-                return _name;
-            }
-        }
+
+        internal string Name => _name;
+        internal string Value => _value;
+
         internal NameValuePair Next
         {
-            get
-            {
-                return _next;
-            }
+            get => _next;
             set
             {
                 if ((null != _next) || (null == value))
@@ -58,13 +47,6 @@ namespace Microsoft.Data.Common
                     throw ADP.InternalError(ADP.InternalErrorCode.NameValuePairNext);
                 }
                 _next = value;
-            }
-        }
-        internal string Value
-        {
-            get
-            {
-                return _value;
             }
         }
     }

@@ -18,7 +18,7 @@ using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     [PlatformSpecific(TestPlatforms.Windows)]
-    public class ConversionTests : IDisposable
+    public sealed class ConversionTests : IDisposable
     {
 
         private const string IdentityColumnName = "IdentityColumn";
@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         private ColumnMasterKey columnMasterKey;
         private ColumnEncryptionKey columnEncryptionKey;
         private SqlColumnEncryptionCertificateStoreProvider certStoreProvider = new SqlColumnEncryptionCertificateStoreProvider();
-        protected List<DbObject> databaseObjects = new List<DbObject>();
+        private List<DbObject> _databaseObjects = new List<DbObject>();
 
         private class ColumnMetaData
         {
@@ -60,19 +60,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 certificate = CertificateUtility.CreateCertificate();
             }
             columnMasterKey = new CspColumnMasterKey(DatabaseHelper.GenerateUniqueName("CMK"), certificate.Thumbprint, certStoreProvider, DataTestUtility.EnclaveEnabled);
-            databaseObjects.Add(columnMasterKey);
+            _databaseObjects.Add(columnMasterKey);
 
             columnEncryptionKey = new ColumnEncryptionKey(DatabaseHelper.GenerateUniqueName("CEK"),
                                                           columnMasterKey,
                                                           certStoreProvider);
-            databaseObjects.Add(columnEncryptionKey);
+            _databaseObjects.Add(columnEncryptionKey);
 
             foreach (string connectionStr in DataTestUtility.AEConnStringsSetup)
             {
                 using (SqlConnection sqlConnection = new SqlConnection(connectionStr))
                 {
                     sqlConnection.Open();
-                    databaseObjects.ForEach(o => o.Create(sqlConnection));
+                    _databaseObjects.ForEach(o => o.Create(sqlConnection));
                 }
             }
         }
@@ -1345,13 +1345,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         public void Dispose()
         {
-            databaseObjects.Reverse();
+            _databaseObjects.Reverse();
             foreach (string connectionStr in DataTestUtility.AEConnStringsSetup)
             {
                 using (SqlConnection sqlConnection = new SqlConnection(connectionStr))
                 {
                     sqlConnection.Open();
-                    databaseObjects.ForEach(o => o.Drop(sqlConnection));
+                    _databaseObjects.ForEach(o => o.Drop(sqlConnection));
                 }
             }
         }

@@ -309,14 +309,14 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             return SqlCipherMetadataConstructor.Invoke(parameters);
         }
 
-        internal static byte[] DecryptWithKey(byte[] cipherText, Object cipherMd, string serverName)
+        internal static byte[] DecryptWithKey(byte[] cipherText, Object cipherMd)
         {
-            return (byte[])SqlSecurityUtilDecryptWithKey.Invoke(null, new Object[] { cipherText, cipherMd, serverName });
+            return (byte[])SqlSecurityUtilDecryptWithKey.Invoke(null, new Object[] { cipherText, cipherMd, new SqlConnection() });
         }
 
-        internal static byte[] EncryptWithKey(byte[] plainText, Object cipherMd, string serverName)
+        internal static byte[] EncryptWithKey(byte[] plainText, Object cipherMd)
         {
-            return (byte[])SqlSecurityUtilEncryptWithKey.Invoke(null, new Object[] { plainText, cipherMd, serverName });
+            return (byte[])SqlSecurityUtilEncryptWithKey.Invoke(null, new Object[] { plainText, cipherMd, new SqlConnection() });
         }
 
         /// <summary>
@@ -404,10 +404,10 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         /// Through reflection, clear the static provider list set on SqlConnection. 
         /// Note- This API doesn't use locks for synchronization.
         /// </summary>
-        internal static void ClearSqlConnectionProviders()
+        internal static void ClearSqlConnectionGlobalProviders()
         {
             SqlConnection conn = new SqlConnection();
-            FieldInfo field = conn.GetType().GetField("_CustomColumnEncryptionKeyStoreProviders", BindingFlags.Static | BindingFlags.NonPublic);
+            FieldInfo field = conn.GetType().GetField("s_globalCustomColumnEncryptionKeyStoreProviders", BindingFlags.Static | BindingFlags.NonPublic);
             Assert.True(null != field);
             field.SetValue(conn, null);
         }

@@ -3,9 +3,11 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Data;
 using System.Data.Common;
 using System.Reflection;
 using System.Security;
+using Microsoft.SqlServer.TDS.Servers;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
@@ -36,6 +38,37 @@ namespace Microsoft.Data.SqlClient.Tests
                 using (SqlConnection connection = new SqlConnection(builder.ConnectionString))
                 {
                     connection.Open();
+                }
+            }
+        }
+
+        [ConditionalFact(typeof(PlatformDetection), nameof(PlatformDetection.IsNotArmProcess))]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public void TransientFaultTest()
+        {
+            using (TransientFaultTDSServer server = TransientFaultTDSServer.StartTestServer(true, true, 40613))
+            {
+                SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder()
+                {
+                    DataSource = "localhost," + server.Port,
+                    IntegratedSecurity = true
+                };
+
+                using (SqlConnection connection = new SqlConnection(builder.ConnectionString))
+                {
+                    try
+                    {
+                        connection.Open();
+                        Assert.Equal(ConnectionState.Open, connection.State);
+                    }
+                    catch (Exception e)
+                    {
+                        if (null != connection)
+                        {
+                            Assert.Equal(ConnectionState.Closed, connection.State);
+                        }
+                        Assert.False(true, e.Message);
+                    }
                 }
             }
         }

@@ -134,11 +134,5 @@ namespace Microsoft.Data.SqlClient
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr SNIClientCertificateFallbackWrapper(IntPtr pCallbackContext);
-        
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern bool RegisterTraceProviderWrapper(int eventKeyword);
-        
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void UnregisterTraceProviderWrapper();
     }
 }

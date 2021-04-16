@@ -102,7 +102,7 @@ namespace Microsoft.Data.SqlClient
             return new SqlRetryLogicProvider(retryLogic);
         }
 
-        /// Return true if the exception is a transient fault or a Timeout exception.
+        /// Return true if the exception is a transient fault.
         private static bool TransientErrorsCondition(Exception e, IEnumerable<int> retriableConditions)
         {
             bool result = false;

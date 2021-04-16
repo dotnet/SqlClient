@@ -12,18 +12,20 @@ namespace Microsoft.Data.SqlClient.Tests
 {
     internal class TestTdsServer : GenericTDSServer, IDisposable
     {
+        private const int DefaultConnectionTimeout = 5;
+
         private TDSServerEndPoint _endpoint = null;
 
-        private SqlConnectionStringBuilder connectionStringBuilder;
+        private SqlConnectionStringBuilder _connectionStringBuilder;
 
         public TestTdsServer(TDSServerArguments args) : base(args) { }
 
         public TestTdsServer(QueryEngine engine, TDSServerArguments args) : base(args)
         {
-            this.Engine = engine;
+            Engine = engine;
         }
 
-        public static TestTdsServer StartServerWithQueryEngine(QueryEngine engine, bool enableFedAuth = false, bool enableLog = false, [CallerMemberName] string methodName = "")
+        public static TestTdsServer StartServerWithQueryEngine(QueryEngine engine, bool enableFedAuth = false, bool enableLog = false, int connectionTimeout = DefaultConnectionTimeout, [CallerMemberName] string methodName = "")
         {
             TDSServerArguments args = new TDSServerArguments()
             {
@@ -32,7 +34,7 @@ namespace Microsoft.Data.SqlClient.Tests
 
             if (enableFedAuth)
             {
-                args.FedAuthRequiredPreLoginOption = Microsoft.SqlServer.TDS.PreLogin.TdsPreLoginFedAuthRequiredOption.FedAuthRequired;
+                args.FedAuthRequiredPreLoginOption = SqlServer.TDS.PreLogin.TdsPreLoginFedAuthRequiredOption.FedAuthRequired;
             }
 
             TestTdsServer server = engine == null ? new TestTdsServer(args) : new TestTdsServer(engine, args);
@@ -43,14 +45,14 @@ namespace Microsoft.Data.SqlClient.Tests
             server._endpoint.Start();
 
             int port = server._endpoint.ServerEndPoint.Port;
-            server.connectionStringBuilder = new SqlConnectionStringBuilder() { DataSource = "localhost," + port, ConnectTimeout = 5, Encrypt = false };
-            server.ConnectionString = server.connectionStringBuilder.ConnectionString;
+            server._connectionStringBuilder = new SqlConnectionStringBuilder() { DataSource = "localhost," + port, ConnectTimeout = connectionTimeout, Encrypt = false };
+            server.ConnectionString = server._connectionStringBuilder.ConnectionString;
             return server;
         }
 
-        public static TestTdsServer StartTestServer(bool enableFedAuth = false, bool enableLog = false, [CallerMemberName] string methodName = "")
+        public static TestTdsServer StartTestServer(bool enableFedAuth = false, bool enableLog = false, int connectionTimeout = DefaultConnectionTimeout, [CallerMemberName] string methodName = "")
         {
-            return StartServerWithQueryEngine(null, false, false, methodName);
+            return StartServerWithQueryEngine(null, enableFedAuth, enableLog, connectionTimeout, methodName);
         }
 
         public void Dispose() => _endpoint?.Stop();

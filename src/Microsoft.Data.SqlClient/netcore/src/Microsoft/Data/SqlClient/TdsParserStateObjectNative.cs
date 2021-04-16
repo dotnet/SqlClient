@@ -96,7 +96,6 @@ namespace Microsoft.Data.SqlClient
                 result = SNINativeMethodWrapper.SniGetConnectionPort(Handle, ref portFromSNI);
                 Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetConnectionPort");
 
-
                 result = SNINativeMethodWrapper.SniGetConnectionIPString(Handle, ref IPStringFromSNI);
                 Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SniGetConnectionIPString");
 

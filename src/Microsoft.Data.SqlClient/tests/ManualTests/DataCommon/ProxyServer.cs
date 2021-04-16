@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     /// This is a simple network listener that redirects traffic
     /// It is used to simulate network delay
     /// </summary>
-    public class ProxyServer : IDisposable
+    public sealed class ProxyServer : IDisposable
     {
         private volatile bool _stopRequested;
         private StringBuilder _eventLog;
@@ -65,12 +65,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// <summary>
         /// Gets/Sets the listener
         /// </summary>
-        protected TcpListener ListenerSocket { get; set; }
+        private TcpListener ListenerSocket { get; set; }
 
         /// <summary>
         /// Gets/Sets the listener thread
         /// </summary>
-        protected Thread ListenerThread { get; set; }
+        private Thread ListenerThread { get; set; }
 
         /// <summary>
         /// Delay incoming 

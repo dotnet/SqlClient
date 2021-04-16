@@ -47,12 +47,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public void Dispose()
         {
-            TdsParserStateObjectHelper.FailAsyncPends = false;
-            TdsParserStateObjectHelper.ForceAllPends = false;
-            TdsParserStateObjectHelper.ForcePendingReadsToWaitForUser = false;
-            TdsParserStateObjectHelper.ForceSyncOverAsyncAfterFirstPend = false;
-            TdsParserStateObjectHelper.SkipSendAttention = false;
-            CommandHelper.ForceAsyncWriteDelay = 0;
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                TdsParserStateObjectHelper.FailAsyncPends = false;
+                TdsParserStateObjectHelper.ForceAllPends = false;
+                TdsParserStateObjectHelper.ForcePendingReadsToWaitForUser = false;
+                TdsParserStateObjectHelper.ForceSyncOverAsyncAfterFirstPend = false;
+                TdsParserStateObjectHelper.SkipSendAttention = false;
+                CommandHelper.ForceAsyncWriteDelay = 0;
+            }
         }
     }
 
@@ -77,6 +86,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
         {
             if (_reader != null)
             {

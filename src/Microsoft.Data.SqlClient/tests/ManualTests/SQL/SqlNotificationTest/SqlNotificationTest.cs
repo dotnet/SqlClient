@@ -8,7 +8,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-    public class SqlNotificationTest : IDisposable
+    public sealed class SqlNotificationTest : IDisposable
     {
         // Misc constants
         private const int CALLBACK_TIMEOUT = 5000; // milliseconds

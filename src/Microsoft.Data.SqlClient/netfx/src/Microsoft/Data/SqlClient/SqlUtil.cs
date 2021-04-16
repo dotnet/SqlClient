@@ -799,6 +799,11 @@ namespace Microsoft.Data.SqlClient
             return e;
         }
 
+        internal static Exception DateTimeOverflow()
+        {
+            return new OverflowException(SqlTypes.SQLResource.DateTimeOverflowMessage);
+        }
+
         //
         // SQL.SqlDependency
         //

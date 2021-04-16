@@ -36,7 +36,7 @@ namespace Microsoft.Data.SqlClient
             throw new PlatformNotSupportedException();
         }
 
-        internal EnclavePackage GenerateEnclavePackage(SqlConnectionAttestationProtocol attestationProtocol, Dictionary<int, SqlTceCipherInfoEntry> keysTobeSentToEnclave, string queryText, string enclaveType, EnclaveSessionParameters enclaveSessionParameters)
+        internal EnclavePackage GenerateEnclavePackage(SqlConnectionAttestationProtocol attestationProtocol, Dictionary<int, SqlTceCipherInfoEntry> keysTobeSentToEnclave, string queryText, string enclaveType, EnclaveSessionParameters enclaveSessionParameters, SqlConnection connection)
         {
             throw new PlatformNotSupportedException();
         }
