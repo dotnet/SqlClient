@@ -521,6 +521,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             B = 2
         }
 
+        private static void ExecuteNonQueryCommand(string connectionString, string cmdText)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = conn.CreateCommand())
+            {
+                conn.Open();
+                cmd.CommandText = cmdText;
+                cmd.ExecuteNonQuery();
+            }
+        }
+
         [Fact]
         private static void PositionalParameters_ParametersAreUsedByPosition()
         {
@@ -693,6 +704,47 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                     Assert.Equal(0, Convert.ToInt32(thirdParameter.Value));
                 }
+            }
+        }
+
+        [Fact]
+        private static void PositionalParameters_ReturnSucceeds()
+        {
+            int firstInput = 12;
+
+            string sprocName = DataTestUtility.GetUniqueName("P");
+            // input, output
+            string createSprocQuery =
+                "CREATE PROCEDURE " + sprocName + " @in int " +
+                "AS " +
+                "RETURN(@in)";
+
+            string dropSprocQuery = "DROP PROCEDURE " + sprocName;
+
+            try
+            {
+                ExecuteNonQueryCommand(DataTestUtility.TCPConnectionString, createSprocQuery);
+
+                using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+                {
+                    connection.Open();
+
+                    using (var command = new SqlCommand(sprocName, connection) { CommandType = CommandType.StoredProcedure })
+                    {
+                        command.UsePositionalParameters = true;
+                        command.Parameters.AddWithValue("@in", firstInput);
+                        SqlParameter returnParameter = command.Parameters.AddWithValue("@retval", 0);
+                        returnParameter.Direction = ParameterDirection.ReturnValue;
+
+                        command.ExecuteNonQuery();
+
+                        Assert.Equal(firstInput, Convert.ToInt32(returnParameter.Value));
+                    }
+                }
+            }
+            finally
+            {
+                ExecuteNonQueryCommand(DataTestUtility.TCPConnectionString, dropSprocQuery);
             }
         }
     }
