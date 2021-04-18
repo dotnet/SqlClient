@@ -520,5 +520,180 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             A = 1,
             B = 2
         }
+
+        [Fact]
+        private static void PositionalParameters_ParametersAreUsedByPosition()
+        {
+            int firstInput = 1;
+            int secondInput = 2;
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                connection.Open();
+
+                using (var command = new SqlCommand("SELECT @Second, @First", connection))
+                {
+                    command.UsePositionalParameters = true;
+                    command.Parameters.AddWithValue("@First", firstInput);
+                    command.Parameters.AddWithValue("@Second", secondInput);
+
+                    using (SqlDataReader reader = command.ExecuteReader())
+                    {
+                        reader.Read();
+
+                        int firstOutput = reader.GetInt32(0);
+                        int secondOutput = reader.GetInt32(1);
+
+                        Assert.Equal(firstInput, secondOutput);
+                        Assert.Equal(secondInput, firstOutput);
+                    }
+
+                }
+            }
+        }
+
+        [Fact]
+        private static void PositionalParameters_NamesMustMatch()
+        {
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                connection.Open();
+
+                using (var command = new SqlCommand("SELECT @DoesNotExist", connection))
+                {
+                    command.UsePositionalParameters = true;
+                    command.Parameters.AddWithValue("@Exists", 1);
+
+                    SqlException sqlException = null;
+                    try
+                    {
+                        command.ExecuteNonQuery();
+                    }
+                    catch (SqlException sqlEx)
+                    {
+                        sqlException = sqlEx;
+                    }
+
+                    Assert.NotNull(sqlException);
+                    Assert.Contains("Must declare the scalar variable",sqlException.Message);
+                    Assert.Contains("@DoesNotExist", sqlException.Message);
+
+                }
+            }
+        }
+
+        [Fact]
+        private static void PositionalParameters_AllNamesMustBeDeclared()
+        {
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                connection.Open();
+
+                using (var command = new SqlCommand("SELECT @Exists, @DoesNotExist", connection))
+                {
+                    command.UsePositionalParameters = true;
+                    command.Parameters.AddWithValue("@Exists", 1);
+
+                    SqlException sqlException = null;
+                    try
+                    {
+                        command.ExecuteNonQuery();
+                    }
+                    catch (SqlException sqlEx)
+                    {
+                        sqlException = sqlEx;
+                    }
+
+                    Assert.NotNull(sqlException);
+                    Assert.Contains("Must declare the scalar variable", sqlException.Message);
+                    Assert.Contains("@DoesNotExist", sqlException.Message);
+                }
+            }
+        }
+
+        [Fact]
+        private static void PositionalParameters_NamesCanBeReUsed()
+        {
+            int firstInput = 1;
+            int secondInput = 2;
+            int thirdInput = 3;
+
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                connection.Open();
+
+                using (var command = new SqlCommand("SELECT @First, @Second, @First", connection))
+                {
+                    command.UsePositionalParameters = true;
+                    command.Parameters.AddWithValue("@First", firstInput);
+                    command.Parameters.AddWithValue("@Second", secondInput);
+                    command.Parameters.AddWithValue("@Third", thirdInput);
+
+                    using (SqlDataReader reader = command.ExecuteReader())
+                    {
+                        reader.Read();
+
+                        int firstOutput = reader.GetInt32(0);
+                        int secondOutput = reader.GetInt32(1);
+                        int thirdOutput = reader.GetInt32(2);
+
+                        Assert.Equal(firstInput, firstOutput);
+                        Assert.Equal(secondInput, secondOutput);
+                        Assert.Equal(firstInput, thirdOutput);
+                    }
+                }
+            }
+        }
+
+        [Fact]
+        private static void PositionalParameters_InputOutputFails()
+        {
+            int firstInput = 1;
+            int secondInput = 2;
+            int thirdInput = 3;
+
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                connection.Open();
+
+                using (var command = new SqlCommand("SELECT @Third = (@Third + @First + @Second)", connection))
+                {
+                    command.UsePositionalParameters = true;
+                    command.Parameters.AddWithValue("@First", firstInput);
+                    command.Parameters.AddWithValue("@Second", secondInput);
+                    SqlParameter thirdParameter = command.Parameters.AddWithValue("@Third", thirdInput);
+                    thirdParameter.Direction = ParameterDirection.InputOutput;
+
+                    command.ExecuteNonQuery();
+
+                    Assert.Equal(thirdInput, Convert.ToInt32(thirdParameter.Value));
+                }
+            }
+        }
+
+        [Fact]
+        private static void PositionalParameters_OutputFails()
+        {
+            int firstInput = 1;
+            int secondInput = 2;
+            int thirdInput = 3;
+
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                connection.Open();
+
+                using (var command = new SqlCommand("SELECT @Third = (@Third + @First + @Second)", connection))
+                {
+                    command.UsePositionalParameters = true;
+                    command.Parameters.AddWithValue("@First", firstInput);
+                    command.Parameters.AddWithValue("@Second", secondInput);
+                    SqlParameter thirdParameter = command.Parameters.AddWithValue("@Third", thirdInput);
+                    thirdParameter.Direction = ParameterDirection.Output;
+
+                    command.ExecuteNonQuery();
+
+                    Assert.Equal(0, Convert.ToInt32(thirdParameter.Value));
+                }
+            }
+        }
     }
 }
