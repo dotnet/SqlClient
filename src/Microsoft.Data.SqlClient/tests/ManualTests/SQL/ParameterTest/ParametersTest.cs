@@ -533,7 +533,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [Fact]
-        private static void PositionalParameters_ParametersAreUsedByPosition()
+        private static void DisableOutputParameters_ParametersAreUsedByName()
         {
             int firstInput = 1;
             int secondInput = 2;
@@ -543,7 +543,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 using (var command = new SqlCommand("SELECT @Second, @First", connection))
                 {
-                    command.UsePositionalParameters = true;
+                    command.DisableOutputParameters = true;
                     command.Parameters.AddWithValue("@First", firstInput);
                     command.Parameters.AddWithValue("@Second", secondInput);
 
@@ -563,7 +563,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [Fact]
-        private static void PositionalParameters_NamesMustMatch()
+        private static void DisableOutputParameters_NamesMustMatch()
         {
             using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
@@ -571,7 +571,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 using (var command = new SqlCommand("SELECT @DoesNotExist", connection))
                 {
-                    command.UsePositionalParameters = true;
+                    command.DisableOutputParameters = true;
                     command.Parameters.AddWithValue("@Exists", 1);
 
                     SqlException sqlException = null;
@@ -593,7 +593,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [Fact]
-        private static void PositionalParameters_AllNamesMustBeDeclared()
+        private static void DisableOutputParameters_AllNamesMustBeDeclared()
         {
             using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
@@ -601,7 +601,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 using (var command = new SqlCommand("SELECT @Exists, @DoesNotExist", connection))
                 {
-                    command.UsePositionalParameters = true;
+                    command.DisableOutputParameters = true;
                     command.Parameters.AddWithValue("@Exists", 1);
 
                     SqlException sqlException = null;
@@ -622,7 +622,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [Fact]
-        private static void PositionalParameters_NamesCanBeReUsed()
+        private static void DisableOutputParameters_NamesCanBeReUsed()
         {
             int firstInput = 1;
             int secondInput = 2;
@@ -634,7 +634,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 using (var command = new SqlCommand("SELECT @First, @Second, @First", connection))
                 {
-                    command.UsePositionalParameters = true;
+                    command.DisableOutputParameters = true;
                     command.Parameters.AddWithValue("@First", firstInput);
                     command.Parameters.AddWithValue("@Second", secondInput);
                     command.Parameters.AddWithValue("@Third", thirdInput);
@@ -656,7 +656,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [Fact]
-        private static void PositionalParameters_InputOutputFails()
+        private static void DisableOutputParameters_InputOutputFails()
         {
             int firstInput = 1;
             int secondInput = 2;
@@ -668,7 +668,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 using (var command = new SqlCommand("SELECT @Third = (@Third + @First + @Second)", connection))
                 {
-                    command.UsePositionalParameters = true;
+                    command.DisableOutputParameters = true;
                     command.Parameters.AddWithValue("@First", firstInput);
                     command.Parameters.AddWithValue("@Second", secondInput);
                     SqlParameter thirdParameter = command.Parameters.AddWithValue("@Third", thirdInput);
@@ -682,7 +682,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [Fact]
-        private static void PositionalParameters_OutputFails()
+        private static void DisableOutputParameters_OutputFails()
         {
             int firstInput = 1;
             int secondInput = 2;
@@ -694,7 +694,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 using (var command = new SqlCommand("SELECT @Third = (@Third + @First + @Second)", connection))
                 {
-                    command.UsePositionalParameters = true;
+                    command.DisableOutputParameters = true;
                     command.Parameters.AddWithValue("@First", firstInput);
                     command.Parameters.AddWithValue("@Second", secondInput);
                     SqlParameter thirdParameter = command.Parameters.AddWithValue("@Third", thirdInput);
@@ -708,7 +708,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [Fact]
-        private static void PositionalParameters_ReturnSucceeds()
+        private static void DisableOutputParameters_ReturnSucceeds()
         {
             int firstInput = 12;
 
@@ -731,7 +731,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                     using (var command = new SqlCommand(sprocName, connection) { CommandType = CommandType.StoredProcedure })
                     {
-                        command.UsePositionalParameters = true;
+                        command.DisableOutputParameters = true;
                         command.Parameters.AddWithValue("@in", firstInput);
                         SqlParameter returnParameter = command.Parameters.AddWithValue("@retval", 0);
                         returnParameter.Direction = ParameterDirection.ReturnValue;

@@ -9021,7 +9021,7 @@ namespace Microsoft.Data.SqlClient
 
                             if (mt.IsNewKatmaiType)
                             {
-                                WriteSmiParameter(param, i, 0 != (options & TdsEnums.RPC_PARAM_DEFAULT), stateObj, cmd.UsePositionalParameters, isAdvancedTraceOn);
+                                WriteSmiParameter(param, i, 0 != (options & TdsEnums.RPC_PARAM_DEFAULT), stateObj, cmd.DisableOutputParameters, isAdvancedTraceOn);
                                 continue;
                             }
 
@@ -9031,7 +9031,7 @@ namespace Microsoft.Data.SqlClient
                                 throw ADP.VersionDoesNotSupportDataType(mt.TypeName);
                             }
 
-                            Task writeParamTask = TDSExecuteRPCAddParameter(stateObj, param, mt, options, cmd.UsePositionalParameters);
+                            Task writeParamTask = TDSExecuteRPCAddParameter(stateObj, param, mt, options, cmd.DisableOutputParameters);
 
                             if (!sync)
                             {
