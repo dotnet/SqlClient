@@ -1206,7 +1206,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             Debug.Assert(allowStreaming || !coercedToDataFeed, "Streaming is not allowed, but type was coerced into a data feed");
-            Debug.Assert(value.GetType() == currentType ^ typeChanged, "Incorrect value for typeChanged");
+            Debug.Assert(objValue == null || objValue.GetType() == currentType ^ typeChanged, "Incorrect value for typeChanged");
             return typeChanged;
         }
 

@@ -81,7 +81,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         { // in debug mode, the double boxing DOES occur as the JIT optimizes less code, which causes the test to fail
 #if DEBUG
             return;
-#endif
+#else
             //cannot figure out an easy way to get this to work on all platforms
 
             var config = new RunOnceConfig(); // cannot use fluent syntax to still support net461
@@ -95,6 +95,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             Assert.Equal(1, report.AllMeasurements.Count);
             Assert.True(report.GcStats.BytesAllocatedPerOperation < totalBytesWhenBoxed);
+#endif
         }
 
         public class NoBoxingValueTypesBenchmark
