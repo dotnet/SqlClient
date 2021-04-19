@@ -339,6 +339,15 @@ namespace Microsoft.Data.SqlClient.SNI
             string IPv4String = null;
             string IPv6String = null;         
             
+            // Returning null socket is handled by the caller function.
+            if(ipAddresses == null || ipAddresses.Length == 0)
+            {
+                return null;
+            }
+
+            Socket[] sockets = new Socket[ipAddresses.Length];
+            AddressFamily[] preferedIPFamilies = new AddressFamily[2];
+
             if (ipPreference == SqlConnectionIPAddressPreference.IPv6First)
             {
                 preferedIPFamilies[0] = AddressFamily.InterNetworkV6;
@@ -349,14 +358,6 @@ namespace Microsoft.Data.SqlClient.SNI
                 preferedIPFamilies[0] = AddressFamily.InterNetwork;
                 preferedIPFamilies[1] = AddressFamily.InterNetworkV6;
             }
-            // Returning null socket is handled by the caller function.
-            if(ipAddresses == null || ipAddresses.Length == 0)
-            {
-                return null;
-            }
-
-            Socket[] sockets = new Socket[ipAddresses.Length];
-            AddressFamily[] preferedIPFamilies = new AddressFamily[] { AddressFamily.InterNetwork, AddressFamily.InterNetworkV6 };
 
             CancellationTokenSource cts = null;
 
