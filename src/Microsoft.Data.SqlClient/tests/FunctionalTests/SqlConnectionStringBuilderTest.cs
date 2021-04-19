@@ -55,6 +55,8 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("Initial Catalog = Northwind; Failover Partner = randomserver.sys.local")]
         [InlineData("Initial Catalog = tempdb")]
         [InlineData("Integrated Security = true")]
+        [InlineData("IPAddressPreference = IPv4First")]
+        [InlineData("IPAddressPreference = IPv6First")]
         [InlineData("Trusted_Connection = false")]
         [InlineData("Max Pool Size = 50")]
         [InlineData("Min Pool Size = 20")]

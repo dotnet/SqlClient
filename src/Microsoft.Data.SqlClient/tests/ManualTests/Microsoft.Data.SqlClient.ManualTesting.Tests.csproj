@@ -70,6 +70,7 @@
       <Link>Common\System\Collections\DictionaryExtensions.cs</Link>
     </Compile>
     <Compile Include="DataCommon\AADUtility.cs" />
+    <Compile Include="SQL\ConfigurableIpPreferenceTest\ConfigurableIpPreferenceTest.cs" />
     <None Include="SQL\RetryLogic\Resources\CustomConfigurableRetryLogic.cs" />
     <Compile Include="SQL\RetryLogic\RetryLogicConfigHelper.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\OrderHint.cs" />
