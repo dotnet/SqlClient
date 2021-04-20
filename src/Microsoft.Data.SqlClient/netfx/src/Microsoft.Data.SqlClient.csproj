@@ -155,9 +155,6 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\AzureAttestationBasedEnclaveProvider.cs">
       <Link>Microsoft\Data\SqlClient\AzureAttestationBasedEnclaveProvider.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\AzureManagedIdentityAuthenticationProvider.cs">
-      <Link>Microsoft\Data\SqlClient\AzureManagedIdentityAuthenticationProvider.cs</Link>
-    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\EnclaveDelegate.cs">
       <Link>Microsoft\Data\SqlClient\EnclaveDelegate.cs</Link>
     </Compile>
