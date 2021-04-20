@@ -2502,7 +2502,7 @@
   <data name="SQL_DeviceFlowWithUsernamePassword" xml:space="preserve">
     <value>Não é possível usar 'Authentication=Active Directory Device Code Flow' com as palavras-chave de cadeia de conexão 'User ID', 'UID', 'Password' ou 'PWD'.</value>
   </data>
-  <data name="SQL_ManagedIdentityWithPassword" xml:space="preserve">
+  <data name="SQL_NonInteractiveWithPassword" xml:space="preserve">
     <value>Não é possível usar 'Authentication={0}' com as palavras-chave de cadeia de conexão 'Password' ou 'PWD'.</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
@@ -4575,13 +4575,13 @@
   <data name="SQL_SettingCredentialWithDeviceFlow" xml:space="preserve">
     <value>Não é possível definir a propriedade Credential quando 'Authentication=Active Directory Device Code Flow' está especificado na cadeia de conexão.</value>
   </data>
-  <data name="SQL_SettingCredentialWithManagedIdentity" xml:space="preserve">
+  <data name="SQL_SettingCredentialWithNonInteractive" xml:space="preserve">
     <value>Não é possível definir a propriedade Credential quando 'Authentication={0}' é especificado na cadeia de conexão.</value>
   </data>
   <data name="SQL_SettingDeviceFlowWithCredential" xml:space="preserve">
     <value>Não é possível usar 'Authentication=Active Directory Device Code Flow' quando a propriedade Credential está configurada.</value>
   </data>
-  <data name="SQL_SettingManagedIdentityWithCredential" xml:space="preserve">
+  <data name="SQL_SettingNonInteractiveWithCredential" xml:space="preserve">
     <value>Não é possível usar 'Authentication={0}' quando a propriedade Credential está configurada.</value>
   </data>
   <data name="SqlDependency_UnexpectedValueOnDeserialize" xml:space="preserve">

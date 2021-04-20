@@ -2502,7 +2502,7 @@
   <data name="SQL_DeviceFlowWithUsernamePassword" xml:space="preserve">
     <value>无法结合使用 "Authentication=Active Directory Device Code Flow" 与 "User ID"、"UID"、"Password" 或 "PWD" 连接字符串关键字。</value>
   </data>
-  <data name="SQL_ManagedIdentityWithPassword" xml:space="preserve">
+  <data name="SQL_NonInteractiveWithPassword" xml:space="preserve">
     <value>无法将 "Authentication={0}" 与 "Password" 或 "PWD" 连接字符串关键字结合使用。</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
@@ -4575,13 +4575,13 @@
   <data name="SQL_SettingCredentialWithDeviceFlow" xml:space="preserve">
     <value>如果在连接字符串中指定了 "Authentication=Active Directory Device Code Flow"，则无法设置 Credential 属性。</value>
   </data>
-  <data name="SQL_SettingCredentialWithManagedIdentity" xml:space="preserve">
+  <data name="SQL_SettingCredentialWithNonInteractive" xml:space="preserve">
     <value>如果在连接字符串中指定了 "Authentication={0}"，则无法设置 Credential 属性。</value>
   </data>
   <data name="SQL_SettingDeviceFlowWithCredential" xml:space="preserve">
     <value>如果设置了 Credential 属性，则无法使用 "Authentication=Active Directory Device Code Flow"。</value>
   </data>
-  <data name="SQL_SettingManagedIdentityWithCredential" xml:space="preserve">
+  <data name="SQL_SettingNonInteractiveWithCredential" xml:space="preserve">
     <value>如果设置了 Credential 属性，则无法使用 "Authentication={0}"。</value>
   </data>
   <data name="SqlDependency_UnexpectedValueOnDeserialize" xml:space="preserve">

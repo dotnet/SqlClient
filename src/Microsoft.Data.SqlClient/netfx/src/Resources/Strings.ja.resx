@@ -2502,7 +2502,7 @@
   <data name="SQL_DeviceFlowWithUsernamePassword" xml:space="preserve">
     <value>'Authentication=Active Directory Device Code Flow' と接続文字列キーワード 'User ID'、'UID'、'Password'、'PWD' を一緒に使用することはできません。</value>
   </data>
-  <data name="SQL_ManagedIdentityWithPassword" xml:space="preserve">
+  <data name="SQL_NonInteractiveWithPassword" xml:space="preserve">
     <value>'Authentication={0}' と接続文字列キーワード 'Password'、'PWD' を一緒に使用することはできません。</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
@@ -4575,13 +4575,13 @@
   <data name="SQL_SettingCredentialWithDeviceFlow" xml:space="preserve">
     <value>接続文字列で 'Authentication=Active Directory Device Code Flow' が指定されている場合は、Credential プロパティを設定できません。</value>
   </data>
-  <data name="SQL_SettingCredentialWithManagedIdentity" xml:space="preserve">
+  <data name="SQL_SettingCredentialWithNonInteractive" xml:space="preserve">
     <value>接続文字列で 'Authentication={0}' が指定されている場合は、Credential プロパティを設定できません。</value>
   </data>
   <data name="SQL_SettingDeviceFlowWithCredential" xml:space="preserve">
     <value>Credential プロパティが設定されている場合は、'Authentication=Active Directory Device Code Flow' を使用できません。</value>
   </data>
-  <data name="SQL_SettingManagedIdentityWithCredential" xml:space="preserve">
+  <data name="SQL_SettingNonInteractiveWithCredential" xml:space="preserve">
     <value>Credential プロパティが設定されている場合は、'Authentication={0}' を使用できません。</value>
   </data>
   <data name="SqlDependency_UnexpectedValueOnDeserialize" xml:space="preserve">

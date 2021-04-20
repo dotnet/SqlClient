@@ -21,6 +21,7 @@ namespace Microsoft.Data.SqlClient
         private const string ActiveDirectoryDeviceCodeFlow = "active directory device code flow";
         private const string ActiveDirectoryManagedIdentity = "active directory managed identity";
         private const string ActiveDirectoryMSI = "active directory msi";
+        private const string ActiveDirectoryDefault = "active directory default";
 
         private readonly string _typeName;
         private readonly IReadOnlyCollection<SqlAuthenticationMethod> _authenticationsWithAppSpecifiedProvider;
@@ -46,6 +47,7 @@ namespace Microsoft.Data.SqlClient
                 instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, activeDirectoryAuthProvider);
                 instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity, activeDirectoryAuthProvider);
                 instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryMSI, activeDirectoryAuthProvider);
+                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDefault, activeDirectoryAuthProvider);
             }
         }
         /// <summary>

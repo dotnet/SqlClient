@@ -73,7 +73,8 @@ namespace Microsoft.Data.SqlClient
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
-                || authentication == SqlAuthenticationMethod.ActiveDirectoryMSI;
+                || authentication == SqlAuthenticationMethod.ActiveDirectoryMSI
+                || authentication == SqlAuthenticationMethod.ActiveDirectoryDefault;
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/BeforeLoad/*'/>
@@ -117,12 +118,31 @@ namespace Microsoft.Data.SqlClient
             string tenantId = parameters.Authority.Substring(seperatorIndex + 1);
             string authority = parameters.Authority.Remove(seperatorIndex + 1);
 
-            TokenCredentialOptions tokenCredentialOptions = new TokenCredentialOptions() { AuthorityHost = new Uri(authority) };
             TokenRequestContext tokenRequestContext = new TokenRequestContext(scopes);
+            string clientId = string.IsNullOrWhiteSpace(parameters.UserId) ? null : parameters.UserId;
+
+            if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryDefault)
+            {
+                DefaultAzureCredentialOptions defaultAzureCredentialOptions = new DefaultAzureCredentialOptions()
+                {
+                    AuthorityHost = new Uri(authority),
+                    ManagedIdentityClientId = clientId,
+                    InteractiveBrowserTenantId = tenantId,
+                    SharedTokenCacheTenantId = tenantId,
+                    SharedTokenCacheUsername = clientId,
+                    VisualStudioCodeTenantId = tenantId,
+                    VisualStudioTenantId = tenantId,
+                    ExcludeInteractiveBrowserCredential = true // Force disabled, even though it's disabled by default to respect driver specifications.
+                };
+                AccessToken accessToken = await new DefaultAzureCredential(defaultAzureCredentialOptions).GetTokenAsync(tokenRequestContext, cts.Token);
+                SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Default auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
+                return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
+            }
+
+            TokenCredentialOptions tokenCredentialOptions = new TokenCredentialOptions() { AuthorityHost = new Uri(authority) };
 
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity || parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryMSI)
             {
-                string clientId = string.IsNullOrWhiteSpace(parameters.UserId) ? null : parameters.UserId;
                 AccessToken accessToken = await new ManagedIdentityCredential(clientId, tokenCredentialOptions).GetTokenAsync(tokenRequestContext, cts.Token);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Managed Identity auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
@@ -199,7 +219,7 @@ namespace Microsoft.Data.SqlClient
                 IAccount account;
                 if (!string.IsNullOrEmpty(parameters.UserId))
                 {
-                    account = accounts.FirstOrDefault(a => parameters.UserId.Equals(a.Username, System.StringComparison.InvariantCultureIgnoreCase));
+                    account = accounts.FirstOrDefault(a => parameters.UserId.Equals(a.Username, StringComparison.InvariantCultureIgnoreCase));
                 }
                 else
                 {

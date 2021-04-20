@@ -106,10 +106,11 @@ namespace Microsoft.Data.Common
         const string ActiveDirectoryDeviceCodeFlowString = "Active Directory Device Code Flow";
         internal const string ActiveDirectoryManagedIdentityString = "Active Directory Managed Identity";
         internal const string ActiveDirectoryMSIString = "Active Directory MSI";
+        internal const string ActiveDirectoryDefaultString = "Active Directory Default";
 
         internal static bool TryConvertToAuthenticationType(string value, out SqlAuthenticationMethod result)
         {
-            Debug.Assert(Enum.GetNames(typeof(SqlAuthenticationMethod)).Length == 9, "SqlAuthenticationMethod enum has changed, update needed");
+            Debug.Assert(Enum.GetNames(typeof(SqlAuthenticationMethod)).Length == 10, "SqlAuthenticationMethod enum has changed, update needed");
 
             bool isSuccess = false;
 
@@ -159,6 +160,12 @@ namespace Microsoft.Data.Common
                 || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.ActiveDirectoryMSI, CultureInfo.InvariantCulture)))
             {
                 result = SqlAuthenticationMethod.ActiveDirectoryMSI;
+                isSuccess = true;
+            }
+            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ActiveDirectoryDefaultString)
+                || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.ActiveDirectoryDefault, CultureInfo.InvariantCulture)))
+            {
+                result = SqlAuthenticationMethod.ActiveDirectoryDefault;
                 isSuccess = true;
             }
             else
@@ -510,6 +517,7 @@ namespace Microsoft.Data.Common
                 || value == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
                 || value == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
                 || value == SqlAuthenticationMethod.ActiveDirectoryMSI
+                || value == SqlAuthenticationMethod.ActiveDirectoryDefault
                 || value == SqlAuthenticationMethod.NotSpecified;
         }
 
@@ -535,6 +543,8 @@ namespace Microsoft.Data.Common
                     return ActiveDirectoryManagedIdentityString;
                 case SqlAuthenticationMethod.ActiveDirectoryMSI:
                     return ActiveDirectoryMSIString;
+                case SqlAuthenticationMethod.ActiveDirectoryDefault:
+                    return ActiveDirectoryDefaultString;
                 default:
                     return null;
             }
