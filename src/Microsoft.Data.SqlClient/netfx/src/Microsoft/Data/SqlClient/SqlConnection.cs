@@ -35,7 +35,10 @@ namespace Microsoft.Data.SqlClient
     using Microsoft.Data.Common;
 
     /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/SqlConnection/*' />
-    [DefaultEvent("InfoMessage")]
+    [
+    DefaultEvent("InfoMessage"),
+    DesignerCategory("")
+    ]
     public sealed partial class SqlConnection : DbConnection, ICloneable
     {
 
