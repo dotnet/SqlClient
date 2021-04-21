@@ -73,25 +73,6 @@ namespace Microsoft.Data.SqlClient
             internal const int ModulusOffset = HeaderSize;
         }
 
-        // Extracts the public key's modulus and exponent from an RSA public key blob
-        // and returns an RSAParameters object
-        private static RSAParameters RSAPublicKeyBlobToParams(byte[] keyBlob)
-        {
-            Debug.Assert(keyBlob.Length == RSAPublicKeyBlob.Size,
-                $"RSA public key blob was not the expected length. Actual: {keyBlob.Length}. Expected: {RSAPublicKeyBlob.Size}");
-
-            byte[] exponent = new byte[RSAPublicKeyBlob.ExponentSize];
-            byte[] modulus = new byte[RSAPublicKeyBlob.ModulusSize];
-            Buffer.BlockCopy(keyBlob, RSAPublicKeyBlob.ExponentOffset, exponent, 0, RSAPublicKeyBlob.ExponentSize);
-            Buffer.BlockCopy(keyBlob, RSAPublicKeyBlob.ModulusOffset, modulus, 0, RSAPublicKeyBlob.ModulusSize);
-
-            return new RSAParameters()
-            {
-                Exponent = exponent,
-                Modulus = modulus
-            };
-        }
-
         internal static RSA CreateRSAFromPublicKeyBlob(byte[] keyBlob)
         {
             Debug.Assert(keyBlob.Length == RSAPublicKeyBlob.Size, $"RSA public key blob was not the expected length. Actual: {keyBlob.Length}. Expected: {RSAPublicKeyBlob.Size}");
@@ -106,29 +87,6 @@ namespace Microsoft.Data.SqlClient
                 Modulus = modulus
             };
             return RSA.Create(rsaParameters);
-        }
-
-
-        // Extracts the public key's X and Y coordinates from an ECC public key blob
-        // and returns an ECParameters object
-        internal static ECParameters ECCPublicKeyBlobToParams(byte[] keyBlob)
-        {
-            Debug.Assert(keyBlob.Length == ECCPublicKeyBlob.Size, $"ECC public key blob was not the expected length. Actual: {keyBlob.Length}. Expected: {ECCPublicKeyBlob.Size}");
-
-            byte[] x = new byte[ECCPublicKeyBlob.KeySize];
-            byte[] y = new byte[ECCPublicKeyBlob.KeySize];
-            Buffer.BlockCopy(keyBlob, ECCPublicKeyBlob.HeaderSize, x, 0, ECCPublicKeyBlob.KeySize);
-            Buffer.BlockCopy(keyBlob, ECCPublicKeyBlob.HeaderSize + ECCPublicKeyBlob.KeySize, y, 0, ECCPublicKeyBlob.KeySize);
-
-            return new ECParameters
-            {
-                Curve = ECCurve.NamedCurves.nistP384,
-                Q = new ECPoint
-                {
-                    X = x,
-                    Y = y
-                },
-            };
         }
 
         internal static ECDiffieHellman CreateECDiffieHellmanFromPublicKeyBlob(byte[] keyBlob)
@@ -153,11 +111,10 @@ namespace Microsoft.Data.SqlClient
             return ECDiffieHellman.Create(parameters);
         }
 
-
         internal static ECDiffieHellman CreateECDiffieHellman(int keySize)
         {
             // platform agnostic creates a key of the correct size but does not
-            // set the key derivation type or algorith, these must be set by calling
+            // set the key derivation type or algorithm, these must be set by calling
             // DeriveKeyFromHash later in DeriveKey
             ECDiffieHellman clientDHKey = ECDiffieHellman.Create();
             clientDHKey.KeySize = keySize;
