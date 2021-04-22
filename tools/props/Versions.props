@@ -11,13 +11,14 @@
   </PropertyGroup>
   <!-- NetFx project dependencies -->
   <PropertyGroup>
-    <MicrosoftDataSqlClientSniVersion>2.1.1</MicrosoftDataSqlClientSniVersion>    
+    <MicrosoftDataSqlClientSniVersion>3.0.0-preview1.21104.2</MicrosoftDataSqlClientSniVersion>    
     <SystemSecurityCryptographyAlgorithmsVersion>4.3.1</SystemSecurityCryptographyAlgorithmsVersion>
     <SystemSecurityCryptographyPrimitivesVersion>4.3.0</SystemSecurityCryptographyPrimitivesVersion>
   </PropertyGroup>
   <!-- NetFx and NetCore project dependencies -->
   <PropertyGroup>
-    <MicrosoftIdentityClientVersion>4.21.1</MicrosoftIdentityClientVersion>
+    <AzureIdentityVersion>1.3.0</AzureIdentityVersion>
+    <MicrosoftIdentityClientVersion>4.22.0</MicrosoftIdentityClientVersion>
     <MicrosoftIdentityModelProtocolsOpenIdConnectVersion>6.8.0</MicrosoftIdentityModelProtocolsOpenIdConnectVersion>
     <MicrosoftIdentityModelJsonWebTokensVersion>6.8.0</MicrosoftIdentityModelJsonWebTokensVersion>
     <SystemBuffersVersion>4.5.1</SystemBuffersVersion>
@@ -27,7 +28,7 @@
   <!-- NetCore project dependencies -->
   <PropertyGroup>
     <MicrosoftWin32RegistryVersion>4.7.0</MicrosoftWin32RegistryVersion>
-    <MicrosoftDataSqlClientSNIRuntimeVersion>2.1.1</MicrosoftDataSqlClientSNIRuntimeVersion>
+    <MicrosoftDataSqlClientSNIRuntimeVersion>3.0.0-preview1.21104.2</MicrosoftDataSqlClientSNIRuntimeVersion>
     <SystemConfigurationConfigurationManagerVersion>4.7.0</SystemConfigurationConfigurationManagerVersion>
     <SystemDiagnosticsDiagnosticSourceVersion>4.7.0</SystemDiagnosticsDiagnosticSourceVersion>
     <SystemDiagnosticsPerformanceCounterVersion>4.7.0</SystemDiagnosticsPerformanceCounterVersion>
@@ -44,12 +45,11 @@
   </PropertyGroup>
   <!-- AKV Provider project dependencies -->
   <PropertyGroup>
-    <AzureCoreVersion>[1.2.2,2.0.0)</AzureCoreVersion>
+    <AzureCoreVersion>[1.6.0,2.0.0)</AzureCoreVersion>
     <AzureSecurityKeyVaultKeysVersion>[4.0.3,5.0.0)</AzureSecurityKeyVaultKeysVersion>
   </PropertyGroup>
   <!-- Test Project Dependencies -->
   <PropertyGroup>
-    <AzureIdentityVersion>1.1.1</AzureIdentityVersion>
     <MicrosoftDotNetPlatformAbstractionsVersion>3.1.1</MicrosoftDotNetPlatformAbstractionsVersion>
     <MicrosoftIdentityModelClientsActiveDirectoryVersion>5.2.6</MicrosoftIdentityModelClientsActiveDirectoryVersion>
     <MicrosoftNETTestSdkVersion>15.9.0</MicrosoftNETTestSdkVersion>

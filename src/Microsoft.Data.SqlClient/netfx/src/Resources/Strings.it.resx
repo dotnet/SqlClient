@@ -4584,24 +4584,6 @@
   <data name="SQL_SettingManagedIdentityWithCredential" xml:space="preserve">
     <value>Non è possibile usare 'Authentication={0}' se è stata impostata la proprietà Credential.</value>
   </data>
-  <data name="Azure_GenericErrorMessage" xml:space="preserve">
-    <value>Non è stato possibile acquisire il token di accesso.</value>
-  </data>
-  <data name="Azure_IdentityEndpointNotListening" xml:space="preserve">
-    <value>Non è possibile connettersi all'endpoint dell'identità gestita. Verificare che sia in esecuzione una risorsa di Azure con configurazione dell'identità.</value>
-  </data>
-  <data name="Azure_ManagedIdentityUsed" xml:space="preserve">
-    <value>È stato eseguito un tentativo di ottenere un token usando l'identità gestita.</value>
-  </data>
-  <data name="Azure_MetadataEndpointNotListening" xml:space="preserve">
-    <value>Non è possibile connettersi al servizio metadati dell'istanza. La richiesta all'endpoint del token dell'identità gestita verrà ignorata.</value>
-  </data>
-  <data name="Azure_NonRetryableError" xml:space="preserve">
-    <value>È stato ricevuto un errore irreversibile.</value>
-  </data>
-  <data name="Azure_RetryFailure" xml:space="preserve">
-    <value>L'operazione non è riuscita dopo 5 tentativi.</value>
-  </data>
   <data name="SqlDependency_UnexpectedValueOnDeserialize" xml:space="preserve">
     <value>Tipo imprevisto rilevato durante la deserializzazione.</value>
   </data>

@@ -12,7 +12,8 @@
             <param name="userId">The user login name/ID.</param>
             <param name="password">The user password.</param>
             <param name="connectionId">The connection ID.</param>
-            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlAuthenticationParameters" /> class using the specified authentication method, server name, database name, resource URI, authority URI, user login name/ID, user password and connection ID.</summary>
+            <param name="connectionTimeout">The connection timeout value in seconds.</param>
+            <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlAuthenticationParameters" /> class using the specified authentication method, server name, database name, resource URI, authority URI, user login name/ID, user password, connection ID and connection timeout value.</summary>
         </ctor>
         <AuthenticationMethod>
             <summary>Gets the authentication method.</summary>
@@ -46,5 +47,9 @@
             <summary>Gets the database name.</summary>
             <value>The database name.</value>
         </DatabaseName>
+        <ConnectionTimeout>
+            <summary>Gets the connection timeout value.</summary>
+            <value>The connection timeout value to be passed to Cancellation Token Source.</value>
+        </ConnectionTimeout>
     </members>
 </docs>

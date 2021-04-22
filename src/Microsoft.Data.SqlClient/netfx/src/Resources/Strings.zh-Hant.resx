@@ -4584,24 +4584,6 @@
   <data name="SQL_SettingManagedIdentityWithCredential" xml:space="preserve">
     <value>如果已設定 Credential 屬性，就無法使用 'Authentication={0}'。</value>
   </data>
-  <data name="Azure_GenericErrorMessage" xml:space="preserve">
-    <value>無法取得存取權杖。</value>
-  </data>
-  <data name="Azure_IdentityEndpointNotListening" xml:space="preserve">
-    <value>無法連線到受控識別端點。請確認您在具有身分識別設定的 Azure 資源上執行。</value>
-  </data>
-  <data name="Azure_ManagedIdentityUsed" xml:space="preserve">
-    <value>嘗試使用受控識別取得權杖。</value>
-  </data>
-  <data name="Azure_MetadataEndpointNotListening" xml:space="preserve">
-    <value>無法連線到 Instance Metadata Service (IMDS) 。正在跳過受控識別權杖端點的要求。</value>
-  </data>
-  <data name="Azure_NonRetryableError" xml:space="preserve">
-    <value>收到無法重試的錯誤。</value>
-  </data>
-  <data name="Azure_RetryFailure" xml:space="preserve">
-    <value>重試 5 次後失敗。</value>
-  </data>
   <data name="SqlDependency_UnexpectedValueOnDeserialize" xml:space="preserve">
     <value>還原序列化時偵測到未預期的類型。</value>
   </data>

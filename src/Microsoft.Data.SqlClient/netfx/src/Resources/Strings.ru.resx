@@ -4584,24 +4584,6 @@
   <data name="SQL_SettingManagedIdentityWithCredential" xml:space="preserve">
     <value>Невозможно использовать "Authentication={0}", если задано свойство Credential.</value>
   </data>
-  <data name="Azure_GenericErrorMessage" xml:space="preserve">
-    <value>Не удалось получить токен доступа.</value>
-  </data>
-  <data name="Azure_IdentityEndpointNotListening" xml:space="preserve">
-    <value>Не удалось подключиться к конечной точке Управляемого удостоверения. Убедитесь, что вы используете ресурс Azure, для которого настроено удостоверение.</value>
-  </data>
-  <data name="Azure_ManagedIdentityUsed" xml:space="preserve">
-    <value>Попытка получить токен с помощью Управляемого удостоверения.</value>
-  </data>
-  <data name="Azure_MetadataEndpointNotListening" xml:space="preserve">
-    <value>Не удается подключиться к Службе метаданных экземпляров (IMDS). Запрос будет передан в конечную точку токена Управляемого удостоверения.</value>
-  </data>
-  <data name="Azure_NonRetryableError" xml:space="preserve">
-    <value>Получена невоспроизводимая ошибка.</value>
-  </data>
-  <data name="Azure_RetryFailure" xml:space="preserve">
-    <value>Сбой после 5 попыток.</value>
-  </data>
   <data name="SqlDependency_UnexpectedValueOnDeserialize" xml:space="preserve">
     <value>Обнаружен непредвиденный тип при десериализации.</value>
   </data>
