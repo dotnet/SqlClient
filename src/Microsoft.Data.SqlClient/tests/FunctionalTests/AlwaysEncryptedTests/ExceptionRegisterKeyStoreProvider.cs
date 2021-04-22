@@ -38,7 +38,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             string expectedMessage = SystemDataResourceManager.Instance.TCE_NullCustomKeyStoreProviderDictionary;
             IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders = null;
 
-            AssertForAllCustomProviderCaches<ArgumentNullException>(customProviders, expectedMessage);
+            AssertExceptionIsThrownForAllCustomProviderCaches<ArgumentNullException>(customProviders, expectedMessage);
         }
 
         [Fact]
@@ -52,7 +52,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
                 new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>();
             customProviders.Add(providerWithReservedSystemPrefix, new DummyKeyStoreProvider());
 
-            AssertForAllCustomProviderCaches<ArgumentException>(customProviders, expectedMessage);
+            AssertExceptionIsThrownForAllCustomProviderCaches<ArgumentException>(customProviders, expectedMessage);
         }
 
         [Fact]
@@ -65,7 +65,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
                 new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>();
             customProviders.Add(providerName, null);
 
-            AssertForAllCustomProviderCaches<ArgumentNullException>(customProviders, expectedMessage);
+            AssertExceptionIsThrownForAllCustomProviderCaches<ArgumentNullException>(customProviders, expectedMessage);
         }
 
         [Fact]
@@ -77,7 +77,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
                 new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>();
             customProviders.Add("   ", new DummyKeyStoreProvider());
 
-            AssertForAllCustomProviderCaches<ArgumentNullException>(customProviders, expectedMessage);
+            AssertExceptionIsThrownForAllCustomProviderCaches<ArgumentNullException>(customProviders, expectedMessage);
         }
 
         [Fact]
@@ -105,12 +105,12 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         {
             connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(singleKeyStoreProvider);
             IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> instanceCache =
-                GetInstanceCacheFrom(connection);
+                GetProviderCacheFrom(connection);
             Assert.Single(instanceCache);
             Assert.True(instanceCache.ContainsKey(dummyProviderName1));
 
             connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(multipleKeyStoreProviders);
-            instanceCache = GetInstanceCacheFrom(connection);
+            instanceCache = GetProviderCacheFrom(connection);
             Assert.Equal(2, instanceCache.Count);
             Assert.True(instanceCache.ContainsKey(dummyProviderName2));
             Assert.True(instanceCache.ContainsKey(dummyProviderName3));
@@ -121,18 +121,18 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         {
             command.RegisterColumnEncryptionKeyStoreProvidersOnCommand(singleKeyStoreProvider);
             IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> instanceCache =
-                GetInstanceCacheFrom(command);
+                GetProviderCacheFrom(command);
             Assert.Single(instanceCache);
             Assert.True(instanceCache.ContainsKey(dummyProviderName1));
 
             command.RegisterColumnEncryptionKeyStoreProvidersOnCommand(multipleKeyStoreProviders);
-            instanceCache = GetInstanceCacheFrom(command);
+            instanceCache = GetProviderCacheFrom(command);
             Assert.Equal(2, instanceCache.Count);
             Assert.True(instanceCache.ContainsKey(dummyProviderName2));
             Assert.True(instanceCache.ContainsKey(dummyProviderName3));
         }
 
-        private void AssertForAllCustomProviderCaches<T>(IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders, string expectedMessage)
+        private void AssertExceptionIsThrownForAllCustomProviderCaches<T>(IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders, string expectedMessage)
             where T : Exception
         {
             Exception ex = Assert.Throws<T>(() => SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders));
@@ -145,7 +145,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             Assert.Contains(expectedMessage, ex.Message);
         }
 
-        private IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> GetInstanceCacheFrom(object obj)
+        private IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> GetProviderCacheFrom(object obj)
         {
             FieldInfo instanceCacheField = obj.GetType().GetField(
                 "_customColumnEncryptionKeyStoreProviders", BindingFlags.NonPublic | BindingFlags.Instance);
