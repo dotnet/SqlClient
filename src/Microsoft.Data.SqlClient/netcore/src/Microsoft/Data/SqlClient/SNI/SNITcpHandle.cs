@@ -340,7 +340,7 @@ namespace Microsoft.Data.SqlClient.SNI
             string IPv6String = null;         
             
             // Returning null socket is handled by the caller function.
-            if(ipAddresses == null || ipAddresses.Length == 0)
+            if (ipAddresses == null || ipAddresses.Length == 0)
             {
                 return null;
             }
