@@ -53,8 +53,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     Assert.NotNull(GetPropertyValueFromCacheEntry(AddrIPv6Property, dnsCacheEntry));
                     Assert.Null(GetPropertyValueFromCacheEntry(AddrIPv4Property, dnsCacheEntry));
                 }
-                string x = "Aabqsaada";
-                Console.WriteLine(x);
             }
 
             object GetDnsCache() =>
