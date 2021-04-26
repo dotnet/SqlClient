@@ -11,13 +11,12 @@ using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Diagnosers;
 using BenchmarkDotNet.Jobs;
-using BenchmarkDotNet.Running;
 using BenchmarkDotNet.Validators;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-    public class NoBoxingValueTypes : IDisposable
+    public sealed class NoBoxingValueTypes : IDisposable
     {
         private static readonly string _table = DataTestUtility.GetUniqueNameForSqlServer(nameof(NoBoxingValueTypes));
         private const int _count = 5000;
@@ -26,6 +25,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly IDataReader _reader;
 
         private static readonly string _connString = DataTestUtility.TCPConnectionString;
+        private bool _disposedValue;
 
         private class ItemToCopy
         {
@@ -118,20 +118,36 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public void Dispose()
+        private void Dispose(bool disposing)
         {
-            using (var conn = new SqlConnection(_connString))
-            using (var cmd = conn.CreateCommand())
+            if (!_disposedValue)
             {
-                conn.Open();
-                Helpers.TryExecute(cmd, $@"
-                    DROP TABLE IF EXISTS {_table}
-                ");
+                if (disposing)
+                {
+                    _reader.Dispose();
+                    using (var conn = new SqlConnection(_connString))
+                    using (var cmd = conn.CreateCommand())
+                    {
+                        conn.Open();
+                        Helpers.TryExecute(cmd, $@"
+                                DROP TABLE IF EXISTS {_table}
+                            ");
+                    }
+                }
+
+                _disposedValue = true;
             }
         }
 
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
+
         //all code here and below is a custom data reader implementation to support the benchmark
-        private class EnumerableDataReaderFactoryBuilder<T>
+        private sealed class EnumerableDataReaderFactoryBuilder<T>: IDisposable
         {
             private readonly List<LambdaExpression> _expressions = new List<LambdaExpression>();
             private readonly List<Func<T, object>> _objExpressions = new List<Func<T, object>>();
@@ -156,6 +172,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 typeof(Guid),
                 typeof(DateTime),
             };
+            private bool _disposedValue;
 
             public EnumerableDataReaderFactoryBuilder<T> Add<TColumn>(string column, Expression<Func<T, TColumn>> expression)
             {
@@ -188,6 +205,26 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             public EnumerableDataReaderFactory<T> BuildFactory() => new EnumerableDataReaderFactory<T>(_schemaTable, _expressions, _objExpressions);
 
             public string Name { get; }
+
+            private void Dispose(bool disposing)
+            {
+                if (!_disposedValue)
+                {
+                    if (disposing)
+                    {
+                        _schemaTable.Dispose();
+                    }
+
+                    _disposedValue = true;
+                }
+            }
+
+            public void Dispose()
+            {
+                // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+                Dispose(disposing: true);
+                GC.SuppressFinalize(this);
+            }
         }
 
         public class EnumerableDataReaderFactory<T>
@@ -274,10 +311,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             public IDataReader CreateReader(IEnumerable<T> items) => new EnumerableDataReader<T>(this, items.GetEnumerator());
         }
 
-        public class EnumerableDataReader<T> : IDataReader
+        public sealed class EnumerableDataReader<T> : IDataReader
         {
             private readonly IEnumerator<T> _source;
             private readonly EnumerableDataReaderFactory<T> _context;
+            private bool _disposedValue;
 
             public EnumerableDataReader(EnumerableDataReaderFactory<T> context, IEnumerator<T> source)
             {
@@ -296,8 +334,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             public bool Read() => _source.MoveNext();
 
             public void Close() => _source.Reset();
-
-            public void Dispose() => this.Close();
 
             public bool NextResult() => throw new NotImplementedException();
 
@@ -425,6 +461,26 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
 
                 return false;
+            }
+
+            private void Dispose(bool disposing)
+            {
+                if (!_disposedValue)
+                {
+                    if (disposing)
+                    {
+                        this.Close();
+                    }
+
+                    _disposedValue = true;
+                }
+            }
+
+            public void Dispose()
+            {
+                // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+                Dispose(disposing: true);
+                GC.SuppressFinalize(this);
             }
         }
     }
