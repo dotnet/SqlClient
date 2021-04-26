@@ -70,6 +70,7 @@
       <Link>Common\System\Collections\DictionaryExtensions.cs</Link>
     </Compile>
     <Compile Include="DataCommon\AADUtility.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\NoBoxingValuesTypes.cs" />
     <None Include="SQL\RetryLogic\Resources\CustomConfigurableRetryLogic.cs" />
     <Compile Include="SQL\RetryLogic\RetryLogicConfigHelper.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\OrderHint.cs" />
@@ -302,6 +303,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="$(MicrosoftIdentityModelClientsActiveDirectoryVersion)" />
     <PackageReference Condition="'$(TargetGroup)'=='netfx'" Include="System.Configuration.ConfigurationManager" Version="$(ConfigurationManagerVersion)" />
+    <PackageReference Include="BenchmarkDotNet" Version="$(BenchmarkDotNetVersion)" />
     <PackageReference Include="System.Runtime.Caching" Version="$(SystemRuntimeCachingVersion)" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNETTestSdkVersion)" />
     <PackageReference Include="System.Linq.Expressions" Version="$(SystemLinqExpressionsVersion)" />

@@ -806,6 +806,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Microsoft\Data\SqlClient\AAsyncCallContext.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\GenericCastExtensions.cs" />
     <Compile Include="Resources\Strings.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>

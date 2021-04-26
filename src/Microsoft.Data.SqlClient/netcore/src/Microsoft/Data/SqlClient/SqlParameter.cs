@@ -2085,12 +2085,20 @@ namespace Microsoft.Data.SqlClient
         // Coerced Value is also used in SqlBulkCopy.ConvertValue(object value, _SqlMetaData metadata)
         internal static object CoerceValue(object value, MetaType destinationType, out bool coercedToDataFeed, out bool typeChanged, bool allowStreaming = true)
         {
+            typeChanged = CoerceValueIfNeeded(value, destinationType, out var objValue, out coercedToDataFeed, allowStreaming);
+
+            return typeChanged ? objValue : value;
+        }
+
+        internal static bool CoerceValueIfNeeded<T>(T value, MetaType destinationType, out object objValue, out bool coercedToDataFeed, bool allowStreaming = true)
+        {
             Debug.Assert(!(value is DataFeed), "Value provided should not already be a data feed");
             Debug.Assert(!ADP.IsNull(value), "Value provided should not be null");
             Debug.Assert(null != destinationType, "null destinationType");
 
+            objValue = null;
             coercedToDataFeed = false;
-            typeChanged = false;
+            var typeChanged = false;
             Type currentType = value.GetType();
 
             if (
@@ -2111,45 +2119,45 @@ namespace Microsoft.Data.SqlClient
                         // For Xml data, destination Type is always string
                         if (currentType == typeof(SqlXml))
                         {
-                            value = MetaType.GetStringFromXml((XmlReader)(((SqlXml)value).CreateReader()));
+                            objValue = MetaType.GetStringFromXml(value.GenericCast<T, SqlXml>().CreateReader());
                         }
                         else if (currentType == typeof(SqlString))
                         {
                             typeChanged = false;   // Do nothing
                         }
-                        else if (typeof(XmlReader).IsAssignableFrom(currentType))
+                        else if (value is XmlReader xmlReader)
                         {
                             if (allowStreaming)
                             {
                                 coercedToDataFeed = true;
-                                value = new XmlDataFeed((XmlReader)value);
+                                objValue = new XmlDataFeed(xmlReader);
                             }
                             else
                             {
-                                value = MetaType.GetStringFromXml((XmlReader)value);
+                                objValue = MetaType.GetStringFromXml(xmlReader);
                             }
                         }
                         else if (currentType == typeof(char[]))
                         {
-                            value = new string((char[])value);
+                            objValue = new string(value.GenericCast<T, char[]>());
                         }
                         else if (currentType == typeof(SqlChars))
                         {
-                            value = new string(((SqlChars)value).Value);
+                            objValue = new string(value.GenericCast<T, SqlChars>().Value);
                         }
                         else if (value is TextReader textReader && allowStreaming)
                         {
                             coercedToDataFeed = true;
-                            value = new TextDataFeed(textReader);
+                            objValue = new TextDataFeed(textReader);
                         }
                         else
                         {
-                            value = Convert.ChangeType(value, destinationType.ClassType, null);
+                            objValue = Convert.ChangeType(value, destinationType.ClassType, null);
                         }
                     }
                     else if ((destinationType.DbType == DbType.Currency) && (currentType == typeof(string)))
                     {
-                        value = decimal.Parse((string)value, NumberStyles.Currency, null);
+                        objValue = decimal.Parse(value.GenericCast<T, string>(), NumberStyles.Currency, null);
                     }
                     else if ((currentType == typeof(SqlBytes)) && (destinationType.ClassType == typeof(byte[])))
                     {
@@ -2157,15 +2165,15 @@ namespace Microsoft.Data.SqlClient
                     }
                     else if ((currentType == typeof(string)) && (destinationType.SqlDbType == SqlDbType.Time))
                     {
-                        value = TimeSpan.Parse((string)value);
+                        objValue = TimeSpan.Parse(value.GenericCast<T, string>());
                     }
                     else if ((currentType == typeof(string)) && (destinationType.SqlDbType == SqlDbType.DateTimeOffset))
                     {
-                        value = DateTimeOffset.Parse((string)value, (IFormatProvider)null);
+                        objValue = DateTimeOffset.Parse(value.GenericCast<T, string>(), (IFormatProvider)null);
                     }
                     else if ((currentType == typeof(DateTime)) && (destinationType.SqlDbType == SqlDbType.DateTimeOffset))
                     {
-                        value = new DateTimeOffset((DateTime)value);
+                        objValue = new DateTimeOffset(value.GenericCast<T, DateTime>());
                     }
                     else if (
                         TdsEnums.SQLTABLE == destinationType.TDSType &&
@@ -2182,11 +2190,11 @@ namespace Microsoft.Data.SqlClient
                     else if (destinationType.ClassType == typeof(byte[]) && allowStreaming && value is Stream stream)
                     {
                         coercedToDataFeed = true;
-                        value = new StreamDataFeed(stream);
+                        objValue = new StreamDataFeed(stream);
                     }
                     else
                     {
-                        value = Convert.ChangeType(value, destinationType.ClassType, null);
+                        objValue = Convert.ChangeType(value, destinationType.ClassType, null);
                     }
                 }
                 catch (Exception e)
@@ -2201,8 +2209,8 @@ namespace Microsoft.Data.SqlClient
             }
 
             Debug.Assert(allowStreaming || !coercedToDataFeed, "Streaming is not allowed, but type was coerced into a data feed");
-            Debug.Assert(value.GetType() == currentType ^ typeChanged, "Incorrect value for typeChanged");
-            return value;
+            Debug.Assert(objValue == null || objValue.GetType() == currentType ^ typeChanged, "Incorrect value for typeChanged");
+            return typeChanged;
         }
 
         private static int StringSize(object value, bool isSqlType)

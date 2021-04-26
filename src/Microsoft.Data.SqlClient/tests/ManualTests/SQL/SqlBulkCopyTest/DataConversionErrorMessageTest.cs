@@ -162,7 +162,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 string expectedErrorMsg = string.Format(pattern, args);
 
-                Assert.True(ex.Message.Contains(expectedErrorMsg), "Unexpected error message: " + ex.Message);
+                Assert.True(ex.Message.Contains(expectedErrorMsg), $"Unexpected error message: {ex}");
                 hitException = true;
             }
             return hitException;

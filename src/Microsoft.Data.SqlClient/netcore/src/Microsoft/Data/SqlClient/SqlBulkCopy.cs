@@ -120,8 +120,8 @@ namespace Microsoft.Data.SqlClient
             DbDataReader
         }
 
-        // Enum for specifying SqlDataReader.Get method used
-        private enum ValueMethod : byte
+        // Enum for specifying SqlDataReader.Get / IDataReader method used
+        private enum ValueMethod
         {
             GetValue,
             SqlTypeSqlDecimal,
@@ -129,7 +129,19 @@ namespace Microsoft.Data.SqlClient
             SqlTypeSqlSingle,
             DataFeedStream,
             DataFeedText,
-            DataFeedXml
+            DataFeedXml,
+            GetInt32,
+            GetString,
+            GetDouble,
+            GetDecimal,
+            GetInt16,
+            GetInt64,
+            GetChar,
+            GetByte,
+            GetBoolean,
+            GetDateTime,
+            GetGuid,
+            GetFloat
         }
 
         // Used to hold column metadata for SqlDataReader case
@@ -873,10 +885,18 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Unified method to read a value from the current row
-        private object GetValueFromSourceRow(int destRowIndex, out bool isSqlType, out bool isDataFeed, out bool isNull)
+        // Reads a cell and then writes it.
+        // Read may block at this moment since there is no getValueAsync or DownStream async at this moment.
+        // When _isAsyncBulkCopy == true: Write will return Task (when async method runs asynchronously) or Null (when async call actually ran synchronously) for performance.
+        // When _isAsyncBulkCopy == false: Writes are purely sync. This method return null at the end.
+        private Task ReadWriteColumnValueAsync(int destRowIndex)
         {
             _SqlMetaData metadata = _sortedColumnMappings[destRowIndex]._metadata;
             int sourceOrdinal = _sortedColumnMappings[destRowIndex]._sourceColumnOrdinal;
+
+            bool isSqlType = false;
+            bool isDataFeed = false;
+            bool isNull = false;
 
             switch (_rowSourceType)
             {
@@ -887,34 +907,40 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (_dbDataReaderRowSource.IsDBNull(sourceOrdinal))
                         {
-                            isSqlType = false;
-                            isDataFeed = false;
                             isNull = true;
-                            return DBNull.Value;
+                            return WriteValueAsync(DBNull.Value, destRowIndex, isSqlType, isDataFeed, isNull);
                         }
                         else
                         {
-                            isSqlType = false;
                             isDataFeed = true;
-                            isNull = false;
+
+                            object feedColumnValue;
+
                             switch (_currentRowMetadata[destRowIndex].Method)
                             {
                                 case ValueMethod.DataFeedStream:
-                                    return new StreamDataFeed(_dbDataReaderRowSource.GetStream(sourceOrdinal));
+                                    feedColumnValue = new StreamDataFeed(_dbDataReaderRowSource.GetStream(sourceOrdinal));
+
+                                    break;
                                 case ValueMethod.DataFeedText:
-                                    return new TextDataFeed(_dbDataReaderRowSource.GetTextReader(sourceOrdinal));
+                                    feedColumnValue = new TextDataFeed(_dbDataReaderRowSource.GetTextReader(sourceOrdinal));
+                                    break;
                                 case ValueMethod.DataFeedXml:
                                     // Only SqlDataReader supports an XmlReader
                                     // There is no GetXmlReader on DbDataReader, however if GetValue returns XmlReader we will read it as stream if it is assigned to XML field
                                     Debug.Assert(_sqlDataReaderRowSource != null, "Should not be reading row as an XmlReader if bulk copy source is not a SqlDataReader");
-                                    return new XmlDataFeed(_sqlDataReaderRowSource.GetXmlReader(sourceOrdinal));
+                                    feedColumnValue = new XmlDataFeed(_sqlDataReaderRowSource.GetXmlReader(sourceOrdinal));
+                                    break;
                                 default:
                                     Debug.Fail($"Current column is marked as being a DataFeed, but no DataFeed compatible method was provided. Method: {_currentRowMetadata[destRowIndex].Method}");
                                     isDataFeed = false;
-                                    object columnValue = _dbDataReaderRowSource.GetValue(sourceOrdinal);
-                                    ADP.IsNullOrSqlType(columnValue, out isNull, out isSqlType);
-                                    return columnValue;
+                                    feedColumnValue = _dbDataReaderRowSource.GetValue(sourceOrdinal);
+                                    ADP.IsNullOrSqlType(feedColumnValue, out isNull, out isSqlType);
+                                    break;
                             }
+
+                            //specifically choosing to use the object overload here to simplify TdsParser logic for the XmlReader scenario
+                            return WriteValueAsync(feedColumnValue, destRowIndex, isSqlType, isDataFeed, isNull);
                         }
                     }
                     // SqlDataReader-specific logic
@@ -922,36 +948,30 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (_currentRowMetadata[destRowIndex].IsSqlType)
                         {
-                            INullable value;
                             isSqlType = true;
-                            isDataFeed = false;
                             switch (_currentRowMetadata[destRowIndex].Method)
                             {
                                 case ValueMethod.SqlTypeSqlDecimal:
-                                    value = _sqlDataReaderRowSource.GetSqlDecimal(sourceOrdinal);
-                                    break;
+                                    var value = _sqlDataReaderRowSource.GetSqlDecimal(sourceOrdinal);
+                                    return WriteValueAsync(value, destRowIndex, isSqlType, isDataFeed, value.IsNull);
                                 case ValueMethod.SqlTypeSqlDouble:
                                     // use cast to handle IsNull correctly because no public constructor allows it
-                                    value = (SqlDecimal)_sqlDataReaderRowSource.GetSqlDouble(sourceOrdinal);
-                                    break;
+                                    var dblValue = (SqlDecimal)_sqlDataReaderRowSource.GetSqlDouble(sourceOrdinal);
+                                    return WriteValueAsync(dblValue, destRowIndex, isSqlType, isDataFeed, dblValue.IsNull);
                                 case ValueMethod.SqlTypeSqlSingle:
-                                    // use cast to handle IsNull correctly because no public constructor allows it
-                                    value = (SqlDecimal)_sqlDataReaderRowSource.GetSqlSingle(sourceOrdinal);
-                                    break;
+                                    // use cast to handle value.IsNull correctly because no public constructor allows it
+                                    var singleValue = (SqlDecimal)_sqlDataReaderRowSource.GetSqlSingle(sourceOrdinal);
+                                    return WriteValueAsync(singleValue, destRowIndex, isSqlType, isDataFeed, singleValue.IsNull);
                                 default:
                                     Debug.Fail($"Current column is marked as being a SqlType, but no SqlType compatible method was provided. Method: {_currentRowMetadata[destRowIndex].Method}");
-                                    value = (INullable)_sqlDataReaderRowSource.GetSqlValue(sourceOrdinal);
-                                    break;
+                                    var sqlValue = (INullable)_sqlDataReaderRowSource.GetSqlValue(sourceOrdinal);
+                                    return WriteValueAsync(sqlValue, destRowIndex, isSqlType, isDataFeed, sqlValue.IsNull);
                             }
 
-                            isNull = value.IsNull;
-                            return value;
+
                         }
                         else
                         {
-                            isSqlType = false;
-                            isDataFeed = false;
-
                             object value = _sqlDataReaderRowSource.GetValue(sourceOrdinal);
                             isNull = ((value == null) || (value == DBNull.Value));
                             if ((!isNull) && (metadata.type == SqlDbType.Udt))
@@ -965,30 +985,58 @@ namespace Microsoft.Data.SqlClient
                                 Debug.Assert(!(value is INullable) || !((INullable)value).IsNull, "IsDBNull returned false, but GetValue returned a null INullable");
                             }
 #endif
-                            return value;
+                            return WriteValueAsync(value, destRowIndex, isSqlType, isDataFeed, isNull);
                         }
                     }
                     else
                     {
-                        isDataFeed = false;
-
                         IDataReader rowSourceAsIDataReader = (IDataReader)_rowSource;
-
-                        // Only use IsDbNull when streaming is enabled and only for non-SqlDataReader
-                        if ((_enableStreaming) && (_sqlDataReaderRowSource == null) && (rowSourceAsIDataReader.IsDBNull(sourceOrdinal)))
+                        // previously, IsDbNull was only invoked in a non-streaming scenario with a non-SqlDataReader.
+                        // based on the else if above, the non-SqlDataReader check was superfluous
+                        // the new logic to not rely only on IDataReader.GetValue needs DbNull
+                        // this could potentially be a breaking change to custom IDataReader implementations that incorrectly return IsDbNull
+                        if (rowSourceAsIDataReader.IsDBNull(sourceOrdinal))
                         {
-                            isSqlType = false;
                             isNull = true;
-                            return DBNull.Value;
+                            return WriteValueAsync(DBNull.Value, destRowIndex, isSqlType, isDataFeed, isNull);
                         }
                         else
                         {
-                            object columnValue = rowSourceAsIDataReader.GetValue(sourceOrdinal);
-                            ADP.IsNullOrSqlType(columnValue, out isNull, out isSqlType);
-                            return columnValue;
+                            switch (_currentRowMetadata[destRowIndex].Method)
+                            {
+                                case ValueMethod.GetInt32:
+                                    return WriteValueAsync(rowSourceAsIDataReader.GetInt32(sourceOrdinal), destRowIndex, isSqlType, isDataFeed, false);
+                                case ValueMethod.GetString:
+                                    var strValue = rowSourceAsIDataReader.GetString(sourceOrdinal);
+                                    isNull = strValue == null;
+                                    return WriteValueAsync(strValue, destRowIndex, isSqlType, isDataFeed, isNull);
+                                case ValueMethod.GetDouble:
+                                    return WriteValueAsync(rowSourceAsIDataReader.GetDouble(sourceOrdinal), destRowIndex, isSqlType, isDataFeed, isNull);
+                                case ValueMethod.GetDecimal:
+                                    return WriteValueAsync(rowSourceAsIDataReader.GetDecimal(sourceOrdinal), destRowIndex, isSqlType, isDataFeed, isNull);
+                                case ValueMethod.GetInt16:
+                                    return WriteValueAsync(rowSourceAsIDataReader.GetInt16(sourceOrdinal), destRowIndex, isSqlType, isDataFeed, isNull);
+                                case ValueMethod.GetInt64:
+                                    return WriteValueAsync(rowSourceAsIDataReader.GetInt64(sourceOrdinal), destRowIndex, isSqlType, isDataFeed, isNull);
+                                case ValueMethod.GetChar:
+                                    return WriteValueAsync(rowSourceAsIDataReader.GetChar(sourceOrdinal), destRowIndex, isSqlType, isDataFeed, isNull);
+                                case ValueMethod.GetByte:
+                                    return WriteValueAsync(rowSourceAsIDataReader.GetByte(sourceOrdinal), destRowIndex, isSqlType, isDataFeed, isNull);
+                                case ValueMethod.GetBoolean:
+                                    return WriteValueAsync(rowSourceAsIDataReader.GetBoolean(sourceOrdinal), destRowIndex, isSqlType, isDataFeed, isNull);
+                                case ValueMethod.GetDateTime:
+                                    return WriteValueAsync(rowSourceAsIDataReader.GetDateTime(sourceOrdinal), destRowIndex, isSqlType, isDataFeed, isNull);
+                                case ValueMethod.GetGuid:
+                                    return WriteValueAsync(rowSourceAsIDataReader.GetGuid(sourceOrdinal), destRowIndex, isSqlType, isDataFeed, isNull);
+                                case ValueMethod.GetFloat:
+                                    return WriteValueAsync(rowSourceAsIDataReader.GetFloat(sourceOrdinal), destRowIndex, isSqlType, isDataFeed, isNull);
+                                default:
+                                    object columnValue = rowSourceAsIDataReader.GetValue(sourceOrdinal);
+                                    ADP.IsNullOrSqlType(columnValue, out isNull, out isSqlType);
+                                    return WriteValueAsync(columnValue, destRowIndex, isSqlType, isDataFeed, isNull);
+                            }
                         }
                     }
-
                 case ValueSourceType.DataTable:
                 case ValueSourceType.RowArray:
                     {
@@ -996,6 +1044,7 @@ namespace Microsoft.Data.SqlClient
                         Debug.Assert(sourceOrdinal < _currentRowLength, "inconsistency of length of rows from rowsource!");
 
                         isDataFeed = false;
+                        // unfortunately this has to be boxed due to DataRow's API.
                         object currentRowValue = _currentRow[sourceOrdinal];
                         ADP.IsNullOrSqlType(currentRowValue, out isNull, out isSqlType);
 
@@ -1008,7 +1057,8 @@ namespace Microsoft.Data.SqlClient
                                     {
                                         if (isSqlType)
                                         {
-                                            return new SqlDecimal(((SqlSingle)currentRowValue).Value);
+                                            var sqlDec = new SqlDecimal(((SqlSingle)currentRowValue).Value);
+                                            return WriteValueAsync(sqlDec, destRowIndex, isSqlType, isDataFeed, isNull);
                                         }
                                         else
                                         {
@@ -1016,16 +1066,20 @@ namespace Microsoft.Data.SqlClient
                                             if (!float.IsNaN(f))
                                             {
                                                 isSqlType = true;
-                                                return new SqlDecimal(f);
+                                                return WriteValueAsync(new SqlDecimal(f), destRowIndex, isSqlType, isDataFeed, isNull);
                                             }
-                                            break;
+                                            else
+                                            {
+                                                return WriteValueAsync(currentRowValue, destRowIndex, isSqlType, isDataFeed, isNull);
+                                            }
                                         }
                                     }
                                 case ValueMethod.SqlTypeSqlDouble:
                                     {
                                         if (isSqlType)
                                         {
-                                            return new SqlDecimal(((SqlDouble)currentRowValue).Value);
+                                            var sqlValue = new SqlDecimal(((SqlDouble)currentRowValue).Value);
+                                            return WriteValueAsync(sqlValue, destRowIndex, isSqlType, isDataFeed, isNull);
                                         }
                                         else
                                         {
@@ -1033,33 +1087,40 @@ namespace Microsoft.Data.SqlClient
                                             if (!double.IsNaN(d))
                                             {
                                                 isSqlType = true;
-                                                return new SqlDecimal(d);
+                                                return WriteValueAsync(new SqlDecimal(d), destRowIndex, isSqlType, isDataFeed, isNull);
                                             }
-                                            break;
+                                            else
+                                            {
+                                                return WriteValueAsync(currentRowValue, destRowIndex, isSqlType, isDataFeed, isNull);
+                                            }
                                         }
                                     }
                                 case ValueMethod.SqlTypeSqlDecimal:
                                     {
                                         if (isSqlType)
                                         {
-                                            return (SqlDecimal)currentRowValue;
+                                            var sqlValue = (SqlDecimal)currentRowValue;
+                                            return WriteValueAsync(sqlValue, destRowIndex, isSqlType, isDataFeed, isNull);
                                         }
                                         else
                                         {
                                             isSqlType = true;
-                                            return new SqlDecimal((decimal)currentRowValue);
+                                            var sqlValue = new SqlDecimal((decimal)currentRowValue);
+                                            return WriteValueAsync(sqlValue, destRowIndex, isSqlType, isDataFeed, isNull);
                                         }
                                     }
                                 default:
                                     {
                                         Debug.Fail($"Current column is marked as being a SqlType, but no SqlType compatible method was provided. Method: {_currentRowMetadata[destRowIndex].Method}");
-                                        break;
+                                        // If we are here then either the value is null, there was no special storage type for this column or the special storage type wasn't handled (e.g. if the currentRowValue is NaN)
+                                        return WriteValueAsync(currentRowValue, destRowIndex, isSqlType, isDataFeed, isNull);
                                     }
                             }
                         }
-
-                        // If we are here then either the value is null, there was no special storage type for this column or the special storage type wasn't handled (e.g. if the currentRowValue is NaN)
-                        return currentRowValue;
+                        else
+                        {
+                            return WriteValueAsync(currentRowValue, destRowIndex, isSqlType, isDataFeed, isNull);
+                        }
                     }
                 default:
                     {
@@ -1260,6 +1321,66 @@ namespace Microsoft.Data.SqlClient
                     method = ValueMethod.GetValue;
                 }
             }
+            else if (_rowSourceType == ValueSourceType.IDataReader)
+            {
+                isSqlType = false;
+                isDataFeed = false;
+
+                Type t = ((IDataReader)_rowSource).GetFieldType(ordinal);
+
+                if (t == typeof(bool))
+                {
+                    method = ValueMethod.GetBoolean;
+                }
+                else if (t == typeof(byte))
+                {
+                    method = ValueMethod.GetByte;
+                }
+                else if (t == typeof(char))
+                {
+                    method = ValueMethod.GetChar;
+                }
+                else if (t == typeof(DateTime))
+                {
+                    method = ValueMethod.GetDateTime;
+                }
+                else if (t == typeof(decimal))
+                {
+                    method = ValueMethod.GetDecimal;
+                }
+                else if (t == typeof(double))
+                {
+                    method = ValueMethod.GetDouble;
+                }
+                else if (t == typeof(float))
+                {
+                    method = ValueMethod.GetFloat;
+                }
+                else if (t == typeof(Guid))
+                {
+                    method = ValueMethod.GetGuid;
+                }
+                else if (t == typeof(short))
+                {
+                    method = ValueMethod.GetInt16;
+                }
+                else if (t == typeof(int))
+                {
+                    method = ValueMethod.GetInt32;
+                }
+                else if (t == typeof(long))
+                {
+                    method = ValueMethod.GetInt64;
+                }
+                else if (t == typeof(string))
+                {
+                    method = ValueMethod.GetString;
+                }
+                else
+                {
+                    method = ValueMethod.GetValue;
+                }
+            }
             else
             {
                 isSqlType = false;
@@ -1394,8 +1515,10 @@ namespace Microsoft.Data.SqlClient
             return name;
         }
 
-        private object ValidateBulkCopyVariant(object value)
+        private bool ValidateBulkCopyVariantIfNeeded<T>(T value, out object variantValue)
         {
+            variantValue = null;
+
             // From the spec:
             // "The only acceptable types are ..."
             // GUID, BIGVARBINARY, BIGBINARY, BIGVARCHAR, BIGCHAR, NVARCHAR, NCHAR, BIT, INT1, INT2, INT4, INT8,
@@ -1423,20 +1546,21 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLDATETIMEOFFSET:
                     if (value is INullable)
                     {   // Current limitation in the SqlBulkCopy Variant code limits BulkCopy to CLR/COM Types.
-                        return MetaType.GetComValueFromSqlVariant(value);
+                        variantValue = MetaType.GetComValueFromSqlVariant(value);
+                        return true;
                     }
                     else
                     {
-                        return value;
+                        return false;
                     }
                 default:
                     throw SQL.BulkLoadInvalidVariantValue();
             }
         }
 
-        private object ConvertValue(object value, _SqlMetaData metadata, bool isNull, ref bool isSqlType, out bool coercedToDataFeed)
+        private Task ConvertWriteValueAsync<T>(T value, int col, _SqlMetaData metadata, bool isNull, bool isSqlType)
         {
-            coercedToDataFeed = false;
+            bool coercedToDataFeed = false;
 
             if (isNull)
             {
@@ -1444,11 +1568,13 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw SQL.BulkLoadBulkLoadNotAllowDBNull(metadata.column);
                 }
-                return value;
+
+                return DoWriteValueAsync(value, col, isSqlType, coercedToDataFeed, isNull, metadata);
             }
 
             MetaType type = metadata.metaType;
             bool typeChanged = false;
+            object objValue = null;
 
             // If the column is encrypted then we are going to transparently encrypt this column
             // (based on connection string setting)- Use the metaType for the underlying
@@ -1473,24 +1599,26 @@ namespace Microsoft.Data.SqlClient
                 {
                     case TdsEnums.SQLNUMERICN:
                     case TdsEnums.SQLDECIMALN:
-                        mt = MetaType.GetMetaTypeFromSqlDbType(type.SqlDbType, false);
-                        value = SqlParameter.CoerceValue(value, mt, out coercedToDataFeed, out typeChanged, false);
+                        SqlDecimal sqlValue;
+                        if (typeof(T) == typeof(decimal))
+                        {
+                            sqlValue = new SqlDecimal(value.GenericCast<T, decimal>());
+                        }
+                        else if (typeof(T) == typeof(SqlDecimal))
+                        {
+                            sqlValue = value.GenericCast<T, SqlDecimal>();
+                        }
+                        else
+                        {
+                            mt = MetaType.GetMetaTypeFromSqlDbType(type.SqlDbType, false);
+                            sqlValue = new SqlDecimal((decimal)SqlParameter.CoerceValue(value, mt, out coercedToDataFeed, out typeChanged, false));
+                        }
 
                         // Convert Source Decimal Precision and Scale to Destination Precision and Scale
                         // Sql decimal data could get corrupted on insert if the scale of
                         // the source and destination weren't the same. The BCP protocol, specifies the
                         // scale of the incoming data in the insert statement, we just tell the server we
                         // are inserting the same scale back.
-                        SqlDecimal sqlValue;
-                        if ((isSqlType) && (!typeChanged))
-                        {
-                            sqlValue = (SqlDecimal)value;
-                        }
-                        else
-                        {
-                            sqlValue = new SqlDecimal((decimal)value);
-                        }
-
                         if (sqlValue.Scale != scale)
                         {
                             sqlValue = TdsParser.AdjustSqlDecimalScale(sqlValue, scale);
@@ -1504,15 +1632,17 @@ namespace Microsoft.Data.SqlClient
                             }
                             catch (SqlTruncateException)
                             {
+                                mt = MetaType.GetMetaTypeFromSqlDbType(type.SqlDbType, false);
                                 throw SQL.BulkLoadCannotConvertValue(value.GetType(), mt, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), ADP.ParameterValueOutOfRange(sqlValue));
                             }
                         }
 
                         // Perf: It is more efficient to write a SqlDecimal than a decimal since we need to break it into its 'bits' when writing
-                        value = sqlValue;
                         isSqlType = true;
                         typeChanged = false; // Setting this to false as SqlParameter.CoerceValue will only set it to true when converting to a CLR type
-                        break;
+
+                        // returning here to avoid unnecessary decValue initialization for all types
+                        return WriteConvertedValue(sqlValue, col, isSqlType, isNull, coercedToDataFeed, metadata);
 
                     case TdsEnums.SQLINTN:
                     case TdsEnums.SQLFLTN:
@@ -1536,16 +1666,22 @@ namespace Microsoft.Data.SqlClient
                     case TdsEnums.SQLDATETIME2:
                     case TdsEnums.SQLDATETIMEOFFSET:
                         mt = MetaType.GetMetaTypeFromSqlDbType(type.SqlDbType, false);
-                        value = SqlParameter.CoerceValue(value, mt, out coercedToDataFeed, out typeChanged, false);
+                        typeChanged = SqlParameter.CoerceValueIfNeeded(value, mt, out objValue, out coercedToDataFeed);
                         break;
                     case TdsEnums.SQLNCHAR:
                     case TdsEnums.SQLNVARCHAR:
                     case TdsEnums.SQLNTEXT:
                         mt = MetaType.GetMetaTypeFromSqlDbType(type.SqlDbType, false);
-                        value = SqlParameter.CoerceValue(value, mt, out coercedToDataFeed, out typeChanged, false);
+                        typeChanged = SqlParameter.CoerceValueIfNeeded(value, mt, out objValue, out coercedToDataFeed, false);
                         if (!coercedToDataFeed)
                         {   // We do not need to test for TextDataFeed as it is only assigned to (N)VARCHAR(MAX)
-                            string str = ((isSqlType) && (!typeChanged)) ? ((SqlString)value).Value : ((string)value);
+                            string str = typeChanged
+                                ? (string)objValue
+                                : isSqlType
+                                    ? value.GenericCast<T, SqlString>().Value
+                                    : value.GenericCast<T, string>()
+                            ;
+
                             int maxStringLength = length / 2;
                             if (str.Length > maxStringLength)
                             {
@@ -1564,8 +1700,7 @@ namespace Microsoft.Data.SqlClient
                         }
                         break;
                     case TdsEnums.SQLVARIANT:
-                        value = ValidateBulkCopyVariant(value);
-                        typeChanged = true;
+                        typeChanged = ValidateBulkCopyVariantIfNeeded(value, out objValue);
                         break;
                     case TdsEnums.SQLUDT:
                         // UDTs are sent as varbinary so we need to get the raw bytes
@@ -1576,16 +1711,16 @@ namespace Microsoft.Data.SqlClient
                         // in byte[] form.
                         if (!(value is byte[]))
                         {
-                            value = _connection.GetBytes(value);
+                            objValue = _connection.GetBytes(value);
                             typeChanged = true;
                         }
                         break;
                     case TdsEnums.SQLXMLTYPE:
                         // Could be either string, SqlCachedBuffer, XmlReader or XmlDataFeed
                         Debug.Assert((value is XmlReader) || (value is SqlCachedBuffer) || (value is string) || (value is SqlString) || (value is XmlDataFeed), "Invalid value type of Xml datatype");
-                        if (value is XmlReader)
+                        if (value is XmlReader xmlReader)
                         {
-                            value = new XmlDataFeed((XmlReader)value);
+                            objValue = new XmlDataFeed(xmlReader);
                             typeChanged = true;
                             coercedToDataFeed = true;
                         }
@@ -1595,14 +1730,6 @@ namespace Microsoft.Data.SqlClient
                         Debug.Fail("Unknown TdsType!" + type.NullableType.ToString("x2", (IFormatProvider)null));
                         throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), null);
                 }
-
-                if (typeChanged)
-                {
-                    // All type changes change to CLR types
-                    isSqlType = false;
-                }
-
-                return value;
             }
             catch (Exception e)
             {
@@ -1611,6 +1738,17 @@ namespace Microsoft.Data.SqlClient
                     throw;
                 }
                 throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), e);
+            }
+
+            if (typeChanged)
+            {
+                // All type changes change to CLR types
+                isSqlType = false;
+                return WriteConvertedValue(objValue, col, isSqlType, isNull, coercedToDataFeed, metadata);
+            }
+            else
+            {
+                return WriteConvertedValue(value, col, isSqlType, isNull, coercedToDataFeed, metadata);
             }
         }
 
@@ -2135,33 +2273,40 @@ namespace Microsoft.Data.SqlClient
             return eventArgs.Abort;
         }
 
-        // Reads a cell and then writes it.
-        // Read may block at this moment since there is no getValueAsync or DownStream async at this moment.
-        // When _isAsyncBulkCopy == true: Write will return Task (when async method runs asynchronously) or Null (when async call actually ran synchronously) for performance.
-        // When _isAsyncBulkCopy == false: Writes are purely sync. This method return null at the end.
-        private Task ReadWriteColumnValueAsync(int col)
+        private Task WriteValueAsync<T>(T value, int col, bool isSqlType, bool isDataFeed, bool isNull)
         {
-            bool isSqlType;
-            bool isDataFeed;
-            bool isNull;
-            object value = GetValueFromSourceRow(col, out isSqlType, out isDataFeed, out isNull); //this will return Task/null in future: as rTask
-
             _SqlMetaData metadata = _sortedColumnMappings[col]._metadata;
-            if (!isDataFeed)
+            if (isDataFeed)
             {
-                value = ConvertValue(value, metadata, isNull, ref isSqlType, out isDataFeed);
-
-                // If column encryption is requested via connection string option, perform encryption here
-                if (!isNull && // if value is not NULL
-                    metadata.isEncrypted)
-                { // If we are transparently encrypting
-                    Debug.Assert(_parser.ShouldEncryptValuesForBulkCopy());
-                    value = _parser.EncryptColumnValue(value, metadata, metadata.column, _stateObj, isDataFeed, isSqlType);
-                    isSqlType = false; // Its not a sql type anymore
-                }
+                //nothing to convert, skip straight to write
+                return DoWriteValueAsync(value, col, isSqlType, isDataFeed, isNull, metadata);
             }
+            else
+            {
+                return ConvertWriteValueAsync(value, col, metadata, isNull, isSqlType);
+            }
+        }
 
-            //write part
+        private Task WriteConvertedValue<T>(T value, int col, bool isSqlType, bool isNull, bool isDatafeed, _SqlMetaData metadata)
+        {
+            // If column encryption is requested via connection string option, perform encryption here
+            if (!isNull && // if value is not NULL
+                metadata.isEncrypted)
+            { // If we are transparently encrypting
+                Debug.Assert(_parser.ShouldEncryptValuesForBulkCopy());
+                var bytesValue = _parser.EncryptColumnValue(value, metadata, metadata.column, _stateObj, isDatafeed, isSqlType);
+                isSqlType = false; // Its not a sql type anymore
+
+                return DoWriteValueAsync(bytesValue, col, isSqlType, isDatafeed, isNull, metadata);
+            }
+            else
+            {
+                return DoWriteValueAsync(value, col, isSqlType, isDatafeed, isNull, metadata);
+            }
+        }
+
+        private Task DoWriteValueAsync<T>(T value, int col, bool isSqlType, bool isDataFeed, bool isNull, _SqlMetaData metadata)
+        {
             Task writeTask = null;
             if (metadata.type != SqlDbType.Variant)
             {
@@ -2180,11 +2325,11 @@ namespace Microsoft.Data.SqlClient
 
                 if (variantInternalType == SqlBuffer.StorageType.DateTime2)
                 {
-                    _parser.WriteSqlVariantDateTime2(((DateTime)value), _stateObj);
+                    _parser.WriteSqlVariantDateTime2(value.GenericCast<T, DateTime>(), _stateObj);
                 }
                 else if (variantInternalType == SqlBuffer.StorageType.Date)
                 {
-                    _parser.WriteSqlVariantDate(((DateTime)value), _stateObj);
+                    _parser.WriteSqlVariantDate(value.GenericCast<T, DateTime>(), _stateObj);
                 }
                 else
                 {
