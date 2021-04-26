@@ -254,8 +254,10 @@ namespace Microsoft.Data.SqlClient
                                 connection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Rollback, null, System.Data.IsolationLevel.Unspecified, _internalTransaction, true);
                             }
                         }
-                        catch (SqlException)
+                        catch (SqlException e)
                         {
+                            ADP.TraceExceptionWithoutRethrow(e);
+
                             // Doom the connection, to make sure that the transaction is
                             // eventually rolled back.
                             // VSTS 144562: doom the connection while having the lock on it to prevent race condition with "Transaction Ended" Event
@@ -273,8 +275,9 @@ namespace Microsoft.Data.SqlClient
                             // we have the tracing that we're doing to fallback on for the
                             // investigation.
                         }
-                        catch (InvalidOperationException)
+                        catch (InvalidOperationException e)
                         {
+                            ADP.TraceExceptionWithoutRethrow(e);
                             connection.DoomThisConnection();
                         }
                     }

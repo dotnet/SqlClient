@@ -1380,8 +1380,12 @@ namespace Microsoft.Data.SqlClient
                         stateObj = _parser.GetSession(this);
                         mustPutSession = true;
                     }
-                    else if (internalTransaction.OpenResultsCount != 0)
+                    if (internalTransaction.OpenResultsCount != 0)
                     {
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.ExecuteTransactionYukon|DATA|CATCH> {0}, Connection is marked to be doomed when closed. Transaction ended with OpenResultsCount {1} > 0, MARSOn {2}",
+                                                               ObjectID,
+                                                               internalTransaction.OpenResultsCount,
+                                                               _parser.MARSOn);
                         throw SQL.CannotCompleteDelegatedTransactionWithOpenResults(this, _parser.MARSOn);
                     }
                 }
