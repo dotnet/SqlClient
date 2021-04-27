@@ -2099,7 +2099,9 @@ namespace Microsoft.Data.SqlClient
             objValue = null;
             coercedToDataFeed = false;
             var typeChanged = false;
-            Type currentType = value.GetType();
+            Type currentType = typeof(T) == typeof(object)
+                ? value.GetType()
+                : typeof(T);
 
             if (
                 (destinationType.ClassType != typeof(object)) &&
