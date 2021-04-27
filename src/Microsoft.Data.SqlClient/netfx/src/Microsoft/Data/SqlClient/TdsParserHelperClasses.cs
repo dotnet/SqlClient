@@ -1054,14 +1054,19 @@ namespace Microsoft.Data.SqlClient
 
         public bool IsNullable
         {
-            get => flags.HasFlag(SqlMetaDataPrivFlags.IsNullable);
+            get => HasFlag(SqlMetaDataPrivFlags.IsNullable);
             set => Set(SqlMetaDataPrivFlags.IsNullable, value);
         }
 
         public bool IsMultiValued
         {
-            get => flags.HasFlag(SqlMetaDataPrivFlags.IsMultiValued);
+            get => HasFlag(SqlMetaDataPrivFlags.IsMultiValued);
             set => Set(SqlMetaDataPrivFlags.IsMultiValued, value);
+        }
+
+        private bool HasFlag(SqlMetaDataPrivFlags flag)
+        {
+            return (flags & flag) != 0;
         }
 
         private void Set(SqlMetaDataPrivFlags flag, bool value)
