@@ -498,7 +498,9 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlStatistics.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlTransaction.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlUdtInfo.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlUdtInfo.cs">
+      <Link>Microsoft\Data\SqlClient\SqlUdtInfo.cs</Link>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlUtil.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsEnums.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.cs" />
