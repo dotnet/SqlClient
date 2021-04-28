@@ -9,6 +9,9 @@ using Azure.Security.KeyVault.Keys;
 using Azure.Core;
 using System.Reflection;
 using System;
+using System.Linq;
+using System.Diagnostics;
+using System.Threading;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
@@ -79,7 +82,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     SqlColumnEncryptionAzureKeyVaultProvider azureKeyProvider = new SqlColumnEncryptionAzureKeyVaultProvider(clientSecretCredential);
                     // Perform an operation to initialize the internal caches
                     azureKeyProvider.EncryptColumnEncryptionKey(DataTestUtility.AKVOriginalUrl, EncryptionAlgorithm, s_columnEncryptionKey);
-                    
+
                     PropertyInfo keyCryptographerProperty = azureKeyProvider.GetType().GetProperty("KeyCryptographer", BindingFlags.NonPublic | BindingFlags.Instance);
                     var keyCryptographer = keyCryptographerProperty.GetValue(azureKeyProvider);
                     MethodInfo getKeyMethod = keyCryptographer.GetType().GetMethod("GetKey", BindingFlags.NonPublic | BindingFlags.Instance);
@@ -102,6 +105,65 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.Contains($"Invalid url specified: '{invalidKeyPath}'", ex1.Message);
             Exception ex2 = Assert.Throws<ArgumentException>(() => azureKeyProvider.DecryptColumnEncryptionKey(invalidKeyPath, EncryptionAlgorithm, s_columnEncryptionKey));
             Assert.Contains($"Invalid url specified: '{invalidKeyPath}'", ex2.Message);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        public static void DecryptedCekIsCachedDuringDecryption()
+        {
+            SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new SqlColumnEncryptionAzureKeyVaultProvider(new SqlClientCustomTokenCredential());
+            byte[] plaintextKey = { 1, 2, 3 };
+            byte[] encryptedKey = akvProvider.EncryptColumnEncryptionKey(DataTestUtility.AKVUrl, "RSA_OAEP", plaintextKey);
+
+            var stopwatch = Stopwatch.StartNew();
+            byte[] decryptedKey = akvProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, "RSA_OAEP", encryptedKey);
+            long elapsedWithoutCache = stopwatch.ElapsedMilliseconds;
+            Assert.True(plaintextKey.SequenceEqual(decryptedKey));
+
+            stopwatch.Restart();
+            decryptedKey = akvProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, "RSA_OAEP", encryptedKey);
+            long elapsedWithCache = stopwatch.ElapsedMilliseconds;
+            Assert.InRange(elapsedWithCache, 0, elapsedWithoutCache / 4);
+            Assert.True(plaintextKey.SequenceEqual(decryptedKey));
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        public static void SignatureVerificationResultIsCachedDuringVerification()
+        {
+            SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new SqlColumnEncryptionAzureKeyVaultProvider(new SqlClientCustomTokenCredential());
+            byte[] signature = akvProvider.SignColumnMasterKeyMetadata(DataTestUtility.AKVUrl, true);
+
+            var stopwatch = Stopwatch.StartNew();
+            bool verificationResult = akvProvider.VerifyColumnMasterKeyMetadata(DataTestUtility.AKVUrl, true, signature);
+            long elapsedWithoutCache = stopwatch.ElapsedMilliseconds;
+            Assert.True(verificationResult);
+
+            stopwatch.Restart();
+            verificationResult = akvProvider.VerifyColumnMasterKeyMetadata(DataTestUtility.AKVUrl, true, signature);
+            long elapsedWithCache = stopwatch.ElapsedMilliseconds;
+            Assert.InRange(elapsedWithCache, 0, elapsedWithoutCache / 4);
+            Assert.True(verificationResult);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
+        public static void CekCacheIsClearedAfterTimeToLive()
+        {
+            SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new SqlColumnEncryptionAzureKeyVaultProvider(new SqlClientCustomTokenCredential());
+            akvProvider.ColumnEncryptionKeyCacheTtl = TimeSpan.FromSeconds(5);
+            byte[] plaintextKey = { 1, 2, 3 };
+            byte[] encryptedKey = akvProvider.EncryptColumnEncryptionKey(DataTestUtility.AKVUrl, "RSA_OAEP", plaintextKey);
+
+            var stopwatch = Stopwatch.StartNew();
+            byte[] decryptedKey = akvProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, "RSA_OAEP", encryptedKey);
+            long elapsedWithoutCache = stopwatch.ElapsedMilliseconds;
+            Assert.True(plaintextKey.SequenceEqual(decryptedKey));
+
+            Thread.Sleep(5000);
+
+            stopwatch.Restart();
+            decryptedKey = akvProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, "RSA_OAEP", encryptedKey);
+            long elapsedWithoutCacheAfterTtl = stopwatch.ElapsedMilliseconds;
+            Assert.True(elapsedWithoutCacheAfterTtl > (elapsedWithoutCache / 3));
+            Assert.True(plaintextKey.SequenceEqual(decryptedKey));
         }
     }
 }
