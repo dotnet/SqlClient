@@ -2188,7 +2188,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             {
                 connection.Open();
 
-                // new connection instance should have an empty cache and fall back to the global cache
+                // new connection instance should have an empty cache and query will fall back to global cache
                 // which contains the required provider
                 Exception ex = Assert.Throws<SqlException>(
                       () => ExecuteQueryThatRequiresCustomKeyStoreProvider(connection));
@@ -2202,7 +2202,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 {
                     command.CommandText =
                         $"SELECT * FROM [{_fixture.CustomKeyStoreProviderTestTable.Name}] WHERE CustomerID = @id";
-                    command.Parameters.AddWithValue(@"id", 9);
+                    command.Parameters.AddWithValue("id", 9);
                     command.ExecuteReader();
                 }
             }
@@ -2222,31 +2222,46 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 connection.Open();
-                string query = $"SELECT * FROM [{_fixture.CustomKeyStoreProviderTestTable.Name}] WHERE CustomerID = @id";
-                using (SqlCommand command = new SqlCommand(query, connection))
+                using (SqlCommand command = CreateCommandThatRequiresCustomKeyStoreProvider(connection))
                 {
-                    command.Parameters.AddWithValue(@"id", 9);
-
-                    // required provider will be found in command cache
-                    command.RegisterColumnEncryptionKeyStoreProvidersOnCommand(_requiredProvider);
+                    // will use DummyProvider in global cache
+                    // provider will be found but it will throw when its methods are called
                     Exception ex = Assert.Throws<SqlException>(() => command.ExecuteReader());
                     AssertExceptionCausedByFailureToDecrypt(ex);
 
+                    // required provider will be found in command cache
+                    command.RegisterColumnEncryptionKeyStoreProvidersOnCommand(_requiredProvider);
+                    ex = Assert.Throws<SqlException>(() => command.ExecuteReader());
+                    AssertExceptionCausedByFailureToDecrypt(ex);
+
                     // not required provider in command cache
-                    // should not fall back to connection caches
                     command.RegisterColumnEncryptionKeyStoreProvidersOnCommand(_notRequiredProvider);
                     ex = Assert.Throws<ArgumentException>(() => command.ExecuteReader());
                     Assert.Equal(_providerNotFoundMessage, ex.Message);
 
-                    using (SqlCommand command2 = new SqlCommand(query, connection))
+                    // not required provider in command cache, required provider in connection cache
+                    // should not fall back to connection cache or global cache
+                    connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(_requiredProvider);
+                    ex = Assert.Throws<ArgumentException>(() => command.ExecuteReader());
+                    Assert.Equal(_providerNotFoundMessage, ex.Message);
+
+                    using (SqlCommand command2 = CreateCommandThatRequiresCustomKeyStoreProvider(connection))
                     {
-                        // new command object should have separate cache
-                        command2.RegisterColumnEncryptionKeyStoreProvidersOnCommand(_requiredProvider);
-                        command2.Parameters.AddWithValue(@"id", 9);
+                        // new command instance should have an empty cache and query will fall back to connection cache
+                        // which contains the required provider
                         ex = Assert.Throws<SqlException>(() => command2.ExecuteReader());
                         AssertExceptionCausedByFailureToDecrypt(ex);
                     }
                 }
+            }
+
+            SqlCommand CreateCommandThatRequiresCustomKeyStoreProvider(SqlConnection connection)
+            {
+                SqlCommand command = new SqlCommand(
+                    $"SELECT * FROM [{_fixture.CustomKeyStoreProviderTestTable.Name}] WHERE CustomerID = @id", 
+                    connection, null, SqlCommandColumnEncryptionSetting.Enabled);
+                command.Parameters.AddWithValue("id", 9);
+                return command;
             }
         }
 

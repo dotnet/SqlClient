@@ -17,6 +17,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         private const string dummyProviderName1 = "DummyProvider1";
         private const string dummyProviderName2 = "DummyProvider2";
         private const string dummyProviderName3 = "DummyProvider3";
+        private const string dummyProviderName4 = "DummyProvider4";
 
         private IDictionary<string, SqlColumnEncryptionKeyStoreProvider> singleKeyStoreProvider =
             new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>()
@@ -28,7 +29,8 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>()
             {
                     { dummyProviderName2, new DummyKeyStoreProvider() },
-                    { dummyProviderName3, new DummyKeyStoreProvider() }
+                    { dummyProviderName3, new DummyKeyStoreProvider() },
+                    { dummyProviderName4, new DummyKeyStoreProvider() }
             };
 
         [Fact]
@@ -104,32 +106,24 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         public void TestCanSetConnectionInstanceProvidersMoreThanOnce()
         {
             connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(singleKeyStoreProvider);
-            IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> instanceCache =
-                GetProviderCacheFrom(connection);
-            Assert.Single(instanceCache);
-            Assert.True(instanceCache.ContainsKey(dummyProviderName1));
+            IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> providerCache = GetProviderCacheFrom(connection);
+            AssertProviderCacheContainsExpectedProviders(providerCache, singleKeyStoreProvider);
 
             connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(multipleKeyStoreProviders);
-            instanceCache = GetProviderCacheFrom(connection);
-            Assert.Equal(2, instanceCache.Count);
-            Assert.True(instanceCache.ContainsKey(dummyProviderName2));
-            Assert.True(instanceCache.ContainsKey(dummyProviderName3));
+            providerCache = GetProviderCacheFrom(connection);
+            AssertProviderCacheContainsExpectedProviders(providerCache, multipleKeyStoreProviders);
         }
 
         [Fact]
         public void TestCanSetCommandInstanceProvidersMoreThanOnce()
         {
             command.RegisterColumnEncryptionKeyStoreProvidersOnCommand(singleKeyStoreProvider);
-            IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> instanceCache =
-                GetProviderCacheFrom(command);
-            Assert.Single(instanceCache);
-            Assert.True(instanceCache.ContainsKey(dummyProviderName1));
+            IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> providerCache = GetProviderCacheFrom(command);
+            AssertProviderCacheContainsExpectedProviders(providerCache, singleKeyStoreProvider);
 
             command.RegisterColumnEncryptionKeyStoreProvidersOnCommand(multipleKeyStoreProviders);
-            instanceCache = GetProviderCacheFrom(command);
-            Assert.Equal(2, instanceCache.Count);
-            Assert.True(instanceCache.ContainsKey(dummyProviderName2));
-            Assert.True(instanceCache.ContainsKey(dummyProviderName3));
+            providerCache = GetProviderCacheFrom(command);
+            AssertProviderCacheContainsExpectedProviders(providerCache, multipleKeyStoreProviders);
         }
 
         private void AssertExceptionIsThrownForAllCustomProviderCaches<T>(IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders, string expectedMessage)
@@ -150,6 +144,17 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             FieldInfo instanceCacheField = obj.GetType().GetField(
                 "_customColumnEncryptionKeyStoreProviders", BindingFlags.NonPublic | BindingFlags.Instance);
             return instanceCacheField.GetValue(obj) as IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider>;
+        }
+
+        private void AssertProviderCacheContainsExpectedProviders(
+            IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> providerCache,
+            IDictionary<string, SqlColumnEncryptionKeyStoreProvider> expectedProviders)
+        {
+            Assert.Equal(expectedProviders.Count, providerCache.Count);
+            foreach (string key in expectedProviders.Keys)
+            {
+                Assert.True(providerCache.ContainsKey(key));
+            }
         }
     }
 }

@@ -311,12 +311,12 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
         internal static byte[] DecryptWithKey(byte[] cipherText, Object cipherMd)
         {
-            return (byte[])SqlSecurityUtilDecryptWithKey.Invoke(null, new Object[] { cipherText, cipherMd, new SqlConnection() });
+            return (byte[])SqlSecurityUtilDecryptWithKey.Invoke(null, new Object[] { cipherText, cipherMd, new SqlConnection(), new SqlCommand() });
         }
 
         internal static byte[] EncryptWithKey(byte[] plainText, Object cipherMd)
         {
-            return (byte[])SqlSecurityUtilEncryptWithKey.Invoke(null, new Object[] { plainText, cipherMd, new SqlConnection() });
+            return (byte[])SqlSecurityUtilEncryptWithKey.Invoke(null, new Object[] { plainText, cipherMd, new SqlConnection(), new SqlCommand() });
         }
 
         /// <summary>
