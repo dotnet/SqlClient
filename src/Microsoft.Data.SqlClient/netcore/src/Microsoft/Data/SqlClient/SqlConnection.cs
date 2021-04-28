@@ -83,6 +83,12 @@ namespace Microsoft.Data.SqlClient
                     {SqlColumnEncryptionCspProvider.ProviderName, new SqlColumnEncryptionCspProvider()}
                 };
 
+        /// Instance-level list of custom key store providers. It can be set more than once by the user.
+        private IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> _customColumnEncryptionKeyStoreProviders;
+
+        internal bool HasColumnEncryptionKeyStoreProvidersRegistered => 
+            _customColumnEncryptionKeyStoreProviders != null && _customColumnEncryptionKeyStoreProviders.Count > 0;
+
         // Lock to control setting of s_globalCustomColumnEncryptionKeyStoreProviders
         private static readonly object s_globalCustomColumnEncryptionKeyProvidersLock = new object();
 
@@ -91,11 +97,6 @@ namespace Microsoft.Data.SqlClient
         /// Global custom provider list can only supplied once per application.
         /// </summary>
         private static IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> s_globalCustomColumnEncryptionKeyStoreProviders;
-
-        /// <summary>
-        /// Per-connection custom providers. It can be provided by the user and can be set more than once. 
-        /// </summary> 
-        private IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> _customColumnEncryptionKeyStoreProviders; 
 
         /// <summary>
         /// Dictionary object holding trusted key paths for various SQL Servers.
@@ -237,10 +238,10 @@ namespace Microsoft.Data.SqlClient
             }
 
             // instance-level custom provider cache takes precedence over global cache
-            if (connection._customColumnEncryptionKeyStoreProviders != null &&
-                connection._customColumnEncryptionKeyStoreProviders.Count > 0)
+            if (_customColumnEncryptionKeyStoreProviders != null &&
+                _customColumnEncryptionKeyStoreProviders.Count > 0)
             {
-                return connection._customColumnEncryptionKeyStoreProviders.TryGetValue(providerName, out columnKeyStoreProvider);
+                return _customColumnEncryptionKeyStoreProviders.TryGetValue(providerName, out columnKeyStoreProvider);
             }
 
             lock (s_globalCustomColumnEncryptionKeyProvidersLock)

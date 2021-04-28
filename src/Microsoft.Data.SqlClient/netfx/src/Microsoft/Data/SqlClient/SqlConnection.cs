@@ -70,6 +70,9 @@ namespace Microsoft.Data.SqlClient
         /// Instance-level list of custom key store providers. It can be set more than once by the user.
         private IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> _customColumnEncryptionKeyStoreProviders;
 
+        internal bool HasColumnEncryptionKeyStoreProvidersRegistered => 
+            _customColumnEncryptionKeyStoreProviders != null && _customColumnEncryptionKeyStoreProviders.Count > 0;
+
         // Lock to control setting of s_globalCustomColumnEncryptionKeyStoreProviders
         private static readonly object s_globalCustomColumnEncryptionKeyProvidersLock = new object();
 
@@ -232,10 +235,10 @@ namespace Microsoft.Data.SqlClient
             }
 
             // instance-level custom provider cache takes precedence over global cache
-            if (connection._customColumnEncryptionKeyStoreProviders != null &&
-                connection._customColumnEncryptionKeyStoreProviders.Count > 0)
+            if (_customColumnEncryptionKeyStoreProviders != null &&
+                _customColumnEncryptionKeyStoreProviders.Count > 0)
             {
-                return connection._customColumnEncryptionKeyStoreProviders.TryGetValue(providerName, out columnKeyStoreProvider);
+                return _customColumnEncryptionKeyStoreProviders.TryGetValue(providerName, out columnKeyStoreProvider);
             }
 
             lock (s_globalCustomColumnEncryptionKeyProvidersLock)
@@ -268,7 +271,7 @@ namespace Microsoft.Data.SqlClient
         internal List<string> GetColumnEncryptionCustomKeyStoreProvidersNames()
         {
             if (_customColumnEncryptionKeyStoreProviders != null && 
-						_customColumnEncryptionKeyStoreProviders.Count > 0)
+                _customColumnEncryptionKeyStoreProviders.Count > 0)
             {
                 return _customColumnEncryptionKeyStoreProviders.Keys.ToList();
             }

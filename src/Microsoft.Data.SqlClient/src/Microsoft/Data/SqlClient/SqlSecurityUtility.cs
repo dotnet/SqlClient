@@ -256,6 +256,9 @@ namespace Microsoft.Data.SqlClient
             return;
         }
 
+        private static bool InstanceLevelProvidersAreRegistered(SqlConnection connection, SqlCommand command) =>
+            connection.HasColumnEncryptionKeyStoreProvidersRegistered || (command != null && command.HasColumnEncryptionKeyStoreProvidersRegistered);
+
         /// <summary>
         /// Decrypts the symmetric key and saves it in metadata.
         /// </summary>
@@ -268,13 +271,19 @@ namespace Microsoft.Data.SqlClient
             sqlClientSymmetricKey = null;
             encryptionkeyInfoChosen = null;
             Exception lastException = null;
-            SqlSymmetricKeyCache cache = SqlSymmetricKeyCache.GetInstance();
+            SqlSymmetricKeyCache globalCekCache = SqlSymmetricKeyCache.GetInstance();
 
             foreach (SqlEncryptionKeyInfo keyInfo in sqlTceCipherInfoEntry.ColumnEncryptionKeyValues)
             {
                 try
                 {
-                    if (cache.GetKey(keyInfo, out sqlClientSymmetricKey, connection, command))
+                    if (InstanceLevelProvidersAreRegistered(connection, command) &&
+                        TryGetKeyFromLocalCache(keyInfo, out sqlClientSymmetricKey, connection, command))
+                    {
+                        encryptionkeyInfoChosen = keyInfo;
+                        break;
+                    }
+                    else if (globalCekCache.GetKey(keyInfo, out sqlClientSymmetricKey, connection, command))
                     {
                         encryptionkeyInfoChosen = keyInfo;
                         break;
@@ -293,6 +302,40 @@ namespace Microsoft.Data.SqlClient
             }
 
             Debug.Assert(encryptionkeyInfoChosen != null, "encryptionkeyInfoChosen must have a value.");
+        }
+
+        private static bool TryGetKeyFromLocalCache(SqlEncryptionKeyInfo keyInfo, out SqlClientSymmetricKey encryptionKey, SqlConnection connection, SqlCommand command)
+        {
+            string serverName = connection.DataSource;
+            Debug.Assert(serverName != null, @"serverName should not be null.");
+
+            Debug.Assert(SqlConnection.ColumnEncryptionTrustedMasterKeyPaths != null, @"SqlConnection.ColumnEncryptionTrustedMasterKeyPaths should not be null");
+
+            ThrowIfKeyPathIsNotTrustedForServer(serverName, keyInfo.keyPath);
+            if (!TryGetColumnEncryptionKeyStoreProvider(keyInfo.keyStoreName, out SqlColumnEncryptionKeyStoreProvider provider, connection, command))
+            {
+                throw SQL.UnrecognizedKeyStoreProviderName(keyInfo.keyStoreName,
+                    SqlConnection.GetColumnEncryptionSystemKeyStoreProvidersNames(),
+                    GetListOfProviderNamesFromCacheThatWasSearched(connection, command));
+            }
+
+            // Decrypt the CEK
+            // We will simply bubble up the exception from the DecryptColumnEncryptionKey function.
+            byte[] plaintextKey;
+            try
+            {
+                plaintextKey = provider.DecryptColumnEncryptionKey(keyInfo.keyPath, keyInfo.algorithmName, keyInfo.encryptedKey);
+            }
+            catch (Exception e)
+            {
+                // Generate a new exception and throw.
+                string keyHex = GetBytesAsString(keyInfo.encryptedKey, fLast: true, countOfBytes: 10);
+                throw SQL.KeyDecryptionFailed(keyInfo.keyStoreName, keyHex, e);
+            }
+
+            encryptionKey = new SqlClientSymmetricKey(plaintextKey);
+
+            return true;
         }
 
         /// <summary>
@@ -335,21 +378,28 @@ namespace Microsoft.Data.SqlClient
                         GetListOfProviderNamesFromCacheThatWasSearched(connection, command));
                 }
 
-                bool? signatureVerificationResult = ColumnMasterKeyMetadataSignatureVerificationCache.GetSignatureVerificationResult(keyStoreName, keyPath, isEnclaveEnabled, CMKSignature);
+                bool? signatureVerificationResult;
 
-                if (signatureVerificationResult == null)
+                if (InstanceLevelProvidersAreRegistered(connection, command))
                 {
-                    // We will simply bubble up the exception from VerifyColumnMasterKeyMetadata function.
-                    isValidSignature = provider.VerifyColumnMasterKeyMetadata(keyPath, isEnclaveEnabled,
-                            CMKSignature);
-
-                    ColumnMasterKeyMetadataSignatureVerificationCache.AddSignatureVerificationResult(keyStoreName, keyPath, isEnclaveEnabled, CMKSignature, isValidSignature);
+                    signatureVerificationResult = provider.VerifyColumnMasterKeyMetadata(keyPath, isEnclaveEnabled, CMKSignature);
                 }
                 else
                 {
-                    isValidSignature = signatureVerificationResult.Value;
-                }
+                    signatureVerificationResult = ColumnMasterKeyMetadataSignatureVerificationCache.GetSignatureVerificationResult(keyStoreName, keyPath, isEnclaveEnabled, CMKSignature);
+                    if (signatureVerificationResult == null)
+                    {
+                        // We will simply bubble up the exception from VerifyColumnMasterKeyMetadata function.
+                        isValidSignature = provider.VerifyColumnMasterKeyMetadata(keyPath, isEnclaveEnabled,
+                                CMKSignature);
 
+                        ColumnMasterKeyMetadataSignatureVerificationCache.AddSignatureVerificationResult(keyStoreName, keyPath, isEnclaveEnabled, CMKSignature, isValidSignature);
+                    }
+                    else
+                    {
+                        isValidSignature = signatureVerificationResult.Value;
+                    }
+                }
             }
             catch (Exception e)
             {
