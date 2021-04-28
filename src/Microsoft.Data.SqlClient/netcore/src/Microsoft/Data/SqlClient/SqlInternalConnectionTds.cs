@@ -1032,9 +1032,9 @@ namespace Microsoft.Data.SqlClient
                         stateObj = _parser.GetSession(this);
                         mustPutSession = true;
                     }
-                    else if (internalTransaction.OpenResultsCount != 0)
+                    if (internalTransaction.OpenResultsCount != 0)
                     {
-                        //throw SQL.CannotCompleteDelegatedTransactionWithOpenResults(this);
+                        throw SQL.CannotCompleteDelegatedTransactionWithOpenResults(this, _parser.MARSOn);
                     }
                 }
 
