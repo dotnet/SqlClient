@@ -9,6 +9,7 @@ using System.Data;
 using System.Data.Common;
 using System.Data.SqlTypes;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -1558,23 +1559,12 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private Task ConvertWriteValueAsync<T>(T value, int col, _SqlMetaData metadata, bool isNull, bool isSqlType)
+        private bool ConvertValueIfNeeded<T>(T value, _SqlMetaData metadata, ref bool isSqlType, out bool coercedToDataFeed, out object convertedValue)
         {
-            bool coercedToDataFeed = false;
-
-            if (isNull)
-            {
-                if (!metadata.IsNullable)
-                {
-                    throw SQL.BulkLoadBulkLoadNotAllowDBNull(metadata.column);
-                }
-
-                return DoWriteValueAsync(value, col, isSqlType, coercedToDataFeed, isNull, metadata);
-            }
-
             MetaType type = metadata.metaType;
             bool typeChanged = false;
-            object objValue = null;
+            coercedToDataFeed = false;
+            convertedValue = null;
 
             // If the column is encrypted then we are going to transparently encrypt this column
             // (based on connection string setting)- Use the metaType for the underlying
@@ -1642,7 +1632,7 @@ namespace Microsoft.Data.SqlClient
                         typeChanged = false; // Setting this to false as SqlParameter.CoerceValue will only set it to true when converting to a CLR type
 
                         // returning here to avoid unnecessary decValue initialization for all types
-                        return WriteConvertedValue(sqlValue, col, isSqlType, isNull, coercedToDataFeed, metadata);
+                        return typeChanged;
 
                     case TdsEnums.SQLINTN:
                     case TdsEnums.SQLFLTN:
@@ -1666,17 +1656,17 @@ namespace Microsoft.Data.SqlClient
                     case TdsEnums.SQLDATETIME2:
                     case TdsEnums.SQLDATETIMEOFFSET:
                         mt = MetaType.GetMetaTypeFromSqlDbType(type.SqlDbType, false);
-                        typeChanged = SqlParameter.CoerceValueIfNeeded(value, mt, out objValue, out coercedToDataFeed);
+                        typeChanged = SqlParameter.CoerceValueIfNeeded(value, mt, out convertedValue, out coercedToDataFeed);
                         break;
                     case TdsEnums.SQLNCHAR:
                     case TdsEnums.SQLNVARCHAR:
                     case TdsEnums.SQLNTEXT:
                         mt = MetaType.GetMetaTypeFromSqlDbType(type.SqlDbType, false);
-                        typeChanged = SqlParameter.CoerceValueIfNeeded(value, mt, out objValue, out coercedToDataFeed, false);
+                        typeChanged = SqlParameter.CoerceValueIfNeeded(value, mt, out convertedValue, out coercedToDataFeed, false);
                         if (!coercedToDataFeed)
                         {   // We do not need to test for TextDataFeed as it is only assigned to (N)VARCHAR(MAX)
                             string str = typeChanged
-                                ? (string)objValue
+                                ? (string)convertedValue
                                 : isSqlType
                                     ? value.GenericCast<T, SqlString>().Value
                                     : value.GenericCast<T, string>()
@@ -1700,7 +1690,7 @@ namespace Microsoft.Data.SqlClient
                         }
                         break;
                     case TdsEnums.SQLVARIANT:
-                        typeChanged = ValidateBulkCopyVariantIfNeeded(value, out objValue);
+                        typeChanged = ValidateBulkCopyVariantIfNeeded(value, out convertedValue);
                         break;
                     case TdsEnums.SQLUDT:
                         // UDTs are sent as varbinary so we need to get the raw bytes
@@ -1711,7 +1701,7 @@ namespace Microsoft.Data.SqlClient
                         // in byte[] form.
                         if (!(value is byte[]))
                         {
-                            objValue = _connection.GetBytes(value);
+                            convertedValue = _connection.GetBytes(value);
                             typeChanged = true;
                         }
                         break;
@@ -1720,7 +1710,7 @@ namespace Microsoft.Data.SqlClient
                         Debug.Assert((value is XmlReader) || (value is SqlCachedBuffer) || (value is string) || (value is SqlString) || (value is XmlDataFeed), "Invalid value type of Xml datatype");
                         if (value is XmlReader xmlReader)
                         {
-                            objValue = new XmlDataFeed(xmlReader);
+                            convertedValue = new XmlDataFeed(xmlReader);
                             typeChanged = true;
                             coercedToDataFeed = true;
                         }
@@ -1740,16 +1730,7 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.BulkLoadCannotConvertValue(value.GetType(), type, metadata.ordinal, RowNumber, metadata.isEncrypted, metadata.column, value.ToString(), e);
             }
 
-            if (typeChanged)
-            {
-                // All type changes change to CLR types
-                isSqlType = false;
-                return WriteConvertedValue(objValue, col, isSqlType, isNull, coercedToDataFeed, metadata);
-            }
-            else
-            {
-                return WriteConvertedValue(value, col, isSqlType, isNull, coercedToDataFeed, metadata);
-            }
+            return typeChanged;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServer[@name="DbDataReaderParameter"]/*'/>
@@ -2276,33 +2257,44 @@ namespace Microsoft.Data.SqlClient
         private Task WriteValueAsync<T>(T value, int col, bool isSqlType, bool isDataFeed, bool isNull)
         {
             _SqlMetaData metadata = _sortedColumnMappings[col]._metadata;
+            object convertedValue = null;
+            bool isTypeChanged = false;
             if (isDataFeed)
             {
                 //nothing to convert, skip straight to write
-                return DoWriteValueAsync(value, col, isSqlType, isDataFeed, isNull, metadata);
+            }
+            else if (isNull)
+            {
+                if (!metadata.IsNullable)
+                {
+                    throw SQL.BulkLoadBulkLoadNotAllowDBNull(metadata.column);
+                }
+
+                // don't need to convert nulls
             }
             else
             {
-                return ConvertWriteValueAsync(value, col, metadata, isNull, isSqlType);
-            }
-        }
+                isTypeChanged = ConvertValueIfNeeded(value, metadata, ref isSqlType, out isDataFeed, out convertedValue);
 
-        private Task WriteConvertedValue<T>(T value, int col, bool isSqlType, bool isNull, bool isDatafeed, _SqlMetaData metadata)
-        {
-            // If column encryption is requested via connection string option, perform encryption here
-            if (!isNull && // if value is not NULL
-                metadata.isEncrypted)
-            { // If we are transparently encrypting
-                Debug.Assert(_parser.ShouldEncryptValuesForBulkCopy());
-                var bytesValue = _parser.EncryptColumnValue(value, metadata, metadata.column, _stateObj, isDatafeed, isSqlType);
-                isSqlType = false; // Its not a sql type anymore
+                // If column encryption is requested via connection string option, perform encryption here
+                if (metadata.isEncrypted) // If we are transparently encrypting
+                {
+                    Debug.Assert(_parser.ShouldEncryptValuesForBulkCopy());
 
-                return DoWriteValueAsync(bytesValue, col, isSqlType, isDatafeed, isNull, metadata);
+                    convertedValue = isTypeChanged
+                        ? _parser.EncryptColumnValue(convertedValue, metadata, metadata.column, _stateObj, isDataFeed, isSqlType)
+                        : _parser.EncryptColumnValue(value, metadata, metadata.column, _stateObj, isDataFeed, isSqlType)
+                    ;
+
+                    isTypeChanged = true; // we should use converted value from here on.
+                    isSqlType = false; // Its not a sql type anymore
+                }
             }
-            else
-            {
-                return DoWriteValueAsync(value, col, isSqlType, isDatafeed, isNull, metadata);
-            }
+
+            return isTypeChanged
+                ? DoWriteValueAsync(convertedValue, col, isSqlType, isDataFeed, isNull, metadata)
+                : DoWriteValueAsync(value, col, isSqlType, isDataFeed, isNull, metadata)
+            ;
         }
 
         private Task DoWriteValueAsync<T>(T value, int col, bool isSqlType, bool isDataFeed, bool isNull, _SqlMetaData metadata)
