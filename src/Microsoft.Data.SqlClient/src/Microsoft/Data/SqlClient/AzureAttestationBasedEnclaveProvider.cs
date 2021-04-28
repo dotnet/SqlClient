@@ -73,9 +73,7 @@ namespace Microsoft.Data.SqlClient
         // Gets the information that SqlClient subsequently uses to initiate the process of attesting the enclave and to establish a secure session with the enclave.
         internal override SqlEnclaveAttestationParameters GetAttestationParameters(string attestationUrl, byte[] customData, int customDataLength)
         {
-            // The key derivation function and hash algorithm name are specified when key derivation is performed
-            ECDiffieHellman clientDHKey = ECDiffieHellman.Create();
-            clientDHKey.KeySize = DiffieHellmanKeySize;
+            ECDiffieHellman clientDHKey = KeyConverter.CreateECDiffieHellman(DiffieHellmanKeySize);
             byte[] attestationParam = PrepareAttestationParameters(attestationUrl, customData, customDataLength);
             return new SqlEnclaveAttestationParameters(AzureBasedAttestationProtocolId, attestationParam, clientDHKey);
         }
@@ -528,8 +526,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Perform signature verification. The enclave's DiffieHellman public key was signed by the enclave's RSA public key.
-            RSAParameters rsaParams = KeyConverter.RSAPublicKeyBlobToParams(enclaveRsaPublicKey);
-            using (RSA rsa = RSA.Create(rsaParams))
+            using (RSA rsa = KeyConverter.CreateRSAFromPublicKeyBlob(enclaveRsaPublicKey))
             {
                 if (!rsa.VerifyData(enclaveDHInfo.PublicKey, enclaveDHInfo.PublicKeySignature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1))
                 {
@@ -537,9 +534,10 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            ECParameters ecParams = KeyConverter.ECCPublicKeyBlobToParams(enclaveDHInfo.PublicKey);
-            ECDiffieHellman enclaveDHKey = ECDiffieHellman.Create(ecParams);
-            return clientDHKey.DeriveKeyFromHash(enclaveDHKey.PublicKey, HashAlgorithmName.SHA256);
+            using (ECDiffieHellman enclaveDHKey = KeyConverter.CreateECDiffieHellmanFromPublicKeyBlob(enclaveDHInfo.PublicKey))
+            {
+                return KeyConverter.DeriveKey(clientDHKey, enclaveDHKey.PublicKey);
+            }
         }
         #endregion
     }
