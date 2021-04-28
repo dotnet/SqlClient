@@ -506,122 +506,134 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCommand), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper))]
         public void ConcurrentExecution(string cnnString, SqlRetryLogicBaseProvider provider)
         {
-            var cnnStr = new SqlConnectionStringBuilder(cnnString) { MultipleActiveResultSets = true, ConnectTimeout = 0 }.ConnectionString;
             int numberOfTries = provider.RetryLogic.NumberOfTries;
             string query = "SELECT bad command";
             int retriesCount = 0;
-            int concurrentExecution = 5;
+            int concurrentExecution = 3;
             provider.Retrying += (s, e) => Interlocked.Increment(ref retriesCount);
 
-            using (SqlConnection cnn = new SqlConnection(cnnStr))
+            Parallel.For(0, concurrentExecution,
+            i =>
             {
-                cnn.Open();
-
-                Parallel.For(0, concurrentExecution,
-                i =>
+                using (SqlConnection cnn = new SqlConnection(cnnString))
+                using (SqlCommand cmd = cnn.CreateCommand())
                 {
-                    using (SqlCommand cmd = cnn.CreateCommand())
-                    {
-                        cmd.RetryLogicProvider = provider;
-                        cmd.CommandText = query;
-                        Assert.Throws<AggregateException>(() => cmd.ExecuteScalar());
-                    }
-                });
-                Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
+                    cnn.Open();
+                    cmd.RetryLogicProvider = provider;
+                    cmd.CommandText = query;
+                    Assert.Throws<AggregateException>(() => cmd.ExecuteScalar());
+                }
+            });
+            Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
 
-                retriesCount = 0;
-                Parallel.For(0, concurrentExecution,
-                i =>
+            retriesCount = 0;
+            Parallel.For(0, concurrentExecution,
+            i =>
+            {
+                using (SqlConnection cnn = new SqlConnection(cnnString))
+                using (SqlCommand cmd = cnn.CreateCommand())
                 {
-                    using (SqlCommand cmd = cnn.CreateCommand())
-                    {
-                        cmd.RetryLogicProvider = provider;
-                        cmd.CommandText = query;
-                        Assert.Throws<AggregateException>(() => cmd.ExecuteNonQuery());
-                    }
-                });
-                Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
+                    cnn.Open();
+                    cmd.RetryLogicProvider = provider;
+                    cmd.CommandText = query;
+                    Assert.Throws<AggregateException>(() => cmd.ExecuteNonQuery());
+                }
+            });
+            Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
 
-                retriesCount = 0;
-                Parallel.For(0, concurrentExecution,
-                i =>
+            retriesCount = 0;
+            Parallel.For(0, concurrentExecution,
+            i =>
+            {
+                using (SqlConnection cnn = new SqlConnection(cnnString))
+                using (SqlCommand cmd = cnn.CreateCommand())
                 {
-                    using (SqlCommand cmd = cnn.CreateCommand())
-                    {
-                        cmd.RetryLogicProvider = provider;
-                        cmd.CommandText = query;
-                        Assert.Throws<AggregateException>(() => cmd.ExecuteReader());
-                    }
-                });
-                Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
+                    cnn.Open();
+                    cmd.RetryLogicProvider = provider;
+                    cmd.CommandText = query;
+                    Assert.Throws<AggregateException>(() => cmd.ExecuteReader());
+                }
+            });
+            Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
 
-                retriesCount = 0;
-                Parallel.For(0, concurrentExecution,
-                i =>
+            retriesCount = 0;
+            Parallel.For(0, concurrentExecution,
+            i =>
+            {
+                using (SqlConnection cnn = new SqlConnection(cnnString))
+                using (SqlCommand cmd = cnn.CreateCommand())
                 {
-                    using (SqlCommand cmd = cnn.CreateCommand())
-                    {
-                        cmd.RetryLogicProvider = provider;
-                        cmd.CommandText = query + " FOR XML AUTO";
-                        Assert.Throws<AggregateException>(() => cmd.ExecuteXmlReader());
-                    }
-                });
-                Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
+                    cnn.Open();
+                    cmd.RetryLogicProvider = provider;
+                    cmd.CommandText = query + " FOR XML AUTO";
+                    Assert.Throws<AggregateException>(() => cmd.ExecuteXmlReader());
+                }
+            });
+            Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
 
-                retriesCount = 0;
-                Parallel.For(0, concurrentExecution,
-                i =>
+            retriesCount = 0;
+            Parallel.For(0, concurrentExecution,
+            i =>
+            {
+                using (SqlConnection cnn = new SqlConnection(cnnString))
+                using (SqlCommand cmd = cnn.CreateCommand())
                 {
-                    using (SqlCommand cmd = cnn.CreateCommand())
-                    {
-                        cmd.RetryLogicProvider = provider;
-                        cmd.CommandText = query;
-                        Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteScalarAsync()).Wait();
-                    }
-                });
-                Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
+                    cnn.Open();
+                    cmd.RetryLogicProvider = provider;
+                    cmd.CommandText = query;
+                    Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteScalarAsync()).Wait();
+                }
+            });
+            Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
 
-                retriesCount = 0;
-                Parallel.For(0, concurrentExecution,
-                i =>
+            retriesCount = 0;
+            Parallel.For(0, concurrentExecution,
+            i =>
+            {
+                using (SqlConnection cnn = new SqlConnection(cnnString))
+                using (SqlCommand cmd = cnn.CreateCommand())
                 {
-                    using (SqlCommand cmd = cnn.CreateCommand())
-                    {
-                        cmd.RetryLogicProvider = provider;
-                        cmd.CommandText = query;
-                        Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteNonQueryAsync()).Wait();
-                    }
-                });
-                Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
+                    cnn.Open();
+                    cmd.RetryLogicProvider = provider;
+                    cmd.CommandText = query;
+                    Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteNonQueryAsync()).Wait();
+                }
+            });
+            Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
 
-                retriesCount = 0;
-                Parallel.For(0, concurrentExecution,
-                i =>
+            retriesCount = 0;
+            Parallel.For(0, concurrentExecution,
+            i =>
+            {
+                using (SqlConnection cnn = new SqlConnection(cnnString))
+                using (SqlCommand cmd = cnn.CreateCommand())
                 {
-                    using (SqlCommand cmd = cnn.CreateCommand())
-                    {
-                        cmd.RetryLogicProvider = provider;
-                        cmd.CommandText = query;
-                        Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteReaderAsync()).Wait();
-                    }
-                });
-                Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
+                    cnn.Open();
+                    cmd.RetryLogicProvider = provider;
+                    cmd.CommandText = query;
+                    Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteReaderAsync()).Wait();
+                }
+            });
+            Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
 
-                retriesCount = 0;
-                Parallel.For(0, concurrentExecution,
-                i =>
+            // TODO: there is a known issue by ExecuteXmlReaderAsync that should be solved first- issue #44
+            /*
+            retriesCount = 0;
+            Parallel.For(0, concurrentExecution,
+            i =>
+            {
+                using (SqlConnection cnn = new SqlConnection(cnnString))
+                using (SqlCommand cmd = cnn.CreateCommand())
                 {
-                    using (SqlCommand cmd = cnn.CreateCommand())
-                    {
-                        cmd.RetryLogicProvider = provider;
-                        cmd.CommandText = query + " FOR XML AUTO";
-                        Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteXmlReaderAsync()).Wait();
-                    }
-                });
-                Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
-            }
+                    cnn.Open();
+                    cmd.RetryLogicProvider = provider;
+                    cmd.CommandText = query + " FOR XML AUTO";
+                    Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteXmlReaderAsync()).Wait();
+                }
+            });
+            Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
+            */
         }
-
         #endregion
 
         #region private members
