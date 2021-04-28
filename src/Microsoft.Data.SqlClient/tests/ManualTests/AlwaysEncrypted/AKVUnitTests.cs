@@ -122,7 +122,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             stopwatch.Restart();
             decryptedKey = akvProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, "RSA_OAEP", encryptedKey);
             long elapsedWithCache = stopwatch.ElapsedMilliseconds;
-            Assert.InRange(elapsedWithCache, 0, elapsedWithoutCache / 4);
+            Assert.InRange<double>(elapsedWithCache, 0, elapsedWithoutCache / 4);
             Assert.True(plaintextKey.SequenceEqual(decryptedKey));
         }
 
@@ -140,7 +140,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             stopwatch.Restart();
             verificationResult = akvProvider.VerifyColumnMasterKeyMetadata(DataTestUtility.AKVUrl, true, signature);
             long elapsedWithCache = stopwatch.ElapsedMilliseconds;
-            Assert.InRange(elapsedWithCache, 0, elapsedWithoutCache / 4);
+            Assert.InRange<double>(elapsedWithCache, 0, elapsedWithoutCache / 4);
             Assert.True(verificationResult);
         }
 
