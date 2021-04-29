@@ -116,8 +116,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     customerFirstParam.Direction = System.Data.ParameterDirection.Input;
                     customerFirstParam.ForceColumnEncryption = true;
 
-										SqlDataReader sqlDataReader = sqlCommand.ExecuteReader();
-										sqlDataReader.Close();
+                    SqlDataReader sqlDataReader = sqlCommand.ExecuteReader();
+                    sqlDataReader.Close();
 
                     SqlColumnEncryptionAzureKeyVaultProvider sqlColumnEncryptionAzureKeyVaultProvider =
                         new SqlColumnEncryptionAzureKeyVaultProvider(new SqlClientCustomTokenCredential());
@@ -131,7 +131,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                     // execute a query using provider from command-level cache. this will cache the cek in the local cek cache
                     sqlCommand.RegisterColumnEncryptionKeyStoreProvidersOnCommand(customProvider);
-                    sqlCommand.ExecuteReader();
+                    SqlDataReader sqlDataReader2 = sqlCommand.ExecuteReader();
+                    sqlDataReader2.Close();
 
                     // global cek cache and local cek cache are populated above
                     // when using a new per-command provider, it will only use its local cek cache 
