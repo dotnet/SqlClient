@@ -125,7 +125,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     Dictionary<string, SqlColumnEncryptionKeyStoreProvider> customProvider =
                         new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>()
                         {
-                            { "AZURE_KEY_VAULT", sqlColumnEncryptionAzureKeyVaultProvider }
+                            { SqlColumnEncryptionAzureKeyVaultProvider.ProviderName, sqlColumnEncryptionAzureKeyVaultProvider }
                         };
 
 
@@ -137,8 +137,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     // global cek cache and local cek cache are populated above
                     // when using a new per-command provider, it will only use its local cek cache 
                     // the following query should fail due to an empty cek cache and invalid credentials
-                    sqlColumnEncryptionAzureKeyVaultProvider =
-                       new SqlColumnEncryptionAzureKeyVaultProvider(new ClientSecretCredential("tenant", "client", "secret"));
+                    customProvider[SqlColumnEncryptionAzureKeyVaultProvider.ProviderName] =
+                        new SqlColumnEncryptionAzureKeyVaultProvider(new ClientSecretCredential("tenant", "client", "secret"));
                     sqlCommand.RegisterColumnEncryptionKeyStoreProvidersOnCommand(customProvider);
                     Exception ex = Assert.Throws<SqlException>(() => sqlCommand.ExecuteReader());
                     Assert.Contains("ClientSecretCredential authentication failed", ex.Message);
