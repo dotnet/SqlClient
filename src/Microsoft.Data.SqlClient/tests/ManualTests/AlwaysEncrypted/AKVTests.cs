@@ -116,7 +116,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     customerFirstParam.Direction = System.Data.ParameterDirection.Input;
                     customerFirstParam.ForceColumnEncryption = true;
 
-                    sqlCommand.ExecuteReader();
+										SqlDataReader sqlDataReader = sqlCommand.ExecuteReader();
+										sqlDataReader.Close();
 
                     SqlColumnEncryptionAzureKeyVaultProvider sqlColumnEncryptionAzureKeyVaultProvider =
                         new SqlColumnEncryptionAzureKeyVaultProvider(new SqlClientCustomTokenCredential());
