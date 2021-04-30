@@ -371,6 +371,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsRecordBufferSetter.cs">
       <Link>Microsoft\Data\SqlClient\TdsRecordBufferSetter.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlNormalizer.cs">
+      <Link>Microsoft\Data\SqlClient\Server\SqlNormalizer.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SmiRecordBuffer.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiRecordBuffer.cs</Link>
     </Compile>
@@ -544,7 +547,6 @@
     <Compile Include="Microsoft\Data\SqlClient\Server\ValueUtilsSmi.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\sqlser.cs" />
     <Compile Include="Microsoft\Data\Sql\SqlGenericUtil.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\Server\sqlnorm.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(BuildSimulator)' == 'true'">
     <Compile Include="Microsoft\Data\SqlClient\SimulatorEnclaveProvider.cs" />

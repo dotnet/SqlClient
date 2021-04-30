@@ -133,6 +133,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlMethodAttribute.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlMethodAttribute.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlNormalizer.cs">
+      <Link>Microsoft\Data\SqlClient\Server\SqlNormalizer.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlUserDefinedTypeAttribute.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlUserDefinedTypeAttribute.cs</Link>
     </Compile>
@@ -449,7 +452,7 @@
       <Link>Microsoft\Data\SqlClient\EnclavePackage.cs</Link>
     </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\Server\SqlNorm.cs" />
+
     <Compile Include="Microsoft\Data\SqlClient\Server\SqlSer.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBuffer.cs" />
