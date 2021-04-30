@@ -121,14 +121,7 @@ Manual Tests require the below setup to run:
   |SupportsIntegratedSecurity | (Optional) Whether or not the USER running tests has integrated security access to the target SQL Server.| `true` OR `false`|
   |SupportsFileStream | (Optional) Whether or not FileStream is enabled on SQL Server| `true` OR `false`|
   |UseManagedSNIOnWindows | (Optional) Enables testing with Managed SNI on Windows| `true` OR `false`|
-  |DNSCachingConnString | (Optional) Connection String for an Azure SQL Server with dual stack IPv4 and IPv6 network support| `Data Source={server.database.windows.net}; Initial Catalog={Azure_DB_Name};User ID={AAD_User}; Password={AAD_User_Password};`|
-  |DNSCachingServerCR | ???| ???|
-  |DNSCachingServerTR | ???| ???|
-  |IsDNSCachingSupportedCR | ???| ???|
-  |IsDNSCachingSupportedTR | ???| ???|  
   |IsAzureSynpase | (Optional) When set to 'true', test suite runs compatible tests for Azure Synapse/Parallel Data Warehouse. | `true` OR `false`|
-  |EnclaveAzureDatabaseConnString | ???| ???|
-  |UserManagedIdentityClientId | ???| ???|
 
 ### Commands to run Manual Tests:
 
