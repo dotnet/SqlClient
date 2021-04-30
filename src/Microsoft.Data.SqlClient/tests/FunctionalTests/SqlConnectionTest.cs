@@ -1349,49 +1349,32 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             SqlConnection cn = new SqlConnection();
             cn.ConnectionString = "IPAddressPreference=IPv4First";
+            cn.ConnectionString = "IPAddressPreference=IPV4FIRST";
+            cn.ConnectionString = "IPAddressPreference=ipv4first";
+            cn.ConnectionString = "IPAddressPreference=iPv4FirSt";
             cn.ConnectionString = "IPAddressPreference=IPv6First";
+            cn.ConnectionString = "IPAddressPreference=IPV6FIRST";
+            cn.ConnectionString = "IPAddressPreference=ipv6first";
+            cn.ConnectionString = "IPAddressPreference=iPv6FirST";
             cn.ConnectionString = "IPAddressPreference=UsePlatformDefault";
+            cn.ConnectionString = "IPAddressPreference=USEPLATFORMDEFAULT";
+            cn.ConnectionString = "IPAddressPreference=useplatformdefault";
+            cn.ConnectionString = "IPAddressPreference=usePlAtFormdeFault";
         }
 
-        [Fact]
-        public void ConnectionString_IPAddressPreference_Invalid()
+        [Theory]
+        [InlineData("IPAddressPreference=-1")]
+        [InlineData("IPAddressPreference=0")]
+        [InlineData("IPAddressPreference=!@#")]
+        [InlineData("IPAddressPreference=ABC")]
+        [InlineData("IPAddressPreference=ipv6")]
+        public void ConnectionString_IPAddressPreference_Invalid(string value)
         {
             SqlConnection cn = new SqlConnection();
-
-            // number
             try
             {
-                cn.ConnectionString = "IPAddressPreference=-1";
-            }
-            catch (ArgumentException ex)
-            {
-                // Invalid value for key 'ip address preference'
-                Assert.Equal(typeof(ArgumentException), ex.GetType());
-                Assert.Null(ex.InnerException);
-                Assert.NotNull(ex.Message);
-                Assert.Contains("'ip address preference'", ex.Message);
-                Assert.Null(ex.ParamName);
-            }
-
-            // symbols
-            try
-            {
-                cn.ConnectionString = "IPAddressPreference=!@#";
-            }
-            catch (ArgumentException ex)
-            {
-                // Invalid value for key 'ip address preference'
-                Assert.Equal(typeof(ArgumentException), ex.GetType());
-                Assert.Null(ex.InnerException);
-                Assert.NotNull(ex.Message);
-                Assert.Contains("'ip address preference'", ex.Message);
-                Assert.Null(ex.ParamName);
-            }
-
-            // invalid ip preference
-            try
-            {
-                cn.ConnectionString = "IPAddressPreference=ABC";
+                cn.ConnectionString = value;
+                Assert.True(false, $"It mustn't come to this line; Value '{value}' should be invalid.");
             }
             catch (ArgumentException ex)
             {

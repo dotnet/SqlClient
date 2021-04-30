@@ -334,6 +334,8 @@ namespace Microsoft.Data.SqlClient.SNI
         // Only write to the DNS cache when we receive IsSupported flag as true in the Feature Ext Ack from server.
         private static Socket Connect(string serverName, int port, TimeSpan timeout, bool isInfiniteTimeout, SqlConnectionIPAddressPreference ipPreference, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
         {
+            SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.INFO, "IP preference : {0}", Enum.GetName(typeof(SqlConnectionIPAddressPreference), ipPreference));
+
             IPAddress[] ipAddresses = Dns.GetHostAddresses(serverName);
 
             string IPv4String = null;
@@ -348,16 +350,17 @@ namespace Microsoft.Data.SqlClient.SNI
             Socket[] sockets = new Socket[ipAddresses.Length];
             AddressFamily[] preferedIPFamilies = new AddressFamily[2];
 
-            if (ipPreference == SqlConnectionIPAddressPreference.IPv6First)
-            {
-                preferedIPFamilies[0] = AddressFamily.InterNetworkV6;
-                preferedIPFamilies[1] = AddressFamily.InterNetwork;
-            }
-            else
+            if (ipPreference == SqlConnectionIPAddressPreference.IPv4First)
             {
                 preferedIPFamilies[0] = AddressFamily.InterNetwork;
                 preferedIPFamilies[1] = AddressFamily.InterNetworkV6;
             }
+            else if (ipPreference == SqlConnectionIPAddressPreference.IPv6First)
+            {
+                preferedIPFamilies[0] = AddressFamily.InterNetworkV6;
+                preferedIPFamilies[1] = AddressFamily.InterNetwork;
+            }
+            // else -> UsePlatformDefault
 
             CancellationTokenSource cts = null;
 
@@ -394,7 +397,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 // We go through the IP list twice.
                 // In the first traversal, we only try to connect with the preferedIPFamilies[0].
                 // In the second traversal, we only try to connect with the preferedIPFamilies[1].
-                // For UsePlatformDefault preference, we do traveral once.
+                // For UsePlatformDefault preference, we do traversal once.
                 for (int i = 0; i < preferedIPFamilies.Length; ++i)
                 {
                     foreach (IPAddress ipAddress in ipAddresses)
@@ -413,7 +416,10 @@ namespace Microsoft.Data.SqlClient.SNI
                                 // enable keep-alive on socket
                                 SetKeepAliveValues(ref sockets[n]);
 
-                                SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.INFO, "Connecting to IP address {0} and port {1}", args0: ipAddress, args1: port);
+                                SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.INFO, "Connecting to IP address {0} and port {1} using {2} address family.",
+                                                                          args0: ipAddress,
+                                                                          args1: port,
+                                                                          args2: ipAddress.AddressFamily);
                                 sockets[n].Connect(ipAddress, port);
                                 if (sockets[n] != null) // sockets[n] can be null if cancel callback is executed during connect()
                                 {
@@ -443,10 +449,12 @@ namespace Microsoft.Data.SqlClient.SNI
                         catch (Exception e)
                         {
                             SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR, "THIS EXCEPTION IS BEING SWALLOWED: {0}", args0: e?.Message);
+                            SqlClientEventSource.Log.TryAdvancedTraceEvent($"{s_className}.{System.Reflection.MethodBase.GetCurrentMethod().Name}{EventType.ERR}THIS EXCEPTION IS BEING SWALLOWED: {e}");
                         }
                     }
 
-                    // If we have already got an valid Socket, we won't do the second traversal.
+                    // If we have already got a valid Socket, or the platform default was prefered
+                    // we won't do the second traversal.
                     if (availableSocket != null || ipPreference == SqlConnectionIPAddressPreference.UsePlatformDefault) 
                     {
                         break;

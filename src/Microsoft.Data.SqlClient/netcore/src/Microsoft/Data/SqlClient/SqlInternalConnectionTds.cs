@@ -21,7 +21,7 @@ using Microsoft.Identity.Client;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal class SessionStateRecord
+    internal sealed class SessionStateRecord
     {
         internal bool _recoverable;
         internal uint _version;
@@ -29,7 +29,7 @@ namespace Microsoft.Data.SqlClient
         internal byte[] _data;
     }
 
-    internal class SessionData
+    internal sealed class SessionData
     {
         internal const int _maxNumberOfSessionStates = 256;
         internal uint _tdsVersion;
@@ -101,7 +101,7 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    sealed internal class SqlInternalConnectionTds : SqlInternalConnection, IDisposable
+    internal sealed class SqlInternalConnectionTds : SqlInternalConnection, IDisposable
     {
         // CONNECTION AND STATE VARIABLES
         private readonly SqlConnectionPoolGroupProviderInfo _poolGroupProviderInfo; // will only be null when called for ChangePassword, or creating SSE User Instance
@@ -2481,12 +2481,9 @@ namespace Microsoft.Data.SqlClient
 
         internal void OnFeatureExtAck(int featureId, byte[] data)
         {
-            if (RoutingInfo != null)
+            if (RoutingInfo != null && TdsEnums.FEATUREEXT_SQLDNSCACHING != featureId)
             {
-                if (TdsEnums.FEATUREEXT_SQLDNSCACHING != featureId)
-                {
-                    return;
-                }
+                return;
             }
 
             switch (featureId)

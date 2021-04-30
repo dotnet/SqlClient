@@ -18,6 +18,9 @@
     "SupportsLocalDb": false,
     "SupportsFileStream": false,
     "UseManagedSNIOnWindows": false,
+    "DNSCachingConnString": "",
+    "DNSCachingServerCR": "",
+    "DNSCachingServerTR": "",
     "IsAzureSynapse": false,
     "EnclaveAzureDatabaseConnString": "",
     "UserManagedIdentityClientId": ""

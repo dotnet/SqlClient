@@ -13,16 +13,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class ConfigurableIpPreferenceTest
     {
+        private const string CnnPrefIPv6 = ";IPAddressPreference=IPv6First";
+        private const string CnnPrefIPv4 = ";IPAddressPreference=IPv4First";
+
         [ConditionalTheory(typeof(DataTestUtility), nameof(DoesHostAddressContainBothIPv4AndIPv6))]
-        [InlineData(";IPAddressPreference=IPv6First")]
-        [InlineData(";IPAddressPreference=IPv4First")]
+        [InlineData(CnnPrefIPv6)]
+        [InlineData(CnnPrefIPv4)]
         public void ConfigurableIpPreferenceManagedSni(string ipPreference)
         {
             AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);
             TestConfigurableIpPreference(ipPreference);
             AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", false);
         }
-
 
         private void TestConfigurableIpPreference(string ipPreference)
         {
@@ -43,14 +45,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 Assert.Equal(connection.DataSource, GetPropertyValueFromCacheEntry(FQDNProperty, dnsCacheEntry));
 
-                if (ipPreference == ";IPAddressPreference=IPv4First")
+                if (ipPreference == CnnPrefIPv4)
                 {
                     Assert.NotNull(GetPropertyValueFromCacheEntry(AddrIPv4Property, dnsCacheEntry));
                     Assert.Null(GetPropertyValueFromCacheEntry(AddrIPv6Property, dnsCacheEntry));
                 }
-                else if (ipPreference == ";IPAddressPreference=IPv6First")
+                else if (ipPreference == CnnPrefIPv6)
                 {
-                    Assert.NotNull(GetPropertyValueFromCacheEntry(AddrIPv6Property, dnsCacheEntry));
+                    string ipv6 = GetPropertyValueFromCacheEntry(AddrIPv6Property, dnsCacheEntry);
+                    Assert.NotNull(ipv6);
                     Assert.Null(GetPropertyValueFromCacheEntry(AddrIPv4Property, dnsCacheEntry));
                 }
             }

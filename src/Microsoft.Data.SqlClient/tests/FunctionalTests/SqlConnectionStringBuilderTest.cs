@@ -57,6 +57,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("Integrated Security = true")]
         [InlineData("IPAddressPreference = IPv4First")]
         [InlineData("IPAddressPreference = IPv6First")]
+        [InlineData("IPAddressPreference = UsePlatformDefault")]
         [InlineData("Trusted_Connection = false")]
         [InlineData("Max Pool Size = 50")]
         [InlineData("Min Pool Size = 20")]
