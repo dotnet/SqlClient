@@ -3048,7 +3048,7 @@
   <data name="SqlMisc_SubclassMustOverride" xml:space="preserve">
     <value>子类未覆盖所需方法。</value>
   </data>
-  <data name="Sql_CanotCreateNormalizer" xml:space="preserve">
+  <data name="SQL_CannotCreateNormalizer" xml:space="preserve">
     <value>无法为“{0}”创建标准化程序。</value>
   </data>
   <data name="Sql_InternalError" xml:space="preserve">
