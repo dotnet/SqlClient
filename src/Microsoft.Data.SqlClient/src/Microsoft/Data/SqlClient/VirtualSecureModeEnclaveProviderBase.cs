@@ -94,10 +94,7 @@ namespace Microsoft.Data.SqlClient
         // Gets the information that SqlClient subsequently uses to initiate the process of attesting the enclave and to establish a secure session with the enclave.
         internal override SqlEnclaveAttestationParameters GetAttestationParameters(string attestationUrl, byte[] customData, int customDataLength)
         {
-            // The key derivation function and hash algorithm name are specified when key derivation is performed
-            ECDiffieHellman clientDHKey = ECDiffieHellman.Create();
-            clientDHKey.KeySize = DiffieHellmanKeySize;
-
+            ECDiffieHellman clientDHKey = KeyConverter.CreateECDiffieHellman(DiffieHellmanKeySize);
             return new SqlEnclaveAttestationParameters(VsmHGSProtocolId, new byte[] { }, clientDHKey);
         }
 
@@ -288,21 +285,19 @@ namespace Microsoft.Data.SqlClient
         private void VerifyEnclaveReportSignature(EnclaveReportPackage enclaveReportPackage, X509Certificate2 healthReportCert)
         {
             // Check if report is formatted correctly
-            UInt32 calculatedSize = Convert.ToUInt32(enclaveReportPackage.PackageHeader.GetSizeInPayload()) + enclaveReportPackage.PackageHeader.SignedStatementSize + enclaveReportPackage.PackageHeader.SignatureSize;
+            uint calculatedSize = Convert.ToUInt32(enclaveReportPackage.PackageHeader.GetSizeInPayload()) + enclaveReportPackage.PackageHeader.SignedStatementSize + enclaveReportPackage.PackageHeader.SignatureSize;
 
             if (calculatedSize != enclaveReportPackage.PackageHeader.PackageSize)
             {
                 throw new ArgumentException(Strings.VerifyEnclaveReportFormatFailed);
             }
 
-            // IDK_S is contained in healthReport cert public key
-            using (RSA rsa = healthReportCert.GetRSAPublicKey())
+            using (RSA rsa = KeyConverter.GetRSAFromCertificate(healthReportCert))
             {
                 if (!rsa.VerifyData(enclaveReportPackage.ReportAsBytes, enclaveReportPackage.SignatureBlob, HashAlgorithmName.SHA256, RSASignaturePadding.Pss))
                 {
                     throw new ArgumentException(Strings.VerifyEnclaveReportFailed);
                 }
-
             }
         }
 
@@ -342,7 +337,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (actual < expected)
             {
-                string exceptionMessage = String.Format(Strings.VerifyEnclavePolicyFailedFormat, property, actual, expected);
+                string exceptionMessage = string.Format(Strings.VerifyEnclavePolicyFailedFormat, property, actual, expected);
                 throw new ArgumentException(exceptionMessage);
             }
         }
@@ -351,8 +346,7 @@ namespace Microsoft.Data.SqlClient
         private byte[] GetSharedSecret(EnclavePublicKey enclavePublicKey, EnclaveDiffieHellmanInfo enclaveDHInfo, ECDiffieHellman clientDHKey)
         {
             // Perform signature verification. The enclave's DiffieHellman public key was signed by the enclave's RSA public key.
-            RSAParameters rsaParams = KeyConverter.RSAPublicKeyBlobToParams(enclavePublicKey.PublicKey);
-            using (RSA rsa = RSA.Create(rsaParams))
+            using (RSA rsa = KeyConverter.CreateRSAFromPublicKeyBlob(enclavePublicKey.PublicKey))
             {
                 if (!rsa.VerifyData(enclaveDHInfo.PublicKey, enclaveDHInfo.PublicKeySignature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1))
                 {
@@ -360,9 +354,10 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            ECParameters ecParams = KeyConverter.ECCPublicKeyBlobToParams(enclaveDHInfo.PublicKey);
-            ECDiffieHellman enclaveDHKey = ECDiffieHellman.Create(ecParams);
-            return clientDHKey.DeriveKeyFromHash(enclaveDHKey.PublicKey, HashAlgorithmName.SHA256);
+            using (ECDiffieHellman ecdh = KeyConverter.CreateECDiffieHellmanFromPublicKeyBlob(enclaveDHInfo.PublicKey))
+            {
+                return KeyConverter.DeriveKey(clientDHKey, ecdh.PublicKey);
+            }
         }
         #endregion
     }

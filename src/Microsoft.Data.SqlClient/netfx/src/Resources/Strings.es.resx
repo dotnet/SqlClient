@@ -4584,24 +4584,6 @@
   <data name="SQL_SettingManagedIdentityWithCredential" xml:space="preserve">
     <value>No se puede usar "Authentication={0}" si se ha establecido la propiedad Credential.</value>
   </data>
-  <data name="Azure_GenericErrorMessage" xml:space="preserve">
-    <value>No se pudo adquirir el token de acceso.</value>
-  </data>
-  <data name="Azure_IdentityEndpointNotListening" xml:space="preserve">
-    <value>No se puede conectar con el punto de conexión de la identidad administrada. Compruebe que se está ejecutando en un recurso de Azure que tiene la configuración de identidad.</value>
-  </data>
-  <data name="Azure_ManagedIdentityUsed" xml:space="preserve">
-    <value>Se intentó obtener el token con la identidad administrada.</value>
-  </data>
-  <data name="Azure_MetadataEndpointNotListening" xml:space="preserve">
-    <value>No se puede conectar con Instance Metadata Service (IMDS). Se omitirá la solicitud al punto de conexión del token de la identidad administrada.</value>
-  </data>
-  <data name="Azure_NonRetryableError" xml:space="preserve">
-    <value>Se ha recibido un error no recuperable.</value>
-  </data>
-  <data name="Azure_RetryFailure" xml:space="preserve">
-    <value>Error después de 5 reintentos.</value>
-  </data>
   <data name="SqlDependency_UnexpectedValueOnDeserialize" xml:space="preserve">
     <value>Se ha detectado un tipo inesperado al realizar la deserialización.</value>
   </data>

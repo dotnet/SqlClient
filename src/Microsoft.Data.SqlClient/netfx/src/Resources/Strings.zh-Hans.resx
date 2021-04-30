@@ -4584,24 +4584,6 @@
   <data name="SQL_SettingManagedIdentityWithCredential" xml:space="preserve">
     <value>如果设置了 Credential 属性，则无法使用 "Authentication={0}"。</value>
   </data>
-  <data name="Azure_GenericErrorMessage" xml:space="preserve">
-    <value>无法获取访问令牌。</value>
-  </data>
-  <data name="Azure_IdentityEndpointNotListening" xml:space="preserve">
-    <value>无法连接到托管标识终结点。请检查你运行的 Azure 资源是否设置了标识。</value>
-  </data>
-  <data name="Azure_ManagedIdentityUsed" xml:space="preserve">
-    <value>已尝试使用托管标识来获取令牌。</value>
-  </data>
-  <data name="Azure_MetadataEndpointNotListening" xml:space="preserve">
-    <value>无法连接到实例元数据服务(IMDS)。正在跳过对托管标识令牌终结点的请求。</value>
-  </data>
-  <data name="Azure_NonRetryableError" xml:space="preserve">
-    <value>收到了不可重试的错误。</value>
-  </data>
-  <data name="Azure_RetryFailure" xml:space="preserve">
-    <value>5 次重试后失败。</value>
-  </data>
   <data name="SqlDependency_UnexpectedValueOnDeserialize" xml:space="preserve">
     <value>反序列化时检测到意外的类型。</value>
   </data>

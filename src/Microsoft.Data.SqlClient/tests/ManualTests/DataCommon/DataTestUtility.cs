@@ -18,8 +18,6 @@ using System.Threading.Tasks;
 using Microsoft.Identity.Client;
 using Microsoft.Data.SqlClient.TestUtilities;
 using Xunit;
-using Azure.Security.KeyVault.Keys;
-using Azure.Identity;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {

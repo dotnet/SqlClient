@@ -4584,24 +4584,6 @@
   <data name="SQL_SettingManagedIdentityWithCredential" xml:space="preserve">
     <value>자격 증명 속성이 설정된 경우 'Authentication={0}'을(를) 사용할 수 없습니다.</value>
   </data>
-  <data name="Azure_GenericErrorMessage" xml:space="preserve">
-    <value>액세스 토큰을 획득할 수 없습니다.</value>
-  </data>
-  <data name="Azure_IdentityEndpointNotListening" xml:space="preserve">
-    <value>관리 ID 엔드포인트에 연결할 수 없습니다. ID가 설정된 Azure 리소스에서 실행 중인지 확인하세요.</value>
-  </data>
-  <data name="Azure_ManagedIdentityUsed" xml:space="preserve">
-    <value>관리 ID를 사용하여 토큰을 가져오려 했습니다.</value>
-  </data>
-  <data name="Azure_MetadataEndpointNotListening" xml:space="preserve">
-    <value>IMDS(Instance Metadata Service)에 연결할 수 없습니다. 관리 ID 토큰 엔드포인트에 대한 요청을 건너뜁니다.</value>
-  </data>
-  <data name="Azure_NonRetryableError" xml:space="preserve">
-    <value>다시 시도할 수 없는 오류가 발생했습니다.</value>
-  </data>
-  <data name="Azure_RetryFailure" xml:space="preserve">
-    <value>5회 다시 시도한 후에 실패했습니다.</value>
-  </data>
   <data name="SqlDependency_UnexpectedValueOnDeserialize" xml:space="preserve">
     <value>역직렬화 시 예기치 않은 형식이 검색되었습니다.</value>
   </data>
