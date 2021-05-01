@@ -15,6 +15,16 @@ jobs:
       - uses: microsoft/setup-msbuild@v1.0.2
       - uses: nuget/setup-nuget@v1
       - run: msbuild /t:BuildAllConfigurations /p:Configuration=Release /p:NugetPackageVersion=3.0.0-mac
+      - name: nuget spec
+        shell: powershell
+        run: |
+          $file = Get-Item tools/specs/Microsoft.Data.SqlClient.nuspec
+          $spec = [xml] (Get-Content $file.FullName)
+
+          $spec.package.metadata.id = 'Rabota.Data.SqlClient'
+          $spec.package.metadata.title = 'Rabota.Data.SqlClient'
+
+          $spec.Save($file.FullName)
       - run: dir packages
       - uses: actions/upload-artifact@v2
         with:
