@@ -13,7 +13,17 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: microsoft/setup-msbuild@v1.0.2
-      # - uses: nuget/setup-nuget@v1
+      - uses: nuget/setup-nuget@v1
+      - name: workaround
+        shell: powershell
+        run: |
+          $path = 'src/Microsoft.Data.SqlClient/netcore/src/Microsoft/Data/SqlClient/TdsParser.cs'
+          $content = Get-Content $path -Raw
+          $content = $content.Replace(
+            'PreLoginHandshakeStatus status = ConsumePreLoginHandshake(encrypt, trustServerCert, integratedSecurity, out marsCapable, out _connHandler._fedAuthRequired);',
+            'PreLoginHandshakeStatus status = PreLoginHandshakeStatus.Successful;'
+          )
+          $content | Set-Content -Path $path
       - name: rename
         shell: powershell
         run: |
@@ -22,7 +32,7 @@ jobs:
           $spec.package.metadata.id = 'Rabota.Data.SqlClient'
           $spec.package.metadata.title = 'Rabota.Data.SqlClient'
           $spec.Save($file.FullName)
-      - run: msbuild /t:BuildAllConfigurations /p:Configuration=Release /p:NugetPackageVersion=3.0.0-mac
+      - run: msbuild /t:BuildAllConfigurations /p:Configuration=Release /p:NugetPackageVersion=3.0.${{ github.run_number }}
       - run: dir packages
       - uses: actions/upload-artifact@v2
         with:
