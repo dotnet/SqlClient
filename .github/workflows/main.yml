@@ -20,6 +20,9 @@ jobs:
           $path = 'src/Microsoft.Data.SqlClient/netcore/src/Microsoft/Data/SqlClient/TdsParser.cs'
           $content = Get-Content $path -Raw
           $content = $content.Replace(
+            'SendPreLoginHandshake(instanceName, encrypt);',
+            '// SendPreLoginHandshake(instanceName, encrypt);'
+          ).Replace(
             'PreLoginHandshakeStatus status = ConsumePreLoginHandshake(encrypt, trustServerCert, integratedSecurity, out marsCapable, out _connHandler._fedAuthRequired);',
             'PreLoginHandshakeStatus status = PreLoginHandshakeStatus.Successful;'
           )
