@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: microsoft/setup-msbuild@v1.0.2
-      - uses: nuget/setup-nuget@v1
+      # - uses: nuget/setup-nuget@v1
       - name: rename
         shell: powershell
         run: |
@@ -23,7 +23,6 @@ jobs:
           $spec.package.metadata.title = 'Rabota.Data.SqlClient'
           $spec.Save($file.FullName)
       - run: msbuild /t:BuildAllConfigurations /p:Configuration=Release /p:NugetPackageVersion=3.0.0-mac
-      - run: mv packages/Microsoft.Data.SqlClient.3.0.0-mac.nupkg packages/Rabota.Data.SqlClient.3.0.0-mac.nupkg
       - run: dir packages
       - uses: actions/upload-artifact@v2
         with:
