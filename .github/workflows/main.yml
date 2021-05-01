@@ -15,5 +15,8 @@ jobs:
       - uses: microsoft/setup-msbuild@v1.0.2
       - uses: nuget/setup-nuget@v1
       - run: msbuild /t:BuildAllConfigurations /p:Configuration=Release /p:NugetPackageVersion=3.0.0-mac
-      - run: dir .
       - run: dir packages
+      - uses: actions/upload-artifact@v2
+        with:
+          name: nuget
+          path: packages/*.nupkg
