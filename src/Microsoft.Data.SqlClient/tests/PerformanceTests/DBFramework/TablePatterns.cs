@@ -65,9 +65,9 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         /// <summary>
         /// Generates a table with column count in multiples of 25.
         /// Column Names in order:
-        /// c_bit, c_int, c_tinyint, c_smallint, c_bigint, c_money, c_smallmoney, c_decimal, c_numeric, 
-        /// c_float, c_real, c_date, c_datetime, c_datetime2, c_time, c_smalldatetime, c_datetimeoffset, 
-        /// c_char, c_nchar, c_binary, c_varchar, c_nvarchar, c_varbinary, c_uid, c_xml and so on...
+        /// c0_bit, c0_int, c0_tinyint, c0_smallint, c0_bigint, c0_money, c0_smallmoney, c0_decimal, c0_numeric, 
+        /// c0_float, c0_real, c0_date, c0_datetime, c0_datetime2, c0_time, c0_smalldatetime, c0_datetimeoffset, 
+        /// c0_char, c0_nchar, c0_binary, c0_varchar, c0_nvarchar, c0_varbinary, c0_uid, c0_xml and so on...
         /// </summary>
         /// <param name="config">DataTypes Configuration</param>
         /// <returns></returns>
