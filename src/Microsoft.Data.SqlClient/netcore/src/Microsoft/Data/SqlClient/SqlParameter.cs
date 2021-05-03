@@ -332,7 +332,7 @@ namespace Microsoft.Data.SqlClient
             Value = value;
             if (!string.IsNullOrEmpty(xmlSchemaCollectionDatabase) || !string.IsNullOrEmpty(xmlSchemaCollectionOwningSchema) || !string.IsNullOrEmpty(xmlSchemaCollectionName))
             {
-                EnsureXmlSchemaCollectionExists();
+                EnsureXmlSchemaCollection();
                 _xmlSchemaCollection.Database = xmlSchemaCollectionDatabase;
                 _xmlSchemaCollection.OwningSchema = xmlSchemaCollectionOwningSchema;
                 _xmlSchemaCollection.Name = xmlSchemaCollectionName;
@@ -408,11 +408,7 @@ namespace Microsoft.Data.SqlClient
         public string XmlSchemaCollectionDatabase
         {
             get => _xmlSchemaCollection?.Database ?? string.Empty;
-            set
-            {
-                EnsureXmlSchemaCollectionExists();
-                _xmlSchemaCollection.Database = value;
-            }
+            set => EnsureXmlSchemaCollection().Database = value;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/XmlSchemaCollectionOwningSchema/*' />
@@ -420,11 +416,7 @@ namespace Microsoft.Data.SqlClient
         public string XmlSchemaCollectionOwningSchema
         {
             get => _xmlSchemaCollection?.OwningSchema ?? string.Empty;
-            set
-            {
-                EnsureXmlSchemaCollectionExists();
-                _xmlSchemaCollection.OwningSchema = value;
-            }
+            set => EnsureXmlSchemaCollection().OwningSchema = value;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/XmlSchemaCollectionName/*' />
@@ -432,11 +424,7 @@ namespace Microsoft.Data.SqlClient
         public string XmlSchemaCollectionName
         {
             get => _xmlSchemaCollection?.Name ?? string.Empty;
-            set
-            {
-                EnsureXmlSchemaCollectionExists();
-                _xmlSchemaCollection.Name = value;
-            }
+            set => EnsureXmlSchemaCollection().Name = value;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ForceColumnEncryption/*' />
@@ -997,8 +985,7 @@ namespace Microsoft.Data.SqlClient
             destination._collation = _collation;
             if (_xmlSchemaCollection != null)
             {
-                destination.EnsureXmlSchemaCollectionExists();
-                destination._xmlSchemaCollection.CopyFrom(_xmlSchemaCollection);
+                destination.EnsureXmlSchemaCollection().CopyFrom(_xmlSchemaCollection);
             }
             destination._udtTypeName = _udtTypeName;
             destination._typeName = _typeName;
@@ -1035,12 +1022,13 @@ namespace Microsoft.Data.SqlClient
             return parent;
         }
 
-        private void EnsureXmlSchemaCollectionExists()
+        private SqlMetaDataXmlSchemaCollection EnsureXmlSchemaCollection()
         {
             if (_xmlSchemaCollection is null)
             {
                 _xmlSchemaCollection = new SqlMetaDataXmlSchemaCollection();
             }
+            return _xmlSchemaCollection;
         }
 
         internal void FixStreamDataForNonPLP()
