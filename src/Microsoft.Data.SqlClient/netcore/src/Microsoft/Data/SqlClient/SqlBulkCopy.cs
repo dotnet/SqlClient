@@ -9,6 +9,7 @@ using System.Data;
 using System.Data.Common;
 using System.Data.SqlTypes;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -2902,11 +2903,11 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (_isAsyncBulkCopy)
                     {
-                        CancellationTokenRegistration regReconnectCancel = new CancellationTokenRegistration();
+                        StrongBox<CancellationTokenRegistration> regReconnectCancel = new StrongBox<CancellationTokenRegistration>(new CancellationTokenRegistration());
                         TaskCompletionSource<object> cancellableReconnectTS = new TaskCompletionSource<object>();
                         if (cts.CanBeCanceled)
                         {
-                            regReconnectCancel = cts.Register(static (object tcs) => ((TaskCompletionSource<object>)tcs).TrySetCanceled(), cancellableReconnectTS);
+                            regReconnectCancel.Value = cts.Register(static (object tcs) => ((TaskCompletionSource<object>)tcs).TrySetCanceled(), cancellableReconnectTS);
                         }
                         AsyncHelper.ContinueTaskWithState(reconnectTask, cancellableReconnectTS,
                             state: cancellableReconnectTS,
@@ -2926,7 +2927,7 @@ namespace Microsoft.Data.SqlClient
                             state: regReconnectCancel,
                             onSuccess: (object state) =>
                             {
-                                ((CancellationTokenRegistration)state).Dispose();
+                                ((StrongBox<CancellationTokenRegistration>)state).Value.Dispose();
                                 if (_parserLock != null)
                                 {
                                     _parserLock.Release();
@@ -2936,8 +2937,8 @@ namespace Microsoft.Data.SqlClient
                                 _parserLock.Wait(canReleaseFromAnyThread: true);
                                 WriteToServerInternalRestAsync(cts, source);
                             },
-                            onFailure: static (Exception _, object state) => ((CancellationTokenRegistration)state).Dispose(),
-                            onCancellation: static (object state) => ((CancellationTokenRegistration)state).Dispose(),
+                            onFailure: static (Exception _, object state) => ((StrongBox<CancellationTokenRegistration>)state).Value.Dispose(),
+                            onCancellation: static (object state) => ((StrongBox<CancellationTokenRegistration>)state).Value.Dispose(),
                             exceptionConverter: (ex) => SQL.BulkLoadInvalidDestinationTable(_destinationTableName, ex));
                         return;
                     }
