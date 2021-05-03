@@ -12,31 +12,29 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         [GlobalCleanup]
         public static void Dispose() => SqlConnection.ClearAllPools();
 
+        /// <summary>
+        /// Whether MARS is enabled or disabled on connection string
+        /// </summary>
+        [Params(true, false)]
+        public bool MARS { get; set; }
+
+        /// <summary>
+        /// Whether Connection Pooling is enabled or disabled on connection string
+        /// </summary>
+        [Params(true, false)]
+        public bool Pooling { get; set; }
+
         [Benchmark]
-        public static void OpenPooledConnection()
+        public void OpenConnection()
         {
-            using var sqlConnection = new SqlConnection(s_config.ConnectionString + ";Pooling=yes;");
+            using var sqlConnection = new SqlConnection(s_config.ConnectionString + $";Pooling={Pooling};MultipleActiveResultSets={MARS}");
             sqlConnection.Open();
         }
 
         [Benchmark]
-        public static void OpenNonPooledConnection()
+        public async Task OpenAsyncConnection()
         {
-            using var sqlConnection = new SqlConnection(s_config.ConnectionString + ";Pooling=no;");
-            sqlConnection.Open();
-        }
-
-        [Benchmark]
-        public static async Task OpenAsyncPooledConnection()
-        {
-            using var sqlConnection = new SqlConnection(s_config.ConnectionString + ";Pooling=yes;");
-            await sqlConnection.OpenAsync();
-        }
-
-        [Benchmark]
-        public static async Task OpenAsyncNonPooledConnection()
-        {
-            using var sqlConnection = new SqlConnection(s_config.ConnectionString + ";Pooling=no;");
+            using var sqlConnection = new SqlConnection(s_config.ConnectionString + $";Pooling={Pooling};MultipleActiveResultSets={MARS}");
             await sqlConnection.OpenAsync();
         }
     }

@@ -108,7 +108,6 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
                 i++;
             }
             return t.SetIndexColumn(1);
-
         }
     }
 }

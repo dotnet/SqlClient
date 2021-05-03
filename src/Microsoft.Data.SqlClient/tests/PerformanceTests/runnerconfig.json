@@ -1,12 +1,12 @@
 ﻿{
     "ConnectionString": "Server=tcp:localhost; Integrated Security=true; Initial Catalog=sqlclient-perf-db;",
-    "UseManagedSniOnWindows": true,
+    "UseManagedSniOnWindows": false,
     "Benchmarks": {
         "SqlConnectionRunnerConfig": {
             "Enabled": true,
             "LaunchCount": 1,
-            "IterationCount": 20,
-            "InvocationCount": 16,
+            "IterationCount": 50,
+            "InvocationCount":30,
             "WarmupCount": 5,
             "RowCount": 0
         },

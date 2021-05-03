@@ -30,7 +30,6 @@ namespace Microsoft.Data.SqlClient.PerformanceTests
         public void Setup()
         {
             s_rowCount = s_config.Benchmarks.SqlBulkCopyRunnerConfig.RowCount;
-
             s_sqlConnection = new(s_config.ConnectionString);
             s_sqlConnection.Open();
 
