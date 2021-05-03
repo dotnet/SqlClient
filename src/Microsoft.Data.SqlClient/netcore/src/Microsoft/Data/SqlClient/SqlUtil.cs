@@ -34,7 +34,7 @@ namespace Microsoft.Data.SqlClient
                 TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
                 ContinueTaskWithState(task, completion,
                     state: Tuple.Create(onSuccess, onFailure, completion),
-                    onSuccess: (state) =>
+                    onSuccess: static (object state) =>
                     {
                         var parameters = (Tuple<Action, Action<Exception>, TaskCompletionSource<object>>)state;
                         Action success = parameters.Item1;
@@ -42,7 +42,7 @@ namespace Microsoft.Data.SqlClient
                         success();
                         taskCompletionSource.SetResult(null);
                     },
-                    onFailure: (exception, state) =>
+                    onFailure: static (Exception exception, object state) =>
                     {
                         var parameters = (Tuple<Action, Action<Exception>, TaskCompletionSource<object>>)state;
                         Action<Exception> failure = parameters.Item2;
@@ -64,7 +64,7 @@ namespace Microsoft.Data.SqlClient
             {
                 var completion = new TaskCompletionSource<object>();
                 ContinueTaskWithState(task, completion, state,
-                    onSuccess: (continueState) =>
+                    onSuccess: (object continueState) =>
                     {
                         onSuccess(continueState);
                         completion.SetResult(null);
@@ -205,11 +205,8 @@ namespace Microsoft.Data.SqlClient
             }
             if (!task.IsCompleted)
             {
-                task.ContinueWith(t => { var ignored = t.Exception; }); //Ensure the task does not leave an unobserved exception
-                if (onTimeout != null)
-                {
-                    onTimeout();
-                }
+                task.ContinueWith(static t => { var ignored = t.Exception; }); //Ensure the task does not leave an unobserved exception
+                onTimeout?.Invoke();
             }
         }
 
@@ -224,6 +221,24 @@ namespace Microsoft.Data.SqlClient
                         completion.TrySetException(exc());
                     }
                 });
+            }
+        }
+
+        internal static void SetTimeoutExceptionWithState(TaskCompletionSource<object> completion, int timeout, object state, Func<object,Exception> onFailure, CancellationToken cancellationToken)
+        {
+            if (timeout > 0)
+            {
+                Task.Delay(timeout * 1000, cancellationToken).ContinueWith(
+                    (task, state) =>
+                    {
+                        if (!task.IsCanceled && !completion.Task.IsCompleted)
+                        {
+                            completion.TrySetException(onFailure(state));
+                        }
+                    },
+                    state: state,
+                    cancellationToken: CancellationToken.None
+                );
             }
         }
     }

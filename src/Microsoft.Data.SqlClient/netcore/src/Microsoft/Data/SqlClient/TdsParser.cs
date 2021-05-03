@@ -8833,7 +8833,7 @@ namespace Microsoft.Data.SqlClient
                     bool taskReleaseConnectionLock = releaseConnectionLock;
                     releaseConnectionLock = false;
                     return executeTask.ContinueWith(
-                        (task, state) =>
+                        static (Task task, object state) =>
                         {
                             Debug.Assert(!task.IsCanceled, "Task should not be canceled");
                             var parameters = (Tuple<TdsParser, TdsParserStateObject, SqlInternalConnectionTds>)state;
@@ -9059,7 +9059,7 @@ namespace Microsoft.Data.SqlClient
                                     if (releaseConnectionLock)
                                     {
                                         task.ContinueWith(
-                                             (_, state) => ((SqlInternalConnectionTds)state)._parserLock.Release(),
+                                             static (Task _, object state) => ((SqlInternalConnectionTds)state)._parserLock.Release(),
                                              state: _connHandler,
                                              TaskScheduler.Default
                                          );
