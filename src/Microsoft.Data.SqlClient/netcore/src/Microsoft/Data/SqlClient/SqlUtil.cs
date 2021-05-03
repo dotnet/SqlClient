@@ -81,12 +81,12 @@ namespace Microsoft.Data.SqlClient
         }
 
         internal static void ContinueTask(Task task,
-                TaskCompletionSource<object> completion,
-                Action onSuccess,
-                Action<Exception> onFailure = null,
-                Action onCancellation = null,
-                Func<Exception, Exception> exceptionConverter = null
-            )
+            TaskCompletionSource<object> completion,
+            Action onSuccess,
+            Action<Exception> onFailure = null,
+            Action onCancellation = null,
+            Func<Exception, Exception> exceptionConverter = null
+        )
         {
             task.ContinueWith(
                 tsk =>
@@ -145,7 +145,7 @@ namespace Microsoft.Data.SqlClient
         )
         {
             task.ContinueWith(
-                tsk =>
+                (Task tsk, object state2) =>
                 {
                     if (tsk.Exception != null)
                     {
@@ -156,7 +156,7 @@ namespace Microsoft.Data.SqlClient
                         }
                         try
                         {
-                            onFailure?.Invoke(exc, state);
+                            onFailure?.Invoke(exc, state2);
                         }
                         finally
                         {
@@ -167,7 +167,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         try
                         {
-                            onCancellation?.Invoke(state);
+                            onCancellation?.Invoke(state2);
                         }
                         finally
                         {
@@ -178,14 +178,16 @@ namespace Microsoft.Data.SqlClient
                     {
                         try
                         {
-                            onSuccess(state);
+                            onSuccess(state2);
                         }
                         catch (Exception e)
                         {
                             completion.SetException(e);
                         }
                     }
-                }, TaskScheduler.Default
+                }, 
+                state: state,
+                scheduler: TaskScheduler.Default
             );
         }
 
@@ -210,17 +212,19 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal static void SetTimeoutException(TaskCompletionSource<object> completion, int timeout, Func<Exception> exc, CancellationToken ctoken)
+        internal static void SetTimeoutException(TaskCompletionSource<object> completion, int timeout, Func<Exception> onFailure, CancellationToken ctoken)
         {
             if (timeout > 0)
             {
-                Task.Delay(timeout * 1000, ctoken).ContinueWith((tsk) =>
-                {
-                    if (!tsk.IsCanceled && !completion.Task.IsCompleted)
+                Task.Delay(timeout * 1000, ctoken).ContinueWith(
+                    (Task task) =>
                     {
-                        completion.TrySetException(exc());
+                        if (!task.IsCanceled && !completion.Task.IsCompleted)
+                        {
+                            completion.TrySetException(onFailure());
+                        }
                     }
-                });
+                );
             }
         }
 
@@ -229,7 +233,7 @@ namespace Microsoft.Data.SqlClient
             if (timeout > 0)
             {
                 Task.Delay(timeout * 1000, cancellationToken).ContinueWith(
-                    (task, state) =>
+                    (Task task, object state) =>
                     {
                         if (!task.IsCanceled && !completion.Task.IsCompleted)
                         {
