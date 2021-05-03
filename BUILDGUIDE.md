@@ -300,3 +300,16 @@ dotnet test <test_properties...> --collect:"Code Coverage"
 ```bash
 dotnet test <test_properties...> --collect:"XPlat Code Coverage"
 ```
+
+## Run Performance Tests
+
+### Running Performance test project directly:
+
+Project location from Root: `src\Microsoft.Data.SqlClient\tests\PerformanceTests\Microsoft.Data.SqlClient.PerformanceTests.csproj`
+Configure `runnerconfig.json` file with connection string and preferred settings to run Benchmark Jobs.
+
+```
+cd src\Microsoft.Data.SqlClient\tests\PerformanceTests
+dotnet run -c Release -f netcoreapp3.1|net5.0
+```
+_Only "**Release** Configuration" applies to Performance Tests_
