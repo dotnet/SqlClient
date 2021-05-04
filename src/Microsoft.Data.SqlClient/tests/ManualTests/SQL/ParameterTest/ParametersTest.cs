@@ -533,7 +533,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [Fact]
-        private static void DisableOutputParameters_ParametersAreUsedByName()
+        private static void EnableOptimizedParameterBinding_ParametersAreUsedByName()
         {
             int firstInput = 1;
             int secondInput = 2;
@@ -543,7 +543,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 using (var command = new SqlCommand("SELECT @Second, @First", connection))
                 {
-                    command.DisableOutputParameters = true;
+                    command.EnableOptimizedParameterBinding = true;
                     command.Parameters.AddWithValue("@First", firstInput);
                     command.Parameters.AddWithValue("@Second", secondInput);
 
@@ -563,7 +563,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [Fact]
-        private static void DisableOutputParameters_NamesMustMatch()
+        private static void EnableOptimizedParameterBinding_NamesMustMatch()
         {
             using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
@@ -571,7 +571,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 using (var command = new SqlCommand("SELECT @DoesNotExist", connection))
                 {
-                    command.DisableOutputParameters = true;
+                    command.EnableOptimizedParameterBinding = true;
                     command.Parameters.AddWithValue("@Exists", 1);
 
                     SqlException sqlException = null;
@@ -593,7 +593,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [Fact]
-        private static void DisableOutputParameters_AllNamesMustBeDeclared()
+        private static void EnableOptimizedParameterBinding_AllNamesMustBeDeclared()
         {
             using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
@@ -601,7 +601,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 using (var command = new SqlCommand("SELECT @Exists, @DoesNotExist", connection))
                 {
-                    command.DisableOutputParameters = true;
+                    command.EnableOptimizedParameterBinding = true;
                     command.Parameters.AddWithValue("@Exists", 1);
 
                     SqlException sqlException = null;
@@ -622,7 +622,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [Fact]
-        private static void DisableOutputParameters_NamesCanBeReUsed()
+        private static void EnableOptimizedParameterBinding_NamesCanBeReUsed()
         {
             int firstInput = 1;
             int secondInput = 2;
@@ -634,7 +634,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 using (var command = new SqlCommand("SELECT @First, @Second, @First", connection))
                 {
-                    command.DisableOutputParameters = true;
+                    command.EnableOptimizedParameterBinding = true;
                     command.Parameters.AddWithValue("@First", firstInput);
                     command.Parameters.AddWithValue("@Second", secondInput);
                     command.Parameters.AddWithValue("@Third", thirdInput);
@@ -656,7 +656,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [Fact]
-        private static void DisableOutputParameters_InputOutputFails()
+        private static void EnableOptimizedParameterBinding_InputOutputFails()
         {
             int firstInput = 1;
             int secondInput = 2;
@@ -668,21 +668,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 using (var command = new SqlCommand("SELECT @Third = (@Third + @First + @Second)", connection))
                 {
-                    command.DisableOutputParameters = true;
+                    command.EnableOptimizedParameterBinding = true;
                     command.Parameters.AddWithValue("@First", firstInput);
                     command.Parameters.AddWithValue("@Second", secondInput);
                     SqlParameter thirdParameter = command.Parameters.AddWithValue("@Third", thirdInput);
                     thirdParameter.Direction = ParameterDirection.InputOutput;
 
-                    command.ExecuteNonQuery();
+                    InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => command.ExecuteNonQuery());
 
-                    Assert.Equal(thirdInput, Convert.ToInt32(thirdParameter.Value));
+                    Assert.Contains("OptimizedParameterBinding", exception.Message);
                 }
             }
         }
 
         [Fact]
-        private static void DisableOutputParameters_OutputFails()
+        private static void EnableOptimizedParameterBinding_OutputFails()
         {
             int firstInput = 1;
             int secondInput = 2;
@@ -694,21 +694,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 using (var command = new SqlCommand("SELECT @Third = (@Third + @First + @Second)", connection))
                 {
-                    command.DisableOutputParameters = true;
+                    command.EnableOptimizedParameterBinding = true;
                     command.Parameters.AddWithValue("@First", firstInput);
                     command.Parameters.AddWithValue("@Second", secondInput);
                     SqlParameter thirdParameter = command.Parameters.AddWithValue("@Third", thirdInput);
                     thirdParameter.Direction = ParameterDirection.Output;
 
-                    command.ExecuteNonQuery();
+                    InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => command.ExecuteNonQuery());
 
-                    Assert.Equal(0, Convert.ToInt32(thirdParameter.Value));
+                    Assert.Contains("OptimizedParameterBinding", exception.Message);
                 }
             }
         }
 
         [Fact]
-        private static void DisableOutputParameters_ReturnSucceeds()
+        private static void EnableOptimizedParameterBinding_ReturnSucceeds()
         {
             int firstInput = 12;
 
@@ -731,7 +731,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                     using (var command = new SqlCommand(sprocName, connection) { CommandType = CommandType.StoredProcedure })
                     {
-                        command.DisableOutputParameters = true;
+                        command.EnableOptimizedParameterBinding = true;
                         command.Parameters.AddWithValue("@in", firstInput);
                         SqlParameter returnParameter = command.Parameters.AddWithValue("@retval", 0);
                         returnParameter.Direction = ParameterDirection.ReturnValue;
