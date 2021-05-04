@@ -1343,6 +1343,33 @@ The <xref:Microsoft.Data.SqlClient.SqlCommand.CreateParameter%2A> method is a st
 				To be added.
 			</remarks>
 		</Dispose>
+    <EnableOptimizedParameterBinding>
+      <summary>
+        Gets or sets a value indicating whether the command object should optimize parameter performance by disabling Output and InputOutput directions when submitting the command to the SQL Server.
+      </summary>
+      <value>
+        A value indicating whether the command object should optimize parameter performance by disabling Output and InputOuput parameter directions when submitting the command to the SQL Server. 
+        The default is <see langword="false" />.
+      </value>
+      <remarks>
+        <format type="text/markdown">
+          <![CDATA[
+## Remarks
+You must set the value for this property before the command is executed for it to take effect.
+
+When a command is submitted to the server with parameters a list of the parameter names is sent as part of the submission. The list is used on the server to match Output and InputOutput parameters to the results of the query execution so that the values can be returned to the caller. This option disables the construction and submission of the parameter name list and as a consequence disables the use of Output and InputOutput parameters. The return parameter is not affected by this option.
+
+A command sent with this option changes the way parameters are handled on the server, because there is no need to maintain an output parameter map. The result of this change is that queries with large numbers of input parameters may execute much faster. 
+
+The fewest number of parameters where this will take effect depends on the individual situation and should be detected by measuring query duration with and without the option enabled. Any query with more than 24 parameters may show lower overall query duration. Queries with parameter counts lower than 24 are unlikely to show a difference.
+
+> [!NOTE]
+If the option is enabled and a parameter with Direction Output or InputOutput is present in the Parameters collection an InvalidOperationException will be thrown when the command is executed.
+
+]]>
+</format>
+      </remarks>
+    </EnableOptimizedParameterBinding>
 		<EndExecuteNonQuery name="IAsyncResult">
 			<param name="asyncResult">
 				The
