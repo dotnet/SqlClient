@@ -60,10 +60,10 @@ namespace Microsoft.Data.SqlClient
                 return false;
             }
 
-            Dictionary<string, SqlCipherMetadata> ciperMetadataDictionary = _cache.Get(cacheLookupKey) as Dictionary<string, SqlCipherMetadata>;
+            Dictionary<string, SqlCipherMetadata> cipherMetadataDictionary = _cache.Get(cacheLookupKey) as Dictionary<string, SqlCipherMetadata>;
 
             // If we had a cache miss just return false.
-            if (ciperMetadataDictionary == null)
+            if (cipherMetadataDictionary == null)
             {
                 IncrementCacheMisses();
                 return false;
@@ -73,7 +73,7 @@ namespace Microsoft.Data.SqlClient
             foreach (SqlParameter param in sqlCommand.Parameters)
             {
                 SqlCipherMetadata paramCiperMetadata;
-                bool found = ciperMetadataDictionary.TryGetValue(param.ParameterNameFixed, out paramCiperMetadata);
+                bool found = cipherMetadataDictionary.TryGetValue(param.ParameterNameFixed, out paramCiperMetadata);
 
                 // If we failed to identify the encryption for a specific parameter, clear up the cipher MD of all parameters and exit.
                 if (!found)
