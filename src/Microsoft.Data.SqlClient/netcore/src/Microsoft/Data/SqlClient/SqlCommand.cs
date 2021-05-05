@@ -149,8 +149,21 @@ namespace Microsoft.Data.SqlClient
         // cached metadata
         private _SqlMetaDataSet _cachedMetaData;
 
-        private Dictionary<int, SqlTceCipherInfoEntry> keysToBeSentToEnclave;
-        private bool requiresEnclaveComputations = false;
+        internal Dictionary<int, SqlTceCipherInfoEntry> keysToBeSentToEnclave;
+        internal bool requiresEnclaveComputations = false;
+
+        private bool ShouldCacheEncryptionMetadata
+        {
+            get
+            {
+                if (requiresEnclaveComputations && !_activeConnection.Parser.AreEnclaveRetriesSupported)
+                {
+                    return false;
+                }
+                return true;
+            }
+        }
+
         internal EnclavePackage enclavePackage = null;
         private SqlEnclaveAttestationParameters enclaveAttestationParameters = null;
         private byte[] customData = null;
@@ -3359,10 +3372,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            if (keysToBeSentToEnclave != null)
-            {
-                keysToBeSentToEnclave.Clear();
-            }
+            keysToBeSentToEnclave?.Clear();
             enclavePackage = null;
             requiresEnclaveComputations = false;
             enclaveAttestationParameters = null;
@@ -4067,7 +4077,6 @@ namespace Microsoft.Data.SqlClient
                         enclaveMetadataExists = false;
                     }
 
-
                     if (isRequestedByEnclave)
                     {
                         if (string.IsNullOrWhiteSpace(this.Connection.EnclaveAttestationUrl))
@@ -4239,7 +4248,6 @@ namespace Microsoft.Data.SqlClient
 
                     while (ds.Read())
                     {
-
                         if (attestationInfoRead)
                         {
                             throw SQL.MultipleRowsReturnedForAttestationInfo();
@@ -4281,8 +4289,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // If we are not in Batch RPC mode, update the query cache with the encryption MD.
-            // Enclave based Always Encrypted implementation on server side does not support cache at this point. So we should not cache if the query requires keys to be sent to enclave
-            if (!BatchRPCMode && !requiresEnclaveComputations && (this._parameters != null && this._parameters.Count > 0))
+            if (!BatchRPCMode && ShouldCacheEncryptionMetadata && (_parameters != null && _parameters.Count > 0))
             {
                 SqlQueryMetadataCache.GetInstance().AddQueryMetadata(this, ignoreQueriesWithReturnValueParams: true);
             }
@@ -5209,8 +5216,8 @@ namespace Microsoft.Data.SqlClient
                     // If we are not in Batch RPC mode, update the query cache with the encryption MD.
                     // We can do this now that we have distinguished between ReturnValue and ReturnStatus.
                     // Read comment in AddQueryMetadata() for more details.
-                    // Enclave based Always Encrypted implementation on server side does not support cache at this point. So we should not cache if the query requires keys to be sent to enclave
-                    if (!BatchRPCMode && CachingQueryMetadataPostponed && !requiresEnclaveComputations && (this._parameters != null && this._parameters.Count > 0))
+                    if (!BatchRPCMode && CachingQueryMetadataPostponed &&
+                        ShouldCacheEncryptionMetadata && (_parameters != null && _parameters.Count > 0))
                     {
                         SqlQueryMetadataCache.GetInstance().AddQueryMetadata(this, ignoreQueriesWithReturnValueParams: false);
                     }
