@@ -11440,7 +11440,6 @@ namespace Microsoft.Data.SqlClient
                     metadata.cipherMD,
                     _connHandler.Connection,
                     null);
-
         }
 
         internal Task WriteBulkCopyValue(object value, SqlMetaDataPriv metadata, TdsParserStateObject stateObj, bool isSqlType, bool isDataFeed, bool isNull)
