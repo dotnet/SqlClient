@@ -280,6 +280,11 @@ namespace Microsoft.Data.SqlClient
         internal byte TceVersionSupported { get; set; }
 
         /// <summary>
+        /// Server supports retrying when the enclave CEKs sent by the client do not match what is needed for the query to run.
+        /// </summary>
+        internal bool AreEnclaveRetriesSupported { get; set; }
+
+        /// <summary>
         /// Type of enclave being used by the server
         /// </summary>
         internal string EnclaveType { get; set; }
