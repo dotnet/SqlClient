@@ -244,62 +244,79 @@ namespace Microsoft.Data.SqlClient
         private static readonly Version constTypeSystemAsmVersion11 = new Version("11.0.0.0");
 
         private readonly string _expandedAttachDBFilename; // expanded during construction so that CreatePermissionSet & Expand are consistent
+        private readonly bool _hasPersistablePassword;
 
-        internal SqlConnectionString(string connectionString) : base(connectionString, GetParseSynonyms())
+        internal readonly bool HasPasswordKeyword;
+        internal readonly bool HasUserIdKeyword;
+        private readonly NameValuePair _keyChain;
+
+        internal SqlConnectionString(string connectionString) : base(connectionString)
         {
-            ThrowUnsupportedIfKeywordSet(KEY.AsynchronousProcessing);
-            ThrowUnsupportedIfKeywordSet(KEY.Connection_Reset);
-            ThrowUnsupportedIfKeywordSet(KEY.Context_Connection);
+            var parsetable = new Dictionary<string, string>();
+            // first pass on parsing, initial syntax check
+            if (0 < connectionString.Length)
+            {
+                _keyChain = ParseInternal(parsetable, connectionString, true, GetParseSynonyms(), false);
+                HasPasswordKeyword = (parsetable.ContainsKey(KEY.Password) || parsetable.ContainsKey(SYNONYM.Pwd));
+                HasUserIdKeyword = (parsetable.ContainsKey(KEY.User_ID) || parsetable.ContainsKey(SYNONYM.UID));
+            }
+
+            ThrowUnsupportedIfKeywordSet(parsetable, KEY.AsynchronousProcessing);
+            ThrowUnsupportedIfKeywordSet(parsetable, KEY.Connection_Reset);
+            ThrowUnsupportedIfKeywordSet(parsetable, KEY.Context_Connection);
 
             // Network Library has its own special error message
-            if (ContainsKey(KEY.Network_Library))
+            if (ContainsKey(parsetable, KEY.Network_Library))
             {
                 throw SQL.NetworkLibraryKeywordNotSupported();
             }
 
-            _integratedSecurity = ConvertValueToIntegratedSecurity();
+            _integratedSecurity = ConvertValueToIntegratedSecurity(parsetable);
 #if NETCOREAPP
-            _poolBlockingPeriod = ConvertValueToPoolBlockingPeriod();
+            _poolBlockingPeriod = ConvertValueToPoolBlockingPeriod(parsetable);
 #endif
-            _encrypt = ConvertValueToBoolean(KEY.Encrypt, DEFAULT.Encrypt);
-            _enlist = ConvertValueToBoolean(KEY.Enlist, DEFAULT.Enlist);
-            _mars = ConvertValueToBoolean(KEY.MARS, DEFAULT.MARS);
-            _persistSecurityInfo = ConvertValueToBoolean(KEY.Persist_Security_Info, DEFAULT.Persist_Security_Info);
-            _pooling = ConvertValueToBoolean(KEY.Pooling, DEFAULT.Pooling);
-            _replication = ConvertValueToBoolean(KEY.Replication, DEFAULT.Replication);
-            _userInstance = ConvertValueToBoolean(KEY.User_Instance, DEFAULT.User_Instance);
-            _multiSubnetFailover = ConvertValueToBoolean(KEY.MultiSubnetFailover, DEFAULT.MultiSubnetFailover);
+            _encrypt = ConvertValueToBoolean(parsetable, KEY.Encrypt, DEFAULT.Encrypt);
+            _enlist = ConvertValueToBoolean(parsetable, KEY.Enlist, DEFAULT.Enlist);
+            _mars = ConvertValueToBoolean(parsetable, KEY.MARS, DEFAULT.MARS);
+            _persistSecurityInfo = ConvertValueToBoolean(parsetable, KEY.Persist_Security_Info, DEFAULT.Persist_Security_Info);
+            _pooling = ConvertValueToBoolean(parsetable, KEY.Pooling, DEFAULT.Pooling);
+            _replication = ConvertValueToBoolean(parsetable, KEY.Replication, DEFAULT.Replication);
+            _userInstance = ConvertValueToBoolean(parsetable, KEY.User_Instance, DEFAULT.User_Instance);
+            _multiSubnetFailover = ConvertValueToBoolean(parsetable, KEY.MultiSubnetFailover, DEFAULT.MultiSubnetFailover);
 
-            _commandTimeout = ConvertValueToInt32(KEY.Command_Timeout, DEFAULT.Command_Timeout);
-            _connectTimeout = ConvertValueToInt32(KEY.Connect_Timeout, DEFAULT.Connect_Timeout);
-            _loadBalanceTimeout = ConvertValueToInt32(KEY.Load_Balance_Timeout, DEFAULT.Load_Balance_Timeout);
-            _maxPoolSize = ConvertValueToInt32(KEY.Max_Pool_Size, DEFAULT.Max_Pool_Size);
-            _minPoolSize = ConvertValueToInt32(KEY.Min_Pool_Size, DEFAULT.Min_Pool_Size);
-            _packetSize = ConvertValueToInt32(KEY.Packet_Size, DEFAULT.Packet_Size);
-            _connectRetryCount = ConvertValueToInt32(KEY.Connect_Retry_Count, DEFAULT.Connect_Retry_Count);
-            _connectRetryInterval = ConvertValueToInt32(KEY.Connect_Retry_Interval, DEFAULT.Connect_Retry_Interval);
+            _commandTimeout = ConvertValueToInt32(parsetable, KEY.Command_Timeout, DEFAULT.Command_Timeout);
+            _connectTimeout = ConvertValueToInt32(parsetable, KEY.Connect_Timeout, DEFAULT.Connect_Timeout);
+            _loadBalanceTimeout = ConvertValueToInt32(parsetable, KEY.Load_Balance_Timeout, DEFAULT.Load_Balance_Timeout);
+            _maxPoolSize = ConvertValueToInt32(parsetable, KEY.Max_Pool_Size, DEFAULT.Max_Pool_Size);
+            _minPoolSize = ConvertValueToInt32(parsetable, KEY.Min_Pool_Size, DEFAULT.Min_Pool_Size);
+            _packetSize = ConvertValueToInt32(parsetable, KEY.Packet_Size, DEFAULT.Packet_Size);
+            _connectRetryCount = ConvertValueToInt32(parsetable, KEY.Connect_Retry_Count, DEFAULT.Connect_Retry_Count);
+            _connectRetryInterval = ConvertValueToInt32(parsetable, KEY.Connect_Retry_Interval, DEFAULT.Connect_Retry_Interval);
 
-            _applicationIntent = ConvertValueToApplicationIntent();
-            _applicationName = ConvertValueToString(KEY.Application_Name, DEFAULT.Application_Name);
-            _attachDBFileName = ConvertValueToString(KEY.AttachDBFilename, DEFAULT.AttachDBFilename);
-            _currentLanguage = ConvertValueToString(KEY.Current_Language, DEFAULT.Current_Language);
-            _dataSource = ConvertValueToString(KEY.Data_Source, DEFAULT.Data_Source);
+            _applicationIntent = ConvertValueToApplicationIntent(parsetable);
+            _applicationName = ConvertValueToString(parsetable, KEY.Application_Name, DEFAULT.Application_Name);
+            _attachDBFileName = ConvertValueToString(parsetable, KEY.AttachDBFilename, DEFAULT.AttachDBFilename);
+            _currentLanguage = ConvertValueToString(parsetable, KEY.Current_Language, DEFAULT.Current_Language);
+            _dataSource = ConvertValueToString(parsetable, KEY.Data_Source, DEFAULT.Data_Source);
             _localDBInstance = LocalDBAPI.GetLocalDbInstanceNameFromServerName(_dataSource);
-            _failoverPartner = ConvertValueToString(KEY.FailoverPartner, DEFAULT.FailoverPartner);
-            _initialCatalog = ConvertValueToString(KEY.Initial_Catalog, DEFAULT.Initial_Catalog);
-            _password = ConvertValueToString(KEY.Password, DEFAULT.Password);
-            _trustServerCertificate = ConvertValueToBoolean(KEY.TrustServerCertificate, DEFAULT.TrustServerCertificate);
-            _authType = ConvertValueToAuthenticationType();
-            _columnEncryptionSetting = ConvertValueToColumnEncryptionSetting();
-            _enclaveAttestationUrl = ConvertValueToString(KEY.EnclaveAttestationUrl, DEFAULT.EnclaveAttestationUrl);
-            _attestationProtocol = ConvertValueToAttestationProtocol();
+            _failoverPartner = ConvertValueToString(parsetable, KEY.FailoverPartner, DEFAULT.FailoverPartner);
+            _initialCatalog = ConvertValueToString(parsetable, KEY.Initial_Catalog, DEFAULT.Initial_Catalog);
+            _password = ConvertValueToString(parsetable, KEY.Password, DEFAULT.Password);
+            _trustServerCertificate = ConvertValueToBoolean(parsetable, KEY.TrustServerCertificate, DEFAULT.TrustServerCertificate);
+            _authType = ConvertValueToAuthenticationType(parsetable);
+            _columnEncryptionSetting = ConvertValueToColumnEncryptionSetting(parsetable);
+            _enclaveAttestationUrl = ConvertValueToString(parsetable, KEY.EnclaveAttestationUrl, DEFAULT.EnclaveAttestationUrl);
+            _attestationProtocol = ConvertValueToAttestationProtocol(parsetable);
+            _hasPersistablePassword =  HasPasswordKeyword?
+                ConvertValueToBoolean(parsetable, KEY.Persist_Security_Info, false) :
+                true; // no password means persistable password so we don't have to munge
 
             // Temporary string - this value is stored internally as an enum.
-            string typeSystemVersionString = ConvertValueToString(KEY.Type_System_Version, null);
-            string transactionBindingString = ConvertValueToString(KEY.TransactionBinding, null);
+            string typeSystemVersionString = ConvertValueToString(parsetable, KEY.Type_System_Version, null);
+            string transactionBindingString = ConvertValueToString(parsetable, KEY.TransactionBinding, null);
 
-            _userID = ConvertValueToString(KEY.User_ID, DEFAULT.User_ID);
-            _workstationId = ConvertValueToString(KEY.Workstation_Id, null);
+            _userID = ConvertValueToString(parsetable, KEY.User_ID, DEFAULT.User_ID);
+            _workstationId = ConvertValueToString(parsetable, KEY.Workstation_Id, null);
 
             if (_loadBalanceTimeout < 0)
             {
@@ -539,6 +556,11 @@ namespace Microsoft.Data.SqlClient
             _enclaveAttestationUrl = connectionOptions._enclaveAttestationUrl;
             _attestationProtocol = connectionOptions._attestationProtocol;
 
+            _hasPersistablePassword = connectionOptions._hasPersistablePassword;
+            HasPasswordKeyword = connectionOptions.HasPasswordKeyword;
+            HasUserIdKeyword = connectionOptions.HasUserIdKeyword;
+            _keyChain = connectionOptions._keyChain;
+
             ValidateValueLength(_dataSource, TdsEnums.MAXLEN_SERVERNAME, KEY.Data_Source);
         }
 
@@ -590,6 +612,9 @@ namespace Microsoft.Data.SqlClient
 
         internal TransactionBindingEnum TransactionBinding { get { return _transactionBinding; } }
 
+        private bool HasPersistablePassword { get { return _hasPersistablePassword; } }
+        public override bool IsEmpty => _keyChain == null;
+
         internal bool EnforceLocalHost
         {
             get
@@ -604,13 +629,18 @@ namespace Microsoft.Data.SqlClient
         {
             if (null != _expandedAttachDBFilename)
             {
-                return ExpandAttachDbFileName(_expandedAttachDBFilename);
+                return ExpandAttachDbFileName(_keyChain, _expandedAttachDBFilename);
             }
             else
             {
                 return base.Expand();
             }
         }
+
+        internal override string UsersConnectionString(bool hidePassword) =>
+	        UsersConnectionString(_keyChain, hidePassword, false);
+
+        internal override string UsersConnectionStringForTrace() => UsersConnectionString(_keyChain, true, true);
 
         private static bool CompareHostName(ref string host, string name, bool fixup)
         {
@@ -638,7 +668,7 @@ namespace Microsoft.Data.SqlClient
 
         // This dictionary is meant to be read-only translation of parsed string
         // keywords/synonyms to a known keyword string.
-        internal static Dictionary<string, string> GetParseSynonyms()
+        private static Dictionary<string, string> GetParseSynonyms()
         {
             Dictionary<string, string> synonyms = s_sqlClientSynonyms;
             if (null == synonyms)
@@ -795,10 +825,9 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal ApplicationIntent ConvertValueToApplicationIntent()
+        private static ApplicationIntent ConvertValueToApplicationIntent(Dictionary<string, string> parsetable)
         {
-            string value;
-            if (!TryGetParsetableValue(KEY.ApplicationIntent, out value))
+            if (!TryGetParsetableValue(parsetable, KEY.ApplicationIntent, out string value))
             {
                 return DEFAULT.ApplicationIntent;
             }
@@ -820,17 +849,17 @@ namespace Microsoft.Data.SqlClient
             // ArgumentException and other types are raised as is (no wrapping)
         }
 
-        internal void ThrowUnsupportedIfKeywordSet(string keyword)
+        private static void ThrowUnsupportedIfKeywordSet(Dictionary<string, string> parsetable, string keyword)
         {
-            if (ContainsKey(keyword))
+            if (ContainsKey(parsetable, keyword))
             {
                 throw SQL.UnsupportedKeyword(keyword);
             }
         }
 
-        internal SqlAuthenticationMethod ConvertValueToAuthenticationType()
+        private static SqlAuthenticationMethod ConvertValueToAuthenticationType(Dictionary<string, string> parsetable)
         {
-            if (!TryGetParsetableValue(KEY.Authentication, out string value))
+            if (!TryGetParsetableValue(parsetable, KEY.Authentication, out string value))
             {
                 return DEFAULT.Authentication;
             }
@@ -853,9 +882,9 @@ namespace Microsoft.Data.SqlClient
         /// Convert the value to SqlConnectionColumnEncryptionSetting.
         /// </summary>
         /// <returns></returns>
-        internal SqlConnectionColumnEncryptionSetting ConvertValueToColumnEncryptionSetting()
+        private static SqlConnectionColumnEncryptionSetting ConvertValueToColumnEncryptionSetting(Dictionary<string, string> parsetable)
         {
-            if (!TryGetParsetableValue(KEY.ColumnEncryptionSetting, out string value))
+            if (!TryGetParsetableValue(parsetable, KEY.ColumnEncryptionSetting, out string value))
             {
                 return DEFAULT.ColumnEncryptionSetting;
             }
@@ -878,9 +907,9 @@ namespace Microsoft.Data.SqlClient
         /// Convert the value to SqlConnectionAttestationProtocol
         /// </summary>
         /// <returns></returns>
-        internal SqlConnectionAttestationProtocol ConvertValueToAttestationProtocol()
+        private static SqlConnectionAttestationProtocol ConvertValueToAttestationProtocol(Dictionary<string, string> parsetable)
         {
-            if (!TryGetParsetableValue(KEY.AttestationProtocol, out string value))
+            if (!TryGetParsetableValue(parsetable, KEY.AttestationProtocol, out string value))
             {
                 return DEFAULT.AttestationProtocol;
             }
@@ -897,6 +926,21 @@ namespace Microsoft.Data.SqlClient
             {
                 throw ADP.InvalidConnectionOptionValue(KEY.AttestationProtocol, e);
             }
+        }
+
+        private string UsersConnectionString(NameValuePair keyChain, bool hidePassword, bool forceHidePassword)
+        {
+            string connectionString = _usersConnectionString;
+            if (HasPasswordKeyword && (forceHidePassword || (hidePassword && !HasPersistablePassword)))
+            {
+                ReplacePasswordPwd(keyChain, out connectionString, false);
+            }
+            return connectionString ?? string.Empty;
+        }
+
+        private static bool ContainsKey(Dictionary<string, string> parsetable, string keyword)
+        {
+            return parsetable.ContainsKey(keyword);
         }
     }
 }

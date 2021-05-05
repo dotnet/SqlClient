@@ -10,49 +10,34 @@ using System.Text;
 
 namespace Microsoft.Data.Common
 {
-    internal partial class DbConnectionOptions
+    internal abstract partial class DbConnectionOptions
     {
         // instances of this class are intended to be immutable, i.e readonly
         // used by pooling classes so it is much easier to verify correctness
         // when not worried about the class being modified during execution
 
-        public DbConnectionOptions(string connectionString, Dictionary<string, string> synonyms)
+        public DbConnectionOptions(string connectionString)
         {
-            _parsetable = new Dictionary<string, string>();
             _usersConnectionString = ((null != connectionString) ? connectionString : "");
-
-            // first pass on parsing, initial syntax check
-            if (0 < _usersConnectionString.Length)
-            {
-                _keyChain = ParseInternal(_parsetable, _usersConnectionString, true, synonyms, false);
-                HasPasswordKeyword = (_parsetable.ContainsKey(KEY.Password) || _parsetable.ContainsKey(SYNONYM.Pwd));
-                HasUserIdKeyword = (_parsetable.ContainsKey(KEY.User_ID) || _parsetable.ContainsKey(SYNONYM.UID));
-            }
         }
 
         protected DbConnectionOptions(DbConnectionOptions connectionOptions)
-        { // Clone used by SqlConnectionString
+        { 
+            // Clone used by SqlConnectionString
             _usersConnectionString = connectionOptions._usersConnectionString;            
-            _parsetable = connectionOptions._parsetable;
-            _keyChain = connectionOptions._keyChain;
-            HasPasswordKeyword = connectionOptions.HasPasswordKeyword;
-            HasUserIdKeyword = connectionOptions.HasUserIdKeyword;
         }
 
-        public bool IsEmpty => _keyChain == null;
-
-        internal bool TryGetParsetableValue(string key, out string value) => _parsetable.TryGetValue(key, out value);
+        protected static bool TryGetParsetableValue(Dictionary<string, string> parsetable, string key, out string value) => parsetable.TryGetValue(key, out value);
 
         // same as Boolean, but with SSPI thrown in as valid yes
-        public bool ConvertValueToIntegratedSecurity()
+        protected static bool ConvertValueToIntegratedSecurity(Dictionary<string, string> parsetable)
         {
-            string value;
-            return _parsetable.TryGetValue(KEY.Integrated_Security, out value) && value != null ?
-                ConvertValueToIntegratedSecurityInternal(value) :
-                false;
+	        return parsetable.TryGetValue(KEY.Integrated_Security, out string value) && value != null ?
+		        ConvertValueToIntegratedSecurityInternal(value) :
+		        false;
         }
 
-        internal bool ConvertValueToIntegratedSecurityInternal(string stringValue)
+        private static bool ConvertValueToIntegratedSecurityInternal(string stringValue)
         {
             if (CompareInsensitiveInvariant(stringValue, "sspi") || CompareInsensitiveInvariant(stringValue, "true") || CompareInsensitiveInvariant(stringValue, "yes"))
                 return true;
@@ -72,39 +57,32 @@ namespace Microsoft.Data.Common
             }
         }
 
-        public int ConvertValueToInt32(string keyName, int defaultValue)
+        protected static int ConvertValueToInt32(Dictionary<string, string> parsetable, string keyName, int defaultValue)
         {
-            string value;
-            return _parsetable.TryGetValue(keyName, out value) && value != null ?
-                ConvertToInt32Internal(keyName, value) :
-                defaultValue;
+            return parsetable.TryGetValue(keyName, out string value) && value != null ?
+		        ConvertToInt32Internal(keyName, value) :
+		        defaultValue;
         }
 
-        internal static int ConvertToInt32Internal(string keyname, string stringValue)
+        private static int ConvertToInt32Internal(string keyname, string stringValue)
         {
-            try
-            {
-                return int.Parse(stringValue, System.Globalization.NumberStyles.Integer, CultureInfo.InvariantCulture);
-            }
-            catch (FormatException e)
-            {
-                throw ADP.InvalidConnectionOptionValue(keyname, e);
-            }
-            catch (OverflowException e)
-            {
-                throw ADP.InvalidConnectionOptionValue(keyname, e);
-            }
+	        try
+	        {
+		        return int.Parse(stringValue, System.Globalization.NumberStyles.Integer, CultureInfo.InvariantCulture);
+	        }
+	        catch (FormatException e)
+	        {
+		        throw ADP.InvalidConnectionOptionValue(keyname, e);
+	        }
+	        catch (OverflowException e)
+	        {
+		        throw ADP.InvalidConnectionOptionValue(keyname, e);
+	        }
         }
 
-        public string ConvertValueToString(string keyName, string defaultValue)
+        protected static string ConvertValueToString(Dictionary<string, string> parsetable, string keyName, string defaultValue)
         {
-            string value;
-            return _parsetable.TryGetValue(keyName, out value) && value != null ? value : defaultValue;
-        }
-
-        public bool ContainsKey(string keyword)
-        {
-            return _parsetable.ContainsKey(keyword);
+            return parsetable.TryGetValue(keyName, out string value) && value != null ? value : defaultValue;
         }
 
         protected internal virtual string Expand()
@@ -151,12 +129,12 @@ namespace Microsoft.Data.Common
             return fullPath;
         }
 
-        internal string ExpandAttachDbFileName(string replacementValue)
+        internal string ExpandAttachDbFileName(NameValuePair keyChain, string replacementValue)
         {
             int copyPosition = 0;
 
             StringBuilder builder = new StringBuilder(_usersConnectionString.Length);
-            for (NameValuePair current = _keyChain; null != current; current = current.Next)
+            for (NameValuePair current = keyChain; null != current; current = current.Next)
             {
                 if (current.Name == KEY.AttachDBFileName)
                 {

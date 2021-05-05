@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
@@ -18,10 +19,10 @@ namespace Microsoft.Data.SqlClient
 
         internal PoolBlockingPeriod PoolBlockingPeriod { get { return _poolBlockingPeriod; } }
 
-        internal Microsoft.Data.SqlClient.PoolBlockingPeriod ConvertValueToPoolBlockingPeriod()
+        private static PoolBlockingPeriod ConvertValueToPoolBlockingPeriod(Dictionary<string, string> parsetable)
         {
             string value;
-            if (!TryGetParsetableValue(KEY.PoolBlockingPeriod, out value))
+            if (!TryGetParsetableValue(parsetable, KEY.PoolBlockingPeriod, out value))
             {
                 return DEFAULT.PoolBlockingPeriod;
             }

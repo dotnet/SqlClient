@@ -12,7 +12,7 @@ using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.Common
 {
-    partial class DbConnectionOptions
+    internal abstract partial class DbConnectionOptions
     {
 #if DEBUG
         /*private const string ConnectionStringPatternV1 =
@@ -71,7 +71,7 @@ namespace Microsoft.Data.Common
         private const string ConnectionStringValidValuePattern = "^[^\u0000]*$";                    // value not allowed to contain embedded null
         private const string ConnectionStringQuoteValuePattern = "^[^\"'=;\\s\\p{Cc}]*$";           // generally do not quote the value if it matches the pattern
         private const string ConnectionStringQuoteOdbcValuePattern = "^\\{([^\\}\u0000]|\\}\\})*\\}$"; // do not quote odbc value if it matches this pattern
-        internal const string DataDirectory = "|datadirectory|";
+        private const string DataDirectory = "|datadirectory|";
 
         private static readonly Regex s_connectionStringValidKeyRegex = new Regex(ConnectionStringValidKeyPattern, RegexOptions.Compiled);
         private static readonly Regex s_connectionStringValidValueRegex = new Regex(ConnectionStringValidValuePattern, RegexOptions.Compiled);
@@ -96,46 +96,21 @@ namespace Microsoft.Data.Common
             internal const string UID = "uid";
         }
 
-        internal readonly bool HasPasswordKeyword;
-        internal readonly bool HasUserIdKeyword;
+        protected readonly string _usersConnectionString;
 
-        private readonly string _usersConnectionString;
-        private readonly Dictionary<string, string> _parsetable;
-        internal readonly NameValuePair _keyChain;
+        internal abstract string UsersConnectionString(bool hidePassword);
 
-        internal Dictionary<string, string> Parsetable
+        internal abstract string UsersConnectionStringForTrace();
+        public abstract bool IsEmpty { get;}
+
+        protected static bool ConvertValueToBoolean(Dictionary<string, string> parsetable, string keyName, bool defaultValue)
         {
-            get { return _parsetable; }
+	        return parsetable.TryGetValue(keyName, out string value) ?
+		        ConvertValueToBooleanInternal(keyName, value) :
+		        defaultValue;
         }
 
-        public string UsersConnectionString(bool hidePassword) =>
-            UsersConnectionString(hidePassword, false);
-
-        internal string UsersConnectionStringForTrace() => UsersConnectionString(true, true);
-
-        private string UsersConnectionString(bool hidePassword, bool forceHidePassword)
-        {
-            string connectionString = _usersConnectionString;
-            if (HasPasswordKeyword && (forceHidePassword || (hidePassword && !HasPersistablePassword)))
-            {
-                ReplacePasswordPwd(out connectionString, false);
-            }
-            return connectionString ?? string.Empty;
-        }
-
-        internal bool HasPersistablePassword => HasPasswordKeyword ?
-            ConvertValueToBoolean(KEY.Persist_Security_Info, false) :
-            true; // no password means persistable password so we don't have to munge
-
-        public bool ConvertValueToBoolean(string keyName, bool defaultValue)
-        {
-            string value;
-            return _parsetable.TryGetValue(keyName, out value) ?
-                ConvertValueToBooleanInternal(keyName, value) :
-                defaultValue;
-        }
-
-        internal static bool ConvertValueToBooleanInternal(string keyName, string stringValue)
+        private static bool ConvertValueToBooleanInternal(string keyName, string stringValue)
         {
             if (CompareInsensitiveInvariant(stringValue, "true") || CompareInsensitiveInvariant(stringValue, "yes"))
                 return true;
@@ -227,7 +202,7 @@ namespace Microsoft.Data.Common
             NullTermination,
         };
 
-        internal static int GetKeyValuePair(string connectionString, int currentPosition, StringBuilder buffer, bool useOdbcRules, out string keyname, out string keyvalue)
+        private static int GetKeyValuePair(string connectionString, int currentPosition, StringBuilder buffer, bool useOdbcRules, out string keyname, out string keyvalue)
         {
             int startposition = currentPosition;
 
@@ -571,7 +546,7 @@ namespace Microsoft.Data.Common
         }
 #endif
 
-        private static NameValuePair ParseInternal(Dictionary<string, string> parsetable, string connectionString, bool buildChain, Dictionary<string, string> synonyms, bool firstKey)
+        protected static NameValuePair ParseInternal(Dictionary<string, string> parsetable, string connectionString, bool buildChain, Dictionary<string, string> synonyms, bool firstKey)
         {
             Debug.Assert(null != connectionString, "null connectionstring");
             StringBuilder buffer = new StringBuilder();
@@ -633,13 +608,13 @@ namespace Microsoft.Data.Common
             return keychain;
         }
 
-        internal NameValuePair ReplacePasswordPwd(out string constr, bool fakePassword)
+        internal NameValuePair ReplacePasswordPwd(NameValuePair keyChain, out string constr, bool fakePassword)
         {
             bool expanded = false;
             int copyPosition = 0;
             NameValuePair head = null, tail = null, next = null;
             StringBuilder builder = new StringBuilder(_usersConnectionString.Length);
-            for (NameValuePair current = _keyChain; null != current; current = current.Next)
+            for (NameValuePair current = keyChain; null != current; current = current.Next)
             {
                 if ((KEY.Password != current.Name) && (SYNONYM.Pwd != current.Name))
                 {
