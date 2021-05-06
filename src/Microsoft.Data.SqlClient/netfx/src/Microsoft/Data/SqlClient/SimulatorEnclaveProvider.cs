@@ -85,10 +85,8 @@ namespace Microsoft.Data.SqlClient
                             checked((int)sizeOfTrustedModuleDHPublicKeySignatureBuffer));
 
                         byte[] sharedSecret;
-                        using (ECDiffieHellman ecdh = KeyConverter.CreateECDiffieHellmanFromPublicKeyBlob(trustedModuleDHPublicKey))
-                        {
-                            sharedSecret = KeyConverter.DeriveKey(clientDHKey, ecdh.PublicKey);
-                        }
+                        using ECDiffieHellman ecdh = KeyConverter.CreateECDiffieHellmanFromPublicKeyBlob(trustedModuleDHPublicKey);
+                        sharedSecret = KeyConverter.DeriveKey(clientDHKey, ecdh.PublicKey);
                         long sessionId = BitConverter.ToInt64(enclaveSessionHandle, 0);
                         sqlEnclaveSession = AddEnclaveSessionToCache(enclaveSessionParameters, sharedSecret, sessionId, out counter);
                     }
