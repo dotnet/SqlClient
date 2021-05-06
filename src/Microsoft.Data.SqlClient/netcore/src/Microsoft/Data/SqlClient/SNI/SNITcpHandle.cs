@@ -392,16 +392,15 @@ namespace Microsoft.Data.SqlClient.SNI
             Socket availableSocket = null;
             try
             {
-                int n = 0; // Socket index
-
                 // We go through the IP list twice.
                 // In the first traversal, we only try to connect with the preferedIPFamilies[0].
                 // In the second traversal, we only try to connect with the preferedIPFamilies[1].
                 // For UsePlatformDefault preference, we do traversal once.
                 for (int i = 0; i < preferedIPFamilies.Length; ++i)
                 {
-                    foreach (IPAddress ipAddress in ipAddresses)
+                    for (int n = 0; n < ipAddresses.Length; n++)
                     {
+                        IPAddress ipAddress = ipAddresses[n];
                         try
                         {
                             if (ipAddress != null)
@@ -443,7 +442,6 @@ namespace Microsoft.Data.SqlClient.SNI
                                         sockets[n] = null;
                                     }
                                 }
-                                n++;
                             }
                         }
                         catch (Exception e)
