@@ -4284,9 +4284,10 @@ namespace Microsoft.Data.SqlClient
             uint userType;
 
             // For return values there is not cipher table and no ordinal.
-            OperationStatus result = stateObj.TryReadUInt16(out index);
+            OperationStatus result;
             if (cipherTable != null)
             {
+                result = stateObj.TryReadUInt16(out index);
                 if (result != OperationStatus.Done)
                 {
                     return result;
