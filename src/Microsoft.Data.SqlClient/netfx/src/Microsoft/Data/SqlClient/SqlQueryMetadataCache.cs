@@ -56,8 +56,8 @@ namespace Microsoft.Data.SqlClient
 
             // Check the cache to see if we have the MD for this query cached.
             Tuple<string, string> keys = GetCacheLookupKeysFromSqlCommand(sqlCommand);
-            string cacheLookupKey = keys.Item1;
-            string enclaveLookupKey = keys.Item2;
+            string cacheLookupKey = keys?.Item1;
+            string enclaveLookupKey = keys?.Item2;
             if (cacheLookupKey == null)
             {
                 IncrementCacheMisses();
@@ -189,8 +189,8 @@ namespace Microsoft.Data.SqlClient
 
             // Construct the entry and put it in the cache.
             Tuple<string, string> keys = GetCacheLookupKeysFromSqlCommand(sqlCommand);
-            string cacheLookupKey = keys.Item1;
-            string enclaveLookupKey = keys.Item2;
+            string cacheLookupKey = keys?.Item1;
+            string enclaveLookupKey = keys?.Item2;
             if (cacheLookupKey == null)
             {
                 return;
@@ -254,8 +254,8 @@ namespace Microsoft.Data.SqlClient
         internal void InvalidateCacheEntry(SqlCommand sqlCommand)
         {
             Tuple<string, string> keys = GetCacheLookupKeysFromSqlCommand(sqlCommand);
-            string cacheLookupKey = keys.Item1;
-            string enclaveLookupKey = keys.Item2;
+            string cacheLookupKey = keys?.Item1;
+            string enclaveLookupKey = keys?.Item2;
             if (cacheLookupKey == null)
             {
                 return;
@@ -300,7 +300,7 @@ namespace Microsoft.Data.SqlClient
             // Return null if we have no connection.
             if (connection == null)
             {
-                return Tuple.Create<string, string>(null, null);
+                return null;
             }
 
             StringBuilder cacheLookupKeyBuilder = new StringBuilder(connection.DataSource, capacity: connection.DataSource.Length + SqlIdentifierLength + sqlCommand.CommandText.Length + 6);

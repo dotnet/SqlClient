@@ -120,20 +120,6 @@ namespace Microsoft.Data.SqlClient
         // cut down on object creation and cache all these
         // cached metadata
         private _SqlMetaDataSet _cachedMetaData;
-
-        internal Dictionary<int, SqlTceCipherInfoEntry> keysToBeSentToEnclave;
-        internal bool requiresEnclaveComputations = false;
-        private bool ShouldCacheEncryptionMetadata
-        {
-            get
-            {
-                if (requiresEnclaveComputations && !_activeConnection.Parser.AreEnclaveRetriesSupported)
-                {
-                    return false;
-                }
-                return true;
-            }
-        }
         internal EnclavePackage enclavePackage = null;
         private SqlEnclaveAttestationParameters enclaveAttestationParameters = null;
         private byte[] customData = null;
@@ -173,6 +159,20 @@ namespace Microsoft.Data.SqlClient
         internal bool ShouldUseEnclaveBasedWorkflow
         {
             get { return !string.IsNullOrWhiteSpace(_activeConnection.EnclaveAttestationUrl) && IsColumnEncryptionEnabled; }
+        }
+
+        internal Dictionary<int, SqlTceCipherInfoEntry> keysToBeSentToEnclave;
+        internal bool requiresEnclaveComputations = false;
+        private bool ShouldCacheEncryptionMetadata
+        {
+            get
+            {
+                if (requiresEnclaveComputations && !_activeConnection.Parser.AreEnclaveRetriesSupported)
+                {
+                    return false;
+                }
+                return true;
+            }
         }
 
         // Cached info for async executions

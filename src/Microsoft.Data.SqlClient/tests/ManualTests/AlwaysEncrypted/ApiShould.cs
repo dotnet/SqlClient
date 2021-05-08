@@ -2201,62 +2201,70 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestRetryWhenAEParameterMetadataCacheIsStale(string connectionString)
         {
-            CleanUpTable(connectionString, _tableName);
-
-            const int customerId = 50;
-            IList<object> values = GetValues(dataHint: customerId);
-            InsertRows(tableName: _tableName, numberofRows: 1, values: values, connection: connectionString);
-
-            ApiTestTable table = _fixture.ApiTestTable as ApiTestTable;
-            string enclaveSelectQuery = $@"SELECT CustomerId, FirstName, LastName FROM [{_tableName}] WHERE CustomerId > @CustomerId";
-            string alterCekQueryFormatString = "ALTER TABLE [{0}] " +
-                "ALTER COLUMN [CustomerId] [int]  " +
-                "ENCRYPTED WITH (COLUMN_ENCRYPTION_KEY = [{1}], " +
-                "ENCRYPTION_TYPE = Randomized, " +
-                "ALGORITHM = 'AEAD_AES_256_CBC_HMAC_SHA_256'); " +
-                "ALTER DATABASE SCOPED CONFIGURATION CLEAR PROCEDURE_CACHE;";
-
-            using (SqlConnection sqlConnection = new SqlConnection(connectionString))
+            if (DataTestUtility.EnclaveEnabled)
             {
-                sqlConnection.Open();
+                CleanUpTable(connectionString, _tableName);
 
-                // execute the select query to add its parameter metadata and enclave-required CEKs to the cache
-                SqlCommand cmd = sqlConnection.CreateCommand();
-                cmd.CommandText = enclaveSelectQuery;
-                cmd.Parameters.AddWithValue("@CustomerId", 0);
+                const int customerId = 50;
+                IList<object> values = GetValues(dataHint: customerId);
+                InsertRows(tableName: _tableName, numberofRows: 1, values: values, connection: connectionString);
 
-                SqlDataReader reader = cmd.ExecuteReader();
-                while (reader.Read())
+                ApiTestTable table = _fixture.ApiTestTable as ApiTestTable;
+                string enclaveSelectQuery = $@"SELECT CustomerId, FirstName, LastName FROM [{_tableName}] WHERE CustomerId > @CustomerId";
+                string alterCekQueryFormatString = "ALTER TABLE [{0}] " +
+                    "ALTER COLUMN [CustomerId] [int]  " +
+                    "ENCRYPTED WITH (COLUMN_ENCRYPTION_KEY = [{1}], " +
+                    "ENCRYPTION_TYPE = Randomized, " +
+                    "ALGORITHM = 'AEAD_AES_256_CBC_HMAC_SHA_256'); " +
+                    "ALTER DATABASE SCOPED CONFIGURATION CLEAR PROCEDURE_CACHE;";
+
+                using (SqlConnection sqlConnection = new SqlConnection(connectionString))
                 {
-                    Assert.Equal(customerId, (int)reader[0]);
-                }
-                reader.Close();
+                    sqlConnection.Open();
 
-                cmd.Parameters.Clear();
+                    // execute the select query to add its parameter metadata and enclave-required CEKs to the cache
+                    SqlCommand cmd = sqlConnection.CreateCommand();
+                    cmd.CommandText = enclaveSelectQuery;
+                    SqlParameter custIdParam = cmd.CreateParameter();
+                    custIdParam.ParameterName = @"@CustomerId";
+                    custIdParam.DbType = DbType.Int32;
+                    custIdParam.Direction = ParameterDirection.Input;
+                    custIdParam.Value = 0;
+                    cmd.Parameters.Add(custIdParam);
 
-                // change the CEK for the CustomerId column from ColumnEncryptionKey1 to ColumnEncryptionKey2
-                // this will render the select query's cache entry stale
-                cmd.CommandText = string.Format(alterCekQueryFormatString, _tableName, table.columnEncryptionKey2.Name);
-                cmd.ExecuteNonQuery();
+                    SqlDataReader reader = cmd.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        Assert.Equal(customerId, (int)reader[0]);
+                    }
+                    reader.Close();
 
-                // execute the select query again. it will attempt to use the stale cache entry, receive 
-                // a retryable error from the server, remove the stale cache entry, retry and succeed
-                cmd.CommandText = enclaveSelectQuery;
-                cmd.Parameters.AddWithValue("@CustomerId", 0);
+                    cmd.Parameters.Clear();
 
-                reader = cmd.ExecuteReader();
-                while (reader.Read())
-                {
-                    Assert.Equal(customerId, (int)reader[0]);
-                }
-                reader.Close();
+                    // change the CEK for the CustomerId column from ColumnEncryptionKey1 to ColumnEncryptionKey2
+                    // this will render the select query's cache entry stale
+                    cmd.CommandText = string.Format(alterCekQueryFormatString, _tableName, table.columnEncryptionKey2.Name);
+                    cmd.ExecuteNonQuery();
 
-                cmd.Parameters.Clear();
+                    // execute the select query again. it will attempt to use the stale cache entry, receive 
+                    // a retryable error from the server, remove the stale cache entry, retry and succeed
+                    cmd.CommandText = enclaveSelectQuery;
+                    cmd.Parameters.AddWithValue("@CustomerId", 0);
 
-                // revert the CEK change to the CustomerId column
-                cmd.CommandText = string.Format(alterCekQueryFormatString, _tableName, table.columnEncryptionKey1.Name);
-                cmd.ExecuteNonQuery();
-            };
+                    reader = cmd.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        Assert.Equal(customerId, (int)reader[0]);
+                    }
+                    reader.Close();
+
+                    cmd.Parameters.Clear();
+
+                    // revert the CEK change to the CustomerId column
+                    cmd.CommandText = string.Format(alterCekQueryFormatString, _tableName, table.columnEncryptionKey1.Name);
+                    cmd.ExecuteNonQuery();
+                };
+            }
         }
 
         private SqlDataAdapter CreateSqlDataAdapter(SqlConnection sqlConnection)
