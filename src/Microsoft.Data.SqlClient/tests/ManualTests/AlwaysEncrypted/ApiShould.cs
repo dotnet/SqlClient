@@ -2227,7 +2227,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     cmd.CommandText = enclaveSelectQuery;
                     SqlParameter custIdParam = cmd.CreateParameter();
                     custIdParam.ParameterName = @"@CustomerId";
-                    custIdParam.DbType = DbType.Int32;
+                    custIdParam.DbType = DbType.AnsiString;
+                    custIdParam.ForceColumnEncryption = true;
                     custIdParam.Direction = ParameterDirection.Input;
                     custIdParam.Value = 0;
                     cmd.Parameters.Add(custIdParam);
