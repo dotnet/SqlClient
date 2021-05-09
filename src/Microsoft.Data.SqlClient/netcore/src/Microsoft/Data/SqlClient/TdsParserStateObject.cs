@@ -2186,7 +2186,7 @@ namespace Microsoft.Data.SqlClient
                 // previous buffer is in snapshot
                 _inBuff = new byte[_inBuff.Length];
                 result = OperationStatus.NeedMoreData;
-                _snapshot.CanContinue = true;
+                //_snapshot.CanContinue = true;
             }
 
             if (_syncOverAsync)
@@ -4131,7 +4131,12 @@ namespace Microsoft.Data.SqlClient
                 {
                     SetStackInternal(value);
                 }
+                public void SetPacketId(int value)
+                {
+                    SetPacketIdInternal(value);
+                }
                 partial void SetStackInternal(string value);
+                partial void SetPacketIdInternal(int value);
 
                 public void Clear()
                 {
@@ -4139,6 +4144,7 @@ namespace Microsoft.Data.SqlClient
                     Read = 0;
                     Prev = null;
                     SetStackInternal(null);
+                    SetPacketIdInternal(0);
                 }
             }
 
@@ -4238,13 +4244,60 @@ namespace Microsoft.Data.SqlClient
             }
 
 #if DEBUG
+            [DebuggerDisplay("{PacketId,nq}: [{Buffer.Length,nq}] {Prev!=null?\"->\":string.Empty,nq}")]
+            [DebuggerTypeProxy(typeof(PacketDataDebugView))]
             private sealed partial class PacketData
             {
+                internal sealed class PacketDataDebugView
+                {
+                    private readonly PacketData _data;
+
+                    public PacketDataDebugView(PacketData data)
+                    {
+                        if (data == null)
+                        {
+                            throw new ArgumentNullException(nameof(data));
+                        }
+
+                        _data = data;
+                    }
+
+                    [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+                    public int[] Items
+                    {
+                        get
+                        {
+                            int[] items = Array.Empty<int>();
+                            if (_data != null)
+                            {
+                                int count = 0;
+                                for (PacketData current = _data; current != null; current = current?.Prev)
+                                {
+                                    count++;
+                                }
+                                items = new int[count];
+                                int index = 0;
+                                for (PacketData current = _data; current != null; current = current?.Prev, index++)
+                                {
+                                    items[index] = current.PacketId;
+                                }
+                            }
+                            return items;
+                        }
+                    }
+                }
+
+                public int PacketId;
                 public string Stack;
 
                 partial void SetStackInternal(string value)
                 {
                     Stack = value;
+                }
+
+                partial void SetPacketIdInternal(int value)
+                {
+                    PacketId = value;
                 }
             }
 
