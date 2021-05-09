@@ -4600,15 +4600,15 @@
     <value>"{0}" no es menor que "{1}"; "{2}" no puede ser mayor que "{3}".</value>
   </data>
   <data name="Arg_ArrayPlusOffTooSmall" xml:space="preserve">
-    <value>Destination array is not long enough to copy all the items in the collection. Check array index and length.</value>
+    <value>La matriz de destino no es lo suficientemente larga para copiar todos los elementos de la colección. Compruebe el índice y la longitud de la matriz.</value>
   </data>
   <data name="Arg_RankMultiDimNotSupported" xml:space="preserve">
-    <value>Only single dimensional arrays are supported for the requested action.</value>
+    <value>Solo se admiten matrices de una sola dimensión para la acción solicitada.</value>
   </data>
   <data name="Arg_RemoveArgNotFound" xml:space="preserve">
-    <value>Cannot remove the specified item because it was not found in the specified Collection.</value>
+    <value>No se puede quitar el elemento especificado porque no se puede encontrar en la colección especificada.</value>
   </data>
   <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
-    <value>Non-negative number required.</value>
+    <value>Número no negativo requerido.</value>
   </data>
 </root>

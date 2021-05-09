@@ -4600,15 +4600,15 @@
     <value>'{0}' 不小於 '{1}'; '{2}' 不能大於 '{3}'。</value>
   </data>
   <data name="Arg_ArrayPlusOffTooSmall" xml:space="preserve">
-    <value>Destination array is not long enough to copy all the items in the collection. Check array index and length.</value>
+    <value>目的地陣列的長度不足以複製集合中的所有項目。請檢查陣列索引以及長度。</value>
   </data>
   <data name="Arg_RankMultiDimNotSupported" xml:space="preserve">
-    <value>Only single dimensional arrays are supported for the requested action.</value>
+    <value>所要求的動作只支援一維陣列。</value>
   </data>
   <data name="Arg_RemoveArgNotFound" xml:space="preserve">
-    <value>Cannot remove the specified item because it was not found in the specified Collection.</value>
+    <value>由於在指定的集合中找不到指定的項目，所以無法移除。</value>
   </data>
   <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
-    <value>Non-negative number required.</value>
+    <value>需要非負數。</value>
   </data>
 </root>

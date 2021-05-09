@@ -4600,15 +4600,15 @@
     <value>"{0}" не меньше "{1}"; "{2}" не может быть больше "{3}".</value>
   </data>
   <data name="Arg_ArrayPlusOffTooSmall" xml:space="preserve">
-    <value>Destination array is not long enough to copy all the items in the collection. Check array index and length.</value>
+    <value>Длина конечного массива недостаточна для копирования всех элементов коллекции. Проверьте индекс и длину массива.</value>
   </data>
   <data name="Arg_RankMultiDimNotSupported" xml:space="preserve">
-    <value>Only single dimensional arrays are supported for the requested action.</value>
+    <value>Для запрашиваемого действия поддерживаются только одномерные массивы.</value>
   </data>
   <data name="Arg_RemoveArgNotFound" xml:space="preserve">
-    <value>Cannot remove the specified item because it was not found in the specified Collection.</value>
+    <value>Невозможно удалить указанный элемент, так как он не найден в заданной коллекции.</value>
   </data>
   <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
-    <value>Non-negative number required.</value>
+    <value>Требуется неотрицательное число.</value>
   </data>
 </root>

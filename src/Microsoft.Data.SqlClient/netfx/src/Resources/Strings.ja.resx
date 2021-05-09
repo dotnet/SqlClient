@@ -4600,15 +4600,15 @@
     <value>'{0}' が '{1}' 未満ではありません。'{2}' は '{3}' よりも大きくできません。</value>
   </data>
   <data name="Arg_ArrayPlusOffTooSmall" xml:space="preserve">
-    <value>Destination array is not long enough to copy all the items in the collection. Check array index and length.</value>
+    <value>ターゲット配列の長さが不足しているため、コレクション内のすべての項目をコピーできません。配列のインデックスと長さをご確認ください。</value>
   </data>
   <data name="Arg_RankMultiDimNotSupported" xml:space="preserve">
-    <value>Only single dimensional arrays are supported for the requested action.</value>
+    <value>要求されたアクションに対しては、1 次元配列のみがサポートされます。</value>
   </data>
   <data name="Arg_RemoveArgNotFound" xml:space="preserve">
-    <value>Cannot remove the specified item because it was not found in the specified Collection.</value>
+    <value>指定された項目は、指定されたコレクションに見つからなかったため、削除できません。</value>
   </data>
   <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
-    <value>Non-negative number required.</value>
+    <value>負でない数値が必要です。</value>
   </data>
 </root>

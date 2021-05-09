@@ -4600,15 +4600,15 @@
     <value>« {0} » n'est pas inférieur à « {1} ». « {2} » ne peut pas être supérieur à « {3} ».</value>
   </data>
   <data name="Arg_ArrayPlusOffTooSmall" xml:space="preserve">
-    <value>Destination array is not long enough to copy all the items in the collection. Check array index and length.</value>
+    <value>La taille du tableau de destination ne permet pas de copier tous les éléments de la collection. Vérifiez l'index et la longueur du tableau.</value>
   </data>
   <data name="Arg_RankMultiDimNotSupported" xml:space="preserve">
-    <value>Only single dimensional arrays are supported for the requested action.</value>
+    <value>Seuls les tableaux unidimensionnels sont pris en charge pour l'action demandée.</value>
   </data>
   <data name="Arg_RemoveArgNotFound" xml:space="preserve">
-    <value>Cannot remove the specified item because it was not found in the specified Collection.</value>
+    <value>Impossible de supprimer l'élément spécifié, car il est introuvable dans la collection.</value>
   </data>
   <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
-    <value>Non-negative number required.</value>
+    <value>Nombre non négatif obligatoire.</value>
   </data>
 </root>

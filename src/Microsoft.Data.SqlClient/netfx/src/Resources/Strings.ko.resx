@@ -4600,15 +4600,15 @@
     <value>'{0}'이(가) '{1}'보다 작지 않습니다. '{2}'은(는) '{3}'보다 클 수 없습니다.</value>
   </data>
   <data name="Arg_ArrayPlusOffTooSmall" xml:space="preserve">
-    <value>Destination array is not long enough to copy all the items in the collection. Check array index and length.</value>
+    <value>대상 배열이 컬렉션의 모든 항목을 복사하기에 충분히 길지 않습니다. 배열 인덱스와 길이를 확인하세요.</value>
   </data>
   <data name="Arg_RankMultiDimNotSupported" xml:space="preserve">
-    <value>Only single dimensional arrays are supported for the requested action.</value>
+    <value>요청한 동작에 대해 1차원 배열만 지원됩니다.</value>
   </data>
   <data name="Arg_RemoveArgNotFound" xml:space="preserve">
-    <value>Cannot remove the specified item because it was not found in the specified Collection.</value>
+    <value>해당 항목은 지정된 컬렉션에 없으므로 제거할 수 없습니다.</value>
   </data>
   <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
-    <value>Non-negative number required.</value>
+    <value>음수가 아닌 수가 필요합니다.</value>
   </data>
 </root>
