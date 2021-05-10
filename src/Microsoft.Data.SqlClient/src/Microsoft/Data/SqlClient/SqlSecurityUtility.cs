@@ -375,7 +375,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw SQL.InvalidKeyStoreProviderName(keyStoreName,
                         SqlConnection.GetColumnEncryptionSystemKeyStoreProvidersNames(),
-                        GetListOfProviderNamesFromCacheThatWasSearched(connection, command));
+                        GetListOfProviderNamesThatWereSearched(connection, command));
                 }
 
                 bool? signatureVerificationResult;
