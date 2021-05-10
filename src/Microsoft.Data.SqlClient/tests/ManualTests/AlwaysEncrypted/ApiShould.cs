@@ -2223,15 +2223,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     sqlConnection.Open();
 
                     // execute the select query to add its parameter metadata and enclave-required CEKs to the cache
-                    SqlCommand cmd = sqlConnection.CreateCommand();
+                    using SqlCommand cmd = new SqlCommand("", sqlConnection, null, SqlCommandColumnEncryptionSetting.Enabled);
                     cmd.CommandText = enclaveSelectQuery;
-                    SqlParameter custIdParam = cmd.CreateParameter();
-                    custIdParam.ParameterName = @"@CustomerId";
-                    custIdParam.DbType = DbType.AnsiString;
-                    custIdParam.ForceColumnEncryption = true;
-                    custIdParam.Direction = ParameterDirection.Input;
-                    custIdParam.Value = 0;
-                    cmd.Parameters.Add(custIdParam);
+                    cmd.Parameters.AddWithValue("CustomerId", 0);
 
                     SqlDataReader reader = cmd.ExecuteReader();
                     while (reader.Read())
