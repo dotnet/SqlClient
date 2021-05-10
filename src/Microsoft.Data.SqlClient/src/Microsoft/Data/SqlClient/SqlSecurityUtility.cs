@@ -447,7 +447,7 @@ namespace Microsoft.Data.SqlClient
             return SqlConnection.s_systemColumnEncryptionKeyStoreProviders.TryGetValue(keyStoreName, out provider)
         }
 
-        internal static List<string> GetListOfProviderNamesFromCacheThatWasSearched(SqlConnection connection, SqlCommand command)
+        internal static List<string> GetListOfProviderNamesThatWereSearched(SqlConnection connection, SqlCommand command)
         {
             if (command != null && command.HasColumnEncryptionKeyStoreProvidersRegistered)
             {
