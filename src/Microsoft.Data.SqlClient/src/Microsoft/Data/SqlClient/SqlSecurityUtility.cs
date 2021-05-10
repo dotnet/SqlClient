@@ -256,9 +256,6 @@ namespace Microsoft.Data.SqlClient
             return;
         }
 
-        private static bool InstanceLevelProvidersAreRegistered(SqlConnection connection, SqlCommand command) =>
-            connection.HasColumnEncryptionKeyStoreProvidersRegistered || (command != null && command.HasColumnEncryptionKeyStoreProvidersRegistered);
-
         /// <summary>
         /// Decrypts the symmetric key and saves it in metadata.
         /// </summary>
@@ -277,14 +274,15 @@ namespace Microsoft.Data.SqlClient
             {
                 try
                 {
-                    if (InstanceLevelProvidersAreRegistered(connection, command) &&
-                        TryGetKeyFromLocalCache(keyInfo, out sqlClientSymmetricKey, connection, command))
+                    if (InstanceLevelProvidersAreRegistered(connection, command))
                     {
+                        sqlClientSymmetricKey = GetKeyFromLocalProviders(keyInfo, connection, command);
                         encryptionkeyInfoChosen = keyInfo;
                         break;
                     }
-                    else if (globalCekCache.GetKey(keyInfo, out sqlClientSymmetricKey, connection, command))
+                    else
                     {
+                        sqlClientSymmetricKey = globalCekCache.GetKey(keyInfo, connection, command);
                         encryptionkeyInfoChosen = keyInfo;
                         break;
                     }
@@ -304,7 +302,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(encryptionkeyInfoChosen != null, "encryptionkeyInfoChosen must have a value.");
         }
 
-        private static bool TryGetKeyFromLocalCache(SqlEncryptionKeyInfo keyInfo, out SqlClientSymmetricKey encryptionKey, SqlConnection connection, SqlCommand command)
+        private static SqlClientSymmetricKey GetKeyFromLocalProviders(SqlEncryptionKeyInfo keyInfo, SqlConnection connection, SqlCommand command)
         {
             string serverName = connection.DataSource;
             Debug.Assert(serverName != null, @"serverName should not be null.");
@@ -333,9 +331,7 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.KeyDecryptionFailed(keyInfo.keyStoreName, keyHex, e);
             }
 
-            encryptionKey = new SqlClientSymmetricKey(plaintextKey);
-
-            return true;
+            return new SqlClientSymmetricKey(plaintextKey);
         }
 
         /// <summary>
@@ -412,6 +408,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        private static bool InstanceLevelProvidersAreRegistered(SqlConnection connection, SqlCommand command) =>
+            connection.HasColumnEncryptionKeyStoreProvidersRegistered || 
+            (command != null && command.HasColumnEncryptionKeyStoreProvidersRegistered);
+
         internal static void ThrowIfKeyPathIsNotTrustedForServer(string serverName, string keyPath)
         {
             // Check against the trusted key paths
@@ -444,7 +444,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Search in the system provider list.
-            return SqlConnection.s_systemColumnEncryptionKeyStoreProviders.TryGetValue(keyStoreName, out provider)
+            return SqlConnection.s_systemColumnEncryptionKeyStoreProviders.TryGetValue(keyStoreName, out provider);
         }
 
         internal static List<string> GetListOfProviderNamesThatWereSearched(SqlConnection connection, SqlCommand command)

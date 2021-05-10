@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// <para> Retrieves Symmetric Key (in plaintext) given the encryption material.</para>
         /// </summary>
-        internal bool GetKey(SqlEncryptionKeyInfo keyInfo, out SqlClientSymmetricKey encryptionKey, SqlConnection connection, SqlCommand command)
+        internal SqlClientSymmetricKey GetKey(SqlEncryptionKeyInfo keyInfo, SqlConnection connection, SqlCommand command)
         {
             string serverName = connection.DataSource;
             Debug.Assert(serverName != null, @"serverName should not be null.");
@@ -55,7 +55,7 @@ namespace Microsoft.Data.SqlClient
 #endif //DEBUG
 
             // Lookup the key in cache
-            encryptionKey = _cache.Get(cacheLookupKey) as SqlClientSymmetricKey;
+            SqlClientSymmetricKey encryptionKey = _cache.Get(cacheLookupKey) as SqlClientSymmetricKey;
 
             if (encryptionKey == null)
             {
@@ -97,7 +97,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            return true;
+            return encryptionKey;
         }
     }
 }
