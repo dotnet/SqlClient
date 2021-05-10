@@ -316,7 +316,7 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.UnrecognizedKeyStoreProviderName(keyInfo.keyStoreName,
                     SqlConnection.GetColumnEncryptionSystemKeyStoreProvidersNames(),
-                    GetListOfProviderNamesFromCacheThatWasSearched(connection, command));
+                    GetListOfProviderNamesThatWereSearched(connection, command));
             }
 
             // Decrypt the CEK
