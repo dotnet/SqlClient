@@ -4609,6 +4609,6 @@
     <value>Impossibile rimuovere l'elemento specificato, perché non si trova nella raccolta indicata.</value>
   </data>
   <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
-    <value>È obbligatorio un numero non negativo.</value>
+    <value>Numero non negativo obbligatorio.</value>
   </data>
 </root>
