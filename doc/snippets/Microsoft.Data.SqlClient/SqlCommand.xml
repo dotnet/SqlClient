@@ -1129,7 +1129,7 @@ The following example demonstrates the use of the <xref:Microsoft.Data.SqlClient
 		</Clone>
 		<ColumnEncryptionSetting>
 			<summary>
-				Gets or sets the column encryption setting for this command.
+				Gets the column encryption setting for this command.
 			</summary>
 			<value>
 				The column encryption setting for this command.
