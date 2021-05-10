@@ -4125,7 +4125,8 @@ namespace Microsoft.Data.SqlClient
             {
                 public byte[] Buffer;
                 public int Read;
-                public PacketData Prev;
+                //public PacketData Prev;
+                public PacketData NextPacket;
 
                 public void SetStack(string value)
                 {
@@ -4142,7 +4143,8 @@ namespace Microsoft.Data.SqlClient
                 {
                     Buffer = null;
                     Read = 0;
-                    Prev = null;
+                    //Prev = null;
+                    NextPacket = null;
                     SetStackInternal(null);
                     SetPacketIdInternal(0);
                 }
@@ -4244,7 +4246,7 @@ namespace Microsoft.Data.SqlClient
             }
 
 #if DEBUG
-            [DebuggerDisplay("{PacketId,nq}: [{Buffer.Length,nq}] {Prev!=null?\"->\":string.Empty,nq}")]
+            [DebuggerDisplay("{PacketId,nq}: [{Buffer.Length,nq}] {NextPacket!=null?\"->\":string.Empty,nq}")]
             [DebuggerTypeProxy(typeof(PacketDataDebugView))]
             private sealed partial class PacketData
             {
@@ -4271,13 +4273,13 @@ namespace Microsoft.Data.SqlClient
                             if (_data != null)
                             {
                                 int count = 0;
-                                for (PacketData current = _data; current != null; current = current?.Prev)
+                                for (PacketData current = _data; current != null; current = current?.NextPacket)
                                 {
                                     count++;
                                 }
                                 items = new int[count];
                                 int index = 0;
-                                for (PacketData current = _data; current != null; current = current?.Prev, index++)
+                                for (PacketData current = _data; current != null; current = current?.NextPacket, index++)
                                 {
                                     items[index] = current.PacketId;
                                 }
@@ -4304,22 +4306,24 @@ namespace Microsoft.Data.SqlClient
             private int _rollingPend = 0;
             private int _rollingPendCount = 0;
 #endif
-            private int _count;
-            private int _position;
             private PacketData _lastPacket;
             private PacketData _firstPacket;
-            private PacketData _continuePacket;
-            private PacketData _sparePacket;
+            private PacketData _current;
+            //private PacketData _continuePacket;
+
 
             private TdsParserStateObject _stateObj;
             private StateObjectData _replayStateData;
-            private StateObjectData _continueStateData;
+            //private StateObjectData _continueStateData;
             private bool _canContinue;
-
-            internal byte[] _targetBuffer; // 
+            private PacketData _sparePacket;
+            internal byte[] _targetBuffer;
             //internal int _targetBufferOffset;
 
 #if DEBUG
+
+            private int PacketCounter;
+
             internal bool DoPend()
             {
                 if (_failAsyncPends || !_forceAllPends)
@@ -4340,20 +4344,20 @@ namespace Microsoft.Data.SqlClient
 
             internal void AssertCurrent()
             {
-                Debug.Assert(_position == _count, "Should not be reading new packets when not replaying last packet");
+                Debug.Assert(_current == _lastPacket);
             }
 
             internal void CheckStack(string trace)
             {
-                PacketData prev = _lastPacket?.Prev;
-                if (prev.Stack == null)
-                {
-                    prev.Stack = trace;
-                }
-                else
-                {
-                    Debug.Assert(_stateObj._permitReplayStackTraceToDiffer || prev.Stack.ToString() == trace.ToString(), "The stack trace on subsequent replays should be the same");
-                }
+                //PacketData prev = _anchor?.Prev;
+                //if (prev.Stack == null)
+                //{
+                //    prev.Stack = trace;
+                //}
+                //else
+                //{
+                //    Debug.Assert(_stateObj._permitReplayStackTraceToDiffer || prev.Stack.ToString() == trace.ToString(), "The stack trace on subsequent replays should be the same");
+                //}
             }
 #endif
             internal void CloneNullBitmapInfo()
@@ -4375,12 +4379,11 @@ namespace Microsoft.Data.SqlClient
             internal void AppendPacketData(byte[] buffer, int read)
             {
 #if DEBUG
-                for (PacketData current = _lastPacket; current != null; current = current.Prev)
+                for (PacketData current = _firstPacket; current != null; current = current.NextPacket)
                 {
                     Debug.Assert(!ReferenceEquals(current.Buffer, buffer));
                 }
 #endif
-
                 PacketData packetData = _sparePacket;
                 if (packetData is null)
                 {
@@ -4392,16 +4395,20 @@ namespace Microsoft.Data.SqlClient
                 }
                 packetData.Buffer = buffer;
                 packetData.Read = read;
-                packetData.Prev = _lastPacket;
 #if DEBUG
                 packetData.SetStack(_stateObj._lastStack);
+                packetData.SetPacketId(Interlocked.Increment(ref PacketCounter));
 #endif
-                _lastPacket = packetData;
                 if (_firstPacket is null)
                 {
                     _firstPacket = packetData;
                 }
-                _count++;
+                else
+                {
+                    _lastPacket.NextPacket = packetData;
+                }
+                _lastPacket = packetData;
+
             }
 
             public bool CanContinue
@@ -4413,9 +4420,10 @@ namespace Microsoft.Data.SqlClient
             internal void CaptureAsStart(TdsParserStateObject stateObj)
             {
                 _stateObj = stateObj;
+
+                _firstPacket = null;
                 _lastPacket = null;
-                _count = 0;
-                _position = 0;
+                _current = null;
 
                 _replayStateData ??= new StateObjectData();
                 _replayStateData.Capture(stateObj);
@@ -4427,44 +4435,49 @@ namespace Microsoft.Data.SqlClient
                 AppendPacketData(_stateObj._inBuff, _stateObj._inBytesRead);
             }
 
-            internal void CaptureAsContinue(TdsParserStateObject stateObj)
-            {
-                Debug.Assert(_stateObj == stateObj);
-                if (_firstPacket is not null)
-                {
-                    _continuePacket = _lastPacket;
-                    _continueStateData ??= new StateObjectData();
-                    _continueStateData.Capture(stateObj, trackStack: false);
-                    _canContinue = true;
-                }
-            }
+            //internal void CaptureAsContinue(TdsParserStateObject stateObj)
+            //{
+            //    Debug.Assert(_stateObj == stateObj);
+            //    if (_firstPacket is not null)
+            //    {
+            //        _continuePacket = _lastPacket;
+            //        _continueStateData ??= new StateObjectData();
+            //        _continueStateData.Capture(stateObj, trackStack: false);
+            //        _canContinue = true;
+            //    }
+            //}
+
 
             internal bool MoveNext()
             {
-                if (_position < _count)
+                bool retval = false;
+
+                bool moved = false;
+                if (_current == null)
                 {
-                    PacketData next = _lastPacket;
-                    for (
-                        int position = (_count - 1);
-                        position != _position;
-                        position -= 1
-                    )
-                    {
-                        next = next.Prev;
-                    }
-                    _stateObj.SetBuffer(next.Buffer, 0, next.Read);
-                    _position++;
-                    return true;
+                    _current = _firstPacket;
+                    moved = true;
+                }
+                else if (_current.NextPacket != null)
+                {
+                    _current = _current.NextPacket;
+                    moved = true;
                 }
 
-                return false;
+                if (moved)
+                {
+                    _stateObj.SetBuffer(_current.Buffer, 0, _current.Read);
+                    retval = true;
+                }
+
+
+                return retval;
             }
 
             internal void MoveToStart()
             {
                 // go back to the beginning
-                _position = 0;
-
+                _current = null;
                 MoveNext();
 
                 _replayStateData.Restore(_stateObj);
@@ -4476,40 +4489,39 @@ namespace Microsoft.Data.SqlClient
 
             internal bool MoveToContinue()
             {
-                if (_canContinue && _lastPacket != _continuePacket)
-                {
-                    _canContinue = false;
-                    //PacketData next = _lastPacket;
-                    //if (next != null && next.Prev != null)
-                    //{
-                    //    next = next.Prev;
-                    //    _stateObj.SetBuffer(next.Buffer, 0, next.Read);
-                    //    _position = _count - 1;
-                    //    return true;
-                    //}
-                }
+                //if (_canContinue && _anchor != _continuePacket)
+                //{
+                //    _canContinue = false;
+                //    //PacketData next = _lastPacket;
+                //    //if (next != null && next.Prev != null)
+                //    //{
+                //    //    next = next.Prev;
+                //    //    _stateObj.SetBuffer(next.Buffer, 0, next.Read);
+                //    //    _position = _count - 1;
+                //    //    return true;
+                //    //}
+                //}
                 return false;
             }
 
             internal void Clear()
             {
-                PacketData packet = _lastPacket;
+                PacketData packet1 = _firstPacket;
                 _firstPacket = null;
                 _lastPacket = null;
-                _count = 0;
-                _position = 0;
+                _current = null;
+
+                packet1.Clear();
+                _sparePacket = packet1;
 
                 _canContinue = false;
                 _replayStateData.Clear(_stateObj);
-                _continueStateData?.Clear(_stateObj, trackStack: false);
+                //_continueStateData?.Clear(_stateObj, trackStack: false);
 #if DEBUG
                 _rollingPend = 0;
                 _rollingPendCount = 0;
 #endif
                 _stateObj = null;
-
-                packet.Clear();
-                _sparePacket = packet;
             }
         }
 
