@@ -432,19 +432,19 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(keyStoreName), "Provider name is invalid");
 
-            // Search in the system provider list.
-            if (SqlConnection.s_systemColumnEncryptionKeyStoreProviders.TryGetValue(keyStoreName, out provider))
-            {
-                return true;
-            }
-
             // command may be null because some callers do not have a command object, eg SqlBulkCopy
             if (command != null && command.HasColumnEncryptionKeyStoreProvidersRegistered)
             {
                 return command.TryGetColumnEncryptionKeyStoreProvider(keyStoreName, out provider);
             }
 
-            return connection.TryGetColumnEncryptionKeyStoreProvider(keyStoreName, out provider);
+            if (connection.HasColumnEncryptionKeyStoreProvidersRegistered)
+            {
+                return connection.TryGetColumnEncryptionKeyStoreProvider(keyStoreName, out provider);
+            }
+
+            // Search in the system provider list.
+            return SqlConnection.s_systemColumnEncryptionKeyStoreProviders.TryGetValue(keyStoreName, out provider)
         }
 
         internal static List<string> GetListOfProviderNamesFromCacheThatWasSearched(SqlConnection connection, SqlCommand command)
