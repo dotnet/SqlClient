@@ -1134,9 +1134,6 @@ The following example demonstrates the use of the <xref:Microsoft.Data.SqlClient
 			<value>
 				The column encryption setting for this command.
 			</value>
-			<remarks>
-				To be added.
-			</remarks>
 		</ColumnEncryptionSetting>
 		<CommandText>
 			<summary>
