@@ -4599,4 +4599,16 @@
   <data name="SqlRetryLogic_InvalidMinMaxPair" xml:space="preserve">
     <value>'{0}' non è minore di '{1}'; '{2}' non può essere maggiore di '{3}'.</value>
   </data>
+  <data name="Arg_ArrayPlusOffTooSmall" xml:space="preserve">
+    <value>La lunghezza della matrice di destinazione non è sufficiente per copiare tutti gli elementi della raccolta. Controllare l'indice e la lunghezza della matrice.</value>
+  </data>
+  <data name="Arg_RankMultiDimNotSupported" xml:space="preserve">
+    <value>Per l'azione richiesta sono supportate solo matrici unidimensionali.</value>
+  </data>
+  <data name="Arg_RemoveArgNotFound" xml:space="preserve">
+    <value>Impossibile rimuovere l'elemento specificato, perché non si trova nella raccolta indicata.</value>
+  </data>
+  <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
+    <value>Numero non negativo obbligatorio.</value>
+  </data>
 </root>

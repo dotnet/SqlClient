@@ -4599,4 +4599,16 @@
   <data name="SqlRetryLogic_InvalidMinMaxPair" xml:space="preserve">
     <value>“{0}”不小于“{1}”；“{2}”不能大于“{3}”。</value>
   </data>
+  <data name="Arg_ArrayPlusOffTooSmall" xml:space="preserve">
+    <value>目标数组长度不足，无法复制集合中的所有项。请检查数组索引和长度。</value>
+  </data>
+  <data name="Arg_RankMultiDimNotSupported" xml:space="preserve">
+    <value>所请求的操作仅支持一维数组。</value>
+  </data>
+  <data name="Arg_RemoveArgNotFound" xml:space="preserve">
+    <value>未在指定的集合中找到指定的项，因此无法移除该项。</value>
+  </data>
+  <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
+    <value>需要提供非负数。</value>
+  </data>
 </root>
