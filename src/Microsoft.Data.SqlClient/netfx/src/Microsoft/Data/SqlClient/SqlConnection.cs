@@ -593,11 +593,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal SqlConnectionIPAddressPreference iPAddressPreference
         {
-            get
-            {
-                SqlConnectionString opt = (SqlConnectionString)ConnectionOptions;
-                return opt.IPAddressPreference;
-            }
+            get => ((SqlConnectionString)ConnectionOptions).IPAddressPreference;
         }
 
         // Is this connection is a Context Connection?
