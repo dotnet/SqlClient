@@ -367,15 +367,13 @@ namespace Microsoft.Data.SqlClient
                         GetListOfProviderNamesThatWereSearched(connection, command));
                 }
 
-                bool? signatureVerificationResult;
-
                 if (InstanceLevelProvidersAreRegistered(connection, command))
                 {
-                    signatureVerificationResult = provider.VerifyColumnMasterKeyMetadata(keyPath, isEnclaveEnabled, CMKSignature);
+                    isValidSignature = provider.VerifyColumnMasterKeyMetadata(keyPath, isEnclaveEnabled, CMKSignature);
                 }
                 else
                 {
-                    signatureVerificationResult = ColumnMasterKeyMetadataSignatureVerificationCache.GetSignatureVerificationResult(keyStoreName, keyPath, isEnclaveEnabled, CMKSignature);
+                    bool? signatureVerificationResult = ColumnMasterKeyMetadataSignatureVerificationCache.GetSignatureVerificationResult(keyStoreName, keyPath, isEnclaveEnabled, CMKSignature);
                     if (signatureVerificationResult == null)
                     {
                         // We will simply bubble up the exception from VerifyColumnMasterKeyMetadata function.
