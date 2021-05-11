@@ -75,7 +75,7 @@ namespace Microsoft.Data.SqlClient
         private static CultureCheckState _cultureCheckState;
 
         // System column encryption key store providers are added by default
-        internal static readonly Dictionary<string, SqlColumnEncryptionKeyStoreProvider> s_systemColumnEncryptionKeyStoreProviders
+        private static readonly Dictionary<string, SqlColumnEncryptionKeyStoreProvider> s_systemColumnEncryptionKeyStoreProviders
             = new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>(capacity: 3, comparer: StringComparer.OrdinalIgnoreCase)
                 {
                     {SqlColumnEncryptionCertificateStoreProvider.ProviderName, new SqlColumnEncryptionCertificateStoreProvider()},
@@ -232,16 +232,15 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(!string.IsNullOrWhiteSpace(providerName), "Provider name is invalid");
             columnKeyStoreProvider = null;
 
-            if (_customColumnEncryptionKeyStoreProviders != null &&_customColumnEncryptionKeyStoreProviders.Count > 0)
+            if (HasColumnEncryptionKeyStoreProvidersRegistered)
             {
                 return _customColumnEncryptionKeyStoreProviders.TryGetValue(providerName, out columnKeyStoreProvider);
             }
 
-            // instance-level custom provider cache takes precedence over global cache
-            if (_customColumnEncryptionKeyStoreProviders != null &&
-                _customColumnEncryptionKeyStoreProviders.Count > 0)
+            // Search in the sytem provider list.
+            if (s_systemColumnEncryptionKeyStoreProviders.TryGetValue(providerName, out columnKeyStoreProvider))
             {
-                return _customColumnEncryptionKeyStoreProviders.TryGetValue(providerName, out columnKeyStoreProvider);
+                return true;
             }
 
             lock (s_globalCustomColumnEncryptionKeyProvidersLock)

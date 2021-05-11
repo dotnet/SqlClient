@@ -274,18 +274,11 @@ namespace Microsoft.Data.SqlClient
             {
                 try
                 {
-                    if (InstanceLevelProvidersAreRegistered(connection, command))
-                    {
-                        sqlClientSymmetricKey = GetKeyFromLocalProviders(keyInfo, connection, command);
-                        encryptionkeyInfoChosen = keyInfo;
-                        break;
-                    }
-                    else
-                    {
-                        sqlClientSymmetricKey = globalCekCache.GetKey(keyInfo, connection, command);
-                        encryptionkeyInfoChosen = keyInfo;
-                        break;
-                    }
+                    sqlClientSymmetricKey = InstanceLevelProvidersAreRegistered(connection, command) ?
+                        GetKeyFromLocalProviders(keyInfo, connection, command) :
+                        globalCekCache.GetKey(keyInfo, connection, command);
+                    encryptionkeyInfoChosen = keyInfo;
+                    break;
                 }
                 catch (Exception e)
                 {
@@ -409,7 +402,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         private static bool InstanceLevelProvidersAreRegistered(SqlConnection connection, SqlCommand command) =>
-            connection.HasColumnEncryptionKeyStoreProvidersRegistered || 
+            connection.HasColumnEncryptionKeyStoreProvidersRegistered ||
             (command != null && command.HasColumnEncryptionKeyStoreProvidersRegistered);
 
         internal static void ThrowIfKeyPathIsNotTrustedForServer(string serverName, string keyPath)
@@ -438,13 +431,7 @@ namespace Microsoft.Data.SqlClient
                 return command.TryGetColumnEncryptionKeyStoreProvider(keyStoreName, out provider);
             }
 
-            if (connection.HasColumnEncryptionKeyStoreProvidersRegistered)
-            {
-                return connection.TryGetColumnEncryptionKeyStoreProvider(keyStoreName, out provider);
-            }
-
-            // Search in the system provider list.
-            return SqlConnection.s_systemColumnEncryptionKeyStoreProviders.TryGetValue(keyStoreName, out provider);
+            return connection.TryGetColumnEncryptionKeyStoreProvider(keyStoreName, out provider);
         }
 
         internal static List<string> GetListOfProviderNamesThatWereSearched(SqlConnection connection, SqlCommand command)
