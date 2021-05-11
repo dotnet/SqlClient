@@ -999,82 +999,60 @@ namespace Microsoft.Data.Common
         #endregion
 
         #region <<IPAddressPreference Utility>>
-
         /// <summary>
         /// IP Address Preference.
         /// </summary>
-        const string IPAddrPreference46 = "IPv4First";
-        const string IPAddrPreference64 = "IPv6First";
-        const string IPAddrPreferenceOS = "UsePlatformDefault";
-        
+        private readonly static Dictionary<string, SqlConnectionIPAddressPreference> s_preferenceNames = new(StringComparer.InvariantCultureIgnoreCase);
+
+        static DbConnectionStringBuilderUtil()
+        {
+            foreach (SqlConnectionIPAddressPreference item in Enum.GetValues(typeof(SqlConnectionIPAddressPreference)))
+            {
+                s_preferenceNames.Add(item.ToString(), item);
+            }
+        }
+
         /// <summary>
-        ///  Convert a string value to the corresponding IPAddressPreference
+        ///  Convert a string value to the corresponding IPAddressPreference.
         /// </summary>
-        /// <param name="value"></param>
-        /// <param name="result"></param>
-        /// <returns></returns>
+        /// <param name="value">The string representation of the enumeration name to convert.</param>
+        /// <param name="result">When this method returns, `result` contains an object of type `SqlConnectionIPAddressPreference` whose value is represented by `value` if the operation succeeds. 
+        /// If the parse operation fails, `result` contains the default value of the `SqlConnectionIPAddressPreference` type.</param>
+        /// <returns>`true` if the value parameter was converted successfully; otherwise, `false`.</returns>
         internal static bool TryConvertToIPAddressPreference(string value, out SqlConnectionIPAddressPreference result)
         {
-            if (StringComparer.InvariantCultureIgnoreCase.Equals(value, IPAddrPreference46))
-            {
-                result = SqlConnectionIPAddressPreference.IPv4First;
-                return true;
-            }
-            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, IPAddrPreference64))
-            {
-                result = SqlConnectionIPAddressPreference.IPv6First;
-                return true;
-            }
-            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, IPAddrPreferenceOS))
-            {
-                result = SqlConnectionIPAddressPreference.UsePlatformDefault;
-                return true;
-            }
-            else
+            if (!s_preferenceNames.TryGetValue(value, out result))
             {
                 result = DbConnectionStringDefaults.IPAddressPreference;
                 return false;
             }
+            return true;
         }
 
+        /// <summary>
+        /// Verifies if the `value` is defined in the expected Enum.
+        /// </summary>
         internal static bool IsValidIPAddressPreference(SqlConnectionIPAddressPreference value)
-        {
-            Debug.Assert(Enum.GetNames(typeof(SqlConnectionIPAddressPreference)).Length == 3, "SqlConnectionIPAddressPreference enum has changed, update needed");
-            return value == SqlConnectionIPAddressPreference.IPv4First
+            => value == SqlConnectionIPAddressPreference.IPv4First
                 || value == SqlConnectionIPAddressPreference.IPv6First
                 || value == SqlConnectionIPAddressPreference.UsePlatformDefault;
-        }
 
         internal static string IPAddressPreferenceToString(SqlConnectionIPAddressPreference value)
-        {
-            Debug.Assert(IsValidIPAddressPreference(value), "value is not a valid IP address preference");
-
-            switch (value)
-            {
-                case SqlConnectionIPAddressPreference.UsePlatformDefault:
-                    return IPAddrPreferenceOS;
-                case SqlConnectionIPAddressPreference.IPv6First:
-                    return IPAddrPreference64;
-                default:
-                    return IPAddrPreference46;
-            }
-        }
+            => Enum.GetName(typeof(SqlConnectionIPAddressPreference), value);
 
         internal static SqlConnectionIPAddressPreference ConvertToIPAddressPreference(string keyword, object value)
         {
-            if (null == value)
+            if (value is null)
             {
                 return DbConnectionStringDefaults.IPAddressPreference;  // IPv4First
             }
 
             string sValue = (value as string);
-            SqlConnectionIPAddressPreference result;
-
-            if (null != sValue)
+            if (sValue is not null)
             {
                 // try again after remove leading & trailing whitespaces.
                 sValue = sValue.Trim();
-                if (TryConvertToIPAddressPreference(sValue, out result))
+                if (TryConvertToIPAddressPreference(sValue, out SqlConnectionIPAddressPreference result))
                 {
                     return result;
                 }
@@ -1087,9 +1065,9 @@ namespace Microsoft.Data.Common
                 // the value is not string, try other options
                 SqlConnectionIPAddressPreference eValue;
 
-                if (value is SqlConnectionIPAddressPreference)
+                if (value is SqlConnectionIPAddressPreference preference)
                 {
-                    eValue = (SqlConnectionIPAddressPreference)value;
+                    eValue = preference;
                 }
                 else if (value.GetType().IsEnum)
                 {
@@ -1123,7 +1101,6 @@ namespace Microsoft.Data.Common
                 }
             }
         }
-
         #endregion
 
         internal static bool IsValidCertificateValue(string value)

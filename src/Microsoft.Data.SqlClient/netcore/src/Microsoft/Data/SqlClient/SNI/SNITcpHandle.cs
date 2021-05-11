@@ -176,26 +176,26 @@ namespace Microsoft.Data.SqlClient.SNI
                                 int portRetry = string.IsNullOrEmpty(cachedDNSInfo.Port) ? port : int.Parse(cachedDNSInfo.Port);
                                 SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.INFO, "Connection Id {0}, Retrying with cached DNS IP Address {1} and port {2}", args0: _connectionId, args1: cachedDNSInfo.AddrIPv4, args2: cachedDNSInfo.Port);
 
-                                string cachedIPA;
-                                string cachedIPB;
+                                string firstCachedIP;
+                                string secondCachedIP;
 
                                 if (SqlConnectionIPAddressPreference.IPv6First == ipPreference) {
-                                    cachedIPA = cachedDNSInfo.AddrIPv6;
-                                    cachedIPB = cachedDNSInfo.AddrIPv4;
+                                    firstCachedIP = cachedDNSInfo.AddrIPv6;
+                                    secondCachedIP = cachedDNSInfo.AddrIPv4;
                                 } else {
-                                    cachedIPA = cachedDNSInfo.AddrIPv4;
-                                    cachedIPB = cachedDNSInfo.AddrIPv6;
+                                    firstCachedIP = cachedDNSInfo.AddrIPv4;
+                                    secondCachedIP = cachedDNSInfo.AddrIPv6;
                                 }
 
                                 try
                                 {
                                     if (parallel)
                                     {
-                                        _socket = TryConnectParallel(cachedIPA, portRetry, ts, isInfiniteTimeOut, ref reportError, cachedFQDN, ref pendingDNSInfo);
+                                        _socket = TryConnectParallel(firstCachedIP, portRetry, ts, isInfiniteTimeOut, ref reportError, cachedFQDN, ref pendingDNSInfo);
                                     }
                                     else
                                     {
-                                        _socket = Connect(cachedIPA, portRetry, ts, isInfiniteTimeOut, ipPreference, cachedFQDN, ref pendingDNSInfo);
+                                        _socket = Connect(firstCachedIP, portRetry, ts, isInfiniteTimeOut, ipPreference, cachedFQDN, ref pendingDNSInfo);
                                     }
                                 }
                                 catch (Exception exRetry)
@@ -206,11 +206,11 @@ namespace Microsoft.Data.SqlClient.SNI
                                         SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.INFO, "Connection Id {0}, Retrying exception {1}", args0: _connectionId, args1: exRetry?.Message);
                                         if (parallel)
                                         {
-                                            _socket = TryConnectParallel(cachedIPB, portRetry, ts, isInfiniteTimeOut, ref reportError, cachedFQDN, ref pendingDNSInfo);
+                                            _socket = TryConnectParallel(secondCachedIP, portRetry, ts, isInfiniteTimeOut, ref reportError, cachedFQDN, ref pendingDNSInfo);
                                         }
                                         else
                                         {
-                                            _socket = Connect(cachedIPB, portRetry, ts, isInfiniteTimeOut, ipPreference, cachedFQDN, ref pendingDNSInfo);
+                                            _socket = Connect(secondCachedIP, portRetry, ts, isInfiniteTimeOut, ipPreference, cachedFQDN, ref pendingDNSInfo);
                                         }
                                     }
                                     else
