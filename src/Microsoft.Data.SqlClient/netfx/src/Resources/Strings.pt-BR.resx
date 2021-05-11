@@ -4584,24 +4584,6 @@
   <data name="SQL_SettingManagedIdentityWithCredential" xml:space="preserve">
     <value>Não é possível usar 'Authentication={0}' quando a propriedade Credential está configurada.</value>
   </data>
-  <data name="Azure_GenericErrorMessage" xml:space="preserve">
-    <value>Não foi possível adquirir o token de acesso.</value>
-  </data>
-  <data name="Azure_IdentityEndpointNotListening" xml:space="preserve">
-    <value>Não foi possível se conectar com o ponto de extremidade de Identidade Gerenciada. Verifique se a execução está ocorrendo em um recurso do Azure que tenha configuração de Identidade.</value>
-  </data>
-  <data name="Azure_ManagedIdentityUsed" xml:space="preserve">
-    <value>Tentativa de obter o token usando a Identidade Gerenciada.</value>
-  </data>
-  <data name="Azure_MetadataEndpointNotListening" xml:space="preserve">
-    <value>Não foi possível se conectar com o IMDS (Serviço de Metadados de Instância). Ignorando a solicitação para o ponto de extremidade do token de Identidade Gerenciada.</value>
-  </data>
-  <data name="Azure_NonRetryableError" xml:space="preserve">
-    <value>Um erro sem nova tentativa foi recebido.</value>
-  </data>
-  <data name="Azure_RetryFailure" xml:space="preserve">
-    <value>Falha após cinco novas tentativas.</value>
-  </data>
   <data name="SqlDependency_UnexpectedValueOnDeserialize" xml:space="preserve">
     <value>Tipo inesperado detectado na desserialização.</value>
   </data>
@@ -4616,5 +4598,17 @@
   </data>
   <data name="SqlRetryLogic_InvalidMinMaxPair" xml:space="preserve">
     <value>'{0}' não é menor que '{1}'; '{2}' não pode ser maior que '{3}'.</value>
+  </data>
+  <data name="Arg_ArrayPlusOffTooSmall" xml:space="preserve">
+    <value>A matriz de destino não é longa o suficiente para copiar todos os itens da coleção. Verifique o índice e o tamanho da matriz.</value>
+  </data>
+  <data name="Arg_RankMultiDimNotSupported" xml:space="preserve">
+    <value>A ação solicitada oferece suporte somente a matrizes dimensionais simples.</value>
+  </data>
+  <data name="Arg_RemoveArgNotFound" xml:space="preserve">
+    <value>Não é possível remover o item especificado porque ele não foi encontrado na Coleção especificada.</value>
+  </data>
+  <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
+    <value>É necessário um número não negativo.</value>
   </data>
 </root>

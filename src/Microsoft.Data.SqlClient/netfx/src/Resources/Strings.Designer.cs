@@ -1834,56 +1834,38 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Access token could not be acquired..
+        ///   Looks up a localized string similar to Destination array is not long enough to copy all the items in the collection. Check array index and length..
         /// </summary>
-        internal static string Azure_GenericErrorMessage {
+        internal static string Arg_ArrayPlusOffTooSmall {
             get {
-                return ResourceManager.GetString("Azure_GenericErrorMessage", resourceCulture);
+                return ResourceManager.GetString("Arg_ArrayPlusOffTooSmall", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Unable to connect to the Managed Identity endpoint. Please check that you are running on an Azure resource that has Identity setup..
+        ///   Looks up a localized string similar to Only single dimensional arrays are supported for the requested action..
         /// </summary>
-        internal static string Azure_IdentityEndpointNotListening {
+        internal static string Arg_RankMultiDimNotSupported {
             get {
-                return ResourceManager.GetString("Azure_IdentityEndpointNotListening", resourceCulture);
+                return ResourceManager.GetString("Arg_RankMultiDimNotSupported", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Tried to get token using Managed Identity..
+        ///   Looks up a localized string similar to Cannot remove the specified item because it was not found in the specified Collection..
         /// </summary>
-        internal static string Azure_ManagedIdentityUsed {
+        internal static string Arg_RemoveArgNotFound {
             get {
-                return ResourceManager.GetString("Azure_ManagedIdentityUsed", resourceCulture);
+                return ResourceManager.GetString("Arg_RemoveArgNotFound", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Unable to connect to the Instance Metadata Service (IMDS). Skipping request to the Managed Identity token endpoint..
+        ///   Looks up a localized string similar to Non-negative number required..
         /// </summary>
-        internal static string Azure_MetadataEndpointNotListening {
+        internal static string ArgumentOutOfRange_NeedNonNegNum {
             get {
-                return ResourceManager.GetString("Azure_MetadataEndpointNotListening", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Received a non-retryable error..
-        /// </summary>
-        internal static string Azure_NonRetryableError {
-            get {
-                return ResourceManager.GetString("Azure_NonRetryableError", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Failed after 5 retries..
-        /// </summary>
-        internal static string Azure_RetryFailure {
-            get {
-                return ResourceManager.GetString("Azure_RetryFailure", resourceCulture);
+                return ResourceManager.GetString("ArgumentOutOfRange_NeedNonNegNum", resourceCulture);
             }
         }
         

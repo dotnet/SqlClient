@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
+    <LangVersion>9.0</LangVersion>
     <TargetsWindows Condition="'$(OS)' == 'Windows_NT' AND '$(OSGroup)' == ''">true</TargetsWindows>
     <TargetsWindows Condition="'$(OS)' != 'Windows_NT' AND '$(OSGroup)' == ''">false</TargetsWindows>
     <TargetsWindows Condition="'$(OSGroup)' == 'Windows_NT'">true</TargetsWindows>
@@ -38,6 +39,7 @@
     <ProjectDir>$(MSBuildThisFileDirectory)</ProjectDir>
     <RepoRoot>$(ProjectDir)..\</RepoRoot>
     <Artifacts>$(RepoRoot)artifacts\$(ReferenceType)\</Artifacts>
+    <ToolsArtifactsDir Condition="'$(ToolsArtifactsDir)'==''">$(Artifacts)tools\</ToolsArtifactsDir>
     <ManagedSourceCode>$(ProjectDir)Microsoft.Data.SqlClient\</ManagedSourceCode>
     <NetCoreSource>$(ManagedSourceCode)netcore\</NetCoreSource>
     <NetFxSource>$(ManagedSourceCode)netfx\</NetFxSource>
@@ -51,6 +53,7 @@
     <BinFolder Condition="'$(TargetsAnyOS)' == 'true'">$(Artifacts)bin\AnyOS\</BinFolder>
     <BinFolder Condition="'$(TargetsUnix)' == 'true'">$(Artifacts)bin\Unix\</BinFolder>
     <ToolsDir Condition="'$(ToolsDir)'==''">$(RepoRoot)tools\</ToolsDir>
+    <GenAPISrcDir Condition="'$(GenAPISrcDir)'==''">$(ToolsDir)GenAPI\</GenAPISrcDir>
     <PackagesDir Condition="'$(PackagesDir)'==''">$(RepoRoot)packages\</PackagesDir>
     <NuGetRoot Condition="'$(NuGetRoot)' == ''">$(RepoRoot).nuget\</NuGetRoot>
     <NuGetCmd>$(NuGetRoot)nuget.exe</NuGetCmd>

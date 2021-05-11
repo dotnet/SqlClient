@@ -48,6 +48,7 @@
     <ManualTests Include="**/tools/Microsoft.DotNet.XUnitExtensions/Microsoft.DotNet.XUnitExtensions.csproj" />
     <ManualTests Include="**/tools/Microsoft.Data.SqlClient.TestUtilities/Microsoft.Data.SqlClient.TestUtilities.csproj"/>
     <ManualTests Include="**/tools/CoreFx.Private.TestUtilities/CoreFx.Private.TestUtilities.csproj" />
+    <ManualTests Include="**/CustomConfigurableRetryLogic/CustomRetryLogicProvider.csproj" />
     <ManualTests Include="**/ManualTests/Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" />
   </ItemGroup>
 

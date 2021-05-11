@@ -272,12 +272,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             Randomizer IScope.Current { get { return Current; } }
 
+
+            public void Dispose()
+            {
+                Dispose(true);
+                GC.SuppressFinalize(this);
+            }
+
             /// <summary>
             /// Disposes the scope and reverts the current thread scope to previous one. 
             /// Note that the "last created scope" is not changed on Dispose, thus the scope instance
             /// itself can still be used to collect repro states.
             /// </summary>
-            public void Dispose()
+            protected virtual void Dispose(bool disposing)
             {
                 if (_current != null)
                 {

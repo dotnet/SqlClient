@@ -82,6 +82,7 @@ namespace Microsoft.Data.SqlClient
     {
         private readonly int maxRandom;
         private readonly int minRandom;
+        private readonly Random random = new Random();
 
         public SqlFixedIntervalEnumerator(TimeSpan gapTimeInterval, TimeSpan maxTimeInterval, TimeSpan minTimeInterval)
             : base(gapTimeInterval, maxTimeInterval, minTimeInterval)
@@ -94,7 +95,6 @@ namespace Microsoft.Data.SqlClient
 
         protected override TimeSpan GetNextInterval()
         {
-            var random = new Random();
             Current = TimeSpan.FromMilliseconds(random.Next(minRandom, maxRandom));
             return Current;
         }

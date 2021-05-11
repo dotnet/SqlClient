@@ -5,6 +5,8 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.SqlTypes;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using Xunit;
@@ -13,6 +15,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class DataReaderTest
     {
+        private static object s_rowVersionLock = new object();
+
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void LoadReaderIntoDataTableToTestGetSchemaTable()
         {
@@ -287,6 +291,78 @@ insert into [{tempTableName}] (first_name,last_name) values ('Joe','Smith')
 
             // hidden field
             Assert.Contains("user_id", names, StringComparer.Ordinal);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void CheckNullRowVersionIsBDNull()
+        {
+            lock (s_rowVersionLock)
+            {
+                bool? originalValue = SetLegacyRowVersionNullBehavior(false);
+                try
+                {
+                    using (SqlConnection con = new SqlConnection(DataTestUtility.TCPConnectionString))
+                    {
+                        con.Open();
+                        using (SqlCommand command = con.CreateCommand())
+                        {
+                            command.CommandText = "select cast(null as rowversion) rv";
+                            using (SqlDataReader reader = command.ExecuteReader())
+                            {
+                                reader.Read();
+                                Assert.True(reader.IsDBNull(0));
+                                Assert.Equal(reader[0], DBNull.Value);
+                            }
+                        }
+                    }
+                }
+                finally
+                {
+                    SetLegacyRowVersionNullBehavior(originalValue);
+                }
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void CheckLegacyNullRowVersionIsEmptyArray()
+        {
+            lock (s_rowVersionLock)
+            {
+                bool? originalValue = SetLegacyRowVersionNullBehavior(true);
+                try
+                {
+                    using (SqlConnection con = new SqlConnection(DataTestUtility.TCPConnectionString))
+                    {
+                        con.Open();
+                        using (SqlCommand command = con.CreateCommand())
+                        {
+                            command.CommandText = "select cast(null as rowversion) rv";
+                            using (SqlDataReader reader = command.ExecuteReader())
+                            {
+                                reader.Read();
+                                Assert.False(reader.IsDBNull(0));
+                                SqlBinary value = reader.GetSqlBinary(0);
+                                Assert.False(value.IsNull);
+                                Assert.Equal(0, value.Length);
+                                Assert.NotNull(value.Value);
+                            }
+                        }
+                    }
+                }
+                finally
+                {
+                    SetLegacyRowVersionNullBehavior(originalValue);
+                }
+            }
+        }
+
+        private static bool? SetLegacyRowVersionNullBehavior(bool? value)
+        {
+            Type switchesType = typeof(SqlCommand).Assembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
+            FieldInfo switchField = switchesType.GetField("s_LegacyRowVersionNullBehavior", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            bool? originalValue = (bool?)switchField.GetValue(null);
+            switchField.SetValue(null, value);
+            return originalValue;
         }
     }
 }

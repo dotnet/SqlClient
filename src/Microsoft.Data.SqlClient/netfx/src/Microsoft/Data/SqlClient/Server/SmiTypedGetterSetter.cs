@@ -4,10 +4,10 @@
 
 using System;
 using System.Data.SqlTypes;
+using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient.Server
 {
-
     // Central interface for getting/setting data values from/to a set of values indexed by ordinal 
     //  (record, row, array, etc)
     //  Which methods are allowed to be called depends on SmiMetaData type of data offset.
@@ -34,11 +34,11 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (!CanGet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
 
@@ -48,162 +48,162 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (!CanGet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
 
         //  valid for SqlDbType.Bit
-        public virtual Boolean GetBoolean(SmiEventSink sink, int ordinal)
+        public virtual bool GetBoolean(SmiEventSink sink, int ordinal)
         {
             if (!CanGet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
 
         //  valid for SqlDbType.TinyInt
-        public virtual Byte GetByte(SmiEventSink sink, int ordinal)
+        public virtual byte GetByte(SmiEventSink sink, int ordinal)
         {
             if (!CanGet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
 
         // valid for SqlDbTypes: Binary, VarBinary, Image, Udt, Xml, Char, VarChar, Text, NChar, NVarChar, NText
         //  (Character type support needed for ExecuteXmlReader handling)
-        public virtual Int64 GetBytesLength(SmiEventSink sink, int ordinal)
+        public virtual long GetBytesLength(SmiEventSink sink, int ordinal)
         {
             if (!CanGet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
         public virtual int GetBytes(SmiEventSink sink, int ordinal, long fieldOffset, byte[] buffer, int bufferOffset, int length)
         {
             if (!CanGet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
 
         // valid for character types: Char, VarChar, Text, NChar, NVarChar, NText
-        public virtual Int64 GetCharsLength(SmiEventSink sink, int ordinal)
+        public virtual long GetCharsLength(SmiEventSink sink, int ordinal)
         {
             if (!CanGet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
         public virtual int GetChars(SmiEventSink sink, int ordinal, long fieldOffset, char[] buffer, int bufferOffset, int length)
         {
             if (!CanGet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
-        public virtual String GetString(SmiEventSink sink, int ordinal)
+        public virtual string GetString(SmiEventSink sink, int ordinal)
         {
             if (!CanGet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
 
         // valid for SqlDbType.SmallInt
-        public virtual Int16 GetInt16(SmiEventSink sink, int ordinal)
+        public virtual short GetInt16(SmiEventSink sink, int ordinal)
         {
             if (!CanGet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
 
         // valid for SqlDbType.Int
-        public virtual Int32 GetInt32(SmiEventSink sink, int ordinal)
+        public virtual int GetInt32(SmiEventSink sink, int ordinal)
         {
             if (!CanGet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
 
         // valid for SqlDbType.BigInt, SqlDbType.Money, SqlDbType.SmallMoney
-        public virtual Int64 GetInt64(SmiEventSink sink, int ordinal)
+        public virtual long GetInt64(SmiEventSink sink, int ordinal)
         {
             if (!CanGet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
 
         // valid for SqlDbType.Real
-        public virtual Single GetSingle(SmiEventSink sink, int ordinal)
+        public virtual float GetSingle(SmiEventSink sink, int ordinal)
         {
             if (!CanGet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
 
         // valid for SqlDbType.Float
-        public virtual Double GetDouble(SmiEventSink sink, int ordinal)
+        public virtual double GetDouble(SmiEventSink sink, int ordinal)
         {
             if (!CanGet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
 
@@ -212,11 +212,11 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (!CanGet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
 
@@ -225,11 +225,11 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (!CanGet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
 
@@ -238,11 +238,11 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (!CanGet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
 
@@ -251,11 +251,11 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (!CanGet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
 
@@ -264,11 +264,11 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (!CanGet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
 
@@ -276,7 +276,7 @@ namespace Microsoft.Data.SqlClient.Server
         //  This method called for both get and set.
         internal virtual SmiTypedGetterSetter GetTypedGetterSetter(SmiEventSink sink, int ordinal)
         {
-            throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+            throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
         }
 
         // valid for multi-valued types only
@@ -284,11 +284,11 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (!CanGet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
         #endregion
@@ -301,37 +301,37 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (!CanSet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
 
         //  valid for SqlDbType.Bit
-        public virtual void SetBoolean(SmiEventSink sink, int ordinal, Boolean value)
+        public virtual void SetBoolean(SmiEventSink sink, int ordinal, bool value)
         {
             if (!CanSet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
 
         //  valid for SqlDbType.TinyInt
-        public virtual void SetByte(SmiEventSink sink, int ordinal, Byte value)
+        public virtual void SetByte(SmiEventSink sink, int ordinal, byte value)
         {
             if (!CanSet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
 
@@ -343,22 +343,22 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (!CanSet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
         public virtual void SetBytesLength(SmiEventSink sink, int ordinal, long length)
         {
             if (!CanSet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
 
@@ -370,22 +370,22 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (!CanSet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
         public virtual void SetCharsLength(SmiEventSink sink, int ordinal, long length)
         {
             if (!CanSet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
 
@@ -394,76 +394,76 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (!CanSet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
 
         // valid for SqlDbType.SmallInt
-        public virtual void SetInt16(SmiEventSink sink, int ordinal, Int16 value)
+        public virtual void SetInt16(SmiEventSink sink, int ordinal, short value)
         {
             if (!CanSet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
 
         // valid for SqlDbType.Int
-        public virtual void SetInt32(SmiEventSink sink, int ordinal, Int32 value)
+        public virtual void SetInt32(SmiEventSink sink, int ordinal, int value)
         {
             if (!CanSet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
 
         // valid for SqlDbType.BigInt, SqlDbType.Money, SqlDbType.SmallMoney
-        public virtual void SetInt64(SmiEventSink sink, int ordinal, Int64 value)
+        public virtual void SetInt64(SmiEventSink sink, int ordinal, long value)
         {
             if (!CanSet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
 
         // valid for SqlDbType.Real
-        public virtual void SetSingle(SmiEventSink sink, int ordinal, Single value)
+        public virtual void SetSingle(SmiEventSink sink, int ordinal, float value)
         {
             if (!CanSet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
 
         // valid for SqlDbType.Float
-        public virtual void SetDouble(SmiEventSink sink, int ordinal, Double value)
+        public virtual void SetDouble(SmiEventSink sink, int ordinal, double value)
         {
             if (!CanSet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
 
@@ -472,11 +472,11 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (!CanSet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
 
@@ -485,11 +485,11 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (!CanSet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
 
@@ -498,11 +498,11 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (!CanSet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
 
@@ -511,11 +511,11 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (!CanSet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
 
@@ -524,11 +524,11 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (!CanSet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
 
@@ -540,7 +540,7 @@ namespace Microsoft.Data.SqlClient.Server
             // Implement body with throw because there are only a couple of ways to get to this code:
             //  1) Client is calling this method even though the server negotiated for V3+ and dropped support for V2-.
             //  2) Server didn't implement V2- on some interface and negotiated V2-.
-            throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+            throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
         }
 
         // valid for multi-valued types only
@@ -548,11 +548,11 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (!CanSet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
 
@@ -560,11 +560,11 @@ namespace Microsoft.Data.SqlClient.Server
         {
             if (!CanSet)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
             else
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
         #endregion

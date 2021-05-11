@@ -106,7 +106,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
     }
 
-    public class ExceptionGenericErrorFixture : IDisposable
+    public sealed class ExceptionGenericErrorFixture : IDisposable
     {
         static public string encryptedTableName;
         static public string encryptedProcedureName;

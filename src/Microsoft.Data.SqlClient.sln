@@ -172,6 +172,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient.Te
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient.ExtUtilities", "Microsoft.Data.SqlClient\tests\tools\Microsoft.Data.SqlClient.ExtUtilities\Microsoft.Data.SqlClient.ExtUtilities.csproj", "{E4C08DCE-DC29-4FEB-B655-1E7287DB5A2B}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CustomRetryLogicProvider", "Microsoft.Data.SqlClient\tests\CustomConfigurableRetryLogic\CustomRetryLogicProvider.csproj", "{B499E477-C9B1-4087-A5CF-5C762D90E433}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -1159,6 +1161,7 @@ Global
 		{E7336BFB-8521-423A-A140-3123F9065C5D} = {0CC4817A-12F3-4357-912C-09315FAAD008}
 		{89D6D382-9B36-43C9-A912-03802FDA8E36} = {0CC4817A-12F3-4357-912C-09315FAAD008}
 		{E4C08DCE-DC29-4FEB-B655-1E7287DB5A2B} = {0CC4817A-12F3-4357-912C-09315FAAD008}
+		{B499E477-C9B1-4087-A5CF-5C762D90E433} = {0CC4817A-12F3-4357-912C-09315FAAD008}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {01D48116-37A2-4D33-B9EC-94793C702431}

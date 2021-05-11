@@ -740,6 +740,11 @@ namespace Microsoft.Data.SqlClient
             return ADP.TypeLoad(System.StringsHelper.GetString(Strings.SQLUDT_Unexpected, exceptionText));
         }
 
+        internal static Exception DateTimeOverflow()
+        {
+            return new OverflowException(SqlTypes.SQLResource.DateTimeOverflowMessage);
+        }
+
         //
         // SQL.SqlDependency
         //
@@ -786,6 +791,13 @@ namespace Microsoft.Data.SqlClient
         //
         // SQL.SqlDelegatedTransaction
         //
+        static internal Exception CannotCompleteDelegatedTransactionWithOpenResults(SqlInternalConnectionTds internalConnection, bool marsOn)
+        {
+            SqlErrorCollection errors = new SqlErrorCollection();
+            errors.Add(new SqlError(TdsEnums.TIMEOUT_EXPIRED, (byte)0x00, TdsEnums.MIN_ERROR_CLASS, null, (StringsHelper.GetString(Strings.ADP_OpenReaderExists, marsOn ? ADP.Command : ADP.Connection)), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
+            return SqlException.CreateException(errors, null, internalConnection);
+        }
+
         internal static TransactionPromotionException PromotionFailed(Exception inner)
         {
             TransactionPromotionException e = new TransactionPromotionException(System.StringsHelper.GetString(Strings.SqlDelegatedTransaction_PromotionFailed), inner);
@@ -2152,14 +2164,22 @@ namespace Microsoft.Data.SqlClient
 
         public Task WaitAsync(CancellationToken cancellationToken)
         {
-            var tcs = new TaskCompletionSource<bool>();
-            _queue.Enqueue(tcs);
-            _semaphore.WaitAsync().ContinueWith(
-                continuationAction: s_continuePop,
-                state: _queue,
-                cancellationToken: cancellationToken
-            );
-            return tcs.Task;
+            // try sync wait with 0 which will not block to see if we need to do an async wait
+            if (_semaphore.Wait(0, cancellationToken))
+            {
+                return Task.CompletedTask;
+            }
+            else
+            {
+                var tcs = new TaskCompletionSource<bool>();
+                _queue.Enqueue(tcs);
+                _semaphore.WaitAsync().ContinueWith(
+                    continuationAction: s_continuePop,
+                    state: _queue,
+                    cancellationToken: cancellationToken
+                );
+                return tcs.Task;
+            }
         }
 
         public void Release()

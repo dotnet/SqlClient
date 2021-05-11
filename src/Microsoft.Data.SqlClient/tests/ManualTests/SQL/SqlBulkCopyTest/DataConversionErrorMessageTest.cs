@@ -15,7 +15,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         _varChar3 = 1
     }
 
-    public class InitialDatabase : IDisposable
+    public sealed class InitialDatabase : IDisposable
     {
         private string srcConstr { get; }
 

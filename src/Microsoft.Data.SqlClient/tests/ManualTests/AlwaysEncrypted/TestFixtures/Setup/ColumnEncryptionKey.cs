@@ -10,7 +10,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
     public class ColumnEncryptionKey : DbObject
     {
         public string Algorithm { get; set; } = "RSA_OAEP";
-        public string EncryptedValue { get; }
+        public byte[] EncryptedValue { get; set; }
         public ColumnMasterKey ColumnMasterKey { get; }
         public static int KeySizeInBytes { get; } = 32;
 
@@ -18,18 +18,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup
         {
             ColumnMasterKey = columnMasterKey;
             byte[] plainTextColumnEncryptionKey = GenerateRandomBytes(KeySizeInBytes);
-            byte[] encryptedColumnEncryptionKey = CreateEncryptedCek(columnMasterKey.KeyPath, Algorithm, plainTextColumnEncryptionKey, columnEncryptionProvider);
-            EncryptedValue = string.Concat("0x", BitConverter.ToString(encryptedColumnEncryptionKey).Replace("-", string.Empty));
+            EncryptedValue = CreateEncryptedCek(columnMasterKey.KeyPath, Algorithm, plainTextColumnEncryptionKey, columnEncryptionProvider);
         }
 
         public override void Create(SqlConnection sqlConnection)
         {
+           string encryptedCekHex = string.Concat("0x", BitConverter.ToString(EncryptedValue).Replace("-", string.Empty));
+
             string sql =
                 $@"CREATE COLUMN ENCRYPTION KEY [{Name}] 
                     WITH VALUES (
                         COLUMN_MASTER_KEY = [{ColumnMasterKey.Name}],
                         ALGORITHM = '{Algorithm}', 
-                        ENCRYPTED_VALUE = {EncryptedValue}
+                        ENCRYPTED_VALUE = {encryptedCekHex}
                     )";
 
             using (SqlCommand command = sqlConnection.CreateCommand())

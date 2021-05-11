@@ -4584,24 +4584,6 @@
   <data name="SQL_SettingManagedIdentityWithCredential" xml:space="preserve">
     <value>"Authentication={0}" kann nicht verwendet werden, wenn die Eigenschaft "Credential" festgelegt wurde.</value>
   </data>
-  <data name="Azure_GenericErrorMessage" xml:space="preserve">
-    <value>Das Zugriffstoken konnte nicht abgerufen werden.</value>
-  </data>
-  <data name="Azure_IdentityEndpointNotListening" xml:space="preserve">
-    <value>Mit dem Endpunkt der verwalteten Identität kann keine Verbindung hergestellt werden. Stellen Sie sicher, dass Sie eine Azure-Ressource mit eingerichteter Identität ausführen.</value>
-  </data>
-  <data name="Azure_ManagedIdentityUsed" xml:space="preserve">
-    <value>Es wurde versucht, ein Token mithilfe einer verwalteten Identität abzurufen.</value>
-  </data>
-  <data name="Azure_MetadataEndpointNotListening" xml:space="preserve">
-    <value>Mit dem Instance Metadata Service (IMDS) kann keine Verbindung hergestellt werden. Die Anforderung an den Tokenendpunkt der verwalteten Identität wird übersprungen.</value>
-  </data>
-  <data name="Azure_NonRetryableError" xml:space="preserve">
-    <value>Es wurde ein nicht wiederholbarer Fehler empfangen.</value>
-  </data>
-  <data name="Azure_RetryFailure" xml:space="preserve">
-    <value>Fehler nach 5 Wiederholungen.</value>
-  </data>
   <data name="SqlDependency_UnexpectedValueOnDeserialize" xml:space="preserve">
     <value>Unerwarteter Typ beim Deserialisieren erkannt.</value>
   </data>
@@ -4616,5 +4598,17 @@
   </data>
   <data name="SqlRetryLogic_InvalidMinMaxPair" xml:space="preserve">
     <value>"{0}" ist nicht kleiner als {1}, "{2}" darf nicht größer sein als {3}.</value>
+  </data>
+  <data name="Arg_ArrayPlusOffTooSmall" xml:space="preserve">
+    <value>Das Zielarray ist nicht lang genug, um alle Elemente in der Sammlung zu kopieren. Prüfen Sie den Index und die Länge des Arrays.</value>
+  </data>
+  <data name="Arg_RankMultiDimNotSupported" xml:space="preserve">
+    <value>Nur eindimensionale Arrays werden für die angeforderte Aktion unterstützt.</value>
+  </data>
+  <data name="Arg_RemoveArgNotFound" xml:space="preserve">
+    <value>Das angegebene Element kann nicht entfernt werden, da es nicht in der Sammlung gefunden wurde.</value>
+  </data>
+  <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
+    <value>Nicht negative Zahl erforderlich.</value>
   </data>
 </root>

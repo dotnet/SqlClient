@@ -84,9 +84,9 @@ namespace Microsoft.Data.SqlClient
                         Buffer.BlockCopy(attestationInfo, attestationInfoOffset, trustedModuleDHPublicKeySignature, 0,
                             checked((int)sizeOfTrustedModuleDHPublicKeySignatureBuffer));
 
-                        ECParameters ecParams = KeyConverter.ECCPublicKeyBlobToParams(trustedModuleDHPublicKey);
-                        ECDiffieHellman enclaveDHKey = ECDiffieHellman.Create(ecParams);
-                        byte[] sharedSecret = clientDHKey.DeriveKeyFromHash(enclaveDHKey.PublicKey, HashAlgorithmName.SHA256);
+                        byte[] sharedSecret;
+                        using ECDiffieHellman ecdh = KeyConverter.CreateECDiffieHellmanFromPublicKeyBlob(trustedModuleDHPublicKey);
+                        sharedSecret = KeyConverter.DeriveKey(clientDHKey, ecdh.PublicKey);
                         long sessionId = BitConverter.ToInt64(enclaveSessionHandle, 0);
                         sqlEnclaveSession = AddEnclaveSessionToCache(enclaveSessionParameters, sharedSecret, sessionId, out counter);
                     }

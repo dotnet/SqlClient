@@ -778,7 +778,14 @@ namespace Microsoft.Data.ProviderBase
 
                 CheckPoolBlockingPeriod(e);
 
+                // Close associated Parser if connection already established.
+                if (newObj?.IsConnectionAlive() == true)
+                {
+                    newObj.Dispose();
+                }
+
                 newObj = null; // set to null, so we do not return bad new object
+
                 // Failed to create instance
                 _resError = e;
 

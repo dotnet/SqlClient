@@ -5,7 +5,4 @@
       $(RestoreSources)
     </RestoreSources>
   </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="Microsoft.DotNet.GenAPI" Version="$(MicrosoftDotNetGenApiPackageVersion)" />
-  </ItemGroup>
 </Project>

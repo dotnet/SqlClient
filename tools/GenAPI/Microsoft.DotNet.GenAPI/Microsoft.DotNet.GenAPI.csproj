@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net472;netcoreapp2.1</TargetFrameworks>
+    <ExcludeFromSourceBuild>true</ExcludeFromSourceBuild>
+    <PackageType>MSBuildSdk</PackageType>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <IsPackable>true</IsPackable>
+    <NoWarn>$(NoWarn);0436</NoWarn>
+    <OutputPath>$(ToolsArtifactsDir)</OutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Diagnostics.TextWriterTraceListener" Version="4.0.0" />
+    <PackageReference Include="System.Diagnostics.TraceSource" Version="4.0.0" />
+    <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="2.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Microsoft.Cci.Extensions\Microsoft.Cci.Extensions.csproj" />
+  </ItemGroup>
+
+</Project>
