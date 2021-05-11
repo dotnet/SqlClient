@@ -86,7 +86,7 @@ namespace Microsoft.Data.SqlClient
         /// Instance-level list of custom key store providers. It can be set more than once by the user.
         private IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> _customColumnEncryptionKeyStoreProviders;
 
-        internal bool HasColumnEncryptionKeyStoreProvidersRegistered => 
+        internal bool HasColumnEncryptionKeyStoreProvidersRegistered =>
             _customColumnEncryptionKeyStoreProviders != null && _customColumnEncryptionKeyStoreProviders.Count > 0;
 
         // Lock to control setting of s_globalCustomColumnEncryptionKeyStoreProviders
@@ -97,6 +97,8 @@ namespace Microsoft.Data.SqlClient
         /// Global custom provider list can only supplied once per application.
         /// </summary>
         private static IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> s_globalCustomColumnEncryptionKeyStoreProviders;
+
+        private static string _akvProviderName = "AZURE_KEY_VAULT";
 
         /// <summary>
         /// Dictionary object holding trusted key paths for various SQL Servers.
@@ -307,6 +309,11 @@ namespace Microsoft.Data.SqlClient
                 if (s_globalCustomColumnEncryptionKeyStoreProviders != null)
                 {
                     throw SQL.CanOnlyCallOnce();
+                }
+
+                if (customProviders.ContainsKey(_akvProviderName))
+                {
+                    customProviders[_akvProviderName].ColumnEncryptionKeyCacheTtl = new TimeSpan(0);
                 }
 
                 // Create a temporary dictionary and then add items from the provided dictionary.
@@ -1512,8 +1519,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsync/*' />
         public override Task OpenAsync(CancellationToken cancellationToken)
-            => IsRetryEnabled ? 
-                InternalOpenWithRetryAsync(cancellationToken) : 
+            => IsRetryEnabled ?
+                InternalOpenWithRetryAsync(cancellationToken) :
                 InternalOpenAsync(cancellationToken);
 
         private Task InternalOpenAsync(CancellationToken cancellationToken)

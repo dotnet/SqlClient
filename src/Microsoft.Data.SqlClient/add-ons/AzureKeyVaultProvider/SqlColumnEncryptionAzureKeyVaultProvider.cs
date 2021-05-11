@@ -85,7 +85,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// This is useful for rapidly decrypting multiple data values. The default value is 2 hours.
         /// Setting the <see cref="ColumnEncryptionKeyCacheTtl"/> to zero disables caching.
         /// </remarks>
-        public TimeSpan? ColumnEncryptionKeyCacheTtl
+        public override TimeSpan? ColumnEncryptionKeyCacheTtl
         {
             get => columnEncryptionKeyCache.TimeToLive;
             set => columnEncryptionKeyCache.TimeToLive = value;
