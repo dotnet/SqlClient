@@ -396,11 +396,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal SqlConnectionIPAddressPreference iPAddressPreference
         {
-            get
-            {
-                SqlConnectionString opt = (SqlConnectionString)ConnectionOptions;
-                return opt.IPAddressPreference;
-            }
+            get => ((SqlConnectionString)ConnectionOptions).IPAddressPreference;
         }
 
         // This method will be called once connection string is set or changed.

@@ -464,19 +464,17 @@ namespace Microsoft.Data.Common
 
         internal static SqlConnectionIPAddressPreference ConvertToIPAddressPreference(string keyword, object value)
         {
-            if (null == value)
+            if (value is null)
             {
                 return DbConnectionStringDefaults.IPAddressPreference;  // IPv4First
             }
 
             string sValue = (value as string);
-            SqlConnectionIPAddressPreference result;
-
-            if (null != sValue)
+            if (sValue is not null)
             {
                 // try again after remove leading & trailing whitespaces.
                 sValue = sValue.Trim();
-                if (TryConvertToIPAddressPreference(sValue, out result))
+                if (TryConvertToIPAddressPreference(sValue, out SqlConnectionIPAddressPreference result))
                 {
                     return result;
                 }
@@ -489,9 +487,9 @@ namespace Microsoft.Data.Common
                 // the value is not string, try other options
                 SqlConnectionIPAddressPreference eValue;
 
-                if (value is SqlConnectionIPAddressPreference)
+                if (value is SqlConnectionIPAddressPreference preference)
                 {
-                    eValue = (SqlConnectionIPAddressPreference)value;
+                    eValue = preference;
                 }
                 else if (value.GetType().IsEnum)
                 {
