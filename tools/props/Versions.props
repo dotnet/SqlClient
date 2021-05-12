@@ -23,6 +23,7 @@
     <MicrosoftIdentityModelJsonWebTokensVersion>6.8.0</MicrosoftIdentityModelJsonWebTokensVersion>
     <SystemBuffersVersion>4.5.1</SystemBuffersVersion>
     <SystemIOVersion>4.3.0</SystemIOVersion>
+    <SystemTextEncodingsWebVersion>4.7.2</SystemTextEncodingsWebVersion>
     <MicrosoftSourceLinkGitHubVersion>1.0.0</MicrosoftSourceLinkGitHubVersion>
   </PropertyGroup>
   <!-- NetCore project dependencies -->
