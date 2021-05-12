@@ -86,61 +86,59 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void TestConnectionIsSafeToReuse()
         {
-            // Force enable pooling for this test case to reproduce issue with Bad Types.
-            using (SqlConnection connection = new(DataTestUtility.TCPConnectionString + ";pooling=true;"))
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+
+            // Bad Scenario - exception expected.
+            try
             {
-                // Bad Scenario - exception expected.
-                try
+                List<A> list = new()
                 {
-                    List<A> list = new()
+                    new A(0),
+                    null,
+                    new A(2),
+                    new A(3),
+                    new A(4),
+                    new A(5)
+                };
+
+                IEnumerable<int> Ids = list.Select(x => x.id.Value).Distinct();
+
+                var sqlParam = new SqlParameter("ids", SqlDbType.Structured)
+                {
+                    TypeName = "dbo.TableOfIntId",
+                    SqlValue = Ids.Select(x =>
                     {
-                        new A(0),
-                        null,
-                        new A(2),
-                        new A(3),
-                        new A(4),
-                        new A(5)
-                    };
+                        SqlDataRecord rec = new(new[] { new SqlMetaData("Id", SqlDbType.Int) });
+                        rec.SetInt32(0, x);
+                        return rec;
+                    })
+                };
 
-                    IEnumerable<int> Ids = list.Select(x => x.id.Value).Distinct();
+                var parameters = new List<SqlParameter>() { sqlParam };
+                const string SQL = @"SELECT * FROM information_schema.COLUMNS cols INNER JOIN  @ids Ids on Ids.id = cols.ORDINAL_POSITION";
+                using SqlCommand cmd = new(SQL, connection);
+                cmd.CommandTimeout = 100;
+                AddCommandParameters(cmd, parameters);
+                new SqlDataAdapter(cmd).Fill(new("BadFunc"));
+            }
+            catch
+            {
+                // Ignore this exception as it's deliberately introduced.
+            }
 
-                    var sqlParam = new SqlParameter("ids", SqlDbType.Structured)
-                    {
-                        TypeName = "dbo.TableOfIntId",
-                        SqlValue = Ids.Select(x =>
-                        {
-                            SqlDataRecord rec = new(new[] { new SqlMetaData("Id", SqlDbType.Int) });
-                            rec.SetInt32(0, x);
-                            return rec;
-                        })
-                    };
-
-                    var parameters = new List<SqlParameter>() { sqlParam };
-                    const string SQL = @"SELECT * FROM information_schema.COLUMNS cols INNER JOIN  @ids Ids on Ids.id = cols.ORDINAL_POSITION";
-                    using SqlCommand cmd = new(SQL, connection);
-                    cmd.CommandTimeout = 100;
-                    AddCommandParameters(cmd, parameters);
-                    new SqlDataAdapter(cmd).Fill(new("BadFunc"));
-                }
-                catch
-                {
-                    // Ignore this exception as it's deliberately introduced.
-                }
-
-                // Good Scenario - No failure expected.
-                try
-                {
-                    const string SQL = @"SELECT * FROM information_schema.tables WHERE TABLE_NAME = @TableName";
-                    var parameters = new List<SqlParameter>() { new SqlParameter("@TableName", "Temp") };
-                    using SqlCommand cmd = new(SQL, connection);
-                    cmd.CommandTimeout = 100;
-                    AddCommandParameters(cmd, parameters);
-                    new SqlDataAdapter(cmd).Fill(new("GoodFunc"));
-                }
-                catch (Exception e)
-                {
-                    Assert.False(true, $"Unexpected error occurred: {e.Message}");
-                }
+            // Good Scenario - No failure expected.
+            try
+            {
+                const string SQL = @"SELECT * FROM information_schema.tables WHERE TABLE_NAME = @TableName";
+                var parameters = new List<SqlParameter>() { new SqlParameter("@TableName", "Temp") };
+                using SqlCommand cmd = new(SQL, connection);
+                cmd.CommandTimeout = 100;
+                AddCommandParameters(cmd, parameters);
+                new SqlDataAdapter(cmd).Fill(new("GoodFunc"));
+            }
+            catch (Exception e)
+            {
+                Assert.False(true, $"Unexpected error occurred: {e.Message}");
             }
         }
 
