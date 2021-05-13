@@ -12081,11 +12081,8 @@ namespace System {
         /// <summary>
         ///   Looks up a localized string similar to Specifies an IP address preference when connecting to SQL instances.
         /// </summary>
-        internal static string TCE_DbConnectionString_IPAddressPreference {
-            get {
-                return ResourceManager.GetString("TCE_DbConnectionString_IPAddressPreference", resourceCulture);
-            }
-        }
+        internal static string TCE_DbConnectionString_IPAddressPreference
+            => ResourceManager.GetString("TCE_DbConnectionString_IPAddressPreference", resourceCulture);
         
         /// <summary>
         ///   Looks up a localized string similar to Default column encryption setting for all the commands on the connection..
