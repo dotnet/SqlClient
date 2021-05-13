@@ -4,7 +4,6 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Linq;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
@@ -215,15 +214,28 @@ namespace Microsoft.Data.SqlClient
                      parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
             {
                 // Fetch available accounts from 'app' instance
-                System.Collections.Generic.IEnumerable<IAccount> accounts = await app.GetAccountsAsync();
-                IAccount account;
-                if (!string.IsNullOrEmpty(parameters.UserId))
+                System.Collections.Generic.IEnumerator<IAccount> accounts = (await app.GetAccountsAsync()).GetEnumerator();
+                
+                IAccount account = default;
+                if (accounts.MoveNext())
                 {
-                    account = accounts.FirstOrDefault(a => parameters.UserId.Equals(a.Username, StringComparison.InvariantCultureIgnoreCase));
-                }
-                else
-                {
-                    account = accounts.FirstOrDefault();
+                    if (!string.IsNullOrEmpty(parameters.UserId))
+                    {
+                        do
+                        {
+                            IAccount currentVal = accounts.Current;
+                            if (string.Compare(parameters.UserId, currentVal.Username, StringComparison.InvariantCultureIgnoreCase) == 0)
+                            {
+                                account = currentVal;
+                                break;
+                            }
+                        }
+                        while (accounts.MoveNext());
+                    }
+                    else
+                    {
+                        account = accounts.Current;
+                    }
                 }
 
                 if (null != account)

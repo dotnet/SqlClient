@@ -98,6 +98,7 @@ namespace Microsoft.Data.Common
 
         private const string ApplicationIntentReadWriteString = "ReadWrite";
         private const string ApplicationIntentReadOnlyString = "ReadOnly";
+
         const string SqlPasswordString = "Sql Password";
         const string ActiveDirectoryPasswordString = "Active Directory Password";
         const string ActiveDirectoryIntegratedString = "Active Directory Integrated";
@@ -108,12 +109,46 @@ namespace Microsoft.Data.Common
         internal const string ActiveDirectoryMSIString = "Active Directory MSI";
         internal const string ActiveDirectoryDefaultString = "Active Directory Default";
 
+#if DEBUG
+        private static string[] s_supportedAuthenticationModes =
+        {
+            "NotSpecified",
+            "SqlPassword",
+            "ActiveDirectoryPassword",
+            "ActiveDirectoryIntegrated",
+            "ActiveDirectoryInteractive",
+            "ActiveDirectoryServicePrincipal",
+            "ActiveDirectoryDeviceCodeFlow",
+            "ActiveDirectoryManagedIdentity",
+            "ActiveDirectoryMSI",
+            "ActiveDirectoryDefault"
+        };
+
+        private static bool IsValidAuthenticationMethodEnum()
+        {
+            string[] names = Enum.GetNames(typeof(SqlAuthenticationMethod));
+            int l = s_supportedAuthenticationModes.Length;
+            bool listValid;
+            if (listValid = names.Length == l)
+            {
+                for (int i = 0; i < l; i++)
+                {
+                    if (s_supportedAuthenticationModes[i].CompareTo(names[i]) != 0)
+                    {
+                        listValid = false;
+                    }
+                }
+            }
+            return listValid;
+        }
+#endif
+
         internal static bool TryConvertToAuthenticationType(string value, out SqlAuthenticationMethod result)
         {
-            Debug.Assert(Enum.GetNames(typeof(SqlAuthenticationMethod)).Length == 10, "SqlAuthenticationMethod enum has changed, update needed");
-
+#if DEBUG
+            Debug.Assert(IsValidAuthenticationMethodEnum(), "SqlAuthenticationMethod enum has changed, update needed");
+#endif
             bool isSuccess = false;
-
             if (StringComparer.InvariantCultureIgnoreCase.Equals(value, SqlPasswordString)
                 || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.SqlPassword, CultureInfo.InvariantCulture)))
             {
@@ -508,7 +543,7 @@ namespace Microsoft.Data.Common
 
         internal static bool IsValidAuthenticationTypeValue(SqlAuthenticationMethod value)
         {
-            Debug.Assert(Enum.GetNames(typeof(SqlAuthenticationMethod)).Length == 9, "SqlAuthenticationMethod enum has changed, update needed");
+            Debug.Assert(Enum.GetNames(typeof(SqlAuthenticationMethod)).Length == 10, "SqlAuthenticationMethod enum has changed, update needed");
             return value == SqlAuthenticationMethod.SqlPassword
                 || value == SqlAuthenticationMethod.ActiveDirectoryPassword
                 || value == SqlAuthenticationMethod.ActiveDirectoryIntegrated

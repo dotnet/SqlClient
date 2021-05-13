@@ -465,7 +465,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
         public static void ActiveDirectoryDefaultMustPass()
         {
-            // connection fails with expected error message.
             string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
             string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +
                 "Authentication=ActiveDirectoryDefault;";
