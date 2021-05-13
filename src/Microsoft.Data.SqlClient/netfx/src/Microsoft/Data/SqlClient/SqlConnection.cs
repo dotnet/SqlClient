@@ -241,7 +241,7 @@ namespace Microsoft.Data.SqlClient
                 return _customColumnEncryptionKeyStoreProviders.TryGetValue(providerName, out columnKeyStoreProvider);
             }
 
-            // Search in the sytem provider list.
+            // Search in the system provider list.
             if (s_systemColumnEncryptionKeyStoreProviders.TryGetValue(providerName, out columnKeyStoreProvider))
             {
                 return true;
