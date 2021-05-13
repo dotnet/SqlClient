@@ -364,25 +364,6 @@ namespace Microsoft.Data.SqlClient.SNI
 
             CancellationTokenSource cts = null;
 
-            void Cancel()
-            {
-                for (int i = 0; i < sockets.Length; ++i)
-                {
-                    try
-                    {
-                        if (sockets[i] != null && !sockets[i].Connected)
-                        {
-                            sockets[i].Dispose();
-                            sockets[i] = null;
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR, "THIS EXCEPTION IS BEING SWALLOWED: {0}", args0: e?.Message);
-                    }
-                }
-            }
-
             if (!isInfiniteTimeout)
             {
                 cts = new CancellationTokenSource(timeout);
@@ -471,6 +452,25 @@ namespace Microsoft.Data.SqlClient.SNI
             }
 
             return availableSocket;
+
+            void Cancel()
+            {
+                for (int i = 0; i < sockets.Length; ++i)
+                {
+                    try
+                    {
+                        if (sockets[i] != null && !sockets[i].Connected)
+                        {
+                            sockets[i].Dispose();
+                            sockets[i] = null;
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR, "THIS EXCEPTION IS BEING SWALLOWED: {0}", args0: e?.Message);
+                    }
+                }
+            }
         }
 
         private static Task<Socket> ParallelConnectAsync(IPAddress[] serverAddresses, int port)

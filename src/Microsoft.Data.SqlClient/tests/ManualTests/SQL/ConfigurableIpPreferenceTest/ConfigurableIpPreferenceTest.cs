@@ -77,15 +77,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // Azure SQL Server doesn't support dual-stack IPv4 and IPv6 that is going to be supported by end of 2021.
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DoesHostAddressContainBothIPv4AndIPv6))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DoesHostAddressContainBothIPv4AndIPv6), nameof(IsUsingManagedSNI))]
         [InlineData(CnnPrefIPv6)]
         [InlineData(CnnPrefIPv4)]
         public void ConfigurableIpPreferenceManagedSni(string ipPreference)
-        {
-            AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);
-            TestCachedConfigurableIpPreference(ipPreference, DNSCachingConnString);
-            AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", false);
-        }
+            => TestCachedConfigurableIpPreference(ipPreference, DNSCachingConnString);
 
         private void TestCachedConfigurableIpPreference(string ipPreference, string cnnString)
         {
