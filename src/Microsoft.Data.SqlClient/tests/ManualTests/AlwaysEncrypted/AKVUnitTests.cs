@@ -111,6 +111,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public static void DecryptedCekIsCachedDuringDecryption()
         {
             SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new SqlColumnEncryptionAzureKeyVaultProvider(new SqlClientCustomTokenCredential());
+            string cacheName = "_columnEncryptionKeyCache";
             byte[] plaintextKey1 = { 1, 2, 3 };
             byte[] plaintextKey2 = { 1, 2, 3 };
             byte[] plaintextKey3 = { 0, 1, 2, 3 };
@@ -119,15 +120,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             byte[] encryptedKey3 = akvProvider.EncryptColumnEncryptionKey(DataTestUtility.AKVUrl, "RSA_OAEP", plaintextKey3);
 
             byte[] decryptedKey1 = akvProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, "RSA_OAEP", encryptedKey1);
-            Assert.Equal(1, GetCacheCount("_columnEncryptionKeyCache", akvProvider));
+            Assert.Equal(1, GetCacheCount(cacheName, akvProvider));
             Assert.True(decryptedKey1.SequenceEqual(plaintextKey1));
 
             byte[] decryptedKey2 = akvProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, "RSA_OAEP", encryptedKey2);
-            Assert.Equal(2, GetCacheCount("_columnEncryptionKeyCache", akvProvider));
+            Assert.Equal(2, GetCacheCount(cacheName, akvProvider));
             Assert.True(decryptedKey2.SequenceEqual(plaintextKey2));
 
             byte[] decryptedKey3 = akvProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, "RSA_OAEP", encryptedKey3);
-            Assert.Equal(3, GetCacheCount("_columnEncryptionKeyCache", akvProvider));
+            Assert.Equal(3, GetCacheCount(cacheName, akvProvider));
             Assert.True(decryptedKey3.SequenceEqual(plaintextKey3));
         }
 
@@ -135,16 +136,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         public static void SignatureVerificationResultIsCachedDuringVerification()
         {
             SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new SqlColumnEncryptionAzureKeyVaultProvider(new SqlClientCustomTokenCredential());
+            string cacheName = "_columnMasterKeyMetadataSignatureVerificationCache";
+
             byte[] signature = akvProvider.SignColumnMasterKeyMetadata(DataTestUtility.AKVUrl, true);
             Assert.True(akvProvider.VerifyColumnMasterKeyMetadata(DataTestUtility.AKVUrl, true, signature));
-            Assert.Equal(1, GetCacheCount("_columnMasterKeyMetadataSignatureVerificationCache", akvProvider));
+            Assert.Equal(1, GetCacheCount(cacheName, akvProvider));
 
             Assert.True(akvProvider.VerifyColumnMasterKeyMetadata(DataTestUtility.AKVUrl, true, signature));
-            Assert.Equal(1, GetCacheCount("_columnMasterKeyMetadataSignatureVerificationCache", akvProvider));
+            Assert.Equal(1, GetCacheCount(cacheName, akvProvider));
 
             byte[] newSignature = akvProvider.SignColumnMasterKeyMetadata(DataTestUtility.AKVUrl, true);
             Assert.True(akvProvider.VerifyColumnMasterKeyMetadata(DataTestUtility.AKVUrl, true, newSignature));
-            Assert.Equal(1, GetCacheCount("_columnMasterKeyMetadataSignatureVerificationCache", akvProvider));
+            Assert.Equal(1, GetCacheCount(cacheName, akvProvider));
+
+            byte[] newSignatureWithoutEnclave = akvProvider.SignColumnMasterKeyMetadata(DataTestUtility.AKVUrl, false);
+            Assert.True(akvProvider.VerifyColumnMasterKeyMetadata(DataTestUtility.AKVUrl, false, newSignatureWithoutEnclave));
+            Assert.Equal(2, GetCacheCount(cacheName, akvProvider));
         }
 
         private static int GetCacheCount(string nameOfCache, SqlColumnEncryptionAzureKeyVaultProvider akvProvider)
