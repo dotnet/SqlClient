@@ -12,6 +12,8 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
     /// LocalCache is to reuse heavy objects.
     /// When performing a heavy creation operation, we will save the result in our cache container.
     /// The next time that we need that result, we will pull it from the cache container, instead of performing the heavy operation again.
+    /// It is used for decrypting CEKs and verifying CMK metadata. Encrypted CEKs and signatures are different every time, even 
+    /// when done with the same key, and should not be cached.
     /// </summary>
     internal class LocalCache<TKey, TValue>
     {
