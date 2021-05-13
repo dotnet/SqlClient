@@ -53,7 +53,7 @@ namespace Microsoft.Data.SqlClient
             internal const SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Disabled;
             internal const string EnclaveAttestationUrl = _emptyString;
             internal static readonly SqlConnectionAttestationProtocol AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified;
-            internal static readonly SqlConnectionIPAddressPreference IPAddressPreference = SqlConnectionIPAddressPreference.IPv4First;
+            internal static readonly SqlConnectionIPAddressPreference s_IPAddressPreference = SqlConnectionIPAddressPreference.IPv4First;
         }
 
         // SqlConnection ConnectionString Options
@@ -565,7 +565,7 @@ namespace Microsoft.Data.SqlClient
         internal SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting { get { return _columnEncryptionSetting; } }
         internal string EnclaveAttestationUrl { get { return _enclaveAttestationUrl; } }
         internal SqlConnectionAttestationProtocol AttestationProtocol { get { return _attestationProtocol; } }
-        internal SqlConnectionIPAddressPreference IPAddressPreference { get { return _ipAddressPreference; } }
+        internal SqlConnectionIPAddressPreference IPAddressPreference => _ipAddressPreference;
         internal bool PersistSecurityInfo { get { return _persistSecurityInfo; } }
         internal bool Pooling { get { return _pooling; } }
         internal bool Replication { get { return _replication; } }
@@ -916,7 +916,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (!TryGetParsetableValue(KEY.IPAddressPreference, out string value))
             {
-                return DEFAULT.IPAddressPreference;
+                return DEFAULT.s_IPAddressPreference;
             }
 
             try

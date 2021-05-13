@@ -58,7 +58,7 @@ namespace Microsoft.Data.SqlClient
             internal static readonly SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Disabled;
             internal const string EnclaveAttestationUrl = _emptyString;
             internal static readonly SqlConnectionAttestationProtocol AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified;
-            internal static readonly SqlConnectionIPAddressPreference IPAddressPreference = SqlConnectionIPAddressPreference.IPv4First;
+            internal static readonly SqlConnectionIPAddressPreference s_IPAddressPreference = SqlConnectionIPAddressPreference.IPv4First;
 
 #if ADONET_CERT_AUTH
             internal const  string Certificate = _emptyString;
@@ -688,7 +688,7 @@ namespace Microsoft.Data.SqlClient
         internal SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting { get { return _columnEncryptionSetting; } }
         internal string EnclaveAttestationUrl { get { return _enclaveAttestationUrl; } }
         internal SqlConnectionAttestationProtocol AttestationProtocol { get { return _attestationProtocol; } }
-        internal SqlConnectionIPAddressPreference IPAddressPreference { get { return _ipAddressPreference; } }
+        internal SqlConnectionIPAddressPreference IPAddressPreference => _ipAddressPreference;
 #if ADONET_CERT_AUTH
         internal string Certificate { get { return _certificate; } }
         internal bool UsesCertificate { get { return _authType == SqlClient.SqlAuthenticationMethod.SqlCertificate; } }
@@ -1097,7 +1097,7 @@ namespace Microsoft.Data.SqlClient
             string valStr = value as string;
             if (valStr == null)
             {
-                return DEFAULT.IPAddressPreference;
+                return DEFAULT.s_IPAddressPreference;
             }
 
             try

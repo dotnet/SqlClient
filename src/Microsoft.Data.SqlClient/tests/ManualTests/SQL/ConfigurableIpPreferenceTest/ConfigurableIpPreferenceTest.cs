@@ -48,8 +48,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     ipAddresses.Exists(ip => ip.AddressFamily == AddressFamily.InterNetworkV6);
         }
 
-        // IPv6 configuration went to an issue with Ubuntu 16 that is following up to get fixed by Azure support.
-        [PlatformSpecific(TestPlatforms.Windows)]
         [ConditionalTheory(nameof(IsTCPConnectionStringSetup), nameof(IsValidDataSource))]
         [InlineData(CnnPrefIPv6)]
         [InlineData(CnnPrefIPv4)]

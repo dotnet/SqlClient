@@ -530,7 +530,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/IPAddressPreference/*' />
         public SqlConnectionIPAddressPreference IPAddressPreference
         {
-            get { return _ipAddressPreference; }
+            get => _ipAddressPreference;
             set
             {
                 if (!DbConnectionStringBuilderUtil.IsValidIPAddressPreference(value))
@@ -934,9 +934,7 @@ namespace Microsoft.Data.SqlClient
         /// <param name="keyword"></param>
         /// <param name="value"></param>
         private static SqlConnectionIPAddressPreference ConvertToIPAddressPreference(string keyword, object value)
-        {
-            return DbConnectionStringBuilderUtil.ConvertToIPAddressPreference(keyword, value);
-        }
+            => DbConnectionStringBuilderUtil.ConvertToIPAddressPreference(keyword, value);
 
         private object GetAt(Keywords index)
         {

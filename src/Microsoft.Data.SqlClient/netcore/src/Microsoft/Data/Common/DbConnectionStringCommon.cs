@@ -450,8 +450,7 @@ namespace Microsoft.Data.Common
                 return DbConnectionStringDefaults.IPAddressPreference;  // IPv4First
             }
 
-            string sValue = (value as string);
-            if (sValue is not null)
+            if (value is string sValue)
             {
                 // try again after remove leading & trailing whitespaces.
                 sValue = sValue.Trim();
