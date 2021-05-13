@@ -4,7 +4,6 @@
 
 using Microsoft.Extensions.Caching.Memory;
 using System;
-
 using static System.Math;
 
 namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
@@ -20,9 +19,9 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// A simple thread-safe implementation of an in-memory Cache.
         /// When the process dies, the cache dies with it.
         /// </summary>
-        private readonly MemoryCache cache;
+        private readonly MemoryCache _cache;
 
-        private readonly int maxSize;
+        private readonly int _maxSize;
 
         /// <summary>
         /// Sets an absolute expiration time, relative to now.
@@ -32,7 +31,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <summary>
         /// Gets the count of the current entries for diagnostic purposes.
         /// </summary>
-        internal int Count => cache.Count;
+        internal int Count => _cache.Count;
 
         /// <summary>
         /// Constructs a new <see cref="LocalCache{TKey, TValue}">LocalCache</see> object.
@@ -44,8 +43,8 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
                 throw new ArgumentOutOfRangeException(nameof(maxSizeLimit));
             }
 
-            maxSize = maxSizeLimit;
-            cache = new MemoryCache(new MemoryCacheOptions());
+            _maxSize = maxSizeLimit;
+            _cache = new MemoryCache(new MemoryCacheOptions());
         }
 
         /// <summary>
@@ -53,9 +52,9 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// returned. Otherwise, the <paramref name="createItem"/> delegate function will be invoked to create the value. 
         /// It will then get stored it in the cache and set the time-to-live before getting returned.
         /// </summary>
-        /// <param name="key">The encrypted key bytes.</param>
-        /// <param name="createItem">The delegate function that will decrypt the encrypted column encryption key.</param>
-        /// <returns>The decrypted column encryption key.</returns>
+        /// <param name="key">The key for the cache entry.</param>
+        /// <param name="createItem">The delegate function that will create the cache entry if it does not exist.</param>
+        /// <returns>The cache entry.</returns>
         internal TValue GetOrCreate(TKey key, Func<TValue> createItem)
         {
             if (TimeToLive <= TimeSpan.Zero)
@@ -63,11 +62,11 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
                 return createItem();
             }
 
-            if (!cache.TryGetValue(key, out TValue cacheEntry))
+            if (!_cache.TryGetValue(key, out TValue cacheEntry))
             {
-                if (cache.Count == maxSize)
+                if (_cache.Count == _maxSize)
                 {
-                    cache.Compact(Max(0.10, 1.0 / maxSize));
+                    _cache.Compact(Max(0.10, 1.0 / _maxSize));
                 }
 
                 cacheEntry = createItem();
@@ -76,7 +75,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
                     AbsoluteExpirationRelativeToNow = TimeToLive
                 };
 
-                cache.Set(key, cacheEntry, cacheEntryOptions);
+                _cache.Set(key, cacheEntry, cacheEntryOptions);
             }
 
             return cacheEntry;
@@ -89,7 +88,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <returns></returns>
         internal bool Contains(TKey key)
         {
-            return cache.TryGetValue(key, out _);
+            return _cache.TryGetValue(key, out _);
         }
     }
 }

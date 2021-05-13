@@ -66,13 +66,13 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <summary>
         /// A cache of column encryption keys (once they are decrypted). This is useful for rapidly decrypting multiple data values.
         /// </summary>
-        private readonly LocalCache<string, byte[]> columnEncryptionKeyCache = 
+        private readonly LocalCache<string, byte[]> _columnEncryptionKeyCache = 
             new LocalCache<string, byte[]>() { TimeToLive = TimeSpan.FromHours(2) };
 
         /// <summary>
         /// A cache for storing the results of signature verification of column master key metadata.
         /// </summary>
-        private readonly LocalCache<Tuple<string, bool, string>, bool> columnMasterKeyMetadataSignatureVerificationCache =
+        private readonly LocalCache<Tuple<string, bool, string>, bool> _columnMasterKeyMetadataSignatureVerificationCache =
             new LocalCache<Tuple<string, bool, string>, bool>(maxSizeLimit: 2000) { TimeToLive = TimeSpan.FromDays(10) };
 
         /// <summary>
@@ -87,8 +87,8 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// </remarks>
         public override TimeSpan? ColumnEncryptionKeyCacheTtl
         {
-            get => columnEncryptionKeyCache.TimeToLive;
-            set => columnEncryptionKeyCache.TimeToLive = value;
+            get => _columnEncryptionKeyCache.TimeToLive;
+            set => _columnEncryptionKeyCache.TimeToLive = value;
         }
 
         #endregion
@@ -358,7 +358,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// </remarks>
         private string ToHexString(byte[] source)
         {
-            if (source == null)
+            if (source is null)
             {
                 return null;
             }
@@ -367,17 +367,17 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         }
 
         /// <summary>
-        /// Returns the cached decrypted data encryption key, or unwraps the encrypted data encryption if not present.
+        /// Returns the cached decrypted column encryption key, or unwraps the encrypted column encryption key if not present.
         /// </summary>
-        /// <param name="encryptedDataEncryptionKey">Encrypted Data Encryption Key</param>
+        /// <param name="encryptedColumnEncryptionKey">Encrypted Column Encryption Key</param>
         /// <param name="createItem">The delegate function that will decrypt the encrypted column encryption key.</param>
-        /// <returns>The decrypted data encryption key.</returns>
+        /// <returns>The decrypted column encryption key.</returns>
         /// <remarks>
         ///
         /// </remarks>
-        private byte[] GetOrCreateColumnEncryptionKey(string encryptedDataEncryptionKey, Func<byte[]> createItem)
+        private byte[] GetOrCreateColumnEncryptionKey(string encryptedColumnEncryptionKey, Func<byte[]> createItem)
         {
-            return columnEncryptionKeyCache.GetOrCreate(encryptedDataEncryptionKey, createItem);
+            return _columnEncryptionKeyCache.GetOrCreate(encryptedColumnEncryptionKey, createItem);
         }
 
         /// <summary>
@@ -388,7 +388,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <returns></returns>
         private bool GetOrCreateSignatureVerificationResult(Tuple<string, bool, string> keyInformation, Func<bool> createItem)
         {
-            return columnMasterKeyMetadataSignatureVerificationCache.GetOrCreate(keyInformation, createItem);
+            return _columnMasterKeyMetadataSignatureVerificationCache.GetOrCreate(keyInformation, createItem);
         }
 
         #endregion
