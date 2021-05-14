@@ -5,7 +5,6 @@
 using System;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Security.KeyVault.Keys.Cryptography;
 using static Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.Validator;
