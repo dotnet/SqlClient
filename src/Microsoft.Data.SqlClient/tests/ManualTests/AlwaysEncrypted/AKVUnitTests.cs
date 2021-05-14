@@ -137,20 +137,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             SqlColumnEncryptionAzureKeyVaultProvider akvProvider = new SqlColumnEncryptionAzureKeyVaultProvider(new SqlClientCustomTokenCredential());
             string cacheName = "_columnMasterKeyMetadataSignatureVerificationCache";
-
             byte[] signature = akvProvider.SignColumnMasterKeyMetadata(DataTestUtility.AKVUrl, true);
-            Assert.True(akvProvider.VerifyColumnMasterKeyMetadata(DataTestUtility.AKVUrl, true, signature));
-            Assert.Equal(1, GetCacheCount(cacheName, akvProvider));
+            byte[] signature2 = akvProvider.SignColumnMasterKeyMetadata(DataTestUtility.AKVUrl, true);
+            byte[] signatureWithoutEnclave = akvProvider.SignColumnMasterKeyMetadata(DataTestUtility.AKVUrl, false);
 
             Assert.True(akvProvider.VerifyColumnMasterKeyMetadata(DataTestUtility.AKVUrl, true, signature));
             Assert.Equal(1, GetCacheCount(cacheName, akvProvider));
 
-            byte[] newSignature = akvProvider.SignColumnMasterKeyMetadata(DataTestUtility.AKVUrl, true);
-            Assert.True(akvProvider.VerifyColumnMasterKeyMetadata(DataTestUtility.AKVUrl, true, newSignature));
+            Assert.True(akvProvider.VerifyColumnMasterKeyMetadata(DataTestUtility.AKVUrl, true, signature));
             Assert.Equal(1, GetCacheCount(cacheName, akvProvider));
 
-            byte[] newSignatureWithoutEnclave = akvProvider.SignColumnMasterKeyMetadata(DataTestUtility.AKVUrl, false);
-            Assert.True(akvProvider.VerifyColumnMasterKeyMetadata(DataTestUtility.AKVUrl, false, newSignatureWithoutEnclave));
+            Assert.True(akvProvider.VerifyColumnMasterKeyMetadata(DataTestUtility.AKVUrl, true, signature2));
+            Assert.Equal(1, GetCacheCount(cacheName, akvProvider));
+
+            Assert.True(akvProvider.VerifyColumnMasterKeyMetadata(DataTestUtility.AKVUrl, false, signatureWithoutEnclave));
             Assert.Equal(2, GetCacheCount(cacheName, akvProvider));
         }
 

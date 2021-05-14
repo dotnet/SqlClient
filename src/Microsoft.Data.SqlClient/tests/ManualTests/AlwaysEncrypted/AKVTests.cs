@@ -101,13 +101,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                 Customer customer = new Customer(45, "Microsoft", "Corporation");
 
-                // Start a transaction and either commit or rollback based on the test variation.
-                using (SqlTransaction sqlTransaction = sqlConnection.BeginTransaction())
-                {
-                    InsertCustomerRecord(sqlConnection, sqlTransaction, customer);
-                    sqlTransaction.Commit();
-                }
-
                 // Test INPUT parameter on an encrypted parameter
                 using (SqlCommand sqlCommand = new SqlCommand($"SELECT CustomerId, FirstName, LastName FROM [{akvTableName}] WHERE FirstName = @firstName",
                                                                 sqlConnection))
