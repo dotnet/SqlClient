@@ -42,7 +42,7 @@
           <value>8</value>
         </ActiveDirectoryMSI>
       <ActiveDirectoryDefault>
-          <summary>The authentication method uses Active Directory Default. Use this mode to connect to a SQL Database using multiple non-interactive authentication methods tried sequentially to acquire access token. This method does not fallback to "Active Directory Interactive" authentication method.</summary>
+          <summary>The authentication method uses Active Directory Default. Use this mode to connect to a SQL Database using multiple non-interactive authentication methods tried sequentially to acquire an access token. This method does not fallback to the "Active Directory Interactive" authentication method.</summary>
           <value>9</value>
       </ActiveDirectoryDefault>
     </members>
