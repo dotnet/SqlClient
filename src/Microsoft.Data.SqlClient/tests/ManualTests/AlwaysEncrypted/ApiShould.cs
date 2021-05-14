@@ -2194,18 +2194,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                       () => ExecuteQueryThatRequiresCustomKeyStoreProvider(connection));
                 AssertExceptionCausedByFailureToDecrypt(ex);
             }
-
-            void ExecuteQueryThatRequiresCustomKeyStoreProvider(SqlConnection connection)
-            {
-                using (SqlCommand command = new SqlCommand(
-                    null, connection, null, SqlCommandColumnEncryptionSetting.Enabled))
-                {
-                    command.CommandText =
-                        $"SELECT * FROM [{_fixture.CustomKeyStoreProviderTestTable.Name}] WHERE CustomerID = @id";
-                    command.Parameters.AddWithValue("id", 9);
-                    command.ExecuteReader();
-                }
-            }
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
@@ -2254,15 +2242,23 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     }
                 }
             }
+        }
 
-            SqlCommand CreateCommandThatRequiresCustomKeyStoreProvider(SqlConnection connection)
+        private void ExecuteQueryThatRequiresCustomKeyStoreProvider(SqlConnection connection)
+        {
+            using (SqlCommand command = CreateCommandThatRequiresCustomKeyStoreProvider(connection))
             {
-                SqlCommand command = new SqlCommand(
-                    $"SELECT * FROM [{_fixture.CustomKeyStoreProviderTestTable.Name}] WHERE CustomerID = @id", 
-                    connection, null, SqlCommandColumnEncryptionSetting.Enabled);
-                command.Parameters.AddWithValue("id", 9);
-                return command;
+                command.ExecuteReader();
             }
+        }
+
+        private SqlCommand CreateCommandThatRequiresCustomKeyStoreProvider(SqlConnection connection)
+        {
+            SqlCommand command = new SqlCommand(
+                $"SELECT * FROM [{_fixture.CustomKeyStoreProviderTestTable.Name}] WHERE CustomerID = @id",
+                connection, null, SqlCommandColumnEncryptionSetting.Enabled);
+            command.Parameters.AddWithValue("id", 9);
+            return command;
         }
 
         private void AssertExceptionCausedByFailureToDecrypt(Exception ex)
