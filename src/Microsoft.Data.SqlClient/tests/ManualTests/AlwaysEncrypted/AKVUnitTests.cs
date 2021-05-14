@@ -10,8 +10,6 @@ using Azure.Core;
 using System.Reflection;
 using System;
 using System.Linq;
-using System.Diagnostics;
-using System.Threading;
 using System.Collections.Generic;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
