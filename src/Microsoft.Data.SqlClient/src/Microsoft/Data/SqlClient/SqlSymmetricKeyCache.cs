@@ -55,9 +55,7 @@ namespace Microsoft.Data.SqlClient
 #endif //DEBUG
 
             // Lookup the key in cache
-            SqlClientSymmetricKey encryptionKey = _cache.Get(cacheLookupKey) as SqlClientSymmetricKey;
-
-            if (encryptionKey == null)
+            if (!(_cache.Get(cacheLookupKey) is SqlClientSymmetricKey encryptionKey))
             {
                 Debug.Assert(SqlConnection.ColumnEncryptionTrustedMasterKeyPaths != null, @"SqlConnection.ColumnEncryptionTrustedMasterKeyPaths should not be null");
 
