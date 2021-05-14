@@ -10,6 +10,7 @@ using System.Reflection;
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
