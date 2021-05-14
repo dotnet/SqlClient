@@ -8,7 +8,7 @@
                 <format type="text/markdown"><![CDATA[
 
 ## Remarks
-If `Multi Subnet Failover` is set to `true`, this setting has no effect.
+If `Multi Subnet Failover` or "Transparent Network IP Resolution" is set to `true`, this setting has no effect.
 ]]></format>
             </remarks>
         </SqlConnectionIPAddressPreference>
