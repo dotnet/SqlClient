@@ -1,6 +1,6 @@
 <docs>
     <members name="SqlConnectionIPAddressPreference">
-        <SqlConnectionIPAddressPreference>
+        <SqlConnectionIPAddressPreferenceNetfx>
             <summary>
                 Specifies a value for IP address preference during a TCP connection.
             </summary>
@@ -9,6 +9,18 @@
 
 ## Remarks
 If `Multi Subnet Failover` or "Transparent Network IP Resolution" is set to `true`, this setting has no effect.
+]]></format>
+            </remarks>
+        </SqlConnectionIPAddressPreferenceNetfx>
+        <SqlConnectionIPAddressPreference>
+            <summary>
+                Specifies a value for IP address preference during a TCP connection.
+            </summary>
+            <remarks>
+                <format type="text/markdown"><![CDATA[
+
+## Remarks
+If `Multi Subnet Failover` is set to `true`, this setting has no effect.
 ]]></format>
             </remarks>
         </SqlConnectionIPAddressPreference>

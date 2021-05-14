@@ -22,11 +22,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private const string CnnPrefIPv6 = ";IPAddressPreference=IPv6First";
         private const string CnnPrefIPv4 = ";IPAddressPreference=IPv4First";
 
-        static ConfigurableIpPreferenceTest()
-        { 
-            AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.DisableTNIRByDefaultInConnectionString", true); 
-        }
-
         private static bool IsTCPConnectionStringSetup() => !string.IsNullOrEmpty(TCPConnectionString);
         private static bool IsValidDataSource()
         {
@@ -54,7 +49,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData(";IPAddressPreference=UsePlatformDefault")]
         public void ConfigurableIpPreference(string ipPreference)
         {
-            using (SqlConnection connection = new SqlConnection(TCPConnectionString + ipPreference))
+            using (SqlConnection connection = new SqlConnection(TCPConnectionString + ipPreference
+#if NETFRAMEWORK
+                + ";TransparentNetworkIPResolution=false"   // doesn't support in .NET Core
+#endif
+                ))
             {
                 connection.Open();
                 Assert.Equal(ConnectionState.Open, connection.State);
