@@ -6,7 +6,6 @@ using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
 using Azure.Identity;
 using Xunit;
 using Azure.Security.KeyVault.Keys;
-using Azure.Core;
 using System.Reflection;
 using System;
 using System.Linq;
