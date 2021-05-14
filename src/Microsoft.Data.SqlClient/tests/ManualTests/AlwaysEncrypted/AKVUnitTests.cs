@@ -128,7 +128,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             byte[] decryptedKey3 = akvProvider.DecryptColumnEncryptionKey(DataTestUtility.AKVUrl, "RSA_OAEP", encryptedKey3);
             Assert.Equal(3, GetCacheCount(cacheName, akvProvider));
-            Assert.True(decryptedKey3.SequenceEqual(plaintextKey3));
+            Assert.Equal(plaintextKey3, decryptedKey3);
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
