@@ -1121,7 +1121,7 @@ namespace Microsoft.Data.SqlClient
                 AssertValidState();
             }
 
-            if (_inBytesPacket < 0 || _inBytesPacket > _inBuff.Length)
+            if (_inBytesPacket < 0 || _inBytesPacket > _inBytesRead)
             {
                 // either TDS stream is corrupted or there is multithreaded misuse of connection
                 throw SQL.ParsingError();
@@ -4684,11 +4684,12 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG
                 _rollingPend = 0;
                 _rollingPendCount = 0;
+                PacketCounter = 0;
 #endif
                 _stateObj = null;
 
                 _continueSupported = null;
-                PacketCounter = 0;
+                
             }
         }
 
