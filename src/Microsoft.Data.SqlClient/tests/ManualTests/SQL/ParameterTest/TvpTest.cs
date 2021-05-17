@@ -91,14 +91,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Bad Scenario - exception expected.
             try
             {
-                List<A> list = new()
+                List<Item> list = new()
                 {
-                    new A(0),
+                    new Item(0),
                     null,
-                    new A(2),
-                    new A(3),
-                    new A(4),
-                    new A(5)
+                    new Item(2),
+                    new Item(3),
+                    new Item(4),
+                    new Item(5)
                 };
 
                 IEnumerable<int> Ids = list.Select(x => x.id.Value).Distinct();
@@ -120,10 +120,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 cmd.CommandTimeout = 100;
                 AddCommandParameters(cmd, parameters);
                 new SqlDataAdapter(cmd).Fill(new("BadFunc"));
+                Assert.False(true, "Expected exception did not occur");
             }
-            catch
+            catch (Exception e)
             {
                 // Ignore this exception as it's deliberately introduced.
+                Assert.True(e.Message.Contains("Object reference not set to an instance of an object"), "Expected exception did not occur");
             }
 
             // Good Scenario - No failure expected.
@@ -142,9 +144,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private class A
+        private class Item
         {
-            public A(int? v)
+            public Item(int? v)
             {
                 id = v;
             }
