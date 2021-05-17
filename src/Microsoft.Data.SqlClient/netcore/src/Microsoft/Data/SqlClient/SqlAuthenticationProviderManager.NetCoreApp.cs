@@ -152,6 +152,8 @@ namespace Microsoft.Data.SqlClient
                     return SqlAuthenticationMethod.ActiveDirectoryManagedIdentity;
                 case ActiveDirectoryMSI:
                     return SqlAuthenticationMethod.ActiveDirectoryMSI;
+                case ActiveDirectoryDefault:
+                    return SqlAuthenticationMethod.ActiveDirectoryDefault;
                 default:
                     throw SQL.UnsupportedAuthentication(authentication);
             }

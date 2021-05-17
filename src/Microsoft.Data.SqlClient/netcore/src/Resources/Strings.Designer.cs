@@ -2799,9 +2799,9 @@ namespace System {
         /// <summary>
         ///   Looks up a localized string similar to Cannot use &apos;Authentication={0}&apos; with &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
         /// </summary>
-        internal static string SQL_ManagedIdentityWithPassword {
+        internal static string SQL_NonInteractiveWithPassword {
             get {
-                return ResourceManager.GetString("SQL_ManagedIdentityWithPassword", resourceCulture);
+                return ResourceManager.GetString("SQL_NonInteractiveWithPassword", resourceCulture);
             }
         }
         
@@ -3087,9 +3087,9 @@ namespace System {
         /// <summary>
         ///   Looks up a localized string similar to Cannot set the Credential property if &apos;Authentication={0}&apos; has been specified in the connection string..
         /// </summary>
-        internal static string SQL_SettingCredentialWithManagedIdentity {
+        internal static string SQL_SettingCredentialWithNonInteractive {
             get {
-                return ResourceManager.GetString("SQL_SettingCredentialWithManagedIdentity", resourceCulture);
+                return ResourceManager.GetString("SQL_SettingCredentialWithNonInteractive", resourceCulture);
             }
         }
         
@@ -3123,9 +3123,9 @@ namespace System {
         /// <summary>
         ///   Looks up a localized string similar to Cannot use &apos;Authentication={0}&apos;, if the Credential property has been set..
         /// </summary>
-        internal static string SQL_SettingManagedIdentityWithCredential {
+        internal static string SQL_SettingNonInteractiveWithCredential {
             get {
-                return ResourceManager.GetString("SQL_SettingManagedIdentityWithCredential", resourceCulture);
+                return ResourceManager.GetString("SQL_SettingNonInteractiveWithCredential", resourceCulture);
             }
         }
         

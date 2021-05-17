@@ -57,7 +57,8 @@ namespace Microsoft.Data.Common
         {
             _items = items;
 #if DEBUG
-            for(int i = 0; i < items.Length; ++i) {
+            for (int i = 0; i < items.Length; ++i)
+            {
                 Debug.Assert(null != items[i], "null item");
             }
 #endif
@@ -524,12 +525,48 @@ namespace Microsoft.Data.Common
         const string ActiveDirectoryDeviceCodeFlowString = "Active Directory Device Code Flow";
         internal const string ActiveDirectoryManagedIdentityString = "Active Directory Managed Identity";
         internal const string ActiveDirectoryMSIString = "Active Directory MSI";
-        const string SqlCertificateString = "Sql Certificate";
+        internal const string ActiveDirectoryDefaultString = "Active Directory Default";
+        // const string SqlCertificateString = "Sql Certificate";
+
+#if DEBUG
+        private static string[] s_supportedAuthenticationModes =
+        {
+            "NotSpecified",
+            "SqlPassword",
+            "ActiveDirectoryPassword",
+            "ActiveDirectoryIntegrated",
+            "ActiveDirectoryInteractive",
+            "ActiveDirectoryServicePrincipal",
+            "ActiveDirectoryDeviceCodeFlow",
+            "ActiveDirectoryManagedIdentity",
+            "ActiveDirectoryMSI",
+            "ActiveDirectoryDefault"
+        };
+
+        private static bool IsValidAuthenticationMethodEnum()
+        {
+            string[] names = Enum.GetNames(typeof(SqlAuthenticationMethod));
+            int l = s_supportedAuthenticationModes.Length;
+            bool listValid;
+            if (listValid = names.Length == l)
+            {
+                for (int i = 0; i < l; i++)
+                {
+                    if (s_supportedAuthenticationModes[i].CompareTo(names[i]) != 0)
+                    {
+                        listValid = false;
+                    }
+                }
+            }
+            return listValid;
+        }
+#endif
 
         internal static bool TryConvertToAuthenticationType(string value, out SqlAuthenticationMethod result)
         {
-            Debug.Assert(Enum.GetNames(typeof(SqlAuthenticationMethod)).Length == 9, "SqlAuthenticationMethod enum has changed, update needed");
-
+#if DEBUG
+            Debug.Assert(IsValidAuthenticationMethodEnum(), "SqlAuthenticationMethod enum has changed, update needed");
+#endif
             bool isSuccess = false;
 
             if (StringComparer.InvariantCultureIgnoreCase.Equals(value, SqlPasswordString)
@@ -578,6 +615,12 @@ namespace Microsoft.Data.Common
                 || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.ActiveDirectoryMSI, CultureInfo.InvariantCulture)))
             {
                 result = SqlAuthenticationMethod.ActiveDirectoryMSI;
+                isSuccess = true;
+            }
+            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ActiveDirectoryDefaultString)
+                || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.ActiveDirectoryDefault, CultureInfo.InvariantCulture)))
+            {
+                result = SqlAuthenticationMethod.ActiveDirectoryDefault;
                 isSuccess = true;
             }
 #if ADONET_CERT_AUTH
@@ -671,6 +714,7 @@ namespace Microsoft.Data.Common
                 || value == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
                 || value == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
                 || value == SqlAuthenticationMethod.ActiveDirectoryMSI
+                || value == SqlAuthenticationMethod.ActiveDirectoryDefault
 #if ADONET_CERT_AUTH
                 || value == SqlAuthenticationMethod.SqlCertificate
 #endif
@@ -699,6 +743,8 @@ namespace Microsoft.Data.Common
                     return ActiveDirectoryManagedIdentityString;
                 case SqlAuthenticationMethod.ActiveDirectoryMSI:
                     return ActiveDirectoryMSIString;
+                case SqlAuthenticationMethod.ActiveDirectoryDefault:
+                    return ActiveDirectoryDefaultString;
 #if ADONET_CERT_AUTH
                 case SqlAuthenticationMethod.SqlCertificate:
                     return SqlCertificateString;

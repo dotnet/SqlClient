@@ -554,6 +554,9 @@ namespace Microsoft.Data.SqlClient
                     case SqlAuthenticationMethod.ActiveDirectoryMSI:
                         SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory MSI authentication");
                         break;
+                    case SqlAuthenticationMethod.ActiveDirectoryDefault:
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Default authentication");
+                        break;
                     case SqlAuthenticationMethod.SqlPassword:
                         SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> SQL Password authentication");
                         break;
@@ -8586,6 +8589,9 @@ namespace Microsoft.Data.SqlClient
                             case SqlAuthenticationMethod.ActiveDirectoryManagedIdentity:
                             case SqlAuthenticationMethod.ActiveDirectoryMSI:
                                 workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYMANAGEDIDENTITY;
+                                break;
+                            case SqlAuthenticationMethod.ActiveDirectoryDefault:
+                                workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYDEFAULT;
                                 break;
                             default:
                                 Debug.Assert(false, "Unrecognized Authentication type for fedauth MSAL request");

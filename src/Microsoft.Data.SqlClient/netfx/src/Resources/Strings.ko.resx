@@ -2502,7 +2502,7 @@
   <data name="SQL_DeviceFlowWithUsernamePassword" xml:space="preserve">
     <value>'Authentication=Active Directory Device Code Flow'를 'User ID', 'UID', 'Password' 또는 'PWD' 연결 문자열 키워드와 함께 사용할 수 없습니다.</value>
   </data>
-  <data name="SQL_ManagedIdentityWithPassword" xml:space="preserve">
+  <data name="SQL_NonInteractiveWithPassword" xml:space="preserve">
     <value>'Authentication={0}'을(를) 'Password' 또는 'PWD' 연결 문자열 키워드와 함께 사용할 수 없습니다.</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
@@ -4575,13 +4575,13 @@
   <data name="SQL_SettingCredentialWithDeviceFlow" xml:space="preserve">
     <value>'Authentication=Active Directory Device Code Flow'가 연결 문자열에 지정된 경우 Credential 속성을 설정할 수 없습니다.</value>
   </data>
-  <data name="SQL_SettingCredentialWithManagedIdentity" xml:space="preserve">
+  <data name="SQL_SettingCredentialWithNonInteractive" xml:space="preserve">
     <value>'Authentication={0}'이(가) 연결 문자열에 지정된 경우 자격 증명 속성을 설정할 수 없습니다.</value>
   </data>
   <data name="SQL_SettingDeviceFlowWithCredential" xml:space="preserve">
     <value>Credential 속성이 설정된 경우 'Authentication=Active Directory Device Code Flow'를 사용할 수 없습니다.</value>
   </data>
-  <data name="SQL_SettingManagedIdentityWithCredential" xml:space="preserve">
+  <data name="SQL_SettingNonInteractiveWithCredential" xml:space="preserve">
     <value>자격 증명 속성이 설정된 경우 'Authentication={0}'을(를) 사용할 수 없습니다.</value>
   </data>
   <data name="SqlDependency_UnexpectedValueOnDeserialize" xml:space="preserve">
