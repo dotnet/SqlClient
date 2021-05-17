@@ -1825,6 +1825,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The validation of an attestation token failed. The token signature does not match the signature omputed using a public key retrieved from the attestation public key endpoint at &apos;{0}&apos;. Verify the DNS apping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If correct, contact Customer Support Services..
+        /// </summary>
+        internal static string AttestationTokenSignatureValidationFailed {
+            get {
+                return ResourceManager.GetString("AttestationTokenSignatureValidationFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Destination array is not long enough to copy all the items in the collection. Check array index and length..
         /// </summary>
         internal static string Arg_ArrayPlusOffTooSmall {
@@ -1857,15 +1866,6 @@ namespace System {
         internal static string ArgumentOutOfRange_NeedNonNegNum {
             get {
                 return ResourceManager.GetString("ArgumentOutOfRange_NeedNonNegNum", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The validation of an attestation token failed. The token signature does not match the signature omputed using a public key retrieved from the attestation public key endpoint at &apos;{0}&apos;. Verify the DNS apping for the endpoint. If correct, contact Customer Support Services..
-        /// </summary>
-        internal static string AttestationTokenSignatureValidationFailed {
-            get {
-                return ResourceManager.GetString("AttestationTokenSignatureValidationFailed", resourceCulture);
             }
         }
         
@@ -6721,7 +6721,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The attestation service returned an expired HGS root certificate for attestation URL &apos;{0}&apos;. Check the HGS root certificate configured for your HGS instance..
+        ///   Looks up a localized string similar to The attestation service returned an expired HGS root certificate for attestation URL &apos;{0}&apos;. Check the HGS root certificate configured for your HGS instance - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details..
         /// </summary>
         internal static string GetAttestationSigningCertificateFailedInvalidCertificate {
             get {
@@ -6730,7 +6730,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The obtained HGS root certificate for attestation URL &apos;{0}&apos; has an invalid format. Verify the attestation URL is correct and the HGS server is online and fully initialized. For more information contact Customer Support Services. Error details: &apos;{1}&apos;..
+        ///   Looks up a localized string similar to The obtained HGS root certificate for attestation URL &apos;{0}&apos; has an invalid format. Verify the attestation URL is correct and the HGS server is online and fully initialized - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. For additional support contact Customer Support Services. Error details: &apos;{1}&apos;..
         /// </summary>
         internal static string GetAttestationSigningCertificateRequestFailedFormat {
             get {
@@ -6811,7 +6811,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The validation of an attestation token failed. Claim &apos;{0}&apos; in the token has an invalid value of &apos;{1}&apos;. Verify the attestation policy. If the policy is correct, contact Customer Support Services..
+        ///   Looks up a localized string similar to The validation of an attestation token failed. Claim &apos;{0}&apos; in the token has an invalid value of &apos;{1}&apos;. Verify the attestation policy - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If the policy is correct, contact Customer Support Services..
         /// </summary>
         internal static string InvalidClaimInAttestationToken {
             get {
@@ -7081,7 +7081,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The validation of the attestation token failed. Claim &apos;{0}&apos; is missing in the token. Verify the attestation policy. If the policy is correct, contact Customer Support Services..
+        ///   Looks up a localized string similar to The validation of the attestation token failed. Claim &apos;{0}&apos; is missing in the token. Verify the attestation policy - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If the policy is correct, contact Customer Support Services..
         /// </summary>
         internal static string MissingClaimInAttestationToken {
             get {
@@ -11935,7 +11935,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to You have specified the attestation protocol in the connection string, but the SQL Server instance in use does not support enclave based computations..
+        ///   Looks up a localized string similar to You have specified the attestation protocol in the connection string, but the SQL Server in use does not support enclave based computations - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details..
         /// </summary>
         internal static string TCE_AttestationProtocolNotSupported {
             get {
@@ -11953,7 +11953,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to You have specified the enclave attestation URL in the connection string, but the SQL Server instance in use does not support enclave based computations..
+        ///   Looks up a localized string similar to You have specified the enclave attestation URL in the connection string, but the SQL Server in use does not support enclave based computations - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details..
         /// </summary>
         internal static string TCE_AttestationURLNotSupported {
             get {
@@ -12247,7 +12247,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to You have specified the enclave attestation URL and attestation protocol in the connection string, but the SQL Server instance in use does not support enclave based computations..
+        ///   Looks up a localized string similar to You have specified the enclave attestation URL and attestation protocol in the connection string, but the SQL Server in use does not support enclave based computations - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details..
         /// </summary>
         internal static string TCE_EnclaveComputationsNotSupported {
             get {
@@ -12274,7 +12274,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to You have specified the enclave attestation URL in the connection string, but the SQL Server instance did not return an enclave type. Please make sure the enclave type is correctly configured in your instance..
+        ///   Looks up a localized string similar to You have specified the enclave attestation URL in the connection string, but the SQL Server did not return an enclave type. Please make sure the enclave type is correctly configured in your instance - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details..
         /// </summary>
         internal static string TCE_EnclaveTypeNotReturned {
             get {
@@ -13183,7 +13183,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Could not verify enclave policy due to a difference between the expected and actual values of the policy on property &apos;{0}&apos;. Actual: &apos;{1}&apos;, Expected: &apos;{2}&apos;..
+        ///   Looks up a localized string similar to Could not verify enclave policy due to a difference between the expected and actual values of the policy on property &apos;{0}&apos;. Actual: &apos;{1}&apos;, Expected: &apos;{2}&apos; - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details..
         /// </summary>
         internal static string VerifyEnclavePolicyFailedFormat {
             get {
@@ -13192,7 +13192,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Signature verification of the enclave report failed. The report signature does not match the signature computed using the HGS root certificate. Verify the DNS mapping for the endpoint. If correct, contact Customer Support Services..
+        ///   Looks up a localized string similar to Signature verification of the enclave report failed. The report signature does not match the signature computed using the HGS root certificate. Verify the DNS mapping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If correct, contact Customer Support Services..
         /// </summary>
         internal static string VerifyEnclaveReportFailed {
             get {
@@ -13210,7 +13210,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Failed to build a chain of trust between the enclave host&apos;s health report and the HGS root certificate for attestation URL &apos;{0}&apos; with status: &apos;{1}&apos;. Verify the attestation URL matches the URL configured on the SQL Server machine. If both the client and SQL Server use the same attestation service, contact Customer Support Services..
+        ///   Looks up a localized string similar to Failed to build a chain of trust between the enclave host&apos;s health report and the HGS root certificate for attestation URL &apos;{0}&apos; with status: &apos;{1}&apos;. Verify the attestation URL matches the URL configured on the SQL Server - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If both the client and SQL Server use the same attestation service, contact Customer Support Services..
         /// </summary>
         internal static string VerifyHealthCertificateChainFormat {
             get {
