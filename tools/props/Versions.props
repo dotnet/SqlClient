@@ -47,6 +47,7 @@
   <PropertyGroup>
     <AzureCoreVersion>[1.6.0,2.0.0)</AzureCoreVersion>
     <AzureSecurityKeyVaultKeysVersion>[4.0.3,5.0.0)</AzureSecurityKeyVaultKeysVersion>
+    <MicrosoftExtensionsCachingMemoryVersion>5.0.0</MicrosoftExtensionsCachingMemoryVersion>
   </PropertyGroup>
   <!-- Test Project Dependencies -->
   <PropertyGroup>

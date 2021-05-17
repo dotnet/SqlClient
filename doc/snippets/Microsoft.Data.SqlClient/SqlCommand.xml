@@ -2769,6 +2769,25 @@ You must set the value for this property before the command is executed for it t
 ]]></format>
 			</remarks>
 		</Notification>
+		<RegisterColumnEncryptionKeyStoreProvidersOnCommand>
+			<param name="customProviders">Dictionary of custom column encryption key providers</param>
+			<summary>Registers the encryption key store providers on the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> instance. If this function has been called, any providers registered using the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.RegisterColumnEncryptionKeyStoreProviders()" /> or
+			<see cref="M:Microsoft.Data.SqlClient.SqlConnection.RegisterColumnEncryptionKeyStoreProvidersOnConnection()" /> methods will be ignored. This function can be called more than once. This does shallow copying of the dictionary so that the app cannot alter the custom provider list once it has been set.</summary>
+			<exception cref="T:System.ArgumentNullException">
+					A null dictionary was provided.
+
+					-or-
+
+					A string key in the dictionary was null or empty.
+
+					-or-
+
+					An EncryptionKeyStoreProvider value in the dictionary was null.
+			</exception>
+			<exception cref="T:System.ArgumentException">
+				A string key in the dictionary started with "MSSQL_". This prefix is reserved for system providers.
+			</exception>
+		</RegisterColumnEncryptionKeyStoreProvidersOnCommand>
 		<RetryLogicProvider>
 			<summary>
 				Gets or sets a value that specifies the
