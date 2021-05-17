@@ -9110,13 +9110,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (Exception e)
                 {
-                    if (!ADP.IsCatchableExceptionType(e))
-                    {
-                        throw;
-                    }
-
                     FailureCleanup(stateObj, e);
-
                     throw;
                 }
                 FinalizeExecuteRPC(stateObj);

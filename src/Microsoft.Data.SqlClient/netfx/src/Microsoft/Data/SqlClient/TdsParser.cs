@@ -10449,14 +10449,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (Exception e)
                 {
-                    // UNDONE - should not be catching all exceptions!!!
-                    if (!ADP.IsCatchableExceptionType(e))
-                    {
-                        throw;
-                    }
-
                     FailureCleanup(stateObj, e);
-
                     throw;
                 }
                 FinalizeExecuteRPC(stateObj);
