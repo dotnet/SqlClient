@@ -1825,6 +1825,42 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Destination array is not long enough to copy all the items in the collection. Check array index and length..
+        /// </summary>
+        internal static string Arg_ArrayPlusOffTooSmall {
+            get {
+                return ResourceManager.GetString("Arg_ArrayPlusOffTooSmall", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Only single dimensional arrays are supported for the requested action..
+        /// </summary>
+        internal static string Arg_RankMultiDimNotSupported {
+            get {
+                return ResourceManager.GetString("Arg_RankMultiDimNotSupported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot remove the specified item because it was not found in the specified Collection..
+        /// </summary>
+        internal static string Arg_RemoveArgNotFound {
+            get {
+                return ResourceManager.GetString("Arg_RemoveArgNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Non-negative number required..
+        /// </summary>
+        internal static string ArgumentOutOfRange_NeedNonNegNum {
+            get {
+                return ResourceManager.GetString("ArgumentOutOfRange_NeedNonNegNum", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The validation of an attestation token failed. The token signature does not match the signature omputed using a public key retrieved from the attestation public key endpoint at &apos;{0}&apos;. Verify the DNS apping for the endpoint. If correct, contact Customer Support Services..
         /// </summary>
         internal static string AttestationTokenSignatureValidationFailed {

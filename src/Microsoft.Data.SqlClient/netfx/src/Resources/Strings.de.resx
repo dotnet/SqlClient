@@ -4599,4 +4599,16 @@
   <data name="SqlRetryLogic_InvalidMinMaxPair" xml:space="preserve">
     <value>"{0}" ist nicht kleiner als {1}, "{2}" darf nicht größer sein als {3}.</value>
   </data>
+  <data name="Arg_ArrayPlusOffTooSmall" xml:space="preserve">
+    <value>Das Zielarray ist nicht lang genug, um alle Elemente in der Sammlung zu kopieren. Prüfen Sie den Index und die Länge des Arrays.</value>
+  </data>
+  <data name="Arg_RankMultiDimNotSupported" xml:space="preserve">
+    <value>Nur eindimensionale Arrays werden für die angeforderte Aktion unterstützt.</value>
+  </data>
+  <data name="Arg_RemoveArgNotFound" xml:space="preserve">
+    <value>Das angegebene Element kann nicht entfernt werden, da es nicht in der Sammlung gefunden wurde.</value>
+  </data>
+  <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
+    <value>Nicht negative Zahl erforderlich.</value>
+  </data>
 </root>

@@ -453,8 +453,12 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionPoolKey.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionString.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionStringBuilder.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlConnectionTimeoutErrorInternal.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlCredential.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlConnectionTimeoutErrorInternal.cs">
+      <Link>Microsoft\Data\SqlClient\SqlConnectionTimeoutErrorInternal.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlCredential.cs">
+      <Link>Microsoft\Data\SqlClient\SqlCredential.cs</Link>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlDataAdapter.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDataReader.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDataReaderSmi.cs" />
@@ -480,10 +484,14 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlSequentialStreamSmi.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlSequentialTextReader.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlSequentialTextReaderSmi.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlStatistics.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlStatistics.cs">
+      <Link>Microsoft\Data\SqlClient\SqlStatistics.cs</Link>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlTransaction.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlUdtInfo.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlUdtInfo.cs">
+      <Link>Microsoft\Data\SqlClient\SqlUdtInfo.cs</Link>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlUtil.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsEnums.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.cs" />
