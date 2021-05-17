@@ -588,6 +588,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <summary>
+        /// Get IP address preference
+        /// </summary>
+        internal SqlConnectionIPAddressPreference iPAddressPreference
+        {
+            get => ((SqlConnectionString)ConnectionOptions).IPAddressPreference;
+        }
+
         // Is this connection is a Context Connection?
         private bool UsesContextConnection(SqlConnectionString opt)
         {

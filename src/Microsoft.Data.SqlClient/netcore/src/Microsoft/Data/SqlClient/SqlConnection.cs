@@ -391,6 +391,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <summary>
+        /// Get IP address preference
+        /// </summary>
+        internal SqlConnectionIPAddressPreference iPAddressPreference
+        {
+            get => ((SqlConnectionString)ConnectionOptions).IPAddressPreference;
+        }
+
         // This method will be called once connection string is set or changed.
         private void CacheConnectionStringProperties()
         {

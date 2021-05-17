@@ -4442,6 +4442,12 @@ namespace System {
                 return ResourceManager.GetString("TCE_DbConnectionString_AttestationProtocol", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Specifies an IP address preference when connecting to SQL instances.
+        /// </summary>
+        internal static string TCE_DbConnectionString_IPAddressPreference
+            => ResourceManager.GetString("TCE_DbConnectionString_IPAddressPreference", resourceCulture);
         
         /// <summary>
         ///   Looks up a localized string similar to Decryption failed. The last 10 bytes of the encrypted column encryption key are: &apos;{0}&apos;. The first 10 bytes of ciphertext are: &apos;{1}&apos;..

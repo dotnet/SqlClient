@@ -9,6 +9,9 @@ using System.Data.SqlTypes;
 using System.Diagnostics.Tracing;
 using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
@@ -341,6 +344,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsTCPConnectionStringPasswordIncluded()
         {
             return RetrieveValueFromConnStr(TCPConnectionString, new string[] { "Password", "PWD" }) != string.Empty;
+        }
+
+        public static bool DoesHostAddressContainBothIPv4AndIPv6()
+        {
+            if (!IsDNSCachingSetup())
+            {
+                return false;
+            }
+            using (var connection = new SqlConnection(DNSCachingConnString))
+            {
+                List<IPAddress> ipAddresses = Dns.GetHostAddresses(connection.DataSource).ToList();
+                return ipAddresses.Exists(ip => ip.AddressFamily == AddressFamily.InterNetwork) &&
+                    ipAddresses.Exists(ip => ip.AddressFamily == AddressFamily.InterNetworkV6);
+            }
         }
 
         /// <summary>

@@ -593,7 +593,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             _physicalStateObj.CreatePhysicalSNIHandle(serverInfo.ExtendedServerName, ignoreSniOpenTimeout, timerExpire,
-                        out instanceName, _sniSpnBuffer, false, true, fParallel, transparentNetworkResolutionState, totalTimeout, FQDNforDNSCahce);
+                        out instanceName, _sniSpnBuffer, false, true, fParallel, transparentNetworkResolutionState, totalTimeout, _connHandler.ConnectionOptions.IPAddressPreference, FQDNforDNSCahce);
 
             if (TdsEnums.SNI_SUCCESS != _physicalStateObj.Status)
             {
@@ -656,7 +656,8 @@ namespace Microsoft.Data.SqlClient
 
                 // On Instance failure re-connect and flush SNI named instance cache.
                 _physicalStateObj.SniContext = SniContext.Snix_Connect;
-                _physicalStateObj.CreatePhysicalSNIHandle(serverInfo.ExtendedServerName, ignoreSniOpenTimeout, timerExpire, out instanceName, _sniSpnBuffer, true, true, fParallel, transparentNetworkResolutionState, totalTimeout, serverInfo.ResolvedServerName);
+                _physicalStateObj.CreatePhysicalSNIHandle(serverInfo.ExtendedServerName, ignoreSniOpenTimeout, timerExpire, 
+                            out instanceName, _sniSpnBuffer, true, true, fParallel, transparentNetworkResolutionState, totalTimeout, _connHandler.ConnectionOptions.IPAddressPreference, serverInfo.ResolvedServerName);
 
                 if (TdsEnums.SNI_SUCCESS != _physicalStateObj.Status)
                 {

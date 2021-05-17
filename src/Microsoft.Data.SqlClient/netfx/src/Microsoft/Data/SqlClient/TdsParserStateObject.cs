@@ -326,7 +326,7 @@ namespace Microsoft.Data.SqlClient
             SQLDNSInfo cachedDNSInfo;
             bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(_parser.FQDNforDNSCahce, out cachedDNSInfo);
 
-            _sessionHandle = new SNIHandle(myInfo, physicalConnection, cachedDNSInfo);
+            _sessionHandle = new SNIHandle(myInfo, physicalConnection, _parser.Connection.ConnectionOptions.IPAddressPreference, cachedDNSInfo);
             if (_sessionHandle.Status != TdsEnums.SNI_SUCCESS)
             {
                 AddError(parser.ProcessSNIError(this));
@@ -852,7 +852,8 @@ namespace Microsoft.Data.SqlClient
             return myInfo;
         }
 
-        internal void CreatePhysicalSNIHandle(string serverName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, byte[] spnBuffer, bool flushCache, bool async, bool fParallel, TransparentNetworkResolutionState transparentNetworkResolutionState, int totalTimeout, string cachedFQDN)
+        internal void CreatePhysicalSNIHandle(string serverName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, byte[] spnBuffer, bool flushCache, 
+                bool async, bool fParallel, TransparentNetworkResolutionState transparentNetworkResolutionState, int totalTimeout, SqlConnectionIPAddressPreference ipPreference, string cachedFQDN)
         {
             SNINativeMethodWrapper.ConsumerInfo myInfo = CreateConsumerInfo(async);
 
@@ -880,7 +881,8 @@ namespace Microsoft.Data.SqlClient
             SQLDNSInfo cachedDNSInfo;
             bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out cachedDNSInfo);
 
-            _sessionHandle = new SNIHandle(myInfo, serverName, spnBuffer, ignoreSniOpenTimeout, checked((int)timeout), out instanceName, flushCache, !async, fParallel, transparentNetworkResolutionState, totalTimeout, cachedDNSInfo);
+            _sessionHandle = new SNIHandle(myInfo, serverName, spnBuffer, ignoreSniOpenTimeout, checked((int)timeout), 
+                    out instanceName, flushCache, !async, fParallel, transparentNetworkResolutionState, totalTimeout, ipPreference, cachedDNSInfo);
         }
 
         internal bool Deactivate()
