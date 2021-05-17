@@ -198,7 +198,7 @@ namespace Microsoft.Data.SqlClient
         private IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> _customColumnEncryptionKeyStoreProviders;
 
         internal bool HasColumnEncryptionKeyStoreProvidersRegistered =>
-            _customColumnEncryptionKeyStoreProviders != null && _customColumnEncryptionKeyStoreProviders.Count > 0;
+            _customColumnEncryptionKeyStoreProviders is not null && _customColumnEncryptionKeyStoreProviders.Count > 0;
 
         // Cached info for async executions
         private sealed class CachedAsyncState
@@ -2791,7 +2791,7 @@ namespace Microsoft.Data.SqlClient
             // Dictionary constructor does shallow copying by simply copying the provider name and provider reference pairs
             // in the provided customerProviders dictionary.
             Dictionary<string, SqlColumnEncryptionKeyStoreProvider> customColumnEncryptionKeyStoreProviders =
-                new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>(customProviders, StringComparer.OrdinalIgnoreCase);
+                new(customProviders, StringComparer.OrdinalIgnoreCase);
 
             _customColumnEncryptionKeyStoreProviders = customColumnEncryptionKeyStoreProviders;
         }
@@ -2799,7 +2799,7 @@ namespace Microsoft.Data.SqlClient
         private void ValidateCustomProviders(IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders)
         {
             // Throw when the provided dictionary is null.
-            if (customProviders == null)
+            if (customProviders is null)
             {
                 throw SQL.NullCustomKeyStoreProviderDictionary();
             }
@@ -2822,7 +2822,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // Validate the provider value
-                if (customProviders[key] == null)
+                if (customProviders[key] is null)
                 {
                     throw SQL.NullProviderValue(key);
                 }

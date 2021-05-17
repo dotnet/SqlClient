@@ -11,8 +11,8 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 {
     public class ExceptionRegisterKeyStoreProvider
     {
-        private SqlConnection connection = new SqlConnection();
-        private SqlCommand command = new SqlCommand();
+        private SqlConnection connection = new();
+        private SqlCommand command = new();
 
         private const string dummyProviderName1 = "DummyProvider1";
         private const string dummyProviderName2 = "DummyProvider2";

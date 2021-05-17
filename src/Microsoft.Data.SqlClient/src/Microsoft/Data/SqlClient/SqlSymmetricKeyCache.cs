@@ -36,7 +36,7 @@ namespace Microsoft.Data.SqlClient
         internal SqlClientSymmetricKey GetKey(SqlEncryptionKeyInfo keyInfo, SqlConnection connection, SqlCommand command)
         {
             string serverName = connection.DataSource;
-            Debug.Assert(serverName != null, @"serverName should not be null.");
+            Debug.Assert(serverName is not null, @"serverName should not be null.");
             StringBuilder cacheLookupKeyBuilder = new StringBuilder(serverName, capacity: serverName.Length + SqlSecurityUtility.GetBase64LengthFromByteLength(keyInfo.encryptedKey.Length) + keyInfo.keyStoreName.Length + 2/*separators*/);
 
 #if DEBUG
@@ -57,7 +57,7 @@ namespace Microsoft.Data.SqlClient
             // Lookup the key in cache
             if (!(_cache.Get(cacheLookupKey) is SqlClientSymmetricKey encryptionKey))
             {
-                Debug.Assert(SqlConnection.ColumnEncryptionTrustedMasterKeyPaths != null, @"SqlConnection.ColumnEncryptionTrustedMasterKeyPaths should not be null");
+                Debug.Assert(SqlConnection.ColumnEncryptionTrustedMasterKeyPaths is not null, @"SqlConnection.ColumnEncryptionTrustedMasterKeyPaths should not be null");
 
                 SqlSecurityUtility.ThrowIfKeyPathIsNotTrustedForServer(serverName, keyInfo.keyPath);
 

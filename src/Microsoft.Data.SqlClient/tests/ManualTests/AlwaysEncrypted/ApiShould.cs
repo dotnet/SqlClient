@@ -26,18 +26,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         private readonly string _tableName;
 
-        private Dictionary<string, SqlColumnEncryptionKeyStoreProvider> _requiredProvider =
-            new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>()
-            {
-                { DummyKeyStoreProvider.Name, new DummyKeyStoreProvider() }
-            };
+        private Dictionary<string, SqlColumnEncryptionKeyStoreProvider> _requiredProvider = new()
+        {
+            { DummyKeyStoreProvider.Name, new DummyKeyStoreProvider() }
+        };
 
         private const string NotRequiredProviderName = "DummyProvider2";
-        private Dictionary<string, SqlColumnEncryptionKeyStoreProvider> _notRequiredProvider =
-            new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>()
-            {
-                { NotRequiredProviderName, new DummyKeyStoreProvider() }
-            };
+        private Dictionary<string, SqlColumnEncryptionKeyStoreProvider> _notRequiredProvider = new()
+        {
+            { NotRequiredProviderName, new DummyKeyStoreProvider() }
+        };
 
         private string _failedToDecryptMessage;
         private string _providerNotFoundMessage = string.Format(
@@ -2148,11 +2146,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             if (!SQLSetupStrategyAzureKeyVault.IsAKVProviderRegistered)
             {
                 SqlColumnEncryptionAzureKeyVaultProvider sqlColumnEncryptionAzureKeyVaultProvider =
-                    new SqlColumnEncryptionAzureKeyVaultProvider(new SqlClientCustomTokenCredential());
+                    new(new SqlClientCustomTokenCredential());
                 SQLSetupStrategyAzureKeyVault.RegisterGlobalProviders(sqlColumnEncryptionAzureKeyVaultProvider);
             }
 
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = new(connectionString))
             {
                 connection.Open();
 
@@ -2184,7 +2182,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 Assert.Equal(_providerNotFoundMessage, ex.Message);
             }
 
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = new(connectionString))
             {
                 connection.Open();
 
@@ -2203,11 +2201,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             if (!SQLSetupStrategyAzureKeyVault.IsAKVProviderRegistered)
             {
                 SqlColumnEncryptionAzureKeyVaultProvider sqlColumnEncryptionAzureKeyVaultProvider =
-                    new SqlColumnEncryptionAzureKeyVaultProvider(new SqlClientCustomTokenCredential());
+                    new(new SqlClientCustomTokenCredential());
                 SQLSetupStrategyAzureKeyVault.RegisterGlobalProviders(sqlColumnEncryptionAzureKeyVaultProvider);
             }
 
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = new(connectionString))
             {
                 connection.Open();
                 using (SqlCommand command = CreateCommandThatRequiresCustomKeyStoreProvider(connection))
@@ -2254,7 +2252,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         private SqlCommand CreateCommandThatRequiresCustomKeyStoreProvider(SqlConnection connection)
         {
-            SqlCommand command = new SqlCommand(
+            SqlCommand command = new(
                 $"SELECT * FROM [{_fixture.CustomKeyStoreProviderTestTable.Name}] WHERE CustomerID = @id",
                 connection, null, SqlCommandColumnEncryptionSetting.Enabled);
             command.Parameters.AddWithValue("id", 9);

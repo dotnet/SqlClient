@@ -95,14 +95,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsAKVSetupAvailable))]
         public void TestLocalCekCacheIsScopedToProvider()
         {
-            using (SqlConnection sqlConnection = new SqlConnection(string.Concat(DataTestUtility.TCPConnectionString, @";Column Encryption Setting = Enabled;")))
+            using (SqlConnection sqlConnection = new(string.Concat(DataTestUtility.TCPConnectionString, @";Column Encryption Setting = Enabled;")))
             {
                 sqlConnection.Open();
 
-                Customer customer = new Customer(45, "Microsoft", "Corporation");
+                Customer customer = new(45, "Microsoft", "Corporation");
 
                 // Test INPUT parameter on an encrypted parameter
-                using (SqlCommand sqlCommand = new SqlCommand($"SELECT CustomerId, FirstName, LastName FROM [{akvTableName}] WHERE FirstName = @firstName",
+                using (SqlCommand sqlCommand = new($"SELECT CustomerId, FirstName, LastName FROM [{akvTableName}] WHERE FirstName = @firstName",
                                                                 sqlConnection))
                 {
                     SqlParameter customerFirstParam = sqlCommand.Parameters.AddWithValue(@"firstName", @"Microsoft");
@@ -113,14 +113,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     sqlDataReader.Close();
 
                     SqlColumnEncryptionAzureKeyVaultProvider sqlColumnEncryptionAzureKeyVaultProvider =
-                        new SqlColumnEncryptionAzureKeyVaultProvider(new SqlClientCustomTokenCredential());
+                        new(new SqlClientCustomTokenCredential());
 
-                    Dictionary<string, SqlColumnEncryptionKeyStoreProvider> customProvider =
-                        new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>()
-                        {
-                            { SqlColumnEncryptionAzureKeyVaultProvider.ProviderName, sqlColumnEncryptionAzureKeyVaultProvider }
-                        };
-
+                    Dictionary<string, SqlColumnEncryptionKeyStoreProvider> customProvider = new()
+                    {
+                        { SqlColumnEncryptionAzureKeyVaultProvider.ProviderName, sqlColumnEncryptionAzureKeyVaultProvider }
+                    };
 
                     // execute a query using provider from command-level cache. this will cache the cek in the local cek cache
                     sqlCommand.RegisterColumnEncryptionKeyStoreProvidersOnCommand(customProvider);

@@ -65,14 +65,13 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <summary>
         /// A cache of column encryption keys (once they are decrypted). This is useful for rapidly decrypting multiple data values.
         /// </summary>
-        private readonly LocalCache<string, byte[]> _columnEncryptionKeyCache = 
-            new LocalCache<string, byte[]>() { TimeToLive = TimeSpan.FromHours(2) };
+        private readonly LocalCache<string, byte[]> _columnEncryptionKeyCache = new() { TimeToLive = TimeSpan.FromHours(2) };
 
         /// <summary>
         /// A cache for storing the results of signature verification of column master key metadata.
         /// </summary>
-        private readonly LocalCache<Tuple<string, bool, string>, bool> _columnMasterKeyMetadataSignatureVerificationCache =
-            new LocalCache<Tuple<string, bool, string>, bool>(maxSizeLimit: 2000) { TimeToLive = TimeSpan.FromDays(10) };
+        private readonly LocalCache<Tuple<string, bool, string>, bool> _columnMasterKeyMetadataSignatureVerificationCache = 
+            new(maxSizeLimit: 2000) { TimeToLive = TimeSpan.FromDays(10) };
 
         /// <summary>
         /// Gets or sets the lifespan of the decrypted column encryption key in the cache.
