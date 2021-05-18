@@ -46,14 +46,15 @@ namespace Microsoft.Data.SqlClient
         /// <param name="keysTobeSentToEnclave">Keys that need to sent to the enclave</param>
         /// <param name="serverName"></param>
         /// <param name="connection"></param>
+        /// <param name="command"></param>
         /// <returns></returns>
-        private List<ColumnEncryptionKeyInfo> GetDecryptedKeysToBeSentToEnclave(Dictionary<int, SqlTceCipherInfoEntry> keysTobeSentToEnclave, string serverName, SqlConnection connection)
+        private List<ColumnEncryptionKeyInfo> GetDecryptedKeysToBeSentToEnclave(Dictionary<int, SqlTceCipherInfoEntry> keysTobeSentToEnclave, string serverName, SqlConnection connection, SqlCommand command)
         {
             List<ColumnEncryptionKeyInfo> decryptedKeysToBeSentToEnclave = new List<ColumnEncryptionKeyInfo>();
 
             foreach (SqlTceCipherInfoEntry cipherInfo in keysTobeSentToEnclave.Values)
             {
-                SqlSecurityUtility.DecryptSymmetricKey(cipherInfo, out SqlClientSymmetricKey sqlClientSymmetricKey, out SqlEncryptionKeyInfo encryptionkeyInfoChosen, connection);
+                SqlSecurityUtility.DecryptSymmetricKey(cipherInfo, out SqlClientSymmetricKey sqlClientSymmetricKey, out SqlEncryptionKeyInfo encryptionkeyInfoChosen, connection, command);
 
                 if (sqlClientSymmetricKey == null)
                 {
@@ -75,7 +76,7 @@ namespace Microsoft.Data.SqlClient
                     new ColumnEncryptionKeyInfo(
                         sqlClientSymmetricKey.RootKey,
                         cipherInfo.ColumnEncryptionKeyValues[0].databaseId,
-                        cipherInfo.ColumnEncryptionKeyValues[0].cekMdVersion, 
+                        cipherInfo.ColumnEncryptionKeyValues[0].cekMdVersion,
                         cipherInfo.ColumnEncryptionKeyValues[0].cekId
                     )
                 );
@@ -150,7 +151,7 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlClientSymmetricKey symmetricKey = new SqlClientSymmetricKey(sessionKey);
                 SqlClientEncryptionAlgorithm sqlClientEncryptionAlgorithm = s_sqlAeadAes256CbcHmac256Factory.Create(
-                    symmetricKey, 
+                    symmetricKey,
                     SqlClientEncryptionType.Randomized,
                     SqlAeadAes256CbcHmac256Algorithm.AlgorithmName
                 );

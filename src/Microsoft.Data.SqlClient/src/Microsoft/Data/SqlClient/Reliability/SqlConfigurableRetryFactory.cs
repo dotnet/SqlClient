@@ -80,12 +80,11 @@ namespace Microsoft.Data.SqlClient
 
         private static SqlRetryLogicBaseProvider InternalCreateRetryProvider(SqlRetryLogicOption retryLogicOption, SqlRetryIntervalBaseEnumerator enumerator)
         {
-            Debug.Assert(enumerator != null, $"The '{nameof(enumerator)}' mustn't be null.");
-
             if (retryLogicOption == null)
             {
                 throw new ArgumentNullException(nameof(retryLogicOption));
             }
+            Debug.Assert(enumerator != null, $"The '{nameof(enumerator)}' mustn't be null.");
 
             var retryLogic = new SqlRetryLogic(retryLogicOption.NumberOfTries, enumerator,
                                         (e) => TransientErrorsCondition(e, retryLogicOption.TransientErrors ?? s_defaultTransientErrors),

@@ -11,7 +11,7 @@ namespace Microsoft.Data.SqlClient.Tests
 {
     public partial class SqlConnectionTest
     {
-        private static readonly string[] s_retrieveInternalInfoKeys = 
+        private static readonly string[] s_retrieveInternalInfoKeys =
         {
             "SQLDNSCachingSupportedState",
             "SQLDNSCachingSupportedStateBeforeRedirect"
@@ -53,7 +53,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Null(cn.Site);
             Assert.Equal(ConnectionState.Closed, cn.State);
             Assert.False(cn.StatisticsEnabled);
-            Assert.True(string.Compare (Environment.MachineName, cn.WorkstationId, true) == 0);
+            Assert.True(string.Compare(Environment.MachineName, cn.WorkstationId, true) == 0);
 
             cn = new SqlConnection((string)null);
             Assert.Equal(string.Empty, cn.ConnectionString);
@@ -67,7 +67,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Null(cn.Site);
             Assert.Equal(ConnectionState.Closed, cn.State);
             Assert.False(cn.StatisticsEnabled);
-            Assert.True(string.Compare (Environment.MachineName, cn.WorkstationId, true) == 0);
+            Assert.True(string.Compare(Environment.MachineName, cn.WorkstationId, true) == 0);
         }
 
         [Fact]
@@ -107,7 +107,7 @@ namespace Microsoft.Data.SqlClient.Tests
             try
             {
                 new SqlConnection("Packet Size=511");
-           }
+            }
             catch (ArgumentException ex)
             {
                 // Invalid 'Packet Size'.  The value must be an
@@ -1326,7 +1326,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.NotEmpty(d.Values);
             Assert.Equal(s_retrieveInternalInfoKeys.Length, d.Values.Count);
 
-            foreach(string key in s_retrieveInternalInfoKeys)
+            foreach (string key in s_retrieveInternalInfoKeys)
             {
                 Assert.True(d.ContainsKey(key));
 
@@ -1342,6 +1342,49 @@ namespace Microsoft.Data.SqlClient.Tests
             SqlConnection cn = new SqlConnection();
             IDictionary<string, object> d = cn.RetrieveInternalInfo();
             Assert.False(d.ContainsKey("Foo"));
+        }
+
+        [Fact]
+        public void ConnectionString_IPAddressPreference()
+        {
+            SqlConnection cn = new SqlConnection();
+            cn.ConnectionString = "IPAddressPreference=IPv4First";
+            cn.ConnectionString = "IPAddressPreference=IPV4FIRST";
+            cn.ConnectionString = "IPAddressPreference=ipv4first";
+            cn.ConnectionString = "IPAddressPreference=iPv4FirSt";
+            cn.ConnectionString = "IPAddressPreference=IPv6First";
+            cn.ConnectionString = "IPAddressPreference=IPV6FIRST";
+            cn.ConnectionString = "IPAddressPreference=ipv6first";
+            cn.ConnectionString = "IPAddressPreference=iPv6FirST";
+            cn.ConnectionString = "IPAddressPreference=UsePlatformDefault";
+            cn.ConnectionString = "IPAddressPreference=USEPLATFORMDEFAULT";
+            cn.ConnectionString = "IPAddressPreference=useplatformdefault";
+            cn.ConnectionString = "IPAddressPreference=usePlAtFormdeFault";
+        }
+
+        [Theory]
+        [InlineData("IPAddressPreference=-1")]
+        [InlineData("IPAddressPreference=0")]
+        [InlineData("IPAddressPreference=!@#")]
+        [InlineData("IPAddressPreference=ABC")]
+        [InlineData("IPAddressPreference=ipv6")]
+        public void ConnectionString_IPAddressPreference_Invalid(string value)
+        {
+            SqlConnection cn = new SqlConnection();
+            try
+            {
+                cn.ConnectionString = value;
+                Assert.True(false, $"It mustn't come to this line; Value '{value}' should be invalid.");
+            }
+            catch (ArgumentException ex)
+            {
+                // Invalid value for key 'ip address preference'
+                Assert.Equal(typeof(ArgumentException), ex.GetType());
+                Assert.Null(ex.InnerException);
+                Assert.NotNull(ex.Message);
+                Assert.Contains("'ip address preference'", ex.Message);
+                Assert.Null(ex.ParamName);
+            }
         }
     }
 }

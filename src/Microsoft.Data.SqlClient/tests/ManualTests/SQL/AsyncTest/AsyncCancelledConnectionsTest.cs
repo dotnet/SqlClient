@@ -28,18 +28,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
             builder.MultipleActiveResultSets = false;
-            RunCancelAsyncConnections(builder, false);
-            RunCancelAsyncConnections(builder, true);
+            RunCancelAsyncConnections(builder);
             builder.MultipleActiveResultSets = true;
-            RunCancelAsyncConnections(builder, false);
-            RunCancelAsyncConnections(builder, true);
+            RunCancelAsyncConnections(builder);
         }
 
-        private void RunCancelAsyncConnections(SqlConnectionStringBuilder connectionStringBuilder, bool makeAsyncBlocking)
+        private void RunCancelAsyncConnections(SqlConnectionStringBuilder connectionStringBuilder)
         {
             SqlConnection.ClearAllPools();
-            AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.MakeReadAsyncBlocking", makeAsyncBlocking);
-
             _watch = Stopwatch.StartNew();
             _random = new Random(4); // chosen via fair dice role.
             ParallelLoopResult results = new ParallelLoopResult();

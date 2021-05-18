@@ -7,7 +7,7 @@ using System.Collections.Concurrent;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal class SQLFallbackDNSCache
+    internal sealed class SQLFallbackDNSCache
     {
         private static readonly SQLFallbackDNSCache _SQLFallbackDNSCache = new SQLFallbackDNSCache();
         private static readonly int initialCapacity = 101;   // give some prime number here according to MSDN docs. It will be resized if reached capacity. 
@@ -68,7 +68,7 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    internal class SQLDNSInfo
+    internal sealed class SQLDNSInfo
     {
         public string FQDN { get; set; }
         public string AddrIPv4 { get; set; }
