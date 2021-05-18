@@ -2503,7 +2503,7 @@
     <value>無法搭配 'User ID'、'UID'、'Password' 或 'PWD' 連接字串關鍵字使用 'Authentication=Active Directory Device Code Flow'。</value>
   </data>
   <data name="SQL_NonInteractiveWithPassword" xml:space="preserve">
-    <value>使用 'Authentication={0}' 時，無法搭配 'Password' 或 'PWD' 連接字串關鍵字一起使用。</value>
+    <value>Cannot use 'Authentication={0}' with 'Password' or 'PWD' connection string keywords.</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>如果已設定 Credential 屬性，則無法使用 'Authentication=Active Directory Integrated'。</value>
@@ -4345,16 +4345,16 @@
     <value>使用中的 {0} 執行個體不支援資料行加密。</value>
   </data>
   <data name="TCE_EnclaveComputationsNotSupported" xml:space="preserve">
-    <value>您已在連接字串中指定記憶體保護區證明 URL 和證明通訊協定，但使用中的 SQL Server 執行個體不支援以記憶體保護區為基礎的計算。</value>
+    <value>You have specified the enclave attestation URL and attestation protocol in the connection string, but the SQL Server in use does not support enclave based computations - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
   </data>
   <data name="TCE_AttestationURLNotSupported" xml:space="preserve">
-    <value>您在連接字串中指定了 enclave 證明 URL，但使用的 SQL Server 執行個體不支援 enclave 類型的計算。</value>
+    <value>You have specified the enclave attestation URL in the connection string, but the SQL Server in use does not support enclave based computations - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
   </data>
   <data name="TCE_AttestationProtocolNotSupported" xml:space="preserve">
-    <value>您已在連接字串中指定證明通訊協定，但使用中的 SQL Server 執行個體不支援以記憶體保護區為基礎的計算。</value>
+    <value>You have specified the attestation protocol in the connection string, but the SQL Server in use does not support enclave based computations - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
   </data>
   <data name="TCE_EnclaveTypeNotReturned" xml:space="preserve">
-    <value>您在連接字串中指定了 enclave 證明 URL，但 SQL Server 執行個體未傳回 enclave 類型。請確定您執行個體中的 enclave 類型設定正確。</value>
+    <value>You have specified the enclave attestation URL in the connection string, but the SQL Server did not return an enclave type. Please make sure the enclave type is correctly configured in your instance - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
   </data>
   <data name="TCE_BatchedUpdateColumnEncryptionSettingMismatch" xml:space="preserve">
     <value>執行批次更新時，所有命令 ({1}、{2}、{3}、{4}) 中的 {0} 必須一致。</value>
@@ -4459,7 +4459,7 @@
     <value>執行逾時到期。在作業完成之前超過逾時等待的時間，或是伺服器未回應。</value>
   </data>
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
-    <value>驗證證明權杖失敗。該權杖簽章與使用從位於 '{0}' 的證明公開金鑰端點擷取而來之公開金鑰計算所得的簽章不符。請檢查該端點的 DNS 對應。若其正確，請連絡客戶支援服務。</value>
+    <value>The validation of an attestation token failed. The token signature does not match the signature omputed using a public key retrieved from the attestation public key endpoint at '{0}'. Verify the DNS apping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If correct, contact Customer Support Services.</value>
   </data>
   <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
     <value>初始要求失敗後，重試下載 HGS 根憑證的下載時發生內部錯誤。請連絡客戶支援服務。</value>
@@ -4480,10 +4480,10 @@
     <value>驗證證明權杖失敗。權杖的格式無效。請連絡客戶支援服務。錯誤詳細資料: '{0}'。</value>
   </data>
   <data name="GetAttestationSigningCertificateFailedInvalidCertificate" xml:space="preserve">
-    <value>證明服務為證明 URL '{0}' 傳回了過期的 HGS 根憑證。請檢查為您 HGS 執行個體設定的 HGS 根憑證。</value>
+    <value>The attestation service returned an expired HGS root certificate for attestation URL '{0}'. Check the HGS root certificate configured for your HGS instance - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details.</value>
   </data>
   <data name="GetAttestationSigningCertificateRequestFailedFormat" xml:space="preserve">
-    <value>為證明 URL '{0}' 取得的 HGS 根憑證格式無效。請確認證明 URL 正確，而且 HGS 伺服器在線上並已完全初始化。如需詳細資訊，請連絡客戶支援服務。錯誤詳細資料: '{1}'。</value>
+    <value>The obtained HGS root certificate for attestation URL '{0}' has an invalid format. Verify the attestation URL is correct and the HGS server is online and fully initialized - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. For additional support contact Customer Support Services. Error details: '{1}'.</value>
   </data>
   <data name="GetAttestationTokenSigningKeysFailed" xml:space="preserve">
     <value>驗證證明權杖失敗。無法從證明公開金鑰端點取得公開金鑰，或擷取到了無效格式的金鑰。錯誤詳細資料: '{0}'。</value>
@@ -4501,28 +4501,31 @@
     <value>驗證簽章時，驗證證明權杖失敗。例外狀況: '{0}'。</value>
   </data>
   <data name="InvalidClaimInAttestationToken" xml:space="preserve">
-    <value>驗證證明權杖失敗。權杖中的宣告 '{0}' 包含無效的 '{1}' 值。請檢查證明原則。若該原則正確，請連絡客戶支援服務。</value>
+    <value>The validation of an attestation token failed. Claim '{0}' in the token has an invalid value of '{1}'. Verify the attestation policy - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If the policy is correct, contact Customer Support Services.</value>
   </data>
   <data name="MissingClaimInAttestationToken" xml:space="preserve">
-    <value>驗證證明權杖失敗。權杖中缺少宣告 '{0}'。請檢查證明原則。若該原則正確，請連絡客戶支援服務。</value>
+    <value>The validation of the attestation token failed. Claim '{0}' is missing in the token. Verify the attestation policy - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If the policy is correct, contact Customer Support Services.</value>
   </data>
   <data name="VerifyEnclaveDebuggable" xml:space="preserve">
     <value>無法檢查記憶體保護區是否在生產模式下執行。請連絡客戶支援服務。</value>
   </data>
   <data name="VerifyEnclavePolicyFailedFormat" xml:space="preserve">
-    <value>因為屬性 '{0}' 上原則的應有值與實際值不同，所以無法驗證記憶體保護區原則。實際: '{1}'，應為: '{2}'。</value>
+    <value>Could not verify enclave policy due to a difference between the expected and actual values of the policy on property '{0}'. Actual: '{1}', Expected: '{2}' - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details.</value>
   </data>
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
-    <value>驗證記憶體保護區報表的簽章失敗。報表的簽章與使用 HGS 根憑證計算所得的簽章不符。請檢查端點的 DNS 對應。若其正確，請連絡客戶支援服務。</value>
+    <value>Signature verification of the enclave report failed. The report signature does not match the signature computed using the HGS root certificate. Verify the DNS mapping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If correct, contact Customer Support Services.</value>
   </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>從 SQL Server 收到的記憶體保護區報表的格式不正確。請連絡客戶支援服務。</value>
   </data>
   <data name="VerifyHealthCertificateChainFormat" xml:space="preserve">
-    <value>無法在記憶體保護區主機的健康狀態報表與證明 URL '{0}' 的 HGS 根憑證之間建立信任鏈結。狀態: '{1}'。請確認證明 URL 與 SQL Server 電腦上設定的 URL 相符。如果用戶端和 SQL Server 都使用相同的證明服務，請連絡客戶支援服務。</value>
+    <value>Failed to build a chain of trust between the enclave host's health report and the HGS root certificate for attestation URL '{0}' with status: '{1}'. Verify the attestation URL matches the URL configured on the SQL Server - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If both the client and SQL Server use the same attestation service, contact Customer Support Services.</value>
   </data>
   <data name="TCE_DbConnectionString_AttestationProtocol" xml:space="preserve">
     <value>為證明通訊協定的對應記憶體保護區證明服務指定證明通訊協定。</value>
+  </data>
+  <data name="TCE_DbConnectionString_IPAddressPreference" xml:space="preserve">
+    <value>Specifies an IP address preference when connecting to SQL instances.</value>
   </data>
   <data name="TCE_EnclaveTypeNotSupported" xml:space="preserve">
     <value>不支援從伺服器傳回的記憶體保護區類型 '{0}'。</value>
@@ -4576,13 +4579,13 @@
     <value>如果連接字串中已指定 'Authentication=Active Directory Device Code Flow'，則無法設定 Credential 屬性。</value>
   </data>
   <data name="SQL_SettingCredentialWithNonInteractive" xml:space="preserve">
-    <value>如果連接字串中已指定 'Authentication={0}'，則無法設定 Credential 屬性。</value>
+    <value>Cannot set the Credential property if 'Authentication={0}' has been specified in the connection string.</value>
   </data>
   <data name="SQL_SettingDeviceFlowWithCredential" xml:space="preserve">
     <value>如果已設定 Credential 屬性，則無法使用 'Authentication=Active Directory Device Code Flow'。</value>
   </data>
   <data name="SQL_SettingNonInteractiveWithCredential" xml:space="preserve">
-    <value>如果已設定 Credential 屬性，就無法使用 'Authentication={0}'。</value>
+    <value>Cannot use 'Authentication={0}', if the Credential property has been set.</value>
   </data>
   <data name="SqlDependency_UnexpectedValueOnDeserialize" xml:space="preserve">
     <value>還原序列化時偵測到未預期的類型。</value>

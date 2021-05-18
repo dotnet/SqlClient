@@ -2503,7 +2503,7 @@
     <value>'Authentication=Active Directory Device Code Flow' と接続文字列キーワード 'User ID'、'UID'、'Password'、'PWD' を一緒に使用することはできません。</value>
   </data>
   <data name="SQL_NonInteractiveWithPassword" xml:space="preserve">
-    <value>'Authentication={0}' と接続文字列キーワード 'Password'、'PWD' を一緒に使用することはできません。</value>
+    <value>Cannot use 'Authentication={0}' with 'Password' or 'PWD' connection string keywords.</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>Credential プロパティが設定されている場合は、'Authentication=Active Directory Integrated' を使用できません。</value>
@@ -4345,16 +4345,16 @@
     <value>使用中の {0} インスタンスは列暗号化をサポートしていません。</value>
   </data>
   <data name="TCE_EnclaveComputationsNotSupported" xml:space="preserve">
-    <value>接続文字列の中でエンクレーブ構成証明の URL と構成証明プロトコルが指定されていますが、使用中の SQL Server インスタンスではエンクレーブに基づく計算はサポートされていません。</value>
+    <value>You have specified the enclave attestation URL and attestation protocol in the connection string, but the SQL Server in use does not support enclave based computations - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
   </data>
   <data name="TCE_AttestationURLNotSupported" xml:space="preserve">
-    <value>接続文字列の中でエンクレーブ構成証明 URL が指定されていますが、使用中の SQL Server インスタンスではエンクレーブに基づく計算がサポートされていません。</value>
+    <value>You have specified the enclave attestation URL in the connection string, but the SQL Server in use does not support enclave based computations - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
   </data>
   <data name="TCE_AttestationProtocolNotSupported" xml:space="preserve">
-    <value>接続文字列の中で構成証明プロトコルが指定されていますが、使用中の SQL Server インスタンスではエンクレーブに基づく計算はサポートされていません。</value>
+    <value>You have specified the attestation protocol in the connection string, but the SQL Server in use does not support enclave based computations - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
   </data>
   <data name="TCE_EnclaveTypeNotReturned" xml:space="preserve">
-    <value>接続文字列の中でエンクレーブ構成証明 URL が指定されていますが、SQL Server インスタンスからはエンクレーブ型が返されませんでした。お使いのインスタンスでエンクレーブ型が正しく構成されていることをご確認ください。</value>
+    <value>You have specified the enclave attestation URL in the connection string, but the SQL Server did not return an enclave type. Please make sure the enclave type is correctly configured in your instance - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
   </data>
   <data name="TCE_BatchedUpdateColumnEncryptionSettingMismatch" xml:space="preserve">
     <value>バッチ更新を実行する際は、{0} を全コマンド ({1}、{2}、{3}、{4}) 上で一致させる必要があります。</value>
@@ -4459,7 +4459,7 @@
     <value>実行タイムアウトの期限が切れました。操作完了前にタイムアウト期間が過ぎたか、サーバーが応答していません。</value>
   </data>
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
-    <value>構成証明トークンの検証に失敗しました。トークンの署名が、'{0}' の構成証明の公開キー エンドポイントから取得した公開キーを使用して計算された署名と一致しません。エンドポイントの DNS マッピングをご確認ください。適切である場合、カスタマー サポート サービスにお問い合わせください。</value>
+    <value>The validation of an attestation token failed. The token signature does not match the signature omputed using a public key retrieved from the attestation public key endpoint at '{0}'. Verify the DNS apping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If correct, contact Customer Support Services.</value>
   </data>
   <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
     <value>最初の要求が失敗した後に、HGS ルート証明書のダウンロードを再試行しているときに内部エラーが発生しました。カスタマー サポート サービスにお問い合わせください。</value>
@@ -4480,10 +4480,10 @@
     <value>構成証明トークンの検証に失敗しました。トークンの形式が無効です。カスタマー サポート サービスにお問い合わせください。エラーの詳細: '{0}'。</value>
   </data>
   <data name="GetAttestationSigningCertificateFailedInvalidCertificate" xml:space="preserve">
-    <value>構成証明サービスにより、構成証明 URL '{0}' の期限切れの HGS ルート証明書が返されました。HGS インスタンス用に構成されている HGS ルート証明書をご確認ください。</value>
+    <value>The attestation service returned an expired HGS root certificate for attestation URL '{0}'. Check the HGS root certificate configured for your HGS instance - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details.</value>
   </data>
   <data name="GetAttestationSigningCertificateRequestFailedFormat" xml:space="preserve">
-    <value>構成証明 URL '{0}' に関する、取得された HGS ルート証明書の形式が無効です。構成証明 URL が正しいこと、および HGS サーバーがオンラインであり完全に初期化されていることをご確認ください。詳細については、カスタマー サポート サービスにお問い合わせください。エラーの詳細: '{1}'。</value>
+    <value>The obtained HGS root certificate for attestation URL '{0}' has an invalid format. Verify the attestation URL is correct and the HGS server is online and fully initialized - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. For additional support contact Customer Support Services. Error details: '{1}'.</value>
   </data>
   <data name="GetAttestationTokenSigningKeysFailed" xml:space="preserve">
     <value>構成証明トークンの検証に失敗しました。構成証明の公開キー エンドポイントから公開キーを取得できないか、取得したキーの形式が無効です。エラーの詳細: '{0}'。</value>
@@ -4501,28 +4501,31 @@
     <value>署名の検証中に、構成証明トークンの検証に失敗しました。例外: '{0}'。</value>
   </data>
   <data name="InvalidClaimInAttestationToken" xml:space="preserve">
-    <value>構成証明トークンの検証に失敗しました。トークン内の要求 '{0}' の値 '{1}' が無効です。構成証明ポリシーをご確認ください。ポリシーが適切である場合、カスタマー サポート サービスにお問い合わせください。</value>
+    <value>The validation of an attestation token failed. Claim '{0}' in the token has an invalid value of '{1}'. Verify the attestation policy - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If the policy is correct, contact Customer Support Services.</value>
   </data>
   <data name="MissingClaimInAttestationToken" xml:space="preserve">
-    <value>構成証明トークンの検証に失敗しました。要求 '{0}' がトークンにありません。構成証明ポリシーをご確認ください。ポリシーが適切である場合、カスタマー サポート サービスにお問い合わせください。</value>
+    <value>The validation of the attestation token failed. Claim '{0}' is missing in the token. Verify the attestation policy - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If the policy is correct, contact Customer Support Services.</value>
   </data>
   <data name="VerifyEnclaveDebuggable" xml:space="preserve">
     <value>エンクレーブが運用モードで実行されているかどうかを確認できませんでした。カスタマー サポート サービスにお問い合わせください。</value>
   </data>
   <data name="VerifyEnclavePolicyFailedFormat" xml:space="preserve">
-    <value>プロパティ '{0}' のポリシーの必要な値と実際の値の違いにより、エンクレーブ ポリシーを確認できませんでした。実際の値: '{1}'、必要な値: '{2}'。</value>
+    <value>Could not verify enclave policy due to a difference between the expected and actual values of the policy on property '{0}'. Actual: '{1}', Expected: '{2}' - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details.</value>
   </data>
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
-    <value>エンクレーブ レポートの署名の検証に失敗しました。レポートの署名が、HGS ルート証明書を使用して計算された署名と一致しません。エンドポイントの DNS マッピングをご確認ください。適切である場合、カスタマー サポート サービスにお問い合わせください。</value>
+    <value>Signature verification of the enclave report failed. The report signature does not match the signature computed using the HGS root certificate. Verify the DNS mapping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If correct, contact Customer Support Services.</value>
   </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>SQL Server から受信したエンクレーブ レポートの形式が適切ではありません。カスタマー サポート サービスにお問い合わせください。</value>
   </data>
   <data name="VerifyHealthCertificateChainFormat" xml:space="preserve">
-    <value>エンクレーブ ホストの正常性レポートと構成証明 URL '{0}' の HGS ルート証明書との間で信頼チェーンを構築できませんでした。状態は '{1}' です。構成証明 URL が SQL Server マシンで構成されている URL と一致していることをご確認ください。クライアントと SQL Server の両方で同じ構成証明サービスが使用されている場合は、カスタマー サポート サービスにお問い合わせください。</value>
+    <value>Failed to build a chain of trust between the enclave host's health report and the HGS root certificate for attestation URL '{0}' with status: '{1}'. Verify the attestation URL matches the URL configured on the SQL Server - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If both the client and SQL Server use the same attestation service, contact Customer Support Services.</value>
   </data>
   <data name="TCE_DbConnectionString_AttestationProtocol" xml:space="preserve">
     <value>対応するエンクレーブ構成証明サービスに対して構成証明プロトコルを指定します。</value>
+  </data>
+  <data name="TCE_DbConnectionString_IPAddressPreference" xml:space="preserve">
+    <value>Specifies an IP address preference when connecting to SQL instances.</value>
   </data>
   <data name="TCE_EnclaveTypeNotSupported" xml:space="preserve">
     <value>サーバーから返されたエンクレーブの種類 '{0}' はサポートされていません。</value>
@@ -4576,13 +4579,13 @@
     <value>接続文字列で 'Authentication=Active Directory Device Code Flow' が指定されている場合は、Credential プロパティを設定できません。</value>
   </data>
   <data name="SQL_SettingCredentialWithNonInteractive" xml:space="preserve">
-    <value>接続文字列で 'Authentication={0}' が指定されている場合は、Credential プロパティを設定できません。</value>
+    <value>Cannot set the Credential property if 'Authentication={0}' has been specified in the connection string.</value>
   </data>
   <data name="SQL_SettingDeviceFlowWithCredential" xml:space="preserve">
     <value>Credential プロパティが設定されている場合は、'Authentication=Active Directory Device Code Flow' を使用できません。</value>
   </data>
   <data name="SQL_SettingNonInteractiveWithCredential" xml:space="preserve">
-    <value>Credential プロパティが設定されている場合は、'Authentication={0}' を使用できません。</value>
+    <value>Cannot use 'Authentication={0}', if the Credential property has been set.</value>
   </data>
   <data name="SqlDependency_UnexpectedValueOnDeserialize" xml:space="preserve">
     <value>逆シリアル化で予期しない型が検出されました。</value>

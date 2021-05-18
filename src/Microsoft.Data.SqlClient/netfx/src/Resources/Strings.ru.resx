@@ -2503,7 +2503,7 @@
     <value>Невозможно использовать "Authentication=Active Directory Device Code Flow" с ключевыми словами строки подключения "User ID", "UID", "Password" или "PWD".</value>
   </data>
   <data name="SQL_NonInteractiveWithPassword" xml:space="preserve">
-    <value>Невозможно использовать "Authentication={0}" с ключевыми словами Password или PWD в строке подключения.</value>
+    <value>Cannot use 'Authentication={0}' with 'Password' or 'PWD' connection string keywords.</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>Не удается использовать "Authentication=Active Directory Integrated", если задано свойство "Credential".</value>
@@ -4345,16 +4345,16 @@
     <value>Используемый экземпляр {0} не поддерживает шифрование столбцов.</value>
   </data>
   <data name="TCE_EnclaveComputationsNotSupported" xml:space="preserve">
-    <value>Вы указали в строке подключения URL-адрес и протокол аттестации анклава, но используемый экземпляр SQL Server не поддерживает вычисления на основе анклава.</value>
+    <value>You have specified the enclave attestation URL and attestation protocol in the connection string, but the SQL Server in use does not support enclave based computations - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
   </data>
   <data name="TCE_AttestationURLNotSupported" xml:space="preserve">
-    <value>В строке подключения указан URL-адрес аттестации анклава, но используемый экземпляр SQL Server не поддерживает вычисления на основе анклава.</value>
+    <value>You have specified the enclave attestation URL in the connection string, but the SQL Server in use does not support enclave based computations - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
   </data>
   <data name="TCE_AttestationProtocolNotSupported" xml:space="preserve">
-    <value>Вы указали в строке подключения протокол аттестации, но используемый экземпляр SQL Server не поддерживает вычисления на основе анклава.</value>
+    <value>You have specified the attestation protocol in the connection string, but the SQL Server in use does not support enclave based computations - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
   </data>
   <data name="TCE_EnclaveTypeNotReturned" xml:space="preserve">
-    <value>В строке подключения указан URL-адрес аттестации анклава, но экземпляр SQL Server не вернул тип анклава. Убедитесь, что тип анклава правильно настроен в вашем экземпляре.</value>
+    <value>You have specified the enclave attestation URL in the connection string, but the SQL Server did not return an enclave type. Please make sure the enclave type is correctly configured in your instance - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
   </data>
   <data name="TCE_BatchedUpdateColumnEncryptionSettingMismatch" xml:space="preserve">
     <value>Параметр {0} должен быть одинаковым для всех команд ({1}, {2}, {3}, {4}) при выполнении пакетных обновлений.</value>
@@ -4459,7 +4459,7 @@
     <value>Время ожидания выполнения истекло. Время ожидания истекло до завершения операции, или сервер не отвечает.</value>
   </data>
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
-    <value>Проверка токена аттестации не пройдена. Подпись токена не соответствует подписи, вычисленной на базе открытого ключа, полученного от конечной точки открытых ключей аттестации по адресу "{0}". Проверьте сопоставление DNS для конечной точки. Если оно верно, обратитесь в службу поддержки пользователей.</value>
+    <value>The validation of an attestation token failed. The token signature does not match the signature omputed using a public key retrieved from the attestation public key endpoint at '{0}'. Verify the DNS apping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If correct, contact Customer Support Services.</value>
   </data>
   <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
     <value>Произошла внутренняя ошибка при повторной попытке скачивания корневого сертификата HGS после сбоя начального запроса. Обратитесь в службу поддержки пользователей.</value>
@@ -4480,10 +4480,10 @@
     <value>Проверка токена аттестации не пройдена. Недопустимый формат токена. Обратитесь в службу поддержки пользователей. Сведения об ошибке: "{0}".</value>
   </data>
   <data name="GetAttestationSigningCertificateFailedInvalidCertificate" xml:space="preserve">
-    <value>Служба аттестации вернула просроченный корневой сертификат HGS для URL-адреса аттестации "{0}". Проверьте корневой сертификат HGS, настроенный для вашего экземпляра HGS.</value>
+    <value>The attestation service returned an expired HGS root certificate for attestation URL '{0}'. Check the HGS root certificate configured for your HGS instance - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details.</value>
   </data>
   <data name="GetAttestationSigningCertificateRequestFailedFormat" xml:space="preserve">
-    <value>Полученный корневой сертификат HGS для URL-адреса аттестации "{0}" имеет недопустимый формат. Проверьте правильность URL-адреса аттестации и убедитесь, что сервер HGS подключен к сети и полностью инициализирован. За дополнительными сведениями обратитесь в службу поддержки пользователей. Сведения об ошибке: "{1}".</value>
+    <value>The obtained HGS root certificate for attestation URL '{0}' has an invalid format. Verify the attestation URL is correct and the HGS server is online and fully initialized - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. For additional support contact Customer Support Services. Error details: '{1}'.</value>
   </data>
   <data name="GetAttestationTokenSigningKeysFailed" xml:space="preserve">
     <value>Проверка токена аттестации не пройдена. Не удается получить открытый ключ из конечной точки открытого ключа аттестации либо полученный ключ имеет недопустимый формат. Сведения об ошибке: "{0}".</value>
@@ -4501,28 +4501,31 @@
     <value>Проверка токена аттестации не пройдена при проверке подписи. Исключение: "{0}".</value>
   </data>
   <data name="InvalidClaimInAttestationToken" xml:space="preserve">
-    <value>Проверка токена аттестации не пройдена. Недопустимое значение "{1}" утверждения "{0}" в токене. Проверьте политику аттестации. Если политика верна, обратитесь в службу поддержки пользователей.</value>
+    <value>The validation of an attestation token failed. Claim '{0}' in the token has an invalid value of '{1}'. Verify the attestation policy - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If the policy is correct, contact Customer Support Services.</value>
   </data>
   <data name="MissingClaimInAttestationToken" xml:space="preserve">
-    <value>Проверка токена аттестации не пройдена. В токене отсутствует утверждение "{0}". Проверьте политику аттестации. Если политика верна, обратитесь в службу поддержки пользователей.</value>
+    <value>The validation of the attestation token failed. Claim '{0}' is missing in the token. Verify the attestation policy - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If the policy is correct, contact Customer Support Services.</value>
   </data>
   <data name="VerifyEnclaveDebuggable" xml:space="preserve">
     <value>Не удалось проверить, работает ли анклав в рабочем режиме. Обратитесь в службу поддержки пользователей.</value>
   </data>
   <data name="VerifyEnclavePolicyFailedFormat" xml:space="preserve">
-    <value>Не удалось проверить политику анклава из-за различий между ожидаемым и фактическим значениями политики в свойстве "{0}". Фактическое: "{1}", ожидаемое: "{2}".</value>
+    <value>Could not verify enclave policy due to a difference between the expected and actual values of the policy on property '{0}'. Actual: '{1}', Expected: '{2}' - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details.</value>
   </data>
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
-    <value>Проверка подписи отчета анклава не пройдена. Подпись отчета не соответствует подписи, вычисленной с помощью корневого сертификата HGS. Проверьте сопоставление DNS для конечной точки. Если оно верно, обратитесь в службу поддержки пользователей.</value>
+    <value>Signature verification of the enclave report failed. The report signature does not match the signature computed using the HGS root certificate. Verify the DNS mapping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If correct, contact Customer Support Services.</value>
   </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>Полученный с SQL Server отчет анклава имеет неправильный формат. Обратитесь в службу поддержки пользователей.</value>
   </data>
   <data name="VerifyHealthCertificateChainFormat" xml:space="preserve">
-    <value>Не удалось создать цепь доверия между отчетом о работоспособности узла анклава и корневым сертификатом HGS для URL-адреса аттестации "{0}" с состоянием: "{1}". Убедитесь, что URL-адрес аттестации совпадает с URL-адресом, настроенным на компьютере с SQL Server. Если клиент и SQL Server используют одну и ту же службу аттестации, обратитесь в службу поддержки пользователей.</value>
+    <value>Failed to build a chain of trust between the enclave host's health report and the HGS root certificate for attestation URL '{0}' with status: '{1}'. Verify the attestation URL matches the URL configured on the SQL Server - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If both the client and SQL Server use the same attestation service, contact Customer Support Services.</value>
   </data>
   <data name="TCE_DbConnectionString_AttestationProtocol" xml:space="preserve">
     <value>Указывает протокол аттестации для соответствующей службы аттестации анклава.</value>
+  </data>
+  <data name="TCE_DbConnectionString_IPAddressPreference" xml:space="preserve">
+    <value>Specifies an IP address preference when connecting to SQL instances.</value>
   </data>
   <data name="TCE_EnclaveTypeNotSupported" xml:space="preserve">
     <value>Возвращаемый с сервера анклав типа "{0}" не поддерживается.</value>
@@ -4576,13 +4579,13 @@
     <value>Не удается задать свойство Credential, если в строке подключения указано "Authentication=Active Directory Device Code Flow".</value>
   </data>
   <data name="SQL_SettingCredentialWithNonInteractive" xml:space="preserve">
-    <value>Невозможно задать свойство Credential, если в строке подключения указано "Authentication={0}".</value>
+    <value>Cannot set the Credential property if 'Authentication={0}' has been specified in the connection string.</value>
   </data>
   <data name="SQL_SettingDeviceFlowWithCredential" xml:space="preserve">
     <value>Невозможно использовать ", если задано свойство Credential.</value>
   </data>
   <data name="SQL_SettingNonInteractiveWithCredential" xml:space="preserve">
-    <value>Невозможно использовать "Authentication={0}", если задано свойство Credential.</value>
+    <value>Cannot use 'Authentication={0}', if the Credential property has been set.</value>
   </data>
   <data name="SqlDependency_UnexpectedValueOnDeserialize" xml:space="preserve">
     <value>Обнаружен непредвиденный тип при десериализации.</value>

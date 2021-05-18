@@ -2503,7 +2503,7 @@
     <value>No se puede usar "Authentication=Active Directory Device Code Flow" con las palabras clave de cadena de conexión "User ID", "UID", "Password" ni "PWD".</value>
   </data>
   <data name="SQL_NonInteractiveWithPassword" xml:space="preserve">
-    <value>No se puede usar "Authentication={0}" con las palabras clave de cadena de conexión "Password" ni "PWD".</value>
+    <value>Cannot use 'Authentication={0}' with 'Password' or 'PWD' connection string keywords.</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>No se puede usar "Authentication=Active Directory Integrated" si se ha establecido la propiedad Credential.</value>
@@ -4345,16 +4345,16 @@
     <value>La instancia de {0} en uso no admite el cifrado de columnas.</value>
   </data>
   <data name="TCE_EnclaveComputationsNotSupported" xml:space="preserve">
-    <value>Ha especificado la dirección URL de atestación de enclave y el protocolo de atestación en la cadena de conexión, pero la instancia de SQL Server que se está usando no admite los cálculos basados en enclave.</value>
+    <value>You have specified the enclave attestation URL and attestation protocol in the connection string, but the SQL Server in use does not support enclave based computations - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
   </data>
   <data name="TCE_AttestationURLNotSupported" xml:space="preserve">
-    <value>Ha especificado la dirección URL de atestación de enclave en la cadena de conexión, pero la instancia de SQL Server en uso no admite cálculos basados en enclave.</value>
+    <value>You have specified the enclave attestation URL in the connection string, but the SQL Server in use does not support enclave based computations - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
   </data>
   <data name="TCE_AttestationProtocolNotSupported" xml:space="preserve">
-    <value>Ha especificado el protocolo de atestación en la cadena de conexión, pero la instancia de SQL Server que se está usando no admite cálculos basados en enclave.</value>
+    <value>You have specified the attestation protocol in the connection string, but the SQL Server in use does not support enclave based computations - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
   </data>
   <data name="TCE_EnclaveTypeNotReturned" xml:space="preserve">
-    <value>Ha especificado la dirección URL de atestación de enclave en la cadena de conexión, pero la instancia de SQL Server no devolvió un tipo de enclave. Asegúrese de que el tipo de enclave está configurado correctamente en la instancia.</value>
+    <value>You have specified the enclave attestation URL in the connection string, but the SQL Server did not return an enclave type. Please make sure the enclave type is correctly configured in your instance - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
   </data>
   <data name="TCE_BatchedUpdateColumnEncryptionSettingMismatch" xml:space="preserve">
     <value>{0} debería ser idéntico en todos los comandos ({1}, {2}, {3}, {4}) cuando se ejecutan actualizaciones en lote.</value>
@@ -4459,7 +4459,7 @@
     <value>Se agotó el tiempo de espera de ejecución. El período de tiempo de espera transcurrió antes de la finalización de la operación o el servidor no responde.</value>
   </data>
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
-    <value>Error en la validación de un token de atestación. La firma del token no coincide con la firma calculada mediante una clave pública recuperada del punto de conexión de clave pública de atestación en "{0}". Compruebe la asignación de DNS del punto de conexión. Si es correcta, póngase en contacto con el servicio de atención al cliente.</value>
+    <value>The validation of an attestation token failed. The token signature does not match the signature omputed using a public key retrieved from the attestation public key endpoint at '{0}'. Verify the DNS apping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If correct, contact Customer Support Services.</value>
   </data>
   <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
     <value>Se ha producido un error interno al reintentar la descarga del certificado raíz de HGS después de un error en la solicitud inicial. Póngase en contacto con el servicio de atención al cliente.</value>
@@ -4480,10 +4480,10 @@
     <value>Error en la validación de un token de atestación. El token tiene un formato no válido. Póngase en contacto con el servicio de atención al cliente. Detalles del error: "{0}".</value>
   </data>
   <data name="GetAttestationSigningCertificateFailedInvalidCertificate" xml:space="preserve">
-    <value>El servicio de atestación devolvió un certificado raíz de HGS expirado para la dirección URL de atestación "{0}". Compruebe el certificado raíz de HGS configurado para su instancia de HGS.</value>
+    <value>The attestation service returned an expired HGS root certificate for attestation URL '{0}'. Check the HGS root certificate configured for your HGS instance - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details.</value>
   </data>
   <data name="GetAttestationSigningCertificateRequestFailedFormat" xml:space="preserve">
-    <value>El certificado raíz de HGS obtenido para la dirección URL de atestación "{0}" tiene un formato no válido. Compruebe que la dirección URL de atestación sea correcta y que el servidor HGS esté en línea y completamente inicializado. Para obtener más información, póngase en contacto con los servicios de atención al cliente. Detalles del error: "{1}".</value>
+    <value>The obtained HGS root certificate for attestation URL '{0}' has an invalid format. Verify the attestation URL is correct and the HGS server is online and fully initialized - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. For additional support contact Customer Support Services. Error details: '{1}'.</value>
   </data>
   <data name="GetAttestationTokenSigningKeysFailed" xml:space="preserve">
     <value>Error en la validación de un token de atestación. No se puede recuperar una clave pública del punto de conexión de clave pública de atestación o la clave recuperada tiene un formato no válido. Detalles del error: "{0}".</value>
@@ -4501,28 +4501,31 @@
     <value>Error en la validación del token de atestación durante la validación de la firma. Excepción: "{0}".</value>
   </data>
   <data name="InvalidClaimInAttestationToken" xml:space="preserve">
-    <value>Error en la validación de un token de atestación. La notificación "{0}" del token tiene un valor no válido de "{1}". Compruebe la directiva de atestación. Si es correcta, póngase en contacto con el servicio de atención al cliente.</value>
+    <value>The validation of an attestation token failed. Claim '{0}' in the token has an invalid value of '{1}'. Verify the attestation policy - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If the policy is correct, contact Customer Support Services.</value>
   </data>
   <data name="MissingClaimInAttestationToken" xml:space="preserve">
-    <value>Error en la validación del token de atestación. Falta la notificación "{0}" en el token. Compruebe la directiva de atestación. Si es correcta, póngase en contacto con el servicio de atención al cliente.</value>
+    <value>The validation of the attestation token failed. Claim '{0}' is missing in the token. Verify the attestation policy - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If the policy is correct, contact Customer Support Services.</value>
   </data>
   <data name="VerifyEnclaveDebuggable" xml:space="preserve">
     <value>No se pudo comprobar si el enclave se está ejecutando en modo de producción. Póngase en contacto con el servicio de atención al cliente.</value>
   </data>
   <data name="VerifyEnclavePolicyFailedFormat" xml:space="preserve">
-    <value>No se pudo comprobar la directiva de enclave debido a una diferencia entre los valores reales y esperados de la directiva en la propiedad "{0}". Valores reales: "{1}"; valores esperados: "{2}".</value>
+    <value>Could not verify enclave policy due to a difference between the expected and actual values of the policy on property '{0}'. Actual: '{1}', Expected: '{2}' - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details.</value>
   </data>
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
-    <value>Error de comprobación de firma del informe de enclave. La firma del informe no coincide con la firma calculada mediante el certificado raíz de HGS. Compruebe la asignación de DNS del punto de conexión. Si es correcta, póngase en contacto con el servicio de atención al cliente.</value>
+    <value>Signature verification of the enclave report failed. The report signature does not match the signature computed using the HGS root certificate. Verify the DNS mapping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If correct, contact Customer Support Services.</value>
   </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>El informe de enclave recibido desde SQL Server no tiene el formato correcto. Póngase en contacto con el servicio de atención al cliente.</value>
   </data>
   <data name="VerifyHealthCertificateChainFormat" xml:space="preserve">
-    <value>No se pudo compilar una cadena de confianza entre el informe de mantenimiento del host del enclave y el certificado raíz de HGS para la dirección URL de atestación "{0}" con el estado "{1}". Compruebe que la dirección URL de atestación coincida con la configurada en la máquina SQL Server. Si el cliente y SQL Server usan el mismo servicio de atestación, póngase en contacto con los servicios de atención al cliente.</value>
+    <value>Failed to build a chain of trust between the enclave host's health report and the HGS root certificate for attestation URL '{0}' with status: '{1}'. Verify the attestation URL matches the URL configured on the SQL Server - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If both the client and SQL Server use the same attestation service, contact Customer Support Services.</value>
   </data>
   <data name="TCE_DbConnectionString_AttestationProtocol" xml:space="preserve">
     <value>Especifica un protocolo de atestación para el servicio de atestación de enclave correspondiente.</value>
+  </data>
+  <data name="TCE_DbConnectionString_IPAddressPreference" xml:space="preserve">
+    <value>Specifies an IP address preference when connecting to SQL instances.</value>
   </data>
   <data name="TCE_EnclaveTypeNotSupported" xml:space="preserve">
     <value>No se admite el tipo de enclave "{0}" que ha devuelto el servidor.</value>
@@ -4576,13 +4579,13 @@
     <value>No se puede establecer la propiedad Credential si se ha especificado "Authentication=Active Directory Device Code Flow" en la cadena de conexión.</value>
   </data>
   <data name="SQL_SettingCredentialWithNonInteractive" xml:space="preserve">
-    <value>No se puede establecer la propiedad Credential si se ha especificado "Authentication={0}" en la cadena de conexión.</value>
+    <value>Cannot set the Credential property if 'Authentication={0}' has been specified in the connection string.</value>
   </data>
   <data name="SQL_SettingDeviceFlowWithCredential" xml:space="preserve">
     <value>No se puede usar "Active Directory Device Code Flow" si se ha establecido la propiedad Credential.</value>
   </data>
   <data name="SQL_SettingNonInteractiveWithCredential" xml:space="preserve">
-    <value>No se puede usar "Authentication={0}" si se ha establecido la propiedad Credential.</value>
+    <value>Cannot use 'Authentication={0}', if the Credential property has been set.</value>
   </data>
   <data name="SqlDependency_UnexpectedValueOnDeserialize" xml:space="preserve">
     <value>Se ha detectado un tipo inesperado al realizar la deserialización.</value>
