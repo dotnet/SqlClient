@@ -4289,7 +4289,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // If we are not in Batch RPC mode, update the query cache with the encryption MD.
-            if (!BatchRPCMode && ShouldCacheEncryptionMetadata && (_parameters != null && _parameters.Count > 0))
+            if (!BatchRPCMode && ShouldCacheEncryptionMetadata && (_parameters is not null && _parameters.Count > 0))
             {
                 SqlQueryMetadataCache.GetInstance().AddQueryMetadata(this, ignoreQueriesWithReturnValueParams: true);
             }
@@ -5217,7 +5217,7 @@ namespace Microsoft.Data.SqlClient
                     // We can do this now that we have distinguished between ReturnValue and ReturnStatus.
                     // Read comment in AddQueryMetadata() for more details.
                     if (!BatchRPCMode && CachingQueryMetadataPostponed &&
-                        ShouldCacheEncryptionMetadata && (_parameters != null && _parameters.Count > 0))
+                        ShouldCacheEncryptionMetadata && (_parameters is not null && _parameters.Count > 0))
                     {
                         SqlQueryMetadataCache.GetInstance().AddQueryMetadata(this, ignoreQueriesWithReturnValueParams: false);
                     }

@@ -22,7 +22,7 @@ namespace Microsoft.Data.SqlClient
         const int CacheTrimThreshold = 300; // Threshold above the cache size when we start trimming.
 
         private readonly MemoryCache _cache;
-        private static readonly SqlQueryMetadataCache _singletonInstance = new SqlQueryMetadataCache();
+        private static readonly SqlQueryMetadataCache _singletonInstance = new();
         private int _inTrim = 0;
         private long _cacheHits = 0;
         private long _cacheMisses = 0;
@@ -54,7 +54,7 @@ namespace Microsoft.Data.SqlClient
 
             // Check the cache to see if we have the MD for this query cached.
             (string cacheLookupKey, string enclaveLookupKey) = GetCacheLookupKeysFromSqlCommand(sqlCommand);
-            if (cacheLookupKey == null)
+            if (cacheLookupKey is null)
             {
                 IncrementCacheMisses();
                 return false;
@@ -63,7 +63,7 @@ namespace Microsoft.Data.SqlClient
             Dictionary<string, SqlCipherMetadata> cipherMetadataDictionary = _cache.Get(cacheLookupKey) as Dictionary<string, SqlCipherMetadata>;
 
             // If we had a cache miss just return false.
-            if (cipherMetadataDictionary == null)
+            if (cipherMetadataDictionary is null)
             {
                 IncrementCacheMisses();
                 return false;
@@ -88,7 +88,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // Cached cipher MD should never have an initialized algorithm since this would contain the key.
-                Debug.Assert(paramCiperMetadata == null || !paramCiperMetadata.IsAlgorithmInitialized());
+                Debug.Assert(paramCiperMetadata is null || !paramCiperMetadata.IsAlgorithmInitialized());
 
                 // We were able to identify the cipher MD for this parameter, so set it on the param.
                 param.CipherMetadata = paramCiperMetadata;
@@ -100,7 +100,7 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlCipherMetadata cipherMdCopy = null;
 
-                if (param.CipherMetadata != null)
+                if (param.CipherMetadata is not null)
                 {
                     cipherMdCopy = new SqlCipherMetadata(
                         param.CipherMetadata.EncryptionInfo,
@@ -113,7 +113,7 @@ namespace Microsoft.Data.SqlClient
 
                 param.CipherMetadata = cipherMdCopy;
 
-                if (cipherMdCopy != null)
+                if (cipherMdCopy is not null)
                 {
                     // Try to get the encryption key. If the key information is stale, this might fail.
                     // In this case, just fail the cache lookup.
@@ -185,18 +185,18 @@ namespace Microsoft.Data.SqlClient
 
             // Construct the entry and put it in the cache.
             (string cacheLookupKey, string enclaveLookupKey) = GetCacheLookupKeysFromSqlCommand(sqlCommand);
-            if (cacheLookupKey == null)
+            if (cacheLookupKey is null)
             {
                 return;
             }
 
-            Dictionary<string, SqlCipherMetadata> cipherMetadataDictionary = new Dictionary<string, SqlCipherMetadata>(sqlCommand.Parameters.Count);
+            Dictionary<string, SqlCipherMetadata> cipherMetadataDictionary = new(sqlCommand.Parameters.Count);
 
             // Create a copy of the cipherMD that doesn't have the algorithm and put it in the cache.
             foreach (SqlParameter param in sqlCommand.Parameters)
             {
                 SqlCipherMetadata cipherMdCopy = null;
-                if (param.CipherMetadata != null)
+                if (param.CipherMetadata is not null)
                 {
                     cipherMdCopy = new SqlCipherMetadata(
                         param.CipherMetadata.EncryptionInfo,
@@ -208,7 +208,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // Cached cipher MD should never have an initialized algorithm since this would contain the key.
-                Debug.Assert(cipherMdCopy == null || !cipherMdCopy.IsAlgorithmInitialized());
+                Debug.Assert(cipherMdCopy is null || !cipherMdCopy.IsAlgorithmInitialized());
 
                 cipherMetadataDictionary.Add(param.ParameterNameFixed, cipherMdCopy);
             }
@@ -248,7 +248,7 @@ namespace Microsoft.Data.SqlClient
         internal void InvalidateCacheEntry(SqlCommand sqlCommand)
         {
             (string cacheLookupKey, string enclaveLookupKey) = GetCacheLookupKeysFromSqlCommand(sqlCommand);
-            if (cacheLookupKey == null)
+            if (cacheLookupKey is null)
             {
                 return;
             }
@@ -290,12 +290,12 @@ namespace Microsoft.Data.SqlClient
             SqlConnection connection = sqlCommand.Connection;
 
             // Return null if we have no connection.
-            if (connection == null)
+            if (connection is null)
             {
                 return (null, null);
             }
 
-            StringBuilder cacheLookupKeyBuilder = new StringBuilder(connection.DataSource, capacity: connection.DataSource.Length + SqlIdentifierLength + sqlCommand.CommandText.Length + 6);
+            StringBuilder cacheLookupKeyBuilder = new(connection.DataSource, capacity: connection.DataSource.Length + SqlIdentifierLength + sqlCommand.CommandText.Length + 6);
             cacheLookupKeyBuilder.Append(":::");
             // Pad database name to 128 characters to avoid any false cache matches because of weird DB names.
             cacheLookupKeyBuilder.Append(connection.Database.PadRight(SqlIdentifierLength));
@@ -303,18 +303,18 @@ namespace Microsoft.Data.SqlClient
             cacheLookupKeyBuilder.Append(sqlCommand.CommandText);
 
             string cacheLookupKey = cacheLookupKeyBuilder.ToString();
-            string enclaveLookupKey = cacheLookupKeyBuilder.Append("enclaveKeys").ToString();
+            string enclaveLookupKey = cacheLookupKeyBuilder.Append(":::enclaveKeys").ToString();
             return (cacheLookupKey, enclaveLookupKey);
         }
 
         private Dictionary<int, SqlTceCipherInfoEntry> CreateCopyOfEnclaveKeys(Dictionary<int, SqlTceCipherInfoEntry> keysToBeSentToEnclave)
         {
-            Dictionary<int, SqlTceCipherInfoEntry> enclaveKeys = new Dictionary<int, SqlTceCipherInfoEntry>();
+            Dictionary<int, SqlTceCipherInfoEntry> enclaveKeys = new();
             foreach (KeyValuePair<int, SqlTceCipherInfoEntry> kvp in keysToBeSentToEnclave)
             {
                 int ordinal = kvp.Key;
                 SqlTceCipherInfoEntry original = kvp.Value;
-                SqlTceCipherInfoEntry copy = new SqlTceCipherInfoEntry(ordinal);
+                SqlTceCipherInfoEntry copy = new(ordinal);
                 foreach (SqlEncryptionKeyInfo cekInfo in original.ColumnEncryptionKeyValues)
                 {
                     copy.Add(cekInfo.encryptedKey, cekInfo.databaseId, cekInfo.cekId, cekInfo.cekVersion,
