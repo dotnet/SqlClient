@@ -98,8 +98,6 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private static IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> s_globalCustomColumnEncryptionKeyStoreProviders;
 
-        private static string s_akvProviderName = "AZURE_KEY_VAULT";
-
         /// <summary>
         /// Dictionary object holding trusted key paths for various SQL Servers.
         /// Key to the dictionary is a SQL Server Name
