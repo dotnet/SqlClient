@@ -9,6 +9,7 @@
     <!-- Not supported sources are created from the ref assembly, we currently don't produce finalizers in dummmy assemblies, so we disable ApiCompat to not fail. -->
     <RunApiCompat>false</RunApiCompat>
     <GenerateDocumentationFile Condition="'$(OSGroup)' != 'Windows_NT'">false</GenerateDocumentationFile>
+    <BuildTools Condition="'$(BuildTools)' == ''">true</BuildTools>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(GeneratePlatformNotSupportedAssembly)' == 'true' OR '$(GeneratePlatformNotSupportedAssemblyMessage)' != ''">
@@ -48,11 +49,12 @@
       <GenAPIPath Condition="'$(MSBuildRuntimeType)' == 'core'"> "$(DotNetCmd) $(ToolsArtifactsDir)netcoreapp2.1\Microsoft.DotNet.GenAPI.dll"</GenAPIPath>
       <GenAPIPath Condition="'$(MSBuildRuntimeType)' != 'core'"> "$(ToolsArtifactsDir)net472\Microsoft.DotNet.GenAPI.exe"</GenAPIPath>
     </PropertyGroup>
+    <message Condition="'$(BuildTools)' != 'true'" Text="Skip building tools." />
 
-    <Exec Command="$(DotnetBuildCmd)" WorkingDirectory="$(GenAPISrcDir)Microsoft.DotNet.GenAPI\" />
-    <Exec Command="$(GenAPIPath) $(GenAPIArgs)" WorkingDirectory="$(ToolRuntimePath)" />
+    <Exec Command="$(DotnetBuildCmd)" WorkingDirectory="$(GenAPISrcDir)Microsoft.DotNet.GenAPI\" Condition="'$(BuildTools)' == 'true'" />
+    <Exec Command="$(GenAPIPath) $(GenAPIArgs)" WorkingDirectory="$(ToolRuntimePath)" Condition="'$(BuildTools)' == 'true'" />
 
-    <ItemGroup>
+    <ItemGroup Condition="'$(BuildTools)' == 'true'">
       <FileWrites Include="$(NotSupportedSourceFile)" />
       <Compile Include="$(NotSupportedSourceFile)" />
     </ItemGroup>
