@@ -2503,7 +2503,7 @@
     <value>"Authentication=Active Directory Device Code Flow" kann nicht mit den Schlüsselwörtern "User ID", "UID", "Password" oder "PWD" für die Verbindungszeichenfolge verwendet werden.</value>
   </data>
   <data name="SQL_NonInteractiveWithPassword" xml:space="preserve">
-    <value>Cannot use 'Authentication={0}' with 'Password' or 'PWD' connection string keywords.</value>
+    <value>"Authentication={0}" kann nicht mit den Schlüsselwörtern "Password" oder "PWD" für die Verbindungszeichenfolge verwendet werden.</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
     <value>"Authentication=Active Directory Integrated" kann nicht verwendet werden, wenn die Eigenschaft "Credential" festgelegt wurde.</value>
@@ -4579,13 +4579,13 @@
     <value>Die Eigenschaft "Credential" kann nicht festgelegt werden, wenn in der Verbindungszeichenfolge "Authentication=Active Directory Device Code Flow" angegeben wurde.</value>
   </data>
   <data name="SQL_SettingCredentialWithNonInteractive" xml:space="preserve">
-    <value>Cannot set the Credential property if 'Authentication={0}' has been specified in the connection string.</value>
+    <value>Die Eigenschaft "Credential" kann nicht festgelegt werden, wenn in der Verbindungszeichenfolge "Authentication={0}" angegeben wurde.</value>
   </data>
   <data name="SQL_SettingDeviceFlowWithCredential" xml:space="preserve">
     <value>"Authentication=Active Directory Device Code Flow" kann nicht verwendet werden, wenn die Eigenschaft "Credential" festgelegt wurde.</value>
   </data>
   <data name="SQL_SettingNonInteractiveWithCredential" xml:space="preserve">
-    <value>Cannot use 'Authentication={0}', if the Credential property has been set.</value>
+    <value>"Authentication={0}" kann nicht verwendet werden, wenn die Eigenschaft "Credential" festgelegt wurde.</value>
   </data>
   <data name="SqlDependency_UnexpectedValueOnDeserialize" xml:space="preserve">
     <value>Unerwarteter Typ beim Deserialisieren erkannt.</value>
