@@ -49,12 +49,12 @@
       <GenAPIPath Condition="'$(MSBuildRuntimeType)' == 'core'"> "$(DotNetCmd) $(ToolsArtifactsDir)netcoreapp2.1\Microsoft.DotNet.GenAPI.dll"</GenAPIPath>
       <GenAPIPath Condition="'$(MSBuildRuntimeType)' != 'core'"> "$(ToolsArtifactsDir)net472\Microsoft.DotNet.GenAPI.exe"</GenAPIPath>
     </PropertyGroup>
-    <message Condition="'$(BuildTools)' != 'true'" Text="Skip building tools." />
+    <Message Condition="'$(BuildTools)' != 'true'" Text="Skip building tools." />
 
     <Exec Command="$(DotnetBuildCmd)" WorkingDirectory="$(GenAPISrcDir)Microsoft.DotNet.GenAPI\" Condition="'$(BuildTools)' == 'true'" />
     <Exec Command="$(GenAPIPath) $(GenAPIArgs)" WorkingDirectory="$(ToolRuntimePath)" Condition="'$(BuildTools)' == 'true'" />
 
-    <ItemGroup Condition="'$(BuildTools)' == 'true'">
+    <ItemGroup>
       <FileWrites Include="$(NotSupportedSourceFile)" />
       <Compile Include="$(NotSupportedSourceFile)" />
     </ItemGroup>

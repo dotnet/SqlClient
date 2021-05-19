@@ -166,7 +166,3 @@ dotnet_code_quality.ca1802.api_surface = private, internal
 
 [*.cs]
 dotnet_code_quality.CA2100.excluded_type_names_with_derived_types = Microsoft.Data.SqlClient.ManualTesting.Tests.*
-[*.cs]
-dotnet_code_quality.CA2000.excluded_type_names_with_derived_types = Microsoft.Cci.* | Microsoft.Cci.Extensions.* | Microsoft.Cci.Writers.Syntax.*
-[*.cs]
-dotnet_code_quality.excluded_type_names_with_derived_types = Microsoft.Cci.* | Microsoft.Cci.Extensions.* | Microsoft.Cci.Writers.Syntax.*
