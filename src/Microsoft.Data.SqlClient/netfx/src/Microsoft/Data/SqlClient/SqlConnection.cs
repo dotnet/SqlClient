@@ -149,9 +149,10 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.CanOnlyCallOnce();
                 }
 
-                if (customProviders.ContainsKey(s_akvProviderName))
+                // to prevent conflicts between CEK caches, global providers should not use their own CEK caches
+                foreach (SqlColumnEncryptionKeyStoreProvider provider in customProviders.Values)
                 {
-                    customProviders[s_akvProviderName].ColumnEncryptionKeyCacheTtl = new TimeSpan(0);
+                    provider.ColumnEncryptionKeyCacheTtl = new TimeSpan(0);
                 }
 
                 // Create a temporary dictionary and then add items from the provided dictionary.
