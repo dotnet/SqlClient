@@ -89,7 +89,7 @@ Integrated Security=True
             <summary>Declares the application workload type when connecting to a database in an SQL Server Availability Group. You can set the value of this property with <see cref="T:Microsoft.Data.SqlClient.ApplicationIntent" />. For more information about SqlClient support for Always On Availability Groups, see [SqlClient Support for High Availability, Disaster Recovery](/sql/connect/ado-net/sql/sqlclient-support-high-availability-disaster-recovery).</summary>
             <value>Returns the current value of the property (a value of type <see cref="T:Microsoft.Data.SqlClient.ApplicationIntent" />).</value>
             <remarks>To be added.</remarks>
-            <related type="Article" href="/sql/connect/ado-net/overview-sqlclient-driver">ADO.NET Overview</related>
+            <related type="Article" href="/sql/connect/ado-net/overview-sqlclient-driver">Overview of the SqlClient driver</related>
         </ApplicationIntent>
         <ApplicationName>
             <summary>Gets or sets the name of the application associated with the connection string.</summary>
@@ -158,7 +158,7 @@ Modified: Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security
             </remarks>
             <exception cref="T:System.ArgumentNullException">To set the value to null, use <see cref="F:System.DBNull.Value" />.</exception>
             <related type="Article" href="https://msdn.microsoft.com/library/745c5f95-2f02-4674-b378-6d51a7ec2490">Working with Connection Strings</related>
-            <related type="Article" href="/sql/connect/ado-net/overview-sqlclient-driver">ADO.NET Overview</related>
+            <related type="Article" href="/sql/connect/ado-net/overview-sqlclient-driver">Overview of the SqlClient driver</related>
         </AttachDBFilename>
         <Authentication>
             <summary>Gets the authentication of the connection string.</summary>
@@ -378,7 +378,7 @@ If `Multi Subnet Failover` is set to `true`, this setting has no effect.
  ]]></format>
             </remarks>
             <related type="Article" href="https://msdn.microsoft.com/library/745c5f95-2f02-4674-b378-6d51a7ec2490">Working with Connection Strings</related>
-            <related type="Article" href="/sql/connect/ado-net/overview-sqlclient-driver">ADO.NET Overview</related>
+            <related type="Article" href="/sql/connect/ado-net/overview-sqlclient-driver">Overview of the SqlClient driver</related>
         </Encrypt>
         <Enlist>
             <summary>Gets or sets a Boolean value that indicates whether the SQL Server connection pooler automatically enlists the connection in the creation thread's current transaction context.</summary>
@@ -451,7 +451,7 @@ If `Multi Subnet Failover` is set to `true`, this setting has no effect.
             <see langword="true" /> in every case, because the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> supplies a fixed-size collection of key/value pairs.</value>
             <remarks>To be added.</remarks>
             <related type="Article" href="https://msdn.microsoft.com/library/745c5f95-2f02-4674-b378-6d51a7ec2490">Working with Connection Strings</related>
-            <related type="Article" href="/sql/connect/ado-net/overview-sqlclient-driver">ADO.NET Overview</related>
+            <related type="Article" href="/sql/connect/ado-net/overview-sqlclient-driver">Overview of the SqlClient driver</related>
         </IsFixedSize>
         <Item>
             <param name="keyword">The key of the item to get or set.</param>

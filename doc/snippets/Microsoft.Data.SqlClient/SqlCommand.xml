@@ -1154,7 +1154,7 @@ The Microsoft .NET Framework Data Provider for SQL Server does not support the q
 SELECT * FROM dbo.Customers WHERE CustomerID = @CustomerID
 ```
 
-For more information, see [Configuring Parameters and Parameter Data Types](/sql/connect/ado-net/configure-parameters).
+For more information, see [Configuring parameters](/sql/connect/ado-net/configure-parameters).
 
 ## Examples
 The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and sets some of its properties.
@@ -1212,7 +1212,7 @@ The Microsoft .NET Framework Data Provider for SQL Server does not support the q
 
 SELECT * FROM Customers WHERE CustomerID = @CustomerID
 
-For more information, see [Configuring Parameters and Parameter Data Types](/sql/connect/ado-net/configure-parameters).
+For more information, see [Configuring parameters](/sql/connect/ado-net/configure-parameters).
 
 ## Examples
 The following example creates a <xref:Microsoft.Data.SqlClient.SqlCommand> and sets some of its properties.
@@ -2892,7 +2892,7 @@ SELECT * FROM Customers WHERE CustomerID = @CustomerID
 > [!NOTE]
 > If the parameters in the collection do not match the requirements of the query to be executed, an error may result.
 
-For more information, see [Configuring Parameters and Parameter Data Types](/sql/connect/ado-net/configure-parameters).
+For more information, see [Configuring parameters](/sql/connect/ado-net/configure-parameters).
 
 ## Examples
 The following example demonstrates how to create a <xref:Microsoft.Data.SqlClient.SqlCommand> and add parameters to the <xref:Microsoft.Data.SqlClient.SqlParameterCollection>.

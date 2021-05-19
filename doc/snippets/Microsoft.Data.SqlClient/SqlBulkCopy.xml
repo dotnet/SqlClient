@@ -109,7 +109,7 @@ For examples demonstrating how to use `SqlBulkCopy` in a transaction, see [Trans
 				Performing Bulk Copy Operations
 			</related>
 			<related type="Article" href="/sql/connect/ado-net/overview-sqlclient-driver">
-				ADO.NET Overview
+				Overview of the SqlClient driver
 			</related>
 		</ctor>
 		<ctor name="ConnectionStringParameter">
@@ -647,7 +647,7 @@ This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. 
 				Performing Bulk Copy Operations
 			</related>
 			<related type="Article" href="/sql/connect/ado-net/overview-sqlclient-driver">
-				ADO.NET Overview
+				Overview of the SqlClient driver
 			</related>
 		</WriteToServer>
 		<WriteToServer name="DataTableAndRowStateParameters">

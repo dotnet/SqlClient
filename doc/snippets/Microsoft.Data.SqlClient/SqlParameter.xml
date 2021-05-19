@@ -2,7 +2,7 @@
 <docs>
     <members name="SqlParameter">
         <SqlParameter>
-            <summary>Represents a parameter to a <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> and optionally its mapping to <see cref="T:System.Data.DataSet" /> columns. This class cannot be inherited. For more information on parameters, see [Configuring Parameters and Parameter Data Types](/sql/connect/ado-net/configure-parameters).</summary>
+            <summary>Represents a parameter to a <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> and optionally its mapping to <see cref="T:System.Data.DataSet" /> columns. This class cannot be inherited. For more information on parameters, see [Configuring parameters](/sql/connect/ado-net/configure-parameters).</summary>
             <remarks>
             <format type="text/markdown"><![CDATA[  
   
@@ -17,7 +17,7 @@
    
   
 ## Examples  
- The following example creates multiple instances of <xref:Microsoft.Data.SqlClient.SqlParameter> through the <xref:Microsoft.Data.SqlClient.SqlParameterCollection> collection within the <xref:Microsoft.Data.SqlClient.SqlDataAdapter>. These parameters are used to select data from the data source and put the data in the <xref:System.Data.DataSet>. This example assumes that a <xref:System.Data.DataSet> and a <xref:Microsoft.Data.SqlClient.SqlDataAdapter> have already been created by using the appropriate schema, commands, and connection. For more information and additional examples on using parameters, see [Retrieving and Modifying Data in ADO.NET](/sql/connect/ado-net/retrieving-modifying-data) and [Configuring Parameters and Parameter Data Types](/sql/connect/ado-net/configure-parameters).  
+ The following example creates multiple instances of <xref:Microsoft.Data.SqlClient.SqlParameter> through the <xref:Microsoft.Data.SqlClient.SqlParameterCollection> collection within the <xref:Microsoft.Data.SqlClient.SqlDataAdapter>. These parameters are used to select data from the data source and put the data in the <xref:System.Data.DataSet>. This example assumes that a <xref:System.Data.DataSet> and a <xref:Microsoft.Data.SqlClient.SqlDataAdapter> have already been created by using the appropriate schema, commands, and connection. For more information and additional examples on using parameters, see [Retrieving and Modifying Data in ADO.NET](/sql/connect/ado-net/retrieving-modifying-data) and [Configuring parameters](/sql/connect/ado-net/configure-parameters).  
   
  [!code-csharp[SqlParameterCollection_Add6](~/../sqlclient/doc/samples/SqlParameterCollection_Add6.cs#1)]
   

@@ -142,7 +142,7 @@ When you create a new instance of <xref:Microsoft.Data.SqlClient.SqlCommandBuild
 
 You can only use `DeriveParameters` with stored procedures. You cannot use `DeriveParameters` with extended stored procedures. You cannot use `DeriveParameters` to populate the <xref:Microsoft.Data.SqlClient.SqlParameterCollection> with arbitrary Transact-SQL statements, such as a parameterized SELECT statement.  
 
-For more information, see [Configuring Parameters and Parameter Data Types](/sql/connect/ado-net/configure-parameters).  
+For more information, see [Configuring parameters](/sql/connect/ado-net/configure-parameters).  
 
 ]]></format>
             </remarks>
@@ -433,7 +433,7 @@ Generally, database servers indicate the schema for a identifier by separating t
             <remarks>To be added.</remarks>
             <related type="Article" href="/sql/connect/ado-net/retrieving-modifying-data">Connecting and Retrieving Data in ADO.NET</related>
             <related type="Article" href="/sql/connect/ado-net/sql/">Using the .NET Framework Data Provider for SQL Server</related>
-            <related type="Article" href="/sql/connect/ado-net/overview-sqlclient-driver">ADO.NET Overview</related>
+            <related type="Article" href="/sql/connect/ado-net/overview-sqlclient-driver">Overview of the SqlClient driver</related>
         </UnquoteIdentifier>
     </members>
 </docs>
