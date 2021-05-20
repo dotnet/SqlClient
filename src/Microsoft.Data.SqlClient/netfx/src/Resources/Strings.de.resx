@@ -4345,16 +4345,16 @@
     <value>Verwendete {0}-Instanz unterstützt die Spaltenverschlüsselung nicht.</value>
   </data>
   <data name="TCE_EnclaveComputationsNotSupported" xml:space="preserve">
-    <value>You have specified the enclave attestation URL and attestation protocol in the connection string, but the SQL Server in use does not support enclave based computations - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
+    <value>Sie haben die Enclave-Nachweis-URL und das Nachweisprotokoll in der Verbindungszeichenfolge angegeben, aber die verwendete SQL Server-Instanz unterstützt keine Enclave-basierten Berechnungen – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2157649  .</value>
   </data>
   <data name="TCE_AttestationURLNotSupported" xml:space="preserve">
-    <value>You have specified the enclave attestation URL in the connection string, but the SQL Server in use does not support enclave based computations - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
+    <value>Sie haben die Enclave-Nachweis-URL in der Verbindungszeichenfolge angegeben, aber die verwendete SQL Server-Instanz unterstützt keine Enclave-basierten Berechnungen – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2157649  .</value>
   </data>
   <data name="TCE_AttestationProtocolNotSupported" xml:space="preserve">
-    <value>You have specified the attestation protocol in the connection string, but the SQL Server in use does not support enclave based computations - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
+    <value>Sie haben das Nachweisprotokoll in der Verbindungszeichenfolge angegeben, aber die verwendete SQL Server-Instanz unterstützt keine Enclave-basierten Berechnungen – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2157649  .</value>
   </data>
   <data name="TCE_EnclaveTypeNotReturned" xml:space="preserve">
-    <value>You have specified the enclave attestation URL in the connection string, but the SQL Server did not return an enclave type. Please make sure the enclave type is correctly configured in your instance - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
+    <value>Sie haben die Enclave-Nachweis-URL in der Verbindungszeichenfolge angegeben, aber die SQL Server-Instanz hat keinen Enclave-Typ zurückgegeben. Stellen Sie sicher, dass der Enclave-Typ ordnungsgemäß in Ihrer Instanz konfiguriert wurde – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2157649  .</value>
   </data>
   <data name="TCE_BatchedUpdateColumnEncryptionSettingMismatch" xml:space="preserve">
     <value>{0} muss beim Durchführen von Batchupdates für alle Befehle ({1}, {2}, {3}, {4}) identisch sein.</value>
@@ -4459,7 +4459,7 @@
     <value>Das Ausführungstimeout ist abgelaufen. Der Timeoutzeitraum wurde überschritten, bevor der Vorgang beendet wurde, oder der Server antwortet nicht.</value>
   </data>
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
-    <value>The validation of an attestation token failed. The token signature does not match the signature omputed using a public key retrieved from the attestation public key endpoint at '{0}'. Verify the DNS apping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If correct, contact Customer Support Services.</value>
+    <value>Fehler bei der Überprüfung eines Nachweistokens. Die Tokensignatur stimmt nicht mit der Signatur überein, die anhand eines öffentlichen Schlüssels berechnet wurde, der vom Endpunkt für öffentliche Nachweisschlüssel unter „{0}“ abgerufen wurde. Überprüfen Sie die DNS-Zuordnung für den Endpunkt – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2157649   . Wenn diese korrekt ist, wenden Sie sich an den Kundensupport.</value>
   </data>
   <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
     <value>Interner Fehler beim erneuten Download des HGS-Stammzertifikats, nachdem bei der ersten Anforderung ein Fehler aufgetreten ist. Wenden Sie sich an den Kundensupport.</value>
@@ -4480,10 +4480,10 @@
     <value>Fehler bei der Überprüfung eines Nachweistokens. Das Token weisen ein ungültiges Format auf. Wenden Sie sich an den Kundensupport. Fehlerdetails: {0}.</value>
   </data>
   <data name="GetAttestationSigningCertificateFailedInvalidCertificate" xml:space="preserve">
-    <value>The attestation service returned an expired HGS root certificate for attestation URL '{0}'. Check the HGS root certificate configured for your HGS instance - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details.</value>
+    <value>Der Nachweisdienst hat ein abgelaufenes HGS-Stammzertifikat für die Nachweis-URL „{0}“ zurückgegeben. Überprüfen Sie das für Ihre HGS-Instanz konfigurierte HGS-Stammzertifikat – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2160553   .</value>
   </data>
   <data name="GetAttestationSigningCertificateRequestFailedFormat" xml:space="preserve">
-    <value>The obtained HGS root certificate for attestation URL '{0}' has an invalid format. Verify the attestation URL is correct and the HGS server is online and fully initialized - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. For additional support contact Customer Support Services. Error details: '{1}'.</value>
+    <value>Das abgerufene HGS-Stammzertifikat für die Nachweis-URL „{0}“ weist ein ungültiges Format auf. Überprüfen Sie, ob die Nachweis-URL korrekt und der HGS-Server online und vollständig initialisiert sind – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2160553   . Wenden Sie sich an den Kundensupport, um weitere Informationen zu erhalten. Fehlerdetails: „{1}“.</value>
   </data>
   <data name="GetAttestationTokenSigningKeysFailed" xml:space="preserve">
     <value>Fehler bei der Überprüfung eines Nachweistokens. Ein öffentlicher Schlüssel kann nicht aus dem Endpunkt für öffentliche Nachweisschlüssel abgerufen werden, oder der abgerufene Schlüssel weist ein ungültiges Format auf. Fehlerdetails: {0}.</value>
@@ -4501,31 +4501,31 @@
     <value>Fehler bei der Überprüfung des Nachweistokens während der Signaturüberprüfung. Ausnahme: {0}.</value>
   </data>
   <data name="InvalidClaimInAttestationToken" xml:space="preserve">
-    <value>The validation of an attestation token failed. Claim '{0}' in the token has an invalid value of '{1}'. Verify the attestation policy - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If the policy is correct, contact Customer Support Services.</value>
+    <value>Fehler bei der Überprüfung eines Nachweistokens. Der Anspruch „{0}“ im Token weist einen ungültigen Wert von „{1}“ auf. Überprüfen Sie die Nachweisrichtlinie – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2157649   . Wenn die Richtlinie korrekt ist, wenden Sie sich an den Kundensupport.</value>
   </data>
   <data name="MissingClaimInAttestationToken" xml:space="preserve">
-    <value>The validation of the attestation token failed. Claim '{0}' is missing in the token. Verify the attestation policy - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If the policy is correct, contact Customer Support Services.</value>
+    <value>Fehler bei der Überprüfung des Nachweistokens. Der Anspruch „{0}“ fehlt im Token. Überprüfen Sie die Nachweisrichtlinie – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2157649   . Wenn die Richtlinie korrekt ist, wenden Sie sich an den Kundensupport.</value>
   </data>
   <data name="VerifyEnclaveDebuggable" xml:space="preserve">
     <value>Es konnte nicht überprüft werden, ob die Enclave im Produktionsmodus ausgeführt wird. Wenden Sie sich an den Kundensupport.</value>
   </data>
   <data name="VerifyEnclavePolicyFailedFormat" xml:space="preserve">
-    <value>Could not verify enclave policy due to a difference between the expected and actual values of the policy on property '{0}'. Actual: '{1}', Expected: '{2}' - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details.</value>
+    <value>Die Enclave-Richtlinie konnte aufgrund einer Abweichung zwischen den erwarteten und den tatsächlichen Werten der Richtlinie für die Eigenschaft „{0}“ nicht überprüft werden. Tatsächlich: „{1}“, erwartet: „{2}“ – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2160553   .</value>
   </data>
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
-    <value>Signature verification of the enclave report failed. The report signature does not match the signature computed using the HGS root certificate. Verify the DNS mapping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If correct, contact Customer Support Services.</value>
+    <value>Fehler bei der Signaturüberprüfung des Enclave-Berichts. Die Berichtssignatur stimmt nicht mit der Signatur überein, die mit dem HGS-Stammzertifikat berechnet wurde. Überprüfen Sie die DNS-Zuordnung für den Endpunkt – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2160553  . Wenn sie korrekt ist, wenden Sie sich an den Kundensupport.</value>
   </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>Der von SQL Server empfangene Enclavebericht weist nicht das richtige Format auf. Wenden Sie sich an den Kundensupport.</value>
   </data>
   <data name="VerifyHealthCertificateChainFormat" xml:space="preserve">
-    <value>Failed to build a chain of trust between the enclave host's health report and the HGS root certificate for attestation URL '{0}' with status: '{1}'. Verify the attestation URL matches the URL configured on the SQL Server - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If both the client and SQL Server use the same attestation service, contact Customer Support Services.</value>
+    <value>Fehler beim Erstellen einer Vertrauenskette zwischen dem Integritätsbericht des Enclave-Hosts und dem HGS-Stammzertifikat für die Nachweis-URL „{0}“ mit dem Status: „{1}“ Überprüfen Sie, ob die Nachweis-URL mit der auf dem SQL Server konfigurierten URL übereinstimmt – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2160553  . Wenn sowohl der Client als auch der SQL Server denselben Nachweisdienst verwenden, wenden Sie sich an den Kundensupport.</value>
   </data>
   <data name="TCE_DbConnectionString_AttestationProtocol" xml:space="preserve">
     <value>Gibt ein Nachweisprotokoll für den entsprechenden Enclave-Nachweisdienst an.</value>
   </data>
   <data name="TCE_DbConnectionString_IPAddressPreference" xml:space="preserve">
-    <value>Specifies an IP address preference when connecting to SQL instances.</value>
+    <value>Gibt eine bevorzugte IP-Adresse beim Herstellen einer Verbindung mit SQL-Instanzen an.</value>
   </data>
   <data name="TCE_EnclaveTypeNotSupported" xml:space="preserve">
     <value>Der vom Server zurückgegebene Enclave-Typ "{0}" wird nicht unterstützt.</value>

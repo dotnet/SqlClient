@@ -4345,16 +4345,16 @@
     <value>使用的 {0} 实例不支持列加密。</value>
   </data>
   <data name="TCE_EnclaveComputationsNotSupported" xml:space="preserve">
-    <value>You have specified the enclave attestation URL and attestation protocol in the connection string, but the SQL Server in use does not support enclave based computations - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
+    <value>你已在连接字符串中指定 enclave 证明 URL 和证明协议，但使用中的 SQL Server 不支持基于 enclave 的计算 - 有关 更多 详细信息，请 参阅 https://go.microsoft.com/fwlink/?linkid=2157649。</value>
   </data>
   <data name="TCE_AttestationURLNotSupported" xml:space="preserve">
-    <value>You have specified the enclave attestation URL in the connection string, but the SQL Server in use does not support enclave based computations - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
+    <value>你已在连接字符串中指定 enclave 证明 URL，但使用中的 SQL Server 不支持基于 enclave 的计算 - 有关 更多 详细信息，请 参阅 https://go.microsoft.com/fwlink/?linkid=2157649。</value>
   </data>
   <data name="TCE_AttestationProtocolNotSupported" xml:space="preserve">
-    <value>You have specified the attestation protocol in the connection string, but the SQL Server in use does not support enclave based computations - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
+    <value>你已在连接字符串中指定证明协议，但使用中的 SQL Server 不支持基于 enclave 的计算 - 有关 更多 详细信息，请 参阅 https://go.microsoft.com/fwlink/?linkid=2157649。</value>
   </data>
   <data name="TCE_EnclaveTypeNotReturned" xml:space="preserve">
-    <value>You have specified the enclave attestation URL in the connection string, but the SQL Server did not return an enclave type. Please make sure the enclave type is correctly configured in your instance - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details.</value>
+    <value>你已在连接字符串中指定 enclave 证明 URL，但 SQL Server 未返回 enclave 类型。请确保在实例中正确配置 enclave 类型 - 有关 更多 详细信息，请 参阅 https://go.microsoft.com/fwlink/?linkid=2157649。</value>
   </data>
   <data name="TCE_BatchedUpdateColumnEncryptionSettingMismatch" xml:space="preserve">
     <value>执行批更新时，{0} 的执行方式应与所有命令({1}、{2}、{3}、{4})的执行方式相同。</value>
@@ -4459,7 +4459,7 @@
     <value>执行超时已过期。完成操作之前已超时或服务器未响应。 </value>
   </data>
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
-    <value>The validation of an attestation token failed. The token signature does not match the signature omputed using a public key retrieved from the attestation public key endpoint at '{0}'. Verify the DNS apping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If correct, contact Customer Support Services.</value>
+    <value>无法验证证明令牌。令牌签名与使用从“{0}”处的证明公钥终结点检索的公钥计算的签名不匹配。请验证终结点的 DNS 映射 - 有关 更多 详细信息，请 参阅 https://go.microsoft.com/fwlink/?linkid=2157649 。</value>
   </data>
   <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
     <value>初始请求失败后，重试下载 HGS 根证书时出现内部错误。请联系客户支持服务。</value>
@@ -4480,10 +4480,10 @@
     <value>无法验证证明令牌。令牌的格式无效。请联系客户支持服务。错误详细信息:“{0}”。</value>
   </data>
   <data name="GetAttestationSigningCertificateFailedInvalidCertificate" xml:space="preserve">
-    <value>The attestation service returned an expired HGS root certificate for attestation URL '{0}'. Check the HGS root certificate configured for your HGS instance - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details.</value>
+    <value>证明服务为证明 URL“{0}”返回的 HGS 根证书已到期。请检查为你的 HGS 实例配置的 HGS 根证书 - 有关 更多 详细信息，请 参阅 https://go.microsoft.com/fwlink/?linkid=2160553 。</value>
   </data>
   <data name="GetAttestationSigningCertificateRequestFailedFormat" xml:space="preserve">
-    <value>The obtained HGS root certificate for attestation URL '{0}' has an invalid format. Verify the attestation URL is correct and the HGS server is online and fully initialized - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. For additional support contact Customer Support Services. Error details: '{1}'.</value>
+    <value>为证明 URL“{0}”获取的 HGS 根证书的格式无效。请验证证明 URL 是否正确，且 HGS 服务器是否处于联机状态且已完全初始化 - 有关 更多 详细信息，请 参阅 https://go.microsoft.com/fwlink/?linkid=2160553 。有关其他支持，请联系客户支持服务。错误详细信息: “{1}”。</value>
   </data>
   <data name="GetAttestationTokenSigningKeysFailed" xml:space="preserve">
     <value>无法验证证明令牌。无法从证明公钥终结点检索公钥，或检索到的密钥的格式无效。错误详细信息:“{0}”。</value>
@@ -4501,31 +4501,31 @@
     <value>无法在签名验证期间验证证明令牌。异常:“{0}”。</value>
   </data>
   <data name="InvalidClaimInAttestationToken" xml:space="preserve">
-    <value>The validation of an attestation token failed. Claim '{0}' in the token has an invalid value of '{1}'. Verify the attestation policy - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If the policy is correct, contact Customer Support Services.</value>
+    <value>无法验证证明令牌。令牌中的声明“{0}”具有无效值“{1}”。请验证证明策略 - 有关 更多 详细信息，请 参阅 https://go.microsoft.com/fwlink/?linkid=2157649 。如果策略正确，请联系客户支持服务。</value>
   </data>
   <data name="MissingClaimInAttestationToken" xml:space="preserve">
-    <value>The validation of the attestation token failed. Claim '{0}' is missing in the token. Verify the attestation policy - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If the policy is correct, contact Customer Support Services.</value>
+    <value>无法验证证明令牌。令牌中缺少声明“{0}”。请验证证明策略 - 有关 更多 详细信息，请 参阅 https://go.microsoft.com/fwlink/?linkid=2157649 。如果策略正确，请联系客户支持服务。</value>
   </data>
   <data name="VerifyEnclaveDebuggable" xml:space="preserve">
     <value>无法检查 enclave 是否在生产模式下运行。请联系客户支持服务。</value>
   </data>
   <data name="VerifyEnclavePolicyFailedFormat" xml:space="preserve">
-    <value>Could not verify enclave policy due to a difference between the expected and actual values of the policy on property '{0}'. Actual: '{1}', Expected: '{2}' - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details.</value>
+    <value>无法验证 enclave 策略，因为属性“{0}”上策略的预期值和实际值不一致。实际值:“{1}”，预期值:“{2}”- 有关 更多 详细信息， 请参阅 https://go.microsoft.com/fwlink/?linkid=2160553 。</value>
   </data>
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
-    <value>Signature verification of the enclave report failed. The report signature does not match the signature computed using the HGS root certificate. Verify the DNS mapping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If correct, contact Customer Support Services.</value>
+    <value>无法验证 enclave 报告的签名。报告签名与使用 HGS 根证书计算出的签名不匹配。请验证终结点的 DNS 映射 - 有关 更多 详细信息，请 参阅 https://go.microsoft.com/fwlink/?linkid=2160553。如果正确，请联系客户支持服务。</value>
   </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>从 SQL Server 收到的 enclave 报告的格式不正确。请联系客户支持服务。</value>
   </data>
   <data name="VerifyHealthCertificateChainFormat" xml:space="preserve">
-    <value>Failed to build a chain of trust between the enclave host's health report and the HGS root certificate for attestation URL '{0}' with status: '{1}'. Verify the attestation URL matches the URL configured on the SQL Server - see https://go.microsoft.com/fwlink/?linkid=2160553 for more details. If both the client and SQL Server use the same attestation service, contact Customer Support Services.</value>
+    <value>无法在 enclave 主机的运行状况报告和证明 URL“{0}”的 HGS 根证书之间生成信任链，状态为“{1}”。请验证证明 URL 与 SQL Server 上配置的 URL 是否匹配 - 有关 更多 详细信息，请 参阅 https://go.microsoft.com/fwlink/?linkid=2160553。如果客户端和 SQL Server 使用的证明服务相同，请联系客户支持服务。</value>
   </data>
   <data name="TCE_DbConnectionString_AttestationProtocol" xml:space="preserve">
     <value>为其相应的 enclave 证明服务指定证明协议。</value>
   </data>
   <data name="TCE_DbConnectionString_IPAddressPreference" xml:space="preserve">
-    <value>Specifies an IP address preference when connecting to SQL instances.</value>
+    <value>指定连接到 SQL 实例时的 IP 地址首选项。</value>
   </data>
   <data name="TCE_EnclaveTypeNotSupported" xml:space="preserve">
     <value>不支持从服务器返回的 enclave 类型“{0}”。</value>
