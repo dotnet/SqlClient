@@ -79,7 +79,7 @@
     <MSBuild Projects="@(FunctionalTests)" Targets="restore" Properties="TestTargetOS=$(TestOS)netfx" />
   </Target>
 
-  <Target Name="BuildTools" Condition="'$(BuildTools)' == 'true'">
+  <Target Name="BuildTools" Condition="'$(BuildTools)' == 'true' AND '$(OSGroup)' == 'AnyOS'">
     <PropertyGroup>
       <DotnetBuildCmd>$(DotNetCmd) dotnet build -c Release"</DotnetBuildCmd>
     </PropertyGroup>
