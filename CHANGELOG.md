@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Added
 
 - Added support for "Active Directory Default" authentication mode [#1043](https://github.com/dotnet/SqlClient/pull/1043)
-- Added multi-user key store provider registration support with connection-level and command-level registration options for custom key store provider registration [#1045](https://github.com/dotnet/SqlClient/pull/1045) [#1056](https://github.com/dotnet/SqlClient/pull/1056) [#1078](https://github.com/dotnet/SqlClient/pull/1078)
+- Added support for connection-level and command-level registration of custom key store providers to enable multi-tenant applications to control key store access [#1045](https://github.com/dotnet/SqlClient/pull/1045) [#1056](https://github.com/dotnet/SqlClient/pull/1056) [#1078](https://github.com/dotnet/SqlClient/pull/1078)
 - Added IP address preference support for TCP connections [#1015](https://github.com/dotnet/SqlClient/pull/1015)
 
 ### Fixed
@@ -19,7 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Changed
 
-- Updated error messages for Enclave exceptions to include link to troubleshooting guide. [#994](https://github.com/dotnet/SqlClient/pull/994)
+- Updated error messages for enclave exceptions to include a link to a troubleshooting guide. [#994](https://github.com/dotnet/SqlClient/pull/994)
 - Changes to share common files between projects [#1022](https://github.com/dotnet/SqlClient/pull/1022) [#1038](https://github.com/dotnet/SqlClient/pull/1038) [#1040](https://github.com/dotnet/SqlClient/pull/1040) [#1033](https://github.com/dotnet/SqlClient/pull/1033) [#1028](https://github.com/dotnet/SqlClient/pull/1028) [#1039](https://github.com/dotnet/SqlClient/pull/1039)
 
 
