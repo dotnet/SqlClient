@@ -67,8 +67,6 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         private static IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> s_globalCustomColumnEncryptionKeyStoreProviders;
 
-        private static string s_akvProviderName = "AZURE_KEY_VAULT";
-
         /// Instance-level list of custom key store providers. It can be set more than once by the user.
         private IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> _customColumnEncryptionKeyStoreProviders;
 
@@ -149,9 +147,10 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.CanOnlyCallOnce();
                 }
 
-                if (customProviders.ContainsKey(s_akvProviderName))
+                // to prevent conflicts between CEK caches, global providers should not use their own CEK caches
+                foreach (SqlColumnEncryptionKeyStoreProvider provider in customProviders.Values)
                 {
-                    customProviders[s_akvProviderName].ColumnEncryptionKeyCacheTtl = new TimeSpan(0);
+                    provider.ColumnEncryptionKeyCacheTtl = new TimeSpan(0);
                 }
 
                 // Create a temporary dictionary and then add items from the provided dictionary.

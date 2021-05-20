@@ -175,7 +175,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsAKVSetupAvailable))]
-        public static void CekCacheShouldBeDisabledWhenAkvProviderIsRegisteredGlobally()
+        public static void CekCacheShouldBeDisabledWhenCustomProviderIsRegisteredGlobally()
         {
             if (SQLSetupStrategyAzureKeyVault.IsAKVProviderRegistered)
             {
