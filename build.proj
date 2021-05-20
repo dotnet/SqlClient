@@ -9,6 +9,8 @@
     <RestoreConfigFile>src\NuGet.config</RestoreConfigFile>
     <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
+    <!-- Flag to control whether or not to build Microsoft.DotNet.GenAPI project in tools -->
+    <BuildTools Condition="'$(BuildTools)' == ''">true</BuildTools>
     <!-- Flag to control if Windows drivers should be built or not -->
     <IsEnabledWindows Condition="'$(IsEnabledWindows)' == '' AND '$(TargetsWindows)' == 'true'">true</IsEnabledWindows>
     <IsEnabledWindows Condition="'$(TargetsUnix)' == 'true'">false</IsEnabledWindows>
@@ -54,8 +56,8 @@
 
   <!-- Top Level Build targets -->
   <Target Name="Restore" DependsOnTargets="RestoreNetCore;RestoreNetFx" />
-  <Target Name="BuildAll" DependsOnTargets="BuildNetFx;BuildNetCore" />
-  <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildNetFx;BuildNetCoreAllOS;GenerateNugetPackage" />
+  <Target Name="BuildAll" DependsOnTargets="BuildTools;BuildNetFx;BuildNetCore" />
+  <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildTools;BuildNetFx;BuildNetCoreAllOS;GenerateNugetPackage" />
   <Target Name="BuildTestsNetCore" DependsOnTargets="RestoreTestsNetCore;BuildAKVNetCore;BuildFunctionalTestsNetCore;BuildManualTestsNetCore" />
   <Target Name="BuildTestsNetFx" DependsOnTargets="RestoreTestsNetFx;BuildAKVNetFx;BuildFunctionalTestsNetFx;BuildManualTestsNetFx;" />
 
@@ -75,6 +77,13 @@
   <Target Name="RestoreTestsNetFx">
     <MSBuild Projects="@(ManualTests)" Targets="restore" Properties="TestTargetOS=$(TestOS)netfx" />
     <MSBuild Projects="@(FunctionalTests)" Targets="restore" Properties="TestTargetOS=$(TestOS)netfx" />
+  </Target>
+
+  <Target Name="BuildTools" Condition="'$(BuildTools)' == 'true'">
+    <PropertyGroup>
+      <DotnetBuildCmd>$(DotNetCmd) dotnet build -c Release"</DotnetBuildCmd>
+    </PropertyGroup>
+    <Exec Command="$(DotnetBuildCmd)" WorkingDirectory="$(GenAPISrcDir)Microsoft.DotNet.GenAPI\" />
   </Target>
 
   <Target Name="BuildNetFx" DependsOnTargets="RestoreNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
