@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Stable Release 2.1.3] - 2021-05-21
+
+### Fixed
+
+- Fixed wrong data blended with transactions in .NET Core by marking a connection as doomed if the transaction completes or aborts while there is an open result set [#1051](https://github.com/dotnet/SqlClient/pull/1051)
+- Fixed race condition issues between SinglePhaseCommit and TransactionEnded events [#1049](https://github.com/dotnet/SqlClient/pull/1049)
+
 ## [Preview Release 3.0.0-preview3.21140.5] - 2021-05-20
 
 ### Added
