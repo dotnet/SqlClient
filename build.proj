@@ -56,7 +56,7 @@
 
   <!-- Top Level Build targets -->
   <Target Name="Restore" DependsOnTargets="RestoreNetCore;RestoreNetFx" />
-  <Target Name="BuildAll" DependsOnTargets="BuildTools;BuildNetFx;BuildNetCore" />
+  <Target Name="BuildAll" DependsOnTargets="BuildNetFx;BuildNetCore" />
   <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildTools;BuildNetFx;BuildNetCoreAllOS;GenerateNugetPackage" />
   <Target Name="BuildTestsNetCore" DependsOnTargets="RestoreTestsNetCore;BuildAKVNetCore;BuildFunctionalTestsNetCore;BuildManualTestsNetCore" />
   <Target Name="BuildTestsNetFx" DependsOnTargets="RestoreTestsNetFx;BuildAKVNetFx;BuildFunctionalTestsNetFx;BuildManualTestsNetFx;" />
@@ -79,7 +79,7 @@
     <MSBuild Projects="@(FunctionalTests)" Targets="restore" Properties="TestTargetOS=$(TestOS)netfx" />
   </Target>
 
-  <Target Name="BuildTools" Condition="'$(BuildTools)' == 'true' AND '$(OSGroup)' == 'AnyOS'">
+  <Target Name="BuildTools" Condition="'$(BuildTools)' == 'true'">
     <PropertyGroup>
       <DotnetBuildCmd>$(DotNetCmd) dotnet build -c Release"</DotnetBuildCmd>
     </PropertyGroup>
