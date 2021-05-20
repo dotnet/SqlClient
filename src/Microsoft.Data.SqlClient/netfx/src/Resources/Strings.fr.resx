@@ -4345,16 +4345,16 @@
     <value>L’instance {0} utilisée ne prend pas en charge le chiffrement de colonne.</value>
   </data>
   <data name="TCE_EnclaveComputationsNotSupported" xml:space="preserve">
-    <value>Vous avez spécifié l'URL d'attestation et le protocole d'attestation de l'enclave dans la chaîne de connexion, alors que le SQL Server utilisée ne prend pas en charge les calculs basés sur des enclaves - consultez https://go.microsoft.com/fwlink/?linkid=2157649 pour  plus  d’informations.</value>
+    <value>Vous avez spécifié l'URL d'attestation et le protocole d'attestation de l'enclave dans la chaîne de connexion, alors que le SQL Server utilisée ne prend pas en charge les calculs basés sur des enclaves - consultez https://go.microsoft.com/fwlink/?linkid=2157649 pour plus d’informations.</value>
   </data>
   <data name="TCE_AttestationURLNotSupported" xml:space="preserve">
-    <value>Vous avez spécifié l'URL de l'attestation d'enclave dans la chaîne de connexion, mais le SQL Server utilisé ne prend pas en charge les calculs basés sur les enclaves - consultez https://go.microsoft.com/fwlink/?linkid=2157649 pour  plus  d’informations.</value>
+    <value>Vous avez spécifié l'URL de l'attestation d'enclave dans la chaîne de connexion, mais le SQL Server utilisé ne prend pas en charge les calculs basés sur les enclaves - consultez https://go.microsoft.com/fwlink/?linkid=2157649 pour plus d’informations.</value>
   </data>
   <data name="TCE_AttestationProtocolNotSupported" xml:space="preserve">
-    <value>Vous avez spécifié l'attestation de l'enclave dans la chaîne de connexion, alors que le SQL Server utilisée ne prend pas en charge les calculs basés sur des enclaves - consultez https://go.microsoft.com/fwlink/?linkid=2157649 pour  plus  d’informations.</value>
+    <value>Vous avez spécifié l'attestation de l'enclave dans la chaîne de connexion, alors que le SQL Server utilisée ne prend pas en charge les calculs basés sur des enclaves - consultez https://go.microsoft.com/fwlink/?linkid=2157649 pour plus d’informations.</value>
   </data>
   <data name="TCE_EnclaveTypeNotReturned" xml:space="preserve">
-    <value>Vous avez spécifié l'URL d'attestation d'enclave dans la chaîne de connexion, mais SQL Server n'a pas retourné de type d'enclave. Vérifiez que le type d'enclave est correctement configuré dans votre instance.- consultez  https://go.microsoft.com/fwlink/?linkid=2157649 pour plus  d’informations.</value>
+    <value>Vous avez spécifié l'URL d'attestation d'enclave dans la chaîne de connexion, mais SQL Server n'a pas retourné de type d'enclave. Vérifiez que le type d'enclave est correctement configuré dans votre instance.- consultez https://go.microsoft.com/fwlink/?linkid=2157649 pour plus d’informations.</value>
   </data>
   <data name="TCE_BatchedUpdateColumnEncryptionSettingMismatch" xml:space="preserve">
     <value>{0} doit être identique dans toutes les commandes ({1}, {2}, {3}, {4}) pendant la réalisation de mises à jour par lot.</value>
