@@ -2171,45 +2171,45 @@ namespace Microsoft.Data.SqlClient
                 {
                     tdsReliabilitySection.Start();
 #endif //DEBUG
-                    if ((_sharedState._columnDataBytesRemaining == 0) || (length == 0))
+                if ((_sharedState._columnDataBytesRemaining == 0) || (length == 0))
+                {
+                    // No data left or nothing requested, return 0
+                    bytesRead = 0;
+                    return true;
+                }
+                else
+                {
+                    // if plp columns, do partial reads. Don't read the entire value in one shot.
+                    if (_metaData[i].metaType.IsPlp)
                     {
-                        // No data left or nothing requested, return 0
-                        bytesRead = 0;
+                        // Read in data
+                        bool result = _stateObj.TryReadPlpBytes(ref buffer, index, length, out bytesRead);
+                        _columnDataBytesRead += bytesRead;
+                        if (!result)
+                        {
+                            return false;
+                        }
+
+                        // Query for number of bytes left
+                        ulong left;
+                        if (!_parser.TryPlpBytesLeft(_stateObj, out left))
+                        {
+                            _sharedState._columnDataBytesRemaining = -1;
+                            return false;
+                        }
+                        _sharedState._columnDataBytesRemaining = (long)left;
                         return true;
                     }
                     else
                     {
-                        // if plp columns, do partial reads. Don't read the entire value in one shot.
-                        if (_metaData[i].metaType.IsPlp)
-                        {
-                            // Read in data
-                            bool result = _stateObj.TryReadPlpBytes(ref buffer, index, length, out bytesRead);
-                            _columnDataBytesRead += bytesRead;
-                            if (!result)
-                            {
-                                return false;
-                            }
-
-                            // Query for number of bytes left
-                            ulong left;
-                            if (!_parser.TryPlpBytesLeft(_stateObj, out left))
-                            {
-                                _sharedState._columnDataBytesRemaining = -1;
-                                return false;
-                            }
-                            _sharedState._columnDataBytesRemaining = (long)left;
-                            return true;
-                        }
-                        else
-                        {
-                            // Read data (not exceeding the total amount of data available)
-                            int bytesToRead = (int)Math.Min((long)length, _sharedState._columnDataBytesRemaining);
-                            bool result = _stateObj.TryReadByteArray(buffer, index, bytesToRead, out bytesRead);
-                            _columnDataBytesRead += bytesRead;
-                            _sharedState._columnDataBytesRemaining -= bytesRead;
-                            return result;
-                        }
+                        // Read data (not exceeding the total amount of data available)
+                        int bytesToRead = (int)Math.Min((long)length, _sharedState._columnDataBytesRemaining);
+                        bool result = _stateObj.TryReadByteArray(buffer, index, bytesToRead, out bytesRead);
+                        _columnDataBytesRead += bytesRead;
+                        _sharedState._columnDataBytesRemaining -= bytesRead;
+                        return result;
                     }
+                }
 #if DEBUG
                 }
                 finally
@@ -4156,7 +4156,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     tdsReliabilitySection.Start();
 #endif //DEBUG
-                    return TryReadColumnInternal(i, readHeaderOnly: true);
+                return TryReadColumnInternal(i, readHeaderOnly: true);
 #if DEBUG
                 }
                 finally
@@ -5074,7 +5074,17 @@ namespace Microsoft.Data.SqlClient
             SetTimeout(_defaultTimeoutMilliseconds);
 
             // Try to read without any continuations (all the data may already be in the stateObj's buffer)
-            if (!TryGetBytesInternalSequential(context.columnIndex, context.buffer, context.index, context.length, out bytesRead))
+            bool filledBuffer = context._reader.TryGetBytesInternalSequential(
+                context.columnIndex,
+                context.buffer,
+                context.index + context.totalBytesRead,
+                context.length - context.totalBytesRead,
+                out bytesRead
+            );
+            context.totalBytesRead += bytesRead;
+            Debug.Assert(context.totalBytesRead <= context.length, "Read more bytes than required");
+
+            if (!filledBuffer)
             {
                 // This will be the 'state' for the callback
                 int totalBytesRead = bytesRead;
@@ -5082,6 +5092,7 @@ namespace Microsoft.Data.SqlClient
                 if (!isContinuation)
                 {
                     // This is the first async operation which is happening - setup the _currentTask and timeout
+                    Debug.Assert(context._source == null, "context._source should not be non-null when trying to change to async");
                     source = new TaskCompletionSource<int>();
                     Task original = Interlocked.CompareExchange(ref _currentTask, source.Task, null);
                     if (original != null)
@@ -5090,6 +5101,7 @@ namespace Microsoft.Data.SqlClient
                         return source.Task;
                     }
 
+                    context._source = source;
                     // Check if cancellation due to close is requested (this needs to be done after setting _currentTask)
                     if (_cancelAsyncOnCloseToken.IsCancellationRequested)
                     {
@@ -5118,7 +5130,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    Debug.Assert(context._source != null, "context.source shuld not be null when continuing");
+                    Debug.Assert(context._source != null, "context._source shuld not be null when continuing");
                     // setup for cleanup\completing
                     retryTask.ContinueWith(
                         continuationAction: AAsyncCallContext<int>.s_completeCallback,
@@ -5177,42 +5189,42 @@ namespace Microsoft.Data.SqlClient
                         {
                             _stateObj._shouldHaveEnoughData = true;
 #endif
-                            if (_sharedState._dataReady)
-                            {
-                                // Clean off current row
-                                CleanPartialReadReliable();
-                            }
+                        if (_sharedState._dataReady)
+                        {
+                            // Clean off current row
+                            CleanPartialReadReliable();
+                        }
 
-                            // If there a ROW token ready (as well as any metadata for the row)
-                            if (_stateObj.IsRowTokenReady())
-                            {
-                                // Read the ROW token
-                                bool result = TryReadInternal(true, out more);
-                                Debug.Assert(result, "Should not have run out of data");
+                        // If there a ROW token ready (as well as any metadata for the row)
+                        if (_stateObj.IsRowTokenReady())
+                        {
+                            // Read the ROW token
+                            bool result = TryReadInternal(true, out more);
+                            Debug.Assert(result, "Should not have run out of data");
 
-                                rowTokenRead = true;
-                                if (more)
+                            rowTokenRead = true;
+                            if (more)
+                            {
+                                // Sequential mode, nothing left to do
+                                if (IsCommandBehavior(CommandBehavior.SequentialAccess))
                                 {
-                                    // Sequential mode, nothing left to do
-                                    if (IsCommandBehavior(CommandBehavior.SequentialAccess))
-                                    {
-                                        return ADP.TrueTask;
-                                    }
-                                    // For non-sequential, check if we can read the row data now
-                                    else if (WillHaveEnoughData(_metaData.Length - 1))
-                                    {
-                                        // Read row data
-                                        result = TryReadColumn(_metaData.Length - 1, setTimeout: true);
-                                        Debug.Assert(result, "Should not have run out of data");
-                                        return ADP.TrueTask;
-                                    }
+                                    return ADP.TrueTask;
                                 }
-                                else
+                                // For non-sequential, check if we can read the row data now
+                                else if (WillHaveEnoughData(_metaData.Length - 1))
                                 {
-                                    // No data left, return
-                                    return ADP.FalseTask;
+                                    // Read row data
+                                    result = TryReadColumn(_metaData.Length - 1, setTimeout: true);
+                                    Debug.Assert(result, "Should not have run out of data");
+                                    return ADP.TrueTask;
                                 }
                             }
+                            else
+                            {
+                                // No data left, return
+                                return ADP.FalseTask;
+                            }
+                        }
 #if DEBUG
                         }
                         finally
@@ -5373,8 +5385,8 @@ namespace Microsoft.Data.SqlClient
                         {
                             _stateObj._shouldHaveEnoughData = true;
 #endif
-                            ReadColumnHeader(i);
-                            return _data[i].IsNull ? ADP.TrueTask : ADP.FalseTask;
+                        ReadColumnHeader(i);
+                        return _data[i].IsNull ? ADP.TrueTask : ADP.FalseTask;
 #if DEBUG
                         }
                         finally
@@ -5510,7 +5522,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         _stateObj._shouldHaveEnoughData = true;
 #endif
-                        return Task.FromResult(GetFieldValueInternal<T>(i));
+                    return Task.FromResult(GetFieldValueInternal<T>(i));
 #if DEBUG
                     }
                     finally
