@@ -529,7 +529,7 @@ End Module
 |Asynchronous Processing<br /><br /> -or-<br /><br /> Async|'false'|This property is obsolete and should not used.<br /><br /> When `true`, enables asynchronous operation support. Recognized values are `true`, `false`, `yes`, and `no`.<br /><br /> This property is ignored beginning in .NET Framework 4.5. For more information about SqlClient support for asynchronous programming, see [Asynchronous Programming](/sql/connect/ado-net/asynchronous-programming).|
 |AttachDBFilename<br /><br /> -or-<br /><br /> Extended Properties<br /><br /> -or-<br /><br /> Initial File Name|N/A|The name of the primary database file, including the full path name of an attachable database. AttachDBFilename is only supported for primary data files with an .mdf extension.<br /><br /> If the value of the AttachDBFileName key is specified in the connection string, the database is attached and becomes the default database for the connection.<br /><br /> If this key is not specified and if the database was previously attached, the database will not be reattached. The previously attached database will be used as the default database for the connection.<br /><br /> If this key is specified together with the AttachDBFileName key, the value of this key will be used as the alias. However, if the name is already used in another attached database, the connection will fail.<br /><br /> The path may be absolute or relative by using the DataDirectory substitution string. If DataDirectory is used, the database file must exist within a subdirectory of the directory pointed to by the substitution string. **Note:**  Remote server, HTTP, and UNC path names are not supported. <br /><br /> The database name must be specified with the keyword 'database' (or one of its aliases) as in the following:<br /><br /> <code>"AttachDbFileName=&#124;DataDirectory&#124;\data\YourDB.mdf;integrated security=true;database=YourDatabase"</code><br /><br /> An error will be generated if a log file exists in the same directory as the data file and the 'database' keyword is used when attaching the primary data file. In this case, remove the log file. Once the database is attached, a new log file will be automatically generated based on the physical path.|  
 |Attestation Protocol|N/A|Gets or sets the value of Attestation Protocol.<br /><br />Valid values are:<br />`AAS`<br />`HGS`|
-|Authentication|N/A|The authentication method used for [Connecting to SQL Database By Using Azure Active Directory Authentication](https://azure.microsoft.com/documentation/articles/sql-database-aad-authentication/#7-connect-to-your-database-by-using-azure-active-directory-identities).<br /><br /> Valid values are:<br /><br /> `Active Directory Integrated`, `Active Directory Interactive`, `Active Directory Password`, `Sql Password`. Currently `Active Directory Integrated` and `Active Directory Interactive` modes of authentication are supported only for .NET Framework. |  
+|Authentication|N/A|The authentication method used for [Connecting to SQL Database By Using Azure Active Directory Authentication](https://azure.microsoft.com/documentation/articles/sql-database-aad-authentication/#7-connect-to-your-database-by-using-azure-active-directory-identities).<br /><br /> Valid values are:<br /><br /> `Active Directory Integrated`, `Active Directory Interactive`, `Active Directory Password`, 'Active Directory Service Principal', 'Active Directory Device Code Flow', 'Active Directory Managed Identity', 'Active Directory MSI', 'Active Directory Default', `Sql Password`. Currently `Active Directory Integrated` and `Active Directory Interactive` modes of authentication are supported only for .NET Framework. |  
 |Column Encryption Setting|N/A|Enables or disables [Always Encrypted](/sql/relational-databases/security/encryption/always-encrypted-database-engine?view=sql-server-2017) functionality for the connection.|  
 |Command Timeout|30|The default wait time (in seconds) before terminating the attempt to execute a command and generating an error.<br /><br /> Valid values are greater than or equal to 0 and less than or equal to 2147483647.|  
 |Connect Timeout<br /><br /> -or-<br /><br /> Connection Timeout<br /><br /> -or-<br /><br /> Timeout|15|The length of time (in seconds) to wait for a connection to the server before terminating the attempt and generating an error.<br /><br /> Valid values are greater than or equal to 0 and less than or equal to 2147483647.<br /><br /> When opening a connection to a Azure SQL Database, set the connection timeout to 30 seconds.|  
@@ -544,6 +544,7 @@ End Module
 |Failover Partner|N/A|The name of the failover partner server where database mirroring is configured.<br /><br /> If the value of this key is "", then **Initial Catalog** must be present, and its value must not be "".<br /><br /> The server name can be 128 characters or less.<br /><br /> If you specify a failover partner but the failover partner server is not configured for database mirroring and the primary server (specified with the Server keyword) is not available, then the connection will fail.<br /><br /> If you specify a failover partner and the primary server is not configured for database mirroring, the connection to the primary server (specified with the Server keyword) will succeed if the primary server is available.|  
 |Initial Catalog<br /><br /> -or-<br /><br /> Database|N/A|The name of the database.<br /><br /> The database name can be 128 characters or less.|  
 |Integrated Security<br /><br /> -or-<br /><br /> Trusted_Connection|'false'|When `false`, User ID and Password are specified in the connection. When `true`, the current Windows account credentials are used for authentication.<br /><br /> Recognized values are `true`, `false`, `yes`, `no`, and `sspi` (strongly recommended), which is equivalent to `true`.<br /><br /> If User ID and Password are specified and Integrated Security is set to true, the User ID and Password will be ignored and Integrated Security will be used.<br /><br /> <xref:Microsoft.Data.SqlClient.SqlCredential> is a more secure way to specify credentials for a connection that uses SQL Server Authentication (`Integrated Security=false`).|  
+|IP Address Preference<br /><br /> -or-<br /><br /> IPAddressPreference|IPv4First|The IP address family preference when establishing TCP connections. If `Transparent Network IP Resolution` (in .NET Framework) or `Multi Subnet Failover` is set to true, this setting has no effect. Supported values include:<br /><br /> `IPAddressPreference=IPv4First`<br /><br />`IPAddressPreference=IPv6First`<br /><br />`IPAddressPreference=UsePlatformDefault`|  
 |Max Pool Size|100|The maximum number of connections that are allowed in the pool.<br /><br /> Valid values are greater than or equal to 1. Values that are less than **Min Pool Size** generate an error.|  
 |Min Pool Size|0|The minimum number of connections that are allowed in the pool.<br /><br /> Valid values are greater than or equal to 0. Zero (0) in this field means no minimum connections are initially opened.<br /><br /> Values that are greater than **Max Pool Size** generate an error.|  
 |Multiple Active Result Sets<br /><br /> -or-<br /><br />MultipleActiveResultSets|false|When `true`, an application can maintain multiple active result sets (MARS). When `false`, an application must process or cancel all result sets from one batch before it can execute any other batch on that connection.<br /><br /> Recognized values are `true` and `false`.<br /><br /> For more information, see [Multiple Active Result Sets (MARS)](/sql/connect/ado-net/sql/multiple-active-result-sets-mars).|  
@@ -1022,7 +1023,11 @@ GO
         </PacketSize>
         <RegisterColumnEncryptionKeyStoreProviders>
             <param name="customProviders">Dictionary of custom column encryption key store providers</param>
-            <summary>Registers the column encryption key store providers. This function should only be called once in an app. This does shallow copying of the dictionary so that the app cannot alter the custom provider list once it has been set.</summary>
+            <summary>
+            Registers the column encryption key store providers. This function should only be called once in an app. This does shallow copying of the dictionary so that the app cannot alter the custom provider list once it has been set.
+       
+            The built-in column master key store providers that are available for the Windows Certificate Store, CNG Store and CSP are pre-registered. No providers should be registered on the connection or command instances if one of the built-in column master key store providers is needed.
+            </summary>
             <remarks>
             <format type="text/markdown"><![CDATA[  
 ## Examples 
@@ -1064,11 +1069,25 @@ GO
 
                 -or-
 
-                An EncryptionKeyStoreProvider value in the dictionary was null.
+                A <see cref="T:Microsoft.Data.SqlClient.SqlColumnEncryptionKeyStoreProvider" /> value in the dictionary was null.
               </exception>
               <exception cref="T:System.ArgumentException">
                 A string key in the dictionary started with "MSSQL_". This prefix is reserved for system providers.
               </exception>
+              <remarks>
+              <format type="text/markdown"><![CDATA[
+## Remarks
+Custom master key store providers can be registered with the driver at three different layers. The precedence of the three registrations is as follows:
+
+- The per-command registration will be checked if it is not empty.
+- If the per-command registration is empty, the per-connection registration will be checked if it is not empty.
+- If the per-connection registration is empty, the global registration will be checked.
+
+Once any key store provider is found at a registration level, the driver will **NOT** fall back to the other registrations to search for a provider. If providers are registered but the proper provider is not found at a level, an exception will be thrown containing only the registered providers in the registration that was checked.
+
+The built-in column master key store providers that are available for the Windows Certificate Store, CNG Store and CSP are pre-registered. No providers should be registered on the connection or command instances if one of the built-in column master key store providers is needed.
+]]></format>
+			</remarks>
         </RegisterColumnEncryptionKeyStoreProvidersOnConnection>
         <RetryLogicProvider>
 			<summary> Gets or sets a value that specifies the 
