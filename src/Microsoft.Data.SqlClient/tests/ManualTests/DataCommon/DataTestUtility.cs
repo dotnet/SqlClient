@@ -38,6 +38,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string AKVTenantId = null;
         public static readonly string AKVClientId = null;
         public static readonly string AKVClientSecret = null;
+        public static readonly string LocalDbAppName = null;
         public static List<string> AEConnStrings = new List<string>();
         public static List<string> AEConnStringsSetup = new List<string>();
         public static readonly bool EnclaveEnabled = false;
@@ -82,6 +83,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             AADServicePrincipalId = c.AADServicePrincipalId;
             AADServicePrincipalSecret = c.AADServicePrincipalSecret;
             SupportsLocalDb = c.SupportsLocalDb;
+            LocalDbAppName = c.LocalDbAppName;
             SupportsIntegratedSecurity = c.SupportsIntegratedSecurity;
             SupportsFileStream = c.SupportsFileStream;
             EnclaveEnabled = c.EnclaveEnabled;
