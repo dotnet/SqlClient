@@ -167,11 +167,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (requiresEnclaveComputations && !_activeConnection.Parser.AreEnclaveRetriesSupported)
-                {
-                    return false;
-                }
-                return true;
+                return !requiresEnclaveComputations || _activeConnection.Parser.AreEnclaveRetriesSupported;
             }
         }
         /// <summary>
