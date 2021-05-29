@@ -24,6 +24,7 @@ using Microsoft.Data.Common;
 using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.Server;
 using SysTx = System.Transactions;
+using System.Collections.Concurrent;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -161,7 +162,7 @@ namespace Microsoft.Data.SqlClient
             get { return !string.IsNullOrWhiteSpace(_activeConnection.EnclaveAttestationUrl) && IsColumnEncryptionEnabled; }
         }
 
-        internal Dictionary<int, SqlTceCipherInfoEntry> keysToBeSentToEnclave;
+        internal ConcurrentDictionary<int, SqlTceCipherInfoEntry> keysToBeSentToEnclave;
         internal bool requiresEnclaveComputations = false;
         private bool ShouldCacheEncryptionMetadata
         {
@@ -4784,12 +4785,12 @@ namespace Microsoft.Data.SqlClient
 
                         if (keysToBeSentToEnclave == null)
                         {
-                            keysToBeSentToEnclave = new Dictionary<int, SqlTceCipherInfoEntry>();
-                            keysToBeSentToEnclave.Add(currentOrdinal, cipherInfo);
+                            keysToBeSentToEnclave = new ConcurrentDictionary<int, SqlTceCipherInfoEntry>();
+                            keysToBeSentToEnclave.TryAdd(currentOrdinal, cipherInfo);
                         }
                         else if (!keysToBeSentToEnclave.ContainsKey(currentOrdinal))
                         {
-                            keysToBeSentToEnclave.Add(currentOrdinal, cipherInfo);
+                            keysToBeSentToEnclave.TryAdd(currentOrdinal, cipherInfo);
                         }
 
                         requiresEnclaveComputations = true;

@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
@@ -147,7 +148,8 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            Dictionary<int, SqlTceCipherInfoEntry> enclaveKeys = _cache.Get(enclaveLookupKey) as Dictionary<int, SqlTceCipherInfoEntry>;
+            ConcurrentDictionary<int, SqlTceCipherInfoEntry> enclaveKeys = 
+                _cache.Get(enclaveLookupKey) as ConcurrentDictionary<int, SqlTceCipherInfoEntry>;
             if (enclaveKeys is not null)
             {
                 sqlCommand.keysToBeSentToEnclave = CreateCopyOfEnclaveKeys(enclaveKeys);
@@ -243,7 +245,7 @@ namespace Microsoft.Data.SqlClient
             _cache.Set(cacheLookupKey, cipherMetadataDictionary, DateTimeOffset.UtcNow.AddHours(10));
             if (sqlCommand.requiresEnclaveComputations)
             {
-                Dictionary<int, SqlTceCipherInfoEntry> keysToBeCached = CreateCopyOfEnclaveKeys(sqlCommand.keysToBeSentToEnclave);
+                ConcurrentDictionary<int, SqlTceCipherInfoEntry> keysToBeCached = CreateCopyOfEnclaveKeys(sqlCommand.keysToBeSentToEnclave);
                 _cache.Set(enclaveLookupKey, keysToBeCached, DateTimeOffset.UtcNow.AddHours(10));
             }
         }
@@ -315,9 +317,9 @@ namespace Microsoft.Data.SqlClient
             return Tuple.Create(cacheLookupKey, enclaveLookupKey);
         }
 
-        private Dictionary<int, SqlTceCipherInfoEntry> CreateCopyOfEnclaveKeys(Dictionary<int, SqlTceCipherInfoEntry> keysToBeSentToEnclave)
+        private ConcurrentDictionary<int, SqlTceCipherInfoEntry> CreateCopyOfEnclaveKeys(ConcurrentDictionary<int, SqlTceCipherInfoEntry> keysToBeSentToEnclave)
         {
-            Dictionary<int, SqlTceCipherInfoEntry> enclaveKeys = new();
+            ConcurrentDictionary<int, SqlTceCipherInfoEntry> enclaveKeys = new();
             foreach (KeyValuePair<int, SqlTceCipherInfoEntry> kvp in keysToBeSentToEnclave)
             {
                 int ordinal = kvp.Key;
@@ -328,7 +330,7 @@ namespace Microsoft.Data.SqlClient
                     copy.Add(cekInfo.encryptedKey, cekInfo.databaseId, cekInfo.cekId, cekInfo.cekVersion,
                             cekInfo.cekMdVersion, cekInfo.keyPath, cekInfo.keyStoreName, cekInfo.algorithmName);
                 }
-                enclaveKeys.Add(ordinal, copy);
+                enclaveKeys.TryAdd(ordinal, copy);
             }
             return enclaveKeys;
         }

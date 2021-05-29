@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data;
@@ -149,7 +150,7 @@ namespace Microsoft.Data.SqlClient
         // cached metadata
         private _SqlMetaDataSet _cachedMetaData;
 
-        internal Dictionary<int, SqlTceCipherInfoEntry> keysToBeSentToEnclave;
+        internal ConcurrentDictionary<int, SqlTceCipherInfoEntry> keysToBeSentToEnclave;
         internal bool requiresEnclaveComputations = false;
 
         private bool ShouldCacheEncryptionMetadata
@@ -4178,12 +4179,12 @@ namespace Microsoft.Data.SqlClient
 
                         if (keysToBeSentToEnclave == null)
                         {
-                            keysToBeSentToEnclave = new Dictionary<int, SqlTceCipherInfoEntry>();
-                            keysToBeSentToEnclave.Add(currentOrdinal, cipherInfo);
+                            keysToBeSentToEnclave = new ConcurrentDictionary<int, SqlTceCipherInfoEntry>();
+                            keysToBeSentToEnclave.TryAdd(currentOrdinal, cipherInfo);
                         }
                         else if (!keysToBeSentToEnclave.ContainsKey(currentOrdinal))
                         {
-                            keysToBeSentToEnclave.Add(currentOrdinal, cipherInfo);
+                            keysToBeSentToEnclave.TryAdd(currentOrdinal, cipherInfo);
                         }
 
                         requiresEnclaveComputations = true;
