@@ -2098,7 +2098,7 @@ namespace Microsoft.Data.SqlClient
                     if (_snapshot != null)
                     {
                         _snapshot._targetBuffer = buff;
-                        if (_snapshot.ContinueEnabled && _snapshotStatus != SnapshotStatus.NotActive)
+                        if (_snapshotStatus != SnapshotStatus.NotActive && _snapshot.ContinueEnabled)
                         {
                             StoreProgress(this, bytesRead);
                         }
@@ -2112,7 +2112,7 @@ namespace Microsoft.Data.SqlClient
                     // Read the next chunk or cleanup state if hit the end
                     if (result != OperationStatus.Done)
                     {
-                        if (_snapshot.ContinueEnabled && result == OperationStatus.NeedMoreData)
+                        if (result == OperationStatus.NeedMoreData &&  _snapshot != null && _snapshot.ContinueEnabled)
                         {
                             StoreProgress(this, bytesRead);
                         }
