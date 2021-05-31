@@ -44,6 +44,10 @@
     <SystemThreadingTasksVersion>4.3.0</SystemThreadingTasksVersion>
     <SystemXmlReaderWriterVersion>4.3.1</SystemXmlReaderWriterVersion>
   </PropertyGroup>
+  <!-- NetStandard project dependencies -->
+  <PropertyGroup>
+    <SystemRuntimeLoaderVersion>4.3.0</SystemRuntimeLoaderVersion>
+  </PropertyGroup>
   <!-- AKV Provider project dependencies -->
   <PropertyGroup>
     <AzureCoreVersion>[1.6.0,2.0.0)</AzureCoreVersion>
