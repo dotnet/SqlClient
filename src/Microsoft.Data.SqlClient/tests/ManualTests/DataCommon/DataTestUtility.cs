@@ -44,7 +44,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly bool EnclaveEnabled = false;
         public static readonly bool TracingEnabled = false;
         public static readonly bool SupportsIntegratedSecurity = false;
-        public static readonly bool SupportsLocalDb = false;
         public static readonly bool SupportsFileStream = false;
         public static readonly bool UseManagedSNIOnWindows = false;
         public static readonly bool IsAzureSynapse = false;
@@ -82,7 +81,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             AADPasswordConnectionString = c.AADPasswordConnectionString;
             AADServicePrincipalId = c.AADServicePrincipalId;
             AADServicePrincipalSecret = c.AADServicePrincipalSecret;
-            SupportsLocalDb = c.SupportsLocalDb;
             LocalDbAppName = c.LocalDbAppName;
             SupportsIntegratedSecurity = c.SupportsIntegratedSecurity;
             SupportsFileStream = c.SupportsFileStream;
@@ -443,7 +441,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public static bool IsLocalDBInstalled() => SupportsLocalDb;
+        public static bool IsLocalDBInstalled() => !string.IsNullOrEmpty(LocalDbAppName?.Trim());
 
         public static bool IsIntegratedSecuritySetup() => SupportsIntegratedSecurity;
 
