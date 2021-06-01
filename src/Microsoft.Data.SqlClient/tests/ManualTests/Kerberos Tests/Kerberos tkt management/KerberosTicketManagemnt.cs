@@ -4,40 +4,36 @@ using System.Text;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    private enum kCommands
+    {
+
+    }
     internal static class KerberosTicketManagemnt
     {
         internal static void Init()
         {
-            try
-            {
-                System.Diagnostics.Process.Start("kinit");
-            }
-            catch(Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
+            RunKerberosCommand("kinit");
         }
 
         internal static void Destroy()
         {
-            try
-            {
-                System.Diagnostics.Process.Start("kdestroy");
-            }
-            catch(Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
+            RunKerberosCommand("kdestroy");
         }
         internal static void List()
         {
+            RunKerberosCommand("klist");
+        }
+
+        public static void RunKerberosCommand(string command)
+        {
             try
             {
-                System.Diagnostics.Process.Start("klist");
+                System.Diagnostics.Process.Start("cmd.exe", command);
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
+                throw;
             }
         }
     }
