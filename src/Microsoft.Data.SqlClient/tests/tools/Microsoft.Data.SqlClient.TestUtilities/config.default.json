@@ -15,7 +15,7 @@
     "AzureKeyVaultClientId": "",
     "AzureKeyVaultClientSecret": "",
     "SupportsIntegratedSecurity": true,
-    "SupportsLocalDb": false,
+    "LocalDbAppName": "",
     "SupportsFileStream": false,
     "UseManagedSNIOnWindows": false,
     "DNSCachingConnString": "",
