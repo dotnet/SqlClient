@@ -80,7 +80,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TCPConnectionStringHGSVBS = c.TCPConnectionStringHGSVBS;
             TCPConnectionStringAASVBS = c.TCPConnectionStringAASVBS;
             TCPConnectionStringAASSGX = c.TCPConnectionStringAASSGX;
-            //TCPConnectionStringKerberos=c.tc
+            TCPConnectionStringKerberos = c.TCPConnectionStringKerberos;
             AADAuthorityURL = c.AADAuthorityURL;
             AADPasswordConnectionString = c.AADPasswordConnectionString;
             AADServicePrincipalId = c.AADServicePrincipalId;
