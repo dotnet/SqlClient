@@ -4,12 +4,10 @@ using System.Text;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-    private enum kCommands
-    {
-
-    }
     internal static class KerberosTicketManagemnt
     {
+        private static readonly string s_cmdPrompt = "cmd.exe";
+
         internal static void Init()
         {
             RunKerberosCommand("kinit");
@@ -28,7 +26,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             try
             {
-                System.Diagnostics.Process.Start("cmd.exe", command);
+                System.Diagnostics.Process.Start(s_cmdPrompt, command);
             }
             catch (Exception ex)
             {

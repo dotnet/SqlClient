@@ -49,6 +49,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly bool IsAzureSynapse = false;
         public static Uri AKVBaseUri = null;
 
+        //Kerberos connection string
+        public static readonly string TCPConnectionStringKerberos = "";
+
         public static readonly string DNSCachingConnString = null;
         public static readonly string DNSCachingServerCR = null;  // this is for the control ring
         public static readonly string DNSCachingServerTR = null;  // this is for the tenant ring
@@ -77,6 +80,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TCPConnectionStringHGSVBS = c.TCPConnectionStringHGSVBS;
             TCPConnectionStringAASVBS = c.TCPConnectionStringAASVBS;
             TCPConnectionStringAASSGX = c.TCPConnectionStringAASSGX;
+            //TCPConnectionStringKerberos=c.tc
             AADAuthorityURL = c.AADAuthorityURL;
             AADPasswordConnectionString = c.AADPasswordConnectionString;
             AADServicePrincipalId = c.AADServicePrincipalId;
@@ -279,6 +283,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool AreConnStringSetupForAE()
         {
             return AEConnStrings.Count > 0 && IsNotAzureSynapse();
+        }
+
+        public static bool IsKerberosTest()
+        {
+            return !string.IsNullOrEmpty(TCPConnectionStringKerberos);
         }
 
         public static bool IsAADPasswordConnStrSetup()
