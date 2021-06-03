@@ -1059,7 +1059,7 @@ GO
         </RegisterColumnEncryptionKeyStoreProviders>
         <RegisterColumnEncryptionKeyStoreProvidersOnConnection>
             <param name="customProviders">Dictionary of custom column encryption key providers</param>
-            <summary>Registers the encryption key store providers on the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> instance. If this function has been called, any providers registered using the static <see cref="M:Microsoft.Data.SqlClient.SqlConnection.RegisterColumnEncryptionKeyStoreProviders%2A" /> methods will be ignored. This function can be called more than once. This does shallow copying of the dictionary so that the app cannot alter the custom provider list once it has been set.</summary>
+            <summary>Registers the encryption key store providers on the <see cref="T:Microsoft.Data.SqlClient.SqlConnection" /> instance. If this function has been called, any providers registered using the static <see cref="M:Microsoft.Data.SqlClient.SqlConnection.RegisterColumnEncryptionKeyStoreProviders(System.Collections.Generic.IDictionary{System.String,Microsoft.Data.SqlClient.SqlColumnEncryptionKeyStoreProvider})" /> methods will be ignored. This function can be called more than once. This does shallow copying of the dictionary so that the app cannot alter the custom provider list once it has been set.</summary>
             <exception cref="T:System.ArgumentNullException">
                 A null dictionary was provided.
 
