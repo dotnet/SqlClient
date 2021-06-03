@@ -6,13 +6,14 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-    public class KerberosTests
+    public class KerberosTests : IDisposable
     {
         readonly SqlConnectionStringBuilder _builder = new()
         {
             DataSource = "ADO-WS2019-KERBEROS-TEST.galaxy.ad",
             IntegratedSecurity = true
         };
+        private bool _disposedValue;
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest))]
         public void FailsToConnectWithNoTicketIssued()
@@ -34,7 +35,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     using SqlDataReader reader = command.ExecuteReader();
                     while (reader.Read())
                     {
-                        Assert.Equal(AuthenticationScheme.KERBEROS.ToString(), reader.GetString(0));
+                        Assert.Equal("KERBEROS", reader.GetString(0));
                     }
                 }
                 catch (SqlException ex)
@@ -55,9 +56,28 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             });
         }
 
-        public enum AuthenticationScheme
+        private enum KListOptions
         {
-            KERBEROS
+
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposedValue)
+            {
+                if (disposing)
+                {
+                    KerberosTicketManagemnt.Destroy();
+                }
+                _disposedValue = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }

@@ -7,10 +7,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     internal static class KerberosTicketManagemnt
     {
         private static readonly string s_cmdPrompt = "cmd.exe";
+        private static readonly string s_domainName = "bamboo";
 
         internal static void Init()
         {
-            RunKerberosCommand("kinit");
+            RunKerberosCommand($"kinit {s_domainName}");
         }
 
         internal static void Destroy()
