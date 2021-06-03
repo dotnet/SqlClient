@@ -2818,12 +2818,12 @@ The built-in column master key store providers that are available for the Window
 You must set the value for this property before the command is executed for it to take effect.  
 
 To apply the retry logic, do the following steps before executing the command:
-1. Define the configuration parameters by using <xref:Microsoft.Data.SqlClient.FixedRetryLogicOption> or <xref:Microsoft.Data.SqlClient.FloatingRetryLogicOption>.
+1. Define the configuration parameters by using <xref:Microsoft.Data.SqlClient.SqlRetryLogicOption> type.
 2. Create a <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider> by using one of the following static methods of the <xref:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory> class:  
-	- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.CreateFixedRetryProvider>  
-	- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.CreateIncrementalRetryProvider>  
-	- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.CreateExponentialRetryProvider>  
-	- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.CreateNoneRetryProvider>  
+	- <xref:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory.CreateFixedRetryProvider%2A>  
+	- <xref:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory.CreateIncrementalRetryProvider%2A>  
+	- <xref:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory.CreateExponentialRetryProvider%2A>  
+	- <xref:Microsoft.Data.SqlClient.SqlConfigurableRetryFactory.CreateNoneRetryProvider%2A>  
 3. Assign the <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider> object to the `RetryLogicProvider` property.
 
 > [!NOTE]
@@ -2851,8 +2851,9 @@ The blocking connection simulates a situation like a command still running in th
 
 ### How to use with legacy asynchronous commands
 Besides assigning the provider to the command and executing the command, it's possible to run it directly using the following <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider> methods:  
-- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.Execute>
-- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.ExecuteAsync>
+- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.Execute%60%601(System.Object,System.Func{%60%600})>
+- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.ExecuteAsync(System.Object,System.Func{System.Threading.Tasks.Task},System.Threading.CancellationToken)>
+- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.ExecuteAsync%60%601(System.Object,System.Func{System.Threading.Tasks.Task{%60%600}},System.Threading.CancellationToken)>
 
 [!code-csharp[SqlConfigurableRetryLogic_SqlCommand#4](~/../sqlclient/doc/samples/SqlConfigurableRetryLogic_SqlCommand.cs#4)]
 
