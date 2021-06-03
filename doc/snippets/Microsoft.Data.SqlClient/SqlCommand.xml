@@ -2771,8 +2771,8 @@ You must set the value for this property before the command is executed for it t
 		</Notification>
 		<RegisterColumnEncryptionKeyStoreProvidersOnCommand>
 			<param name="customProviders">Dictionary of custom column encryption key providers</param>
-			<summary>Registers the encryption key store providers on the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> instance. If this function has been called, any providers registered using the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.RegisterColumnEncryptionKeyStoreProviders()" /> or
-			<see cref="M:Microsoft.Data.SqlClient.SqlConnection.RegisterColumnEncryptionKeyStoreProvidersOnConnection()" /> methods will be ignored. This function can be called more than once. This does shallow copying of the dictionary so that the app cannot alter the custom provider list once it has been set.</summary>
+			<summary>Registers the encryption key store providers on the <see cref="T:Microsoft.Data.SqlClient.SqlCommand" /> instance. If this function has been called, any providers registered using the <see cref="M:Microsoft.Data.SqlClient.SqlConnection.RegisterColumnEncryptionKeyStoreProviders(System.Collections.Generic.IDictionary{System.String,Microsoft.Data.SqlClient.SqlColumnEncryptionKeyStoreProvider})" /> or
+			<see cref="M:Microsoft.Data.SqlClient.SqlConnection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(System.Collections.Generic.IDictionary{System.String,Microsoft.Data.SqlClient.SqlColumnEncryptionKeyStoreProvider})" /> methods will be ignored. This function can be called more than once. This does shallow copying of the dictionary so that the app cannot alter the custom provider list once it has been set.</summary>
 			<exception cref="T:System.ArgumentNullException">
 					A null dictionary was provided.
 
