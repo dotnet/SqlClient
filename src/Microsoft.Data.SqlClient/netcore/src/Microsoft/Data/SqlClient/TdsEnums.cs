@@ -985,7 +985,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // TCE Related constants
-        internal const byte MAX_SUPPORTED_TCE_VERSION = 0x02; // max version
+        internal const byte MAX_SUPPORTED_TCE_VERSION = 0x03; // max version
         internal const byte MIN_TCE_VERSION_WITH_ENCLAVE_SUPPORT = 0x02; // min version with enclave support
         internal const ushort MAX_TCE_CIPHERINFO_SIZE = 2048; // max size of cipherinfo blob
         internal const long MAX_TCE_CIPHERTEXT_SIZE = 2147483648; // max size of encrypted blob- currently 2GB.

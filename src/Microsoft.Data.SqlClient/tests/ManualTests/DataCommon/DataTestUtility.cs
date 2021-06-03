@@ -41,7 +41,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string LocalDbAppName = null;
         public static List<string> AEConnStrings = new List<string>();
         public static List<string> AEConnStringsSetup = new List<string>();
-        public static readonly bool EnclaveEnabled = false;
+        public static bool EnclaveEnabled { get; private set; } = false;
         public static readonly bool TracingEnabled = false;
         public static readonly bool SupportsIntegratedSecurity = false;
         public static readonly bool SupportsFileStream = false;
