@@ -65,6 +65,7 @@ namespace Microsoft.Data.SqlClient
             AttestationProtocol,
 
             CommandTimeout,
+            IPAddressPreference,
 
 #if ADONET_CERT_AUTH
             Certificate,
@@ -118,6 +119,7 @@ namespace Microsoft.Data.SqlClient
         private SqlConnectionColumnEncryptionSetting _columnEncryptionSetting = DbConnectionStringDefaults.ColumnEncryptionSetting;
         private string _enclaveAttestationUrl = DbConnectionStringDefaults.EnclaveAttestationUrl;
         private SqlConnectionAttestationProtocol _attestationProtocol = DbConnectionStringDefaults.AttestationProtocol;
+        private SqlConnectionIPAddressPreference _ipAddressPreference = DbConnectionStringDefaults.IPAddressPreference;
         private PoolBlockingPeriod _poolBlockingPeriod = DbConnectionStringDefaults.PoolBlockingPeriod;
 
 #if ADONET_CERT_AUTH
@@ -168,6 +170,7 @@ namespace Microsoft.Data.SqlClient
             validKeywords[(int)Keywords.ColumnEncryptionSetting] = DbConnectionStringKeywords.ColumnEncryptionSetting;
             validKeywords[(int)Keywords.EnclaveAttestationUrl] = DbConnectionStringKeywords.EnclaveAttestationUrl;
             validKeywords[(int)Keywords.AttestationProtocol] = DbConnectionStringKeywords.AttestationProtocol;
+            validKeywords[(int)Keywords.IPAddressPreference] = DbConnectionStringKeywords.IPAddressPreference;
 #if ADONET_CERT_AUTH
             validKeywords[(int)Keywords.Certificate] = DbConnectionStringKeywords.Certificate;
 #endif
@@ -215,9 +218,11 @@ namespace Microsoft.Data.SqlClient
             hash.Add(DbConnectionStringKeywords.ColumnEncryptionSetting, Keywords.ColumnEncryptionSetting);
             hash.Add(DbConnectionStringKeywords.EnclaveAttestationUrl, Keywords.EnclaveAttestationUrl);
             hash.Add(DbConnectionStringKeywords.AttestationProtocol, Keywords.AttestationProtocol);
+            hash.Add(DbConnectionStringKeywords.IPAddressPreference, Keywords.IPAddressPreference);
 #if ADONET_CERT_AUTH
             hash.Add(DbConnectionStringKeywords.Certificate, Keywords.Certificate);
 #endif
+            hash.Add(DbConnectionStringSynonyms.IPADDRESSPREFERENCE, Keywords.IPAddressPreference);
             hash.Add(DbConnectionStringSynonyms.APP, Keywords.ApplicationName);
             hash.Add(DbConnectionStringSynonyms.APPLICATIONINTENT, Keywords.ApplicationIntent);
             hash.Add(DbConnectionStringSynonyms.Async, Keywords.AsynchronousProcessing);
@@ -356,6 +361,9 @@ namespace Microsoft.Data.SqlClient
                             break;
                         case Keywords.AttestationProtocol:
                             AttestationProtocol = ConvertToAttestationProtocol(keyword, value);
+                            break;
+                        case Keywords.IPAddressPreference:
+                            IPAddressPreference = ConvertToIPAddressPreference(keyword, value);
                             break;
 #if ADONET_CERT_AUTH
                         case Keywords.Certificate:
@@ -685,6 +693,26 @@ namespace Microsoft.Data.SqlClient
 
                 SetAttestationProtocolValue(value);
                 _attestationProtocol = value;
+            }
+        }
+
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/IPAddressPreference/*' />
+        [DisplayName(DbConnectionStringKeywords.IPAddressPreference)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Security)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.TCE_DbConnectionString_IPAddressPreference)]
+        [RefreshPropertiesAttribute(RefreshProperties.All)]
+        public SqlConnectionIPAddressPreference IPAddressPreference
+        {
+            get => _ipAddressPreference;
+            set
+            {
+                if (!DbConnectionStringBuilderUtil.IsValidIPAddressPreference(value))
+                {
+                    throw ADP.InvalidEnumerationValue(typeof(SqlConnectionIPAddressPreference), (int)value);
+                }
+
+                SetIPAddressPreferenceValue(value);
+                _ipAddressPreference = value;
             }
         }
 
@@ -1267,6 +1295,14 @@ namespace Microsoft.Data.SqlClient
             return DbConnectionStringBuilderUtil.ConvertToAttestationProtocol(keyword, value);
         }
 
+        /// <summary>
+        /// Convert to SqlConnectionIPAddressPreference
+        /// </summary>
+        /// <param name="keyword"></param>
+        /// <param name="value"></param>
+        private static SqlConnectionIPAddressPreference ConvertToIPAddressPreference(string keyword, object value)
+            => DbConnectionStringBuilderUtil.ConvertToIPAddressPreference(keyword, value);
+
         private object GetAt(Keywords index)
         {
             switch (index)
@@ -1357,6 +1393,8 @@ namespace Microsoft.Data.SqlClient
                     return EnclaveAttestationUrl;
                 case Keywords.AttestationProtocol:
                     return AttestationProtocol;
+                case Keywords.IPAddressPreference:
+                    return IPAddressPreference;
 #if ADONET_CERT_AUTH
             case Keywords.Certificate:              return Certificate;
 #endif
@@ -1552,6 +1590,9 @@ namespace Microsoft.Data.SqlClient
                 case Keywords.AttestationProtocol:
                     _attestationProtocol = DbConnectionStringDefaults.AttestationProtocol;
                     break;
+                case Keywords.IPAddressPreference:
+                    _ipAddressPreference = DbConnectionStringDefaults.IPAddressPreference;
+                    break;
                 default:
                     Debug.Fail("unexpected keyword");
                     throw ADP.KeywordNotSupported(_validKeywords[(int)index]);
@@ -1596,6 +1637,12 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(DbConnectionStringBuilderUtil.IsValidAttestationProtocol(value), "Invalid value for SqlConnectionAttestationProtocol");
             base[DbConnectionStringKeywords.AttestationProtocol] = DbConnectionStringBuilderUtil.AttestationProtocolToString(value);
+        }
+
+        private void SetIPAddressPreferenceValue(SqlConnectionIPAddressPreference value)
+        {
+            Debug.Assert(DbConnectionStringBuilderUtil.IsValidIPAddressPreference(value), "Invalid value for SqlConnectionIPAddressPreference");
+            base[DbConnectionStringKeywords.IPAddressPreference] = DbConnectionStringBuilderUtil.IPAddressPreferenceToString(value);
         }
 
 
@@ -1923,4 +1970,3 @@ namespace Microsoft.Data.SqlClient
     }
 
 }
-

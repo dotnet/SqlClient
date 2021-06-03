@@ -53,6 +53,7 @@ namespace Microsoft.Data.SqlClient
             internal const SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Disabled;
             internal const string EnclaveAttestationUrl = _emptyString;
             internal static readonly SqlConnectionAttestationProtocol AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified;
+            internal static readonly SqlConnectionIPAddressPreference s_IPAddressPreference = SqlConnectionIPAddressPreference.IPv4First;
         }
 
         // SqlConnection ConnectionString Options
@@ -69,6 +70,7 @@ namespace Microsoft.Data.SqlClient
             internal const string ColumnEncryptionSetting = "column encryption setting";
             internal const string EnclaveAttestationUrl = "enclave attestation url";
             internal const string AttestationProtocol = "attestation protocol";
+            internal const string IPAddressPreference = "ip address preference";
 
             internal const string Command_Timeout = "command timeout";
             internal const string Connect_Timeout = "connect timeout";
@@ -106,6 +108,8 @@ namespace Microsoft.Data.SqlClient
         // Constant for the number of duplicate options in the connection string
         private static class SYNONYM
         {
+            // ip address preference
+            internal const string IPADDRESSPREFERENCE = "ipaddresspreference";
             //application intent
             internal const string APPLICATIONINTENT = "applicationintent";
             // application name
@@ -160,9 +164,9 @@ namespace Microsoft.Data.SqlClient
         }
 
 #if NETCOREAPP
-        internal const int SynonymCount = 25;
+        internal const int SynonymCount = 26;
 #else
-        internal const int SynonymCount = 24;
+        internal const int SynonymCount = 25;
 #endif
         internal const int DeprecatedSynonymCount = 3;
 
@@ -213,6 +217,7 @@ namespace Microsoft.Data.SqlClient
         private readonly SqlConnectionColumnEncryptionSetting _columnEncryptionSetting;
         private readonly string _enclaveAttestationUrl;
         private readonly SqlConnectionAttestationProtocol _attestationProtocol;
+        private readonly SqlConnectionIPAddressPreference _ipAddressPreference;
 
         private readonly int _commandTimeout;
         private readonly int _connectTimeout;
@@ -293,6 +298,7 @@ namespace Microsoft.Data.SqlClient
             _columnEncryptionSetting = ConvertValueToColumnEncryptionSetting();
             _enclaveAttestationUrl = ConvertValueToString(KEY.EnclaveAttestationUrl, DEFAULT.EnclaveAttestationUrl);
             _attestationProtocol = ConvertValueToAttestationProtocol();
+            _ipAddressPreference = ConvertValueToIPAddressPreference();
 
             // Temporary string - this value is stored internally as an enum.
             string typeSystemVersionString = ConvertValueToString(KEY.Type_System_Version, null);
@@ -478,12 +484,17 @@ namespace Microsoft.Data.SqlClient
 
             if (Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity && HasPasswordKeyword)
             {
-                throw SQL.ManagedIdentityWithPassword(DbConnectionStringBuilderUtil.ActiveDirectoryManagedIdentityString);
+                throw SQL.NonInteractiveWithPassword(DbConnectionStringBuilderUtil.ActiveDirectoryManagedIdentityString);
             }
 
             if (Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI && HasPasswordKeyword)
             {
-                throw SQL.ManagedIdentityWithPassword(DbConnectionStringBuilderUtil.ActiveDirectoryMSIString);
+                throw SQL.NonInteractiveWithPassword(DbConnectionStringBuilderUtil.ActiveDirectoryMSIString);
+            }
+
+            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryDefault && HasPasswordKeyword)
+            {
+                throw SQL.NonInteractiveWithPassword(DbConnectionStringBuilderUtil.ActiveDirectoryDefaultString);
             }
         }
 
@@ -559,6 +570,7 @@ namespace Microsoft.Data.SqlClient
         internal SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting { get { return _columnEncryptionSetting; } }
         internal string EnclaveAttestationUrl { get { return _enclaveAttestationUrl; } }
         internal SqlConnectionAttestationProtocol AttestationProtocol { get { return _attestationProtocol; } }
+        internal SqlConnectionIPAddressPreference IPAddressPreference => _ipAddressPreference;
         internal bool PersistSecurityInfo { get { return _persistSecurityInfo; } }
         internal bool Pooling { get { return _pooling; } }
         internal bool Replication { get { return _replication; } }
@@ -687,6 +699,7 @@ namespace Microsoft.Data.SqlClient
                     { KEY.Connect_Retry_Count, KEY.Connect_Retry_Count },
                     { KEY.Connect_Retry_Interval, KEY.Connect_Retry_Interval },
                     { KEY.Authentication, KEY.Authentication },
+                    { KEY.IPAddressPreference, KEY.IPAddressPreference },
 
                     { SYNONYM.APP, KEY.Application_Name },
                     { SYNONYM.APPLICATIONINTENT, KEY.ApplicationIntent },
@@ -717,7 +730,8 @@ namespace Microsoft.Data.SqlClient
                     { SYNONYM.TRUSTSERVERCERTIFICATE, KEY.TrustServerCertificate },
                     { SYNONYM.UID, KEY.User_ID },
                     { SYNONYM.User, KEY.User_ID },
-                    { SYNONYM.WSID, KEY.Workstation_Id }
+                    { SYNONYM.WSID, KEY.Workstation_Id },
+                    { SYNONYM.IPADDRESSPREFERENCE, KEY.IPAddressPreference }
                 };
                 Debug.Assert(synonyms.Count == count, "incorrect initial ParseSynonyms size");
                 Interlocked.CompareExchange(ref s_sqlClientSynonyms, synonyms, null);
@@ -896,6 +910,31 @@ namespace Microsoft.Data.SqlClient
             catch (OverflowException e)
             {
                 throw ADP.InvalidConnectionOptionValue(KEY.AttestationProtocol, e);
+            }
+        }
+
+        /// <summary>
+        /// Convert the value to SqlConnectionIPAddressPreference
+        /// </summary>
+        /// <returns></returns>
+        internal SqlConnectionIPAddressPreference ConvertValueToIPAddressPreference()
+        {
+            if (!TryGetParsetableValue(KEY.IPAddressPreference, out string value))
+            {
+                return DEFAULT.s_IPAddressPreference;
+            }
+
+            try
+            {
+                return DbConnectionStringBuilderUtil.ConvertToIPAddressPreference(KEY.IPAddressPreference, value);
+            }
+            catch (FormatException e)
+            {
+                throw ADP.InvalidConnectionOptionValue(KEY.IPAddressPreference, e);
+            }
+            catch (OverflowException e)
+            {
+                throw ADP.InvalidConnectionOptionValue(KEY.IPAddressPreference, e);
             }
         }
     }

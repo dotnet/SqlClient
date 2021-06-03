@@ -3798,7 +3798,7 @@ namespace Microsoft.Data.SqlClient
                             // can read it out of order
                             if (!_parser.TryReadSqlValue(_data[_sharedState._nextColumnDataToRead], columnMetaData, (int)dataLength, _stateObj,
                                 _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
-                                columnMetaData.column))
+                                columnMetaData.column, _command))
                             { // will read UDTs as VARBINARY.
                                 return false;
                             }

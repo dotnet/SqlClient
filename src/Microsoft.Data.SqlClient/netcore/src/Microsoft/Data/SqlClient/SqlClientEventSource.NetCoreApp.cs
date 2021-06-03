@@ -67,14 +67,14 @@ namespace Microsoft.Data.SqlClient
             _activeHardConnections = _activeHardConnections ??
              new PollingCounter("active-hard-connections", this, () => _activeHardConnectionsCounter)
              {
-                 DisplayName = "Actual active connections are made to servers",
+                 DisplayName = "Actual active connections currently made to servers",
                  DisplayUnits = "count"
              };
 
             _hardConnectsPerSecond = _hardConnectsPerSecond ??
                 new IncrementingPollingCounter("hard-connects", this, () => _hardConnectsCounter)
                 {
-                    DisplayName = "Actual connections are made to servers",
+                    DisplayName = "Actual connection rate to servers",
                     DisplayUnits = "count / sec",
                     DisplayRateTimeScale = TimeSpan.FromSeconds(1)
                 };
@@ -82,7 +82,7 @@ namespace Microsoft.Data.SqlClient
             _hardDisconnectsPerSecond = _hardDisconnectsPerSecond ??
                 new IncrementingPollingCounter("hard-disconnects", this, () => _hardDisconnectsCounter)
                 {
-                    DisplayName = "Actual disconnections are made to servers",
+                    DisplayName = "Actual disconnection rate from servers",
                     DisplayUnits = "count / sec",
                     DisplayRateTimeScale = TimeSpan.FromSeconds(1)
                 };
@@ -90,14 +90,14 @@ namespace Microsoft.Data.SqlClient
             _activeSoftConnections = _activeSoftConnections ??
                 new PollingCounter("active-soft-connects", this, () => _activeSoftConnectionsCounter)
                 {
-                    DisplayName = "Active connections got from connection pool",
+                    DisplayName = "Active connections retrieved from the connection pool",
                     DisplayUnits = "count"
                 };
 
             _softConnects = _softConnects ??
                 new IncrementingPollingCounter("soft-connects", this, () => _softConnectsCounter)
                 {
-                    DisplayName = "Connections got from connection pool",
+                    DisplayName = "Rate of connections retrieved from the connection pool",
                     DisplayUnits = "count / sec",
                     DisplayRateTimeScale = TimeSpan.FromSeconds(1)
                 };
@@ -105,7 +105,7 @@ namespace Microsoft.Data.SqlClient
             _softDisconnects = _softDisconnects ??
                 new IncrementingPollingCounter("soft-disconnects", this, () => _softDisconnectsCounter)
                 {
-                    DisplayName = "Connections returned to the connection pool",
+                    DisplayName = "Rate of connections returned to the connection pool",
                     DisplayUnits = "count / sec",
                     DisplayRateTimeScale = TimeSpan.FromSeconds(1)
                 };
@@ -113,15 +113,15 @@ namespace Microsoft.Data.SqlClient
             _numberOfNonPooledConnections = _numberOfNonPooledConnections ??
                 new PollingCounter("number-of-non-pooled-connections", this, () => _nonPooledConnectionsCounter)
                 {
-                    DisplayName = "Number of connections are not using connection pooling",
-                    DisplayUnits = "count / sec"
+                    DisplayName = "Number of connections not using connection pooling",
+                    DisplayUnits = "count"
                 };
 
             _numberOfPooledConnections = _numberOfPooledConnections ??
                 new PollingCounter("number-of-pooled-connections", this, () => _pooledConnectionsCounter)
                 {
-                    DisplayName = "Number of connections are managed by connection pooler",
-                    DisplayUnits = "count / sec"
+                    DisplayName = "Number of connections managed by the connection pool",
+                    DisplayUnits = "count"
                 };
 
             _numberOfActiveConnectionPoolGroups = _numberOfActiveConnectionPoolGroups ??
@@ -162,7 +162,7 @@ namespace Microsoft.Data.SqlClient
             _numberOfFreeConnections = _numberOfFreeConnections ??
                 new PollingCounter("number-of-free-connections", this, () => _freeConnectionsCounter)
                 {
-                    DisplayName = "Number of free-ready connections",
+                    DisplayName = "Number of ready connections in the connection pool",
                     DisplayUnits = "count"
                 };
 
@@ -241,7 +241,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// The number of connections that are managed by the connection pooler
+        /// The number of connections that are managed by the connection pool
         /// </summary>
         [NonEvent]
         internal override void EnterPooledConnection()
@@ -250,7 +250,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// The number of connections that are managed by the connection pooler
+        /// The number of connections that are managed by the connection pool
         /// </summary>
         [NonEvent]
         internal override void ExitPooledConnection()

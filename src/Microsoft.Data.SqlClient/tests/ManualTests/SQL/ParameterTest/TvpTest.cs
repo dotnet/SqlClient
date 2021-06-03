@@ -17,6 +17,7 @@ using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.SqlClient.Server;
 using Xunit;
+using System.Linq;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -80,6 +81,99 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Console.WriteLine($"enumerator.Count={enumerator.Count}, enumerator.MaxCount={enumerator.MaxCount}, elapsed={stopwatch.Elapsed.TotalSeconds}");
             }
             Assert.True(enumerator.MaxCount == enumerator.Count);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public void TestConnectionIsSafeToReuse()
+        {
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+
+            // Bad Scenario - exception expected.
+            try
+            {
+                List<Item> list = new()
+                {
+                    new Item(0),
+                    null,
+                    new Item(2),
+                    new Item(3),
+                    new Item(4),
+                    new Item(5)
+                };
+
+                IEnumerable<int> Ids = list.Select(x => x.id.Value).Distinct();
+
+                var sqlParam = new SqlParameter("ids", SqlDbType.Structured)
+                {
+                    TypeName = "dbo.TableOfIntId",
+                    SqlValue = Ids.Select(x =>
+                    {
+                        SqlDataRecord rec = new(new[] { new SqlMetaData("Id", SqlDbType.Int) });
+                        rec.SetInt32(0, x);
+                        return rec;
+                    })
+                };
+
+                var parameters = new List<SqlParameter>() { sqlParam };
+                const string SQL = @"SELECT * FROM information_schema.COLUMNS cols INNER JOIN  @ids Ids on Ids.id = cols.ORDINAL_POSITION";
+                using SqlCommand cmd = new(SQL, connection);
+                cmd.CommandTimeout = 100;
+                AddCommandParameters(cmd, parameters);
+                new SqlDataAdapter(cmd).Fill(new("BadFunc"));
+                Assert.False(true, "Expected exception did not occur");
+            }
+            catch (Exception e)
+            {
+                // Ignore this exception as it's deliberately introduced.
+                Assert.True(e.Message.Contains("Object reference not set to an instance of an object"), "Expected exception did not occur");
+            }
+
+            // Good Scenario - No failure expected.
+            try
+            {
+                const string SQL = @"SELECT * FROM information_schema.tables WHERE TABLE_NAME = @TableName";
+                var parameters = new List<SqlParameter>() { new SqlParameter("@TableName", "Temp") };
+                using SqlCommand cmd = new(SQL, connection);
+                cmd.CommandTimeout = 100;
+                AddCommandParameters(cmd, parameters);
+                new SqlDataAdapter(cmd).Fill(new("GoodFunc"));
+            }
+            catch (Exception e)
+            {
+                Assert.False(true, $"Unexpected error occurred: {e.Message}");
+            }
+        }
+
+        private class Item
+        {
+            public Item(int? v)
+            {
+                id = v;
+            }
+            public int? id { get; set; }
+        }
+
+        static internal void AddCommandParameters(SqlCommand command, IEnumerable parameters)
+        {
+            if (parameters == null)
+                return;
+
+            foreach (SqlParameter p in parameters)
+            {
+                if (p == null)
+                    continue;
+
+                if (p.Value == null)
+                {
+                    var clone = (SqlParameter)((ICloneable)p).Clone();
+                    clone.Value = DBNull.Value;
+                    command.Parameters.Add(clone);
+                }
+                else
+                {
+                    command.Parameters.Add(p);
+                }
+            }
         }
 
         public TvpTest()
@@ -693,7 +787,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     // allowable max-length adjustments
                     if (maxLength == resultBytes.Length)
                     {  // a bit optimistic, but what the heck.
-                        // truncation
+                       // truncation
                         if (maxLength <= source.Length)
                         {
                             returnValue = true;
