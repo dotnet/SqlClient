@@ -2851,9 +2851,9 @@ The blocking connection simulates a situation like a command still running in th
 
 ### How to use with legacy asynchronous commands
 Besides assigning the provider to the command and executing the command, it's possible to run it directly using the following <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider> methods:  
-- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.Execute%2A>
-- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.ExecuteAsync1%2A>
-- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.ExecuteAsync2%2A>
+- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.Execute%60%601(System.Object,System.Func{%60%600})>
+- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.ExecuteAsync(System.Object,System.Func{System.Threading.Tasks.Task},System.Threading.CancellationToken)>
+- <xref:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider.ExecuteAsync%60%601(System.Object,System.Func{System.Threading.Tasks.Task{%60%600}},System.Threading.CancellationToken)>
 
 [!code-csharp[SqlConfigurableRetryLogic_SqlCommand#4](~/../sqlclient/doc/samples/SqlConfigurableRetryLogic_SqlCommand.cs#4)]
 

@@ -12,7 +12,7 @@
             <param name="maxTime">The maximum time allowed as a gap time.</param>
             <param name="minTime">The minimum time allowed as a gap time.</param>
             <summary>Initializes a new instance of the <see cref="T:Microsoft.Data.SqlClient.SqlRetryIntervalBaseEnumerator" /> class.</summary>
-            <exception cref="T:System.ArgumentOutOfRangeException">The supplied arguments failed <see cref="M:Microsoft.Data.SqlClient.SqlRetryIntervalBaseEnumerator.#Validate" /> validation.</exception>
+            <exception cref="T:System.ArgumentOutOfRangeException">The supplied arguments failed <see cref="M:Microsoft.Data.SqlClient.SqlRetryIntervalBaseEnumerator.Validate(System.TimeSpan,System.TimeSpan,System.TimeSpan)" /> validation.</exception>
         </ctor2>
         <GapTimeInterval>
             <summary>The default gap time of each interval.</summary>
