@@ -136,7 +136,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // Synapse: Statement 'Drop Database' is not supported in this version of SQL Server.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void CollatedDataReaderTest()
         {
             var databaseName = DataTestUtility.GetUniqueName("DB");
@@ -293,7 +293,7 @@ insert into [{tempTableName}] (first_name,last_name) values ('Joe','Smith')
             Assert.Contains("user_id", names, StringComparer.Ordinal);
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void CheckNullRowVersionIsBDNull()
         {
             lock (s_rowVersionLock)
@@ -323,7 +323,8 @@ insert into [{tempTableName}] (first_name,last_name) values ('Joe','Smith')
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        // Synapse: Cannot find data type 'rowversion'.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void CheckLegacyNullRowVersionIsEmptyArray()
         {
             lock (s_rowVersionLock)
