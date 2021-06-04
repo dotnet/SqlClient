@@ -225,6 +225,12 @@ namespace Microsoft.Data.SqlClient
             CacheConnectionStringProperties();
         }
 
+
+        internal static bool TryGetSystemColumnEncryptionKeyStoreProvider(string keyStoreName, out SqlColumnEncryptionKeyStoreProvider provider)
+        {
+            return s_systemColumnEncryptionKeyStoreProviders.TryGetValue(keyStoreName, out provider);
+        }
+
         /// <summary>
         /// This function walks through both system and custom column encryption key store providers and returns an object if found.
         /// </summary>
@@ -240,17 +246,12 @@ namespace Microsoft.Data.SqlClient
                 return _customColumnEncryptionKeyStoreProviders.TryGetValue(providerName, out columnKeyStoreProvider);
             }
 
-            // Search in the sytem provider list.
-            if (s_systemColumnEncryptionKeyStoreProviders.TryGetValue(providerName, out columnKeyStoreProvider))
-            {
-                return true;
-            }
-
             lock (s_globalCustomColumnEncryptionKeyProvidersLock)
             {
                 // If custom provider is not set, then return false
                 if (s_globalCustomColumnEncryptionKeyStoreProviders is null)
                 {
+                    columnKeyStoreProvider = null;
                     return false;
                 }
 

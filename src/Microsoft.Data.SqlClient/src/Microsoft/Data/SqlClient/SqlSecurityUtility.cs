@@ -9,6 +9,7 @@ using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -274,7 +275,7 @@ namespace Microsoft.Data.SqlClient
             {
                 try
                 {
-                    sqlClientSymmetricKey = InstanceLevelProvidersAreRegistered(connection, command) ?
+                    sqlClientSymmetricKey = ShouldUseInstanceLevelProviderFlow(keyInfo.keyStoreName, connection, command) ?
                         GetKeyFromLocalProviders(keyInfo, connection, command) :
                         globalCekCache.GetKey(keyInfo, connection, command);
                     encryptionkeyInfoChosen = keyInfo;
@@ -367,7 +368,7 @@ namespace Microsoft.Data.SqlClient
                         GetListOfProviderNamesThatWereSearched(connection, command));
                 }
 
-                if (InstanceLevelProvidersAreRegistered(connection, command))
+                if (ShouldUseInstanceLevelProviderFlow(keyStoreName,connection, command))
                 {
                     isValidSignature = provider.VerifyColumnMasterKeyMetadata(keyPath, isEnclaveEnabled, CMKSignature);
                 }
@@ -399,6 +400,15 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        // Instance-level providers will be used if at least one is registered on a connection or command and
+        // the required provider is not a system provider. System providers are pre-registered globally and
+        // must use the global provider flow
+        private static bool ShouldUseInstanceLevelProviderFlow(string keyStoreName, SqlConnection connection, SqlCommand command)
+        {
+            return InstanceLevelProvidersAreRegistered(connection, command) &&
+                !keyStoreName.StartsWith(ADP.ColumnEncryptionSystemProviderNamePrefix);
+        }
+
         private static bool InstanceLevelProvidersAreRegistered(SqlConnection connection, SqlCommand command) =>
             connection.HasColumnEncryptionKeyStoreProvidersRegistered ||
             (command is not null && command.HasColumnEncryptionKeyStoreProvidersRegistered);
@@ -422,6 +432,11 @@ namespace Microsoft.Data.SqlClient
         internal static bool TryGetColumnEncryptionKeyStoreProvider(string keyStoreName, out SqlColumnEncryptionKeyStoreProvider provider, SqlConnection connection, SqlCommand command)
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(keyStoreName), "Provider name is invalid");
+
+            if (SqlConnection.TryGetSystemColumnEncryptionKeyStoreProvider(keyStoreName, out provider))
+            {
+                return true;
+            }
 
             // command may be null because some callers do not have a command object, eg SqlBulkCopy
             if (command is not null && command.HasColumnEncryptionKeyStoreProvidersRegistered)

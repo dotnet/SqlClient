@@ -2242,6 +2242,31 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
+        // On Windows, "_fixture" will be type SQLSetupStrategyCertStoreProvider
+        // On non-Windows, "_fixture" will be type SQLSetupStrategyAzureKeyVault
+        // Test will pass on both but only SQLSetupStrategyCertStoreProvider is a system provider
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void TestSystemProvidersHavePrecedenceOverInstanceLevelProviders(string connectionString)
+        {
+            if (!SQLSetupStrategyAzureKeyVault.IsAKVProviderRegistered)
+            {
+                SqlColumnEncryptionAzureKeyVaultProvider sqlColumnEncryptionAzureKeyVaultProvider =
+                    new(new SqlClientCustomTokenCredential());
+                SQLSetupStrategyAzureKeyVault.RegisterGlobalProviders(sqlColumnEncryptionAzureKeyVaultProvider);
+            }
+
+            using SqlConnection connection = new(connectionString);
+            connection.Open();
+            using SqlCommand command = new(
+                $"SELECT * FROM [{_fixture.CustomKeyStoreProviderTestTable.Name}] WHERE FirstName = @firstName",
+                connection, null, SqlCommandColumnEncryptionSetting.Enabled);
+            command.Parameters.AddWithValue("firstName", "abc");
+            connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(_requiredProvider);
+            command.RegisterColumnEncryptionKeyStoreProvidersOnCommand(_notRequiredProvider);
+            command.ExecuteReader();
+        }
+
         private void ExecuteQueryThatRequiresCustomKeyStoreProvider(SqlConnection connection)
         {
             using (SqlCommand command = CreateCommandThatRequiresCustomKeyStoreProvider(connection))
