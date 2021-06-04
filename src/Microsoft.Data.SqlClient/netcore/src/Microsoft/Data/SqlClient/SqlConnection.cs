@@ -225,7 +225,6 @@ namespace Microsoft.Data.SqlClient
             CacheConnectionStringProperties();
         }
 
-
         internal static bool TryGetSystemColumnEncryptionKeyStoreProvider(string keyStoreName, out SqlColumnEncryptionKeyStoreProvider provider)
         {
             return s_systemColumnEncryptionKeyStoreProviders.TryGetValue(keyStoreName, out provider);
