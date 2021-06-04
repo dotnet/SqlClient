@@ -4,6 +4,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Reflection;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -11,9 +12,33 @@ namespace Microsoft.Data.SqlClient
     /// Configurable retry logic manager;
     /// Receive the default providers by a loader and feeds connections and commands.
     /// </summary>
-    internal sealed partial class SqlConfigurableRetryLogicManager
+    internal sealed class SqlConfigurableRetryLogicManager
     {
         private const string TypeName = nameof(SqlConfigurableRetryLogicManager);
+
+        private static readonly Lazy<SqlConfigurableRetryLogicLoader> s_loader =
+            new Lazy<SqlConfigurableRetryLogicLoader>(() =>
+            {
+                ISqlConfigurableRetryConnectionSection cnnConfig = null;
+                ISqlConfigurableRetryCommandSection cmdConfig = null;
+
+                // Fetch the section attributes values from the configuration section of the app config file.
+                cnnConfig = AppConfigManager.FetchConfigurationSection<SqlConfigurableRetryConnectionSection>(SqlConfigurableRetryConnectionSection.Name);
+                cmdConfig = AppConfigManager.FetchConfigurationSection<SqlConfigurableRetryCommandSection>(SqlConfigurableRetryCommandSection.Name);
+#if !NETFRAMEWORK
+                IAppContextSwitchOverridesSection appContextSwitch = AppConfigManager.FetchConfigurationSection<AppContextSwitchOverridesSection>(AppContextSwitchOverridesSection.Name);
+                try
+                {
+                    SqlAppContextSwitchManager.ApplyContextSwitches(appContextSwitch);
+                }
+                catch (Exception e)
+                {
+                    // Don't throw an exception for an invalid config file
+                    SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO>: {2}", TypeName, MethodBase.GetCurrentMethod().Name, e);
+                }
+#endif
+                return new SqlConfigurableRetryLogicLoader(cnnConfig, cmdConfig);
+            });
 
         private SqlConfigurableRetryLogicManager() {/*prevent external object creation*/}
 
@@ -73,33 +98,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-    }
-
-    /// <summary>
-    /// Configurable retry logic loader
-    /// </summary>
-    internal sealed partial class SqlConfigurableRetryLogicLoader
-    {
-        private const string TypeName = nameof(SqlConfigurableRetryLogicLoader);
-
-        /// <summary>
-        /// The default non retry provider will apply if a parameter passes by null.
-        /// </summary>
-        private void AssignProviders(SqlRetryLogicBaseProvider cnnProvider = null, SqlRetryLogicBaseProvider cmdProvider = null)
-        {
-            ConnectionProvider = cnnProvider ?? SqlConfigurableRetryFactory.CreateNoneRetryProvider();
-            CommandProvider = cmdProvider ?? SqlConfigurableRetryFactory.CreateNoneRetryProvider();
-        }
-
-        /// <summary>
-        /// Default Retry provider for SqlConnections
-        /// </summary>
-        internal SqlRetryLogicBaseProvider ConnectionProvider { get; private set; }
-
-        /// <summary>
-        /// Default Retry provider for SqlCommands
-        /// </summary>
-        internal SqlRetryLogicBaseProvider CommandProvider { get; private set; }
     }
 
     internal interface IAppContextSwitchOverridesSection

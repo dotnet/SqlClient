@@ -30,16 +30,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public const string DefaultTansientErrors = "1204, 1205, 1222, 49918, 49919, 49920, 4060, 4221, 40143, 40613, 40501, 40540, 40197, 10929, 10928, 10060, 10054, 10053, 997, 233, 64, 20, 0, -2, 207, 102, 2812";
 
-        //private const string SqlRetryLogicProviderTypeName = "Microsoft.Data.SqlClient.SqlRetryLogicProvider";
-        //private const string SqlExponentialIntervalEnumeratorTypeName = "Microsoft.Data.SqlClient.SqlExponentialIntervalEnumerator";
-        //private const string SqlIncrementalIntervalEnumeratorTypeName = "Microsoft.Data.SqlClient.SqlIncrementalIntervalEnumerator";
-        //private const string SqlFixedIntervalEnumeratorTypeName = "Microsoft.Data.SqlClient.SqlFixedIntervalEnumerator";
-        //private const string SqlNoneIntervalEnumeratorTypeName = "Microsoft.Data.SqlClient.SqlNoneIntervalEnumerator";
-
-        //private static readonly Type s_sqlRetryLogicBaseProviderType = typeof(SqlRetryLogicBaseProvider);
-        //private static readonly Type s_sqlRetryLogicProviderType = s_sqlClientAssembly.GetType(SqlRetryLogicProviderTypeName);
-        //private static readonly Type s_sqlRetryLogicBaseType = s_sqlClientAssembly.GetType(SqlRetryLogicBaseTypeName);
-
         private static readonly Random s_random = new Random();
 
         private static readonly Assembly s_sqlClientAssembly = typeof(SqlConnection).Assembly;
