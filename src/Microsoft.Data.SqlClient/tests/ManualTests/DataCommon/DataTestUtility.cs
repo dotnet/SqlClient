@@ -51,6 +51,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         //Kerberos connection string
         public static readonly bool IsKerberosEnabled = false;
+        public static readonly string DomainProviderName = null;
 
         public static readonly string DNSCachingConnString = null;
         public static readonly string DNSCachingServerCR = null;  // this is for the control ring
@@ -80,7 +81,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TCPConnectionStringHGSVBS = c.TCPConnectionStringHGSVBS;
             TCPConnectionStringAASVBS = c.TCPConnectionStringAASVBS;
             TCPConnectionStringAASSGX = c.TCPConnectionStringAASSGX;
-            IsKerberosEnabled = c.IsKerberosEnabled;
+           
             AADAuthorityURL = c.AADAuthorityURL;
             AADPasswordConnectionString = c.AADPasswordConnectionString;
             AADServicePrincipalId = c.AADServicePrincipalId;
@@ -97,6 +98,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             IsAzureSynapse = c.IsAzureSynapse;
             IsDNSCachingSupportedCR = c.IsDNSCachingSupportedCR;
             IsDNSCachingSupportedTR = c.IsDNSCachingSupportedTR;
+            IsKerberosEnabled = c.IsKerberosEnabled;
+            DomainProviderName = c.DomainProviderName;
             EnclaveAzureDatabaseConnString = c.EnclaveAzureDatabaseConnString;
             UserManagedIdentityClientId = c.UserManagedIdentityClientId;
 
@@ -287,7 +290,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsKerberosTest()
         {
-            return IsKerberosEnabled;
+            return IsKerberosEnabled && (!string.IsNullOrEmpty(DomainProviderName));
         }
 
         public static bool IsAADPasswordConnStrSetup()

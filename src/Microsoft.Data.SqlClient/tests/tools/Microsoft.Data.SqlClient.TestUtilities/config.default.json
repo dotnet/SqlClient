@@ -25,6 +25,7 @@
     "IsDNSCachingSupportedTR": false,
     "IsAzureSynapse": false,
     "IsKerberosEnabled":false,
+    "DomainProviderName":"",
     "EnclaveAzureDatabaseConnString": "",
     "UserManagedIdentityClientId": ""
 }
