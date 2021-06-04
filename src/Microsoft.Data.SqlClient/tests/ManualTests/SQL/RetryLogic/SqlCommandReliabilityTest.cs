@@ -51,11 +51,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.Equal(numberOfTries, ex.InnerExceptions.Count);
                 Assert.Contains(string.Format(_exceedErrMsgPattern, numberOfTries), ex.Message);
 
-                cmd.CommandText = query + " FOR XML AUTO";
-                ex = Assert.Throws<AggregateException>(() => cmd.ExecuteXmlReader());
-                Assert.Equal(numberOfTries, currentRetries + 1);
-                Assert.Equal(numberOfTries, ex.InnerExceptions.Count);
-                Assert.Contains(string.Format(_exceedErrMsgPattern, numberOfTries), ex.Message);
+                if (!DataTestUtility.IsAzureSynapse)
+                {
+                    cmd.CommandText = query + " FOR XML AUTO";
+                    ex = Assert.Throws<AggregateException>(() => cmd.ExecuteXmlReader());
+                    Assert.Equal(numberOfTries, currentRetries + 1);
+                    Assert.Equal(numberOfTries, ex.InnerExceptions.Count);
+                    Assert.Contains(string.Format(_exceedErrMsgPattern, numberOfTries), ex.Message);
+                }
             }
         }
 
@@ -93,16 +96,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.Equal(cancelAfterRetries, ex.InnerExceptions.Count);
                 Assert.Contains(string.Format(_cancelErrMsgPattern, currentRetries), ex.Message);
 
-                cmd.CommandText = query + " FOR XML AUTO";
-                ex = Assert.Throws<AggregateException>(() => cmd.ExecuteXmlReader());
-                Assert.Equal(cancelAfterRetries, currentRetries);
-                Assert.Equal(cancelAfterRetries, ex.InnerExceptions.Count);
-                Assert.Contains(string.Format(_cancelErrMsgPattern, currentRetries), ex.Message);
+                if (DataTestUtility.IsNotAzureSynapse())
+                {
+                    cmd.CommandText = query + " FOR XML AUTO";
+                    ex = Assert.Throws<AggregateException>(() => cmd.ExecuteXmlReader());
+                    Assert.Equal(cancelAfterRetries, currentRetries);
+                    Assert.Equal(cancelAfterRetries, ex.InnerExceptions.Count);
+                    Assert.Contains(string.Format(_cancelErrMsgPattern, currentRetries), ex.Message);
+                }
             }
         }
 
         [ActiveIssue(14588)]
-        [Theory]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCommand), parameters: new object[] { 5 }, MemberType = typeof(RetryLogicTestHelper))]
         public void RetryExecuteWithTransScope(string cnnString, SqlRetryLogicBaseProvider provider)
         {
@@ -137,7 +143,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [Theory]
+        // Synapse: 111214;An attempt to complete a transaction has failed. No corresponding transaction found.
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCommand), parameters: new object[] { 5 }, MemberType = typeof(RetryLogicTestHelper))]
         public void RetryExecuteWithTrans(string cnnString, SqlRetryLogicBaseProvider provider)
         {
@@ -173,7 +180,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [Theory]
+        // Synapse: Msg 103010, Level 16, State 1, Line 1 | Parse error at line: 1, column: 1: Incorrect syntax near 'command'
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyFilterDMLStatements), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper))]
         public void RetryExecuteUnauthorizedSqlStatementDML(string cnnString, SqlRetryLogicBaseProvider provider)
         {
@@ -227,7 +235,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [ActiveIssue(14325)]
         // avoid creating a new database in Azure
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureServer))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyDropDB), parameters: new object[] { 5 }, MemberType = typeof(RetryLogicTestHelper))]
         public void DropDatabaseWithActiveConnection(string cnnString, SqlRetryLogicBaseProvider provider)
         {
@@ -288,7 +296,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // In Managed SNI by Named pipe connection, SqlCommand doesn't respect timeout. "ActiveIssue 12167"
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotUsingManagedSNIOnWindows))]
+        // Synapse: Does not support WAITFOR DELAY.
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotUsingManagedSNIOnWindows), nameof(DataTestUtility.IsNotAzureSynapse))]
         [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyLockedTable), parameters: new object[] { 10 }, MemberType = typeof(RetryLogicTestHelper))]
         public void UpdateALockedTable(string cnnString, SqlRetryLogicBaseProvider provider)
         {
@@ -368,9 +377,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.ThrowsAsync<SqlException>(() => cmd.ExecuteReaderAsync(CommandBehavior.Default)).Wait();
                 Assert.ThrowsAsync<SqlException>(() => cmd.ExecuteNonQueryAsync()).Wait();
 
-                cmd.CommandText = query + " FOR XML AUTO";
-                Assert.Throws<SqlException>(() => cmd.ExecuteXmlReader());
-                Assert.ThrowsAsync<SqlException>(() => cmd.ExecuteXmlReaderAsync()).Wait();
+                if (DataTestUtility.IsNotAzureSynapse())
+                {
+                    cmd.CommandText = query + " FOR XML AUTO";
+                    Assert.Throws<SqlException>(() => cmd.ExecuteXmlReader());
+                    Assert.ThrowsAsync<SqlException>(() => cmd.ExecuteXmlReaderAsync()).Wait();
+                }
             }
         }
         #endregion
@@ -425,16 +437,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.Equal(numberOfTries, ex.InnerExceptions.Count);
                 Assert.Contains(string.Format(_exceedErrMsgPattern, numberOfTries), ex.Message);
 
-                cmd.CommandText = query + " FOR XML AUTO";
-                ex = await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteXmlReaderAsync());
-                Assert.Equal(numberOfTries, currentRetries + 1);
-                Assert.Equal(numberOfTries, ex.InnerExceptions.Count);
-                Assert.Contains(string.Format(_exceedErrMsgPattern, numberOfTries), ex.Message);
+                if (DataTestUtility.IsNotAzureSynapse())
+                {
+                    cmd.CommandText = query + " FOR XML AUTO";
+                    ex = await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteXmlReaderAsync());
+                    Assert.Equal(numberOfTries, currentRetries + 1);
+                    Assert.Equal(numberOfTries, ex.InnerExceptions.Count);
+                    Assert.Contains(string.Format(_exceedErrMsgPattern, numberOfTries), ex.Message);
 
-                ex = await Assert.ThrowsAsync<AggregateException>(() => provider.ExecuteAsync(cmd, () => Task.Factory.FromAsync(cmd.BeginExecuteXmlReader(), cmd.EndExecuteXmlReader)));
-                Assert.Equal(numberOfTries, currentRetries + 1);
-                Assert.Equal(numberOfTries, ex.InnerExceptions.Count);
-                Assert.Contains(string.Format(_exceedErrMsgPattern, numberOfTries), ex.Message);
+                    ex = await Assert.ThrowsAsync<AggregateException>(() => provider.ExecuteAsync(cmd, () => Task.Factory.FromAsync(cmd.BeginExecuteXmlReader(), cmd.EndExecuteXmlReader)));
+                    Assert.Equal(numberOfTries, currentRetries + 1);
+                    Assert.Equal(numberOfTries, ex.InnerExceptions.Count);
+                    Assert.Contains(string.Format(_exceedErrMsgPattern, numberOfTries), ex.Message);
+                }
             }
         }
 
@@ -487,16 +502,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.Equal(cancelAfterRetries, ex.InnerExceptions.Count);
                 Assert.Contains(string.Format(_cancelErrMsgPattern, currentRetries), ex.Message);
 
-                cmd.CommandText = query + " FOR XML AUTO";
-                ex = await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteXmlReaderAsync());
-                Assert.Equal(cancelAfterRetries, currentRetries);
-                Assert.Equal(cancelAfterRetries, ex.InnerExceptions.Count);
-                Assert.Contains(string.Format(_cancelErrMsgPattern, currentRetries), ex.Message);
+                if (DataTestUtility.IsNotAzureSynapse())
+                {
+                    cmd.CommandText = query + " FOR XML AUTO";
+                    ex = await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteXmlReaderAsync());
+                    Assert.Equal(cancelAfterRetries, currentRetries);
+                    Assert.Equal(cancelAfterRetries, ex.InnerExceptions.Count);
+                    Assert.Contains(string.Format(_cancelErrMsgPattern, currentRetries), ex.Message);
 
-                ex = await Assert.ThrowsAsync<AggregateException>(() => provider.ExecuteAsync(cmd, () => Task.Factory.FromAsync(cmd.BeginExecuteXmlReader(), cmd.EndExecuteXmlReader)));
-                Assert.Equal(cancelAfterRetries, currentRetries);
-                Assert.Equal(cancelAfterRetries, ex.InnerExceptions.Count);
-                Assert.Contains(string.Format(_cancelErrMsgPattern, currentRetries), ex.Message);
+                    ex = await Assert.ThrowsAsync<AggregateException>(() => provider.ExecuteAsync(cmd, () => Task.Factory.FromAsync(cmd.BeginExecuteXmlReader(), cmd.EndExecuteXmlReader)));
+                    Assert.Equal(cancelAfterRetries, currentRetries);
+                    Assert.Equal(cancelAfterRetries, ex.InnerExceptions.Count);
+                    Assert.Contains(string.Format(_cancelErrMsgPattern, currentRetries), ex.Message);
+                }
             }
         }
         #endregion
@@ -556,21 +574,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             });
             Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
 
-            retriesCount = 0;
-            Parallel.For(0, concurrentExecution,
-            i =>
+            if(DataTestUtility.IsNotAzureSynapse())
             {
-                using (SqlConnection cnn = new SqlConnection(cnnString))
-                using (SqlCommand cmd = cnn.CreateCommand())
+                retriesCount = 0;
+                Parallel.For(0, concurrentExecution,
+                i =>
                 {
-                    cnn.Open();
-                    cmd.RetryLogicProvider = provider;
-                    cmd.CommandText = query + " FOR XML AUTO";
-                    Assert.Throws<AggregateException>(() => cmd.ExecuteXmlReader());
-                }
-            });
-            Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
-
+                    using (SqlConnection cnn = new SqlConnection(cnnString))
+                    using (SqlCommand cmd = cnn.CreateCommand())
+                    {
+                        cnn.Open();
+                        cmd.RetryLogicProvider = provider;
+                        cmd.CommandText = query + " FOR XML AUTO";
+                        Assert.Throws<AggregateException>(() => cmd.ExecuteXmlReader());
+                    }
+                });
+                Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
+            }
+            
             retriesCount = 0;
             Parallel.For(0, concurrentExecution,
             i =>
@@ -618,20 +639,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             // TODO: there is a known issue by ExecuteXmlReaderAsync that should be solved first- issue #44
             /*
-            retriesCount = 0;
-            Parallel.For(0, concurrentExecution,
-            i =>
+            
+            if(DataTestUtility.IsNotAzureSynapse())
             {
-                using (SqlConnection cnn = new SqlConnection(cnnString))
-                using (SqlCommand cmd = cnn.CreateCommand())
+                retriesCount = 0;
+                Parallel.For(0, concurrentExecution,
+                i =>
                 {
-                    cnn.Open();
-                    cmd.RetryLogicProvider = provider;
-                    cmd.CommandText = query + " FOR XML AUTO";
-                    Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteXmlReaderAsync()).Wait();
-                }
-            });
-            Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
+                    using (SqlConnection cnn = new SqlConnection(cnnString))
+                    using (SqlCommand cmd = cnn.CreateCommand())
+                    {
+                        cnn.Open();
+                        cmd.RetryLogicProvider = provider;
+                        cmd.CommandText = query + " FOR XML AUTO";
+                        Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteXmlReaderAsync()).Wait();
+                    }
+                });
+                Assert.Equal(numberOfTries * concurrentExecution, retriesCount + concurrentExecution);
+            }
             */
         }
         #endregion

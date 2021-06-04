@@ -48,7 +48,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             RetryLogicTestHelper.CleanRetryEnabledCache();
             s_connectionCRLTest.ConnectionRetryOpenInvalidCatalogFailed(TcpCnnString, cnnProvider);
             s_commandCRLTest.RetryExecuteFail(TcpCnnString, cmdProvider);
-            s_commandCRLTest.RetryExecuteUnauthorizedSqlStatementDML(TcpCnnString, cmdProvider);
+            if (DataTestUtility.IsNotAzureSynapse())
+            {
+                s_commandCRLTest.RetryExecuteUnauthorizedSqlStatementDML(TcpCnnString, cmdProvider);
+            }
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
@@ -251,7 +254,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(typeof(System.Configuration.ConfigurationErrorsException), ex.InnerException?.GetType());
             Assert.Equal(typeof(ArgumentException), ex.InnerException?.InnerException?.GetType());
         }
-#endregion
+        #endregion
 
         #region AppContextSwitchManager
         [Theory]
@@ -295,9 +298,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.Equal(cnfig.NumberOfTries, ex.InnerExceptions.Count);
                 ex = Assert.Throws<AggregateException>(() => cmd.ExecuteNonQuery());
                 Assert.Equal(cnfig.NumberOfTries, ex.InnerExceptions.Count);
-                cmd.CommandText = cmd.CommandText + " FOR XML AUTO";
-                ex = Assert.Throws<AggregateException>(() => cmd.ExecuteXmlReader());
-                Assert.Equal(cnfig.NumberOfTries, ex.InnerExceptions.Count);
+                if (DataTestUtility.IsNotAzureSynapse())
+                {
+                    cmd.CommandText = cmd.CommandText + " FOR XML AUTO";
+                    ex = Assert.Throws<AggregateException>(() => cmd.ExecuteXmlReader());
+                    Assert.Equal(cnfig.NumberOfTries, ex.InnerExceptions.Count);
+                }
             }
         }
 
@@ -318,9 +324,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.Equal(cnfig.NumberOfTries, ex.InnerExceptions.Count);
                 ex = await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteNonQueryAsync());
                 Assert.Equal(cnfig.NumberOfTries, ex.InnerExceptions.Count);
-                cmd.CommandText = cmd.CommandText + " FOR XML AUTO";
-                ex = await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteXmlReaderAsync());
-                Assert.Equal(cnfig.NumberOfTries, ex.InnerExceptions.Count);
+                if (DataTestUtility.IsNotAzureSynapse())
+                {
+                    cmd.CommandText = cmd.CommandText + " FOR XML AUTO";
+                    ex = await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteXmlReaderAsync());
+                    Assert.Equal(cnfig.NumberOfTries, ex.InnerExceptions.Count);
+                }
             }
         }
         #endregion

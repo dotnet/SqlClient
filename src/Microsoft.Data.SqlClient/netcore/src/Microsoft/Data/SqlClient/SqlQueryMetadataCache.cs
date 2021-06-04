@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
@@ -22,7 +23,7 @@ namespace Microsoft.Data.SqlClient
         const int CacheTrimThreshold = 300; // Threshold above the cache size when we start trimming.
 
         private readonly MemoryCache _cache;
-        private static readonly SqlQueryMetadataCache _singletonInstance = new SqlQueryMetadataCache();
+        private static readonly SqlQueryMetadataCache _singletonInstance = new();
         private int _inTrim = 0;
         private long _cacheHits = 0;
         private long _cacheMisses = 0;
@@ -53,17 +54,17 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Check the cache to see if we have the MD for this query cached.
-            string cacheLookupKey = GetCacheLookupKeyFromSqlCommand(sqlCommand);
-            if (cacheLookupKey == null)
+            (string cacheLookupKey, string enclaveLookupKey) = GetCacheLookupKeysFromSqlCommand(sqlCommand);
+            if (cacheLookupKey is null)
             {
                 IncrementCacheMisses();
                 return false;
             }
 
-            Dictionary<string, SqlCipherMetadata> ciperMetadataDictionary = _cache.Get(cacheLookupKey) as Dictionary<string, SqlCipherMetadata>;
+            Dictionary<string, SqlCipherMetadata> cipherMetadataDictionary = _cache.Get(cacheLookupKey) as Dictionary<string, SqlCipherMetadata>;
 
             // If we had a cache miss just return false.
-            if (ciperMetadataDictionary == null)
+            if (cipherMetadataDictionary is null)
             {
                 IncrementCacheMisses();
                 return false;
@@ -73,7 +74,7 @@ namespace Microsoft.Data.SqlClient
             foreach (SqlParameter param in sqlCommand.Parameters)
             {
                 SqlCipherMetadata paramCiperMetadata;
-                bool found = ciperMetadataDictionary.TryGetValue(param.ParameterNameFixed, out paramCiperMetadata);
+                bool found = cipherMetadataDictionary.TryGetValue(param.ParameterNameFixed, out paramCiperMetadata);
 
                 // If we failed to identify the encryption for a specific parameter, clear up the cipher MD of all parameters and exit.
                 if (!found)
@@ -88,7 +89,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // Cached cipher MD should never have an initialized algorithm since this would contain the key.
-                Debug.Assert(paramCiperMetadata == null || !paramCiperMetadata.IsAlgorithmInitialized());
+                Debug.Assert(paramCiperMetadata is null || !paramCiperMetadata.IsAlgorithmInitialized());
 
                 // We were able to identify the cipher MD for this parameter, so set it on the param.
                 param.CipherMetadata = paramCiperMetadata;
@@ -100,7 +101,7 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlCipherMetadata cipherMdCopy = null;
 
-                if (param.CipherMetadata != null)
+                if (param.CipherMetadata is not null)
                 {
                     cipherMdCopy = new SqlCipherMetadata(
                         param.CipherMetadata.EncryptionInfo,
@@ -113,7 +114,7 @@ namespace Microsoft.Data.SqlClient
 
                 param.CipherMetadata = cipherMdCopy;
 
-                if (cipherMdCopy != null)
+                if (cipherMdCopy is not null)
                 {
                     // Try to get the encryption key. If the key information is stale, this might fail.
                     // In this case, just fail the cache lookup.
@@ -141,6 +142,13 @@ namespace Microsoft.Data.SqlClient
                         throw;
                     }
                 }
+            }
+
+            ConcurrentDictionary<int, SqlTceCipherInfoEntry> enclaveKeys = 
+                _cache.Get(enclaveLookupKey) as ConcurrentDictionary<int, SqlTceCipherInfoEntry>;
+            if (enclaveKeys is not null)
+            {
+                sqlCommand.keysToBeSentToEnclave = CreateCopyOfEnclaveKeys(enclaveKeys);
             }
 
             IncrementCacheHits();
@@ -178,19 +186,19 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Construct the entry and put it in the cache.
-            string cacheLookupKey = GetCacheLookupKeyFromSqlCommand(sqlCommand);
-            if (cacheLookupKey == null)
+            (string cacheLookupKey, string enclaveLookupKey) = GetCacheLookupKeysFromSqlCommand(sqlCommand);
+            if (cacheLookupKey is null)
             {
                 return;
             }
 
-            Dictionary<string, SqlCipherMetadata> ciperMetadataDictionary = new Dictionary<string, SqlCipherMetadata>(sqlCommand.Parameters.Count);
+            Dictionary<string, SqlCipherMetadata> cipherMetadataDictionary = new(sqlCommand.Parameters.Count);
 
             // Create a copy of the cipherMD that doesn't have the algorithm and put it in the cache.
             foreach (SqlParameter param in sqlCommand.Parameters)
             {
                 SqlCipherMetadata cipherMdCopy = null;
-                if (param.CipherMetadata != null)
+                if (param.CipherMetadata is not null)
                 {
                     cipherMdCopy = new SqlCipherMetadata(
                         param.CipherMetadata.EncryptionInfo,
@@ -202,9 +210,9 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // Cached cipher MD should never have an initialized algorithm since this would contain the key.
-                Debug.Assert(cipherMdCopy == null || !cipherMdCopy.IsAlgorithmInitialized());
+                Debug.Assert(cipherMdCopy is null || !cipherMdCopy.IsAlgorithmInitialized());
 
-                ciperMetadataDictionary.Add(param.ParameterNameFixed, cipherMdCopy);
+                cipherMetadataDictionary.Add(param.ParameterNameFixed, cipherMdCopy);
             }
 
             // If the size of the cache exceeds the threshold, set that we are in trimming and trim the cache accordingly.
@@ -228,7 +236,12 @@ namespace Microsoft.Data.SqlClient
             }
 
             // By default evict after 10 hours.
-            _cache.Set(cacheLookupKey, ciperMetadataDictionary, DateTimeOffset.UtcNow.AddHours(10));
+            _cache.Set(cacheLookupKey, cipherMetadataDictionary, DateTimeOffset.UtcNow.AddHours(10));
+            if (sqlCommand.requiresEnclaveComputations)
+            {
+                ConcurrentDictionary<int, SqlTceCipherInfoEntry> keysToBeCached = CreateCopyOfEnclaveKeys(sqlCommand.keysToBeSentToEnclave);
+                _cache.Set(enclaveLookupKey, keysToBeCached, DateTimeOffset.UtcNow.AddHours(10));
+            }
         }
 
         /// <summary>
@@ -236,13 +249,14 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal void InvalidateCacheEntry(SqlCommand sqlCommand)
         {
-            string cacheLookupKey = GetCacheLookupKeyFromSqlCommand(sqlCommand);
-            if (cacheLookupKey == null)
+            (string cacheLookupKey, string enclaveLookupKey) = GetCacheLookupKeysFromSqlCommand(sqlCommand);
+            if (cacheLookupKey is null)
             {
                 return;
             }
 
             _cache.Remove(cacheLookupKey);
+            _cache.Remove(enclaveLookupKey);
         }
 
 
@@ -271,26 +285,46 @@ namespace Microsoft.Data.SqlClient
             _cacheMisses = 0;
         }
 
-        private String GetCacheLookupKeyFromSqlCommand(SqlCommand sqlCommand)
+        private (string, string) GetCacheLookupKeysFromSqlCommand(SqlCommand sqlCommand)
         {
             const int SqlIdentifierLength = 128;
 
             SqlConnection connection = sqlCommand.Connection;
 
             // Return null if we have no connection.
-            if (connection == null)
+            if (connection is null)
             {
-                return null;
+                return (null, null);
             }
 
-            StringBuilder cacheLookupKeyBuilder = new StringBuilder(connection.DataSource, capacity: connection.DataSource.Length + SqlIdentifierLength + sqlCommand.CommandText.Length + 6);
+            StringBuilder cacheLookupKeyBuilder = new(connection.DataSource, capacity: connection.DataSource.Length + SqlIdentifierLength + sqlCommand.CommandText.Length + 6);
             cacheLookupKeyBuilder.Append(":::");
             // Pad database name to 128 characters to avoid any false cache matches because of weird DB names.
             cacheLookupKeyBuilder.Append(connection.Database.PadRight(SqlIdentifierLength));
             cacheLookupKeyBuilder.Append(":::");
             cacheLookupKeyBuilder.Append(sqlCommand.CommandText);
 
-            return cacheLookupKeyBuilder.ToString();
+            string cacheLookupKey = cacheLookupKeyBuilder.ToString();
+            string enclaveLookupKey = cacheLookupKeyBuilder.Append(":::enclaveKeys").ToString();
+            return (cacheLookupKey, enclaveLookupKey);
+        }
+
+        private ConcurrentDictionary<int, SqlTceCipherInfoEntry> CreateCopyOfEnclaveKeys(ConcurrentDictionary<int, SqlTceCipherInfoEntry> keysToBeSentToEnclave)
+        {
+            ConcurrentDictionary<int, SqlTceCipherInfoEntry> enclaveKeys = new();
+            foreach (KeyValuePair<int, SqlTceCipherInfoEntry> kvp in keysToBeSentToEnclave)
+            {
+                int ordinal = kvp.Key;
+                SqlTceCipherInfoEntry original = kvp.Value;
+                SqlTceCipherInfoEntry copy = new(ordinal);
+                foreach (SqlEncryptionKeyInfo cekInfo in original.ColumnEncryptionKeyValues)
+                {
+                    copy.Add(cekInfo.encryptedKey, cekInfo.databaseId, cekInfo.cekId, cekInfo.cekVersion,
+                            cekInfo.cekMdVersion, cekInfo.keyPath, cekInfo.keyStoreName, cekInfo.algorithmName);
+                }
+                enclaveKeys.TryAdd(ordinal, copy);
+            }
+            return enclaveKeys;
         }
     }
 }
