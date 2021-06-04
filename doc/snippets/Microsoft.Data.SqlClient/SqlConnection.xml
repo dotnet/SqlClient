@@ -1026,7 +1026,7 @@ GO
             <summary>
             Registers the column encryption key store providers. This function should only be called once in an app. This does shallow copying of the dictionary so that the app cannot alter the custom provider list once it has been set.
        
-            The built-in column master key store providers that are available for the Windows Certificate Store, CNG Store and CSP are pre-registered. No providers should be registered on the connection or command instances if one of the built-in column master key store providers is needed.
+            The built-in column master key store providers that are available for the Windows Certificate Store, CNG Store and CSP are pre-registered.
             </summary>
             <remarks>
             <format type="text/markdown"><![CDATA[  
