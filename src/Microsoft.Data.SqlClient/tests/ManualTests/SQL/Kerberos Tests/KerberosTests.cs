@@ -13,7 +13,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             DataSource = "ADO-WS2019-KERBEROS-TEST.galaxy.ad",
             IntegratedSecurity = true
         };
-        private readonly bool _disposedValue;
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest))]
         public void FailsToConnectWithNoTicketIssued()
