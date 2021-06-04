@@ -38,6 +38,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities
         public bool IsKerberosEnabled = false;
         public string EnclaveAzureDatabaseConnString = null;
         public string UserManagedIdentityClientId = null;
+        public string DomainProviderName = null;
 
 
         public static Config Load(string configPath = @"config.json")
