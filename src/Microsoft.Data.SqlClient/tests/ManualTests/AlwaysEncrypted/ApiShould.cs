@@ -2249,12 +2249,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestSystemProvidersHavePrecedenceOverInstanceLevelProviders(string connectionString)
         {
-            if (!SQLSetupStrategyAzureKeyVault.IsAKVProviderRegistered)
+            Dictionary<string, SqlColumnEncryptionKeyStoreProvider> customKeyStoreProviders = new()
             {
-                SqlColumnEncryptionAzureKeyVaultProvider sqlColumnEncryptionAzureKeyVaultProvider =
-                    new(new SqlClientCustomTokenCredential());
-                SQLSetupStrategyAzureKeyVault.RegisterGlobalProviders(sqlColumnEncryptionAzureKeyVaultProvider);
-            }
+                {
+                    SqlColumnEncryptionAzureKeyVaultProvider.ProviderName,
+                    new SqlColumnEncryptionAzureKeyVaultProvider(new SqlClientCustomTokenCredential())
+                }
+            };
 
             using SqlConnection connection = new(connectionString);
             connection.Open();
@@ -2262,11 +2263,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 $"SELECT * FROM [{_fixture.CustomKeyStoreProviderTestTable.Name}] WHERE FirstName = @firstName",
                 connection, null, SqlCommandColumnEncryptionSetting.Enabled);
             command.Parameters.AddWithValue("firstName", "abc");
-            connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(_requiredProvider);
-            command.RegisterColumnEncryptionKeyStoreProvidersOnCommand(_notRequiredProvider);
+            command.RegisterColumnEncryptionKeyStoreProvidersOnCommand(customKeyStoreProviders);
             command.ExecuteReader();
         }
-        
+
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.EnclaveEnabled))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestRetryWhenAEParameterMetadataCacheIsStale(string connectionString)
