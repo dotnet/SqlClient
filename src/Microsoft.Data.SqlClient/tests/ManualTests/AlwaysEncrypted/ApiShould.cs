@@ -2257,14 +2257,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 }
             };
 
-            using SqlConnection connection = new(connectionString);
-            connection.Open();
-            using SqlCommand command = new(
-                $"SELECT * FROM [{_fixture.CustomKeyStoreProviderTestTable.Name}] WHERE FirstName = @firstName",
-                connection, null, SqlCommandColumnEncryptionSetting.Enabled);
-            command.Parameters.AddWithValue("firstName", "abc");
-            command.RegisterColumnEncryptionKeyStoreProvidersOnCommand(customKeyStoreProviders);
-            command.ExecuteReader();
+            using (SqlConnection connection = new(connectionString))
+            {
+                connection.Open();
+                using SqlCommand command = CreateCommandThatRequiresSystemKeyStoreProvider(connection);
+                connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(customKeyStoreProviders);
+                command.ExecuteReader();
+            }
+
+            using (SqlConnection connection = new(connectionString))
+            {
+                connection.Open();
+                using SqlCommand command = CreateCommandThatRequiresSystemKeyStoreProvider(connection);
+                command.RegisterColumnEncryptionKeyStoreProvidersOnCommand(customKeyStoreProviders);
+                command.ExecuteReader();
+            }
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.EnclaveEnabled))]
@@ -2340,6 +2347,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 $"SELECT * FROM [{_fixture.CustomKeyStoreProviderTestTable.Name}] WHERE CustomerID = @id",
                 connection, null, SqlCommandColumnEncryptionSetting.Enabled);
             command.Parameters.AddWithValue("id", 9);
+            return command;
+        }
+
+        private SqlCommand CreateCommandThatRequiresSystemKeyStoreProvider(SqlConnection connection)
+        {
+            SqlCommand command = new(
+                    $"SELECT * FROM [{_fixture.CustomKeyStoreProviderTestTable.Name}] WHERE FirstName = @firstName",
+                    connection, null, SqlCommandColumnEncryptionSetting.Enabled);
+            command.Parameters.AddWithValue("firstName", "abc");
             return command;
         }
 
