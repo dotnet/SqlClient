@@ -15,7 +15,6 @@ namespace Microsoft.Data.SqlClient.TestUtilities
         public string TCPConnectionStringHGSVBS = null;
         public string TCPConnectionStringAASVBS = null;
         public string TCPConnectionStringAASSGX = null;
-        public string TCPConnectionStringKerberos = null;
         public string AADAuthorityURL = null;
         public string AADPasswordConnectionString = null;
         public string AADServicePrincipalId = null;
@@ -36,8 +35,10 @@ namespace Microsoft.Data.SqlClient.TestUtilities
         public bool IsAzureSynapse = false; // True for Azure Data Warehouse/Synapse
         public bool IsDNSCachingSupportedCR = false;  // this is for the control ring
         public bool IsDNSCachingSupportedTR = false;  // this is for the tenant ring
+        public bool IsKerberosEnabled = false;
         public string EnclaveAzureDatabaseConnString = null;
         public string UserManagedIdentityClientId = null;
+
 
         public static Config Load(string configPath = @"config.json")
         {
