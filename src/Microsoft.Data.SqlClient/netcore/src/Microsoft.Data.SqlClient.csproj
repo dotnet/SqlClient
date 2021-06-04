@@ -317,7 +317,7 @@
       <Link>Microsoft\Data\SqlClient\Reliability\AppConfigManager.cs</Link>
     </Compile>
     <Compile Include="Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.NetCoreApp.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\Reliability\SqlAppContextSwitchManager.NetCoreApp.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SqlAppContextSwitchManager.NetCoreApp.cs" />
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlUtil.cs">
       <Link>Microsoft\Data\SqlClient\SqlUtil.cs</Link>
     </Compile>

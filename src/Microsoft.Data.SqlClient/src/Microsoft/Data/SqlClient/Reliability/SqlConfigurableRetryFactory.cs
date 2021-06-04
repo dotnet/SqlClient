@@ -63,21 +63,6 @@ namespace Microsoft.Data.SqlClient
                     233     // A connection was successfully established with the server, but then an error occurred during the login process. (provider: Shared Memory Provider, error: 0 - No process is on the other end of the pipe.) (Microsoft SQL Server, Error: 233)
                 };
 
-        private static bool? s_isRetryEnabled = null;
-        internal static bool IsRetryEnabled
-        {
-            get
-            {
-                if (s_isRetryEnabled is null)
-                {
-                    bool result;
-                    result = AppContext.TryGetSwitch(SqlRetryLogicProvider.EnableRetryLogicSwitch, out result) ? result : false;
-                    s_isRetryEnabled = result;
-                }
-                return (bool)s_isRetryEnabled;
-            }
-        }
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/CreateExponentialRetryProvider/*' />
         public static SqlRetryLogicBaseProvider CreateExponentialRetryProvider(SqlRetryLogicOption retryLogicOption)
             => InternalCreateRetryProvider(retryLogicOption,

@@ -493,7 +493,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private static bool IsRetryEnabled => SqlConfigurableRetryFactory.IsRetryEnabled;
+        private static bool IsRetryEnabled => LocalAppContextSwitches.IsRetryEnabled;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RetryLogicProvider/*' />
         public SqlRetryLogicBaseProvider RetryLogicProvider

@@ -4,7 +4,6 @@
 
 using System;
 using System.Diagnostics;
-using System.Reflection;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -25,18 +24,7 @@ namespace Microsoft.Data.SqlClient
                 // Fetch the section attributes values from the configuration section of the app config file.
                 cnnConfig = AppConfigManager.FetchConfigurationSection<SqlConfigurableRetryConnectionSection>(SqlConfigurableRetryConnectionSection.Name);
                 cmdConfig = AppConfigManager.FetchConfigurationSection<SqlConfigurableRetryCommandSection>(SqlConfigurableRetryCommandSection.Name);
-#if !NETFRAMEWORK
-                IAppContextSwitchOverridesSection appContextSwitch = AppConfigManager.FetchConfigurationSection<AppContextSwitchOverridesSection>(AppContextSwitchOverridesSection.Name);
-                try
-                {
-                    SqlAppContextSwitchManager.ApplyContextSwitches(appContextSwitch);
-                }
-                catch (Exception e)
-                {
-                    // Don't throw an exception for an invalid config file
-                    SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO>: {2}", TypeName, MethodBase.GetCurrentMethod().Name, e);
-                }
-#endif
+
                 return new SqlConfigurableRetryLogicLoader(cnnConfig, cmdConfig);
             });
 

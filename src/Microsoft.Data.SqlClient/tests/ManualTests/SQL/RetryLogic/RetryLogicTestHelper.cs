@@ -47,8 +47,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         internal const string RetryAppContextSwitch = "Switch.Microsoft.Data.SqlClient.EnableRetryLogic";
         private static readonly Assembly s_sqlClientAssembly = typeof(SqlConnection).Assembly;
-        private static readonly Type s_sqlConfigurableRetryFactoryType = s_sqlClientAssembly.GetType("Microsoft.Data.SqlClient.SqlConfigurableRetryFactory");
-        private static readonly FieldInfo s_isRetryEnabledFieldInfo = s_sqlConfigurableRetryFactoryType.GetField("s_isRetryEnabled", BindingFlags.Static | BindingFlags.NonPublic);
+        private static readonly Type s_LocalAppContextSwitchesType = s_sqlClientAssembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
+        private static readonly FieldInfo s_isRetryEnabledFieldInfo = s_LocalAppContextSwitchesType.GetField("s_isRetryEnabled", BindingFlags.Static | BindingFlags.NonPublic);
 
         private static readonly HashSet<int> s_defaultTransientErrors
            = new HashSet<int>

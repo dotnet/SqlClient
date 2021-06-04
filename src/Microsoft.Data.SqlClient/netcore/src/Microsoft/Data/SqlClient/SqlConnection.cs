@@ -111,7 +111,7 @@ namespace Microsoft.Data.SqlClient
         private static readonly Action<object> s_openAsyncCancel = OpenAsyncCancel;
         private static readonly Action<Task<object>, object> s_openAsyncComplete = OpenAsyncComplete;
 
-        private static bool IsRetryEnabled => SqlConfigurableRetryFactory.IsRetryEnabled;
+        private static bool IsRetryEnabled => LocalAppContextSwitches.IsRetryEnabled;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetryLogicProvider/*' />
         public SqlRetryLogicBaseProvider RetryLogicProvider
