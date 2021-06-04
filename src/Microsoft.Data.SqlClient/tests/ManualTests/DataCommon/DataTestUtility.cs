@@ -50,7 +50,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static Uri AKVBaseUri = null;
 
         //Kerberos connection string
-        public static readonly string TCPConnectionStringKerberos = "";
+        public static readonly bool IsKerberosEnabled = false;
 
         public static readonly string DNSCachingConnString = null;
         public static readonly string DNSCachingServerCR = null;  // this is for the control ring
@@ -80,7 +80,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TCPConnectionStringHGSVBS = c.TCPConnectionStringHGSVBS;
             TCPConnectionStringAASVBS = c.TCPConnectionStringAASVBS;
             TCPConnectionStringAASSGX = c.TCPConnectionStringAASSGX;
-            TCPConnectionStringKerberos = c.TCPConnectionStringKerberos;
+            IsKerberosEnabled = c.IsKerberosEnabled;
             AADAuthorityURL = c.AADAuthorityURL;
             AADPasswordConnectionString = c.AADPasswordConnectionString;
             AADServicePrincipalId = c.AADServicePrincipalId;
@@ -287,7 +287,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsKerberosTest()
         {
-            return !string.IsNullOrEmpty(TCPConnectionStringKerberos);
+            return IsKerberosEnabled;
         }
 
         public static bool IsAADPasswordConnStrSetup()
