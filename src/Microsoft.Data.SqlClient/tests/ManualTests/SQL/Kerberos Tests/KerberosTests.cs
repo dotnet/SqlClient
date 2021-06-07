@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -19,7 +17,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [PlatformSpecific(TestPlatforms.AnyUnix)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest))]
-        [ClassData(typeof(ConnectionStringsProvider))]
+        [InlineData("Data Source=ADO-WS2019-TEST; Integrated Security=true;")]
         public void IsKerBerosSetupTest(string connection)
         {
             Task t = Task.Run(() => KerberosTicketManagemnt.Init(DataTestUtility.DomainProviderName)).ContinueWith((i) =>
@@ -45,7 +43,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [PlatformSpecific(TestPlatforms.AnyUnix)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest))]
-        [ClassData(typeof(ConnectionStringsProvider))]
+        [InlineData("Data Source=ADO-WS2019-TEST; Integrated Security=true;")]
         public void ExpiredTicketTest(string connection)
         {
             Task t = Task.Run(() => KerberosTicketManagemnt.Destroy()).ContinueWith((i) =>
@@ -53,20 +51,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using var conn = new SqlConnection(connection);
                 Assert.Throws<SqlException>(() => conn.Open());
             });
-        }
-
-        public class ConnectionStringsProvider : IEnumerable<object[]>
-        {
-            public IEnumerator<object[]> GetEnumerator()
-            {
-                foreach (var cnnString in DataTestUtility.ConnectionStrings)
-                {
-                    yield return new object[] { cnnString, false };
-                    yield return new object[] { cnnString, true };
-                }
-            }
-
-            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
     }
 }
