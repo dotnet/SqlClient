@@ -1,17 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     internal static class KerberosTicketManagemnt
     {
-        private static readonly string s_cmdPrompt = "cmd.exe";
-        private static readonly string s_domainName = "bamboo";
+        private static readonly string s_cmdPrompt = "/bin/bash";
+        private static readonly string s_domainPass = "";
 
-        internal static void Init()
+        internal static void Init(string domain)
         {
-            RunKerberosCommand($"kinit {s_domainName}");
+            RunKerberosCommand($"kinit {domain}");
         }
 
         internal static void Destroy()
@@ -27,7 +28,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             try
             {
-                System.Diagnostics.Process.Start(s_cmdPrompt, command);
+                var proc = new Process
+                {
+                    StartInfo =
+                    {
+                        FileName = s_cmdPrompt,
+                        Arguments = string.IsNullOrEmpty(s_domainPass)? $"-c {command}" : $"-c {command} -p:{s_domainPass}"
+                    }
+                };
+                proc.Start();
             }
             catch (Exception ex)
             {

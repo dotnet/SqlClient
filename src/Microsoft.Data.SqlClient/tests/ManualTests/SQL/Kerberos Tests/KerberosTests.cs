@@ -1,6 +1,6 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -14,19 +14,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             IntegratedSecurity = true
         };
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest))]
-        public void FailsToConnectWithNoTicketIssued()
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest))]
+        [ClassData(typeof(ConnectionStringsProvider))]
+        public void FailsToConnectWithNoTicketIssued(string cnn)
         {
-            using var conn = new SqlConnection(_builder.ConnectionString);
+            using var conn = new SqlConnection(cnn);
             Assert.Throws<SqlException>(() => conn.Open());
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest))]
-        public void IsKerBerosSetupTest()
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest))]
+        [ClassData(typeof(ConnectionStringsProvider))]
+        [ClassData(typeof(DomainProvider))]
+        public void IsKerBerosSetupTest(string connection, string domain)
         {
-            Task t = Task.Run(() => KerberosTicketManagemnt.Init()).ContinueWith((i) =>
+            Task t = Task.Run(() => KerberosTicketManagemnt.Init(domain)).ContinueWith((i) =>
             {
-                using var conn = new SqlConnection(_builder.ConnectionString);
+                using var conn = new SqlConnection(connection);
                 try
                 {
                     conn.Open();
@@ -54,5 +57,32 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.Throws<SqlException>(() => conn.Open());
             });
         }
+
+        public class ConnectionStringsProvider : IEnumerable<object[]>
+        {
+            public IEnumerator<object[]> GetEnumerator()
+            {
+                foreach (var cnnString in DataTestUtility.ConnectionStrings)
+                {
+                    yield return new object[] { cnnString, false };
+                    yield return new object[] { cnnString, true };
+                }
+            }
+
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        }
+
+        public class DomainProvider : IEnumerable<object[]>
+        {
+            public IEnumerator<object[]> GetEnumerator()
+            {
+                foreach (var provider in DataTestUtility.DomainProviderNames)
+                {
+                    yield return new object[] { provider };
+                }
+            }
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        }
     }
 }
+

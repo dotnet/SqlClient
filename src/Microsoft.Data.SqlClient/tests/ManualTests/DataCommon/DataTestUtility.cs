@@ -81,7 +81,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TCPConnectionStringHGSVBS = c.TCPConnectionStringHGSVBS;
             TCPConnectionStringAASVBS = c.TCPConnectionStringAASVBS;
             TCPConnectionStringAASSGX = c.TCPConnectionStringAASSGX;
-           
+
             AADAuthorityURL = c.AADAuthorityURL;
             AADPasswordConnectionString = c.AADPasswordConnectionString;
             AADServicePrincipalId = c.AADServicePrincipalId;
@@ -176,6 +176,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         yield return connStr;
                     }
+                }
+            }
+        }
+
+        public static IEnumerable<string> DomainProviderNames
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(DomainProviderName))
+                {
+                    yield return DomainProviderName;
                 }
             }
         }
