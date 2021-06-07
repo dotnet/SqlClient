@@ -8,12 +8,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class KerberosTests
     {
-        readonly SqlConnectionStringBuilder _builder = new()
-        {
-            DataSource = "ADO-WS2019-KERBEROS-TEST.galaxy.ad",
-            IntegratedSecurity = true
-        };
-
+        [PlatformSpecific(TestPlatforms.AnyUnix)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest))]
         [ClassData(typeof(ConnectionStringsProvider))]
         public void FailsToConnectWithNoTicketIssued(string cnn)
@@ -22,6 +17,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Throws<SqlException>(() => conn.Open());
         }
 
+        [PlatformSpecific(TestPlatforms.AnyUnix)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest))]
         [ClassData(typeof(ConnectionStringsProvider))]
         [ClassData(typeof(DomainProvider))]
@@ -48,12 +44,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             });
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest))]
-        public void ExpiredTicketTest()
+        [PlatformSpecific(TestPlatforms.AnyUnix)]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest))]
+        [ClassData(typeof(ConnectionStringsProvider))]
+        public void ExpiredTicketTest(string connection)
         {
             Task t = Task.Run(() => KerberosTicketManagemnt.Destroy()).ContinueWith((i) =>
             {
-                using var conn = new SqlConnection(_builder.ConnectionString);
+                using var conn = new SqlConnection(connection);
                 Assert.Throws<SqlException>(() => conn.Open());
             });
         }
