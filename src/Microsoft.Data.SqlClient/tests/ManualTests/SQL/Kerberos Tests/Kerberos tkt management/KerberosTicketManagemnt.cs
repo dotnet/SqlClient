@@ -8,23 +8,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     internal static class KerberosTicketManagemnt
     {
         private static readonly string s_cmdPrompt = "/bin/bash";
-        private static readonly string s_domainPass = "";
 
         internal static void Init(string domain)
         {
-            RunKerberosCommand($"kinit {domain}");
+            RunKerberosCommand($"kinit {domain}", true);
         }
 
         internal static void Destroy()
         {
-            RunKerberosCommand("kdestroy");
+            RunKerberosCommand("kdestroy", false);
         }
         internal static void List()
         {
-            RunKerberosCommand("klist");
+            RunKerberosCommand("klist", false);
         }
 
-        public static void RunKerberosCommand(string command)
+        public static void RunKerberosCommand(string command, bool isIniti)
         {
             try
             {
@@ -33,7 +32,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     StartInfo =
                     {
                         FileName = s_cmdPrompt,
-                        Arguments = string.IsNullOrEmpty(s_domainPass)? $"-c {command}" : $"-c {command} -p:{s_domainPass}"
+                        Arguments = isIniti? $"-c {command}" : $"-c {command} -p:{DataTestUtility.DomainPass}"
                     }
                 };
                 proc.Start();

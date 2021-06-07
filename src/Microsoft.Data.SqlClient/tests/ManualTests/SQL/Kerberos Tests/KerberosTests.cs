@@ -9,15 +9,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [PlatformSpecific(TestPlatforms.AnyUnix)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest))]
         [InlineData("Data Source=ADO-WS2019-KERBEROS-TEST; Integrated Security=true;")]
-        public void FailsToConnectWithNoTicketIssued(string cnn)
-        {
-            using var conn = new SqlConnection(cnn);
-            Assert.Throws<SqlException>(() => conn.Open());
-        }
-
-        [PlatformSpecific(TestPlatforms.AnyUnix)]
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest))]
-        [InlineData("Data Source=ADO-WS2019-KERBEROS-TEST; Integrated Security=true;")]
         public void IsKerBerosSetupTest(string connection)
         {
             Task t = Task.Run(() => KerberosTicketManagemnt.Init(DataTestUtility.DomainProviderName)).ContinueWith((i) =>
@@ -51,6 +42,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using var conn = new SqlConnection(connection);
                 Assert.Throws<SqlException>(() => conn.Open());
             });
+
+            //makes sure that kerberos is initiated for other tests to pass
+            KerberosTicketManagemnt.Init(DataTestUtility.DomainProviderName);
         }
     }
 }

@@ -52,6 +52,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         //Kerberos connection string
         public static readonly bool IsKerberosEnabled = false;
         public static readonly string DomainProviderName = null;
+        internal static readonly string DomainPass = null;
 
         public static readonly string DNSCachingConnString = null;
         public static readonly string DNSCachingServerCR = null;  // this is for the control ring
@@ -102,6 +103,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             DomainProviderName = c.DomainProviderName;
             EnclaveAzureDatabaseConnString = c.EnclaveAzureDatabaseConnString;
             UserManagedIdentityClientId = c.UserManagedIdentityClientId;
+            DomainPass = c.DomainPass;
 
             System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
 

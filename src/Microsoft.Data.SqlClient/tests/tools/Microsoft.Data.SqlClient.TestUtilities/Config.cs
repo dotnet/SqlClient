@@ -39,6 +39,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities
         public string EnclaveAzureDatabaseConnString = null;
         public string UserManagedIdentityClientId = null;
         public string DomainProviderName = null;
+        public string DomainPass = null;
 
 
         public static Config Load(string configPath = @"config.json")
