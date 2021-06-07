@@ -180,17 +180,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public static IEnumerable<string> DomainProviderNames
-        {
-            get
-            {
-                if (!string.IsNullOrEmpty(DomainProviderName))
-                {
-                    yield return DomainProviderName;
-                }
-            }
-        }
-
         private static string GenerateAccessToken(string authorityURL, string aADAuthUserID, string aADAuthPassword)
         {
             return AcquireTokenAsync(authorityURL, aADAuthUserID, aADAuthPassword).Result;

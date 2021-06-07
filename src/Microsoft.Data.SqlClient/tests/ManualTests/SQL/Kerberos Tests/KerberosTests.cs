@@ -9,9 +9,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public class KerberosTests
     {
         [PlatformSpecific(TestPlatforms.AnyUnix)]
-        [Theory]
-        //[ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest))]
-        [ClassData(typeof(ConnectionStringsProvider))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest))]
+        [InlineData("Data Source=ADO-WS2019-TEST; Integrated Security=true;")]
         public void FailsToConnectWithNoTicketIssued(string cnn)
         {
             using var conn = new SqlConnection(cnn);
@@ -19,13 +18,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [PlatformSpecific(TestPlatforms.AnyUnix)]
-        //[ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest))]
-        [Theory]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest))]
         [ClassData(typeof(ConnectionStringsProvider))]
-        [ClassData(typeof(DomainProvider))]
-        public void IsKerBerosSetupTest(string connection, string domain)
+        public void IsKerBerosSetupTest(string connection)
         {
-            Task t = Task.Run(() => KerberosTicketManagemnt.Init(domain)).ContinueWith((i) =>
+            Task t = Task.Run(() => KerberosTicketManagemnt.Init(DataTestUtility.DomainProviderName)).ContinueWith((i) =>
             {
                 using var conn = new SqlConnection(connection);
                 try
@@ -47,8 +44,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [PlatformSpecific(TestPlatforms.AnyUnix)]
-        [Theory]
-        //[ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest))]
         [ClassData(typeof(ConnectionStringsProvider))]
         public void ExpiredTicketTest(string connection)
         {
@@ -70,18 +66,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
 
-            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-        }
-
-        public class DomainProvider : IEnumerable<object[]>
-        {
-            public IEnumerator<object[]> GetEnumerator()
-            {
-                foreach (var provider in DataTestUtility.DomainProviderNames)
-                {
-                    yield return new object[] { provider };
-                }
-            }
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
     }
