@@ -45,6 +45,25 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             //makes sure that kerberos is initiated for other tests to pass
             KerberosTicketManagemnt.Init(DataTestUtility.DomainProviderName);
+            Task t1 = Task.Run(() => KerberosTicketManagemnt.Init(DataTestUtility.DomainProviderName)).ContinueWith((i) =>
+            {
+                using var conn = new SqlConnection(connection);
+                try
+                {
+                    conn.Open();
+                    using var command = new SqlCommand("SELECT auth_scheme from sys.dm_exec_connections where session_id = @@spid", conn);
+                    using SqlDataReader reader = command.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        Assert.Equal("KERBEROS", reader.GetString(0));
+                    }
+                }
+                catch (SqlException ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    Assert.False(true);
+                }
+            });
         }
     }
 }
