@@ -219,10 +219,10 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// This function walks through both system and custom column encryption key store providers and returns an object if found.
+        /// This function walks through both instance-level and global custom column encryption key store providers and returns an object if found.
         /// </summary>
-        /// <param name="providerName">Provider Name to be searched in System Provider diction and Custom provider dictionary.</param>
-        /// <param name="columnKeyStoreProvider">If the provider is found, returns the corresponding SqlColumnEncryptionKeyStoreProvider instance.</param>
+        /// <param name="providerName">Provider Name to be searched for.</param>
+        /// <param name="columnKeyStoreProvider">If the provider is found, initializes the corresponding SqlColumnEncryptionKeyStoreProvider instance.</param>
         /// <returns>true if the provider is found, else returns false</returns>
         internal bool TryGetColumnEncryptionKeyStoreProvider(string providerName, out SqlColumnEncryptionKeyStoreProvider columnKeyStoreProvider)
         {
