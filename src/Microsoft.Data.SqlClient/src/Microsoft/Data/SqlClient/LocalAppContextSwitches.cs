@@ -3,17 +3,52 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 
 namespace Microsoft.Data.SqlClient
 {
     internal static partial class LocalAppContextSwitches
     {
+        private const string TypeName = nameof(LocalAppContextSwitches);
         internal const string MakeReadAsyncBlockingString = @"Switch.Microsoft.Data.SqlClient.MakeReadAsyncBlocking";
         internal const string LegacyRowVersionNullString = @"Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehavior";
+        // safety switch
+        internal const string EnableRetryLogicSwitch = "Switch.Microsoft.Data.SqlClient.EnableRetryLogic";
 
         private static bool _makeReadAsyncBlocking;
         private static bool? s_LegacyRowVersionNullBehavior;
+        private static bool? s_isRetryEnabled = null;
+
+#if !NETFRAMEWORK
+        static LocalAppContextSwitches()
+        {
+            IAppContextSwitchOverridesSection appContextSwitch = AppConfigManager.FetchConfigurationSection<AppContextSwitchOverridesSection>(AppContextSwitchOverridesSection.Name);
+            try
+            {
+                SqlAppContextSwitchManager.ApplyContextSwitches(appContextSwitch);
+            }
+            catch (Exception e)
+            {
+                // Don't throw an exception for an invalid config file
+                SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO>: {2}", TypeName, MethodBase.GetCurrentMethod().Name, e);
+            }
+        }
+#endif
+
+        internal static bool IsRetryEnabled
+        {
+            get
+            {
+                if (s_isRetryEnabled is null)
+                {
+                    bool result;
+                    result = AppContext.TryGetSwitch(EnableRetryLogicSwitch, out result) ? result : false;
+                    s_isRetryEnabled = result;
+                }
+                return s_isRetryEnabled.Value;
+            }
+        }
 
         public static bool MakeReadAsyncBlocking
         {
@@ -33,7 +68,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (s_LegacyRowVersionNullBehavior == null)
+                if (s_LegacyRowVersionNullBehavior is null)
                 {
                     bool value = false;
                     if (AppContext.TryGetSwitch(LegacyRowVersionNullString, out bool providedValue))

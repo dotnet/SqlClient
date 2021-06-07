@@ -45,6 +45,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             RetryLogicConfigHelper.AssessProvider(cmdProvider, cmdCfg, switchValue);
 
             // check the retry in action
+            RetryLogicTestHelper.CleanRetryEnabledCache();
             s_connectionCRLTest.ConnectionRetryOpenInvalidCatalogFailed(TcpCnnString, cnnProvider);
             s_commandCRLTest.RetryExecuteFail(TcpCnnString, cmdProvider);
             if (DataTestUtility.IsNotAzureSynapse())
@@ -68,6 +69,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             RetryLogicConfigHelper.AssessProvider(cnnProvider, cnnCfg, switchValue);
             RetryLogicConfigHelper.AssessProvider(cmdProvider, cmdCfg, switchValue);
 
+            RetryLogicTestHelper.CleanRetryEnabledCache();
             s_connectionCRLTest.DefaultOpenWithoutRetry(TcpCnnString, cnnProvider);
             s_commandCRLTest.NoneRetriableExecuteFail(TcpCnnString, cmdProvider);
         }
@@ -98,6 +100,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             object loaderObj = RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, switchValue, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider);
             Assert.NotNull(loaderObj);
 
+            RetryLogicTestHelper.CleanRetryEnabledCache();
             TestConnection(cnnProvider, cnnCfg);
             TestCommandExecute(cmdProvider, cmdCfg);
             TestCommandExecuteAsync(cmdProvider, cmdCfg).Wait();
@@ -130,6 +133,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             object loaderObj = RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, switchValue, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider);
             Assert.NotNull(loaderObj);
 
+            RetryLogicTestHelper.CleanRetryEnabledCache();
             s_connectionCRLTest.DefaultOpenWithoutRetry(TcpCnnString, cnnProvider);
             s_commandCRLTest.NoneRetriableExecuteFail(TcpCnnString, cmdProvider);
         }
@@ -151,6 +155,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.NotNull(loaderObj);
 
             // none retriable logic applies.
+            RetryLogicTestHelper.CleanRetryEnabledCache();
             s_connectionCRLTest.DefaultOpenWithoutRetry(TcpCnnString, cnnProvider);
             s_commandCRLTest.NoneRetriableExecuteFail(TcpCnnString, cmdProvider);
         }
@@ -177,6 +182,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             RetryLogicConfigHelper.AssessProvider(cmdProvider, cmdCfg, switchValue);
 
             // internal type used to resolve the specified method
+            RetryLogicTestHelper.CleanRetryEnabledCache();
             s_connectionCRLTest.ConnectionRetryOpenInvalidCatalogFailed(TcpCnnString, cnnProvider);
             s_commandCRLTest.RetryExecuteFail(TcpCnnString, cmdProvider);
         }

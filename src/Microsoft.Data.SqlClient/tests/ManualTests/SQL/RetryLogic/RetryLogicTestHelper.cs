@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -45,6 +46,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public class RetryLogicTestHelper
     {
         internal const string RetryAppContextSwitch = "Switch.Microsoft.Data.SqlClient.EnableRetryLogic";
+        private static readonly Assembly s_sqlClientAssembly = typeof(SqlConnection).Assembly;
+        private static readonly Type s_LocalAppContextSwitchesType = s_sqlClientAssembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
+        private static readonly FieldInfo s_isRetryEnabledFieldInfo = s_LocalAppContextSwitchesType.GetField("s_isRetryEnabled", BindingFlags.Static | BindingFlags.NonPublic);
 
         private static readonly HashSet<int> s_defaultTransientErrors
            = new HashSet<int>
@@ -79,8 +83,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         internal static readonly string s_ExceedErrMsgPattern = SystemDataResourceManager.Instance.SqlRetryLogic_RetryExceeded;
         internal static readonly string s_CancelErrMsgPattern = SystemDataResourceManager.Instance.SqlRetryLogic_RetryCanceled;
 
+        public static void CleanRetryEnabledCache() => s_isRetryEnabledFieldInfo.SetValue(null, null);
+
         public static void SetRetrySwitch(bool value)
         {
+            CleanRetryEnabledCache();
             AppContext.SetSwitch(RetryAppContextSwitch, value);
         }
 
