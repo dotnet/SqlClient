@@ -9,7 +9,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public class KerberosTests
     {
         [PlatformSpecific(TestPlatforms.AnyUnix)]
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest))]
+        [Theory]
+        //[ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest))]
         [ClassData(typeof(ConnectionStringsProvider))]
         public void FailsToConnectWithNoTicketIssued(string cnn)
         {
@@ -18,7 +19,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [PlatformSpecific(TestPlatforms.AnyUnix)]
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest))]
+        //[ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest))]
+        [Theory]
         [ClassData(typeof(ConnectionStringsProvider))]
         [ClassData(typeof(DomainProvider))]
         public void IsKerBerosSetupTest(string connection, string domain)
@@ -45,7 +47,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [PlatformSpecific(TestPlatforms.AnyUnix)]
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest))]
+        [Theory]
+        //[ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest))]
         [ClassData(typeof(ConnectionStringsProvider))]
         public void ExpiredTicketTest(string connection)
         {
