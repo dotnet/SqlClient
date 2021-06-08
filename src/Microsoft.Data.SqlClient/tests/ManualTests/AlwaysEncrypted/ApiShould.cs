@@ -2242,6 +2242,38 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
+        // On Windows, "_fixture" will be type SQLSetupStrategyCertStoreProvider
+        // On non-Windows, "_fixture" will be type SQLSetupStrategyAzureKeyVault
+        // Test will pass on both but only SQLSetupStrategyCertStoreProvider is a system provider
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void TestSystemProvidersHavePrecedenceOverInstanceLevelProviders(string connectionString)
+        {
+            Dictionary<string, SqlColumnEncryptionKeyStoreProvider> customKeyStoreProviders = new()
+            {
+                {
+                    SqlColumnEncryptionAzureKeyVaultProvider.ProviderName,
+                    new SqlColumnEncryptionAzureKeyVaultProvider(new SqlClientCustomTokenCredential())
+                }
+            };
+
+            using (SqlConnection connection = new(connectionString))
+            {
+                connection.Open();
+                using SqlCommand command = CreateCommandThatRequiresSystemKeyStoreProvider(connection);
+                connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(customKeyStoreProviders);
+                command.ExecuteReader();
+            }
+
+            using (SqlConnection connection = new(connectionString))
+            {
+                connection.Open();
+                using SqlCommand command = CreateCommandThatRequiresSystemKeyStoreProvider(connection);
+                command.RegisterColumnEncryptionKeyStoreProvidersOnCommand(customKeyStoreProviders);
+                command.ExecuteReader();
+            }
+        }
+
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.EnclaveEnabled))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestRetryWhenAEParameterMetadataCacheIsStale(string connectionString)
@@ -2315,6 +2347,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 $"SELECT * FROM [{_fixture.CustomKeyStoreProviderTestTable.Name}] WHERE CustomerID = @id",
                 connection, null, SqlCommandColumnEncryptionSetting.Enabled);
             command.Parameters.AddWithValue("id", 9);
+            return command;
+        }
+
+        private SqlCommand CreateCommandThatRequiresSystemKeyStoreProvider(SqlConnection connection)
+        {
+            SqlCommand command = new(
+                    $"SELECT * FROM [{_fixture.CustomKeyStoreProviderTestTable.Name}] WHERE FirstName = @firstName",
+                    connection, null, SqlCommandColumnEncryptionSetting.Enabled);
+            command.Parameters.AddWithValue("firstName", "abc");
             return command;
         }
 

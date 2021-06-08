@@ -212,10 +212,15 @@ namespace Microsoft.Data.SqlClient
             CacheConnectionStringProperties();
         }
 
+        internal static bool TryGetSystemColumnEncryptionKeyStoreProvider(string keyStoreName, out SqlColumnEncryptionKeyStoreProvider provider)
+        {
+            return s_systemColumnEncryptionKeyStoreProviders.TryGetValue(keyStoreName, out provider);
+        }
+
         /// <summary>
-        /// This function walks through both system and custom column encryption key store providers and returns an object if found.
+        /// This function walks through both instance-level and global custom column encryption key store providers and returns an object if found.
         /// </summary>
-        /// <param name="providerName">Provider Name to be searched in System Provider dictionary and Custom provider dictionary.</param>
+        /// <param name="providerName">Provider Name to be searched for.</param>
         /// <param name="columnKeyStoreProvider">If the provider is found, initializes the corresponding SqlColumnEncryptionKeyStoreProvider instance.</param>
         /// <returns>true if the provider is found, else returns false</returns>
         internal bool TryGetColumnEncryptionKeyStoreProvider(string providerName, out SqlColumnEncryptionKeyStoreProvider columnKeyStoreProvider)
@@ -227,17 +232,12 @@ namespace Microsoft.Data.SqlClient
                 return _customColumnEncryptionKeyStoreProviders.TryGetValue(providerName, out columnKeyStoreProvider);
             }
 
-            // Search in the sytem provider list.
-            if (s_systemColumnEncryptionKeyStoreProviders.TryGetValue(providerName, out columnKeyStoreProvider))
-            {
-                return true;
-            }
-
             lock (s_globalCustomColumnEncryptionKeyProvidersLock)
             {
                 // If custom provider is not set, then return false
                 if (s_globalCustomColumnEncryptionKeyStoreProviders is null)
                 {
+                    columnKeyStoreProvider = null;
                     return false;
                 }
 
