@@ -1040,7 +1040,53 @@ namespace Microsoft.Data.SqlClient
         // Processes the tds header that is present in the buffer
         internal OperationStatus TryProcessHeader()
         {
-            Debug.Assert(_inBytesPacket == 0, "there should not be any bytes left in packet when ReadHeader is called");
+            //if (_lastPacketWasPartial)
+            //{
+            //    Debugger.Break();
+            //}
+            //Debug.Assert(_inBytesPacket == 0, "there should not be any bytes left in packet when ReadHeader is called");
+
+            //if (_partialPacket != null)
+            //{
+            //    Packet partial = _partialPacket;
+            //    int takeLength = Math.Min(partial.expectedLength - partial.length, _inBytesRead);
+            //    Buffer.BlockCopy(_inBuff, _inBytesUsed, partial.buffer, partial.length, takeLength);
+            //    _inBytesUsed += takeLength;
+            //    partial.length += takeLength;
+            //    if (partial.length == partial.expectedLength)
+            //    {
+            //        // now we can take the current packet but we have to make sure that if there is still data in the
+            //        // current _inbuff that we store it and recover it in TryReadNetworkPacket
+            //        byte[] futureInBuff = null;
+            //        int _futureInBytesRead = 0;
+
+            //        if (_inBytesUsed != _inBytesRead)
+            //        {
+            //            futureInBuff = _inBuff;
+            //            _futureInBytesRead = _inBytesRead - _inBytesUsed;
+            //            // move the remaining bytes to the start of the buffer
+            //            Buffer.BlockCopy(futureInBuff, _inBytesUsed, futureInBuff, 0, _futureInBytesRead);
+            //        }
+
+            //        _inBuff = partial.buffer;
+            //        _inBytesRead = partial.length;
+            //        _inBytesUsed = 0;
+
+            //        if (futureInBuff == null)
+            //        {
+            //            partial = null;
+            //        }
+            //        else
+            //        {
+            //            partial.expectedLength = 0;
+            //            partial.buffer = futureInBuff;
+            //            partial.length = _futureInBytesRead;
+            //            partial.offset = 0;
+            //        }
+
+            //        _partialPacket = partial;
+            //    }
+            //}
 
             // if the header splits buffer reads - special case!
             if ((_partialHeaderBytesRead > 0) || (_inBytesUsed + _inputHeaderLen > _inBytesRead))
@@ -1102,32 +1148,135 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                // normal header processing...
-                _messageStatus = _inBuff[_inBytesUsed + 1];
-                _inBytesPacket = (_inBuff[_inBytesUsed + TdsEnums.HEADER_LEN_FIELD_OFFSET] << 8 |
-                                              _inBuff[_inBytesUsed + TdsEnums.HEADER_LEN_FIELD_OFFSET + 1]) - _inputHeaderLen;
-                _inBytesPacketAssignedBy = 10;
-
-                if (_inBytesPacket > _inBuff.Length)
+                if (_partialPacket == null || _partialPacket.expectedLength == 0)
                 {
-                    Debugger.Break();
+                    // normal header processing...aw
+                    _messageStatus = _inBuff[_inBytesUsed + 1];
+                    _inBytesPacket = (_inBuff[_inBytesUsed + TdsEnums.HEADER_LEN_FIELD_OFFSET] << 8 |
+                                                    _inBuff[_inBytesUsed + TdsEnums.HEADER_LEN_FIELD_OFFSET + 1]) - _inputHeaderLen;
+                    _inBytesPacketAssignedBy = 10;
+                    _spid = _inBuff[_inBytesUsed + TdsEnums.SPID_OFFSET] << 8 |
+                                                    _inBuff[_inBytesUsed + TdsEnums.SPID_OFFSET + 1];
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.TryProcessHeader | ADV | State Object Id {0}, Client Connection Id {1}, Server process Id (SPID) {2}", _objectID, _parser?.Connection?.ClientConnectionId, _spid);
+                    _inBytesUsed += _inputHeaderLen;
+
+                    if (_inBytesPacket > _inBuff.Length)
+                    {
+                        Debugger.Break();
+                    }
+
+                    if (_inBytesPacket - _inBytesRead > 0)
+                    {
+                        // we need more data because the packet hasn't been completely read
+                        // this is complicated because we now need to store the current _inBuff, _inBytesRead and _inBytesUsed
+                        // because the process of recieving a new packet will overwrite the current ones
+                        // so put them somewhere to one side so we can find it later
+                        _partialPacket = new Packet
+                        {
+                            expectedLength = _inBytesPacket,
+                            buffer = _inBuff,
+                            length = _inBytesRead,
+                            offset = _inBytesUsed
+                        };
+                        if (_inBytesPacket > _inBuff.Length)
+                        {
+                            Debugger.Break();
+                        }
+                    }
                 }
+                
+                
+                while (_partialPacket != null && _partialPacket.expectedLength > 0)
+                {
+                    if (_partialPacket.buffer == _inBuff)
+                    {
+                        // Require more data
+                        if (_parser.State == TdsParserState.Broken || _parser.State == TdsParserState.Closed)
+                        {
+                            // NOTE: ReadNetworkPacket does nothing if the parser state is closed or broken
+                            // to avoid infinite loop, we raise an exception
+                            ThrowExceptionAndWarning();
+                            return OperationStatus.InvalidData;
+                        }
 
-                _spid = _inBuff[_inBytesUsed + TdsEnums.SPID_OFFSET] << 8 |
-                                              _inBuff[_inBytesUsed + TdsEnums.SPID_OFFSET + 1];
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.TryProcessHeader | ADV | State Object Id {0}, Client Connection Id {1}, Server process Id (SPID) {2}", _objectID, _parser?.Connection?.ClientConnectionId, _spid);
-                _inBytesUsed += _inputHeaderLen;
+                        OperationStatus result = TryReadNetworkPacket();
+                        if (result != OperationStatus.Done)
+                        {
+                            return result;
+                        }
 
+                        if (IsTimeoutStateExpired)
+                        {
+                            ThrowExceptionAndWarning();
+                            return OperationStatus.InvalidData;
+                        }
+                    }
+
+                    Packet partial = _partialPacket;
+                    int takeLength = Math.Min(partial.expectedLength - partial.length, _inBytesRead);
+                    Buffer.BlockCopy(_inBuff, 0, partial.buffer, partial.length, takeLength);
+                    _inBytesUsed = partial.offset;
+                    partial.length += takeLength;
+                    if (partial.length == partial.expectedLength)
+                    {
+                        // now we can take the current packet but we have to make sure that if there is still data in the
+                        // current _inbuff that we store it and recover it in TryReadNetworkPacket
+                        byte[] futureInBuff = null;
+                        int _futureInBytesRead = 0;
+
+                        if (_inBytesUsed != _inBytesRead)
+                        {
+                            futureInBuff = _inBuff;
+                            _futureInBytesRead = _inBytesRead - takeLength;
+                            // move the remaining bytes to the start of the buffer
+                            Buffer.BlockCopy(futureInBuff, 0, futureInBuff, 0, _futureInBytesRead);
+                        }
+
+                        _inBuff = partial.buffer;
+                        _inBytesRead = partial.length;
+                        _inBytesUsed = 0;
+                        _inBytesPacket = partial.expectedLength;
+
+                        if (futureInBuff == null)
+                        {
+                            partial = null;
+                        }
+                        else
+                        {
+                            partial.expectedLength = 0;
+                            partial.buffer = futureInBuff;
+                            partial.length = _futureInBytesRead;
+                            partial.offset = 0;
+                        }
+
+                        _partialPacket = partial;
+                    }
+                    if (_inBytesPacket > _inBuff.Length)
+                    {
+                        Debugger.Break();
+                    }
+                }
+                
                 AssertValidState();
             }
 
-            if (_inBytesPacket < 0 || _inBytesPacket > _inBytesRead)
+            if (_inBytesPacket < 0)
             {
                 // either TDS stream is corrupted or there is multithreaded misuse of connection
                 throw SQL.ParsingError();
             }
 
             return OperationStatus.Done;
+        }
+
+        private Packet _partialPacket;
+
+        public sealed class Packet
+        {
+            public int expectedLength;
+            public byte[] buffer;
+            public int length;
+            public int offset;
         }
 
         // This ensure that there is data available to be read in the buffer and that the header has been processed
@@ -1643,10 +1792,10 @@ namespace Microsoft.Data.SqlClient
                     return result;
                 }
             }
-            if (_inBytesPacket > _inBuff.Length)
-            {
-                Debugger.Break();
-            }
+            //if (_inBytesPacket > _inBuff.Length)
+            //{
+            //    Debugger.Break();
+            //}
             if ((_bTmpRead > 0) || (((_inBytesUsed + 4) > _inBytesRead) || (_inBytesPacket < 4)))
             {
                 // If the int isn't fully in the buffer, or if it isn't fully in the packet,
@@ -2024,10 +2173,10 @@ namespace Microsoft.Data.SqlClient
                 if ((ulong)(buff?.Length ?? 0) != _longlen)
                 {
                     // if the buffer is null or the wrong length create one to use
-                    if (_longLenleft > 5242880)
-                    {
-                        Debugger.Break();
-                    }
+                    //if (_longLenleft > 5242880)
+                    //{
+                    //    Debugger.Break();
+                    //}
                     buff = new byte[(int)Math.Min((int)_longlen, len)];
                 }
             }
@@ -2065,10 +2214,10 @@ namespace Microsoft.Data.SqlClient
                 if (buff.Length < (offset + bytesToRead))
                 {
                     // Grow the array
-                    if (_longLenleft > 5242880)
-                    {
-                        Debugger.Break();
-                    }
+                    //if (_longLenleft > 5242880)
+                    //{
+                    //    Debugger.Break();
+                    //}
                     newbuf = new byte[offset + bytesToRead];
                     Buffer.BlockCopy(buff, 0, newbuf, 0, offset);
                     buff = newbuf;
@@ -2220,6 +2369,14 @@ namespace Microsoft.Data.SqlClient
 
         internal OperationStatus TryReadNetworkPacket()
         {
+            if (_partialPacket != null && _partialPacket.expectedLength==0)
+            {
+                _inBuff = _partialPacket.buffer;
+                _inBytesRead = _partialPacket.length;
+                _inBytesUsed = _partialPacket.offset;
+                _partialPacket = null;
+                return OperationStatus.Done;
+            }
 #if DEBUG
             Debug.Assert(!_shouldHaveEnoughData || _attentionSent, "Caller said there should be enough data, but we are currently reading a packet");
 #endif
@@ -2243,10 +2400,10 @@ namespace Microsoft.Data.SqlClient
                     else
                     {
 #if DEBUG
-                        if (_checkNetworkPacketRetryStacks)
-                        {
-                            _lastStack = Environment.StackTrace;
-                        }
+                        //if (_checkNetworkPacketRetryStacks)
+                        //{
+                        //    _lastStack = Environment.StackTrace;
+                        //}
 #endif
                         if (_bTmpRead == 0 && _partialHeaderBytesRead == 0 && _longLenleft==0 && _snapshot.ContinueEnabled)
                         {
@@ -3355,7 +3512,7 @@ namespace Microsoft.Data.SqlClient
                         Span<byte> copyTo = _outBuff.AsSpan(_outBytesUsed, remainder);
                         ReadOnlySpan<byte> copyFrom = b.Slice(0, remainder);
 
-                        Debug.Assert(copyTo.Length == copyFrom.Length, $"copyTo.Length:{copyTo.Length} and copyFrom.Length{copyFrom.Length:D} should be the same");
+                        //Debug.Assert(copyTo.Length == copyFrom.Length, $"copyTo.Length:{copyTo.Length} and copyFrom.Length{copyFrom.Length:D} should be the same");
 
                         copyFrom.CopyTo(copyTo);
 
@@ -3381,7 +3538,7 @@ namespace Microsoft.Data.SqlClient
                                 byte[] tempArray = new byte[len];
                                 Span<byte> copyTempTo = tempArray.AsSpan();
 
-                                Debug.Assert(copyTempTo.Length == b.Length, $"copyTempTo.Length:{copyTempTo.Length} and copyTempFrom.Length:{b.Length:D} should be the same");
+                                //Debug.Assert(copyTempTo.Length == b.Length, $"copyTempTo.Length:{copyTempTo.Length} and copyTempFrom.Length:{b.Length:D} should be the same");
 
                                 b.CopyTo(copyTempTo);
                                 array = tempArray;
@@ -3401,7 +3558,7 @@ namespace Microsoft.Data.SqlClient
                         Span<byte> copyTo = _outBuff.AsSpan(_outBytesUsed, len);
                         ReadOnlySpan<byte> copyFrom = b.Slice(0, len);
 
-                        Debug.Assert(copyTo.Length == copyFrom.Length, $"copyTo.Length:{copyTo.Length} and copyFrom.Length:{copyFrom.Length:D} should be the same");
+                        //Debug.Assert(copyTo.Length == copyFrom.Length, $"copyTo.Length:{copyTo.Length} and copyFrom.Length:{copyFrom.Length:D} should be the same");
 
                         copyFrom.CopyTo(copyTo);
 
@@ -3854,6 +4011,10 @@ namespace Microsoft.Data.SqlClient
             }
 
             Debug.Assert(_inBytesPacket >= 0, "Packet must not be negative");
+            if (_inBytesPacket > _inBuff.Length)
+            {
+                Debugger.Break();
+            }
         }
 
 
@@ -4513,10 +4674,10 @@ namespace Microsoft.Data.SqlClient
 
             internal void AppendPacketData(byte[] buffer, int read)
             {
-                if (buffer[0] != 4)
-                {
-                    Debugger.Break();
-                }
+                //if (buffer[0] != 4)
+                //{
+                //    Debugger.Break();
+                //}
 #if DEBUG
                 for (PacketData current = _firstPacket; current != null; current = current.NextPacket)
                 {
