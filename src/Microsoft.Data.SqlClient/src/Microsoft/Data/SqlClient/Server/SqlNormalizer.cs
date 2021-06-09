@@ -30,14 +30,7 @@ namespace Microsoft.Data.SqlClient.Server
         internal Normalizer Normalizer { get; private set; }
 
         // Sort fields by field offsets.
-        public int CompareTo(object other)
-        {
-            if (other is FieldInfoEx otherFieldInfoEx)
-            {
-                return _offset.CompareTo(otherFieldInfoEx._offset);
-            }
-            return -1;           
-        }
+        public int CompareTo(object other) => other is FieldInfoEx otherEx ? _offset.CompareTo(otherEx._offset) : -1;
     }
 
     // The most complex normalizer, a udt normalizer
@@ -73,7 +66,7 @@ namespace Microsoft.Data.SqlClient.Server
             // what to do about nested udts
             _isTopLevelUdt = true;
             //      else
-            //        this.m_isTopLevelUdt = isTopLevelUdt;
+            //        this._isTopLevelUdt = isTopLevelUdt;
 
             FieldInfo[] fields = GetFields(t);
 
@@ -136,7 +129,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             object result = null;
             //if nullable and not the top object, read the null marker
-            if (!_isTopLevelUdt && typeof(System.Data.SqlTypes.INullable).IsAssignableFrom(t))
+            if (!_isTopLevelUdt && typeof(INullable).IsAssignableFrom(t))
             {
                 byte nullByte = (byte)s.ReadByte();
                 if (nullByte == 0)
