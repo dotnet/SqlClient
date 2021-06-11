@@ -881,33 +881,47 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
-        public void TestEnclaveStoredProcedureWithoutParameters(string connectionString)
+        public void TestEnclaveStoredProcedure(string connectionString)
         {
-            using (SqlConnection sqlConnection = new(connectionString))
+            using SqlConnection sqlConnection = new(connectionString);
+            sqlConnection.Open();
+
+            using SqlCommand sqlCommand = new("", sqlConnection, transaction: null,
+                columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled);
+
+            string procWithoutParams = DataTestUtility.GetUniqueName("EnclaveWithoutParams", withBracket: false);
+            string procWithParam = DataTestUtility.GetUniqueName("EnclaveWithParams", withBracket: false);
+
+            try
             {
-                sqlConnection.Open();
+                sqlCommand.CommandText = $"CREATE PROCEDURE {procWithoutParams} AS SELECT * FROM [{_tableName}];";
+                sqlCommand.ExecuteNonQuery();
+                sqlCommand.CommandText = $"CREATE PROCEDURE {procWithParam} @id INT AS SELECT * FROM [{_tableName}] WHERE CustomerId = @id";
+                sqlCommand.ExecuteNonQuery();
 
-                using (SqlCommand sqlCommand = new("", sqlConnection, transaction: null,
-                    columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
+                sqlCommand.CommandText = procWithoutParams;
+                sqlCommand.CommandType = CommandType.StoredProcedure;
+                using (SqlDataReader reader = sqlCommand.ExecuteReader())
                 {
-                    string storedProcedureName = DataTestUtility.GetUniqueName("EnclaveWithoutParams");
-
-                    try
-                    {
-                        sqlCommand.CommandText = $"CREATE PROCEDURE {storedProcedureName} AS SELECT * FROM [{_tableName}]";
-                        sqlCommand.ExecuteNonQuery();
-
-                        sqlCommand.CommandText = storedProcedureName;
-                        sqlCommand.CommandType = CommandType.StoredProcedure;
-                        SqlDataReader reader = sqlCommand.ExecuteReader();
-
-                        Assert.Equal(3, reader.VisibleFieldCount);
-                    }
-                    finally
-                    {
-                        DropHelperProcedures(new[] { storedProcedureName }, connectionString);
-                    }
+                    Assert.Equal(3, reader.VisibleFieldCount);
                 }
+
+                sqlCommand.CommandText = procWithParam;
+                sqlCommand.CommandType = CommandType.StoredProcedure;
+                Exception ex = Assert.Throws<SqlException>(() => sqlCommand.ExecuteReader());
+                string expectedMsg = $"Procedure or function '{procWithParam}' expects parameter '@id', which was not supplied.";
+
+                Assert.Equal(expectedMsg, ex.Message);
+
+                sqlCommand.Parameters.AddWithValue("@id", 0);
+                using (SqlDataReader reader = sqlCommand.ExecuteReader())
+                {
+                    Assert.Equal(3, reader.VisibleFieldCount);
+                }
+            }
+            finally
+            {
+                DropHelperProcedures(new[] { procWithoutParams, procWithParam }, connectionString);
             }
         }
 
