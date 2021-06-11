@@ -878,6 +878,39 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             });
         }
 
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void TestEnclaveStoredProcedureWithoutParameters(string connectionString)
+        {
+            using (SqlConnection sqlConnection = new(connectionString))
+            {
+                sqlConnection.Open();
+
+                using (SqlCommand sqlCommand = new("", sqlConnection, transaction: null,
+                    columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
+                {
+                    string storedProcedureName = DataTestUtility.GetUniqueName("EnclaveWithoutParams");
+
+                    try
+                    {
+                        sqlCommand.CommandText = $"CREATE PROCEDURE {storedProcedureName} AS SELECT * FROM [{_tableName}]";
+                        sqlCommand.ExecuteNonQuery();
+
+                        sqlCommand.CommandText = storedProcedureName;
+                        sqlCommand.CommandType = CommandType.StoredProcedure;
+                        SqlDataReader reader = sqlCommand.ExecuteReader();
+
+                        Assert.Equal(3, reader.VisibleFieldCount);
+                    }
+                    finally
+                    {
+                        DropHelperProcedures(new[] { storedProcedureName }, connectionString);
+                    }
+                }
+            }
+        }
+
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestPrepareWithExecuteNonQuery(string connection)
@@ -2262,7 +2295,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 connection.Open();
                 using SqlCommand command = CreateCommandThatRequiresSystemKeyStoreProvider(connection);
                 connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(customKeyStoreProviders);
-                command.ExecuteReader();
+                SqlDataReader reader = command.ExecuteReader();
+                Assert.Equal(3, reader.VisibleFieldCount);
             }
 
             using (SqlConnection connection = new(connectionString))
@@ -2270,7 +2304,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 connection.Open();
                 using SqlCommand command = CreateCommandThatRequiresSystemKeyStoreProvider(connection);
                 command.RegisterColumnEncryptionKeyStoreProvidersOnCommand(customKeyStoreProviders);
-                command.ExecuteReader();
+                SqlDataReader reader = command.ExecuteReader();
+                Assert.Equal(3, reader.VisibleFieldCount);
             }
         }
 
