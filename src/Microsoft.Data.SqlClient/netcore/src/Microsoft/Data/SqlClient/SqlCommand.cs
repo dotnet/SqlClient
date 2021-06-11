@@ -3854,7 +3854,7 @@ namespace Microsoft.Data.SqlClient
                                 "The number of decribe parameter encryption RPC requests is more than the number of original RPC requests.");
             }
             //Always Encrypted generally operates only on parameterized queries. However enclave based Always encrypted also supports unparameterized queries
-            else if (ShouldUseEnclaveBasedWorkflow && (0 != GetParameterCount(_parameters)))
+            else if ((ShouldUseEnclaveBasedWorkflow && 0 != GetParameterCount(_parameters)) || (0 != GetParameterCount(_parameters)))
             {
                 // Fetch params for a single batch
                 inputParameterEncryptionNeeded = true;
