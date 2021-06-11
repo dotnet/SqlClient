@@ -10389,19 +10389,25 @@ namespace Microsoft.Data.SqlClient
                                         task = completion.Task;
                                     }
 
-                                    AsyncHelper.ContinueTask(writeParamTask, completion,
-                                        () => TdsExecuteRPC(cmd, rpcArray, timeout, inSchema, notificationRequest, stateObj, isCommandProc, sync, completion,
-                                                              startRpc: ii, startParam: i + 1),
-                                        connectionToDoom: _connHandler,
-                                        onFailure: exc => TdsExecuteRPC_OnFailure(exc, stateObj));
+                                    AsyncHelper.ContinueTaskWithState(writeParamTask, completion, this,
+                                        (object state) =>
+                                        {
+                                            TdsParser tdsParser = (TdsParser)state;
+                                            TdsExecuteRPC(cmd, rpcArray, timeout, inSchema, notificationRequest, stateObj, isCommandProc, sync, completion,
+                                                                  startRpc: ii, startParam: i + 1);
+                                        },
+                                        onFailure: (Exception exc, object state) => ((TdsParser)state).TdsExecuteRPC_OnFailure(exc, stateObj),
+                                        connectionToDoom: _connHandler
+                                    );
 
                                     // Take care of releasing the locks
                                     if (releaseConnectionLock)
                                     {
-                                        task.ContinueWith(_ =>
-                                        {
-                                            _connHandler._parserLock.Release();
-                                        }, TaskScheduler.Default);
+                                        task.ContinueWith(
+                                            static (Task _, object state) => ((TdsParser)state)._connHandler._parserLock.Release(), 
+                                            state: this,
+                                            scheduler: TaskScheduler.Default
+                                        );
                                         releaseConnectionLock = false;
                                     }
 
@@ -11960,7 +11966,8 @@ namespace Microsoft.Data.SqlClient
                 {
                     return AsyncHelper.CreateContinuationTask<int, TdsParserStateObject>(unterminatedWriteTask,
                         WriteInt, 0, stateObj,
-                        connectionToDoom: _connHandler);
+                        connectionToDoom: _connHandler
+                    );
                 }
             }
             else

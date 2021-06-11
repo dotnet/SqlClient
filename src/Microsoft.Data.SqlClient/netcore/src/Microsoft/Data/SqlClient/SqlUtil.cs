@@ -34,7 +34,7 @@ namespace Microsoft.Data.SqlClient
                 TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
                 ContinueTaskWithState(task, completion,
                     state: Tuple.Create(onSuccess, onFailure, completion),
-                    onSuccess: (state) =>
+                    onSuccess: static (object state) =>
                     {
                         var parameters = (Tuple<Action, Action<Exception>, TaskCompletionSource<object>>)state;
                         Action success = parameters.Item1;
@@ -42,7 +42,7 @@ namespace Microsoft.Data.SqlClient
                         success();
                         taskCompletionSource.SetResult(null);
                     },
-                    onFailure: (exception, state) =>
+                    onFailure: static (Exception exception, object state) =>
                     {
                         var parameters = (Tuple<Action, Action<Exception>, TaskCompletionSource<object>>)state;
                         Action<Exception> failure = parameters.Item2;
@@ -64,7 +64,7 @@ namespace Microsoft.Data.SqlClient
             {
                 var completion = new TaskCompletionSource<object>();
                 ContinueTaskWithState(task, completion, state,
-                    onSuccess: (continueState) =>
+                    onSuccess: (object continueState) =>
                     {
                         onSuccess(continueState);
                         completion.SetResult(null);
@@ -81,12 +81,12 @@ namespace Microsoft.Data.SqlClient
         }
 
         internal static void ContinueTask(Task task,
-                TaskCompletionSource<object> completion,
-                Action onSuccess,
-                Action<Exception> onFailure = null,
-                Action onCancellation = null,
-                Func<Exception, Exception> exceptionConverter = null
-            )
+            TaskCompletionSource<object> completion,
+            Action onSuccess,
+            Action<Exception> onFailure = null,
+            Action onCancellation = null,
+            Func<Exception, Exception> exceptionConverter = null
+        )
         {
             task.ContinueWith(
                 tsk =>
@@ -145,7 +145,7 @@ namespace Microsoft.Data.SqlClient
         )
         {
             task.ContinueWith(
-                tsk =>
+                (Task tsk, object state2) =>
                 {
                     if (tsk.Exception != null)
                     {
@@ -156,7 +156,7 @@ namespace Microsoft.Data.SqlClient
                         }
                         try
                         {
-                            onFailure?.Invoke(exc, state);
+                            onFailure?.Invoke(exc, state2);
                         }
                         finally
                         {
@@ -167,7 +167,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         try
                         {
-                            onCancellation?.Invoke(state);
+                            onCancellation?.Invoke(state2);
                         }
                         finally
                         {
@@ -178,14 +178,16 @@ namespace Microsoft.Data.SqlClient
                     {
                         try
                         {
-                            onSuccess(state);
+                            onSuccess(state2);
                         }
                         catch (Exception e)
                         {
                             completion.SetException(e);
                         }
                     }
-                }, TaskScheduler.Default
+                }, 
+                state: state,
+                scheduler: TaskScheduler.Default
             );
         }
 
@@ -205,25 +207,42 @@ namespace Microsoft.Data.SqlClient
             }
             if (!task.IsCompleted)
             {
-                task.ContinueWith(t => { var ignored = t.Exception; }); //Ensure the task does not leave an unobserved exception
-                if (onTimeout != null)
-                {
-                    onTimeout();
-                }
+                task.ContinueWith(static t => { var ignored = t.Exception; }); //Ensure the task does not leave an unobserved exception
+                onTimeout?.Invoke();
             }
         }
 
-        internal static void SetTimeoutException(TaskCompletionSource<object> completion, int timeout, Func<Exception> exc, CancellationToken ctoken)
+        internal static void SetTimeoutException(TaskCompletionSource<object> completion, int timeout, Func<Exception> onFailure, CancellationToken ctoken)
         {
             if (timeout > 0)
             {
-                Task.Delay(timeout * 1000, ctoken).ContinueWith((tsk) =>
-                {
-                    if (!tsk.IsCanceled && !completion.Task.IsCompleted)
+                Task.Delay(timeout * 1000, ctoken).ContinueWith(
+                    (Task task) =>
                     {
-                        completion.TrySetException(exc());
+                        if (!task.IsCanceled && !completion.Task.IsCompleted)
+                        {
+                            completion.TrySetException(onFailure());
+                        }
                     }
-                });
+                );
+            }
+        }
+
+        internal static void SetTimeoutExceptionWithState(TaskCompletionSource<object> completion, int timeout, object state, Func<object,Exception> onFailure, CancellationToken cancellationToken)
+        {
+            if (timeout > 0)
+            {
+                Task.Delay(timeout * 1000, cancellationToken).ContinueWith(
+                    (Task task, object state) =>
+                    {
+                        if (!task.IsCanceled && !completion.Task.IsCompleted)
+                        {
+                            completion.TrySetException(onFailure(state));
+                        }
+                    },
+                    state: state,
+                    cancellationToken: CancellationToken.None
+                );
             }
         }
     }
