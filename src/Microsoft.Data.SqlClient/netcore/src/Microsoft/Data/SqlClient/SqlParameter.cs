@@ -733,7 +733,7 @@ namespace Microsoft.Data.SqlClient
                 _coercedValue = null;
                 _valueAsINullable = _value as INullable;
                 SetFlag(SqlParameterFlags.IsSqlParameterSqlType, _valueAsINullable != null);
-                SetFlag(SqlParameterFlags.IsNull, (null == _value) || (_value == DBNull.Value) || HasFlag(SqlParameterFlags.IsSqlParameterSqlType) && _valueAsINullable.IsNull);
+                SetFlag(SqlParameterFlags.IsNull, (null == _value) || (_value == DBNull.Value) || (HasFlag(SqlParameterFlags.IsSqlParameterSqlType) && _valueAsINullable.IsNull));
                 _udtLoadError = null;
                 _actualSize = -1;
             }
@@ -1012,7 +1012,9 @@ namespace Microsoft.Data.SqlClient
                 SqlParameterFlags.IsSqlParameterSqlType |
                 SqlParameterFlags.CoercedValueIsDataFeed |
                 SqlParameterFlags.CoercedValueIsSqlType |
-                SqlParameterFlags.ForceColumnEncryption
+                SqlParameterFlags.ForceColumnEncryption |
+                SqlParameterFlags.IsDerivedParameterTypeName
+                // HasScale and HasReceivedMetadata deliberately omitted
             );
             destination._metaType = _metaType;
             destination._collation = _collation;
