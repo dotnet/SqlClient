@@ -3048,7 +3048,7 @@
   <data name="SqlMisc_SubclassMustOverride" xml:space="preserve">
     <value>サブクラスが、必要なメソッドをオーバーライドしませんでした。</value>
   </data>
-  <data name="Sql_CanotCreateNormalizer" xml:space="preserve">
+  <data name="SQL_CannotCreateNormalizer" xml:space="preserve">
     <value>'{0}' のノーマライザーを作成できません。</value>
   </data>
   <data name="Sql_InternalError" xml:space="preserve">

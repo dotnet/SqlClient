@@ -9127,6 +9127,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot create normalizer for &apos;{0}&apos;..
+        /// </summary>
+        internal static string SQL_CannotCreateNormalizer {
+            get {
+                return ResourceManager.GetString("SQL_CannotCreateNormalizer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot find an authentication provider for &apos;{0}&apos;..
         /// </summary>
         internal static string SQL_CannotFindAuthProvider {
@@ -9168,15 +9177,6 @@ namespace System {
         internal static string SQL_CannotModifyPropertyAsyncOperationInProgress {
             get {
                 return ResourceManager.GetString("SQL_CannotModifyPropertyAsyncOperationInProgress", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot create normalizer for &apos;{0}&apos;..
-        /// </summary>
-        internal static string Sql_CanotCreateNormalizer {
-            get {
-                return ResourceManager.GetString("Sql_CanotCreateNormalizer", resourceCulture);
             }
         }
         

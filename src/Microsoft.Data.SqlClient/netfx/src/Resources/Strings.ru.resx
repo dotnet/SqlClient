@@ -3048,7 +3048,7 @@
   <data name="SqlMisc_SubclassMustOverride" xml:space="preserve">
     <value>Подклассы не переопределяют необходимый метод.</value>
   </data>
-  <data name="Sql_CanotCreateNormalizer" xml:space="preserve">
+  <data name="SQL_CannotCreateNormalizer" xml:space="preserve">
     <value>Не удается создать нормализатор для "{0}".</value>
   </data>
   <data name="Sql_InternalError" xml:space="preserve">
