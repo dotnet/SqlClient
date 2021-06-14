@@ -47,6 +47,13 @@ namespace Microsoft.Data.SqlClient.SNI
             return _marsConnection.CreateMarsSession(callbackObject, async);
         }
 
+        /// <summary>
+        /// Copies data in SNIPacket to given byte array parameter
+        /// </summary>
+        /// <param name="packet">SNIPacket object containing data packets</param>
+        /// <param name="inBuff">Destination byte array where data packets are copied to</param>
+        /// <param name="dataSize">Length of data packets</param>
+        /// <returns>SNI error status</returns>
         protected override uint SNIPacketGetData(PacketHandle packet, byte[] inBuff, ref uint dataSize)
         {
             int dataSizeInt = 0;
@@ -279,7 +286,7 @@ namespace Microsoft.Data.SqlClient.SNI
         internal override uint SniGetConnectionId(ref Guid clientConnectionId)
         {
             clientConnectionId = Handle.ConnectionId;
-            SqlClientEventSource.Log.TryTraceEvent("SNIProxy.GetConnectionId | Info | Session Id {0}", clientConnectionId);
+            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.GetConnectionId | Info | Session Id {0}", clientConnectionId);
             return TdsEnums.SNI_SUCCESS;
         }
 

@@ -21,16 +21,9 @@ namespace Microsoft.Data.SqlClient.SNI
         private const int DefaultSqlServerDacPort = 1434;
         private const string SqlServerSpnHeader = "MSSQLSvc";
 
-        internal class SspiClientContextResult
-        {
-            internal const uint OK = 0;
-            internal const uint Failed = 1;
-            internal const uint KerberosTicketMissing = 2;
-        }
+        private static readonly SNIProxy s_singleton = new SNIProxy();
 
-        internal static readonly SNIProxy s_singleton = new SNIProxy();
-
-        internal static SNIProxy GetInstance() => s_singleton;
+        internal static SNIProxy Instance => s_singleton;
 
         /// <summary>
         /// Generate SSPI context
