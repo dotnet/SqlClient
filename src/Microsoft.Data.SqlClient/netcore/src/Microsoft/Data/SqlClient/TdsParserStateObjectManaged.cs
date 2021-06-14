@@ -47,13 +47,25 @@ namespace Microsoft.Data.SqlClient.SNI
             return _marsConnection.CreateMarsSession(callbackObject, async);
         }
 
-        protected override uint SNIPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize)
-            => SNIProxy.GetInstance().PacketGetData(packet.ManagedPacket, _inBuff, ref dataSize);
+        /// <summary>
+        /// Copies data in SNIPacket to given byte array parameter
+        /// </summary>
+        /// <param name="packet">SNIPacket object containing data packets</param>
+        /// <param name="inBuff">Destination byte array where data packets are copied to</param>
+        /// <param name="dataSize">Length of data packets</param>
+        /// <returns>SNI error status</returns>
+        protected override uint SNIPacketGetData(PacketHandle packet, byte[] inBuff, ref uint dataSize)
+        {
+            int dataSizeInt = 0;
+            packet.ManagedPacket.GetData(inBuff, ref dataSizeInt);
+            dataSize = (uint)dataSizeInt;
+            return TdsEnums.SNI_SUCCESS;
+        }
 
         internal override void CreatePhysicalSNIHandle(string serverName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[][] spnBuffer, bool flushCache, bool async, bool parallel, 
                                            SqlConnectionIPAddressPreference iPAddressPreference, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo, bool isIntegratedSecurity)
         {
-            _sessionHandle = SNIProxy.GetInstance().CreateConnectionHandle(serverName, ignoreSniOpenTimeout, timerExpire, out instanceName, ref spnBuffer, flushCache, async, parallel, isIntegratedSecurity, 
+            _sessionHandle = SNIProxy.CreateConnectionHandle(serverName, ignoreSniOpenTimeout, timerExpire, out instanceName, ref spnBuffer, flushCache, async, parallel, isIntegratedSecurity, 
                                                         iPAddressPreference, cachedFQDN, ref pendingDNSInfo);
             if (_sessionHandle == null)
             {
@@ -162,7 +174,9 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 throw ADP.ClosedConnectionError();
             }
-            error = SNIProxy.GetInstance().ReadSyncOverAsync(handle, out SNIPacket packet, timeoutRemaining);
+
+            error = handle.Receive(out SNIPacket packet, timeoutRemaining);
+            
             SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.ReadSyncOverAsync | Info | State Object Id {0}, Session Id {1}", _objectID, _sessionHandle?.ConnectionId);
 #if DEBUG
             SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObjectManaged.ReadSyncOverAsync | TRC | State Object Id {0}, Session Id {1}, Packet {2} received, Packet owner Id {3}, Packet dataLeft {4}", _objectID, _sessionHandle?.ConnectionId, packet?._id, packet?._owner.ConnectionId, packet?.DataLeft);
@@ -191,12 +205,14 @@ namespace Microsoft.Data.SqlClient.SNI
         internal override uint CheckConnection()
         {
             SNIHandle handle = Handle;
-            return handle == null ? TdsEnums.SNI_SUCCESS : SNIProxy.GetInstance().CheckConnection(handle);
+            return handle == null ? TdsEnums.SNI_SUCCESS : handle.CheckConnection();
         }
 
         internal override PacketHandle ReadAsync(SessionHandle handle, out uint error)
         {
-            error = SNIProxy.GetInstance().ReadAsync(handle.ManagedHandle, out SNIPacket packet);
+            SNIPacket packet = null;
+            error = handle.ManagedHandle.ReceiveAsync(ref packet);
+
             SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.ReadAsync | Info | State Object Id {0}, Session Id {1}, Packet DataLeft {2}", _objectID, _sessionHandle?.ConnectionId, packet?.DataLeft);
             return PacketHandle.FromManagedPacket(packet);
         }
@@ -214,8 +230,24 @@ namespace Microsoft.Data.SqlClient.SNI
             return packetHandle;
         }
 
-        internal override uint WritePacket(PacketHandle packet, bool sync) =>
-            SNIProxy.GetInstance().WritePacket(Handle, packet.ManagedPacket, sync);
+        internal override uint WritePacket(PacketHandle packetHandle, bool sync)
+        {
+            uint result;
+            SNIHandle handle = Handle;
+            SNIPacket packet = packetHandle.ManagedPacket;
+            if (sync)
+            {
+                result = handle.Send(packet);
+                handle.ReturnPacket(packet);
+            }
+            else
+            {
+                result = handle.SendAsync(packet);
+            }
+
+            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.WritePacket | Info | Session Id {0}, SendAsync Result {1}", handle?.ConnectionId, result);
+            return result;
+        }
 
         // No- Op in managed SNI
         internal override PacketHandle AddPacketToPendingList(PacketHandle packet) => packet;
@@ -246,11 +278,25 @@ namespace Microsoft.Data.SqlClient.SNI
             Debug.Assert(_asyncWriteCount == 0, "Should not clear all write packets if there are packets pending");
         }
 
-        internal override void SetPacketData(PacketHandle packet, byte[] buffer, int bytesUsed) => SNIProxy.GetInstance().PacketSetData(packet.ManagedPacket, buffer, bytesUsed);
+        internal override void SetPacketData(PacketHandle packet, byte[] buffer, int bytesUsed)
+        {
+            packet.ManagedPacket.AppendData(buffer, bytesUsed);
+        }
 
-        internal override uint SniGetConnectionId(ref Guid clientConnectionId) => SNIProxy.GetInstance().GetConnectionId(Handle, ref clientConnectionId);
+        internal override uint SniGetConnectionId(ref Guid clientConnectionId)
+        {
+            clientConnectionId = Handle.ConnectionId;
+            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.GetConnectionId | Info | Session Id {0}", clientConnectionId);
+            return TdsEnums.SNI_SUCCESS;
+        }
 
-        internal override uint DisableSsl() => SNIProxy.GetInstance().DisableSsl(Handle);
+        internal override uint DisableSsl()
+        {
+            SNIHandle handle = Handle;
+            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.DisableSsl | Info | Session Id {0}", handle?.ConnectionId);
+            handle.DisableSsl();
+            return TdsEnums.SNI_SUCCESS;
+        }
 
         internal override uint EnableMars(ref uint info)
         {
@@ -265,9 +311,26 @@ namespace Microsoft.Data.SqlClient.SNI
             return TdsEnums.SNI_ERROR;
         }
 
-        internal override uint EnableSsl(ref uint info) => SNIProxy.GetInstance().EnableSsl(Handle, info);
+        internal override uint EnableSsl(ref uint info)
+        {
+            SNIHandle handle = Handle;
+            try
+            {
+                SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.EnableSsl | Info | Session Id {0}", handle?.ConnectionId);
+                return handle.EnableSsl(info);
+            }
+            catch (Exception e)
+            {
+                SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.EnableSsl | Err | Session Id {0}, SNI Handshake failed with exception: {1}", handle?.ConnectionId, e?.Message);
+                return SNICommon.ReportSNIError(SNIProviders.SSL_PROV, SNICommon.HandshakeFailureError, e);
+            }
+        }
 
-        internal override uint SetConnectionBufferSize(ref uint unsignedPacketSize) => SNIProxy.GetInstance().SetConnectionBufferSize(Handle, unsignedPacketSize);
+        internal override uint SetConnectionBufferSize(ref uint unsignedPacketSize)
+        {
+            Handle.SetBufferSize((int)unsignedPacketSize);
+            return TdsEnums.SNI_SUCCESS;
+        }
 
         internal override uint GenerateSspiClientContext(byte[] receivedBuff, uint receivedLength, ref byte[] sendBuff, ref uint sendLength, byte[][] _sniSpnBuffer)
         {
@@ -276,8 +339,8 @@ namespace Microsoft.Data.SqlClient.SNI
                 _sspiClientContextStatus = new SspiClientContextStatus();
             }
 
-            SNIProxy.GetInstance().GenSspiClientContext(_sspiClientContextStatus, receivedBuff, ref sendBuff, _sniSpnBuffer);
-            SqlClientEventSource.Log.TryTraceEvent("SNIProxy.GenerateSspiClientContext | Info | Session Id {0}", _sessionHandle?.ConnectionId);
+            SNIProxy.GenSspiClientContext(_sspiClientContextStatus, receivedBuff, ref sendBuff, _sniSpnBuffer);
+            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObjectManaged.GenerateSspiClientContext | Info | Session Id {0}", _sessionHandle?.ConnectionId);
             sendLength = (uint)(sendBuff != null ? sendBuff.Length : 0);
             return 0;
         }
