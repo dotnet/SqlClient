@@ -45,9 +45,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             RetryLogicConfigHelper.AssessProvider(cmdProvider, cmdCfg, switchValue);
 
             // check the retry in action
+            RetryLogicTestHelper.CleanRetryEnabledCache();
             s_connectionCRLTest.ConnectionRetryOpenInvalidCatalogFailed(TcpCnnString, cnnProvider);
             s_commandCRLTest.RetryExecuteFail(TcpCnnString, cmdProvider);
-            s_commandCRLTest.RetryExecuteUnauthorizedSqlStatementDML(TcpCnnString, cmdProvider);
+            if (DataTestUtility.IsNotAzureSynapse())
+            {
+                s_commandCRLTest.RetryExecuteUnauthorizedSqlStatementDML(TcpCnnString, cmdProvider);
+            }
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
@@ -65,6 +69,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             RetryLogicConfigHelper.AssessProvider(cnnProvider, cnnCfg, switchValue);
             RetryLogicConfigHelper.AssessProvider(cmdProvider, cmdCfg, switchValue);
 
+            RetryLogicTestHelper.CleanRetryEnabledCache();
             s_connectionCRLTest.DefaultOpenWithoutRetry(TcpCnnString, cnnProvider);
             s_commandCRLTest.NoneRetriableExecuteFail(TcpCnnString, cmdProvider);
         }
@@ -72,13 +77,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         #region External Functions
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [InlineData("ClassLibrary.StaticCustomConfigurableRetryLogic, ClassLibrary_CustomConfigurableRetryLogic", "GetDefaultRetry_static")]
-        [InlineData("ClassLibrary.StructCustomConfigurableRetryLogic, ClassLibrary_CustomConfigurableRetryLogic", "GetDefaultRetry_static")]
-        [InlineData("ClassLibrary.StructCustomConfigurableRetryLogic, ClassLibrary_CustomConfigurableRetryLogic", "GetDefaultRetry")]
-        [InlineData("ClassLibrary.CustomConfigurableRetryLogic, ClassLibrary_CustomConfigurableRetryLogic", "GetDefaultRetry_static")]
-        [InlineData("ClassLibrary.CustomConfigurableRetryLogic, ClassLibrary_CustomConfigurableRetryLogic", "GetDefaultRetry")]
-        [InlineData("ClassLibrary.CustomConfigurableRetryLogic, ClassLibrary_CustomConfigurableRetryLogic, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null", "GetDefaultRetry")]
-        [InlineData("ClassLibrary.CustomConfigurableRetryLogicEx, ClassLibrary_CustomConfigurableRetryLogic", "GetDefaultRetry")]
+        [InlineData("Microsoft.Data.SqlClient.Tests.StaticCustomConfigurableRetryLogic, ExternalConfigurableRetryLogic", "GetDefaultRetry_static")]
+        [InlineData("Microsoft.Data.SqlClient.Tests.StructCustomConfigurableRetryLogic, ExternalConfigurableRetryLogic", "GetDefaultRetry_static")]
+        [InlineData("Microsoft.Data.SqlClient.Tests.StructCustomConfigurableRetryLogic, ExternalConfigurableRetryLogic", "GetDefaultRetry")]
+        [InlineData("Microsoft.Data.SqlClient.Tests.CustomConfigurableRetryLogic, ExternalConfigurableRetryLogic", "GetDefaultRetry_static")]
+        [InlineData("Microsoft.Data.SqlClient.Tests.CustomConfigurableRetryLogic, ExternalConfigurableRetryLogic", "GetDefaultRetry")]
+        [InlineData("Microsoft.Data.SqlClient.Tests.CustomConfigurableRetryLogic, ExternalConfigurableRetryLogic, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null", "GetDefaultRetry")]
+        [InlineData("Microsoft.Data.SqlClient.Tests.CustomConfigurableRetryLogicEx, ExternalConfigurableRetryLogic", "GetDefaultRetry")]
         public void LoadCustomMethod(string typeName, string methodName)
         {
             bool switchValue = true;
@@ -95,22 +100,23 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             object loaderObj = RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, switchValue, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider);
             Assert.NotNull(loaderObj);
 
+            RetryLogicTestHelper.CleanRetryEnabledCache();
             TestConnection(cnnProvider, cnnCfg);
             TestCommandExecute(cmdProvider, cmdCfg);
             TestCommandExecuteAsync(cmdProvider, cmdCfg).Wait();
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [InlineData("ClassLibrary.Invalid, ClassLibrary_CustomConfigurableRetryLogic", "GetDefaultRetry_static")]
-        [InlineData("ClassLibrary.Invalid, ClassLibrary_CustomConfigurableRetryLogic", "GetDefaultRetry")]
-        [InlineData("ClassLibrary.CustomConfigurableRetryLogic, ClassLibrary_Invalid", "GetDefaultRetry_static")]
-        [InlineData("ClassLibrary.StaticCustomConfigurableRetryLogic, ClassLibrary_Invalid", "GetDefaultRetry_static")]
-        [InlineData("ClassLibrary.StructCustomConfigurableRetryLogic, ClassLibrary_Invalid", "GetDefaultRetry")]
+        [InlineData("ClassLibrary.Invalid, ExternalConfigurableRetryLogic", "GetDefaultRetry_static")]
+        [InlineData("ClassLibrary.Invalid, ExternalConfigurableRetryLogic", "GetDefaultRetry")]
+        [InlineData("Microsoft.Data.SqlClient.Tests.CustomConfigurableRetryLogic, ClassLibrary_Invalid", "GetDefaultRetry_static")]
+        [InlineData("Microsoft.Data.SqlClient.Tests.StaticCustomConfigurableRetryLogic, ClassLibrary_Invalid", "GetDefaultRetry_static")]
+        [InlineData("Microsoft.Data.SqlClient.Tests.StructCustomConfigurableRetryLogic, ClassLibrary_Invalid", "GetDefaultRetry")]
         // Type and method name are case sensitive.
-        [InlineData("ClassLibrary.StaticCustomConfigurableRetryLogic, ClassLibrary_CustomConfigurableRetryLogic", "GETDEFAULTRETRY_STATIC")]
-        [InlineData("ClassLibrary.STRUCTCUSTOMCONFIGURABLERETRYLOGIC, ClassLibrary_CustomConfigurableRetryLogic", "GetDefaultRetry")]
-        [InlineData("CLASSLIBRARY.CustomConfigurableRetryLogic, ClassLibrary_CustomConfigurableRetryLogic", "GetDefaultRetry_static")]
-        [InlineData("ClassLibrary.CustomConfigurableRetryLogic, ClassLibrary_CustomConfigurableRetryLogic", "getdefaultretry")]
+        [InlineData("Microsoft.Data.SqlClient.Tests.StaticCustomConfigurableRetryLogic, ExternalConfigurableRetryLogic", "GETDEFAULTRETRY_STATIC")]
+        [InlineData("Microsoft.Data.SqlClient.Tests.STRUCTCUSTOMCONFIGURABLERETRYLOGIC, ExternalConfigurableRetryLogic", "GetDefaultRetry")]
+        [InlineData("MICROSOFT.DATA.SQLCLIENT.TESTS.CustomConfigurableRetryLogic, ExternalConfigurableRetryLogic", "GetDefaultRetry_static")]
+        [InlineData("Microsoft.Data.SqlClient.Tests.CustomConfigurableRetryLogic, ExternalConfigurableRetryLogic", "getdefaultretry")]
         public void LoadInvalidCustomRetryLogicType(string typeName, string methodName)
         {
             bool switchValue = true;
@@ -127,6 +133,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             object loaderObj = RetryLogicConfigHelper.ReturnLoaderAndProviders(cnnCfg, cmdCfg, switchValue, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider);
             Assert.NotNull(loaderObj);
 
+            RetryLogicTestHelper.CleanRetryEnabledCache();
             s_connectionCRLTest.DefaultOpenWithoutRetry(TcpCnnString, cnnProvider);
             s_commandCRLTest.NoneRetriableExecuteFail(TcpCnnString, cmdProvider);
         }
@@ -148,6 +155,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.NotNull(loaderObj);
 
             // none retriable logic applies.
+            RetryLogicTestHelper.CleanRetryEnabledCache();
             s_connectionCRLTest.DefaultOpenWithoutRetry(TcpCnnString, cnnProvider);
             s_commandCRLTest.NoneRetriableExecuteFail(TcpCnnString, cmdProvider);
         }
@@ -174,6 +182,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             RetryLogicConfigHelper.AssessProvider(cmdProvider, cmdCfg, switchValue);
 
             // internal type used to resolve the specified method
+            RetryLogicTestHelper.CleanRetryEnabledCache();
             s_connectionCRLTest.ConnectionRetryOpenInvalidCatalogFailed(TcpCnnString, cnnProvider);
             s_commandCRLTest.RetryExecuteFail(TcpCnnString, cmdProvider);
         }
@@ -245,7 +254,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(typeof(System.Configuration.ConfigurationErrorsException), ex.InnerException?.GetType());
             Assert.Equal(typeof(ArgumentException), ex.InnerException?.InnerException?.GetType());
         }
-#endregion
+        #endregion
 
         #region AppContextSwitchManager
         [Theory]
@@ -289,9 +298,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.Equal(cnfig.NumberOfTries, ex.InnerExceptions.Count);
                 ex = Assert.Throws<AggregateException>(() => cmd.ExecuteNonQuery());
                 Assert.Equal(cnfig.NumberOfTries, ex.InnerExceptions.Count);
-                cmd.CommandText = cmd.CommandText + " FOR XML AUTO";
-                ex = Assert.Throws<AggregateException>(() => cmd.ExecuteXmlReader());
-                Assert.Equal(cnfig.NumberOfTries, ex.InnerExceptions.Count);
+                if (DataTestUtility.IsNotAzureSynapse())
+                {
+                    cmd.CommandText = cmd.CommandText + " FOR XML AUTO";
+                    ex = Assert.Throws<AggregateException>(() => cmd.ExecuteXmlReader());
+                    Assert.Equal(cnfig.NumberOfTries, ex.InnerExceptions.Count);
+                }
             }
         }
 
@@ -312,9 +324,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.Equal(cnfig.NumberOfTries, ex.InnerExceptions.Count);
                 ex = await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteNonQueryAsync());
                 Assert.Equal(cnfig.NumberOfTries, ex.InnerExceptions.Count);
-                cmd.CommandText = cmd.CommandText + " FOR XML AUTO";
-                ex = await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteXmlReaderAsync());
-                Assert.Equal(cnfig.NumberOfTries, ex.InnerExceptions.Count);
+                if (DataTestUtility.IsNotAzureSynapse())
+                {
+                    cmd.CommandText = cmd.CommandText + " FOR XML AUTO";
+                    ex = await Assert.ThrowsAsync<AggregateException>(() => cmd.ExecuteXmlReaderAsync());
+                    Assert.Equal(cnfig.NumberOfTries, ex.InnerExceptions.Count);
+                }
             }
         }
         #endregion

@@ -15,7 +15,8 @@ namespace Microsoft.Data.SqlClient
     [
     DefaultEvent("RowUpdated"),
     ToolboxItem("Microsoft.VSDesigner.Data.VS.SqlDataAdapterToolboxItem, " + AssemblyRef.MicrosoftVSDesigner),
-    Designer("Microsoft.VSDesigner.Data.VS.SqlDataAdapterDesigner, " + AssemblyRef.MicrosoftVSDesigner)
+    Designer("Microsoft.VSDesigner.Data.VS.SqlDataAdapterDesigner, " + AssemblyRef.MicrosoftVSDesigner),
+    DesignerCategory("")
     ]
     public sealed class SqlDataAdapter : DbDataAdapter, IDbDataAdapter, ICloneable
     {

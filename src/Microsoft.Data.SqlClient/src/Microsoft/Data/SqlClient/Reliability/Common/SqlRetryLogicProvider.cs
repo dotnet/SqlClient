@@ -19,9 +19,6 @@ namespace Microsoft.Data.SqlClient
         // keeps free RetryLogic objects
         private readonly ConcurrentBag<SqlRetryLogicBase> _retryLogicPool = new ConcurrentBag<SqlRetryLogicBase>();
 
-        // safety switch for the preview version
-        internal const string EnableRetryLogicSwitch = "Switch.Microsoft.Data.SqlClient.EnableRetryLogic";
-
         /// <summary>Creates an instance of this type.</summary>
         public SqlRetryLogicProvider(SqlRetryLogicBase retryLogic)
         {

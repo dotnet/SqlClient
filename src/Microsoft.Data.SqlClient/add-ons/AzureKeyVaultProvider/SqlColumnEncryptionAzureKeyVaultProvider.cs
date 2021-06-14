@@ -5,7 +5,6 @@
 using System;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Security.KeyVault.Keys.Cryptography;
 using static Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.Validator;
@@ -62,6 +61,33 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// 
         /// </summary>
         public readonly string[] TrustedEndPoints;
+
+        /// <summary>
+        /// A cache of column encryption keys (once they are decrypted). This is useful for rapidly decrypting multiple data values.
+        /// </summary>
+        private readonly LocalCache<string, byte[]> _columnEncryptionKeyCache = new() { TimeToLive = TimeSpan.FromHours(2) };
+
+        /// <summary>
+        /// A cache for storing the results of signature verification of column master key metadata.
+        /// </summary>
+        private readonly LocalCache<Tuple<string, bool, string>, bool> _columnMasterKeyMetadataSignatureVerificationCache = 
+            new(maxSizeLimit: 2000) { TimeToLive = TimeSpan.FromDays(10) };
+
+        /// <summary>
+        /// Gets or sets the lifespan of the decrypted column encryption key in the cache.
+        /// Once the timespan has elapsed, the decrypted column encryption key is discarded
+        /// and must be revalidated.
+        /// </summary>
+        /// <remarks>
+        /// Internally, there is a cache of column encryption keys (once they are decrypted).
+        /// This is useful for rapidly decrypting multiple data values. The default value is 2 hours.
+        /// Setting the <see cref="ColumnEncryptionKeyCacheTtl"/> to zero disables caching.
+        /// </remarks>
+        public override TimeSpan? ColumnEncryptionKeyCacheTtl
+        {
+            get => _columnEncryptionKeyCache.TimeToLive;
+            set => _columnEncryptionKeyCache.TimeToLive = value;
+        }
 
         #endregion
 
@@ -130,10 +156,16 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         {
             ValidateNonEmptyAKVPath(masterKeyPath, isSystemOp: true);
 
-            // Also validates key is of RSA type.
-            KeyCryptographer.AddKey(masterKeyPath);
-            byte[] message = CompileMasterKeyMetadata(masterKeyPath, allowEnclaveComputations);
-            return KeyCryptographer.VerifyData(message, signature, masterKeyPath);
+            var key = Tuple.Create(masterKeyPath, allowEnclaveComputations, ToHexString(signature));
+            return GetOrCreateSignatureVerificationResult(key, VerifyColumnMasterKeyMetadata);
+
+            bool VerifyColumnMasterKeyMetadata()
+            {
+                // Also validates key is of RSA type.
+                KeyCryptographer.AddKey(masterKeyPath);
+                byte[] message = CompileMasterKeyMetadata(masterKeyPath, allowEnclaveComputations);
+                return KeyCryptographer.VerifyData(message, signature, masterKeyPath);
+            }
         }
 
         /// <summary>
@@ -153,58 +185,62 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             ValidateNotEmpty(encryptedColumnEncryptionKey, nameof(encryptedColumnEncryptionKey));
             ValidateVersionByte(encryptedColumnEncryptionKey[0], s_firstVersion[0]);
 
-            // Also validates whether the key is RSA one or not and then get the key size
-            KeyCryptographer.AddKey(masterKeyPath);
+            return GetOrCreateColumnEncryptionKey(ToHexString(encryptedColumnEncryptionKey), DecryptEncryptionKey);
 
-            int keySizeInBytes = KeyCryptographer.GetKeySize(masterKeyPath);
-
-            // Get key path length
-            int currentIndex = s_firstVersion.Length;
-            ushort keyPathLength = BitConverter.ToUInt16(encryptedColumnEncryptionKey, currentIndex);
-            currentIndex += sizeof(ushort);
-
-            // Get ciphertext length
-            ushort cipherTextLength = BitConverter.ToUInt16(encryptedColumnEncryptionKey, currentIndex);
-            currentIndex += sizeof(ushort);
-
-            // Skip KeyPath
-            // KeyPath exists only for troubleshooting purposes and doesnt need validation.
-            currentIndex += keyPathLength;
-
-            // validate the ciphertext length
-            if (cipherTextLength != keySizeInBytes)
+            byte[] DecryptEncryptionKey()
             {
-                throw ADP.InvalidCipherTextLength(cipherTextLength, keySizeInBytes, masterKeyPath);
+                // Also validates whether the key is RSA one or not and then get the key size
+                KeyCryptographer.AddKey(masterKeyPath);
+
+                int keySizeInBytes = KeyCryptographer.GetKeySize(masterKeyPath);
+
+                // Get key path length
+                int currentIndex = s_firstVersion.Length;
+                ushort keyPathLength = BitConverter.ToUInt16(encryptedColumnEncryptionKey, currentIndex);
+                currentIndex += sizeof(ushort);
+
+                // Get ciphertext length
+                ushort cipherTextLength = BitConverter.ToUInt16(encryptedColumnEncryptionKey, currentIndex);
+                currentIndex += sizeof(ushort);
+
+                // Skip KeyPath
+                // KeyPath exists only for troubleshooting purposes and doesnt need validation.
+                currentIndex += keyPathLength;
+
+                // validate the ciphertext length
+                if (cipherTextLength != keySizeInBytes)
+                {
+                    throw ADP.InvalidCipherTextLength(cipherTextLength, keySizeInBytes, masterKeyPath);
+                }
+
+                // Validate the signature length
+                int signatureLength = encryptedColumnEncryptionKey.Length - currentIndex - cipherTextLength;
+                if (signatureLength != keySizeInBytes)
+                {
+                    throw ADP.InvalidSignatureLengthTemplate(signatureLength, keySizeInBytes, masterKeyPath);
+                }
+
+                // Get ciphertext
+                byte[] cipherText = encryptedColumnEncryptionKey.Skip(currentIndex).Take(cipherTextLength).ToArray();
+                currentIndex += cipherTextLength;
+
+                // Get signature
+                byte[] signature = encryptedColumnEncryptionKey.Skip(currentIndex).Take(signatureLength).ToArray();
+
+                // Compute the message to validate the signature
+                byte[] message = encryptedColumnEncryptionKey.Take(encryptedColumnEncryptionKey.Length - signatureLength).ToArray();
+
+                if (null == message)
+                {
+                    throw ADP.NullHashFound();
+                }
+
+                if (!KeyCryptographer.VerifyData(message, signature, masterKeyPath))
+                {
+                    throw ADP.InvalidSignatureTemplate(masterKeyPath);
+                }
+                return KeyCryptographer.UnwrapKey(s_keyWrapAlgorithm, cipherText, masterKeyPath);
             }
-
-            // Validate the signature length
-            int signatureLength = encryptedColumnEncryptionKey.Length - currentIndex - cipherTextLength;
-            if (signatureLength != keySizeInBytes)
-            {
-                throw ADP.InvalidSignatureLengthTemplate(signatureLength, keySizeInBytes, masterKeyPath);
-            }
-
-            // Get ciphertext
-            byte[] cipherText = encryptedColumnEncryptionKey.Skip(currentIndex).Take(cipherTextLength).ToArray();
-            currentIndex += cipherTextLength;
-
-            // Get signature
-            byte[] signature = encryptedColumnEncryptionKey.Skip(currentIndex).Take(signatureLength).ToArray();
-
-            // Compute the message to validate the signature
-            byte[] message = encryptedColumnEncryptionKey.Take(encryptedColumnEncryptionKey.Length - signatureLength).ToArray();
-
-            if (null == message)
-            {
-                throw ADP.NullHashFound();
-            }
-
-            if (!KeyCryptographer.VerifyData(message, signature, masterKeyPath))
-            {
-                throw ADP.InvalidSignatureTemplate(masterKeyPath);
-            }
-
-            return KeyCryptographer.UnwrapKey(s_keyWrapAlgorithm, cipherText, masterKeyPath);
         }
 
         /// <summary>
@@ -308,6 +344,49 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         {
             string masterkeyMetadata = ProviderName + masterKeyPath + allowEnclaveComputations;
             return Encoding.Unicode.GetBytes(masterkeyMetadata.ToLowerInvariant());
+        }
+
+        /// <summary>
+        /// Converts the numeric value of each element of a specified array of bytes to its equivalent hexadecimal string representation.
+        /// </summary>
+        /// <param name="source">An array of bytes to convert.</param>
+        /// <returns>A string of hexadecimal characters</returns>
+        /// <remarks>
+        /// Produces a string of hexadecimal character pairs preceded with "0x", where each pair represents the corresponding element in value; for example, "0x7F2C4A00".
+        /// </remarks>
+        private string ToHexString(byte[] source)
+        {
+            if (source is null)
+            {
+                return null;
+            }
+
+            return "0x" + BitConverter.ToString(source).Replace("-", "");
+        }
+
+        /// <summary>
+        /// Returns the cached decrypted column encryption key, or unwraps the encrypted column encryption key if not present.
+        /// </summary>
+        /// <param name="encryptedColumnEncryptionKey">Encrypted Column Encryption Key</param>
+        /// <param name="createItem">The delegate function that will decrypt the encrypted column encryption key.</param>
+        /// <returns>The decrypted column encryption key.</returns>
+        /// <remarks>
+        ///
+        /// </remarks>
+        private byte[] GetOrCreateColumnEncryptionKey(string encryptedColumnEncryptionKey, Func<byte[]> createItem)
+        {
+            return _columnEncryptionKeyCache.GetOrCreate(encryptedColumnEncryptionKey, createItem);
+        }
+
+        /// <summary>
+        /// Returns the cached signature verification result, or proceeds to verify if not present.
+        /// </summary>
+        /// <param name="keyInformation">The encryptionKeyId, allowEnclaveComputations and hexadecimal signature.</param>
+        /// <param name="createItem">The delegate function that will perform the verification.</param>
+        /// <returns></returns>
+        private bool GetOrCreateSignatureVerificationResult(Tuple<string, bool, string> keyInformation, Func<bool> createItem)
+        {
+            return _columnMasterKeyMetadataSignatureVerificationCache.GetOrCreate(keyInformation, createItem);
         }
 
         #endregion

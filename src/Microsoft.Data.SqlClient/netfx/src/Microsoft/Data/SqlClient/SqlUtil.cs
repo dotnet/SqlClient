@@ -33,8 +33,14 @@ namespace Microsoft.Data.SqlClient
             {
                 TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
                 ContinueTask(task, completion,
-                    () => { onSuccess(); completion.SetResult(null); },
-                    connectionToDoom, onFailure);
+                    onSuccess: () =>
+                    {
+                        onSuccess();
+                        completion.SetResult(null);
+                    },
+                    onFailure: onFailure,
+                    connectionToDoom: connectionToDoom
+                );
                 return completion.Task;
             }
         }
@@ -45,14 +51,14 @@ namespace Microsoft.Data.SqlClient
         }
 
         internal static void ContinueTask(Task task,
-                TaskCompletionSource<object> completion,
-                Action onSuccess,
-                SqlInternalConnectionTds connectionToDoom = null,
-                Action<Exception> onFailure = null,
-                Action onCancellation = null,
-                Func<Exception, Exception> exceptionConverter = null,
-                SqlConnection connectionToAbort = null
-            )
+            TaskCompletionSource<object> completion,
+            Action onSuccess,
+            Action<Exception> onFailure = null,
+            Action onCancellation = null,
+            Func<Exception, Exception> exceptionConverter = null,
+            SqlInternalConnectionTds connectionToDoom = null,
+            SqlConnection connectionToAbort = null
+        )
         {
             Debug.Assert((connectionToAbort == null) || (connectionToDoom == null), "Should not specify both connectionToDoom and connectionToAbort");
             task.ContinueWith(
@@ -172,6 +178,132 @@ namespace Microsoft.Data.SqlClient
             );
         }
 
+        internal static void ContinueTaskWithState(Task task,
+            TaskCompletionSource<object> completion,
+            object state,
+            Action<object> onSuccess,
+            Action<Exception, object> onFailure = null,
+            Action<object> onCancellation = null,
+            Func<Exception, object, Exception> exceptionConverter = null,
+            SqlInternalConnectionTds connectionToDoom = null,
+            SqlConnection connectionToAbort = null
+        )
+        {
+            Debug.Assert((connectionToAbort == null) || (connectionToDoom == null), "Should not specify both connectionToDoom and connectionToAbort");
+            task.ContinueWith(
+                (Task tsk, object state) =>
+                {
+                    if (tsk.Exception != null)
+                    {
+                        Exception exc = tsk.Exception.InnerException;
+                        if (exceptionConverter != null)
+                        {
+                            exc = exceptionConverter(exc, state);
+                        }
+                        try
+                        {
+                            onFailure?.Invoke(exc, state);
+                        }
+                        finally
+                        {
+                            completion.TrySetException(exc);
+                        }
+                    }
+                    else if (tsk.IsCanceled)
+                    {
+                        try
+                        {
+                            onCancellation?.Invoke(state);
+                        }
+                        finally
+                        {
+                            completion.TrySetCanceled();
+                        }
+                    }
+                    else
+                    {
+                        if (connectionToDoom != null || connectionToAbort != null)
+                        {
+                            RuntimeHelpers.PrepareConstrainedRegions();
+                            try
+                            {
+#if DEBUG
+                                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+                                RuntimeHelpers.PrepareConstrainedRegions();
+                                try
+                                {
+                                    tdsReliabilitySection.Start();
+#endif //DEBUG
+                                    onSuccess(state);
+#if DEBUG
+                                }
+                                finally
+                                {
+                                    tdsReliabilitySection.Stop();
+                                }
+#endif //DEBUG
+                            }
+                            catch (System.OutOfMemoryException e)
+                            {
+                                if (connectionToDoom != null)
+                                {
+                                    connectionToDoom.DoomThisConnection();
+                                }
+                                else
+                                {
+                                    connectionToAbort.Abort(e);
+                                }
+                                completion.SetException(e);
+                                throw;
+                            }
+                            catch (System.StackOverflowException e)
+                            {
+                                if (connectionToDoom != null)
+                                {
+                                    connectionToDoom.DoomThisConnection();
+                                }
+                                else
+                                {
+                                    connectionToAbort.Abort(e);
+                                }
+                                completion.SetException(e);
+                                throw;
+                            }
+                            catch (System.Threading.ThreadAbortException e)
+                            {
+                                if (connectionToDoom != null)
+                                {
+                                    connectionToDoom.DoomThisConnection();
+                                }
+                                else
+                                {
+                                    connectionToAbort.Abort(e);
+                                }
+                                completion.SetException(e);
+                                throw;
+                            }
+                            catch (Exception e)
+                            {
+                                completion.SetException(e);
+                            }
+                        }
+                        else
+                        { // no connection to doom - reliability section not required
+                            try
+                            {
+                                onSuccess(state);
+                            }
+                            catch (Exception e)
+                            {
+                                completion.SetException(e);
+                            }
+                        }
+                    }
+                }, 
+                state: state,
+                scheduler: TaskScheduler.Default
+            );
+        }
 
         internal static void WaitForCompletion(Task task, int timeout, Action onTimeout = null, bool rethrowExceptions = true)
         {
@@ -334,9 +466,9 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_DeviceFlowWithUsernamePassword));
         }
-        static internal Exception ManagedIdentityWithPassword(string authenticationMode)
+        static internal Exception NonInteractiveWithPassword(string authenticationMode)
         {
-            return ADP.Argument(StringsHelper.GetString(Strings.SQL_ManagedIdentityWithPassword, authenticationMode));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_NonInteractiveWithPassword, authenticationMode));
         }
         static internal Exception SettingIntegratedWithCredential()
         {
@@ -350,9 +482,9 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SettingDeviceFlowWithCredential));
         }
-        static internal Exception SettingManagedIdentityWithCredential(string authenticationMode)
+        static internal Exception SettingNonInteractiveWithCredential(string authenticationMode)
         {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SettingManagedIdentityWithCredential, authenticationMode));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SettingNonInteractiveWithCredential, authenticationMode));
         }
         static internal Exception SettingCredentialWithIntegratedArgument()
         {
@@ -366,9 +498,9 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_SettingCredentialWithDeviceFlow));
         }
-        static internal Exception SettingCredentialWithManagedIdentityArgument(string authenticationMode)
+        static internal Exception SettingCredentialWithNonInteractiveArgument(string authenticationMode)
         {
-            return ADP.Argument(StringsHelper.GetString(Strings.SQL_SettingCredentialWithManagedIdentity, authenticationMode));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_SettingCredentialWithNonInteractive, authenticationMode));
         }
         static internal Exception SettingCredentialWithIntegratedInvalid()
         {
@@ -382,9 +514,9 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SettingCredentialWithDeviceFlow));
         }
-        static internal Exception SettingCredentialWithManagedIdentityInvalid(string authenticationMode)
+        static internal Exception SettingCredentialWithNonInteractiveInvalid(string authenticationMode)
         {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SettingCredentialWithManagedIdentity, authenticationMode));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SettingCredentialWithNonInteractive, authenticationMode));
         }
         static internal Exception InvalidSQLServerVersionUnknown()
         {

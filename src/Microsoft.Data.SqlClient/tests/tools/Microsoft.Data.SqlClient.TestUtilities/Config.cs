@@ -23,10 +23,10 @@ namespace Microsoft.Data.SqlClient.TestUtilities
         public string AzureKeyVaultTenantId = null;
         public string AzureKeyVaultClientId = null;
         public string AzureKeyVaultClientSecret = null;
+        public string LocalDbAppName = null;
         public bool EnclaveEnabled = false;
         public bool TracingEnabled = false;
         public bool SupportsIntegratedSecurity = false;
-        public bool SupportsLocalDb = false;
         public bool SupportsFileStream = false;
         public bool UseManagedSNIOnWindows = false;
         public string DNSCachingConnString = null;

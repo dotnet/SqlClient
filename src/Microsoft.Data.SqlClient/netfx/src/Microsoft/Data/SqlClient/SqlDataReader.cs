@@ -4118,7 +4118,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (!_parser.TryReadSqlValue(_data[_sharedState._nextColumnDataToRead], columnMetaData, (int)_sharedState._columnDataBytesRemaining, _stateObj,
                                              _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
-                                             columnMetaData.column))
+                                             columnMetaData.column, _command))
                 { // will read UDTs as VARBINARY.
                     return false;
                 }
@@ -5090,7 +5090,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     // setup for cleanup\completing
-                    retryTask.ContinueWith((t) => CompleteRetryable(t, source, timeoutCancellationSource), TaskScheduler.Default);
+                    retryTask.ContinueWith((Task<int> t) => CompleteRetryable(t, source, timeoutCancellationSource), TaskScheduler.Default);
                     return source.Task;
                 }
             }
@@ -5654,7 +5654,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    task.ContinueWith((t) => CompleteRetryable(t, source, objectToDispose), TaskScheduler.Default);
+                    task.ContinueWith((Task<T> t) => CompleteRetryable(t, source, objectToDispose), TaskScheduler.Default);
                 }
             }
             catch (AggregateException e)

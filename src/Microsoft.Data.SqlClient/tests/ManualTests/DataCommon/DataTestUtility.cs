@@ -9,14 +9,15 @@ using System.Data.SqlTypes;
 using System.Diagnostics.Tracing;
 using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Identity.Client;
 using Microsoft.Data.SqlClient.TestUtilities;
 using Xunit;
-using Azure.Security.KeyVault.Keys;
-using Azure.Identity;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -37,12 +38,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string AKVTenantId = null;
         public static readonly string AKVClientId = null;
         public static readonly string AKVClientSecret = null;
+        public static readonly string LocalDbAppName = null;
         public static List<string> AEConnStrings = new List<string>();
         public static List<string> AEConnStringsSetup = new List<string>();
-        public static readonly bool EnclaveEnabled = false;
+        public static bool EnclaveEnabled { get; private set; } = false;
         public static readonly bool TracingEnabled = false;
         public static readonly bool SupportsIntegratedSecurity = false;
-        public static readonly bool SupportsLocalDb = false;
         public static readonly bool SupportsFileStream = false;
         public static readonly bool UseManagedSNIOnWindows = false;
         public static readonly bool IsAzureSynapse = false;
@@ -80,7 +81,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             AADPasswordConnectionString = c.AADPasswordConnectionString;
             AADServicePrincipalId = c.AADServicePrincipalId;
             AADServicePrincipalSecret = c.AADServicePrincipalSecret;
-            SupportsLocalDb = c.SupportsLocalDb;
+            LocalDbAppName = c.LocalDbAppName;
             SupportsIntegratedSecurity = c.SupportsIntegratedSecurity;
             SupportsFileStream = c.SupportsFileStream;
             EnclaveEnabled = c.EnclaveEnabled;
@@ -345,6 +346,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return RetrieveValueFromConnStr(TCPConnectionString, new string[] { "Password", "PWD" }) != string.Empty;
         }
 
+        public static bool DoesHostAddressContainBothIPv4AndIPv6()
+        {
+            if (!IsDNSCachingSetup())
+            {
+                return false;
+            }
+            using (var connection = new SqlConnection(DNSCachingConnString))
+            {
+                List<IPAddress> ipAddresses = Dns.GetHostAddresses(connection.DataSource).ToList();
+                return ipAddresses.Exists(ip => ip.AddressFamily == AddressFamily.InterNetwork) &&
+                    ipAddresses.Exists(ip => ip.AddressFamily == AddressFamily.InterNetworkV6);
+            }
+        }
+
         /// <summary>
         /// Generate a unique name to use in Sql Server; 
         /// some providers does not support names (Oracle supports up to 30).
@@ -426,7 +441,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public static bool IsLocalDBInstalled() => SupportsLocalDb;
+        public static bool IsLocalDBInstalled() => !string.IsNullOrEmpty(LocalDbAppName?.Trim());
 
         public static bool IsIntegratedSecuritySetup() => SupportsIntegratedSecurity;
 

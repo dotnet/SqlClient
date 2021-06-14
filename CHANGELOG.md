@@ -4,6 +4,46 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Stable Release 3.0.0] - 2021-06-09
+
+### Added
+- Added support for column encryption key caching when the server supports retrying queries that require enclave computations [#1062](https://github.com/dotnet/SqlClient/pull/1062)
+- Added support for configurable retry logic configuration file in .NET Standard [#1090](https://github.com/dotnet/SqlClient/pull/1090)
+
+### Changed
+- Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `v3.0.0` [#1102](https://github.com/dotnet/SqlClient/pull/1102)
+- Improved event counter display information [#1091](https://github.com/dotnet/SqlClient/pull/1091)
+
+### Breaking Changes
+- Modified column encryption key store provider registrations to give built-in system providers precedence over providers registered on connection and command instances. [#1101](https://github.com/dotnet/SqlClient/pull/1101)
+
+
+## [Stable Release 2.1.3] - 2021-05-21
+
+### Fixed
+
+- Fixed wrong data blended with transactions in .NET Core by marking a connection as doomed if the transaction completes or aborts while there is an open result set [#1051](https://github.com/dotnet/SqlClient/pull/1051)
+- Fixed race condition issues between SinglePhaseCommit and TransactionEnded events [#1049](https://github.com/dotnet/SqlClient/pull/1049)
+
+## [Preview Release 3.0.0-preview3.21140.5] - 2021-05-20
+
+### Added
+
+- Added support for "Active Directory Default" authentication mode [#1043](https://github.com/dotnet/SqlClient/pull/1043)
+- Added support for connection-level and command-level registration of custom key store providers to enable multi-tenant applications to control key store access [#1045](https://github.com/dotnet/SqlClient/pull/1045) [#1056](https://github.com/dotnet/SqlClient/pull/1056) [#1078](https://github.com/dotnet/SqlClient/pull/1078)
+- Added IP address preference support for TCP connections [#1015](https://github.com/dotnet/SqlClient/pull/1015)
+
+### Fixed
+
+- Fixed corrupted connection issue when an exception occurs during RPC execution with TVP types [#1068](https://github.com/dotnet/SqlClient/pull/1068)
+- Fixed race condition issues between SinglePhaseCommit and TransactionEnded events [#1042](https://github.com/dotnet/SqlClient/pull/1042)
+
+### Changed
+
+- Updated error messages for enclave exceptions to include a link to a troubleshooting guide. [#994](https://github.com/dotnet/SqlClient/pull/994)
+- Changes to share common files between projects [#1022](https://github.com/dotnet/SqlClient/pull/1022) [#1038](https://github.com/dotnet/SqlClient/pull/1038) [#1040](https://github.com/dotnet/SqlClient/pull/1040) [#1033](https://github.com/dotnet/SqlClient/pull/1033) [#1028](https://github.com/dotnet/SqlClient/pull/1028) [#1039](https://github.com/dotnet/SqlClient/pull/1039)
+
+
 ## [Preview Release 3.0.0-preview2.21106.5] - 2021-04-16
 
 ### Breaking Changes over preview release v3.0.0-preview1

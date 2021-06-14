@@ -29,7 +29,7 @@ The following example bulk copies data from a source table in the **AdventureWor
 <xref:Microsoft.Data.SqlClient.SqlBulkCopy> object to specify order hints for the bulk copy operation.  
 
 > [!IMPORTANT]
-> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup). 
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/sql/connect/ado-net/sql/bulk-copy-example-setup). 
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to 
 use a Transact-SQL `INSERT … SELECT` statement to copy the data.  
 
@@ -51,7 +51,7 @@ The following example bulk copies data from a source table in the **AdventureWor
 A SqlBulkCopyColumnOrderHint object is used to define the sort order for the **ProductNumber** destination column.
 
 > [!IMPORTANT]
-> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup). 
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/sql/connect/ado-net/sql/bulk-copy-example-setup). 
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, 
 it is easier and faster to use a Transact-SQL `INSERT … SELECT` statement to copy the data.  
 
@@ -78,7 +78,7 @@ The following example bulk copies data from a source table in the **AdventureWor
 A SqlBulkCopyColumnOrderHint object is added to the <xref:Microsoft.Data.SqlClient.SqlBulkCopy.ColumnOrderHints> by providing the destination column name and its sort order.
 
 > [!IMPORTANT]
-> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup). 
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/sql/connect/ado-net/sql/bulk-copy-example-setup). 
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a 
 Transact-SQL `INSERT … SELECT` statement to copy the data.  
 
@@ -107,7 +107,7 @@ The example defines a column order hint for each bulk copy operation.
 The <xref:Microsoft.Data.SqlClient.SqlBulkCopyColumnOrderHintCollection.Clear> method must be used after the first bulk copy is performed and before the next bulk copy's order hint is defined.  
 
 > [!IMPORTANT]
-> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup). 
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/sql/connect/ado-net/sql/bulk-copy-example-setup). 
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a 
 Transact-SQL `INSERT … SELECT` statement to copy the data.  
 
@@ -176,7 +176,7 @@ The following example performs two bulk copy operations. The first operation cop
 The example defines a column order hint for the **OrderDate** column in the first bulk copy operation. The hint is removed before the second bulk copy operation.
 
 > [!IMPORTANT]
-> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup). 
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/sql/connect/ado-net/sql/bulk-copy-example-setup). 
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a 
 Transact-SQL `INSERT … SELECT` statement to copy the data.  
 
@@ -208,7 +208,7 @@ The following example performs two bulk copy operations. The first operation cop
 The example defines a column order hint for the **OrderDate** column in the first bulk copy operation. The hint is removed before the second bulk copy operation.
 
 > [!IMPORTANT]
-> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/dotnet/framework/data/adonet/sql/bulk-copy-example-setup). 
+> This sample will not run unless you have created the work tables as described in [Bulk Copy Example Setup](/sql/connect/ado-net/sql/bulk-copy-example-setup). 
 This code is provided to demonstrate the syntax for using **SqlBulkCopy** only. If the source and destination tables are in the same SQL Server instance, it is easier and faster to use a 
 Transact-SQL `INSERT … SELECT` statement to copy the data.  
 

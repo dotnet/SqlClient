@@ -71,19 +71,26 @@ namespace Microsoft.Data.SqlClient
         // using SqlConnection.Open() method.
         internal bool _applyTransientFaultHandling = false;
 
-        // System column encryption key store providers are added by default
-        private static readonly Dictionary<string, SqlColumnEncryptionKeyStoreProvider> s_systemColumnEncryptionKeyStoreProviders
-            = new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>(capacity: 1, comparer: StringComparer.OrdinalIgnoreCase)
-                {
-                    {SqlColumnEncryptionCertificateStoreProvider.ProviderName, new SqlColumnEncryptionCertificateStoreProvider()},
-                    {SqlColumnEncryptionCngProvider.ProviderName, new SqlColumnEncryptionCngProvider()},
-                    {SqlColumnEncryptionCspProvider.ProviderName, new SqlColumnEncryptionCspProvider()}
-                };
-
-        // Lock to control setting of s_globalCustomColumnEncryptionKeyStoreProviders
-        private static readonly object s_globalCustomColumnEncryptionKeyProvidersLock = new object();
         // status of invariant culture environment check
         private static CultureCheckState _cultureCheckState;
+
+        // System column encryption key store providers are added by default
+        private static readonly Dictionary<string, SqlColumnEncryptionKeyStoreProvider> s_systemColumnEncryptionKeyStoreProviders
+            = new(capacity: 3, comparer: StringComparer.OrdinalIgnoreCase)
+            {
+                { SqlColumnEncryptionCertificateStoreProvider.ProviderName, new SqlColumnEncryptionCertificateStoreProvider() },
+                { SqlColumnEncryptionCngProvider.ProviderName, new SqlColumnEncryptionCngProvider() },
+                { SqlColumnEncryptionCspProvider.ProviderName, new SqlColumnEncryptionCspProvider() }
+            };
+
+        /// Instance-level list of custom key store providers. It can be set more than once by the user.
+        private IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> _customColumnEncryptionKeyStoreProviders;
+
+        internal bool HasColumnEncryptionKeyStoreProvidersRegistered =>
+            _customColumnEncryptionKeyStoreProviders is not null && _customColumnEncryptionKeyStoreProviders.Count > 0;
+
+        // Lock to control setting of s_globalCustomColumnEncryptionKeyStoreProviders
+        private static readonly object s_globalCustomColumnEncryptionKeyProvidersLock = new();
 
         /// <summary>
         /// Global custom provider list should be provided by the user. We shallow copy the user supplied dictionary into a ReadOnlyDictionary.
@@ -97,27 +104,14 @@ namespace Microsoft.Data.SqlClient
         /// IList contains a list of trusted key paths.
         /// </summary>
         private static readonly ConcurrentDictionary<string, IList<string>> _ColumnEncryptionTrustedMasterKeyPaths
-            = new ConcurrentDictionary<string, IList<string>>(concurrencyLevel: 4 * Environment.ProcessorCount /* default value in ConcurrentDictionary*/,
+            = new(concurrencyLevel: 4 * Environment.ProcessorCount /* default value in ConcurrentDictionary*/,
                 capacity: 1,
                 comparer: StringComparer.OrdinalIgnoreCase);
 
         private static readonly Action<object> s_openAsyncCancel = OpenAsyncCancel;
         private static readonly Action<Task<object>, object> s_openAsyncComplete = OpenAsyncComplete;
 
-        private bool? _isRetryEnabled;
-        private bool IsRetryEnabled
-        {
-            get
-            {
-                if (_isRetryEnabled == null)
-                {
-                    bool result;
-                    result = AppContext.TryGetSwitch(SqlRetryLogicProvider.EnableRetryLogicSwitch, out result) ? result : false;
-                    _isRetryEnabled = result;
-                }
-                return (bool)_isRetryEnabled;
-            }
-        }
+        private static bool IsRetryEnabled => LocalAppContextSwitches.IsRetryEnabled;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetryLogicProvider/*' />
         public SqlRetryLogicBaseProvider RetryLogicProvider
@@ -184,11 +178,15 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if (UsesActiveDirectoryManagedIdentity(connectionOptions))
                 {
-                    throw SQL.SettingCredentialWithManagedIdentityArgument(DbConnectionStringBuilderUtil.ActiveDirectoryManagedIdentityString);
+                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringBuilderUtil.ActiveDirectoryManagedIdentityString);
                 }
                 else if (UsesActiveDirectoryMSI(connectionOptions))
                 {
-                    throw SQL.SettingCredentialWithManagedIdentityArgument(DbConnectionStringBuilderUtil.ActiveDirectoryMSIString);
+                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringBuilderUtil.ActiveDirectoryMSIString);
+                }
+                else if (UsesActiveDirectoryDefault(connectionOptions))
+                {
+                    throw SQL.SettingCredentialWithNonInteractiveArgument(DbConnectionStringBuilderUtil.ActiveDirectoryDefaultString);
                 }
 
                 Credential = credential;
@@ -214,31 +212,32 @@ namespace Microsoft.Data.SqlClient
             CacheConnectionStringProperties();
         }
 
+        internal static bool TryGetSystemColumnEncryptionKeyStoreProvider(string keyStoreName, out SqlColumnEncryptionKeyStoreProvider provider)
+        {
+            return s_systemColumnEncryptionKeyStoreProviders.TryGetValue(keyStoreName, out provider);
+        }
+
         /// <summary>
-        /// This function walks through both system and custom column encryption key store providers and returns an object if found.
+        /// This function walks through both instance-level and global custom column encryption key store providers and returns an object if found.
         /// </summary>
-        /// <param name="providerName">Provider Name to be searched in System Provider diction and Custom provider dictionary.</param>
-        /// <param name="columnKeyStoreProvider">If the provider is found, returns the corresponding SqlColumnEncryptionKeyStoreProvider instance.</param>
-        /// <param name="connection">The connection requiring the provider</param>
+        /// <param name="providerName">Provider Name to be searched for.</param>
+        /// <param name="columnKeyStoreProvider">If the provider is found, initializes the corresponding SqlColumnEncryptionKeyStoreProvider instance.</param>
         /// <returns>true if the provider is found, else returns false</returns>
-        internal static bool TryGetColumnEncryptionKeyStoreProvider(string providerName, out SqlColumnEncryptionKeyStoreProvider columnKeyStoreProvider, SqlConnection connection)
+        internal bool TryGetColumnEncryptionKeyStoreProvider(string providerName, out SqlColumnEncryptionKeyStoreProvider columnKeyStoreProvider)
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(providerName), "Provider name is invalid");
 
-            // Initialize the out parameter
-            columnKeyStoreProvider = null;
-
-            // Search in the sytem provider list.
-            if (s_systemColumnEncryptionKeyStoreProviders.TryGetValue(providerName, out columnKeyStoreProvider))
+            if (HasColumnEncryptionKeyStoreProvidersRegistered)
             {
-                return true;
+                return _customColumnEncryptionKeyStoreProviders.TryGetValue(providerName, out columnKeyStoreProvider);
             }
 
             lock (s_globalCustomColumnEncryptionKeyProvidersLock)
             {
                 // If custom provider is not set, then return false
-                if (s_globalCustomColumnEncryptionKeyStoreProviders == null)
+                if (s_globalCustomColumnEncryptionKeyStoreProviders is null)
                 {
+                    columnKeyStoreProvider = null;
                     return false;
                 }
 
@@ -251,7 +250,7 @@ namespace Microsoft.Data.SqlClient
         /// This function returns a list of system providers currently supported by this driver.
         /// </summary>
         /// <returns>Combined list of provider names</returns>
-        internal static List<string> GetColumnEncryptionSystemKeyStoreProviders()
+        internal static List<string> GetColumnEncryptionSystemKeyStoreProvidersNames()
         {
             return s_systemColumnEncryptionKeyStoreProviders.Keys.ToList();
         }
@@ -260,11 +259,15 @@ namespace Microsoft.Data.SqlClient
         /// This function returns a list of the names of the custom providers currently registered. If the 
         /// instance-level cache is not empty, that cache is used, else the global cache is used.
         /// </summary>
-        /// <param name="connection">The connection requiring the provider</param>
         /// <returns>Combined list of provider names</returns>
-        internal static List<string> GetColumnEncryptionCustomKeyStoreProviders(SqlConnection connection)
+        internal List<string> GetColumnEncryptionCustomKeyStoreProvidersNames()
         {
-            if (s_globalCustomColumnEncryptionKeyStoreProviders != null)
+            if (_customColumnEncryptionKeyStoreProviders is not null &&
+                _customColumnEncryptionKeyStoreProviders.Count > 0)
+            {
+                return _customColumnEncryptionKeyStoreProviders.Keys.ToList();
+            }
+            if (s_globalCustomColumnEncryptionKeyStoreProviders is not null)
             {
                 return s_globalCustomColumnEncryptionKeyStoreProviders.Keys.ToList();
             }
@@ -291,25 +294,49 @@ namespace Microsoft.Data.SqlClient
             lock (s_globalCustomColumnEncryptionKeyProvidersLock)
             {
                 // Provider list can only be set once
-                if (s_globalCustomColumnEncryptionKeyStoreProviders != null)
+                if (s_globalCustomColumnEncryptionKeyStoreProviders is not null)
                 {
                     throw SQL.CanOnlyCallOnce();
+                }
+
+                // to prevent conflicts between CEK caches, global providers should not use their own CEK caches
+                foreach (SqlColumnEncryptionKeyStoreProvider provider in customProviders.Values)
+                {
+                    provider.ColumnEncryptionKeyCacheTtl = new TimeSpan(0);
                 }
 
                 // Create a temporary dictionary and then add items from the provided dictionary.
                 // Dictionary constructor does shallow copying by simply copying the provider name and provider reference pairs
                 // in the provided customerProviders dictionary.
                 Dictionary<string, SqlColumnEncryptionKeyStoreProvider> customColumnEncryptionKeyStoreProviders =
-                    new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>(customProviders, StringComparer.OrdinalIgnoreCase);
+                    new(customProviders, StringComparer.OrdinalIgnoreCase);
 
                 // Set the dictionary to the ReadOnly dictionary.
                 s_globalCustomColumnEncryptionKeyStoreProviders = customColumnEncryptionKeyStoreProviders;
             }
         }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisterColumnEncryptionKeyStoreProvidersOnConnection/*' />
+        public void RegisterColumnEncryptionKeyStoreProvidersOnConnection(IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders)
+        {
+            ValidateCustomProviders(customProviders);
+
+            // Create a temporary dictionary and then add items from the provided dictionary.
+            // Dictionary constructor does shallow copying by simply copying the provider name and provider reference pairs
+            // in the provided customerProviders dictionary.
+            Dictionary<string, SqlColumnEncryptionKeyStoreProvider> customColumnEncryptionKeyStoreProviders =
+                new(customProviders, StringComparer.OrdinalIgnoreCase);
+
+            // Set the dictionary to the ReadOnly dictionary.
+            // This method can be called more than once. Re-registering a new collection will replace the 
+            // old collection of providers.
+            _customColumnEncryptionKeyStoreProviders = customColumnEncryptionKeyStoreProviders;
+        }
+
         private static void ValidateCustomProviders(IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders)
         {
             // Throw when the provided dictionary is null.
-            if (customProviders == null)
+            if (customProviders is null)
             {
                 throw SQL.NullCustomKeyStoreProviderDictionary();
             }
@@ -332,7 +359,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // Validate the provider value
-                if (customProviders[key] == null)
+                if (customProviders[key] is null)
                 {
                     throw SQL.NullProviderValue(key);
                 }
@@ -354,6 +381,14 @@ namespace Microsoft.Data.SqlClient
                 SqlConnectionString opt = (SqlConnectionString)ConnectionOptions;
                 return opt.AttestationProtocol;
             }
+        }
+
+        /// <summary>
+        /// Get IP address preference
+        /// </summary>
+        internal SqlConnectionIPAddressPreference iPAddressPreference
+        {
+            get => ((SqlConnectionString)ConnectionOptions).IPAddressPreference;
         }
 
         // This method will be called once connection string is set or changed.
@@ -463,6 +498,11 @@ namespace Microsoft.Data.SqlClient
             return opt != null && opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI;
         }
 
+        private bool UsesActiveDirectoryDefault(SqlConnectionString opt)
+        {
+            return opt != null && opt.Authentication == SqlAuthenticationMethod.ActiveDirectoryDefault;
+        }
+
         private bool UsesAuthentication(SqlConnectionString opt)
         {
             return opt != null && opt.Authentication != SqlAuthenticationMethod.NotSpecified;
@@ -520,7 +560,7 @@ namespace Microsoft.Data.SqlClient
                     if (_credential != null)
                     {
                         // Check for Credential being used with Authentication=ActiveDirectoryIntegrated | ActiveDirectoryInteractive |
-                        //  ActiveDirectoryDeviceCodeFlow | ActiveDirectoryManagedIdentity/ActiveDirectoryMSI. Since a different error string is used
+                        //  ActiveDirectoryDeviceCodeFlow | ActiveDirectoryManagedIdentity/ActiveDirectoryMSI | ActiveDirectoryDefault. Since a different error string is used
                         // for this case in ConnectionString setter vs in Credential setter, check for this error case before calling
                         // CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential, which is common to both setters.
                         if (UsesActiveDirectoryIntegrated(connectionOptions))
@@ -537,11 +577,15 @@ namespace Microsoft.Data.SqlClient
                         }
                         else if (UsesActiveDirectoryManagedIdentity(connectionOptions))
                         {
-                            throw SQL.SettingManagedIdentityWithCredential(DbConnectionStringBuilderUtil.ActiveDirectoryManagedIdentityString);
+                            throw SQL.SettingNonInteractiveWithCredential(DbConnectionStringBuilderUtil.ActiveDirectoryManagedIdentityString);
                         }
                         else if (UsesActiveDirectoryMSI(connectionOptions))
                         {
-                            throw SQL.SettingManagedIdentityWithCredential(DbConnectionStringBuilderUtil.ActiveDirectoryMSIString);
+                            throw SQL.SettingNonInteractiveWithCredential(DbConnectionStringBuilderUtil.ActiveDirectoryMSIString);
+                        }
+                        else if (UsesActiveDirectoryDefault(connectionOptions))
+                        {
+                            throw SQL.SettingNonInteractiveWithCredential(DbConnectionStringBuilderUtil.ActiveDirectoryDefaultString);
                         }
 
                         CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential(connectionOptions);
@@ -833,7 +877,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     var connectionOptions = (SqlConnectionString)ConnectionOptions;
                     // Check for Credential being used with Authentication=ActiveDirectoryIntegrated | ActiveDirectoryInteractive |
-                    // ActiveDirectoryDeviceCodeFlow | ActiveDirectoryManagedIdentity/ActiveDirectoryMSI. Since a different error string is used
+                    // ActiveDirectoryDeviceCodeFlow | ActiveDirectoryManagedIdentity/ActiveDirectoryMSI | ActiveDirectoryDefault. Since a different error string is used
                     // for this case in ConnectionString setter vs in Credential setter, check for this error case before calling
                     // CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential, which is common to both setters.
                     if (UsesActiveDirectoryIntegrated(connectionOptions))
@@ -850,11 +894,15 @@ namespace Microsoft.Data.SqlClient
                     }
                     else if (UsesActiveDirectoryManagedIdentity(connectionOptions))
                     {
-                        throw SQL.SettingCredentialWithManagedIdentityInvalid(DbConnectionStringBuilderUtil.ActiveDirectoryManagedIdentityString);
+                        throw SQL.SettingCredentialWithNonInteractiveInvalid(DbConnectionStringBuilderUtil.ActiveDirectoryManagedIdentityString);
                     }
                     else if (UsesActiveDirectoryMSI(connectionOptions))
                     {
-                        throw SQL.SettingCredentialWithManagedIdentityInvalid(DbConnectionStringBuilderUtil.ActiveDirectoryMSIString);
+                        throw SQL.SettingCredentialWithNonInteractiveInvalid(DbConnectionStringBuilderUtil.ActiveDirectoryMSIString);
+                    }
+                    else if (UsesActiveDirectoryDefault(connectionOptions))
+                    {
+                        throw SQL.SettingCredentialWithNonInteractiveInvalid(DbConnectionStringBuilderUtil.ActiveDirectoryDefaultString);
                     }
 
                     CheckAndThrowOnInvalidCombinationOfConnectionStringAndSqlCredential(connectionOptions);
@@ -1481,8 +1529,8 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsync/*' />
         public override Task OpenAsync(CancellationToken cancellationToken)
-            => IsRetryEnabled ? 
-                InternalOpenWithRetryAsync(cancellationToken) : 
+            => IsRetryEnabled ?
+                InternalOpenWithRetryAsync(cancellationToken) :
                 InternalOpenAsync(cancellationToken);
 
         private Task InternalOpenAsync(CancellationToken cancellationToken)
@@ -2104,7 +2152,7 @@ namespace Microsoft.Data.SqlClient
         {
             // Connection exists,  schedule removal, will be added to ref collection after calling ValidateAndReconnect
             return outerTask.ContinueWith(
-                continuationFunction: (task, state) =>
+                continuationFunction: static (task, state) =>
                 {
                     Tuple<SqlConnection, object> parameters = (Tuple<SqlConnection, object>)state;
                     SqlConnection connection = parameters.Item1;

@@ -280,6 +280,11 @@ namespace Microsoft.Data.SqlClient
         internal byte TceVersionSupported { get; set; }
 
         /// <summary>
+        /// Server supports retrying when the enclave CEKs sent by the client do not match what is needed for the query to run.
+        /// </summary>
+        internal bool AreEnclaveRetriesSupported { get; set; }
+
+        /// <summary>
         /// Type of enclave being used by the server
         /// </summary>
         internal string EnclaveType { get; set; }
@@ -554,6 +559,9 @@ namespace Microsoft.Data.SqlClient
                     case SqlAuthenticationMethod.ActiveDirectoryMSI:
                         SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory MSI authentication");
                         break;
+                    case SqlAuthenticationMethod.ActiveDirectoryDefault:
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Active Directory Default authentication");
+                        break;
                     case SqlAuthenticationMethod.SqlPassword:
                         SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> SQL Password authentication");
                         break;
@@ -593,7 +601,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             _physicalStateObj.CreatePhysicalSNIHandle(serverInfo.ExtendedServerName, ignoreSniOpenTimeout, timerExpire,
-                        out instanceName, _sniSpnBuffer, false, true, fParallel, transparentNetworkResolutionState, totalTimeout, FQDNforDNSCahce);
+                        out instanceName, _sniSpnBuffer, false, true, fParallel, transparentNetworkResolutionState, totalTimeout, _connHandler.ConnectionOptions.IPAddressPreference, FQDNforDNSCahce);
 
             if (TdsEnums.SNI_SUCCESS != _physicalStateObj.Status)
             {
@@ -656,7 +664,8 @@ namespace Microsoft.Data.SqlClient
 
                 // On Instance failure re-connect and flush SNI named instance cache.
                 _physicalStateObj.SniContext = SniContext.Snix_Connect;
-                _physicalStateObj.CreatePhysicalSNIHandle(serverInfo.ExtendedServerName, ignoreSniOpenTimeout, timerExpire, out instanceName, _sniSpnBuffer, true, true, fParallel, transparentNetworkResolutionState, totalTimeout, serverInfo.ResolvedServerName);
+                _physicalStateObj.CreatePhysicalSNIHandle(serverInfo.ExtendedServerName, ignoreSniOpenTimeout, timerExpire, 
+                            out instanceName, _sniSpnBuffer, true, true, fParallel, transparentNetworkResolutionState, totalTimeout, _connHandler.ConnectionOptions.IPAddressPreference, serverInfo.ResolvedServerName);
 
                 if (TdsEnums.SNI_SUCCESS != _physicalStateObj.Status)
                 {
@@ -6669,7 +6678,8 @@ namespace Microsoft.Data.SqlClient
                                       int length,
                                       TdsParserStateObject stateObj,
                                       SqlCommandColumnEncryptionSetting columnEncryptionOverride,
-                                      string columnName)
+                                      string columnName, 
+                                      SqlCommand command = null)
         {
             bool isPlp = md.metaType.IsPlp;
             byte tdsType = md.tdsType;
@@ -6732,7 +6742,7 @@ namespace Microsoft.Data.SqlClient
                         try
                         {
                             // CipherInfo is present, decrypt and read
-                            byte[] unencryptedBytes = SqlSecurityUtility.DecryptWithKey(b, md.cipherMD, _connHandler.Connection);
+                            byte[] unencryptedBytes = SqlSecurityUtility.DecryptWithKey(b, md.cipherMD, _connHandler.Connection, command);
 
                             if (unencryptedBytes != null)
                             {
@@ -8585,6 +8595,9 @@ namespace Microsoft.Data.SqlClient
                             case SqlAuthenticationMethod.ActiveDirectoryMSI:
                                 workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYMANAGEDIDENTITY;
                                 break;
+                            case SqlAuthenticationMethod.ActiveDirectoryDefault:
+                                workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYDEFAULT;
+                                break;
                             default:
                                 Debug.Assert(false, "Unrecognized Authentication type for fedauth MSAL request");
                                 break;
@@ -10033,7 +10046,7 @@ namespace Microsoft.Data.SqlClient
                                         }
 
                                         Debug.Assert(serializedValue != null, "serializedValue should not be null in TdsExecuteRPC.");
-                                        encryptedValue = SqlSecurityUtility.EncryptWithKey(serializedValue, param.CipherMetadata, _connHandler.Connection);
+                                        encryptedValue = SqlSecurityUtility.EncryptWithKey(serializedValue, param.CipherMetadata, _connHandler.Connection, cmd);
                                     }
                                     catch (Exception e)
                                     {
@@ -10376,19 +10389,25 @@ namespace Microsoft.Data.SqlClient
                                         task = completion.Task;
                                     }
 
-                                    AsyncHelper.ContinueTask(writeParamTask, completion,
-                                        () => TdsExecuteRPC(cmd, rpcArray, timeout, inSchema, notificationRequest, stateObj, isCommandProc, sync, completion,
-                                                              startRpc: ii, startParam: i + 1),
-                                        connectionToDoom: _connHandler,
-                                        onFailure: exc => TdsExecuteRPC_OnFailure(exc, stateObj));
+                                    AsyncHelper.ContinueTaskWithState(writeParamTask, completion, this,
+                                        (object state) =>
+                                        {
+                                            TdsParser tdsParser = (TdsParser)state;
+                                            TdsExecuteRPC(cmd, rpcArray, timeout, inSchema, notificationRequest, stateObj, isCommandProc, sync, completion,
+                                                                  startRpc: ii, startParam: i + 1);
+                                        },
+                                        onFailure: (Exception exc, object state) => ((TdsParser)state).TdsExecuteRPC_OnFailure(exc, stateObj),
+                                        connectionToDoom: _connHandler
+                                    );
 
                                     // Take care of releasing the locks
                                     if (releaseConnectionLock)
                                     {
-                                        task.ContinueWith(_ =>
-                                        {
-                                            _connHandler._parserLock.Release();
-                                        }, TaskScheduler.Default);
+                                        task.ContinueWith(
+                                            static (Task _, object state) => ((TdsParser)state)._connHandler._parserLock.Release(), 
+                                            state: this,
+                                            scheduler: TaskScheduler.Default
+                                        );
                                         releaseConnectionLock = false;
                                     }
 
@@ -10441,14 +10460,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (Exception e)
                 {
-                    // UNDONE - should not be catching all exceptions!!!
-                    if (!ADP.IsCatchableExceptionType(e))
-                    {
-                        throw;
-                    }
-
                     FailureCleanup(stateObj, e);
-
                     throw;
                 }
                 FinalizeExecuteRPC(stateObj);
@@ -11065,7 +11077,7 @@ namespace Microsoft.Data.SqlClient
         /// decrypt the CEK and keep it ready for encryption.
         /// </summary>
         /// <returns></returns>
-        internal void LoadColumnEncryptionKeys(_SqlMetaDataSet metadataCollection, SqlConnection connection)
+        internal void LoadColumnEncryptionKeys(_SqlMetaDataSet metadataCollection, SqlConnection connection, SqlCommand command = null)
         {
             if (_serverSupportsColumnEncryption && ShouldEncryptValuesForBulkCopy())
             {
@@ -11076,7 +11088,7 @@ namespace Microsoft.Data.SqlClient
                         _SqlMetaData md = metadataCollection[col];
                         if (md.isEncrypted)
                         {
-                            SqlSecurityUtility.DecryptSymmetricKey(md.cipherMD, connection);
+                            SqlSecurityUtility.DecryptSymmetricKey(md.cipherMD, connection, command);
                         }
                     }
                 }
@@ -11437,7 +11449,8 @@ namespace Microsoft.Data.SqlClient
             return SqlSecurityUtility.EncryptWithKey(
                     serializedValue,
                     metadata.cipherMD,
-                    _connHandler.Connection);
+                    _connHandler.Connection,
+                    null);
         }
 
         internal Task WriteBulkCopyValue(object value, SqlMetaDataPriv metadata, TdsParserStateObject stateObj, bool isSqlType, bool isDataFeed, bool isNull)
@@ -11953,7 +11966,8 @@ namespace Microsoft.Data.SqlClient
                 {
                     return AsyncHelper.CreateContinuationTask<int, TdsParserStateObject>(unterminatedWriteTask,
                         WriteInt, 0, stateObj,
-                        connectionToDoom: _connHandler);
+                        connectionToDoom: _connHandler
+                    );
                 }
             }
             else

@@ -37,7 +37,7 @@ The following table shows the inner transient error list.
             </remarks>
         </SqlConfigurableRetryFactory>
         <CreateExponentialRetryProvider>
-            <param name="retryLogicOption">An object of <see cref="T:Microsoft.Data.SqlClient.FloatingRetryLogicOption" /> containing the configuration for the object.</param>
+            <param name="retryLogicOption">An object of <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicOption" /> containing the configuration for the object.</param>
             <summary>Provides an exponential time interval retry logic provider.</summary>
             <returns>A <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider" /> object.</returns>
             <remarks>
@@ -58,7 +58,7 @@ The following table shows the inner transient error list.
             </exception>
         </CreateExponentialRetryProvider>
         <CreateIncrementalRetryProvider>
-            <param name="retryLogicOption">An object of <see cref="T:Microsoft.Data.SqlClient.FloatingRetryLogicOption" /> containing the configuration for the object.</param>
+            <param name="retryLogicOption">An object of <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicOption" /> containing the configuration for the object.</param>
             <summary>Provides an incremental time interval retry logic provider.</summary>
             <returns>A <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider" /> object.</returns>
             <remarks>
@@ -79,7 +79,7 @@ The following table shows the inner transient error list.
             </exception>
         </CreateIncrementalRetryProvider>
         <CreateFixedRetryProvider>
-            <param name="retryLogicOption">An object of <see cref="T:Microsoft.Data.SqlClient.FixedRetryLogicOption" /> containing the configuration for the object.</param>
+            <param name="retryLogicOption">An object of <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicOption" /> containing the configuration for the object.</param>
             <summary>Provides a fixed interval time retry logic provider.</summary>
             <returns>A <see cref="T:Microsoft.Data.SqlClient.SqlRetryLogicBaseProvider" /> object.</returns>
             <remarks>

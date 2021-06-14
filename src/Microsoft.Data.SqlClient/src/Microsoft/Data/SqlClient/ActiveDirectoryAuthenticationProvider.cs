@@ -4,7 +4,6 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Linq;
 using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
@@ -73,7 +72,8 @@ namespace Microsoft.Data.SqlClient
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
                 || authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
-                || authentication == SqlAuthenticationMethod.ActiveDirectoryMSI;
+                || authentication == SqlAuthenticationMethod.ActiveDirectoryMSI
+                || authentication == SqlAuthenticationMethod.ActiveDirectoryDefault;
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/BeforeLoad/*'/>
@@ -117,12 +117,31 @@ namespace Microsoft.Data.SqlClient
             string tenantId = parameters.Authority.Substring(seperatorIndex + 1);
             string authority = parameters.Authority.Remove(seperatorIndex + 1);
 
-            TokenCredentialOptions tokenCredentialOptions = new TokenCredentialOptions() { AuthorityHost = new Uri(authority) };
             TokenRequestContext tokenRequestContext = new TokenRequestContext(scopes);
+            string clientId = string.IsNullOrWhiteSpace(parameters.UserId) ? null : parameters.UserId;
+
+            if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryDefault)
+            {
+                DefaultAzureCredentialOptions defaultAzureCredentialOptions = new DefaultAzureCredentialOptions()
+                {
+                    AuthorityHost = new Uri(authority),
+                    ManagedIdentityClientId = clientId,
+                    InteractiveBrowserTenantId = tenantId,
+                    SharedTokenCacheTenantId = tenantId,
+                    SharedTokenCacheUsername = clientId,
+                    VisualStudioCodeTenantId = tenantId,
+                    VisualStudioTenantId = tenantId,
+                    ExcludeInteractiveBrowserCredential = true // Force disabled, even though it's disabled by default to respect driver specifications.
+                };
+                AccessToken accessToken = await new DefaultAzureCredential(defaultAzureCredentialOptions).GetTokenAsync(tokenRequestContext, cts.Token);
+                SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Default auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
+                return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
+            }
+
+            TokenCredentialOptions tokenCredentialOptions = new TokenCredentialOptions() { AuthorityHost = new Uri(authority) };
 
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity || parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryMSI)
             {
-                string clientId = string.IsNullOrWhiteSpace(parameters.UserId) ? null : parameters.UserId;
                 AccessToken accessToken = await new ManagedIdentityCredential(clientId, tokenCredentialOptions).GetTokenAsync(tokenRequestContext, cts.Token);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Managed Identity auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
@@ -195,15 +214,28 @@ namespace Microsoft.Data.SqlClient
                      parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
             {
                 // Fetch available accounts from 'app' instance
-                System.Collections.Generic.IEnumerable<IAccount> accounts = await app.GetAccountsAsync();
-                IAccount account;
-                if (!string.IsNullOrEmpty(parameters.UserId))
+                System.Collections.Generic.IEnumerator<IAccount> accounts = (await app.GetAccountsAsync()).GetEnumerator();
+                
+                IAccount account = default;
+                if (accounts.MoveNext())
                 {
-                    account = accounts.FirstOrDefault(a => parameters.UserId.Equals(a.Username, System.StringComparison.InvariantCultureIgnoreCase));
-                }
-                else
-                {
-                    account = accounts.FirstOrDefault();
+                    if (!string.IsNullOrEmpty(parameters.UserId))
+                    {
+                        do
+                        {
+                            IAccount currentVal = accounts.Current;
+                            if (string.Compare(parameters.UserId, currentVal.Username, StringComparison.InvariantCultureIgnoreCase) == 0)
+                            {
+                                account = currentVal;
+                                break;
+                            }
+                        }
+                        while (accounts.MoveNext());
+                    }
+                    else
+                    {
+                        account = accounts.Current;
+                    }
                 }
 
                 if (null != account)

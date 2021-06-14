@@ -792,7 +792,8 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal abstract void CreatePhysicalSNIHandle(string serverName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[][] spnBuffer, bool flushCache, bool async, bool fParallel, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo, bool isIntegratedSecurity = false);
+        internal abstract void CreatePhysicalSNIHandle(string serverName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[][] spnBuffer, bool flushCache, bool async, bool fParallel, 
+                                SqlConnectionIPAddressPreference iPAddressPreference, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo, bool isIntegratedSecurity = false);
 
         internal abstract void AssignPendingDNSInfo(string userProtocol, string DNSCacheKey, ref SQLDNSInfo pendingDNSInfo);
 
@@ -1015,7 +1016,16 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        return AsyncHelper.CreateContinuationTask(writePacketTask, () => { HasPendingData = true; _messageStatus = 0; });
+                        return AsyncHelper.CreateContinuationTaskWithState(
+                            task: writePacketTask, 
+                            state: this,
+                            onSuccess: static (object state) => 
+                            {
+                                TdsParserStateObject stateObject = (TdsParserStateObject)state;
+                                stateObject.HasPendingData = true;
+                                stateObject._messageStatus = 0; 
+                            }
+                        );
                     }
                 }
             }

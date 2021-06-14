@@ -14,6 +14,7 @@ using Microsoft.Data.Sql;
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/SqlCommandBuilder/*'/>
+    [DesignerCategory("")]
     public sealed class SqlCommandBuilder : DbCommandBuilder
     {
 

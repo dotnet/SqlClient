@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsLocalDBEnvironmentSet))]
         public static void LocalDBConnectionTest()
         {
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(@"server=(localdb)\MSSQLLocalDB");
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(@$"server=(localdb)\{DataTestUtility.LocalDbAppName}");
             builder.IntegratedSecurity = true;
             builder.ConnectTimeout = 2;
             OpenConnection(builder.ConnectionString);
@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsLocalDBEnvironmentSet))]
         public static void LocalDBMarsTest()
         {
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(@"server=(localdb)\MSSQLLocalDB;");
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(@$"server=(localdb)\{DataTestUtility.LocalDbAppName}");
             builder.IntegratedSecurity = true;
             builder.MultipleActiveResultSets = true;
             builder.ConnectTimeout = 2;
@@ -35,7 +35,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsLocalDBEnvironmentSet))]
         public static void InvalidDBTest()
         {
-            using (var connection = new SqlConnection(@"Data Source=(localdb)\MSSQLLOCALDB;Database=DOES_NOT_EXIST;Pooling=false;"))
+            using (var connection = new SqlConnection(@$"server=(localdb)\{DataTestUtility.LocalDbAppName};Database=DOES_NOT_EXIST;Pooling=false;"))
             {
                 DataTestUtility.AssertThrowsWrapper<SqlException>(() => connection.Open());
             }
