@@ -19,10 +19,12 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
+using System.Buffers;
 using Microsoft.Data.Common;
 using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.Server;
 using SysTx = System.Transactions;
+using System.Collections.Concurrent;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -30,7 +32,8 @@ namespace Microsoft.Data.SqlClient
     [
     DefaultEvent("RecordsAffected"),
     ToolboxItem(true),
-    Designer("Microsoft.VSDesigner.Data.VS.SqlCommandDesigner, " + AssemblyRef.MicrosoftVSDesigner)
+    Designer("Microsoft.VSDesigner.Data.VS.SqlCommandDesigner, " + AssemblyRef.MicrosoftVSDesigner),
+    DesignerCategory("")
     ]
     public sealed class SqlCommand : DbCommand, ICloneable
     {
@@ -118,10 +121,7 @@ namespace Microsoft.Data.SqlClient
         // cut down on object creation and cache all these
         // cached metadata
         private _SqlMetaDataSet _cachedMetaData;
-
-        private Dictionary<int, SqlTceCipherInfoEntry> keysToBeSentToEnclave;
-        private bool requiresEnclaveComputations = false;
-        internal EnclaveDelegate.EnclavePackage enclavePackage = null;
+        internal EnclavePackage enclavePackage = null;
         private SqlEnclaveAttestationParameters enclaveAttestationParameters = null;
         private byte[] customData = null;
         private int customDataLength = 0;
@@ -161,6 +161,23 @@ namespace Microsoft.Data.SqlClient
         {
             get { return !string.IsNullOrWhiteSpace(_activeConnection.EnclaveAttestationUrl) && IsColumnEncryptionEnabled; }
         }
+
+        internal ConcurrentDictionary<int, SqlTceCipherInfoEntry> keysToBeSentToEnclave;
+        internal bool requiresEnclaveComputations = false;
+        private bool ShouldCacheEncryptionMetadata
+        {
+            get
+            {
+                return !requiresEnclaveComputations || _activeConnection.Parser.AreEnclaveRetriesSupported;
+            }
+        }
+        /// <summary>
+        /// Per-command custom providers. It can be provided by the user and can be set more than once. 
+        /// </summary> 
+        private IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> _customColumnEncryptionKeyStoreProviders;
+
+        internal bool HasColumnEncryptionKeyStoreProvidersRegistered =>
+            _customColumnEncryptionKeyStoreProviders is not null && _customColumnEncryptionKeyStoreProviders.Count > 0;
 
         // Cached info for async executions
         private sealed class CachedAsyncState
@@ -295,6 +312,7 @@ namespace Microsoft.Data.SqlClient
         private _SqlRPC[] _sqlRPCParameterEncryptionReqArray;
         private List<SqlParameterCollection> _parameterCollectionList;
         private int _currentlyExecutingBatch;
+        private SqlRetryLogicBaseProvider _retryLogicProvider;
 
         /// <summary>
         /// This variable is used to keep track of which RPC batch's results are being read when reading the results of
@@ -598,6 +616,28 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        private static bool IsRetryEnabled => LocalAppContextSwitches.IsRetryEnabled;
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RetryLogicProvider/*' />
+        [
+        Browsable(false),
+        DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)
+        ]
+        public SqlRetryLogicBaseProvider RetryLogicProvider
+        {
+            get
+            {
+                if (_retryLogicProvider == null)
+                {
+                    _retryLogicProvider = SqlConfigurableRetryLogicManager.CommandProvider;
+                }
+                return _retryLogicProvider;
+            }
+            set
+            {
+                _retryLogicProvider = value;
+            }
+        }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/NotificationAutoEnlist/*'/>
         [
@@ -719,7 +759,7 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlClientEventSource.Log.TryTraceEvent("<sc.SqlCommand.set_CommandText|API> {0}, String Value = '{1}'", ObjectID, value);
 
-                if (0 != ADP.SrcCompare(_commandText, value))
+                if (_commandText != value)
                 {
                     PropertyChanging();
                     _commandText = value;
@@ -1299,6 +1339,9 @@ namespace Microsoft.Data.SqlClient
             base.Dispose(disposing);
         }
 
+        private SqlDataReader RunExecuteReaderWithRetry(CommandBehavior cmdBehavior, RunBehavior runBehavior, bool returnStream, string method)
+            => RetryLogicProvider.Execute(this, () => RunExecuteReader(cmdBehavior, runBehavior, returnStream, method));
+
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteScalar/*'/>
         public override object ExecuteScalar()
         {
@@ -1320,7 +1363,9 @@ namespace Microsoft.Data.SqlClient
                 statistics = SqlStatistics.StartTimer(Statistics);
                 WriteBeginExecuteEvent();
                 SqlDataReader ds;
-                ds = RunExecuteReader(0, RunBehavior.ReturnImmediately, true, ADP.ExecuteScalar);
+                ds = IsRetryEnabled ?
+                    RunExecuteReaderWithRetry(0, RunBehavior.ReturnImmediately, true, ADP.ExecuteScalar) :
+                    RunExecuteReader(0, RunBehavior.ReturnImmediately, true, ADP.ExecuteScalar);
                 object result = CompleteExecuteScalar(ds, false);
                 success = true;
                 return result;
@@ -1368,6 +1413,14 @@ namespace Microsoft.Data.SqlClient
             return retResult;
         }
 
+        private Task InternalExecuteNonQueryWithRetry(string methodName, bool sendToPipe, int timeout, out bool usedCache, bool asyncWrite, bool inRetry)
+        {
+            bool innerUsedCache = false;
+            Task result = RetryLogicProvider.Execute(this, () => InternalExecuteNonQuery(completion: null, methodName, sendToPipe, timeout, out innerUsedCache, asyncWrite, inRetry));
+            usedCache = innerUsedCache;
+            return result;
+        }
+
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteNonQuery[@name="default"]/*'/>
         public override int ExecuteNonQuery()
         {
@@ -1389,7 +1442,14 @@ namespace Microsoft.Data.SqlClient
                 statistics = SqlStatistics.StartTimer(Statistics);
                 WriteBeginExecuteEvent();
                 bool usedCache;
-                InternalExecuteNonQuery(null, ADP.ExecuteNonQuery, false, CommandTimeout, out usedCache);
+                if (IsRetryEnabled)
+                {
+                    InternalExecuteNonQueryWithRetry(ADP.ExecuteNonQuery, sendToPipe: false, CommandTimeout, out usedCache, asyncWrite: false, inRetry: false);
+                }
+                else
+                {
+                    InternalExecuteNonQuery(null, ADP.ExecuteNonQuery, sendToPipe: false, CommandTimeout, out usedCache);
+                }
                 success = true;
                 return _rowsAffected;
             }
@@ -1483,7 +1543,7 @@ namespace Microsoft.Data.SqlClient
                     Task execNQ = InternalExecuteNonQuery(localCompletion, ADP.BeginExecuteNonQuery, false, timeout, out usedCache, asyncWrite, inRetry: inRetry);
                     if (execNQ != null)
                     {
-                        AsyncHelper.ContinueTask(execNQ, localCompletion, () => BeginExecuteNonQueryInternalReadStage(localCompletion));
+                        AsyncHelper.ContinueTaskWithState(execNQ, localCompletion, this, (object state) => ((SqlCommand)state).BeginExecuteNonQueryInternalReadStage(localCompletion));
                     }
                     else
                     {
@@ -2006,7 +2066,9 @@ namespace Microsoft.Data.SqlClient
 
                 // use the reader to consume metadata
                 SqlDataReader ds;
-                ds = RunExecuteReader(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, true, ADP.ExecuteXmlReader);
+                ds = IsRetryEnabled ?
+                    RunExecuteReaderWithRetry(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, true, ADP.ExecuteXmlReader) :
+                    RunExecuteReader(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, true, ADP.ExecuteXmlReader);
                 XmlReader result = CompleteXmlReader(ds);
                 success = true;
                 return result;
@@ -2091,7 +2153,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (writeTask != null)
                 {
-                    AsyncHelper.ContinueTask(writeTask, localCompletion, () => BeginExecuteXmlReaderInternalReadStage(localCompletion));
+                    AsyncHelper.ContinueTaskWithState(writeTask, localCompletion, this, (object state) => ((SqlCommand)state).BeginExecuteXmlReaderInternalReadStage(localCompletion));
                 }
                 else
                 {
@@ -2318,6 +2380,9 @@ namespace Microsoft.Data.SqlClient
             return ExecuteReader(behavior, ADP.ExecuteReader);
         }
 
+        private SqlDataReader ExecuteReaderWithRetry(CommandBehavior behavior, string method)
+            => RetryLogicProvider.Execute(this, () => ExecuteReader(behavior, method));
+
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReader[@name="default"]/*'/>
         new public SqlDataReader ExecuteReader()
         {
@@ -2327,7 +2392,9 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
-                return ExecuteReader(CommandBehavior.Default, ADP.ExecuteReader);
+                return IsRetryEnabled ?
+                        ExecuteReaderWithRetry(CommandBehavior.Default, ADP.ExecuteReader) :
+                        ExecuteReader(CommandBehavior.Default, ADP.ExecuteReader);
             }
             finally
             {
@@ -2344,7 +2411,9 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                return ExecuteReader(behavior, ADP.ExecuteReader);
+                return IsRetryEnabled ?
+                       ExecuteReaderWithRetry(behavior, ADP.ExecuteReader) :
+                       ExecuteReader(behavior, ADP.ExecuteReader);
             }
             finally
             {
@@ -2573,7 +2642,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (writeTask != null)
                 {
-                    AsyncHelper.ContinueTask(writeTask, localCompletion, () => BeginExecuteReaderInternalReadStage(localCompletion));
+                    AsyncHelper.ContinueTaskWithState(writeTask, localCompletion, this, (object state) => ((SqlCommand)state).BeginExecuteReaderInternalReadStage(localCompletion));
                 }
                 else
                 {
@@ -2686,7 +2755,7 @@ namespace Microsoft.Data.SqlClient
 
                                 if (ShouldUseEnclaveBasedWorkflow && this.enclavePackage != null)
                                 {
-                                    EnclaveSessionParameters enclaveSessionParameters= new EnclaveSessionParameters(this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this._activeConnection.Database);
+                                    EnclaveSessionParameters enclaveSessionParameters = new EnclaveSessionParameters(this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this._activeConnection.Database);
                                     EnclaveDelegate.Instance.InvalidateEnclaveSession(this._activeConnection.AttestationProtocol, this._activeConnection.Parser.EnclaveType, enclaveSessionParameters, this.enclavePackage.EnclaveSession);
                                 }
 
@@ -2849,8 +2918,16 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        private Task<int> InternalExecuteNonQueryWithRetryAsync(CancellationToken cancellationToken)
+            => RetryLogicProvider.ExecuteAsync(this, () => InternalExecuteNonQueryAsync(cancellationToken), cancellationToken);
+
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteNonQueryAsync[@name="CancellationToken"]/*'/>
         public override Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
+            => IsRetryEnabled ?
+                InternalExecuteNonQueryWithRetryAsync(cancellationToken) :
+                InternalExecuteNonQueryAsync(cancellationToken);
+
+        private Task<int> InternalExecuteNonQueryAsync(CancellationToken cancellationToken)
         {
             SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlCommand.ExecuteNonQueryAsync|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
             SqlConnection.ExecutePermission.Demand();
@@ -2905,36 +2982,49 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteDbDataReaderAsync/*'/>
         protected override Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
         {
-            return ExecuteReaderAsync(behavior, cancellationToken).ContinueWith<DbDataReader>((result) =>
-            {
-                if (result.IsFaulted)
+            return ExecuteReaderAsync(behavior, cancellationToken).ContinueWith<DbDataReader>(
+                static (Task<SqlDataReader> result) =>
                 {
-                    throw result.Exception.InnerException;
-                }
-                return result.Result;
-            }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.NotOnCanceled, TaskScheduler.Default);
+                    if (result.IsFaulted)
+                    {
+                        throw result.Exception.InnerException;
+                    }
+                    return result.Result;
+                }, 
+                CancellationToken.None, 
+                TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.NotOnCanceled, 
+                TaskScheduler.Default
+            );
         }
+
+        private Task<SqlDataReader> InternalExecuteReaderWithRetryAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+            => RetryLogicProvider.ExecuteAsync(this, () => InternalExecuteReaderAsync(behavior, cancellationToken), cancellationToken);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="default"]/*'/>
         new public Task<SqlDataReader> ExecuteReaderAsync()
-        {
-            return ExecuteReaderAsync(CommandBehavior.Default, CancellationToken.None);
-        }
+            => IsRetryEnabled ?
+                InternalExecuteReaderWithRetryAsync(CommandBehavior.Default, CancellationToken.None) :
+                InternalExecuteReaderAsync(CommandBehavior.Default, CancellationToken.None);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="CommandBehavior"]/*'/>
         new public Task<SqlDataReader> ExecuteReaderAsync(CommandBehavior behavior)
-        {
-            return ExecuteReaderAsync(behavior, CancellationToken.None);
-        }
+            => IsRetryEnabled ?
+                InternalExecuteReaderWithRetryAsync(behavior, CancellationToken.None) :
+                InternalExecuteReaderAsync(behavior, CancellationToken.None);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="CancellationToken"]/*'/>
         new public Task<SqlDataReader> ExecuteReaderAsync(CancellationToken cancellationToken)
-        {
-            return ExecuteReaderAsync(CommandBehavior.Default, cancellationToken);
-        }
+            => IsRetryEnabled ?
+                InternalExecuteReaderWithRetryAsync(CommandBehavior.Default, cancellationToken) :
+                InternalExecuteReaderAsync(CommandBehavior.Default, cancellationToken);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="commandBehaviorAndCancellationToken"]/*'/>
         new public Task<SqlDataReader> ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+            => IsRetryEnabled ?
+                InternalExecuteReaderWithRetryAsync(behavior, cancellationToken) :
+                InternalExecuteReaderAsync(behavior, cancellationToken);
+
+        private Task<SqlDataReader> InternalExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
         {
             SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlCommand.ExecuteReaderAsync|API|Correlation> ObjectID {0}, behavior={1}, ActivityID {2}", ObjectID, (int)behavior, ActivityCorrelator.Current);
             SqlConnection.ExecutePermission.Demand();
@@ -2986,8 +3076,16 @@ namespace Microsoft.Data.SqlClient
             return returnedTask;
         }
 
+        private Task<object> InternalExecuteScalarWithRetryAsync(CancellationToken cancellationToken)
+            => RetryLogicProvider.ExecuteAsync(this, () => InternalExecuteScalarAsync(cancellationToken), cancellationToken);
+
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteScalarAsync[@name="CancellationToken"]/*'/>
         public override Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
+            => IsRetryEnabled ?
+                InternalExecuteScalarWithRetryAsync(cancellationToken) :
+                InternalExecuteScalarAsync(cancellationToken);
+
+        private Task<object> InternalExecuteScalarAsync(CancellationToken cancellationToken)
         {
             return ExecuteReaderAsync(cancellationToken).ContinueWith((executeTask) =>
             {
@@ -3067,8 +3165,16 @@ namespace Microsoft.Data.SqlClient
             return ExecuteXmlReaderAsync(CancellationToken.None);
         }
 
+        private Task<XmlReader> InternalExecuteXmlReaderWithRetryAsync(CancellationToken cancellationToken)
+            => RetryLogicProvider.ExecuteAsync(this, () => InternalExecuteXmlReaderAsync(cancellationToken), cancellationToken);
+
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReaderAsync[@name="CancellationToken"]/*'/>
         public Task<XmlReader> ExecuteXmlReaderAsync(CancellationToken cancellationToken)
+            => IsRetryEnabled ?
+                InternalExecuteXmlReaderWithRetryAsync(cancellationToken) :
+                InternalExecuteXmlReaderAsync(cancellationToken);
+
+        private Task<XmlReader> InternalExecuteXmlReaderAsync(CancellationToken cancellationToken)
         {
             SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlCommand.ExecuteXmlReaderAsync|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
             SqlConnection.ExecutePermission.Demand();
@@ -3118,6 +3224,74 @@ namespace Microsoft.Data.SqlClient
             }
 
             return returnedTask;
+        }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RegisterColumnEncryptionKeyStoreProvidersOnCommand/*' />
+        public void RegisterColumnEncryptionKeyStoreProvidersOnCommand(IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders)
+        {
+            ValidateCustomProviders(customProviders);
+
+            // Create a temporary dictionary and then add items from the provided dictionary.
+            // Dictionary constructor does shallow copying by simply copying the provider name and provider reference pairs
+            // in the provided customerProviders dictionary.
+            Dictionary<string, SqlColumnEncryptionKeyStoreProvider> customColumnEncryptionKeyStoreProviders =
+                new(customProviders, StringComparer.OrdinalIgnoreCase);
+
+            _customColumnEncryptionKeyStoreProviders = customColumnEncryptionKeyStoreProviders;
+        }
+
+        private void ValidateCustomProviders(IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders)
+        {
+            // Throw when the provided dictionary is null.
+            if (customProviders is null)
+            {
+                throw SQL.NullCustomKeyStoreProviderDictionary();
+            }
+
+            // Validate that custom provider list doesn't contain any of system provider list
+            foreach (string key in customProviders.Keys)
+            {
+                // Validate the provider name
+                //
+                // Check for null or empty
+                if (string.IsNullOrWhiteSpace(key))
+                {
+                    throw SQL.EmptyProviderName();
+                }
+
+                // Check if the name starts with MSSQL_, since this is reserved namespace for system providers.
+                if (key.StartsWith(ADP.ColumnEncryptionSystemProviderNamePrefix, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    throw SQL.InvalidCustomKeyStoreProviderName(key, ADP.ColumnEncryptionSystemProviderNamePrefix);
+                }
+
+                // Validate the provider value
+                if (customProviders[key] is null)
+                {
+                    throw SQL.NullProviderValue(key);
+                }
+            }
+        }
+
+        /// <summary>
+        /// This function walks through the registered custom column encryption key store providers and returns an object if found.
+        /// </summary>
+        /// <param name="providerName">Provider Name to be searched in custom provider dictionary.</param>
+        /// <param name="columnKeyStoreProvider">If the provider is found, initializes the corresponding SqlColumnEncryptionKeyStoreProvider instance.</param>
+        /// <returns>true if the provider is found, else returns false</returns>
+        internal bool TryGetColumnEncryptionKeyStoreProvider(string providerName, out SqlColumnEncryptionKeyStoreProvider columnKeyStoreProvider)
+        {
+            Debug.Assert(!string.IsNullOrWhiteSpace(providerName), "Provider name is invalid");
+            return _customColumnEncryptionKeyStoreProviders.TryGetValue(providerName, out columnKeyStoreProvider);
+        }
+
+        /// <summary>
+        /// This function returns a list of the names of the custom providers currently registered.
+        /// </summary>
+        /// <returns>Combined list of provider names</returns>
+        internal List<string> GetColumnEncryptionCustomKeyStoreProvidersNames()
+        {
+            return _customColumnEncryptionKeyStoreProviders.Keys.ToList();
         }
 
         // If the user part is quoted, remove first and last brackets and then unquote any right square
@@ -3441,6 +3615,12 @@ namespace Microsoft.Data.SqlClient
                         p.TypeName = r[colNames[(int)ProcParamsColIndex.TypeCatalogName]] + "." +
                             r[colNames[(int)ProcParamsColIndex.TypeSchemaName]] + "." +
                             r[colNames[(int)ProcParamsColIndex.TypeName]];
+
+                        // the constructed type name above is incorrectly formatted, it should be a 2 part name not 3
+                        // for compatibility we can't change this because the bug has existed for a long time and been 
+                        // worked around by users, so identify that it is present and catch it later in the execution
+                        // process once users can no longer interact with with the parameter type name
+                        p.IsDerivedParameterTypeName = true;
                     }
 
                     // XmlSchema name for Xml types
@@ -3627,7 +3807,7 @@ namespace Microsoft.Data.SqlClient
                         _activeConnection.RegisterWaitingForReconnect(completion.Task);
                         _reconnectionCompletionSource = completion;
                         CancellationTokenSource timeoutCTS = new CancellationTokenSource();
-                        AsyncHelper.SetTimeoutException(completion, timeout, SQL.CR_ReconnectTimeout, timeoutCTS.Token);
+                        AsyncHelper.SetTimeoutException(completion, timeout, static () => SQL.CR_ReconnectTimeout(), timeoutCTS.Token);
                         AsyncHelper.ContinueTask(reconnectTask, completion,
                             () =>
                             {
@@ -3644,14 +3824,16 @@ namespace Microsoft.Data.SqlClient
                                 }
                                 else
                                 {
-                                    AsyncHelper.ContinueTask(subTask, completion, () => completion.SetResult(null));
+                                    AsyncHelper.ContinueTaskWithState(subTask, completion, completion, static (object state) => ((TaskCompletionSource<object>)state).SetResult(null));
                                 }
-                            }, connectionToAbort: _activeConnection);
+                            },
+                            connectionToAbort: _activeConnection
+                        );
                         return completion.Task;
                     }
                     else
                     {
-                        AsyncHelper.WaitForCompletion(reconnectTask, timeout, () => { throw SQL.CR_ReconnectTimeout(); });
+                        AsyncHelper.WaitForCompletion(reconnectTask, timeout, static () => throw SQL.CR_ReconnectTimeout());
                         timeout = TdsParserStaticMethods.GetRemainingTimeout(timeout, reconnectionStart);
                     }
                 }
@@ -3809,10 +3991,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            if (keysToBeSentToEnclave != null)
-            {
-                keysToBeSentToEnclave.Clear();
-            }
+            keysToBeSentToEnclave?.Clear();
             enclavePackage = null;
             requiresEnclaveComputations = false;
             enclaveAttestationParameters = null;
@@ -4571,7 +4750,6 @@ namespace Microsoft.Data.SqlClient
                         enclaveMetadataExists = false;
                     }
 
-
                     if (isRequestedByEnclave)
                     {
                         if (string.IsNullOrWhiteSpace(this.Connection.EnclaveAttestationUrl))
@@ -4588,8 +4766,7 @@ namespace Microsoft.Data.SqlClient
                             ds.GetBytes((int)DescribeParameterEncryptionResultSet1.KeySignature, 0, keySignature, 0, keySignatureLength);
                         }
 
-                        string servername = this._activeConnection.DataSource;
-                        SqlSecurityUtility.VerifyColumnMasterKeySignature(providerName, keyPath, servername, isRequestedByEnclave, keySignature);
+                        SqlSecurityUtility.VerifyColumnMasterKeySignature(providerName, keyPath, isRequestedByEnclave, keySignature, _activeConnection, this);
 
                         int requestedKey = currentOrdinal;
                         SqlTceCipherInfoEntry cipherInfo;
@@ -4602,12 +4779,12 @@ namespace Microsoft.Data.SqlClient
 
                         if (keysToBeSentToEnclave == null)
                         {
-                            keysToBeSentToEnclave = new Dictionary<int, SqlTceCipherInfoEntry>();
-                            keysToBeSentToEnclave.Add(currentOrdinal, cipherInfo);
+                            keysToBeSentToEnclave = new ConcurrentDictionary<int, SqlTceCipherInfoEntry>();
+                            keysToBeSentToEnclave.TryAdd(currentOrdinal, cipherInfo);
                         }
                         else if (!keysToBeSentToEnclave.ContainsKey(currentOrdinal))
                         {
-                            keysToBeSentToEnclave.Add(currentOrdinal, cipherInfo);
+                            keysToBeSentToEnclave.TryAdd(currentOrdinal, cipherInfo);
                         }
 
                         requiresEnclaveComputations = true;
@@ -4695,7 +4872,7 @@ namespace Microsoft.Data.SqlClient
 
                                     // Decrypt the symmetric key.(This will also validate and throw if needed).
                                     Debug.Assert(_activeConnection != null, @"_activeConnection should not be null");
-                                    SqlSecurityUtility.DecryptSymmetricKey(sqlParameter.CipherMetadata, this._activeConnection.DataSource);
+                                    SqlSecurityUtility.DecryptSymmetricKey(sqlParameter.CipherMetadata, _activeConnection, this);
 
                                     // This is effective only for BatchRPCMode even though we set it for non-BatchRPCMode also,
                                     // since for non-BatchRPCMode mode, paramoptions gets thrown away and reconstructed in BuildExecuteSql.
@@ -4739,7 +4916,6 @@ namespace Microsoft.Data.SqlClient
 
                     while (ds.Read())
                     {
-
                         if (attestationInfoRead)
                         {
                             throw SQL.MultipleRowsReturnedForAttestationInfo();
@@ -4781,8 +4957,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // If we are not in Batch RPC mode, update the query cache with the encryption MD.
-            // Enclave based Always Encrypted implementation on server side does not support cache at this point. So we should not cache if the query requires keys to be sent to enclave
-            if (!BatchRPCMode && !requiresEnclaveComputations && (this._parameters != null && this._parameters.Count > 0))
+            if (!BatchRPCMode && ShouldCacheEncryptionMetadata && (_parameters is not null && _parameters.Count > 0))
             {
                 SqlQueryMetadataCache.GetInstance().AddQueryMetadata(this, ignoreQueriesWithReturnValueParams: true);
             }
@@ -4887,7 +5062,7 @@ namespace Microsoft.Data.SqlClient
 
                             if (ShouldUseEnclaveBasedWorkflow && this.enclavePackage != null)
                             {
-                                EnclaveSessionParameters enclaveSessionParameters= new EnclaveSessionParameters(this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this._activeConnection.Database);
+                                EnclaveSessionParameters enclaveSessionParameters = new EnclaveSessionParameters(this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this._activeConnection.Database);
                                 EnclaveDelegate.Instance.InvalidateEnclaveSession(this._activeConnection.AttestationProtocol, this._activeConnection.Parser.EnclaveType,
                                     enclaveSessionParameters, this.enclavePackage.EnclaveSession);
                             }
@@ -4931,7 +5106,7 @@ namespace Microsoft.Data.SqlClient
 
                                 if (ShouldUseEnclaveBasedWorkflow && this.enclavePackage != null)
                                 {
-                                    EnclaveSessionParameters enclaveSessionParameters= new EnclaveSessionParameters(this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this._activeConnection.Database);
+                                    EnclaveSessionParameters enclaveSessionParameters = new EnclaveSessionParameters(this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this._activeConnection.Database);
                                     EnclaveDelegate.Instance.InvalidateEnclaveSession(this._activeConnection.AttestationProtocol, this._activeConnection.Parser.EnclaveType,
                                         enclaveSessionParameters, this.enclavePackage.EnclaveSession);
                                 }
@@ -4996,39 +5171,32 @@ namespace Microsoft.Data.SqlClient
             {
                 long parameterEncryptionStart = ADP.TimerCurrent();
                 TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
-                AsyncHelper.ContinueTask(describeParameterEncryptionTask, completion,
-                    () =>
+                AsyncHelper.ContinueTaskWithState(describeParameterEncryptionTask, completion, this,
+                    (object state) =>
                     {
+                        SqlCommand command = (SqlCommand)state;
                         Task subTask = null;
-                        GenerateEnclavePackage();
-                        RunExecuteReaderTds(cmdBehavior, runBehavior, returnStream, async, TdsParserStaticMethods.GetRemainingTimeout(timeout, parameterEncryptionStart), out subTask, asyncWrite, inRetry, ds);
+                        command.GenerateEnclavePackage();
+                        command.RunExecuteReaderTds(cmdBehavior, runBehavior, returnStream, async, TdsParserStaticMethods.GetRemainingTimeout(timeout, parameterEncryptionStart), out subTask, asyncWrite, inRetry, ds);
                         if (subTask == null)
                         {
                             completion.SetResult(null);
                         }
                         else
                         {
-                            AsyncHelper.ContinueTask(subTask, completion, () => completion.SetResult(null));
+                            AsyncHelper.ContinueTaskWithState(subTask, completion, completion, static (object state2) => ((TaskCompletionSource<object>)state2).SetResult(null));
                         }
-                    }, connectionToDoom: null,
-                    onFailure: ((exception) =>
+                    },
+                    onFailure: static (Exception exception, object state) =>
                     {
-                        if (_cachedAsyncState != null)
-                        {
-                            _cachedAsyncState.ResetAsyncState();
-                        }
+                        ((SqlCommand)state)._cachedAsyncState?.ResetAsyncState();
                         if (exception != null)
                         {
                             throw exception;
                         }
-                    }),
-                    onCancellation: (() =>
-                    {
-                        if (_cachedAsyncState != null)
-                        {
-                            _cachedAsyncState.ResetAsyncState();
-                        }
-                    }),
+                    },
+                    onCancellation: static (object state) => ((SqlCommand)state)._cachedAsyncState?.ResetAsyncState(),
+                    connectionToDoom: null,
                     connectionToAbort: _activeConnection);
                 task = completion.Task;
                 return ds;
@@ -5065,7 +5233,7 @@ namespace Microsoft.Data.SqlClient
             {
                 EnclaveSessionParameters enclaveSessionParameters = new EnclaveSessionParameters(this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this._activeConnection.Database);
                 this.enclavePackage = EnclaveDelegate.Instance.GenerateEnclavePackage(attestationProtocol, keysToBeSentToEnclave,
-                    this.CommandText, enclaveType, enclaveSessionParameters);
+                    this.CommandText, enclaveType, enclaveSessionParameters, _activeConnection, this);
             }
             catch (EnclaveDelegate.RetryableEnclaveQueryExecutionException)
             {
@@ -5097,7 +5265,7 @@ namespace Microsoft.Data.SqlClient
                     _activeConnection.RegisterWaitingForReconnect(completion.Task);
                     _reconnectionCompletionSource = completion;
                     CancellationTokenSource timeoutCTS = new CancellationTokenSource();
-                    AsyncHelper.SetTimeoutException(completion, timeout, SQL.CR_ReconnectTimeout, timeoutCTS.Token);
+                    AsyncHelper.SetTimeoutException(completion, timeout, static () => SQL.CR_ReconnectTimeout(), timeoutCTS.Token);
                     AsyncHelper.ContinueTask(reconnectTask, completion,
                         () =>
                         {
@@ -5115,15 +5283,17 @@ namespace Microsoft.Data.SqlClient
                             }
                             else
                             {
-                                AsyncHelper.ContinueTask(subTask, completion, () => completion.SetResult(null));
+                                AsyncHelper.ContinueTaskWithState(subTask, completion, completion, static (object state) => ((TaskCompletionSource<object>)state).SetResult(null));
                             }
-                        }, connectionToAbort: _activeConnection);
+                        },
+                        connectionToAbort: _activeConnection
+                    );
                     task = completion.Task;
                     return ds;
                 }
                 else
                 {
-                    AsyncHelper.WaitForCompletion(reconnectTask, timeout, () => { throw SQL.CR_ReconnectTimeout(); });
+                    AsyncHelper.WaitForCompletion(reconnectTask, timeout, static () => throw SQL.CR_ReconnectTimeout());
                     timeout = TdsParserStaticMethods.GetRemainingTimeout(timeout, reconnectionStart);
                 }
             }
@@ -5976,8 +6146,8 @@ namespace Microsoft.Data.SqlClient
                     // If we are not in Batch RPC mode, update the query cache with the encryption MD.
                     // We can do this now that we have distinguished between ReturnValue and ReturnStatus.
                     // Read comment in AddQueryMetadata() for more details.
-                    // Enclave based Always Encrypted implementation on server side does not support cache at this point. So we should not cache if the query requires keys to be sent to enclave
-                    if (!BatchRPCMode && CachingQueryMetadataPostponed && !requiresEnclaveComputations && (this._parameters != null && this._parameters.Count > 0))
+                    if (!BatchRPCMode && CachingQueryMetadataPostponed &&
+                        ShouldCacheEncryptionMetadata && (_parameters is not null && _parameters.Count > 0))
                     {
                         SqlQueryMetadataCache.GetInstance().AddQueryMetadata(this, ignoreQueriesWithReturnValueParams: false);
                     }
@@ -6040,7 +6210,7 @@ namespace Microsoft.Data.SqlClient
 
                             // Get the key information from the parameter and decrypt the value.
                             rec.cipherMD.EncryptionInfo = thisParam.CipherMetadata.EncryptionInfo;
-                            byte[] unencryptedBytes = SqlSecurityUtility.DecryptWithKey(rec.value.ByteArray, rec.cipherMD, _activeConnection.DataSource);
+                            byte[] unencryptedBytes = SqlSecurityUtility.DecryptWithKey(rec.value.ByteArray, rec.cipherMD, _activeConnection, this);
 
                             if (unencryptedBytes != null)
                             {
@@ -6367,6 +6537,23 @@ namespace Microsoft.Data.SqlClient
                         if (null == parameter.Value && (!inSchema || SqlDbType.Structured == parameter.SqlDbType))
                         {
                             rpc.paramoptions[j] |= TdsEnums.RPC_PARAM_DEFAULT;
+                        }
+
+                        // detect incorrectly derived type names unchanged by the caller and fix them
+                        if (parameter.IsDerivedParameterTypeName)
+                        {
+                            string[] parts = MultipartIdentifier.ParseMultipartIdentifier(parameter.TypeName, "[\"", "]\"", Strings.SQL_TDSParserTableName, false);
+                            if (parts != null && parts.Length == 4) // will always return int[4] right justified
+                            {
+                                if (
+                                    parts[3] != null && // name must not be null
+                                    parts[2] != null && // schema must not be null
+                                    parts[1] != null // server should not be null or we don't need to remove it
+                                )
+                                {
+                                    parameter.TypeName = QuoteIdentifier(parts, 2, 2);
+                                }
+                            }
                         }
                     }
 
@@ -6839,6 +7026,29 @@ namespace Microsoft.Data.SqlClient
         {
             string[] strings = SqlParameter.ParseTypeName(identifier, isUdtTypeName);
             return ADP.BuildMultiPartName(strings);
+        }
+
+        private static string QuoteIdentifier(string[] strings, int offset, int length)
+        {
+            StringBuilder bld = new StringBuilder();
+
+            // Stitching back together is a little tricky. Assume we want to build a full multi-part name
+            //  with all parts except trimming separators for leading empty names (null or empty strings,
+            //  but not whitespace). Separators in the middle should be added, even if the name part is 
+            //  null/empty, to maintain proper location of the parts.
+            for (int i = offset; i < (offset + length); i++)
+            {
+                if (0 < bld.Length)
+                {
+                    bld.Append('.');
+                }
+                if (null != strings[i] && 0 != strings[i].Length)
+                {
+                    ADP.AppendQuotedString(bld, "[", "]", strings[i]);
+                }
+            }
+
+            return bld.ToString();
         }
 
         // returns set option text to turn on format only and key info on and off

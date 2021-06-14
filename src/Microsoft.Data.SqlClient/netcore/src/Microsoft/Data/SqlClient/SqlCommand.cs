@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data;
@@ -149,8 +150,17 @@ namespace Microsoft.Data.SqlClient
         // cached metadata
         private _SqlMetaDataSet _cachedMetaData;
 
-        private Dictionary<int, SqlTceCipherInfoEntry> keysToBeSentToEnclave;
-        private bool requiresEnclaveComputations = false;
+        internal ConcurrentDictionary<int, SqlTceCipherInfoEntry> keysToBeSentToEnclave;
+        internal bool requiresEnclaveComputations = false;
+
+        private bool ShouldCacheEncryptionMetadata
+        {
+            get
+            {
+                return !requiresEnclaveComputations || _activeConnection.Parser.AreEnclaveRetriesSupported;
+            }
+        }
+
         internal EnclavePackage enclavePackage = null;
         private SqlEnclaveAttestationParameters enclaveAttestationParameters = null;
         private byte[] customData = null;
@@ -191,6 +201,14 @@ namespace Microsoft.Data.SqlClient
         {
             get { return !string.IsNullOrWhiteSpace(_activeConnection.EnclaveAttestationUrl) && IsColumnEncryptionEnabled; }
         }
+
+        /// <summary>
+        /// Per-command custom providers. It can be provided by the user and can be set more than once. 
+        /// </summary> 
+        private IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> _customColumnEncryptionKeyStoreProviders;
+
+        internal bool HasColumnEncryptionKeyStoreProvidersRegistered =>
+            _customColumnEncryptionKeyStoreProviders is not null && _customColumnEncryptionKeyStoreProviders.Count > 0;
 
         // Cached info for async executions
         private sealed class CachedAsyncState
@@ -323,6 +341,7 @@ namespace Microsoft.Data.SqlClient
         private _SqlRPC[] _sqlRPCParameterEncryptionReqArray;
         private List<SqlParameterCollection> _parameterCollectionList;
         private int _currentlyExecutingBatch;
+        private SqlRetryLogicBaseProvider _retryLogicProvider;
 
         /// <summary>
         /// This variable is used to keep track of which RPC batch's results are being read when reading the results of
@@ -449,7 +468,7 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
                 _activeConnection = value;
-                SqlClientEventSource.Log.TryTraceEvent("SqlCommand.Set_Connection | API | ObjectId {0}, Client Connection Id {1}, SPID {2}", ObjectID, value?.ClientConnectionId, value?.ServerProcessId);
+                SqlClientEventSource.Log.TryTraceEvent("SqlCommand.Set_Connection | API | ObjectId {0}, Client Connection Id {1}", ObjectID, value?.ClientConnectionId);
             }
         }
 
@@ -471,6 +490,25 @@ namespace Microsoft.Data.SqlClient
             get
             {
                 return (SqlInternalConnectionTds)_activeConnection.InnerConnection;
+            }
+        }
+
+        private static bool IsRetryEnabled => LocalAppContextSwitches.IsRetryEnabled;
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RetryLogicProvider/*' />
+        public SqlRetryLogicBaseProvider RetryLogicProvider
+        {
+            get
+            {
+                if (_retryLogicProvider == null)
+                {
+                    _retryLogicProvider = SqlConfigurableRetryLogicManager.CommandProvider;
+                }
+                return _retryLogicProvider;
+            }
+            set
+            {
+                _retryLogicProvider = value;
             }
         }
 
@@ -528,7 +566,7 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
                 _transaction = value;
-                SqlClientEventSource.Log.TryTraceEvent("SqlCommand.Set_Transaction | API | Object Id {0}, Internal Transaction Id {1}, Client Connection Id {2}, SPID {3}", ObjectID, value?.InternalTransaction?.TransactionId, Connection?.ClientConnectionId, Connection?.ServerProcessId);
+                SqlClientEventSource.Log.TryTraceEvent("SqlCommand.Set_Transaction | API | Object Id {0}, Internal Transaction Id {1}, Client Connection Id {2}", ObjectID, value?.InternalTransaction?.TransactionId, Connection?.ClientConnectionId);
             }
         }
 
@@ -542,7 +580,7 @@ namespace Microsoft.Data.SqlClient
             set
             {
                 Transaction = (SqlTransaction)value;
-                SqlClientEventSource.Log.TryTraceEvent("SqlCommand.Set_DbTransaction | API | Object Id {0}, Client Connection Id {1}, SPID {2}", ObjectID, Connection?.ClientConnectionId, Connection?.ServerProcessId);
+                SqlClientEventSource.Log.TryTraceEvent("SqlCommand.Set_DbTransaction | API | Object Id {0}, Client Connection Id {1}", ObjectID, Connection?.ClientConnectionId);
             }
         }
 
@@ -561,7 +599,7 @@ namespace Microsoft.Data.SqlClient
                     PropertyChanging();
                     _commandText = value;
                 }
-                SqlClientEventSource.Log.TryTraceEvent("SqlCommand.Set_CommandText | API | Object Id {0}, String Value = '{1}', Client Connection Id {2}, SPID {3}", ObjectID, value, Connection?.ClientConnectionId, Connection?.ServerProcessId);
+                SqlClientEventSource.Log.TryTraceEvent("SqlCommand.Set_CommandText | API | Object Id {0}, String Value = '{1}', Client Connection Id {2}", ObjectID, value, Connection?.ClientConnectionId);
             }
         }
 
@@ -586,7 +624,7 @@ namespace Microsoft.Data.SqlClient
                     PropertyChanging();
                     _commandTimeout = value;
                 }
-                SqlClientEventSource.Log.TryTraceEvent("SqlCommand.Set_CommandTimeout | API | ObjectId {0}, Command Timeout value {1}, Client Connection Id {2}, SPID {3}", ObjectID, value, Connection?.ClientConnectionId, Connection?.ServerProcessId);
+                SqlClientEventSource.Log.TryTraceEvent("SqlCommand.Set_CommandTimeout | API | ObjectId {0}, Command Timeout value {1}, Client Connection Id {2}", ObjectID, value, Connection?.ClientConnectionId);
             }
         }
 
@@ -632,7 +670,7 @@ namespace Microsoft.Data.SqlClient
                         default:
                             throw ADP.InvalidCommandType(value);
                     }
-                    SqlClientEventSource.Log.TryTraceEvent("SqlCommand.Set_CommandType | API | ObjectId {0}, Command type value {1}, Client Connection Id {2}, SPID {3}", ObjectID, (int)value, Connection?.ClientConnectionId, Connection?.ServerProcessId);
+                    SqlClientEventSource.Log.TryTraceEvent("SqlCommand.Set_CommandType | API | ObjectId {0}, Command type value {1}, Client Connection Id {2}", ObjectID, (int)value, Connection?.ClientConnectionId);
                 }
             }
         }
@@ -698,7 +736,7 @@ namespace Microsoft.Data.SqlClient
                     default:
                         throw ADP.InvalidUpdateRowSource(value);
                 }
-                SqlClientEventSource.Log.TryTraceEvent("SqlCommand.UpdatedRowSource | API | ObjectId {0}, Updated row source value {1}, Client Connection Id {2}, SPID {3}", ObjectID, (int)value, Connection?.ClientConnectionId, Connection?.ServerProcessId);
+                SqlClientEventSource.Log.TryTraceEvent("SqlCommand.UpdatedRowSource | API | ObjectId {0}, Updated row source value {1}, Client Connection Id {2}", ObjectID, (int)value, Connection?.ClientConnectionId);
             }
         }
 
@@ -724,7 +762,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     try
                     {
-                        SqlClientEventSource.Log.TryTraceEvent("SqlCommand.OnStatementCompleted | Info | ObjectId {0}, Record Count {1}, Client Connection Id {2}, SPID {3}", ObjectID, recordCount, Connection?.ClientConnectionId, Connection?.ServerProcessId);
+                        SqlClientEventSource.Log.TryTraceEvent("SqlCommand.OnStatementCompleted | Info | ObjectId {0}, Record Count {1}, Client Connection Id {2}", ObjectID, recordCount, Connection?.ClientConnectionId);
                         handler(this, new StatementCompletedEventArgs(recordCount));
                     }
                     catch (Exception e)
@@ -752,7 +790,7 @@ namespace Microsoft.Data.SqlClient
 
             SqlStatistics statistics = null;
             long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlCommand.Prepare | API | Object Id {0}", ObjectID);
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.Prepare | API | Correlation | Object Id {0}, ActivityID {1}, Client Connection Id {2}, SPID {3}", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId);
+            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.Prepare | API | Correlation | Object Id {0}, ActivityID {1}, Client Connection Id {2}", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId);
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -875,7 +913,7 @@ namespace Microsoft.Data.SqlClient
         public override void Cancel()
         {
             long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlCommand.Cancel | API | Object Id {0}", ObjectID);
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.Cancel | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command Text '{4}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
+            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.Cancel | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
 
             SqlStatistics statistics = null;
             try
@@ -980,6 +1018,9 @@ namespace Microsoft.Data.SqlClient
             base.Dispose(disposing);
         }
 
+        private SqlDataReader RunExecuteReaderWithRetry(CommandBehavior cmdBehavior, RunBehavior runBehavior, bool returnStream, [CallerMemberName] string method = "")
+            => RetryLogicProvider.Execute(this, () => RunExecuteReader(cmdBehavior, runBehavior, returnStream, method));
+
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteScalar/*'/>
         public override object ExecuteScalar()
         {
@@ -992,7 +1033,7 @@ namespace Microsoft.Data.SqlClient
             SqlStatistics statistics = null;
 
             long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlCommand.ExecuteScalar | API | ObjectId {0}", ObjectID);
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.ExecuteScalar | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command Text '{4}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
+            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.ExecuteScalar | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
 
             Exception e = null;
             bool success = false;
@@ -1003,7 +1044,9 @@ namespace Microsoft.Data.SqlClient
                 statistics = SqlStatistics.StartTimer(Statistics);
                 WriteBeginExecuteEvent();
                 SqlDataReader ds;
-                ds = RunExecuteReader(0, RunBehavior.ReturnImmediately, returnStream: true);
+                ds = IsRetryEnabled ?
+                    RunExecuteReaderWithRetry(0, RunBehavior.ReturnImmediately, returnStream: true) :
+                    RunExecuteReader(0, RunBehavior.ReturnImmediately, returnStream: true, method: nameof(ExecuteScalar));
                 success = true;
 
                 return CompleteExecuteScalar(ds, false);
@@ -1065,6 +1108,14 @@ namespace Microsoft.Data.SqlClient
             return retResult;
         }
 
+        private Task InternalExecuteNonQueryWithRetry(bool sendToPipe, int timeout, out bool usedCache, bool asyncWrite, bool inRetry, [CallerMemberName] string methodName = "")
+        {
+            bool innerUsedCache = false;
+            Task result = RetryLogicProvider.Execute(this, () => InternalExecuteNonQuery(completion: null, sendToPipe, timeout, out innerUsedCache, asyncWrite, inRetry, methodName));
+            usedCache = innerUsedCache;
+            return result;
+        }
+
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteNonQuery[@name="default"]/*'/>
         public override int ExecuteNonQuery()
         {
@@ -1077,13 +1128,20 @@ namespace Microsoft.Data.SqlClient
             SqlStatistics statistics = null;
 
             long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlCommand.ExecuteNonQuery | API | Object Id {0}", ObjectID);
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.ExecuteNonQuery | API | Correlation | Object Id {0}, ActivityID {1}, Client Connection Id {2}, SPID {3}, Command Text {4}", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
+            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.ExecuteNonQuery | API | Correlation | Object Id {0}, ActivityID {1}, Client Connection Id {2}, Command Text {3}", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
             Exception e = null;
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
                 WriteBeginExecuteEvent();
-                InternalExecuteNonQuery(completion: null, sendToPipe: false, timeout: CommandTimeout, out _, methodName: nameof(ExecuteNonQuery));
+                if (IsRetryEnabled)
+                {
+                    InternalExecuteNonQueryWithRetry(sendToPipe: false, timeout: CommandTimeout, out _, asyncWrite: false, inRetry: false);
+                }
+                else
+                {
+                    InternalExecuteNonQuery(completion: null, sendToPipe: false, timeout: CommandTimeout, out _);
+                }
                 return _rowsAffected;
             }
             catch (Exception ex)
@@ -1112,13 +1170,13 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteNonQuery[@name="AsyncCallbackAndStateObject"]/*'/>
         public IAsyncResult BeginExecuteNonQuery(AsyncCallback callback, object stateObject)
         {
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.BeginExecuteNonQuery | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command Text '{4}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
+            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.BeginExecuteNonQuery | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
             return BeginExecuteNonQueryInternal(0, callback, stateObject, 0, inRetry: false);
         }
 
         private IAsyncResult BeginExecuteNonQueryAsync(AsyncCallback callback, object stateObject)
         {
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.BeginExecuteNonQueryAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command Text '{4}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
+            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.BeginExecuteNonQueryAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
             return BeginExecuteNonQueryInternal(0, callback, stateObject, CommandTimeout, inRetry: false, asyncWrite: true);
         }
 
@@ -1191,7 +1249,7 @@ namespace Microsoft.Data.SqlClient
                 if (callback != null)
                 {
                     globalCompletion.Task.ContinueWith(
-                        (task, state) => ((AsyncCallback)state)(task),
+                        static (task, state) => ((AsyncCallback)state)(task),
                         state: callback
                     );
                 }
@@ -1310,7 +1368,7 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.EndExecuteNonQuery | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command Text '{4}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
+                SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.EndExecuteNonQuery | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
             }
         }
 
@@ -1329,7 +1387,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EndExecuteNonQueryAsync[@name="IAsyncResult"]/*'/>
         public int EndExecuteNonQueryAsync(IAsyncResult asyncResult)
         {
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.EndExecuteNonQueryAsync | Info | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command Text '{4}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
+            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.EndExecuteNonQueryAsync | Info | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
             Debug.Assert(!_internalEndExecuteInitiated || _stateObj == null);
 
             Exception asyncException = ((Task)asyncResult).Exception;
@@ -1566,7 +1624,7 @@ namespace Microsoft.Data.SqlClient
 
             SqlStatistics statistics = null;
             long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlCommand.ExecuteXmlReader | API | Object Id {0}", ObjectID);
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.ExecuteXmlReader | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command Text '{4}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
+            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.ExecuteXmlReader | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
             int? sqlExceptionNumber = null;
 
             Exception e = null;
@@ -1576,7 +1634,9 @@ namespace Microsoft.Data.SqlClient
                 WriteBeginExecuteEvent();
                 // use the reader to consume metadata
                 SqlDataReader ds;
-                ds = RunExecuteReader(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, returnStream: true);
+                ds = IsRetryEnabled ?
+                    RunExecuteReaderWithRetry(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, returnStream: true) :
+                    RunExecuteReader(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, returnStream: true);
                 success = true;
                 return CompleteXmlReader(ds);
             }
@@ -1617,13 +1677,13 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteXmlReader[@name="AsyncCallbackAndstateObject"]/*'/>
         public IAsyncResult BeginExecuteXmlReader(AsyncCallback callback, object stateObject)
         {
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.BeginExecuteXmlReader | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command Text '{4}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
+            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.BeginExecuteXmlReader | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
             return BeginExecuteXmlReaderInternal(CommandBehavior.SequentialAccess, callback, stateObject, 0, inRetry: false);
         }
 
         private IAsyncResult BeginExecuteXmlReaderAsync(AsyncCallback callback, object stateObject)
         {
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.BeginExecuteXmlReaderAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command Text '{4}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
+            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.BeginExecuteXmlReaderAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
             return BeginExecuteXmlReaderInternal(CommandBehavior.SequentialAccess, callback, stateObject, CommandTimeout, inRetry: false, asyncWrite: true);
         }
 
@@ -1698,7 +1758,7 @@ namespace Microsoft.Data.SqlClient
                 if (callback != null)
                 {
                     localCompletion.Task.ContinueWith(
-                        (task, state) => ((AsyncCallback)state)(task),
+                        static (task, state) => ((AsyncCallback)state)(task),
                         state: callback
                     );
                 }
@@ -1742,13 +1802,13 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.EndExecuteXmlReader | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command Text '{4}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
+                SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.EndExecuteXmlReader | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
             }
         }
 
         private XmlReader EndExecuteXmlReaderAsync(IAsyncResult asyncResult)
         {
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.EndExecuteXmlReaderAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command Text '{4}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
+            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.EndExecuteXmlReaderAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
             Debug.Assert(!_internalEndExecuteInitiated || _stateObj == null);
 
             Exception asyncException = ((Task)asyncResult).Exception;
@@ -1853,14 +1913,14 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteReader[@name="AsyncCallbackAndstateObjectAndCommandBehavior"]/*'/>
         public IAsyncResult BeginExecuteReader(AsyncCallback callback, object stateObject, CommandBehavior behavior)
         {
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.BeginExecuteReader | API | Correlation | Object Id {0}, Behavior {1}, Activity Id {2}, Client Connection Id {3}, SPID {4}, Command Text '{5}'", ObjectID, (int)behavior, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
+            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.BeginExecuteReader | API | Correlation | Object Id {0}, Behavior {1}, Activity Id {2}, Client Connection Id {3}, Command Text '{4}'", ObjectID, (int)behavior, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
             return BeginExecuteReaderInternal(behavior, callback, stateObject, 0, inRetry: false);
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteDbDataReader[@name="CommandBehavior"]/*'/>
         protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
         {
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.ExecuteDbDataReader | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command Text '{4}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
+            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.ExecuteDbDataReader | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
             return ExecuteReader(behavior);
         }
 
@@ -1868,7 +1928,7 @@ namespace Microsoft.Data.SqlClient
         new public SqlDataReader ExecuteReader()
         {
             SqlStatistics statistics = null;
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.ExecuteReader | API | Correlation | ObjectID {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command Text '{4}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
+            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.ExecuteReader | API | Correlation | ObjectID {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -1898,7 +1958,9 @@ namespace Microsoft.Data.SqlClient
             {
                 WriteBeginExecuteEvent();
                 statistics = SqlStatistics.StartTimer(Statistics);
-                return RunExecuteReader(behavior, RunBehavior.ReturnImmediately, returnStream: true);
+                return IsRetryEnabled ?
+                    RunExecuteReaderWithRetry(behavior, RunBehavior.ReturnImmediately, returnStream: true) :
+                    RunExecuteReader(behavior, RunBehavior.ReturnImmediately, returnStream: true);
             }
             catch (Exception ex)
             {
@@ -1937,13 +1999,13 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
-                SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.EndExecuteReader | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command Text '{4}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
+                SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.EndExecuteReader | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
             }
         }
 
         internal SqlDataReader EndExecuteReaderAsync(IAsyncResult asyncResult)
         {
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.EndExecuteReaderAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command Text '{4}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
+            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.EndExecuteReaderAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
             Debug.Assert(!_internalEndExecuteInitiated || _stateObj == null);
 
             Exception asyncException = ((Task)asyncResult).Exception;
@@ -2127,7 +2189,7 @@ namespace Microsoft.Data.SqlClient
                 if (callback != null)
                 {
                     globalCompletion.Task.ContinueWith(
-                        (task, state) => ((AsyncCallback)state)(task),
+                        static (task, state) => ((AsyncCallback)state)(task),
                         state: callback
                     );
                 }
@@ -2383,8 +2445,16 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteNonQueryAsync[@name="CancellationToken"]/*'/>
         public override Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
+            => IsRetryEnabled ?
+                InternalExecuteNonQueryWithRetryAsync(cancellationToken) :
+                InternalExecuteNonQueryAsync(cancellationToken);
+
+        private Task<int> InternalExecuteNonQueryWithRetryAsync(CancellationToken cancellationToken)
+            => RetryLogicProvider.ExecuteAsync(this, () => InternalExecuteNonQueryAsync(cancellationToken), cancellationToken);
+
+        private Task<int> InternalExecuteNonQueryAsync(CancellationToken cancellationToken)
         {
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.ExecuteNonQueryAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command Text '{4}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
+            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.InternalExecuteNonQueryAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
             Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
 
             TaskCompletionSource<int> source = new TaskCompletionSource<int>();
@@ -2440,14 +2510,19 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteDbDataReaderAsync/*'/>
         protected override Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
         {
-            return ExecuteReaderAsync(behavior, cancellationToken).ContinueWith<DbDataReader>((result) =>
-            {
-                if (result.IsFaulted)
+            return ExecuteReaderAsync(behavior, cancellationToken).ContinueWith<DbDataReader>(
+                static (Task<SqlDataReader> result) =>
                 {
-                    throw result.Exception.InnerException;
-                }
-                return result.Result;
-            }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.NotOnCanceled, TaskScheduler.Default);
+                    if (result.IsFaulted)
+                    {
+                        throw result.Exception.InnerException;
+                    }
+                    return result.Result;
+                }, 
+                CancellationToken.None, 
+                TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.NotOnCanceled, 
+                TaskScheduler.Default
+            );
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="default"]/*'/>
@@ -2470,9 +2545,17 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="commandBehaviorAndCancellationToken"]/*'/>
         new public Task<SqlDataReader> ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+            => IsRetryEnabled ?
+                InternalExecuteReaderWithRetryAsync(behavior, cancellationToken) :
+                InternalExecuteReaderAsync(behavior, cancellationToken);
+
+        private Task<SqlDataReader> InternalExecuteReaderWithRetryAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+            => RetryLogicProvider.ExecuteAsync(this, () => InternalExecuteReaderAsync(behavior, cancellationToken), cancellationToken);
+
+        private Task<SqlDataReader> InternalExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
         {
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.ExecuteReaderAsync | API | Correlation | Object Id {0}, Behavior {1}, Activity Id {2}, Client Connection Id {3}, SPID {4}, Command Text '{5}'", ObjectID, (int)behavior, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
-            SqlClientEventSource.Log.TryTraceEvent("SqlCommand.ExecuteReaderAsync | API> {0}, Client Connection Id {1}, SPID {2}, Command Text = '{3}'", ObjectID, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
+            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.InternalExecuteReaderAsync | API | Correlation | Object Id {0}, Behavior {1}, Activity Id {2}, Client Connection Id {3}, Command Text '{4}'", ObjectID, (int)behavior, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
+            SqlClientEventSource.Log.TryTraceEvent("SqlCommand.InternalExecuteReaderAsync | API> {0}, Client Connection Id {1}, Command Text = '{2}'", ObjectID, Connection?.ClientConnectionId, CommandText);
             Guid operationId = default(Guid);
             if (!_parentOperationStarted)
             {
@@ -2540,9 +2623,17 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteScalarAsync[@name="CancellationToken"]/*'/>
         public override Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
+            => IsRetryEnabled ?
+                InternalExecuteScalarWithRetryAsync(cancellationToken) :
+                InternalExecuteScalarAsync(cancellationToken);
+
+        private Task<object> InternalExecuteScalarWithRetryAsync(CancellationToken cancellationToken)
+            => RetryLogicProvider.ExecuteAsync(this, () => InternalExecuteScalarAsync(cancellationToken), cancellationToken);
+
+        private Task<object> InternalExecuteScalarAsync(CancellationToken cancellationToken)
         {
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.ExecuteScalarAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command Text '{4}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
-            SqlClientEventSource.Log.TryTraceEvent("SqlCommand.ExecuteScalarAsync | API> {0}, Client Connection Id {1}, SPID {2}, Command Text = '{3}'", ObjectID, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
+            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.InternalExecuteScalarAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
+            SqlClientEventSource.Log.TryTraceEvent("SqlCommand.InternalExecuteScalarAsync | API> {0}, Client Connection Id {1}, Command Text = '{2}'", ObjectID, Connection?.ClientConnectionId, CommandText);
             _parentOperationStarted = true;
             Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
 
@@ -2631,8 +2722,16 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReaderAsync[@name="CancellationToken"]/*'/>
         public Task<XmlReader> ExecuteXmlReaderAsync(CancellationToken cancellationToken)
+            => IsRetryEnabled ?
+                InternalExecuteXmlReaderWithRetryAsync(cancellationToken) :
+                InternalExecuteXmlReaderAsync(cancellationToken);
+
+        private Task<XmlReader> InternalExecuteXmlReaderWithRetryAsync(CancellationToken cancellationToken)
+            => RetryLogicProvider.ExecuteAsync(this, () => InternalExecuteXmlReaderAsync(cancellationToken), cancellationToken);
+
+        private Task<XmlReader> InternalExecuteXmlReaderAsync(CancellationToken cancellationToken)
         {
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.ExecuteXmlReaderAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command Text '{4}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
+            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.InternalExecuteXmlReaderAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
             Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
 
             TaskCompletionSource<XmlReader> source = new TaskCompletionSource<XmlReader>();
@@ -2683,6 +2782,74 @@ namespace Microsoft.Data.SqlClient
             }
 
             return returnedTask;
+        }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RegisterColumnEncryptionKeyStoreProvidersOnCommand/*' />
+        public void RegisterColumnEncryptionKeyStoreProvidersOnCommand(IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders)
+        {
+            ValidateCustomProviders(customProviders);
+
+            // Create a temporary dictionary and then add items from the provided dictionary.
+            // Dictionary constructor does shallow copying by simply copying the provider name and provider reference pairs
+            // in the provided customerProviders dictionary.
+            Dictionary<string, SqlColumnEncryptionKeyStoreProvider> customColumnEncryptionKeyStoreProviders =
+                new(customProviders, StringComparer.OrdinalIgnoreCase);
+
+            _customColumnEncryptionKeyStoreProviders = customColumnEncryptionKeyStoreProviders;
+        }
+
+        private void ValidateCustomProviders(IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders)
+        {
+            // Throw when the provided dictionary is null.
+            if (customProviders is null)
+            {
+                throw SQL.NullCustomKeyStoreProviderDictionary();
+            }
+
+            // Validate that custom provider list doesn't contain any of system provider list
+            foreach (string key in customProviders.Keys)
+            {
+                // Validate the provider name
+                //
+                // Check for null or empty
+                if (string.IsNullOrWhiteSpace(key))
+                {
+                    throw SQL.EmptyProviderName();
+                }
+
+                // Check if the name starts with MSSQL_, since this is reserved namespace for system providers.
+                if (key.StartsWith(ADP.ColumnEncryptionSystemProviderNamePrefix, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    throw SQL.InvalidCustomKeyStoreProviderName(key, ADP.ColumnEncryptionSystemProviderNamePrefix);
+                }
+
+                // Validate the provider value
+                if (customProviders[key] is null)
+                {
+                    throw SQL.NullProviderValue(key);
+                }
+            }
+        }
+
+        /// <summary>
+        /// This function walks through the registered custom column encryption key store providers and returns an object if found.
+        /// </summary>
+        /// <param name="providerName">Provider Name to be searched in custom provider dictionary.</param>
+        /// <param name="columnKeyStoreProvider">If the provider is found, initializes the corresponding SqlColumnEncryptionKeyStoreProvider instance.</param>
+        /// <returns>true if the provider is found, else returns false</returns>
+        internal bool TryGetColumnEncryptionKeyStoreProvider(string providerName, out SqlColumnEncryptionKeyStoreProvider columnKeyStoreProvider)
+        {
+            Debug.Assert(!string.IsNullOrWhiteSpace(providerName), "Provider name is invalid");
+            return _customColumnEncryptionKeyStoreProviders.TryGetValue(providerName, out columnKeyStoreProvider);
+        }
+
+        /// <summary>
+        /// This function returns a list of the names of the custom providers currently registered.
+        /// </summary>
+        /// <returns>Combined list of provider names</returns>
+        internal List<string> GetColumnEncryptionCustomKeyStoreProvidersNames()
+        {
+            return _customColumnEncryptionKeyStoreProviders.Keys.ToList();
         }
 
         // If the user part is quoted, remove first and last brackets and then unquote any right square
@@ -2995,6 +3162,12 @@ namespace Microsoft.Data.SqlClient
                         p.TypeName = r[colNames[(int)ProcParamsColIndex.TypeCatalogName]] + "." +
                             r[colNames[(int)ProcParamsColIndex.TypeSchemaName]] + "." +
                             r[colNames[(int)ProcParamsColIndex.TypeName]];
+
+                        // the constructed type name above is incorrectly formatted, it should be a 2 part name not 3
+                        // for compatibility we can't change this because the bug has existed for a long time and been 
+                        // worked around by users, so identify that it is present and catch it later in the execution
+                        // process once users can no longer interact with with the parameter type name
+                        p.IsDerivedParameterTypeName = true;
                     }
 
                     // XmlSchema name for Xml types
@@ -3155,7 +3328,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        AsyncHelper.WaitForCompletion(reconnectTask, timeout, () => { throw SQL.CR_ReconnectTimeout(); });
+                        AsyncHelper.WaitForCompletion(reconnectTask, timeout, static () => throw SQL.CR_ReconnectTimeout());
                         timeout = TdsParserStaticMethods.GetRemainingTimeout(timeout, reconnectionStart);
                     }
                 }
@@ -3174,7 +3347,7 @@ namespace Microsoft.Data.SqlClient
                 // no parameters are sent over
                 // no data reader is returned
                 // use this overload for "batch SQL" tds token type
-                SqlClientEventSource.Log.TryTraceEvent("SqlCommand.RunExecuteNonQueryTds | Info | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command executed as SQLBATCH, Command Text '{4}' ", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
+                SqlClientEventSource.Log.TryTraceEvent("SqlCommand.RunExecuteNonQueryTds | Info | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command executed as SQLBATCH, Command Text '{3}' ", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
                 Task executeTask = _stateObj.Parser.TdsExecuteSQLBatch(this.CommandText, timeout, this.Notification, _stateObj, sync: true);
                 Debug.Assert(executeTask == null, "Shouldn't get a task when doing sync writes");
 
@@ -3212,7 +3385,7 @@ namespace Microsoft.Data.SqlClient
         private void RunExecuteNonQueryTdsSetupReconnnectContinuation(string methodName, bool isAsync, int timeout, bool asyncWrite, Task reconnectTask, long reconnectionStart, TaskCompletionSource<object> completion)
         {
             CancellationTokenSource timeoutCTS = new CancellationTokenSource();
-            AsyncHelper.SetTimeoutException(completion, timeout, SQL.CR_ReconnectTimeout, timeoutCTS.Token);
+            AsyncHelper.SetTimeoutException(completion, timeout, static () => SQL.CR_ReconnectTimeout(), timeoutCTS.Token);
             AsyncHelper.ContinueTask(reconnectTask, completion,
                 () =>
                 {
@@ -3231,7 +3404,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         AsyncHelper.ContinueTaskWithState(subTask, completion,
                             state: completion,
-                            onSuccess: (state) => ((TaskCompletionSource<object>)state).SetResult(null)
+                            onSuccess: static (object state) => ((TaskCompletionSource<object>)state).SetResult(null)
                         );
                     }
                 }
@@ -3264,10 +3437,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            if (keysToBeSentToEnclave != null)
-            {
-                keysToBeSentToEnclave.Clear();
-            }
+            keysToBeSentToEnclave?.Clear();
             enclavePackage = null;
             requiresEnclaveComputations = false;
             enclaveAttestationParameters = null;
@@ -3477,70 +3647,72 @@ namespace Microsoft.Data.SqlClient
             SqlDataReader describeParameterEncryptionDataReader,
             ReadOnlyDictionary<_SqlRPC, _SqlRPC> describeParameterEncryptionRpcOriginalRpcMap, bool describeParameterEncryptionNeeded)
         {
-            returnTask = AsyncHelper.CreateContinuationTask(fetchInputParameterEncryptionInfoTask, () =>
-            {
-                bool processFinallyBlockAsync = true;
-                bool decrementAsyncCountInFinallyBlockAsync = true;
-
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
+            returnTask = AsyncHelper.CreateContinuationTaskWithState(fetchInputParameterEncryptionInfoTask, this,
+                (object state) =>
                 {
-                    // Check for any exceptions on network write, before reading.
-                    CheckThrowSNIException();
+                    SqlCommand command = (SqlCommand)state;
+                    bool processFinallyBlockAsync = true;
+                    bool decrementAsyncCountInFinallyBlockAsync = true;
 
-                    // If it is async, then TryFetchInputParameterEncryptionInfo-> RunExecuteReaderTds would have incremented the async count.
-                    // Decrement it when we are about to complete async execute reader.
-                    SqlInternalConnectionTds internalConnectionTds = _activeConnection.GetOpenTdsConnection();
-                    if (internalConnectionTds != null)
+                    RuntimeHelpers.PrepareConstrainedRegions();
+                    try
                     {
-                        internalConnectionTds.DecrementAsyncCount();
-                        decrementAsyncCountInFinallyBlockAsync = false;
+                        // Check for any exceptions on network write, before reading.
+                        command.CheckThrowSNIException();
+
+                        // If it is async, then TryFetchInputParameterEncryptionInfo-> RunExecuteReaderTds would have incremented the async count.
+                        // Decrement it when we are about to complete async execute reader.
+                        SqlInternalConnectionTds internalConnectionTds = command._activeConnection.GetOpenTdsConnection();
+                        if (internalConnectionTds != null)
+                        {
+                            internalConnectionTds.DecrementAsyncCount();
+                            decrementAsyncCountInFinallyBlockAsync = false;
+                        }
+
+                        // Complete executereader.
+                        describeParameterEncryptionDataReader = command.CompleteAsyncExecuteReader(forDescribeParameterEncryption: true);
+                        Debug.Assert(null == command._stateObj, "non-null state object in PrepareForTransparentEncryption.");
+
+                        // Read the results of describe parameter encryption.
+                        command.ReadDescribeEncryptionParameterResults(describeParameterEncryptionDataReader, describeParameterEncryptionRpcOriginalRpcMap);
+
+    #if DEBUG
+                        // Failpoint to force the thread to halt to simulate cancellation of SqlCommand.
+                        if (_sleepAfterReadDescribeEncryptionParameterResults)
+                        {
+                            Thread.Sleep(10000);
+                        }
+    #endif
+                    }
+                    catch (Exception e)
+                    {
+                        processFinallyBlockAsync = ADP.IsCatchableExceptionType(e);
+                        throw;
+                    }
+                    finally
+                    {
+                        command.PrepareTransparentEncryptionFinallyBlock(closeDataReader: processFinallyBlockAsync,
+                            decrementAsyncCount: decrementAsyncCountInFinallyBlockAsync,
+                            clearDataStructures: processFinallyBlockAsync,
+                            wasDescribeParameterEncryptionNeeded: describeParameterEncryptionNeeded,
+                            describeParameterEncryptionRpcOriginalRpcMap: describeParameterEncryptionRpcOriginalRpcMap,
+                            describeParameterEncryptionDataReader: describeParameterEncryptionDataReader);
+                    }
+                },
+                onFailure: static (Exception exception, object state) =>
+                {
+                    SqlCommand command = (SqlCommand)state;
+                    if (command._cachedAsyncState != null)
+                    {
+                        command._cachedAsyncState.ResetAsyncState();
                     }
 
-                    // Complete executereader.
-                    describeParameterEncryptionDataReader =
-                        CompleteAsyncExecuteReader(forDescribeParameterEncryption: true);
-                    Debug.Assert(null == _stateObj, "non-null state object in PrepareForTransparentEncryption.");
-
-                    // Read the results of describe parameter encryption.
-                    ReadDescribeEncryptionParameterResults(describeParameterEncryptionDataReader,
-                        describeParameterEncryptionRpcOriginalRpcMap);
-
-#if DEBUG
-                    // Failpoint to force the thread to halt to simulate cancellation of SqlCommand.
-                    if (_sleepAfterReadDescribeEncryptionParameterResults)
+                    if (exception != null)
                     {
-                        Thread.Sleep(10000);
+                        throw exception;
                     }
-#endif
                 }
-                catch (Exception e)
-                {
-                    processFinallyBlockAsync = ADP.IsCatchableExceptionType(e);
-                    throw;
-                }
-                finally
-                {
-                    PrepareTransparentEncryptionFinallyBlock(closeDataReader: processFinallyBlockAsync,
-                        decrementAsyncCount: decrementAsyncCountInFinallyBlockAsync,
-                        clearDataStructures: processFinallyBlockAsync,
-                        wasDescribeParameterEncryptionNeeded: describeParameterEncryptionNeeded,
-                        describeParameterEncryptionRpcOriginalRpcMap: describeParameterEncryptionRpcOriginalRpcMap,
-                        describeParameterEncryptionDataReader: describeParameterEncryptionDataReader);
-                }
-            },
-            onFailure: ((exception) =>
-            {
-                if (_cachedAsyncState != null)
-                {
-                    _cachedAsyncState.ResetAsyncState();
-                }
-
-                if (exception != null)
-                {
-                    throw exception;
-                }
-            }));
+            );
 
             return describeParameterEncryptionDataReader;
         }
@@ -3972,7 +4144,6 @@ namespace Microsoft.Data.SqlClient
                         enclaveMetadataExists = false;
                     }
 
-
                     if (isRequestedByEnclave)
                     {
                         if (string.IsNullOrWhiteSpace(this.Connection.EnclaveAttestationUrl))
@@ -3989,8 +4160,7 @@ namespace Microsoft.Data.SqlClient
                             ds.GetBytes((int)DescribeParameterEncryptionResultSet1.KeySignature, 0, keySignature, 0, keySignatureLength);
                         }
 
-                        string servername = this._activeConnection.DataSource;
-                        SqlSecurityUtility.VerifyColumnMasterKeySignature(providerName, keyPath, servername, isRequestedByEnclave, keySignature);
+                        SqlSecurityUtility.VerifyColumnMasterKeySignature(providerName, keyPath, isRequestedByEnclave, keySignature, _activeConnection, this);
 
                         int requestedKey = currentOrdinal;
                         SqlTceCipherInfoEntry cipherInfo;
@@ -4003,12 +4173,12 @@ namespace Microsoft.Data.SqlClient
 
                         if (keysToBeSentToEnclave == null)
                         {
-                            keysToBeSentToEnclave = new Dictionary<int, SqlTceCipherInfoEntry>();
-                            keysToBeSentToEnclave.Add(currentOrdinal, cipherInfo);
+                            keysToBeSentToEnclave = new ConcurrentDictionary<int, SqlTceCipherInfoEntry>();
+                            keysToBeSentToEnclave.TryAdd(currentOrdinal, cipherInfo);
                         }
                         else if (!keysToBeSentToEnclave.ContainsKey(currentOrdinal))
                         {
-                            keysToBeSentToEnclave.Add(currentOrdinal, cipherInfo);
+                            keysToBeSentToEnclave.TryAdd(currentOrdinal, cipherInfo);
                         }
 
                         requiresEnclaveComputations = true;
@@ -4094,7 +4264,7 @@ namespace Microsoft.Data.SqlClient
 
                                     // Decrypt the symmetric key.(This will also validate and throw if needed).
                                     Debug.Assert(_activeConnection != null, @"_activeConnection should not be null");
-                                    SqlSecurityUtility.DecryptSymmetricKey(sqlParameter.CipherMetadata, this._activeConnection.DataSource);
+                                    SqlSecurityUtility.DecryptSymmetricKey(sqlParameter.CipherMetadata, _activeConnection, this);
 
                                     // This is effective only for BatchRPCMode even though we set it for non-BatchRPCMode also,
                                     // since for non-BatchRPCMode mode, paramoptions gets thrown away and reconstructed in BuildExecuteSql.
@@ -4145,7 +4315,6 @@ namespace Microsoft.Data.SqlClient
 
                     while (ds.Read())
                     {
-
                         if (attestationInfoRead)
                         {
                             throw SQL.MultipleRowsReturnedForAttestationInfo();
@@ -4187,8 +4356,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // If we are not in Batch RPC mode, update the query cache with the encryption MD.
-            // Enclave based Always Encrypted implementation on server side does not support cache at this point. So we should not cache if the query requires keys to be sent to enclave
-            if (!BatchRPCMode && !requiresEnclaveComputations && (this._parameters != null && this._parameters.Count > 0))
+            if (!BatchRPCMode && ShouldCacheEncryptionMetadata && (_parameters is not null && _parameters.Count > 0))
             {
                 SqlQueryMetadataCache.GetInstance().AddQueryMetadata(this, ignoreQueriesWithReturnValueParams: true);
             }
@@ -4356,40 +4524,35 @@ namespace Microsoft.Data.SqlClient
             {
                 long parameterEncryptionStart = ADP.TimerCurrent();
                 TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
-                AsyncHelper.ContinueTask(describeParameterEncryptionTask, completion,
-                    () =>
+                AsyncHelper.ContinueTaskWithState(describeParameterEncryptionTask, completion, this,
+                    (object state) =>
                     {
+                        SqlCommand command = (SqlCommand)state;
                         Task subTask = null;
-                        GenerateEnclavePackage();
-                        RunExecuteReaderTds(cmdBehavior, runBehavior, returnStream, isAsync, TdsParserStaticMethods.GetRemainingTimeout(timeout, parameterEncryptionStart), out subTask, asyncWrite, inRetry, ds);
+                        command.GenerateEnclavePackage();
+                        command.RunExecuteReaderTds(cmdBehavior, runBehavior, returnStream, isAsync, TdsParserStaticMethods.GetRemainingTimeout(timeout, parameterEncryptionStart), out subTask, asyncWrite, inRetry, ds);
                         if (subTask == null)
                         {
                             completion.SetResult(null);
                         }
                         else
                         {
-                            AsyncHelper.ContinueTask(subTask, completion, () => completion.SetResult(null));
+                            AsyncHelper.ContinueTaskWithState(subTask, completion, completion, static (object state) => ((TaskCompletionSource<object>)state).SetResult(null));
                         }
                     },
-                    onFailure: ((exception) =>
+                    onFailure: static (Exception exception, object state) =>
                     {
-                        if (_cachedAsyncState != null)
-                        {
-                            _cachedAsyncState.ResetAsyncState();
-                        }
+                        ((SqlCommand)state)._cachedAsyncState?.ResetAsyncState();
                         if (exception != null)
                         {
                             throw exception;
                         }
-                    }),
-                    onCancellation: (() =>
+                    },
+                    onCancellation: static (object state) =>
                     {
-                        if (_cachedAsyncState != null)
-                        {
-                            _cachedAsyncState.ResetAsyncState();
-                        }
-                    })
-                   );
+                        ((SqlCommand)state)._cachedAsyncState?.ResetAsyncState();
+                    }
+                );
                 task = completion.Task;
                 return ds;
             }
@@ -4425,7 +4588,7 @@ namespace Microsoft.Data.SqlClient
             {
                 EnclaveSessionParameters enclaveSessionParameters = new EnclaveSessionParameters(this._activeConnection.DataSource, this._activeConnection.EnclaveAttestationUrl, this._activeConnection.Database);
                 this.enclavePackage = EnclaveDelegate.Instance.GenerateEnclavePackage(attestationProtocol, keysToBeSentToEnclave,
-                    this.CommandText, enclaveType, enclaveSessionParameters);
+                    this.CommandText, enclaveType, enclaveSessionParameters, _activeConnection, this);
             }
             catch (EnclaveDelegate.RetryableEnclaveQueryExecutionException)
             {
@@ -4462,7 +4625,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    AsyncHelper.WaitForCompletion(reconnectTask, timeout, () => { throw SQL.CR_ReconnectTimeout(); });
+                    AsyncHelper.WaitForCompletion(reconnectTask, timeout, static () => throw SQL.CR_ReconnectTimeout());
                     timeout = TdsParserStaticMethods.GetRemainingTimeout(timeout, reconnectionStart);
                 }
             }
@@ -4527,7 +4690,7 @@ namespace Microsoft.Data.SqlClient
 
                     if (returnStream)
                     {
-                        SqlClientEventSource.Log.TryTraceEvent("SqlCommand.RunExecuteReaderTds | Info | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command executed as SQLBATCH, Command Text '{4}' ", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, CommandText);
+                        SqlClientEventSource.Log.TryTraceEvent("SqlCommand.RunExecuteReaderTds | Info | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command executed as SQLBATCH, Command Text '{3}' ", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
                     }
                     string text = GetCommandText(cmdBehavior) + GetResetOptionsString(cmdBehavior);
 
@@ -4589,7 +4752,7 @@ namespace Microsoft.Data.SqlClient
                     rpc.options = TdsEnums.RPC_NOMETADATA;
                     if (returnStream)
                     {
-                        SqlClientEventSource.Log.TryTraceEvent("SqlCommand.RunExecuteReaderTds | Info | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command executed as RPC, RPC Name '{4}' ", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, rpc?.rpcName);
+                        SqlClientEventSource.Log.TryTraceEvent("SqlCommand.RunExecuteReaderTds | Info | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command executed as RPC, RPC Name '{3}' ", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, rpc?.rpcName);
                     }
 
                     Debug.Assert(_rpcArrayOf1[0] == rpc);
@@ -4607,7 +4770,7 @@ namespace Microsoft.Data.SqlClient
                     optionSettings = GetSetOptionsString(cmdBehavior);
                     if (returnStream)
                     {
-                        SqlClientEventSource.Log.TryTraceEvent("SqlCommand.RunExecuteReaderTds | Info | Object Id {0}, Activity Id {1}, Client Connection Id {2}, SPID {3}, Command executed as RPC, RPC Name '{4}' ", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, Connection?.ServerProcessId, rpc?.rpcName);
+                        SqlClientEventSource.Log.TryTraceEvent("SqlCommand.RunExecuteReaderTds | Info | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command executed as RPC, RPC Name '{3}' ", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, rpc?.rpcName);
                     }
 
                     // turn set options ON
@@ -4676,15 +4839,18 @@ namespace Microsoft.Data.SqlClient
 
         private Task RunExecuteReaderTdsSetupContinuation(RunBehavior runBehavior, SqlDataReader ds, string optionSettings, Task writeTask)
         {
-            Task task = AsyncHelper.CreateContinuationTask(writeTask,
-                onSuccess: () =>
+            Task task = AsyncHelper.CreateContinuationTaskWithState(
+                task: writeTask, 
+                state: _activeConnection,
+                onSuccess: (object state) =>
                 {
-                    _activeConnection.GetOpenTdsConnection(); // it will throw if connection is closed
+                    SqlConnection sqlConnection = (SqlConnection)state;
+                    sqlConnection.GetOpenTdsConnection(); // it will throw if connection is closed
                     cachedAsyncState.SetAsyncReaderState(ds, runBehavior, optionSettings);
                 },
-                onFailure: (exc) =>
+                onFailure: static (Exception exc, object state) =>
                 {
-                    _activeConnection.GetOpenTdsConnection().DecrementAsyncCount();
+                    ((SqlConnection)state).GetOpenTdsConnection().DecrementAsyncCount();
                 }
             );
             return task;
@@ -4694,7 +4860,7 @@ namespace Microsoft.Data.SqlClient
         private void RunExecuteReaderTdsSetupReconnectContinuation(CommandBehavior cmdBehavior, RunBehavior runBehavior, bool returnStream, bool isAsync, int timeout, bool asyncWrite, bool inRetry, SqlDataReader ds, Task reconnectTask, long reconnectionStart, TaskCompletionSource<object> completion)
         {
             CancellationTokenSource timeoutCTS = new CancellationTokenSource();
-            AsyncHelper.SetTimeoutException(completion, timeout, SQL.CR_ReconnectTimeout, timeoutCTS.Token);
+            AsyncHelper.SetTimeoutException(completion, timeout, static () => SQL.CR_ReconnectTimeout(), timeoutCTS.Token);
             AsyncHelper.ContinueTask(reconnectTask, completion,
                 () =>
                 {
@@ -4714,7 +4880,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         AsyncHelper.ContinueTaskWithState(subTask, completion,
                              state: completion,
-                             onSuccess: (state) => ((TaskCompletionSource<object>)state).SetResult(null)
+                             onSuccess: static (object state) => ((TaskCompletionSource<object>)state).SetResult(null)
                          );
                     }
                 }
@@ -5115,8 +5281,8 @@ namespace Microsoft.Data.SqlClient
                     // If we are not in Batch RPC mode, update the query cache with the encryption MD.
                     // We can do this now that we have distinguished between ReturnValue and ReturnStatus.
                     // Read comment in AddQueryMetadata() for more details.
-                    // Enclave based Always Encrypted implementation on server side does not support cache at this point. So we should not cache if the query requires keys to be sent to enclave
-                    if (!BatchRPCMode && CachingQueryMetadataPostponed && !requiresEnclaveComputations && (this._parameters != null && this._parameters.Count > 0))
+                    if (!BatchRPCMode && CachingQueryMetadataPostponed &&
+                        ShouldCacheEncryptionMetadata && (_parameters is not null && _parameters.Count > 0))
                     {
                         SqlQueryMetadataCache.GetInstance().AddQueryMetadata(this, ignoreQueriesWithReturnValueParams: false);
                     }
@@ -5179,7 +5345,7 @@ namespace Microsoft.Data.SqlClient
 
                             // Get the key information from the parameter and decrypt the value.
                             rec.cipherMD.EncryptionInfo = thisParam.CipherMetadata.EncryptionInfo;
-                            byte[] unencryptedBytes = SqlSecurityUtility.DecryptWithKey(rec.value.ByteArray, rec.cipherMD, _activeConnection.DataSource);
+                            byte[] unencryptedBytes = SqlSecurityUtility.DecryptWithKey(rec.value.ByteArray, rec.cipherMD, _activeConnection, this);
 
                             if (unencryptedBytes != null)
                             {
@@ -5445,6 +5611,23 @@ namespace Microsoft.Data.SqlClient
                         if (null == parameter.Value && (!inSchema || SqlDbType.Structured == parameter.SqlDbType))
                         {
                             options |= TdsEnums.RPC_PARAM_DEFAULT;
+                        }
+
+                        // detect incorrectly derived type names unchanged by the caller and fix them
+                        if (parameter.IsDerivedParameterTypeName)
+                        {
+                            string[] parts = MultipartIdentifier.ParseMultipartIdentifier(parameter.TypeName, "[\"", "]\"", Strings.SQL_TDSParserTableName, false);
+                            if (parts != null && parts.Length == 4) // will always return int[4] right justified
+                            {
+                                if (
+                                    parts[3] != null && // name must not be null
+                                    parts[2] != null && // schema must not be null
+                                    parts[1] != null // server should not be null or we don't need to remove it
+                                )
+                                {
+                                    parameter.TypeName = QuoteIdentifier(parts.AsSpan(2, 2));
+                                }
+                            }
                         }
                     }
 
@@ -5886,7 +6069,30 @@ namespace Microsoft.Data.SqlClient
         private static string ParseAndQuoteIdentifier(string identifier, bool isUdtTypeName)
         {
             string[] strings = SqlParameter.ParseTypeName(identifier, isUdtTypeName);
-            return ADP.BuildMultiPartName(strings);
+            return QuoteIdentifier(strings);
+        }
+
+        private static string QuoteIdentifier(ReadOnlySpan<string> strings)
+        {
+            StringBuilder bld = new StringBuilder();
+
+            // Stitching back together is a little tricky. Assume we want to build a full multi-part name
+            //  with all parts except trimming separators for leading empty names (null or empty strings,
+            //  but not whitespace). Separators in the middle should be added, even if the name part is 
+            //  null/empty, to maintain proper location of the parts.
+            for (int i = 0; i < strings.Length; i++)
+            {
+                if (0 < bld.Length)
+                {
+                    bld.Append('.');
+                }
+                if (null != strings[i] && 0 != strings[i].Length)
+                {
+                    ADP.AppendQuotedString(bld, "[", "]", strings[i]);
+                }
+            }
+
+            return bld.ToString();
         }
 
         // returns set option text to turn on format only and key info on and off
@@ -6272,7 +6478,7 @@ namespace Microsoft.Data.SqlClient
         public SqlCommand Clone()
         {
             SqlCommand clone = new SqlCommand(this);
-            SqlClientEventSource.Log.TryTraceEvent("SqlCommand.Clone | API | Object Id {0}, Clone Object Id {1}, Client Connection Id {2}, SPID {3}", ObjectID, clone.ObjectID, Connection?.ClientConnectionId, Connection?.ServerProcessId);
+            SqlClientEventSource.Log.TryTraceEvent("SqlCommand.Clone | API | Object Id {0}, Clone Object Id {1}, Client Connection Id {2}", ObjectID, clone.ObjectID, Connection?.ClientConnectionId);
             return clone;
         }
 

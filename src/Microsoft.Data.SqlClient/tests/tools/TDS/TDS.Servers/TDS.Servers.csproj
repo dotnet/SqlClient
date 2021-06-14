@@ -5,7 +5,7 @@
     <ProjectGuid>{978063D3-FBB5-4E10-8C45-67C90BE1B931}</ProjectGuid>
     <ClsCompliant>false</ClsCompliant>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <Configurations>Debug;Release;net46-Release;net46-Debug;netcoreapp2.1-Debug;netcoreapp2.1-Release;netcoreapp3.1-Debug;netcoreapp3.1-Release</Configurations>
+    <Configurations>Debug;Release;net461-Release;net461-Debug;netcoreapp2.1-Debug;netcoreapp2.1-Release;netcoreapp3.1-Debug;netcoreapp3.1-Release</Configurations>
     <Platforms>AnyCPU;x86;x64</Platforms>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AssemblyName)</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration).$(Platform)\$(AssemblyName)</OutputPath>
@@ -25,6 +25,8 @@
     <Compile Include="RoutingTDSServerArguments.cs" />
     <Compile Include="ServerNameFilterType.cs" />
     <Compile Include="TDSServerArguments.cs" />
+    <Compile Include="TransientFaultTDSServer.cs" />
+    <Compile Include="TransientFaultTDSServerArguments.cs" />
     <None Include="TdsServerCertificate.pfx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

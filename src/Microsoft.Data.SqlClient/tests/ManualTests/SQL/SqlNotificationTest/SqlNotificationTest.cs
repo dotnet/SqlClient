@@ -8,7 +8,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-    public class SqlNotificationTest : IDisposable
+    public sealed class SqlNotificationTest : IDisposable
     {
         // Misc constants
         private const int CALLBACK_TIMEOUT = 5000; // milliseconds
@@ -146,8 +146,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             try
             {
                 // create a new event every time to avoid mixing notification callbacks
-                ManualResetEvent notificationReceived = new ManualResetEvent(false);
-                ManualResetEvent updateCompleted = new ManualResetEvent(false);
+                ManualResetEventSlim notificationReceived = new ManualResetEventSlim(false);
+                ManualResetEventSlim updateCompleted = new ManualResetEventSlim(false);
 
                 using (SqlConnection conn = new SqlConnection(_execConnectionString))
                 using (SqlCommand cmd = new SqlCommand("SELECT a, b, c FROM " + _tableName, conn))
@@ -157,7 +157,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     SqlDependency dep = new SqlDependency(cmd);
                     dep.OnChange += delegate (object o, SqlNotificationEventArgs arg)
                     {
-                        Assert.True(updateCompleted.WaitOne(CALLBACK_TIMEOUT, false), "Received notification, but update did not complete.");
+                        Assert.True(updateCompleted.Wait(CALLBACK_TIMEOUT), "Received notification, but update did not complete.");
 
                         DataTestUtility.AssertEqualsWithDescription(SqlNotificationType.Change, arg.Type, "Unexpected Type value.");
                         DataTestUtility.AssertEqualsWithDescription(SqlNotificationInfo.Update, arg.Info, "Unexpected Info value.");
@@ -174,7 +174,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 updateCompleted.Set();
 
-                Assert.True(notificationReceived.WaitOne(CALLBACK_TIMEOUT, false), "Notification not received within the timeout period");
+                Assert.True(notificationReceived.Wait(CALLBACK_TIMEOUT), "Notification not received within the timeout period");
             }
             finally
             {
@@ -190,8 +190,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             try
             {
                 // create a new event every time to avoid mixing notification callbacks
-                ManualResetEvent notificationReceived = new ManualResetEvent(false);
-                ManualResetEvent updateCompleted = new ManualResetEvent(false);
+                ManualResetEventSlim notificationReceived = new ManualResetEventSlim(false);
+                ManualResetEventSlim updateCompleted = new ManualResetEventSlim(false);
 
                 using (SqlConnection conn = new SqlConnection(_execConnectionString))
                 using (SqlCommand cmd = new SqlCommand("SELECT a, b, c FROM " + _tableName, conn))
@@ -201,7 +201,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     SqlDependency dep = new SqlDependency(cmd, "service=" + _serviceName + ";local database=msdb", 0);
                     dep.OnChange += delegate (object o, SqlNotificationEventArgs args)
                     {
-                        Assert.True(updateCompleted.WaitOne(CALLBACK_TIMEOUT, false), "Received notification, but update did not complete.");
+                        Assert.True(updateCompleted.Wait(CALLBACK_TIMEOUT), "Received notification, but update did not complete.");
 
                         Console.WriteLine("7 Notification callback. Type={0}, Info={1}, Source={2}", args.Type, args.Info, args.Source);
                         notificationReceived.Set();
@@ -215,7 +215,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 updateCompleted.Set();
 
-                Assert.False(notificationReceived.WaitOne(CALLBACK_TIMEOUT, false), "Notification should not be received.");
+                Assert.False(notificationReceived.Wait(CALLBACK_TIMEOUT), "Notification should not be received.");
             }
             finally
             {
@@ -241,7 +241,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 const int maxTimeoutEventInterval = testTimeSeconds + SqlDependencyTimerResolution + 1;
 
                 // create a new event every time to avoid mixing notification callbacks
-                ManualResetEvent notificationReceived = new ManualResetEvent(false);
+                ManualResetEventSlim notificationReceived = new ManualResetEventSlim(false);
                 DateTime startUtcTime;
 
                 using (SqlConnection conn = new SqlConnection(_execConnectionString))
@@ -272,7 +272,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
 
                 Assert.True(
-                    notificationReceived.WaitOne(TimeSpan.FromSeconds(maxTimeoutEventInterval), false),
+                    notificationReceived.Wait(TimeSpan.FromSeconds(maxTimeoutEventInterval)),
                     string.Format("Notification not received within the maximum timeout period of {0} seconds", maxTimeoutEventInterval));
 
                 // notification received in time, check that it is not too early

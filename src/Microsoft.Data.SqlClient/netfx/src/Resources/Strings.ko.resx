@@ -2502,7 +2502,7 @@
   <data name="SQL_DeviceFlowWithUsernamePassword" xml:space="preserve">
     <value>'Authentication=Active Directory Device Code Flow'를 'User ID', 'UID', 'Password' 또는 'PWD' 연결 문자열 키워드와 함께 사용할 수 없습니다.</value>
   </data>
-  <data name="SQL_ManagedIdentityWithPassword" xml:space="preserve">
+  <data name="SQL_NonInteractiveWithPassword" xml:space="preserve">
     <value>'Authentication={0}'을(를) 'Password' 또는 'PWD' 연결 문자열 키워드와 함께 사용할 수 없습니다.</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
@@ -4345,16 +4345,16 @@
     <value>사용 중인 {0} 인스턴스에서 열 암호화를 지원하지 않습니다.</value>
   </data>
   <data name="TCE_EnclaveComputationsNotSupported" xml:space="preserve">
-    <value>연결 문자열에 enclave 증명 URL 및 증명 프로토콜을 지정했지만 사용 중인 SQL Server 인스턴스가 enclave 기반 계산을 지원하지 않습니다.</value>
+    <value>연결 문자열에 enclave 증명 URL 및 증명 프로토콜을 지정했지만 사용 중인 SQL Server가 enclave 기반 계산을 지원하지 않습니다. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2157649를 참조 하세요.</value>
   </data>
   <data name="TCE_AttestationURLNotSupported" xml:space="preserve">
-    <value>연결 문자열에 enclave 증명 URL을 지정했지만 사용 중인 SQL Server 인스턴스가 enclave 기반 계산을 지원하지 않습니다.</value>
+    <value>연결 문자열에 enclave 증명 URL을 지정했지만 사용 중인 SQL Server가 enclave 기반 계산을 지원하지 않습니다. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2157649를 참조 하세요.</value>
   </data>
   <data name="TCE_AttestationProtocolNotSupported" xml:space="preserve">
-    <value>연결 문자열에 증명 프로토콜을 지정했지만 사용 중인 SQL Server 인스턴스가 enclave 기반 계산을 지원하지 않습니다.</value>
+    <value>연결 문자열에 증명 프로토콜을 지정했지만 사용 중인 SQL Server가 enclave 기반 계산을 지원하지 않습니다. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2157649를 참조 하세요.</value>
   </data>
   <data name="TCE_EnclaveTypeNotReturned" xml:space="preserve">
-    <value>연결 문자열에 enclave 증명 URL을 지정했지만 SQL Server 인스턴스는 enclave 형식을 반환하지 않았습니다. enclave 형식이 인스턴스에 올바르게 구성되어 있는지 확인하세요.</value>
+    <value>연결 문자열에 enclave 증명 URL을 지정했지만 SQL Server는 enclave 형식을 반환하지 않았습니다. enclave 형식이 인스턴스에 올바르게 구성되어 있는지 확인하세요. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2157649를 확인 하세요.</value>
   </data>
   <data name="TCE_BatchedUpdateColumnEncryptionSettingMismatch" xml:space="preserve">
     <value>일괄 업데이트를 수행할 때 {0}이(가) 모든 명령({1}, {2}, {3}, {4})에서 동일해야 합니다.</value>
@@ -4459,7 +4459,7 @@
     <value>실행 제한 시간을 초과했습니다. 작업이 완료되기 전에 실행 제한 시간이 지났거나 서버가 응답하지 않습니다.</value>
   </data>
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
-    <value>증명 토큰의 유효성을 검사하지 못했습니다. 토큰 서명이 '{0}'의 증명 공개 키 엔드포인트에서 검색된 공개 키를 사용하여 계산된 서명과 일치하지 않습니다. 엔드포인트에 대한 DNS 매핑을 확인하세요. 올바른 경우 고객 지원 서비스에 문의하세요.</value>
+    <value>증명 토큰의 유효성을 검사하지 못했습니다. 토큰 서명이 '{0}'의 증명 공개 키 엔드포인트에서 검색된 공개 키를 사용하여 계산된 서명과 일치하지 않습니다. 엔드포인트에 대한 DNS 매핑을 확인하세요. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2157649 을 확인 하세요. 올바른 경우 고객 지원 서비스에 문의하세요.</value>
   </data>
   <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
     <value>초기 요청이 실패한 후 HGS 루트 인증서 다운로드를 다시 시도하는 동안 내부 오류가 발생했습니다. 고객 지원 서비스에 문의하세요.</value>
@@ -4480,10 +4480,10 @@
     <value>증명 토큰의 유효성을 검사하지 못했습니다. 토큰의 형식이 유효하지 않습니다. 고객 지원 서비스에 문의하세요. 오류 세부 정보: '{0}'.</value>
   </data>
   <data name="GetAttestationSigningCertificateFailedInvalidCertificate" xml:space="preserve">
-    <value>증명 서비스가 증명 URL '{0}'에 대해 만료된 HGS 루트 인증서를 반환했습니다. HGS 인스턴스에 대해 구성된 HGS 루트 인증서를 확인하세요.</value>
+    <value>증명 서비스가 증명 URL '{0}'에 대해 만료된 HGS 루트 인증서를 반환했습니다. HGS 인스턴스에 대해 구성된 HGS 루트 인증서를 확인하세요. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2160553 을 확인 하세요.</value>
   </data>
   <data name="GetAttestationSigningCertificateRequestFailedFormat" xml:space="preserve">
-    <value>증명 URL '{0}'에 대해 가져온 HGS 루트 인증서의 형식이 유효하지 않습니다. 증명 URL이 올바르며 HGS 서버가 온라인 상태이고 완전히 초기화되었는지 확인하세요. 자세한 내용은 고객 지원 서비스 팀에 문의하세요. 오류 세부 정보: '{1}'.</value>
+    <value>증명 URL '{0}'에 대해 가져온 HGS 루트 인증서의 형식이 유효하지 않습니다. 증명 URL이 올바르며 HGS 서버가 온라인 상태이고 완전히 초기화되었는지 확인하세요. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2160553 을 확인 하세요. 추가 지원은 고객 지원 서비스 팀에 문의하세요. 오류 세부 정보: '{1}'.</value>
   </data>
   <data name="GetAttestationTokenSigningKeysFailed" xml:space="preserve">
     <value>증명 토큰의 유효성을 검사하지 못했습니다. 증명 공개 키 엔드포인트에서 공개 키를 검색할 수 없거나, 검색된 키의 형식이 유효하지 않습니다. 오류 세부 정보: '{0}'.</value>
@@ -4501,28 +4501,31 @@
     <value>서명 유효성 검사 도중 증명 토큰의 유효성을 검사하지 못했습니다. 예외: '{0}'.</value>
   </data>
   <data name="InvalidClaimInAttestationToken" xml:space="preserve">
-    <value>증명 토큰의 유효성을 검사하지 못했습니다. 토큰의 클레임 '{0}'에 유효하지 않은 값 '{1}'이(가) 있습니다. 증명 정책을 확인하세요. 정책이 올바르면 고객 지원 서비스에 문의하세요.</value>
+    <value>증명 토큰의 유효성을 검사하지 못했습니다. 토큰의 클레임 '{0}'의 '{1}'의 값이 유효하지 않습니다. 증명 정책을 확인하세요. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2157649 을 확인 하세요. 정책이 올바르면 고객 지원 서비스에 문의하세요.</value>
   </data>
   <data name="MissingClaimInAttestationToken" xml:space="preserve">
-    <value>증명 토큰의 유효성을 검사하지 못했습니다. 클레임 '{0}'이(가) 토큰에 없습니다. 증명 정책을 확인하세요. 정책이 올바르면 고객 지원 서비스에 문의하세요.</value>
+    <value>증명 토큰의 유효성을 검사하지 못했습니다. 클레임 '{0}'이(가) 토큰에 없습니다. 증명 정책을 확인하세요. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2157649 을 확인 하세요. 정책이 올바르면 고객 지원 서비스에 문의하세요.</value>
   </data>
   <data name="VerifyEnclaveDebuggable" xml:space="preserve">
     <value>enclave가 프로덕션 모드에서 실행되고 있는지 확인하지 못했습니다. 고객 지원 서비스에 문의하세요.</value>
   </data>
   <data name="VerifyEnclavePolicyFailedFormat" xml:space="preserve">
-    <value>속성 '{0}'의 예상 값과 실제 값 간의 차이로 인해 enclave 정책을 확인할 수 없습니다. 실제: '{1}', 예상: '{2}'.</value>
+    <value>속성 '{0}'의 예상 값과 실제 값 간의 차이로 인해 enclave 정책을 확인할 수 없습니다. 실제: '{1}', 예상: '{2}'. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2160553 을 확인 하세요.</value>
   </data>
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
-    <value>enclave 보고서의 서명을 확인하지 못했습니다. 보고서 서명이 HGS 루트 인증서를 사용하여 계산된 서명과 일치하지 않습니다. 엔드포인트에 대한 DNS 매핑을 확인하세요. 올바른 경우 고객 지원 서비스에 문의하세요.</value>
+    <value>enclave 보고서의 서명을 확인하지 못했습니다. 보고서 서명이 HGS 루트 인증서를 사용하여 계산된 서명과 일치하지 않습니다. 엔드포인트에 대한 DNS 매핑을 확인하세요. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2160553을 확인 하세요. 올바른 경우 고객 지원 서비스에 문의하세요.</value>
   </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>SQL Server에서 수신된 enclave 보고서의 형식이 잘못되었습니다. 고객 지원 서비스에 문의하세요.</value>
   </data>
   <data name="VerifyHealthCertificateChainFormat" xml:space="preserve">
-    <value>상태가 '{1}' 인 증명 URL '{0}'에 대한 HGS 루트 인증서와 enclave 호스트의 상태 보고서 간에 신뢰 체인을 만들지 못했습니다. 증명 URL이 SQL Server 컴퓨터에 구성된 URL과 일치하는지 확인하세요. 클라이언트와 SQL Server 모두 동일한 증명 서비스를 사용하는 경우 고객 지원 서비스 팀에 문의하세요.</value>
+    <value>상태가 '{0}' 인 증명 URL '{1}'에 대한 HGS 루트 인증서와 enclave 호스트의 상태 보고서 간에 신뢰 체인을 만들지 못했습니다. 증명 URL이 SQL Server에 구성된 URL과 일치하는지 확인하세요. 자세한 내용은 https://go.microsoft.com/fwlink/?linkid=2160553을 확인 하세요. 클라이언트와 SQL Server 모두 동일한 증명 서비스를 사용하는 경우 고객 지원 서비스 팀에 문의하세요.</value>
   </data>
   <data name="TCE_DbConnectionString_AttestationProtocol" xml:space="preserve">
     <value>해당하는 enclave 증명 서비스에 대한 증명 프로토콜을 지정합니다.</value>
+  </data>
+  <data name="TCE_DbConnectionString_IPAddressPreference" xml:space="preserve">
+    <value>SQL 인스턴스에 연결할 때 IP 주소 기본 설정을 지정합니다.</value>
   </data>
   <data name="TCE_EnclaveTypeNotSupported" xml:space="preserve">
     <value>서버에서 반환된 enclave 형식 '{0}'은(는) 지원되지 않습니다.</value>
@@ -4575,31 +4578,40 @@
   <data name="SQL_SettingCredentialWithDeviceFlow" xml:space="preserve">
     <value>'Authentication=Active Directory Device Code Flow'가 연결 문자열에 지정된 경우 Credential 속성을 설정할 수 없습니다.</value>
   </data>
-  <data name="SQL_SettingCredentialWithManagedIdentity" xml:space="preserve">
+  <data name="SQL_SettingCredentialWithNonInteractive" xml:space="preserve">
     <value>'Authentication={0}'이(가) 연결 문자열에 지정된 경우 자격 증명 속성을 설정할 수 없습니다.</value>
   </data>
   <data name="SQL_SettingDeviceFlowWithCredential" xml:space="preserve">
     <value>Credential 속성이 설정된 경우 'Authentication=Active Directory Device Code Flow'를 사용할 수 없습니다.</value>
   </data>
-  <data name="SQL_SettingManagedIdentityWithCredential" xml:space="preserve">
+  <data name="SQL_SettingNonInteractiveWithCredential" xml:space="preserve">
     <value>자격 증명 속성이 설정된 경우 'Authentication={0}'을(를) 사용할 수 없습니다.</value>
   </data>
-  <data name="Azure_GenericErrorMessage" xml:space="preserve">
-    <value>액세스 토큰을 획득할 수 없습니다.</value>
+  <data name="SqlDependency_UnexpectedValueOnDeserialize" xml:space="preserve">
+    <value>역직렬화 시 예기치 않은 형식이 검색되었습니다.</value>
   </data>
-  <data name="Azure_IdentityEndpointNotListening" xml:space="preserve">
-    <value>관리 ID 엔드포인트에 연결할 수 없습니다. ID가 설정된 Azure 리소스에서 실행 중인지 확인하세요.</value>
+  <data name="SqlRetryLogic_InvalidRange" xml:space="preserve">
+    <value>'{0}' 값이 범위를 벗어났습니다. {1}과(와) {2} 사이여야 합니다.</value>
   </data>
-  <data name="Azure_ManagedIdentityUsed" xml:space="preserve">
-    <value>관리 ID를 사용하여 토큰을 가져오려 했습니다.</value>
+  <data name="SqlRetryLogic_RetryCanceled" xml:space="preserve">
+    <value>{0} 시도 시 다시 시도가 취소되었습니다.</value>
   </data>
-  <data name="Azure_MetadataEndpointNotListening" xml:space="preserve">
-    <value>IMDS(Instance Metadata Service)에 연결할 수 없습니다. 관리 ID 토큰 엔드포인트에 대한 요청을 건너뜁니다.</value>
+  <data name="SqlRetryLogic_RetryExceeded" xml:space="preserve">
+    <value>다시 시도 횟수가 최댓값인 {0}번 시도를 초과했습니다.</value>
   </data>
-  <data name="Azure_NonRetryableError" xml:space="preserve">
-    <value>다시 시도할 수 없는 오류가 발생했습니다.</value>
+  <data name="SqlRetryLogic_InvalidMinMaxPair" xml:space="preserve">
+    <value>'{0}'이(가) '{1}'보다 작지 않습니다. '{2}'은(는) '{3}'보다 클 수 없습니다.</value>
   </data>
-  <data name="Azure_RetryFailure" xml:space="preserve">
-    <value>5회 다시 시도한 후에 실패했습니다.</value>
+  <data name="Arg_ArrayPlusOffTooSmall" xml:space="preserve">
+    <value>대상 배열이 컬렉션의 모든 항목을 복사하기에 충분히 길지 않습니다. 배열 인덱스와 길이를 확인하세요.</value>
+  </data>
+  <data name="Arg_RankMultiDimNotSupported" xml:space="preserve">
+    <value>요청한 동작에 대해 1차원 배열만 지원됩니다.</value>
+  </data>
+  <data name="Arg_RemoveArgNotFound" xml:space="preserve">
+    <value>해당 항목은 지정된 컬렉션에 없으므로 제거할 수 없습니다.</value>
+  </data>
+  <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
+    <value>음수가 아닌 수가 필요합니다.</value>
   </data>
 </root>

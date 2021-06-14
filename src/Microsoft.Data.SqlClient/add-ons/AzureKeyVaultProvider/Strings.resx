@@ -123,9 +123,6 @@
   <data name="CipherTextLengthMismatch" xml:space="preserve">
     <value>CipherText length does not match the RSA key size.</value>
   </data>
-  <data name="NullOrWhitespaceArgument" xml:space="preserve">
-    <value>{0} cannot be null or empty or consist of only whitespace.</value>
-  </data>
   <data name="EmptyArgumentInternal" xml:space="preserve">
     <value>Internal error. Empty {0} specified.</value>
   </data>

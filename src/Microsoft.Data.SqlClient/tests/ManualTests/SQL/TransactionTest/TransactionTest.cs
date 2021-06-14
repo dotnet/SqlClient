@@ -10,6 +10,102 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class TransactionTest
     {
+        public static TheoryData<string> PoolEnabledConnectionStrings =>
+            new TheoryData<string>
+            {
+                new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+                {
+                    MultipleActiveResultSets = false,
+                    Pooling = true,
+                    MaxPoolSize = 1
+                }.ConnectionString
+                , new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+                {
+                    Pooling = true,
+                    MultipleActiveResultSets = true
+                }.ConnectionString
+            };
+
+        public static TheoryData<string> PoolDisabledConnectionStrings =>
+            new TheoryData<string>
+            {
+                new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+                {
+                    Pooling = false,
+                    MultipleActiveResultSets = false
+                }.ConnectionString
+                , new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+                {
+                    Pooling = false,
+                    MultipleActiveResultSets = true
+                }.ConnectionString
+            };
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(PoolEnabledConnectionStrings))]
+        public static void ReadNextQueryAfterTxAbortedPoolEnabled(string connString)
+            => ReadNextQueryAfterTxAbortedTest(connString);
+
+        // Azure SQL has no DTC support
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [MemberData(nameof(PoolDisabledConnectionStrings))]
+        public static void ReadNextQueryAfterTxAbortedPoolDisabled(string connString)
+            => ReadNextQueryAfterTxAbortedTest(connString);
+
+        private static void ReadNextQueryAfterTxAbortedTest(string connString)
+        {
+            using (System.Transactions.TransactionScope scope = new System.Transactions.TransactionScope())
+            {
+                using (SqlConnection sqlConnection = new SqlConnection(connString))
+                {
+                    SqlCommand cmd = new SqlCommand("SELECT 1", sqlConnection);
+                    sqlConnection.Open();
+                    var reader = cmd.ExecuteReader();
+                    // Disposing Transaction Scope before completing read triggers GitHub issue #980 use-case that leads to wrong data in future rounds.
+                    scope.Dispose();
+                }
+
+                using (SqlConnection sqlConnection = new SqlConnection(connString))
+                using (SqlCommand cmd = new SqlCommand("SELECT 2", sqlConnection))
+                {
+                    sqlConnection.Open();
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        bool result = reader.Read();
+                        Assert.True(result);
+                        Assert.Equal(2, reader.GetValue(0));
+                    }
+                }
+
+                using (SqlConnection sqlConnection = new SqlConnection(connString))
+                using (SqlCommand cmd = new SqlCommand("SELECT 3", sqlConnection))
+                {
+                    sqlConnection.Open();
+                    using (SqlDataReader reader = cmd.ExecuteReaderAsync().Result)
+                    {
+                        bool result = reader.ReadAsync().Result;
+                        Assert.True(result);
+                        Assert.Equal(3, reader.GetValue(0));
+                    }
+                }
+
+                if (DataTestUtility.IsNotAzureSynapse())
+                {
+                    using (SqlConnection sqlConnection = new SqlConnection(connString))
+                    using (SqlCommand cmd = new SqlCommand("SELECT TOP(1) 4 Clm0 FROM sysobjects FOR XML AUTO", sqlConnection))
+                    {
+                        sqlConnection.Open();
+                        using (System.Xml.XmlReader reader = cmd.ExecuteXmlReader())
+                        {
+                            bool result = reader.Read();
+                            Assert.True(result);
+                            Assert.Equal("4", reader[0]);
+                        }
+                    }
+                }
+            }
+        }
+
         // Synapse: Enforced unique constraints are not supported. To create an unenforced unique constraint you must include the NOT ENFORCED syntax as part of your statement.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void TestMain()
@@ -246,12 +342,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                     DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() =>
                     {
-                        SqlConnection con1 = new SqlConnection(_connectionString);
-                        con1.Open();
+                        using (SqlConnection con1 = new SqlConnection(_connectionString))
+                        {
+                            con1.Open();
 
-                        SqlCommand command = new SqlCommand("sql", con1);
-                        command.Transaction = tx;
-                        command.ExecuteNonQuery();
+                            SqlCommand command = new SqlCommand("sql", con1);
+                            command.Transaction = tx;
+                            command.ExecuteNonQuery();
+                        }
                     }, transactionConflictErrorMessage);
 
                     DataTestUtility.AssertThrowsWrapper<InvalidOperationException>(() =>

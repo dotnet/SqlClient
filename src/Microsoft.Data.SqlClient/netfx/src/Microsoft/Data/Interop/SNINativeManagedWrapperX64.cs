@@ -101,6 +101,7 @@ namespace Microsoft.Data.SqlClient
             [In] SNIHandle pConn,
             out IntPtr ppConn,
             [MarshalAs(UnmanagedType.Bool)] bool fSync,
+            SqlConnectionIPAddressPreference ipPreference,
             [In] ref SNI_DNSCache_Info pDNSCachedInfo);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
@@ -133,11 +134,5 @@ namespace Microsoft.Data.SqlClient
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr SNIClientCertificateFallbackWrapper(IntPtr pCallbackContext);
-        
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern bool RegisterTraceProviderWrapper(int eventKeyword);
-        
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void UnregisterTraceProviderWrapper();
     }
 }

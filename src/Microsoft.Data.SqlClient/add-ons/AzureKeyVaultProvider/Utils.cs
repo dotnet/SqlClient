@@ -21,14 +21,6 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             }
         }
 
-        internal static void ValidateNotNullOrWhitespace(string parameter, string name)
-        {
-            if (string.IsNullOrWhiteSpace(parameter))
-            {
-                throw ADP.NullOrWhitespaceArgument(name);
-            }
-        }
-
         internal static void ValidateNotEmpty(IList parameter, string name)
         {
             if (parameter.Count == 0)
@@ -81,9 +73,6 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
     {
         internal static ArgumentNullException NullArgument(string name) =>
             new ArgumentNullException(name);
-
-        internal static ArgumentException NullOrWhitespaceArgument(string name) =>
-            new ArgumentException(string.Format(Strings.NullOrWhitespaceArgument, name));
 
         internal static ArgumentException EmptyArgument(string name) =>
             new ArgumentException(string.Format(Strings.EmptyArgumentInternal, name));

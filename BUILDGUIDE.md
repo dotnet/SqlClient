@@ -27,6 +27,7 @@ Once the environment is setup properly, execute the desired set of commands belo
 ```bash
  msbuild /p:Platform=Win32
 # Builds the .NET Framework  (NetFx) driver for Win32 (x86) platform on Windows.
+
 ```
 
 ```bash
@@ -63,6 +64,7 @@ Once the environment is setup properly, execute the desired set of commands belo
 ## Building Tests
 
 ```bash
+
  msbuild /t:BuildTestsNetCore
 # Build the tests for the .NET Core driver. Default .NET Core version is 2.1.
 ```
@@ -93,6 +95,7 @@ Unix (`netcoreapp`):
 ```bash
  dotnet test "src/Microsoft.Data.SqlClient/tests/FunctionalTests/Microsoft.Data.SqlClient.Tests.csproj" /p:Platform="AnyCPU" /p:Configuration="Release" /p:TestTargetOS="Unixnetcoreapp" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonlinuxtests&category!=nonuaptests"
 ```
+
 
 ## Run Manual Tests
 
@@ -201,27 +204,30 @@ Tests can be built and run with custom Target Frameworks. See the below examples
 ### Building Tests:
 
 ```bash
+
  msbuild /t:BuildTestsNetFx /p:TargetNetFxVersion=net461
 # Build the tests for custom TargetFramework (.NET Framework)
-# Applicable values: net46 (Default) | net461 | net462 | net47 | net471  net472 | net48
+# Applicable values: net461 (Default) | net462 | net47 | net471  net472 | net48
 ```
 
 ```bash
  msbuild /t:BuildTestsNetCore /p:TargetNetCoreVersion=netcoreapp3.1
 # Build the tests for custom TargetFramework (.NET Core)
-# Applicable values: netcoreapp2.1 | netcoreapp2.2 | netcoreapp3.1 | netcoreapp5.0
+# Applicable values: netcoreapp2.1 | netcoreapp2.2 | netcoreapp3.1 | net5.0
 ```
 
 ### Running Tests:
 
 ```bash
+
  dotnet test /p:TargetNetFxVersion=net461 ...
+
 # Use above property to run Functional Tests with custom TargetFramework (.NET Framework)
-# Applicable values: net46 (Default) | net461 | net462 | net47 | net471  net472 | net48
+# Applicable values: net461 (Default) | net462 | net47 | net471  net472 | net48
 
  dotnet test /p:TargetNetCoreVersion=netcoreapp3.1 ...
 # Use above property to run Functional Tests with custom TargetFramework (.NET Core)
-# Applicable values: netcoreapp2.1 | netcoreapp2.2 | netcoreapp3.1 | netcoreapp5.0
+# Applicable values: netcoreapp2.1 | netcoreapp2.2 | netcoreapp3.1 | net5.0
 ```
 
 ## Using Managed SNI on Windows
@@ -235,6 +241,18 @@ Managed SNI can be enabled on Windows by enabling the below AppContext switch:
 Scaled decimal parameter truncation can be enabled by enabling the below AppContext switch:
 
 **"Switch.Microsoft.Data.SqlClient.TruncateScaledDecimal"**
+
+## Enabling configurable retry logic
+
+To use this feature, you must enable the following AppContext switch at application startup:
+
+**"Switch.Microsoft.Data.SqlClient.EnableRetryLogic"**
+
+## Enabling row version null behavior
+
+`SqlDataReader` returns a `DBNull` value instead of an empty `byte[]`. To enable the legacy behavior, you must enable the following AppContext switch on application startup:
+
+**"Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehavior"**
 
 ## Debugging SqlClient on Linux from Windows
 

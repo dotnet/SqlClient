@@ -44,6 +44,7 @@ namespace CustomAuthenticationProviderExamples
     {
         public static void Main()
         {
+            // Register our custom authentication provider class to override Active Directory Device Code Flow
             SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, new CustomDeviceCodeFlowAzureAuthenticationProvider());
             using (SqlConnection sqlConnection = new SqlConnection("Server=<myserver>.database.windows.net;Authentication=Active Directory Device Code Flow;Database=<db>;"))
             {

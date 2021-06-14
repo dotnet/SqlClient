@@ -326,7 +326,7 @@ namespace Microsoft.Data.SqlClient
             SQLDNSInfo cachedDNSInfo;
             bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(_parser.FQDNforDNSCahce, out cachedDNSInfo);
 
-            _sessionHandle = new SNIHandle(myInfo, physicalConnection, cachedDNSInfo);
+            _sessionHandle = new SNIHandle(myInfo, physicalConnection, _parser.Connection.ConnectionOptions.IPAddressPreference, cachedDNSInfo);
             if (_sessionHandle.Status != TdsEnums.SNI_SUCCESS)
             {
                 AddError(parser.ProcessSNIError(this));
@@ -852,7 +852,8 @@ namespace Microsoft.Data.SqlClient
             return myInfo;
         }
 
-        internal void CreatePhysicalSNIHandle(string serverName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, byte[] spnBuffer, bool flushCache, bool async, bool fParallel, TransparentNetworkResolutionState transparentNetworkResolutionState, int totalTimeout, string cachedFQDN)
+        internal void CreatePhysicalSNIHandle(string serverName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, byte[] spnBuffer, bool flushCache, 
+                bool async, bool fParallel, TransparentNetworkResolutionState transparentNetworkResolutionState, int totalTimeout, SqlConnectionIPAddressPreference ipPreference, string cachedFQDN)
         {
             SNINativeMethodWrapper.ConsumerInfo myInfo = CreateConsumerInfo(async);
 
@@ -880,7 +881,8 @@ namespace Microsoft.Data.SqlClient
             SQLDNSInfo cachedDNSInfo;
             bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out cachedDNSInfo);
 
-            _sessionHandle = new SNIHandle(myInfo, serverName, spnBuffer, ignoreSniOpenTimeout, checked((int)timeout), out instanceName, flushCache, !async, fParallel, transparentNetworkResolutionState, totalTimeout, cachedDNSInfo);
+            _sessionHandle = new SNIHandle(myInfo, serverName, spnBuffer, ignoreSniOpenTimeout, checked((int)timeout), 
+                    out instanceName, flushCache, !async, fParallel, transparentNetworkResolutionState, totalTimeout, ipPreference, cachedDNSInfo);
         }
 
         internal bool Deactivate()
@@ -2546,6 +2548,7 @@ namespace Microsoft.Data.SqlClient
                 // the identity source. The identity value is used to correlate timer callback events to the currently
                 // running timeout and prevents a late timer callback affecting a result it does not relate to
                 int previousTimeoutState = Interlocked.CompareExchange(ref _timeoutState, TimeoutState.Running, TimeoutState.Stopped);
+                Debug.Assert(previousTimeoutState == TimeoutState.Stopped, "previous timeout state was not Stopped");
                 if (previousTimeoutState == TimeoutState.Stopped)
                 {
                     Debug.Assert(_timeoutIdentityValue == 0, "timer was previously stopped without resetting the _identityValue");
@@ -2565,8 +2568,6 @@ namespace Microsoft.Data.SqlClient
                 //  0 == Already timed out (NOTE: To simulate the same behavior as sync we will only timeout on 0 if we receive an IO Pending from SNI)
                 // >0 == Actual timeout remaining
                 int msecsRemaining = GetTimeoutRemaining();
-
-                Debug.Assert(previousTimeoutState == TimeoutState.Stopped, "previous timeout state was not Stopped");
                 if (msecsRemaining > 0)
                 {
                     ChangeNetworkPacketTimeout(msecsRemaining, Timeout.Infinite);
@@ -2983,7 +2984,7 @@ namespace Microsoft.Data.SqlClient
 
                 // try to change to the stopped state but only do so if currently in the running state
                 // and use cmpexch so that all changes out of the running state are atomic
-                int previousState = Interlocked.CompareExchange(ref _timeoutState, TimeoutState.Running, TimeoutState.Stopped);
+                int previousState = Interlocked.CompareExchange(ref _timeoutState, TimeoutState.Stopped, TimeoutState.Running);
 
                 // if the state is anything other than running then this query has reached an end so
                 // set the correlation _timeoutIdentityValue to 0 to prevent late callbacks executing
@@ -3360,11 +3361,12 @@ namespace Microsoft.Data.SqlClient
         }
 
         // This is in its own method to avoid always allocating the lambda in WriteByteArray
-        private void WriteByteArraySetupContinuation(Byte[] b, int len, TaskCompletionSource<object> completion, int offset, Task packetTask)
+        private void WriteByteArraySetupContinuation(byte[] b, int len, TaskCompletionSource<object> completion, int offset, Task packetTask)
         {
             AsyncHelper.ContinueTask(packetTask, completion,
                 () => WriteByteArray(b, len: len, offsetBuffer: offset, canAccumulate: false, completion: completion),
-                connectionToDoom: _parser.Connection);
+                connectionToDoom: _parser.Connection
+            );
         }
 
         // Dumps contents of buffer to SNI for network write.

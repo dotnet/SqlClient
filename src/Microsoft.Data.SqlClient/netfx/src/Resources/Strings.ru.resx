@@ -2502,7 +2502,7 @@
   <data name="SQL_DeviceFlowWithUsernamePassword" xml:space="preserve">
     <value>Невозможно использовать "Authentication=Active Directory Device Code Flow" с ключевыми словами строки подключения "User ID", "UID", "Password" или "PWD".</value>
   </data>
-  <data name="SQL_ManagedIdentityWithPassword" xml:space="preserve">
+  <data name="SQL_NonInteractiveWithPassword" xml:space="preserve">
     <value>Невозможно использовать "Authentication={0}" с ключевыми словами Password или PWD в строке подключения.</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
@@ -4345,16 +4345,16 @@
     <value>Используемый экземпляр {0} не поддерживает шифрование столбцов.</value>
   </data>
   <data name="TCE_EnclaveComputationsNotSupported" xml:space="preserve">
-    <value>Вы указали в строке подключения URL-адрес и протокол аттестации анклава, но используемый экземпляр SQL Server не поддерживает вычисления на основе анклава.</value>
+    <value>Вы указали в строке подключения URL-адрес и протокол аттестации анклава, но используемый SQL Server не поддерживает вычисления на основе анклава — см. https://go.microsoft.com/fwlink/?linkid=2157649 для получения дополнительных сведений.</value>
   </data>
   <data name="TCE_AttestationURLNotSupported" xml:space="preserve">
-    <value>В строке подключения указан URL-адрес аттестации анклава, но используемый экземпляр SQL Server не поддерживает вычисления на основе анклава.</value>
+    <value>Вы указали URL-адрес аттестации анклава в строке подключения, но используемый SQL Server не поддерживает вычисления на основе анклава — см. https://go.microsoft.com/fwlink/?linkid=2157649 для получения дополнительных сведений.</value>
   </data>
   <data name="TCE_AttestationProtocolNotSupported" xml:space="preserve">
-    <value>Вы указали в строке подключения протокол аттестации, но используемый экземпляр SQL Server не поддерживает вычисления на основе анклава.</value>
+    <value>Вы указали в строке подключения протокол аттестации, но используемый SQL Server не поддерживает вычисления на основе анклава — см. https://go.microsoft.com/fwlink/?linkid=2157649 для получения дополнительных сведений.</value>
   </data>
   <data name="TCE_EnclaveTypeNotReturned" xml:space="preserve">
-    <value>В строке подключения указан URL-адрес аттестации анклава, но экземпляр SQL Server не вернул тип анклава. Убедитесь, что тип анклава правильно настроен в вашем экземпляре.</value>
+    <value>В строке подключения указан URL-адрес аттестации анклава, но SQL Server не вернул тип анклава. Убедитесь, что тип анклава правильно настроен в вашем экземпляре — см. https://go.microsoft.com/fwlink/?linkid=2157649 для получения дополнительных сведений.</value>
   </data>
   <data name="TCE_BatchedUpdateColumnEncryptionSettingMismatch" xml:space="preserve">
     <value>Параметр {0} должен быть одинаковым для всех команд ({1}, {2}, {3}, {4}) при выполнении пакетных обновлений.</value>
@@ -4459,7 +4459,7 @@
     <value>Время ожидания выполнения истекло. Время ожидания истекло до завершения операции, или сервер не отвечает.</value>
   </data>
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
-    <value>Проверка токена аттестации не пройдена. Подпись токена не соответствует подписи, вычисленной на базе открытого ключа, полученного от конечной точки открытых ключей аттестации по адресу "{0}". Проверьте сопоставление DNS для конечной точки. Если оно верно, обратитесь в службу поддержки пользователей.</value>
+    <value>Проверка токена аттестации не пройдена. Подпись токена не соответствует подписи, вычисленной на базе открытого ключа, полученного от конечной точки открытых ключей аттестации по адресу "{0}". Проверьте сопоставление DNS для конечной точки — см. https://go.microsoft.com/fwlink/?linkid=2157649 для получения дополнительных сведений. Если оно верно, обратитесь в службу поддержки пользователей.</value>
   </data>
   <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
     <value>Произошла внутренняя ошибка при повторной попытке скачивания корневого сертификата HGS после сбоя начального запроса. Обратитесь в службу поддержки пользователей.</value>
@@ -4480,10 +4480,10 @@
     <value>Проверка токена аттестации не пройдена. Недопустимый формат токена. Обратитесь в службу поддержки пользователей. Сведения об ошибке: "{0}".</value>
   </data>
   <data name="GetAttestationSigningCertificateFailedInvalidCertificate" xml:space="preserve">
-    <value>Служба аттестации вернула просроченный корневой сертификат HGS для URL-адреса аттестации "{0}". Проверьте корневой сертификат HGS, настроенный для вашего экземпляра HGS.</value>
+    <value>Служба аттестации вернула просроченный корневой сертификат HGS для URL-адреса аттестации "{0}". Проверьте корневой сертификат HGS, настроенный для вашего экземпляра HGS — см. https://go.microsoft.com/fwlink/?linkid=2160553 для получения дополнительных сведений.</value>
   </data>
   <data name="GetAttestationSigningCertificateRequestFailedFormat" xml:space="preserve">
-    <value>Полученный корневой сертификат HGS для URL-адреса аттестации "{0}" имеет недопустимый формат. Проверьте правильность URL-адреса аттестации и убедитесь, что сервер HGS подключен к сети и полностью инициализирован. За дополнительными сведениями обратитесь в службу поддержки пользователей. Сведения об ошибке: "{1}".</value>
+    <value>Полученный корневой сертификат HGS для URL-адреса аттестации "{0}" имеет недопустимый формат. Проверьте правильность URL-адреса аттестации и убедитесь, что сервер HGS подключен к сети и полностью инициализирован — см. https://go.microsoft.com/fwlink/?linkid=2160553 для получения дополнительных сведений. Для получения дополнительной поддержки обратитесь в службу поддержки пользователей. Сведения об ошибке: "{1}".</value>
   </data>
   <data name="GetAttestationTokenSigningKeysFailed" xml:space="preserve">
     <value>Проверка токена аттестации не пройдена. Не удается получить открытый ключ из конечной точки открытого ключа аттестации либо полученный ключ имеет недопустимый формат. Сведения об ошибке: "{0}".</value>
@@ -4501,28 +4501,31 @@
     <value>Проверка токена аттестации не пройдена при проверке подписи. Исключение: "{0}".</value>
   </data>
   <data name="InvalidClaimInAttestationToken" xml:space="preserve">
-    <value>Проверка токена аттестации не пройдена. Недопустимое значение "{1}" утверждения "{0}" в токене. Проверьте политику аттестации. Если политика верна, обратитесь в службу поддержки пользователей.</value>
+    <value>Проверка токена аттестации не пройдена. Утверждение "{0}" в токене имеет недопустимое значение "{1}". Проверьте политику аттестации — см. https://go.microsoft.com/fwlink/?linkid=2157649 для получения дополнительных сведений. Если политика верна, обратитесь в службу поддержки пользователей.</value>
   </data>
   <data name="MissingClaimInAttestationToken" xml:space="preserve">
-    <value>Проверка токена аттестации не пройдена. В токене отсутствует утверждение "{0}". Проверьте политику аттестации. Если политика верна, обратитесь в службу поддержки пользователей.</value>
+    <value>Проверка токена аттестации не пройдена. В токене отсутствует утверждение "{0}". Проверьте политику аттестации — см. https://go.microsoft.com/fwlink/?linkid=2157649 для получения дополнительных сведений. Если политика верна, обратитесь в службу поддержки пользователей.</value>
   </data>
   <data name="VerifyEnclaveDebuggable" xml:space="preserve">
     <value>Не удалось проверить, работает ли анклав в рабочем режиме. Обратитесь в службу поддержки пользователей.</value>
   </data>
   <data name="VerifyEnclavePolicyFailedFormat" xml:space="preserve">
-    <value>Не удалось проверить политику анклава из-за различий между ожидаемым и фактическим значениями политики в свойстве "{0}". Фактическое: "{1}", ожидаемое: "{2}".</value>
+    <value>Не удалось проверить политику анклава из-за различий между ожидаемым и фактическим значениями политики в свойстве "{0}". Фактическое: "{1}", ожидаемое: "{2}" — см. https://go.microsoft.com/fwlink/?linkid=2160553 для дополнительных сведений.</value>
   </data>
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
-    <value>Проверка подписи отчета анклава не пройдена. Подпись отчета не соответствует подписи, вычисленной с помощью корневого сертификата HGS. Проверьте сопоставление DNS для конечной точки. Если оно верно, обратитесь в службу поддержки пользователей.</value>
+    <value>Проверка подписи отчета анклава не пройдена. Подпись отчета не соответствует подписи, вычисленной с помощью корневого сертификата HGS. Проверьте сопоставление DNS для конечной точки — см. https://go.microsoft.com/fwlink/?linkid=2160553 для получения дополнительных сведений. Если оно верно, обратитесь в службу поддержки пользователей.</value>
   </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>Полученный с SQL Server отчет анклава имеет неправильный формат. Обратитесь в службу поддержки пользователей.</value>
   </data>
   <data name="VerifyHealthCertificateChainFormat" xml:space="preserve">
-    <value>Не удалось создать цепь доверия между отчетом о работоспособности узла анклава и корневым сертификатом HGS для URL-адреса аттестации "{0}" с состоянием: "{1}". Убедитесь, что URL-адрес аттестации совпадает с URL-адресом, настроенным на компьютере с SQL Server. Если клиент и SQL Server используют одну и ту же службу аттестации, обратитесь в службу поддержки пользователей.</value>
+    <value>Не удалось создать цепь доверия между отчетом о работоспособности узла анклава и корневым сертификатом HGS для URL-адреса аттестации "{0}" с состоянием: "{1}". Убедитесь, что URL-адрес аттестации совпадает с URL-адресом, настроенным на SQL Server — см. https://go.microsoft.com/fwlink/?linkid=2160553 для получения дополнительных сведений. Если клиент и SQL Server используют одну и ту же службу аттестации, обратитесь в службу поддержки пользователей.</value>
   </data>
   <data name="TCE_DbConnectionString_AttestationProtocol" xml:space="preserve">
     <value>Указывает протокол аттестации для соответствующей службы аттестации анклава.</value>
+  </data>
+  <data name="TCE_DbConnectionString_IPAddressPreference" xml:space="preserve">
+    <value>Указывает параметр IP-адреса при подключении к экземплярам SQL Server.</value>
   </data>
   <data name="TCE_EnclaveTypeNotSupported" xml:space="preserve">
     <value>Возвращаемый с сервера анклав типа "{0}" не поддерживается.</value>
@@ -4575,31 +4578,40 @@
   <data name="SQL_SettingCredentialWithDeviceFlow" xml:space="preserve">
     <value>Не удается задать свойство Credential, если в строке подключения указано "Authentication=Active Directory Device Code Flow".</value>
   </data>
-  <data name="SQL_SettingCredentialWithManagedIdentity" xml:space="preserve">
+  <data name="SQL_SettingCredentialWithNonInteractive" xml:space="preserve">
     <value>Невозможно задать свойство Credential, если в строке подключения указано "Authentication={0}".</value>
   </data>
   <data name="SQL_SettingDeviceFlowWithCredential" xml:space="preserve">
     <value>Невозможно использовать ", если задано свойство Credential.</value>
   </data>
-  <data name="SQL_SettingManagedIdentityWithCredential" xml:space="preserve">
+  <data name="SQL_SettingNonInteractiveWithCredential" xml:space="preserve">
     <value>Невозможно использовать "Authentication={0}", если задано свойство Credential.</value>
   </data>
-  <data name="Azure_GenericErrorMessage" xml:space="preserve">
-    <value>Не удалось получить токен доступа.</value>
+  <data name="SqlDependency_UnexpectedValueOnDeserialize" xml:space="preserve">
+    <value>Обнаружен непредвиденный тип при десериализации.</value>
   </data>
-  <data name="Azure_IdentityEndpointNotListening" xml:space="preserve">
-    <value>Не удалось подключиться к конечной точке Управляемого удостоверения. Убедитесь, что вы используете ресурс Azure, для которого настроено удостоверение.</value>
+  <data name="SqlRetryLogic_InvalidRange" xml:space="preserve">
+    <value>Значение "{0}" выходит за пределы допустимого диапазона между {1} и {2}.</value>
   </data>
-  <data name="Azure_ManagedIdentityUsed" xml:space="preserve">
-    <value>Попытка получить токен с помощью Управляемого удостоверения.</value>
+  <data name="SqlRetryLogic_RetryCanceled" xml:space="preserve">
+    <value>Повторная попытка номер {0} была отменена.</value>
   </data>
-  <data name="Azure_MetadataEndpointNotListening" xml:space="preserve">
-    <value>Не удается подключиться к Службе метаданных экземпляров (IMDS). Запрос будет передан в конечную точку токена Управляемого удостоверения.</value>
+  <data name="SqlRetryLogic_RetryExceeded" xml:space="preserve">
+    <value>Превышено максимальное число повторных попыток ({0}).</value>
   </data>
-  <data name="Azure_NonRetryableError" xml:space="preserve">
-    <value>Получена невоспроизводимая ошибка.</value>
+  <data name="SqlRetryLogic_InvalidMinMaxPair" xml:space="preserve">
+    <value>"{0}" не меньше "{1}"; "{2}" не может быть больше "{3}".</value>
   </data>
-  <data name="Azure_RetryFailure" xml:space="preserve">
-    <value>Сбой после 5 попыток.</value>
+  <data name="Arg_ArrayPlusOffTooSmall" xml:space="preserve">
+    <value>Длина конечного массива недостаточна для копирования всех элементов коллекции. Проверьте индекс и длину массива.</value>
+  </data>
+  <data name="Arg_RankMultiDimNotSupported" xml:space="preserve">
+    <value>Для запрашиваемого действия поддерживаются только одномерные массивы.</value>
+  </data>
+  <data name="Arg_RemoveArgNotFound" xml:space="preserve">
+    <value>Невозможно удалить указанный элемент, так как он не найден в заданной коллекции.</value>
+  </data>
+  <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
+    <value>Требуется неотрицательное число.</value>
   </data>
 </root>

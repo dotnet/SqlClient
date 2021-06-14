@@ -146,7 +146,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
         }
-        public class ConnectionWorker
+        public class ConnectionWorker : IDisposable
         {
             private static List<ConnectionWorker> workerList = new List<ConnectionWorker>();
             private ManualResetEventSlim _doneEvent = new ManualResetEventSlim(false);
@@ -180,6 +180,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 foreach (ConnectionWorker w in workerList)
                 {
                     w._doneEvent.Wait();
+                }
+            }
+
+            public void Dispose()
+            {
+                Dispose(true);
+                GC.SuppressFinalize(this);
+            }
+
+            protected virtual void Dispose(bool disposing)
+            {
+                if (disposing)
+                {
+                    _doneEvent.Dispose();
                 }
             }
 

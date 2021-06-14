@@ -6,8 +6,10 @@ using System;
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Xml;
+using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.SqlTypes
 {
@@ -61,22 +63,33 @@ namespace Microsoft.Data.SqlTypes
             const int SQLTicksPerMinute = SQLTicksPerSecond * 60;
             const int SQLTicksPerHour = SQLTicksPerMinute * 60;
             const int SQLTicksPerDay = SQLTicksPerHour * 24;
-            const int MinDay = -53690;                // Jan 1 1753
-            const int MaxDay = 2958463;               // Dec 31 9999 is this many days from Jan 1 1900
-            const int MinTime = 0;                    // 00:00:0:000PM
-            const int MaxTime = SQLTicksPerDay - 1; // = 25919999,  11:59:59:997PM
+            //const int MinDay = -53690;                // Jan 1 1753
+            const uint MinDayOffset = 53690;            // postive value of MinDay used to pull negative values up to 0 so a single check can be used
+            const uint MaxDay = 2958463;               // Dec 31 9999 is this many days from Jan 1 1900
+            const uint MaxTime = SQLTicksPerDay - 1; // = 25919999,  11:59:59:997PM
+            const long BaseDateTicks = 599266080000000000L;//new DateTime(1900, 1, 1).Ticks;
 
-            if (daypart < MinDay || daypart > MaxDay || timepart < MinTime || timepart > MaxTime)
+            // casting to uint wraps negative values to large positive ones above the valid 
+            // ranges so the lower bound doesn't need to be checked
+            if ((uint)(daypart + MinDayOffset) > (MaxDay + MinDayOffset) || (uint)timepart > MaxTime)
             {
-                throw new OverflowException(SQLResource.DateTimeOverflowMessage);
+                ThrowOverflowException();
             }
 
-            long baseDateTicks = new DateTime(1900, 1, 1).Ticks;
             long dayticks = daypart * TimeSpan.TicksPerDay;
-            long timeticks = ((long)(timepart / SQLTicksPerMillisecond + 0.5)) * TimeSpan.TicksPerMillisecond;
-
-            return new DateTime(baseDateTicks + dayticks + timeticks);
+            double timePartPerMs = timepart / SQLTicksPerMillisecond;
+            timePartPerMs += 0.5;
+            long timeTicks = ((long)timePartPerMs) * TimeSpan.TicksPerMillisecond;
+            long totalTicks = BaseDateTicks + dayticks + timeTicks;
+            return new DateTime(totalTicks);
         }
+
+        // this method is split out of SqlDateTimeToDateTime for performance reasons
+        // it is faster to make a method call than it is to incorporate the asm for this
+        // method in the calling method.
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static Exception ThrowOverflowException() => throw SQL.DateTimeOverflow();
+
         #endregion
 
         #region Work around inability to access SqlMoney.ctor(long, int) and SqlMoney.ToSqlInternalRepresentation

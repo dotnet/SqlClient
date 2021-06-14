@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 
@@ -271,24 +272,28 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             Randomizer IScope.Current { get { return Current; } }
 
+
+            public void Dispose()
+            {
+                Dispose(true);
+                GC.SuppressFinalize(this);
+            }
+
             /// <summary>
             /// Disposes the scope and reverts the current thread scope to previous one. 
             /// Note that the "last created scope" is not changed on Dispose, thus the scope instance
             /// itself can still be used to collect repro states.
             /// </summary>
-            public void Dispose()
+            protected virtual void Dispose(bool disposing)
             {
                 if (_current != null)
                 {
                     _current = null;
 
-                    if (t_currentScope != this)
-                    {
-                        // every creation of scope in test must be balanced with Dispose call, use 'using' to enforce that!
-                        // nested scopes are allowed, child scope must be disposed before the parent one
-                        throw new InvalidOperationException("Unbalanced call to scope.Dispose");
-                    }
-
+                    // every creation of scope in test must be balanced with Dispose call, use 'using' to enforce that!
+                    // nested scopes are allowed, child scope must be disposed before the parent one
+                    // throw new InvalidOperationException("Unbalanced call to scope.Dispose");
+                    Trace.Assert(t_currentScope == this, "Unbalanced call to scope.Dispose");
                     t_currentScope = _previousScope;
                 }
             }

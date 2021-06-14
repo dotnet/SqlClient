@@ -2502,7 +2502,7 @@
   <data name="SQL_DeviceFlowWithUsernamePassword" xml:space="preserve">
     <value>"Authentication=Active Directory Device Code Flow" kann nicht mit den Schlüsselwörtern "User ID", "UID", "Password" oder "PWD" für die Verbindungszeichenfolge verwendet werden.</value>
   </data>
-  <data name="SQL_ManagedIdentityWithPassword" xml:space="preserve">
+  <data name="SQL_NonInteractiveWithPassword" xml:space="preserve">
     <value>"Authentication={0}" kann nicht mit den Schlüsselwörtern "Password" oder "PWD" für die Verbindungszeichenfolge verwendet werden.</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
@@ -4345,16 +4345,16 @@
     <value>Verwendete {0}-Instanz unterstützt die Spaltenverschlüsselung nicht.</value>
   </data>
   <data name="TCE_EnclaveComputationsNotSupported" xml:space="preserve">
-    <value>Sie haben die Enclave-Nachweis-URL und das Nachweisprotokoll in der Verbindungszeichenfolge angegeben, aber die verwendete SQL Server-Instanz unterstützt keine auf Enclave basierenden Berechnungen.</value>
+    <value>Sie haben die Enclave-Nachweis-URL und das Nachweisprotokoll in der Verbindungszeichenfolge angegeben, aber die verwendete SQL Server-Instanz unterstützt keine Enclave-basierten Berechnungen –Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2157649</value>
   </data>
   <data name="TCE_AttestationURLNotSupported" xml:space="preserve">
-    <value>Sie haben die Enclave-Nachweis-URL in der Verbindungszeichenfolge angegeben, aber die SQL Server-Instanz unterstützt keine Enclave-basierten Berechnungen.</value>
+    <value>Sie haben die Enclave-Nachweis-URL in der Verbindungszeichenfolge angegeben, aber die verwendete SQL Server-Instanz unterstützt keine Enclave-basierten Berechnungen – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2157649.</value>
   </data>
   <data name="TCE_AttestationProtocolNotSupported" xml:space="preserve">
-    <value>Sie haben das Nachweisprotokoll in der Verbindungszeichenfolge angegeben, aber die verwendete SQL Server-Instanz unterstützt keine auf Enclave basierenden Berechnungen.</value>
+    <value>Sie haben das Nachweisprotokoll in der Verbindungszeichenfolge angegeben, aber die verwendete SQL Server-Instanz unterstützt keine Enclave-basierten Berechnungen – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2157649.</value>
   </data>
   <data name="TCE_EnclaveTypeNotReturned" xml:space="preserve">
-    <value>Sie haben die Enclave-Nachweis-URL in der Verbindungszeichenfolge angegeben, aber die SQL Server-Instanz hat keinen Enclave-Typ zurückgegeben. Stellen Sie sicher, dass der Enclave-Typ ordnungsgemäß in Ihrer Instanz konfiguriert wurde.</value>
+    <value>Sie haben die Enclave-Nachweis-URL in der Verbindungszeichenfolge angegeben, aber die SQL Server-Instanz hat keinen Enclave-Typ zurückgegeben. Stellen Sie sicher, dass der Enclave-Typ ordnungsgemäß in Ihrer Instanz konfiguriert wurde –Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2157649.</value>
   </data>
   <data name="TCE_BatchedUpdateColumnEncryptionSettingMismatch" xml:space="preserve">
     <value>{0} muss beim Durchführen von Batchupdates für alle Befehle ({1}, {2}, {3}, {4}) identisch sein.</value>
@@ -4459,7 +4459,7 @@
     <value>Das Ausführungstimeout ist abgelaufen. Der Timeoutzeitraum wurde überschritten, bevor der Vorgang beendet wurde, oder der Server antwortet nicht.</value>
   </data>
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
-    <value>Fehler bei der Überprüfung eines Nachweistokens. Die Tokensignatur stimmt nicht mit der Signatur überein, die anhand eines öffentlichen Schlüssels berechnet wurde, der vom Endpunkt für öffentliche Nachweisschlüssel unter "{0}" abgerufen wurde. Überprüfen Sie die DNS-Zuordnung für den Endpunkt. Wenn diese korrekt ist, wenden Sie sich an den Kundensupport.</value>
+    <value>Fehler bei der Überprüfung eines Nachweistokens. Die Tokensignatur stimmt nicht mit der Signatur überein, die anhand eines öffentlichen Schlüssels berechnet wurde, der vom Endpunkt für öffentliche Nachweisschlüssel unter „{0}“ abgerufen wurde. Überprüfen Sie die DNS-Zuordnung für den Endpunkt – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2157649. Wenn diese korrekt ist, wenden Sie sich an den Kundensupport.</value>
   </data>
   <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
     <value>Interner Fehler beim erneuten Download des HGS-Stammzertifikats, nachdem bei der ersten Anforderung ein Fehler aufgetreten ist. Wenden Sie sich an den Kundensupport.</value>
@@ -4480,10 +4480,10 @@
     <value>Fehler bei der Überprüfung eines Nachweistokens. Das Token weisen ein ungültiges Format auf. Wenden Sie sich an den Kundensupport. Fehlerdetails: {0}.</value>
   </data>
   <data name="GetAttestationSigningCertificateFailedInvalidCertificate" xml:space="preserve">
-    <value>Der Nachweisdienst hat ein abgelaufenes HGS-Stammzertifikat für die Nachweis-URL {0} zurückgegeben. Überprüfen Sie das für Ihre HGS-Instanz konfigurierte HGS-Stammzertifikat.</value>
+    <value>Der Nachweisdienst hat ein abgelaufenes HGS-Stammzertifikat für die Nachweis-URL „{0}“ zurückgegeben. Überprüfen Sie das für Ihre HGS-Instanz konfigurierte HGS-Stammzertifikat – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2160553.</value>
   </data>
   <data name="GetAttestationSigningCertificateRequestFailedFormat" xml:space="preserve">
-    <value>Das abgerufene HGS-Stammzertifikat für die Nachweis-URL {0} weist ein ungültiges Format auf. Überprüfen Sie, ob die Nachweis-URL korrekt und der HGS-Server online und vollständig initialisiert ist. Wenden Sie sich an den Kundensupport, um weitere Informationen zu erhalten. Fehlerdetails: "{1}".</value>
+    <value>Das abgerufene HGS-Stammzertifikat für die Nachweis-URL „{0}“ weist ein ungültiges Format auf. Überprüfen Sie, ob die Nachweis-URL korrekt und der HGS-Server online und vollständig initialisiert sind – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2160553. Wenden Sie sich an den Kundensupport, um weitere Informationen zu erhalten. Fehlerdetails: „{1}“.</value>
   </data>
   <data name="GetAttestationTokenSigningKeysFailed" xml:space="preserve">
     <value>Fehler bei der Überprüfung eines Nachweistokens. Ein öffentlicher Schlüssel kann nicht aus dem Endpunkt für öffentliche Nachweisschlüssel abgerufen werden, oder der abgerufene Schlüssel weist ein ungültiges Format auf. Fehlerdetails: {0}.</value>
@@ -4501,28 +4501,31 @@
     <value>Fehler bei der Überprüfung des Nachweistokens während der Signaturüberprüfung. Ausnahme: {0}.</value>
   </data>
   <data name="InvalidClaimInAttestationToken" xml:space="preserve">
-    <value>Fehler bei der Überprüfung eines Nachweistokens. Der Anspruch "{0}" im Token weist den ungültigen Wert "{1}" auf. Überprüfen Sie die Nachweisrichtlinie. Wenn die Richtlinie korrekt ist, wenden Sie sich an den Kundensupport.</value>
+    <value>Fehler bei der Überprüfung eines Nachweistokens. Der Anspruch „{0}“ im Token weist einen ungültigen Wert von „{1}“ auf. Überprüfen Sie die Nachweisrichtlinie – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2157649. Wenn die Richtlinie korrekt ist, wenden Sie sich an den Kundensupport.</value>
   </data>
   <data name="MissingClaimInAttestationToken" xml:space="preserve">
-    <value>Fehler bei der Überprüfung des Nachweistokens. Der Anspruch "{0}" fehlt im Token. Überprüfen Sie die Nachweisrichtlinie. Wenn die Richtlinie korrekt ist, wenden Sie sich an den Kundensupport.</value>
+    <value>Fehler bei der Überprüfung des Nachweistokens. Der Anspruch „{0}“ fehlt im Token. Überprüfen Sie die Nachweisrichtlinie – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2157649. Wenn die Richtlinie korrekt ist, wenden Sie sich an den Kundensupport.</value>
   </data>
   <data name="VerifyEnclaveDebuggable" xml:space="preserve">
     <value>Es konnte nicht überprüft werden, ob die Enclave im Produktionsmodus ausgeführt wird. Wenden Sie sich an den Kundensupport.</value>
   </data>
   <data name="VerifyEnclavePolicyFailedFormat" xml:space="preserve">
-    <value>Die Enclaverichtlinie konnte aufgrund einer Abweichung zwischen den erwarteten und den tatsächlichen Werten der Richtlinie für die Eigenschaft "{0}" nicht überprüft werden. Tatsächlich: "{1}", erwartet: "{2}".</value>
+    <value>Die Enclave-Richtlinie konnte aufgrund einer Abweichung zwischen den erwarteten und den tatsächlichen Werten der Richtlinie für die Eigenschaft „{0}“ nicht überprüft werden. Tatsächlich: „{1}“, erwartet: „{2}“ – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2160553.</value>
   </data>
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
-    <value>Fehler bei der Signaturüberprüfung des Enclaveberichts. Die Berichtssignatur stimmt nicht mit der Signatur überein, die mit dem HGS-Stammzertifikat berechnet wurde. Überprüfen Sie die DNS-Zuordnung für den Endpunkt. Wenn sie korrekt ist, wenden Sie sich an den Kundensupport.</value>
+    <value>Fehler bei der Signaturüberprüfung des Enclave-Berichts. Die Berichtssignatur stimmt nicht mit der Signatur überein, die mit dem HGS-Stammzertifikat berechnet wurde. Überprüfen Sie die DNS-Zuordnung für den Endpunkt – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2160553. Wenn sie korrekt ist, wenden Sie sich an den Kundensupport.</value>
   </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>Der von SQL Server empfangene Enclavebericht weist nicht das richtige Format auf. Wenden Sie sich an den Kundensupport.</value>
   </data>
   <data name="VerifyHealthCertificateChainFormat" xml:space="preserve">
-    <value>Fehler beim Erstellen einer Vertrauenskette zwischen dem Integritätsbericht für den Enclave-Host und dem HGS-Stammzertifikat für die Nachweis-URL {0} mit dem Status "{1}". Überprüfen Sie, ob die Nachweis-URL mit der auf dem SQL Server-Computer konfigurierten URL übereinstimmt. Wenn sowohl der Client als auch SQL Server denselben Nachweisdienst verwenden, wenden Sie sich an den Kundensupport.</value>
+    <value>Fehler beim Erstellen einer Vertrauenskette zwischen dem Integritätsbericht des Enclave-Hosts und dem HGS-Stammzertifikat für die Nachweis-URL „{0}“ mit dem Status: „{1}“ Überprüfen Sie, ob die Nachweis-URL mit der auf dem SQL Server konfigurierten URL übereinstimmt – Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=2160553. Wenn sowohl der Client als auch der SQL Server denselben Nachweisdienst verwenden, wenden Sie sich an den Kundensupport.</value>
   </data>
   <data name="TCE_DbConnectionString_AttestationProtocol" xml:space="preserve">
     <value>Gibt ein Nachweisprotokoll für den entsprechenden Enclave-Nachweisdienst an.</value>
+  </data>
+  <data name="TCE_DbConnectionString_IPAddressPreference" xml:space="preserve">
+    <value>Gibt eine bevorzugte IP-Adresse beim Herstellen einer Verbindung mit SQL-Instanzen an.</value>
   </data>
   <data name="TCE_EnclaveTypeNotSupported" xml:space="preserve">
     <value>Der vom Server zurückgegebene Enclave-Typ "{0}" wird nicht unterstützt.</value>
@@ -4575,31 +4578,40 @@
   <data name="SQL_SettingCredentialWithDeviceFlow" xml:space="preserve">
     <value>Die Eigenschaft "Credential" kann nicht festgelegt werden, wenn in der Verbindungszeichenfolge "Authentication=Active Directory Device Code Flow" angegeben wurde.</value>
   </data>
-  <data name="SQL_SettingCredentialWithManagedIdentity" xml:space="preserve">
+  <data name="SQL_SettingCredentialWithNonInteractive" xml:space="preserve">
     <value>Die Eigenschaft "Credential" kann nicht festgelegt werden, wenn in der Verbindungszeichenfolge "Authentication={0}" angegeben wurde.</value>
   </data>
   <data name="SQL_SettingDeviceFlowWithCredential" xml:space="preserve">
     <value>"Authentication=Active Directory Device Code Flow" kann nicht verwendet werden, wenn die Eigenschaft "Credential" festgelegt wurde.</value>
   </data>
-  <data name="SQL_SettingManagedIdentityWithCredential" xml:space="preserve">
+  <data name="SQL_SettingNonInteractiveWithCredential" xml:space="preserve">
     <value>"Authentication={0}" kann nicht verwendet werden, wenn die Eigenschaft "Credential" festgelegt wurde.</value>
   </data>
-  <data name="Azure_GenericErrorMessage" xml:space="preserve">
-    <value>Das Zugriffstoken konnte nicht abgerufen werden.</value>
+  <data name="SqlDependency_UnexpectedValueOnDeserialize" xml:space="preserve">
+    <value>Unerwarteter Typ beim Deserialisieren erkannt.</value>
   </data>
-  <data name="Azure_IdentityEndpointNotListening" xml:space="preserve">
-    <value>Mit dem Endpunkt der verwalteten Identität kann keine Verbindung hergestellt werden. Stellen Sie sicher, dass Sie eine Azure-Ressource mit eingerichteter Identität ausführen.</value>
+  <data name="SqlRetryLogic_InvalidRange" xml:space="preserve">
+    <value>Der Wert "{0}" liegt außerhalb des gültigen Bereichs, er muss zwischen {1} und {2} liegen.</value>
   </data>
-  <data name="Azure_ManagedIdentityUsed" xml:space="preserve">
-    <value>Es wurde versucht, ein Token mithilfe einer verwalteten Identität abzurufen.</value>
+  <data name="SqlRetryLogic_RetryCanceled" xml:space="preserve">
+    <value>Die Wiederholung wurde bei Versuch {0} abgebrochen.</value>
   </data>
-  <data name="Azure_MetadataEndpointNotListening" xml:space="preserve">
-    <value>Mit dem Instance Metadata Service (IMDS) kann keine Verbindung hergestellt werden. Die Anforderung an den Tokenendpunkt der verwalteten Identität wird übersprungen.</value>
+  <data name="SqlRetryLogic_RetryExceeded" xml:space="preserve">
+    <value>Die maximal zulässige Anzahl von {0} Wiederholungsversuchen wurde überschritten.</value>
   </data>
-  <data name="Azure_NonRetryableError" xml:space="preserve">
-    <value>Es wurde ein nicht wiederholbarer Fehler empfangen.</value>
+  <data name="SqlRetryLogic_InvalidMinMaxPair" xml:space="preserve">
+    <value>"{0}" ist nicht kleiner als {1}, "{2}" darf nicht größer sein als {3}.</value>
   </data>
-  <data name="Azure_RetryFailure" xml:space="preserve">
-    <value>Fehler nach 5 Wiederholungen.</value>
+  <data name="Arg_ArrayPlusOffTooSmall" xml:space="preserve">
+    <value>Das Zielarray ist nicht lang genug, um alle Elemente in der Sammlung zu kopieren. Prüfen Sie den Index und die Länge des Arrays.</value>
+  </data>
+  <data name="Arg_RankMultiDimNotSupported" xml:space="preserve">
+    <value>Nur eindimensionale Arrays werden für die angeforderte Aktion unterstützt.</value>
+  </data>
+  <data name="Arg_RemoveArgNotFound" xml:space="preserve">
+    <value>Das angegebene Element kann nicht entfernt werden, da es nicht in der Sammlung gefunden wurde.</value>
+  </data>
+  <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
+    <value>Nicht negative Zahl erforderlich.</value>
   </data>
 </root>

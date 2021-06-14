@@ -33,11 +33,6 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <!-- Contains common items shared between NetFx and NetCore -->
-  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetsWindows)' == 'true'">
-	<Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientEventSource.Windows.cs">
-	  <Link>Microsoft\Data\SqlClient\SqlClientEventSource.Windows.cs</Link>
-	</Compile>
-  </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS'">
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientEventSource.cs">
       <Link>Microsoft\Data\SqlClient\SqlClientEventSource.cs</Link>
@@ -57,6 +52,9 @@
     <Compile Include="..\..\src\Microsoft\Data\Common\MultipartIdentifier.cs">
       <Link>Microsoft\Data\Common\MultipartIdentifier.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\Common\NameValuePair.cs">
+      <Link>Microsoft\Data\Common\NameValuePair.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\DataClassification\SensitivityClassification.cs">
       <Link>Microsoft\Data\SqlClient\DataClassification\SensitivityClassification.cs</Link>
     </Compile>
@@ -75,17 +73,20 @@
     <Compile Include="..\..\src\Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContextKey.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContextKey.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\ProviderBase\FieldNameLookup.cs">
+      <Link>Microsoft\Data\ProviderBase\FieldNameLookup.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationTimeoutRetryHelper.cs">
       <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationTimeoutRetryHelper.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\ApplicationIntent.cs">
       <Link>Microsoft\Data\SqlClient\ApplicationIntent.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\AssemblyRef.cs">
+      <Link>Microsoft\Data\SqlClient\AssemblyRef.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.cs">
       <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\AzureManagedIdentityAuthenticationProvider.cs">
-      <Link>Microsoft\Data\SqlClient\AzureManagedIdentityAuthenticationProvider.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\LocalAppContextSwitches.cs">
       <Link>Microsoft\Data\SqlClient\LocalAppContextSwitches.cs</Link>
@@ -137,6 +138,9 @@
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlUserDefinedAggregateAttribute.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlUserDefinedAggregateAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SmiMetaData.cs">
+      <Link>Microsoft\Data\SqlClient\Server\SmiMetaData.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\ColumnEncryptionKeyInfo.cs">
       <Link>Microsoft\Data\SqlClient\ColumnEncryptionKeyInfo.cs</Link>
@@ -210,6 +214,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlConnectionPoolProviderInfo.cs">
       <Link>Microsoft\Data\SqlClient\SqlConnectionPoolProviderInfo.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlCredential.cs">
+      <Link>Microsoft\Data\SqlClient\SqlCredential.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlInfoMessageEventHandler.cs">
       <Link>Microsoft\Data\SqlClient\SqlInfoMessageEventHandler.cs</Link>
     </Compile>
@@ -221,6 +228,9 @@
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlNotificationType.cs">
       <Link>Microsoft\Data\SqlClient\SqlNotificationType.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlParameterCollection.cs">
+      <Link>Microsoft\Data\SqlClient\SqlParameterCollection.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlRowUpdatedEvent.cs">
       <Link>Microsoft\Data\SqlClient\SqlRowUpdatedEvent.cs</Link>
@@ -234,6 +244,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlRowUpdatingEventHandler.cs">
       <Link>Microsoft\Data\SqlClient\SqlRowUpdatingEventHandler.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlSecurityUtility.cs">
+      <Link>Microsoft\Data\SqlClient\SqlSecurityUtility.cs</Link>
+    </Compile>  
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlSymmetricKeyCache.cs">
       <Link>Microsoft\Data\SqlClient\SqlSymmetricKeyCache.cs</Link>
     </Compile>
@@ -270,24 +283,74 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SmiRecordBuffer.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiRecordBuffer.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\Common\SqlRetryingEventArgs.cs">
+      <Link>Microsoft\Data\SqlClient\Reliability\SqlRetryingEventArgs.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\Common\SqlRetryIntervalBaseEnumerator.cs">
+      <Link>Microsoft\Data\SqlClient\Reliability\SqlRetryIntervalBaseEnumerator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\Common\SqlRetryLogic.cs">
+      <Link>Microsoft\Data\SqlClient\Reliability\SqlRetryLogic.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\Common\SqlRetryLogicBase.cs">
+      <Link>Microsoft\Data\SqlClient\Reliability\SqlRetryLogicBase.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\Common\SqlRetryLogicBaseProvider.cs">
+      <Link>Microsoft\Data\SqlClient\Reliability\SqlRetryLogicBaseProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\Common\SqlRetryLogicProvider.cs">
+      <Link>Microsoft\Data\SqlClient\Reliability\SqlRetryLogicProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryFactory.cs">
+      <Link>Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryFactory.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\SqlRetryIntervalEnumerators.cs">
+      <Link>Microsoft\Data\SqlClient\Reliability\SqlRetryIntervalEnumerators.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.cs">
+      <Link>Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicLoader.cs">
+      <Link>Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicLoader.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\AppConfigManager.cs">
+      <Link>Microsoft\Data\SqlClient\Reliability\AppConfigManager.cs</Link>
+    </Compile>
+    <Compile Include="Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.NetCoreApp.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SqlAppContextSwitchManager.NetCoreApp.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlUtil.cs">
+      <Link>Microsoft\Data\SqlClient\SqlUtil.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Resources\ResCategoryAttribute.cs">
+      <Link>Resources\ResCategoryAttribute.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netstandard' OR '$(TargetGroup)' == 'netcoreapp' OR '$(IsUAPAssembly)' == 'true'">
     <Compile Include="Microsoft.Data.SqlClient.TypeForwards.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netstandard' AND '$(TargetFramework)' == 'netstandard2.0'">
-    <Compile Include="Microsoft\Data\SqlClient\EnclaveDelegate.NetStandard.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\EnclaveDelegate.NotSupported.cs">
+      <Link>Microsoft\Data\SqlClient\EnclaveDelegate.NotSupported.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlEnclaveAttestationParameters.NotSupported.cs">
+      <Link>Microsoft\Data\SqlClient\SqlEnclaveAttestationParameters.NotSupported.cs</Link>
+    </Compile>
   </ItemGroup>
-	<ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netstandard'">
-		<Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.NetStandard.cs" />
-		<Compile Include="Microsoft\Data\SqlClient\SqlDiagnosticListener.NetStandard.cs" />
-		<Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.NetStandard.cs" />
-		<Compile Include="Microsoft\Data\SqlClient\TdsParser.NetStandard.cs" />
+  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netstandard'">
+    <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.NetStandard.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SqlDiagnosticListener.NetStandard.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.NetStandard.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\TdsParser.NetStandard.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SslOverTdsStream.NetStandard.cs" />
-	</ItemGroup>
-	<ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetFramework)' != 'netstandard2.0'">
+  </ItemGroup>
+  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetFramework)' != 'netstandard2.0'">
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\AlwaysEncryptedAttestationException.cs">
       <Link>Microsoft\Data\SqlClient\AlwaysEncryptedAttestationException.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.cs">
+      <Link>Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.cs</Link>
+    </Compile>
+    <Compile Include="Microsoft\Data\SqlClient\AlwaysEncryptedKeyConverter.CrossPlatform.cs" />
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\EnclaveProviderBase.cs">
       <Link>Microsoft\Data\SqlClient\EnclaveProviderBase.cs</Link>
     </Compile>
@@ -295,13 +358,26 @@
       <Link>Microsoft\Data\SqlClient\EnclaveSessionCache.cs</Link>
     </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.NetCoreApp.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlEnclaveAttestationParameters.NetCoreApp.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\EnclaveDelegate.NetCoreApp.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\AzureAttestationBasedEnclaveProvider.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProvider.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProviderBase.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.cs" />
-	</ItemGroup>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlEnclaveAttestationParameters.Crypto.cs">
+      <Link>Microsoft\Data\SqlClient\SqlEnclaveAttestationParameters.Crypto.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\EnclaveDelegate.Crypto.cs">
+      <Link>Microsoft\Data\SqlClient\EnclaveDelegate.Crypto.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\AzureAttestationBasedEnclaveProvider.cs">
+      <Link>Microsoft\Data\SqlClient\AzureAttestationBasedEnclaveProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProvider.cs">
+      <Link>Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProviderBase.cs">
+      <Link>Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProviderBase.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <!-- netcoreapp 3.1 & netstandard 2.1 and above -->
+  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetFramework)' != 'netcoreapp2.1' AND '$(TargetFramework)' != 'netstandard2.0'">
+    <Compile Include="Microsoft\Data\SqlClient\SqlClientEventSource.NetCoreApp.cs" />
+  </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netcoreapp'">
     <Compile Include="Microsoft\Data\Common\DbConnectionStringCommon.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPool.NetCoreApp.cs" />
@@ -315,14 +391,13 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionFactory.AssemblyLoadContext.cs" />    
     <Compile Include="Microsoft\Data\SqlClient\SqlDependencyUtils.AssemblyLoadContext.cs" />
   </ItemGroup>
-  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netcoreapp' AND '$(BuildSimulator)' == 'true'">
+  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetFramework)' != 'netstandard2.0' AND '$(BuildSimulator)' == 'true'">
     <Compile Include="Microsoft\Data\SqlClient\SimulatorEnclaveProvider.NetCoreApp.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS'">
     <Compile Include="Microsoft\Data\SqlClient\Server\MetadataUtilsSmi.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiEventSink.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiEventSink_Default.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\Server\SmiMetaData.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiMetaDataProperty.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiTypedGetterSetter.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiXetterAccessMap.cs" />
@@ -341,15 +416,6 @@
       <Link>Microsoft\Data\Common\DbConnectionOptions.Common.cs</Link>
     </Compile>
     <Compile Include="Microsoft\Data\Common\DbConnectionStringCommon.cs" />
-    <Compile Include="$(CommonPath)\Microsoft\Data\Common\FieldNameLookup.cs">
-      <Link>Microsoft\Data\Common\FieldNameLookup.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Microsoft\Data\Common\BasicFieldNameLookup.cs">
-      <Link>Microsoft\Data\Common\BasicFieldNameLookup.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Microsoft\Data\Common\NameValuePair.cs">
-      <Link>Microsoft\Data\Common\NameValuePair.cs</Link>
-    </Compile>
     <Compile Include="$(CommonPath)\Microsoft\Data\ProviderBase\DbConnectionInternal.cs">
       <Link>Common\Microsoft\Data\ProviderBase\DbConnectionInternal.cs</Link>
     </Compile>
@@ -376,6 +442,12 @@
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionInternal.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPool.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\EnclaveDelegate.cs">
+      <Link>Microsoft\Data\SqlClient\EnclaveDelegate.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\EnclavePackage.cs">
+      <Link>Microsoft\Data\SqlClient\EnclavePackage.cs</Link>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SqlNorm.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SqlSer.cs" />
@@ -397,7 +469,9 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionPoolKey.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionString.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionStringBuilder.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlConnectionTimeoutErrorInternal.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlConnectionTimeoutErrorInternal.cs">
+      <Link>Microsoft\Data\SqlClient\SqlConnectionTimeoutErrorInternal.cs</Link>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlDataAdapter.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDataReader.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDependency.cs" />
@@ -408,6 +482,9 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlEnums.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlError.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlErrorCollection.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlEnclaveSession.cs">
+      <Link>Microsoft\Data\SqlClient\SqlEnclaveSession.cs</Link>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlException.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInfoMessageEvent.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnection.cs" />
@@ -416,16 +493,17 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlMetadataFactory.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlNotificationEventArgs.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlParameter.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlParameterCollection.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlParameterCollectionHelper.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlParameterHelper.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlReferenceCollection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlSequentialStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlSequentialTextReader.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlStatistics.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlStatistics.cs">
+      <Link>Microsoft\Data\SqlClient\SqlStatistics.cs</Link>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlTransaction.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlUdtInfo.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlUdtInfo.cs">
+      <Link>Microsoft\Data\SqlClient\SqlUdtInfo.cs</Link>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlUtil.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsEnums.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.cs" />
@@ -460,15 +538,9 @@
     <Compile Include="Microsoft\Data\SqlClient\SNI\SSRP.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectManaged.cs" />
     <Compile Include="Interop\SNINativeMethodWrapper.Common.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlCredential.cs" />
     <Compile Include="Microsoft\Data\SqlClient\AlwaysEncryptedHelperClasses.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlSecurityUtility.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\EnclavePackage.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlEnclaveSession.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlQueryMetadataCache.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionEnclaveProvider.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlEnclaveAttestationParameters.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\EnclaveDelegate.cs" />
   </ItemGroup>
   <!-- Windows only -->
   <ItemGroup Condition="'$(TargetsWindows)' == 'true'">
@@ -765,14 +837,16 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Condition="'$(TargetsWindows)' == 'true' and '$(IsUAPAssembly)' != 'true'" Include="Microsoft.Win32.Registry" Version="$(MicrosoftWin32RegistryVersion)" />
-    <PackageReference Condition="'$(TargetGroup)' == 'netcoreapp'" Include="System.Configuration.ConfigurationManager" Version="$(SystemConfigurationConfigurationManagerVersion)" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="$(SystemConfigurationConfigurationManagerVersion)" />
     <PackageReference Include="System.Security.Permissions" Version="$(SystemSecurityPermissionsVersion)" />
     <PackageReference Include="System.Security.Principal.Windows" Version="$(SystemSecurityPrincipalWindowsVersion)" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="$(SystemTextEncodingCodePagesVersion)" />
+    <PackageReference Include="System.Text.Encodings.Web" Version="$(SystemTextEncodingsWebVersion)" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" Version="$(MicrosoftDataSqlClientSNIRuntimeVersion)" />
     <PackageReference Condition="$(TargetGroup) == 'netcoreapp' " Include="System.Diagnostics.DiagnosticSource" Version="$(SystemDiagnosticsDiagnosticSourceVersion)" />
     <PackageReference Include="System.Threading.Tasks" Version="$(SystemThreadingTasksVersion)" />
     <PackageReference Include="System.Memory" Version="$(SystemMemoryVersion)" />
+    <PackageReference Include="Azure.Identity" Version="$(AzureIdentityVersion)" />
     <PackageReference Include="Microsoft.Identity.Client" Version="$(MicrosoftIdentityClientVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="$(MicrosoftIdentityModelProtocolsOpenIdConnectVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="$(MicrosoftIdentityModelJsonWebTokensVersion)" />
@@ -782,6 +856,7 @@
     <PackageReference Include="System.Resources.ResourceManager" Version="$(SystemResourcesResourceManagerVersion)" />
     <PackageReference Include="System.Buffers" Version="$(SystemBuffersVersion)" />
     <PackageReference Include="System.Runtime.Caching" Version="$(SystemRuntimeCachingVersion)" />
+    <PackageReference Condition="$(TargetGroup) == 'netstandard'" Include="System.Runtime.Loader" Version="$(SystemRuntimeLoaderVersion)" />
     <PackageReference Include="System.Security.Cryptography.Cng" Version="$(SystemSecurityCryptographyCngVersion)" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="$(MicrosoftSourceLinkGitHubVersion)" PrivateAssets="All" />
   </ItemGroup>

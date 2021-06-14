@@ -5,7 +5,6 @@
 using System;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Security.KeyVault.Keys.Cryptography;
 using static Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.Validator;
@@ -14,36 +13,26 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 {
     /// <summary>
     /// Implementation of column master key store provider that allows client applications to access data when a 
-    /// column master key is stored in Microsoft Azure Key Vault. For more information on Always Encrypted, please refer to: https://aka.ms/AlwaysEncrypted.
+    /// column master key is stored in Microsoft Azure Key Vault. 
+    ///
+    /// For more information on Always Encrypted, please refer to: https://aka.ms/AlwaysEncrypted.
     ///
     /// A Column Encryption Key encrypted with certificate store provider should be decryptable by this provider and vice versa.
     /// 
-    /// Envelope Format for the encrypted column encryption key  
-    ///           version + keyPathLength + ciphertextLength + keyPath + ciphertext +  signature
+    /// Envelope Format for the encrypted column encryption key :
+    ///           version + keyPathLength + ciphertextLength + keyPath + ciphertext + signature
     /// 
-    /// version: A single byte indicating the format version.
-    /// keyPathLength: Length of the keyPath.
-    /// ciphertextLength: ciphertext length
-    /// keyPath: keyPath used to encrypt the column encryption key. This is only used for troubleshooting purposes and is not verified during decryption.
-    /// ciphertext: Encrypted column encryption key
-    /// signature: Signature of the entire byte array. Signature is validated before decrypting the column encryption key.
+    /// - version: A single byte indicating the format version.
+    /// - keyPathLength: Length of the keyPath.
+    /// - ciphertextLength: ciphertext length
+    /// - keyPath: keyPath used to encrypt the column encryption key. This is only used for troubleshooting purposes and is not verified during decryption.
+    /// - ciphertext: Encrypted column encryption key
+    /// - signature: Signature of the entire byte array. Signature is validated before decrypting the column encryption key.
     /// </summary>
     /// <remarks>
 	///	    <format type="text/markdown"><![CDATA[
     /// ## Remarks
-    /// 
-    /// **SqlColumnEncryptionAzureKeyVaultProvider** is implemented for Microsoft.Data.SqlClient and supports .NET Framework 4.6.1+ and .NET Core 2.1+.
-    /// The provider name identifier for this implementation is "AZURE_KEY_VAULT" and it is not registered in driver by default.
-    /// Client applications must call the <xref=Microsoft.Data.SqlClient.SqlConnection.RegisterColumnEncryptionKeyStoreProviders> API only once in the lifetime of the driver to register this custom provider by implementing a custom Authentication Callback mechanism.
-    /// 
-    /// Once the provider is registered, it can used to perform Always Encrypted operations by creating Column Master Key using Azure Key Vault Key Identifier URL.
-    /// 
-    /// ## Example
-    /// 
-    /// Sample C# applications to demonstrate Always Encrypted use with Azure Key Vault are available at links below:
-    /// 
-    /// - [Example: Using Azure Key Vault with Always Encrypted](~/connect/ado-net/sql/azure-key-vault-example.md)
-    /// - [Example: Using Azure Key Vault with Always Encrypted with enclaves enabled](~/connect/ado-net/sql/azure-key-vault-enclave-example.md)
+    /// For more information, see: [Using the Azure Key Vault Provider](/sql/connect/ado-net/sql/sqlclient-support-always-encrypted#using-the-azure-key-vault-provider) 
     /// ]]></format>
     /// </remarks>
     public class SqlColumnEncryptionAzureKeyVaultProvider : SqlColumnEncryptionKeyStoreProvider
@@ -72,6 +61,33 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// 
         /// </summary>
         public readonly string[] TrustedEndPoints;
+
+        /// <summary>
+        /// A cache of column encryption keys (once they are decrypted). This is useful for rapidly decrypting multiple data values.
+        /// </summary>
+        private readonly LocalCache<string, byte[]> _columnEncryptionKeyCache = new() { TimeToLive = TimeSpan.FromHours(2) };
+
+        /// <summary>
+        /// A cache for storing the results of signature verification of column master key metadata.
+        /// </summary>
+        private readonly LocalCache<Tuple<string, bool, string>, bool> _columnMasterKeyMetadataSignatureVerificationCache = 
+            new(maxSizeLimit: 2000) { TimeToLive = TimeSpan.FromDays(10) };
+
+        /// <summary>
+        /// Gets or sets the lifespan of the decrypted column encryption key in the cache.
+        /// Once the timespan has elapsed, the decrypted column encryption key is discarded
+        /// and must be revalidated.
+        /// </summary>
+        /// <remarks>
+        /// Internally, there is a cache of column encryption keys (once they are decrypted).
+        /// This is useful for rapidly decrypting multiple data values. The default value is 2 hours.
+        /// Setting the <see cref="ColumnEncryptionKeyCacheTtl"/> to zero disables caching.
+        /// </remarks>
+        public override TimeSpan? ColumnEncryptionKeyCacheTtl
+        {
+            get => _columnEncryptionKeyCache.TimeToLive;
+            set => _columnEncryptionKeyCache.TimeToLive = value;
+        }
 
         #endregion
 
@@ -140,10 +156,16 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         {
             ValidateNonEmptyAKVPath(masterKeyPath, isSystemOp: true);
 
-            // Also validates key is of RSA type.
-            KeyCryptographer.AddKey(masterKeyPath);
-            byte[] message = CompileMasterKeyMetadata(masterKeyPath, allowEnclaveComputations);
-            return KeyCryptographer.VerifyData(message, signature, masterKeyPath);
+            var key = Tuple.Create(masterKeyPath, allowEnclaveComputations, ToHexString(signature));
+            return GetOrCreateSignatureVerificationResult(key, VerifyColumnMasterKeyMetadata);
+
+            bool VerifyColumnMasterKeyMetadata()
+            {
+                // Also validates key is of RSA type.
+                KeyCryptographer.AddKey(masterKeyPath);
+                byte[] message = CompileMasterKeyMetadata(masterKeyPath, allowEnclaveComputations);
+                return KeyCryptographer.VerifyData(message, signature, masterKeyPath);
+            }
         }
 
         /// <summary>
@@ -163,58 +185,62 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             ValidateNotEmpty(encryptedColumnEncryptionKey, nameof(encryptedColumnEncryptionKey));
             ValidateVersionByte(encryptedColumnEncryptionKey[0], s_firstVersion[0]);
 
-            // Also validates whether the key is RSA one or not and then get the key size
-            KeyCryptographer.AddKey(masterKeyPath);
+            return GetOrCreateColumnEncryptionKey(ToHexString(encryptedColumnEncryptionKey), DecryptEncryptionKey);
 
-            int keySizeInBytes = KeyCryptographer.GetKeySize(masterKeyPath);
-
-            // Get key path length
-            int currentIndex = s_firstVersion.Length;
-            ushort keyPathLength = BitConverter.ToUInt16(encryptedColumnEncryptionKey, currentIndex);
-            currentIndex += sizeof(ushort);
-
-            // Get ciphertext length
-            ushort cipherTextLength = BitConverter.ToUInt16(encryptedColumnEncryptionKey, currentIndex);
-            currentIndex += sizeof(ushort);
-
-            // Skip KeyPath
-            // KeyPath exists only for troubleshooting purposes and doesnt need validation.
-            currentIndex += keyPathLength;
-
-            // validate the ciphertext length
-            if (cipherTextLength != keySizeInBytes)
+            byte[] DecryptEncryptionKey()
             {
-                throw ADP.InvalidCipherTextLength(cipherTextLength, keySizeInBytes, masterKeyPath);
+                // Also validates whether the key is RSA one or not and then get the key size
+                KeyCryptographer.AddKey(masterKeyPath);
+
+                int keySizeInBytes = KeyCryptographer.GetKeySize(masterKeyPath);
+
+                // Get key path length
+                int currentIndex = s_firstVersion.Length;
+                ushort keyPathLength = BitConverter.ToUInt16(encryptedColumnEncryptionKey, currentIndex);
+                currentIndex += sizeof(ushort);
+
+                // Get ciphertext length
+                ushort cipherTextLength = BitConverter.ToUInt16(encryptedColumnEncryptionKey, currentIndex);
+                currentIndex += sizeof(ushort);
+
+                // Skip KeyPath
+                // KeyPath exists only for troubleshooting purposes and doesnt need validation.
+                currentIndex += keyPathLength;
+
+                // validate the ciphertext length
+                if (cipherTextLength != keySizeInBytes)
+                {
+                    throw ADP.InvalidCipherTextLength(cipherTextLength, keySizeInBytes, masterKeyPath);
+                }
+
+                // Validate the signature length
+                int signatureLength = encryptedColumnEncryptionKey.Length - currentIndex - cipherTextLength;
+                if (signatureLength != keySizeInBytes)
+                {
+                    throw ADP.InvalidSignatureLengthTemplate(signatureLength, keySizeInBytes, masterKeyPath);
+                }
+
+                // Get ciphertext
+                byte[] cipherText = encryptedColumnEncryptionKey.Skip(currentIndex).Take(cipherTextLength).ToArray();
+                currentIndex += cipherTextLength;
+
+                // Get signature
+                byte[] signature = encryptedColumnEncryptionKey.Skip(currentIndex).Take(signatureLength).ToArray();
+
+                // Compute the message to validate the signature
+                byte[] message = encryptedColumnEncryptionKey.Take(encryptedColumnEncryptionKey.Length - signatureLength).ToArray();
+
+                if (null == message)
+                {
+                    throw ADP.NullHashFound();
+                }
+
+                if (!KeyCryptographer.VerifyData(message, signature, masterKeyPath))
+                {
+                    throw ADP.InvalidSignatureTemplate(masterKeyPath);
+                }
+                return KeyCryptographer.UnwrapKey(s_keyWrapAlgorithm, cipherText, masterKeyPath);
             }
-
-            // Validate the signature length
-            int signatureLength = encryptedColumnEncryptionKey.Length - currentIndex - cipherTextLength;
-            if (signatureLength != keySizeInBytes)
-            {
-                throw ADP.InvalidSignatureLengthTemplate(signatureLength, keySizeInBytes, masterKeyPath);
-            }
-
-            // Get ciphertext
-            byte[] cipherText = encryptedColumnEncryptionKey.Skip(currentIndex).Take(cipherTextLength).ToArray();
-            currentIndex += cipherTextLength;
-
-            // Get signature
-            byte[] signature = encryptedColumnEncryptionKey.Skip(currentIndex).Take(signatureLength).ToArray();
-
-            // Compute the message to validate the signature
-            byte[] message = encryptedColumnEncryptionKey.Take(encryptedColumnEncryptionKey.Length - signatureLength).ToArray();
-
-            if (null == message)
-            {
-                throw ADP.NullHashFound();
-            }
-
-            if (!KeyCryptographer.VerifyData(message, signature, masterKeyPath))
-            {
-                throw ADP.InvalidSignatureTemplate(masterKeyPath);
-            }
-
-            return KeyCryptographer.UnwrapKey(s_keyWrapAlgorithm, cipherText, masterKeyPath);
         }
 
         /// <summary>
@@ -223,7 +249,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// </summary>
         /// <param name="masterKeyPath">Complete path of an asymmetric key in Azure Key Vault</param>
         /// <param name="encryptionAlgorithm">Asymmetric Key Encryption Algorithm</param>
-        /// <param name="columnEncryptionKey">Plain text column encryption key</param>
+        /// <param name="columnEncryptionKey">The plaintext column encryption key.</param>
         /// <returns>Encrypted column encryption key</returns>
         public override byte[] EncryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] columnEncryptionKey)
         {
@@ -283,7 +309,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             // throw appropriate error if masterKeyPath is null or empty
             if (string.IsNullOrWhiteSpace(masterKeyPath))
             {
-                ADP.InvalidAKVPath(masterKeyPath, isSystemOp);
+                throw ADP.InvalidAKVPath(masterKeyPath, isSystemOp);
             }
 
             if (!Uri.TryCreate(masterKeyPath, UriKind.Absolute, out Uri parsedUri) || parsedUri.Segments.Length < 3)
@@ -320,15 +346,49 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
             return Encoding.Unicode.GetBytes(masterkeyMetadata.ToLowerInvariant());
         }
 
+        /// <summary>
+        /// Converts the numeric value of each element of a specified array of bytes to its equivalent hexadecimal string representation.
+        /// </summary>
+        /// <param name="source">An array of bytes to convert.</param>
+        /// <returns>A string of hexadecimal characters</returns>
+        /// <remarks>
+        /// Produces a string of hexadecimal character pairs preceded with "0x", where each pair represents the corresponding element in value; for example, "0x7F2C4A00".
+        /// </remarks>
+        private string ToHexString(byte[] source)
+        {
+            if (source is null)
+            {
+                return null;
+            }
+
+            return "0x" + BitConverter.ToString(source).Replace("-", "");
+        }
+
+        /// <summary>
+        /// Returns the cached decrypted column encryption key, or unwraps the encrypted column encryption key if not present.
+        /// </summary>
+        /// <param name="encryptedColumnEncryptionKey">Encrypted Column Encryption Key</param>
+        /// <param name="createItem">The delegate function that will decrypt the encrypted column encryption key.</param>
+        /// <returns>The decrypted column encryption key.</returns>
+        /// <remarks>
+        ///
+        /// </remarks>
+        private byte[] GetOrCreateColumnEncryptionKey(string encryptedColumnEncryptionKey, Func<byte[]> createItem)
+        {
+            return _columnEncryptionKeyCache.GetOrCreate(encryptedColumnEncryptionKey, createItem);
+        }
+
+        /// <summary>
+        /// Returns the cached signature verification result, or proceeds to verify if not present.
+        /// </summary>
+        /// <param name="keyInformation">The encryptionKeyId, allowEnclaveComputations and hexadecimal signature.</param>
+        /// <param name="createItem">The delegate function that will perform the verification.</param>
+        /// <returns></returns>
+        private bool GetOrCreateSignatureVerificationResult(Tuple<string, bool, string> keyInformation, Func<bool> createItem)
+        {
+            return _columnMasterKeyMetadataSignatureVerificationCache.GetOrCreate(keyInformation, createItem);
+        }
+
         #endregion
     }
-
-    /// <summary>
-    /// The authentication callback delegate which is to be implemented by the client code
-    /// </summary>
-    /// <param name="authority"> Identifier of the authority, a URL. </param>
-    /// <param name="resource"> Identifier of the target resource that is the recipient of the requested token, a URL. </param>
-    /// <param name="scope"> The scope of the authentication request. </param>
-    /// <returns> access token </returns>
-    public delegate Task<string> AuthenticationCallback(string authority, string resource, string scope);
 }

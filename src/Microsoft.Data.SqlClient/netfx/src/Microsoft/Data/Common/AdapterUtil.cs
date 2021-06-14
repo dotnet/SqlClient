@@ -32,7 +32,6 @@ namespace Microsoft.Data.Common
 
     internal static class ADP
     {
-
         // The class ADP defines the exceptions that are specific to the Adapters.f
         // The class contains functions that take the proper informational variables and then construct
         // the appropriate exception with an error string obtained from the resource Framework.txt.
@@ -41,6 +40,8 @@ namespace Microsoft.Data.Common
         // This class is used so that there will be compile time checking of error messages.
         // The resource Framework.txt will ensure proper string text based on the appropriate
         // locale.
+
+        internal const CompareOptions DefaultCompareOptions = CompareOptions.IgnoreKanaType | CompareOptions.IgnoreWidth | CompareOptions.IgnoreCase;
 
         static internal Task<T> CreatedTaskWithException<T>(Exception ex)
         {
@@ -2333,26 +2334,34 @@ namespace Microsoft.Data.Common
             return Environment.MachineName;
         }
 
-        static internal string BuildQuotedString(string quotePrefix, string quoteSuffix, string unQuotedString)
+        internal static string BuildQuotedString(string quotePrefix, string quoteSuffix, string unQuotedString)
         {
-            StringBuilder resultString = new StringBuilder();
-            if (ADP.IsEmpty(quotePrefix) == false)
+            var resultString = new StringBuilder(unQuotedString.Length + quoteSuffix.Length + quoteSuffix.Length);
+            AppendQuotedString(resultString, quotePrefix, quoteSuffix, unQuotedString);
+            return resultString.ToString();
+        }
+
+        internal static string AppendQuotedString(StringBuilder buffer, string quotePrefix, string quoteSuffix, string unQuotedString)
+        {
+            if (!string.IsNullOrEmpty(quotePrefix))
             {
-                resultString.Append(quotePrefix);
+                buffer.Append(quotePrefix);
             }
 
             // Assuming that the suffix is escaped by doubling it. i.e. foo"bar becomes "foo""bar".
-            if (ADP.IsEmpty(quoteSuffix) == false)
+            if (!string.IsNullOrEmpty(quoteSuffix))
             {
-                resultString.Append(unQuotedString.Replace(quoteSuffix, quoteSuffix + quoteSuffix));
-                resultString.Append(quoteSuffix);
+                int start = buffer.Length;
+                buffer.Append(unQuotedString);
+                buffer.Replace(quoteSuffix, quoteSuffix + quoteSuffix, start, unQuotedString.Length);
+                buffer.Append(quoteSuffix);
             }
             else
             {
-                resultString.Append(unQuotedString);
+                buffer.Append(unQuotedString);
             }
 
-            return resultString.ToString();
+            return buffer.ToString();
         }
 
         static internal string BuildMultiPartName(string[] strings)
@@ -2976,7 +2985,7 @@ namespace Microsoft.Data.Common
                 return true;
             }
             INullable nullable = (value as INullable);
-            return ((null != nullable) && nullable.IsNull);
+            return (null != nullable) && nullable.IsNull;
         }
 
         static internal void IsNullOrSqlType(object value, out bool isNull, out bool isSqlType)

@@ -237,18 +237,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return unchecked((int)uval);
         }
 
-
-        /// <summary>
-        /// deserialization constructor
-        /// </summary>
-        public Randomizer(StreamingContext context)
-        {
-            string base64State = GetCurrentState().ToString();
-            int offset;
-            Deserialize(Convert.FromBase64String(base64State), out offset);
-        }
-
-
         /// <summary>
         /// use this method to create seeds for nested randomizers out of current one
         /// </summary>

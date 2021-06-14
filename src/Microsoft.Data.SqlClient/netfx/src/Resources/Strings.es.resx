@@ -2502,7 +2502,7 @@
   <data name="SQL_DeviceFlowWithUsernamePassword" xml:space="preserve">
     <value>No se puede usar "Authentication=Active Directory Device Code Flow" con las palabras clave de cadena de conexión "User ID", "UID", "Password" ni "PWD".</value>
   </data>
-  <data name="SQL_ManagedIdentityWithPassword" xml:space="preserve">
+  <data name="SQL_NonInteractiveWithPassword" xml:space="preserve">
     <value>No se puede usar "Authentication={0}" con las palabras clave de cadena de conexión "Password" ni "PWD".</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
@@ -4345,16 +4345,16 @@
     <value>La instancia de {0} en uso no admite el cifrado de columnas.</value>
   </data>
   <data name="TCE_EnclaveComputationsNotSupported" xml:space="preserve">
-    <value>Ha especificado la dirección URL de atestación de enclave y el protocolo de atestación en la cadena de conexión, pero la instancia de SQL Server que se está usando no admite los cálculos basados en enclave.</value>
+    <value>Ha especificado la dirección URL de atestación de enclave y el protocolo de atestación en la cadena de conexión, pero la instancia de SQL Server que se está usando no admite los cálculos basados en enclave. Vea https://go.microsoft.com/fwlink/?linkid=2157649 para obtener más detalles.</value>
   </data>
   <data name="TCE_AttestationURLNotSupported" xml:space="preserve">
-    <value>Ha especificado la dirección URL de atestación de enclave en la cadena de conexión, pero la instancia de SQL Server en uso no admite cálculos basados en enclave.</value>
+    <value>Ha especificado el vínculo de atestación enclave en la cadena de conexión, pero la instancia de SQL Server que se está usando no admite los cálculos basados en enclave. Vea https://go.microsoft.com/fwlink/?linkid=2157649 para obtener más detalles.</value>
   </data>
   <data name="TCE_AttestationProtocolNotSupported" xml:space="preserve">
-    <value>Ha especificado el protocolo de atestación en la cadena de conexión, pero la instancia de SQL Server que se está usando no admite cálculos basados en enclave.</value>
+    <value>Ha especificado el protocolo de atestación en la cadena de conexión, pero la instancia de SQL Server que se está usando no admite los cálculos basados en enclave. Vea https://go.microsoft.com/fwlink/?linkid=2157649 para obtener más detalles.</value>
   </data>
   <data name="TCE_EnclaveTypeNotReturned" xml:space="preserve">
-    <value>Ha especificado la dirección URL de atestación de enclave en la cadena de conexión, pero la instancia de SQL Server no devolvió un tipo de enclave. Asegúrese de que el tipo de enclave está configurado correctamente en la instancia.</value>
+    <value>Ha especificado la dirección URL de atestación de enclave en la cadena de conexión, pero SQL Server no ha devuelto un tipo de enclave. Asegúrese de que el tipo de enclave está configurado correctamente en la instancia. Vea https://go.microsoft.com/fwlink/?linkid=2157649 para obtener más detalles.</value>
   </data>
   <data name="TCE_BatchedUpdateColumnEncryptionSettingMismatch" xml:space="preserve">
     <value>{0} debería ser idéntico en todos los comandos ({1}, {2}, {3}, {4}) cuando se ejecutan actualizaciones en lote.</value>
@@ -4459,7 +4459,7 @@
     <value>Se agotó el tiempo de espera de ejecución. El período de tiempo de espera transcurrió antes de la finalización de la operación o el servidor no responde.</value>
   </data>
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
-    <value>Error en la validación de un token de atestación. La firma del token no coincide con la firma calculada mediante una clave pública recuperada del punto de conexión de clave pública de atestación en "{0}". Compruebe la asignación de DNS del punto de conexión. Si es correcta, póngase en contacto con el servicio de atención al cliente.</value>
+    <value>Error en la validación de un token de atestación. La firma del token no coincide con la firma calculada mediante una clave pública recuperada del punto de conexión de clave pública de atestación en "{0}". Compruebe la asignación de DNS del punto de conexión. Vea https://go.microsoft.com/fwlink/?linkid=2157649 para obtener más detalles. Si es correcta, póngase en contacto con el servicio de atención al cliente.</value>
   </data>
   <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
     <value>Se ha producido un error interno al reintentar la descarga del certificado raíz de HGS después de un error en la solicitud inicial. Póngase en contacto con el servicio de atención al cliente.</value>
@@ -4480,10 +4480,10 @@
     <value>Error en la validación de un token de atestación. El token tiene un formato no válido. Póngase en contacto con el servicio de atención al cliente. Detalles del error: "{0}".</value>
   </data>
   <data name="GetAttestationSigningCertificateFailedInvalidCertificate" xml:space="preserve">
-    <value>El servicio de atestación devolvió un certificado raíz de HGS expirado para la dirección URL de atestación "{0}". Compruebe el certificado raíz de HGS configurado para su instancia de HGS.</value>
+    <value>El servicio de atestación devolvió un certificado raíz de HGS expirado para la dirección URL de atestación "{0}". Compruebe el certificado raíz de HGS configurado para su instancia de HGS. Vea https://go.microsoft.com/fwlink/?linkid=2160553 para obtener más detalles.</value>
   </data>
   <data name="GetAttestationSigningCertificateRequestFailedFormat" xml:space="preserve">
-    <value>El certificado raíz de HGS obtenido para la dirección URL de atestación "{0}" tiene un formato no válido. Compruebe que la dirección URL de atestación sea correcta y que el servidor HGS esté en línea y completamente inicializado. Para obtener más información, póngase en contacto con los servicios de atención al cliente. Detalles del error: "{1}".</value>
+    <value>El certificado raíz de HGS obtenido para la dirección URL de atestación "{0}" tiene un formato no válido. Compruebe que la dirección URL de atestación sea correcta y que el servidor HGS esté en línea y completamente inicializado. Vea https://go.microsoft.com/fwlink/?linkid=2160553 para obtener más información. Para obtener soporte técnico adicional, póngase en contacto con los servicios de atención al cliente. Detalles del error: "{1}".</value>
   </data>
   <data name="GetAttestationTokenSigningKeysFailed" xml:space="preserve">
     <value>Error en la validación de un token de atestación. No se puede recuperar una clave pública del punto de conexión de clave pública de atestación o la clave recuperada tiene un formato no válido. Detalles del error: "{0}".</value>
@@ -4501,28 +4501,31 @@
     <value>Error en la validación del token de atestación durante la validación de la firma. Excepción: "{0}".</value>
   </data>
   <data name="InvalidClaimInAttestationToken" xml:space="preserve">
-    <value>Error en la validación de un token de atestación. La notificación "{0}" del token tiene un valor no válido de "{1}". Compruebe la directiva de atestación. Si es correcta, póngase en contacto con el servicio de atención al cliente.</value>
+    <value>Error en la validación de un token de atestación. La notificación "{0}" en el token tiene un valor no válido para "{1}". Compruebe la directiva de atestación. Vea https://go.microsoft.com/fwlink/?linkid=2157649 para obtener más detalles. Si ka directiva es correcta, póngase en contacto con el servicio de atención al cliente.</value>
   </data>
   <data name="MissingClaimInAttestationToken" xml:space="preserve">
-    <value>Error en la validación del token de atestación. Falta la notificación "{0}" en el token. Compruebe la directiva de atestación. Si es correcta, póngase en contacto con el servicio de atención al cliente.</value>
+    <value>Error en la validación del token de atestación. Falta la notificación "{0}" en el token. Compruebe la directiva de atestación. Vea https://go.microsoft.com/fwlink/?linkid=2157649 para obtener más detalles. Si ka directiva es correcta, póngase en contacto con el servicio de atención al cliente.</value>
   </data>
   <data name="VerifyEnclaveDebuggable" xml:space="preserve">
     <value>No se pudo comprobar si el enclave se está ejecutando en modo de producción. Póngase en contacto con el servicio de atención al cliente.</value>
   </data>
   <data name="VerifyEnclavePolicyFailedFormat" xml:space="preserve">
-    <value>No se pudo comprobar la directiva de enclave debido a una diferencia entre los valores reales y esperados de la directiva en la propiedad "{0}". Valores reales: "{1}"; valores esperados: "{2}".</value>
+    <value>No se pudo comprobar la directiva de enclave debido a una diferencia entre los valores reales y esperados de la directiva en la propiedad "{0}". Valores reales: "{1}"; valores esperados: "{2}". Vea https://go.microsoft.com/fwlink/?linkid=2160553 para obtener más detalles.</value>
   </data>
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
-    <value>Error de comprobación de firma del informe de enclave. La firma del informe no coincide con la firma calculada mediante el certificado raíz de HGS. Compruebe la asignación de DNS del punto de conexión. Si es correcta, póngase en contacto con el servicio de atención al cliente.</value>
+    <value>Error de comprobación de firma del informe de enclave. La firma del informe no coincide con la firma calculada mediante el certificado raíz de HGS. Compruebe la asignación de DNS del punto de conexión. Vea https://go.microsoft.com/fwlink/?linkid=2160553 para más detalles. Si es correcta, póngase en contacto con el servicio de atención al cliente.</value>
   </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>El informe de enclave recibido desde SQL Server no tiene el formato correcto. Póngase en contacto con el servicio de atención al cliente.</value>
   </data>
   <data name="VerifyHealthCertificateChainFormat" xml:space="preserve">
-    <value>No se pudo compilar una cadena de confianza entre el informe de mantenimiento del host del enclave y el certificado raíz de HGS para la dirección URL de atestación "{0}" con el estado "{1}". Compruebe que la dirección URL de atestación coincida con la configurada en la máquina SQL Server. Si el cliente y SQL Server usan el mismo servicio de atestación, póngase en contacto con los servicios de atención al cliente.</value>
+    <value>No se pudo compilar una cadena de confianza entre el informe de mantenimiento del host del enclave y el certificado raíz de HGS para la dirección URL de atestación "{0}" con el estado "{1}". Compruebe que la dirección URL de atestación coincida con la configurada en SQL Server. Vea https://go.microsoft.com/fwlink/?linkid=2160553 para obtener más detalles. Si el cliente y SQL Server usan el mismo servicio de atestación, póngase en contacto con los servicios de atención al cliente.</value>
   </data>
   <data name="TCE_DbConnectionString_AttestationProtocol" xml:space="preserve">
     <value>Especifica un protocolo de atestación para el servicio de atestación de enclave correspondiente.</value>
+  </data>
+  <data name="TCE_DbConnectionString_IPAddressPreference" xml:space="preserve">
+    <value>Especifica una preferencia de dirección IP al conectarse a las instancias de SQL.</value>
   </data>
   <data name="TCE_EnclaveTypeNotSupported" xml:space="preserve">
     <value>No se admite el tipo de enclave "{0}" que ha devuelto el servidor.</value>
@@ -4575,31 +4578,40 @@
   <data name="SQL_SettingCredentialWithDeviceFlow" xml:space="preserve">
     <value>No se puede establecer la propiedad Credential si se ha especificado "Authentication=Active Directory Device Code Flow" en la cadena de conexión.</value>
   </data>
-  <data name="SQL_SettingCredentialWithManagedIdentity" xml:space="preserve">
+  <data name="SQL_SettingCredentialWithNonInteractive" xml:space="preserve">
     <value>No se puede establecer la propiedad Credential si se ha especificado "Authentication={0}" en la cadena de conexión.</value>
   </data>
   <data name="SQL_SettingDeviceFlowWithCredential" xml:space="preserve">
     <value>No se puede usar "Active Directory Device Code Flow" si se ha establecido la propiedad Credential.</value>
   </data>
-  <data name="SQL_SettingManagedIdentityWithCredential" xml:space="preserve">
+  <data name="SQL_SettingNonInteractiveWithCredential" xml:space="preserve">
     <value>No se puede usar "Authentication={0}" si se ha establecido la propiedad Credential.</value>
   </data>
-  <data name="Azure_GenericErrorMessage" xml:space="preserve">
-    <value>No se pudo adquirir el token de acceso.</value>
+  <data name="SqlDependency_UnexpectedValueOnDeserialize" xml:space="preserve">
+    <value>Se ha detectado un tipo inesperado al realizar la deserialización.</value>
   </data>
-  <data name="Azure_IdentityEndpointNotListening" xml:space="preserve">
-    <value>No se puede conectar con el punto de conexión de la identidad administrada. Compruebe que se está ejecutando en un recurso de Azure que tiene la configuración de identidad.</value>
+  <data name="SqlRetryLogic_InvalidRange" xml:space="preserve">
+    <value>El valor "{0}" no está en el rango; debe estar comprendido entre {1} y {2}.</value>
   </data>
-  <data name="Azure_ManagedIdentityUsed" xml:space="preserve">
-    <value>Se intentó obtener el token con la identidad administrada.</value>
+  <data name="SqlRetryLogic_RetryCanceled" xml:space="preserve">
+    <value>El reintento se ha cancelado en el intento número {0}.</value>
   </data>
-  <data name="Azure_MetadataEndpointNotListening" xml:space="preserve">
-    <value>No se puede conectar con Instance Metadata Service (IMDS). Se omitirá la solicitud al punto de conexión del token de la identidad administrada.</value>
+  <data name="SqlRetryLogic_RetryExceeded" xml:space="preserve">
+    <value>El número de reintentos ha superado el máximo permitido, que es de {0}.</value>
   </data>
-  <data name="Azure_NonRetryableError" xml:space="preserve">
-    <value>Se ha recibido un error no recuperable.</value>
+  <data name="SqlRetryLogic_InvalidMinMaxPair" xml:space="preserve">
+    <value>"{0}" no es menor que "{1}"; "{2}" no puede ser mayor que "{3}".</value>
   </data>
-  <data name="Azure_RetryFailure" xml:space="preserve">
-    <value>Error después de 5 reintentos.</value>
+  <data name="Arg_ArrayPlusOffTooSmall" xml:space="preserve">
+    <value>La matriz de destino no es lo suficientemente larga para copiar todos los elementos de la colección. Compruebe el índice y la longitud de la matriz.</value>
+  </data>
+  <data name="Arg_RankMultiDimNotSupported" xml:space="preserve">
+    <value>Solo se admiten matrices de una sola dimensión para la acción solicitada.</value>
+  </data>
+  <data name="Arg_RemoveArgNotFound" xml:space="preserve">
+    <value>No se puede quitar el elemento especificado porque no se puede encontrar en la colección especificada.</value>
+  </data>
+  <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
+    <value>Número no negativo requerido.</value>
   </data>
 </root>

@@ -3412,6 +3412,8 @@ namespace Microsoft.Data.SqlClient
         {
             SqlStatistics statistics = null;
             long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlDataReader.TryReadInternal | API | Object Id {0}", ObjectID);
+            RuntimeHelpers.PrepareConstrainedRegions();
+
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
@@ -3560,6 +3562,39 @@ namespace Microsoft.Data.SqlClient
 #endif
 
                 return true;
+            }
+            catch (OutOfMemoryException e)
+            {
+                _isClosed = true;
+                SqlConnection con = _connection;
+                if (con != null)
+                {
+                    con.Abort(e);
+                }
+                throw;
+            }
+            catch (StackOverflowException e)
+            {
+                _isClosed = true;
+                SqlConnection con = _connection;
+                if (con != null)
+                {
+                    con.Abort(e);
+                }
+                throw;
+            }
+            /* Even though ThreadAbortException exists in .NET Core, 
+             * since Abort is not supported, the common language runtime won't ever throw ThreadAbortException.
+             * just to keep a common codebase!*/
+            catch (System.Threading.ThreadAbortException e)
+            {
+                _isClosed = true;
+                SqlConnection con = _connection;
+                if (con != null)
+                {
+                    con.Abort(e);
+                }
+                throw;
             }
             finally
             {
@@ -3732,16 +3767,26 @@ namespace Microsoft.Data.SqlClient
                     _sharedState._nextColumnDataToRead = _sharedState._nextColumnHeaderToRead;
                     _sharedState._nextColumnHeaderToRead++;  // We read this one
 
-                    if (isNull && columnMetaData.type != SqlDbType.Timestamp)
+                    if (isNull)
                     {
-                        TdsParser.GetNullSqlValue(_data[_sharedState._nextColumnDataToRead],
-                            columnMetaData,
-                            _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
-                            _parser.Connection);
-
-                        if (!readHeaderOnly)
+                        if (columnMetaData.type == SqlDbType.Timestamp)
                         {
-                            _sharedState._nextColumnDataToRead++;
+                            if (!LocalAppContextSwitches.LegacyRowVersionNullBehavior)
+                            {
+                                _data[i].SetToNullOfType(SqlBuffer.StorageType.SqlBinary);
+                            }
+                        }
+                        else
+                        {
+                            TdsParser.GetNullSqlValue(_data[_sharedState._nextColumnDataToRead],
+                                columnMetaData,
+                                _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
+                                _parser.Connection);
+
+                            if (!readHeaderOnly)
+                            {
+                                _sharedState._nextColumnDataToRead++;
+                            }
                         }
                     }
                     else
@@ -3753,7 +3798,7 @@ namespace Microsoft.Data.SqlClient
                             // can read it out of order
                             if (!_parser.TryReadSqlValue(_data[_sharedState._nextColumnDataToRead], columnMetaData, (int)dataLength, _stateObj,
                                 _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
-                                columnMetaData.column))
+                                columnMetaData.column, _command))
                             { // will read UDTs as VARBINARY.
                                 return false;
                             }

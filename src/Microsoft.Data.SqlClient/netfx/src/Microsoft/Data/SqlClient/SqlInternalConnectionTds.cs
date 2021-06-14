@@ -114,7 +114,7 @@ namespace Microsoft.Data.SqlClient
         private TdsParser _parser;
         private SqlLoginAck _loginAck;
         private SqlCredential _credential;
-        private FederatedAuthenticationFeatureExtensionData? _fedAuthFeatureExtensionData;
+        private FederatedAuthenticationFeatureExtensionData _fedAuthFeatureExtensionData;
 
         // Connection Resiliency
         private bool _sessionRecoveryRequested;
@@ -1380,8 +1380,12 @@ namespace Microsoft.Data.SqlClient
                         stateObj = _parser.GetSession(this);
                         mustPutSession = true;
                     }
-                    else if (internalTransaction.OpenResultsCount != 0)
+                    if (internalTransaction.OpenResultsCount != 0)
                     {
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.ExecuteTransactionYukon|DATA|CATCH> {0}, Connection is marked to be doomed when closed. Transaction ended with OpenResultsCount {1} > 0, MARSOn {2}",
+                                                               ObjectID,
+                                                               internalTransaction.OpenResultsCount,
+                                                               _parser.MARSOn);
                         throw SQL.CannotCompleteDelegatedTransactionWithOpenResults(this, _parser.MARSOn);
                     }
                 }
@@ -1576,6 +1580,7 @@ namespace Microsoft.Data.SqlClient
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
                 || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI
+                || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDefault
                 // Since AD Integrated may be acting like Windows integrated, additionally check _fedAuthRequired
                 || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _fedAuthRequired))
             {
@@ -1971,7 +1976,8 @@ namespace Microsoft.Data.SqlClient
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal ||
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow ||
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity ||
-                                       connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI;
+                                       connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI ||
+                                       connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDefault;
 
             // Check if the user had explicitly specified the TNIR option in the connection string or the connection string builder.
             // If the user has specified the option in the connection string explicitly, then we shouldn't disable TNIR.
@@ -2559,6 +2565,7 @@ namespace Microsoft.Data.SqlClient
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI
+                         || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDefault
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
                          || (ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _fedAuthRequired),
                          "Credentials aren't provided for calling MSAL");
@@ -2771,7 +2778,8 @@ namespace Microsoft.Data.SqlClient
                         authority: fedAuthInfo.stsurl,
                         serverName: ConnectionOptions.DataSource,
                         databaseName: ConnectionOptions.InitialCatalog)
-                        .WithConnectionId(_clientConnectionId);
+                        .WithConnectionId(_clientConnectionId)
+                        .WithConnectionTimeout(ConnectionOptions.ConnectTimeout);
                     switch (ConnectionOptions.Authentication)
                     {
                         case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
@@ -2782,7 +2790,7 @@ namespace Microsoft.Data.SqlClient
                             }
                             else
                             {
-                                Task.Run(() => fedAuthToken = authProvider.AcquireTokenAsync(authParamsBuilder).Result.ToSqlFedAuthToken()).Wait();
+                                fedAuthToken = authProvider.AcquireTokenAsync(authParamsBuilder).Result.ToSqlFedAuthToken();
                                 _activeDirectoryAuthTimeoutRetryHelper.CachedToken = fedAuthToken;
                             }
                             break;
@@ -2790,6 +2798,7 @@ namespace Microsoft.Data.SqlClient
                         case SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow:
                         case SqlAuthenticationMethod.ActiveDirectoryManagedIdentity:
                         case SqlAuthenticationMethod.ActiveDirectoryMSI:
+                        case SqlAuthenticationMethod.ActiveDirectoryDefault:
                             if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
                             {
                                 fedAuthToken = _activeDirectoryAuthTimeoutRetryHelper.CachedToken;
@@ -2797,7 +2806,7 @@ namespace Microsoft.Data.SqlClient
                             else
                             {
                                 authParamsBuilder.WithUserId(ConnectionOptions.UserID);
-                                Task.Run(() => fedAuthToken = authProvider.AcquireTokenAsync(authParamsBuilder).Result.ToSqlFedAuthToken()).Wait();
+                                fedAuthToken = authProvider.AcquireTokenAsync(authParamsBuilder).Result.ToSqlFedAuthToken();
                                 _activeDirectoryAuthTimeoutRetryHelper.CachedToken = fedAuthToken;
                             }
                             break;
@@ -2813,13 +2822,13 @@ namespace Microsoft.Data.SqlClient
                                 {
                                     username = _credential.UserId;
                                     authParamsBuilder.WithUserId(username).WithPassword(_credential.Password);
-                                    Task.Run(() => fedAuthToken = authProvider.AcquireTokenAsync(authParamsBuilder).Result.ToSqlFedAuthToken()).Wait();
+                                    fedAuthToken = authProvider.AcquireTokenAsync(authParamsBuilder).Result.ToSqlFedAuthToken();
                                 }
                                 else
                                 {
                                     username = ConnectionOptions.UserID;
                                     authParamsBuilder.WithUserId(username).WithPassword(ConnectionOptions.Password);
-                                    Task.Run(() => fedAuthToken = authProvider.AcquireTokenAsync(authParamsBuilder).Result.ToSqlFedAuthToken()).Wait();
+                                    fedAuthToken = authProvider.AcquireTokenAsync(authParamsBuilder).Result.ToSqlFedAuthToken();
                                 }
                                 _activeDirectoryAuthTimeoutRetryHelper.CachedToken = fedAuthToken;
                             }
@@ -2985,7 +2994,7 @@ namespace Microsoft.Data.SqlClient
 
                         Debug.Assert(_fedAuthFeatureExtensionData != null, "_fedAuthFeatureExtensionData must not be null when _federatedAuthenticationRequested == true");
 
-                        switch (_fedAuthFeatureExtensionData.Value.libraryType)
+                        switch (_fedAuthFeatureExtensionData.libraryType)
                         {
                             case TdsEnums.FedAuthLibrary.MSAL:
                             case TdsEnums.FedAuthLibrary.SecurityToken:
@@ -3001,7 +3010,7 @@ namespace Microsoft.Data.SqlClient
                                 Debug.Fail("Unknown _fedAuthLibrary type");
 
                                 SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Attempting to use unknown federated authentication library", ObjectID);
-                                throw SQL.ParsingErrorLibraryType(ParsingErrorState.FedAuthFeatureAckUnknownLibraryType, (int)_fedAuthFeatureExtensionData.Value.libraryType);
+                                throw SQL.ParsingErrorLibraryType(ParsingErrorState.FedAuthFeatureAckUnknownLibraryType, (int)_fedAuthFeatureExtensionData.libraryType);
                         }
                         _federatedAuthenticationAcknowledged = true;
 
@@ -3050,6 +3059,7 @@ namespace Microsoft.Data.SqlClient
                         Debug.Assert(_tceVersionSupported <= TdsEnums.MAX_SUPPORTED_TCE_VERSION, "Client support TCE version 2");
                         _parser.IsColumnEncryptionSupported = true;
                         _parser.TceVersionSupported = _tceVersionSupported;
+                        _parser.AreEnclaveRetriesSupported = _tceVersionSupported == 3;
 
                         if (data.Length > 1)
                         {

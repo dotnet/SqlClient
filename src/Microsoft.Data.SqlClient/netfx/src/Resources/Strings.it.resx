@@ -2502,7 +2502,7 @@
   <data name="SQL_DeviceFlowWithUsernamePassword" xml:space="preserve">
     <value>Non è possibile usare 'Authentication=Active Directory Device Code Flow' con le parole chiave della stringa di connessione 'User ID', 'UID', 'Password' o 'PWD'.</value>
   </data>
-  <data name="SQL_ManagedIdentityWithPassword" xml:space="preserve">
+  <data name="SQL_NonInteractiveWithPassword" xml:space="preserve">
     <value>Non è possibile usare 'Authentication={0}' con le parole chiave della stringa di connessione 'Password' o 'PWD'.</value>
   </data>
   <data name="SQL_SettingIntegratedWithCredential" xml:space="preserve">
@@ -4345,16 +4345,16 @@
     <value>L'istanza {0} in uso non supporta la crittografia di colonna.</value>
   </data>
   <data name="TCE_EnclaveComputationsNotSupported" xml:space="preserve">
-    <value>Sono stati specificati l'URL di attestazione dell'enclave e il protocollo di attestazione nella stringa di connessione, ma l'istanza di SQL Server in uso non supporta i calcoli basati su enclave.</value>
+    <value>Sono stati specificati l'URL di attestazione dell'enclave e il protocollo di attestazione nella stringa di connessione, ma SQL Server in uso non supporta i calcoli basati su enclave - vedere https://go.microsoft.com/fwlink/?linkid=2157649 per altri dettagli.</value>
   </data>
   <data name="TCE_AttestationURLNotSupported" xml:space="preserve">
-    <value>L'URL di attestazione dell'enclave è stato specificato nella stringa di connessione, ma l'istanza di SQL Server non supporta i calcoli basati su enclave.</value>
+    <value>È stato specificato l'URL di attestazione dell'enclave nella stringa di connessione, ma SQL Server in uso non supporta i calcoli basati su enclave - vedere https://go.microsoft.com/fwlink/?linkid=2157649 per altri dettagli.</value>
   </data>
   <data name="TCE_AttestationProtocolNotSupported" xml:space="preserve">
-    <value>È stato specificato il protocollo di attestazione nella stringa di connessione, ma l'istanza di SQL Server in uso non supporta i calcoli basati su enclave.</value>
+    <value>È stato specificato il protocollo di attestazione nella stringa di connessione, ma SQL Server in uso non supporta i calcoli basati su enclave - vedere https://go.microsoft.com/fwlink/?linkid=2157649 per altri dettagli.</value>
   </data>
   <data name="TCE_EnclaveTypeNotReturned" xml:space="preserve">
-    <value>L'URL di attestazione dell'enclave è stato specificato nella stringa di connessione, ma l'istanza di SQL Server non ha restituito un tipo di enclave. Assicurarsi che il tipo di enclave sia configurato correttamente nell'istanza.</value>
+    <value>L'URL di attestazione dell'enclave è stato specificato nella stringa di connessione, ma SQL Server non ha restituito un tipo di enclave. Assicurarsi che il tipo di enclave sia configurato correttamente nell'istanza - vedere https://go.microsoft.com/fwlink/?linkid=2157649 per altri dettagli.</value>
   </data>
   <data name="TCE_BatchedUpdateColumnEncryptionSettingMismatch" xml:space="preserve">
     <value>Quando si eseguono aggiornamenti in batch, {0} deve essere identico in tutti i comandi ({1}, {2}, {3}, {4}).</value>
@@ -4459,7 +4459,7 @@
     <value>Il timeout di esecuzione è scaduto. Il periodo di timeout è scaduto prima del completamento dell'operazione oppure il server non risponde.</value>
   </data>
   <data name="AttestationTokenSignatureValidationFailed" xml:space="preserve">
-    <value>La convalida di un token di attestazione non è riuscita. La firma del token non corrisponde alla firma calcolata usando una chiave pubblica recuperata dall'endpoint della chiave pubblica di attestazione in '{0}'. Verificare il mapping DNS per l'endpoint. Se è corretto, contattare il Servizio Supporto Tecnico Clienti.</value>
+    <value>La convalida di un token di attestazione non è riuscita. La firma del token non corrisponde alla firma calcolata usando una chiave pubblica recuperata dall'endpoint della chiave pubblica di attestazione in '{0}'. Verificare il mapping DNS per l'endpoint - vedere https://go.microsoft.com/fwlink/?linkid=2157649 per altri dettagli. Se è corretto, contattare il Servizio Supporto Tecnico Clienti.</value>
   </data>
   <data name="EnclaveRetrySleepInSecondsValueException" xml:space="preserve">
     <value>Si è verificato un errore interno durante il tentativo di eseguire il download del certificato radice HGS dopo che la richiesta iniziale non è riuscita. Contattare il Servizio Supporto Tecnico Clienti.</value>
@@ -4480,10 +4480,10 @@
     <value>La convalida di un token di attestazione non è riuscita. Il formato del token non è valido. Contattare il Servizio Supporto Tecnico Clienti. Dettagli dell'errore: '{0}'.</value>
   </data>
   <data name="GetAttestationSigningCertificateFailedInvalidCertificate" xml:space="preserve">
-    <value>Il servizio di attestazione ha restituito un certificato radice HGS scaduto per l'URL di attestazione '{0}'. Controllare il certificato radice HGS configurato per l'istanza di HGS.</value>
+    <value>Il servizio di attestazione ha restituito un certificato radice HGS scaduto per l'URL di attestazione '{0}'. Verificare il certificato radice HGS configurato per l'istanza di HGS - vedere https://go.microsoft.com/fwlink/?linkid=2160553 per altri dettagli.</value>
   </data>
   <data name="GetAttestationSigningCertificateRequestFailedFormat" xml:space="preserve">
-    <value>Il formato del certificato radice HGS ottenuto per l'URL di attestazione '{0}' non è valido. Verificare che l'URL di attestazione sia corretto e che il server HGS sia online e completamente inizializzato. Per altre informazioni, contattare il Servizio Supporto Tecnico Clienti. Dettagli errore: '{1}'.</value>
+    <value>Il formato del certificato radice HGS ottenuto per l'URL di attestazione '{0}' non è valido. Verificare che l'URL di attestazione sia corretto e che il server HGS sia online e completamente inizializzato - vedere https://go.microsoft.com/fwlink/?linkid=2160553 per altri dettagli. Per ulteriore assistenza, contattare il Servizio Supporto Tecnico Clienti. Dettagli errore: '{1}'.</value>
   </data>
   <data name="GetAttestationTokenSigningKeysFailed" xml:space="preserve">
     <value>La convalida di un token di attestazione non è riuscita. Non è possibile recuperare una chiave pubblica dall'endpoint della chiave pubblica di attestazione oppure la chiave recuperata ha un formato non valido. Dettagli dell'errore: '{0}'.</value>
@@ -4501,28 +4501,31 @@
     <value>La convalida del token di attestazione non è riuscita durante la convalida della firma. Eccezione: '{0}'.</value>
   </data>
   <data name="InvalidClaimInAttestationToken" xml:space="preserve">
-    <value>La convalida di un token di attestazione non è riuscita. Il valore '{1}' dell'attestazione '{0}' nel token non è valido. Verificare i criteri di attestazione. Se i criteri sono corretti, contattare il Servizio Supporto Tecnico Clienti.</value>
+    <value>La convalida del token di attestazione non è riuscita. L'attestazione '{0}' presenta il valore non valido '{1}'. Verificare i criteri di attestazione - vedere https://go.microsoft.com/fwlink/?linkid=2157649 per altri dettagli. Se i criteri sono corretti, contattare il Servizio Supporto Tecnico Clienti.</value>
   </data>
   <data name="MissingClaimInAttestationToken" xml:space="preserve">
-    <value>La convalida del token di attestazione non è riuscita. L'attestazione '{0}' non è presente nel token. Verificare i criteri di attestazione. Se i criteri sono corretti, contattare il Servizio Supporto Tecnico Clienti.</value>
+    <value>La convalida del token di attestazione non è riuscita. L'attestazione '{0}' non è presente nel token. Verificare i criteri di attestazione - vedere https://go.microsoft.com/fwlink/?linkid=2157649 per altri dettagli. Se i criteri sono corretti, contattare il Servizio Supporto Tecnico Clienti.</value>
   </data>
   <data name="VerifyEnclaveDebuggable" xml:space="preserve">
     <value>Non è stato possibile verificare se l'enclave è in esecuzione in modalità di produzione. Contattare il Servizio Supporto Tecnico Clienti.</value>
   </data>
   <data name="VerifyEnclavePolicyFailedFormat" xml:space="preserve">
-    <value>Non è stato possibile verificare i criteri dell'enclave a causa di una differenza tra il valore previsto e il valore effettivo dei criteri per la proprietà '{0}'. Effettivo: '{1}', previsto: '{2}'.</value>
+    <value>Non è stato possibile verificare i criteri dell'enclave a causa di una differenza tra il valore previsto e il valore effettivo dei criteri per la proprietà '{0}'. Effettivo: '{1}', previsto: '{2}'. - vedere https://go.microsoft.com/fwlink/?linkid=2160553 per altri dettagli.</value>
   </data>
   <data name="VerifyEnclaveReportFailed" xml:space="preserve">
-    <value>La verifica della firma del report dell'enclave non è riuscita. La firma del report non corrisponde alla firma calcolata usando il certificato radice HGS. Verificare il mapping DNS per l'endpoint. Se è corretto, contattare il Servizio Supporto Tecnico Clienti.</value>
+    <value>La verifica della firma del report dell'enclave non è riuscita. La firma del report non corrisponde alla firma calcolata usando il certificato radice HGS. Verificare il mapping DNS per l'endpoint - vedere https://go.microsoft.com/fwlink/?linkid=2160553 per altri dettagli. Se è corretto, contattare il Servizio Supporto Tecnico Clienti.</value>
   </data>
   <data name="VerifyEnclaveReportFormatFailed" xml:space="preserve">
     <value>Il formato del report dell'enclave ricevuto da SQL Server non è corretto. Contattare il Servizio Supporto Tecnico Clienti.</value>
   </data>
   <data name="VerifyHealthCertificateChainFormat" xml:space="preserve">
-    <value>Non è stato possibile creare una catena di certificati tra il report sull'integrità dell'host dell'enclave e il certificato radice HGS per l'URL di attestazione '{0}' con stato: '{1}'. Verificare che l'URL di attestazione corrisponda all'URL configurato nel computer SQL Server. Se il client e SQL Server usano lo stesso servizio di attestazione, contattare il Servizio Supporto Tecnico Clienti.</value>
+    <value>Non è stato possibile creare una catena di certificati tra il report sull'integrità dell'host dell'enclave e il certificato radice HGS per l'URL di attestazione '{0}' con stato: '{1}'. Verificare che l'URL di attestazione corrisponda all'URL configurato in SQL Server - vedere https://go.microsoft.com/fwlink/?linkid=2160553 per altri dettagli. Se il client e SQL Server usano lo stesso servizio di attestazione, contattare il Servizio Supporto Tecnico Clienti.</value>
   </data>
   <data name="TCE_DbConnectionString_AttestationProtocol" xml:space="preserve">
     <value>Specifica un protocollo di attestazione per il servizio di attestazione dell'enclave corrispondente.</value>
+  </data>
+  <data name="TCE_DbConnectionString_IPAddressPreference" xml:space="preserve">
+    <value>Specifica una preferenza di indirizzo IP per la connessione alle istanze SQL.</value>
   </data>
   <data name="TCE_EnclaveTypeNotSupported" xml:space="preserve">
     <value>Il tipo di enclave '{0}' restituito dal server non è supportato.</value>
@@ -4575,31 +4578,40 @@
   <data name="SQL_SettingCredentialWithDeviceFlow" xml:space="preserve">
     <value>Non è possibile impostare la proprietà Credential se nella stringa di connessione è stato specificato 'Authentication=Active Directory Device Code Flow'.</value>
   </data>
-  <data name="SQL_SettingCredentialWithManagedIdentity" xml:space="preserve">
+  <data name="SQL_SettingCredentialWithNonInteractive" xml:space="preserve">
     <value>Non è possibile impostare la proprietà Credential se nella stringa di connessione è stato specificato 'Authentication={0}'.</value>
   </data>
   <data name="SQL_SettingDeviceFlowWithCredential" xml:space="preserve">
     <value>Non è possibile usare 'Authentication=Active Directory Device Code Flow' se è stata impostata la proprietà Credential.</value>
   </data>
-  <data name="SQL_SettingManagedIdentityWithCredential" xml:space="preserve">
+  <data name="SQL_SettingNonInteractiveWithCredential" xml:space="preserve">
     <value>Non è possibile usare 'Authentication={0}' se è stata impostata la proprietà Credential.</value>
   </data>
-  <data name="Azure_GenericErrorMessage" xml:space="preserve">
-    <value>Non è stato possibile acquisire il token di accesso.</value>
+  <data name="SqlDependency_UnexpectedValueOnDeserialize" xml:space="preserve">
+    <value>Tipo imprevisto rilevato durante la deserializzazione.</value>
   </data>
-  <data name="Azure_IdentityEndpointNotListening" xml:space="preserve">
-    <value>Non è possibile connettersi all'endpoint dell'identità gestita. Verificare che sia in esecuzione una risorsa di Azure con configurazione dell'identità.</value>
+  <data name="SqlRetryLogic_InvalidRange" xml:space="preserve">
+    <value>Il valore '{0}' non è compreso nell'intervallo. Deve essere compreso tra {1} e {2}.</value>
   </data>
-  <data name="Azure_ManagedIdentityUsed" xml:space="preserve">
-    <value>È stato eseguito un tentativo di ottenere un token usando l'identità gestita.</value>
+  <data name="SqlRetryLogic_RetryCanceled" xml:space="preserve">
+    <value>Il tentativo è stato annullato al tentativo {0}.</value>
   </data>
-  <data name="Azure_MetadataEndpointNotListening" xml:space="preserve">
-    <value>Non è possibile connettersi al servizio metadati dell'istanza. La richiesta all'endpoint del token dell'identità gestita verrà ignorata.</value>
+  <data name="SqlRetryLogic_RetryExceeded" xml:space="preserve">
+    <value>Il numero di tentativi supera il limite massimo di {0} tentativi.</value>
   </data>
-  <data name="Azure_NonRetryableError" xml:space="preserve">
-    <value>È stato ricevuto un errore irreversibile.</value>
+  <data name="SqlRetryLogic_InvalidMinMaxPair" xml:space="preserve">
+    <value>'{0}' non è minore di '{1}'; '{2}' non può essere maggiore di '{3}'.</value>
   </data>
-  <data name="Azure_RetryFailure" xml:space="preserve">
-    <value>L'operazione non è riuscita dopo 5 tentativi.</value>
+  <data name="Arg_ArrayPlusOffTooSmall" xml:space="preserve">
+    <value>La lunghezza della matrice di destinazione non è sufficiente per copiare tutti gli elementi della raccolta. Controllare l'indice e la lunghezza della matrice.</value>
+  </data>
+  <data name="Arg_RankMultiDimNotSupported" xml:space="preserve">
+    <value>Per l'azione richiesta sono supportate solo matrici unidimensionali.</value>
+  </data>
+  <data name="Arg_RemoveArgNotFound" xml:space="preserve">
+    <value>Impossibile rimuovere l'elemento specificato, perché non si trova nella raccolta indicata.</value>
+  </data>
+  <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
+    <value>Numero non negativo obbligatorio.</value>
   </data>
 </root>
