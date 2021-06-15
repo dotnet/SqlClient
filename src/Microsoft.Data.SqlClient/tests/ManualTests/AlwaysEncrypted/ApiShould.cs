@@ -881,7 +881,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
-        public void TestEnclaveStoredProcedure(string connectionString)
+        public void TestEnclaveStoredProceduresWithAndWithoutParameters(string connectionString)
         {
             using SqlConnection sqlConnection = new(connectionString);
             sqlConnection.Open();
