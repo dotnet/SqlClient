@@ -639,7 +639,7 @@ namespace Microsoft.Data.SqlClient
         public byte Updatability
         {
             get => (byte)(flags & _SqlMetadataFlags.IsUpdatableMask);
-            set => flags = (_SqlMetadataFlags)((value & 0x3) | ((int)flags & ~0x03));
+            set => flags = (_SqlMetadataFlags)((value & (byte)_SqlMetadataFlags.IsUpdatableMask) | ((int)flags & ~(byte)_SqlMetadataFlags.IsUpdatableMask));
         }
 
         public bool IsReadOnly
