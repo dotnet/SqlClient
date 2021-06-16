@@ -21,12 +21,15 @@ namespace Microsoft.Data.SqlClient.Server
         private FieldNameLookup _fieldNameLookup;
         private bool _usesStringStorageForXml;
 
-        private static readonly SmiMetaData s_maxNVarCharForXml = new SmiMetaData(SqlDbType.NVarChar, SmiMetaData.UnlimitedMaxLengthIndicator,
-                                        SmiMetaData.DefaultNVarChar_NoCollation.Precision,
-                                        SmiMetaData.DefaultNVarChar_NoCollation.Scale,
-                                        SmiMetaData.DefaultNVarChar.LocaleId,
-                                        SmiMetaData.DefaultNVarChar.CompareOptions,
-                                        null);
+        private static readonly SmiMetaData s_maxNVarCharForXml = new SmiMetaData(
+            SqlDbType.NVarChar, 
+            SmiMetaData.UnlimitedMaxLengthIndicator,
+            SmiMetaData.DefaultNVarChar_NoCollation.Precision,
+            SmiMetaData.DefaultNVarChar_NoCollation.Scale,
+            SmiMetaData.DefaultNVarChar.LocaleId,
+            SmiMetaData.DefaultNVarChar.CompareOptions,
+            userDefinedType: null
+        );
 
         /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/FieldCount/*' />
         public virtual int FieldCount
@@ -50,7 +53,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             EnsureSubclassOverride();
             SqlMetaData metaData = GetSqlMetaData(ordinal);
-            if (SqlDbType.Udt == metaData.SqlDbType)
+            if (metaData.SqlDbType == SqlDbType.Udt)
             {
                 return metaData.UdtTypeName;
             }
@@ -64,10 +67,8 @@ namespace Microsoft.Data.SqlClient.Server
         public virtual Type GetFieldType(int ordinal)
         {
             EnsureSubclassOverride();
-            {
-                SqlMetaData md = GetSqlMetaData(ordinal);
-                return MetaType.GetMetaTypeFromSqlDbType(md.SqlDbType, false).ClassType;
-            }
+            SqlMetaData md = GetSqlMetaData(ordinal);
+            return MetaType.GetMetaTypeFromSqlDbType(md.SqlDbType, false).ClassType;
         }
 
         /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetValue/*' />
@@ -75,20 +76,14 @@ namespace Microsoft.Data.SqlClient.Server
         {
             EnsureSubclassOverride();
             SmiMetaData metaData = GetSmiMetaData(ordinal);
-
-            return ValueUtilsSmi.GetValue200(
-                            _eventSink,
-                            _recordBuffer,
-                            ordinal,
-                            metaData
-                                );
+            return ValueUtilsSmi.GetValue200(_eventSink, _recordBuffer, ordinal, metaData);
         }
 
         /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetValues/*' />
         public virtual int GetValues(object[] values)
         {
             EnsureSubclassOverride();
-            if (null == values)
+            if (values == null)
             {
                 throw ADP.ArgumentNull(nameof(values));
             }
@@ -158,7 +153,7 @@ namespace Microsoft.Data.SqlClient.Server
         public virtual long GetBytes(int ordinal, long fieldOffset, byte[] buffer, int bufferOffset, int length)
         {
             EnsureSubclassOverride();
-            return ValueUtilsSmi.GetBytes(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), fieldOffset, buffer, bufferOffset, length, true);
+            return ValueUtilsSmi.GetBytes(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), fieldOffset, buffer, bufferOffset, length, throwOnNull: true);
         }
 
         /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetChar/*' />
@@ -222,7 +217,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             EnsureSubclassOverride();
             SmiMetaData colMeta = GetSmiMetaData(ordinal);
-            if (_usesStringStorageForXml && SqlDbType.Xml == colMeta.SqlDbType)
+            if (_usesStringStorageForXml && colMeta.SqlDbType == SqlDbType.Xml)
             {
                 return ValueUtilsSmi.GetString(_eventSink, _recordBuffer, ordinal, s_maxNVarCharForXml);
             }
@@ -296,11 +291,10 @@ namespace Microsoft.Data.SqlClient.Server
         public virtual int GetSqlValues(object[] values)
         {
             EnsureSubclassOverride();
-            if (null == values)
+            if (values == null)
             {
                 throw ADP.ArgumentNull(nameof(values));
             }
-
 
             int copyLength = (values.Length < FieldCount) ? values.Length : FieldCount;
             for (int i = 0; i < copyLength; i++)
@@ -428,7 +422,7 @@ namespace Microsoft.Data.SqlClient.Server
         public virtual int SetValues(params object[] values)
         {
             EnsureSubclassOverride();
-            if (null == values)
+            if (values == null)
             {
                 throw ADP.ArgumentNull(nameof(values));
             }
@@ -443,8 +437,12 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 SqlMetaData metaData = GetSqlMetaData(i);
                 typeCodes[i] = MetaDataUtilsSmi.DetermineExtendedTypeCodeForUseWithSqlDbType(
-                    metaData.SqlDbType, false /* isMultiValued */, values[i], metaData.Type);
-                if (ExtendedClrTypeCode.Invalid == typeCodes[i])
+                    metaData.SqlDbType,
+                    isMultiValued: false,
+                    values[i],
+                    metaData.Type
+                );
+                if (typeCodes[i] == ExtendedClrTypeCode.Invalid)
                 {
                     throw ADP.InvalidCast();
                 }
@@ -454,7 +452,7 @@ namespace Microsoft.Data.SqlClient.Server
             //      the validation loop and here, or if an invalid UDT was sent).
             for (int i = 0; i < copyLength; i++)
             {
-                ValueUtilsSmi.SetCompatibleValueV200(_eventSink, _recordBuffer, i, GetSmiMetaData(i), values[i], typeCodes[i], 0, 0, null);
+                ValueUtilsSmi.SetCompatibleValueV200(_eventSink, _recordBuffer, i, GetSmiMetaData(i), values[i], typeCodes[i], offset: 0, length: 0, peekAhead: null);
             }
 
             return copyLength;
@@ -466,13 +464,17 @@ namespace Microsoft.Data.SqlClient.Server
             EnsureSubclassOverride();
             SqlMetaData metaData = GetSqlMetaData(ordinal);
             ExtendedClrTypeCode typeCode = MetaDataUtilsSmi.DetermineExtendedTypeCodeForUseWithSqlDbType(
-                        metaData.SqlDbType, false /* isMultiValued */, value, metaData.Type);
-            if (ExtendedClrTypeCode.Invalid == typeCode)
+                metaData.SqlDbType, 
+                isMultiValued: false,
+                value,
+                metaData.Type
+            );
+            if (typeCode == ExtendedClrTypeCode.Invalid)
             {
                 throw ADP.InvalidCast();
             }
 
-            ValueUtilsSmi.SetCompatibleValueV200(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value, typeCode, 0, 0, null);
+            ValueUtilsSmi.SetCompatibleValueV200(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value, typeCode, offset: 0, length: 0, peekAhead: null);
         }
 
         /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetBoolean/*' />
@@ -550,6 +552,7 @@ namespace Microsoft.Data.SqlClient.Server
             EnsureSubclassOverride();
             ValueUtilsSmi.SetString(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value);
         }
+
         /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetDecimal/*' />
         public virtual void SetDecimal(int ordinal, decimal value)
         {
@@ -709,7 +712,7 @@ namespace Microsoft.Data.SqlClient.Server
         public SqlDataRecord(params SqlMetaData[] metaData)
         {
             // Initial consistency check
-            if (null == metaData)
+            if (metaData == null)
             {
                 throw ADP.ArgumentNull(nameof(metaData));
             }
@@ -718,7 +721,7 @@ namespace Microsoft.Data.SqlClient.Server
             _columnSmiMetaData = new SmiExtendedMetaData[metaData.Length];
             for (int i = 0; i < _columnSmiMetaData.Length; i++)
             {
-                if (null == metaData[i])
+                if (metaData[i] == null)
                 {
                     throw ADP.ArgumentNull($"{nameof(metaData)}[{i}]");
                 }
@@ -727,7 +730,6 @@ namespace Microsoft.Data.SqlClient.Server
             }
 
             _eventSink = new SmiEventSink_Default();
-
             _recordBuffer = new MemoryRecordBuffer(_columnSmiMetaData);
             _usesStringStorageForXml = true;
             _eventSink.ProcessMessagesAndThrow();
@@ -735,8 +737,8 @@ namespace Microsoft.Data.SqlClient.Server
 
         internal SqlDataRecord(SmiRecordBuffer recordBuffer, params SmiExtendedMetaData[] metaData)
         {
-            Debug.Assert(null != recordBuffer, "invalid attempt to instantiate SqlDataRecord with null SmiRecordBuffer");
-            Debug.Assert(null != metaData, "invalid attempt to instantiate SqlDataRecord with null SmiExtendedMetaData[]");
+            Debug.Assert(recordBuffer != null, "invalid attempt to instantiate SqlDataRecord with null SmiRecordBuffer");
+            Debug.Assert(metaData != null, "invalid attempt to instantiate SqlDataRecord with null SmiExtendedMetaData[]");
 
             _columnMetaData = new SqlMetaData[metaData.Length];
             _columnSmiMetaData = new SmiExtendedMetaData[metaData.Length];
@@ -747,7 +749,6 @@ namespace Microsoft.Data.SqlClient.Server
             }
 
             _eventSink = new SmiEventSink_Default();
-
             _recordBuffer = recordBuffer;
             _eventSink.ProcessMessagesAndThrow();
         }
@@ -762,7 +763,6 @@ namespace Microsoft.Data.SqlClient.Server
                 return _recordBuffer;
             }
         }
-
 
         internal SqlMetaData[] InternalGetMetaData()
         {
@@ -786,15 +786,17 @@ namespace Microsoft.Data.SqlClient.Server
                 throw ADP.IndexOutOfRange(ordinal);
             }
         }
+
         private void EnsureSubclassOverride()
         {
-            if (null == _recordBuffer)
+            if (_recordBuffer == null)
             {
                 throw SQL.SubclassMustOverride();
             }
         }
 
         /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/System.Data.IDataRecord.GetData/*' />
+        [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Never)]
         IDataReader System.Data.IDataRecord.GetData(int ordinal)
         {
             throw ADP.NotSupported();
