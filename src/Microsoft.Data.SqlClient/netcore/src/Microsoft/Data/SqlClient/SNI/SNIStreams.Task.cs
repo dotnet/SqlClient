@@ -5,7 +5,6 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-
 namespace Microsoft.Data.SqlClient.SNI
 {
     // NetCore2.1:
@@ -44,7 +43,6 @@ namespace Microsoft.Data.SqlClient.SNI
 
     internal sealed partial class SNINetworkStream
     {
-
         public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
             await _readAsyncSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
