@@ -4,7 +4,7 @@ The following Microsoft.Data.SqlClient 3.0 stable releases have been shipped:
 
 | Release Date | Version | Notes |
 | :-- | :-- | :--: |
-| 2020/06/09 | 3.0.0 | [release notes](3.0.0.md) |
+| 2021/06/09 | 3.0.0 | [release notes](3.0.0.md) |
 
 The following Microsoft.Data.SqlClient 3.0 preview releases have been shipped:
 
