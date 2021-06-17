@@ -12,15 +12,7 @@ namespace Microsoft.Data.SqlClient.SNI
     {
         public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            ValueTask<int> valueTask = ReadAsync(new Memory<byte>(buffer, offset, count), cancellationToken);
-            if (valueTask.IsCompletedSuccessfully)
-            {
-                return Task.FromResult(valueTask.Result);
-            }
-            else
-            {
-                return valueTask.AsTask();
-            }
+            return ReadAsync(new Memory<byte>(buffer, offset, count), cancellationToken).AsTask();
         }
 
         public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
@@ -38,15 +30,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
         public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            ValueTask valueTask = WriteAsync(new Memory<byte>(buffer, offset, count), cancellationToken);
-            if (valueTask.IsCompletedSuccessfully)
-            {
-                return Task.CompletedTask;
-            }
-            else
-            {
-                return valueTask.AsTask();
-            }
+            return WriteAsync(new Memory<byte>(buffer, offset, count), cancellationToken).AsTask();
         }
 
         public override async ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
@@ -63,20 +47,11 @@ namespace Microsoft.Data.SqlClient.SNI
         }
     }
 
-
     internal sealed partial class SNINetworkStream
     {
         public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            ValueTask<int> valueTask = ReadAsync(new Memory<byte>(buffer, offset, count), cancellationToken);
-            if (valueTask.IsCompletedSuccessfully)
-            {
-                return Task.FromResult(valueTask.Result);
-            }
-            else
-            {
-                return valueTask.AsTask();
-            }
+            return ReadAsync(new Memory<byte>(buffer, offset, count), cancellationToken).AsTask();
         }
 
         public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
@@ -95,15 +70,7 @@ namespace Microsoft.Data.SqlClient.SNI
         // Prevent the WriteAsync collisions by running the task in a Semaphore Slim
         public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            ValueTask valueTask = WriteAsync(new Memory<byte>(buffer, offset, count), cancellationToken);
-            if (valueTask.IsCompletedSuccessfully)
-            {
-                return Task.CompletedTask;
-            }
-            else
-            {
-                return valueTask.AsTask();
-            }
+            return WriteAsync(new Memory<byte>(buffer, offset, count), cancellationToken).AsTask();
         }
 
         public override async ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
