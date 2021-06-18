@@ -4,7 +4,7 @@
 
 using System;
 using System.Collections.Generic;
-using Microsoft.Data.SqlClient.Server;
+using Microsoft.SqlServer.Server;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -32,7 +32,7 @@ namespace Microsoft.Data.SqlClient
             SqlUdtInfo udtAttr = TryGetFromType(target);
             if (udtAttr == null)
             {
-                throw InvalidUdtException.Create(target, Strings.SqlUdtReason_NoUdtAttribute);
+                throw Server.InvalidUdtException.Create(target, Strings.SqlUdtReason_NoUdtAttribute);
             }
             return udtAttr;
         }

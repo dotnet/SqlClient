@@ -17,6 +17,7 @@
     <TestOS Condition="'$(TestTargetOS)' == '' AND '$(TargetsWindows)' == 'true'">Windows</TestOS>
     <TestOS Condition="'$(TestTargetOS)' == '' AND '$(TargetsUnix)' == 'true'">Unix</TestOS>
     <GenerateNuget Condition="'$(GenerateNuget)' == ''">true</GenerateNuget>
+    <SqlServerLibProperties>Configuration=$(Configuration);AssemblyVersion=$(SqlServerAssemblyVersion);Version=$(SqlServerPackageVersion);</SqlServerLibProperties>
     <ProjectProperties>Configuration=$(Configuration);AssemblyFileVersion=$(AssemblyFileVersion);TargetsWindows=$(TargetsWindows);TargetsUnix=$(TargetsUnix);</ProjectProperties>
     <TestProjectProperties>BuildProjectReferences=false;$(ProjectProperties);</TestProjectProperties>
   </PropertyGroup>
@@ -29,6 +30,7 @@
 
   <!-- Populate all managed projects -->
   <ItemGroup>
+    <SqlServerLib Include="**/Microsoft.SqlServer.Server.csproj" />
     <NetFxDriver Include="**/netfx/**/Microsoft.Data.SqlClient*.csproj" Condition="'$(IsEnabledWindows)' == 'true'" />
     <NetCoreDriver Include="**/netcore/**/Microsoft.Data.SqlClient*.csproj" />
     <AKVProvider Include="**/add-ons/**/AzureKeyVaultProvider/*.csproj" />
@@ -55,11 +57,15 @@
   </ItemGroup>
 
   <!-- Top Level Build targets -->
-  <Target Name="Restore" DependsOnTargets="RestoreNetCore;RestoreNetFx" />
-  <Target Name="BuildAll" DependsOnTargets="BuildNetFx;BuildNetCore" />
-  <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildTools;BuildNetFx;BuildNetCoreAllOS;GenerateNugetPackage" />
+  <Target Name="Restore" DependsOnTargets="RestoreSqlServerLib;RestoreNetCore;RestoreNetFx" />
+  <Target Name="BuildAll" DependsOnTargets="BuildSqlServerLib;BuildNetFx;BuildNetCore" />
+  <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildTools;BuildSqlServerLib;GenerateSqlServerPackage;BuildNetFx;BuildNetCoreAllOS;GenerateNugetPackage" />
   <Target Name="BuildTestsNetCore" DependsOnTargets="RestoreTestsNetCore;BuildAKVNetCore;BuildFunctionalTestsNetCore;BuildManualTestsNetCore" />
   <Target Name="BuildTestsNetFx" DependsOnTargets="RestoreTestsNetFx;BuildAKVNetFx;BuildFunctionalTestsNetFx;BuildManualTestsNetFx;" />
+
+  <Target Name="RestoreSqlServerLib">
+    <MSBuild Projects="@(SqlServerLib)" Targets="restore" />
+  </Target>
 
   <Target Name="RestoreNetCore">
     <MSBuild Projects="@(NetCoreDriver)" Targets="restore" Properties="TestTargetOS=$(TestOS)netcoreapp" />
@@ -88,6 +94,10 @@
 
   <Target Name="BuildNetFx" DependsOnTargets="RestoreNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
     <MSBuild Projects="@(NetFxDriver)" Properties="$(CI);Platform=AnyCPU;$(ProjectProperties)" />
+  </Target>
+
+  <Target Name="BuildSqlServerLib" DependsOnTargets="RestoreSqlServerLib">
+    <MSBuild Projects="@(SqlServerLib)" Properties="$(CI);$(SqlServerLibProperties);Platform=AnyCPU;OSGroup=AnyOS;" RemoveProperties="TargetsWindows;TargetsUnix;" />
   </Target>
 
   <Target Name="BuildNetCore" DependsOnTargets="RestoreNetCore">

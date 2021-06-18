@@ -876,14 +876,26 @@ namespace Microsoft.Data.Common
             return Provider(System.StringsHelper.GetString(Strings.ADP_TransactionCompletedButNotDisposed));
         }
 
+        // Obsolete
         internal static ArgumentOutOfRangeException InvalidUserDefinedTypeSerializationFormat(Microsoft.Data.SqlClient.Server.Format value)
         {
             return InvalidEnumerationValue(typeof(Microsoft.Data.SqlClient.Server.Format), (int)value);
         }
 
+        // Obsolete
         internal static ArgumentOutOfRangeException NotSupportedUserDefinedTypeSerializationFormat(Microsoft.Data.SqlClient.Server.Format value, string method)
         {
             return NotSupportedEnumerationValue(typeof(Microsoft.Data.SqlClient.Server.Format), value.ToString(), method);
+        }
+
+        internal static ArgumentOutOfRangeException InvalidUserDefinedTypeSerializationFormat(Microsoft.SqlServer.Server.Format value)
+        {
+            return InvalidEnumerationValue(typeof(Microsoft.SqlServer.Server.Format), (int)value);
+        }
+
+        internal static ArgumentOutOfRangeException NotSupportedUserDefinedTypeSerializationFormat(Microsoft.SqlServer.Server.Format value, string method)
+        {
+            return NotSupportedEnumerationValue(typeof(Microsoft.SqlServer.Server.Format), value.ToString(), method);
         }
 
         internal static ArgumentOutOfRangeException ArgumentOutOfRange(string message, string parameterName, object value)

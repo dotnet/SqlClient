@@ -28,21 +28,18 @@ namespace Microsoft.Data.SqlClient.Server
         internal static int SizeInBytes(object instance)
         {
             Type t = instance.GetType();
-            Format k = GetFormat(t);
+            Microsoft.SqlServer.Server.Format k = GetFormat(t);
             DummyStream stream = new DummyStream();
             Serializer ser = GetSerializer(instance.GetType());
             ser.Serialize(stream, instance);
             return (int)stream.Length;
         }
 
-        internal static void Serialize(Stream s, object instance)
-        {
-            GetSerializer(instance.GetType()).Serialize(s, instance);
-        }
+        internal static void Serialize(Stream s, object instance) => GetSerializer(instance.GetType()).Serialize(s, instance);
 
         internal static object Deserialize(Stream s, Type resultType) => GetSerializer(resultType).Deserialize(s);
 
-        private static Format GetFormat(Type t) => GetUdtAttribute(t).Format;
+        private static Microsoft.SqlServer.Server.Format GetFormat(Type t) => GetUdtAttribute(t).Format;
 
         // Cache the relationship between a type and its serializer.
         // This is expensive to compute since it involves traversing the
@@ -61,7 +58,7 @@ namespace Microsoft.Data.SqlClient.Server
             Serializer s = (Serializer)s_types2Serializers[t];
             if (s == null)
             {
-                s = GetNewSerializer(t);
+                s = (Serializer) GetNewSerializer(t);
                 s_types2Serializers[t] = s;
             }
             return s;
@@ -71,7 +68,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             SqlUdtInfo udtInfo = SqlUdtInfo.GetFromType(t);
 
-            if (Format.Native == udtInfo.SerializationFormat)
+            if (Microsoft.SqlServer.Server.Format.Native == udtInfo.SerializationFormat)
             {
                 // In the native format, the user does not specify the
                 // max byte size, it is computed from the type definition
@@ -84,72 +81,19 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
-        private static object[] GetCustomAttributes(Type t)
+        private static object[] GetCustomAttributes(Type t) => 
+            t.GetCustomAttributes(typeof(Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute), false);
+
+        internal static Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute GetUdtAttribute(Type t)
         {
-            object[] attrs = t.GetCustomAttributes(typeof(SqlUserDefinedTypeAttribute), false);
+            Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute udtAttr = null;
+            object[] attr = GetCustomAttributes (t);
 
-            // If we don't find a Microsoft.Data.SqlClient.Server.SqlUserDefinedTypeAttribute,
-            // search for a Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute from the
-            // old System.Data.SqlClient assembly and copy it to our
-            // Microsoft.Data.SqlClient.Server.SqlUserDefinedTypeAttribute for reference.
-            if (attrs == null || attrs.Length == 0)
-            {
-                object[] attr = t.GetCustomAttributes(false);
-                attrs = new object[0];
-                if (attr != null && attr.Length > 0)
-                {
-                    for (int i = 0; i < attr.Length; i++)
-                    {
-                        if (attr[i].GetType().FullName.Equals("Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute"))
-                        {
-                            SqlUserDefinedTypeAttribute newAttr = null;
-                            PropertyInfo[] sourceProps = attr[i].GetType().GetProperties();
-
-                            foreach (PropertyInfo sourceProp in sourceProps)
-                            {
-                                if (sourceProp.Name.Equals("Format"))
-                                {
-                                    newAttr = new SqlUserDefinedTypeAttribute((Format)sourceProp.GetValue(attr[i], null));
-                                    break;
-                                }
-                            }
-                            if (newAttr != null)
-                            {
-                                foreach (PropertyInfo targetProp in newAttr.GetType().GetProperties())
-                                {
-                                    if (targetProp.CanRead && targetProp.CanWrite)
-                                    {
-                                        object copyValue = attr[i].GetType().GetProperty(targetProp.Name).GetValue(attr[i]);
-                                        targetProp.SetValue(newAttr, copyValue);
-                                    }
-                                }
-                            }
-
-                            attrs = new object[1] { newAttr };
-                            break;
-                        }
-                    }
-                }
+            if (attr != null && attr.Length == 1) {
+                udtAttr = (Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute) attr[0];
             }
-
-            return attrs;
-        }
-
-        internal static SqlUserDefinedTypeAttribute GetUdtAttribute(Type t)
-        {
-            SqlUserDefinedTypeAttribute udtAttr = null;
-            object[] attr = GetCustomAttributes(t);
-
-            if (attr != null && attr.Length == 1)
-            {
-                udtAttr = (SqlUserDefinedTypeAttribute)attr[0];
-            }
-            else
-            {
-                Type InvalidUdtExceptionType = typeof(InvalidUdtException);
-                var arguments = new Type[] { typeof(Type), typeof(String) };
-                MethodInfo Create = InvalidUdtExceptionType.GetMethod("Create", arguments);
-                Create.Invoke(null, new object[] { t, Strings.SqlUdtReason_NoUdtAttribute });
+            else {
+                throw InvalidUdtException.Create(t, Strings.SqlUdtReason_NoUdtAttribute);
             }
             return udtAttr;
         }
@@ -157,15 +101,15 @@ namespace Microsoft.Data.SqlClient.Server
         // Create a new serializer for the given type.
         private static Serializer GetNewSerializer(Type t)
         {
-            SqlUserDefinedTypeAttribute udtAttr = GetUdtAttribute(t);
+            Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute udtAttr = GetUdtAttribute(t);
 
             switch (udtAttr.Format)
             {
-                case Format.Native:
+                case Microsoft.SqlServer.Server.Format.Native:
                     return new NormalizedSerializer(t);
-                case Format.UserDefined:
+                case Microsoft.SqlServer.Server.Format.UserDefined:
                     return new BinarySerializeSerializer(t);
-                case Format.Unknown: // should never happen, but fall through
+                case Microsoft.SqlServer.Server.Format.Unknown: // should never happen, but fall through
                 default:
                     throw ADP.InvalidUserDefinedTypeSerializationFormat(udtAttr.Format);
             }
@@ -193,7 +137,7 @@ namespace Microsoft.Data.SqlClient.Server
 
         internal NormalizedSerializer(Type t) : base(t)
         {
-            SqlUserDefinedTypeAttribute udtAttr = SerializationHelperSql9.GetUdtAttribute(t);
+            Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute udtAttr = SerializationHelperSql9.GetUdtAttribute(t);
             _normalizer = new BinaryOrderedUdtNormalizer(t, true);
             _isFixedSize = udtAttr.IsFixedLength;
             _maxSize = _normalizer.Size;
@@ -210,17 +154,9 @@ namespace Microsoft.Data.SqlClient.Server
         {
         }
 
-        public override void Serialize(Stream s, object o)
-        {
+        public override void Serialize(Stream s, object o) {
             BinaryWriter w = new BinaryWriter(s);
-            if (o is Microsoft.SqlServer.Server.IBinarySerialize)
-            {
-                ((SqlServer.Server.IBinarySerialize)o).Write(w);
-            }
-            else
-            {
-                ((IBinarySerialize)o).Write(w);
-            }
+            ((Microsoft.SqlServer.Server.IBinarySerialize)o).Write(w);
         }
 
         // Prevent inlining so that reflection calls are not moved
@@ -231,14 +167,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             object instance = Activator.CreateInstance(_type);
             BinaryReader r = new BinaryReader(s);
-            if (instance is Microsoft.SqlServer.Server.IBinarySerialize)
-            {
-                ((SqlServer.Server.IBinarySerialize)instance).Read(r);
-            }
-            else
-            {
-                ((IBinarySerialize)instance).Read(r);
-            }
+            ((Microsoft.SqlServer.Server.IBinarySerialize)instance).Read(r);
             return instance;
         }
     }

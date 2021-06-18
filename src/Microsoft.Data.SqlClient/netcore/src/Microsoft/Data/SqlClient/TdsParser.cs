@@ -21,6 +21,7 @@ using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.SqlTypes;
+using Microsoft.SqlServer.Server;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -9394,7 +9395,7 @@ namespace Microsoft.Data.SqlClient
 
                     int maxSupportedSize = IsKatmaiOrNewer ? int.MaxValue : short.MaxValue;
                     byte[] udtVal = null;
-                    Format format = Format.Native;
+                    Microsoft.SqlServer.Server.Format format = Microsoft.SqlServer.Server.Format.Native;
 
                     if (string.IsNullOrEmpty(param.UdtTypeName))
                     {
@@ -9738,7 +9739,7 @@ namespace Microsoft.Data.SqlClient
                 // Value for TVP default is empty list, not NULL
                 if (SqlDbType.Structured == metaData.SqlDbType && metaData.IsMultiValued)
                 {
-                    value = Array.Empty<SqlDataRecord>();
+                    value = Array.Empty<Server.SqlDataRecord>();
                     typeCode = ExtendedClrTypeCode.IEnumerableOfSqlDataRecord;
                 }
                 else

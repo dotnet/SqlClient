@@ -864,6 +864,9 @@
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="$(MicrosoftSourceLinkGitHubVersion)" PrivateAssets="All" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="$(SqlServerSourceCode)\Microsoft.SqlServer.Server.csproj" />
+  </ItemGroup>
+  <ItemGroup>
     <EmbeddedResource Update="Resources\Strings.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Strings.Designer.cs</LastGenOutput>
