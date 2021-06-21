@@ -102,7 +102,7 @@ namespace Microsoft.Data.SqlClient.SNI
     internal class SNICommon
     {
         private const string s_className = nameof(SNICommon);
-    
+
         // Each error number maps to SNI_ERROR_* in String.resx
         internal const int ConnTerminatedError = 2;
         internal const int InvalidParameterError = 5;
@@ -220,11 +220,12 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="provider">SNI provider</param>
         /// <param name="sniError">SNI error code</param>
         /// <param name="sniException">SNI Exception</param>
+        /// <param name="nativeErrorCode">Native SNI error code</param>
         /// <returns></returns>
-        internal static uint ReportSNIError(SNIProviders provider, uint sniError, Exception sniException)
+        internal static uint ReportSNIError(SNIProviders provider, uint sniError, Exception sniException, uint nativeErrorCode = 0)
         {
             SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR, "Provider = {0}, SNI Error = {1}, Exception = {2}", args0: provider, args1: sniError, args2: sniException?.Message);
-            return ReportSNIError(new SNIError(provider, sniError, sniException));
+            return ReportSNIError(new SNIError(provider, sniError, sniException, nativeErrorCode));
         }
 
         /// <summary>

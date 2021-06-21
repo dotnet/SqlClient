@@ -11,6 +11,9 @@ namespace Microsoft.Data.SqlClient.SNI
     /// </summary>
     internal class SNIError
     {
+        // Error numbers from native SNI implementation
+        internal const uint CertificateValidationErrorCode = 2148074277;
+
         public readonly SNIProviders provider;
         public readonly string errorMessage;
         public readonly uint nativeError;
@@ -30,12 +33,12 @@ namespace Microsoft.Data.SqlClient.SNI
             this.exception = null;
         }
 
-        public SNIError(SNIProviders provider, uint sniErrorCode, Exception sniException)
+        public SNIError(SNIProviders provider, uint sniErrorCode, Exception sniException, uint nativeErrorCode = 0)
         {
             this.lineNumber = 0;
             this.function = string.Empty;
             this.provider = provider;
-            this.nativeError = 0;
+            this.nativeError = nativeErrorCode;
             this.sniError = sniErrorCode;
             this.errorMessage = string.Empty;
             this.exception = sniException;
