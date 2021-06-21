@@ -983,7 +983,7 @@ namespace Microsoft.Data.SqlClient
                 tdsReliabilitySection.Start();
 #endif //DEBUG
 
-            isAlive = _parser._physicalStateObj.IsConnectionAlive(throwOnException);
+                isAlive = _parser._physicalStateObj.IsConnectionAlive(throwOnException);
 
 #if DEBUG
             }
@@ -1759,11 +1759,11 @@ namespace Microsoft.Data.SqlClient
 
             ResolveExtendedServerName(serverInfo, !redirectedUserInstance, connectionOptions);
 
-            Boolean disableTnir = ShouldDisableTnir(connectionOptions);
+            bool disableTnir = ShouldDisableTnir(connectionOptions);
 
             long timeoutUnitInterval = 0;
 
-            Boolean isParallel = connectionOptions.MultiSubnetFailover || (connectionOptions.TransparentNetworkIPResolution && !disableTnir);
+            bool isParallel = connectionOptions.MultiSubnetFailover || (connectionOptions.TransparentNetworkIPResolution && !disableTnir);
 
 
             if (isParallel)
@@ -1795,7 +1795,7 @@ namespace Microsoft.Data.SqlClient
             while (true)
             {
 
-                Boolean isFirstTransparentAttempt = connectionOptions.TransparentNetworkIPResolution && !disableTnir && attemptNumber == 1;
+                var isFirstTransparentAttempt = connectionOptions.TransparentNetworkIPResolution && !disableTnir && attemptNumber == 1;
 
                 if (isParallel)
                 {
@@ -1967,9 +1967,9 @@ namespace Microsoft.Data.SqlClient
 
         private bool ShouldDisableTnir(SqlConnectionString connectionOptions)
         {
-            Boolean isAzureEndPoint = ADP.IsAzureSqlServerEndpoint(connectionOptions.DataSource);
+            var isAzureEndPoint = ADP.IsAzureSqlServerEndpoint(connectionOptions.DataSource);
 
-            Boolean isFedAuthEnabled = this._accessTokenInBytes != null ||
+            bool isFedAuthEnabled = this._accessTokenInBytes != null ||
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword ||
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated ||
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive ||
@@ -2378,18 +2378,18 @@ namespace Microsoft.Data.SqlClient
                     {
                         tdsReliabilitySection.Start();
 #endif //DEBUG
-                    Task reconnectTask = parent.ValidateAndReconnect(() =>
-                    {
-                        ThreadHasParserLockForClose = false;
-                        _parserLock.Release();
-                        releaseConnectionLock = false;
-                    }, timeout);
-                    if (reconnectTask != null)
-                    {
-                        AsyncHelper.WaitForCompletion(reconnectTask, timeout);
-                        return true;
-                    }
-                    return false;
+                        Task reconnectTask = parent.ValidateAndReconnect(() =>
+                        {
+                            ThreadHasParserLockForClose = false;
+                            _parserLock.Release();
+                            releaseConnectionLock = false;
+                        }, timeout);
+                        if (reconnectTask != null)
+                        {
+                            AsyncHelper.WaitForCompletion(reconnectTask, timeout);
+                            return true;
+                        }
+                        return false;
 #if DEBUG
                     }
                     finally
