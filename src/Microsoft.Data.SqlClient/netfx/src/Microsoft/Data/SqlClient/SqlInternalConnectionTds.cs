@@ -1967,7 +1967,7 @@ namespace Microsoft.Data.SqlClient
 
         private bool ShouldDisableTnir(SqlConnectionString connectionOptions)
         {
-            var isAzureEndPoint = ADP.IsAzureSqlServerEndpoint(connectionOptions.DataSource);
+            bool isAzureEndPoint = ADP.IsAzureSqlServerEndpoint(connectionOptions.DataSource);
 
             bool isFedAuthEnabled = this._accessTokenInBytes != null ||
                                        connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword ||
