@@ -1795,7 +1795,7 @@ namespace Microsoft.Data.SqlClient
             while (true)
             {
 
-                var isFirstTransparentAttempt = connectionOptions.TransparentNetworkIPResolution && !disableTnir && attemptNumber == 1;
+                bool isFirstTransparentAttempt = connectionOptions.TransparentNetworkIPResolution && !disableTnir && attemptNumber == 1;
 
                 if (isParallel)
                 {
