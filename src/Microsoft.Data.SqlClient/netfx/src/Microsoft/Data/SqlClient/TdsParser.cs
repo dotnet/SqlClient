@@ -9914,7 +9914,7 @@ namespace Microsoft.Data.SqlClient
 
                             if (mt.IsNewKatmaiType)
                             {
-                                WriteSmiParameter(param, i, 0 != (rpcext.paramoptions[i] & TdsEnums.RPC_PARAM_DEFAULT), stateObj, cmd.DisableOutputParameters, isAdvancedTraceOn);
+                                WriteSmiParameter(param, i, 0 != (rpcext.paramoptions[i] & TdsEnums.RPC_PARAM_DEFAULT), stateObj, cmd.EnableOptimizedParameterBinding, isAdvancedTraceOn);
                                 continue;
                             }
 
@@ -9946,7 +9946,7 @@ namespace Microsoft.Data.SqlClient
                                 }
                             }
 
-                            WriteParameterName(param.ParameterNameFixed, stateObj, cmd.DisableOutputParameters);
+                            WriteParameterName(param.ParameterNameFixed, stateObj, cmd.EnableOptimizedParameterBinding);
 
                             // Write parameter status
                             stateObj.WriteByte(rpcext.paramoptions[i]);
