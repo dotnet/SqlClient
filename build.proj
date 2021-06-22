@@ -17,7 +17,7 @@
     <TestOS Condition="'$(TestTargetOS)' == '' AND '$(TargetsWindows)' == 'true'">Windows</TestOS>
     <TestOS Condition="'$(TestTargetOS)' == '' AND '$(TargetsUnix)' == 'true'">Unix</TestOS>
     <GenerateNuget Condition="'$(GenerateNuget)' == ''">true</GenerateNuget>
-    <SqlServerLibProperties>Configuration=$(Configuration);AssemblyVersion=$(SqlServerAssemblyVersion);Version=$(SqlServerPackageVersion);</SqlServerLibProperties>
+    <SqlServerLibProperties>Configuration=$(Configuration);AssemblyVersion=$(SqlServerAssemblyVersion);AssemblyFileVersion=$(SqlServerAssemblyFileVersion);Version=$(SqlServerPackageVersion);</SqlServerLibProperties>
     <ProjectProperties>Configuration=$(Configuration);AssemblyFileVersion=$(AssemblyFileVersion);TargetsWindows=$(TargetsWindows);TargetsUnix=$(TargetsUnix);</ProjectProperties>
     <TestProjectProperties>BuildProjectReferences=false;$(ProjectProperties);</TestProjectProperties>
   </PropertyGroup>
@@ -59,7 +59,8 @@
   <!-- Top Level Build targets -->
   <Target Name="Restore" DependsOnTargets="RestoreSqlServerLib;RestoreNetCore;RestoreNetFx" />
   <Target Name="BuildAll" DependsOnTargets="BuildSqlServerLib;BuildNetFx;BuildNetCore" />
-  <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildTools;BuildSqlServerLib;GenerateSqlServerPackage;BuildNetFx;BuildNetCoreAllOS;GenerateNugetPackage" />
+  <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildTools;BuildSqlServerLib;BuildNetFx;BuildNetCoreAllOS;GenerateNugetPackage" />
+  <Target Name="BuildSqlServerPackage" DependsOnTargets="BuildSqlServerLib;GenerateSqlServerPackage" />
   <Target Name="BuildTestsNetCore" DependsOnTargets="RestoreTestsNetCore;BuildAKVNetCore;BuildFunctionalTestsNetCore;BuildManualTestsNetCore" />
   <Target Name="BuildTestsNetFx" DependsOnTargets="RestoreTestsNetFx;BuildAKVNetFx;BuildFunctionalTestsNetFx;BuildManualTestsNetFx;" />
 
