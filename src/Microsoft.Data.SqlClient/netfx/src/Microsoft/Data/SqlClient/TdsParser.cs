@@ -9880,6 +9880,7 @@ namespace Microsoft.Data.SqlClient
                         SqlParameter[] parameters = rpcext.parameters;
 
                         bool isAdvancedTraceOn = SqlClientEventSource.Log.IsAdvancedTraceOn();
+                        bool enableOptimizedParameterBinding = cmd.EnableOptimizedParameterBinding;
 
                         for (int i = (ii == startRpc) ? startParam : 0; i < parameters.Length; i++)
                         {
@@ -9888,7 +9889,11 @@ namespace Microsoft.Data.SqlClient
                             SqlParameter param = parameters[i];
                             // Since we are reusing the parameters array, we cannot rely on length to indicate no of parameters.
                             if (param == null)
+                            {
                                 break;      // End of parameters for this execute
+                            }
+
+                            ParameterDirection parameterDirection = param.Direction;
 
                             // Throw an exception if ForceColumnEncryption is set on a parameter and the ColumnEncryption is not enabled on SqlConnection or SqlCommand
                             if (param.ForceColumnEncryption &&
@@ -9900,10 +9905,15 @@ namespace Microsoft.Data.SqlClient
 
                             // Check if the applications wants to force column encryption to avoid sending sensitive data to server
                             if (param.ForceColumnEncryption && param.CipherMetadata == null
-                                && (param.Direction == ParameterDirection.Input || param.Direction == ParameterDirection.InputOutput))
+                                && (parameterDirection == ParameterDirection.Input || parameterDirection == ParameterDirection.InputOutput))
                             {
                                 // Application wants a parameter to be encrypted before sending it to server, however server doesnt think this parameter needs encryption.
                                 throw SQL.ParamUnExpectedEncryptionMetadata(param.ParameterName, rpcext.GetCommandTextOrRpcName());
+                            }
+
+                            if (enableOptimizedParameterBinding && (parameterDirection == ParameterDirection.Output || parameterDirection == ParameterDirection.InputOutput))
+                            {
+                                throw SQL.ParameterDirectionInvalidForOptimizedBinding(param.ParameterName);
                             }
 
                             // Validate parameters are not variable length without size and with null value.  MDAC 66522
@@ -9914,7 +9924,7 @@ namespace Microsoft.Data.SqlClient
 
                             if (mt.IsNewKatmaiType)
                             {
-                                WriteSmiParameter(param, i, 0 != (rpcext.paramoptions[i] & TdsEnums.RPC_PARAM_DEFAULT), stateObj, cmd.EnableOptimizedParameterBinding, isAdvancedTraceOn);
+                                WriteSmiParameter(param, i, 0 != (rpcext.paramoptions[i] & TdsEnums.RPC_PARAM_DEFAULT), stateObj, enableOptimizedParameterBinding, isAdvancedTraceOn);
                                 continue;
                             }
 
@@ -9929,7 +9939,7 @@ namespace Microsoft.Data.SqlClient
                             bool isSqlVal = false;
                             bool isDataFeed = false;
                             // if we have an output param, set the value to null so we do not send it across to the server
-                            if (param.Direction == ParameterDirection.Output)
+                            if (parameterDirection == ParameterDirection.Output)
                             {
                                 isSqlVal = param.ParameterIsSqlType;  // We have to forward the TYPE info, we need to know what type we are returning.  Once we null the parameter we will no longer be able to distinguish what type were seeing.
                                 param.Value = null;
@@ -9946,7 +9956,7 @@ namespace Microsoft.Data.SqlClient
                                 }
                             }
 
-                            WriteParameterName(param.ParameterNameFixed, stateObj, cmd.EnableOptimizedParameterBinding);
+                            WriteParameterName(param.ParameterNameFixed, stateObj, enableOptimizedParameterBinding);
 
                             // Write parameter status
                             stateObj.WriteByte(rpcext.paramoptions[i]);
