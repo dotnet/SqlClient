@@ -9021,7 +9021,7 @@ namespace Microsoft.Data.SqlClient
 
                             if (mt.IsNewKatmaiType)
                             {
-                                WriteSmiParameter(param, i, 0 != (options & TdsEnums.RPC_PARAM_DEFAULT), stateObj, isAdvancedTraceOn);
+                                WriteSmiParameter(param, i, 0 != (options & TdsEnums.RPC_PARAM_DEFAULT), stateObj, cmd.UsePositionalParameters, isAdvancedTraceOn);
                                 continue;
                             }
 
@@ -9031,7 +9031,7 @@ namespace Microsoft.Data.SqlClient
                                 throw ADP.VersionDoesNotSupportDataType(mt.TypeName);
                             }
 
-                            Task writeParamTask = TDSExecuteRPCAddParameter(stateObj, param, mt, options, cmd);
+                            Task writeParamTask = TDSExecuteRPCAddParameter(stateObj, param, mt, options, cmd.UsePositionalParameters);
 
                             if (!sync)
                             {
@@ -9148,7 +9148,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private Task TDSExecuteRPCAddParameter(TdsParserStateObject stateObj, SqlParameter param, MetaType mt, byte options, SqlCommand command)
+        private Task TDSExecuteRPCAddParameter(TdsParserStateObject stateObj, SqlParameter param, MetaType mt, byte options, bool isAnonymous)
         {
             int tempLen;
             object value = null;
@@ -9173,7 +9173,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            WriteParameterName(param.ParameterNameFixed, stateObj);
+            WriteParameterName(param.ParameterNameFixed, stateObj, isAnonymous);
 
             // Write parameter status
             stateObj.WriteByte(options);
@@ -9695,11 +9695,11 @@ namespace Microsoft.Data.SqlClient
         }
 
 
-        private void WriteParameterName(string parameterName, TdsParserStateObject stateObj)
+        private void WriteParameterName(string parameterName, TdsParserStateObject stateObj, bool isAnonymous)
         {
             // paramLen
             // paramName
-            if (!string.IsNullOrEmpty(parameterName))
+            if (!isAnonymous && !string.IsNullOrEmpty(parameterName))
             {
                 Debug.Assert(parameterName.Length <= 0xff, "parameter name can only be 255 bytes, shouldn't get to TdsParser!");
                 int tempLen = parameterName.Length & 0xff;
@@ -9712,7 +9712,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private void WriteSmiParameter(SqlParameter param, int paramIndex, bool sendDefault, TdsParserStateObject stateObj, bool advancedTraceIsOn)
+        private void WriteSmiParameter(SqlParameter param, int paramIndex, bool sendDefault, TdsParserStateObject stateObj, bool isAnonymous, bool advancedTraceIsOn)
         {
             //
             // Determine Metadata
@@ -9771,7 +9771,7 @@ namespace Microsoft.Data.SqlClient
             //
             // Write parameter metadata
             //
-            WriteSmiParameterMetaData(metaData, sendDefault, stateObj);
+            WriteSmiParameterMetaData(metaData, sendDefault, isAnonymous, stateObj);
 
             //
             // Now write the value
@@ -9790,7 +9790,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Writes metadata portion of parameter stream from an SmiParameterMetaData object.
-        private void WriteSmiParameterMetaData(SmiParameterMetaData metaData, bool sendDefault, TdsParserStateObject stateObj)
+        private void WriteSmiParameterMetaData(SmiParameterMetaData metaData, bool sendDefault, bool isAnonymous, TdsParserStateObject stateObj)
         {
             // Determine status
             byte status = 0;
@@ -9805,7 +9805,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Write everything out
-            WriteParameterName(metaData.Name, stateObj);
+            WriteParameterName(metaData.Name, stateObj, isAnonymous);
             stateObj.WriteByte(status);
             WriteSmiTypeInfo(metaData, stateObj);
         }
