@@ -32,8 +32,8 @@ namespace Microsoft.Data.SqlClient
     [
     DefaultEvent("RecordsAffected"),
     ToolboxItem(true),
-    Designer("Microsoft.VSDesigner.Data.VS.SqlCommandDesigner, " + AssemblyRef.MicrosoftVSDesigner),
     DesignerCategory("")
+    // TODO: Add designer attribute when Microsoft.VSDesigner.Data.VS.SqlCommandDesigner uses Microsoft.Data.SqlClient
     ]
     public sealed class SqlCommand : DbCommand, ICloneable
     {
