@@ -8988,6 +8988,7 @@ namespace Microsoft.Data.SqlClient
                         int parametersLength = rpcext.userParamCount + rpcext.systemParamCount;
 
                         bool isAdvancedTraceOn = SqlClientEventSource.Log.IsAdvancedTraceOn();
+                        bool enableOptimizedParameterBinding = cmd.EnableOptimizedParameterBinding;
 
                         for (int i = (ii == startRpc) ? startParam : 0; i < parametersLength; i++)
                         {
@@ -8995,7 +8996,11 @@ namespace Microsoft.Data.SqlClient
                             SqlParameter param = rpcext.GetParameterByIndex(i, out options);
                             // Since we are reusing the parameters array, we cannot rely on length to indicate no of parameters.
                             if (param == null)
+                            {
                                 break;      // End of parameters for this execute
+                            }
+
+                            ParameterDirection parameterDirection = param.Direction;
 
                             // Throw an exception if ForceColumnEncryption is set on a parameter and the ColumnEncryption is not enabled on SqlConnection or SqlCommand
                             if (param.ForceColumnEncryption &&
@@ -9007,10 +9012,15 @@ namespace Microsoft.Data.SqlClient
 
                             // Check if the applications wants to force column encryption to avoid sending sensitive data to server
                             if (param.ForceColumnEncryption && param.CipherMetadata == null
-                                                            && (param.Direction == ParameterDirection.Input || param.Direction == ParameterDirection.InputOutput))
+                                                            && (parameterDirection == ParameterDirection.Input || parameterDirection == ParameterDirection.InputOutput))
                             {
                                 // Application wants a parameter to be encrypted before sending it to server, however server doesnt think this parameter needs encryption.
                                 throw SQL.ParamUnExpectedEncryptionMetadata(param.ParameterName, rpcext.GetCommandTextOrRpcName());
+                            }
+
+                            if (enableOptimizedParameterBinding && (parameterDirection == ParameterDirection.Output || parameterDirection == ParameterDirection.InputOutput))
+                            {
+                                throw SQL.ParameterDirectionInvalidForOptimizedBinding(param.ParameterName);
                             }
 
                             // Validate parameters are not variable length without size and with null value.
@@ -9021,7 +9031,7 @@ namespace Microsoft.Data.SqlClient
 
                             if (mt.IsNewKatmaiType)
                             {
-                                WriteSmiParameter(param, i, 0 != (options & TdsEnums.RPC_PARAM_DEFAULT), stateObj, cmd.DisableOutputParameters, isAdvancedTraceOn);
+                                WriteSmiParameter(param, i, 0 != (options & TdsEnums.RPC_PARAM_DEFAULT), stateObj, enableOptimizedParameterBinding, isAdvancedTraceOn);
                                 continue;
                             }
 
@@ -9031,7 +9041,7 @@ namespace Microsoft.Data.SqlClient
                                 throw ADP.VersionDoesNotSupportDataType(mt.TypeName);
                             }
 
-                            Task writeParamTask = TDSExecuteRPCAddParameter(stateObj, param, mt, options, cmd.DisableOutputParameters);
+                            Task writeParamTask = TDSExecuteRPCAddParameter(stateObj, param, mt, options, enableOptimizedParameterBinding);
 
                             if (!sync)
                             {
