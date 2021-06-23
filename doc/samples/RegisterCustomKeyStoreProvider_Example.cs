@@ -1,4 +1,8 @@
 ﻿// <Snippet1>
+using Microsoft.Data.SqlClient;
+using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
+using System.Collections.Generic;
+
 class Program
 {
     // Links a SqlColumnEncryptionKeyStoreProvider to some object that represents a user
