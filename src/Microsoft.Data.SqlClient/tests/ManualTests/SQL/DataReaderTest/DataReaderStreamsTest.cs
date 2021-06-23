@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(GetCommandBehaviours))]
         public static async Task GetFieldValueAsync_OfStream(CommandBehavior behavior)
         {
-            const int PacketSize = 512;
+            const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
             string connectionString = SetConnectionStringPacketSize(DataTestUtility.TCPConnectionString, PacketSize);
             byte[] originalData = CreateBinaryData(PacketSize, forcedPacketCount: 4);
             string query = CreateBinaryDataQuery(originalData);
@@ -57,7 +57,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(GetCommandBehaviours))]
         public static async Task GetFieldValueAsync_OfXmlReader(CommandBehavior behavior)
         {
-            const int PacketSize = 512;
+            const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
             string connectionString = SetConnectionStringPacketSize(DataTestUtility.TCPConnectionString, PacketSize);
             string originalXml = CreateXmlData(PacketSize, forcedPacketCount: 4);
             string query = CreateXmlDataQuery(originalXml);
@@ -92,7 +92,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(GetCommandBehaviours))]
         public static async Task GetFieldValueAsync_OfTextReader(CommandBehavior behavior)
         {
-            const int PacketSize = 512;
+            const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
             string connectionString = SetConnectionStringPacketSize(DataTestUtility.TCPConnectionString, PacketSize);
             string originalText = CreateXmlData(PacketSize, forcedPacketCount: 4);
             string query = CreateTextDataQuery(originalText);
@@ -127,7 +127,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(GetCommandBehaviours))]
         public static void GetFieldValue_OfXmlReader(CommandBehavior behavior)
         {
-            const int PacketSize = 512;
+            const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
             string connectionString = SetConnectionStringPacketSize(DataTestUtility.TCPConnectionString, PacketSize);
             string originalXml = CreateXmlData(PacketSize, forcedPacketCount: 4);
             string query = CreateXmlDataQuery(originalXml);
@@ -162,7 +162,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(GetCommandBehaviours))]
         public static void GetFieldValue_OfStream(CommandBehavior behavior)
         {
-            const int PacketSize = 512;
+            const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
             string connectionString = SetConnectionStringPacketSize(DataTestUtility.TCPConnectionString, PacketSize);
             byte[] originalData = CreateBinaryData(PacketSize, forcedPacketCount: 4);
             string query = CreateBinaryDataQuery(originalData);
@@ -196,7 +196,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(GetCommandBehaviours))]
         public static void GetFieldValue_OfTextReader(CommandBehavior behavior)
         {
-            const int PacketSize = 512;
+            const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
             string connectionString = SetConnectionStringPacketSize(DataTestUtility.TCPConnectionString, PacketSize);
             string originalText = CreateXmlData(PacketSize, forcedPacketCount: 4);
             string query = CreateTextDataQuery(originalText);
@@ -231,7 +231,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(GetCommandBehaviours))]
         public static void GetStream(CommandBehavior behavior)
         {
-            const int PacketSize = 512;
+            const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
             string connectionString = SetConnectionStringPacketSize(DataTestUtility.TCPConnectionString, PacketSize);
             byte[] originalData = CreateBinaryData(PacketSize, forcedPacketCount: 4);
             string query = CreateBinaryDataQuery(originalData);
@@ -268,7 +268,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(GetCommandBehaviours))]
         public static void GetXmlReader(CommandBehavior behavior)
         {
-            const int PacketSize = 512;
+            const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
             string connectionString = SetConnectionStringPacketSize(DataTestUtility.TCPConnectionString, PacketSize);
             string originalXml = CreateXmlData(PacketSize, forcedPacketCount: 4);
             string query = CreateXmlDataQuery(originalXml);
@@ -303,7 +303,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [MemberData(nameof(GetCommandBehaviours))]
         public static void GetTextReader(CommandBehavior behavior)
         {
-            const int PacketSize = 512;
+            const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
             string connectionString = SetConnectionStringPacketSize(DataTestUtility.TCPConnectionString, PacketSize);
             string originalText = CreateXmlData(PacketSize, forcedPacketCount: 4);
             string query = CreateTextDataQuery(originalText);
@@ -494,7 +494,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString);
             builder.PersistSecurityInfo = true;
-            builder.PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
+            builder.PacketSize = packetSize;
             return builder.ToString();
         }
 
