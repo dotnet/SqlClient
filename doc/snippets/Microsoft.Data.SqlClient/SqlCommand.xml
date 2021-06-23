@@ -286,8 +286,13 @@ The following console application creates updates data within the **AdventureWor
 			<exception cref="T:System.InvalidOperationException">
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
-				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/sql/connect/ado-net/sqlclient-streaming-support).
-			</exception>
+        closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/sql/connect/ado-net/sqlclient-streaming-support).
+
+        - or -
+
+        <see cref="P:Microssoft.Data.SqlClient.SqlCommand.EnableOptimizedParameterBinding" />
+        is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" />Parameters collection.
+      </exception>
 			<exception cref="T:System.IO.IOException">
 				An error occurred in a
 				<see cref="T:System.IO.Stream" />
@@ -399,8 +404,13 @@ To set up this example, create a new Windows application. Put a <xref:System.Win
 			<exception cref="T:System.InvalidOperationException">
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
-				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/sql/connect/ado-net/sqlclient-streaming-support).
-			</exception>
+        closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/sql/connect/ado-net/sqlclient-streaming-support).
+
+        - or -
+
+        <see cref="P:Microssoft.Data.SqlClient.SqlCommand.EnableOptimizedParameterBinding" />
+        is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" />Parameters collection.
+      </exception>
 		</BeginExecuteNonQuery>
 		<BeginExecuteReader name="default">
 			<summary>
@@ -477,8 +487,13 @@ The following console application starts the process of retrieving a data reader
 			<exception cref="T:System.InvalidOperationException">
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
-				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/sql/connect/ado-net/sqlclient-streaming-support).
-			</exception>
+        closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/sql/connect/ado-net/sqlclient-streaming-support).
+
+        - or -
+
+        <see cref="P:Microssoft.Data.SqlClient.SqlCommand.EnableOptimizedParameterBinding" />
+        is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" />Parameters collection.
+      </exception>
 			<exception cref="T:System.IO.IOException">
 				An error occurred in a
 				<see cref="T:System.IO.Stream" />
@@ -584,8 +599,13 @@ This example also passes the `CommandBehavior.CloseConnection` and `CommandBehav
 			<exception cref="T:System.InvalidOperationException">
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
-				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/sql/connect/ado-net/sqlclient-streaming-support).
-			</exception>
+        closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/sql/connect/ado-net/sqlclient-streaming-support).
+
+        - or -
+
+        <see cref="P:Microssoft.Data.SqlClient.SqlCommand.EnableOptimizedParameterBinding" />
+        is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" />Parameters collection.
+      </exception>
 			<exception cref="T:System.IO.IOException">
 				An error occurred in a
 				<see cref="T:System.IO.Stream" />
@@ -702,8 +722,13 @@ To set up this example, create a new Windows application. Put a <xref:System.Win
 			<exception cref="T:System.InvalidOperationException">
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
-				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/sql/connect/ado-net/sqlclient-streaming-support).
-			</exception>
+        closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/sql/connect/ado-net/sqlclient-streaming-support).
+
+        - or -
+
+        <see cref="P:Microssoft.Data.SqlClient.SqlCommand.EnableOptimizedParameterBinding" />
+        is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" />Parameters collection.
+      </exception>
 			<exception cref="T:System.IO.IOException">
 				An error occurred in a
 				<see cref="T:System.IO.Stream" />
@@ -831,8 +856,13 @@ This example passes the `CommandBehavior.CloseConnection` value in the `behavior
 			<exception cref="T:System.InvalidOperationException">
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
-				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/sql/connect/ado-net/sqlclient-streaming-support).
-			</exception>
+        closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/sql/connect/ado-net/sqlclient-streaming-support).
+
+        - or -
+
+        <see cref="P:Microssoft.Data.SqlClient.SqlCommand.EnableOptimizedParameterBinding" />
+        is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" />Parameters collection.
+      </exception>
 			<exception cref="T:System.IO.IOException">
 				An error occurred in a
 				<see cref="T:System.IO.Stream" />
@@ -940,6 +970,11 @@ The following console application starts the process of retrieving XML data asyn
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
 				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/sql/connect/ado-net/sqlclient-streaming-support).
+        
+        - or -
+
+        <see cref="P:Microssoft.Data.SqlClient.SqlCommand.EnableOptimizedParameterBinding" />
+        is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" />Parameters collection.
 			</exception>
 			<exception cref="T:System.IO.IOException">
 				An error occurred in a
@@ -1067,8 +1102,13 @@ To set up this example, create a new Windows application. Put a <xref:System.Win
 			<exception cref="T:System.InvalidOperationException">
 				The
 				<see cref="T:Microsoft.Data.SqlClient.SqlConnection" />
-				closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/sql/connect/ado-net/sqlclient-streaming-support).
-			</exception>
+        closed or dropped during a streaming operation. For more information about streaming, see [SqlClient Streaming Support](/sql/connect/ado-net/sqlclient-streaming-support).
+
+        - or -
+
+        <see cref="P:Microssoft.Data.SqlClient.SqlCommand.EnableOptimizedParameterBinding" />
+        is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" />Parameters collection.
+      </exception>
 			<exception cref="T:System.IO.IOException">
 				An error occurred in a
 				<see cref="T:System.IO.Stream" />
