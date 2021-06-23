@@ -391,7 +391,7 @@ namespace Microsoft.Data.SqlClient.Tests
             return GetEnumerator();
         }
     }
-    [SqlUserDefinedType(Format.UserDefined)]
+    [Microsoft.SqlServer.Server.SqlUserDefinedType(Microsoft.SqlServer.Server.Format.UserDefined)]
     public class TestUdt
     {
 

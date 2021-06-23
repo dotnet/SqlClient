@@ -16,7 +16,7 @@ namespace Microsoft.SqlServer.Server
 
         internal StringsHelper()
         {
-            _resources = new ResourceManager("Microsoft.SqlServer.Server.Resources.Strings", GetType().Assembly);
+            _resources = new ResourceManager("Microsoft.SqlServer.Server.Strings", GetType().Assembly);
         }
 
         private static StringsHelper GetLoader()
