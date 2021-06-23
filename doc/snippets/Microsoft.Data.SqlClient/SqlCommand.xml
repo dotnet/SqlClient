@@ -291,7 +291,7 @@ The following console application creates updates data within the **AdventureWor
         - or -
 
         <see cref="P:Microssoft.Data.SqlClient.SqlCommand.EnableOptimizedParameterBinding" />
-        is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" />Parameters collection.
+        is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" /> collection.
       </exception>
 			<exception cref="T:System.IO.IOException">
 				An error occurred in a
@@ -409,7 +409,7 @@ To set up this example, create a new Windows application. Put a <xref:System.Win
         - or -
 
         <see cref="P:Microssoft.Data.SqlClient.SqlCommand.EnableOptimizedParameterBinding" />
-        is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" />Parameters collection.
+        is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" /> collection.
       </exception>
 		</BeginExecuteNonQuery>
 		<BeginExecuteReader name="default">
@@ -492,7 +492,7 @@ The following console application starts the process of retrieving a data reader
         - or -
 
         <see cref="P:Microssoft.Data.SqlClient.SqlCommand.EnableOptimizedParameterBinding" />
-        is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" />Parameters collection.
+        is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" /> collection.
       </exception>
 			<exception cref="T:System.IO.IOException">
 				An error occurred in a
@@ -604,7 +604,7 @@ This example also passes the `CommandBehavior.CloseConnection` and `CommandBehav
         - or -
 
         <see cref="P:Microssoft.Data.SqlClient.SqlCommand.EnableOptimizedParameterBinding" />
-        is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" />Parameters collection.
+        is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" /> collection.
       </exception>
 			<exception cref="T:System.IO.IOException">
 				An error occurred in a
@@ -727,7 +727,7 @@ To set up this example, create a new Windows application. Put a <xref:System.Win
         - or -
 
         <see cref="P:Microssoft.Data.SqlClient.SqlCommand.EnableOptimizedParameterBinding" />
-        is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" />Parameters collection.
+        is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" /> collection.
       </exception>
 			<exception cref="T:System.IO.IOException">
 				An error occurred in a
@@ -861,7 +861,7 @@ This example passes the `CommandBehavior.CloseConnection` value in the `behavior
         - or -
 
         <see cref="P:Microssoft.Data.SqlClient.SqlCommand.EnableOptimizedParameterBinding" />
-        is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" />Parameters collection.
+        is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" /> collection.
       </exception>
 			<exception cref="T:System.IO.IOException">
 				An error occurred in a
@@ -974,7 +974,7 @@ The following console application starts the process of retrieving XML data asyn
         - or -
 
         <see cref="P:Microssoft.Data.SqlClient.SqlCommand.EnableOptimizedParameterBinding" />
-        is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" />Parameters collection.
+        is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" /> collection.
 			</exception>
 			<exception cref="T:System.IO.IOException">
 				An error occurred in a
@@ -1107,7 +1107,7 @@ To set up this example, create a new Windows application. Put a <xref:System.Win
         - or -
 
         <see cref="P:Microssoft.Data.SqlClient.SqlCommand.EnableOptimizedParameterBinding" />
-        is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" />Parameters collection.
+        is set to true and a parameter with direction Output or InputOutput has been added to the <see cref="P:Microsoft.Data.SqlClient.SqlCommand.Parameters" /> collection.
       </exception>
 			<exception cref="T:System.IO.IOException">
 				An error occurred in a
