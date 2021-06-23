@@ -3048,7 +3048,7 @@
   <data name="SqlMisc_SubclassMustOverride" xml:space="preserve">
     <value>Die Unterklasse hat keine erforderliche Methode überschrieben.</value>
   </data>
-  <data name="Sql_CanotCreateNormalizer" xml:space="preserve">
+  <data name="Sql_CannotCreateNormalizer" xml:space="preserve">
     <value>Die Normalisierungsfunktion für '{0}' kann nicht erstellt werden.</value>
   </data>
   <data name="Sql_InternalError" xml:space="preserve">
