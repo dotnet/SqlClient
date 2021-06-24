@@ -532,7 +532,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [Fact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         private static void EnableOptimizedParameterBinding_ParametersAreUsedByName()
         {
             int firstInput = 1;
@@ -562,7 +562,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [Fact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         private static void EnableOptimizedParameterBinding_NamesMustMatch()
         {
             using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
@@ -592,7 +592,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [Fact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         private static void EnableOptimizedParameterBinding_AllNamesMustBeDeclared()
         {
             using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
@@ -621,7 +621,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [Fact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         private static void EnableOptimizedParameterBinding_NamesCanBeReUsed()
         {
             int firstInput = 1;
@@ -655,7 +655,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [Fact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         private static void EnableOptimizedParameterBinding_InputOutputFails()
         {
             int firstInput = 1;
@@ -681,7 +681,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [Fact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         private static void EnableOptimizedParameterBinding_OutputFails()
         {
             int firstInput = 1;
@@ -707,7 +707,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [Fact]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         private static void EnableOptimizedParameterBinding_ReturnSucceeds()
         {
             int firstInput = 12;
