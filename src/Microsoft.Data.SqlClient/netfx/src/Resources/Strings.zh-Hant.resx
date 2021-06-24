@@ -3049,7 +3049,7 @@
     <value>子類別並未覆寫所需的方法。</value>
   </data>
   <data name="Sql_CannotCreateNormalizer" xml:space="preserve">
-    <value>無法建立 '{0}' 的正規器。</value>
+    <value>Cannot create normalizer for '{0}'.</value>
   </data>
   <data name="Sql_InternalError" xml:space="preserve">
     <value>內部錯誤</value>

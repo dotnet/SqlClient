@@ -3049,7 +3049,7 @@
     <value>Подклассы не переопределяют необходимый метод.</value>
   </data>
   <data name="Sql_CannotCreateNormalizer" xml:space="preserve">
-    <value>Не удается создать нормализатор для "{0}".</value>
+    <value>Cannot create normalizer for '{0}'.</value>
   </data>
   <data name="Sql_InternalError" xml:space="preserve">
     <value>Внутренняя ошибка</value>

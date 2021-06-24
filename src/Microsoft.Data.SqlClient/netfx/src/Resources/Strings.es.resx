@@ -3049,7 +3049,7 @@
     <value>La subclase no invalidó un método requerido.</value>
   </data>
   <data name="Sql_CannotCreateNormalizer" xml:space="preserve">
-    <value>No se puede crear un normalizador para '{0}'.</value>
+    <value>Cannot create normalizer for '{0}'.</value>
   </data>
   <data name="Sql_InternalError" xml:space="preserve">
     <value>Error interno</value>

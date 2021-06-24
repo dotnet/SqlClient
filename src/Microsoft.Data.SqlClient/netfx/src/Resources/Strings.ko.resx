@@ -3049,7 +3049,7 @@
     <value>서브클래스에서 필요한 메서드를 재정의하지 않았습니다.</value>
   </data>
   <data name="Sql_CannotCreateNormalizer" xml:space="preserve">
-    <value>'{0}'에 대한 노멀라이저를 만들 수 없습니다.</value>
+    <value>Cannot create normalizer for '{0}'.</value>
   </data>
   <data name="Sql_InternalError" xml:space="preserve">
     <value>내부 오류</value>

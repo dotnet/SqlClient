@@ -3049,7 +3049,7 @@
     <value>La sottoclasse non ha eseguito l'override di un metodo di richiesta.</value>
   </data>
   <data name="Sql_CannotCreateNormalizer" xml:space="preserve">
-    <value>Impossibile creare un normalizzatore per '{0}'.</value>
+    <value>Cannot create normalizer for '{0}'.</value>
   </data>
   <data name="Sql_InternalError" xml:space="preserve">
     <value>Errore interno</value>
