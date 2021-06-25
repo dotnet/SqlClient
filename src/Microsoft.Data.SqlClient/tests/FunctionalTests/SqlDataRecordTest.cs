@@ -8,14 +8,12 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
 using Microsoft.Data.SqlClient.Server;
-using Microsoft.SqlServer.Server;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
 {
     public class SqlDataRecordTest
     {
-
         [Fact]
         public void SqlRecordFillTest()
         {
