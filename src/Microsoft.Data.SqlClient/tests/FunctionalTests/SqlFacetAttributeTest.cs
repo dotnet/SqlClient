@@ -5,7 +5,7 @@
 using Microsoft.SqlServer.Server;
 using Xunit;
 
-namespace System.Data.SqlClient.Tests
+namespace Microsoft.Data.SqlClient.Tests
 {
     public class SqlFacetAttributeTests
     {
