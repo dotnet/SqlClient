@@ -14,6 +14,7 @@ namespace Microsoft.Data.SqlClient.SNI
     /// </summary>
     internal class SNIMarsConnection
     {
+        private readonly object _sync;
         private readonly Guid _connectionId;
         private readonly Dictionary<int, SNIMarsHandle> _sessions;
         private SNIHandle _lowerHandle;
@@ -26,7 +27,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
         public int ProtocolVersion => _lowerHandle.ProtocolVersion;
 
-        public object DemuxerSync => this;
+        public object DemuxerSync => _sync;
 
         /// <summary>
         /// Constructor
@@ -34,6 +35,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="lowerHandle">Lower handle</param>
         public SNIMarsConnection(SNIHandle lowerHandle)
         {
+            _sync = new object();
             _connectionId = Guid.NewGuid();
             _sessions = new Dictionary<int, SNIMarsHandle>();
             _demuxState = DemuxState.Header;
