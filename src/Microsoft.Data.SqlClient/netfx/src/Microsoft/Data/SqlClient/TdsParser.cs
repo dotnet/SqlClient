@@ -3550,6 +3550,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     return false;
                 }
+
                 if (featureId != TdsEnums.FEATUREEXT_TERMINATOR)
                 {
                     UInt32 dataLen;
@@ -3565,7 +3566,8 @@ namespace Microsoft.Data.SqlClient
                             return false;
                         }
                     }
-                    _connHandler.OnFeatureExtAck(featureId, data);
+                    _connHandler.
+                        OnFeatureExtAck(featureId, data);
                 }
             } while (featureId != TdsEnums.FEATUREEXT_TERMINATOR);
 
@@ -8707,6 +8709,20 @@ namespace Microsoft.Data.SqlClient
             return len;
         }
 
+        internal int WriteForceRefreshFeatureRequest(bool write /* if false just calculates the length */)
+        {
+            int len = 5; // 1byte = featureID, 4bytes = featureData length
+
+            if (write)
+            {
+                // Write Feature ID
+                _physicalStateObj.WriteByte(TdsEnums.FEATUREEXT_FORCEREFRESH);
+                WriteInt(0, _physicalStateObj); // we don't send any data
+            }
+
+            return len;
+        }
+
         internal void TdsLogin(SqlLogin rec,
                                TdsEnums.FeatureExtension requestedFeatures,
                                SessionData recoverySessionData,
@@ -8898,6 +8914,10 @@ namespace Microsoft.Data.SqlClient
                     if ((requestedFeatures & TdsEnums.FeatureExtension.SQLDNSCaching) != 0)
                     {
                         length += WriteSQLDNSCachingFeatureRequest(false);
+                    }
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.ForceRefresh) != 0)
+                    {
+                        length += WriteForceRefreshFeatureRequest(false);
                     }
 
                     length++; // for terminator
@@ -9175,6 +9195,11 @@ namespace Microsoft.Data.SqlClient
                     if ((requestedFeatures & TdsEnums.FeatureExtension.SQLDNSCaching) != 0)
                     {
                         WriteSQLDNSCachingFeatureRequest(true);
+                    }
+
+                    if ((requestedFeatures & TdsEnums.FeatureExtension.ForceRefresh) != 0)
+                    {
+                        WriteForceRefreshFeatureRequest(true);
                     }
 
                     _physicalStateObj.WriteByte(0xFF); // terminator

@@ -146,6 +146,8 @@ namespace Microsoft.Data.SqlClient
         internal bool _cleanSQLDNSCaching = false;
         private bool _serverSupportsDNSCaching = false;
 
+        internal bool _requestForceRefresh = false;
+
         /// <summary>
         /// Returns buffer time allowed before access token expiry to continue using the access token.
         /// </summary>
@@ -530,15 +532,27 @@ namespace Microsoft.Data.SqlClient
                     // If transient fault handling is enabled then we can retry the login upto the ConnectRetryCount.
                     int connectionEstablishCount = applyTransientFaultHandling ? connectionOptions.ConnectRetryCount + 1 : 1;
                     int transientRetryIntervalInMilliSeconds = connectionOptions.ConnectRetryInterval * 1000; // Max value of transientRetryInterval is 60*1000 ms. The max value allowed for ConnectRetryInterval is 60
-                    for (int i = 0; i < connectionEstablishCount; i++)
+                    for (int i = 0; i < 1; i++)
                     {
                         try
                         {
+                            _requestForceRefresh = false;
                             OpenLoginEnlist(_timeout, connectionOptions, credential, newPassword, newSecurePassword, redirectedUserInstance);
                             break;
                         }
                         catch (SqlException sqlex)
                         {
+                            foreach (SqlError error in sqlex.Errors)
+                            {
+                                if (error.Number == 40613)
+                                {
+                                    //AD 
+                                    Console.WriteLine("Client recieved ERROR 40613, retrying...");
+                                    _requestForceRefresh = true;
+                                    OpenLoginEnlist(_timeout, connectionOptions, credential, newPassword, newSecurePassword, redirectedUserInstance);
+                                }
+                            }
+
                             if (i + 1 == connectionEstablishCount
                               || !applyTransientFaultHandling
                               || _timeout.IsExpired
@@ -1622,6 +1636,19 @@ namespace Microsoft.Data.SqlClient
             // The SQLDNSCaching feature is implicitly set
             requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
 
+            // The ForceRefresh feature is set if driver recieved 40613 Error
+            // TODO: Flesh out cases where ForceRefresh is used
+            // TODO: Remove the true short circuit below
+            if (_requestForceRefresh)
+            {
+                Console.WriteLine("Requesting WITH Force Refresh");
+                requestedFeatures |= TdsEnums.FeatureExtension.ForceRefresh;
+            }
+            else
+            { 
+                Console.WriteLine("Requesting WITHOUT Force Refresh"); 
+            }
+            
             _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, _originalNetworkAddressInfo);
         }
 
@@ -2925,7 +2952,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (_routingInfo != null)
             {
-                if (TdsEnums.FEATUREEXT_SQLDNSCACHING != featureId)
+                if (TdsEnums.FEATUREEXT_SQLDNSCACHING != featureId && TdsEnums.FEATUREEXT_FORCEREFRESH != featureId)
                 {
                     return;
                 }
@@ -3177,6 +3204,31 @@ namespace Microsoft.Data.SqlClient
                         // not put them in the DNS cache at this point but need to store them somewhere
 
                         // generate pendingSQLDNSObject and turn on IsSQLDNSRetryEnabled flag
+
+                        break;
+                    }
+
+                case TdsEnums.FEATUREEXT_FORCEREFRESH:
+                    {
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ADV> {0}, Received feature extension acknowledgement for FORCEREFRESH", ObjectID);
+
+                        if (data.Length < 1)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.OnFeatureExtAck|ERR> {0}, Unknown token for FORCEREFRESH", ObjectID);
+                            throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+                        }
+
+                        // TODO Add logic for when server acknowledges Force Refresh
+                        if (1 == data[0])
+                        {
+                            Console.WriteLine("FORCE REFRESH IS SUPPORTED");
+                            Console.Out.Flush();
+                        }
+                        else
+                        {
+                            Console.WriteLine("FORCE REFRESH IS NOT SUPPORTED");
+                            Console.Out.Flush();
+                        }
 
                         break;
                     }
