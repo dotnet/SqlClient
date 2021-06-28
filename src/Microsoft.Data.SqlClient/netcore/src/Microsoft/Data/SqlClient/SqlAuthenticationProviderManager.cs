@@ -21,6 +21,7 @@ namespace Microsoft.Data.SqlClient
         private const string ActiveDirectoryDeviceCodeFlow = "active directory device code flow";
         private const string ActiveDirectoryManagedIdentity = "active directory managed identity";
         private const string ActiveDirectoryMSI = "active directory msi";
+        private const string ActiveDirectoryDefault = "active directory default";
 
         private readonly string _typeName;
         private readonly IReadOnlyCollection<SqlAuthenticationMethod> _authenticationsWithAppSpecifiedProvider;
@@ -30,6 +31,25 @@ namespace Microsoft.Data.SqlClient
 
         public static readonly SqlAuthenticationProviderManager Instance;
 
+        /// <summary>
+        /// Sets default supported Active Directory Authentication providers by the driver 
+        /// on the SqlAuthenticationProviderManager instance.
+        /// </summary>
+        private static void SetDefaultAuthProviders(SqlAuthenticationProviderManager instance)
+        {
+            if (instance != null)
+            {
+                var activeDirectoryAuthProvider = new ActiveDirectoryAuthenticationProvider(instance._applicationClientId);
+                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryIntegrated, activeDirectoryAuthProvider);
+                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, activeDirectoryAuthProvider);
+                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive, activeDirectoryAuthProvider);
+                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal, activeDirectoryAuthProvider);
+                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, activeDirectoryAuthProvider);
+                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity, activeDirectoryAuthProvider);
+                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryMSI, activeDirectoryAuthProvider);
+                instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDefault, activeDirectoryAuthProvider);
+            }
+        }
         /// <summary>
         /// Constructor.
         /// </summary>

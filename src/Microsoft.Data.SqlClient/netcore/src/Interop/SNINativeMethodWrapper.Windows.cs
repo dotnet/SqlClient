@@ -165,6 +165,7 @@ namespace Microsoft.Data.SqlClient
             public TransparentNetworkResolutionMode transparentNetworkResolution;
             public int totalTimeout;
             public bool isAzureSqlServerEndpoint;
+            public SqlConnectionIPAddressPreference ipAddressPreference;
             public SNI_DNSCache_Info DNSCacheInfo;
         }
 
@@ -275,6 +276,7 @@ namespace Microsoft.Data.SqlClient
             [In] SNIHandle pConn,
             out IntPtr ppConn,
             [MarshalAs(UnmanagedType.Bool)] bool fSync,
+            SqlConnectionIPAddressPreference ipPreference,
             [In] ref SNI_DNSCache_Info pDNSCachedInfo);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
@@ -304,12 +306,6 @@ namespace Microsoft.Data.SqlClient
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         private static extern uint SNIWriteSyncOverAsync(SNIHandle pConn, [In] SNIPacket pPacket);
-        
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern bool RegisterTraceProviderWrapper(int eventKeyword);
-        
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void UnregisterTraceProviderWrapper();
 	    #endregion
 
         internal static uint SniGetConnectionId(SNIHandle pConn, ref Guid connId)
@@ -347,7 +343,7 @@ namespace Microsoft.Data.SqlClient
             return SNIInitialize(IntPtr.Zero);
         }
 
-        internal static unsafe uint SNIOpenMarsSession(ConsumerInfo consumerInfo, SNIHandle parent, ref IntPtr pConn, bool fSync, SQLDNSInfo cachedDNSInfo)
+        internal static unsafe uint SNIOpenMarsSession(ConsumerInfo consumerInfo, SNIHandle parent, ref IntPtr pConn, bool fSync, SqlConnectionIPAddressPreference ipPreference, SQLDNSInfo cachedDNSInfo)
         {
             // initialize consumer info for MARS
             Sni_Consumer_Info native_consumerInfo = new Sni_Consumer_Info();
@@ -359,10 +355,11 @@ namespace Microsoft.Data.SqlClient
             native_cachedDNSInfo.wszCachedTcpIPv6 = cachedDNSInfo?.AddrIPv6;
             native_cachedDNSInfo.wszCachedTcpPort = cachedDNSInfo?.Port;
 
-            return SNIOpenWrapper(ref native_consumerInfo, "session:", parent, out pConn, fSync, ref native_cachedDNSInfo);
+            return SNIOpenWrapper(ref native_consumerInfo, "session:", parent, out pConn, fSync, ipPreference, ref native_cachedDNSInfo);
         }
 
-        internal static unsafe uint SNIOpenSyncEx(ConsumerInfo consumerInfo, string constring, ref IntPtr pConn, byte[] spnBuffer, byte[] instanceName, bool fOverrideCache, bool fSync, int timeout, bool fParallel, SQLDNSInfo cachedDNSInfo)
+        internal static unsafe uint SNIOpenSyncEx(ConsumerInfo consumerInfo, string constring, ref IntPtr pConn, byte[] spnBuffer, byte[] instanceName, bool fOverrideCache, 
+                                    bool fSync, int timeout, bool fParallel, SqlConnectionIPAddressPreference ipPreference, SQLDNSInfo cachedDNSInfo)
         {
             fixed (byte* pin_instanceName = &instanceName[0])
             {
@@ -385,6 +382,7 @@ namespace Microsoft.Data.SqlClient
                 clientConsumerInfo.totalTimeout = SniOpenTimeOut;
                 clientConsumerInfo.isAzureSqlServerEndpoint = ADP.IsAzureSqlServerEndpoint(constring);
 
+                clientConsumerInfo.ipAddressPreference = ipPreference;
                 clientConsumerInfo.DNSCacheInfo.wszCachedFQDN = cachedDNSInfo?.FQDN;
                 clientConsumerInfo.DNSCacheInfo.wszCachedTcpIPv4 = cachedDNSInfo?.AddrIPv4;
                 clientConsumerInfo.DNSCacheInfo.wszCachedTcpIPv6 = cachedDNSInfo?.AddrIPv6;
@@ -467,18 +465,6 @@ namespace Microsoft.Data.SqlClient
                 : IntPtr.Zero;
             native_consumerInfo.ConsumerKey = consumerInfo.key;
         }
-
-		internal static bool RegisterTraceProvider(int eventKeyword)
-		{
-			// Registers the TraceLogging provider, enabling it to generate events.
-			// Return true if enabled, otherwise false.
-			return RegisterTraceProviderWrapper(eventKeyword);
-		}
-
-		internal static void UnregisterTraceProvider()
-		{
-			UnregisterTraceProviderWrapper();
-		}
     }
 }
 

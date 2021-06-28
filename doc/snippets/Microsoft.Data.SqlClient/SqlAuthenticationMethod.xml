@@ -34,12 +34,16 @@
             <value>6</value>
         </ActiveDirectoryDeviceCodeFlow>
         <ActiveDirectoryManagedIdentity>
-          <summary>The authentication method uses Active Directory Managed Identity. Use System Assigned or User Assigned Managed Identity to connect to SQL Database from Azure client environments that have enabled support for Managed Identity. For User Assigned Managed Identity, 'User Id' or 'UID' is required to be set to the object ID of the user identity.</summary>
+          <summary>The authentication method uses Active Directory Managed Identity. Use System Assigned or User Assigned Managed Identity to connect to SQL Database from Azure client environments that have enabled support for Managed Identity. For User Assigned Managed Identity, 'User Id' or 'UID' is required to be set to the "client ID" of the user identity.</summary>
           <value>7</value>
         </ActiveDirectoryManagedIdentity>
         <ActiveDirectoryMSI>
-          <summary>Alias for "Active Directory Managed Identity" authentication method. Use System Assigned or User Assigned Managed Identity to connect to SQL Database from Azure client environments that have enabled support for Managed Identity. For User Assigned Managed Identity, 'User Id' or 'UID' is required to be set to the object ID of the user identity.</summary>
+          <summary>Alias for "Active Directory Managed Identity" authentication method. Use System Assigned or User Assigned Managed Identity to connect to SQL Database from Azure client environments that have enabled support for Managed Identity. For User Assigned Managed Identity, 'User Id' or 'UID' is required to be set to the "client ID" of the user identity.</summary>
           <value>8</value>
         </ActiveDirectoryMSI>
+      <ActiveDirectoryDefault>
+          <summary>The authentication method uses Active Directory Default. Use this mode to connect to a SQL Database using multiple non-interactive authentication methods tried sequentially to acquire an access token. This method does not fallback to the "Active Directory Interactive" authentication method.</summary>
+          <value>9</value>
+      </ActiveDirectoryDefault>
     </members>
 </docs>

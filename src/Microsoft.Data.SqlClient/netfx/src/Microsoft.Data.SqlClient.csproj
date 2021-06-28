@@ -97,9 +97,6 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientEventSource.cs">
       <Link>Microsoft\Data\SqlClient\SqlClientEventSource.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientEventSource.Windows.cs">
-      <Link>Microsoft\Data\SqlClient\SqlClientEventSource.Windows.cs</Link>
-    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientLogger.cs">
       <Link>Microsoft\Data\SqlClient\SqlClientLogger.cs</Link>
     </Compile>
@@ -154,11 +151,15 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.cs">
       <Link>Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\AzureManagedIdentityAuthenticationProvider.cs">
-      <Link>Microsoft\Data\SqlClient\AzureManagedIdentityAuthenticationProvider.cs</Link>
+    <Compile Include="Microsoft\Data\SqlClient\AlwaysEncryptedKeyConverter.Cng.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\AzureAttestationBasedEnclaveProvider.cs">
+      <Link>Microsoft\Data\SqlClient\AzureAttestationBasedEnclaveProvider.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\EnclaveDelegate.cs">
       <Link>Microsoft\Data\SqlClient\EnclaveDelegate.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\EnclaveDelegate.Crypto.cs">
+      <Link>Microsoft\Data\SqlClient\EnclaveDelegate.Crypto.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\EnclavePackage.cs">
       <Link>Microsoft\Data\SqlClient\EnclavePackage.cs</Link>
@@ -289,6 +290,12 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlConnectionPoolProviderInfo.cs">
       <Link>Microsoft\Data\SqlClient\SqlConnectionPoolProviderInfo.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlEnclaveAttestationParameters.Crypto.cs">
+      <Link>Microsoft\Data\SqlClient\SqlEnclaveAttestationParameters.Crypto.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlEnclaveSession.cs">
+      <Link>Microsoft\Data\SqlClient\SqlEnclaveSession.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlInfoMessageEventHandler.cs">
       <Link>Microsoft\Data\SqlClient\SqlInfoMessageEventHandler.cs</Link>
     </Compile>
@@ -324,6 +331,9 @@
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProvider.cs">
       <Link>Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProviderBase.cs">
+      <Link>Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProviderBase.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlTypes\SqlTypeWorkarounds.cs">
       <Link>Microsoft\Data\SqlTypes\SqlTypeWorkarounds.cs</Link>
@@ -361,6 +371,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsRecordBufferSetter.cs">
       <Link>Microsoft\Data\SqlClient\TdsRecordBufferSetter.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlNormalizer.cs">
+      <Link>Microsoft\Data\SqlClient\Server\SqlNormalizer.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SmiRecordBuffer.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiRecordBuffer.cs</Link>
     </Compile>
@@ -391,8 +404,8 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.cs">
       <Link>Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.CreateProvider.cs">
-      <Link>Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.CreateProvider.cs</Link>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicLoader.cs">
+      <Link>Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicLoader.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\AppConfigManager.cs">
       <Link>Microsoft\Data\SqlClient\Reliability\AppConfigManager.cs</Link>
@@ -409,15 +422,12 @@
     <Compile Include="Microsoft\Data\Interop\SNINativeManagedWrapperX86.cs" />
     <Compile Include="Microsoft\Data\Interop\SNINativeMethodWrapper.cs" />
     <Compile Include="Microsoft\Data\SqlClient\assemblycache.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\AzureAttestationBasedEnclaveProvider.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\EnclaveDelegate.CngCryto.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalAppContextSwitches.netfx.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBConfig.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.LoadType.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SqlDataRecord.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\TriggerAction.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProviderBase.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlFileStream.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\UnsafeNativeMethods.cs" />
     <Compile Include="Resources\ResDescriptionAttribute.cs" />
@@ -446,8 +456,12 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionPoolKey.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionString.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionStringBuilder.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlConnectionTimeoutErrorInternal.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlCredential.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlConnectionTimeoutErrorInternal.cs">
+      <Link>Microsoft\Data\SqlClient\SqlConnectionTimeoutErrorInternal.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlCredential.cs">
+      <Link>Microsoft\Data\SqlClient\SqlCredential.cs</Link>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlDataAdapter.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDataReader.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDataReaderSmi.cs" />
@@ -455,10 +469,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlDependency.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDependencyListener.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDependencyUtils.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlEnclaveAttestationParameters.cs" />
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlEnclaveSession.cs">
-      <Link>Microsoft\Data\SqlClient\SqlEnclaveSession.cs</Link>
-    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlEnums.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlError.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlErrorCollection.cs" />
@@ -477,10 +487,14 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlSequentialStreamSmi.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlSequentialTextReader.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlSequentialTextReaderSmi.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlStatistics.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlStatistics.cs">
+      <Link>Microsoft\Data\SqlClient\SqlStatistics.cs</Link>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlTransaction.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlUdtInfo.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlUdtInfo.cs">
+      <Link>Microsoft\Data\SqlClient\SqlUdtInfo.cs</Link>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlUtil.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsEnums.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.cs" />
@@ -533,7 +547,6 @@
     <Compile Include="Microsoft\Data\SqlClient\Server\ValueUtilsSmi.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\sqlser.cs" />
     <Compile Include="Microsoft\Data\Sql\SqlGenericUtil.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\Server\sqlnorm.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(BuildSimulator)' == 'true'">
     <Compile Include="Microsoft\Data\SqlClient\SimulatorEnclaveProvider.cs" />
@@ -570,6 +583,9 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="$(MicrosoftSourceLinkGitHubVersion)" PrivateAssets="All" />
+    <PackageReference Include="System.Text.Encodings.Web">
+      <Version>$(SystemTextEncodingsWebVersion)</Version>
+    </PackageReference>
     <PackageReference Include="System.Security.Cryptography.Algorithms">
       <Version>$(SystemSecurityCryptographyAlgorithmsVersion)</Version>
     </PackageReference>
@@ -580,6 +596,9 @@
       <Version>$(MicrosoftDataSqlClientSniVersion)</Version>
       <PrivateAssets>All</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Azure.Identity">
+      <Version>$(AzureIdentityVersion)</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Identity.Client">
       <Version>$(MicrosoftIdentityClientVersion)</Version>

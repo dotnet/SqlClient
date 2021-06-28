@@ -354,6 +354,7 @@ namespace Microsoft.Data.SqlClient
             public TransparentNetworkResolutionMode transparentNetworkResolution;
             public int totalTimeout;
             public bool isAzureSqlServerEndpoint;
+            public SqlConnectionIPAddressPreference ipAddressPreference;
             public SNI_DNSCache_Info DNSCacheInfo;
         }
 
@@ -604,11 +605,12 @@ namespace Microsoft.Data.SqlClient
             [In] SNIHandle pConn,
             out IntPtr ppConn,
             [MarshalAs(UnmanagedType.Bool)] bool fSync,
+            SqlConnectionIPAddressPreference ipPreference,
             [In] ref SNI_DNSCache_Info pDNSCachedInfo)
         {
             return s_is64bitProcess ?
-                SNINativeManagedWrapperX64.SNIOpenWrapper(ref pConsumerInfo, szConnect, pConn, out ppConn, fSync, ref pDNSCachedInfo) :
-                SNINativeManagedWrapperX86.SNIOpenWrapper(ref pConsumerInfo, szConnect, pConn, out ppConn, fSync, ref pDNSCachedInfo);
+                SNINativeManagedWrapperX64.SNIOpenWrapper(ref pConsumerInfo, szConnect, pConn, out ppConn, fSync, ipPreference, ref pDNSCachedInfo) :
+                SNINativeManagedWrapperX86.SNIOpenWrapper(ref pConsumerInfo, szConnect, pConn, out ppConn, fSync, ipPreference, ref pDNSCachedInfo);
         }
 
         private static IntPtr SNIPacketAllocateWrapper([In] SafeHandle pConn, IOType IOType)
@@ -758,7 +760,7 @@ namespace Microsoft.Data.SqlClient
             return SNIInitialize(IntPtr.Zero);
         }
 
-        internal static unsafe uint SNIOpenMarsSession(ConsumerInfo consumerInfo, SNIHandle parent, ref IntPtr pConn, bool fSync, SQLDNSInfo cachedDNSInfo)
+        internal static unsafe uint SNIOpenMarsSession(ConsumerInfo consumerInfo, SNIHandle parent, ref IntPtr pConn, bool fSync, SqlConnectionIPAddressPreference ipPreference, SQLDNSInfo cachedDNSInfo)
         {
             // initialize consumer info for MARS
             Sni_Consumer_Info native_consumerInfo = new Sni_Consumer_Info();
@@ -770,10 +772,11 @@ namespace Microsoft.Data.SqlClient
             native_cachedDNSInfo.wszCachedTcpIPv6 = cachedDNSInfo?.AddrIPv6;
             native_cachedDNSInfo.wszCachedTcpPort = cachedDNSInfo?.Port;
 
-            return SNIOpenWrapper(ref native_consumerInfo, "session:", parent, out pConn, fSync, ref native_cachedDNSInfo);
+            return SNIOpenWrapper(ref native_consumerInfo, "session:", parent, out pConn, fSync, ipPreference, ref native_cachedDNSInfo);
         }
 
-        internal static unsafe uint SNIOpenSyncEx(ConsumerInfo consumerInfo, string constring, ref IntPtr pConn, byte[] spnBuffer, byte[] instanceName, bool fOverrideCache, bool fSync, int timeout, bool fParallel, Int32 transparentNetworkResolutionStateNo, Int32 totalTimeout, Boolean isAzureSqlServerEndpoint, SQLDNSInfo cachedDNSInfo)
+        internal static unsafe uint SNIOpenSyncEx(ConsumerInfo consumerInfo, string constring, ref IntPtr pConn, byte[] spnBuffer, byte[] instanceName, bool fOverrideCache, bool fSync, int timeout, bool fParallel, 
+                        Int32 transparentNetworkResolutionStateNo, Int32 totalTimeout, Boolean isAzureSqlServerEndpoint, SqlConnectionIPAddressPreference ipPreference, SQLDNSInfo cachedDNSInfo)
         {
             fixed (byte* pin_instanceName = &instanceName[0])
             {
@@ -808,6 +811,7 @@ namespace Microsoft.Data.SqlClient
                 };
                 clientConsumerInfo.totalTimeout = totalTimeout;
 
+                clientConsumerInfo.ipAddressPreference = ipPreference;
                 clientConsumerInfo.DNSCacheInfo.wszCachedFQDN = cachedDNSInfo?.FQDN;
                 clientConsumerInfo.DNSCacheInfo.wszCachedTcpIPv4 = cachedDNSInfo?.AddrIPv4;
                 clientConsumerInfo.DNSCacheInfo.wszCachedTcpIPv6 = cachedDNSInfo?.AddrIPv6;
@@ -1074,32 +1078,6 @@ namespace Microsoft.Data.SqlClient
                 ? Marshal.GetFunctionPointerForDelegate(consumerInfo.writeDelegate)
                 : IntPtr.Zero;
             native_consumerInfo.ConsumerKey = consumerInfo.key;
-        }
-
-        internal static bool RegisterTraceProvider(int eventKeyword)
-        {
-            // Registers the TraceLogging provider, enabling it to generate events.
-            // Return true if enabled, otherwise false.
-            if (s_is64bitProcess)
-            {
-                return SNINativeManagedWrapperX64.RegisterTraceProviderWrapper(eventKeyword);
-            }
-            else
-            {
-                return SNINativeManagedWrapperX86.RegisterTraceProviderWrapper(eventKeyword);
-            }
-        }
-
-        internal static void UnregisterTraceProvider()
-        {
-            if (s_is64bitProcess)
-            {
-                SNINativeManagedWrapperX64.UnregisterTraceProviderWrapper();
-            }
-            else
-            {
-                SNINativeManagedWrapperX86.UnregisterTraceProviderWrapper();
-            }
         }
     }
 }

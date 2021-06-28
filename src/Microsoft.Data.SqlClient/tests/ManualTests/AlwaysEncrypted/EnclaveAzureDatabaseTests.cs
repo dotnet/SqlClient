@@ -14,7 +14,7 @@ using Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.Setup;
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
     // This test class is for internal use only
-    public class EnclaveAzureDatabaseTests : IDisposable
+    public sealed class EnclaveAzureDatabaseTests : IDisposable
     {
         private ColumnMasterKey akvColumnMasterKey;
         private ColumnEncryptionKey akvColumnEncryptionKey;

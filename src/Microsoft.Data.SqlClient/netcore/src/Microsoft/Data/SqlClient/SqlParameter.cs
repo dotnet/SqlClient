@@ -208,25 +208,34 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        [Flags]
+        private enum SqlParameterFlags : ushort
+        {
+            None = 0,
+            IsNull = 1,
+            IsNullable = 2,
+            IsSqlParameterSqlType = 4,
+            SourceColumnNullMapping = 8,
+            CoercedValueIsSqlType = 16,
+            CoercedValueIsDataFeed = 32,
+            HasReceivedMetadata = 64,
+            ForceColumnEncryption = 128,
+            IsDerivedParameterTypeName = 256,
+            HasScale = 512,
+        }
+
         private MetaType _metaType;
         private SqlCollation _collation;
-        private string _xmlSchemaCollectionDatabase;
-        private string _xmlSchemaCollectionOwningSchema;
-        private string _xmlSchemaCollectionName;
+        private SqlMetaDataXmlSchemaCollection _xmlSchemaCollection;
         private string _udtTypeName;
         private string _typeName;
         private Exception _udtLoadError;
         private string _parameterName;
         private byte _precision;
         private byte _scale;
-        private bool _hasScale; // V1.0 compat, ignore _hasScale
         private MetaType _internalMetaType;
         private SqlBuffer _sqlBufferReturnValue;
         private INullable _valueAsINullable;
-        private bool _isSqlParameterSqlType;
-        private bool _isNull;
-        private bool _coercedValueIsSqlType;
-        private bool _coercedValueIsDataFeed;
         private int _actualSize;
         private object _value;
         private object _coercedValue;
@@ -236,14 +245,14 @@ namespace Microsoft.Data.SqlClient
         private int _offset;
         private string _sourceColumn;
         private DataRowVersion _sourceVersion;
-        private bool _sourceColumnNullMapping;
-        private bool _isNullable;
+        private SqlParameterFlags _flags;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctor2/*' />
         public SqlParameter() : base()
         {
-            _isNull = true;
+            _flags = SqlParameterFlags.IsNull;
             _actualSize = -1;
+            _direction = ParameterDirection.Input;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbType/*' />
@@ -331,9 +340,13 @@ namespace Microsoft.Data.SqlClient
             SourceVersion = sourceVersion;
             SourceColumnNullMapping = sourceColumnNullMapping;
             Value = value;
-            XmlSchemaCollectionDatabase = xmlSchemaCollectionDatabase;
-            XmlSchemaCollectionOwningSchema = xmlSchemaCollectionOwningSchema;
-            XmlSchemaCollectionName = xmlSchemaCollectionName;
+            if (!string.IsNullOrEmpty(xmlSchemaCollectionDatabase) || !string.IsNullOrEmpty(xmlSchemaCollectionOwningSchema) || !string.IsNullOrEmpty(xmlSchemaCollectionName))
+            {
+                EnsureXmlSchemaCollection();
+                _xmlSchemaCollection.Database = xmlSchemaCollectionDatabase;
+                _xmlSchemaCollection.OwningSchema = xmlSchemaCollectionOwningSchema;
+                _xmlSchemaCollection.Name = xmlSchemaCollectionName;
+            }
         }
 
         private SqlParameter(SqlParameter source) : this()
@@ -357,7 +370,11 @@ namespace Microsoft.Data.SqlClient
         /// For unencrypted parameters, the encryption metadata should still be sent (and will indicate 
         /// that no encryption is needed).
         /// </summary>
-        internal bool HasReceivedMetadata { get; set; }
+        internal bool HasReceivedMetadata 
+        { 
+            get => HasFlag(SqlParameterFlags.HasReceivedMetadata); 
+            set => SetFlag(SqlParameterFlags.HasReceivedMetadata, value); 
+        }
 
         /// <summary>
         /// Returns the normalization rule version number as a byte
@@ -404,24 +421,24 @@ namespace Microsoft.Data.SqlClient
         [ResCategory("XML")]
         public string XmlSchemaCollectionDatabase
         {
-            get => _xmlSchemaCollectionDatabase ?? ADP.StrEmpty;
-            set => _xmlSchemaCollectionDatabase = value;
+            get => _xmlSchemaCollection?.Database ?? string.Empty;
+            set => EnsureXmlSchemaCollection().Database = value;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/XmlSchemaCollectionOwningSchema/*' />
         [ResCategory("XML")]
         public string XmlSchemaCollectionOwningSchema
         {
-            get => _xmlSchemaCollectionOwningSchema ?? ADP.StrEmpty;
-            set => _xmlSchemaCollectionOwningSchema = value;
+            get => _xmlSchemaCollection?.OwningSchema ?? string.Empty;
+            set => EnsureXmlSchemaCollection().OwningSchema = value;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/XmlSchemaCollectionName/*' />
         [ResCategory("XML")]
         public string XmlSchemaCollectionName
         {
-            get => _xmlSchemaCollectionName ?? ADP.StrEmpty;
-            set => _xmlSchemaCollectionName = value;
+            get => _xmlSchemaCollection?.Name ?? string.Empty;
+            set => EnsureXmlSchemaCollection().Name = value;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ForceColumnEncryption/*' />
@@ -429,7 +446,11 @@ namespace Microsoft.Data.SqlClient
         DefaultValue(false),
         ResCategory("Data")
         ]
-        public bool ForceColumnEncryption { get; set; }
+        public bool ForceColumnEncryption
+        {
+            get => HasFlag(SqlParameterFlags.ForceColumnEncryption);
+            set => SetFlag(SqlParameterFlags.ForceColumnEncryption, value);
+        }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/DbType/*' />
         public override DbType DbType
@@ -452,7 +473,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ParameterName/*' />
         public override string ParameterName
         {
-            get => _parameterName ?? ADP.StrEmpty;
+            get => _parameterName ?? string.Empty;
             set
             {
                 if (
@@ -544,11 +565,11 @@ namespace Microsoft.Data.SqlClient
             }
             set
             {
-                if (_scale != value || !_hasScale)
+                if (_scale != value || !HasFlag(SqlParameterFlags.HasScale))
                 {
                     PropertyChanging();
                     _scale = value;
-                    _hasScale = true;
+                    SetFlag(SqlParameterFlags.HasScale, true);
                     _actualSize = -1;   // Invalidate actual size such that it is re-calculated
                 }
             }
@@ -657,7 +678,7 @@ namespace Microsoft.Data.SqlClient
         ]
         public string UdtTypeName
         {
-            get => _udtTypeName ?? ADP.StrEmpty;
+            get => _udtTypeName ?? string.Empty;
             set => _udtTypeName = value;
         }
 
@@ -668,8 +689,12 @@ namespace Microsoft.Data.SqlClient
         ]
         public string TypeName
         {
-            get => _typeName ?? ADP.StrEmpty;
-            set => _typeName = value;
+            get => _typeName ?? string.Empty;
+            set 
+            { 
+                _typeName = value;
+                IsDerivedParameterTypeName = false;
+            }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Value/*' />
@@ -707,8 +732,8 @@ namespace Microsoft.Data.SqlClient
                 _sqlBufferReturnValue = null;
                 _coercedValue = null;
                 _valueAsINullable = _value as INullable;
-                _isSqlParameterSqlType = _valueAsINullable != null;
-                _isNull = (null == _value) || (_value == DBNull.Value) || (_isSqlParameterSqlType && _valueAsINullable.IsNull);
+                SetFlag(SqlParameterFlags.IsSqlParameterSqlType, _valueAsINullable != null);
+                SetFlag(SqlParameterFlags.IsNull, (null == _value) || (_value == DBNull.Value) || (HasFlag(SqlParameterFlags.IsSqlParameterSqlType) && _valueAsINullable.IsNull));
                 _udtLoadError = null;
                 _actualSize = -1;
             }
@@ -721,11 +746,7 @@ namespace Microsoft.Data.SqlClient
         ]
         public override ParameterDirection Direction
         {
-            get
-            {
-                ParameterDirection direction = _direction;
-                return (direction != 0) ? direction : ParameterDirection.Input;
-            }
+            get => _direction;
             set
             {
                 if (_direction != value)
@@ -749,8 +770,8 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/IsNullable/*' />
         public override bool IsNullable
         {
-            get => _isNullable;
-            set => _isNullable = value;
+            get => HasFlag(SqlParameterFlags.IsNullable);
+            set => SetFlag(SqlParameterFlags.IsNullable, value);
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Offset/*' />
@@ -809,15 +830,15 @@ namespace Microsoft.Data.SqlClient
         [ResCategory("Update")]
         public override string SourceColumn
         {
-            get => _sourceColumn ?? ADP.StrEmpty;
+            get => _sourceColumn ?? string.Empty;
             set => _sourceColumn = value;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceColumnNullMapping/*' />
         public override bool SourceColumnNullMapping
         {
-            get => _sourceColumnNullMapping;
-            set => _sourceColumnNullMapping = value;
+            get => HasFlag(SqlParameterFlags.SourceColumnNullMapping);
+            set => SetFlag(SqlParameterFlags.SourceColumnNullMapping, value);
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ToString/*' />
@@ -866,7 +887,7 @@ namespace Microsoft.Data.SqlClient
                     GetCoercedValue();
                 }
                 AssertCachedPropertiesAreValid();
-                return _coercedValueIsDataFeed;
+                return HasFlag(SqlParameterFlags.CoercedValueIsDataFeed);
             }
         }
 
@@ -879,7 +900,7 @@ namespace Microsoft.Data.SqlClient
                     GetCoercedValue();
                 }
                 AssertCachedPropertiesAreValid();
-                return _coercedValueIsSqlType;
+                return HasFlag(SqlParameterFlags.CoercedValueIsSqlType);
             }
         }
 
@@ -892,6 +913,11 @@ namespace Microsoft.Data.SqlClient
             set => _collation = value;
         }
 
+        private bool HasFlag(SqlParameterFlags flag)
+        {
+            return (_flags & flag) != 0;
+        }
+
         internal bool IsNull
         {
             get
@@ -899,9 +925,9 @@ namespace Microsoft.Data.SqlClient
                 // NOTE: Udts can change their value any time
                 if (_internalMetaType.SqlDbType == SqlDbType.Udt)
                 {
-                    _isNull = (_value == null) || (_value == DBNull.Value) || (_isSqlParameterSqlType && _valueAsINullable.IsNull);
+                    SetFlag(SqlParameterFlags.IsNull, (_value == null) || (_value == DBNull.Value) || (HasFlag(SqlParameterFlags.IsSqlParameterSqlType) && _valueAsINullable.IsNull));
                 }
-                return _isNull;
+                return HasFlag(SqlParameterFlags.IsNull);
             }
         }
 
@@ -944,8 +970,8 @@ namespace Microsoft.Data.SqlClient
 
         internal bool ParameterIsSqlType
         {
-            get => _isSqlParameterSqlType;
-            set => _isSqlParameterSqlType = value;
+            get => HasFlag(SqlParameterFlags.IsSqlParameterSqlType);
+            set => SetFlag(SqlParameterFlags.IsSqlParameterSqlType, value);
         }
 
         internal string ParameterNameFixed
@@ -964,6 +990,12 @@ namespace Microsoft.Data.SqlClient
 
         internal INullable ValueAsINullable => _valueAsINullable;
 
+        internal bool IsDerivedParameterTypeName
+        {
+            get => HasFlag(SqlParameterFlags.IsDerivedParameterTypeName);
+            set => SetFlag(SqlParameterFlags.IsDerivedParameterTypeName, value);
+        }
+
         private void CloneHelper(SqlParameter destination)
         {
             // NOTE: _parent is not cloned
@@ -973,31 +1005,34 @@ namespace Microsoft.Data.SqlClient
             destination._offset = _offset;
             destination._sourceColumn = _sourceColumn;
             destination._sourceVersion = _sourceVersion;
-            destination._sourceColumnNullMapping = _sourceColumnNullMapping;
-            destination._isNullable = _isNullable;
-
+            destination._flags = _flags & (
+                SqlParameterFlags.SourceColumnNullMapping |
+                SqlParameterFlags.IsNull |
+                SqlParameterFlags.IsNullable |
+                SqlParameterFlags.IsSqlParameterSqlType |
+                SqlParameterFlags.CoercedValueIsDataFeed |
+                SqlParameterFlags.CoercedValueIsSqlType |
+                SqlParameterFlags.ForceColumnEncryption |
+                SqlParameterFlags.IsDerivedParameterTypeName
+                // HasScale and HasReceivedMetadata deliberately omitted
+            );
             destination._metaType = _metaType;
             destination._collation = _collation;
-            destination._xmlSchemaCollectionDatabase = _xmlSchemaCollectionDatabase;
-            destination._xmlSchemaCollectionOwningSchema = _xmlSchemaCollectionOwningSchema;
-            destination._xmlSchemaCollectionName = _xmlSchemaCollectionName;
+            if (_xmlSchemaCollection != null)
+            {
+                destination.EnsureXmlSchemaCollection().CopyFrom(_xmlSchemaCollection);
+            }
             destination._udtTypeName = _udtTypeName;
             destination._typeName = _typeName;
             destination._udtLoadError = _udtLoadError;
-
             destination._parameterName = _parameterName;
             destination._precision = _precision;
             destination._scale = _scale;
             destination._sqlBufferReturnValue = _sqlBufferReturnValue;
-            destination._isSqlParameterSqlType = _isSqlParameterSqlType;
             destination._internalMetaType = _internalMetaType;
             destination.CoercedValue = CoercedValue; // copy cached value reference because of XmlReader problem
             destination._valueAsINullable = _valueAsINullable;
-            destination._isNull = _isNull;
-            destination._coercedValueIsDataFeed = _coercedValueIsDataFeed;
-            destination._coercedValueIsSqlType = _coercedValueIsSqlType;
             destination._actualSize = _actualSize;
-            destination.ForceColumnEncryption = ForceColumnEncryption;
         }
 
         internal void CopyTo(SqlParameter destination)
@@ -1016,16 +1051,25 @@ namespace Microsoft.Data.SqlClient
             return parent;
         }
 
+        private SqlMetaDataXmlSchemaCollection EnsureXmlSchemaCollection()
+        {
+            if (_xmlSchemaCollection is null)
+            {
+                _xmlSchemaCollection = new SqlMetaDataXmlSchemaCollection();
+            }
+            return _xmlSchemaCollection;
+        }
+
         internal void FixStreamDataForNonPLP()
         {
             object value = GetCoercedValue();
             AssertCachedPropertiesAreValid();
-            if (!_coercedValueIsDataFeed)
+            if (!HasFlag(SqlParameterFlags.CoercedValueIsDataFeed))
             {
                 return;
             }
 
-            _coercedValueIsDataFeed = false;
+            SetFlag(SqlParameterFlags.CoercedValueIsDataFeed, false);
 
             if (value is TextDataFeed textFeed)
             {
@@ -1451,7 +1495,7 @@ namespace Microsoft.Data.SqlClient
                         case SqlDbType.NText:
                         case SqlDbType.Xml:
                             {
-                                coercedSize = ((!_isNull) && (!_coercedValueIsDataFeed)) ? (StringSize(val, _coercedValueIsSqlType)) : 0;
+                                coercedSize = ((!HasFlag(SqlParameterFlags.IsNull)) && (!HasFlag(SqlParameterFlags.CoercedValueIsDataFeed))) ? (StringSize(val, HasFlag(SqlParameterFlags.CoercedValueIsSqlType))) : 0;
                                 _actualSize = (ShouldSerializeSize() ? Size : 0);
                                 _actualSize = (ShouldSerializeSize() && (_actualSize <= coercedSize)) ? _actualSize : coercedSize;
                                 if (_actualSize == -1)
@@ -1466,7 +1510,7 @@ namespace Microsoft.Data.SqlClient
                         case SqlDbType.Text:
                             {
                                 // for these types, ActualSize is the num of chars, not actual bytes - since non-unicode chars are not always uniform size
-                                coercedSize = ((!_isNull) && (!_coercedValueIsDataFeed)) ? (StringSize(val, _coercedValueIsSqlType)) : 0;
+                                coercedSize = ((!HasFlag(SqlParameterFlags.IsNull)) && (!HasFlag(SqlParameterFlags.CoercedValueIsDataFeed))) ? (StringSize(val, HasFlag(SqlParameterFlags.CoercedValueIsSqlType))) : 0;
                                 _actualSize = (ShouldSerializeSize() ? Size : 0);
                                 _actualSize = (ShouldSerializeSize() && (_actualSize <= coercedSize)) ? _actualSize : coercedSize;
                                 if (_actualSize == -1)
@@ -1479,7 +1523,7 @@ namespace Microsoft.Data.SqlClient
                         case SqlDbType.VarBinary:
                         case SqlDbType.Image:
                         case SqlDbType.Timestamp:
-                            coercedSize = ((!_isNull) && (!_coercedValueIsDataFeed)) ? (BinarySize(val, _coercedValueIsSqlType)) : 0;
+                            coercedSize = ((!HasFlag(SqlParameterFlags.IsNull)) && (!HasFlag(SqlParameterFlags.CoercedValueIsDataFeed))) ? (BinarySize(val, HasFlag(SqlParameterFlags.CoercedValueIsSqlType))) : 0;
                             _actualSize = (ShouldSerializeSize() ? Size : 0);
                             _actualSize = ((ShouldSerializeSize() && (_actualSize <= coercedSize)) ? _actualSize : coercedSize);
                             if (_actualSize == -1)
@@ -1538,14 +1582,15 @@ namespace Microsoft.Data.SqlClient
                 {
                     // No coercion is done for DataFeeds and Nulls
                     _coercedValue = Value;
-                    _coercedValueIsSqlType = _coercedValue != null && _isSqlParameterSqlType; // set to null for output parameters that keeps _isSqlParameterSqlType
-                    _coercedValueIsDataFeed = isDataFeed;
+                    SetFlag(SqlParameterFlags.CoercedValueIsSqlType, _coercedValue != null && HasFlag(SqlParameterFlags.IsSqlParameterSqlType)); // set to null for output parameters that keeps _isSqlParameterSqlType
+                    SetFlag(SqlParameterFlags.CoercedValueIsDataFeed, isDataFeed);
                     _actualSize = IsNull ? 0 : -1;
                 }
                 else
                 {
-                    _coercedValue = CoerceValue(Value, _internalMetaType, out _coercedValueIsDataFeed, out bool typeChanged);
-                    _coercedValueIsSqlType = _isSqlParameterSqlType && (!typeChanged);  // Type changed always results in a CLR type
+                    _coercedValue = CoerceValue(Value, _internalMetaType, out bool coercedValueIsDataFeed, out bool typeChanged);
+                    SetFlag(SqlParameterFlags.CoercedValueIsDataFeed, coercedValueIsDataFeed);
+                    SetFlag(SqlParameterFlags.CoercedValueIsSqlType, HasFlag(SqlParameterFlags.IsSqlParameterSqlType) && (!typeChanged));  // Type changed always results in a CLR type
                     _actualSize = -1;
                 }
             }
@@ -1743,7 +1788,7 @@ namespace Microsoft.Data.SqlClient
         [Conditional("DEBUG")]
         internal void AssertCachedPropertiesAreValid()
         {
-            AssertPropertiesAreValid(_coercedValue, _coercedValueIsSqlType, _coercedValueIsDataFeed, IsNull);
+            AssertPropertiesAreValid(_coercedValue, HasFlag(SqlParameterFlags.CoercedValueIsSqlType), HasFlag(SqlParameterFlags.CoercedValueIsDataFeed), IsNull);
         }
 
         [Conditional("DEBUG")]
@@ -1791,7 +1836,7 @@ namespace Microsoft.Data.SqlClient
             }
             else if (_sqlBufferReturnValue != null)
             {  // value came back from the server
-                Type valueType = _sqlBufferReturnValue.GetTypeFromStorageType(_isSqlParameterSqlType);
+                Type valueType = _sqlBufferReturnValue.GetTypeFromStorageType(HasFlag(SqlParameterFlags.IsSqlParameterSqlType));
                 if (valueType != null)
                 {
                     return MetaType.GetMetaTypeFromType(valueType);
@@ -1834,11 +1879,16 @@ namespace Microsoft.Data.SqlClient
             _sqlBufferReturnValue = buff;
             _value = null;
             _coercedValue = null;
-            _isNull = _sqlBufferReturnValue.IsNull;
-            _coercedValueIsDataFeed = false;
-            _coercedValueIsSqlType = false;
+            SetFlag(SqlParameterFlags.IsNull, _sqlBufferReturnValue.IsNull);
+            SetFlag(SqlParameterFlags.CoercedValueIsDataFeed, false);
+            SetFlag(SqlParameterFlags.CoercedValueIsSqlType, false);
             _udtLoadError = null;
             _actualSize = -1;
+        }
+
+        private void SetFlag(SqlParameterFlags flag, bool value)
+        {
+            _flags = value ? _flags | flag : _flags & ~flag;
         }
 
         internal void SetUdtLoadError(Exception e)
@@ -1940,7 +1990,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (
                     (maxSizeInBytes > TdsEnums.TYPE_SIZE_LIMIT) ||
-                    _coercedValueIsDataFeed ||
+                    HasFlag(SqlParameterFlags.CoercedValueIsDataFeed) ||
                     (sizeInCharacters == -1) || 
                     (actualSizeInBytes == -1)
                 )

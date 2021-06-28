@@ -164,7 +164,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             AggregateException e = Assert.Throws<AggregateException>(() => ConnectAndDisconnect(connStr));
 
             string expectedMessage = "ID3242: The security token could not be authenticated or authorized.";
-            Assert.Contains(expectedMessage, e.InnerException.InnerException.InnerException.Message);
+            Assert.Contains(expectedMessage, e.InnerException.InnerException.Message);
         }
 
 
@@ -388,7 +388,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             AggregateException e = Assert.Throws<AggregateException>(() => ConnectAndDisconnect(connStrWithNoCred));
 
-            string expectedMessage = "Response: {\"error\":\"invalid_request\",\"error_description\":\"Identity not found\"}";
+            string expectedMessage = "ManagedIdentityCredential authentication unavailable";
             Assert.Contains(expectedMessage, e.GetBaseException().Message);
         }
 
@@ -425,6 +425,52 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             string expectedMessage = "Cannot use 'Authentication=Active Directory MSI' with 'Password' or 'PWD' connection string keywords.";
             Assert.Contains(expectedMessage, e.Message);
+        }
+
+        [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        public static void ActiveDirectoryDefaultWithCredentialsMustFail()
+        {
+            // connection fails with expected error message.
+            string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
+            string connStrWithNoCred = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +
+                "Authentication=Active Directory Default;";
+
+            SecureString str = new SecureString();
+            foreach (char c in "hello")
+            {
+                str.AppendChar(c);
+            }
+            str.MakeReadOnly();
+            SqlCredential credential = new SqlCredential("someuser", str);
+            InvalidOperationException e = Assert.Throws<InvalidOperationException>(() => ConnectAndDisconnect(connStrWithNoCred, credential));
+
+            string expectedMessage = "Cannot set the Credential property if 'Authentication=Active Directory Default' has been specified in the connection string.";
+            Assert.Contains(expectedMessage, e.Message);
+        }
+
+        [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        public static void ActiveDirectoryDefaultWithPasswordMustFail()
+        {
+            // connection fails with expected error message.
+            string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
+            string connStrWithNoCred = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +
+                "Authentication=ActiveDirectoryDefault; Password=anything";
+
+            ArgumentException e = Assert.Throws<ArgumentException>(() => ConnectAndDisconnect(connStrWithNoCred));
+
+            string expectedMessage = "Cannot use 'Authentication=Active Directory Default' with 'Password' or 'PWD' connection string keywords.";
+            Assert.Contains(expectedMessage, e.Message);
+        }
+
+        [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        public static void ActiveDirectoryDefaultMustPass()
+        {
+            string[] credKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
+            string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +
+                "Authentication=ActiveDirectoryDefault;";
+
+            // Connection should be established using Managed Identity by default.
+            ConnectAndDisconnect(connStr);
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsIntegratedSecuritySetup), nameof(DataTestUtility.AreConnStringsSetup))]
@@ -491,7 +537,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD" };
             string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, removeKeys) +
-                $"Authentication=Active Directory Managed Identity; User Id={DataTestUtility.UserManagedIdentityObjectId};";
+                $"Authentication=Active Directory Managed Identity; User Id={DataTestUtility.UserManagedIdentityClientId};";
             ConnectAndDisconnect(connStr);
         }
 
@@ -543,7 +589,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             string[] removeKeys = { "Authentication", "User ID", "Password", "UID", "PWD", "Trusted_Connection", "Integrated Security" };
             string connectionString = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.TCPConnectionString, removeKeys)
-                + $"Authentication=Active Directory Managed Identity; User Id={DataTestUtility.UserManagedIdentityObjectId}";
+                + $"Authentication=Active Directory Managed Identity; User Id={DataTestUtility.UserManagedIdentityClientId}";
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             {

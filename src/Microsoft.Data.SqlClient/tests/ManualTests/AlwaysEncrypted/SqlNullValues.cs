@@ -11,7 +11,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
-    public class SqlNullValuesTests : IClassFixture<PlatformSpecificTestContext>, IDisposable
+    public sealed class SqlNullValuesTests : IClassFixture<PlatformSpecificTestContext>, IDisposable
     {
         private SQLSetupStrategy fixture;
         private readonly string tableName;

@@ -15,7 +15,6 @@ namespace Microsoft.Data.SqlClient
 
         static SqlAuthenticationProviderManager()
         {
-            var azureManagedIdentityAuthenticationProvider = new AzureManagedIdentityAuthenticationProvider();
             SqlAuthenticationProviderConfigurationSection configurationSection = null;
 
             try
@@ -35,14 +34,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             Instance = new SqlAuthenticationProviderManager(configurationSection);
-            var activeDirectoryAuthProvider = new ActiveDirectoryAuthenticationProvider(Instance._applicationClientId);
-            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryIntegrated, activeDirectoryAuthProvider);
-            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, activeDirectoryAuthProvider);
-            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryInteractive, activeDirectoryAuthProvider);
-            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryServicePrincipal, activeDirectoryAuthProvider);
-            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow, activeDirectoryAuthProvider);
-            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryManagedIdentity, azureManagedIdentityAuthenticationProvider);
-            Instance.SetProvider(SqlAuthenticationMethod.ActiveDirectoryMSI, azureManagedIdentityAuthenticationProvider);
+            SetDefaultAuthProviders(Instance);
         }
 
         /// <summary>
@@ -160,6 +152,8 @@ namespace Microsoft.Data.SqlClient
                     return SqlAuthenticationMethod.ActiveDirectoryManagedIdentity;
                 case ActiveDirectoryMSI:
                     return SqlAuthenticationMethod.ActiveDirectoryMSI;
+                case ActiveDirectoryDefault:
+                    return SqlAuthenticationMethod.ActiveDirectoryDefault;
                 default:
                     throw SQL.UnsupportedAuthentication(authentication);
             }
