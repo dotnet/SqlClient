@@ -66,7 +66,7 @@ namespace Microsoft.Data.SqlClient
 
 
         protected readonly TdsParser _parser;                            // TdsParser pointer
-        private readonly WeakReference _owner = new WeakReference(null);   // the owner of this session, used to track when it's been orphaned
+        private readonly WeakReference<object> _owner = new WeakReference<object>(null);   // the owner of this session, used to track when it's been orphaned
         internal SqlDataReader.SharedState _readerState;                    // susbset of SqlDataReader state (if it is the owner) necessary for parsing abandoned results in TDS
         private int _activateCount;                     // 0 when we're in the pool, 1 when we're not, all others are an error
 
@@ -375,10 +375,11 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                Debug.Assert((0 == _activateCount && !_owner.IsAlive) // in pool
-                             || (1 == _activateCount && _owner.IsAlive && _owner.Target != null)
-                             || (1 == _activateCount && !_owner.IsAlive), "Unknown state on TdsParserStateObject.IsOrphaned!");
-                return (0 != _activateCount && !_owner.IsAlive);
+                bool isAlive = _owner.TryGetTarget(out object target);
+                Debug.Assert((0 == _activateCount && !isAlive) // in pool
+                             || (1 == _activateCount && isAlive && target != null)
+                             || (1 == _activateCount && !isAlive), "Unknown state on TdsParserStateObject.IsOrphaned!");
+                return (0 != _activateCount && !isAlive);
             }
         }
 
@@ -386,29 +387,22 @@ namespace Microsoft.Data.SqlClient
         {
             set
             {
-                Debug.Assert(value == null || !_owner.IsAlive || ((value is SqlDataReader) && (((SqlDataReader)value).Command == _owner.Target)), "Should not be changing the owner of an owned stateObj");
-                SqlDataReader reader = value as SqlDataReader;
-                if (reader == null)
-                {
-                    _readerState = null;
-                }
-                else
+                Debug.Assert(value == null || !_owner.TryGetTarget(out object target) || value is SqlDataReader reader1 && reader1.Command == target, "Should not be changing the owner of an owned stateObj");
+                if (value is SqlDataReader reader)
                 {
                     _readerState = reader._sharedState;
                 }
-                _owner.Target = value;
+                else
+                {
+                    _readerState = null;                    
+                }
+                _owner.SetTarget(value);
             }
         }
 
         internal abstract uint DisableSsl();
 
-        internal bool HasOwner
-        {
-            get
-            {
-                return _owner.IsAlive;
-            }
-        }
+        internal bool HasOwner => _owner.TryGetTarget(out object _);
 
         internal TdsParser Parser
         {

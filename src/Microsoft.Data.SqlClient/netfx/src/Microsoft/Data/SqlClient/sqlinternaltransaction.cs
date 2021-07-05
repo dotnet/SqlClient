@@ -26,11 +26,10 @@ namespace Microsoft.Data.SqlClient
         Delegated = 3,
         Distributed = 4,
         Context = 5,     // only valid in proc.
-    };
+    }
 
     sealed internal class SqlInternalTransaction
     {
-
         internal const long NullTransactionId = 0;
 
         private TransactionState _transactionState;
@@ -39,7 +38,7 @@ namespace Microsoft.Data.SqlClient
         private int _openResultCount;           // passed in the MARS headers
         private SqlInternalConnection _innerConnection;
         private bool _disposing;                 // used to prevent us from throwing exceptions while we're disposing
-        private WeakReference _parent;                    // weak ref to the outer transaction object; needs to be weak to allow GC to occur.
+        private WeakReference<SqlTransaction> _parent;                    // weak ref to the outer transaction object; needs to be weak to allow GC to occur.
 
         private static int _objectTypeCount; // EventSource Counter
         internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
@@ -60,7 +59,7 @@ namespace Microsoft.Data.SqlClient
 
             if (null != outerTransaction)
             {
-                _parent = new WeakReference(outerTransaction);
+                _parent = new WeakReference<SqlTransaction>(outerTransaction);
             }
 
             _transactionId = transactionId;
@@ -168,14 +167,14 @@ namespace Microsoft.Data.SqlClient
                     Debug.Assert(_transactionType == TransactionType.LocalFromTSQL, "invalid state");
                     result = false;
                 }
-                else if (null == _parent.Target)
+                else if (!_parent.TryGetTarget(out SqlTransaction _))
                 {
-                    // We have an parent, but parent was GC'ed.
+                    // We had a parent, but parent was GC'ed.
                     result = true;
                 }
                 else
                 {
-                    // We have an parent, and parent is alive.
+                    // We have a parent, and parent is alive.
                     result = false;
                 }
 
@@ -214,9 +213,9 @@ namespace Microsoft.Data.SqlClient
                 SqlTransaction result = null;
                 // Should we protect against this, since this probably is an invalid state?
                 Debug.Assert(null != _parent, "Why are we calling Parent with no parent?");
-                if (null != _parent)
+                if (_parent != null && _parent.TryGetTarget(out SqlTransaction target))
                 {
-                    result = (SqlTransaction)_parent.Target;
+                    result = target;
                 }
                 return result;
             }
@@ -420,7 +419,7 @@ namespace Microsoft.Data.SqlClient
         internal void InitParent(SqlTransaction transaction)
         {
             Debug.Assert(_parent == null, "Why do we have a parent on InitParent?");
-            _parent = new WeakReference(transaction);
+            _parent = new WeakReference<SqlTransaction>(transaction);
         }
 
         internal void Rollback()
@@ -591,20 +590,16 @@ namespace Microsoft.Data.SqlClient
 
         private void ZombieParent()
         {
-            if (null != _parent)
+            if (_parent != null && _parent.TryGetTarget(out SqlTransaction parent))
             {
-                SqlTransaction parent = (SqlTransaction)_parent.Target;
-                if (null != parent)
-                {
-                    parent.Zombie();
-                }
-                _parent = null;
+                parent.Zombie();
             }
+            _parent = null;
         }
 
         internal string TraceString()
         {
-            return String.Format(/*IFormatProvider*/ null, "(ObjId={0}, tranId={1}, state={2}, type={3}, open={4}, disp={5}",
+            return string.Format(/*IFormatProvider*/ null, "(ObjId={0}, tranId={1}, state={2}, type={3}, open={4}, disp={5}",
                         ObjectID, _transactionId, _transactionState, _transactionType, _openResultCount, _disposing);
         }
     }
