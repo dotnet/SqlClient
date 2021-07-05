@@ -557,7 +557,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         Assert.Equal(firstInput, secondOutput);
                         Assert.Equal(secondInput, firstOutput);
                     }
-
                 }
             }
         }
@@ -587,7 +586,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     Assert.NotNull(sqlException);
                     Assert.Contains("Must declare the scalar variable",sqlException.Message);
                     Assert.Contains("@DoesNotExist", sqlException.Message);
-
                 }
             }
         }
