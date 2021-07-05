@@ -755,7 +755,6 @@ Connections are considered the same if they have the same connection string. Dif
 |Key|Default value|  
 |---------|-------------------|  
 |Application Name|"Core Microsoft SqlClient Data Provider"|  
-|Asynchronous Processing(Obsolete)|False|  
 |AttachDBFilename|Empty string|  
 |Connection Timeout|15|  
 |Context Connection(Obsolete)|False|  

@@ -8857,15 +8857,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to This command requires an asynchronous connection. Set &quot;Asynchronous Processing=true&quot; in the connection string..
-        /// </summary>
-        internal static string SQL_AsyncConnectionRequired {
-            get {
-                return ResourceManager.GetString("SQL_AsyncConnectionRequired", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The asynchronous operation has already completed..
         /// </summary>
         internal static string SQL_AsyncOperationCompleted {
@@ -10536,15 +10527,6 @@ namespace System {
         internal static string SqlConnection_AccessToken {
             get {
                 return ResourceManager.GetString("SqlConnection_AccessToken", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to State of connection, synchronous or asynchronous.  &apos;Asynchronous Processing=x&apos; in the connection string..
-        /// </summary>
-        internal static string SqlConnection_Asynchronous {
-            get {
-                return ResourceManager.GetString("SqlConnection_Asynchronous", resourceCulture);
             }
         }
         
