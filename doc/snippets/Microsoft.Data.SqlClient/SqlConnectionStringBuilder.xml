@@ -363,7 +363,7 @@ The port number can be specified after the server name: `server=tcp:servername, 
 
 When specifying a local instance, always use (local). To force a protocol, add one of the following prefixes:`np:(local),  tcp:(local), lpc:(local)`.
 
-Beginning in .NET Framework 4.5, you can also connect to a LocalDB database as follows: `server=(localdb)\\myInstance`. For more information about LocalDB, see [SqlClient Support for LocalDB](/sql/connect/ado-net/sql/sqlclient-support-localdb).
+You can also connect to a LocalDB database as follows: `server=(localdb)\\myInstance`. For more information about LocalDB, see [SqlClient Support for LocalDB](/sql/connect/ado-net/sql/sqlclient-support-localdb).
 **Data Source** must use the TCP format or the Named Pipes format. TCP format is as follows:
 
 -   tcp:\<host name>\\<instance name\>
