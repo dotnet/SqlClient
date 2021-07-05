@@ -593,8 +593,8 @@ namespace Microsoft.Data.SqlClient
             if (_parent != null && _parent.TryGetTarget(out SqlTransaction parent))
             {
                 parent.Zombie();
-                _parent = null;
             }
+            _parent = null;
         }
 
         internal string TraceString()
