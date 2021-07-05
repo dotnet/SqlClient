@@ -201,7 +201,7 @@ For more information, see [Using Azure Active Directory authentication with SqlC
         </Clear>
         <ColumnEncryptionSetting>
             <summary>Gets or sets the column encryption settings for the connection string builder.</summary>
-            <value>The column encryption settings for the connection string builder.This property enables or disables [Always Encrypted](/sql/relational-databases/security/encryption/always-encrypted-database-engine?view=sql-server-2017) functionality for the connection.</value>
+            <value>The column encryption settings for the connection string builder.This property enables or disables [Always Encrypted](/sql/relational-databases/security/encryption/always-encrypted-database-engine) functionality for the connection.</value>
         </ColumnEncryptionSetting>
 		<CommandTimeout>
 			<summary>
@@ -362,7 +362,7 @@ The port number can be specified after the server name: `server=tcp:servername, 
 
 When specifying a local instance, always use (local). To force a protocol, add one of the following prefixes:`np:(local),  tcp:(local), lpc:(local)`.
 
-Beginning in .NET Framework 4.5, you can also connect to a LocalDB database as follows: `server=(localdb)\\myInstance`. For more information about LocalDB, see [SqlClient Support for LocalDB](/sql/connect/ado-net/sql/sqlclient-support-localdb).
+You can also connect to a LocalDB database as follows: `server=(localdb)\\myInstance`. For more information about LocalDB, see [SqlClient Support for LocalDB](/sql/connect/ado-net/sql/sqlclient-support-localdb).
 **Data Source** must use the TCP format or the Named Pipes format. TCP format is as follows:
 
 -   tcp:\<host name>\\<instance name\>
@@ -388,7 +388,7 @@ The host name MUST be specified in one of the following ways:
 -   IPv4Address
 -   IPv6Address
 
-The pipe name is used to identify the database instance to which the .NET Framework application will be connected. 
+The pipe name is used to identify the database instance to which the .NET application will connect. 
 
 If the value of the **Network** key is specified, the prefixes "tcp:" and "np:" should not be specified. **Note:**  You can force the use of TCP instead of shared memory, either by prefixing **tcp:** to the server name in the connection string, or by using **localhost**.
   
@@ -415,7 +415,7 @@ If the value of the **Network** key is specified, the prefixes "tcp:" and "np:" 
 ## Remarks  
  This property corresponds to the "Encrypt" key within the connection string.  
   
-Beginning in .NET Framework 4.5, when `TrustServerCertificate` is false and `Encrypt` is true, the server name (or IP address) in a SQL Server SSL certificate must exactly match the server name (or IP address) specified in the connection string. Otherwise, the connection attempt will fail. For information about support for certificates whose subject starts with a wildcard character (*), see [Enable encrypted connections to the Database Engine](sql/database-engine/configure-windows/enable-encrypted-connections-to-the-database-engine#certificate-requirements).|  
+When `TrustServerCertificate` is false and `Encrypt` is true, the server name (or IP address) in a SQL Server SSL certificate must exactly match the server name (or IP address) specified in the connection string. Otherwise, the connection attempt will fail. For information about support for certificates whose subject starts with a wildcard character (*), see [Enable encrypted connections to the Database Engine](sql/database-engine/configure-windows/enable-encrypted-connections-to-the-database-engine#certificate-requirements).|  
 
  ]]></format>
             </remarks>
