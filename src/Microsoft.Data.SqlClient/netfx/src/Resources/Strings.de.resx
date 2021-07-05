@@ -3201,9 +3201,6 @@
   <data name="DbConnectionString_ApplicationName" xml:space="preserve">
     <value>Der Name der Anwendung.</value>
   </data>
-  <data name="DbConnectionString_AsynchronousProcessing" xml:space="preserve">
-    <value>Bei Festlegung auf TRUE wird die Verwendung der asynchronen Funktionalität im .NET Framework-Datenanbieter aktiviert.</value>
-  </data>
   <data name="DbConnectionString_AttachDBFilename" xml:space="preserve">
     <value>Der Name der primären Datei, einschließlich dem vollständigen Pfadnamen, einer anfügbaren Datenbank.</value>
   </data>

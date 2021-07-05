@@ -5551,15 +5551,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to When true, enables usage of the Asynchronous functionality in the .NET Framework Data Provider..
-        /// </summary>
-        internal static string DbConnectionString_AsynchronousProcessing {
-            get {
-                return ResourceManager.GetString("DbConnectionString_AsynchronousProcessing", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The name of the primary file, including the full path name, of an attachable database..
         /// </summary>
         internal static string DbConnectionString_AttachDBFilename {

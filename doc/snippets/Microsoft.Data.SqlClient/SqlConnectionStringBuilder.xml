@@ -129,23 +129,6 @@ Modified: Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security
             </remarks>
             <exception cref="T:System.ArgumentNullException">To set the value to null, use <see cref="F:System.DBNull.Value" />.</exception>
         </ApplicationName>
-        <AsynchronousProcessing>
-            <summary>This property is obsolete and should not used. Gets or sets a Boolean value that indicates whether asynchronous processing is allowed by the connection created by using this connection string.</summary>
-            <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.AsynchronousProcessing" /> property, or <see langword="false" /> if no value has been supplied.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This property corresponds to the "Asynchronous Processing" and "async" keys within the connection string. In order to take advantage of the asynchronous processing provided by the <xref:Microsoft.Data.SqlClient.SqlCommand> object, this key/value pair must be included within the connection string of the associated <xref:Microsoft.Data.SqlClient.SqlConnection> object.  
-
-This property is ignored beginning in .NET Framework 4.5. For more information about SqlClient support for asynchronous programming, see [Asynchronous Programming](/sql/connect/ado-net/asynchronous-programming).
-
- ]]></format>
-            </remarks>
-            <altmember cref="M:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteReader" />
-            <altmember cref="M:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery" />
-            <altmember cref="M:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteXmlReader" />
-        </AsynchronousProcessing>
         <AttachDBFilename>
             <summary>Gets or sets a string that contains the name of the primary data file. This includes the full path name of an attachable database.</summary>
             <value>The value of the <see langword="AttachDBFilename" /> property, or <see langword="String.Empty" /> if no value has been supplied.</value>
