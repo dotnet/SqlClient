@@ -202,7 +202,7 @@ Currently Active Directory Integrated and Active Directory Interactive modes of 
         </Clear>
         <ColumnEncryptionSetting>
             <summary>Gets or sets the column encryption settings for the connection string builder.</summary>
-            <value>The column encryption settings for the connection string builder.This property enables or disables [Always Encrypted](/sql/relational-databases/security/encryption/always-encrypted-database-engine?view=sql-server-2017) functionality for the connection.</value>
+            <value>The column encryption settings for the connection string builder.This property enables or disables [Always Encrypted](/sql/relational-databases/security/encryption/always-encrypted-database-engine) functionality for the connection.</value>
         </ColumnEncryptionSetting>
 		<CommandTimeout>
 			<summary>
