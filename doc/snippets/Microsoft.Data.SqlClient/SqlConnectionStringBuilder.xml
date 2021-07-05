@@ -177,7 +177,7 @@ Modified: Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security
             <format type="text/markdown"><![CDATA[  
   
 ## Remarks  
-Currently Active Directory Integrated and Active Directory Interactive modes of authentication are supported only for .NET Framework.
+For more information, see [Using Azure Active Directory authentication with SqlClient](sql/connect/ado-net/sql/azure-active-directory-authentication).
 
  ]]></format>
             </remarks>
@@ -189,7 +189,6 @@ Currently Active Directory Integrated and Active Directory Interactive modes of 
   
 ## Remarks  
  The <xref:System.Data.Common.DbConnectionStringBuilder.Clear%2A> method removes all key/value pairs from the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder>, and resets all corresponding properties. This includes setting the <xref:System.Data.Common.DbConnectionStringBuilder.Count%2A> property to 0, and setting the <xref:System.Data.Common.DbConnectionStringBuilder.ConnectionString%2A> property to an empty string.  
-  
    
   
 ## Examples  
