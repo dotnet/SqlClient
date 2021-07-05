@@ -389,7 +389,7 @@ The host name MUST be specified in one of the following ways:
 -   IPv4Address
 -   IPv6Address
 
-The pipe name is used to identify the database instance to which the .NET Framework application will be connected. 
+The pipe name is used to identify the database instance to which the .NET application will connect. 
 
 If the value of the **Network** key is specified, the prefixes "tcp:" and "np:" should not be specified. **Note:**  You can force the use of TCP instead of shared memory, either by prefixing **tcp:** to the server name in the connection string, or by using **localhost**.
   
