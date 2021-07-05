@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 class Program
 {
-    // Links a SqlColumnEncryptionAzureKeyVaultProvider to some object that represents a user
+    // Maps a SqlColumnEncryptionAzureKeyVaultProvider to some object that represents a user
     static Dictionary<object, SqlColumnEncryptionAzureKeyVaultProvider> providerByUser = new();
 
     void ExecuteSelectQuery(object user, SqlConnection connection)
