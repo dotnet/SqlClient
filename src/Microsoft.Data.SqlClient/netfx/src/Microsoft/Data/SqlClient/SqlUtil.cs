@@ -530,10 +530,6 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ConnectionLockedForBcpEvent));
         }
-        static internal Exception AsyncConnectionRequired()
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_AsyncConnectionRequired));
-        }
         static internal Exception FatalTimeout()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_FatalTimeout));
