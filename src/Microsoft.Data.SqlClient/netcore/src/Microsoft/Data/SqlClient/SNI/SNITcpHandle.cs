@@ -437,7 +437,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
                     // If we have already got a valid Socket, or the platform default was prefered
                     // we won't do the second traversal.
-                    if (availableSocket != null || ipPreference == SqlConnectionIPAddressPreference.UsePlatformDefault)
+                    if (availableSocket is not null || ipPreference == SqlConnectionIPAddressPreference.UsePlatformDefault)
                     {
                         break;
                     }
