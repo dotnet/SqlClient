@@ -1178,7 +1178,6 @@ namespace Microsoft.Data.Common
         // SqlClient
         internal const ApplicationIntent ApplicationIntent = Microsoft.Data.SqlClient.ApplicationIntent.ReadWrite;
         internal const string ApplicationName = "Framework Microsoft SqlClient Data Provider";
-        internal const bool AsynchronousProcessing = false;
         internal const string AttachDBFilename = _emptyString;
         internal const int CommandTimeout = 30;
         internal const int ConnectTimeout = 15;
@@ -1262,7 +1261,6 @@ namespace Microsoft.Data.Common
         // SqlClient
         internal const string ApplicationIntent = "Application Intent";
         internal const string ApplicationName = "Application Name";
-        internal const string AsynchronousProcessing = "Asynchronous Processing";
         internal const string AttachDBFilename = "AttachDbFilename";
         internal const string ConnectTimeout = "Connect Timeout";
         internal const string CommandTimeout = "Command Timeout";
@@ -1310,9 +1308,6 @@ namespace Microsoft.Data.Common
 
     internal static class DbConnectionStringSynonyms
     {
-        //internal const string AsynchronousProcessing = Async;
-        internal const string Async = "async";
-
         //internal const string ApplicationName        = APP;
         internal const string APP = "app";
 

@@ -1536,9 +1536,6 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
             // This logic is done here to enable us to have the complete connection string now to be used
             // for tracing as we flow through the logic.
             connectionStringBuilder = new SqlConnectionStringBuilder(connectionString);
-#pragma warning disable CS0618 // Obsolete AsynchronousProcessing
-            connectionStringBuilder.AsynchronousProcessing = true;
-#pragma warning restore CS0618
             connectionStringBuilder.Pooling = false;
             connectionStringBuilder.Enlist = false;
             connectionStringBuilder.ConnectRetryCount = 0;
