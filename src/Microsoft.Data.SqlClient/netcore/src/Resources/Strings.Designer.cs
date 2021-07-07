@@ -2932,6 +2932,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Parameter &apos;{0}&apos; cannot have Direction Output or InputOutput when EnableOptimizedParameterBinding is enabled on the parent command..
+        /// </summary>
+        internal static string SQL_ParameterDirectionInvalidForOptimizedBinding {
+            get {
+                return ResourceManager.GetString("SQL_ParameterDirectionInvalidForOptimizedBinding", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Parameter &apos;{0}&apos; exceeds the size limit for the sql_variant datatype..
         /// </summary>
         internal static string SQL_ParameterInvalidVariant {

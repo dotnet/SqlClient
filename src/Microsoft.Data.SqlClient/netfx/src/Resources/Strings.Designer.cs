@@ -1825,15 +1825,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The validation of an attestation token failed. The token signature does not match the signature omputed using a public key retrieved from the attestation public key endpoint at &apos;{0}&apos;. Verify the DNS apping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If correct, contact Customer Support Services..
-        /// </summary>
-        internal static string AttestationTokenSignatureValidationFailed {
-            get {
-                return ResourceManager.GetString("AttestationTokenSignatureValidationFailed", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Destination array is not long enough to copy all the items in the collection. Check array index and length..
         /// </summary>
         internal static string Arg_ArrayPlusOffTooSmall {
@@ -1866,6 +1857,15 @@ namespace System {
         internal static string ArgumentOutOfRange_NeedNonNegNum {
             get {
                 return ResourceManager.GetString("ArgumentOutOfRange_NeedNonNegNum", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The validation of an attestation token failed. The token signature does not match the signature omputed using a public key retrieved from the attestation public key endpoint at &apos;{0}&apos;. Verify the DNS apping for the endpoint - see https://go.microsoft.com/fwlink/?linkid=2157649 for more details. If correct, contact Customer Support Services..
+        /// </summary>
+        internal static string AttestationTokenSignatureValidationFailed {
+            get {
+                return ResourceManager.GetString("AttestationTokenSignatureValidationFailed", resourceCulture);
             }
         }
         
@@ -9640,15 +9640,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Cannot use &apos;Authentication={0}&apos; with &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
-        /// </summary>
-        internal static string SQL_NonInteractiveWithPassword {
-            get {
-                return ResourceManager.GetString("SQL_NonInteractiveWithPassword", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The connection does not support MultipleActiveResultSets..
         /// </summary>
         internal static string SQL_MarsUnsupportedOnConnection {
@@ -9717,6 +9708,15 @@ namespace System {
         internal static string SQL_NonCharColumn {
             get {
                 return ResourceManager.GetString("SQL_NonCharColumn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication={0}&apos; with &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
+        /// </summary>
+        internal static string SQL_NonInteractiveWithPassword {
+            get {
+                return ResourceManager.GetString("SQL_NonInteractiveWithPassword", resourceCulture);
             }
         }
         
@@ -9816,6 +9816,15 @@ namespace System {
         internal static string SQL_ParameterCannotBeEmpty {
             get {
                 return ResourceManager.GetString("SQL_ParameterCannotBeEmpty", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Parameter &apos;{0}&apos; cannot have Direction Output or InputOutput when EnableOptimizedParameterBinding is enabled on the parent command..
+        /// </summary>
+        internal static string SQL_ParameterDirectionInvalidForOptimizedBinding {
+            get {
+                return ResourceManager.GetString("SQL_ParameterDirectionInvalidForOptimizedBinding", resourceCulture);
             }
         }
         
@@ -12077,12 +12086,6 @@ namespace System {
                 return ResourceManager.GetString("TCE_DbConnectionString_AttestationProtocol", resourceCulture);
             }
         }
-
-        /// <summary>
-        ///   Looks up a localized string similar to Specifies an IP address preference when connecting to SQL instances.
-        /// </summary>
-        internal static string TCE_DbConnectionString_IPAddressPreference
-            => ResourceManager.GetString("TCE_DbConnectionString_IPAddressPreference", resourceCulture);
         
         /// <summary>
         ///   Looks up a localized string similar to Default column encryption setting for all the commands on the connection..
@@ -12099,6 +12102,15 @@ namespace System {
         internal static string TCE_DbConnectionString_EnclaveAttestationUrl {
             get {
                 return ResourceManager.GetString("TCE_DbConnectionString_EnclaveAttestationUrl", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Specifies an IP address preference when connecting to SQL instances..
+        /// </summary>
+        internal static string TCE_DbConnectionString_IPAddressPreference {
+            get {
+                return ResourceManager.GetString("TCE_DbConnectionString_IPAddressPreference", resourceCulture);
             }
         }
         
