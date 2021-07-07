@@ -102,7 +102,7 @@ The default value is `ApplicationIntent.ReadWrite`.
         </ApplicationIntent>
         <ApplicationName>
             <summary>Gets or sets the name of the application associated with the connection string.</summary>
-            <value>The name of the application, or "Core Microsoft SqlClient Data Provider" if no name has been supplied.</value>
+            <value>The name of the application. If no name has been supplied, "Framework Microsoft SqlClient Data Provider" when running on .NET Framework and "Core Microsoft SqlClient Data Provider" otherwise.</value>
             <remarks>
             <format type="text/markdown"><![CDATA[  
   
@@ -753,7 +753,7 @@ Connections are considered the same if they have the same connection string. Dif
   
 |Key|Default value|  
 |---------|-------------------|  
-|Application Name|"Core Microsoft SqlClient Data Provider"|  
+|Application Name|"Framework Microsoft SqlClient Data Provider" when running on .NET Framework. "Core Microsoft SqlClient Data Provider" otherwise.|  
 |AttachDBFilename|Empty string|  
 |Connection Timeout|15|  
 |Context Connection(Obsolete)|False|  
