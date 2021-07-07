@@ -16,6 +16,7 @@ using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient.SNI
 {
@@ -350,7 +351,8 @@ namespace Microsoft.Data.SqlClient.SNI
                 SqlConnectionIPAddressPreference.IPv6First => ipAddresses.OrderByDescending(address =>
                     address.AddressFamily == AddressFamily.InterNetworkV6),
                 SqlConnectionIPAddressPreference.UsePlatformDefault => ipAddresses,
-                _ => throw new ArgumentOutOfRangeException(nameof(ipPreference), ipPreference, null)
+                _ => throw ADP.NotSupportedEnumerationValue(typeof(SqlConnectionIPAddressPreference),
+                    ipPreference.ToString(), nameof(Connect))
             };
 
             foreach (IPAddress ipAddress in ipAddresses)
