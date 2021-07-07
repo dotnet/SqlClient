@@ -359,7 +359,7 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 var socket = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp)
                 {
-                    Blocking = !isInfiniteTimeout
+                    Blocking = isInfiniteTimeout
                 };
 
                 bool isSocketSelected = false;
