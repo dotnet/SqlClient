@@ -357,8 +357,10 @@ namespace Microsoft.Data.SqlClient.SNI
 
             foreach (IPAddress ipAddress in ipAddresses)
             {
-                var socket =
-                    new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp) { Blocking = false };
+                var socket = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp)
+                {
+                    Blocking = !isInfiniteTimeout
+                };
 
                 bool isSocketSelected = false;
 
@@ -366,34 +368,53 @@ namespace Microsoft.Data.SqlClient.SNI
                 SetKeepAliveValues(ref socket);
 
                 SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.INFO,
-                    "Connecting to IP address {0} and port {1} using {2} address family.", ipAddress,
-                    port, ipAddress.AddressFamily);
+                    "Connecting to IP address {0} and port {1} using {2} address family. Is infinite timeout: {3}",
+                    ipAddress,
+                    port, 
+                    ipAddress.AddressFamily, 
+                    isInfiniteTimeout);
 
-                try
+                try // finally disposing socket if has not been selected
                 {
-                    socket.Connect(ipAddress, port);
-                    throw new InternalException(
-                        $"Call to {nameof(Socket.Connect)} must throw {nameof(SocketException)} " +
-                        $"with {SocketError.WouldBlock.ToString()} error code");
-                }
-                catch (SocketException socketException) when (socketException.SocketErrorCode ==
-                                                              SocketError.WouldBlock)
-                {
-                    // https://github.com/dotnet/SqlClient/issues/826#issuecomment-736224118
-
-                    var timeLeft = timeout - timeTaken.Elapsed;
-
-                    if (timeLeft <= TimeSpan.Zero && !isInfiniteTimeout)
-                        return null;
-                    try
+                    bool isConnected = false;
+                    try // catching SocketException from socket.Connect (if isInfiniteTimeout) or Socket.Select otherwise
                     {
-                        int connectionTimeout = isInfiniteTimeout? -1 : checked((int)(timeLeft.TotalMilliseconds * 1000));
-                        Socket.Select(null, new List<Socket> {socket}, null,
-                            connectionTimeout);
-                    }
-                    catch (SocketException) { }
+                        try // catching SocketException with SocketErrorCode == WouldBlock to run Socket.Select
+                        {
+                            socket.Connect(ipAddress, port);
+                            if (!isInfiniteTimeout)
+                                throw new InternalException(
+                                    $"Call to {nameof(Socket.Connect)} must throw {nameof(SocketException)} " +
+                                    $"with {SocketError.WouldBlock.ToString()} error code");
+                            isConnected = true;
+                        }
+                        catch (SocketException socketException) when (!isInfiniteTimeout &&
+                                                                      socketException.SocketErrorCode ==
+                                                                      SocketError.WouldBlock)
+                        {
+                            // https://github.com/dotnet/SqlClient/issues/826#issuecomment-736224118
 
-                    if (socket.Connected)
+                            var timeLeft = timeout - timeTaken.Elapsed;
+
+                            if (timeLeft <= TimeSpan.Zero && !isInfiniteTimeout)
+                                return null;
+
+                            int connectionTimeout =
+                                isInfiniteTimeout ? -1 : checked((int)(timeLeft.TotalMilliseconds * 1000));
+                            Socket.Select(null, new List<Socket> { socket }, null,
+                                connectionTimeout);
+                            isConnected = socket.Connected;
+                        }
+                    }
+                    catch (SocketException e)
+                    {
+                        SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR,
+                            "THIS EXCEPTION IS BEING SWALLOWED: {0}", args0: e.Message);
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                            $"{s_className}.{System.Reflection.MethodBase.GetCurrentMethod().Name}{EventType.ERR}THIS EXCEPTION IS BEING SWALLOWED: {e}");
+                    }
+
+                    if (isConnected)
                     {
                         isSocketSelected = true;
                         socket.Blocking = true;
