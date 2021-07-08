@@ -897,12 +897,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 sqlCommand.ExecuteNonQuery();
                 sqlCommand.CommandText = $"CREATE PROCEDURE {procWithParam} @id INT AS SELECT FirstName, LastName FROM [{_tableName}] WHERE CustomerId = @id";
                 sqlCommand.ExecuteNonQuery();
+                int expectedFields = 2;
 
                 sqlCommand.CommandText = procWithoutParams;
                 sqlCommand.CommandType = CommandType.StoredProcedure;
                 using (SqlDataReader reader = sqlCommand.ExecuteReader())
                 {
-                    Assert.Equal(2, reader.VisibleFieldCount);
+                    Assert.Equal(expectedFields, reader.VisibleFieldCount);
                 }
 
                 sqlCommand.CommandText = procWithParam;
@@ -915,7 +916,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 sqlCommand.Parameters.AddWithValue("@id", 0);
                 using (SqlDataReader reader = sqlCommand.ExecuteReader())
                 {
-                    Assert.Equal(2, reader.VisibleFieldCount);
+                    Assert.Equal(expectedFields, reader.VisibleFieldCount);
                 }
             }
             finally
