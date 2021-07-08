@@ -878,7 +878,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             });
         }
 
-
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestEnclaveStoredProceduresWithAndWithoutParameters(string connectionString)
@@ -894,16 +893,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
             try
             {
-                sqlCommand.CommandText = $"CREATE PROCEDURE {procWithoutParams} AS SELECT * FROM [{_tableName}];";
+                sqlCommand.CommandText = $"CREATE PROCEDURE {procWithoutParams} AS SELECT FirstName, LastName  FROM [{_tableName}];";
                 sqlCommand.ExecuteNonQuery();
-                sqlCommand.CommandText = $"CREATE PROCEDURE {procWithParam} @id INT AS SELECT * FROM [{_tableName}] WHERE CustomerId = @id";
+                sqlCommand.CommandText = $"CREATE PROCEDURE {procWithParam} @id INT AS SELECT FirstName, LastName FROM [{_tableName}] WHERE CustomerId = @id";
                 sqlCommand.ExecuteNonQuery();
 
                 sqlCommand.CommandText = procWithoutParams;
                 sqlCommand.CommandType = CommandType.StoredProcedure;
                 using (SqlDataReader reader = sqlCommand.ExecuteReader())
                 {
-                    Assert.Equal(3, reader.VisibleFieldCount);
+                    Assert.Equal(2, reader.VisibleFieldCount);
                 }
 
                 sqlCommand.CommandText = procWithParam;
@@ -916,7 +915,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 sqlCommand.Parameters.AddWithValue("@id", 0);
                 using (SqlDataReader reader = sqlCommand.ExecuteReader())
                 {
-                    Assert.Equal(3, reader.VisibleFieldCount);
+                    Assert.Equal(2, reader.VisibleFieldCount);
                 }
             }
             finally
