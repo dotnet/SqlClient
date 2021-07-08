@@ -3,61 +3,47 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Data;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Data;
 using System.Transactions;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-    public static class ConnectionPoolTest
+    public class ConnectionPoolConnectionStringProvider : IEnumerable<object[]>
     {
         private static readonly string _TCPConnectionString = (new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { MultipleActiveResultSets = false, Pooling = true }).ConnectionString;
         private static readonly string _tcpMarsConnStr = (new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { MultipleActiveResultSets = true, Pooling = true }).ConnectionString;
+        private static bool IsNotAzureSynapse = DataTestUtility.IsNotAzureSynapse();
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        public static void ConnectionPool_NonMars()
+        public IEnumerator<object[]> GetEnumerator()
         {
-            RunDataTestForSingleConnString(_TCPConnectionString);
+            yield return new object[] { _TCPConnectionString, false };
+            yield return new object[] { _tcpMarsConnStr, IsNotAzureSynapse ? false : true };
         }
 
-        // TODO Synapse: Fix this test for Azure Synapse.
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static void ConnectionPool_Mars()
-        {
-            RunDataTestForSingleConnString(_tcpMarsConnStr);
-        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    }
 
-        private static void RunDataTestForSingleConnString(string tcpConnectionString)
-        {
-            BasicConnectionPoolingTest(tcpConnectionString);
-            ClearAllPoolsTest(tcpConnectionString);
-            ReclaimEmancipatedOnOpenTest(tcpConnectionString);
-            SoftTcpShutdownConnectionTest(tcpConnectionString);
-            MaxPoolWaitForConnectionTest(tcpConnectionString);
-
-#if NETFRAMEWORK
-            TransactionCleanupTest(tcpConnectionString);
-            TransactionPoolTest(tcpConnectionString);
-#endif
-
-            if (DataTestUtility.IsUsingManagedSNI())
-            {
-                KillConnectionTest(tcpConnectionString);
-                CleanupTest(tcpConnectionString);
-                ReplacementConnectionUsesSemaphoreTest(tcpConnectionString);
-                ReplacementConnectionObeys0TimeoutTest(tcpConnectionString);
-            }
-        }
-
+    // TODO Synapse: Fix these tests for Azure Synapse.
+    public static class ConnectionPoolTest
+    {
         /// <summary>
         /// Tests that using the same connection string results in the same pool\internal connection and a different string results in a different pool\internal connection
         /// </summary>
-        /// <param name="connectionString"></param>
-        private static void BasicConnectionPoolingTest(string connectionString)
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ClassData(typeof(ConnectionPoolConnectionStringProvider))]
+        public static void BasicConnectionPoolingTest(string connectionString, bool marsAndAzureSynapse)
         {
+            if (marsAndAzureSynapse)
+            {
+                return;
+            }
+
             InternalConnectionWrapper internalConnection;
             ConnectionPoolWrapper connectionPool;
             using (SqlConnection connection = new SqlConnection(connectionString))
@@ -133,13 +119,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             connection4.Close();
         }
 
+#if DEBUG
         /// <summary>
         /// Tests if killing the connection using the InternalConnectionWrapper is working
         /// </summary>
-        /// <param name="connectionString"></param>
-        private static void KillConnectionTest(string connectionString)
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ClassData(typeof(ConnectionPoolConnectionStringProvider))]
+        public static void KillConnectionTest(string connectionString, bool marsAndAzureSynapse)
         {
-#if DEBUG
+            if (marsAndAzureSynapse || !DataTestUtility.IsUsingManagedSNI())
+            {
+                return;
+            }
+
             InternalConnectionWrapper wrapper = null;
 
             using (SqlConnection connection = new SqlConnection(connectionString))
@@ -164,15 +156,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     DataTestUtility.AssertEqualsWithDescription(5, command.ExecuteScalar(), "Incorrect scalar result.");
                 }
             }
-#endif
         }
+#endif
 
         /// <summary>
         /// Tests if clearing all of the pools does actually remove the pools
         /// </summary>
-        /// <param name="connectionString"></param>
-        private static void ClearAllPoolsTest(string connectionString)
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ClassData(typeof(ConnectionPoolConnectionStringProvider))]
+        public static void ClearAllPoolsTest(string connectionString, bool marsAndAzureSynapse)
         {
+            if (marsAndAzureSynapse)
+            {
+                return;
+            }
+
             SqlConnection.ClearAllPools();
             Assert.True(0 == ConnectionPoolWrapper.AllConnectionPools().Length, "Pools exist after clearing all pools");
 
@@ -196,9 +194,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Checks if an 'emancipated' internal connection is reclaimed when a new connection is opened AND we hit max pool size
         /// NOTE: 'emancipated' means that the internal connection's SqlConnection has fallen out of scope and has no references, but was not explicitly disposed\closed
         /// </summary>
-        /// <param name="connectionString"></param>
-        private static void ReclaimEmancipatedOnOpenTest(string connectionString)
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ClassData(typeof(ConnectionPoolConnectionStringProvider))]
+        public static void ReclaimEmancipatedOnOpenTest(string connectionString, bool marsAndAzureSynapse)
         {
+            if (marsAndAzureSynapse)
+            {
+                return;
+            }
+
             string newConnectionString = (new SqlConnectionStringBuilder(connectionString) { MaxPoolSize = 1 }).ConnectionString;
             SqlConnection.ClearAllPools();
 
@@ -218,9 +222,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private static void ReplacementConnectionUsesSemaphoreTest(string connectionString)
-        {
 #if DEBUG
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ClassData(typeof(ConnectionPoolConnectionStringProvider))]
+        public static void ReplacementConnectionUsesSemaphoreTest(string connectionString, bool marsAndAzureSynapse)
+        {
+            if (marsAndAzureSynapse || !DataTestUtility.IsUsingManagedSNI())
+            {
+                return;
+            }
 
             string newConnectionString = (new SqlConnectionStringBuilder(connectionString) { MaxPoolSize = 2, ConnectTimeout = 5 }).ConnectionString;
             SqlConnection.ClearAllPools();
@@ -282,14 +292,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             waitAllTask.Wait();
             Assert.True(taskWithLiveConnection && taskWithNewConnection && taskWithCorrectException, string.Format("Tasks didn't finish as expected.\nTask with live connection: {0}\nTask with new connection: {1}\nTask with correct exception: {2}\n", taskWithLiveConnection, taskWithNewConnection, taskWithCorrectException));
-#endif
         }
+#endif
 
         /// <summary>
         /// Tests if killing the connection using the ProxyServer is working
         /// </summary>
-        private static void SoftTcpShutdownConnectionTest(string connectionString)
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ClassData(typeof(ConnectionPoolConnectionStringProvider))]
+        public static void SoftTcpShutdownConnectionTest(string connectionString, bool marsAndAzureSynapse)
         {
+            if (marsAndAzureSynapse)
+            {
+                return;
+            }
+
             using (ProxyServer proxy = ProxyServer.CreateAndStartProxy(connectionString, out connectionString))
             {
                 InternalConnectionWrapper wrapper = null;
@@ -320,12 +337,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+#if DEBUG
         /// <summary>
         /// Tests that cleanup removes connections that are unused for two cleanups
         /// </summary>
-        private static void CleanupTest(string connectionString)
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ClassData(typeof(ConnectionPoolConnectionStringProvider))]
+        public static void CleanupTest(string connectionString, bool marsAndAzureSynapse)
         {
-#if DEBUG
+            if (marsAndAzureSynapse || !DataTestUtility.IsUsingManagedSNI())
+            {
+                return;
+            }
+
             SqlConnection.ClearAllPools();
 
             SqlConnection conn1 = new SqlConnection(connectionString);
@@ -360,15 +384,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             connectionPool.Cleanup();
             Assert.Equal(1, connectionPool.ConnectionCount);
-#endif
         }
+#endif
 
         /// <summary>
         /// Tests if, when max pool size is reached, Open() will block until a connection becomes available
         /// </summary>
-        /// <param name="connectionString"></param>
-        private static void MaxPoolWaitForConnectionTest(string connectionString)
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ClassData(typeof(ConnectionPoolConnectionStringProvider))]
+        public static void MaxPoolWaitForConnectionTest(string connectionString, bool marsAndAzureSynapse)
         {
+            if (marsAndAzureSynapse)
+            {
+                return;
+            }
+
             string newConnectionString = (new SqlConnectionStringBuilder(connectionString) { MaxPoolSize = 1 }).ConnectionString;
             SqlConnection.ClearAllPools();
 
@@ -389,9 +419,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(TaskStatus.RanToCompletion, waitTask.Status);
         }
 
-        private static void ReplacementConnectionObeys0TimeoutTest(string connectionString)
-        {
 #if DEBUG
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ClassData(typeof(ConnectionPoolConnectionStringProvider))]
+        public static void ReplacementConnectionObeys0TimeoutTest(string connectionString, bool marsAndAzureSynapse)
+        {
+            if (marsAndAzureSynapse || !DataTestUtility.IsUsingManagedSNI())
+            {
+                return;
+            }
+
             string newConnectionString = (new SqlConnectionStringBuilder(connectionString) { ConnectTimeout = 0 }).ConnectionString;
             SqlConnection.ClearAllPools();
 
@@ -424,8 +461,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 blockedConnectionTask.Result.Close();
                 newConnectionTask.Result.Close();
             }
-#endif
         }
+#endif
 
 #if NETFRAMEWORK
 
@@ -433,9 +470,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Tests if connections in a distributed transaction are put into a transaction pool. Also checks that clearallpools 
         /// does not clear transaction connections and that the transaction root is put into "stasis" when closed
         /// </summary>
-        /// <param name="connectionString"></param>
-        private static void TransactionPoolTest(string connectionString)
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ClassData(typeof(ConnectionPoolConnectionStringProvider))]
+        public static void TransactionPoolTest(string connectionString, bool marsAndAzureSynapse)
         {
+            if (marsAndAzureSynapse)
+            {
+                return;
+            }
+
             ConnectionPoolWrapper connectionPool = null;
 
             using (TransactionScope transScope = new TransactionScope())
@@ -487,8 +530,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// Checks that connections in the transaction pool are not cleaned out, and the root transaction is put into "stasis" when it ages
         /// </summary>
         /// <param name="connectionString"></param>
-        private static void TransactionCleanupTest(string connectionString)
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ClassData(typeof(ConnectionPoolConnectionStringProvider))]
+        public static void TransactionCleanupTest(string connectionString, bool marsAndAzureSynapse)
         {
+            if (marsAndAzureSynapse)
+            {
+                return;
+            }
+
             SqlConnection.ClearAllPools();
             ConnectionPoolWrapper connectionPool = null;
 
