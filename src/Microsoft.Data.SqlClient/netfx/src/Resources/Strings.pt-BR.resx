@@ -3048,7 +3048,7 @@
   <data name="SqlMisc_SubclassMustOverride" xml:space="preserve">
     <value>A subclasse não substituiu um método necessário.</value>
   </data>
-  <data name="Sql_CanotCreateNormalizer" xml:space="preserve">
+  <data name="SQL_CannotCreateNormalizer" xml:space="preserve">
     <value>Não é possível criar o normalizador para '{0}'.</value>
   </data>
   <data name="Sql_InternalError" xml:space="preserve">
@@ -4613,5 +4613,8 @@
   </data>
   <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
     <value>É necessário um número não negativo.</value>
+  </data>
+  <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
+    <value>Parameter '{0}' cannot have Direction Output or InputOutput when EnableOptimizedParameterBinding is enabled on the parent command.</value>
   </data>
 </root>

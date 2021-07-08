@@ -3048,7 +3048,7 @@
   <data name="SqlMisc_SubclassMustOverride" xml:space="preserve">
     <value>서브클래스에서 필요한 메서드를 재정의하지 않았습니다.</value>
   </data>
-  <data name="Sql_CanotCreateNormalizer" xml:space="preserve">
+  <data name="SQL_CannotCreateNormalizer" xml:space="preserve">
     <value>'{0}'에 대한 노멀라이저를 만들 수 없습니다.</value>
   </data>
   <data name="Sql_InternalError" xml:space="preserve">
@@ -4613,5 +4613,8 @@
   </data>
   <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
     <value>음수가 아닌 수가 필요합니다.</value>
+  </data>
+  <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
+    <value>Parameter '{0}' cannot have Direction Output or InputOutput when EnableOptimizedParameterBinding is enabled on the parent command.</value>
   </data>
 </root>

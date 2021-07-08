@@ -1932,4 +1932,7 @@
   <data name="SqlRetryLogic_InvalidMinMaxPair" xml:space="preserve">
     <value>'{0}' is not less than '{1}'; '{2}' cannot be greater than '{3}'.</value>
   </data>
+  <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
+    <value>Parameter '{0}' cannot have Direction Output or InputOutput when EnableOptimizedParameterBinding is enabled on the parent command.</value>
+  </data>
 </root>

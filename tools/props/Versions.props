@@ -4,9 +4,9 @@
     <AssemblyFileVersion Condition="'$(AssemblyFileVersion)' == ''">1.0.0.0</AssemblyFileVersion>
     <!-- This Assembly version corresponds to version of Microsoft.Data.SqlClient v2.0.0 Assembly. -->
     <!-- Should only be changed in future when a non-backwards compatible driver is released. -->
-    <!-- Future Assembly Version values shall be Major.Minor.0.0; e.g. 3.0.0.0 -->
-    <AssemblyVersion>3.0.0.0</AssemblyVersion>
-    <NugetPackageVersion Condition="'$(NugetPackageVersion)' == ''">3.0.0-dev</NugetPackageVersion>
+    <!-- Future Assembly Version values shall be Major.Minor.0.0; e.g. 4.0.0.0 -->
+    <AssemblyVersion>4.0.0.0</AssemblyVersion>
+    <NugetPackageVersion Condition="'$(NugetPackageVersion)' == ''">4.0.0-dev</NugetPackageVersion>
     <Version>$(NugetPackageVersion)</Version>
   </PropertyGroup>
   <!-- NetFx project dependencies -->

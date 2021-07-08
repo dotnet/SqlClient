@@ -2986,7 +2986,7 @@
     <value>无效的数组大小。</value>
   </data>
   <data name="SqlMisc_InvalidPrecScaleMessage" xml:space="preserve">
-    <value>无效的数值精度/小数位数。</value>
+    <value>数值精度/小数位数无效。</value>
   </data>
   <data name="SqlMisc_FormatMessage" xml:space="preserve">
     <value>输入采用的格式不正确。</value>
@@ -3048,7 +3048,7 @@
   <data name="SqlMisc_SubclassMustOverride" xml:space="preserve">
     <value>子类未覆盖所需方法。</value>
   </data>
-  <data name="Sql_CanotCreateNormalizer" xml:space="preserve">
+  <data name="SQL_CannotCreateNormalizer" xml:space="preserve">
     <value>无法为“{0}”创建标准化程序。</value>
   </data>
   <data name="Sql_InternalError" xml:space="preserve">
@@ -4613,5 +4613,8 @@
   </data>
   <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
     <value>需要提供非负数。</value>
+  </data>
+  <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
+    <value>Parameter '{0}' cannot have Direction Output or InputOutput when EnableOptimizedParameterBinding is enabled on the parent command.</value>
   </data>
 </root>
