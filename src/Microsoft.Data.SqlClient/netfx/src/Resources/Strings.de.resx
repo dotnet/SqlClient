@@ -3201,6 +3201,9 @@
   <data name="DbConnectionString_ApplicationName" xml:space="preserve">
     <value>Der Name der Anwendung.</value>
   </data>
+  <data name="DbConnectionString_AsynchronousProcessing" xml:space="preserve">
+    <value>Bei Festlegung auf TRUE wird die Verwendung der asynchronen Funktionalität im .NET Framework-Datenanbieter aktiviert.</value>
+  </data>
   <data name="DbConnectionString_AttachDBFilename" xml:space="preserve">
     <value>Der Name der primären Datei, einschließlich dem vollständigen Pfadnamen, einer anfügbaren Datenbank.</value>
   </data>
@@ -4610,5 +4613,8 @@
   </data>
   <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
     <value>Nicht negative Zahl erforderlich.</value>
+  </data>
+  <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
+    <value>Parameter '{0}' cannot have Direction Output or InputOutput when EnableOptimizedParameterBinding is enabled on the parent command.</value>
   </data>
 </root>
