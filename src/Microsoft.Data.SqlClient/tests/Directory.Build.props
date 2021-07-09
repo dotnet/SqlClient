@@ -6,6 +6,9 @@
   <Import Project="..\..\Directory.Build.props" />
   
   <PropertyGroup>
+    <OSGroup Condition="$(OSGroup) == ''">$(OS)</OSGroup>
+    <TargetsWindows Condition="'$(OSGroup)'=='Windows_NT'">true</TargetsWindows>
+    <TargetsUnix Condition="'$(OSGroup)'=='Unix'">true</TargetsUnix>
     <Configurations>Debug;Release;</Configurations>
     <Platforms>AnyCPU;x86;x64</Platforms>
     <ReferenceType Condition="'$(ReferenceType)'==''">Project</ReferenceType>
@@ -22,7 +25,8 @@
     <!-- Set Default Target Framework when building for Debug and Release configurations. (Visual Studio) -->
     <When Condition="'$(TestTargetOS)' == ''">
       <PropertyGroup>
-        <TargetFrameworks>$(TargetNetFxVersion);$(TargetNetCoreVersion);</TargetFrameworks>
+        <TargetFrameworks Condition="'$(TargetsWindows)' == 'true'">$(TargetNetFxVersion);$(TargetNetCoreVersion);</TargetFrameworks>
+        <TargetFrameworks Condition="'$(TargetsUnix)' == 'true'">$(TargetNetCoreVersion);</TargetFrameworks>
       </PropertyGroup>
     </When>
     <!-- Set Target Framework when TestTargetOS is not empty. (Command Line) -->
