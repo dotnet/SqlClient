@@ -4615,6 +4615,6 @@
     <value>Número no negativo requerido.</value>
   </data>
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
-    <value>Parameter '{0}' cannot have Direction Output or InputOutput when EnableOptimizedParameterBinding is enabled on the parent command.</value>
+    <value>El parámetro “{0}” no puede tener la Dirección de salida ni InputOutput cuando EnableOptimizedParameterBinding está habilitado en el comando primario.</value>
   </data>
 </root>

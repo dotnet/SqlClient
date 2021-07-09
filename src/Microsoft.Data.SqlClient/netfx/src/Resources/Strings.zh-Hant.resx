@@ -4615,6 +4615,6 @@
     <value>需要非負數。</value>
   </data>
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
-    <value>Parameter '{0}' cannot have Direction Output or InputOutput when EnableOptimizedParameterBinding is enabled on the parent command.</value>
+    <value>在父命令上啟用 EnableOptimizedParameterBinding 時，參數 '{0}' 不能具有方向輸出或 InputOutput。</value>
   </data>
 </root>
