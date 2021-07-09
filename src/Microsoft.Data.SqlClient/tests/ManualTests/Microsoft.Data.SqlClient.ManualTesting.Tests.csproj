@@ -2,6 +2,8 @@
   <PropertyGroup>
     <ProjectGuid>{45DB5F86-7AE3-45C6-870D-F9357B66BDB5}</ProjectGuid>
     <AssemblyName>ManualTests</AssemblyName>
+    <Configurations>Debug;Release;</Configurations>
+    <Platforms>AnyCPU;x86;x64</Platforms>
     <TargetGroup Condition="$(TargetFramework.StartsWith('net4'))">netfx</TargetGroup>
     <TargetGroup Condition="$(TargetGroup) == ''">netcoreapp</TargetGroup>
     <OSGroup Condition="'$(OSGroup)' == ''">$(OS)</OSGroup>
