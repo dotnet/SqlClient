@@ -40,7 +40,7 @@
     <SystemSecurityCryptographyCngVersion>5.0.0</SystemSecurityCryptographyCngVersion>
     <SystemSecurityPermissionsVersion>5.0.0</SystemSecurityPermissionsVersion>
     <SystemSecurityPrincipalWindowsVersion>5.0.0</SystemSecurityPrincipalWindowsVersion>
-    <SystemTextEncodingCodePagesVersion>5.0.0</SystemTextEncodingCodePagesVersion>
+    <SystemTextEncodingCodePagesVersion>4.7.0</SystemTextEncodingCodePagesVersion>
     <SystemThreadingTasksVersion>4.3.0</SystemThreadingTasksVersion>
     <SystemXmlReaderWriterVersion>4.3.1</SystemXmlReaderWriterVersion>
   </PropertyGroup>
