@@ -6,6 +6,8 @@
   <Import Project="..\..\Directory.Build.props" />
 
   <PropertyGroup>
+    <Configurations>Debug;Release;</Configurations>
+    <Platforms>AnyCPU;x86;x64</Platforms>
     <TargetNetFxVersion Condition="'$(TargetNetFxVersion)' == ''">net461</TargetNetFxVersion>
     <TargetNetCoreVersion Condition="'$(ReferenceType)' == 'NetStandard' AND $(TargetNetStandardVersion)=='netstandard2.1'">netcoreapp3.1</TargetNetCoreVersion>
     <TargetNetCoreVersion Condition="'$(TargetNetCoreVersion)' == ''">netcoreapp2.1</TargetNetCoreVersion>
@@ -14,22 +16,16 @@
 
   <Choose>
     <!-- Set Default Target Framework when building for Debug and Release configurations. (Visual Studio) -->
-    <When Condition="'$(TestTargetOS)' == '' AND ('$(Configuration)' == 'Debug' OR '$(Configuration)' == 'Release')">
+    <When Condition="'$(TestTargetOS)' == ''">
       <PropertyGroup>
-        <TargetFrameworks>$(TargetNetCoreVersion)</TargetFrameworks>
+        <TargetFrameworks>$(TargetNetFxVersion);$(TargetNetCoreVersion)</TargetFrameworks>
       </PropertyGroup>
     </When>
     <!-- Set Target Framework when TestTargetOS is not empty. (Command Line) -->
-    <When Condition="'$(TestTargetOS)' != ''">
+    <Otherwise>
       <PropertyGroup>
         <TargetFrameworks Condition="'$(TestTargetOS)' == 'Windowsnetcoreapp' OR '$(TestTargetOS)' == 'Unixnetcoreapp'">$(TargetNetCoreVersion)</TargetFrameworks>
         <TargetFrameworks Condition="'$(TestTargetOS)' == 'Windowsnetfx'">$(TargetNetFxVersion)</TargetFrameworks>
-      </PropertyGroup>
-    </When>
-    <!-- Set Target Framework when TestTargetOS is empty and Configuration is neither Debug nor Release. (Visual Studio) -->
-    <Otherwise>
-      <PropertyGroup>
-        <TargetFrameworks>$(Configuration.Split('-')[0])</TargetFrameworks>
       </PropertyGroup>
     </Otherwise>
   </Choose>

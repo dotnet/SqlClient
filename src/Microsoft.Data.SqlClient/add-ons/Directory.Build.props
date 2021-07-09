@@ -8,9 +8,6 @@
     <ReferenceType Condition="'$(ReferenceType)'==''">Project</ReferenceType>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
-  </PropertyGroup>
-  
-  <PropertyGroup>
     <TargetFrameworkMonikerAssemblyAttributesPath>$([System.IO.Path]::Combine('$(IntermediateOutputPath)','$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)'))</TargetFrameworkMonikerAssemblyAttributesPath>
   </PropertyGroup>
   <ItemGroup>
@@ -18,24 +15,18 @@
   </ItemGroup>
   <Choose>
     <!-- Set Default Target Framework when building for Debug and Release configurations. (Visual Studio) -->
-    <When Condition="'$(TestTargetOS)' == '' AND ('$(Configuration)' == 'Debug' OR '$(Configuration)' == 'Release')">
-        <PropertyGroup>
-          <TargetFramework>netcoreapp2.1</TargetFramework>
-        </PropertyGroup>
-    </When>
-    <!-- Set Target Framework when TestTargetOS is not empty. (Command Line) -->
-    <When Condition="'$(TestTargetOS)' != ''">
-        <PropertyGroup>
-          <TargetFramework Condition="'$(TestTargetOS)' == 'Windowsnetstandard' OR '$(TestTargetOS)' == 'Unixnetstandard'">netstandard2.0</TargetFramework>
-          <TargetFramework Condition="'$(TestTargetOS)' == 'Windowsnetcoreapp' OR '$(TestTargetOS)' == 'Unixnetcoreapp'">netcoreapp2.1</TargetFramework>
-          <TargetFramework Condition="('$(TestTargetOS)' == 'Windowsnetcoreapp' OR '$(TestTargetOS)' == 'Unixnetcoreapp') AND ($(ReferenceType)=='NetStandard' AND $(TargetNetStandardVersion)=='netstandard2.1')">netcoreapp3.1</TargetFramework>
-          <TargetFramework Condition="'$(TestTargetOS)' == 'Windowsnetfx'">net461</TargetFramework>
+    <When Condition="'$(TestTargetOS)' == ''">
+      <PropertyGroup>
+        <TargetFrameworks>net461;netcoreapp2.1;netstandard2.0</TargetFrameworks>
       </PropertyGroup>
     </When>
-    <!-- Set Target Framework when TestTargetOS is empty and Configuration is neither Debug nor Release. (Visual Studio) -->
+    <!-- Set Target Framework when TestTargetOS is not empty. (Command Line) -->
     <Otherwise>
       <PropertyGroup>
-        <TargetFramework>$(Configuration.Split('-')[0])</TargetFramework>
+        <TargetFramework Condition="'$(TestTargetOS)' == 'Windowsnetstandard' OR '$(TestTargetOS)' == 'Unixnetstandard'">netstandard2.0</TargetFramework>
+        <TargetFramework Condition="'$(TestTargetOS)' == 'Windowsnetcoreapp' OR '$(TestTargetOS)' == 'Unixnetcoreapp'">netcoreapp2.1</TargetFramework>
+        <TargetFramework Condition="('$(TestTargetOS)' == 'Windowsnetcoreapp' OR '$(TestTargetOS)' == 'Unixnetcoreapp') AND ($(ReferenceType)=='NetStandard' AND $(TargetNetStandardVersion)=='netstandard2.1')">netcoreapp3.1</TargetFramework>
+        <TargetFramework Condition="'$(TestTargetOS)' == 'Windowsnetfx'">net461</TargetFramework>
       </PropertyGroup>
     </Otherwise>
   </Choose>
