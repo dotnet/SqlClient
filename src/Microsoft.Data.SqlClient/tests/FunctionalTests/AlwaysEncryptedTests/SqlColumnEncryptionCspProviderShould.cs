@@ -165,7 +165,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         }
     }
 
-    public class CspFixture : IDisposable
+    class CspFixture : IDisposable
     {
         private const string containerName = "KeyName";
         private const int KEY_SIZE = 2048;
@@ -183,15 +183,20 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
         public static void AddKeyToCsp(string containerName)
         {
-
-            CspParameters cspParams = new CspParameters();
+#if NET5_0_OR_GREATER
+            System.Diagnostics.Debug.Assert(OperatingSystem.IsWindows());
+#endif
+            CspParameters cspParams = new();
             cspParams.KeyContainerName = containerName;
-            RSACryptoServiceProvider rsaAlg = new RSACryptoServiceProvider(KEY_SIZE, cspParams);
+            RSACryptoServiceProvider rsaAlg = new(KEY_SIZE, cspParams);
             rsaAlg.PersistKeyInCsp = true;
         }
 
         public static void RemoveKeyFromCsp(string containerName)
         {
+#if NET5_0_OR_GREATER
+            System.Diagnostics.Debug.Assert(OperatingSystem.IsWindows());
+#endif
             CspParameters cspParams = new CspParameters();
             cspParams.KeyContainerName = containerName;
             RSACryptoServiceProvider rsaAlg = new RSACryptoServiceProvider(cspParams);

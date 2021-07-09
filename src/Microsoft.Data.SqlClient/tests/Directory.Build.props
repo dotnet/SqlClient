@@ -4,14 +4,18 @@
 
   <!-- Import parent Directory.build.props -->
   <Import Project="..\..\Directory.Build.props" />
-
+  
   <PropertyGroup>
     <Configurations>Debug;Release;</Configurations>
     <Platforms>AnyCPU;x86;x64</Platforms>
+    <ReferenceType Condition="'$(ReferenceType)'==''">Project</ReferenceType>
+  </PropertyGroup>
+
+  <!--These properties can be modified locally to target .NET version of choice to build and test entire test suite-->
+  <PropertyGroup>
     <TargetNetFxVersion Condition="'$(TargetNetFxVersion)' == ''">net461</TargetNetFxVersion>
     <TargetNetCoreVersion Condition="'$(ReferenceType)' == 'NetStandard' AND $(TargetNetStandardVersion)=='netstandard2.1'">netcoreapp3.1</TargetNetCoreVersion>
-    <TargetNetCoreVersion Condition="'$(TargetNetCoreVersion)' == ''">netcoreapp2.1</TargetNetCoreVersion>
-    <ReferenceType Condition="'$(ReferenceType)'==''">Project</ReferenceType>
+    <TargetNetCoreVersion Condition="'$(TargetNetCoreVersion)' == ''">net6.0</TargetNetCoreVersion>
   </PropertyGroup>
 
   <Choose>
