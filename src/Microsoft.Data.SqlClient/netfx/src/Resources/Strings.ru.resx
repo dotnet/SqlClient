@@ -4615,6 +4615,6 @@
     <value>Требуется неотрицательное число.</value>
   </data>
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
-    <value>Parameter '{0}' cannot have Direction Output or InputOutput when EnableOptimizedParameterBinding is enabled on the parent command.</value>
+    <value>У параметра "{0}" не может быть направления вывода или InputOutput, если EnableOptimizedParameterBinding включен в родительской команде.</value>
   </data>
 </root>
