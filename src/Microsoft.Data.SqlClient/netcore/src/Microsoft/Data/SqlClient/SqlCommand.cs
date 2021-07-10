@@ -1412,10 +1412,7 @@ namespace Microsoft.Data.SqlClient
             if (asyncException != null)
             {
                 // Leftover exception from the Begin...InternalReadStage
-                if (cachedAsyncState != null)
-                {
-                    cachedAsyncState.ResetAsyncState();
-                }
+                cachedAsyncState?.ResetAsyncState();
                 ReliablePutStateObject();
                 throw asyncException.InnerException;
             }
@@ -1848,6 +1845,7 @@ namespace Microsoft.Data.SqlClient
             Exception asyncException = ((Task)asyncResult).Exception;
             if (asyncException != null)
             {
+                cachedAsyncState?.ResetAsyncState();
                 ReliablePutStateObject();
                 throw asyncException.InnerException;
             }
@@ -2045,6 +2043,7 @@ namespace Microsoft.Data.SqlClient
             Exception asyncException = ((Task)asyncResult).Exception;
             if (asyncException != null)
             {
+                cachedAsyncState?.ResetAsyncState();
                 ReliablePutStateObject();
                 throw asyncException.InnerException;
             }
