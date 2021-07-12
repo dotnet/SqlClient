@@ -63,8 +63,6 @@
   <!-- All Available Configurations-->
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'net461-Debug|AnyCPU'" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'net461-Release|AnyCPU'" />
   <PropertyGroup Condition="$(Configuration.Contains('Debug'))">
     <DefineConstants>$(DefineConstants);DEBUG;DBG;_DEBUG;_LOGGING;RESOURCE_ANNOTATION_WORK;</DefineConstants>
     <DebugType>Full</DebugType>
@@ -371,6 +369,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsRecordBufferSetter.cs">
       <Link>Microsoft\Data\SqlClient\TdsRecordBufferSetter.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlNormalizer.cs">
+      <Link>Microsoft\Data\SqlClient\Server\SqlNormalizer.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SmiRecordBuffer.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiRecordBuffer.cs</Link>
     </Compile>
@@ -401,8 +402,8 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.cs">
       <Link>Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.CreateProvider.cs">
-      <Link>Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicManager.CreateProvider.cs</Link>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicLoader.cs">
+      <Link>Microsoft\Data\SqlClient\Reliability\SqlConfigurableRetryLogicLoader.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\AppConfigManager.cs">
       <Link>Microsoft\Data\SqlClient\Reliability\AppConfigManager.cs</Link>
@@ -544,7 +545,6 @@
     <Compile Include="Microsoft\Data\SqlClient\Server\ValueUtilsSmi.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\sqlser.cs" />
     <Compile Include="Microsoft\Data\Sql\SqlGenericUtil.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\Server\sqlnorm.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(BuildSimulator)' == 'true'">
     <Compile Include="Microsoft\Data\SqlClient\SimulatorEnclaveProvider.cs" />

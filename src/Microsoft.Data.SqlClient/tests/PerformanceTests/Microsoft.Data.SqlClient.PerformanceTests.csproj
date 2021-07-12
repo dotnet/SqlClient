@@ -4,7 +4,7 @@
     <AssemblyName>PerformanceTests</AssemblyName>
     <TargetFrameworks>netcoreapp3.1;net5.0</TargetFrameworks>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <Configurations>Debug;Release;net5.0-Debug;net5.0-Release;netcoreapp3.1-Debug;netcoreapp3.1-Release</Configurations>
+    <Configurations>Debug;Release;</Configurations>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform).$(AssemblyName)</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
     <StartupObject>Microsoft.Data.SqlClient.PerformanceTests.Program</StartupObject>

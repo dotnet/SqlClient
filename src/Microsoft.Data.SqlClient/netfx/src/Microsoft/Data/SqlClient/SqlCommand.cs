@@ -32,8 +32,8 @@ namespace Microsoft.Data.SqlClient
     [
     DefaultEvent("RecordsAffected"),
     ToolboxItem(true),
-    Designer("Microsoft.VSDesigner.Data.VS.SqlCommandDesigner, " + AssemblyRef.MicrosoftVSDesigner),
     DesignerCategory("")
+    // TODO: Add designer attribute when Microsoft.VSDesigner.Data.VS.SqlCommandDesigner uses Microsoft.Data.SqlClient
     ]
     public sealed class SqlCommand : DbCommand, ICloneable
     {
@@ -616,20 +616,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private bool? _isRetryEnabled;
-        private bool IsRetryEnabled
-        {
-            get
-            {
-                if (_isRetryEnabled == null)
-                {
-                    bool result;
-                    result = AppContext.TryGetSwitch(SqlRetryLogicProvider.EnableRetryLogicSwitch, out result) ? result : false;
-                    _isRetryEnabled = result;
-                }
-                return (bool)_isRetryEnabled;
-            }
-        }
+        private static bool IsRetryEnabled => LocalAppContextSwitches.IsRetryEnabled;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RetryLogicProvider/*' />
         [
@@ -892,6 +879,9 @@ namespace Microsoft.Data.SqlClient
                 TypeDescriptor.Refresh(this);
             }
         }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EnableOptimizedParameterBinding/*'/>
+        public bool EnableOptimizedParameterBinding { get; set; }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Parameters/*'/>
         [
@@ -1556,7 +1546,7 @@ namespace Microsoft.Data.SqlClient
                     Task execNQ = InternalExecuteNonQuery(localCompletion, ADP.BeginExecuteNonQuery, false, timeout, out usedCache, asyncWrite, inRetry: inRetry);
                     if (execNQ != null)
                     {
-                        AsyncHelper.ContinueTask(execNQ, localCompletion, () => BeginExecuteNonQueryInternalReadStage(localCompletion));
+                        AsyncHelper.ContinueTaskWithState(execNQ, localCompletion, this, (object state) => ((SqlCommand)state).BeginExecuteNonQueryInternalReadStage(localCompletion));
                     }
                     else
                     {
@@ -2166,7 +2156,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (writeTask != null)
                 {
-                    AsyncHelper.ContinueTask(writeTask, localCompletion, () => BeginExecuteXmlReaderInternalReadStage(localCompletion));
+                    AsyncHelper.ContinueTaskWithState(writeTask, localCompletion, this, (object state) => ((SqlCommand)state).BeginExecuteXmlReaderInternalReadStage(localCompletion));
                 }
                 else
                 {
@@ -2655,7 +2645,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (writeTask != null)
                 {
-                    AsyncHelper.ContinueTask(writeTask, localCompletion, () => BeginExecuteReaderInternalReadStage(localCompletion));
+                    AsyncHelper.ContinueTaskWithState(writeTask, localCompletion, this, (object state) => ((SqlCommand)state).BeginExecuteReaderInternalReadStage(localCompletion));
                 }
                 else
                 {
@@ -2995,14 +2985,19 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteDbDataReaderAsync/*'/>
         protected override Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
         {
-            return ExecuteReaderAsync(behavior, cancellationToken).ContinueWith<DbDataReader>((result) =>
-            {
-                if (result.IsFaulted)
+            return ExecuteReaderAsync(behavior, cancellationToken).ContinueWith<DbDataReader>(
+                static (Task<SqlDataReader> result) =>
                 {
-                    throw result.Exception.InnerException;
-                }
-                return result.Result;
-            }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.NotOnCanceled, TaskScheduler.Default);
+                    if (result.IsFaulted)
+                    {
+                        throw result.Exception.InnerException;
+                    }
+                    return result.Result;
+                }, 
+                CancellationToken.None, 
+                TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.NotOnCanceled, 
+                TaskScheduler.Default
+            );
         }
 
         private Task<SqlDataReader> InternalExecuteReaderWithRetryAsync(CommandBehavior behavior, CancellationToken cancellationToken)
@@ -3815,7 +3810,7 @@ namespace Microsoft.Data.SqlClient
                         _activeConnection.RegisterWaitingForReconnect(completion.Task);
                         _reconnectionCompletionSource = completion;
                         CancellationTokenSource timeoutCTS = new CancellationTokenSource();
-                        AsyncHelper.SetTimeoutException(completion, timeout, SQL.CR_ReconnectTimeout, timeoutCTS.Token);
+                        AsyncHelper.SetTimeoutException(completion, timeout, static () => SQL.CR_ReconnectTimeout(), timeoutCTS.Token);
                         AsyncHelper.ContinueTask(reconnectTask, completion,
                             () =>
                             {
@@ -3832,14 +3827,16 @@ namespace Microsoft.Data.SqlClient
                                 }
                                 else
                                 {
-                                    AsyncHelper.ContinueTask(subTask, completion, () => completion.SetResult(null));
+                                    AsyncHelper.ContinueTaskWithState(subTask, completion, completion, static (object state) => ((TaskCompletionSource<object>)state).SetResult(null));
                                 }
-                            }, connectionToAbort: _activeConnection);
+                            },
+                            connectionToAbort: _activeConnection
+                        );
                         return completion.Task;
                     }
                     else
                     {
-                        AsyncHelper.WaitForCompletion(reconnectTask, timeout, () => { throw SQL.CR_ReconnectTimeout(); });
+                        AsyncHelper.WaitForCompletion(reconnectTask, timeout, static () => throw SQL.CR_ReconnectTimeout());
                         timeout = TdsParserStaticMethods.GetRemainingTimeout(timeout, reconnectionStart);
                     }
                 }
@@ -5177,39 +5174,32 @@ namespace Microsoft.Data.SqlClient
             {
                 long parameterEncryptionStart = ADP.TimerCurrent();
                 TaskCompletionSource<object> completion = new TaskCompletionSource<object>();
-                AsyncHelper.ContinueTask(describeParameterEncryptionTask, completion,
-                    () =>
+                AsyncHelper.ContinueTaskWithState(describeParameterEncryptionTask, completion, this,
+                    (object state) =>
                     {
+                        SqlCommand command = (SqlCommand)state;
                         Task subTask = null;
-                        GenerateEnclavePackage();
-                        RunExecuteReaderTds(cmdBehavior, runBehavior, returnStream, async, TdsParserStaticMethods.GetRemainingTimeout(timeout, parameterEncryptionStart), out subTask, asyncWrite, inRetry, ds);
+                        command.GenerateEnclavePackage();
+                        command.RunExecuteReaderTds(cmdBehavior, runBehavior, returnStream, async, TdsParserStaticMethods.GetRemainingTimeout(timeout, parameterEncryptionStart), out subTask, asyncWrite, inRetry, ds);
                         if (subTask == null)
                         {
                             completion.SetResult(null);
                         }
                         else
                         {
-                            AsyncHelper.ContinueTask(subTask, completion, () => completion.SetResult(null));
+                            AsyncHelper.ContinueTaskWithState(subTask, completion, completion, static (object state2) => ((TaskCompletionSource<object>)state2).SetResult(null));
                         }
-                    }, connectionToDoom: null,
-                    onFailure: ((exception) =>
+                    },
+                    onFailure: static (Exception exception, object state) =>
                     {
-                        if (_cachedAsyncState != null)
-                        {
-                            _cachedAsyncState.ResetAsyncState();
-                        }
+                        ((SqlCommand)state)._cachedAsyncState?.ResetAsyncState();
                         if (exception != null)
                         {
                             throw exception;
                         }
-                    }),
-                    onCancellation: (() =>
-                    {
-                        if (_cachedAsyncState != null)
-                        {
-                            _cachedAsyncState.ResetAsyncState();
-                        }
-                    }),
+                    },
+                    onCancellation: static (object state) => ((SqlCommand)state)._cachedAsyncState?.ResetAsyncState(),
+                    connectionToDoom: null,
                     connectionToAbort: _activeConnection);
                 task = completion.Task;
                 return ds;
@@ -5278,7 +5268,7 @@ namespace Microsoft.Data.SqlClient
                     _activeConnection.RegisterWaitingForReconnect(completion.Task);
                     _reconnectionCompletionSource = completion;
                     CancellationTokenSource timeoutCTS = new CancellationTokenSource();
-                    AsyncHelper.SetTimeoutException(completion, timeout, SQL.CR_ReconnectTimeout, timeoutCTS.Token);
+                    AsyncHelper.SetTimeoutException(completion, timeout, static () => SQL.CR_ReconnectTimeout(), timeoutCTS.Token);
                     AsyncHelper.ContinueTask(reconnectTask, completion,
                         () =>
                         {
@@ -5296,15 +5286,17 @@ namespace Microsoft.Data.SqlClient
                             }
                             else
                             {
-                                AsyncHelper.ContinueTask(subTask, completion, () => completion.SetResult(null));
+                                AsyncHelper.ContinueTaskWithState(subTask, completion, completion, static (object state) => ((TaskCompletionSource<object>)state).SetResult(null));
                             }
-                        }, connectionToAbort: _activeConnection);
+                        },
+                        connectionToAbort: _activeConnection
+                    );
                     task = completion.Task;
                     return ds;
                 }
                 else
                 {
-                    AsyncHelper.WaitForCompletion(reconnectTask, timeout, () => { throw SQL.CR_ReconnectTimeout(); });
+                    AsyncHelper.WaitForCompletion(reconnectTask, timeout, static () => throw SQL.CR_ReconnectTimeout());
                     timeout = TdsParserStaticMethods.GetRemainingTimeout(timeout, reconnectionStart);
                 }
             }
@@ -6794,10 +6786,21 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(CommandType == CommandType.StoredProcedure, "BuildStoredProcedureStatementForColumnEncryption() should only be called for stored procedures");
             Debug.Assert(!string.IsNullOrWhiteSpace(storedProcedureName), "storedProcedureName cannot be null or empty in BuildStoredProcedureStatementForColumnEncryption");
-            Debug.Assert(parameters != null, "parameters cannot be null in BuildStoredProcedureStatementForColumnEncryption");
 
             StringBuilder execStatement = new StringBuilder();
             execStatement.Append(@"EXEC ");
+
+            if (parameters is null)
+            {
+                execStatement.Append(ParseAndQuoteIdentifier(storedProcedureName, false));
+                return new SqlParameter(
+                    null,
+                    ((execStatement.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText,
+                    execStatement.Length)
+                {
+                    Value = execStatement.ToString()
+                };
+            }
 
             // Find the return value parameter (if any).
             SqlParameter returnValueParameter = null;

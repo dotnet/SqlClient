@@ -880,6 +880,53 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
+        public void TestEnclaveStoredProceduresWithAndWithoutParameters(string connectionString)
+        {
+            using SqlConnection sqlConnection = new(connectionString);
+            sqlConnection.Open();
+
+            using SqlCommand sqlCommand = new("", sqlConnection, transaction: null,
+                columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled);
+
+            string procWithoutParams = DataTestUtility.GetUniqueName("EnclaveWithoutParams", withBracket: false);
+            string procWithParam = DataTestUtility.GetUniqueName("EnclaveWithParams", withBracket: false);
+
+            try
+            {
+                sqlCommand.CommandText = $"CREATE PROCEDURE {procWithoutParams} AS SELECT FirstName, LastName  FROM [{_tableName}];";
+                sqlCommand.ExecuteNonQuery();
+                sqlCommand.CommandText = $"CREATE PROCEDURE {procWithParam} @id INT AS SELECT FirstName, LastName FROM [{_tableName}] WHERE CustomerId = @id";
+                sqlCommand.ExecuteNonQuery();
+                int expectedFields = 2;
+
+                sqlCommand.CommandText = procWithoutParams;
+                sqlCommand.CommandType = CommandType.StoredProcedure;
+                using (SqlDataReader reader = sqlCommand.ExecuteReader())
+                {
+                    Assert.Equal(expectedFields, reader.VisibleFieldCount);
+                }
+
+                sqlCommand.CommandText = procWithParam;
+                sqlCommand.CommandType = CommandType.StoredProcedure;
+                Exception ex = Assert.Throws<SqlException>(() => sqlCommand.ExecuteReader());
+                string expectedMsg = $"Procedure or function '{procWithParam}' expects parameter '@id', which was not supplied.";
+
+                Assert.Equal(expectedMsg, ex.Message);
+
+                sqlCommand.Parameters.AddWithValue("@id", 0);
+                using (SqlDataReader reader = sqlCommand.ExecuteReader())
+                {
+                    Assert.Equal(expectedFields, reader.VisibleFieldCount);
+                }
+            }
+            finally
+            {
+                DropHelperProcedures(new[] { procWithoutParams, procWithParam }, connectionString);
+            }
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProvider))]
         public void TestPrepareWithExecuteNonQuery(string connection)
         {
             CleanUpTable(connection, _tableName);
@@ -2242,6 +2289,40 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
+        // On Windows, "_fixture" will be type SQLSetupStrategyCertStoreProvider
+        // On non-Windows, "_fixture" will be type SQLSetupStrategyAzureKeyVault
+        // Test will pass on both but only SQLSetupStrategyCertStoreProvider is a system provider
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
+        [ClassData(typeof(AEConnectionStringProvider))]
+        public void TestSystemProvidersHavePrecedenceOverInstanceLevelProviders(string connectionString)
+        {
+            Dictionary<string, SqlColumnEncryptionKeyStoreProvider> customKeyStoreProviders = new()
+            {
+                {
+                    SqlColumnEncryptionAzureKeyVaultProvider.ProviderName,
+                    new SqlColumnEncryptionAzureKeyVaultProvider(new SqlClientCustomTokenCredential())
+                }
+            };
+
+            using (SqlConnection connection = new(connectionString))
+            {
+                connection.Open();
+                using SqlCommand command = CreateCommandThatRequiresSystemKeyStoreProvider(connection);
+                connection.RegisterColumnEncryptionKeyStoreProvidersOnConnection(customKeyStoreProviders);
+                SqlDataReader reader = command.ExecuteReader();
+                Assert.Equal(3, reader.VisibleFieldCount);
+            }
+
+            using (SqlConnection connection = new(connectionString))
+            {
+                connection.Open();
+                using SqlCommand command = CreateCommandThatRequiresSystemKeyStoreProvider(connection);
+                command.RegisterColumnEncryptionKeyStoreProvidersOnCommand(customKeyStoreProviders);
+                SqlDataReader reader = command.ExecuteReader();
+                Assert.Equal(3, reader.VisibleFieldCount);
+            }
+        }
+
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE), nameof(DataTestUtility.EnclaveEnabled))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestRetryWhenAEParameterMetadataCacheIsStale(string connectionString)
@@ -2315,6 +2396,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 $"SELECT * FROM [{_fixture.CustomKeyStoreProviderTestTable.Name}] WHERE CustomerID = @id",
                 connection, null, SqlCommandColumnEncryptionSetting.Enabled);
             command.Parameters.AddWithValue("id", 9);
+            return command;
+        }
+
+        private SqlCommand CreateCommandThatRequiresSystemKeyStoreProvider(SqlConnection connection)
+        {
+            SqlCommand command = new(
+                    $"SELECT * FROM [{_fixture.CustomKeyStoreProviderTestTable.Name}] WHERE FirstName = @firstName",
+                    connection, null, SqlCommandColumnEncryptionSetting.Enabled);
+            command.Parameters.AddWithValue("firstName", "abc");
             return command;
         }
 
