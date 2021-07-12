@@ -125,7 +125,6 @@ namespace Microsoft.Data.SqlClient
             internal const string APPLICATIONINTENT = "applicationintent";
             // application name
             internal const string APP = "app";
-            internal const string Async = "async";
             // attachDBFilename
             internal const string EXTENDED_PROPERTIES = "extended properties";
             internal const string INITIAL_FILE_NAME = "initial file name";
@@ -175,7 +174,7 @@ namespace Microsoft.Data.SqlClient
             // make sure to update SynonymCount value below when adding or removing synonyms
         }
 
-        internal const int SynonymCount = 30;
+        internal const int SynonymCount = 29;
 
         // the following are all inserted as keys into the _netlibMapping hash
         internal static class NETLIB
