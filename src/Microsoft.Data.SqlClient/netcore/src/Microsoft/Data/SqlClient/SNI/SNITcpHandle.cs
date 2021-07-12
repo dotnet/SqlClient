@@ -374,49 +374,53 @@ namespace Microsoft.Data.SqlClient.SNI
                     ipAddress.AddressFamily, 
                     isInfiniteTimeout);
 
-                try // finally disposing socket if has not been selected
-                {
-                    bool isConnected = false;
-                    try // catching SocketException from socket.Connect (if isInfiniteTimeout) or Socket.Select otherwise
-                    {
-                        try // catching SocketException with SocketErrorCode == WouldBlock to run Socket.Select
-                        {
-                            socket.Connect(ipAddress, port);
-                            if (!isInfiniteTimeout)
-                                throw new InternalException(
-                                    $"Call to {nameof(Socket.Connect)} must throw {nameof(SocketException)} " +
-                                    $"with {SocketError.WouldBlock.ToString()} error code");
-                            isConnected = true;
-                        }
-                        catch (SocketException socketException) when (!isInfiniteTimeout &&
-                                                                      socketException.SocketErrorCode ==
-                                                                      SocketError.WouldBlock)
-                        {
-                            // https://github.com/dotnet/SqlClient/issues/826#issuecomment-736224118
 
+                try
+                {
+                    bool isConnected;
+                    try // catching SocketException with SocketErrorCode == WouldBlock to run Socket.Select
+                    {
+                        socket.Connect(ipAddress, port);
+                        if (!isInfiniteTimeout)
+                            throw new InternalException(
+                                $"Call to {nameof(Socket.Connect)} must throw {nameof(SocketException)} " +
+                                $"with {SocketError.WouldBlock.ToString()} error code");
+                        isConnected = true;
+                    }
+                    catch (SocketException socketException) when (!isInfiniteTimeout &&
+                                                                  socketException.SocketErrorCode ==
+                                                                  SocketError.WouldBlock)
+                    {
+                        // https://github.com/dotnet/SqlClient/issues/826#issuecomment-736224118
+
+                        List<Socket> checkReadLst; List<Socket> checkWriteLst; List<Socket> checkErrorLst;
+
+                        // Repeating Socket.Select several times if our timeout is greater
+                        // than int.MaxValue microseconds because of https://github.com/dotnet/SqlClient/pull/1029#issuecomment-875364044
+                        do
+                        {
                             var timeLeft = timeout - timeTaken.Elapsed;
 
-                            if (timeLeft <= TimeSpan.Zero && !isInfiniteTimeout)
+                            if (timeLeft <= TimeSpan.Zero)
                                 return null;
 
-                            int connectionTimeout =
-                                isInfiniteTimeout ? -1 : checked((int)(timeLeft.TotalMilliseconds * 1000));
-                            Socket.Select(null, new List<Socket> { socket }, null,
-                                connectionTimeout);
-                            isConnected = socket.Connected;
-                        }
-                    }
-                    catch (SocketException e)
-                    {
-                        SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR,
-                            "THIS EXCEPTION IS BEING SWALLOWED: {0}", args0: e.Message);
-                        SqlClientEventSource.Log.TryAdvancedTraceEvent(
-                            $"{s_className}.{System.Reflection.MethodBase.GetCurrentMethod().Name}{EventType.ERR}THIS EXCEPTION IS BEING SWALLOWED: {e}");
+                            int socketSelectTimeout =
+                                checked((int)(Math.Min(timeLeft.TotalMilliseconds, int.MaxValue / 1000) * 1000));
+
+                            checkReadLst = new List<Socket>(1) { socket };
+                            checkWriteLst = new List<Socket>(1) { socket };
+                            checkErrorLst = new List<Socket>(1) { socket };
+
+                            Socket.Select(checkReadLst, checkWriteLst, checkErrorLst, socketSelectTimeout);
+                            // nothing selected means timeout
+                        } while (checkReadLst.Count == 0 && checkWriteLst.Count == 0 && checkErrorLst.Count == 0);
+
+                        // workaround: false positive socket.Connected on linux: https://github.com/dotnet/runtime/issues/55538
+                        isConnected = socket.Connected && checkErrorLst.Count == 0;
                     }
 
                     if (isConnected)
                     {
-                        isSocketSelected = true;
                         socket.Blocking = true;
                         string iPv4String = null;
                         string iPv6String = null;
@@ -425,8 +429,16 @@ namespace Microsoft.Data.SqlClient.SNI
                             iPv4String = ipAddressString;
                         else iPv6String = ipAddressString;
                         pendingDNSInfo = new SQLDNSInfo(cachedFQDN, iPv4String, iPv6String, port.ToString());
+                        isSocketSelected = true;
                         return socket;
                     }
+                }
+                catch (SocketException e)
+                {
+                    SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR,
+                        "THIS EXCEPTION IS BEING SWALLOWED: {0}", args0: e.Message);
+                    SqlClientEventSource.Log.TryAdvancedTraceEvent(
+                        $"{s_className}.{System.Reflection.MethodBase.GetCurrentMethod().Name}{EventType.ERR}THIS EXCEPTION IS BEING SWALLOWED: {e}");
                 }
                 finally
                 {
