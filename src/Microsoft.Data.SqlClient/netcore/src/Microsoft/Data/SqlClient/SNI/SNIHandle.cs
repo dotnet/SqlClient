@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Security.Authentication;
 
 namespace Microsoft.Data.SqlClient.SNI
 {
@@ -11,6 +12,11 @@ namespace Microsoft.Data.SqlClient.SNI
     /// </summary>
     internal abstract class SNIHandle
     {
+        /// <summary>
+        /// TLS 1.3 (not fully supported) in addition to obsolete and insecure protocols are excluded.
+        /// </summary>
+        protected readonly SslProtocols SupportedProtocols = SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls;
+
         /// <summary>
         /// Dispose class
         /// </summary>
