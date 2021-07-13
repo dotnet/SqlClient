@@ -495,6 +495,11 @@ namespace Microsoft.Data.SqlClient
             return ADP.ArgumentNull(System.StringsHelper.GetString(Strings.SQL_ParameterCannotBeEmpty, paramName));
         }
 
+        internal static Exception ParameterDirectionInvalidForOptimizedBinding(string paramName)
+        {
+            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_ParameterDirectionInvalidForOptimizedBinding, paramName));
+        }
+
         internal static Exception ActiveDirectoryInteractiveTimeout()
         {
             return ADP.TimeoutException(Strings.SQL_Timeout_Active_Directory_Interactive_Authentication);

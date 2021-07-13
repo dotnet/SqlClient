@@ -520,5 +520,230 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             A = 1,
             B = 2
         }
+
+        private static void ExecuteNonQueryCommand(string connectionString, string cmdText)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlCommand cmd = conn.CreateCommand())
+            {
+                conn.Open();
+                cmd.CommandText = cmdText;
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        private static void EnableOptimizedParameterBinding_ParametersAreUsedByName()
+        {
+            int firstInput = 1;
+            int secondInput = 2;
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                connection.Open();
+
+                using (var command = new SqlCommand("SELECT @Second, @First", connection))
+                {
+                    command.EnableOptimizedParameterBinding = true;
+                    command.Parameters.AddWithValue("@First", firstInput);
+                    command.Parameters.AddWithValue("@Second", secondInput);
+
+                    using (SqlDataReader reader = command.ExecuteReader())
+                    {
+                        reader.Read();
+
+                        int firstOutput = reader.GetInt32(0);
+                        int secondOutput = reader.GetInt32(1);
+
+                        Assert.Equal(firstInput, secondOutput);
+                        Assert.Equal(secondInput, firstOutput);
+                    }
+                }
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        private static void EnableOptimizedParameterBinding_NamesMustMatch()
+        {
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                connection.Open();
+
+                using (var command = new SqlCommand("SELECT @DoesNotExist", connection))
+                {
+                    command.EnableOptimizedParameterBinding = true;
+                    command.Parameters.AddWithValue("@Exists", 1);
+
+                    SqlException sqlException = null;
+                    try
+                    {
+                        command.ExecuteNonQuery();
+                    }
+                    catch (SqlException sqlEx)
+                    {
+                        sqlException = sqlEx;
+                    }
+
+                    Assert.NotNull(sqlException);
+                    Assert.Contains("Must declare the scalar variable",sqlException.Message);
+                    Assert.Contains("@DoesNotExist", sqlException.Message);
+                }
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        private static void EnableOptimizedParameterBinding_AllNamesMustBeDeclared()
+        {
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                connection.Open();
+
+                using (var command = new SqlCommand("SELECT @Exists, @DoesNotExist", connection))
+                {
+                    command.EnableOptimizedParameterBinding = true;
+                    command.Parameters.AddWithValue("@Exists", 1);
+
+                    SqlException sqlException = null;
+                    try
+                    {
+                        command.ExecuteNonQuery();
+                    }
+                    catch (SqlException sqlEx)
+                    {
+                        sqlException = sqlEx;
+                    }
+
+                    Assert.NotNull(sqlException);
+                    Assert.Contains("Must declare the scalar variable", sqlException.Message);
+                    Assert.Contains("@DoesNotExist", sqlException.Message);
+                }
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        private static void EnableOptimizedParameterBinding_NamesCanBeReUsed()
+        {
+            int firstInput = 1;
+            int secondInput = 2;
+            int thirdInput = 3;
+
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                connection.Open();
+
+                using (var command = new SqlCommand("SELECT @First, @Second, @First", connection))
+                {
+                    command.EnableOptimizedParameterBinding = true;
+                    command.Parameters.AddWithValue("@First", firstInput);
+                    command.Parameters.AddWithValue("@Second", secondInput);
+                    command.Parameters.AddWithValue("@Third", thirdInput);
+
+                    using (SqlDataReader reader = command.ExecuteReader())
+                    {
+                        reader.Read();
+
+                        int firstOutput = reader.GetInt32(0);
+                        int secondOutput = reader.GetInt32(1);
+                        int thirdOutput = reader.GetInt32(2);
+
+                        Assert.Equal(firstInput, firstOutput);
+                        Assert.Equal(secondInput, secondOutput);
+                        Assert.Equal(firstInput, thirdOutput);
+                    }
+                }
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        private static void EnableOptimizedParameterBinding_InputOutputFails()
+        {
+            int firstInput = 1;
+            int secondInput = 2;
+            int thirdInput = 3;
+
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                connection.Open();
+
+                using (var command = new SqlCommand("SELECT @Third = (@Third + @First + @Second)", connection))
+                {
+                    command.EnableOptimizedParameterBinding = true;
+                    command.Parameters.AddWithValue("@First", firstInput);
+                    command.Parameters.AddWithValue("@Second", secondInput);
+                    SqlParameter thirdParameter = command.Parameters.AddWithValue("@Third", thirdInput);
+                    thirdParameter.Direction = ParameterDirection.InputOutput;
+
+                    InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => command.ExecuteNonQuery());
+
+                    Assert.Contains("OptimizedParameterBinding", exception.Message);
+                }
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        private static void EnableOptimizedParameterBinding_OutputFails()
+        {
+            int firstInput = 1;
+            int secondInput = 2;
+            int thirdInput = 3;
+
+            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                connection.Open();
+
+                using (var command = new SqlCommand("SELECT @Third = (@Third + @First + @Second)", connection))
+                {
+                    command.EnableOptimizedParameterBinding = true;
+                    command.Parameters.AddWithValue("@First", firstInput);
+                    command.Parameters.AddWithValue("@Second", secondInput);
+                    SqlParameter thirdParameter = command.Parameters.AddWithValue("@Third", thirdInput);
+                    thirdParameter.Direction = ParameterDirection.Output;
+
+                    InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => command.ExecuteNonQuery());
+
+                    Assert.Contains("OptimizedParameterBinding", exception.Message);
+                }
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        private static void EnableOptimizedParameterBinding_ReturnSucceeds()
+        {
+            int firstInput = 12;
+
+            string sprocName = DataTestUtility.GetUniqueName("P");
+            // input, output
+            string createSprocQuery =
+                "CREATE PROCEDURE " + sprocName + " @in int " +
+                "AS " +
+                "RETURN(@in)";
+
+            string dropSprocQuery = "DROP PROCEDURE " + sprocName;
+
+            try
+            {
+                ExecuteNonQueryCommand(DataTestUtility.TCPConnectionString, createSprocQuery);
+
+                using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+                {
+                    connection.Open();
+
+                    using (var command = new SqlCommand(sprocName, connection) { CommandType = CommandType.StoredProcedure })
+                    {
+                        command.EnableOptimizedParameterBinding = true;
+                        command.Parameters.AddWithValue("@in", firstInput);
+                        SqlParameter returnParameter = command.Parameters.AddWithValue("@retval", 0);
+                        returnParameter.Direction = ParameterDirection.ReturnValue;
+
+                        command.ExecuteNonQuery();
+
+                        Assert.Equal(firstInput, Convert.ToInt32(returnParameter.Value));
+                    }
+                }
+            }
+            finally
+            {
+                ExecuteNonQueryCommand(DataTestUtility.TCPConnectionString, dropSprocQuery);
+            }
+        }
     }
 }

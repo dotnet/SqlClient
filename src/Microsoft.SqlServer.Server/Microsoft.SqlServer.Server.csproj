@@ -3,7 +3,7 @@
     <AssemblyName>Microsoft.SqlServer.Server</AssemblyName>
     <Description>This is the helper library for Microsoft.Data.SqlClient for cross framework compatibility support of UDT types.</Description>
     <BaseProduct>Microsoft SqlServer Server</BaseProduct>
-    <TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net46;netstandard2.0</TargetFrameworks>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AssemblyName)\</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration).$(Platform)\$(AssemblyName)\</OutputPath>
     <DocumentationFile>$(OutputPath)$(TargetFramework)\Microsoft.SqlServer.Server.xml</DocumentationFile>
@@ -16,11 +16,11 @@
     <None Remove=".AssemblyAttributes" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)'=='net461'">
+  <ItemGroup Condition="'$(TargetFramework)'=='net46'">
     <Compile Include="TypeForwards.cs" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)'!='net461'">
+  <ItemGroup Condition="'$(TargetFramework)'!='net46'">
     <Compile Include="IBinarySerialize.cs" />
     <Compile Include="SqlFacetAttribute.cs" />
     <Compile Include="SqlFunctionAttribute.cs" />

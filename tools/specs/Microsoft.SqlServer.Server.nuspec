@@ -28,7 +28,7 @@ Microsoft.SqlServer.Server.Format
     <copyright>© Microsoft Corporation. All rights reserved.</copyright>
     <tags>sqlserver microsoft.sqlserver.server</tags>
     <dependencies>
-      <group targetFramework="net461" />
+      <group targetFramework="net46" />
       <group targetFramework="netstandard2.0" />
     </dependencies>
   </metadata>
@@ -36,9 +36,9 @@ Microsoft.SqlServer.Server.Format
     <file src="..\icons\dotnet.png" target="" />
 
     <!-- lib .NET Framework 4.6.1 -->
-    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.SqlServer.Server\net461\Microsoft.SqlServer.Server.dll" target="lib\net461\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.SqlServer.Server\net461\Microsoft.SqlServer.Server.pdb" target="lib\net461\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.SqlServer.Server\net461\Microsoft.SqlServer.Server.xml" target="lib\net461\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.SqlServer.Server\net46\Microsoft.SqlServer.Server.dll" target="lib\net46\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.SqlServer.Server\net46\Microsoft.SqlServer.Server.pdb" target="lib\net46\" exclude="" />
+    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.SqlServer.Server\net46\Microsoft.SqlServer.Server.xml" target="lib\net46\" exclude="" />
 
     <!-- lib NetStandard -->
     <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.SqlServer.Server\netstandard2.0\Microsoft.SqlServer.Server.dll" target="lib\netstandard2.0\" exclude="" />

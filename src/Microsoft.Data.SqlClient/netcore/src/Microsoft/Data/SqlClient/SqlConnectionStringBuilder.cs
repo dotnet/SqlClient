@@ -1234,12 +1234,9 @@ namespace Microsoft.Data.SqlClient
         }
 
         private static readonly string[] s_notSupportedKeywords = new string[] {
-            DbConnectionStringKeywords.AsynchronousProcessing,
             DbConnectionStringKeywords.ConnectionReset,
             DbConnectionStringKeywords.ContextConnection,
             DbConnectionStringKeywords.TransactionBinding,
-
-            DbConnectionStringSynonyms.Async
         };
 
         private static readonly string[] s_notSupportedNetworkLibraryKeywords = new string[] {
