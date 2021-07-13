@@ -166,7 +166,7 @@ namespace Microsoft.Data.SqlClient
 #else
         internal const int SynonymCount = 25;
 #endif
-        internal const int DeprecatedSynonymCount = 3;
+        internal const int DeprecatedSynonymCount = 2;
 
         internal enum TypeSystem
         {
