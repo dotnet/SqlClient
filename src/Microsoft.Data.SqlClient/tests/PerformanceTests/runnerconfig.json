@@ -1,0 +1,46 @@
+﻿{
+    "ConnectionString": "Server=tcp:localhost; Integrated Security=true; Initial Catalog=sqlclient-perf-db;",
+    "UseManagedSniOnWindows": false,
+    "Benchmarks": {
+        "SqlConnectionRunnerConfig": {
+            "Enabled": true,
+            "LaunchCount": 1,
+            "IterationCount": 50,
+            "InvocationCount":30,
+            "WarmupCount": 5,
+            "RowCount": 0
+        },
+        "SqlCommandRunnerConfig": {
+            "Enabled": true,
+            "LaunchCount": 1,
+            "IterationCount": 10,
+            "InvocationCount": 2,
+            "WarmupCount": 1,
+            "RowCount": 10000
+        },
+        "SqlBulkCopyRunnerConfig": {
+            "Enabled": true,
+            "LaunchCount": 1,
+            "IterationCount": 10,
+            "InvocationCount": 1,
+            "WarmupCount": 1,
+            "RowCount": 10000
+        },
+        "DataTypeReaderRunnerConfig": {
+            "Enabled": true,
+            "LaunchCount": 1,
+            "IterationCount": 20,
+            "InvocationCount": 2,
+            "WarmupCount": 1,
+            "RowCount": 1000
+        },
+        "DataTypeReaderAsyncRunnerConfig": {
+            "Enabled": true,
+            "LaunchCount": 1,
+            "IterationCount": 20,
+            "InvocationCount": 2,
+            "WarmupCount": 1,
+            "RowCount": 1000
+        }
+    }
+}

@@ -537,10 +537,6 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ConnectionLockedForBcpEvent));
         }
-        static internal Exception AsyncConnectionRequired()
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_AsyncConnectionRequired));
-        }
         static internal Exception FatalTimeout()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_FatalTimeout));
@@ -641,6 +637,11 @@ namespace Microsoft.Data.SqlClient
         static internal Exception ParameterCannotBeEmpty(string paramName)
         {
             return ADP.ArgumentNull(StringsHelper.GetString(Strings.SQL_ParameterCannotBeEmpty, paramName));
+        }
+
+        internal static Exception ParameterDirectionInvalidForOptimizedBinding(string paramName)
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ParameterDirectionInvalidForOptimizedBinding, paramName));
         }
 
         static internal Exception ActiveDirectoryInteractiveTimeout()

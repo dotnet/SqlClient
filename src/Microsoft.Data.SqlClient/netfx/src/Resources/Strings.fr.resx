@@ -4614,4 +4614,7 @@
   <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
     <value>Nombre non négatif obligatoire.</value>
   </data>
+  <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
+    <value>Le paramètre « {0} » ne peut pas avoir Direction Output ou InputOutput lorsque EnableOptimizedParameterBinding est activé sur la commande parente.</value>
+  </data>
 </root>
