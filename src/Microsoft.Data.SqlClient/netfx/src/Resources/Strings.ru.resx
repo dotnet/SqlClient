@@ -3049,7 +3049,7 @@
     <value>Подклассы не переопределяют необходимый метод.</value>
   </data>
   <data name="SQL_CannotCreateNormalizer" xml:space="preserve">
-    <value>Cannot create normalizer for '{0}'.</value>
+    <value>Не удается создать нормализатор для "{0}".</value>
   </data>
   <data name="Sql_InternalError" xml:space="preserve">
     <value>Внутренняя ошибка</value>
@@ -4613,5 +4613,8 @@
   </data>
   <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
     <value>Требуется неотрицательное число.</value>
+  </data>
+  <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
+    <value>У параметра "{0}" не может быть направления вывода или InputOutput, если EnableOptimizedParameterBinding включен в родительской команде.</value>
   </data>
 </root>

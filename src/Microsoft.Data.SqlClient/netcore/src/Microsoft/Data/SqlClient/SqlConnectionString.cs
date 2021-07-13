@@ -62,7 +62,6 @@ namespace Microsoft.Data.SqlClient
         {
             internal const string ApplicationIntent = "application intent";
             internal const string Application_Name = "application name";
-            internal const string AsynchronousProcessing = "asynchronous processing";
             internal const string AttachDBFilename = "attachdbfilename";
 #if NETCOREAPP
             internal const string PoolBlockingPeriod = "pool blocking period";
@@ -114,7 +113,6 @@ namespace Microsoft.Data.SqlClient
             internal const string APPLICATIONINTENT = "applicationintent";
             // application name
             internal const string APP = "app";
-            internal const string Async = "async";
             // attachDBFilename
             internal const string EXTENDED_PROPERTIES = "extended properties";
             internal const string INITIAL_FILE_NAME = "initial file name";
@@ -252,7 +250,6 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlConnectionString(string connectionString) : base(connectionString, GetParseSynonyms())
         {
-            ThrowUnsupportedIfKeywordSet(KEY.AsynchronousProcessing);
             ThrowUnsupportedIfKeywordSet(KEY.Connection_Reset);
             ThrowUnsupportedIfKeywordSet(KEY.Context_Connection);
 
@@ -660,7 +657,6 @@ namespace Microsoft.Data.SqlClient
                 {
                     { KEY.ApplicationIntent, KEY.ApplicationIntent },
                     { KEY.Application_Name, KEY.Application_Name },
-                    { KEY.AsynchronousProcessing, KEY.AsynchronousProcessing },
                     { KEY.AttachDBFilename, KEY.AttachDBFilename },
 #if NETCOREAPP
                     { KEY.PoolBlockingPeriod, KEY.PoolBlockingPeriod},
@@ -703,7 +699,6 @@ namespace Microsoft.Data.SqlClient
 
                     { SYNONYM.APP, KEY.Application_Name },
                     { SYNONYM.APPLICATIONINTENT, KEY.ApplicationIntent },
-                    { SYNONYM.Async, KEY.AsynchronousProcessing },
                     { SYNONYM.EXTENDED_PROPERTIES, KEY.AttachDBFilename },
                     { SYNONYM.INITIAL_FILE_NAME, KEY.AttachDBFilename },
                     { SYNONYM.CONNECTRETRYCOUNT, KEY.Connect_Retry_Count },

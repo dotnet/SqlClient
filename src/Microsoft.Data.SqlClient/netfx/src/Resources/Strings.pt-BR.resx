@@ -3049,7 +3049,7 @@
     <value>A subclasse não substituiu um método necessário.</value>
   </data>
   <data name="SQL_CannotCreateNormalizer" xml:space="preserve">
-    <value>Cannot create normalizer for '{0}'.</value>
+    <value>Não é possível criar o normalizador para '{0}'.</value>
   </data>
   <data name="Sql_InternalError" xml:space="preserve">
     <value>Erro Interno</value>
@@ -4613,5 +4613,8 @@
   </data>
   <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
     <value>É necessário um número não negativo.</value>
+  </data>
+  <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
+    <value>O parâmetro '{0}' não pode ter a saída de direção ou InputOutput quando EnableOptimizedParameterBinding está habilitado no comando pai.</value>
   </data>
 </root>

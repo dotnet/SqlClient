@@ -2986,7 +2986,7 @@
     <value>无效的数组大小。</value>
   </data>
   <data name="SqlMisc_InvalidPrecScaleMessage" xml:space="preserve">
-    <value>无效的数值精度/小数位数。</value>
+    <value>数值精度/小数位数无效。</value>
   </data>
   <data name="SqlMisc_FormatMessage" xml:space="preserve">
     <value>输入采用的格式不正确。</value>
@@ -3049,7 +3049,7 @@
     <value>子类未覆盖所需方法。</value>
   </data>
   <data name="SQL_CannotCreateNormalizer" xml:space="preserve">
-    <value>Cannot create normalizer for '{0}'.</value>
+    <value>无法为“{0}”创建标准化程序。</value>
   </data>
   <data name="Sql_InternalError" xml:space="preserve">
     <value>内部错误</value>
@@ -4613,5 +4613,8 @@
   </data>
   <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
     <value>需要提供非负数。</value>
+  </data>
+  <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
+    <value>当在父命令上启用 EnableOptimizedParameterBinding 时，参数“{0}”不能具有 Direction Output 或 InputOutput。</value>
   </data>
 </root>
