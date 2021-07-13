@@ -326,7 +326,6 @@ namespace Microsoft.Data.SqlClient.SNI
 
             availableSocket = connectTask.Result;
             return availableSocket;
-
         }
 
         // Connect to server with hostName and port.
