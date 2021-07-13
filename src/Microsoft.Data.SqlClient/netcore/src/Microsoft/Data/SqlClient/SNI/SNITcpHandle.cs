@@ -182,10 +182,13 @@ namespace Microsoft.Data.SqlClient.SNI
                                 string firstCachedIP;
                                 string secondCachedIP;
 
-                                if (SqlConnectionIPAddressPreference.IPv6First == ipPreference) {
+                                if (SqlConnectionIPAddressPreference.IPv6First == ipPreference)
+                                {
                                     firstCachedIP = cachedDNSInfo.AddrIPv6;
                                     secondCachedIP = cachedDNSInfo.AddrIPv4;
-                                } else {
+                                }
+                                else
+                                {
                                     firstCachedIP = cachedDNSInfo.AddrIPv4;
                                     secondCachedIP = cachedDNSInfo.AddrIPv6;
                                 }
@@ -567,7 +570,7 @@ namespace Microsoft.Data.SqlClient.SNI
             catch (AuthenticationException aue)
             {
                 SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR, "Connection Id {0}, Authentication exception occurred: {1}", args0: _connectionId, args1: aue?.Message);
-                return ReportTcpSNIError(aue);
+                return ReportTcpSNIError(aue, SNIError.CertificateValidationErrorCode);
             }
             catch (InvalidOperationException ioe)
             {
@@ -859,10 +862,10 @@ namespace Microsoft.Data.SqlClient.SNI
             return TdsEnums.SNI_SUCCESS;
         }
 
-        private uint ReportTcpSNIError(Exception sniException)
+        private uint ReportTcpSNIError(Exception sniException, uint nativeErrorCode = 0)
         {
             _status = TdsEnums.SNI_ERROR;
-            return SNICommon.ReportSNIError(SNIProviders.TCP_PROV, SNICommon.InternalExceptionError, sniException);
+            return SNICommon.ReportSNIError(SNIProviders.TCP_PROV, SNICommon.InternalExceptionError, sniException, nativeErrorCode);
         }
 
         private uint ReportTcpSNIError(uint nativeError, uint sniError, string errorMessage)

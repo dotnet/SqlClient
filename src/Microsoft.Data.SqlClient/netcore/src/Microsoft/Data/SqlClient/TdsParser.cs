@@ -482,7 +482,7 @@ namespace Microsoft.Data.SqlClient
                 // On Instance failure re-connect and flush SNI named instance cache.
                 _physicalStateObj.SniContext = SniContext.Snix_Connect;
 
-                _physicalStateObj.CreatePhysicalSNIHandle(serverInfo.ExtendedServerName, ignoreSniOpenTimeout, timerExpire, out instanceName, ref _sniSpnBuffer, true, true, fParallel, 
+                _physicalStateObj.CreatePhysicalSNIHandle(serverInfo.ExtendedServerName, ignoreSniOpenTimeout, timerExpire, out instanceName, ref _sniSpnBuffer, true, true, fParallel,
                                                 _connHandler.ConnectionOptions.IPAddressPreference, FQDNforDNSCahce, ref _connHandler.pendingSQLDNSObject, integratedSecurity);
 
                 if (TdsEnums.SNI_SUCCESS != _physicalStateObj.Status)
@@ -1432,8 +1432,8 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.TryAdvancedTraceErrorEvent("<sc.TdsParser.ProcessSNIError |ERR|ADV > SNI Error Message. Native Error = {0}, Line Number ={1}, Function ={2}, Exception ={3}, Server = {4}",
                     (int)details.nativeError, (int)details.lineNumber, details.function, details.exception, _server);
 
-                return new SqlError((int)details.nativeError, 0x00, TdsEnums.FATAL_ERROR_CLASS,
-                                    _server, errorMessage, details.function, (int)details.lineNumber, details.nativeError, details.exception);
+                return new SqlError(infoNumber: (int)details.nativeError, errorState: 0x00, TdsEnums.FATAL_ERROR_CLASS, _server,
+                    errorMessage, details.function, (int)details.lineNumber, win32ErrorCode: details.nativeError, details.exception);
             }
             finally
             {
