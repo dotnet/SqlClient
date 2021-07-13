@@ -77,7 +77,6 @@ namespace Microsoft.Data.SqlClient.Tests
             // Format of the initialization string does
             // not conform to specification starting at
             // index 0
-            Assert.Equal(typeof(ArgumentException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.Null(ex.ParamName);
@@ -85,7 +84,6 @@ namespace Microsoft.Data.SqlClient.Tests
             // invalid keyword
             ex = Assert.Throws<ArgumentException>(() => new SqlConnection("invalidKeyword=10"));
             // Keyword not supported: 'invalidkeyword'
-            Assert.Equal(typeof(ArgumentException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.True(ex.Message.IndexOf("'invalidkeyword'") != -1);
@@ -95,7 +93,6 @@ namespace Microsoft.Data.SqlClient.Tests
             ex = Assert.Throws<ArgumentException>(() => new SqlConnection("Packet Size=511"));
             // Invalid 'Packet Size'.  The value must be an
             // integer >= 512 and <= 32768
-            Assert.Equal(typeof(ArgumentException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.Null(ex.ParamName);
@@ -104,7 +101,6 @@ namespace Microsoft.Data.SqlClient.Tests
             ex = Assert.Throws<ArgumentException>(() => new SqlConnection("Packet Size=32769"));
             // Invalid 'Packet Size'.  The value must be an
             // integer >= 512 and <= 32768
-            Assert.Equal(typeof(ArgumentException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.Null(ex.ParamName);
@@ -112,7 +108,6 @@ namespace Microsoft.Data.SqlClient.Tests
             // negative connect timeout
             ex = Assert.Throws<ArgumentException>(() => new SqlConnection("Connect Timeout=-1"));
             // Invalid value for key 'connect timeout'
-            Assert.Equal(typeof(ArgumentException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.Null(ex.ParamName);
@@ -120,7 +115,6 @@ namespace Microsoft.Data.SqlClient.Tests
             // negative max pool size
             ex = Assert.Throws<ArgumentException>(() => new SqlConnection("Max Pool Size=-1"));
             // Invalid value for key 'max pool size'
-            Assert.Equal(typeof(ArgumentException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.Null(ex.ParamName);
@@ -128,7 +122,6 @@ namespace Microsoft.Data.SqlClient.Tests
             // negative min pool size
             ex = Assert.Throws<ArgumentException>(() => new SqlConnection("Min Pool Size=-1"));
             // Invalid value for key 'min pool size'
-            Assert.Equal(typeof(ArgumentException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.Null(ex.ParamName);
@@ -141,37 +134,31 @@ namespace Microsoft.Data.SqlClient.Tests
 
             InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => cn.BeginTransaction());
             // Invalid operation. The connection is closed
-            Assert.Equal(typeof(InvalidOperationException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
 
             ex = Assert.Throws<InvalidOperationException>(() => cn.BeginTransaction((IsolationLevel)666));
             // Invalid operation. The connection is closed
-            Assert.Equal(typeof(InvalidOperationException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
 
             ex = Assert.Throws<InvalidOperationException>(() => cn.BeginTransaction(IsolationLevel.Serializable));
             // Invalid operation. The connection is closed
-            Assert.Equal(typeof(InvalidOperationException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
 
             ex = Assert.Throws<InvalidOperationException>(() => cn.BeginTransaction("trans"));
             // Invalid operation. The connection is closed
-            Assert.Equal(typeof(InvalidOperationException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
 
             ex = Assert.Throws<InvalidOperationException>(() => cn.BeginTransaction((IsolationLevel)666, "trans"));
             // Invalid operation. The connection is closed
-            Assert.Equal(typeof(InvalidOperationException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
 
             ex = Assert.Throws<InvalidOperationException>(() => cn.BeginTransaction(IsolationLevel.Serializable, "trans"));
             // Invalid operation. The connection is closed
-            Assert.Equal(typeof(InvalidOperationException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
         }
@@ -184,7 +171,6 @@ namespace Microsoft.Data.SqlClient.Tests
 
             InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => cn.ChangeDatabase("database"));
             // Invalid operation. The connection is closed
-            Assert.Equal(typeof(InvalidOperationException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
         }
@@ -193,7 +179,6 @@ namespace Microsoft.Data.SqlClient.Tests
         public void ChangePassword_ConnectionString_Empty()
         {
             ArgumentNullException ex = Assert.Throws<ArgumentNullException>(() => SqlConnection.ChangePassword(string.Empty, "dotnet"));
-            Assert.Equal(typeof(ArgumentNullException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.NotNull(ex.ParamName);
@@ -203,7 +188,6 @@ namespace Microsoft.Data.SqlClient.Tests
         public void ChangePassword_ConnectionString_Null()
         {
             ArgumentNullException ex = Assert.Throws<ArgumentNullException>(() => SqlConnection.ChangePassword(null, "dotnet"));
-            Assert.Equal(typeof(ArgumentNullException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.NotNull(ex.ParamName);
@@ -213,7 +197,6 @@ namespace Microsoft.Data.SqlClient.Tests
         public void ChangePassword_NewPassword_Empty()
         {
             ArgumentNullException ex = Assert.Throws<ArgumentNullException>(() => SqlConnection.ChangePassword("server=SQLSRV", string.Empty));
-            Assert.Equal(typeof(ArgumentNullException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.NotNull(ex.ParamName);
@@ -226,7 +209,6 @@ namespace Microsoft.Data.SqlClient.Tests
             ArgumentException ex = Assert.Throws<ArgumentException>(() => SqlConnection.ChangePassword("server=SQLSRV", new string('d', 129)));
             // The length of argument 'newPassword' exceeds
             // it's limit of '128'
-            Assert.Equal(typeof(ArgumentException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.True(ex.Message.IndexOf("'newPassword'") != -1);
@@ -238,7 +220,6 @@ namespace Microsoft.Data.SqlClient.Tests
         public void ChangePassword_NewPassword_Null()
         {
             ArgumentNullException ex = Assert.Throws<ArgumentNullException>(() => SqlConnection.ChangePassword("server=SQLSRV", null));
-            Assert.Equal(typeof(ArgumentNullException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.NotNull(ex.ParamName);
@@ -249,7 +230,6 @@ namespace Microsoft.Data.SqlClient.Tests
         public void ClearPool_Connection_Null()
         {
             ArgumentNullException ex = Assert.Throws<ArgumentNullException>(() => SqlConnection.ClearPool(null));
-            Assert.Equal(typeof(ArgumentNullException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.Equal("connection", ex.ParamName);
@@ -278,7 +258,6 @@ namespace Microsoft.Data.SqlClient.Tests
             // Format of the initialization string does
             // not conform to specification starting at
             // index 0
-            Assert.Equal(typeof(ArgumentException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.Null(ex.ParamName);
@@ -286,7 +265,6 @@ namespace Microsoft.Data.SqlClient.Tests
             // invalid keyword
             ex = Assert.Throws<ArgumentException>(() => cn.ConnectionString = "invalidKeyword=10");
             // Keyword not supported: 'invalidkeyword'
-            Assert.Equal(typeof(ArgumentException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.True(ex.Message.IndexOf("'invalidkeyword'") != -1);
@@ -341,43 +319,36 @@ namespace Microsoft.Data.SqlClient.Tests
 
             InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => cn.GetSchema());
             // Invalid operation. The connection is closed
-            Assert.Equal(typeof(InvalidOperationException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
 
             ex = Assert.Throws<InvalidOperationException>(() => cn.GetSchema("Tables"));
             // Invalid operation. The connection is closed
-            Assert.Equal(typeof(InvalidOperationException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
 
             ex = Assert.Throws<InvalidOperationException>(() => cn.GetSchema(null));
             // Invalid operation. The connection is closed
-            Assert.Equal(typeof(InvalidOperationException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
 
             ex = Assert.Throws<InvalidOperationException>(() => cn.GetSchema("Tables", new string[] { "master" }));
             // Invalid operation. The connection is closed
-            Assert.Equal(typeof(InvalidOperationException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
 
             ex = Assert.Throws<InvalidOperationException>(() => cn.GetSchema(null, new string[] { "master" }));
             // Invalid operation. The connection is closed
-            Assert.Equal(typeof(InvalidOperationException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
 
             ex = Assert.Throws<InvalidOperationException>(() => cn.GetSchema("Tables", null));
             // Invalid operation. The connection is closed
-            Assert.Equal(typeof(InvalidOperationException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
 
             ex = Assert.Throws<InvalidOperationException>(() => cn.GetSchema(null, null));
             // Invalid operation. The connection is closed
-            Assert.Equal(typeof(InvalidOperationException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
         }
@@ -495,7 +466,6 @@ namespace Microsoft.Data.SqlClient.Tests
             // negative number
             ArgumentException ex = Assert.Throws<ArgumentException>(() => cn.ConnectionString = "Connection timeout=-1");
             // Invalid value for key 'connect timeout'
-            Assert.Equal(typeof(ArgumentException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.True(ex.Message.IndexOf("'connect timeout'") != -1);
@@ -504,7 +474,6 @@ namespace Microsoft.Data.SqlClient.Tests
             // invalid number
             ex = Assert.Throws<ArgumentException>(() => cn.ConnectionString = "connect Timeout=BB");
             // Invalid value for key 'connect timeout'
-            Assert.Equal(typeof(ArgumentException), ex.GetType());
             Assert.NotNull(ex.InnerException);
             Assert.Equal(typeof(FormatException), ex.InnerException.GetType());
             Assert.NotNull(ex.Message);
@@ -519,7 +488,6 @@ namespace Microsoft.Data.SqlClient.Tests
             // overflow
             ex = Assert.Throws<ArgumentException>(() => cn.ConnectionString = "timeout=2147483648");
             // Invalid value for key 'connect timeout'
-            Assert.Equal(typeof(ArgumentException), ex.GetType());
             Assert.NotNull(ex.InnerException);
             Assert.Equal(typeof(OverflowException), ex.InnerException.GetType());
             Assert.NotNull(ex.Message);
@@ -556,7 +524,6 @@ namespace Microsoft.Data.SqlClient.Tests
             // negative number
             ArgumentException ex = Assert.Throws<ArgumentException>(() => cn.ConnectionString = "Command timeout=-1");
             // Invalid value for key 'connect timeout'
-            Assert.Equal(typeof(ArgumentException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.True(ex.Message.IndexOf("'command timeout'") != -1);
@@ -565,7 +532,6 @@ namespace Microsoft.Data.SqlClient.Tests
             // invalid number
             ex = Assert.Throws<ArgumentException>(() => cn.ConnectionString = "command Timeout=BB");
             // Invalid value for key 'connect timeout'
-            Assert.Equal(typeof(ArgumentException), ex.GetType());
             Assert.NotNull(ex.InnerException);
             Assert.Equal(typeof(FormatException), ex.InnerException.GetType());
             Assert.NotNull(ex.Message);
@@ -580,7 +546,6 @@ namespace Microsoft.Data.SqlClient.Tests
             // overflow
             ex = Assert.Throws<ArgumentException>(() => cn.ConnectionString = "command timeout=2147483648");
             // Invalid value for key 'command timeout'
-            Assert.Equal(typeof(ArgumentException), ex.GetType());
             Assert.NotNull(ex.InnerException);
             Assert.Equal(typeof(OverflowException), ex.InnerException.GetType());
             Assert.NotNull(ex.Message);
@@ -667,7 +632,6 @@ namespace Microsoft.Data.SqlClient.Tests
             // negative number
             ArgumentException ex = Assert.Throws<ArgumentException>(() => cn.ConnectionString = "Max Pool Size=-1");
             // Invalid value for key 'max pool size'
-            Assert.Equal(typeof(ArgumentException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.True(ex.Message.IndexOf("'max pool size'") != -1);
@@ -676,7 +640,6 @@ namespace Microsoft.Data.SqlClient.Tests
             // invalid number
             ex = Assert.Throws<ArgumentException>(() => cn.ConnectionString = "max Pool size=BB");
             // Invalid value for key 'max pool size'
-            Assert.Equal(typeof(ArgumentException), ex.GetType());
             Assert.NotNull(ex.InnerException);
             Assert.Equal(typeof(FormatException), ex.InnerException.GetType());
             Assert.NotNull(ex.Message);
@@ -691,7 +654,6 @@ namespace Microsoft.Data.SqlClient.Tests
             // overflow
             ex = Assert.Throws<ArgumentException>(() => cn.ConnectionString = "max pool size=2147483648");
             // Invalid value for key 'max pool size'
-            Assert.Equal(typeof(ArgumentException), ex.GetType());
             Assert.NotNull(ex.InnerException);
             Assert.Equal(typeof(OverflowException), ex.InnerException.GetType());
             Assert.NotNull(ex.Message);
@@ -706,7 +668,6 @@ namespace Microsoft.Data.SqlClient.Tests
             // less than minimum (1)
             ex = Assert.Throws<ArgumentException>(() => cn.ConnectionString = "Min Pool Size=0;Max Pool Size=0");
             // Invalid value for key 'max pool size'
-            Assert.Equal(typeof(ArgumentException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.True(ex.Message.IndexOf("'max pool size'") != -1);
@@ -717,7 +678,6 @@ namespace Microsoft.Data.SqlClient.Tests
             // Invalid min or max pool size values, min
             // pool size cannot be greater than the max
             // pool size
-            Assert.Equal(typeof(ArgumentException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.Null(ex.ParamName);
@@ -740,7 +700,6 @@ namespace Microsoft.Data.SqlClient.Tests
             // negative number
             ArgumentException ex = Assert.Throws<ArgumentException>(() => cn.ConnectionString = "Min Pool Size=-1");
             // Invalid value for key 'min pool size'
-            Assert.Equal(typeof(ArgumentException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.True(ex.Message.IndexOf("'min pool size'") != -1);
@@ -749,7 +708,6 @@ namespace Microsoft.Data.SqlClient.Tests
             // invalid number
             ex = Assert.Throws<ArgumentException>(() => cn.ConnectionString = "min Pool size=BB");
             // Invalid value for key 'min pool size'
-            Assert.Equal(typeof(ArgumentException), ex.GetType());
             Assert.NotNull(ex.InnerException);
             Assert.Equal(typeof(FormatException), ex.InnerException.GetType());
             Assert.NotNull(ex.Message);
@@ -764,7 +722,6 @@ namespace Microsoft.Data.SqlClient.Tests
             // overflow
             ex = Assert.Throws<ArgumentException>(() => cn.ConnectionString = "min pool size=2147483648");
             // Invalid value for key 'min pool size'
-            Assert.Equal(typeof(ArgumentException), ex.GetType());
             Assert.NotNull(ex.InnerException);
             Assert.Equal(typeof(OverflowException), ex.InnerException.GetType());
             Assert.NotNull(ex.Message);
@@ -791,7 +748,6 @@ namespace Microsoft.Data.SqlClient.Tests
 
             ArgumentException ex = Assert.Throws<ArgumentException>(() => cn.ConnectionString = "MultipleActiveResultSets=1");
             // Invalid value for key 'multiple active result sets'
-            Assert.Equal(typeof(ArgumentException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.True(ex.Message.IndexOf("'multiple active result sets'") != -1);
@@ -823,7 +779,6 @@ namespace Microsoft.Data.SqlClient.Tests
             ArgumentException ex = Assert.Throws<ArgumentException>(() => cn.ConnectionString = "Packet Size=511");
             // Invalid 'Packet Size'.  The value must be an
             // integer >= 512 and <= 32768
-            Assert.Equal(typeof(ArgumentException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.True(ex.Message.IndexOf("'Packet Size'") != -1);
@@ -833,7 +788,6 @@ namespace Microsoft.Data.SqlClient.Tests
             ex = Assert.Throws<ArgumentException>(() => cn.ConnectionString = "packet SIze=32769");
             // Invalid 'Packet Size'.  The value must be an
             // integer >= 512 and <= 32768
-            Assert.Equal(typeof(ArgumentException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.True(ex.Message.IndexOf("'Packet Size'") != -1);
@@ -842,7 +796,6 @@ namespace Microsoft.Data.SqlClient.Tests
             // overflow
             ex = Assert.Throws<ArgumentException>(() => cn.ConnectionString = "packet SIze=2147483648");
             // Invalid value for key 'packet size'
-            Assert.Equal(typeof(ArgumentException), ex.GetType());
             Assert.NotNull(ex.InnerException);
             Assert.Equal(typeof(OverflowException), ex.InnerException.GetType());
             Assert.NotNull(ex.Message);
@@ -894,7 +847,6 @@ namespace Microsoft.Data.SqlClient.Tests
 
             ArgumentException ex = Assert.Throws<ArgumentException>(() => cn.ConnectionString = "User Instance=1");
             // Invalid value for key 'user instance'
-            Assert.Equal(typeof(ArgumentException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.True(ex.Message.IndexOf("'user instance'") != -1);
@@ -934,7 +886,6 @@ namespace Microsoft.Data.SqlClient.Tests
             InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => cn.Open());
             // The ConnectionString property has not been
             // initialized
-            Assert.Equal(typeof(InvalidOperationException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
         }
@@ -948,7 +899,6 @@ namespace Microsoft.Data.SqlClient.Tests
             InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => cn.Open());
             // The ConnectionString property has not been
             // initialized
-            Assert.Equal(typeof(InvalidOperationException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
         }
@@ -962,7 +912,6 @@ namespace Microsoft.Data.SqlClient.Tests
             InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => cn.Open());
             // The ConnectionString property has not been
             // initialized
-            Assert.Equal(typeof(InvalidOperationException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
         }
@@ -975,7 +924,6 @@ namespace Microsoft.Data.SqlClient.Tests
 
             InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => version = cn.ServerVersion);
             // Invalid operation. The connection is closed
-            Assert.Equal(typeof(InvalidOperationException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
 
@@ -983,7 +931,6 @@ namespace Microsoft.Data.SqlClient.Tests
 
             ex = Assert.Throws<InvalidOperationException>(() => version = cn.ServerVersion);
             // Invalid operation. The connection is closed
-            Assert.Equal(typeof(InvalidOperationException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
         }
@@ -1060,7 +1007,6 @@ namespace Microsoft.Data.SqlClient.Tests
 
             ArgumentException ex = Assert.Throws<ArgumentException>(() => cn.ConnectionString = value);
             // Invalid value for key 'ip address preference'
-            Assert.Equal(typeof(ArgumentException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.Contains("'ip address preference'", ex.Message);

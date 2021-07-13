@@ -290,7 +290,6 @@ namespace Microsoft.Data.SqlClient.Tests
 
             ArgumentException ex = Assert.Throws<ArgumentException>(() => cmd.CommandTimeout = -1);
             // Invalid CommandTimeout value -1; the value must be >= 0
-            Assert.Equal(typeof(ArgumentException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.Equal("CommandTimeout", ex.ParamName);
@@ -303,7 +302,6 @@ namespace Microsoft.Data.SqlClient.Tests
 
             ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => cmd.CommandType = (CommandType)(666));
             // The CommandType enumeration value, 666, is invalid
-            Assert.Equal(typeof(ArgumentOutOfRangeException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.True(ex.Message.IndexOf("666") != -1);
@@ -334,7 +332,6 @@ namespace Microsoft.Data.SqlClient.Tests
             // ExecuteNonQuery requires an open and available
             // Connection. The connection's current state is
             // closed.
-            Assert.Equal(typeof(InvalidOperationException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.True(ex.Message.IndexOf("ExecuteNonQuery") != -1);
@@ -348,7 +345,6 @@ namespace Microsoft.Data.SqlClient.Tests
             InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => cmd.ExecuteNonQuery());
             // ExecuteNonQuery: Connection property has not
             // been initialized
-            Assert.Equal(typeof(InvalidOperationException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.StartsWith("ExecuteNonQuery:", ex.Message);
@@ -366,7 +362,6 @@ namespace Microsoft.Data.SqlClient.Tests
             // ExecuteReader requires an open and available
             // Connection. The connection's current state is
             // closed.
-            Assert.Equal(typeof(InvalidOperationException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.True(ex.Message.IndexOf("ExecuteReader") != -1);
@@ -380,7 +375,6 @@ namespace Microsoft.Data.SqlClient.Tests
             InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => cmd.ExecuteReader());
             // ExecuteReader: Connection property has not
             // been initialized
-            Assert.Equal(typeof(InvalidOperationException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.StartsWith("ExecuteReader:", ex.Message);
@@ -399,7 +393,6 @@ namespace Microsoft.Data.SqlClient.Tests
             // ExecuteScalar requires an open and available
             // Connection. The connection's current state is
             // closed.
-            Assert.Equal(typeof(InvalidOperationException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.True(ex.Message.IndexOf("ExecuteScalar") != -1);
@@ -413,7 +406,6 @@ namespace Microsoft.Data.SqlClient.Tests
             InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => cmd.ExecuteScalar());
             // ExecuteScalar: Connection property has not
             // been initialized
-            Assert.Equal(typeof(InvalidOperationException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.StartsWith("ExecuteScalar:", ex.Message);
@@ -429,7 +421,6 @@ namespace Microsoft.Data.SqlClient.Tests
             cmd.Parameters.Add("@TestPar1", SqlDbType.Int);
 
             InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => cmd.Prepare());
-            Assert.Equal(typeof(InvalidOperationException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.StartsWith("Prepare: Connection property has not been initialized.", ex.Message);
@@ -456,7 +447,6 @@ namespace Microsoft.Data.SqlClient.Tests
             // Prepare requires an open and available
             // Connection. The connection's current state
             // is Closed
-            Assert.Equal(typeof(InvalidOperationException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.True(ex.Message.IndexOf("Prepare") != -1);
@@ -510,7 +500,6 @@ namespace Microsoft.Data.SqlClient.Tests
             ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => cmd.UpdatedRowSource = (UpdateRowSource)666);
             // The UpdateRowSource enumeration value,666,
             // is invalid
-            Assert.Equal(typeof(ArgumentOutOfRangeException), ex.GetType());
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.Equal("UpdateRowSource", ex.ParamName);
