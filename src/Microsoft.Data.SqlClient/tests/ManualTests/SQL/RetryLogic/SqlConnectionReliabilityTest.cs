@@ -66,33 +66,33 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (var cnn1 = new SqlConnection(new SqlConnectionStringBuilder(cnnString) { ConnectTimeout = 60, Pooling = false }.ConnectionString))
             {
                 cnn1.Open();
-                Task createDBTask = null;
-                try
+                using (var cmd = cnn1.CreateCommand())
                 {
-                    provider.Retrying += (s, e) =>
+                    Task createDBTask = null;
+                    try
                     {
-                        currentRetries = e.RetryCount;
-                        using (var cmd = cnn1.CreateCommand())
+                        provider.Retrying += (s, e) =>
                         {
+                            currentRetries = e.RetryCount;
                             // Try to create database just after first faliure.
                             if (createDBTask == null || createDBTask.Status == TaskStatus.Faulted)
                             {
                                 cmd.CommandText = $"IF (NOT EXISTS(SELECT 1 FROM sys.databases WHERE name = '{database}')) CREATE DATABASE [{database}];";
                                 createDBTask = cmd.ExecuteNonQueryAsync();
                             }
-                        }
-                    };
+                        };
 
-                    using (var cnn2 = new SqlConnection(builder.ConnectionString))
-                    {
-                        cnn2.RetryLogicProvider = provider;
-                        cnn2.Open();
+                        using (var cnn2 = new SqlConnection(builder.ConnectionString))
+                        {
+                            cnn2.RetryLogicProvider = provider;
+                            cnn2.Open();
+                        }
                     }
-                }
-                finally
-                {
-                    createDBTask?.Wait();
-                    DataTestUtility.DropDatabase(cnn1, database);
+                    finally
+                    {
+                        createDBTask?.Wait();
+                        DataTestUtility.DropDatabase(cnn1, database);
+                    }
                 }
             }
             Assert.True(currentRetries > 0);
