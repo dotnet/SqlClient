@@ -245,7 +245,7 @@ namespace Microsoft.Data.SqlClient.SNI
             Demux,
             HandleAck,
             HandleData,
-            Recieve,
+            Receive,
             Finish,
             Error
         }
@@ -312,7 +312,7 @@ namespace Microsoft.Data.SqlClient.SNI
                                         }
                                         else
                                         {
-                                            state = State.Recieve;
+                                            state = State.Receive;
                                         }
                                         break;
 
@@ -346,14 +346,14 @@ namespace Microsoft.Data.SqlClient.SNI
                                             {
                                                 // payload is complete so dispatch the current packet
                                                 _demuxState = DemuxState.Dispatch;
-                                                state = State.Recieve;
+                                                state = State.Receive;
                                                 goto case DemuxState.Dispatch;
                                             }
                                             else if (packet.DataLeft == 0)
                                             {
                                                 // no more data in the delivered packet so wait for a new one
                                                 _demuxState = DemuxState.Payload;
-                                                state = State.Recieve;
+                                                state = State.Receive;
                                             }
                                             else
                                             {
@@ -388,7 +388,7 @@ namespace Microsoft.Data.SqlClient.SNI
                                                     }
                                                     else
                                                     {
-                                                        nextState = State.Recieve;
+                                                        nextState = State.Receive;
                                                     }
                                                     break;
 
@@ -407,7 +407,7 @@ namespace Microsoft.Data.SqlClient.SNI
                                                     }
                                                     else
                                                     {
-                                                        nextState = State.Recieve;
+                                                        nextState = State.Receive;
                                                     }
                                                     break;
 
@@ -438,7 +438,7 @@ namespace Microsoft.Data.SqlClient.SNI
                                                 {
                                                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "MARS Session Id {0}, run out of data , queuing receive", args0: _lowerHandle?.ConnectionId, args1: _header.SessionId);
                                                 }
-                                                state = State.Recieve;
+                                                state = State.Receive;
                                             }
 
                                         }
@@ -500,7 +500,7 @@ namespace Microsoft.Data.SqlClient.SNI
                             nextState = State.Finish;
                             break;
 
-                        case State.Recieve:
+                        case State.Receive:
                             if (packet != null)
                             {
                                 Debug.Assert(packet.DataLeft == 0, "loop exit with data remaining");

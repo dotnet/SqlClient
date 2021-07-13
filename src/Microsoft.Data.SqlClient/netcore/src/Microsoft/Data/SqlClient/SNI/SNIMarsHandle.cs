@@ -56,7 +56,7 @@ namespace Microsoft.Data.SqlClient.SNI
         public override void Dispose()
         {
             // SendControlPacket will lock so make sure that it cannot deadlock by failing to enter the DemuxerLock
-            Debug.Assert(_connection != null && Monitor.IsEntered(_connection.DemuxerSync), "SNIMarsHandle.HandleRecieveComplete should be be called while holding the SNIMarsConnection.DemuxerSync because it can cause deadlocks");
+            Debug.Assert(_connection != null && Monitor.IsEntered(_connection.DemuxerSync), "SNIMarsHandle.HandleRecieveComplete should be called while holding the SNIMarsConnection.DemuxerSync because it can cause deadlocks");
             long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent(s_className);
             try
             {
@@ -298,7 +298,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error code</returns>
         public override uint SendAsync(SNIPacket packet, SNIAsyncCallback callback = null)
         {
-            Debug.Assert(_connection != null && Monitor.IsEntered(_connection.DemuxerSync), "SNIMarsHandle.HandleRecieveComplete should be be called while holding the SNIMarsConnection.DemuxerSync because it can cause deadlocks");
+            Debug.Assert(_connection != null && Monitor.IsEntered(_connection.DemuxerSync), "SNIMarsHandle.HandleRecieveComplete should be called while holding the SNIMarsConnection.DemuxerSync because it can cause deadlocks");
             long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent(s_className);
             try
             {
@@ -432,7 +432,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="highwater">Send highwater mark</param>
         public void HandleAck(uint highwater)
         {
-            Debug.Assert(_connection != null && Monitor.IsEntered(_connection.DemuxerSync), "SNIMarsHandle.HandleRecieveComplete should be be called while holding the SNIMarsConnection.DemuxerSync because it can cause deadlocks");
+            Debug.Assert(_connection != null && Monitor.IsEntered(_connection.DemuxerSync), "SNIMarsHandle.HandleRecieveComplete should be called while holding the SNIMarsConnection.DemuxerSync because it can cause deadlocks");
             long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent(s_className);
             try
             {
@@ -459,7 +459,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="header">SMUX header</param>
         public void HandleReceiveComplete(SNIPacket packet, SNISMUXHeader header)
         {
-            Debug.Assert(_connection != null && Monitor.IsEntered(_connection.DemuxerSync), "SNIMarsHandle.HandleRecieveComplete should be be called while holding the SNIMarsConnection.DemuxerSync because it can cause deadlocks");
+            Debug.Assert(_connection != null && Monitor.IsEntered(_connection.DemuxerSync), "SNIMarsHandle.HandleRecieveComplete should be called while holding the SNIMarsConnection.DemuxerSync because it can cause deadlocks");
             long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent(s_className);
             try
             {
