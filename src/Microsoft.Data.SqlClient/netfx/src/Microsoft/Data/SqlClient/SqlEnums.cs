@@ -303,7 +303,7 @@ namespace Microsoft.Data.SqlClient
                 case DbType.StringFixedLength:
                     return MetaNChar;
                 case DbType.Time:
-                    return MetaTime;
+                    return MetaDateTime;
                 case DbType.Xml:
                     return MetaXml;
                 case DbType.DateTime2:
