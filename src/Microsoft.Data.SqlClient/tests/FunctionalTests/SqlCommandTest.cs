@@ -258,7 +258,7 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Fact]
-       public void CommandText()
+        public void CommandText()
         {
             SqlCommand cmd = new SqlCommand();
             cmd.CommandText = COMMAND_TEXT;
@@ -287,37 +287,25 @@ namespace Microsoft.Data.SqlClient.Tests
         public void CommandTimeout_Value_Negative()
         {
             SqlCommand cmd = new SqlCommand();
-            try
-            {
-                cmd.CommandTimeout = -1;
-            }
-            catch (ArgumentException ex)
-            {
-                // Invalid CommandTimeout value -1; the value must be >= 0
-                Assert.Equal(typeof(ArgumentException), ex.GetType());
-                Assert.Null(ex.InnerException);
-                Assert.NotNull(ex.Message);
-                Assert.Equal("CommandTimeout", ex.ParamName);
-            }
+
+            ArgumentException ex = Assert.Throws<ArgumentException>(() => cmd.CommandTimeout = -1);
+            // Invalid CommandTimeout value -1; the value must be >= 0
+            Assert.Null(ex.InnerException);
+            Assert.NotNull(ex.Message);
+            Assert.Equal("CommandTimeout", ex.ParamName);
         }
 
         [Fact]
         public void CommandType_Value_Invalid()
         {
             SqlCommand cmd = new SqlCommand();
-            try
-            {
-                cmd.CommandType = (CommandType)(666);
-            }
-            catch (ArgumentOutOfRangeException ex)
-            {
-                // The CommandType enumeration value, 666, is invalid
-                Assert.Equal(typeof(ArgumentOutOfRangeException), ex.GetType());
-                Assert.Null(ex.InnerException);
-                Assert.NotNull(ex.Message);
-                Assert.True(ex.Message.IndexOf("666") != -1);
-                Assert.Equal("CommandType", ex.ParamName);
-            }
+
+            ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => cmd.CommandType = (CommandType)(666));
+            // The CommandType enumeration value, 666, is invalid
+            Assert.Null(ex.InnerException);
+            Assert.NotNull(ex.Message);
+            Assert.True(ex.Message.IndexOf("666") != -1);
+            Assert.Equal("CommandType", ex.ParamName);
         }
 
         [Fact]
@@ -339,39 +327,27 @@ namespace Microsoft.Data.SqlClient.Tests
             SqlConnection cn = new SqlConnection(connectionString);
 
             SqlCommand cmd = new SqlCommand("delete from whatever", cn);
-            try
-            {
-                cmd.ExecuteNonQuery();
-            }
-            catch (InvalidOperationException ex)
-            {
-                // ExecuteNonQuery requires an open and available
-                // Connection. The connection's current state is
-                // closed.
-                Assert.Equal(typeof(InvalidOperationException), ex.GetType());
-                Assert.Null(ex.InnerException);
-                Assert.NotNull(ex.Message);
-                Assert.True(ex.Message.IndexOf("ExecuteNonQuery") != -1);
-            }
+
+            InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => cmd.ExecuteNonQuery());
+            // ExecuteNonQuery requires an open and available
+            // Connection. The connection's current state is
+            // closed.
+            Assert.Null(ex.InnerException);
+            Assert.NotNull(ex.Message);
+            Assert.True(ex.Message.IndexOf("ExecuteNonQuery") != -1);
         }
 
         [Fact]
         public void ExecuteNonQuery_Connection_Null()
         {
             SqlCommand cmd = new SqlCommand("delete from whatever");
-            try
-            {
-                cmd.ExecuteNonQuery();
-            }
-            catch (InvalidOperationException ex)
-            {
-                // ExecuteNonQuery: Connection property has not
-                // been initialized
-                Assert.Equal(typeof(InvalidOperationException), ex.GetType());
-                Assert.Null(ex.InnerException);
-                Assert.NotNull(ex.Message);
-                Assert.StartsWith("ExecuteNonQuery:", ex.Message);
-            }
+
+            InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => cmd.ExecuteNonQuery());
+            // ExecuteNonQuery: Connection property has not
+            // been initialized
+            Assert.Null(ex.InnerException);
+            Assert.NotNull(ex.Message);
+            Assert.StartsWith("ExecuteNonQuery:", ex.Message);
         }
 
         [Fact]
@@ -382,39 +358,26 @@ namespace Microsoft.Data.SqlClient.Tests
             SqlConnection cn = new SqlConnection(connectionString);
 
             SqlCommand cmd = new SqlCommand("Select count(*) from whatever", cn);
-            try
-            {
-                cmd.ExecuteReader();
-            }
-            catch (InvalidOperationException ex)
-            {
-                // ExecuteReader requires an open and available
-                // Connection. The connection's current state is
-                // closed.
-                Assert.Equal(typeof(InvalidOperationException), ex.GetType());
-                Assert.Null(ex.InnerException);
-                Assert.NotNull(ex.Message);
-                Assert.True(ex.Message.IndexOf("ExecuteReader") != -1);
-            }
+            InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => cmd.ExecuteReader());
+            // ExecuteReader requires an open and available
+            // Connection. The connection's current state is
+            // closed.
+            Assert.Null(ex.InnerException);
+            Assert.NotNull(ex.Message);
+            Assert.True(ex.Message.IndexOf("ExecuteReader") != -1);
         }
 
         [Fact]
         public void ExecuteReader_Connection_Null()
         {
             SqlCommand cmd = new SqlCommand("select * from whatever");
-            try
-            {
-                cmd.ExecuteReader();
-            }
-            catch (InvalidOperationException ex)
-            {
-                // ExecuteReader: Connection property has not
-                // been initialized
-                Assert.Equal(typeof(InvalidOperationException), ex.GetType());
-                Assert.Null(ex.InnerException);
-                Assert.NotNull(ex.Message);
-                Assert.StartsWith("ExecuteReader:", ex.Message);
-            }
+
+            InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => cmd.ExecuteReader());
+            // ExecuteReader: Connection property has not
+            // been initialized
+            Assert.Null(ex.InnerException);
+            Assert.NotNull(ex.Message);
+            Assert.StartsWith("ExecuteReader:", ex.Message);
         }
 
         [Fact]
@@ -425,39 +388,27 @@ namespace Microsoft.Data.SqlClient.Tests
             SqlConnection cn = new SqlConnection(connectionString);
 
             SqlCommand cmd = new SqlCommand("Select count(*) from whatever", cn);
-            try
-            {
-                cmd.ExecuteScalar();
-            }
-            catch (InvalidOperationException ex)
-            {
-                // ExecuteScalar requires an open and available
-                // Connection. The connection's current state is
-                // closed.
-                Assert.Equal(typeof(InvalidOperationException), ex.GetType());
-                Assert.Null(ex.InnerException);
-                Assert.NotNull(ex.Message);
-                Assert.True(ex.Message.IndexOf("ExecuteScalar") != -1);
-            }
+
+            InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => cmd.ExecuteScalar());
+            // ExecuteScalar requires an open and available
+            // Connection. The connection's current state is
+            // closed.
+            Assert.Null(ex.InnerException);
+            Assert.NotNull(ex.Message);
+            Assert.True(ex.Message.IndexOf("ExecuteScalar") != -1);
         }
 
         [Fact] // bug #412584
         public void ExecuteScalar_Connection_Null()
         {
             SqlCommand cmd = new SqlCommand("select count(*) from whatever");
-            try
-            {
-                cmd.ExecuteScalar();
-            }
-            catch (InvalidOperationException ex)
-            {
-                // ExecuteScalar: Connection property has not
-                // been initialized
-                Assert.Equal(typeof(InvalidOperationException), ex.GetType());
-                Assert.Null(ex.InnerException);
-                Assert.NotNull(ex.Message);
-                Assert.StartsWith("ExecuteScalar:", ex.Message);
-            }
+
+            InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => cmd.ExecuteScalar());
+            // ExecuteScalar: Connection property has not
+            // been initialized
+            Assert.Null(ex.InnerException);
+            Assert.NotNull(ex.Message);
+            Assert.StartsWith("ExecuteScalar:", ex.Message);
         }
 
         [Fact]
@@ -468,13 +419,11 @@ namespace Microsoft.Data.SqlClient.Tests
             // Text, with parameters
             cmd = new SqlCommand("select count(*) from whatever");
             cmd.Parameters.Add("@TestPar1", SqlDbType.Int);
-            try
-            {
-                cmd.Prepare();
-            }
-            catch (InvalidOperationException)
-            {
-            }
+
+            InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => cmd.Prepare());
+            Assert.Null(ex.InnerException);
+            Assert.NotNull(ex.Message);
+            Assert.StartsWith("Prepare: Connection property has not been initialized.", ex.Message);
         }
 
         [Fact]
@@ -493,20 +442,14 @@ namespace Microsoft.Data.SqlClient.Tests
             // Text, with parameters
             cmd = new SqlCommand("select count(*) from whatever", cn);
             cmd.Parameters.Add("@TestPar1", SqlDbType.Int);
-            try
-            {
-                cmd.Prepare();
-            }
-            catch (InvalidOperationException ex)
-            {
-                // Prepare requires an open and available
-                // Connection. The connection's current state
-                // is Closed
-                Assert.Equal(typeof(InvalidOperationException), ex.GetType());
-                Assert.Null(ex.InnerException);
-                Assert.NotNull(ex.Message);
-                Assert.True(ex.Message.IndexOf("Prepare") != -1);
-            }
+
+            InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => cmd.Prepare());
+            // Prepare requires an open and available
+            // Connection. The connection's current state
+            // is Closed
+            Assert.Null(ex.InnerException);
+            Assert.NotNull(ex.Message);
+            Assert.True(ex.Message.IndexOf("Prepare") != -1);
 
             // Text, parameters cleared
             cmd = new SqlCommand("select count(*) from whatever", cn);
@@ -553,19 +496,13 @@ namespace Microsoft.Data.SqlClient.Tests
         public void UpdatedRowSource_Value_Invalid()
         {
             SqlCommand cmd = new SqlCommand();
-            try
-            {
-                cmd.UpdatedRowSource = (UpdateRowSource)666;
-            }
-            catch (ArgumentOutOfRangeException ex)
-            {
-                // The UpdateRowSource enumeration value,666,
-                // is invalid
-                Assert.Equal(typeof(ArgumentOutOfRangeException), ex.GetType());
-                Assert.Null(ex.InnerException);
-                Assert.NotNull(ex.Message);
-                Assert.Equal("UpdateRowSource", ex.ParamName);
-            }
+
+            ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => cmd.UpdatedRowSource = (UpdateRowSource)666);
+            // The UpdateRowSource enumeration value,666,
+            // is invalid
+            Assert.Null(ex.InnerException);
+            Assert.NotNull(ex.Message);
+            Assert.Equal("UpdateRowSource", ex.ParamName);
         }
 
         [Fact]
@@ -575,8 +512,8 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 cmd.Parameters.Add(new SqlParameter());
                 cmd.Parameters.AddRange(new SqlParameter[] { });
-                cmd.Parameters.Insert(0, new SqlParameter());                
-                cmd.Parameters.Insert(1, new SqlParameter());                
+                cmd.Parameters.Insert(0, new SqlParameter());
+                cmd.Parameters.Insert(1, new SqlParameter());
                 cmd.Parameters.RemoveAt(0);
                 cmd.Parameters.Remove(cmd.Parameters[0]);
             }
