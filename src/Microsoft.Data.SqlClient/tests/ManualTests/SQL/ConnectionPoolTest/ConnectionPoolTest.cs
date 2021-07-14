@@ -307,10 +307,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 return;
             }
 
-            using (ProxyServer proxy = ProxyServer.CreateAndStartProxy(connectionString, out connectionString))
+            string newConnString = connectionString + ";TrustServerCertificate=true";
+
+            using (ProxyServer proxy = ProxyServer.CreateAndStartProxy(newConnString, out connectionString))
             {
                 InternalConnectionWrapper wrapper = null;
-                using (SqlConnection connection = new SqlConnection(connectionString))
+                using (SqlConnection connection = new SqlConnection(newConnString))
                 {
                     connection.Open();
                     wrapper = new InternalConnectionWrapper(connection);
@@ -324,7 +326,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 // Kill the connection softly
                 proxy.KillAllConnections(softKill: true);
                 Thread.Sleep(100);
-                using (SqlConnection connection2 = new SqlConnection(connectionString))
+                using (SqlConnection connection2 = new SqlConnection(newConnString))
                 {
                     connection2.Open();
                     Assert.False(wrapper.IsInternalConnectionOf(connection2), "New connection has internal connection that was just killed");
