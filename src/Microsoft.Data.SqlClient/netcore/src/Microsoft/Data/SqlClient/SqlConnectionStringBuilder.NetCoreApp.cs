@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
+using System.ComponentModel;
 using System.Data.Common;
 using System.Diagnostics;
 using Microsoft.Data.Common;
@@ -24,6 +26,10 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/PoolBlockingPeriod/*' />
+        [DisplayNameAttribute(DbConnectionStringKeywords.PoolBlockingPeriod)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Pooling)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_PoolBlockingPeriod)]
+        [RefreshPropertiesAttribute(RefreshProperties.All)]
         public PoolBlockingPeriod PoolBlockingPeriod
         {
             get { return _poolBlockingPeriod; }

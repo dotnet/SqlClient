@@ -428,7 +428,9 @@
     <Compile Include="Microsoft\Data\SqlClient\Server\TriggerAction.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlFileStream.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\UnsafeNativeMethods.cs" />
-    <Compile Include="Resources\ResDescriptionAttribute.cs" />
+     <Compile Include="..\..\src\Resources\ResDescriptionAttribute.cs">
+      <Link>Resources\ResDescriptionAttribute.cs</Link>
+    </Compile> 
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBuffer.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />
