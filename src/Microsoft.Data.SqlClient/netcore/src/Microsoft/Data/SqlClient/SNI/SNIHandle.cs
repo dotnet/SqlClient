@@ -13,9 +13,13 @@ namespace Microsoft.Data.SqlClient.SNI
     internal abstract class SNIHandle
     {
         /// <summary>
-        /// TLS 1.3 (not fully supported) in addition to obsolete and insecure protocols are excluded.
+        /// Exclude Tls 1.3 (not fully supported).
         /// </summary>
-        protected readonly SslProtocols SupportedProtocols = SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls;
+        protected readonly SslProtocols SupportedProtocols = SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls
+#pragma warning disable CS0618 // Type or member is obsolete
+            | SslProtocols.Ssl2 | SslProtocols.Ssl3
+#pragma warning restore CS0618 // Type or member is obsolete
+            ;
 
         /// <summary>
         /// Dispose class

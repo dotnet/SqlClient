@@ -421,9 +421,9 @@ namespace Microsoft.Data.SqlClient
                 protocolVersion = (int)SslProtocols.Ssl2;
 #pragma warning restore CS0618 // Type or member is obsolete : SSL is depricated
             }
-            else
+            else //if (nativeProtocol.HasFlag(NativeProtocols.SP_PROT_NONE))
             {
-                throw ADP.Argument(StringsHelper.Format(StringsHelper.net_invalid_enum, nameof(NativeProtocols)), nameof(NativeProtocols));
+                protocolVersion = (int)SslProtocols.None;
             }
             return returnValue;
         }
