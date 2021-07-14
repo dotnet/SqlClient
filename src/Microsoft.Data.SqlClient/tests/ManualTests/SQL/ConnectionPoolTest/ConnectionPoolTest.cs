@@ -295,50 +295,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 #endif
 
-        /// <summary>
-        /// Tests if killing the connection using the ProxyServer is working
-        /// </summary>
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [ClassData(typeof(ConnectionPoolConnectionStringProvider))]
-        public static void SoftTcpShutdownConnectionTest(string connectionString, bool marsAndAzureSynapse)
-        {
-            if (marsAndAzureSynapse)
-            {
-                return;
-            }
-
-            string newConnString = connectionString + ";TrustServerCertificate=true";
-
-            using (ProxyServer proxy = ProxyServer.CreateAndStartProxy(newConnString, out connectionString))
-            {
-                InternalConnectionWrapper wrapper = null;
-                using (SqlConnection connection = new SqlConnection(newConnString))
-                {
-                    connection.Open();
-                    wrapper = new InternalConnectionWrapper(connection);
-
-                    using (SqlCommand command = new SqlCommand("SELECT 5;", connection))
-                    {
-                        Assert.Equal(5, command.ExecuteScalar());
-                    }
-                }
-
-                // Kill the connection softly
-                proxy.KillAllConnections(softKill: true);
-                Thread.Sleep(100);
-                using (SqlConnection connection2 = new SqlConnection(newConnString))
-                {
-                    connection2.Open();
-                    Assert.False(wrapper.IsInternalConnectionOf(connection2), "New connection has internal connection that was just killed");
-
-                    using (SqlCommand command = new SqlCommand("SELECT 5;", connection2))
-                    {
-                        Assert.Equal(5, command.ExecuteScalar());
-                    }
-                }
-            }
-        }
-
 #if DEBUG
         /// <summary>
         /// Tests that cleanup removes connections that are unused for two cleanups
