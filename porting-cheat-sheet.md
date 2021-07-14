@@ -31,6 +31,12 @@ For .NET Framework projects it may be necessary to include the following in your
 </configuration>
 ```
 
+## Functionality Changes
+
+| System.Data.SqlClient | Microsoft.Data.SqlClient |
+|--|--|
+| Can use DateTime object as value for SqlParameter with type `DbType.Time`. | Must use TimeSpan object as value for SqlParameter with type `DbType.Time`. |
+
 ## Contribute to this Cheat Sheet
 
 We would love the SqlClient community to help enhance this cheat sheet by contributing experiences and challenges faced when porting their applications.
