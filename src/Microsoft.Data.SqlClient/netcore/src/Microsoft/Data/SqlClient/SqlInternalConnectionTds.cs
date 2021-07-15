@@ -1521,7 +1521,7 @@ namespace Microsoft.Data.SqlClient
                     AttemptOneLogin(serverInfo,
                                     newPassword,
                                     newSecurePassword,
-                                    !connectionOptions.MultiSubnetFailover,    // ignore timeout for SniOpen call unless MSF
+                                    connectionOptions.MultiSubnetFailover,
                                     connectionOptions.MultiSubnetFailover ? intervalTimer : timeout);
 
                     if (connectionOptions.MultiSubnetFailover && null != ServerProvidedFailOverPartner)
@@ -2632,7 +2632,7 @@ namespace Microsoft.Data.SqlClient
                         Debug.Assert(_tceVersionSupported <= TdsEnums.MAX_SUPPORTED_TCE_VERSION, "Client support TCE version 2");
                         _parser.IsColumnEncryptionSupported = true;
                         _parser.TceVersionSupported = _tceVersionSupported;
-                        _parser.AreEnclaveRetriesSupported = _tceVersionSupported == 3; 
+                        _parser.AreEnclaveRetriesSupported = _tceVersionSupported == 3;
 
                         if (data.Length > 1)
                         {
