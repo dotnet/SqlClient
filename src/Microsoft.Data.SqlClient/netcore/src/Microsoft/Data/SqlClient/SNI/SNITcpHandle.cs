@@ -743,7 +743,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     packet = RentPacket(headerSize: 0, dataSize: _bufferSize);
                     packet.ReadFromStream(_stream);
 
-                    if (packet.Length == 0)
+                    if (packet.DataLength == 0)
                     {
                         errorPacket = packet;
                         packet = null;
