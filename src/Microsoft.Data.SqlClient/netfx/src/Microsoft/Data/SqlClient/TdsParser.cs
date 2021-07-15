@@ -23,6 +23,7 @@ using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.SqlTypes;
+using Microsoft.SqlServer.Server;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -10175,7 +10176,7 @@ namespace Microsoft.Data.SqlClient
                                 else if (mt.SqlDbType == SqlDbType.Udt)
                                 {
                                     byte[] udtVal = null;
-                                    Format format = Format.Native;
+                                    Microsoft.SqlServer.Server.Format format = Microsoft.SqlServer.Server.Format.Native;
 
                                     Debug.Assert(_isYukon, "Invalid DataType UDT for non-Yukon or later server!");
 
@@ -10655,7 +10656,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private static readonly IEnumerable<SqlDataRecord> __tvpEmptyValue = new List<SqlDataRecord>().AsReadOnly();
+        private static readonly IEnumerable<Server.SqlDataRecord> __tvpEmptyValue = new List<Server.SqlDataRecord>().AsReadOnly();
         private void WriteSmiParameter(SqlParameter param, int paramIndex, bool sendDefault, TdsParserStateObject stateObj, bool isAnonymous, bool advancedTraceIsOn)
         {
             //

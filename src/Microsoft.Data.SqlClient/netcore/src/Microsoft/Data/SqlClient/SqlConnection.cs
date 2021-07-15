@@ -21,6 +21,7 @@ using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Server;
+using Microsoft.SqlServer.Server;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -2312,11 +2313,11 @@ namespace Microsoft.Data.SqlClient
 
         internal byte[] GetBytes(object o)
         {
-            Format format = Format.Native;
+            Microsoft.SqlServer.Server.Format format = Microsoft.SqlServer.Server.Format.Native;
             return GetBytes(o, out format, out int maxSize);
         }
 
-        internal byte[] GetBytes(object o, out Format format, out int maxSize)
+        internal byte[] GetBytes(object o, out Microsoft.SqlServer.Server.Format format, out int maxSize)
         {
             SqlUdtInfo attr = GetInfoFromType(o.GetType());
             maxSize = attr.MaxByteSize;

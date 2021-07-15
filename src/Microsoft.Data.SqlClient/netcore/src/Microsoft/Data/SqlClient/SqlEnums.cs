@@ -616,7 +616,7 @@ namespace Microsoft.Data.SqlClient
         private static void AssertIsUserDefinedTypeInstance(object sqlValue, string failedAssertMessage)
         {
             Type type = sqlValue.GetType();
-            Microsoft.Data.SqlClient.Server.SqlUserDefinedTypeAttribute[] attributes = (Microsoft.Data.SqlClient.Server.SqlUserDefinedTypeAttribute[])type.GetCustomAttributes(typeof(Microsoft.Data.SqlClient.Server.SqlUserDefinedTypeAttribute), true);
+            Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute[] attributes = (Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute[])type.GetCustomAttributes(typeof(Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute), true);
 
             Debug.Assert(attributes.Length > 0, failedAssertMessage);
         }

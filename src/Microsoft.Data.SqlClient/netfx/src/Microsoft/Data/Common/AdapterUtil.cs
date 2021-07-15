@@ -799,24 +799,46 @@ namespace Microsoft.Data.Common
             return NotSupportedEnumerationValue(typeof(StatementType), value.ToString(), method);
         }
 
-        static internal ArgumentOutOfRangeException InvalidUserDefinedTypeSerializationFormat(Format value)
+        // Obsolete
+        static internal ArgumentOutOfRangeException InvalidUserDefinedTypeSerializationFormat(Microsoft.Data.SqlClient.Server.Format value)
         {
 #if DEBUG
             switch (value)
             {
-                case Format.Unknown:
-                case Format.Native:
-                case Format.UserDefined:
+                case Microsoft.Data.SqlClient.Server.Format.Unknown:
+                case Microsoft.Data.SqlClient.Server.Format.Native:
+                case Microsoft.Data.SqlClient.Server.Format.UserDefined:
                     Debug.Assert(false, "valid UserDefinedTypeSerializationFormat " + value.ToString());
                     break;
             }
 #endif
-            return InvalidEnumerationValue(typeof(Format), (int)value);
+            return InvalidEnumerationValue(typeof(Microsoft.Data.SqlClient.Server.Format), (int)value);
         }
 
-        static internal ArgumentOutOfRangeException NotSupportedUserDefinedTypeSerializationFormat(Format value, string method)
+        // Obsolete
+        static internal ArgumentOutOfRangeException NotSupportedUserDefinedTypeSerializationFormat(Microsoft.Data.SqlClient.Server.Format value, string method)
         {
-            return ADP.NotSupportedEnumerationValue(typeof(Format), value.ToString(), method);
+            return ADP.NotSupportedEnumerationValue(typeof(Microsoft.Data.SqlClient.Server.Format), value.ToString(), method);
+        }
+
+        static internal ArgumentOutOfRangeException InvalidUserDefinedTypeSerializationFormat(Microsoft.SqlServer.Server.Format value)
+        {
+#if DEBUG
+            switch (value)
+            {
+                case Microsoft.SqlServer.Server.Format.Unknown:
+                case Microsoft.SqlServer.Server.Format.Native:
+                case Microsoft.SqlServer.Server.Format.UserDefined:
+                    Debug.Assert(false, "valid UserDefinedTypeSerializationFormat " + value.ToString());
+                    break;
+            }
+#endif
+            return InvalidEnumerationValue(typeof(Microsoft.SqlServer.Server.Format), (int)value);
+        }
+
+        static internal ArgumentOutOfRangeException NotSupportedUserDefinedTypeSerializationFormat(Microsoft.SqlServer.Server.Format value, string method)
+        {
+            return ADP.NotSupportedEnumerationValue(typeof(Microsoft.SqlServer.Server.Format), value.ToString(), method);
         }
 
         //
