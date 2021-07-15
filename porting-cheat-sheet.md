@@ -36,6 +36,7 @@ For .NET Framework projects it may be necessary to include the following in your
 | System.Data.SqlClient | Microsoft.Data.SqlClient |
 |--|--|
 | Can use DateTime object as value for SqlParameter with type `DbType.Time`. | Must use TimeSpan object as value for SqlParameter with type `DbType.Time`. |
+| Using DateTime object as value for SqlParameter with type `DbType.Date` would send date and time to SQL Server. | DateTime object's time components will be truncated when sent to SQL Server using `DbType.Date`. |
 
 ## Contribute to this Cheat Sheet
 
