@@ -36,36 +36,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
-                try
-                {
-                    SqlCommand command = new SqlCommand(GenerateCommandText(), connection);
-                    connection.Open();
+                SqlCommand command = new SqlCommand(GenerateCommandText(), connection);
+                connection.Open();
 
-                    IAsyncResult result = command.BeginExecuteNonQuery();
-                    while (!result.IsCompleted)
-                    {
-                        System.Threading.Thread.Sleep(100);
-                    }
+                IAsyncResult result = command.BeginExecuteNonQuery();
+                while (!result.IsCompleted)
+                {
+                    System.Threading.Thread.Sleep(100);
+                }
 
-                    Assert.True(command.EndExecuteNonQuery(result) > 0, "FAILED: BeginExecuteNonQuery did not complete successfully.");
-                }
-                catch (SqlException ex)
-                {
-                    Console.WriteLine("Error ({0}): {1}", ex.Number, ex.Message);
-                    Assert.Null(ex);
-                }
-                catch (InvalidOperationException ex)
-                {
-                    Console.WriteLine("Error: {0}", ex.Message);
-                    Assert.Null(ex);
-                }
-                catch (Exception ex)
-                {
-                    // You might want to pass these errors
-                    // back out to the caller.
-                    Console.WriteLine("Error: {0}", ex.Message);
-                    Assert.Null(ex);
-                }
+                Assert.True(command.EndExecuteNonQuery(result) > 0, "FAILED: BeginExecuteNonQuery did not complete successfully.");
             }
         }
 
@@ -75,24 +55,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
-                bool caughtException = false;
                 SqlCommand command = new SqlCommand(GenerateCommandText(), connection);
                 connection.Open();
 
                 //Try to execute a synchronous query on same command
                 IAsyncResult result = command.BeginExecuteNonQuery();
-                try
-                {
-                    command.ExecuteNonQuery();
-                }
-                catch (Exception ex)
-                {
-                    Assert.True(ex is InvalidOperationException, "FAILED: Thrown exception for BeginExecuteNonQuery was not an InvalidOperationException");
-                    caughtException = true;
-                }
-
-                Assert.True(caughtException, "FAILED: No exception thrown after trying second BeginExecuteNonQuery.");
-                caughtException = false;
+                InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => command.ExecuteNonQuery());
 
                 while (!result.IsCompleted)
                 {

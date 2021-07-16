@@ -32,6 +32,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
         private static PropertyInfo s_pendingSQLDNS_AddrIPv4 = s_SQLDNSInfo.GetProperty("AddrIPv4", BindingFlags.Instance | BindingFlags.Public);
         private static PropertyInfo s_pendingSQLDNS_AddrIPv6 = s_SQLDNSInfo.GetProperty("AddrIPv6", BindingFlags.Instance | BindingFlags.Public);
         private static PropertyInfo s_pendingSQLDNS_Port = s_SQLDNSInfo.GetProperty("Port", BindingFlags.Instance | BindingFlags.Public);
+        private static PropertyInfo dbConnectionInternalIsTransRoot = s_dbConnectionInternal.GetProperty("IsTransactionRoot", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static PropertyInfo dbConnectionInternalEnlistedTrans = s_sqlInternalConnection.GetProperty("EnlistedTransaction", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static PropertyInfo dbConnectionInternalIsTxRootWaitingForTxEnd = s_dbConnectionInternal.GetProperty("IsTxRootWaitingForTxEnd", BindingFlags.Instance | BindingFlags.NonPublic);
 
         public static object GetConnectionPool(object internalConnection)
         {
@@ -67,6 +70,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.SystemDataInternals
                 throw new ArgumentNullException(nameof(connection));
             if (!s_sqlConnection.IsInstanceOfType(connection))
                 throw new ArgumentException("Object provided was not a SqlConnection", nameof(connection));
+        }
+
+        public static bool IsEnlistedInTransaction(object internalConnection)
+        {
+            VerifyObjectIsInternalConnection(internalConnection);
+            return (dbConnectionInternalEnlistedTrans.GetValue(internalConnection, null) != null);
+        }
+
+        public static bool IsTransactionRoot(object internalConnection)
+        {
+            VerifyObjectIsInternalConnection(internalConnection);
+            return (bool)dbConnectionInternalIsTransRoot.GetValue(internalConnection, null);
+        }
+        
+        public static bool IsTxRootWaitingForTxEnd(object internalConnection)
+        {
+            VerifyObjectIsInternalConnection(internalConnection);
+            return (bool)dbConnectionInternalIsTxRootWaitingForTxEnd.GetValue(internalConnection, null);
         }
 
         public static object GetParser(object internalConnection)
