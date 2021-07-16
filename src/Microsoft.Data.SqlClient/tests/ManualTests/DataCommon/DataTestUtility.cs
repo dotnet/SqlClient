@@ -789,7 +789,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             protected override void OnEventSourceCreated(EventSource eventSource)
             {
-                if (eventSource.Name.Equals("Microsoft.Data.SqlClient.EventSource"))
+                if (eventSource.Name.StartsWith("Microsoft.Data.SqlClient"))
                 {
                     //// Collect all traces for better code coverage
                     EnableEvents(eventSource, EventLevel.Informational, EventKeywords.All);
