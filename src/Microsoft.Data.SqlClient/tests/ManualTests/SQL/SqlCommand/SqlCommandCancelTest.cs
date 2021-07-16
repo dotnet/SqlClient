@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string tcp_connStr = (new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { PacketSize = 512 }).ConnectionString;
         private static readonly string np_connStr = (new SqlConnectionStringBuilder(DataTestUtility.NPConnectionString) { PacketSize = 512 }).ConnectionString;
 
-        // Synapse: Remove dependency on Northwind database + WAITFOR not supported + ';' not supported
+        // Synapse: WAITFOR not supported + ';' not supported
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void PlainCancelTest()
         {
@@ -29,8 +29,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             PlainCancel(np_connStr);
         }
-        
-        // Synapse: Remove dependency on Northwind database + WAITFOR not supported + ';' not supported
+
+        // Synapse: WAITFOR not supported + ';' not supported
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void PlainMARSCancelTest()
         {
@@ -75,7 +75,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static void PlainCancel(string connString)
         {
             using (SqlConnection conn = new SqlConnection(connString))
-            using (SqlCommand cmd = new SqlCommand("select * from dbo.Orders; waitfor delay '00:00:10'; select * from dbo.Orders", conn))
+            using (SqlCommand cmd = new SqlCommand("select @@VERSION; waitfor delay '00:00:10'; select @@VERSION", conn))
             {
                 conn.Open();
                 using (SqlDataReader reader = cmd.ExecuteReader())
@@ -100,7 +100,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static void PlainCancelAsync(string connString)
         {
             using (SqlConnection conn = new SqlConnection(connString))
-            using (SqlCommand cmd = new SqlCommand("select * from dbo.Orders; waitfor delay '00:00:10'; select * from dbo.Orders", conn))
+            using (SqlCommand cmd = new SqlCommand("select @@VERSION; waitfor delay '00:00:10'; select @@VERSION", conn))
             {
                 conn.Open();
                 Task<SqlDataReader> readerTask = cmd.ExecuteReaderAsync();
@@ -122,7 +122,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        // Synapse: Remove dependency from Northwind database + WAITFOR not supported + ';' not supported.
+        // Synapse: WAITFOR not supported + ';' not supported.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public static void MultiThreadedCancel_NonAsync()
         {
@@ -136,7 +136,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             MultiThreadedCancel(np_connStr, false);
         }
 
-        // Synapse: Remove dependency from Northwind database + WAITFOR not supported + ';' not supported.
+        // Synapse: WAITFOR not supported + ';' not supported.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void MultiThreadedCancel_Async()
         {
@@ -195,30 +195,57 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         // Synapse: WAITFOR not supported + ';' not supported.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static void CancelDoesNotWait()
+        public static void CancelDoesNotWait_WaitForDelay()
         {
             CancelDoesNotWait(tcp_connStr);
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [PlatformSpecific(TestPlatforms.Windows)]
-        public static void CancelDoesNotWaitNP()
+        public static void CancelDoesNotWaitNP_WaitForDelay()
         {
             CancelDoesNotWait(np_connStr);
         }
 
         // Synapse: WAITFOR not supported + ';' not supported.
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static void AsyncCancelDoesNotWait()
+        public static void CancelDoesNotWait_44()
         {
-            AsyncCancelDoesNotWait(tcp_connStr).Wait();
+            CancelDoesNotWait_44(tcp_connStr);
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [PlatformSpecific(TestPlatforms.Windows)]
-        public static void AsyncCancelDoesNotWaitNP()
+        public static void CancelDoesNotWaitNP_44()
         {
-            AsyncCancelDoesNotWait(np_connStr).Wait();
+            CancelDoesNotWait_44(np_connStr);
+        }
+
+        // Synapse: WAITFOR not supported + ';' not supported.
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public static void AsyncCancelDoesNotWait_WaitForDelay()
+        {
+            AsyncCancelDoesNotWait_WaitForDelay(tcp_connStr).Wait();
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public static void AsyncCancelDoesNotWait_WaitForDelayNP()
+        {
+            AsyncCancelDoesNotWait_WaitForDelay(np_connStr).Wait();
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public static void AsyncCancelDoesNotWait_44()
+        {
+            AsyncCancelDoesNotWait_44(tcp_connStr).Wait();
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public static void AsyncCancelDoesNotWait_44NP()
+        {
+            AsyncCancelDoesNotWait_44(np_connStr).Wait();
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
@@ -328,7 +355,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 con.Open();
                 using (var command = con.CreateCommand())
                 {
-                    command.CommandText = "select * from orders; waitfor delay '00:00:08'; select * from customers";
+                    command.CommandText = "select @@VERSION; waitfor delay '00:00:08'; select @@VERSION";
 
                     Barrier threadsReady = new Barrier(2);
                     object state = new Tuple<bool, SqlCommand, Barrier>(async, command, threadsReady);
@@ -354,7 +381,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using (SqlCommand cmd = con.CreateCommand())
                 {
                     cmd.CommandTimeout = 1;
-                    cmd.CommandText = "WAITFOR DELAY '00:00:20';select * from Customers";
+                    cmd.CommandText = "WAITFOR DELAY '00:00:20';select @@VERSION";
 
                     string errorMessage = SystemDataResourceManager.Instance.SQL_Timeout_Execution;
                     DataTestUtility.ExpectFailure<SqlException>(() => ExecuteReaderOnCmd(cmd), new string[] { errorMessage });
@@ -505,7 +532,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             const int cancelSeconds = 1;
 
             using (SqlConnection conn = new SqlConnection(connStr))
-            using (var cmd = new SqlCommand($"WAITFOR DELAY '00:00:{delaySeconds:D2}'", conn))
+            using (var cmd = new SqlCommand($"WAITFOR DELAY '00:00:{delaySeconds}'", conn))
             {
                 conn.Open();
 
@@ -531,13 +558,52 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private static async Task AsyncCancelDoesNotWait(string connStr)
+        private static void CancelDoesNotWait_44(string connStr)
         {
             const int delaySeconds = 30;
             const int cancelSeconds = 1;
 
             using (SqlConnection conn = new SqlConnection(connStr))
-            using (var cmd = new SqlCommand($"WAITFOR DELAY '00:00:{delaySeconds:D2}'", conn))
+            using (var cmd = new SqlCommand(@"WHILE 1 = 1
+                            BEGIN
+                                DECLARE @x INT = 1
+                            END", conn))
+            {
+                conn.Open();
+
+                // Cancel after 2 seconds as sometimes total time elapsed can be .99 in case of 1 second that causes random failures
+                Task.Delay(TimeSpan.FromSeconds(cancelSeconds + 1))
+                    .ContinueWith(t => cmd.Cancel());
+
+                DateTime started = DateTime.UtcNow;
+                DateTime ended = DateTime.UtcNow;
+                Exception exception = null;
+                try
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                catch (Exception ex)
+                {
+                    exception = ex;
+                }
+                ended = DateTime.UtcNow;
+
+                Assert.NotNull(exception);
+                Assert.InRange((ended - started).TotalSeconds, cancelSeconds, delaySeconds - 1);
+            }
+        }
+
+        // Reproduces issue https://github.com/dotnet/SqlClient/issues/44
+        private static async Task AsyncCancelDoesNotWait_44(string connStr)
+        {
+            const int delaySeconds = 30;
+            const int cancelSeconds = 1;
+
+            using (SqlConnection conn = new SqlConnection(connStr))
+            using (var cmd = new SqlCommand(@"WHILE 1 = 1
+                            BEGIN
+                                DECLARE @x INT = 1
+                            END", conn))
             {
                 await conn.OpenAsync();
 
@@ -545,8 +611,38 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Exception exception = null;
                 try
                 {
-                    // Cancel after 2 seconds as sometimes total time elapsed can be .99 in case of 1 second that causes random failures
-                    await cmd.ExecuteNonQueryAsync(new CancellationTokenSource(2000).Token);
+                    async Task RunSqlAsync() =>
+                        await cmd.ExecuteNonQueryAsync(new CancellationTokenSource(2000).Token).ConfigureAwait(false);
+                    RunSqlAsync().Wait();
+                }
+                catch (Exception ex)
+                {
+                    exception = ex;
+                }
+                DateTime ended = DateTime.UtcNow;
+
+                Assert.NotNull(exception);
+                Assert.InRange((ended - started).TotalSeconds, cancelSeconds, delaySeconds - 1);
+            }
+        }
+
+        private static async Task AsyncCancelDoesNotWait_WaitForDelay(string connStr)
+        {
+            const int delaySeconds = 30;
+            const int cancelSeconds = 1;
+
+            using (SqlConnection conn = new SqlConnection(connStr))
+            using (var cmd = new SqlCommand($@"WAITFOR DELAY '00:00:{delaySeconds}'", conn))
+            {
+                await conn.OpenAsync();
+
+                DateTime started = DateTime.UtcNow;
+                Exception exception = null;
+                try
+                {
+                    async Task RunSqlAsync() =>
+                        await cmd.ExecuteNonQueryAsync(new CancellationTokenSource(2000).Token).ConfigureAwait(false);
+                    RunSqlAsync().Wait();
                 }
                 catch (Exception ex)
                 {

@@ -1760,19 +1760,7 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 ThrowIfReconnectionHasBeenCanceled();
-                // lock on _stateObj prevents races with close/cancel.
-                // If we have already initiate the End call internally, we have already done that, so no point doing it again.
-                if (!_internalEndExecuteInitiated)
-                {
-                    lock (_stateObj)
-                    {
-                        return EndExecuteNonQueryInternal(asyncResult);
-                    }
-                }
-                else
-                {
-                    return EndExecuteNonQueryInternal(asyncResult);
-                }
+                return EndExecuteNonQueryInternal(asyncResult);
             }
         }
 
@@ -2273,19 +2261,7 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 ThrowIfReconnectionHasBeenCanceled();
-                // lock on _stateObj prevents races with close/cancel.
-                // If we have already initiate the End call internally, we have already done that, so no point doing it again.
-                if (!_internalEndExecuteInitiated)
-                {
-                    lock (_stateObj)
-                    {
-                        return EndExecuteXmlReaderInternal(asyncResult);
-                    }
-                }
-                else
-                {
-                    return EndExecuteXmlReaderInternal(asyncResult);
-                }
+                return EndExecuteXmlReaderInternal(asyncResult);
             }
         }
 
@@ -2535,19 +2511,7 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 ThrowIfReconnectionHasBeenCanceled();
-                // lock on _stateObj prevents races with close/cancel.
-                // If we have already initiate the End call internally, we have already done that, so no point doing it again.
-                if (!_internalEndExecuteInitiated)
-                {
-                    lock (_stateObj)
-                    {
-                        return EndExecuteReaderInternal(asyncResult);
-                    }
-                }
-                else
-                {
-                    return EndExecuteReaderInternal(asyncResult);
-                }
+                return EndExecuteReaderInternal(asyncResult);
             }
         }
 
@@ -2706,11 +2670,8 @@ namespace Microsoft.Data.SqlClient
                             Debug.Assert(!_internalEndExecuteInitiated);
                             _internalEndExecuteInitiated = true;
 
-                            // lock on _stateObj prevents races with close/cancel.
-                            lock (_stateObj)
-                            {
-                                endFunc(tsk, endMethod, true/*inInternal*/);
-                            }
+                            endFunc(tsk, endMethod, true/*inInternal*/);
+                            
                             globalCompletion.TrySetResult(tsk.Result);
                         }
                         catch (Exception e)
