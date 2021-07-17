@@ -102,11 +102,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         }
                     }
                 }
-                catch (Exception e)
-                {
-                    Console.WriteLine(@"INFO: Failed to validate using a certificate using provider:{0}", providerName);
-                    Console.WriteLine(@"Exception: {0}", e.Message);
-                }
                 finally
                 {
                     CertificateUtilityWin.RemoveCertificate(certificateName, StoreLocation.CurrentUser);
@@ -193,10 +188,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                             }
                         }
                     }
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(@"Exception: {0}", e.Message);
                 }
                 finally
                 {

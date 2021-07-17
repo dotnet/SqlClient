@@ -31,11 +31,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     txScope.Complete();
                 }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error: {ex.Message}");
-                Assert.Null(ex);
-            }
             finally
             {
 #if DEBUG

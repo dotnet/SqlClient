@@ -36,36 +36,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
-                try
-                {
-                    SqlCommand command = new SqlCommand(GenerateCommandText(), connection);
-                    connection.Open();
+                SqlCommand command = new SqlCommand(GenerateCommandText(), connection);
+                connection.Open();
 
-                    IAsyncResult result = command.BeginExecuteNonQuery();
-                    while (!result.IsCompleted)
-                    {
-                        System.Threading.Thread.Sleep(100);
-                    }
+                IAsyncResult result = command.BeginExecuteNonQuery();
+                while (!result.IsCompleted)
+                {
+                    System.Threading.Thread.Sleep(100);
+                }
 
-                    Assert.True(command.EndExecuteNonQuery(result) > 0, "FAILED: BeginExecuteNonQuery did not complete successfully.");
-                }
-                catch (SqlException ex)
-                {
-                    Console.WriteLine("Error ({0}): {1}", ex.Number, ex.Message);
-                    Assert.Null(ex);
-                }
-                catch (InvalidOperationException ex)
-                {
-                    Console.WriteLine("Error: {0}", ex.Message);
-                    Assert.Null(ex);
-                }
-                catch (Exception ex)
-                {
-                    // You might want to pass these errors
-                    // back out to the caller.
-                    Console.WriteLine("Error: {0}", ex.Message);
-                    Assert.Null(ex);
-                }
+                Assert.True(command.EndExecuteNonQuery(result) > 0, "FAILED: BeginExecuteNonQuery did not complete successfully.");
             }
         }
 

@@ -6,6 +6,7 @@ using System;
 using System.Data;
 using System.Data.SqlTypes;
 using Microsoft.Data.SqlClient.Server;
+using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -71,16 +72,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string actualTypeName = dr.GetSqlValue(0).GetType().ToString();
             string actualBaseTypeName = dr.GetString(1);
             Console.WriteLine("{0,-40} -> {1}:{2}", tag, actualTypeName, actualBaseTypeName);
-            if (!actualTypeName.Equals(expectedTypeName))
-            {
-                Console.WriteLine("   --> ERROR: Expected type {0} does not match actual type {1}",
-                    expectedTypeName, actualTypeName);
-            }
-            if (!actualBaseTypeName.Equals(expectedBaseTypeName))
-            {
-                Console.WriteLine("   --> ERROR: Expected base type {0} does not match actual base type {1}",
-                    expectedBaseTypeName, actualBaseTypeName);
-            }
+            Assert.Equal(actualTypeName, expectedTypeName);
+            Assert.Equal(actualBaseTypeName, expectedBaseTypeName);
         }
         /// <summary>
         /// Round trips a sql_variant to server and verifies result.

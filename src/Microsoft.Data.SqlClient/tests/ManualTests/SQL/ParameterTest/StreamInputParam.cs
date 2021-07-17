@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
+using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -465,21 +466,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                     try
                     {
-                        Task.WaitAll(cmd.ExecuteNonQueryAsync(cts.Token), Task.Run(() => cts.Cancel()));
-                        Console.WriteLine("FAIL: Expected AggregateException on Task wait for Cancelled Task!");
-                    }
-                    catch (AggregateException ae)
-                    {
-                        if (ae.InnerException is InvalidOperationException ||
-                            (ae.InnerException is SqlException &&
-                             ae.InnerException.Message.Contains("Operation cancelled by user.")))
-                        {
-                            Console.WriteLine("PASS: Task is cancelled");
-                        }
-                        else
-                        {
-                            throw ae.InnerException;
-                        }
+                        AggregateException ex = Assert.Throws<AggregateException>(
+                            () => Task.WaitAll(cmd.ExecuteNonQueryAsync(cts.Token), Task.Run(() => cts.Cancel())));
+                        Assert.True(ex.InnerException is InvalidOperationException || ex.InnerException is SqlException);
+                        Assert.Contains("Operation cancelled by user.", ex.InnerException.Message);
                     }
                     finally
                     {
@@ -509,24 +499,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     cmd.Parameters["@blob"].Direction = ParameterDirection.Input;
                     cmd.Parameters["@blob"].Value = new StringReader(sb.ToString());
 
-                    try
-                    {
-                        Task.WaitAll(cmd.ExecuteNonQueryAsync(cts.Token), Task.Run(() => cts.Cancel()));
-                        Console.WriteLine("FAIL: Expected AggregateException on Task wait for Cancelled Task!");
-                    }
-                    catch (AggregateException ae)
-                    {
-                        if (ae.InnerException is InvalidOperationException ||
-                            (ae.InnerException is SqlException &&
-                             ae.InnerException.Message.Contains("Operation cancelled by user.")))
-                        {
-                            Console.WriteLine("PASS: Task is cancelled");
-                        }
-                        else
-                        {
-                            throw ae.InnerException;
-                        }
-                    }
+                    AggregateException ex = Assert.Throws<AggregateException>(
+                        () => Task.WaitAll(cmd.ExecuteNonQueryAsync(cts.Token), Task.Run(() => cts.Cancel())));
+                    Assert.True(ex.InnerException is InvalidOperationException || ex.InnerException is SqlException);
+                    Assert.Contains("Operation cancelled by user.", ex.InnerException.Message);
                 }
             }
         }
@@ -548,24 +524,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     cmd.Parameters["@blob"].Direction = ParameterDirection.Input;
                     cmd.Parameters["@blob"].Value = XmlReader.Create(new StringReader(XmlStr));
 
-                    try
-                    {
-                        Task.WaitAll(cmd.ExecuteNonQueryAsync(cts.Token), Task.Run(() => cts.Cancel()));
-                        Console.WriteLine("FAIL: Expected AggregateException on Task wait for Cancelled Task!");
-                    }
-                    catch (AggregateException ae)
-                    {
-                        if (ae.InnerException is InvalidOperationException ||
-                            (ae.InnerException is SqlException &&
-                             ae.InnerException.Message.Contains("Operation cancelled by user.")))
-                        {
-                            Console.WriteLine("PASS: Task is cancelled");
-                        }
-                        else
-                        {
-                            throw ae.InnerException;
-                        }
-                    }
+                    AggregateException ex = Assert.Throws<AggregateException>(
+                        () => Task.WaitAll(cmd.ExecuteNonQueryAsync(cts.Token), Task.Run(() => cts.Cancel())));
+                    Assert.True(ex.InnerException is InvalidOperationException || ex.InnerException is SqlException);
+                    Assert.Contains("Operation cancelled by user.", ex.InnerException.Message);
                 }
             }
         }
@@ -631,15 +593,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                         try
                         {
-                            Task.WaitAll(func(cmd, cts.Token), Task.Run(() => cts.Cancel()));
-                            Console.WriteLine("FAIL: Expected AggregateException on Task wait for Cancelled Task!");
-                        }
-                        catch (AggregateException ae)
-                        {
-                            if (!ae.InnerException.Message.Contains("Operation cancelled by user."))
-                            {
-                                Console.WriteLine("FAIL: Unexpected exception message: " + ae.InnerException.Message);
-                            }
+                            AggregateException ex = Assert.Throws<AggregateException>(
+                                () => Task.WaitAll(func(cmd, cts.Token), Task.Run(() => cts.Cancel())));
+                            Assert.Contains("Operation cancelled by user.", ex.InnerException.Message);
                         }
                         finally
                         {
