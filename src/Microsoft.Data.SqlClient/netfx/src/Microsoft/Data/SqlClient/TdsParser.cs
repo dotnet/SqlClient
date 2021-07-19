@@ -9905,6 +9905,7 @@ namespace Microsoft.Data.SqlClient
                         SqlParameter[] parameters = rpcext.parameters;
 
                         bool isAdvancedTraceOn = SqlClientEventSource.Log.IsAdvancedTraceOn();
+                        bool enableOptimizedParameterBinding = cmd.EnableOptimizedParameterBinding;
 
                         for (int i = (ii == startRpc) ? startParam : 0; i < parameters.Length; i++)
                         {
@@ -9913,7 +9914,11 @@ namespace Microsoft.Data.SqlClient
                             SqlParameter param = parameters[i];
                             // Since we are reusing the parameters array, we cannot rely on length to indicate no of parameters.
                             if (param == null)
+                            {
                                 break;      // End of parameters for this execute
+                            }
+
+                            ParameterDirection parameterDirection = param.Direction;
 
                             // Throw an exception if ForceColumnEncryption is set on a parameter and the ColumnEncryption is not enabled on SqlConnection or SqlCommand
                             if (param.ForceColumnEncryption &&
@@ -9925,10 +9930,15 @@ namespace Microsoft.Data.SqlClient
 
                             // Check if the applications wants to force column encryption to avoid sending sensitive data to server
                             if (param.ForceColumnEncryption && param.CipherMetadata == null
-                                && (param.Direction == ParameterDirection.Input || param.Direction == ParameterDirection.InputOutput))
+                                && (parameterDirection == ParameterDirection.Input || parameterDirection == ParameterDirection.InputOutput))
                             {
                                 // Application wants a parameter to be encrypted before sending it to server, however server doesnt think this parameter needs encryption.
                                 throw SQL.ParamUnExpectedEncryptionMetadata(param.ParameterName, rpcext.GetCommandTextOrRpcName());
+                            }
+
+                            if (enableOptimizedParameterBinding && (parameterDirection == ParameterDirection.Output || parameterDirection == ParameterDirection.InputOutput))
+                            {
+                                throw SQL.ParameterDirectionInvalidForOptimizedBinding(param.ParameterName);
                             }
 
                             // Validate parameters are not variable length without size and with null value.  MDAC 66522
@@ -9939,7 +9949,7 @@ namespace Microsoft.Data.SqlClient
 
                             if (mt.IsNewKatmaiType)
                             {
-                                WriteSmiParameter(param, i, 0 != (rpcext.paramoptions[i] & TdsEnums.RPC_PARAM_DEFAULT), stateObj, isAdvancedTraceOn);
+                                WriteSmiParameter(param, i, 0 != (rpcext.paramoptions[i] & TdsEnums.RPC_PARAM_DEFAULT), stateObj, enableOptimizedParameterBinding, isAdvancedTraceOn);
                                 continue;
                             }
 
@@ -9954,7 +9964,7 @@ namespace Microsoft.Data.SqlClient
                             bool isSqlVal = false;
                             bool isDataFeed = false;
                             // if we have an output param, set the value to null so we do not send it across to the server
-                            if (param.Direction == ParameterDirection.Output)
+                            if (parameterDirection == ParameterDirection.Output)
                             {
                                 isSqlVal = param.ParameterIsSqlType;  // We have to forward the TYPE info, we need to know what type we are returning.  Once we null the parameter we will no longer be able to distinguish what type were seeing.
                                 param.Value = null;
@@ -9971,7 +9981,7 @@ namespace Microsoft.Data.SqlClient
                                 }
                             }
 
-                            WriteParameterName(param.ParameterNameFixed, stateObj);
+                            WriteParameterName(param.ParameterNameFixed, stateObj, enableOptimizedParameterBinding);
 
                             // Write parameter status
                             stateObj.WriteByte(rpcext.paramoptions[i]);
@@ -10414,19 +10424,25 @@ namespace Microsoft.Data.SqlClient
                                         task = completion.Task;
                                     }
 
-                                    AsyncHelper.ContinueTask(writeParamTask, completion,
-                                        () => TdsExecuteRPC(cmd, rpcArray, timeout, inSchema, notificationRequest, stateObj, isCommandProc, sync, completion,
-                                                              startRpc: ii, startParam: i + 1),
-                                        connectionToDoom: _connHandler,
-                                        onFailure: exc => TdsExecuteRPC_OnFailure(exc, stateObj));
+                                    AsyncHelper.ContinueTaskWithState(writeParamTask, completion, this,
+                                        (object state) =>
+                                        {
+                                            TdsParser tdsParser = (TdsParser)state;
+                                            TdsExecuteRPC(cmd, rpcArray, timeout, inSchema, notificationRequest, stateObj, isCommandProc, sync, completion,
+                                                                  startRpc: ii, startParam: i + 1);
+                                        },
+                                        onFailure: (Exception exc, object state) => ((TdsParser)state).TdsExecuteRPC_OnFailure(exc, stateObj),
+                                        connectionToDoom: _connHandler
+                                    );
 
                                     // Take care of releasing the locks
                                     if (releaseConnectionLock)
                                     {
-                                        task.ContinueWith(_ =>
-                                        {
-                                            _connHandler._parserLock.Release();
-                                        }, TaskScheduler.Default);
+                                        task.ContinueWith(
+                                            static (Task _, object state) => ((TdsParser)state)._connHandler._parserLock.Release(), 
+                                            state: this,
+                                            scheduler: TaskScheduler.Default
+                                        );
                                         releaseConnectionLock = false;
                                     }
 
@@ -10647,11 +10663,11 @@ namespace Microsoft.Data.SqlClient
         }
 
 
-        private void WriteParameterName(string parameterName, TdsParserStateObject stateObj)
+        private void WriteParameterName(string parameterName, TdsParserStateObject stateObj, bool isAnonymous)
         {
             // paramLen
             // paramName
-            if (!ADP.IsEmpty(parameterName))
+            if (!isAnonymous && !string.IsNullOrEmpty(parameterName))
             {
                 Debug.Assert(parameterName.Length <= 0xff, "parameter name can only be 255 bytes, shouldn't get to TdsParser!");
                 int tempLen = parameterName.Length & 0xff;
@@ -10665,7 +10681,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         private static readonly IEnumerable<SqlDataRecord> __tvpEmptyValue = new List<SqlDataRecord>().AsReadOnly();
-        private void WriteSmiParameter(SqlParameter param, int paramIndex, bool sendDefault, TdsParserStateObject stateObj, bool advancedTraceIsOn)
+        private void WriteSmiParameter(SqlParameter param, int paramIndex, bool sendDefault, TdsParserStateObject stateObj, bool isAnonymous, bool advancedTraceIsOn)
         {
             //
             // Determine Metadata
@@ -10725,7 +10741,7 @@ namespace Microsoft.Data.SqlClient
             //
             // Write parameter metadata
             //
-            WriteSmiParameterMetaData(metaData, sendDefault, stateObj);
+            WriteSmiParameterMetaData(metaData, sendDefault, isAnonymous, stateObj);
 
             //
             // Now write the value
@@ -10744,7 +10760,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Writes metadata portion of parameter stream from an SmiParameterMetaData object.
-        private void WriteSmiParameterMetaData(SmiParameterMetaData metaData, bool sendDefault, TdsParserStateObject stateObj)
+        private void WriteSmiParameterMetaData(SmiParameterMetaData metaData, bool sendDefault, bool isAnonymous, TdsParserStateObject stateObj)
         {
             // Determine status
             byte status = 0;
@@ -10759,7 +10775,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Write everything out
-            WriteParameterName(metaData.Name, stateObj);
+            WriteParameterName(metaData.Name, stateObj, isAnonymous);
             stateObj.WriteByte(status);
             WriteSmiTypeInfo(metaData, stateObj);
         }
@@ -11985,7 +12001,8 @@ namespace Microsoft.Data.SqlClient
                 {
                     return AsyncHelper.CreateContinuationTask<int, TdsParserStateObject>(unterminatedWriteTask,
                         WriteInt, 0, stateObj,
-                        connectionToDoom: _connHandler);
+                        connectionToDoom: _connHandler
+                    );
                 }
             }
             else

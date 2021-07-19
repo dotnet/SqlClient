@@ -602,6 +602,11 @@ namespace Microsoft.Data.SqlClient
             this.ordinal = ordinal;
         }
 
+        private bool HasFlag(_SqlMetadataFlags flag)
+        {
+            return (flags & flag) != 0;
+        }
+
         internal string serverName
         {
             get
@@ -634,47 +639,47 @@ namespace Microsoft.Data.SqlClient
         public byte Updatability
         {
             get => (byte)(flags & _SqlMetadataFlags.IsUpdatableMask);
-            set => flags = (_SqlMetadataFlags)((value & 0x3) | ((int)flags & ~0x03));
+            set => flags = (_SqlMetadataFlags)((value & (byte)_SqlMetadataFlags.IsUpdatableMask) | ((int)flags & ~(byte)_SqlMetadataFlags.IsUpdatableMask));
         }
 
         public bool IsReadOnly
         {
-            get => (flags & _SqlMetadataFlags.IsUpdatableMask) == 0;
+            get => !HasFlag(_SqlMetadataFlags.IsUpdatableMask);
         }
 
         public bool IsDifferentName
         {
-            get => flags.HasFlag(_SqlMetadataFlags.IsDifferentName);
+            get => HasFlag(_SqlMetadataFlags.IsDifferentName);
             set => Set(_SqlMetadataFlags.IsDifferentName, value);
         }
 
         public bool IsKey
         {
-            get => flags.HasFlag(_SqlMetadataFlags.IsKey);
+            get => HasFlag(_SqlMetadataFlags.IsKey);
             set => Set(_SqlMetadataFlags.IsKey, value);
         }
 
         public bool IsHidden
         {
-            get => flags.HasFlag(_SqlMetadataFlags.IsHidden);
+            get => HasFlag(_SqlMetadataFlags.IsHidden);
             set => Set(_SqlMetadataFlags.IsHidden, value);
         }
 
         public bool IsExpression
         {
-            get => flags.HasFlag(_SqlMetadataFlags.IsExpression);
+            get => HasFlag(_SqlMetadataFlags.IsExpression);
             set => Set(_SqlMetadataFlags.IsExpression, value);
         }
 
         public bool IsIdentity
         {
-            get => flags.HasFlag(_SqlMetadataFlags.IsIdentity);
+            get => HasFlag(_SqlMetadataFlags.IsIdentity);
             set => Set(_SqlMetadataFlags.IsIdentity, value);
         }
 
         public bool IsColumnSet
         {
-            get => flags.HasFlag(_SqlMetadataFlags.IsColumnSet);
+            get => HasFlag(_SqlMetadataFlags.IsColumnSet);
             set => Set(_SqlMetadataFlags.IsColumnSet, value);
         }
 
@@ -1054,14 +1059,19 @@ namespace Microsoft.Data.SqlClient
 
         public bool IsNullable
         {
-            get => flags.HasFlag(SqlMetaDataPrivFlags.IsNullable);
+            get => HasFlag(SqlMetaDataPrivFlags.IsNullable);
             set => Set(SqlMetaDataPrivFlags.IsNullable, value);
         }
 
         public bool IsMultiValued
         {
-            get => flags.HasFlag(SqlMetaDataPrivFlags.IsMultiValued);
+            get => HasFlag(SqlMetaDataPrivFlags.IsMultiValued);
             set => Set(SqlMetaDataPrivFlags.IsMultiValued, value);
+        }
+
+        private bool HasFlag(SqlMetaDataPrivFlags flag)
+        {
+            return (flags & flag) != 0;
         }
 
         private void Set(SqlMetaDataPrivFlags flag, bool value)

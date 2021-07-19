@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Stable Release 3.0.0] - 2021-06-09
+
+### Added
+- Added support for column encryption key caching when the server supports retrying queries that require enclave computations [#1062](https://github.com/dotnet/SqlClient/pull/1062)
+- Added support for configurable retry logic configuration file in .NET Standard [#1090](https://github.com/dotnet/SqlClient/pull/1090)
+
+### Changed
+- Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `v3.0.0` [#1102](https://github.com/dotnet/SqlClient/pull/1102)
+- Improved event counter display information [#1091](https://github.com/dotnet/SqlClient/pull/1091)
+
+### Breaking Changes
+- Modified column encryption key store provider registrations to give built-in system providers precedence over providers registered on connection and command instances. [#1101](https://github.com/dotnet/SqlClient/pull/1101)
+
+
 ## [Stable Release 2.1.3] - 2021-05-21
 
 ### Fixed

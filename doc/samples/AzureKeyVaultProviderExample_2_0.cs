@@ -242,7 +242,5 @@ namespace Microsoft.Data.SqlClient.Samples
             }
         }
     }
-
-    //</Snippet1>
-
 }
+//</Snippet1>

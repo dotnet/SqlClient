@@ -4,8 +4,7 @@
     <AssemblyName>FunctionalTests</AssemblyName>
     <TargetGroup Condition="$(TargetFramework.StartsWith('net4'))">netfx</TargetGroup>
     <TargetGroup Condition="$(TargetGroup) == ''">netcoreapp</TargetGroup>
-    <Configurations>Debug;Release;net461-Release;net461-Debug;netcoreapp2.1-Debug;netcoreapp2.1-Release;netcoreapp3.1-Debug;netcoreapp3.1-Release</Configurations>
-    <Platforms>AnyCPU;x86;x64</Platforms>
+    <RuntimeIdentifier Condition="'$(TargetGroup)'=='netfx'">win</RuntimeIdentifier>
     <DefineConstants Condition="'$(TargetGroup)'=='netfx'">$(DefineConstants);NETFX</DefineConstants>
     <DefineConstants Condition="'$(TargetGroup)'=='netcoreapp'">$(DefineConstants);NETCOREAPP</DefineConstants>
     <DefineConstants Condition="'$(TargetGroup)' == 'netcoreapp' AND !$(TargetFramework.StartsWith('netcoreapp'))">$(DefineConstants);NET50_OR_LATER</DefineConstants>
@@ -15,17 +14,15 @@
   <ItemGroup Condition="!$(ReferenceType.Contains('NetStandard'))">
     <Compile Include="SqlConnectionStringBuilderPoolBlockingTest.cs" />
   </ItemGroup>
-  <ItemGroup Condition="'OsGroup'=='Windows'">
-    <Compile Include="AlwaysEncryptedTests\SqlColumnEncryptionCertificateStoreProviderShould.cs" />
-    <Compile Include="AlwaysEncryptedTests\SqlColumnEncryptionCngProviderShould.cs" />
-    <Compile Include="AlwaysEncryptedTests\SqlColumnEncryptionCspProviderShould.cs" />
-  </ItemGroup>
   <ItemGroup>
     <Compile Include="AlwaysEncryptedTests\ExceptionsAlgorithmErrors.cs" />
     <Compile Include="AlwaysEncryptedTests\ExceptionsCertStore.cs" />
     <Compile Include="AlwaysEncryptedTests\ConnectionStringBuilderShould.cs" />
     <Compile Include="AlwaysEncryptedTests\DummyKeyStoreProvider.cs" />
     <Compile Include="AlwaysEncryptedTests\ExceptionRegisterKeyStoreProvider.cs" />
+    <Compile Include="AlwaysEncryptedTests\SqlColumnEncryptionCertificateStoreProviderShould.cs" />
+    <Compile Include="AlwaysEncryptedTests\SqlColumnEncryptionCngProviderShould.cs" />
+    <Compile Include="AlwaysEncryptedTests\SqlColumnEncryptionCspProviderShould.cs" />
     <Compile Include="AlwaysEncryptedTests\SqlCommandShould.cs" />
     <Compile Include="AlwaysEncryptedTests\SqlConnectionShould.cs" />
     <Compile Include="AlwaysEncryptedTests\TestFixtures.cs" />
@@ -96,14 +93,11 @@
     <ProjectReference Include="$(TestsPath)tools\Microsoft.DotNet.XUnitExtensions\Microsoft.DotNet.XUnitExtensions.csproj">
       <Name>Microsoft.DotNet.XUnitExtensions</Name>
     </ProjectReference>
+    <ProjectReference Condition="!$(ReferenceType.Contains('NetStandard'))" Include="$(AddOnsPath)AzureKeyVaultProvider\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
     <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp' AND $(ReferenceType)=='Project'" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
     <ProjectReference Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
     <ProjectReference Condition="$(ReferenceType.Contains('NetStandard'))" Include="$(TestsPath)NSLibrary\Microsoft.Data.SqlClient.NSLibrary.csproj" />
     <PackageReference Condition="$(ReferenceType)=='Package'" Include="Microsoft.Data.SqlClient" Version="$(TestMicrosoftDataSqlClientVersion)" />
-  </ItemGroup>
-  <!-- Azure Key Vault provider is not compatible with .NET Framework 4.6 and can only be used with .NET Framework 4.6.1 and above. -->
-  <ItemGroup Condition="$(TargetFramework) != 'net46'">
-    <ProjectReference Condition="!$(ReferenceType.Contains('NetStandard'))" Include="$(AddOnsPath)AzureKeyVaultProvider\Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(BinFolder)$(Configuration).AnyCPU\Microsoft.Data.SqlClient\netfx\**\*SNI*.dll" CopyToOutputDirectory="PreserveNewest" />

@@ -71,7 +71,6 @@ namespace Microsoft.Data.SqlClient
         {
             internal const string ApplicationIntent = "application intent";
             internal const string Application_Name = "application name";
-            internal const string AsynchronousProcessing = "asynchronous processing";
             internal const string AttachDBFilename = "attachdbfilename";
             internal const string PoolBlockingPeriod = "pool blocking period";
             internal const string ColumnEncryptionSetting = "column encryption setting";
@@ -126,7 +125,6 @@ namespace Microsoft.Data.SqlClient
             internal const string APPLICATIONINTENT = "applicationintent";
             // application name
             internal const string APP = "app";
-            internal const string Async = "async";
             // attachDBFilename
             internal const string EXTENDED_PROPERTIES = "extended properties";
             internal const string INITIAL_FILE_NAME = "initial file name";
@@ -176,7 +174,7 @@ namespace Microsoft.Data.SqlClient
             // make sure to update SynonymCount value below when adding or removing synonyms
         }
 
-        internal const int SynonymCount = 30;
+        internal const int SynonymCount = 29;
 
         // the following are all inserted as keys into the _netlibMapping hash
         internal static class NETLIB
@@ -289,8 +287,6 @@ namespace Microsoft.Data.SqlClient
             bool runningInProc = InOutOfProcHelper.InProc;
 
             _integratedSecurity = ConvertValueToIntegratedSecurity();
-
-            ConvertValueToBoolean(KEY.AsynchronousProcessing, DEFAULT.Asynchronous); // while we don't use it anymore, we still need to verify it is true/false
 
             // SQLPT 41700: Ignore ResetConnection=False (still validate the keyword/value)
             _poolBlockingPeriod = ConvertValueToPoolBlockingPeriod();
@@ -796,7 +792,6 @@ namespace Microsoft.Data.SqlClient
                 hash = new Hashtable(SqlConnectionStringBuilder.KeywordsCount + SynonymCount);
                 hash.Add(KEY.ApplicationIntent, KEY.ApplicationIntent);
                 hash.Add(KEY.Application_Name, KEY.Application_Name);
-                hash.Add(KEY.AsynchronousProcessing, KEY.AsynchronousProcessing);
                 hash.Add(KEY.AttachDBFilename, KEY.AttachDBFilename);
                 hash.Add(KEY.PoolBlockingPeriod, KEY.PoolBlockingPeriod);
                 hash.Add(KEY.Connect_Timeout, KEY.Connect_Timeout);
@@ -840,7 +835,6 @@ namespace Microsoft.Data.SqlClient
 #endif
                 hash.Add(SYNONYM.APPLICATIONINTENT, KEY.ApplicationIntent);
                 hash.Add(SYNONYM.APP, KEY.Application_Name);
-                hash.Add(SYNONYM.Async, KEY.AsynchronousProcessing);
                 hash.Add(SYNONYM.EXTENDED_PROPERTIES, KEY.AttachDBFilename);
                 hash.Add(SYNONYM.INITIAL_FILE_NAME, KEY.AttachDBFilename);
                 hash.Add(SYNONYM.CONNECTION_TIMEOUT, KEY.Connect_Timeout);

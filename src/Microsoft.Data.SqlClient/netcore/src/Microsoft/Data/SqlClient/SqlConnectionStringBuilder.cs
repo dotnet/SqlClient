@@ -66,7 +66,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         internal const int KeywordsCount = (int)Keywords.KeywordsCount;
-        internal const int DeprecatedKeywordsCount = 4;
+        internal const int DeprecatedKeywordsCount = 3;
 
         private static readonly string[] s_validKeywords = CreateValidKeywords();
         private static readonly Dictionary<string, Keywords> s_keywords = CreateKeywordsDictionary();
@@ -1234,12 +1234,9 @@ namespace Microsoft.Data.SqlClient
         }
 
         private static readonly string[] s_notSupportedKeywords = new string[] {
-            DbConnectionStringKeywords.AsynchronousProcessing,
             DbConnectionStringKeywords.ConnectionReset,
             DbConnectionStringKeywords.ContextConnection,
             DbConnectionStringKeywords.TransactionBinding,
-
-            DbConnectionStringSynonyms.Async
         };
 
         private static readonly string[] s_notSupportedNetworkLibraryKeywords = new string[] {

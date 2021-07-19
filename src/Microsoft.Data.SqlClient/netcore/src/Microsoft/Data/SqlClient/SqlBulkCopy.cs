@@ -9,6 +9,7 @@ using System.Data;
 using System.Data.Common;
 using System.Data.SqlTypes;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -1078,14 +1079,19 @@ namespace Microsoft.Data.SqlClient
             if (_isAsyncBulkCopy && _dbDataReaderRowSource != null)
             {
                 // This will call ReadAsync for DbDataReader (for SqlDataReader it will be truly async read; for non-SqlDataReader it may block.)
-                return _dbDataReaderRowSource.ReadAsync(cts).ContinueWith((t) =>
-                {
-                    if (t.Status == TaskStatus.RanToCompletion)
+                return _dbDataReaderRowSource.ReadAsync(cts).ContinueWith(
+                    static (Task<bool> task, object state) =>
                     {
-                        _hasMoreRowToCopy = t.Result;
-                    }
-                    return t;
-                }, TaskScheduler.Default).Unwrap();
+                        SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
+                        if (task.Status == TaskStatus.RanToCompletion)
+                        {
+                            sqlBulkCopy._hasMoreRowToCopy = task.Result;
+                        }
+                        return task;
+                    },
+                    state: this,
+                    scheduler: TaskScheduler.Default
+                ).Unwrap();
             }
             else
             { // This will call Read for DataRows, DataTable and IDataReader (this includes all IDataReader except DbDataReader)
@@ -1940,7 +1946,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             AsyncHelper.ContinueTaskWithState(writeTask, tcs,
                                 state: tcs,
-                                onSuccess: state => ((TaskCompletionSource<object>)state).SetResult(null)
+                                onSuccess: static (object state) => ((TaskCompletionSource<object>)state).SetResult(null)
                             );
                         }
                     }, ctoken); // We do not need to propagate exception, etc, from reconnect task, we just need to wait for it to finish.
@@ -1948,7 +1954,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    AsyncHelper.WaitForCompletion(reconnectTask, BulkCopyTimeout, () => { throw SQL.CR_ReconnectTimeout(); }, rethrowExceptions: false);
+                    AsyncHelper.WaitForCompletion(reconnectTask, BulkCopyTimeout, static () => throw SQL.CR_ReconnectTimeout(), rethrowExceptions: false);
                 }
             }
 
@@ -1969,27 +1975,32 @@ namespace Microsoft.Data.SqlClient
                 if (resultTask != null)
                 {
                     finishedSynchronously = false;
-                    return resultTask.ContinueWith((t) =>
-                    {
-                        try
+                    return resultTask.ContinueWith(
+                        static (Task t, object state) =>
                         {
-                            AbortTransaction(); // If there is one, on success transactions will be committed.
-                        }
-                        finally
-                        {
-                            _isBulkCopyingInProgress = false;
-                            if (_parser != null)
+                            SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
+                            try
                             {
-                                _parser._asyncWrite = false;
+                                sqlBulkCopy.AbortTransaction(); // If there is one, on success transactions will be committed.
                             }
-                            if (_parserLock != null)
+                            finally
                             {
-                                _parserLock.Release();
-                                _parserLock = null;
+                                sqlBulkCopy._isBulkCopyingInProgress = false;
+                                if (sqlBulkCopy._parser != null)
+                                {
+                                    sqlBulkCopy._parser._asyncWrite = false;
+                                }
+                                if (sqlBulkCopy._parserLock != null)
+                                {
+                                    sqlBulkCopy._parserLock.Release();
+                                    sqlBulkCopy._parserLock = null;
+                                }
                             }
-                        }
-                        return t;
-                    }, TaskScheduler.Default).Unwrap();
+                            return t;
+                        }, 
+                        state: this,
+                        scheduler: TaskScheduler.Default
+                    ).Unwrap();
                 }
                 return null;
             }
@@ -2254,12 +2265,13 @@ namespace Microsoft.Data.SqlClient
         // This is in its own method to avoid always allocating the lambda in CopyColumnsAsync
         private void CopyColumnsAsyncSetupContinuation(TaskCompletionSource<object> source, Task task, int i)
         {
-            AsyncHelper.ContinueTask(task, source,
-                onSuccess: () =>
+            AsyncHelper.ContinueTaskWithState(task, source, this,
+                onSuccess: (object state) =>
                 {
-                    if (i + 1 < _sortedColumnMappings.Count)
+                    SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
+                    if (i + 1 < sqlBulkCopy._sortedColumnMappings.Count)
                     {
-                        CopyColumnsAsync(i + 1, source); //continue from the next column
+                        sqlBulkCopy.CopyColumnsAsync(i + 1, source); //continue from the next column
                     }
                     else
                     {
@@ -2401,8 +2413,9 @@ namespace Microsoft.Data.SqlClient
                             }
                             resultTask = source.Task;
 
-                            AsyncHelper.ContinueTask(readTask, source,
-                                onSuccess: () => CopyRowsAsync(i + 1, totalRows, cts, source)
+                            AsyncHelper.ContinueTaskWithState(readTask, source, this,
+                                onSuccess: (object state) => ((SqlBulkCopy)state).CopyRowsAsync(i + 1, totalRows, cts, source)
+                                
                             );
                             return resultTask; // Associated task will be completed when all rows are copied to server/exception/cancelled.
                         }
@@ -2412,20 +2425,21 @@ namespace Microsoft.Data.SqlClient
                         source = source ?? new TaskCompletionSource<object>();
                         resultTask = source.Task;
 
-                        AsyncHelper.ContinueTask(task, source, 
-                            onSuccess: () =>
+                        AsyncHelper.ContinueTaskWithState(task, source, this,
+                            onSuccess: (object state) =>
                             {
-                                CheckAndRaiseNotification(); // Check for notification now as the current row copy is done at this moment.
+                                SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
+                                sqlBulkCopy.CheckAndRaiseNotification(); // Check for notification now as the current row copy is done at this moment.
 
-                                Task readTask = ReadFromRowSourceAsync(cts);
+                                Task readTask = sqlBulkCopy.ReadFromRowSourceAsync(cts);
                                 if (readTask == null)
                                 {
-                                    CopyRowsAsync(i + 1, totalRows, cts, source);
+                                    sqlBulkCopy.CopyRowsAsync(i + 1, totalRows, cts, source);
                                 }
                                 else
                                 {
-                                    AsyncHelper.ContinueTask(readTask, source,
-                                        onSuccess: () => CopyRowsAsync(i + 1, totalRows, cts, source)
+                                    AsyncHelper.ContinueTaskWithState(readTask, source, sqlBulkCopy,
+                                        onSuccess: (object state2) => ((SqlBulkCopy)state2).CopyRowsAsync(i + 1, totalRows, cts, source)
                                     );
                                 }
                            }
@@ -2498,14 +2512,15 @@ namespace Microsoft.Data.SqlClient
                             source = new TaskCompletionSource<object>();
                         }
 
-                        AsyncHelper.ContinueTask(commandTask, source,
-                            onSuccess: () =>
+                        AsyncHelper.ContinueTaskWithState(commandTask, source, this,
+                            onSuccess: (object state) =>
                             {
-                                Task continuedTask = CopyBatchesAsyncContinued(internalResults, updateBulkCommandText, cts, source);
+                                SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
+                                Task continuedTask = sqlBulkCopy.CopyBatchesAsyncContinued(internalResults, updateBulkCommandText, cts, source);
                                 if (continuedTask == null)
                                 {
                                     // Continuation finished sync, recall into CopyBatchesAsync to continue
-                                    CopyBatchesAsync(internalResults, updateBulkCommandText, cts, source);
+                                    sqlBulkCopy.CopyBatchesAsync(internalResults, updateBulkCommandText, cts, source);
                                 }
                             }
                         );
@@ -2562,18 +2577,19 @@ namespace Microsoft.Data.SqlClient
                     {   // First time only
                         source = new TaskCompletionSource<object>();
                     }
-                    AsyncHelper.ContinueTask(task, source,
-                        onSuccess: () =>
+                    AsyncHelper.ContinueTaskWithState(task, source, this,
+                        onSuccess: (object state) =>
                         {
-                            Task continuedTask = CopyBatchesAsyncContinuedOnSuccess(internalResults, updateBulkCommandText, cts, source);
+                            SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
+                            Task continuedTask = sqlBulkCopy.CopyBatchesAsyncContinuedOnSuccess(internalResults, updateBulkCommandText, cts, source);
                             if (continuedTask == null)
                             {
                                 // Continuation finished sync, recall into CopyBatchesAsync to continue
-                                CopyBatchesAsync(internalResults, updateBulkCommandText, cts, source);
+                                sqlBulkCopy.CopyBatchesAsync(internalResults, updateBulkCommandText, cts, source);
                             }
                         },
-                        onFailure: _ => CopyBatchesAsyncContinuedOnError(cleanupParser: false),
-                        onCancellation: () => CopyBatchesAsyncContinuedOnError(cleanupParser: true)
+                        onFailure: static (Exception _, object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: false),
+                        onCancellation: static (object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: true)
                     );
 
                     return source.Task;
@@ -2621,24 +2637,25 @@ namespace Microsoft.Data.SqlClient
                         source = new TaskCompletionSource<object>();
                     }
 
-                    AsyncHelper.ContinueTask(writeTask, source,
-                        onSuccess: () =>
+                    AsyncHelper.ContinueTaskWithState(writeTask, source, this,
+                        onSuccess: (object state) =>
                         {
+                            SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
                             try
                             {
-                                RunParser();
-                                CommitTransaction();
+                                sqlBulkCopy.RunParser();
+                                sqlBulkCopy.CommitTransaction();
                             }
                             catch (Exception)
                             {
-                                CopyBatchesAsyncContinuedOnError(cleanupParser: false);
+                                sqlBulkCopy.CopyBatchesAsyncContinuedOnError(cleanupParser: false);
                                 throw;
                             }
 
                             // Always call back into CopyBatchesAsync
-                            CopyBatchesAsync(internalResults, updateBulkCommandText, cts, source);
+                            sqlBulkCopy.CopyBatchesAsync(internalResults, updateBulkCommandText, cts, source);
                         },
-                        onFailure: _ => CopyBatchesAsyncContinuedOnError(cleanupParser: false)
+                        onFailure: static (Exception _, object state) => ((SqlBulkCopy)state).CopyBatchesAsyncContinuedOnError(cleanupParser: false)
                     );
                     return source.Task;
                 }
@@ -2758,16 +2775,17 @@ namespace Microsoft.Data.SqlClient
                     {
                         source = new TaskCompletionSource<object>();
                     }
-                    AsyncHelper.ContinueTask(task, source,
-                        onSuccess: () =>
+                    AsyncHelper.ContinueTaskWithState(task, source, this,
+                        onSuccess: (object state) =>
                         {
+                            SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
                             // Bulk copy task is completed at this moment.
                             if (task.IsCanceled)
                             {
-                                _localColumnMappings = null;
+                                sqlBulkCopy._localColumnMappings = null;
                                 try
                                 {
-                                    CleanUpStateObject();
+                                    sqlBulkCopy.CleanUpStateObject();
                                 }
                                 finally
                                 {
@@ -2780,10 +2798,10 @@ namespace Microsoft.Data.SqlClient
                             }
                             else
                             {
-                                _localColumnMappings = null;
+                                sqlBulkCopy._localColumnMappings = null;
                                 try
                                 {
-                                    CleanUpStateObject(isCancelRequested: false);
+                                    sqlBulkCopy.CleanUpStateObject(isCancelRequested: false);
                                 }
                                 finally
                                 {
@@ -2885,23 +2903,31 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (_isAsyncBulkCopy)
                     {
-                        CancellationTokenRegistration regReconnectCancel = new CancellationTokenRegistration();
+                        StrongBox<CancellationTokenRegistration> regReconnectCancel = new StrongBox<CancellationTokenRegistration>(new CancellationTokenRegistration());
                         TaskCompletionSource<object> cancellableReconnectTS = new TaskCompletionSource<object>();
                         if (cts.CanBeCanceled)
                         {
-                            regReconnectCancel = cts.Register(s => ((TaskCompletionSource<object>)s).TrySetCanceled(), cancellableReconnectTS);
+                            regReconnectCancel.Value = cts.Register(static (object tcs) => ((TaskCompletionSource<object>)tcs).TrySetCanceled(), cancellableReconnectTS);
                         }
                         AsyncHelper.ContinueTaskWithState(reconnectTask, cancellableReconnectTS,
                             state: cancellableReconnectTS,
-                            onSuccess: (state) => { ((TaskCompletionSource<object>)state).SetResult(null); }
+                            onSuccess: static (object state) => ((TaskCompletionSource<object>)state).SetResult(null)
                         );
                         // No need to cancel timer since SqlBulkCopy creates specific task source for reconnection.
-                        AsyncHelper.SetTimeoutException(cancellableReconnectTS, BulkCopyTimeout,
-                                () => { return SQL.BulkLoadInvalidDestinationTable(_destinationTableName, SQL.CR_ReconnectTimeout()); }, CancellationToken.None);
-                        AsyncHelper.ContinueTask(cancellableReconnectTS.Task, source,
-                            onSuccess: () =>
+                        AsyncHelper.SetTimeoutExceptionWithState(
+                            completion: cancellableReconnectTS, 
+                            timeout: BulkCopyTimeout,
+                            state: _destinationTableName,
+                            onFailure: static (object state) => SQL.BulkLoadInvalidDestinationTable((string)state, SQL.CR_ReconnectTimeout()), 
+                            cancellationToken: CancellationToken.None
+                        );
+                        AsyncHelper.ContinueTaskWithState(
+                            task: cancellableReconnectTS.Task, 
+                            completion: source,
+                            state: regReconnectCancel,
+                            onSuccess: (object state) =>
                             {
-                                regReconnectCancel.Dispose();
+                                ((StrongBox<CancellationTokenRegistration>)state).Value.Dispose();
                                 if (_parserLock != null)
                                 {
                                     _parserLock.Release();
@@ -2911,8 +2937,8 @@ namespace Microsoft.Data.SqlClient
                                 _parserLock.Wait(canReleaseFromAnyThread: true);
                                 WriteToServerInternalRestAsync(cts, source);
                             },
-                            onFailure: (e) => { regReconnectCancel.Dispose(); },
-                            onCancellation: () => { regReconnectCancel.Dispose(); },
+                            onFailure: static (Exception _, object state) => ((StrongBox<CancellationTokenRegistration>)state).Value.Dispose(),
+                            onCancellation: static (object state) => ((StrongBox<CancellationTokenRegistration>)state).Value.Dispose(),
                             exceptionConverter: (ex) => SQL.BulkLoadInvalidDestinationTable(_destinationTableName, ex));
                         return;
                     }
@@ -2920,7 +2946,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         try
                         {
-                            AsyncHelper.WaitForCompletion(reconnectTask, BulkCopyTimeout, () => { throw SQL.CR_ReconnectTimeout(); });
+                            AsyncHelper.WaitForCompletion(reconnectTask, BulkCopyTimeout, static () => throw SQL.CR_ReconnectTimeout());
                         }
                         catch (SqlException ex)
                         {
@@ -2961,8 +2987,8 @@ namespace Microsoft.Data.SqlClient
 
                 if (internalResultsTask != null)
                 {
-                    AsyncHelper.ContinueTask(internalResultsTask, source,
-                        onSuccess: () => WriteToServerInternalRestContinuedAsync(internalResultsTask.Result, cts, source)
+                    AsyncHelper.ContinueTaskWithState(internalResultsTask, source, this,
+                        onSuccess: (object state) => ((SqlBulkCopy)state).WriteToServerInternalRestContinuedAsync(internalResultsTask.Result, cts, source)
                     );
                 }
                 else
@@ -3034,16 +3060,17 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     Debug.Assert(_isAsyncBulkCopy, "Read must not return a Task in the Sync mode");
-                    AsyncHelper.ContinueTask(readTask, source,
-                        onSuccess: () =>
+                    AsyncHelper.ContinueTaskWithState(readTask, source, this,
+                        onSuccess: (object state) =>
                         {
-                            if (!_hasMoreRowToCopy)
+                            SqlBulkCopy sqlBulkCopy = (SqlBulkCopy)state;
+                            if (!sqlBulkCopy._hasMoreRowToCopy)
                             {
                                 source.SetResult(null); // No rows to copy!
                             }
                             else
                             {
-                                WriteToServerInternalRestAsync(ctoken, source); // Passing the same completion which will be completed by the Callee.
+                                sqlBulkCopy.WriteToServerInternalRestAsync(ctoken, source); // Passing the same completion which will be completed by the Callee.
                             }
                         }
                     );
