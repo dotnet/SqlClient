@@ -514,6 +514,8 @@ namespace Microsoft.Data.SqlClient
                     {
                         foreach (SqlError error in sqlex.Errors)
                         {
+                            // If server returns generic Error 40613, request force refresh feature extension in future connections
+                            // TODO: Narrow down error code for force refresh
                             if (error.Number == 40613)
                             {
                                 _requestForceRefresh = true;
@@ -1353,7 +1355,6 @@ namespace Microsoft.Data.SqlClient
             requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
 
             // The ForceRefresh feature is set if driver recieved 40613 Error
-            // TODO: Flesh out cases where ForceRefresh is used
             if (_requestForceRefresh)
             {
                 requestedFeatures |= TdsEnums.FeatureExtension.ForceRefresh;
@@ -2739,7 +2740,7 @@ namespace Microsoft.Data.SqlClient
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                         }
 
-                        // TODO Add logic for when server acknowledges Force Refresh
+                        // TODO: Add logic for when server acknowledges Force Refresh
                         if (1 == data[0])
                         {
                             Console.WriteLine("FORCE REFRESH IS SUPPORTED");

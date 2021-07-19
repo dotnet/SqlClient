@@ -532,11 +532,10 @@ namespace Microsoft.Data.SqlClient
                     // If transient fault handling is enabled then we can retry the login upto the ConnectRetryCount.
                     int connectionEstablishCount = applyTransientFaultHandling ? connectionOptions.ConnectRetryCount + 1 : 1;
                     int transientRetryIntervalInMilliSeconds = connectionOptions.ConnectRetryInterval * 1000; // Max value of transientRetryInterval is 60*1000 ms. The max value allowed for ConnectRetryInterval is 60
-                    for (int i = 0; i < 1; i++)
+                    for (int i = 0; i < connectionEstablishCount; i++)
                     {
                         try
                         {
-                            _requestForceRefresh = false;
                             OpenLoginEnlist(_timeout, connectionOptions, credential, newPassword, newSecurePassword, redirectedUserInstance);
                             break;
                         }
@@ -544,12 +543,11 @@ namespace Microsoft.Data.SqlClient
                         {
                             foreach (SqlError error in sqlex.Errors)
                             {
+                                // If server returns generic Error 40613, request force refresh feature extension in future connections
+                                // TODO: Narrow down error code for force refresh
                                 if (error.Number == 40613)
-                                {
-                                    //AD 
-                                    Console.WriteLine("Client recieved ERROR 40613, retrying...");
+                                { 
                                     _requestForceRefresh = true;
-                                    OpenLoginEnlist(_timeout, connectionOptions, credential, newPassword, newSecurePassword, redirectedUserInstance);
                                 }
                             }
 
@@ -1637,16 +1635,9 @@ namespace Microsoft.Data.SqlClient
             requestedFeatures |= TdsEnums.FeatureExtension.SQLDNSCaching;
 
             // The ForceRefresh feature is set if driver recieved 40613 Error
-            // TODO: Flesh out cases where ForceRefresh is used
-            // TODO: Remove the true short circuit below
             if (_requestForceRefresh)
             {
-                Console.WriteLine("Requesting WITH Force Refresh");
                 requestedFeatures |= TdsEnums.FeatureExtension.ForceRefresh;
-            }
-            else
-            { 
-                Console.WriteLine("Requesting WITHOUT Force Refresh"); 
             }
             
             _parser.TdsLogin(login, requestedFeatures, _recoverySessionData, _fedAuthFeatureExtensionData, _originalNetworkAddressInfo);
@@ -3218,16 +3209,14 @@ namespace Microsoft.Data.SqlClient
                             throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
                         }
 
-                        // TODO Add logic for when server acknowledges Force Refresh
+                        // TODO: Add logic for when server acknowledges Force Refresh
                         if (1 == data[0])
                         {
                             Console.WriteLine("FORCE REFRESH IS SUPPORTED");
-                            Console.Out.Flush();
                         }
                         else
                         {
                             Console.WriteLine("FORCE REFRESH IS NOT SUPPORTED");
-                            Console.Out.Flush();
                         }
 
                         break;
