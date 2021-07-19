@@ -72,8 +72,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string actualTypeName = dr.GetSqlValue(0).GetType().ToString();
             string actualBaseTypeName = dr.GetString(1);
             Console.WriteLine("{0,-40} -> {1}:{2}", tag, actualTypeName, actualBaseTypeName);
-            Assert.Equal(actualTypeName, expectedTypeName);
-            Assert.Equal(actualBaseTypeName, expectedBaseTypeName);
+            Assert.Equal(expectedTypeName, actualTypeName);
+            Assert.Equal(expectedBaseTypeName, actualBaseTypeName);
         }
         /// <summary>
         /// Round trips a sql_variant to server and verifies result.
