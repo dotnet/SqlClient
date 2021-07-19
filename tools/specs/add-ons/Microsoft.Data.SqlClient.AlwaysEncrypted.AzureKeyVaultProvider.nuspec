@@ -25,20 +25,23 @@ Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyStoreProvider.SqlColumnEncrypti
     <tags>sqlclient microsoft.data.sqlclient azurekeyvaultprovider akvprovider alwaysencrypted</tags>
     <dependencies>
       <group targetFramework="net461">
-        <dependency id="Microsoft.Data.SqlClient" version="1.1.3" />
+        <dependency id="Microsoft.Data.SqlClient" version="3.0.0" />
         <dependency id="Azure.Core" version="[1.6.0,2.0.0)" />
+        <dependency id="System.Text.Encodings.Web" version="4.7.2" />
         <dependency id="Azure.Security.KeyVault.Keys" version="[4.0.3,5.0.0)" />
         <dependency id="Microsoft.Extensions.Caching.Memory" version="5.0.0" />
       </group>
       <group targetFramework="netcoreapp2.1">
-        <dependency id="Microsoft.Data.SqlClient" version="1.1.3" />
+        <dependency id="Microsoft.Data.SqlClient" version="3.0.0" />
         <dependency id="Azure.Core" version="[1.6.0,2.0.0)" />
+        <dependency id="System.Text.Encodings.Web" version="4.7.2" />
         <dependency id="Azure.Security.KeyVault.Keys" version="[4.0.3,5.0.0)" />
         <dependency id="Microsoft.Extensions.Caching.Memory" version="5.0.0" />
       </group>
       <group targetFramework="netstandard2.0">
-        <dependency id="Microsoft.Data.SqlClient" version="2.1.0" />
+        <dependency id="Microsoft.Data.SqlClient" version="3.0.0" />
         <dependency id="Azure.Core" version="[1.6.0,2.0.0)" />
+        <dependency id="System.Text.Encodings.Web" version="4.7.2" />
         <dependency id="Azure.Security.KeyVault.Keys" version="[4.0.3,5.0.0)" />
         <dependency id="Microsoft.Extensions.Caching.Memory" version="5.0.0" />
       </group>

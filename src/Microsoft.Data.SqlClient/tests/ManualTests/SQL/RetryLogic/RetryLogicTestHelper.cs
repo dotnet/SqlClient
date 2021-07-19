@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -45,6 +46,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public class RetryLogicTestHelper
     {
         internal const string RetryAppContextSwitch = "Switch.Microsoft.Data.SqlClient.EnableRetryLogic";
+        private static readonly Assembly s_sqlClientAssembly = typeof(SqlConnection).Assembly;
+        private static readonly Type s_LocalAppContextSwitchesType = s_sqlClientAssembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
+        private static readonly FieldInfo s_isRetryEnabledFieldInfo = s_LocalAppContextSwitchesType.GetField("s_isRetryEnabled", BindingFlags.Static | BindingFlags.NonPublic);
 
         private static readonly HashSet<int> s_defaultTransientErrors
            = new HashSet<int>
@@ -65,8 +69,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     10929,  // Resource ID: %d. The %s minimum guarantee is %d, maximum limit is %d and the current usage for the database is %d. However, the server is currently too busy to support requests greater than %d for this database. For more information, see http://go.microsoft.com/fwlink/?LinkId=267637. Otherwise, please try again later.
                     10928,  // Resource ID: %d. The %s limit for the database is %d and has been reached. For more information, see http://go.microsoft.com/fwlink/?LinkId=267637.
                     10060,  // An error has occurred while establishing a connection to the server. When connecting to SQL Server, this failure may be caused by the fact that under the default settings SQL Server does not allow remote connections. (provider: TCP Provider, error: 0 - A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.) (Microsoft SQL Server, Error: 10060)
-                    10054,  // The data value for one or more columns overflowed the type used by the provider.
-                    10053,  // Could not convert the data value due to reasons other than sign mismatch or overflow.
                     997,    // A connection was successfully established with the server, but then an error occurred during the login process. (provider: Named Pipes Provider, error: 0 - Overlapped I/O operation is in progress)
                     233,    // A connection was successfully established with the server, but then an error occurred during the login process. (provider: Shared Memory Provider, error: 0 - No process is on the other end of the pipe.) (Microsoft SQL Server, Error: 233)
                     64,
@@ -79,8 +81,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         internal static readonly string s_ExceedErrMsgPattern = SystemDataResourceManager.Instance.SqlRetryLogic_RetryExceeded;
         internal static readonly string s_CancelErrMsgPattern = SystemDataResourceManager.Instance.SqlRetryLogic_RetryCanceled;
 
+        public static void CleanRetryEnabledCache() => s_isRetryEnabledFieldInfo.SetValue(null, null);
+
         public static void SetRetrySwitch(bool value)
         {
+            CleanRetryEnabledCache();
             AppContext.SetSwitch(RetryAppContextSwitch, value);
         }
 

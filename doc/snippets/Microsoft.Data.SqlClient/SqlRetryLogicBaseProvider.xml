@@ -34,9 +34,7 @@
             <typeparam name = "TResult">The object that the `function` returns when executed.</typeparam>
             <param name="sender">The source of the event.</param>
             <param name="function">The operation to re-execute if a transient condition occurs.</param>
-            <summary>Executes a function and applies retry logic, if enabled.
-            
-            Exceptions will be reported via an aggregate exception if the execution isn't successful via retry attempts.
+            <summary>Executes a function and applies retry logic, if enabled. **Note:**  Exceptions will be reported via an aggregate exception if the execution isn't successful via retry attempts.
             </summary>
             <returns>The return value of the `function` if it runs without exception.</returns>
             <remarks>
@@ -56,9 +54,7 @@
             <param name="sender">The source of the event.</param>
             <param name="function">The operation to re-execute if a transient condition occurs.</param>
             <param name="cancellationToken">The cancellation instruction.</param>
-            <summary>Executes a function and applies retry logic, if enabled. The cancellation token can be used to request that the operation be abandoned before the execution attempts are exceeded.
-            
-            Exceptions will be reported via the returned Task object, which will contain an aggregate exception if execution fails for all retry attempts.</summary>
+            <summary>Executes a function and applies retry logic, if enabled. The cancellation token can be used to request that the operation be abandoned before the execution attempts are exceeded. **Note:**  Exceptions will be reported via the returned Task object, which will contain an aggregate exception if execution fails for all retry attempts.</summary>
             <returns>A task representing the asynchronous operation. The results of the task will be the return value of the `function`, if it runs without exception.</returns>
             <remarks>
             <format type="text/markdown"><![CDATA[  
@@ -76,9 +72,7 @@
             <param name="sender">The source of the event.</param>
             <param name="function">The operation to re-execute if a transient condition occurs.</param>
             <param name="cancellationToken">The cancellation instruction.</param>
-            <summary>Executes a function and applies retry logic, if enabled. The cancellation token can be used to request that the operation be abandoned before the execution attempts are exceeded.
-            
-            Exceptions will be reported via the returned Task object, which will contain an aggregate exception if execution fails for all retry attempts.</summary>
+            <summary>Executes a function and applies retry logic, if enabled. The cancellation token can be used to request that the operation be abandoned before the execution attempts are exceeded. **Note:**  Exceptions will be reported via the returned Task object, which will contain an aggregate exception if execution fails for all retry attempts.</summary>
             <returns>A Task or an exception.</returns>
             <remarks>
             <format type="text/markdown"><![CDATA[  
