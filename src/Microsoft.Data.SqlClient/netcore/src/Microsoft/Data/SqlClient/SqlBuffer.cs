@@ -215,7 +215,63 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (_value._numericInfo._data4 != 0 || _value._numericInfo._scale > 28)
                     {
-                        throw new OverflowException(SQLResource.ConversionOverflowMessage);
+                        if (_value._numericInfo._scale > 0)
+                        {
+                            SqlDecimal sqlValue = new(_value._numericInfo._precision,
+                                                       _value._numericInfo._scale,
+                                                       _value._numericInfo._positive,
+                                                       _value._numericInfo._data1,
+                                                       _value._numericInfo._data2,
+                                                       _value._numericInfo._data3,
+                                                       _value._numericInfo._data4);
+
+                            // Remove trail zeros after the point from the end to calculate the valuable floating part
+                            string[] valueParts = sqlValue.ToString().TrimEnd('0').Split('.');
+                            int scale = valueParts[1].Length;
+                            int precision = valueParts[0].Length + scale + (sqlValue.IsPositive ? 0 : -1);
+
+                            // Out of range
+                            if ((precision > 29 || scale > 28) && !(precision == 29 && scale == 28))
+                            {
+                                throw new OverflowException(SQLResource.ConversionOverflowMessage);
+                            }
+                            else
+                            {
+                                // Precision could be 28 or 29
+                                // ex: (precision == 29 && scale == 28)
+                                //  valid:   (+/-)7.1234567890123456789012345678
+                                //  invalid: (+/-)8.1234567890123456789012345678
+                                bool tryMaxPrec = (valueParts[0].Length == 1 || (valueParts[0].Length == 2 && !_value._numericInfo._positive));
+                                int precConvert = 29;
+                                int scaleConvert;
+
+                                if (!tryMaxPrec && precision != 29)
+                                {
+                                    precConvert = 28;
+                                }
+                                scaleConvert = precConvert - (precision - scale);
+
+                                try
+                                {
+                                    return SqlDecimal.ConvertToPrecScale(sqlValue, precConvert, scaleConvert).Value;
+                                }
+                                catch (OverflowException)
+                                {
+                                    if (tryMaxPrec && scale < 28)
+                                    {
+                                        return SqlDecimal.ConvertToPrecScale(sqlValue, precConvert - 1, scaleConvert).Value;
+                                    }
+                                    else
+                                    {
+                                        throw;
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            throw new OverflowException(SQLResource.ConversionOverflowMessage);
+                        }
                     }
                     return new decimal(_value._numericInfo._data1, _value._numericInfo._data2, _value._numericInfo._data3, !_value._numericInfo._positive, _value._numericInfo._scale);
                 }
