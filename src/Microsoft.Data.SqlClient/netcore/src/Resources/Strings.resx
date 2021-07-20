@@ -241,7 +241,7 @@
     <value>Use of key '{0}' requires the key '{1}' to be present.</value>
   </data>
   <data name="ADP_InvalidConnectionOptionValueLength" xml:space="preserve">
-    <value>The value's length for key '{0}' exceeds it's limit of '{1}'.</value>
+    <value>The value's length for key '{0}' exceeds its limit of '{1}'.</value>
   </data>
   <data name="ADP_KeywordNotSupported" xml:space="preserve">
     <value>Keyword not supported: '{0}'.</value>

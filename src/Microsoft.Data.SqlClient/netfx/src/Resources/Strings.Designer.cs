@@ -673,7 +673,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The length of argument &apos;{0}&apos; exceeds it&apos;s limit of &apos;{1}&apos;..
+        ///   Looks up a localized string similar to The length of argument &apos;{0}&apos; exceeds its limit of &apos;{1}&apos;..
         /// </summary>
         internal static string ADP_InvalidArgumentLength {
             get {
@@ -718,7 +718,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The value&apos;s length for key &apos;{0}&apos; exceeds it&apos;s limit of &apos;{1}&apos;..
+        ///   Looks up a localized string similar to The value&apos;s length for key &apos;{0}&apos; exceeds its limit of &apos;{1}&apos;..
         /// </summary>
         internal static string ADP_InvalidConnectionOptionValueLength {
             get {
