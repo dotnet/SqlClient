@@ -639,7 +639,7 @@ namespace Microsoft.Data.SqlClient
 
         internal bool SetCancelStateClosed()
         {
-            return Interlocked.CompareExchange(ref _cancelState, CancelState.Unset, CancelState.Closed) == CancelState.Unset;
+            return Interlocked.CompareExchange(ref _cancelState, CancelState.Closed, CancelState.Unset) == CancelState.Unset && _cancelState == CancelState.Closed;
         }
 
         // This method is only called by the command or datareader as a result of a user initiated
@@ -652,7 +652,7 @@ namespace Microsoft.Data.SqlClient
             if (
                 (_parser.State != TdsParserState.Closed) && (_parser.State != TdsParserState.Broken) &&
                 (_cancellationOwner.Target == caller) &&
-                Interlocked.CompareExchange(ref _cancelState, CancelState.Unset, CancelState.Cancelled) == CancelState.Unset
+                Interlocked.CompareExchange(ref _cancelState, CancelState.Cancelled, CancelState.Unset) == CancelState.Unset && _cancelState == CancelState.Cancelled
             )
             {
                 if (HasPendingData && !_attentionSent)
