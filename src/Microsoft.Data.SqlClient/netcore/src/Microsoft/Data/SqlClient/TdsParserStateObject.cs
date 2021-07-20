@@ -649,10 +649,11 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(caller != null, "Null caller for Cancel!");
             Debug.Assert(caller is SqlCommand || caller is SqlDataReader, "Calling API with invalid caller type: " + caller.GetType());
 
+            Interlocked.CompareExchange(ref _cancelState, CancelState.Cancelled, CancelState.Unset); // only change state if it is Unset, so don't check the return value
+
             if (
                 (_parser.State != TdsParserState.Closed) && (_parser.State != TdsParserState.Broken) &&
-                (_cancellationOwner.Target == caller) &&
-                Interlocked.CompareExchange(ref _cancelState, CancelState.Cancelled, CancelState.Unset) == CancelState.Unset && _cancelState == CancelState.Cancelled
+                (_cancellationOwner.Target == caller)
             )
             {
                 if (HasPendingData && !_attentionSent)
