@@ -77,9 +77,12 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
                     AbsoluteExpirationRelativeToNow = TimeToLive
                 };
 
+                AKVEventSource.Log.TryTraceEvent("Encryption key added to local cache.");
+
                 _cache.Set(key, cacheEntry, cacheEntryOptions);
             }
 
+            AKVEventSource.Log.TryTraceEvent("Encryption key entry fetched from local cache.");
             return cacheEntry;
         }
 
