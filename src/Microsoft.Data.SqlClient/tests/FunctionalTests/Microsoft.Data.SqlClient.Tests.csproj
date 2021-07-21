@@ -11,9 +11,6 @@
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform).$(AssemblyName)</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
   </PropertyGroup>
-  <ItemGroup Condition="!$(ReferenceType.Contains('NetStandard'))">
-    <Compile Include="SqlConnectionStringBuilderPoolBlockingTest.cs" />
-  </ItemGroup>
   <ItemGroup>
     <Compile Include="AlwaysEncryptedTests\ExceptionsAlgorithmErrors.cs" />
     <Compile Include="AlwaysEncryptedTests\ExceptionsCertStore.cs" />
