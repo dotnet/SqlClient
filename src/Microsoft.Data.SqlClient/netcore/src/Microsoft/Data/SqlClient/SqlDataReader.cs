@@ -842,7 +842,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 base.Dispose(disposing);
             }
-            catch(SqlException ex)
+            catch (SqlException ex)
             {
                 SqlClientEventSource.Log.TryTraceEvent("SqlDataReader.Dispose | ERR | Error Message: {0}, Stack Trace: {1}", ex.Message, ex.StackTrace);
             }
@@ -3775,17 +3775,17 @@ namespace Microsoft.Data.SqlClient
                             {
                                 _data[i].SetToNullOfType(SqlBuffer.StorageType.SqlBinary);
                             }
-                        }
-                        else
-                        {
-                            TdsParser.GetNullSqlValue(_data[_sharedState._nextColumnDataToRead],
-                                columnMetaData,
-                                _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
-                                _parser.Connection);
-
-                            if (!readHeaderOnly)
+                            else
                             {
-                                _sharedState._nextColumnDataToRead++;
+                                TdsParser.GetNullSqlValue(_data[_sharedState._nextColumnDataToRead],
+                                    columnMetaData,
+                                    _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
+                                    _parser.Connection);
+
+                                if (!readHeaderOnly)
+                                {
+                                    _sharedState._nextColumnDataToRead++;
+                                }
                             }
                         }
                     }
@@ -5021,7 +5021,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         _stateObj._shouldHaveEnoughData = true;
 #endif
-                    return Task.FromResult(GetFieldValueInternal<T>(i));
+                        return Task.FromResult(GetFieldValueInternal<T>(i));
 #if DEBUG
                     }
                     finally
@@ -5115,7 +5115,7 @@ namespace Microsoft.Data.SqlClient
 
 #endif
 
-        internal abstract class SqlDataReaderAsyncCallContext<T> : AAsyncCallContext<SqlDataReader,T>
+        internal abstract class SqlDataReaderAsyncCallContext<T> : AAsyncCallContext<SqlDataReader, T>
         {
             internal static readonly Action<Task<T>, object> s_completeCallback = CompleteAsyncCallCallback;
 

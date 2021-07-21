@@ -4287,17 +4287,17 @@ namespace Microsoft.Data.SqlClient
                             {
                                 _data[i].SetToNullOfType(SqlBuffer.StorageType.SqlBinary);
                             }
-                        }
-                        else
-                        {
-                            TdsParser.GetNullSqlValue(_data[_sharedState._nextColumnDataToRead],
-                                columnMetaData,
-                                _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
-                                _parser.Connection);
-
-                            if (!readHeaderOnly)
+                            else
                             {
-                                _sharedState._nextColumnDataToRead++;
+                                TdsParser.GetNullSqlValue(_data[_sharedState._nextColumnDataToRead],
+                                    columnMetaData,
+                                    _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
+                                    _parser.Connection);
+
+                                if (!readHeaderOnly)
+                                {
+                                    _sharedState._nextColumnDataToRead++;
+                                }
                             }
                         }
                     }
