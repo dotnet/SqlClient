@@ -4279,10 +4279,9 @@ namespace Microsoft.Data.SqlClient
                     _sharedState._nextColumnDataToRead = _sharedState._nextColumnHeaderToRead;
                     _sharedState._nextColumnHeaderToRead++;  // We read this one
 
-                    // Trigger new behavior for RowVersion to send DBNull.Value - allow entry for Timestamp here.
-                    if ((!LocalAppContextSwitches.LegacyRowVersionNullBehavior && isNull)
-                        // Legacy behavior - Discard entry for Timestamp for "IsNull" data
-                        || (LocalAppContextSwitches.LegacyRowVersionNullBehavior && isNull && columnMetaData.type != SqlDbType.Timestamp))
+                    // Trigger new behavior for RowVersion to send DBNull.Value by allowing entry for Timestamp or discard entry for Timestamp for legacy support.
+                    // if LegacyRowVersionNullBehavior is enabled, Timestamp type must enter "else" block.
+                    if (isNull && (!LocalAppContextSwitches.LegacyRowVersionNullBehavior || columnMetaData.type != SqlDbType.Timestamp))
                     {
                         TdsParser.GetNullSqlValue(_data[_sharedState._nextColumnDataToRead],
                                 columnMetaData,
