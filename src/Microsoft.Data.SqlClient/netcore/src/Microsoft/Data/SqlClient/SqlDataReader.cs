@@ -2911,7 +2911,12 @@ namespace Microsoft.Data.SqlClient
                     {
                         try
                         {
-                            return (T)GetValueFromSqlBufferInternal(data, metaData);
+                            object rawValue = GetValueFromSqlBufferInternal(data, metaData);
+                            if (data.IsNull && !LocalAppContextSwitches.LegacyRowVersionNullBehavior)
+                            {
+                                rawValue = DBNull.Value;
+                            }
+                            return (T)rawValue;
                         }
                         catch (InvalidCastException)
                         {
@@ -3767,26 +3772,19 @@ namespace Microsoft.Data.SqlClient
                     _sharedState._nextColumnDataToRead = _sharedState._nextColumnHeaderToRead;
                     _sharedState._nextColumnHeaderToRead++;  // We read this one
 
-                    if (isNull)
+                    // Trigger new behavior for RowVersion to send DBNull.Value - allow entry for Timestamp here.
+                    if ((!LocalAppContextSwitches.LegacyRowVersionNullBehavior && isNull)
+                        // Legacy behavior - check again for App Context switch and discard entry for Timestamp for "IsNull" data
+                        || (LocalAppContextSwitches.LegacyRowVersionNullBehavior && isNull && columnMetaData.type != SqlDbType.Timestamp))
                     {
-                        if (columnMetaData.type == SqlDbType.Timestamp)
-                        {
-                            if (!LocalAppContextSwitches.LegacyRowVersionNullBehavior)
-                            {
-                                _data[i].SetToNullOfType(SqlBuffer.StorageType.SqlBinary);
-                            }
-                            else
-                            {
-                                TdsParser.GetNullSqlValue(_data[_sharedState._nextColumnDataToRead],
-                                    columnMetaData,
-                                    _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
-                                    _parser.Connection);
+                        TdsParser.GetNullSqlValue(_data[_sharedState._nextColumnDataToRead],
+                                columnMetaData,
+                                _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
+                                _parser.Connection);
 
-                                if (!readHeaderOnly)
-                                {
-                                    _sharedState._nextColumnDataToRead++;
-                                }
-                            }
+                        if (!readHeaderOnly)
+                        {
+                            _sharedState._nextColumnDataToRead++;
                         }
                     }
                     else
@@ -4098,8 +4096,8 @@ namespace Microsoft.Data.SqlClient
 
                     if (_parser != null)
                     { // There is a valid case where parser is null
-                        // Peek, and if row token present, set _hasRows true since there is a
-                        // row in the result
+                      // Peek, and if row token present, set _hasRows true since there is a
+                      // row in the result
                         byte b;
                         if (!_stateObj.TryPeekByte(out b))
                         {
