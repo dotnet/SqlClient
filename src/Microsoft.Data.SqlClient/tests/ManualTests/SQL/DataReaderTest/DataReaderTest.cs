@@ -282,6 +282,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     Assert.True(result is DBNull);
                     Exception ex = Record.Exception(() => reader.GetFieldValue<DBNull>(0));
                     Assert.Null(ex);
+                    Assert.Null(reader.GetFieldValue<byte[]>(0)); //backwards compatible cast support
+                    ex = Record.Exception(() => reader.GetFieldValue<byte[]>(0)); // backwards comparible cast support
+                    Assert.Null(ex);
                 }
                 finally
                 {

@@ -2914,7 +2914,8 @@ namespace Microsoft.Data.SqlClient
                             object rawValue = GetValueFromSqlBufferInternal(data, metaData);
                             if (data.IsNull && !LocalAppContextSwitches.LegacyRowVersionNullBehavior)
                             {
-                                rawValue = DBNull.Value;
+                                // Return "null" if data is null and cannot be cast to DBNull (legacy support for GetFieldValue<byte[]>)
+                                rawValue = typeofT == typeof(DBNull) ? DBNull.Value : null;
                             }
                             return (T)rawValue;
                         }
