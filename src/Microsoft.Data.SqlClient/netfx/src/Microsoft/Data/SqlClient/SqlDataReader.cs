@@ -3253,13 +3253,7 @@ namespace Microsoft.Data.SqlClient
                     // Otherwise Its a CLR or non-Nullable UDT
                     try
                     {
-                        object rawValue = GetValueFromSqlBufferInternal(data, metaData);
-                        if (data.IsNull && !LocalAppContextSwitches.LegacyRowVersionNullBehavior)
-                        {
-                            // Return "null" if data is null and cannot be cast to DBNull (legacy support for GetFieldValue<byte[]>)
-                            rawValue = typeofT == typeof(DBNull) ? DBNull.Value : null;
-                        }
-                        return (T)rawValue;
+                        return (T)GetValueFromSqlBufferInternal(data, metaData);
                     }
                     catch (InvalidCastException)
                     {
