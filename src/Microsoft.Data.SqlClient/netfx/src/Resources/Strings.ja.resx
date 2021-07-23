@@ -1771,7 +1771,7 @@
     <value>指定された QuotePrefix の値と QuoteSuffix の値が一致しません。</value>
   </data>
   <data name="ADP_InvalidArgumentLength" xml:space="preserve">
-    <value>The length of argument '{0}' exceeds its limit of '{1}'.</value>
+    <value>引数 '{0}' の長さが、上限の '{1}' を超えています。</value>
   </data>
   <data name="SQL_WrongType" xml:space="preserve">
     <value>型 {1} の引数を予期していましたが、型 {0} が渡されました。</value>
@@ -1783,7 +1783,7 @@
     <value>'{0}' キーを使用するには、キーとして '{1}' が指定されている必要があります。</value>
   </data>
   <data name="ADP_InvalidConnectionOptionValueLength" xml:space="preserve">
-    <value>The value's length for key '{0}' exceeds its limit of '{1}'.</value>
+    <value>キー '{0}' の値の長さが、制限 '{1}' を超えています。</value>
   </data>
   <data name="ADP_KeywordNotSupported" xml:space="preserve">
     <value>キーワード '{0}' はサポートされていません。</value>
@@ -4162,7 +4162,7 @@
     <value>内部エラー。列暗号化キーを Null にすることはできません。</value>
   </data>
   <data name="TCE_InvalidKeySize" xml:space="preserve">
-    <value>The column encryption key has been successfully decrypted but its length: {1} does not match the length: {2} for algorithm '{0}'. Verify the encrypted value of the column encryption key in the database.</value>
+    <value>列暗号化キーは正常に暗号化解除されましたが、その長さ {1} がアルゴリズム '{0}' の長さ {2} と一致しません。データベースにある列暗号化キーの暗号化された値を確認してください。</value>
   </data>
   <data name="TCE_InvalidEncryptionType" xml:space="preserve">
     <value>データベースの列に指定された暗号化の種類 '{1}' は、無効か破損しています。アルゴリズム '{0}' に対して有効な暗号化の種類は {2} です。</value>

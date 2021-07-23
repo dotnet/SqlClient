@@ -1771,7 +1771,7 @@
     <value>指定的 QuotePrefix 與 QuoteSuffix 值不符。</value>
   </data>
   <data name="ADP_InvalidArgumentLength" xml:space="preserve">
-    <value>The length of argument '{0}' exceeds its limit of '{1}'.</value>
+    <value>引數 '{0}' 的長度超過其上限 '{1}'。</value>
   </data>
   <data name="SQL_WrongType" xml:space="preserve">
     <value>必須要收到引數型別 {1}，卻收到型別 {0}。</value>
@@ -1783,7 +1783,7 @@
     <value>必須要顯示索引鍵 '{1}' 才能使用索引鍵 '{0}'。</value>
   </data>
   <data name="ADP_InvalidConnectionOptionValueLength" xml:space="preserve">
-    <value>The value's length for key '{0}' exceeds its limit of '{1}'.</value>
+    <value>索引鍵 '{0}' 的值長度超過其上限 '{1}'。</value>
   </data>
   <data name="ADP_KeywordNotSupported" xml:space="preserve">
     <value>不支援關鍵字: '{0}'。</value>
@@ -4162,7 +4162,7 @@
     <value>內部錯誤。資料行加密金鑰不能是 Null。</value>
   </data>
   <data name="TCE_InvalidKeySize" xml:space="preserve">
-    <value>The column encryption key has been successfully decrypted but its length: {1} does not match the length: {2} for algorithm '{0}'. Verify the encrypted value of the column encryption key in the database.</value>
+    <value>已成功解密資料行加密金鑰，但其長度 {1} 不符合演算法 '{0}' 的長度 {2}。請驗證資料庫中該資料行加密金鑰的加密值。</value>
   </data>
   <data name="TCE_InvalidEncryptionType" xml:space="preserve">
     <value>為資料庫中資料行指定的加密類型 '{1}' 無效或已損毀。演算法 '{0}' 的有效加密類型為: {2}</value>
