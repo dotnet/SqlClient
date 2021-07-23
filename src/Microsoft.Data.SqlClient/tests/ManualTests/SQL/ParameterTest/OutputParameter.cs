@@ -4,7 +4,6 @@
 
 using System;
 using System.Data;
-using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -12,6 +11,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         public static void Run(string connectionString)
         {
+            Console.WriteLine("Starting 'OutputParameter' tests");
             InvalidValueInOutParam(connectionString);
         }
 
@@ -19,6 +19,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         // You should be able to set an Output SqlParameter to an invalid value (e.g. a string in a decimal param) since we clear its value before starting
         private static void InvalidValueInOutParam(string connectionString)
         {
+            Console.WriteLine("Test setting output SqlParameter to an invalid value");
+
             using (var connection = new SqlConnection(connectionString))
             {
                 connection.Open();
@@ -35,10 +37,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                     // Execute
                     command.ExecuteNonQuery();
-
-                    Assert.Equal((decimal)decimalParam.Value, new decimal(1.23));
+                    // Validate
+                    if (((decimal)decimalParam.Value) != new decimal(1.23))
+                    {
+                        Console.WriteLine("FAIL: Value is incorrect: {0}", decimalParam.Value);
+                    }
                 }
             }
+
+            Console.WriteLine("Done");
         }
     }
 }
