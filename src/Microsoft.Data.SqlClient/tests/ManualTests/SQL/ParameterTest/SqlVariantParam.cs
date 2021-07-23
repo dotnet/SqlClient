@@ -6,7 +6,6 @@ using System;
 using System.Data;
 using System.Data.SqlTypes;
 using Microsoft.Data.SqlClient.Server;
-using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
