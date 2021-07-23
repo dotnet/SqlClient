@@ -32,8 +32,8 @@ namespace Microsoft.Data.SqlClient
     [
     DefaultEvent("RecordsAffected"),
     ToolboxItem(true),
-    Designer("Microsoft.VSDesigner.Data.VS.SqlCommandDesigner, " + AssemblyRef.MicrosoftVSDesigner),
     DesignerCategory("")
+    // TODO: Add designer attribute when Microsoft.VSDesigner.Data.VS.SqlCommandDesigner uses Microsoft.Data.SqlClient
     ]
     public sealed class SqlCommand : DbCommand, ICloneable
     {
@@ -882,6 +882,9 @@ namespace Microsoft.Data.SqlClient
                 TypeDescriptor.Refresh(this);
             }
         }
+
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EnableOptimizedParameterBinding/*'/>
+        public bool EnableOptimizedParameterBinding { get; set; }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Parameters/*'/>
         [
@@ -6807,10 +6810,21 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(CommandType == CommandType.StoredProcedure, "BuildStoredProcedureStatementForColumnEncryption() should only be called for stored procedures");
             Debug.Assert(!string.IsNullOrWhiteSpace(storedProcedureName), "storedProcedureName cannot be null or empty in BuildStoredProcedureStatementForColumnEncryption");
-            Debug.Assert(parameters != null, "parameters cannot be null in BuildStoredProcedureStatementForColumnEncryption");
 
             StringBuilder execStatement = new StringBuilder();
             execStatement.Append(@"EXEC ");
+
+            if (parameters is null)
+            {
+                execStatement.Append(ParseAndQuoteIdentifier(storedProcedureName, false));
+                return new SqlParameter(
+                    null,
+                    ((execStatement.Length << 1) <= TdsEnums.TYPE_SIZE_LIMIT) ? SqlDbType.NVarChar : SqlDbType.NText,
+                    execStatement.Length)
+                {
+                    Value = execStatement.ToString()
+                };
+            }
 
             // Find the return value parameter (if any).
             SqlParameter returnValueParameter = null;
