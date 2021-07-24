@@ -87,10 +87,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         DatabaseHelper.InsertCustomerData(sqlConn, tableName, customer);
 
                         // Test INPUT parameter on an encrypted parameter
-                        using (SqlCommand sqlCommand = new SqlCommand(@"SELECT CustomerId, FirstName, LastName FROM [@tableName] WHERE FirstName = @firstName",
+                        using (SqlCommand sqlCommand = new SqlCommand(@$"SELECT CustomerId, FirstName, LastName FROM [{tableName}] WHERE FirstName = @firstName",
                                                                     sqlConn, null, SqlCommandColumnEncryptionSetting.Enabled))
                         {
-                            sqlCommand.Parameters.AddWithValue(@"tableName", tableName);
                             SqlParameter customerFirstParam = sqlCommand.Parameters.AddWithValue(@"firstName", @"Microsoft");
                             customerFirstParam.Direction = System.Data.ParameterDirection.Input;
 
