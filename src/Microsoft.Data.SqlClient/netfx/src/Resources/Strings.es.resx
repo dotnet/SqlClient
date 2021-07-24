@@ -1771,7 +1771,7 @@
     <value>Los valores QuotePrefix y QuoteSuffix especificados no coinciden.</value>
   </data>
   <data name="ADP_InvalidArgumentLength" xml:space="preserve">
-    <value>The length of argument '{0}' exceeds its limit of '{1}'.</value>
+    <value>La longitud del argumento '{0}' supera su límite de '{1}'.</value>
   </data>
   <data name="SQL_WrongType" xml:space="preserve">
     <value>Se esperaba un argumento del tipo {1}, pero se ha recibido del tipo {0}.</value>
@@ -1783,7 +1783,7 @@
     <value>Para poder utilizar la clave '{0}', debe estar presente la clave '{1}'.</value>
   </data>
   <data name="ADP_InvalidConnectionOptionValueLength" xml:space="preserve">
-    <value>The value's length for key '{0}' exceeds its limit of '{1}'.</value>
+    <value>La longitud del valor para la clave '{0}' supera el límite '{1}'.</value>
   </data>
   <data name="ADP_KeywordNotSupported" xml:space="preserve">
     <value>Palabra clave no admitida: '{0}'.</value>
@@ -4162,7 +4162,7 @@
     <value>Error interno. La clave de cifrado de columnas no puede ser nula.</value>
   </data>
   <data name="TCE_InvalidKeySize" xml:space="preserve">
-    <value>The column encryption key has been successfully decrypted but its length: {1} does not match the length: {2} for algorithm '{0}'. Verify the encrypted value of the column encryption key in the database.</value>
+    <value>La clave de cifrado de columna se ha descifrado correctamente, pero su longitud ({1}) no coincide con la longitud ({2}) del algoritmo "{0}". Compruebe el valor cifrado de la clave de cifrado de columna en la base de datos.</value>
   </data>
   <data name="TCE_InvalidEncryptionType" xml:space="preserve">
     <value>El tipo de cifrado "{1}" especificado para la columna en la base de datos no es válido o está corrupto. Los tipos de cifrado válidos para el algoritmo "{0}" son: {2}.</value>

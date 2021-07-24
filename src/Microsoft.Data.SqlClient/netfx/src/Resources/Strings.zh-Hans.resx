@@ -1771,7 +1771,7 @@
     <value>指定的 QuotePrefix 和 QuoteSuffix 值不匹配。</value>
   </data>
   <data name="ADP_InvalidArgumentLength" xml:space="preserve">
-    <value>The length of argument '{0}' exceeds its limit of '{1}'.</value>
+    <value>参数“{0}”的长度超出其“{1}”的限制。</value>
   </data>
   <data name="SQL_WrongType" xml:space="preserve">
     <value>应为 {1} 类型的参数，而收到的是 {0} 类型。</value>
@@ -1783,7 +1783,7 @@
     <value>使用键“{0}”要求存在键“{1}”。</value>
   </data>
   <data name="ADP_InvalidConnectionOptionValueLength" xml:space="preserve">
-    <value>The value's length for key '{0}' exceeds its limit of '{1}'.</value>
+    <value>密钥“{0}”值的长度超出其限制 {1}。</value>
   </data>
   <data name="ADP_KeywordNotSupported" xml:space="preserve">
     <value>不支持的关键字:“{0}”。</value>
@@ -4162,7 +4162,7 @@
     <value>内部错误。列加密密钥不能为 null。</value>
   </data>
   <data name="TCE_InvalidKeySize" xml:space="preserve">
-    <value>The column encryption key has been successfully decrypted but its length: {1} does not match the length: {2} for algorithm '{0}'. Verify the encrypted value of the column encryption key in the database.</value>
+    <value>列加密密钥已成功解密，但其长度“{1}”与算法“{0}”的长度“{2}”不匹配。请验证数据库中列加密密钥的加密值。</value>
   </data>
   <data name="TCE_InvalidEncryptionType" xml:space="preserve">
     <value>为数据库中的列指定的加密类型“{1}”无效或已损坏。算法“{0}”的有效加密类型是: {2}。</value>

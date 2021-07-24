@@ -1771,7 +1771,7 @@
     <value>Несоответствие указанных значений QuotePrefix и QuoteSuffix.</value>
   </data>
   <data name="ADP_InvalidArgumentLength" xml:space="preserve">
-    <value>The length of argument '{0}' exceeds its limit of '{1}'.</value>
+    <value>Длина аргумента "{0}" превышает установленное для него ограничение "{1}".</value>
   </data>
   <data name="SQL_WrongType" xml:space="preserve">
     <value>Ожидается аргумент типа {1}, получен аргумент типа {0}.</value>
@@ -1783,7 +1783,7 @@
     <value>Использование ключа "{0}" требует наличия ключа "{1}".</value>
   </data>
   <data name="ADP_InvalidConnectionOptionValueLength" xml:space="preserve">
-    <value>The value's length for key '{0}' exceeds its limit of '{1}'.</value>
+    <value>Длина значения для ключа "{0}" превышает лимит “{1}”.</value>
   </data>
   <data name="ADP_KeywordNotSupported" xml:space="preserve">
     <value>Ключевое слово не поддерживается: "{0}".</value>
@@ -4162,7 +4162,7 @@
     <value>Внутренняя ошибка. Ключ шифрования столбца не может иметь значение Null.</value>
   </data>
   <data name="TCE_InvalidKeySize" xml:space="preserve">
-    <value>The column encryption key has been successfully decrypted but its length: {1} does not match the length: {2} for algorithm '{0}'. Verify the encrypted value of the column encryption key in the database.</value>
+    <value>Ключ шифрования столбца успешно расшифрован, но его длина ({1}) не совпадает с длиной ({2}) для алгоритма "{0}". Проверьте зашифрованное значение ключа шифрования столбца в базе данных.</value>
   </data>
   <data name="TCE_InvalidEncryptionType" xml:space="preserve">
     <value>Тип шифрования "{1}", указанный для столбца в базе данных, недействителен или поврежден. Следующие типы шифрования являются допустимыми для алгоритма "{0}": {2}</value>
