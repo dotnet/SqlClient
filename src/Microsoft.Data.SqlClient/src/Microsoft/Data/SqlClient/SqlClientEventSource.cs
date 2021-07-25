@@ -1127,4 +1127,27 @@ namespace Microsoft.Data.SqlClient
             return new TrySNIEventScope(SqlClientEventSource.Log.TrySNIScopeEnterEvent(message, memberName));
         }
     }
+
+    internal readonly ref struct TryEventScope //: IDisposable
+    {
+        private readonly long _scopeId;
+
+        public TryEventScope(long scopeID) => _scopeId = scopeID;
+
+        public void Dispose()
+        {
+            if (_scopeId != 0)
+            {
+                SqlClientEventSource.Log.TryScopeLeaveEvent(_scopeId);
+            }
+        }
+
+        public static TryEventScope Create<T0>(string message, T0 args0) => new TryEventScope(SqlClientEventSource.Log.TryScopeEnterEvent(message, args0));
+
+        public static TryEventScope Create<T0, T1>(string message, T0 args0, T1 args1) => new TryEventScope(SqlClientEventSource.Log.TryScopeEnterEvent(message, args0, args1));
+
+        public static TryEventScope Create(string className, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "") => new TryEventScope(SqlClientEventSource.Log.TryScopeEnterEvent(className, memberName));
+
+        public static TryEventScope Create(long scopeId) => new TryEventScope(scopeId);
+    }
 }
