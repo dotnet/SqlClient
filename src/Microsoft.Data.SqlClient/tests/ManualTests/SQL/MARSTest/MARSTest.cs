@@ -26,16 +26,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             { 6, "Mayumi's" },
             { 7, "Pavlova, Ltd." },
             { 8, "Specialty Biscuits, Ltd." },
-            { 9, "PB Knäckebröd AB" },
+            { 9, "PB Knï¿½ckebrï¿½d AB" },
             { 10, "Refrescos Americanas LTDA" },
-            { 11, "Heli Süßwaren GmbH & Co. KG" },
-            { 12, "Plutzer Lebensmittelgroßmärkte AG" },
+            { 11, "Heli Sï¿½ï¿½waren GmbH & Co. KG" },
+            { 12, "Plutzer Lebensmittelgroï¿½mï¿½rkte AG" },
             { 13, "Nord-Ost-Fisch Handelsgesellschaft mbH" },
             { 14, "Formaggi Fortini s.r.l." },
             { 15, "Norske Meierier" },
             { 16, "Bigfoot Breweries" },
-            { 17, "Svensk Sjöföda AB" },
-            { 18, "Aux joyeux ecclésiastiques" },
+            { 17, "Svensk Sjï¿½fï¿½da AB" },
+            { 18, "Aux joyeux ecclï¿½siastiques" },
             { 19, "New England Seafood Cannery" },
             { 20, "Leka Trading" },
             { 21, "Lyngbysild" },
@@ -45,8 +45,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             { 25, "Ma Maison" },
             { 26, "Pasta Buttini s.r.l." },
             { 27, "Escargots Nouveaux" },
-            { 28, "Gai pâturage" },
-            { 29, "Forêts d'érables" },
+            { 28, "Gai pï¿½turage" },
+            { 29, "Forï¿½ts d'ï¿½rables" },
         };
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
@@ -166,7 +166,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static async Task MARSAsyncBusyReaderTest()
         {
-
             using SqlConnection con = new(_connStr);
             con.Open();
 
@@ -304,7 +303,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static async void MARSAsyncExecuteReaderTest1()
         {
-
             using SqlConnection con = new(_connStr);
             con.Open();
 
@@ -544,7 +542,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using SqlCommand com1 = new("select * from Orders where OrderID = 10248", con);
             using SqlCommand com2 = new("select * from Orders where OrderID = 10249", con);
             using SqlCommand com3 = new("select * from Orders where OrderID = 10250", con);
-
 
             Task<SqlDataReader> result1 = com1.ExecuteReaderAsync();
             Task<SqlDataReader> result2 = com2.ExecuteReaderAsync();
