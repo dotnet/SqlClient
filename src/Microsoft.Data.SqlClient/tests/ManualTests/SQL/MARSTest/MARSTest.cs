@@ -26,16 +26,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             { 6, "Mayumi's" },
             { 7, "Pavlova, Ltd." },
             { 8, "Specialty Biscuits, Ltd." },
-            { 9, "PB Kn�ckebr�d AB" },
+            { 9, "PB Knäckebröd AB" },
             { 10, "Refrescos Americanas LTDA" },
-            { 11, "Heli S��waren GmbH & Co. KG" },
-            { 12, "Plutzer Lebensmittelgro�m�rkte AG" },
+            { 11, "Heli Süßwaren GmbH & Co. KG" },
+            { 12, "Plutzer Lebensmittelgroßmärkte AG" },
             { 13, "Nord-Ost-Fisch Handelsgesellschaft mbH" },
             { 14, "Formaggi Fortini s.r.l." },
             { 15, "Norske Meierier" },
             { 16, "Bigfoot Breweries" },
-            { 17, "Svensk Sj�f�da AB" },
-            { 18, "Aux joyeux eccl�siastiques" },
+            { 17, "Svensk Sjöföda AB" },
+            { 18, "Aux joyeux ecclésiastiques" },
             { 19, "New England Seafood Cannery" },
             { 20, "Leka Trading" },
             { 21, "Lyngbysild" },
@@ -45,8 +45,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             { 25, "Ma Maison" },
             { 26, "Pasta Buttini s.r.l." },
             { 27, "Escargots Nouveaux" },
-            { 28, "Gai p�turage" },
-            { 29, "For�ts d'�rables" },
+            { 28, "Gai pâturage" },
+            { 29, "Forêts d'érables" },
         };
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
@@ -637,13 +637,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using SqlConnection con = new(connectionString);
             await con.OpenAsync();
 
-            SqlCommand productsCommand = new("SELECT SupplierID FROM Northwind.dbo.Products ORDER BY UnitsInStock", con);
+            SqlCommand productsCommand = new("SELECT SupplierID FROM dbo.Products ORDER BY UnitsInStock", con);
             using SqlDataReader reader = await productsCommand.ExecuteReaderAsync();
 
             while (await reader.ReadAsync())
             {
                 int supplier = reader.GetInt32(0);
-                using SqlCommand getSupplierCommand = new("SELECT CompanyName FROM Northwind.dbo.Suppliers WHERE SupplierID = @ID", con);
+                using SqlCommand getSupplierCommand = new("SELECT CompanyName FROM dbo.Suppliers WHERE SupplierID = @ID", con);
                 getSupplierCommand.Parameters.Add(new SqlParameter("ID", SqlDbType.Int) { Value = supplier });
                 string name = (string)await getSupplierCommand.ExecuteScalarAsync();
                 Assert.Equal(companyNames[supplier], name);
