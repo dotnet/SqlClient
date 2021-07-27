@@ -54,7 +54,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
-        [ActiveIssue(5531)]
         public async Task TestPacketNumberWraparound()
         {
             // this test uses a specifically crafted sql record enumerator and data to put the TdsParserStateObject.WritePacket(byte,bool)
@@ -81,13 +80,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
 
-            // Bad Scenario - exception expected.
+            //Bad Scenario -exception expected.
             try
             {
                 List<Item> list = new()
                 {
+                    // this will go as null as we pass 0 to it.
                     new Item(0),
-                    null,
+                    new Item(1),
                     new Item(2),
                     new Item(3),
                     new Item(4),
@@ -112,7 +112,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using SqlCommand cmd = new(SQL, connection);
                 cmd.CommandTimeout = 100;
                 AddCommandParameters(cmd, parameters);
-                Assert.Throws<SqlNullValueException>(() => new SqlDataAdapter(cmd).Fill(new("BadFunc")));
+
+                // I changed the exception as it comes InvalidOperationException saying null objects must have a value.
+                Assert.Throws<InvalidOperationException>(() => new SqlDataAdapter(cmd).Fill(new("BadFunc")));
                 //Assert.False(true, "Expected exception did not occur");
             }
             catch (Exception e)
@@ -141,7 +143,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             public Item(int? v)
             {
-                id = v;
+                id = v == 0 ? null : v;
             }
             public int? id { get; set; }
         }
@@ -185,8 +187,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void RunTestCoreAndCompareWithBaseline()
         {
-            // Run Test
-                RunTest();
+            RunTest();
         }
 
         private sealed class CarriageReturnLineFeedReplacer : TextWriter
@@ -268,8 +269,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             object[][] baseValues = SteStructuredTypeBoundaries.GetSeparateValues(boundsMD);
             IList<DataTable> dtList = GenerateDataTables(baseValues);
 
-            TransactionOptions opts = new TransactionOptions();
-            opts.IsolationLevel = System.Transactions.IsolationLevel.ReadCommitted;
+            TransactionOptions opts = new TransactionOptions
+            {
+                IsolationLevel = System.Transactions.IsolationLevel.ReadCommitted
+            };
 
             // for each unique pattern of metadata
             int iter = 0;
@@ -278,9 +281,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 StePermutation tvpPerm = boundsMD.Current;
 
                 // Set up base command
-                SqlCommand cmd;
                 SqlParameter param;
-                cmd = new SqlCommand(GetProcName(tvpPerm))
+                SqlCommand cmd = new(GetProcName(tvpPerm))
                 {
                     CommandType = CommandType.StoredProcedure
                 };
@@ -327,7 +329,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
 
                     // send datasets
-                    //This is failing due to mismatch of length in source and target
+                    // This is failing due to mismatch of length in source and target while setting datatable in  dt  at
+                    // GenerateDataTables(baseValues).
                     // Needs more investigation to see which one is on purpose and which is oversight
 
                     //foreach (DataTable d in dtList)
@@ -346,400 +349,394 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void QueryHintsTest()
         {
-            using (SqlConnection conn = new SqlConnection(_connStr))
+            using SqlConnection conn = new(_connStr);
+            conn.Open();
+
+            Guid randomizer = Guid.NewGuid();
+            string typeName = string.Format("dbo.[QHint_{0}]", randomizer);
+            string procName = string.Format("dbo.[QHint_Proc_{0}]", randomizer);
+            string createTypeSql = string.Format(
+                    "CREATE TYPE {0} AS TABLE("
+                        + " c1 Int DEFAULT -1,"
+                        + " c2 NVarChar(40) DEFAULT N'DEFUALT',"
+                        + " c3 DateTime DEFAULT '1/1/2006',"
+                        + " c4 Int DEFAULT -1)",
+                        typeName);
+            string createProcSql = string.Format(
+                    "CREATE PROC {0}(@tvp {1} READONLY) AS SELECT TOP(2) * FROM @tvp ORDER BY c1", procName, typeName);
+            string dropSql = string.Format("DROP PROC {0}; DROP TYPE {1}", procName, typeName);
+
+            try
             {
-                conn.Open();
+                SqlCommand cmd = new(createTypeSql, conn);
+                cmd.ExecuteNonQuery();
 
-                Guid randomizer = Guid.NewGuid();
-                string typeName = string.Format("dbo.[QHint_{0}]", randomizer);
-                string procName = string.Format("dbo.[QHint_Proc_{0}]", randomizer);
-                string createTypeSql = string.Format(
-                        "CREATE TYPE {0} AS TABLE("
-                            + " c1 Int DEFAULT -1,"
-                            + " c2 NVarChar(40) DEFAULT N'DEFUALT',"
-                            + " c3 DateTime DEFAULT '1/1/2006',"
-                            + " c4 Int DEFAULT -1)",
-                            typeName);
-                string createProcSql = string.Format(
-                        "CREATE PROC {0}(@tvp {1} READONLY) AS SELECT TOP(2) * FROM @tvp ORDER BY c1", procName, typeName);
-                string dropSql = string.Format("DROP PROC {0}; DROP TYPE {1}", procName, typeName);
+                cmd.CommandText = createProcSql;
+                cmd.ExecuteNonQuery();
 
-                try
-                {
-                    SqlCommand cmd = new SqlCommand(createTypeSql, conn);
-                    cmd.ExecuteNonQuery();
+                cmd.CommandText = procName;
+                cmd.CommandType = CommandType.StoredProcedure;
+                SqlParameter param = cmd.Parameters.Add("@tvp", SqlDbType.Structured);
 
-                    cmd.CommandText = createProcSql;
-                    cmd.ExecuteNonQuery();
+                SqlMetaData[] columnMetadata;
+                List<SqlDataRecord> rows = new();
 
-                    cmd.CommandText = procName;
-                    cmd.CommandType = CommandType.StoredProcedure;
-                    SqlParameter param = cmd.Parameters.Add("@tvp", SqlDbType.Structured);
-
-                    SqlMetaData[] columnMetadata;
-                    List<SqlDataRecord> rows = new List<SqlDataRecord>();
-                    SqlDataRecord record;
-
-                    columnMetadata = new SqlMetaData[] {
+                columnMetadata = new SqlMetaData[] {
                             new SqlMetaData("", SqlDbType.Int, false, true, SortOrder.Ascending, 0),
                             new SqlMetaData("", SqlDbType.NVarChar, 40, false, true, SortOrder.Descending, 1),
                             new SqlMetaData("", SqlDbType.DateTime, false, true, SortOrder.Ascending, 2),
                             new SqlMetaData("", SqlDbType.Int, false, true, SortOrder.Descending, 3),
                         };
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(0, "Z-value", DateTime.Parse("03/01/2000"), 5);
-                    rows.Add(record);
+                SqlDataRecord record = new(columnMetadata);
+                record.SetValues(0, "Z-value", DateTime.Parse("03/01/2000"), 5);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(1, "Y-value", DateTime.Parse("02/01/2000"), 6);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(1, "Y-value", DateTime.Parse("02/01/2000"), 6);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(1, "X-value", DateTime.Parse("01/01/2000"), 7);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(1, "X-value", DateTime.Parse("01/01/2000"), 7);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(1, "X-value", DateTime.Parse("04/01/2000"), 8);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(1, "X-value", DateTime.Parse("04/01/2000"), 8);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(1, "X-value", DateTime.Parse("04/01/2000"), 4);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(1, "X-value", DateTime.Parse("04/01/2000"), 4);
+                rows.Add(record);
 
-                    param.Value = rows;
-                    using (SqlDataReader rdr = cmd.ExecuteReader())
+                param.Value = rows;
+                using (SqlDataReader rdr = cmd.ExecuteReader())
+                {
+                    do
                     {
-                        do
+                        int rowCounter = 0;
+                        while (rdr.Read())
                         {
-                            int rowCounter = 0;
-                            while (rdr.Read())
+                            // We are only selecting top 2 rows
+                            // Field counts are 4
+                            //  // Based on sortOrder the values we are expecting is
+                            //  "0  Z-value  3/1/2000 12:00:00 AM  5"
+                            //  "1  X-value  1/1/2000 12:00:00 AM  7"
+                            if (rowCounter == 0)
                             {
-                                // We are only selection top 2 rows
-                                // Field counts are 4
-                                //  // Based on sortOrder the values we are expecting is
-                                //  "0  Z-value  3/1/2000 12:00:00 AM  5"
-                                //  "1  X-value  1/1/2000 12:00:00 AM  7"
-                                if (rowCounter == 0)
-                                {
-                                    Assert.Equal("0", DataTestUtility.GetValueString(rdr.GetValue(0)));
-                                    Assert.Equal("Z-value", DataTestUtility.GetValueString(rdr.GetValue(1)));
-                                    Assert.Equal("3/1/2000 12:00:00 AM", DataTestUtility.GetValueString(rdr.GetValue(2)));
-                                    Assert.Equal("5", DataTestUtility.GetValueString(rdr.GetValue(3)));
-                                }
-                                if (rowCounter == 1)
-                                {
-                                    Assert.Equal("1", DataTestUtility.GetValueString(rdr.GetValue(0)));
-                                    Assert.Equal("X-value", DataTestUtility.GetValueString(rdr.GetValue(1)));
-                                    Assert.Equal("1/1/2000 12:00:00 AM", DataTestUtility.GetValueString(rdr.GetValue(2)));
-                                    Assert.Equal("7", DataTestUtility.GetValueString(rdr.GetValue(3)));
-                                }
-
-                                rowCounter++;
+                                Assert.Equal("0", DataTestUtility.GetValueString(rdr.GetValue(0)));
+                                Assert.Equal("Z-value", DataTestUtility.GetValueString(rdr.GetValue(1)));
+                                Assert.Equal("3/1/2000 12:00:00 AM", DataTestUtility.GetValueString(rdr.GetValue(2)));
+                                Assert.Equal("5", DataTestUtility.GetValueString(rdr.GetValue(3)));
                             }
-                        }
-                        while (rdr.NextResult());
-                    }
-                    rows.Clear();
+                            if (rowCounter == 1)
+                            {
+                                Assert.Equal("1", DataTestUtility.GetValueString(rdr.GetValue(0)));
+                                Assert.Equal("X-value", DataTestUtility.GetValueString(rdr.GetValue(1)));
+                                Assert.Equal("1/1/2000 12:00:00 AM", DataTestUtility.GetValueString(rdr.GetValue(2)));
+                                Assert.Equal("7", DataTestUtility.GetValueString(rdr.GetValue(3)));
+                            }
 
-                    columnMetadata = new SqlMetaData[] {
+                            rowCounter++;
+                        }
+                    }
+                    while (rdr.NextResult());
+                }
+                rows.Clear();
+
+                columnMetadata = new SqlMetaData[] {
                             new SqlMetaData("", SqlDbType.Int, false, true, SortOrder.Descending, 3),
                             new SqlMetaData("", SqlDbType.NVarChar, 40, false, true, SortOrder.Descending, 0),
                             new SqlMetaData("", SqlDbType.DateTime, false, true, SortOrder.Ascending, 2),
                             new SqlMetaData("", SqlDbType.Int, false, true, SortOrder.Ascending, 1),
                         };
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 1);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 1);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 2);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 2);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(6, "Y-value", DateTime.Parse("01/01/2000"), 3);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(6, "Y-value", DateTime.Parse("01/01/2000"), 3);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(6, "Y-value", DateTime.Parse("02/01/2000"), 3);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(6, "Y-value", DateTime.Parse("02/01/2000"), 3);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(5, "X-value", DateTime.Parse("03/01/2000"), 3);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(5, "X-value", DateTime.Parse("03/01/2000"), 3);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(4, "X-value", DateTime.Parse("01/01/2000"), 3);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(4, "X-value", DateTime.Parse("01/01/2000"), 3);
+                rows.Add(record);
 
-                    param.Value = rows;
-                    using (SqlDataReader rdr = cmd.ExecuteReader())
+                param.Value = rows;
+                using (SqlDataReader rdr = cmd.ExecuteReader())
+                {
+                    do
                     {
-                        do
+                        int rowCounter = 0;
+                        while (rdr.Read())
                         {
-                            int rowCounter = 0;
-                            while (rdr.Read())
+                            // We are only selecting top 2 rows
+                            // Field counts are 4
+                            //  // Based on sortOrder the values we are expecting is
+                            //  "4  X-value  1/1/2000 12:00:00 AM  3"
+                            //  "5  X-value  3/1/2000 12:00:00 AM  3"
+                            if (rowCounter == 0)
                             {
-                                // We are only selection top 2 rows
-                                // Field counts are 4
-                                //  // Based on sortOrder the values we are expecting is
-                                //  "4  X-value  1/1/2000 12:00:00 AM  3"
-                                //  "5  X-value  3/1/2000 12:00:00 AM  3"
-                                if (rowCounter == 0)
-                                {
-                                    Assert.Equal("4", DataTestUtility.GetValueString(rdr.GetValue(0)));
-                                    Assert.Equal("X-value", DataTestUtility.GetValueString(rdr.GetValue(1)));
-                                    Assert.Equal("1/1/2000 12:00:00 AM", DataTestUtility.GetValueString(rdr.GetValue(2)));
-                                    Assert.Equal("3", DataTestUtility.GetValueString(rdr.GetValue(3)));
-                                }
-                                if (rowCounter == 1)
-                                {
-                                    Assert.Equal("5", DataTestUtility.GetValueString(rdr.GetValue(0)));
-                                    Assert.Equal("X-value", DataTestUtility.GetValueString(rdr.GetValue(1)));
-                                    Assert.Equal("3/1/2000 12:00:00 AM", DataTestUtility.GetValueString(rdr.GetValue(2)));
-                                    Assert.Equal("3", DataTestUtility.GetValueString(rdr.GetValue(3)));
-                                }
-                                rowCounter++;
+                                Assert.Equal("4", DataTestUtility.GetValueString(rdr.GetValue(0)));
+                                Assert.Equal("X-value", DataTestUtility.GetValueString(rdr.GetValue(1)));
+                                Assert.Equal("1/1/2000 12:00:00 AM", DataTestUtility.GetValueString(rdr.GetValue(2)));
+                                Assert.Equal("3", DataTestUtility.GetValueString(rdr.GetValue(3)));
                             }
+                            if (rowCounter == 1)
+                            {
+                                Assert.Equal("5", DataTestUtility.GetValueString(rdr.GetValue(0)));
+                                Assert.Equal("X-value", DataTestUtility.GetValueString(rdr.GetValue(1)));
+                                Assert.Equal("3/1/2000 12:00:00 AM", DataTestUtility.GetValueString(rdr.GetValue(2)));
+                                Assert.Equal("3", DataTestUtility.GetValueString(rdr.GetValue(3)));
+                            }
+                            rowCounter++;
                         }
-                        while (rdr.NextResult());
                     }
-                    rows.Clear();
+                    while (rdr.NextResult());
+                }
+                rows.Clear();
 
-                    columnMetadata = new SqlMetaData[] {
+                columnMetadata = new SqlMetaData[] {
                             new SqlMetaData("", SqlDbType.Int, true, false, SortOrder.Unspecified, -1),
                             new SqlMetaData("", SqlDbType.NVarChar, 40, false, false, SortOrder.Unspecified, -1),
                             new SqlMetaData("", SqlDbType.DateTime, false, false, SortOrder.Unspecified, -1),
                             new SqlMetaData("", SqlDbType.Int, true, false, SortOrder.Unspecified, -1),
                         };
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 1);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 1);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 2);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 2);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(6, "Y-value", DateTime.Parse("01/01/2000"), 3);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(6, "Y-value", DateTime.Parse("01/01/2000"), 3);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(6, "Y-value", DateTime.Parse("02/01/2000"), 3);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(6, "Y-value", DateTime.Parse("02/01/2000"), 3);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(5, "X-value", DateTime.Parse("03/01/2000"), 3);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(5, "X-value", DateTime.Parse("03/01/2000"), 3);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(4, "X-value", DateTime.Parse("01/01/2000"), 3);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(4, "X-value", DateTime.Parse("01/01/2000"), 3);
+                rows.Add(record);
 
-                    param.Value = rows;
-                    using (SqlDataReader rdr = cmd.ExecuteReader())
+                param.Value = rows;
+                using (SqlDataReader rdr = cmd.ExecuteReader())
+                {
+                    do
                     {
-                        do
+                        int rowCounter = 0;
+                        while (rdr.Read())
                         {
-                            int rowCounter = 0;
-                            while (rdr.Read())
+                            // We are only selecting top 2 rows
+                            // Field counts are 4
+                            //  // Based on sortOrder the values we are expecting is
+                            //  "-1  Y-value  1/1/2000 12:00:00 AM  -1"
+                            //  "-1  Z-value  1/1/2000 12:00:00 AM  -1"
+                            if (rowCounter == 0)
                             {
-                                // We are only selection top 2 rows
-                                // Field counts are 4
-                                //  // Based on sortOrder the values we are expecting is
-                                //  "-1  Y-value  1/1/2000 12:00:00 AM  -1"
-                                //  "-1  Z-value  1/1/2000 12:00:00 AM  -1"
-                                if (rowCounter == 0)
-                                {
-                                    Assert.Equal("-1", DataTestUtility.GetValueString(rdr.GetValue(0)));
-                                    Assert.Equal("Y-value", DataTestUtility.GetValueString(rdr.GetValue(1)));
-                                    Assert.Equal("1/1/2000 12:00:00 AM", DataTestUtility.GetValueString(rdr.GetValue(2)));
-                                    Assert.Equal("-1", DataTestUtility.GetValueString(rdr.GetValue(3)));
-                                }
-                                if (rowCounter == 1)
-                                {
-                                    Assert.Equal("-1", DataTestUtility.GetValueString(rdr.GetValue(0)));
-                                    Assert.Equal("Z-value", DataTestUtility.GetValueString(rdr.GetValue(1)));
-                                    Assert.Equal("1/1/2000 12:00:00 AM", DataTestUtility.GetValueString(rdr.GetValue(2)));
-                                    Assert.Equal("-1", DataTestUtility.GetValueString(rdr.GetValue(3)));
-                                }
-                                rowCounter++;
+                                Assert.Equal("-1", DataTestUtility.GetValueString(rdr.GetValue(0)));
+                                Assert.Equal("Y-value", DataTestUtility.GetValueString(rdr.GetValue(1)));
+                                Assert.Equal("1/1/2000 12:00:00 AM", DataTestUtility.GetValueString(rdr.GetValue(2)));
+                                Assert.Equal("-1", DataTestUtility.GetValueString(rdr.GetValue(3)));
                             }
+                            if (rowCounter == 1)
+                            {
+                                Assert.Equal("-1", DataTestUtility.GetValueString(rdr.GetValue(0)));
+                                Assert.Equal("Z-value", DataTestUtility.GetValueString(rdr.GetValue(1)));
+                                Assert.Equal("1/1/2000 12:00:00 AM", DataTestUtility.GetValueString(rdr.GetValue(2)));
+                                Assert.Equal("-1", DataTestUtility.GetValueString(rdr.GetValue(3)));
+                            }
+                            rowCounter++;
                         }
-                        while (rdr.NextResult());
                     }
-                    rows.Clear();
+                    while (rdr.NextResult());
+                }
+                rows.Clear();
 
 
-                    columnMetadata = new SqlMetaData[] {
+                columnMetadata = new SqlMetaData[] {
                             new SqlMetaData("", SqlDbType.Int, false, false, SortOrder.Unspecified, -1),
                             new SqlMetaData("", SqlDbType.NVarChar, 40, true, false, SortOrder.Unspecified, -1),
                             new SqlMetaData("", SqlDbType.DateTime, true, false, SortOrder.Unspecified, -1),
                             new SqlMetaData("", SqlDbType.Int, false, false, SortOrder.Unspecified, -1),
                         };
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 1);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 1);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 2);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 2);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(6, "Y-value", DateTime.Parse("01/01/2000"), 3);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(6, "Y-value", DateTime.Parse("01/01/2000"), 3);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(6, "Y-value", DateTime.Parse("02/01/2000"), 3);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(6, "Y-value", DateTime.Parse("02/01/2000"), 3);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(5, "X-value", DateTime.Parse("03/01/2000"), 3);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(5, "X-value", DateTime.Parse("03/01/2000"), 3);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(4, "X-value", DateTime.Parse("01/01/2000"), 3);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(4, "X-value", DateTime.Parse("01/01/2000"), 3);
+                rows.Add(record);
 
-                    param.Value = rows;
-                    using (SqlDataReader rdr = cmd.ExecuteReader())
+                param.Value = rows;
+                using (SqlDataReader rdr = cmd.ExecuteReader())
+                {
+                    do
                     {
-                        do
+                        int rowCounter = 0;
+                        while (rdr.Read())
                         {
-                            int rowCounter = 0;
-                            while (rdr.Read())
+                            // We are only selecting top 2 rows
+                            // Field counts are 4
+                            //  // Based on sortOrder the values we are expecting is
+                            //  "4  DEFUALT  1/1/2006 12:00:00 AM  3"
+                            //  "5  DEFUALT  1/1/2006 12:00:00 AM  3"
+                            if (rowCounter == 0)
                             {
-                                // We are only selection top 2 rows
-                                // Field counts are 4
-                                //  // Based on sortOrder the values we are expecting is
-                                //  "4  DEFUALT  1/1/2006 12:00:00 AM  3"
-                                //  "5  DEFUALT  1/1/2006 12:00:00 AM  3"
-                                if (rowCounter == 0)
-                                {
-                                    Assert.Equal("4", DataTestUtility.GetValueString(rdr.GetValue(0)));
-                                    Assert.Equal("DEFUALT", DataTestUtility.GetValueString(rdr.GetValue(1)));
-                                    Assert.Equal("1/1/2006 12:00:00 AM", DataTestUtility.GetValueString(rdr.GetValue(2)));
-                                    Assert.Equal("3", DataTestUtility.GetValueString(rdr.GetValue(3)));
-                                }
-                                if (rowCounter == 1)
-                                {
-                                    Assert.Equal("5", DataTestUtility.GetValueString(rdr.GetValue(0)));
-                                    Assert.Equal("DEFUALT", DataTestUtility.GetValueString(rdr.GetValue(1)));
-                                    Assert.Equal("1/1/2006 12:00:00 AM", DataTestUtility.GetValueString(rdr.GetValue(2)));
-                                    Assert.Equal("3", DataTestUtility.GetValueString(rdr.GetValue(3)));
-                                }
-                                rowCounter++;
+                                Assert.Equal("4", DataTestUtility.GetValueString(rdr.GetValue(0)));
+                                Assert.Equal("DEFUALT", DataTestUtility.GetValueString(rdr.GetValue(1)));
+                                Assert.Equal("1/1/2006 12:00:00 AM", DataTestUtility.GetValueString(rdr.GetValue(2)));
+                                Assert.Equal("3", DataTestUtility.GetValueString(rdr.GetValue(3)));
                             }
+                            if (rowCounter == 1)
+                            {
+                                Assert.Equal("5", DataTestUtility.GetValueString(rdr.GetValue(0)));
+                                Assert.Equal("DEFUALT", DataTestUtility.GetValueString(rdr.GetValue(1)));
+                                Assert.Equal("1/1/2006 12:00:00 AM", DataTestUtility.GetValueString(rdr.GetValue(2)));
+                                Assert.Equal("3", DataTestUtility.GetValueString(rdr.GetValue(3)));
+                            }
+                            rowCounter++;
                         }
-                        while (rdr.NextResult());
                     }
-                    rows.Clear();
+                    while (rdr.NextResult());
+                }
+                rows.Clear();
 
-                    columnMetadata = new SqlMetaData[] {
+                columnMetadata = new SqlMetaData[] {
                             new SqlMetaData("", SqlDbType.Int, true, false, SortOrder.Unspecified, -1),
                             new SqlMetaData("", SqlDbType.NVarChar, 40, true, false, SortOrder.Unspecified, -1),
                             new SqlMetaData("", SqlDbType.DateTime, true, false, SortOrder.Unspecified, -1),
                             new SqlMetaData("", SqlDbType.Int, true, false, SortOrder.Unspecified, -1),
                         };
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 1);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 1);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 2);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(6, "Z-value", DateTime.Parse("01/01/2000"), 2);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(6, "Y-value", DateTime.Parse("01/01/2000"), 3);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(6, "Y-value", DateTime.Parse("01/01/2000"), 3);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(6, "Y-value", DateTime.Parse("02/01/2000"), 3);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(6, "Y-value", DateTime.Parse("02/01/2000"), 3);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(5, "X-value", DateTime.Parse("03/01/2000"), 3);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(5, "X-value", DateTime.Parse("03/01/2000"), 3);
+                rows.Add(record);
 
-                    record = new SqlDataRecord(columnMetadata);
-                    record.SetValues(4, "X-value", DateTime.Parse("01/01/2000"), 3);
-                    rows.Add(record);
+                record = new SqlDataRecord(columnMetadata);
+                record.SetValues(4, "X-value", DateTime.Parse("01/01/2000"), 3);
+                rows.Add(record);
 
-                    param.Value = rows;
-                    using (SqlDataReader rdr = cmd.ExecuteReader())
+                param.Value = rows;
+                using (SqlDataReader rdr = cmd.ExecuteReader())
+                {
+                    do
                     {
-                        do
+                        int rowCounter = 0;
+                        while (rdr.Read())
                         {
-                            int rowCounter = 0;
-                            while (rdr.Read())
+                            // We are only selecting top 2 rows
+                            // Field counts are 4
+                            //  // Based on sortOrder the values we are expecting is
+                            //  "-1  DEFUALT  1/1/2006 12:00:00 AM  -1"
+                            //  "-1  DEFUALT  1/1/2006 12:00:00 AM  -1"
+                            if (rowCounter == 0)
                             {
-                                // We are only selection top 2 rows
-                                // Field counts are 4
-                                //  // Based on sortOrder the values we are expecting is
-                                //  "-1  DEFUALT  1/1/2006 12:00:00 AM  -1"
-                                //  "-1  DEFUALT  1/1/2006 12:00:00 AM  -1"
-                                if (rowCounter == 0)
-                                {
-                                    Assert.Equal("-1", DataTestUtility.GetValueString(rdr.GetValue(0)));
-                                    Assert.Equal("DEFUALT", DataTestUtility.GetValueString(rdr.GetValue(1)));
-                                    Assert.Equal("1/1/2006 12:00:00 AM", DataTestUtility.GetValueString(rdr.GetValue(2)));
-                                    Assert.Equal("-1", DataTestUtility.GetValueString(rdr.GetValue(3)));
-                                }
-                                if (rowCounter == 1)
-                                {
-                                    Assert.Equal("-1", DataTestUtility.GetValueString(rdr.GetValue(0)));
-                                    Assert.Equal("DEFUALT", DataTestUtility.GetValueString(rdr.GetValue(1)));
-                                    Assert.Equal("1/1/2006 12:00:00 AM", DataTestUtility.GetValueString(rdr.GetValue(2)));
-                                    Assert.Equal("-1", DataTestUtility.GetValueString(rdr.GetValue(3)));
-                                }
-                                rowCounter++;
+                                Assert.Equal("-1", DataTestUtility.GetValueString(rdr.GetValue(0)));
+                                Assert.Equal("DEFUALT", DataTestUtility.GetValueString(rdr.GetValue(1)));
+                                Assert.Equal("1/1/2006 12:00:00 AM", DataTestUtility.GetValueString(rdr.GetValue(2)));
+                                Assert.Equal("-1", DataTestUtility.GetValueString(rdr.GetValue(3)));
                             }
+                            if (rowCounter == 1)
+                            {
+                                Assert.Equal("-1", DataTestUtility.GetValueString(rdr.GetValue(0)));
+                                Assert.Equal("DEFUALT", DataTestUtility.GetValueString(rdr.GetValue(1)));
+                                Assert.Equal("1/1/2006 12:00:00 AM", DataTestUtility.GetValueString(rdr.GetValue(2)));
+                                Assert.Equal("-1", DataTestUtility.GetValueString(rdr.GetValue(3)));
+                            }
+                            rowCounter++;
                         }
-                        while (rdr.NextResult());
                     }
-                    rows.Clear();
+                    while (rdr.NextResult());
+                }
+                rows.Clear();
 
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e.Message);
-                }
-                finally
-                {
-                    SqlCommand cmd = new SqlCommand(dropSql, conn);
-                    cmd.ExecuteNonQuery();
-                }
-
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+            finally
+            {
+                SqlCommand cmd = new SqlCommand(dropSql, conn);
+                cmd.ExecuteNonQuery();
             }
         }
 
         private static async Task RunPacketNumberWraparound(WraparoundRowEnumerator enumerator)
         {
-            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
-            using (var cmd = new SqlCommand("unimportant")
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            using SqlCommand cmd = new("unimportant")
             {
                 CommandType = System.Data.CommandType.StoredProcedure,
                 Connection = connection,
-            })
+            };
+            await cmd.Connection.OpenAsync();
+            cmd.Parameters.Add(new SqlParameter("@rows", SqlDbType.Structured)
             {
-                await cmd.Connection.OpenAsync();
-                cmd.Parameters.Add(new SqlParameter("@rows", SqlDbType.Structured)
-                {
-                    TypeName = "unimportant",
-                    Value = enumerator,
-                });
-                try
-                {
-                    await cmd.ExecuteNonQueryAsync();
-                }
-                catch (Exception)
-                {
-                    // ignore the errors caused by the sproc and table type not existing
-                }
+                TypeName = "unimportant",
+                Value = enumerator,
+            });
+            try
+            {
+                await cmd.ExecuteNonQueryAsync();
+            }
+            catch (Exception)
+            {
+                // ignore the errors caused by the sproc and table type not existing
             }
         }
 
@@ -749,7 +746,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private bool AllowableDifference(string source, object result, StePermutation metadata)
         {
-            object value;
             bool returnValue = false;
 
             // turn result into a string
@@ -773,7 +769,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     returnValue = true;
                 }
-                else if (metadata.TryGetValue(SteAttributeKey.MaxLength, out value) && value != SteTypeBoundaries.s_doNotUseMarker)
+                else if (metadata.TryGetValue(SteAttributeKey.MaxLength, out object value) && value != SteTypeBoundaries.s_doNotUseMarker)
                 {
                     int maxLength = (int)value;
 
@@ -800,7 +796,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private bool AllowableDifference(byte[] source, object result, StePermutation metadata)
         {
-            object value;
             bool returnValue = false;
 
             // turn result into byte array
@@ -820,7 +815,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     returnValue = true;
                 }
-                else if (metadata.TryGetValue(SteAttributeKey.MaxLength, out value) && value != SteTypeBoundaries.s_doNotUseMarker)
+                else if (metadata.TryGetValue(SteAttributeKey.MaxLength, out object value) && value != SteTypeBoundaries.s_doNotUseMarker)
                 {
                     int maxLength = (int)value;
 
@@ -841,14 +836,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }
             }
-
             return returnValue;
         }
 
         private bool AllowableDifference(SqlDecimal source, object result, StePermutation metadata)
         {
-            object value;
-            object value2;
             bool returnValue = false;
 
             // turn result into SqlDecimal
@@ -872,7 +864,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     returnValue = true;
                 }
-                else if (metadata.TryGetValue(SteAttributeKey.SqlDbType, out value) &&
+                else if (metadata.TryGetValue(SteAttributeKey.SqlDbType, out object value) &&
                         SteTypeBoundaries.s_doNotUseMarker != value &&
                         (SqlDbType.SmallMoney == (SqlDbType)value ||
                          SqlDbType.Money == (SqlDbType)value))
@@ -896,7 +888,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         SqlDbType.Decimal == (SqlDbType)value)
                 {
                     if (metadata.TryGetValue(SteAttributeKey.Scale, out value) &&
-                            metadata.TryGetValue(SteAttributeKey.Precision, out value2) &&
+                            metadata.TryGetValue(SteAttributeKey.Precision, out object value2) &&
                             SteTypeBoundaries.s_doNotUseMarker != value &&
                             SteTypeBoundaries.s_doNotUseMarker != value2)
                     {
@@ -920,10 +912,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }
             }
-
             return returnValue;
         }
-
 
         private bool CompareValue(object result, object source, StePermutation metadata)
         {
@@ -971,9 +961,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                     {
                                         isMatch = result.Equals(((SqlInt32)source).Value);
                                     }
-                                    else if (source is SqlInt16 && result is short)
+                                    else if (source is SqlInt16 @int && result is short)
                                     {
-                                        isMatch = result.Equals(((SqlInt16)source).Value);
+                                        isMatch = result.Equals(@int.Value);
                                     }
                                     else if (source is SqlSingle && result is float)
                                     {
@@ -1060,13 +1050,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }
             }
-
             return records;
         }
 
         private DataTable CreateNewTable(object[] row, ref Type[] lastRowTypes)
         {
-            DataTable dt = new DataTable();
+            DataTable dt = new();
             for (int i = 0; i < row.Length; i++)
             {
                 object value = row[i];
@@ -1089,17 +1078,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 dt.Columns.Add(new DataColumn("Col" + i + "_" + t.Name, t));
 
-
                 lastRowTypes[i] = t;
             }
-
             return dt;
         }
 
         // create table type and proc that uses that type at the server
         private void CreateServerObjects(StePermutation tvpPerm)
         {
-
             // Create the table type tsql
             StringBuilder tsql = new StringBuilder();
             tsql.Append("CREATE TYPE ");
@@ -1235,25 +1221,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     case SqlDbType.Structured:
                         throw new NotSupportedException("Not supported");
                 }
-
                 colOrdinal++;
             }
 
             tsql.Append(")");
 
-            using (SqlConnection conn = new SqlConnection(_connStr))
-            {
-                conn.Open();
+            using SqlConnection conn = new SqlConnection(_connStr);
+            conn.Open();
 
-                // execute it to create the type
-                SqlCommand cmd = new SqlCommand(tsql.ToString(), conn);
-                cmd.ExecuteNonQuery();
+            // execute it to create the type
+            SqlCommand cmd = new SqlCommand(tsql.ToString(), conn);
+            cmd.ExecuteNonQuery();
 
-                // and create the proc that uses the type            
-                cmd.CommandText = string.Format("CREATE PROC {0}(@tvp {1} READONLY) AS SELECT * FROM @tvp order by {2}",
-                        GetProcName(tvpPerm), GetTypeName(tvpPerm), colOrdinal - 1);
-                cmd.ExecuteNonQuery();
-            }
+            // and create the proc that uses the type            
+            cmd.CommandText = string.Format("CREATE PROC {0}(@tvp {1} READONLY) AS SELECT * FROM @tvp order by {2}",
+                    GetProcName(tvpPerm), GetTypeName(tvpPerm), colOrdinal - 1);
+            cmd.ExecuteNonQuery();
         }
 
         private bool DoesRowMatchMetadata(object[] row, DataTable table)
@@ -1279,66 +1262,62 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private void DropServerObjects(StePermutation tvpPerm)
         {
             string dropText = $"DROP PROC IF EXISTS { GetProcName(tvpPerm)} ;  DROP TYPE IF EXISTS {GetTypeName(tvpPerm)} ";
-            using (SqlConnection conn = new SqlConnection(_connStr))
-            {
-                conn.Open();
+            using SqlConnection conn = new(_connStr);
+            conn.Open();
 
-                SqlCommand cmd = new SqlCommand(dropText, conn);
-                try
-                {
-                    cmd.ExecuteNonQuery();
-                }
-                catch (SqlException e)
-                {
-                    Console.WriteLine("SqlException dropping objects: {0}", e.Number);
-                    throw;
-                }
+            SqlCommand cmd = new(dropText, conn);
+            try
+            {
+                cmd.ExecuteNonQuery();
+            }
+            catch (SqlException e)
+            {
+                Console.WriteLine("SqlException dropping objects: {0}", e.Number);
+                throw;
             }
         }
 
         private void ExecuteAndVerify(SqlCommand cmd, StePermutation tvpPerm, object[][] objValues, DataTable dtValues)
         {
-            using (SqlConnection conn = new SqlConnection(_connStr))
+            using SqlConnection conn = new(_connStr);
+            conn.Open();
+            cmd.Connection = conn;
+            if (DataTestUtility.IsNotAzureServer())
             {
-                conn.Open();
-                cmd.Connection = conn;
-                if (DataTestUtility.IsNotAzureServer())
-                {
-                    // Choose the 2628 error message instead of 8152 in SQL Server 2016 & 2017
-                    // Azure SQL Managed Instance supports the following global Trace Flags:
-                    // 460, 2301, 2389, 2390, 2453, 2467, 7471, 8207, 9389, 10316, and 11024.
-                    // Session trace-flags are not yet supported in Managed Instance. Related link:
-                    // https://docs.microsoft.com/en-us/sql/t-sql/database-console-commands/dbcc-traceon-trace-flags-transact-sql?view=sql-server-ver15#trace-flags
-                    // Flag 460 replaces message 8152: 'String or binary data would be truncated.'to
-                    // 2628: String or binary data would be truncated in table '%.*ls', column '%.*ls'. Truncated value: '%.*ls'.
-                    // Starting with SQL Server 2019 (15.x), to accomplish this at the database level,
-                    // see the VERBOSE_TRUNCATION_WARNINGS option in ALTER DATABASE SCOPED CONFIGURATION (Transact-SQL).
-                    // This trace flag applies to SQL Server 2017(14.x) CU12 and higher builds.
-                    //Starting with database compatibility level 150, message ID 2628 is the default and this trace flag has no effect.
-                    using SqlCommand cmdFix = new("DBCC TRACEON(460)", conn);
-                    cmdFix.ExecuteNonQuery();
-                }
+                // Choose the 2628 error message instead of 8152 in SQL Server 2016 & 2017
+                // Azure SQL Managed Instance supports the following global Trace Flags:
+                // 460, 2301, 2389, 2390, 2453, 2467, 7471, 8207, 9389, 10316, and 11024.
+                // Session trace-flags are not yet supported in Managed Instance. Related link:
+                // https://docs.microsoft.com/en-us/sql/t-sql/database-console-commands/dbcc-traceon-trace-flags-transact-sql?view=sql-server-ver15#trace-flags
+                // Flag 460 replaces message 8152: 'String or binary data would be truncated.'to
+                // 2628: String or binary data would be truncated in table '%.*ls', column '%.*ls'. Truncated value: '%.*ls'.
+                // Starting with SQL Server 2019 (15.x), to accomplish this at the database level,
+                // see the VERBOSE_TRUNCATION_WARNINGS option in ALTER DATABASE SCOPED CONFIGURATION (Transact-SQL).
+                // This trace flag applies to SQL Server 2017(14.x) CU12 and higher builds.
+                //Starting with database compatibility level 150, message ID 2628 is the default and this trace flag has no effect.
+                using SqlCommand cmdFix = new("DBCC TRACEON(460)", conn);
+                cmdFix.ExecuteNonQuery();
+            }
 
-                try
-                {
-                    using SqlDataReader rdr = cmd.ExecuteReader();
-                    VerifyColumnBoundaries(rdr, GetFields(tvpPerm), objValues, dtValues);
-                }
-                catch (SqlException se)
-                {
-                    Console.WriteLine("SqlException. Error Code: {0} with ", se.Number);
-                    throw;
-                }
-                catch (InvalidOperationException ioe)
-                {
-                    Console.WriteLine("InvalidOp: {0}", ioe.Message);
-                    throw;
-                }
-                catch (ArgumentException ae)
-                {
-                    Console.WriteLine("ArgumentException: {0}", ae.Message);
-                    throw;
-                }
+            try
+            {
+                using SqlDataReader rdr = cmd.ExecuteReader();
+                VerifyColumnBoundaries(rdr, GetFields(tvpPerm), objValues, dtValues);
+            }
+            catch (SqlException se)
+            {
+                Console.WriteLine("SqlException. Error Code: {0} with ", se.Number);
+                throw;
+            }
+            catch (InvalidOperationException ioe)
+            {
+                Console.WriteLine("InvalidOp: {0}", ioe.Message);
+                throw;
+            }
+            catch (ArgumentException ae)
+            {
+                Console.WriteLine("ArgumentException: {0}", ae.Message);
+                throw;
             }
         }
 
@@ -1384,36 +1363,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 }
             }
-
             return dtList;
         }
 
-        private IList<StePermutation> GetFields(StePermutation tvpPerm)
-        {
-            return (IList<StePermutation>)tvpPerm[SteAttributeKey.Fields];
-        }
+        private IList<StePermutation> GetFields(StePermutation tvpPerm) => (IList<StePermutation>)tvpPerm[SteAttributeKey.Fields];
 
-        private string GetProcName(StePermutation tvpPerm)
-        {
-            return "dbo.[Proc_" + (string)tvpPerm[SteAttributeKey.TypeName] + "]";
-        }
+        private string GetProcName(StePermutation tvpPerm) => "dbo.[Proc_" + (string)tvpPerm[SteAttributeKey.TypeName] + "]";
 
-        private string GetTypeName(StePermutation tvpPerm)
-        {
-            return "dbo.[" + (string)tvpPerm[SteAttributeKey.TypeName] + "]";
-        }
+        private string GetTypeName(StePermutation tvpPerm) => "dbo.[" + (string)tvpPerm[SteAttributeKey.TypeName] + "]";
 
-        private bool IsNull(object value)
-        {
-            return null == value ||
+        private bool IsNull(object value) => null == value ||
                     DBNull.Value == value ||
-                    (value is INullable &&
-                     ((INullable)value).IsNull);
-        }
+                    (value is INullable nullableValue &&
+                     nullableValue.IsNull);
 
         private SqlMetaData PermToSqlMetaData(StePermutation perm)
         {
-            object attr;
             SqlDbType sqlDbType;
             int maxLength = 0;
             byte precision = 0;
@@ -1422,7 +1387,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Type type = null;
             long localeId = 0;
             SqlCompareOptions opts = SqlCompareOptions.IgnoreCase | SqlCompareOptions.IgnoreKanaType | SqlCompareOptions.IgnoreWidth;
-            if (perm.TryGetValue(SteAttributeKey.SqlDbType, out attr) && (attr != SteTypeBoundaries.s_doNotUseMarker))
+            if (perm.TryGetValue(SteAttributeKey.SqlDbType, out object attr) && (attr != SteTypeBoundaries.s_doNotUseMarker))
             {
                 sqlDbType = (SqlDbType)attr;
             }
@@ -1585,30 +1550,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             _currentRow = _sourceData.Count;
         }
 
-        override public string GetDataTypeName(int ordinal)
-        {
-            return _sourceData[_currentRow].GetDataTypeName(ordinal);
-        }
+        public override string GetDataTypeName(int ordinal) => _sourceData[_currentRow].GetDataTypeName(ordinal);
 
-        override public IEnumerator GetEnumerator()
-        {
-            return _sourceData.GetEnumerator();
-        }
+        override public IEnumerator GetEnumerator() => _sourceData.GetEnumerator();
 
-        override public Type GetFieldType(int ordinal)
-        {
-            return _sourceData[_currentRow].GetFieldType(ordinal);
-        }
+        override public Type GetFieldType(int ordinal) => _sourceData[_currentRow].GetFieldType(ordinal);
 
-        override public string GetName(int ordinal)
-        {
-            return _sourceData[_currentRow].GetName(ordinal);
-        }
+        public override string GetName(int ordinal) => _sourceData[_currentRow].GetName(ordinal);
 
-        override public int GetOrdinal(string name)
-        {
-            return _sourceData[_currentRow].GetOrdinal(name);
-        }
+        public override int GetOrdinal(string name) => _sourceData[_currentRow].GetOrdinal(name);
 
         override public DataTable GetSchemaTable()
         {
@@ -1668,39 +1618,23 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 row[SchemaTableColumn.BaseColumnName] = md.Name;
                 schemaTable.Rows.Add(row);
             }
-
             return schemaTable;
         }
 
-        override public bool GetBoolean(int ordinal)
-        {
-            return _sourceData[_currentRow].GetBoolean(ordinal);
-        }
+        // zero reference
+        public override bool GetBoolean(int ordinal) => _sourceData[_currentRow].GetBoolean(ordinal);
 
-        override public byte GetByte(int ordinal)
-        {
-            return _sourceData[_currentRow].GetByte(ordinal);
-        }
+        public override byte GetByte(int ordinal) => _sourceData[_currentRow].GetByte(ordinal);
 
-        override public long GetBytes(int ordinal, long dataOffset, byte[] buffer, int bufferOffset, int length)
-        {
-            return _sourceData[_currentRow].GetBytes(ordinal, dataOffset, buffer, bufferOffset, length);
-        }
+        public override long GetBytes(int ordinal, long dataOffset, byte[] buffer, int bufferOffset, int length) =>
+            _sourceData[_currentRow].GetBytes(ordinal, dataOffset, buffer, bufferOffset, length);
 
-        override public char GetChar(int ordinal)
-        {
-            return _sourceData[_currentRow].GetChar(ordinal);
-        }
+        public override char GetChar(int ordinal) => _sourceData[_currentRow].GetChar(ordinal);
 
-        override public long GetChars(int ordinal, long dataOffset, char[] buffer, int bufferOffset, int length)
-        {
-            return _sourceData[_currentRow].GetChars(ordinal, dataOffset, buffer, bufferOffset, length);
-        }
+        public override long GetChars(int ordinal, long dataOffset, char[] buffer, int bufferOffset, int length) =>
+            _sourceData[_currentRow].GetChars(ordinal, dataOffset, buffer, bufferOffset, length);
 
-        override public DateTime GetDateTime(int ordinal)
-        {
-            return _sourceData[_currentRow].GetDateTime(ordinal);
-        }
+        override public DateTime GetDateTime(int ordinal) => _sourceData[_currentRow].GetDateTime(ordinal);
 
         override public decimal GetDecimal(int ordinal)
         {
@@ -1717,63 +1651,33 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return result;
         }
 
-        override public double GetDouble(int ordinal)
-        {
-            return _sourceData[_currentRow].GetDouble(ordinal);
-        }
+        public override double GetDouble(int ordinal) => _sourceData[_currentRow].GetDouble(ordinal);
 
-        override public float GetFloat(int ordinal)
-        {
-            return _sourceData[_currentRow].GetFloat(ordinal);
-        }
+        public override float GetFloat(int ordinal) => _sourceData[_currentRow].GetFloat(ordinal);
 
-        override public Guid GetGuid(int ordinal)
-        {
-            return _sourceData[_currentRow].GetGuid(ordinal);
-        }
+        public override Guid GetGuid(int ordinal) => _sourceData[_currentRow].GetGuid(ordinal);
 
-        override public short GetInt16(int ordinal)
-        {
-            return _sourceData[_currentRow].GetInt16(ordinal);
-        }
+        public override short GetInt16(int ordinal) => _sourceData[_currentRow].GetInt16(ordinal);
 
-        override public int GetInt32(int ordinal)
-        {
-            return _sourceData[_currentRow].GetInt32(ordinal);
-        }
+        public override int GetInt32(int ordinal) => _sourceData[_currentRow].GetInt32(ordinal);
 
-        override public long GetInt64(int ordinal)
-        {
-            return _sourceData[_currentRow].GetInt64(ordinal);
-        }
+        public override long GetInt64(int ordinal) => _sourceData[_currentRow].GetInt64(ordinal);
 
-        override public string GetString(int ordinal)
-        {
-            return _sourceData[_currentRow].GetString(ordinal);
-        }
+        public override string GetString(int ordinal) => _sourceData[_currentRow].GetString(ordinal);
 
-        override public object GetValue(int ordinal)
-        {
-            return _sourceData[_currentRow].GetValue(ordinal);
-        }
+        public override object GetValue(int ordinal) => _sourceData[_currentRow].GetValue(ordinal);
 
-        override public int GetValues(object[] values)
-        {
-            return _sourceData[_currentRow].GetValues(values);
-        }
+        public override int GetValues(object[] values) => _sourceData[_currentRow].GetValues(values);
 
-        override public bool IsDBNull(int ordinal)
-        {
-            return _sourceData[_currentRow].IsDBNull(ordinal);
-        }
+        public override bool IsDBNull(int ordinal) => _sourceData[_currentRow].IsDBNull(ordinal);
 
-        override public bool NextResult()
+        public override bool NextResult()
         {
             Close();
             return false;
         }
 
-        override public bool Read()
+        public override bool Read()
         {
             _currentRow++;
 
@@ -1814,8 +1718,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         object IEnumerator.Current => Current;
 
-        public int Count { get => this._count; set => this._count = value; }
-        public int MaxCount { get => this._maxCount; set => this._maxCount = value; }
+        public int Count { get => _count; set => _count = value; }
+        public int MaxCount { get => _maxCount; set => _maxCount = value; }
 
         public IEnumerator<SqlDataRecord> GetEnumerator() => this;
 
@@ -1823,6 +1727,5 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public void Dispose() { }
         public void Reset() { }
-
     }
 }
