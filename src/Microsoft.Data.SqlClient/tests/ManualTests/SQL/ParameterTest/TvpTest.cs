@@ -50,7 +50,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US"); // To keep things consistent since we output dates as strings
 
             // This test is additionally affected by #26, where a Cancel throws SqlException instead of InvalidOperationException on Linux.
-            Assert.True(RunTestCoreAndCompareWithBaseline());
+            RunTestCoreAndCompareWithBaseline();
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
@@ -183,19 +183,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             OutputParameter.Run(_connStr);
         }
 
-        private bool RunTestCoreAndCompareWithBaseline()
+        private void RunTestCoreAndCompareWithBaseline()
         {
             // Run Test
-            try
-            {
                 RunTest();
-                return true;
-            }
-            catch (Exception e)
-            {
-                Assert.True(false, $"TvpTest failed. Message:{e.Message}");
-                return false;
-            }
         }
 
         private sealed class CarriageReturnLineFeedReplacer : TextWriter
