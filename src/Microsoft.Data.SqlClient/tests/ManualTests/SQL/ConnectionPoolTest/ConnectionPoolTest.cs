@@ -424,7 +424,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 connection4.Close();
 
                 // Use a different connection string
-                SqlConnection connection5 = new SqlConnection(connectionString + ";App=SqlConnectionPoolUnitTest;");
+                using SqlConnection connection5 = new SqlConnection(connectionString + ";App=SqlConnectionPoolUnitTest;");
                 connection5.Open();
                 Assert.False(internalConnection2.IsInternalConnectionOf(connection5), "Connection with different connection string re-used internal connection");
                 Assert.False(connectionPool.ContainsConnection(connection5), "Connection with different connection string is in same pool");
