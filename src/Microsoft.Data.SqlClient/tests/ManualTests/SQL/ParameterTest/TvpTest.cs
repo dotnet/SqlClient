@@ -94,11 +94,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     new Item(5)
                 };
 
-                IEnumerable<int> Ids = list.Select(x => x.id.Value).Distinct();
+                IEnumerable<int> Ids = list.Select(x => x.id.GetValueOrDefault()).Distinct();
 
-                var sqlParam = new SqlParameter("ids", SqlDbType.Structured)
+                var sqlParam = new SqlParameter("@ids", SqlDbType.Structured)
                 {
-                    TypeName = "dbo.TableOfIntId",
+                    TypeName = "TableOfIntId",
                     SqlValue = Ids.Select(x =>
                     {
                         SqlDataRecord rec = new(new[] { new SqlMetaData("Id", SqlDbType.Int) });
@@ -114,7 +114,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 AddCommandParameters(cmd, parameters);
 
                 // I changed the exception as it comes InvalidOperationException saying null objects must have a value.
-                Assert.Throws<InvalidOperationException>(() => new SqlDataAdapter(cmd).Fill(new("BadFunc")));
+                Assert.Throws<SqlException>(() => new SqlDataAdapter(cmd).Fill(new("BadFunc")));
                 //Assert.False(true, "Expected exception did not occur");
             }
             catch (Exception e)
