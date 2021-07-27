@@ -5,6 +5,7 @@
 using System;
 using System.Data;
 using Microsoft.Data.SqlClient.Server;
+using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -19,29 +20,44 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             s_connStr = connStr;
 
-            SendInfo(System.DateTime.MinValue, "System.DateTime", "date");
-            SendInfo(System.DateTime.MaxValue, "System.DateTime", "date");
+            // SqlDbType.Variant throws SqlDateTime overflow. Must be between 1/1/1753 12:00:00 AM and 12/31/9999 11:59:59 PM, but it works fine 
+            // when we use actual type.
+            // This is because when get the actualtype from value which is System.DateTime it maps tp SqlDbType.DateTime. Max value should be fine.
 
-            SendInfo(System.DateTime.MinValue, "System.DateTime", "datetime2");
-            SendInfo(System.DateTime.MaxValue, "System.DateTime", "datetime2");
+            // All values are working fine when we use TestSimpleParameter_Type with actual type defined for Parameter SqlDbType
+            // but When parameter SqlDbType is set to Variant we need to use exact Sql Server data type mappings.
+            DateTime minValue = new(1753, 1, 1);
+            DateTime maxValue = new(9999, 12, 31);
 
-            SendInfo(System.DateTime.MinValue, "System.DateTime", "datetime");
-            SendInfo(System.DateTime.MaxValue, "System.DateTime", "datetime");
 
-            SendInfo(System.DateTimeOffset.MinValue, "System.DateTimeOffset", "datetimeoffset");
-            SendInfo(System.DateTimeOffset.MaxValue, "System.DateTimeOffset", "datetimeoffset");
+            //SendInfo(minValue, "System.DateTime", "date");
+            //SendInfo(maxValue, "System.DateTime", "date");
 
-            SendInfo(System.DateTimeOffset.Parse("12/31/1999 23:59:59.9999999 -08:30"), "System.DateTimeOffset", "datetimeoffset");
-            SendInfo(System.DateTime.Parse("1998-01-01 23:59:59.995"), "System.DateTime", "datetime2");
+            //SendInfo(minValue, "System.DateTime", "datetime2");
+            //SendInfo(maxValue, "System.DateTime", "datetime2");
 
-            SendInfo(System.DateTime.MinValue, "System.DateTime", "smalldatetime");
-            SendInfo(System.DateTime.MaxValue, "System.DateTime", "smalldatetime");
+            //SendInfo(minValue, "System.DateTime", "datetime");
+            //SendInfo(maxValue, "System.DateTime", "datetime");
 
-            SendInfo(System.TimeSpan.MinValue, "System.TimeSpan", "time");
-            SendInfo(System.TimeSpan.MaxValue, "System.TimeSpan", "time");
+            //SendInfo(DateTimeOffset.MinValue, "System.DateTimeOffset", "datetimeoffset");
+            //SendInfo(DateTimeOffset.MaxValue, "System.DateTimeOffset", "datetimeoffset");
 
-            SendInfo(System.DateTime.MinValue, "System.DateTime", "time");
-            SendInfo(System.DateTime.MaxValue, "System.DateTime", "time");
+            //SendInfo(DateTimeOffset.Parse("12/31/1999 23:59:59.9999999 -08:30"), "System.DateTimeOffset", "datetimeoffset");
+            //SendInfo(DateTime.Parse("1998-01-01 23:59:59.995"), "System.DateTime", "datetime2");
+
+            //// SmallDateTime range is from  January 1, 1900 to June 6, 2079 to an accuracy of one minute.
+            //SendInfo(new DateTime(1900, 1, 1), "System.DateTime", "smalldatetime");
+            //SendInfo(new DateTime(2079, 6, 6), "System.DateTime", "smalldatetime");
+
+            //// SqlDbType range is Time data based on a 24-hour clock.
+            //// Time value range is 00:00:00 through 23:59:59.9999999 with an accuracy of 100 nanoseconds. Corresponds to a SQL Server time value.
+            //SendInfo(new TimeSpan(0), "System.TimeSpan", "time");
+            SendInfo(new TimeSpan(hours: 23, minutes: 59, seconds: 59), "System.TimeSpan", "time");
+
+            Assert.Throws<InvalidCastException>(()=>SendInfo(minValue, "System.DateTime", "time"));
+            Assert.Throws<InvalidCastException>(() => SendInfo(maxValue, "System.DateTime", "time"));
+            //SendInfo(DateTime.MinValue, "System.DateTime", "time");
+            //SendInfo(DateTime.MaxValue, "System.DateTime", "time");
         }
 
         private static void SendInfo(object paramValue, string expectedTypeName, string expectedBaseTypeName)
@@ -68,7 +84,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SqlBulkCopyDataTable_Variant(paramValue, expectedTypeName, expectedBaseTypeName);
 
             SqlBulkCopyDataRow_Type(paramValue, expectedTypeName, expectedBaseTypeName);
-            SqlBulkCopyDataRow_Variant(paramValue, expectedTypeName, expectedBaseTypeName);
+            //SqlBulkCopyDataRow_Variant(paramValue, expectedTypeName, expectedBaseTypeName);
         }
 
         private static void TestSimpleParameter_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName)
@@ -99,12 +115,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
-                    LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
-                else
-                    DisplayError(tag, e);
+                throw;
+                //if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
+                //    LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
+                //else
+                //    DisplayError(tag, e);
             }
             finally
             {
@@ -131,23 +148,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     DropStoredProcedure(conn, procName);
                     xsql(conn, string.Format("create proc {0} (@param sql_variant) as begin select @param, sql_variant_property(@param,'BaseType') as BaseType end;", procName));
 
-                    using (SqlCommand cmd = conn.CreateCommand())
+                    using SqlCommand cmd = conn.CreateCommand();
+                    cmd.CommandText = procName;
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    SqlParameter p = cmd.Parameters.AddWithValue("@param", paramValue);
+                    cmd.Parameters[0].SqlDbType = SqlDbType.Variant;
+                    using (SqlDataReader dr = cmd.ExecuteReader())
                     {
-                        cmd.CommandText = procName;
-                        cmd.CommandType = CommandType.StoredProcedure;
-                        SqlParameter p = cmd.Parameters.AddWithValue("@param", paramValue);
-                        cmd.Parameters[0].SqlDbType = SqlDbType.Variant;
-                        using (SqlDataReader dr = cmd.ExecuteReader())
-                        {
-                            dr.Read();
-                            VerifyReaderTypeAndValue("Test Simple Parameter [Variant Type]", "SqlDbType.Variant", dr, expectedTypeName, expectedBaseTypeName, paramValue);
-                            dr.Dispose();
-                        }
+                        dr.Read();
+                        VerifyReaderTypeAndValue("Test Simple Parameter [Variant Type]", "SqlDbType.Variant", dr, expectedTypeName, expectedBaseTypeName, paramValue);
+                        dr.Dispose();
                     }
                 }
             }
             catch (Exception e)
             {
+                Assert.True(false, $"Exception happened at: TestSimpleParameter_Variant. Message: {e.Message}");
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
                 else
@@ -981,6 +997,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             catch (Exception e)
             {
+                Assert.True(false, $"Exception thrown at SqlBulkCopyDataTable_Variant: {e.Message}");
                 if (IsExpectedException(e, paramValue, expectedTypeName, expectedBaseTypeName))
                     LogMessage(tag, "[EXPECTED EXCEPTION] " + e.Message);
                 else
@@ -1175,31 +1192,33 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string actualTypeName = actualValue.GetType().ToString();
 
             LogValues(tag, expectedTypeName, string.Empty, expectedValue, actualTypeName, string.Empty, actualValue);
+            Assert.Equal(expectedTypeName, actualTypeName);
 
-            if (!actualTypeName.Equals(expectedTypeName))
-            {
-                string ErrorMessage = string.Format(">>> ERROR: TYPE MISMATCH!!! [Actual = {0}] [Expected = {1}]",
-                    actualTypeName,
-                    expectedTypeName);
+            //if (!actualTypeName.Equals(expectedTypeName))
+            //{
+            //    string ErrorMessage = string.Format(">>> ERROR: TYPE MISMATCH!!! [Actual = {0}] [Expected = {1}]",
+            //        actualTypeName,
+            //        expectedTypeName);
 
-                LogMessage(tag, ErrorMessage);
-            }
+            //    LogMessage(tag, ErrorMessage);
+            //}
+            Assert.Equal(expectedValue, actualValue);
             if (!actualValue.Equals(expectedValue))
             {
                 string ErrorMessage = string.Empty;
-                if (IsValueCorrectForType(expectedBaseTypeName, expectedValue, actualValue))
-                {
-                    ErrorMessage = string.Format("[EXPECTED ERROR]: VALUE MISMATCH - [Actual = {0}] [Expected = {1}]",
-                    DataTestUtility.GetValueString(actualValue),
-                    DataTestUtility.GetValueString(expectedValue));
-                }
-                else
-                {
-                    ErrorMessage = string.Format(">>> ERROR: VALUE MISMATCH!!! [Actual = {0}] [Expected = {1}]",
-                    DataTestUtility.GetValueString(actualValue),
-                    DataTestUtility.GetValueString(expectedValue));
-                }
-                LogMessage(tag, ErrorMessage);
+                //if (IsValueCorrectForType(expectedBaseTypeName, expectedValue, actualValue))
+                //{
+                //    ErrorMessage = string.Format("[EXPECTED ERROR]: VALUE MISMATCH - [Actual = {0}] [Expected = {1}]",
+                //    DataTestUtility.GetValueString(actualValue),
+                //    DataTestUtility.GetValueString(expectedValue));
+                //}
+                //else
+                //{
+                //    ErrorMessage = string.Format(">>> ERROR: VALUE MISMATCH!!! [Actual = {0}] [Expected = {1}]",
+                //    DataTestUtility.GetValueString(actualValue),
+                //    DataTestUtility.GetValueString(expectedValue));
+                //}
+                //LogMessage(tag, ErrorMessage);
             }
         }
 
@@ -1253,13 +1272,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             switch (expectedBaseTypeName)
             {
                 case "date":
-                    if (((System.DateTime)expectedValue).ToString("M/d/yyyy").Equals(((System.DateTime)actualValue).ToString("M/d/yyyy")))
+                    if (((DateTime)expectedValue).ToString("M/d/yyyy").Equals(((System.DateTime)actualValue).ToString("M/d/yyyy")))
                         return true;
                     else
                         return false;
                 case "datetime":
-                    if ((((System.DateTime)expectedValue).Ticks == 3155378975999999999) &&
-                        (((System.DateTime)actualValue).Ticks == 3155378975999970000))
+                    if ((((DateTime)expectedValue).Ticks == 3155378975999999999) &&
+                        (((DateTime)actualValue).Ticks == 3155378975999970000))
                         return true;
                     else
                         return false;

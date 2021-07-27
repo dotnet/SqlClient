@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
+using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -135,9 +136,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 len = Math.Min(len, val.Length);
             else
                 len = val.Length;
-            Debug.Assert(ret != null && ret.Length == len, "Length not equal");
+            Assert.NotNull(ret);
+            Assert.Equal(ret.Length, len);
+            //Debug.Assert(ret != null && ret.Length == len, "Length not equal");
             for (int i = 0; i < len; i++)
+            {
                 Debug.Assert(val[i] == ret[i], "Data not equal");
+                Assert.Equal(val[i], ret[i]);
+            }
         }
 
         private static void TestStream(int dataLen, bool sync, bool oldTypes, int paramLen, bool addWithValue = false)
@@ -145,7 +151,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             byte[] val = new byte[dataLen];
             s_rand.NextBytes(val);
             TestStreamHelper(val, new MemoryStream(val, false), sync, oldTypes, paramLen, false, addWithValue);
-            Console.WriteLine("TestStream (Sync {0} DataLen {1} ParamLen {2} OLD {3} AVW {4}) is OK", sync, dataLen, paramLen, oldTypes, addWithValue);
+            //Console.WriteLine("TestStream (Sync {0} DataLen {1} ParamLen {2} OLD {3} AVW {4}) is OK", sync, dataLen, paramLen, oldTypes, addWithValue);
         }
 
         private static void TestCustomStream(int dataLen, bool sync, bool oldTypes, int paramLen, bool error, bool addWithValue = false)
@@ -348,7 +354,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         }
                     }
                     Debug.Assert(exc == expectException, "Exception!=Expectation");
-
+                    Assert.Equal(exc, expectException);
                     string back = (new SqlCommand("select blob from #blobs where id=1", conn)).ExecuteScalar() as string;
                     if (paramLen > 0)
                     {
@@ -356,7 +362,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                     if (!expectException)
                     {
-                        Debug.Assert(back == s, "Strings are not equal");
+                        Assert.Equal(back , s);
                     }
                 }
                 finally

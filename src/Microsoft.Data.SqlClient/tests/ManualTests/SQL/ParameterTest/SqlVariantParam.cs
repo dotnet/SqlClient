@@ -6,6 +6,7 @@ using System;
 using System.Data;
 using System.Data.SqlTypes;
 using Microsoft.Data.SqlClient.Server;
+using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -36,7 +37,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SendVariant(new SqlDecimal(1234.123M), "System.Data.SqlTypes.SqlDecimal", "numeric");
             SendVariant(new SqlDateTime(DateTime.Now), "System.Data.SqlTypes.SqlDateTime", "datetime");
             SendVariant(new SqlMoney(123.123M), "System.Data.SqlTypes.SqlMoney", "money");
-            Console.WriteLine("End test 'SqlVariantParam'");
         }
         /// <summary>
         /// Returns a SqlDataReader with embedded sql_variant column with paramValue inside.
@@ -71,16 +71,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string actualTypeName = dr.GetSqlValue(0).GetType().ToString();
             string actualBaseTypeName = dr.GetString(1);
             Console.WriteLine("{0,-40} -> {1}:{2}", tag, actualTypeName, actualBaseTypeName);
-            if (!actualTypeName.Equals(expectedTypeName))
-            {
-                Console.WriteLine("   --> ERROR: Expected type {0} does not match actual type {1}",
-                    expectedTypeName, actualTypeName);
-            }
-            if (!actualBaseTypeName.Equals(expectedBaseTypeName))
-            {
-                Console.WriteLine("   --> ERROR: Expected base type {0} does not match actual base type {1}",
-                    expectedBaseTypeName, actualBaseTypeName);
-            }
+            Assert.Equal(expectedTypeName, actualTypeName);
+            Assert.Equal(expectedBaseTypeName, actualBaseTypeName);
+            //if (!actualTypeName.Equals(expectedTypeName))
+            //{
+            //    Console.WriteLine("   --> ERROR: Expected type {0} does not match actual type {1}",
+            //        expectedTypeName, actualTypeName);
+            //}
+            //if (!actualBaseTypeName.Equals(expectedBaseTypeName))
+            //{
+            //    Console.WriteLine("   --> ERROR: Expected base type {0} does not match actual base type {1}",
+            //        expectedBaseTypeName, actualBaseTypeName);
+            //}
         }
         /// <summary>
         /// Round trips a sql_variant to server and verifies result.
@@ -137,6 +139,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             cmd.CommandText = string.Format("select f1, sql_variant_property(f1,'BaseType') as BaseType from {0}", bulkCopyTableName);
                             using (SqlDataReader drVerify = cmd.ExecuteReader())
                             {
+                                // Since Sql_variant goes for the top level int he hierarchy 
+                                // When it comes to SqlDbType Money the base tyoe is numberic and expected type would be Decimal in bulk copy's destination table
+                                if (expectedTypeName.Equals("System.Data.SqlTypes.SqlMoney") && expectedBaseTypeName.Equals("money"))
+                                {
+                                    expectedTypeName = "System.Data.SqlTypes.SqlDecimal";
+                                    expectedBaseTypeName = "numeric";
+                                }
                                 VerifyReader("SendVariantBulkCopy[SqlDataReader]", drVerify, expectedTypeName, expectedBaseTypeName);
                             }
                         }
