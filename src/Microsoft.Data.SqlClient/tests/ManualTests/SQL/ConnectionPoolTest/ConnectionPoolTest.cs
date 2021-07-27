@@ -505,7 +505,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void MaxPoolWaitForConnectionTask(string connectionString, InternalConnectionWrapper internalConnection, ConnectionPoolWrapper connectionPool, ManualResetEventSlim waitToSpeak)
         {
-            SqlConnection connection = new SqlConnection(connectionString);
+            using SqlConnection connection = new SqlConnection(connectionString);
             connection.Open();
             waitToSpeak.Wait();
             Assert.True(internalConnection.IsInternalConnectionOf(connection), "Connection has wrong internal connection");
