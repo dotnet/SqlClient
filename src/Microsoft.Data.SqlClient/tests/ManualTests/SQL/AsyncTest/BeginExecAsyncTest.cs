@@ -40,6 +40,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     SqlCommand command = new SqlCommand(GenerateCommandText(), connection);
                     connection.Open();
+                    
                     IAsyncResult result = command.BeginExecuteNonQuery();
                     while (!result.IsCompleted)
                     {
@@ -64,8 +65,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     Console.WriteLine("Error: {0}", ex.Message);
                     Assert.Null(ex);
                 }
-
-                Assert.True(command.EndExecuteNonQuery(result) > 0, "FAILED: BeginExecuteNonQuery did not complete successfully.");
             }
         }
 
