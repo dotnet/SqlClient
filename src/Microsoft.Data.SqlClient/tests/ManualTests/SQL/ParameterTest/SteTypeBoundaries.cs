@@ -31,209 +31,236 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly IList<SteSimpleTypeBoundaries> s_udtsOnly;
         static SteSimpleTypeBoundaries()
         {
-            List<SteSimpleTypeBoundaries> list = new List<SteSimpleTypeBoundaries>();
+            List<SteSimpleTypeBoundaries> list = new();
 
             // DevNote: Don't put null value attributes first -- it confuses DataTable generation for SteStructuredTypeBoundaries
 
             // BigInt
-            SteSimplePermutationGenerator type = new SteSimplePermutationGenerator();
-            type.Add(SteAttributeKey.SqlDbType, SqlDbType.BigInt);
-            type.Add(SteAttributeKey.Value, (long)0);
-            type.Add(SteAttributeKey.Value, long.MaxValue);
-            type.Add(SteAttributeKey.Value, long.MinValue);
-            type.Add(SteAttributeKey.Value, new SqlInt64(long.MaxValue));
-            type.Add(SteAttributeKey.Value, new SqlInt64(long.MinValue));
-            type.Add(SteAttributeKey.Value, null);
-            type.Add(SteAttributeKey.Value, DBNull.Value);
+            SteSimplePermutationGenerator type = new()
+            {
+                { SteAttributeKey.SqlDbType, SqlDbType.BigInt },
+                { SteAttributeKey.Value, (long)0 },
+                { SteAttributeKey.Value, long.MaxValue },
+                { SteAttributeKey.Value, long.MinValue },
+                { SteAttributeKey.Value, new SqlInt64(long.MaxValue) },
+                { SteAttributeKey.Value, new SqlInt64(long.MinValue) },
+                { SteAttributeKey.Value, null },
+                { SteAttributeKey.Value, DBNull.Value }
+            };
             list.Add(new SteSimpleTypeBoundaries(type));
 
             // Binary types
-            type = new SteSimplePermutationGenerator();
-            type.Add(SteAttributeKey.SqlDbType, SqlDbType.Binary);
-            type.Add(SteAttributeKey.SqlDbType, SqlDbType.VarBinary);
-            type.Add(SteAttributeKey.SqlDbType, SqlDbType.Image);
-            type.Add(SteAttributeKey.MaxLength, 1);    // a small value
-            type.Add(SteAttributeKey.MaxLength, 40);   // Somewhere in the middle
-            type.Add(SteAttributeKey.MaxLength, 8000); // Couple values around maximum tds length
-            type.Add(SteAttributeKey.Value, CreateByteArray(0));
-            type.Add(SteAttributeKey.Value, CreateByteArray(1));
-            type.Add(SteAttributeKey.Value, CreateByteArray(50));
-            type.Add(SteAttributeKey.Value, s_moderateSizeByteArray);
-            type.Add(SteAttributeKey.Value, new SqlBytes(CreateByteArray(0)));
-            type.Add(SteAttributeKey.Value, new SqlBytes(CreateByteArray(1)));
-            type.Add(SteAttributeKey.Value, new SqlBytes(CreateByteArray(40)));
-            type.Add(SteAttributeKey.Value, new SqlBytes(s_moderateSizeByteArray));
-            type.Add(SteAttributeKey.Value, null);
-            type.Add(SteAttributeKey.Value, DBNull.Value);
-            type.Add(SteAttributeKey.Offset, s_doNotUseMarker);
-            type.Add(SteAttributeKey.Offset, -1);
-            type.Add(SteAttributeKey.Offset, 0);
-            type.Add(SteAttributeKey.Offset, 10);
-            type.Add(SteAttributeKey.Offset, 8000);
-            type.Add(SteAttributeKey.Offset, int.MaxValue);
-            type.Add(SteAttributeKey.Length, 0);
-            type.Add(SteAttributeKey.Length, 40);
-            type.Add(SteAttributeKey.Length, 8000);
-            type.Add(SteAttributeKey.Length, 1000000);
-            type.Add(SteAttributeKey.Length, -1);
+            type = new SteSimplePermutationGenerator
+            {
+                { SteAttributeKey.SqlDbType, SqlDbType.Binary },
+                { SteAttributeKey.SqlDbType, SqlDbType.VarBinary },
+                { SteAttributeKey.SqlDbType, SqlDbType.Image },
+                { SteAttributeKey.MaxLength, 1 },    // a small value
+                { SteAttributeKey.MaxLength, 40 },   // Somewhere in the middle
+                { SteAttributeKey.MaxLength, 8000 }, // Couple values around maximum tds length
+                { SteAttributeKey.Value, CreateByteArray(0) },
+                { SteAttributeKey.Value, CreateByteArray(1) },
+                { SteAttributeKey.Value, CreateByteArray(50) },
+                { SteAttributeKey.Value, s_moderateSizeByteArray },
+                { SteAttributeKey.Value, new SqlBytes(CreateByteArray(0)) },
+                { SteAttributeKey.Value, new SqlBytes(CreateByteArray(1)) },
+                { SteAttributeKey.Value, new SqlBytes(CreateByteArray(40)) },
+                { SteAttributeKey.Value, new SqlBytes(s_moderateSizeByteArray) },
+                { SteAttributeKey.Value, null },
+                { SteAttributeKey.Value, DBNull.Value },
+                { SteAttributeKey.Offset, s_doNotUseMarker },
+                { SteAttributeKey.Offset, -1 },
+                { SteAttributeKey.Offset, 0 },
+                { SteAttributeKey.Offset, 10 },
+                { SteAttributeKey.Offset, 8000 },
+                { SteAttributeKey.Offset, int.MaxValue },
+                { SteAttributeKey.Length, 0 },
+                { SteAttributeKey.Length, 40 },
+                { SteAttributeKey.Length, 8000 },
+                { SteAttributeKey.Length, 1000000 },
+                { SteAttributeKey.Length, -1 }
+            };
             list.Add(new SteSimpleTypeBoundaries(type));
 
             // Byte
-            type = new SteSimplePermutationGenerator();
-            type.Add(SteAttributeKey.SqlDbType, SqlDbType.TinyInt);
-            type.Add(SteAttributeKey.Value, byte.MaxValue);
-            type.Add(SteAttributeKey.Value, byte.MinValue);
-            type.Add(SteAttributeKey.Value, null);
-            type.Add(SteAttributeKey.Value, DBNull.Value);
+            type = new SteSimplePermutationGenerator
+            {
+                { SteAttributeKey.SqlDbType, SqlDbType.TinyInt },
+                { SteAttributeKey.Value, byte.MaxValue },
+                { SteAttributeKey.Value, byte.MinValue },
+                { SteAttributeKey.Value, null },
+                { SteAttributeKey.Value, DBNull.Value }
+            };
             list.Add(new SteSimpleTypeBoundaries(type));
 
             // Character (ANSI)
-            type = new SteSimplePermutationGenerator();
-            type.Add(SteAttributeKey.SqlDbType, SqlDbType.Char);
-            type.Add(SteAttributeKey.SqlDbType, SqlDbType.Text);
-            type.Add(SteAttributeKey.SqlDbType, SqlDbType.VarChar);
-            type.Add(SteAttributeKey.MaxLength, 1);
-            type.Add(SteAttributeKey.MaxLength, 30);
-            type.Add(SteAttributeKey.MaxLength, 8000);
-            type.Add(SteAttributeKey.Value, CreateString(1));
-            type.Add(SteAttributeKey.Value, CreateString(20));
-            type.Add(SteAttributeKey.Value, s_moderateSizeString);
-            type.Add(SteAttributeKey.Value, CreateString(1).ToCharArray());
-            type.Add(SteAttributeKey.Value, CreateString(25).ToCharArray());
-            type.Add(SteAttributeKey.Value, s_moderateSizeCharArray);
-            type.Add(SteAttributeKey.Value, new SqlChars(CreateString(1).ToCharArray()));
-            type.Add(SteAttributeKey.Value, new SqlChars(CreateString(30).ToCharArray()));
-            type.Add(SteAttributeKey.Value, new SqlChars(s_moderateSizeCharArray));
-            type.Add(SteAttributeKey.Value, null);
-            type.Add(SteAttributeKey.Value, DBNull.Value);
+            type = new SteSimplePermutationGenerator
+            {
+                { SteAttributeKey.SqlDbType, SqlDbType.Char },
+                { SteAttributeKey.SqlDbType, SqlDbType.Text },
+                { SteAttributeKey.SqlDbType, SqlDbType.VarChar },
+                { SteAttributeKey.MaxLength, 1 },
+                { SteAttributeKey.MaxLength, 30 },
+                { SteAttributeKey.MaxLength, 8000 },
+                { SteAttributeKey.Value, CreateString(1) },
+                { SteAttributeKey.Value, CreateString(20) },
+                { SteAttributeKey.Value, s_moderateSizeString },
+                { SteAttributeKey.Value, CreateString(1).ToCharArray() },
+                { SteAttributeKey.Value, CreateString(25).ToCharArray() },
+                { SteAttributeKey.Value, s_moderateSizeCharArray },
+                { SteAttributeKey.Value, new SqlChars(CreateString(1).ToCharArray()) },
+                { SteAttributeKey.Value, new SqlChars(CreateString(30).ToCharArray()) },
+                { SteAttributeKey.Value, new SqlChars(s_moderateSizeCharArray) },
+                { SteAttributeKey.Value, null },
+                { SteAttributeKey.Value, DBNull.Value }
+            };
             list.Add(new SteSimpleTypeBoundaries(type));
 
             // Character (UNICODE)
-            type = new SteSimplePermutationGenerator();
-            type.Add(SteAttributeKey.SqlDbType, SqlDbType.NChar);
-            type.Add(SteAttributeKey.SqlDbType, SqlDbType.NText);
-            type.Add(SteAttributeKey.SqlDbType, SqlDbType.NVarChar);
-            type.Add(SteAttributeKey.MaxLength, 1);
-            type.Add(SteAttributeKey.MaxLength, 35);
-            type.Add(SteAttributeKey.MaxLength, 4000);
-            type.Add(SteAttributeKey.Value, CreateString(1));
-            type.Add(SteAttributeKey.Value, CreateString(15));
-            type.Add(SteAttributeKey.Value, s_moderateSizeString);
-            type.Add(SteAttributeKey.Value, CreateString(1).ToCharArray());
-            type.Add(SteAttributeKey.Value, CreateString(20).ToCharArray());
-            type.Add(SteAttributeKey.Value, s_moderateSizeCharArray);
-            type.Add(SteAttributeKey.Value, new SqlChars(CreateString(1).ToCharArray()));
-            type.Add(SteAttributeKey.Value, new SqlChars(CreateString(25).ToCharArray()));
-            type.Add(SteAttributeKey.Value, new SqlChars(s_moderateSizeCharArray));
-            type.Add(SteAttributeKey.Value, null);
-            type.Add(SteAttributeKey.Value, DBNull.Value);
+            type = new SteSimplePermutationGenerator
+            {
+                { SteAttributeKey.SqlDbType, SqlDbType.NChar },
+                { SteAttributeKey.SqlDbType, SqlDbType.NText },
+                { SteAttributeKey.SqlDbType, SqlDbType.NVarChar },
+                { SteAttributeKey.MaxLength, 1 },
+                { SteAttributeKey.MaxLength, 35 },
+                { SteAttributeKey.MaxLength, 4000 },
+                { SteAttributeKey.Value, CreateString(1) },
+                { SteAttributeKey.Value, CreateString(15) },
+                { SteAttributeKey.Value, s_moderateSizeString },
+                { SteAttributeKey.Value, CreateString(1).ToCharArray() },
+                { SteAttributeKey.Value, CreateString(20).ToCharArray() },
+                { SteAttributeKey.Value, s_moderateSizeCharArray },
+                { SteAttributeKey.Value, new SqlChars(CreateString(1).ToCharArray()) },
+                { SteAttributeKey.Value, new SqlChars(CreateString(25).ToCharArray()) },
+                { SteAttributeKey.Value, new SqlChars(s_moderateSizeCharArray) },
+                { SteAttributeKey.Value, null },
+                { SteAttributeKey.Value, DBNull.Value }
+            };
             list.Add(new SteSimpleTypeBoundaries(type));
 
             // DateTime
-            type = new SteSimplePermutationGenerator();
-            type.Add(SteAttributeKey.SqlDbType, SqlDbType.DateTime);
-            type.Add(SteAttributeKey.SqlDbType, SqlDbType.SmallDateTime);
+            type = new SteSimplePermutationGenerator
+            {
+                { SteAttributeKey.SqlDbType, SqlDbType.DateTime },
 
-            type.Add(SteAttributeKey.Value, new DateTime(1900, 1, 1));
-            type.Add(SteAttributeKey.Value, new SqlDateTime(new DateTime(1900, 1, 1)));  // min SqlSmallDateTime
-            type.Add(SteAttributeKey.Value, null);
-            type.Add(SteAttributeKey.Value, DBNull.Value);
+                { SteAttributeKey.Value, new DateTime(1753, 1, 1) },
+                { SteAttributeKey.Value, new SqlDateTime(new DateTime(1753, 1, 1)) },  // min SqllDateTime
+                { SteAttributeKey.Value, null },
+                { SteAttributeKey.Value, DBNull.Value }
+            };
             list.Add(new SteSimpleTypeBoundaries(type));
 
-            //// SmallDateTime starts from January 1, 1900
-            //type = new SteSimplePermutationGenerator();
-            //type.Add(SteAttributeKey.SqlDbType, SqlDbType.SmallDateTime);
-            //type.Add(SteAttributeKey.Value, new DateTime(1900, 1, 1));
-            //type.Add(SteAttributeKey.Value, new SqlDateTime(new DateTime(1900, 1, 1)));  // min SqlDateTime
-            //type.Add(SteAttributeKey.Value, null);
-            //type.Add(SteAttributeKey.Value, DBNull.Value);
-            //list.Add(new SteSimpleTypeBoundaries(type));
+            // SmallDateTime starts from January 1, 1900
+            type = new SteSimplePermutationGenerator
+            {
+                { SteAttributeKey.SqlDbType, SqlDbType.SmallDateTime },
+                { SteAttributeKey.Value, new DateTime(1900, 1, 1) },
+                { SteAttributeKey.Value, new SqlDateTime(new DateTime(1900, 1, 1)) },  // min SmallSqlDateTime
+                { SteAttributeKey.Value, null },
+                { SteAttributeKey.Value, DBNull.Value }
+            };
+            list.Add(new SteSimpleTypeBoundaries(type));
 
             // Decimal
             //  the TVP test isn't robust in the face of OverflowExceptions on input, so a number of these
             //  values are commented out and other numbers substituted.
-            type = new SteSimplePermutationGenerator();
-            type.Add(SteAttributeKey.SqlDbType, SqlDbType.Decimal);
-            type.Add(SteAttributeKey.Precision, (byte)38);
-            type.Add(SteAttributeKey.Scale, (byte)0);
-            type.Add(SteAttributeKey.Scale, (byte)10);
-            type.Add(SteAttributeKey.Value, (decimal)0);
-            type.Add(SteAttributeKey.Value, decimal.MaxValue / 10000000000);
-            type.Add(SteAttributeKey.Value, new SqlDecimal(0));
-            //type.Add(SteAttributeKey.Value, ((SqlDecimal)1234567890123456.789012345678M) * 100); // Bigger than a Decimal taking this out as we need to rewrite the test and use Assert.Throw to capture the exception
-            type.Add(SteAttributeKey.Value, null);
-            type.Add(SteAttributeKey.Value, DBNull.Value);
+            type = new SteSimplePermutationGenerator
+            {
+                { SteAttributeKey.SqlDbType, SqlDbType.Decimal },
+                { SteAttributeKey.Precision, (byte)38 },
+                { SteAttributeKey.Scale, (byte)0 },
+                { SteAttributeKey.Scale, (byte)10 },
+                { SteAttributeKey.Value, (decimal)0 },
+                { SteAttributeKey.Value, decimal.MaxValue / 10000000000 },
+                { SteAttributeKey.Value, new SqlDecimal(0) },
+                //type.Add(SteAttributeKey.Value, ((SqlDecimal)1234567890123456.789012345678M) * 100); // Bigger than a Decimal taking this out as we need to rewrite the test and use Assert.Throw to capture the exception
+                { SteAttributeKey.Value, null },
+                { SteAttributeKey.Value, DBNull.Value }
+            };
             list.Add(new SteSimpleTypeBoundaries(type));
 
             // Float
-            type = new SteSimplePermutationGenerator();
-            type.Add(SteAttributeKey.SqlDbType, SqlDbType.Float);
-            type.Add(SteAttributeKey.Value, (double)0);
-            type.Add(SteAttributeKey.Value, double.MaxValue);
-            type.Add(SteAttributeKey.Value, double.MinValue);
-            type.Add(SteAttributeKey.Value, new SqlDouble(double.MaxValue));
-            type.Add(SteAttributeKey.Value, new SqlDouble(double.MinValue));
-            type.Add(SteAttributeKey.Value, null);
-            type.Add(SteAttributeKey.Value, DBNull.Value);
+            type = new SteSimplePermutationGenerator
+            {
+                { SteAttributeKey.SqlDbType, SqlDbType.Float },
+                { SteAttributeKey.Value, (double)0 },
+                { SteAttributeKey.Value, double.MaxValue },
+                { SteAttributeKey.Value, double.MinValue },
+                { SteAttributeKey.Value, new SqlDouble(double.MaxValue) },
+                { SteAttributeKey.Value, new SqlDouble(double.MinValue) },
+                { SteAttributeKey.Value, null },
+                { SteAttributeKey.Value, DBNull.Value }
+            };
             list.Add(new SteSimpleTypeBoundaries(type));
 
             // Int
-            type = new SteSimplePermutationGenerator();
-            type.Add(SteAttributeKey.SqlDbType, SqlDbType.Int);
-            type.Add(SteAttributeKey.Value, (int)0);
-            type.Add(SteAttributeKey.Value, int.MaxValue);
-            type.Add(SteAttributeKey.Value, int.MinValue);
-            type.Add(SteAttributeKey.Value, new SqlInt32(int.MaxValue));
-            type.Add(SteAttributeKey.Value, new SqlInt32(int.MinValue));
-            type.Add(SteAttributeKey.Value, null);
-            type.Add(SteAttributeKey.Value, DBNull.Value);
+            type = new SteSimplePermutationGenerator
+            {
+                { SteAttributeKey.SqlDbType, SqlDbType.Int },
+                { SteAttributeKey.Value, (int)0 },
+                { SteAttributeKey.Value, int.MaxValue },
+                { SteAttributeKey.Value, int.MinValue },
+                { SteAttributeKey.Value, new SqlInt32(int.MaxValue) },
+                { SteAttributeKey.Value, new SqlInt32(int.MinValue) },
+                { SteAttributeKey.Value, null },
+                { SteAttributeKey.Value, DBNull.Value }
+            };
             list.Add(new SteSimpleTypeBoundaries(type));
 
             // Money types
-            type = new SteSimplePermutationGenerator();
-            type.Add(SteAttributeKey.SqlDbType, SqlDbType.Money);
-            type.Add(SteAttributeKey.SqlDbType, SqlDbType.SmallMoney);
-            type.Add(SteAttributeKey.Value, (decimal)0);
-            //type.Add(SteAttributeKey.Value, (decimal)unchecked(((long)0x8000000000000000L) / 10000));
-            //type.Add(SteAttributeKey.Value, (decimal)0x7FFFFFFFFFFFFFFFL / 10000);
-            type.Add(SteAttributeKey.Value, new decimal(-214748.3648)); // smallmoney min
-            type.Add(SteAttributeKey.Value, new decimal(214748.3647)); // smallmoney max
-            type.Add(SteAttributeKey.Value, new SqlMoney(((decimal)int.MaxValue) / 10000));
-            type.Add(SteAttributeKey.Value, new SqlMoney(((decimal)int.MinValue) / 10000));
-            type.Add(SteAttributeKey.Value, null);
-            type.Add(SteAttributeKey.Value, DBNull.Value);
+            type = new SteSimplePermutationGenerator
+            {
+                { SteAttributeKey.SqlDbType, SqlDbType.Money },
+                { SteAttributeKey.SqlDbType, SqlDbType.SmallMoney },
+                { SteAttributeKey.Value, (decimal)0 },
+                //type.Add(SteAttributeKey.Value, (decimal)unchecked(((long)0x8000000000000000L) / 10000));
+                //type.Add(SteAttributeKey.Value, (decimal)0x7FFFFFFFFFFFFFFFL / 10000);
+                { SteAttributeKey.Value, new decimal(-214748.3648) }, // smallmoney min
+                { SteAttributeKey.Value, new decimal(214748.3647) }, // smallmoney max
+                { SteAttributeKey.Value, new SqlMoney(((decimal)int.MaxValue) / 10000) },
+                { SteAttributeKey.Value, new SqlMoney(((decimal)int.MinValue) / 10000) },
+                { SteAttributeKey.Value, null },
+                { SteAttributeKey.Value, DBNull.Value }
+            };
             list.Add(new SteSimpleTypeBoundaries(type));
 
             // Real
-            type = new SteSimplePermutationGenerator();
-            type.Add(SteAttributeKey.SqlDbType, SqlDbType.Real);
-            type.Add(SteAttributeKey.Value, (float)0);
-            type.Add(SteAttributeKey.Value, float.MaxValue);
-            type.Add(SteAttributeKey.Value, float.MinValue);
-            type.Add(SteAttributeKey.Value, new SqlSingle(float.MaxValue));
-            type.Add(SteAttributeKey.Value, new SqlSingle(float.MinValue));
-            type.Add(SteAttributeKey.Value, null);
-            type.Add(SteAttributeKey.Value, DBNull.Value);
+            type = new SteSimplePermutationGenerator
+            {
+                { SteAttributeKey.SqlDbType, SqlDbType.Real },
+                { SteAttributeKey.Value, (float)0 },
+                { SteAttributeKey.Value, float.MaxValue },
+                { SteAttributeKey.Value, float.MinValue },
+                { SteAttributeKey.Value, new SqlSingle(float.MaxValue) },
+                { SteAttributeKey.Value, new SqlSingle(float.MinValue) },
+                { SteAttributeKey.Value, null },
+                { SteAttributeKey.Value, DBNull.Value }
+            };
             list.Add(new SteSimpleTypeBoundaries(type));
 
             // SmallInt
-            type = new SteSimplePermutationGenerator();
-            type.Add(SteAttributeKey.SqlDbType, SqlDbType.SmallInt);
-            type.Add(SteAttributeKey.Value, (short)0);
-            type.Add(SteAttributeKey.Value, short.MaxValue);
-            type.Add(SteAttributeKey.Value, short.MinValue);
-            type.Add(SteAttributeKey.Value, new SqlInt16(short.MaxValue));
-            type.Add(SteAttributeKey.Value, new SqlInt16(short.MinValue));
-            type.Add(SteAttributeKey.Value, null);
-            type.Add(SteAttributeKey.Value, DBNull.Value);
+            type = new SteSimplePermutationGenerator
+            {
+                { SteAttributeKey.SqlDbType, SqlDbType.SmallInt },
+                { SteAttributeKey.Value, (short)0 },
+                { SteAttributeKey.Value, short.MaxValue },
+                { SteAttributeKey.Value, short.MinValue },
+                { SteAttributeKey.Value, new SqlInt16(short.MaxValue) },
+                { SteAttributeKey.Value, new SqlInt16(short.MinValue) },
+                { SteAttributeKey.Value, null },
+                { SteAttributeKey.Value, DBNull.Value }
+            };
             list.Add(new SteSimpleTypeBoundaries(type));
 
             // UniqueIdentifier
-            type = new SteSimplePermutationGenerator();
-            type.Add(SteAttributeKey.SqlDbType, SqlDbType.UniqueIdentifier);
-            type.Add(SteAttributeKey.Value, new Guid());
-            type.Add(SteAttributeKey.Value, null);
-            type.Add(SteAttributeKey.Value, DBNull.Value);
+            type = new SteSimplePermutationGenerator
+            {
+                { SteAttributeKey.SqlDbType, SqlDbType.UniqueIdentifier },
+                { SteAttributeKey.Value, new Guid() },
+                { SteAttributeKey.Value, null },
+                { SteAttributeKey.Value, DBNull.Value }
+            };
             list.Add(new SteSimpleTypeBoundaries(type));
 
             // UDT
@@ -284,7 +311,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private const string __prefix = "Char: ";
         public static string CreateString(int size)
         {
-            System.Text.StringBuilder b = new System.Text.StringBuilder();
+            System.Text.StringBuilder b = new();
             b.Append(__prefix);
             for (int i = 0; i < s_theBigByteArray.Length && b.Length < size; i++)
             {

@@ -112,7 +112,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using SqlCommand cmd = new(SQL, connection);
                 cmd.CommandTimeout = 100;
                 AddCommandParameters(cmd, parameters);
-                new SqlDataAdapter(cmd).Fill(new("BadFunc"));
+                Assert.Throws<SqlNullValueException>(() => new SqlDataAdapter(cmd).Fill(new("BadFunc")));
                 //Assert.False(true, "Expected exception did not occur");
             }
             catch (Exception e)
@@ -177,10 +177,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private void RunTest()
         {
             ColumnBoundariesTest();
-            //QueryHintsTest();
-            //SqlVariantParam.SendAllSqlTypesInsideVariant(_connStr);
-            //DateTimeVariantTest.TestAllDateTimeWithDataTypeAndVariant(_connStr);
-            //OutputParameter.Run(_connStr);
+            QueryHintsTest();
+            SqlVariantParam.SendAllSqlTypesInsideVariant(_connStr);
+            DateTimeVariantTest.TestAllDateTimeWithDataTypeAndVariant(_connStr);
+            OutputParameter.Run(_connStr);
         }
 
         private bool RunTestCoreAndCompareWithBaseline()
@@ -265,7 +265,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         #region Main test methods
         private void ColumnBoundariesTest()
         {
-            IEnumerator<StePermutation> boundsMD = SteStructuredTypeBoundaries.AllColumnTypesExceptUdts.GetEnumerator(
+            _ = SteStructuredTypeBoundaries.AllColumnTypesExceptUdts.GetEnumerator(
                         BoundariesTestKeys);
             TestTVPPermutations(SteStructuredTypeBoundaries.AllColumnTypesExceptUdts, false);
         }
@@ -303,8 +303,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
                 catch (SqlException)
                 {
-                    //DropServerObjects(tvpPerm);
-                    
+                    DropServerObjects(tvpPerm);
+
                     iter++;
                     continue;
                     throw;
@@ -314,7 +314,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 try
                 {
                     param.Value = CreateListOfRecords(tvpPerm, baseValues);
-                     ExecuteAndVerify(cmd, tvpPerm, baseValues, null);
+                    ExecuteAndVerify(cmd, tvpPerm, baseValues, null);
                 }
                 catch (ArgumentException ae)
                 {
@@ -336,11 +336,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
 
                     // send datasets
-                    foreach (DataTable d in dtList)
-                    {
-                        param.Value = d;
-                        //ExecuteAndVerify(cmd, tvpPerm, null, d);
-                    }
+                    //This is failing due to mismatch of length in source and target
+                    // Needs more investigation to see which one is on purpose and which is oversight
+
+                    //foreach (DataTable d in dtList)
+                    //{
+                    //    param.Value = d;
+                    //    ExecuteAndVerify(cmd, tvpPerm, null, d);
+                    //}
                 }
 
                 // And clean up
@@ -1092,9 +1095,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     t = value.GetType();
                 }
-             
+
                 dt.Columns.Add(new DataColumn("Col" + i + "_" + t.Name, t));
-                
+
 
                 lastRowTypes[i] = t;
             }
@@ -1284,7 +1287,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private void DropServerObjects(StePermutation tvpPerm)
         {
-            string dropText = "DROP PROC " + GetProcName(tvpPerm) + "; DROP TYPE " + GetTypeName(tvpPerm);
+            string dropText = $"DROP PROC IF EXISTS { GetProcName(tvpPerm)} ;  DROP TYPE IF EXISTS {GetTypeName(tvpPerm)} ";
             using (SqlConnection conn = new SqlConnection(_connStr))
             {
                 conn.Open();
