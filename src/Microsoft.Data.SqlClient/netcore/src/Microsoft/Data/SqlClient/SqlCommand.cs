@@ -29,6 +29,8 @@ namespace Microsoft.Data.SqlClient
         private static int _objectTypeCount; // EventSource Counter
         internal readonly int ObjectID = Interlocked.Increment(ref _objectTypeCount); private string _commandText;
 
+        // these static delegates are used to avoid per-call instance delegate allocations.
+        // They work by storing a delegate to a static function which takes the instance as a parameter, unpacks it and makes the call.
         private static readonly Func<AsyncCallback, object, IAsyncResult> s_beginExecuteReaderAsync = BeginExecuteReaderAsyncCallback;
         private static readonly Func<IAsyncResult, SqlDataReader> s_endExecuteReaderAsync = EndExecuteReaderAsyncCallback;
         private static readonly Action<Task<SqlDataReader>> s_cleanupExecuteReaderAsync = CleanupExecuteReaderAsyncCallback;
@@ -37,6 +39,10 @@ namespace Microsoft.Data.SqlClient
         private static readonly Func<SqlCommand, CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult> s_beginExecuteReaderInternal = BeginExecuteReaderInternalCallback;
         private static readonly Func<SqlCommand, CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult> s_beginExecuteXmlReaderInternal = BeginExecuteXmlReaderInternalCallback;
         private static readonly Func<SqlCommand, CommandBehavior, AsyncCallback, object, int, bool, bool, IAsyncResult> s_beginExecuteNonQueryInternal = BeginExecuteNonQueryInternalCallback;
+        private static readonly Func<AsyncCallback, object, IAsyncResult> s_beginExecuteNonQueryAsync = BeginExecuteNonQueryAsyncCallback;
+        private static readonly Func<IAsyncResult, int> s_endExecuteNonQueryAsync = EndExecuteNonQueryAsyncCallback;
+        private static readonly Func<AsyncCallback, object, IAsyncResult> s_beginExecuteXmlReaderAsync = BeginExecuteXmlReaderAsyncCallback;
+        private static readonly Func<IAsyncResult, XmlReader> s_endExecuteXmlReaderAsync = EndExecuteXmlReaderAsyncCallback;
 
         internal sealed class ExecuteReaderAsyncCallContext : AAsyncCallContext<SqlCommand, SqlDataReader>
         {
@@ -1177,6 +1183,11 @@ namespace Microsoft.Data.SqlClient
             return BeginExecuteNonQueryInternal(0, callback, stateObject, 0, inRetry: false);
         }
 
+        private static IAsyncResult BeginExecuteNonQueryAsyncCallback(AsyncCallback callback, object stateObject)
+        {
+            return ((SqlCommand)stateObject).BeginExecuteNonQueryAsync(callback, stateObject);
+        }
+
         private IAsyncResult BeginExecuteNonQueryAsync(AsyncCallback callback, object stateObject)
         {
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.BeginExecuteNonQueryAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
@@ -1385,6 +1396,11 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.CR_ReconnectionCancelled();
                 }
             }
+        }
+
+        private static int EndExecuteNonQueryAsyncCallback(IAsyncResult asyncResult)
+        {
+            return ((SqlCommand)asyncResult.AsyncState).EndExecuteNonQueryAsync(asyncResult);
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EndExecuteNonQueryAsync[@name="IAsyncResult"]/*'/>
@@ -1684,6 +1700,10 @@ namespace Microsoft.Data.SqlClient
             return BeginExecuteXmlReaderInternal(CommandBehavior.SequentialAccess, callback, stateObject, 0, inRetry: false);
         }
 
+        private static IAsyncResult BeginExecuteXmlReaderAsyncCallback(AsyncCallback callback, object stateObject)
+        {
+            return ((SqlCommand)stateObject).BeginExecuteXmlReaderAsync(callback, stateObject);
+        }
         private IAsyncResult BeginExecuteXmlReaderAsync(AsyncCallback callback, object stateObject)
         {
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.BeginExecuteXmlReaderAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
@@ -1807,6 +1827,11 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.EndExecuteXmlReader | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
             }
+        }
+
+        private static XmlReader EndExecuteXmlReaderAsyncCallback(IAsyncResult asyncResult)
+        {
+            return ((SqlCommand)asyncResult.AsyncState).EndExecuteXmlReaderAsync(asyncResult);
         }
 
         private XmlReader EndExecuteXmlReaderAsync(IAsyncResult asyncResult)
@@ -2478,28 +2503,31 @@ namespace Microsoft.Data.SqlClient
             {
                 returnedTask = RegisterForConnectionCloseNotification(returnedTask);
 
-                Task<int>.Factory.FromAsync(BeginExecuteNonQueryAsync, EndExecuteNonQueryAsync, null).ContinueWith((t) =>
-                {
-                    registration.Dispose();
-                    if (t.IsFaulted)
+                Task<int>.Factory.FromAsync(s_beginExecuteNonQueryAsync, s_endExecuteNonQueryAsync, this).ContinueWith(
+                    (Task<int> t) =>
                     {
-                        Exception e = t.Exception.InnerException;
-                        _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
-                        source.SetException(e);
-                    }
-                    else
-                    {
-                        if (t.IsCanceled)
+                        registration.Dispose();
+                        if (t.IsFaulted)
                         {
-                            source.SetCanceled();
+                            Exception e = t.Exception.InnerException;
+                            _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
+                            source.SetException(e);
                         }
                         else
                         {
-                            source.SetResult(t.Result);
+                            if (t.IsCanceled)
+                            {
+                                source.SetCanceled();
+                            }
+                            else
+                            {
+                                source.SetResult(t.Result);
+                            }
+                            _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
                         }
-                        _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
-                    }
-                }, TaskScheduler.Default);
+                    }, 
+                    TaskScheduler.Default
+                );
             }
             catch (Exception e)
             {
@@ -2755,28 +2783,31 @@ namespace Microsoft.Data.SqlClient
             {
                 returnedTask = RegisterForConnectionCloseNotification(returnedTask);
 
-                Task<XmlReader>.Factory.FromAsync(BeginExecuteXmlReaderAsync, EndExecuteXmlReaderAsync, null).ContinueWith((t) =>
-                {
-                    registration.Dispose();
-                    if (t.IsFaulted)
+                Task<XmlReader>.Factory.FromAsync(s_beginExecuteXmlReaderAsync, s_endExecuteXmlReaderAsync, this).ContinueWith(
+                    (Task<XmlReader> t) =>
                     {
-                        Exception e = t.Exception.InnerException;
-                        _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
-                        source.SetException(e);
-                    }
-                    else
-                    {
-                        if (t.IsCanceled)
+                        registration.Dispose();
+                        if (t.IsFaulted)
                         {
-                            source.SetCanceled();
+                            Exception e = t.Exception.InnerException;
+                            _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
+                            source.SetException(e);
                         }
                         else
                         {
-                            source.SetResult(t.Result);
+                            if (t.IsCanceled)
+                            {
+                                source.SetCanceled();
+                            }
+                            else
+                            {
+                                source.SetResult(t.Result);
+                            }
+                            _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
                         }
-                        _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
-                    }
-                }, TaskScheduler.Default);
+                    }, 
+                    TaskScheduler.Default
+                );
             }
             catch (Exception e)
             {
