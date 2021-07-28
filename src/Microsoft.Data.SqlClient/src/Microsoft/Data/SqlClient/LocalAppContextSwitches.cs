@@ -13,11 +13,13 @@ namespace Microsoft.Data.SqlClient
         private const string TypeName = nameof(LocalAppContextSwitches);
         internal const string MakeReadAsyncBlockingString = @"Switch.Microsoft.Data.SqlClient.MakeReadAsyncBlocking";
         internal const string LegacyRowVersionNullString = @"Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehavior";
+        internal const string EnableSecureProtocolsByOSString = @"Switch.Microsoft.Data.SqlClient.EnableSecureProtocolsByOS";
         // safety switch
         internal const string EnableRetryLogicSwitch = "Switch.Microsoft.Data.SqlClient.EnableRetryLogic";
 
         private static bool _makeReadAsyncBlocking;
         private static bool? s_LegacyRowVersionNullBehavior;
+        private static bool? s_EnableSecureProtocolsByOS;
         private static bool? s_isRetryEnabled = null;
 
 #if !NETFRAMEWORK
@@ -70,14 +72,28 @@ namespace Microsoft.Data.SqlClient
             {
                 if (s_LegacyRowVersionNullBehavior is null)
                 {
-                    bool value = false;
-                    if (AppContext.TryGetSwitch(LegacyRowVersionNullString, out bool providedValue))
-                    {
-                         value = providedValue;
-                    }
-                    s_LegacyRowVersionNullBehavior = value;
+                    bool result;
+                    result = AppContext.TryGetSwitch(LegacyRowVersionNullString, out result) ? result : false;
+                    s_LegacyRowVersionNullBehavior = result;
                 }
                 return s_LegacyRowVersionNullBehavior.Value;
+            }
+        }
+
+        /// <summary>
+        /// For backward compatibility, this switch can be on to jump back on OS preferences.
+        /// </summary>
+        public static bool EnableSecureProtocolsByOS
+        {
+            get
+            {
+                if (s_EnableSecureProtocolsByOS is null)
+                {
+                    bool result;
+                    result = AppContext.TryGetSwitch(EnableSecureProtocolsByOSString, out result) ? result : false;
+                    s_EnableSecureProtocolsByOS = result;
+                }
+                return s_EnableSecureProtocolsByOS.Value;
             }
         }
     }

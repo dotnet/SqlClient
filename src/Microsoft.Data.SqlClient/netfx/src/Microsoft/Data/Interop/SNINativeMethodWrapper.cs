@@ -585,11 +585,11 @@ namespace Microsoft.Data.SqlClient
                 SNINativeManagedWrapperX86.SNIGetInfoWrapper(pConn, QType, out provNum);
         }
 
-        private static uint SNIInitialize([In] IntPtr pmo)
+        private static uint SNIInitialize([In] bool enableSecureProtocolsByOS, [In] IntPtr pmo)
         {
             return s_is64bitProcess ?
-                SNINativeManagedWrapperX64.SNIInitialize(pmo) :
-                SNINativeManagedWrapperX86.SNIInitialize(pmo);
+                SNINativeManagedWrapperX64.SNIInitialize(enableSecureProtocolsByOS, pmo) :
+                SNINativeManagedWrapperX86.SNIInitialize(enableSecureProtocolsByOS, pmo);
         }
 
         private static uint SNIOpenSyncExWrapper(ref SNI_CLIENT_CONSUMER_INFO pClientConsumerInfo, out IntPtr ppConn)
@@ -757,7 +757,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static uint SNIInitialize()
         {
-            return SNIInitialize(IntPtr.Zero);
+            return SNIInitialize(LocalAppContextSwitches.EnableSecureProtocolsByOS, IntPtr.Zero);
         }
 
         internal static unsafe uint SNIOpenMarsSession(ConsumerInfo consumerInfo, SNIHandle parent, ref IntPtr pConn, bool fSync, SqlConnectionIPAddressPreference ipPreference, SQLDNSInfo cachedDNSInfo)
