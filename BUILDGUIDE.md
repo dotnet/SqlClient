@@ -259,7 +259,7 @@ To use this feature, you must enable the following AppContext switch at applicat
 
 ## Enabling OS secure protocols preference
 
-Tls 1.3 has been taken out in view of the fact that the driver lacks full support. To jump back on the OS preferences as same as earlier, you must enable the following AppContext switch on application's startup:
+TLS 1.3 has been excluded due to the fact that the driver lacks full support. To enable OS preferences as before, enable the following AppContext switch on application startup:
 
 **"Switch.Microsoft.Data.SqlClient.EnableSecureProtocolsByOS"**
 

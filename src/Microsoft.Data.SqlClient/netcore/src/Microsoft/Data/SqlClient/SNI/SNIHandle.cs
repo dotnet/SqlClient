@@ -13,7 +13,7 @@ namespace Microsoft.Data.SqlClient.SNI
     internal abstract class SNIHandle
     {
         /// <summary>
-        /// Exclude Tls 1.3 (not fully supported).
+        /// Exclude TLS 1.3 (not fully supported).
         /// </summary>
         protected readonly SslProtocols SupportedProtocols = LocalAppContextSwitches.UseSystemDefaultSecureProtocols ? SslProtocols.None : SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls
         //protected readonly SslProtocols SupportedProtocols = SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls
