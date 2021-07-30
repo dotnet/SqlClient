@@ -5586,7 +5586,14 @@ namespace Microsoft.Data.SqlClient
                             }
                             if (length > 0)
                             {
-                                s = new string(cc, 0, length);
+                                if (cc.LongLength == length + 1)
+                                {
+                                    s = Encoding.Unicode.GetString(Encoding.Unicode.GetBytes(cc), 0, length);
+                                }
+                                else
+                                {
+                                    s = new String(cc, 0, length);
+                                }
                             }
                             else
                             {
