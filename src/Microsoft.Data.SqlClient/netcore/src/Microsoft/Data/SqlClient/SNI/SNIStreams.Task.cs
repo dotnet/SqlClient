@@ -21,6 +21,11 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 return await base.ReadAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
             }
+            catch (System.Exception e)
+            {
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNISslStream), EventType.ERR, "Internal Exception occurred while reading data: {0}", args0: e?.Message);
+                throw;
+            }
             finally
             {
                 _readAsyncSemaphore.Release();
@@ -33,6 +38,11 @@ namespace Microsoft.Data.SqlClient.SNI
             try
             {
                 await base.WriteAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
+            }
+            catch (System.Exception e)
+            {
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNISslStream), EventType.ERR, "Internal Exception occurred while reading data: {0}", args0: e?.Message);
+                throw;
             }
             finally
             {
@@ -50,6 +60,11 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 return await base.ReadAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
             }
+            catch (System.Exception e)
+            {
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNISslStream), EventType.ERR, "Internal Exception occurred while reading data: {0}", args0: e?.Message);
+                throw;
+            }
             finally
             {
                 _readAsyncSemaphore.Release();
@@ -63,6 +78,11 @@ namespace Microsoft.Data.SqlClient.SNI
             try
             {
                 await base.WriteAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
+            }
+            catch (System.Exception e)
+            {
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNISslStream), EventType.ERR, "Internal Exception occurred while reading data: {0}", args0: e?.Message);
+                throw;
             }
             finally
             {
