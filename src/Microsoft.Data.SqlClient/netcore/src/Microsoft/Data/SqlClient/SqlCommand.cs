@@ -2550,7 +2550,10 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.InternalExecuteNonQueryAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
             Guid operationId = s_diagnosticListener.WriteCommandBefore(this, _transaction);
 
-            TaskCompletionSource<int> source = new TaskCompletionSource<int>();
+            // connection can be used as state in RegisterForConnectionCloseNotification continuation
+            // to avoid an allocation so use it as the state value if possible but it can be changed if
+            // you need it for a more important piece of data that justifies the tuple allocation later
+            TaskCompletionSource<int> source = new TaskCompletionSource<int>(_activeConnection);
 
             CancellationTokenRegistration registration = new CancellationTokenRegistration();
             if (cancellationToken.CanBeCanceled)
@@ -2674,7 +2677,10 @@ namespace Microsoft.Data.SqlClient
                 operationId = s_diagnosticListener.WriteCommandBefore(this, _transaction);
             }
 
-            TaskCompletionSource<SqlDataReader> source = new TaskCompletionSource<SqlDataReader>();
+            // connection can be used as state in RegisterForConnectionCloseNotification continuation
+            // to avoid an allocation so use it as the state value if possible but it can be changed if
+            // you need it for a more important piece of data that justifies the tuple allocation later
+            TaskCompletionSource<SqlDataReader> source = new TaskCompletionSource<SqlDataReader>(_activeConnection);
 
             CancellationTokenRegistration registration = new CancellationTokenRegistration();
             if (cancellationToken.CanBeCanceled)
@@ -2846,7 +2852,10 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.InternalExecuteXmlReaderAsync | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
             Guid operationId = s_diagnosticListener.WriteCommandBefore(this, _transaction);
 
-            TaskCompletionSource<XmlReader> source = new TaskCompletionSource<XmlReader>();
+            // connection can be used as state in RegisterForConnectionCloseNotification continuation
+            // to avoid an allocation so use it as the state value if possible but it can be changed if
+            // you need it for a more important piece of data that justifies the tuple allocation later
+            TaskCompletionSource<XmlReader> source = new TaskCompletionSource<XmlReader>(_activeConnection);
 
             CancellationTokenRegistration registration = new CancellationTokenRegistration();
             if (cancellationToken.CanBeCanceled)

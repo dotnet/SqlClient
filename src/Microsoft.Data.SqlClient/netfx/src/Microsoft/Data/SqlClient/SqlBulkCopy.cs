@@ -2310,7 +2310,7 @@ namespace Microsoft.Data.SqlClient
             return writeTask;
         }
 
-        private void RegisterForConnectionCloseNotification<T>(ref Task<T> outterTask)
+        private Task<T> RegisterForConnectionCloseNotification<T>(Task<T> outterTask)
         {
             SqlConnection connection = _connection;
             if (connection == null)
@@ -2319,7 +2319,7 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.ClosedConnectionError();
             }
 
-            connection.RegisterForConnectionCloseNotification<T>(ref outterTask, this, SqlReferenceCollection.BulkCopyTag);
+            return connection.RegisterForConnectionCloseNotification(outterTask, this, SqlReferenceCollection.BulkCopyTag);
         }
 
         // Runs a loop to copy all columns of a single row.
@@ -3139,9 +3139,7 @@ namespace Microsoft.Data.SqlClient
             if (_isAsyncBulkCopy)
             {
                 source = new TaskCompletionSource<object>(); // Creating the completion source/Task that we pass to application
-                resultTask = source.Task;
-
-                RegisterForConnectionCloseNotification(ref resultTask);
+                resultTask = RegisterForConnectionCloseNotification(source.Task);
             }
 
             if (_destinationTableName == null)
