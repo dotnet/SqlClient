@@ -228,6 +228,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\PoolBlockingPeriod.cs">
       <Link>Microsoft\Data\SqlClient\PoolBlockingPeriod.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Pool.cs">
+      <Link>Microsoft\Data\SqlClient\Pool.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\RowsCopiedEventArgs.cs">
       <Link>Microsoft\Data\SqlClient\RowsCopiedEventArgs.cs</Link>
     </Compile>

@@ -154,6 +154,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\ParameterPeekAheadValue.cs">
       <Link>Microsoft\Data\SqlClient\ParameterPeekAheadValue.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Pool.cs">
+      <Link>Microsoft\Data\SqlClient\Pool.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\PoolBlockingPeriod.cs">
       <Link>Microsoft\Data\SqlClient\PoolBlockingPeriod.cs</Link>
     </Compile>
@@ -535,7 +538,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNINpHandle.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIPacket.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIPacket.Debug.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIPacketPool.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIPhysicalHandle.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIProxy.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIStreams.cs" />
