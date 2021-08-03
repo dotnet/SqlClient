@@ -623,7 +623,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 connDst.Open();
                 using SqlCommand cmd2 = connDst.CreateCommand();
                 cmd2.CommandText = prepTableDst3;
-                cmd2.ExecuteNonQuery();
+                _ = cmd2.ExecuteNonQuery();
 
                 using (SqlBulkCopy bcp = new(connDst))
                 {
