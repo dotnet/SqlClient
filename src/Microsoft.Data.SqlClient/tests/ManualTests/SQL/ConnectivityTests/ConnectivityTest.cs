@@ -31,16 +31,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void EnvironmentHostNameSPIDTest()
         {
-            SqlConnectionStringBuilder builder = (new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { Pooling = true });
-            builder.ApplicationName = "HostNameTest";
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+            {
+                Pooling = true,
+                ApplicationName = "HostNameTest"
+            };
 
-            using (SqlConnection sqlConnection = new SqlConnection(builder.ConnectionString))
+            using (SqlConnection sqlConnection = new(builder.ConnectionString))
             {
                 sqlConnection.Open();
                 int sqlClientSPID = sqlConnection.ServerProcessId;
                 int sessionSpid;
 
-                using (SqlCommand cmd = new SqlCommand("SELECT @@SPID", sqlConnection))
+                using (SqlCommand cmd = new("SELECT @@SPID", sqlConnection))
                 using (SqlDataReader reader = cmd.ExecuteReader())
                 {
                     reader.Read();
@@ -53,7 +56,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 // Confirm once again SPID on SqlConnection directly
                 Assert.Equal(sessionSpid, sqlConnection.ServerProcessId);
 
-                using (SqlCommand command = new SqlCommand("sp_who2", sqlConnection))
+                using (SqlCommand command = new("sp_who2", sqlConnection))
                 using (SqlDataReader reader = command.ExecuteReader())
                 {
                     while (reader.Read())
@@ -103,14 +106,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ConnectionWorker.Stop();
 
             double timeTotal = 0;
-            double timeElapsed = 0;
 
             foreach (ConnectionWorker w in ConnectionWorker.WorkerList)
             {
                 timeTotal += w.TimeElapsed;
             }
-            timeElapsed = timeTotal / Convert.ToDouble(ConnectionWorker.WorkerList.Count);
-
+            double timeElapsed = timeTotal / Convert.ToDouble(ConnectionWorker.WorkerList.Count);
             int threshold = timeoutSec * numOfTry * 2 * 1000;
 
             Assert.True(timeElapsed < threshold);
@@ -258,80 +259,80 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void ConnectionResiliencySPIDTest()
         {
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
-            builder.ConnectRetryCount = 0;
-            builder.ConnectRetryInterval = 5;
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+            {
+                ConnectRetryCount = 0,
+                ConnectRetryInterval = 5
+            };
 
             // No connection resiliency
-            using (SqlConnection conn = new SqlConnection(builder.ConnectionString))
+            using (SqlConnection conn = new(builder.ConnectionString))
             {
                 conn.Open();
-                InternalConnectionWrapper wrapper = new InternalConnectionWrapper(conn, true, builder.ConnectionString);
-                using (SqlCommand cmd = conn.CreateCommand())
+                InternalConnectionWrapper wrapper = new(conn, true, builder.ConnectionString);
+                using SqlCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "SELECT @@SPID";
+                wrapper.KillConnectionByTSql();
+                bool cmdSuccess = false;
+                try
                 {
-                    cmd.CommandText = "SELECT @@SPID";
-                    wrapper.KillConnectionByTSql();
-                    bool cmdSuccess = false;
-                    try
-                    {
-                        cmd.ExecuteScalar();
-                        cmdSuccess = true;
-                    }
-                    // Windows always throws SqlException. Unix sometimes throws AggregateException against Azure SQL DB.
-                    catch (Exception ex) when (ex is SqlException || ex is AggregateException) { }
-                    Assert.False(cmdSuccess);
+                    cmd.ExecuteScalar();
+                    cmdSuccess = true;
                 }
+                // Windows always throws SqlException. Unix sometimes throws AggregateException against Azure SQL DB.
+                catch (Exception ex) when (ex is SqlException || ex is AggregateException) { }
+                Assert.False(cmdSuccess);
             }
 
             builder.ConnectRetryCount = 2;
             // Also check SPID changes with connection resiliency
-            using (SqlConnection conn = new SqlConnection(builder.ConnectionString))
+            using (SqlConnection conn = new(builder.ConnectionString))
             {
                 conn.Open();
                 int clientSPID = conn.ServerProcessId;
                 int serverSPID = 0;
-                InternalConnectionWrapper wrapper = new InternalConnectionWrapper(conn, true, builder.ConnectionString);
-                using (SqlCommand cmd = conn.CreateCommand())
-                {
-                    cmd.CommandText = "SELECT @@SPID";
-                    using (SqlDataReader reader = cmd.ExecuteReader())
-                        while (reader.Read())
-                        {
-                            serverSPID = reader.GetInt16(0);
-                        }
+                InternalConnectionWrapper wrapper = new(conn, true, builder.ConnectionString);
+                using SqlCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "SELECT @@SPID";
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                    while (reader.Read())
+                    {
+                        serverSPID = reader.GetInt16(0);
+                    }
 
-                    Assert.Equal(serverSPID, clientSPID);
-                    // Also check SPID after query execution
-                    Assert.Equal(serverSPID, conn.ServerProcessId);
+                Assert.Equal(serverSPID, clientSPID);
+                // Also check SPID after query execution
+                Assert.Equal(serverSPID, conn.ServerProcessId);
 
-                    wrapper.KillConnectionByTSql();
+                wrapper.KillConnectionByTSql();
 
-                    // Connection resiliency should reconnect transparently
-                    using (SqlDataReader reader = cmd.ExecuteReader())
-                        while (reader.Read())
-                        {
-                            serverSPID = reader.GetInt16(0);
-                        }
+                // Connection resiliency should reconnect transparently
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                    while (reader.Read())
+                    {
+                        serverSPID = reader.GetInt16(0);
+                    }
 
-                    // SPID should match server's SPID
-                    Assert.Equal(serverSPID, conn.ServerProcessId);
-                }
+                // SPID should match server's SPID
+                Assert.Equal(serverSPID, conn.ServerProcessId);
             }
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnectionStringPasswordIncluded))]
         public static void ConnectionStringPersistentInfoTest()
         {
-            SqlConnectionStringBuilder connectionStringBuilder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
-            connectionStringBuilder.PersistSecurityInfo = false;
+            SqlConnectionStringBuilder connectionStringBuilder = new(DataTestUtility.TCPConnectionString)
+            {
+                PersistSecurityInfo = false
+            };
             string cnnString = connectionStringBuilder.ConnectionString;
 
             connectionStringBuilder.Clear();
-            using (SqlConnection sqlCnn = new SqlConnection(cnnString))
+            using (SqlConnection sqlCnn = new(cnnString))
             {
                 sqlCnn.Open();
                 connectionStringBuilder.ConnectionString = sqlCnn.ConnectionString;
-                Assert.True(connectionStringBuilder.Password == string.Empty, "Password must not persist according to set the PersistSecurityInfo by false!");
+                Assert.True(string.IsNullOrEmpty(connectionStringBuilder.Password), "Password must not persist according to set the PersistSecurityInfo by false!");
             }
 
             connectionStringBuilder.ConnectionString = DataTestUtility.TCPConnectionString;
@@ -339,45 +340,36 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             cnnString = connectionStringBuilder.ConnectionString;
 
             connectionStringBuilder.Clear();
-            using (SqlConnection sqlCnn = new SqlConnection(cnnString))
+            using (SqlConnection sqlCnn = new(cnnString))
             {
                 sqlCnn.Open();
                 connectionStringBuilder.ConnectionString = sqlCnn.ConnectionString;
-                Assert.True(connectionStringBuilder.Password != string.Empty, "Password must persist according to set the PersistSecurityInfo by true!");
+                Assert.True(!string.IsNullOrEmpty(connectionStringBuilder.Password), "Password must persist according to set the PersistSecurityInfo by true!");
             }
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ConnectionOpenDisableRetry()
         {
-            using (SqlConnection sqlConnection = new SqlConnection((new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { InitialCatalog = "DoesNotExist0982532435423", Pooling = false }).ConnectionString))
+            SqlConnectionStringBuilder connectionStringBuilder = new(DataTestUtility.TCPConnectionString)
             {
-                TimeSpan duration;
-                DateTime start = DateTime.Now;
-                try
-                {
-                    sqlConnection.Open(SqlConnectionOverrides.OpenWithoutRetry);
-                    Assert.True(false, "Connection succeeded to database that should not exist.");
-                }
-                catch (SqlException)
-                {
-                    duration = DateTime.Now - start;
-                    Assert.True(duration.TotalSeconds < 2, $"Connection Open() without retries took longer than expected. Expected < 2 sec. Took {duration.TotalSeconds} sec.");
-                }
+                InitialCatalog = "DoesNotExist0982532435423",
+                Pooling = false
+            };
+            using SqlConnection sqlConnection = new(connectionStringBuilder.ConnectionString);
+            Stopwatch timer = new();
 
-                start = DateTime.Now;
-                try
-                {
-                    sqlConnection.Open();
-                    Assert.True(false, "Connection succeeded to database that should not exist.");
-                }
-                catch (SqlException)
-                {
-                    duration = DateTime.Now - start;
-                    //Should not fail fast due to transient fault handling when DB does not exist
-                    Assert.True(duration.TotalSeconds > 5, $"Connection Open() with retries took less time than expected. Expect > 5 sec with transient fault handling. Took {duration.TotalSeconds} sec.");
-                }
-            }
+            timer.Start();
+            Assert.Throws<SqlException>(() => sqlConnection.Open(SqlConnectionOverrides.OpenWithoutRetry));
+            timer.Stop();
+            TimeSpan duration = timer.Elapsed;
+            Assert.True(duration.Seconds < 2, $"Connection Open() without retries took longer than expected. Expected < 2 sec. Took {duration.Seconds} sec.");
+
+            timer.Restart();
+            Assert.Throws<SqlException>(() => sqlConnection.Open());
+            timer.Stop();
+            duration = timer.Elapsed;
+            Assert.True(duration.Seconds > 5, $"Connection Open() with retries took less time than expected. Expect > 5 sec with transient fault handling. Took {duration.Seconds} sec.");                //    sqlConnection.Open();
         }
     }
 }
