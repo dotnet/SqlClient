@@ -211,6 +211,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientSymmetricKey.cs">
       <Link>Microsoft\Data\SqlClient\SqlClientSymmetricKey.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlCollation.cs">
+      <Link>Microsoft\Data\SqlClient\SqlCollation.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlColumnEncryptionKeyStoreProvider.cs">
       <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionKeyStoreProvider.cs</Link>
     </Compile>
@@ -830,8 +833,7 @@
     <Reference Include="System.Memory" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Microsoft\Data\SqlClient\AAsyncCallContext.cs" />
-    
+    <Compile Include="Microsoft\Data\SqlClient\AAsyncCallContext.cs" />   
     <Compile Include="Resources\Strings.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
