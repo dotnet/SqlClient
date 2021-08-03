@@ -31,7 +31,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void EnvironmentHostNameSPIDTest()
         {
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
             {
                 Pooling = true,
                 ApplicationName = "HostNameTest"
@@ -92,9 +92,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             const int numOfTry = 2;
             const int numOfThreads = 5;
 
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
-            builder.DataSource = "invalidhost";
-            builder.ConnectTimeout = timeoutSec;
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
+            {
+                DataSource = "invalidhost",
+                ConnectTimeout = timeoutSec
+            };
             string connStrNotAvailable = builder.ConnectionString;
 
             for (int i = 0; i < numOfThreads; ++i)
