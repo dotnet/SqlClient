@@ -795,67 +795,68 @@ namespace Microsoft.Data.SqlClient
             _pendingCancel = false;
 
             SqlStatistics statistics = null;
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlCommand.Prepare | API | Object Id {0}", ObjectID);
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.Prepare | API | Correlation | Object Id {0}, ActivityID {1}, Client Connection Id {2}", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId);
-            try
+            using (TryEventScope.Create("SqlCommand.Prepare | API | Object Id {0}", ObjectID))
             {
-                statistics = SqlStatistics.StartTimer(Statistics);
-
-                // only prepare if batch with parameters
-                if (this.IsPrepared && !this.IsDirty
-                    || (this.CommandType == CommandType.StoredProcedure)
-                    || ((System.Data.CommandType.Text == this.CommandType)
-                            && (0 == GetParameterCount(_parameters))))
+                SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.Prepare | API | Correlation | Object Id {0}, ActivityID {1}, Client Connection Id {2}", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId);
+                try
                 {
-                    if (null != Statistics)
-                    {
-                        Statistics.SafeIncrement(ref Statistics._prepares);
-                    }
-                    _hiddenPrepare = false;
-                }
-                else
-                {
-                    // Validate the command outside of the try/catch to avoid putting the _stateObj on error
-                    ValidateCommand(isAsync: false);
+                    statistics = SqlStatistics.StartTimer(Statistics);
 
-                    bool processFinallyBlock = true;
-                    try
+                    // only prepare if batch with parameters
+                    if (this.IsPrepared && !this.IsDirty
+                        || (this.CommandType == CommandType.StoredProcedure)
+                        || ((System.Data.CommandType.Text == this.CommandType)
+                                && (0 == GetParameterCount(_parameters))))
                     {
-                        // NOTE: The state object isn't actually needed for this, but it is still here for back-compat (since it does a bunch of checks)
-                        GetStateObject();
-
-                        // Loop through parameters ensuring that we do not have unspecified types, sizes, scales, or precisions
-                        if (null != _parameters)
+                        if (null != Statistics)
                         {
-                            int count = _parameters.Count;
-                            for (int i = 0; i < count; ++i)
+                            Statistics.SafeIncrement(ref Statistics._prepares);
+                        }
+                        _hiddenPrepare = false;
+                    }
+                    else
+                    {
+                        // Validate the command outside of the try/catch to avoid putting the _stateObj on error
+                        ValidateCommand(isAsync: false);
+
+                        bool processFinallyBlock = true;
+                        try
+                        {
+                            // NOTE: The state object isn't actually needed for this, but it is still here for back-compat (since it does a bunch of checks)
+                            GetStateObject();
+
+                            // Loop through parameters ensuring that we do not have unspecified types, sizes, scales, or precisions
+                            if (null != _parameters)
                             {
-                                _parameters[i].Prepare(this);
+                                int count = _parameters.Count;
+                                for (int i = 0; i < count; ++i)
+                                {
+                                    _parameters[i].Prepare(this);
+                                }
+                            }
+
+                            InternalPrepare();
+                        }
+                        catch (Exception e)
+                        {
+                            processFinallyBlock = ADP.IsCatchableExceptionType(e);
+                            throw;
+                        }
+                        finally
+                        {
+                            if (processFinallyBlock)
+                            {
+                                _hiddenPrepare = false; // The command is now officially prepared
+
+                                ReliablePutStateObject();
                             }
                         }
-
-                        InternalPrepare();
-                    }
-                    catch (Exception e)
-                    {
-                        processFinallyBlock = ADP.IsCatchableExceptionType(e);
-                        throw;
-                    }
-                    finally
-                    {
-                        if (processFinallyBlock)
-                        {
-                            _hiddenPrepare = false; // The command is now officially prepared
-
-                            ReliablePutStateObject();
-                        }
                     }
                 }
-            }
-            finally
-            {
-                SqlStatistics.StopTimer(statistics);
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
+                finally
+                {
+                    SqlStatistics.StopTimer(statistics);
+                }
             }
         }
 
@@ -918,86 +919,87 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Cancel/*'/>
         public override void Cancel()
         {
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlCommand.Cancel | API | Object Id {0}", ObjectID);
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.Cancel | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
-
-            SqlStatistics statistics = null;
-            try
+            using (TryEventScope.Create("SqlCommand.Cancel | API | Object Id {0}", ObjectID))
             {
-                statistics = SqlStatistics.StartTimer(Statistics);
+                SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.Cancel | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
 
-                // If we are in reconnect phase simply cancel the waiting task
-                var reconnectCompletionSource = _reconnectionCompletionSource;
-                if (reconnectCompletionSource != null)
+                SqlStatistics statistics = null;
+                try
                 {
-                    if (reconnectCompletionSource.TrySetCanceled())
+                    statistics = SqlStatistics.StartTimer(Statistics);
+
+                    // If we are in reconnect phase simply cancel the waiting task
+                    var reconnectCompletionSource = _reconnectionCompletionSource;
+                    if (reconnectCompletionSource != null)
                     {
-                        return;
-                    }
-                }
-
-                // the pending data flag means that we are awaiting a response or are in the middle of processing a response
-                // if we have no pending data, then there is nothing to cancel
-                // if we have pending data, but it is not a result of this command, then we don't cancel either.  Note that
-                // this model is implementable because we only allow one active command at any one time.  This code
-                // will have to change we allow multiple outstanding batches
-                if (null == _activeConnection)
-                {
-                    return;
-                }
-                SqlInternalConnectionTds connection = (_activeConnection.InnerConnection as SqlInternalConnectionTds);
-                if (null == connection)
-                {  // Fail with out locking
-                    return;
-                }
-
-                // The lock here is to protect against the command.cancel / connection.close race condition
-                // The SqlInternalConnectionTds is set to OpenBusy during close, once this happens the cast below will fail and
-                // the command will no longer be cancelable.  It might be desirable to be able to cancel the close operation, but this is
-                // outside of the scope of Whidbey RTM.  See (SqlConnection::Close) for other lock.
-                lock (connection)
-                {
-                    if (connection != (_activeConnection.InnerConnection as SqlInternalConnectionTds))
-                    { // make sure the connection held on the active connection is what we have stored in our temp connection variable, if not between getting "connection" and taking the lock, the connection has been closed
-                        return;
-                    }
-
-                    TdsParser parser = connection.Parser;
-                    if (null == parser)
-                    {
-                        return;
-                    }
-
-
-                    if (!_pendingCancel)
-                    { // Do nothing if already pending.
-                      // Before attempting actual cancel, set the _pendingCancel flag to false.
-                      // This denotes to other thread before obtaining stateObject from the
-                      // session pool that there is another thread wishing to cancel.
-                      // The period in question is between entering the ExecuteAPI and obtaining
-                      // a stateObject.
-                        _pendingCancel = true;
-
-                        TdsParserStateObject stateObj = _stateObj;
-                        if (null != stateObj)
+                        if (reconnectCompletionSource.TrySetCanceled())
                         {
-                            stateObj.Cancel(this);
+                            return;
                         }
-                        else
+                    }
+
+                    // the pending data flag means that we are awaiting a response or are in the middle of processing a response
+                    // if we have no pending data, then there is nothing to cancel
+                    // if we have pending data, but it is not a result of this command, then we don't cancel either.  Note that
+                    // this model is implementable because we only allow one active command at any one time.  This code
+                    // will have to change we allow multiple outstanding batches
+                    if (null == _activeConnection)
+                    {
+                        return;
+                    }
+                    SqlInternalConnectionTds connection = (_activeConnection.InnerConnection as SqlInternalConnectionTds);
+                    if (null == connection)
+                    {  // Fail with out locking
+                        return;
+                    }
+
+                    // The lock here is to protect against the command.cancel / connection.close race condition
+                    // The SqlInternalConnectionTds is set to OpenBusy during close, once this happens the cast below will fail and
+                    // the command will no longer be cancelable.  It might be desirable to be able to cancel the close operation, but this is
+                    // outside of the scope of Whidbey RTM.  See (SqlConnection::Close) for other lock.
+                    lock (connection)
+                    {
+                        if (connection != (_activeConnection.InnerConnection as SqlInternalConnectionTds))
+                        { // make sure the connection held on the active connection is what we have stored in our temp connection variable, if not between getting "connection" and taking the lock, the connection has been closed
+                            return;
+                        }
+
+                        TdsParser parser = connection.Parser;
+                        if (null == parser)
                         {
-                            SqlDataReader reader = connection.FindLiveReader(this);
-                            if (reader != null)
+                            return;
+                        }
+
+
+                        if (!_pendingCancel)
+                        { // Do nothing if already pending.
+                          // Before attempting actual cancel, set the _pendingCancel flag to false.
+                          // This denotes to other thread before obtaining stateObject from the
+                          // session pool that there is another thread wishing to cancel.
+                          // The period in question is between entering the ExecuteAPI and obtaining
+                          // a stateObject.
+                            _pendingCancel = true;
+
+                            TdsParserStateObject stateObj = _stateObj;
+                            if (null != stateObj)
                             {
-                                reader.Cancel(this);
+                                stateObj.Cancel(this);
+                            }
+                            else
+                            {
+                                SqlDataReader reader = connection.FindLiveReader(this);
+                                if (reader != null)
+                                {
+                                    reader.Cancel(this);
+                                }
                             }
                         }
                     }
                 }
-            }
-            finally
-            {
-                SqlStatistics.StopTimer(statistics);
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
+                finally
+                {
+                    SqlStatistics.StopTimer(statistics);
+                }
             }
         }
 
@@ -1038,52 +1040,51 @@ namespace Microsoft.Data.SqlClient
             // between entry into Execute* API and the thread obtaining the stateObject.
             _pendingCancel = false;
 
-            Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
-
             SqlStatistics statistics = null;
-
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlCommand.ExecuteScalar | API | ObjectId {0}", ObjectID);
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.ExecuteScalar | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
-
             Exception e = null;
             bool success = false;
             int? sqlExceptionNumber = null;
+            Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
 
-            try
+            using (TryEventScope.Create("SqlCommand.ExecuteScalar | API | ObjectId {0}", ObjectID))
             {
-                statistics = SqlStatistics.StartTimer(Statistics);
-                WriteBeginExecuteEvent();
-                SqlDataReader ds;
-                ds = IsRetryEnabled ?
-                    RunExecuteReaderWithRetry(0, RunBehavior.ReturnImmediately, returnStream: true) :
-                    RunExecuteReader(0, RunBehavior.ReturnImmediately, returnStream: true, method: nameof(ExecuteScalar));
-                success = true;
+                SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.ExecuteScalar | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
 
-                return CompleteExecuteScalar(ds, false);
-            }
-            catch (Exception ex)
-            {
-                if (ex is SqlException)
+                try
                 {
-                    SqlException exception = (SqlException)ex;
-                    sqlExceptionNumber = exception.Number;
+                    statistics = SqlStatistics.StartTimer(Statistics);
+                    WriteBeginExecuteEvent();
+                    SqlDataReader ds;
+                    ds = IsRetryEnabled ?
+                        RunExecuteReaderWithRetry(0, RunBehavior.ReturnImmediately, returnStream: true) :
+                        RunExecuteReader(0, RunBehavior.ReturnImmediately, returnStream: true, method: nameof(ExecuteScalar));
+                    success = true;
+
+                    return CompleteExecuteScalar(ds, false);
                 }
+                catch (Exception ex)
+                {
+                    if (ex is SqlException)
+                    {
+                        SqlException exception = (SqlException)ex;
+                        sqlExceptionNumber = exception.Number;
+                    }
 
-                e = ex;
-                throw;
-            }
-            finally
-            {
-                SqlStatistics.StopTimer(statistics);
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
-                WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
-                if (e != null)
-                {
-                    _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
+                    e = ex;
+                    throw;
                 }
-                else
+                finally
                 {
-                    _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
+                    SqlStatistics.StopTimer(statistics);
+                    WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
+                    if (e != null)
+                    {
+                        _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
+                    }
+                    else
+                    {
+                        _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
+                    }
                 }
             }
         }
@@ -1133,43 +1134,44 @@ namespace Microsoft.Data.SqlClient
             // between entry into Execute* API and the thread obtaining the stateObject.
             _pendingCancel = false;
 
+            SqlStatistics statistics = null;
+            Exception e = null;
             Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
 
-            SqlStatistics statistics = null;
+            using (TryEventScope.Create("SqlCommand.ExecuteNonQuery | API | Object Id {0}", ObjectID))
+            {
+                SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.ExecuteNonQuery | API | Correlation | Object Id {0}, ActivityID {1}, Client Connection Id {2}, Command Text {3}", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
 
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlCommand.ExecuteNonQuery | API | Object Id {0}", ObjectID);
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.ExecuteNonQuery | API | Correlation | Object Id {0}, ActivityID {1}, Client Connection Id {2}, Command Text {3}", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
-            Exception e = null;
-            try
-            {
-                statistics = SqlStatistics.StartTimer(Statistics);
-                WriteBeginExecuteEvent();
-                if (IsRetryEnabled)
+                try
                 {
-                    InternalExecuteNonQueryWithRetry(sendToPipe: false, timeout: CommandTimeout, out _, asyncWrite: false, inRetry: false);
+                    statistics = SqlStatistics.StartTimer(Statistics);
+                    WriteBeginExecuteEvent();
+                    if (IsRetryEnabled)
+                    {
+                        InternalExecuteNonQueryWithRetry(sendToPipe: false, timeout: CommandTimeout, out _, asyncWrite: false, inRetry: false);
+                    }
+                    else
+                    {
+                        InternalExecuteNonQuery(completion: null, sendToPipe: false, timeout: CommandTimeout, out _);
+                    }
+                    return _rowsAffected;
                 }
-                else
+                catch (Exception ex)
                 {
-                    InternalExecuteNonQuery(completion: null, sendToPipe: false, timeout: CommandTimeout, out _);
+                    e = ex;
+                    throw;
                 }
-                return _rowsAffected;
-            }
-            catch (Exception ex)
-            {
-                e = ex;
-                throw;
-            }
-            finally
-            {
-                SqlStatistics.StopTimer(statistics);
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
-                if (e != null)
+                finally
                 {
-                    _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
-                }
-                else
-                {
-                    _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
+                    SqlStatistics.StopTimer(statistics);
+                    if (e != null)
+                    {
+                        _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
+                    }
+                    else
+                    {
+                        _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
+                    }
                 }
             }
         }
@@ -1641,51 +1643,52 @@ namespace Microsoft.Data.SqlClient
             // Reset _pendingCancel upon entry into any Execute - used to synchronize state
             // between entry into Execute* API and the thread obtaining the stateObject.
             _pendingCancel = false;
-            bool success = false;
-
-            Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
 
             SqlStatistics statistics = null;
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlCommand.ExecuteXmlReader | API | Object Id {0}", ObjectID);
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.ExecuteXmlReader | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
+            bool success = false;
             int? sqlExceptionNumber = null;
-
             Exception e = null;
-            try
-            {
-                statistics = SqlStatistics.StartTimer(Statistics);
-                WriteBeginExecuteEvent();
-                // use the reader to consume metadata
-                SqlDataReader ds;
-                ds = IsRetryEnabled ?
-                    RunExecuteReaderWithRetry(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, returnStream: true) :
-                    RunExecuteReader(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, returnStream: true);
-                success = true;
-                return CompleteXmlReader(ds);
-            }
-            catch (Exception ex)
-            {
-                e = ex;
-                if (ex is SqlException)
-                {
-                    SqlException exception = (SqlException)ex;
-                    sqlExceptionNumber = exception.Number;
-                }
+            Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
 
-                throw;
-            }
-            finally
+            using (TryEventScope.Create("SqlCommand.ExecuteXmlReader | API | Object Id {0}", ObjectID))
             {
-                SqlStatistics.StopTimer(statistics);
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
-                WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
-                if (e != null)
+                SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.ExecuteXmlReader | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
+
+                try
                 {
-                    _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
+                    statistics = SqlStatistics.StartTimer(Statistics);
+                    WriteBeginExecuteEvent();
+                    // use the reader to consume metadata
+                    SqlDataReader ds;
+                    ds = IsRetryEnabled ?
+                        RunExecuteReaderWithRetry(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, returnStream: true) :
+                        RunExecuteReader(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, returnStream: true);
+                    success = true;
+                    return CompleteXmlReader(ds);
                 }
-                else
+                catch (Exception ex)
                 {
-                    _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
+                    e = ex;
+                    if (ex is SqlException)
+                    {
+                        SqlException exception = (SqlException)ex;
+                        sqlExceptionNumber = exception.Number;
+                    }
+
+                    throw;
+                }
+                finally
+                {
+                    SqlStatistics.StopTimer(statistics);
+                    WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
+                    if (e != null)
+                    {
+                        _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
+                    }
+                    else
+                    {
+                        _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
+                    }
                 }
             }
         }
@@ -1978,50 +1981,50 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReader[@name="CommandBehavior"]/*'/>
         new public SqlDataReader ExecuteReader(CommandBehavior behavior)
         {
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlCommand.ExecuteReader | API | Object Id {0}", ObjectID);
             // Reset _pendingCancel upon entry into any Execute - used to synchronize state
             // between entry into Execute* API and the thread obtaining the stateObject.
             _pendingCancel = false;
-
-            Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
 
             SqlStatistics statistics = null;
             bool success = false;
             int? sqlExceptionNumber = null;
             Exception e = null;
-            try
-            {
-                WriteBeginExecuteEvent();
-                statistics = SqlStatistics.StartTimer(Statistics);
-                return IsRetryEnabled ?
-                    RunExecuteReaderWithRetry(behavior, RunBehavior.ReturnImmediately, returnStream: true) :
-                    RunExecuteReader(behavior, RunBehavior.ReturnImmediately, returnStream: true);
-            }
-            catch (Exception ex)
-            {
-                if (ex is SqlException)
-                {
-                    SqlException exception = (SqlException)ex;
-                    sqlExceptionNumber = exception.Number;
-                }
+            Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
 
-                e = ex;
-                throw;
-            }
-            finally
+            using (TryEventScope.Create("SqlCommand.ExecuteReader | API | Object Id {0}", ObjectID))
             {
-                SqlStatistics.StopTimer(statistics);
-                WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
+                try
+                {
+                    WriteBeginExecuteEvent();
+                    statistics = SqlStatistics.StartTimer(Statistics);
+                    return IsRetryEnabled ?
+                        RunExecuteReaderWithRetry(behavior, RunBehavior.ReturnImmediately, returnStream: true) :
+                        RunExecuteReader(behavior, RunBehavior.ReturnImmediately, returnStream: true);
+                }
+                catch (Exception ex)
+                {
+                    if (ex is SqlException)
+                    {
+                        SqlException exception = (SqlException)ex;
+                        sqlExceptionNumber = exception.Number;
+                    }
 
-                if (e != null)
-                {
-                    _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
+                    e = ex;
+                    throw;
                 }
-                else
+                finally
                 {
-                    _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
+                    SqlStatistics.StopTimer(statistics);
+                    WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
+                    if (e != null)
+                    {
+                        _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
+                    }
+                    else
+                    {
+                        _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
+                    }
                 }
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
             }
         }
 
