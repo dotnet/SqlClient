@@ -151,8 +151,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
         public class ConnectionWorker : IDisposable
         {
-            private static List<ConnectionWorker> workerList = new List<ConnectionWorker>();
-            private ManualResetEventSlim _doneEvent = new ManualResetEventSlim(false);
+            private static List<ConnectionWorker> s_workerList = new();
+            private ManualResetEventSlim _doneEvent = new(false);
             private double _timeElapsed;
             private Thread _thread;
             private string _connectionString;
@@ -160,19 +160,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             public ConnectionWorker(string connectionString, int numOfTry)
             {
-                workerList.Add(this);
+                s_workerList.Add(this);
                 _connectionString = connectionString;
                 _numOfTry = numOfTry;
                 _thread = new Thread(new ThreadStart(SqlConnectionOpen));
             }
 
-            public static List<ConnectionWorker> WorkerList => workerList;
+            public static List<ConnectionWorker> WorkerList => s_workerList;
 
             public double TimeElapsed => _timeElapsed;
 
             public static void Start()
             {
-                foreach (ConnectionWorker w in workerList)
+                foreach (ConnectionWorker w in s_workerList)
                 {
                     w._thread.Start();
                 }
@@ -180,7 +180,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             public static void Stop()
             {
-                foreach (ConnectionWorker w in workerList)
+                foreach (ConnectionWorker w in s_workerList)
                 {
                     w._doneEvent.Wait();
                 }
@@ -206,7 +206,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 double totalTime = 0;
                 for (int i = 0; i < _numOfTry; ++i)
                 {
-                    using (SqlConnection con = new SqlConnection(_connectionString))
+                    using (SqlConnection con = new(_connectionString))
                     {
                         sw.Start();
                         try
@@ -219,7 +219,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     totalTime += sw.Elapsed.TotalMilliseconds;
                     sw.Reset();
                 }
-
                 _timeElapsed = totalTime / Convert.ToDouble(_numOfTry);
 
                 _doneEvent.Set();
@@ -356,7 +355,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SqlConnectionStringBuilder connectionStringBuilder = new(DataTestUtility.TCPConnectionString)
             {
                 InitialCatalog = "DoesNotExist0982532435423",
-                Pooling = false
+                Pooling = false,
+                ConnectTimeout=15
             };
             using SqlConnection sqlConnection = new(connectionStringBuilder.ConnectionString);
             Stopwatch timer = new();
