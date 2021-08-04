@@ -36,6 +36,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
             {
+
                 using SqlCommand command = new SqlCommand(GenerateCommandText(), connection);
                 connection.Open();
 

@@ -1771,7 +1771,7 @@
     <value>指定的 QuotePrefix 和 QuoteSuffix 值不匹配。</value>
   </data>
   <data name="ADP_InvalidArgumentLength" xml:space="preserve">
-    <value>参数“{0}”的长度超出了“{1}”的限制。</value>
+    <value>参数“{0}”的长度超出其“{1}”的限制。</value>
   </data>
   <data name="SQL_WrongType" xml:space="preserve">
     <value>应为 {1} 类型的参数，而收到的是 {0} 类型。</value>
@@ -1783,7 +1783,7 @@
     <value>使用键“{0}”要求存在键“{1}”。</value>
   </data>
   <data name="ADP_InvalidConnectionOptionValueLength" xml:space="preserve">
-    <value>键“{0}”值的长度超出了“{1}”的限制。</value>
+    <value>密钥“{0}”值的长度超出其限制 {1}。</value>
   </data>
   <data name="ADP_KeywordNotSupported" xml:space="preserve">
     <value>不支持的关键字:“{0}”。</value>
@@ -2986,7 +2986,7 @@
     <value>无效的数组大小。</value>
   </data>
   <data name="SqlMisc_InvalidPrecScaleMessage" xml:space="preserve">
-    <value>无效的数值精度/小数位数。</value>
+    <value>数值精度/小数位数无效。</value>
   </data>
   <data name="SqlMisc_FormatMessage" xml:space="preserve">
     <value>输入采用的格式不正确。</value>
@@ -4613,5 +4613,8 @@
   </data>
   <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
     <value>需要提供非负数。</value>
+  </data>
+  <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
+    <value>当在父命令上启用 EnableOptimizedParameterBinding 时，参数“{0}”不能具有 Direction Output 或 InputOutput。</value>
   </data>
 </root>

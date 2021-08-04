@@ -14,9 +14,8 @@ namespace Microsoft.Data.SqlClient
     /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/SqlDataAdapter/*' />
     [
     DefaultEvent("RowUpdated"),
-    ToolboxItem("Microsoft.VSDesigner.Data.VS.SqlDataAdapterToolboxItem, " + AssemblyRef.MicrosoftVSDesigner),
-    Designer("Microsoft.VSDesigner.Data.VS.SqlDataAdapterDesigner, " + AssemblyRef.MicrosoftVSDesigner),
     DesignerCategory("")
+    // TODO: Add designer and toolbox attribute when Microsoft.VSDesigner.Data.VS.SqlDataAdapterDesigner uses Microsoft.Data.SqlClient
     ]
     public sealed class SqlDataAdapter : DbDataAdapter, IDbDataAdapter, ICloneable
     {

@@ -294,9 +294,7 @@ namespace Microsoft.Data.SqlClient
         internal int ExecuteNonQuery()
         {
             SqlConnection.ExecutePermission.Demand();
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlCommandSet.ExecuteNonQuery|API> {0}", ObjectID);
-
-            try
+            using (TryEventScope.Create("<sc.SqlCommandSet.ExecuteNonQuery|API> {0}", ObjectID))
             {
                 if (Connection.IsContextConnection)
                 {
@@ -312,10 +310,6 @@ namespace Microsoft.Data.SqlClient
                     BatchCommand.AddBatchCommand(cmd.CommandText, cmd.Parameters, cmd.CmdType, cmd.ColumnEncryptionSetting);
                 }
                 return BatchCommand.ExecuteBatchRPCCommand();
-            }
-            finally
-            {
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
             }
         }
 

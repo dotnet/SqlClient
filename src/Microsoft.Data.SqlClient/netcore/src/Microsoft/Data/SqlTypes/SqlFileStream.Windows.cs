@@ -61,8 +61,7 @@ namespace Microsoft.Data.SqlTypes
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/ctor2/*' />
         public SqlFileStream(string path, byte[] transactionContext, FileAccess access, FileOptions options, long allocationSize)
         {
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlFileStream.ctor | API | Object Id {0} | Access {1} | Options {2} | Path '{3}'", ObjectID, (int)access, (int)options, path);
-            try
+            using (TryEventScope.Create(SqlClientEventSource.Log.TryScopeEnterEvent("SqlFileStream.ctor | API | Object Id {0} | Access {1} | Options {2} | Path '{3}'", ObjectID, (int)access, (int)options, path)))
             {
                 //-----------------------------------------------------------------
                 // precondition validation
@@ -83,10 +82,6 @@ namespace Microsoft.Data.SqlTypes
                 // only set internal state once the file has actually been successfully opened
                 Name = path;
                 TransactionContext = transactionContext;
-            }
-            finally
-            {
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
             }
         }
 

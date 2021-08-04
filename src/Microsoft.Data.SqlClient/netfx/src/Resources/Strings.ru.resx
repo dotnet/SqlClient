@@ -1783,7 +1783,7 @@
     <value>Использование ключа "{0}" требует наличия ключа "{1}".</value>
   </data>
   <data name="ADP_InvalidConnectionOptionValueLength" xml:space="preserve">
-    <value>Длина значения для ключа "{0}" превышает его ограничение, установленное для "{1}".</value>
+    <value>Длина значения для ключа "{0}" превышает лимит “{1}”.</value>
   </data>
   <data name="ADP_KeywordNotSupported" xml:space="preserve">
     <value>Ключевое слово не поддерживается: "{0}".</value>
@@ -4613,5 +4613,8 @@
   </data>
   <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
     <value>Требуется неотрицательное число.</value>
+  </data>
+  <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
+    <value>У параметра "{0}" не может быть направления вывода или InputOutput, если EnableOptimizedParameterBinding включен в родительской команде.</value>
   </data>
 </root>

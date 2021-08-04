@@ -6,7 +6,7 @@
     <ProjectGuid>{9073ABEF-92E0-4702-BB23-2C99CEF9BDD7}</ProjectGuid>
     <TargetGroup Condition="$(TargetFramework.StartsWith('netcoreapp')) OR $(TargetFramework.StartsWith('netstandard'))">netcoreapp</TargetGroup>
     <TargetGroup Condition="$(TargetFramework.StartsWith('net4'))">netfx</TargetGroup>
-    <Configurations>Debug;Release;net461-Release;net461-Debug;netcoreapp2.1-Debug;netcoreapp2.1-Release;netcoreapp3.1-Debug;netcoreapp3.1-Release</Configurations>
+    <Configurations>Debug;Release;</Configurations>
     <Platforms>AnyCPU;x86;x64</Platforms>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AddOnName)</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration).$(Platform)\$(AddOnName)</OutputPath>

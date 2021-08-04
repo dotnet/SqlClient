@@ -87,19 +87,29 @@ Integrated Security=True
         </ctorConnectionString>
         <ApplicationIntent>
             <summary>Declares the application workload type when connecting to a database in an SQL Server Availability Group. You can set the value of this property with <see cref="T:Microsoft.Data.SqlClient.ApplicationIntent" />. For more information about SqlClient support for Always On Availability Groups, see [SqlClient Support for High Availability, Disaster Recovery](/sql/connect/ado-net/sql/sqlclient-support-high-availability-disaster-recovery).</summary>
-            <value>Returns the current value of the property (a value of type <see cref="T:Microsoft.Data.SqlClient.ApplicationIntent" />).</value>
-            <remarks>To be added.</remarks>
+            <value>Returns the current value of the property.</value>
+             <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+ This property corresponds to the "Application Intent" and "ApplicationIntent" keys within the connection string.  
+
+The default value is `ApplicationIntent.ReadWrite`. 
+  
+ ]]></format>
+            </remarks>
             <related type="Article" href="/sql/connect/ado-net/overview-sqlclient-driver">Overview of the SqlClient driver</related>
         </ApplicationIntent>
         <ApplicationName>
             <summary>Gets or sets the name of the application associated with the connection string.</summary>
-            <value>The name of the application, or ".NET SqlClient Data Provider" if no name has been supplied.</value>
+            <value>The name of the application. If no name has been supplied, "Framework Microsoft SqlClient Data Provider" when running on .NET Framework and "Core Microsoft SqlClient Data Provider" otherwise.</value>
             <remarks>
             <format type="text/markdown"><![CDATA[  
   
 ## Remarks  
  This property corresponds to the "Application Name" and "app" keys within the connection string.  
-  
+
+ An application name can be 128 characters or less.
    
   
 ## Examples  
@@ -111,7 +121,7 @@ Integrated Security=True
   
 ```  
 Original: Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security=True  
-ApplicationName=".Net SqlClient Data Provider"  
+ApplicationName="Core Microsoft SqlClient Data Provider"  
 Modified: Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security=True;Application Name="My Application"  
 ```  
   
@@ -119,21 +129,6 @@ Modified: Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security
             </remarks>
             <exception cref="T:System.ArgumentNullException">To set the value to null, use <see cref="F:System.DBNull.Value" />.</exception>
         </ApplicationName>
-        <AsynchronousProcessing>
-            <summary>Obsolete. Gets or sets a Boolean value that indicates whether asynchronous processing is allowed by the connection created by using this connection string.</summary>
-            <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.AsynchronousProcessing" /> property, or <see langword="false" /> if no value has been supplied.</value>
-            <remarks>
-            <format type="text/markdown"><![CDATA[  
-  
-## Remarks  
- This property corresponds to the "Asynchronous Processing" and "async" keys within the connection string. In order to take advantage of the asynchronous processing provided by the <xref:Microsoft.Data.SqlClient.SqlCommand> object, this key/value pair must be included within the connection string of the associated <xref:Microsoft.Data.SqlClient.SqlConnection> object.  
-
- ]]></format>
-            </remarks>
-            <altmember cref="M:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteReader" />
-            <altmember cref="M:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteNonQuery" />
-            <altmember cref="M:Microsoft.Data.SqlClient.SqlCommand.BeginExecuteXmlReader" />
-        </AsynchronousProcessing>
         <AttachDBFilename>
             <summary>Gets or sets a string that contains the name of the primary data file. This includes the full path name of an attachable database.</summary>
             <value>The value of the <see langword="AttachDBFilename" /> property, or <see langword="String.Empty" /> if no value has been supplied.</value>
@@ -144,9 +139,20 @@ Modified: Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security
  This property corresponds to the "AttachDBFilename", "extended properties", and "initial file name" keys within the connection string.  
   
  `AttachDBFilename` is only supported for primary data files with an .mdf extension.  
-  
+
+ If the value of the AttachDBFileName key is specified in the connection string, the database is attached and becomes the default database for the connection.
+ 
+ If this key is not specified and if the database was previously attached, the database will not be reattached. The previously attached database will be used as the default database for the connection.
+ 
+ If this key is specified together with the AttachDBFileName key, the value of this key will be used as the alias. However, if the name is already used in another attached database, the connection will fail.
+ 
+ The path may be absolute or relative by using the DataDirectory substitution string. If DataDirectory is used, the database file must exist within a subdirectory of the directory pointed to by the substitution string. **Note:**  Remote server, HTTP, and UNC path names are not supported. 
+ 
+ The database name must be specified with the keyword 'database' (or one of its aliases) as in the following:
+ 
+ `"AttachDbFileName=&#124;DataDirectory&#124;\data\YourDB.mdf;integrated security=true;database=YourDatabase"`
+ 
  An error will be generated if a log file exists in the same directory as the data file and the 'database' keyword is used when attaching the primary data file. In this case, remove the log file. Once the database is attached, a new log file will be automatically generated based on the physical path.  
-  
    
   
 ## Examples  
@@ -160,10 +166,21 @@ Modified: Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security
             <related type="Article" href="https://msdn.microsoft.com/library/745c5f95-2f02-4674-b378-6d51a7ec2490">Working with Connection Strings</related>
             <related type="Article" href="/sql/connect/ado-net/overview-sqlclient-driver">Overview of the SqlClient driver</related>
         </AttachDBFilename>
+        <AttestationProtocol>
+            <summary>Gets or sets the value of Attestation Protocol.</summary>
+            <returns>Returns the attestation protocol.</returns>
+        </AttestationProtocol>
         <Authentication>
-            <summary>Gets the authentication of the connection string.</summary>
-            <value>The authentication of the connection string.</value>
-            <remarks>To be added.</remarks>
+            <summary>Gets or sets the authentication method used for [Connecting to SQL Database By Using Azure Active Directory Authentication](https://azure.microsoft.com/documentation/articles/sql-database-aad-authentication/#7-connect-to-your-database-by-using-azure-active-directory-identities).</summary>
+            <value>The authentication method of the connection string.</value>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+For more information, see [Using Azure Active Directory authentication with SqlClient](sql/connect/ado-net/sql/azure-active-directory-authentication).
+
+ ]]></format>
+            </remarks>
         </Authentication>
         <Clear>
             <summary>Clears the contents of the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> instance.</summary>
@@ -172,7 +189,6 @@ Modified: Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security
   
 ## Remarks  
  The <xref:System.Data.Common.DbConnectionStringBuilder.Clear%2A> method removes all key/value pairs from the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder>, and resets all corresponding properties. This includes setting the <xref:System.Data.Common.DbConnectionStringBuilder.Count%2A> property to 0, and setting the <xref:System.Data.Common.DbConnectionStringBuilder.ConnectionString%2A> property to an empty string.  
-  
    
   
 ## Examples  
@@ -185,8 +201,7 @@ Modified: Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security
         </Clear>
         <ColumnEncryptionSetting>
             <summary>Gets or sets the column encryption settings for the connection string builder.</summary>
-            <value>The column encryption settings for the connection string builder.</value>
-            <remarks>To be added.</remarks>
+            <value>The column encryption settings for the connection string builder.This property enables or disables [Always Encrypted](/sql/relational-databases/security/encryption/always-encrypted-database-engine) functionality for the connection.</value>
         </ColumnEncryptionSetting>
 		<CommandTimeout>
 			<summary>
@@ -200,6 +215,8 @@ Modified: Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security
   
 ## Remarks  
    This property corresponds to the "Command Timeout" key within the <xref:Microsoft.Data.SqlClient.SqlConnection> connection string.
+
+   Valid values are greater than or equal to 0 and less than or equal to 2147483647.
   
  ]]></format>
             </remarks>
@@ -232,8 +249,9 @@ Modified: Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security
             </remarks>
         </ConnectRetryCount>
         <ConnectRetryInterval>
-            <summary>Amount of time (in seconds) between each reconnection attempt after identifying that there was an idle connection failure. This must be an integer between 1 and 60. The default is 10 seconds. An <see cref="T:System.ArgumentException" /> will be thrown if set to a value outside of the allowed range.</summary>
+            <summary>Amount of time (in seconds) between each reconnection attempt after identifying that there was an idle connection failure. This must be an integer between 1 and 60. The default is 10 seconds.</summary>
             <value>Amount of time (in seconds) between each reconnection attempt after identifying that there was an idle connection failure.</value>
+			<exception cref="T:System.ArgumentException">Value is outside of the allowed range.</exception>            
             <remarks>
               <format type="text/markdown">
                 <![CDATA[  
@@ -241,6 +259,8 @@ Modified: Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security
     ## Remarks  
      This property corresponds to the "Connect Retry Interval" key within the <xref:Microsoft.Data.SqlClient.SqlConnection> connection string.
   
+This value is applied after the first reconnection attempt. When a broken connection is detected, the client immediately attempts to reconnect; this is the first reconnection attempt and only occurs if `ConnectRetryCount` is greater than 0. If the first reconnection attempt fails and `ConnectRetryCount` is greater than 1, the client waits `ConnectRetryInterval` to try the second and subsequent reconnection attempts.
+
      ]]>
               </format>
             </remarks>
@@ -256,6 +276,7 @@ Modified: Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security
   
  When opening a connection to a Azure SQL Database, set the connection timeout to 30 seconds.  
   
+ Valid values are greater than or equal to 0 and less than or equal to 2147483647.
    
   
 ## Examples  
@@ -314,13 +335,15 @@ False
             </remarks>
         </ContextConnection>
         <CurrentLanguage>
-            <summary>Gets or sets the SQL Server Language record name.</summary>
+            <summary>Gets or sets the language used for database server warning or error messages..</summary>
             <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.CurrentLanguage" /> property, or <see langword="String.Empty" /> if no value has been supplied.</value>
             <remarks>
             <format type="text/markdown"><![CDATA[  
   
 ## Remarks  
  This property corresponds to the "Current Language" and "language" keys within the connection string.  
+
+ The language name can be 128 characters or less.
   
  ]]></format>
             </remarks>
@@ -335,7 +358,40 @@ False
 ## Remarks  
  This property corresponds to the "Data Source", "server", "address", "addr", and "network address" keys within the connection string. Regardless of which of these values has been supplied within the supplied connection string, the connection string created by the `SqlConnectionStringBuilder` will use the well-known "Data Source" key.  
   
-   
+The port number can be specified after the server name: `server=tcp:servername, portnumber`.
+
+When specifying a local instance, always use (local). To force a protocol, add one of the following prefixes:`np:(local),  tcp:(local), lpc:(local)`.
+
+You can also connect to a LocalDB database as follows: `server=(localdb)\\myInstance`. For more information about LocalDB, see [SqlClient Support for LocalDB](/sql/connect/ado-net/sql/sqlclient-support-localdb).
+**Data Source** must use the TCP format or the Named Pipes format. TCP format is as follows:
+
+-   tcp:\<host name>\\<instance name\>
+-   tcp:\<host name>,\<TCP/IP port number>
+
+The TCP format must start with the prefix "tcp:" and is followed by the database instance, as specified by a host name and an instance name. This format is not applicable when connecting to Azure SQL Database. TCP is automatically selected for connections to Azure SQL Database when no protocol is specified.
+
+The host name MUST be specified in one of the following ways:
+-   NetBIOSName
+-   IPv4Address
+-   IPv6Address
+
+The instance name is used to resolve to a particular TCP/IP port number on which a database instance is hosted. Alternatively, specifying a TCP/IP port number directly is also allowed. If both instance name and port number are not present, the default database instance is used.
+
+The Named Pipes format is as follows:
+-   np:\\\\<host name\>\pipe\\<pipe name\>
+
+The Named Pipes format MUST start with the prefix "np:" and is followed by a named pipe name.
+
+The host name MUST be specified in one of the following ways:
+
+-   NetBIOSName
+-   IPv4Address
+-   IPv6Address
+
+The pipe name is used to identify the database instance to which the .NET application will connect. 
+
+If the value of the **Network** key is specified, the prefixes "tcp:" and "np:" should not be specified. **Note:**  You can force the use of TCP instead of shared memory, either by prefixing **tcp:** to the server name in the connection string, or by using **localhost**.
+  
   
 ## Examples  
  The following example demonstrates that the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> class converts synonyms for the "Data Source" connection string key into the well-known key:  
@@ -346,26 +402,10 @@ False
             </remarks>
             <exception cref="T:System.ArgumentNullException">To set the value to null, use <see cref="F:System.DBNull.Value" />.</exception>
         </DataSource>
-        <IPAddressPreference>
-            <summary>Gets or sets the value of IP address preference.</summary>
-            <returns>Returns IP address preference.</returns>
-            <remarks>
-                <format type="text/markdown"><![CDATA[
-
-## Remarks
-If `Multi Subnet Failover` is set to `true`, this setting has no effect.
-]]></format>
-            </remarks>
-        </IPAddressPreference>
         <EnclaveAttestationUrl>
-            <summary>Gets or sets the enclave attestation Url to be used with enclave based Always Encrypted.</summary>
-            <value>The enclave attestation Url.</value>
-            <remarks>To be added.</remarks>
+            <summary>Gets or sets the enclave attestation URL to be used with enclave based Always Encrypted.</summary>
+            <value>The enclave attestation URL.</value>
         </EnclaveAttestationUrl>
-        <AttestationProtocol>
-            <summary>Set/Get the value of Attestation Protocol.</summary>
-            <returns>Returns Attestation Protocol.</returns>
-        </AttestationProtocol>
         <Encrypt>
             <summary>Gets or sets a Boolean value that indicates whether SQL Server uses SSL encryption for all data sent between the client and server if the server has a certificate installed.</summary>
             <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Encrypt" /> property, or <see langword="false" /> if none has been supplied.</value>
@@ -375,6 +415,8 @@ If `Multi Subnet Failover` is set to `true`, this setting has no effect.
 ## Remarks  
  This property corresponds to the "Encrypt" key within the connection string.  
   
+When `TrustServerCertificate` is false and `Encrypt` is true, the server name (or IP address) in a SQL Server SSL certificate must exactly match the server name (or IP address) specified in the connection string. Otherwise, the connection attempt will fail. For information about support for certificates whose subject starts with a wildcard character (*), see [Enable encrypted connections to the Database Engine](sql/database-engine/configure-windows/enable-encrypted-connections-to-the-database-engine#certificate-requirements).|  
+
  ]]></format>
             </remarks>
             <related type="Article" href="https://msdn.microsoft.com/library/745c5f95-2f02-4674-b378-6d51a7ec2490">Working with Connection Strings</related>
@@ -395,8 +437,21 @@ If `Multi Subnet Failover` is set to `true`, this setting has no effect.
         <FailoverPartner>
             <summary>Gets or sets the name or address of the partner server to connect to if the primary server is down.</summary>
             <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.FailoverPartner" /> property, or <see langword="String.Empty" /> if none has been supplied.</value>
-            <remarks>To be added.</remarks>
             <exception cref="T:System.ArgumentNullException">To set the value to null, use <see cref="F:System.DBNull.Value" />.</exception>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+If the value of this key is "", then **Initial Catalog** must be present, and its value must not be "".
+
+The server name can be 128 characters or less.
+
+If you specify a failover partner but the failover partner server is not configured for database mirroring and the primary server (specified with the Server keyword) is not available, then the connection will fail.
+
+If you specify a failover partner and the primary server is not configured for database mirroring, the connection to the primary server (specified with the Server keyword) will succeed if the primary server is available.
+
+ ]]></format>
+            </remarks>
         </FailoverPartner>
         <GetProperties>
             <param name="propertyDescriptors">To be added.</param>
@@ -412,7 +467,7 @@ If `Multi Subnet Failover` is set to `true`, this setting has no effect.
 ## Remarks  
  This property corresponds to the "Initial Catalog" and "database" keys within the connection string.  
   
-   
+ The database name can be 128 characters or less.
   
 ## Examples  
  The following example creates a simple connection string and then uses the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder> class to add the name of the database to the connection string. The code displays the contents of the <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.InitialCatalog%2A> property, just to verify that the class was able to convert from the synonym ("Database") to the appropriate property value.  
@@ -432,6 +487,9 @@ If `Multi Subnet Failover` is set to `true`, this setting has no effect.
 ## Remarks  
  This property corresponds to the "Integrated Security" and "trusted_connection" keys within the connection string.  
   
+ If User ID and Password are specified and Integrated Security is set to true, the User ID and Password will be ignored and Integrated Security will be used.
+ 
+ <xref:Microsoft.Data.SqlClient.SqlCredential> is a more secure way to specify credentials for a connection that uses SQL Server Authentication (`Integrated Security=false`).
    
   
 ## Examples  
@@ -445,6 +503,18 @@ If `Multi Subnet Failover` is set to `true`, this setting has no effect.
  ]]></format>
             </remarks>
         </IntegratedSecurity>
+        <IPAddressPreference>
+            <summary>Gets or sets the IP address family preference when establishing TCP connections.</summary>
+            <returns>Returns the IP address preference.</returns>
+            <remarks>
+                <format type="text/markdown"><![CDATA[
+
+## Remarks
+ If `Transparent Network IP Resolution` (in .NET Framework) or `Multi Subnet Failover` is set to true, this setting has no effect. 
+
+]]></format>
+            </remarks>
+        </IPAddressPreference>
         <IsFixedSize>
             <summary>Gets a value that indicates whether the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> has a fixed size.</summary>
             <value>
@@ -507,6 +577,10 @@ If `Multi Subnet Failover` is set to `true`, this setting has no effect.
 ## Remarks  
  This property corresponds to the "Load Balance Timeout" and "connection lifetime" keys within the connection string.  
   
+When a connection is returned to the pool, its creation time is compared with the current time, and the connection is destroyed if that time span (in seconds) exceeds the value specified by `Connection Lifetime`. This is useful in clustered configurations to force load balancing between a running server and a server just brought online.
+
+A value of zero (0) causes pooled connections to have the maximum connection timeout.
+
  ]]></format>
             </remarks>
         </LoadBalanceTimeout>
@@ -556,7 +630,14 @@ If `Multi Subnet Failover` is set to `true`, this setting has no effect.
         <MultiSubnetFailover>
             <summary>If your application is connecting to an AlwaysOn availability group (AG) on different subnets, setting MultiSubnetFailover=true provides faster detection of and connection to the (currently) active server. For more information about SqlClient support for Always On Availability Groups, see [SqlClient Support for High Availability, Disaster Recovery](/sql/connect/ado-net/sql/sqlclient-support-high-availability-disaster-recovery).</summary>
             <value>Returns <see cref="T:System.Boolean" /> indicating the current value of the property.</value>
-            <remarks>To be added.</remarks>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
+  
+## Remarks  
+Always specify `multiSubnetFailover=True` when connecting to the availability group listener of a SQL Server 2012 (or later) availability group or a SQL Server 2012 (or later) Failover Cluster Instance. 
+
+ ]]></format>
+            </remarks>
         </MultiSubnetFailover>
         <NetworkLibrary>
             <summary>Gets or sets a string that contains the name of the network library used to establish a connection to the SQL Server.</summary>
@@ -582,6 +663,8 @@ If `Multi Subnet Failover` is set to `true`, this setting has no effect.
 ## Remarks  
  This property corresponds to the "Packet Size" key within the connection string.  
   
+The packet size can be greater than or equal to 512 and less than or equal to 32768.
+
  ]]></format>
             </remarks>
         </PacketSize>
@@ -593,9 +676,12 @@ If `Multi Subnet Failover` is set to `true`, this setting has no effect.
   
 ## Remarks  
  This property corresponds to the "Password" and "pwd" keys within the connection string.  
+
+Setting this property is not recommended. To maintain a high level of security, we strongly recommend that you use the `Integrated Security` or `Trusted_Connection` keyword instead. <xref:Microsoft.Data.SqlClient.SqlCredential> is a more secure way to specify credentials for a connection that uses SQL Server Authentication.
   
  If <xref:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Password%2A> has not been set and you retrieve the value, the return value is <xref:System.String.Empty>. To reset the password for the connection string, pass null to the Item property.  
   
+The password must be 128 characters or less.
    
   
 ## Examples  
@@ -616,6 +702,8 @@ If `Multi Subnet Failover` is set to `true`, this setting has no effect.
 ## Remarks  
  This property corresponds to the "Persist Security Info" and "persistsecurityinfo" keys within the connection string.  
   
+ Resetting the connection string resets all connection string values including the password. 
+
  ]]></format>
             </remarks>
         </PersistSecurityInfo>
@@ -645,6 +733,8 @@ If `Multi Subnet Failover` is set to `true`, this setting has no effect.
 ## Remarks  
  This property corresponds to the "Pooling" key within the connection string.  
   
+Connections are considered the same if they have the same connection string. Different connections have different connection strings.
+
  ]]></format>
             </remarks>
         </Pooling>
@@ -663,8 +753,7 @@ If `Multi Subnet Failover` is set to `true`, this setting has no effect.
   
 |Key|Default value|  
 |---------|-------------------|  
-|Application Name|".Net SqlClient Data Provider"|  
-|Asynchronous Processing(Obsolete)|False|  
+|Application Name|"Framework Microsoft SqlClient Data Provider" when running on .NET Framework. "Core Microsoft SqlClient Data Provider" otherwise.|  
 |AttachDBFilename|Empty string|  
 |Connection Timeout|15|  
 |Context Connection(Obsolete)|False|  
@@ -741,7 +830,7 @@ Database = AdventureWorks
         </ShouldSerialize>
         <TransactionBinding>
             <summary>Gets or sets a string value that indicates how the connection maintains its association with an enlisted <see langword="System.Transactions" /> transaction.</summary>
-            <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.TransactionBinding" /> property, or <see langword="String.Empty" /> if none has been supplied.</value>
+            <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.TransactionBinding" /> property, or `Implicit Unbind` if none has been supplied.</value>
             <remarks>
             <format type="text/markdown"><![CDATA[  
   
@@ -796,11 +885,13 @@ Database = AdventureWorks
         </TransparentNetworkIPResolution>
         <TrustServerCertificate>
             <summary>Gets or sets a value that indicates whether the channel will be encrypted while bypassing walking the certificate chain to validate trust.</summary>
-            <value>A <see langword="Boolean" />. Recognized values are <see langword="true" />, <see langword="false" />, <see langword="yes" />, and <see langword="no" />.</value>
+            <value>A boolean. The default is `false`.</value>
             <remarks>
             <format type="text/markdown"><![CDATA[  
   
 ## Remarks  
+ This property corresponds to the "Trust Server Certificate" and "TrustServerCertificate" keys within the connection string.  
+
  When `Trust Server Certificate` is set to `true`, the transport layer will use SSL to encrypt the channel and bypass walking the certificate chain to validate trust. If `Trust Server Certificate` is set to `true` and encryption is enforced by target server, the encryption level specified on the server will be used even if `Encrypt` is set to `false`. The connection will fail otherwise.
   
  For more information, see [Encryption Hierarchy](/sql/relational-databases/security/encryption/encryption-hierarchy) and [Using Encryption Without Validation](/sql/relational-databases/native-client/features/using-encryption-without-validation).
@@ -878,6 +969,10 @@ Unable to retrieve value for null key.
 ## Remarks  
  This property corresponds to the "User ID", "user", and "uid" keys within the connection string.  
   
+ Setting this property is not recommended. To maintain a high level of security, we strongly recommend that you use the `Integrated Security` or `Trusted_Connection` keywords instead. <xref:Microsoft.Data.SqlClient.SqlCredential> is a more secure way to specify credentials for a connection that uses SQL Server Authentication.
+ 
+ The user ID must be 128 characters or less.
+
  ]]></format>
             </remarks>
             <exception cref="T:System.ArgumentNullException">To set the value to null, use <see cref="F:System.DBNull.Value" />.</exception>
@@ -926,7 +1021,9 @@ Unable to retrieve value for null key.
   
 ## Remarks  
  This property corresponds to the "Workstation ID" and "wsid" keys within the connection string.  
-  
+
+ The ID must be 128 characters or less.
+
  ]]></format>
             </remarks>
             <exception cref="T:System.ArgumentNullException">To set the value to null, use <see cref="F:System.DBNull.Value" />.</exception>

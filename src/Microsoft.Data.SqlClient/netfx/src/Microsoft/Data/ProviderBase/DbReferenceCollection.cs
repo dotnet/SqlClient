@@ -15,21 +15,21 @@ namespace Microsoft.Data.ProviderBase
         private struct CollectionEntry
         {
             private int _tag;              // information about the reference
-            private WeakReference _weak;   // the reference itself.
+            private WeakReference<object> _weak;   // the reference itself.
 
             public void NewTarget(int tag, object target)
             {
-                Debug.Assert(!HasTarget, "Entry already has a valid target");
+                Debug.Assert(!TryGetTarget(out object _), "Entry already has a valid target");
                 Debug.Assert(tag != 0, "Bad tag");
                 Debug.Assert(target != null, "Invalid target");
 
                 if (_weak == null)
                 {
-                    _weak = new WeakReference(target, false);
+                    _weak = new WeakReference<object>(target, false);
                 }
                 else
                 {
-                    _weak.Target = target;
+                    _weak.SetTarget(target);
                 }
                 _tag = tag;
             }
@@ -37,30 +37,15 @@ namespace Microsoft.Data.ProviderBase
             public void RemoveTarget()
             {
                 _tag = 0;
+                _weak.SetTarget(null);
             }
 
-            public bool HasTarget
-            {
-                get
-                {
-                    return ((_tag != 0) && (_weak.IsAlive));
-                }
-            }
+            public int Tag => _tag;
 
-            public int Tag
+            public bool TryGetTarget(out object target)
             {
-                get
-                {
-                    return _tag;
-                }
-            }
-
-            public object Target
-            {
-                get
-                {
-                    return (_tag == 0 ? null : _weak.Target);
-                }
+                target = null;
+                return _tag != 0 && _weak.TryGetTarget(out target);
             }
         }
 
@@ -95,7 +80,7 @@ namespace Microsoft.Data.ProviderBase
                     if (_items[i].Tag == 0)
                     {
                         _items[i].NewTarget(tag, value);
-                        Debug.Assert(_items[i].HasTarget, "missing expected target");
+                        Debug.Assert(_items[i].TryGetTarget(out object _), "missing expected target");
                         itemAdded = true;
                         break;
                     }
@@ -114,10 +99,10 @@ namespace Microsoft.Data.ProviderBase
                 {
                     for (int i = 0; i <= _lastItemIndex; ++i)
                     {
-                        if (!_items[i].HasTarget)
+                        if (!_items[i].TryGetTarget(out object _))
                         {
                             _items[i].NewTarget(tag, value);
-                            Debug.Assert(_items[i].HasTarget, "missing expected target");
+                            Debug.Assert(_items[i].TryGetTarget(out object _), "missing expected target");
                             itemAdded = true;
                             break;
                         }
@@ -152,14 +137,10 @@ namespace Microsoft.Data.ProviderBase
                             // Check tag (should be easiest and quickest)
                             if (_items[counter].Tag == tag)
                             {
-                                // NOTE: Check if the returned value is null twice may seem wasteful, but this if for performance
-                                // Since checking for null twice is cheaper than calling both HasTarget and Target OR always attempting to typecast
-                                object value = _items[counter].Target;
-                                if (value != null)
+                                if (_items[counter].TryGetTarget(out object value))
                                 {
                                     // Make sure the item has the correct type and passes the filtering
-                                    T tempItem = value as T;
-                                    if ((tempItem != null) && (filterMethod(tempItem)))
+                                    if (value is T tempItem && filterMethod(tempItem))
                                     {
                                         return tempItem;
                                     }
@@ -195,13 +176,12 @@ namespace Microsoft.Data.ProviderBase
                         {
                             for (int index = 0; index <= _lastItemIndex; ++index)
                             {
-                                object value = _items[index].Target; // checks tag & gets target
-                                if (null != value)
+                                if (_items[index].TryGetTarget(out object value))
                                 {
                                     NotifyItem(message, _items[index].Tag, value);
                                     _items[index].RemoveTarget();
                                 }
-                                Debug.Assert(!_items[index].HasTarget, "Unexpected target after notifying");
+                                Debug.Assert(!_items[index].TryGetTarget(out object _), "Unexpected target after notifying");
                             }
                             _optimisticCount = 0;
                         }
@@ -245,8 +225,8 @@ namespace Microsoft.Data.ProviderBase
                     {
                         for (int index = 0; index <= _lastItemIndex; ++index)
                         {
-                            if (value == _items[index].Target)
-                            { // checks tag & gets target
+                            if (_items[index].TryGetTarget(out object target) && value == target)
+                            {
                                 _items[index].RemoveTarget();
                                 _optimisticCount--;
                                 break;
