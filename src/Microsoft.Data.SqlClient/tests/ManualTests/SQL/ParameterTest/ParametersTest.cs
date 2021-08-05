@@ -320,6 +320,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         #region Scaled Decimal Parameter & TVP Test
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [InlineData("CAST(1.0 as decimal(38, 37))", "1.0000000000000000000000000000")]
         [InlineData("CAST(7.1234567890123456789012345678 as decimal(38, 35))", "7.1234567890123456789012345678")]
         [InlineData("CAST(-7.1234567890123456789012345678 as decimal(38, 35))", "-7.1234567890123456789012345678")]
         [InlineData("CAST(-0.1234567890123456789012345678 as decimal(38, 35))", "-0.1234567890123456789012345678")]
