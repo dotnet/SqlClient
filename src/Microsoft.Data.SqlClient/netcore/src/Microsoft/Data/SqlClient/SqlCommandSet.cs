@@ -278,9 +278,7 @@ namespace Microsoft.Data.SqlClient
         internal int ExecuteNonQuery()
         {
             ValidateCommandBehavior(nameof(ExecuteNonQuery), CommandBehavior.Default);
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlCommandSet.ExecuteNonQuery | API | Object Id {0}, Commands executed in Batch RPC mode", ObjectID);
-
-            try
+            using (TryEventScope.Create("SqlCommandSet.ExecuteNonQuery | API | Object Id {0}, Commands executed in Batch RPC mode", ObjectID))
             {
                 BatchCommand.BatchRPCMode = true;
                 BatchCommand.ClearBatchCommand();
@@ -292,10 +290,6 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 return BatchCommand.ExecuteBatchRPCCommand();
-            }
-            finally
-            {
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
             }
         }
 

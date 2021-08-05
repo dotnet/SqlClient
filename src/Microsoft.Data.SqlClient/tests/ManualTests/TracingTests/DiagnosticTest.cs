@@ -111,14 +111,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             conn.Open();
                             Console.WriteLine("SqlClient.DiagnosticTest.ExecuteNonQueryErrorTest Connection Open Successful");
 
-                            try
-                            {
-                                var output = cmd.ExecuteNonQuery();
-                            }
-                            catch (Exception e)
-                            {
-                                Console.WriteLine("SqlClient.DiagnosticTest.ExecuteNonQueryErrorTest " + e.Message);
-                            }
+                            SqlException ex = Assert.Throws<SqlException>(() => cmd.ExecuteNonQuery());
                             Console.WriteLine("SqlClient.DiagnosticTest.ExecuteNonQueryErrorTest Command Executed");
                         }
                         Console.WriteLine("SqlClient.DiagnosticTest.ExecuteNonQueryErrorTest Command Disposed");

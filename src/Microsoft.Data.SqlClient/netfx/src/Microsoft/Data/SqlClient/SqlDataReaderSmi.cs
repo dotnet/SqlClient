@@ -374,43 +374,43 @@ namespace Microsoft.Data.SqlClient
 
         private void CloseInternal(bool closeConnection)
         {
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlDataReaderSmi.Close|API> {0}", ObjectID);
-            bool processFinallyBlock = true;
-            try
+            using (TryEventScope.Create("<sc.SqlDataReaderSmi.Close|API> {0}", ObjectID))
             {
-                if (!IsClosed)
+                bool processFinallyBlock = true;
+                try
                 {
-                    _hasRows = false;
-
-                    // Process the remaining events. This makes sure that environment changes are applied and any errors are picked up.
-                    while (_eventStream.HasEvents)
+                    if (!IsClosed)
                     {
-                        _eventStream.ProcessEvent(_readerEventSink);
+                        _hasRows = false;
+
+                        // Process the remaining events. This makes sure that environment changes are applied and any errors are picked up.
+                        while (_eventStream.HasEvents)
+                        {
+                            _eventStream.ProcessEvent(_readerEventSink);
+                            _readerEventSink.ProcessMessagesAndThrow(true);
+                        }
+
+                        // Close the request executor
+                        _requestExecutor.Close(_readerEventSink);
                         _readerEventSink.ProcessMessagesAndThrow(true);
                     }
-
-                    // Close the request executor
-                    _requestExecutor.Close(_readerEventSink);
-                    _readerEventSink.ProcessMessagesAndThrow(true);
                 }
-            }
-            catch (Exception e)
-            {
-                processFinallyBlock = ADP.IsCatchableExceptionType(e);
-                throw;
-            }
-            finally
-            {
-                if (processFinallyBlock)
+                catch (Exception e)
                 {
-                    _isOpen = false;
-
-                    if ((closeConnection) && (Connection != null))
+                    processFinallyBlock = ADP.IsCatchableExceptionType(e);
+                    throw;
+                }
+                finally
+                {
+                    if (processFinallyBlock)
                     {
-                        Connection.Close();
-                    }
+                        _isOpen = false;
 
-                    SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
+                        if ((closeConnection) && (Connection != null))
+                        {
+                            Connection.Close();
+                        }
+                    }
                 }
             }
         }

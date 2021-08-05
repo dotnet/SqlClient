@@ -592,6 +592,82 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [InlineData(true)]
+        [InlineData(false)]
+        public static void BulkCopyTest(bool useReader)
+        {
+            string tempTableSrc = "t" + Guid.NewGuid().ToString().Replace('-', '_');
+            string tempTableDst = "#t_" + Guid.NewGuid().ToString().Replace('-', '_');
+            string prepTableSrc1 = "CREATE TABLE " + tempTableSrc + " (ci int, c0 dateTime, c1 date, c2 time(7), c3 datetime2(3), c4 datetimeoffset)";
+            string prepTableSrc2 = "INSERT INTO " + tempTableSrc + " VALUES (0, " +
+                "'1753-01-01 12:00AM', " +
+                "'1753-01-01', " +
+                "'20:12:13.36', " +
+                "'2000-12-31 23:59:59.997', " +
+                "'9999-12-31 15:59:59.997 -08:00')";
+            string prepTableDst3 = "CREATE TABLE " + tempTableDst + " (ci int, c0 dateTime, c1 date, c2 time(7), c3 datetime2(3), c4 datetimeoffset)";
+
+            using SqlConnection conn = new(DataTestUtility.TCPConnectionString);
+            conn.Open();
+            using SqlCommand cmd = conn.CreateCommand();
+            cmd.CommandText = prepTableSrc1;
+            cmd.ExecuteNonQuery();
+            cmd.CommandText = prepTableSrc2;
+            cmd.ExecuteNonQuery();
+            cmd.CommandText = "SELECT * FROM " + tempTableSrc;
+
+            try
+            {
+                using SqlConnection connDst = new(DataTestUtility.TCPConnectionString);
+                connDst.Open();
+                using SqlCommand cmd2 = connDst.CreateCommand();
+                cmd2.CommandText = prepTableDst3;
+                _ = cmd2.ExecuteNonQuery();
+
+                using (SqlBulkCopy bcp = new(connDst))
+                {
+                    bcp.DestinationTableName = tempTableDst;
+                    if (useReader)
+                    {
+                        using (SqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            bcp.WriteToServer(reader);
+                        }
+                    }
+                    else
+                    {
+                        SqlDataAdapter adapter = new(cmd);
+                        DataTable sourceTbl = new();
+                        adapter.Fill(sourceTbl);
+                        bcp.WriteToServer(sourceTbl);
+                    }
+                }
+
+                cmd2.CommandText = "SELECT * FROM " + tempTableDst;
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    int numberOfRows = 0;
+                    Assert.Equal(6, reader.VisibleFieldCount);
+                    while (reader.Read())
+                    {
+                        Assert.Equal(typeof(int), reader[0].GetType());
+                        Assert.Equal(typeof(DateTime), reader[1].GetType());
+                        Assert.Equal(typeof(DateTime), reader[2].GetType());
+                        Assert.Equal(typeof(TimeSpan), reader[3].GetType());
+                        Assert.Equal(typeof(DateTime), reader[4].GetType());
+                        Assert.Equal(typeof(DateTimeOffset), reader[5].GetType());
+                        numberOfRows++;
+                    }
+                    Assert.Equal(1, numberOfRows);
+                }
+            }
+            finally
+            {
+                cmd.CommandText = "DROP TABLE " + tempTableSrc;
+                cmd.ExecuteNonQuery();
+            }
+        }
 
         private static bool IsValidParam(SqlDbType dbType, string col, object value, SqlConnection conn, string tempTable)
         {

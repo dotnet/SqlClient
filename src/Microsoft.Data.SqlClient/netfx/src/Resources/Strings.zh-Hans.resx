@@ -1771,7 +1771,7 @@
     <value>指定的 QuotePrefix 和 QuoteSuffix 值不匹配。</value>
   </data>
   <data name="ADP_InvalidArgumentLength" xml:space="preserve">
-    <value>参数“{0}”的长度超出了“{1}”的限制。</value>
+    <value>参数“{0}”的长度超出其“{1}”的限制。</value>
   </data>
   <data name="SQL_WrongType" xml:space="preserve">
     <value>应为 {1} 类型的参数，而收到的是 {0} 类型。</value>
@@ -1783,7 +1783,7 @@
     <value>使用键“{0}”要求存在键“{1}”。</value>
   </data>
   <data name="ADP_InvalidConnectionOptionValueLength" xml:space="preserve">
-    <value>键“{0}”值的长度超出了“{1}”的限制。</value>
+    <value>密钥“{0}”值的长度超出其限制 {1}。</value>
   </data>
   <data name="ADP_KeywordNotSupported" xml:space="preserve">
     <value>不支持的关键字:“{0}”。</value>

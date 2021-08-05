@@ -1783,7 +1783,7 @@
     <value>Para poder utilizar la clave '{0}', debe estar presente la clave '{1}'.</value>
   </data>
   <data name="ADP_InvalidConnectionOptionValueLength" xml:space="preserve">
-    <value>La longitud del valor para la clave '{0}' supera su límite de '{1}'.</value>
+    <value>La longitud del valor para la clave '{0}' supera el límite '{1}'.</value>
   </data>
   <data name="ADP_KeywordNotSupported" xml:space="preserve">
     <value>Palabra clave no admitida: '{0}'.</value>

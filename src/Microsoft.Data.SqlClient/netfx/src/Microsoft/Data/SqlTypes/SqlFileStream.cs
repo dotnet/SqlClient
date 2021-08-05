@@ -65,17 +65,21 @@ namespace Microsoft.Data.SqlTypes
                 Int64 allocationSize
             )
         {
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlFileStream.ctor|API> {0} access={1} options={2} path='{3}'", ObjectID, (int)access, (int)options, path);
-            try
+            using (TryEventScope.Create(SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlFileStream.ctor|API> {0} access={1} options={2} path='{3}'", ObjectID, (int)access, (int)options, path)))
+
             {
                 //-----------------------------------------------------------------
                 // precondition validation
 
                 if (transactionContext == null)
+                {
                     throw ADP.ArgumentNull("transactionContext");
+                }
 
                 if (path == null)
+                {
                     throw ADP.ArgumentNull("path");
+                }
 
                 //-----------------------------------------------------------------
 
@@ -87,10 +91,6 @@ namespace Microsoft.Data.SqlTypes
                 // only set internal state once the file has actually been successfully opened
                 this.Name = path;
                 this.TransactionContext = transactionContext;
-            }
-            finally
-            {
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
             }
         }
 
