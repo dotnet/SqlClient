@@ -199,11 +199,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             for (int i = 415; i < 830; i++)
             {
-                Assert.True(reader1.Read() && reader2.Read());
+                Assert.True(reader1.Read() && reader2.Read(), "MARS read failure");
                 Assert.Equal(reader1.GetInt32(0), reader2.GetInt32(0));
             }
 
-            Assert.True(!reader1.Read() && !reader2.Read());
+            Assert.True(!reader1.Read() && !reader2.Read(), "MARS read should not have returned more rows");
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
@@ -241,10 +241,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         for (int i = rowCount / 2; i < rowCount; i++)
                         {
                             Assert.True(reader1.Read() && reader2.Read(), "MARSSyncBusyReaderTest Failure #3");
-                            Assert.True(reader1.GetInt32(0) == reader2.GetInt32(0),
-                                        "MARSSyncBusyReaderTest, Failure #4" + "\n" +
-                                        "reader1.GetInt32(0): " + reader1.GetInt32(0) + "\n" +
-                                        "reader2.GetInt32(0): " + reader2.GetInt32(0));
+                            Assert.Equal(reader1.GetInt32(0), reader2.GetInt32(0));
                         }
 
                         Assert.False(reader1.Read() || reader2.Read(), "MARSSyncBusyReaderTest, Failure #5");
@@ -517,16 +514,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     Assert.True(reader1.Read() && reader2.Read() && reader3.Read() && reader4.Read() && reader5.Read(), "MARSSyncExecuteReaderTest3 Failure #1");
 
                     // All reads succeeded - check values.
-                    Assert.True(reader1.GetInt32(0) == reader2.GetInt32(0) &&
-                                reader2.GetInt32(0) == reader3.GetInt32(0) &&
-                                reader3.GetInt32(0) == reader4.GetInt32(0) &&
-                                reader4.GetInt32(0) == reader5.GetInt32(0),
-                                "MARSSyncExecuteReaderTest3, Failure #2" + "\n" +
-                                "reader1.GetInt32(0): " + reader1.GetInt32(0) + "\n" +
-                                "reader2.GetInt32(0): " + reader2.GetInt32(0) + "\n" +
-                                "reader3.GetInt32(0): " + reader3.GetInt32(0) + "\n" +
-                                "reader4.GetInt32(0): " + reader4.GetInt32(0) + "\n" +
-                                "reader5.GetInt32(0): " + reader5.GetInt32(0));
+                    Assert.Equal(reader1.GetInt32(0), reader2.GetInt32(0));
+                    Assert.Equal(reader2.GetInt32(0), reader3.GetInt32(0));
+                    Assert.Equal(reader3.GetInt32(0), reader4.GetInt32(0));
+                    Assert.Equal(reader4.GetInt32(0), reader5.GetInt32(0));
 
                     Assert.False(reader1.Read() || reader2.Read() || reader3.Read() || reader4.Read() || reader5.Read(), "MARSSyncExecuteReaderTest3 Failure #3");
                 }
@@ -553,9 +544,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             Assert.True(reader1.Read() && reader2.Read() && reader3.Read());
 
-            Assert.True(reader1.GetInt32(0) == 10248 &&
-                        reader2.GetInt32(0) == 10249 &&
-                        reader3.GetInt32(0) == 10250);
+            Assert.Equal(10248, reader1.GetInt32(0));
+            Assert.Equal(10249, reader2.GetInt32(0));
+            Assert.Equal(10250, reader3.GetInt32(0));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
@@ -571,10 +562,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     Assert.True(reader1.Read() && reader2.Read() && reader3.Read(), "MARSSyncExecuteReaderTest4 failure #1");
 
-                    Assert.True(reader1.GetInt32(0) == 1 &&
-                                reader2.GetInt32(0) == 2 &&
-                                reader3.GetInt32(0) == 3,
-                                "MARSSyncExecuteReaderTest4 failure #2");
+                    Assert.Equal(1, reader1.GetInt32(0));
+                    Assert.Equal(2, reader2.GetInt32(0));
+                    Assert.Equal(3, reader3.GetInt32(0));
 
                     Assert.False(reader1.Read() || reader2.Read() || reader3.Read(), "MARSSyncExecuteReaderTest4 failure #3");
                 }
