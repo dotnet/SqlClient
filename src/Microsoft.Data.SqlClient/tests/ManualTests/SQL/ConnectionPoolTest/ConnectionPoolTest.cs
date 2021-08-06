@@ -179,7 +179,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string newConnectionString = (new SqlConnectionStringBuilder(connectionString) { MaxPoolSize = 1 }).ConnectionString;
             SqlConnection.ClearAllPools();
 
-            SqlConnection connection1 = new SqlConnection(newConnectionString);
+            using SqlConnection connection1 = new SqlConnection(newConnectionString);
             connection1.Open();
 
             InternalConnectionWrapper internalConnection = new InternalConnectionWrapper(connection1);
@@ -306,8 +306,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             SqlConnection.ClearAllPools();
 
-            SqlConnection conn1 = new SqlConnection(connectionString);
-            SqlConnection conn2 = new SqlConnection(connectionString);
+            using SqlConnection conn1 = new SqlConnection(connectionString);
+            using SqlConnection conn2 = new SqlConnection(connectionString);
             conn1.Open();
             conn2.Open();
             ConnectionPoolWrapper connectionPool = new ConnectionPoolWrapper(conn1);
@@ -327,7 +327,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             connectionPool.Cleanup();
             Assert.Equal(0, connectionPool.ConnectionCount);
 
-            SqlConnection conn3 = new SqlConnection(connectionString);
+            using SqlConnection conn3 = new SqlConnection(connectionString);
             conn3.Open();
             InternalConnectionWrapper internalConnection3 = new InternalConnectionWrapper(conn3);
 
@@ -393,8 +393,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             using (TransactionScope transScope = new TransactionScope())
             {
-                SqlConnection connection1 = new SqlConnection(connectionString);
-                SqlConnection connection2 = new SqlConnection(connectionString);
+                using SqlConnection connection1 = new SqlConnection(connectionString);
+                using SqlConnection connection2 = new SqlConnection(connectionString);
                 connection1.Open();
                 connection2.Open();
                 connectionPool = new ConnectionPoolWrapper(connection1);
@@ -409,7 +409,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 // Attempt to re-use root connection
                 connection1.Close();
-                SqlConnection connection3 = new SqlConnection(connectionString);
+                using SqlConnection connection3 = new SqlConnection(connectionString);
                 connection3.Open();
 
                 Assert.True(connectionPool.ContainsConnection(connection3), "New connection in wrong pool");
@@ -417,14 +417,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 // Attempt to re-use non-root connection
                 connection2.Close();
-                SqlConnection connection4 = new SqlConnection(connectionString);
+                using SqlConnection connection4 = new SqlConnection(connectionString);
                 connection4.Open();
                 Assert.True(internalConnection2.IsInternalConnectionOf(connection4), "Connection did not re-use expected internal connection");
                 Assert.True(connectionPool.ContainsConnection(connection4), "New connection is in the wrong pool");
                 connection4.Close();
 
                 // Use a different connection string
-                SqlConnection connection5 = new SqlConnection(connectionString + ";App=SqlConnectionPoolUnitTest;");
+                using SqlConnection connection5 = new SqlConnection(connectionString + ";App=SqlConnectionPoolUnitTest;");
                 connection5.Open();
                 Assert.False(internalConnection2.IsInternalConnectionOf(connection5), "Connection with different connection string re-used internal connection");
                 Assert.False(connectionPool.ContainsConnection(connection5), "Connection with different connection string is in same pool");
@@ -449,8 +449,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             using (TransactionScope transScope = new TransactionScope())
             {
-                SqlConnection connection1 = new SqlConnection(connectionString);
-                SqlConnection connection2 = new SqlConnection(connectionString);
+                using SqlConnection connection1 = new SqlConnection(connectionString);
+                using SqlConnection connection2 = new SqlConnection(connectionString);
                 connection1.Open();
                 connection2.Open();
                 InternalConnectionWrapper internalConnection1 = new InternalConnectionWrapper(connection1);
@@ -515,8 +515,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static SqlConnection ReplacementConnectionObeys0TimeoutTask(string connectionString)
         {
-            SqlConnection connection = null;
-            connection = new SqlConnection(connectionString);
+            SqlConnection connection = new SqlConnection(connectionString);
             connection.Open();
             return connection;
         }

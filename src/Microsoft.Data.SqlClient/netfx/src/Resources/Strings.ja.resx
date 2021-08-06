@@ -1783,7 +1783,7 @@
     <value>'{0}' キーを使用するには、キーとして '{1}' が指定されている必要があります。</value>
   </data>
   <data name="ADP_InvalidConnectionOptionValueLength" xml:space="preserve">
-    <value>キー '{0}' の値の長さが、上限の '{1}' を超えています。</value>
+    <value>キー '{0}' の値の長さが、制限 '{1}' を超えています。</value>
   </data>
   <data name="ADP_KeywordNotSupported" xml:space="preserve">
     <value>キーワード '{0}' はサポートされていません。</value>
@@ -4613,5 +4613,8 @@
   </data>
   <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
     <value>負でない数値が必要です。</value>
+  </data>
+  <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
+    <value>親コマンドで EnableOptimizedParameterBinding が有効になっている場合、パラメーター '{0}' に Direction 出力または InputOutput は指定できません。</value>
   </data>
 </root>

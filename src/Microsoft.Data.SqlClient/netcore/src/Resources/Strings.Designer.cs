@@ -331,7 +331,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The value&apos;s length for key &apos;{0}&apos; exceeds it&apos;s limit of &apos;{1}&apos;..
+        ///   Looks up a localized string similar to The value&apos;s length for key &apos;{0}&apos; exceeds its limit of &apos;{1}&apos;..
         /// </summary>
         internal static string ADP_InvalidConnectionOptionValueLength {
             get {
@@ -2932,6 +2932,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Parameter &apos;{0}&apos; cannot have Direction Output or InputOutput when EnableOptimizedParameterBinding is enabled on the parent command..
+        /// </summary>
+        internal static string SQL_ParameterDirectionInvalidForOptimizedBinding {
+            get {
+                return ResourceManager.GetString("SQL_ParameterDirectionInvalidForOptimizedBinding", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Parameter &apos;{0}&apos; exceeds the size limit for the sql_variant datatype..
         /// </summary>
         internal static string SQL_ParameterInvalidVariant {
@@ -4972,7 +4981,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The column encryption key has been successfully decrypted but it&apos;s length: {1} does not match the length: {2} for algorithm &apos;{0}&apos;. Verify the encrypted value of the column encryption key in the database..
+        ///   Looks up a localized string similar to The column encryption key has been successfully decrypted but its length: {1} does not match the length: {2} for algorithm &apos;{0}&apos;. Verify the encrypted value of the column encryption key in the database..
         /// </summary>
         internal static string TCE_InvalidKeySize {
             get {

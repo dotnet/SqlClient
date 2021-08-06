@@ -1771,7 +1771,7 @@
     <value>Specified QuotePrefix and QuoteSuffix values do not match.</value>
   </data>
   <data name="ADP_InvalidArgumentLength" xml:space="preserve">
-    <value>The length of argument '{0}' exceeds it's limit of '{1}'.</value>
+    <value>The length of argument '{0}' exceeds its limit of '{1}'.</value>
   </data>
   <data name="SQL_WrongType" xml:space="preserve">
     <value>Expecting argument of type {1}, but received type {0}.</value>
@@ -1783,7 +1783,7 @@
     <value>Use of key '{0}' requires the key '{1}' to be present.</value>
   </data>
   <data name="ADP_InvalidConnectionOptionValueLength" xml:space="preserve">
-    <value>The value's length for key '{0}' exceeds it's limit of '{1}'.</value>
+    <value>The value's length for key '{0}' exceeds its limit of '{1}'.</value>
   </data>
   <data name="ADP_KeywordNotSupported" xml:space="preserve">
     <value>Keyword not supported: '{0}'.</value>
@@ -4162,7 +4162,7 @@
     <value>Internal error. Column encryption key cannot be null.</value>
   </data>
   <data name="TCE_InvalidKeySize" xml:space="preserve">
-    <value>The column encryption key has been successfully decrypted but it's length: {1} does not match the length: {2} for algorithm '{0}'. Verify the encrypted value of the column encryption key in the database.</value>
+    <value>The column encryption key has been successfully decrypted but its length: {1} does not match the length: {2} for algorithm '{0}'. Verify the encrypted value of the column encryption key in the database.</value>
   </data>
   <data name="TCE_InvalidEncryptionType" xml:space="preserve">
     <value>Encryption type '{1}' specified for the column in the database is either invalid or corrupted. Valid encryption types for algorithm '{0}' are: {2}.</value>
@@ -4613,5 +4613,8 @@
   </data>
   <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
     <value>Non-negative number required.</value>
+  </data>
+  <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
+    <value>Parameter '{0}' cannot have Direction Output or InputOutput when EnableOptimizedParameterBinding is enabled on the parent command.</value>
   </data>
 </root>

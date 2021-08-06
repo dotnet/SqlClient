@@ -1771,7 +1771,7 @@
     <value>Valores de QuotePrefix e QuoteSuffix especificados não coincidem.</value>
   </data>
   <data name="ADP_InvalidArgumentLength" xml:space="preserve">
-    <value>O comprimento do argumento '{0}' excede o limite de '{1}'.</value>
+    <value>O comprimento do argumento '{0}' excede seu limite de '{1}'.</value>
   </data>
   <data name="SQL_WrongType" xml:space="preserve">
     <value>Esperado o tipo de argumento {1}, mas recebido o tipo {0}.</value>
@@ -1783,7 +1783,7 @@
     <value>O uso da chave '{0}' requer a presença da chave '{1}'.</value>
   </data>
   <data name="ADP_InvalidConnectionOptionValueLength" xml:space="preserve">
-    <value>O comprimento do argumento para a chave '{0}' excede o limite de '{1}'.</value>
+    <value>O comprimento do valor para a chave '{0}' excede seu limite de '{1}'.</value>
   </data>
   <data name="ADP_KeywordNotSupported" xml:space="preserve">
     <value>Palavra-chave não suportada: '{0}'.</value>
@@ -4162,7 +4162,7 @@
     <value>Erro interno. A chave de criptografia da coluna não pode ser nula.</value>
   </data>
   <data name="TCE_InvalidKeySize" xml:space="preserve">
-    <value>A chave de criptografia da coluna criptografada foi descriptografada com sucesso, mas seu comprimento {1} não corresponde ao comprimento {2} do algoritmo '{0}'. Verifique o valor criptografado da chave de criptografia de coluna no banco de dados.</value>
+    <value>A chave de criptografia da coluna foi descriptografada com êxito, mas seu comprimento: {1} não corresponde ao comprimento: {2} para o algoritmo '{0}'. Verifique o valor criptografado da chave de criptografia da coluna no banco de dados.</value>
   </data>
   <data name="TCE_InvalidEncryptionType" xml:space="preserve">
     <value>O tipo de criptografia '{1}' especificado para a coluna no banco de dados é inválido ou está corrompido. Os tipos de criptografia válidos para o algoritmo '{0}' são: {2}.</value>
@@ -4613,5 +4613,8 @@
   </data>
   <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
     <value>É necessário um número não negativo.</value>
+  </data>
+  <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
+    <value>O parâmetro '{0}' não pode ter a saída de direção ou InputOutput quando EnableOptimizedParameterBinding está habilitado no comando pai.</value>
   </data>
 </root>

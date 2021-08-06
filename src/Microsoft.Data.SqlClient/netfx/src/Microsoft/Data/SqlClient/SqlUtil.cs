@@ -11,6 +11,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
+using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Text;
 using System.Threading;
@@ -358,6 +359,12 @@ namespace Microsoft.Data.SqlClient
         [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
         private InOutOfProcHelper()
         {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                // SafeNativeMethods.GetModuleHandle calls into kernel32.dll, so return early to avoid
+                // a System.EntryPointNotFoundException on non-Windows platforms, e.g. Mono.
+                return;
+            }
             // Don't need to close this handle...
             // SxS: we use this method to check if we are running inside the SQL Server process. This call should be safe in SxS environment.
             IntPtr handle = SafeNativeMethods.GetModuleHandle(null);
@@ -530,10 +537,6 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ConnectionLockedForBcpEvent));
         }
-        static internal Exception AsyncConnectionRequired()
-        {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_AsyncConnectionRequired));
-        }
         static internal Exception FatalTimeout()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_FatalTimeout));
@@ -634,6 +637,11 @@ namespace Microsoft.Data.SqlClient
         static internal Exception ParameterCannotBeEmpty(string paramName)
         {
             return ADP.ArgumentNull(StringsHelper.GetString(Strings.SQL_ParameterCannotBeEmpty, paramName));
+        }
+
+        internal static Exception ParameterDirectionInvalidForOptimizedBinding(string paramName)
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ParameterDirectionInvalidForOptimizedBinding, paramName));
         }
 
         static internal Exception ActiveDirectoryInteractiveTimeout()

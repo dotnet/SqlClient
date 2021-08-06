@@ -62,21 +62,21 @@
   <Target Name="BuildTestsNetFx" DependsOnTargets="RestoreTestsNetFx;BuildAKVNetFx;BuildFunctionalTestsNetFx;BuildManualTestsNetFx;" />
 
   <Target Name="RestoreNetCore">
-    <MSBuild Projects="@(NetCoreDriver)" Targets="restore" Properties="TestTargetOS=$(TestOS)netcoreapp" />
+    <MSBuild Projects="@(NetCoreDriver)" Targets="restore" />
   </Target>
 
   <Target Name="RestoreTestsNetCore">
-    <MSBuild Projects="@(ManualTests)" Targets="restore" Properties="TestTargetOS=$(TestOS)netcoreapp" />
-    <MSBuild Projects="@(FunctionalTests)" Targets="restore" Properties="TestTargetOS=$(TestOS)netcoreapp" />
+    <MSBuild Projects="@(ManualTests)" Targets="restore" />
+    <MSBuild Projects="@(FunctionalTests)" Targets="restore" />
   </Target>
 
   <Target Name="RestoreNetFx" Condition="'$(IsEnabledWindows)' == 'true'">
-    <MSBuild Projects="@(NetFxDriver)" Targets="restore" Properties="TestTargetOS=$(TestOS)netfx" />
+    <MSBuild Projects="@(NetFxDriver)" Targets="restore" />
   </Target>
 
   <Target Name="RestoreTestsNetFx">
-    <MSBuild Projects="@(ManualTests)" Targets="restore" Properties="TestTargetOS=$(TestOS)netfx" />
-    <MSBuild Projects="@(FunctionalTests)" Targets="restore" Properties="TestTargetOS=$(TestOS)netfx" />
+    <MSBuild Projects="@(ManualTests)" Targets="restore" />
+    <MSBuild Projects="@(FunctionalTests)" Targets="restore" />
   </Target>
 
   <Target Name="BuildTools" Condition="'$(BuildTools)' == 'true'">

@@ -1771,7 +1771,7 @@
     <value>I valori specificati per QuotePrefix e QuoteSuffix non corrispondono.</value>
   </data>
   <data name="ADP_InvalidArgumentLength" xml:space="preserve">
-    <value>La lunghezza dell'argomento "{0}" supera il limite di "{1}".</value>
+    <value>La lunghezza dell'argomento '{0}' supera il limite di '{1}'.</value>
   </data>
   <data name="SQL_WrongType" xml:space="preserve">
     <value>Previsto un argomento di tipo {1}. Ricevuto tipo {0}.</value>
@@ -1783,7 +1783,7 @@
     <value>L'utilizzo della chiave "{0}" richiede la presenza della chiave "{1}".</value>
   </data>
   <data name="ADP_InvalidConnectionOptionValueLength" xml:space="preserve">
-    <value>La lunghezza del valore per la chiave "{0}" supera il limite di "{1}".</value>
+    <value>La lunghezza del valore per la chiave '{0}' supera il limite di '{1}'.</value>
   </data>
   <data name="ADP_KeywordNotSupported" xml:space="preserve">
     <value>Parola chiave non supportata: '{0}'.</value>
@@ -4613,5 +4613,8 @@
   </data>
   <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
     <value>Numero non negativo obbligatorio.</value>
+  </data>
+  <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
+    <value>Il parametro '{0}' non può includere Output o InputOutput come valore di Direction quando nel comando padre è abilitato EnableOptimizedParameterBinding.</value>
   </data>
 </root>

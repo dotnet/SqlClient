@@ -1771,7 +1771,7 @@
     <value>Les valeurs spécifiées de QuotePrefix et de QuoteSuffix ne correspondent pas.</value>
   </data>
   <data name="ADP_InvalidArgumentLength" xml:space="preserve">
-    <value>La longueur de l'argument '{0}' dépasse sa limite fixée à '{1}'.</value>
+    <value>La longueur de l’argument «{0}» dépasse sa limite de «{1}».</value>
   </data>
   <data name="SQL_WrongType" xml:space="preserve">
     <value>Argument de type {1} attendu, mais type {0} reçu.</value>
@@ -1783,7 +1783,7 @@
     <value>L'utilisation de la clé '{0}' nécessite la présence de la clé '{1}'.</value>
   </data>
   <data name="ADP_InvalidConnectionOptionValueLength" xml:space="preserve">
-    <value>La longueur de la valeur de la clé '{0}' dépasse sa limite fixée à '{1}'.</value>
+    <value>La longueur de la valeur pour la clé «{0}» dépasse sa limite de «{1}».</value>
   </data>
   <data name="ADP_KeywordNotSupported" xml:space="preserve">
     <value>Mot clé non pris en charge : « {0} ».</value>
@@ -4162,7 +4162,7 @@
     <value>Erreur interne. La clé de chiffrement de colonne ne peut pas avoir la valeur null.</value>
   </data>
   <data name="TCE_InvalidKeySize" xml:space="preserve">
-    <value>La clé de chiffrement de colonne a bien été déchiffrée, mais sa longueur {1} ne correspond pas à la longueur {2} de l’algorithme « {0} ». Vérifiez la valeur chiffrée de la clé de chiffrement de colonne dans la base de données.</value>
+    <value>La clé de chiffrement de colonne a bien été déchiffrée, mais sa longueur :{1} ne correspond pas à la longueur :{2} de l’algorithme «{0}». Vérifiez la valeur chiffrée de la clé de chiffrement de colonne dans la base de données.</value>
   </data>
   <data name="TCE_InvalidEncryptionType" xml:space="preserve">
     <value>Le type de chiffrement « {1} » spécifié pour la colonne dans la base de données n’est pas valide ou est endommagé. Les types de chiffrement valides pour l’algorithme « {0} » sont : {2}.</value>
@@ -4613,5 +4613,8 @@
   </data>
   <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
     <value>Nombre non négatif obligatoire.</value>
+  </data>
+  <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
+    <value>Le paramètre « {0} » ne peut pas avoir Direction Output ou InputOutput lorsque EnableOptimizedParameterBinding est activé sur la commande parente.</value>
   </data>
 </root>
