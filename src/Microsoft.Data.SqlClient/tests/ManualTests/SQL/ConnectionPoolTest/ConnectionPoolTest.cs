@@ -47,7 +47,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 connection.Open();
                 internalConnection = new InternalConnectionWrapper(connection);
                 connectionPool = new ConnectionPoolWrapper(connection);
-                connection.Close();
             }
 
             using (SqlConnection connection2 = new SqlConnection(connectionString))
@@ -55,7 +54,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 connection2.Open();
                 Assert.True(internalConnection.IsInternalConnectionOf(connection2), "New connection does not use same internal connection");
                 Assert.True(connectionPool.ContainsConnection(connection2), "New connection is in a different pool");
-                connection2.Close();
             }
 
             using (SqlConnection connection3 = new SqlConnection(connectionString + ";App=SqlConnectionPoolUnitTest;"))
@@ -63,7 +61,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 connection3.Open();
                 Assert.False(internalConnection.IsInternalConnectionOf(connection3), "Connection with different connection string uses same internal connection");
                 Assert.False(connectionPool.ContainsConnection(connection3), "Connection with different connection string uses same connection pool");
-                connection3.Close();
             }
 
             connectionPool.Cleanup();
@@ -73,7 +70,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 connection4.Open();
                 Assert.True(internalConnection.IsInternalConnectionOf(connection4), "New connection does not use same internal connection");
                 Assert.True(connectionPool.ContainsConnection(connection4), "New connection is in a different pool");
-                connection4.Close();
             }
         }
 
@@ -86,21 +82,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string[] credKeys = { "User ID", "Password", "UID", "PWD", "Authentication" };
             string connectionString = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys);
 
-            SqlConnection connection = new SqlConnection(connectionString);
+            using SqlConnection connection = new SqlConnection(connectionString);
             connection.AccessToken = DataTestUtility.GetAccessToken();
             connection.Open();
             InternalConnectionWrapper internalConnection = new InternalConnectionWrapper(connection);
             ConnectionPoolWrapper connectionPool = new ConnectionPoolWrapper(connection);
             connection.Close();
 
-            SqlConnection connection2 = new SqlConnection(connectionString);
+            using SqlConnection connection2 = new SqlConnection(connectionString);
             connection2.AccessToken = DataTestUtility.GetAccessToken();
             connection2.Open();
             Assert.True(internalConnection.IsInternalConnectionOf(connection2), "New connection does not use same internal connection");
             Assert.True(connectionPool.ContainsConnection(connection2), "New connection is in a different pool");
             connection2.Close();
 
-            SqlConnection connection3 = new SqlConnection(connectionString + ";App=SqlConnectionPoolUnitTest;");
+            using SqlConnection connection3 = new SqlConnection(connectionString + ";App=SqlConnectionPoolUnitTest;");
             connection3.AccessToken = DataTestUtility.GetAccessToken();
             connection3.Open();
             Assert.False(internalConnection.IsInternalConnectionOf(connection3), "Connection with different connection string uses same internal connection");
@@ -109,7 +105,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             connectionPool.Cleanup();
 
-            SqlConnection connection4 = new SqlConnection(connectionString);
+            using SqlConnection connection4 = new SqlConnection(connectionString);
             connection4.AccessToken = DataTestUtility.GetAccessToken();
             connection4.Open();
             Assert.True(internalConnection.IsInternalConnectionOf(connection4), "New connection does not use same internal connection");
@@ -133,6 +129,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 ConnectionPoolWrapper pool = new ConnectionPoolWrapper(connection);
                 connection.Close();
                 ConnectionPoolWrapper[] allPools = ConnectionPoolWrapper.AllConnectionPools();
+
                 DataTestUtility.AssertEqualsWithDescription(1, allPools.Length, "Incorrect number of pools exist.");
                 Assert.True(allPools[0].Equals(pool), "Saved pool is not in the list of all pools");
                 DataTestUtility.AssertEqualsWithDescription(1, pool.ConnectionCount, "Saved pool has incorrect number of connections");
@@ -234,7 +231,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             waitToSpeak.Wait();
             Assert.True(internalConnection.IsInternalConnectionOf(connection), "Connection has wrong internal connection");
             Assert.True(connectionPool.ContainsConnection(connection), "Connection is in wrong connection pool");
-            connection.Close();
         }
 
         internal static SqlConnection ReplacementConnectionObeys0TimeoutTask(string connectionString)

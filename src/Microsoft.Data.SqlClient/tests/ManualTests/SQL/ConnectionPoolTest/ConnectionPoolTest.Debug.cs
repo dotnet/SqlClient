@@ -16,8 +16,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string newConnectionString = (new SqlConnectionStringBuilder(connectionString) { MaxPoolSize = 2, ConnectTimeout = 5 }).ConnectionString;
             SqlConnection.ClearAllPools();
 
-            SqlConnection liveConnection = new SqlConnection(newConnectionString);
-            SqlConnection deadConnection = new SqlConnection(newConnectionString);
+            using SqlConnection liveConnection = new SqlConnection(newConnectionString);
+            using SqlConnection deadConnection = new SqlConnection(newConnectionString);
             liveConnection.Open();
             deadConnection.Open();
             InternalConnectionWrapper deadConnectionInternal = new InternalConnectionWrapper(deadConnection);
@@ -161,7 +161,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (ProxyServer proxy = ProxyServer.CreateAndStartProxy(newConnectionString, out newConnectionString))
             {
                 // Create one dead connection
-                SqlConnection deadConnection = new SqlConnection(newConnectionString);
+                using SqlConnection deadConnection = new SqlConnection(newConnectionString);
                 deadConnection.Open();
                 InternalConnectionWrapper deadConnectionInternal = new InternalConnectionWrapper(deadConnection);
                 deadConnectionInternal.KillConnection();
