@@ -5273,10 +5273,6 @@ namespace Microsoft.Data.SqlClient
 
                 return InvokeAsyncCall(context);
             }
-            finally
-            {
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
-            }
         }
 
         private static Task<bool> ReadAsyncExecute(Task task, object state)
