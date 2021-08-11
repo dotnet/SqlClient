@@ -208,7 +208,7 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             ArgumentException ex = Assert.Throws<ArgumentException>(() => SqlConnection.ChangePassword("server=SQLSRV", new string('d', 129)));
             // The length of argument 'newPassword' exceeds
-            // it's limit of '128'
+            // its limit of '128'
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
             Assert.True(ex.Message.IndexOf("'newPassword'") != -1);

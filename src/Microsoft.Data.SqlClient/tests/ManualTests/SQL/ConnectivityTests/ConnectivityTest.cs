@@ -241,11 +241,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 // Execute SELECT statement.
                 DataTestUtility.RunNonQuery(s_dbConnectionString, s_selectTableCmd);
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error: {ex.Message}");
-                Assert.Null(ex);
-            }
             finally
             {
                 // Kill all the connections, set Database to SINGLE_USER Mode and drop Database

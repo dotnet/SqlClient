@@ -1301,8 +1301,7 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlError ProcessSNIError(TdsParserStateObject stateObj)
         {
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.TdsParser.ProcessSNIError|ERR>");
-            try
+            using (TryEventScope.Create("<sc.TdsParser.ProcessSNIError|ERR>"))
             {
 #if DEBUG
                 // There is an exception here for MARS as its possible that another thread has closed the connection just as we see an error
@@ -1434,10 +1433,6 @@ namespace Microsoft.Data.SqlClient
 
                 return new SqlError(infoNumber: (int)details.nativeError, errorState: 0x00, TdsEnums.FATAL_ERROR_CLASS, _server,
                     errorMessage, details.function, (int)details.lineNumber, win32ErrorCode: details.nativeError, details.exception);
-            }
-            finally
-            {
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
             }
         }
 
