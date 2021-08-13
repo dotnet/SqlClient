@@ -20,7 +20,8 @@ namespace Microsoft.Data.SqlClient
         internal readonly SNINativeMethodWrapper.SqlAsyncCallbackDelegate WriteAsyncCallbackDispatcher = new SNINativeMethodWrapper.SqlAsyncCallbackDelegate(WriteDispatcher);
 
         private readonly UInt32 _sniStatus = TdsEnums.SNI_UNINITIALIZED;
-        private readonly EncryptionOptions _encryptionOption;
+        private readonly EncryptionOptions _encryptionOption = EncryptionOptions.OFF;
+        private bool? _encryptClientPossible = null;
 
         private SNILoadHandle() : base(IntPtr.Zero, true)
         {
@@ -32,21 +33,37 @@ namespace Microsoft.Data.SqlClient
             { }
             finally
             {
-
                 _sniStatus = SNINativeMethodWrapper.SNIInitialize();
-
-                UInt32 value = 0;
-
-                // VSDevDiv 479597: If initialize fails, don't call QueryInfo.
-                if (TdsEnums.SNI_SUCCESS == _sniStatus)
-                {
-                    // Query OS to find out whether encryption is supported.
-                    SNINativeMethodWrapper.SNIQueryInfo(SNINativeMethodWrapper.QTypes.SNI_QUERY_CLIENT_ENCRYPT_POSSIBLE, ref value);
-                }
-
-                _encryptionOption = (value == 0) ? EncryptionOptions.NOT_SUP : EncryptionOptions.OFF;
-
                 base.handle = (IntPtr)1; // Initialize to non-zero dummy variable.
+            }
+        }
+
+        /// <summary>
+        /// Verify client encryption possibility.
+        /// </summary>
+        public bool EncryptClientPossible
+        {
+            get
+            {
+                if (_encryptClientPossible is null)
+                {
+                    // VSDevDiv 479597: If initialize fails, don't call QueryInfo.
+                    if (TdsEnums.SNI_SUCCESS == _sniStatus)
+                    {
+                        try
+                        {
+                            UInt32 value = 0;
+                            // Query OS to find out whether encryption is supported.
+                            SNINativeMethodWrapper.SNIQueryInfo(SNINativeMethodWrapper.QTypes.SNI_QUERY_CLIENT_ENCRYPT_POSSIBLE, ref value);
+                            _encryptClientPossible = value != 0;
+                        }
+                        catch (Exception e)
+                        {
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.SNILoadHandle.EncryptClientPossible|SEC> Exception occurs during resolving encryption possibility: {0}", e.Message);
+                        }
+                    }
+                }
+                return _encryptClientPossible.Value;
             }
         }
 

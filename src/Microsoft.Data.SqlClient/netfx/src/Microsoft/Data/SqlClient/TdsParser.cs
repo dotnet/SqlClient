@@ -58,6 +58,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <summary>
+        /// Verify client encryption possibility.
+        /// </summary>
+        private bool EncryptClientPossible => SNILoadHandle.SingletonInstance.EncryptClientPossible;
 
         // ReliabilitySection Usage:
         //
@@ -644,6 +648,11 @@ namespace Microsoft.Data.SqlClient
             // for DNS Caching phase 1
             AssignPendingDNSInfo(serverInfo.UserProtocol, FQDNforDNSCahce);
 
+            if(encrypt && !EncryptClientPossible)
+            {
+                _encryptionOption = EncryptionOptions.NOT_SUP;
+            }
+
             // UNDONE - send "" for instance now, need to fix later
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Sending prelogin handshake");
             SendPreLoginHandshake(instanceName, encrypt, !string.IsNullOrEmpty(certificate), useOriginalAddressInfo);
@@ -683,8 +692,8 @@ namespace Microsoft.Data.SqlClient
                 AssignPendingDNSInfo(serverInfo.UserProtocol, FQDNforDNSCahce);
 
                 SendPreLoginHandshake(instanceName, encrypt, !string.IsNullOrEmpty(certificate), useOriginalAddressInfo);
-                status = ConsumePreLoginHandshake(authType, encrypt, trustServerCert, integratedSecurity, serverCallback, clientCallback, out marsCapable,
-                                                  out _connHandler._fedAuthRequired);
+                status = ConsumePreLoginHandshake(authType, encrypt, trustServerCert, integratedSecurity, serverCallback, clientCallback, 
+                                                  out marsCapable, out _connHandler._fedAuthRequired);
 
                 // Don't need to check for Sphinx failure, since we've already consumed
                 // one pre-login packet and know we are connecting to Shiloh.
@@ -983,8 +992,13 @@ namespace Microsoft.Data.SqlClient
                     case (int)PreLoginOptions.ENCRYPT:
                         if (_encryptionOption == EncryptionOptions.NOT_SUP)
                         {
-                            // If OS doesn't support encryption, inform server not supported.
-                            payload[payloadLength] = (byte)EncryptionOptions.NOT_SUP;
+                            //If encryption is required, an error will throw.
+                            if (encrypt)
+                            {
+                                _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByClient(), "", 0));
+                                _physicalStateObj.Dispose();
+                                ThrowExceptionAndWarning(_physicalStateObj);
+                            }
                         }
                         else
                         {
@@ -1201,8 +1215,11 @@ namespace Microsoft.Data.SqlClient
                             case (EncryptionOptions.OFF):
                                 if ((serverOption & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.OFF)
                                 {
-                                    // Only encrypt login.
-                                    _encryptionOption = EncryptionOptions.LOGIN | (_encryptionOption & ~EncryptionOptions.OPTIONS_MASK);
+                                    if (EncryptClientPossible)
+                                    {
+                                        // Only encrypt login.
+                                        _encryptionOption = EncryptionOptions.LOGIN | (_encryptionOption & ~EncryptionOptions.OPTIONS_MASK);
+                                    }
                                 }
                                 else if ((serverOption & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.REQ)
                                 {
@@ -1213,6 +1230,7 @@ namespace Microsoft.Data.SqlClient
                                 break;
 
                             case (EncryptionOptions.NOT_SUP):
+                                // Server required encryption
                                 if ((serverOption & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.REQ)
                                 {
                                     _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByClient(), "", 0));
