@@ -6,6 +6,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
 using System.Data.SqlTypes;
@@ -24,6 +25,10 @@ using Microsoft.Data.SqlClient.Server;
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/SqlCommand/*'/>
+    [DefaultEvent("RecordsAffected")]
+    [ToolboxItem(true)]
+    [DesignerCategory("")]
+    // TODO: Add designer attribute when Microsoft.VSDesigner.Data.VS.SqlCommandDesigner uses Microsoft.Data.SqlClient
     public sealed partial class SqlCommand : DbCommand, ICloneable
     {
         private static int _objectTypeCount; // EventSource Counter
@@ -420,6 +425,11 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Connection/*'/>
+        ///  [
+        [DefaultValue(null)]
+        [Editor("Microsoft.VSDesigner.Data.Design.DbConnectionEditor, " + AssemblyRef.MicrosoftVSDesigner, "System.Drawing.Design.UITypeEditor, " + AssemblyRef.SystemDrawing)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_Connection)]
         new public SqlConnection Connection
         {
             get
@@ -496,6 +506,8 @@ namespace Microsoft.Data.SqlClient
         private static bool IsRetryEnabled => LocalAppContextSwitches.IsRetryEnabled;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RetryLogicProvider/*' />
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public SqlRetryLogicBaseProvider RetryLogicProvider
         {
             get
@@ -513,6 +525,10 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Notification/*'/>
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)] // MDAC 90471
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Notification)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.SqlCommand_Notification)]
         public SqlNotificationRequest Notification
         {
             get
@@ -544,6 +560,9 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Transaction/*'/>
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_Transaction)]
         new public SqlTransaction Transaction
         {
             get
@@ -585,6 +604,11 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandText/*'/>
+        [DefaultValue("")]
+        [Editor("Microsoft.VSDesigner.Data.SQL.Design.SqlCommandTextEditor, " + AssemblyRef.MicrosoftVSDesigner, "System.Drawing.Design.UITypeEditor, " + AssemblyRef.SystemDrawing)]
+        [RefreshProperties(RefreshProperties.All)] // MDAC 67707
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_CommandText)]
         public override string CommandText
         {
             get
@@ -604,9 +628,15 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ColumnEncryptionSetting/*'/>
+        [Browsable(false)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.TCE_SqlCommand_ColumnEncryptionSetting)]
         public SqlCommandColumnEncryptionSetting ColumnEncryptionSetting => _columnEncryptionSetting;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandTimeout/*'/>
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_CommandTimeout)]
         public override int CommandTimeout
         {
             get
@@ -647,6 +677,10 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandType/*'/>
+        [DefaultValue(System.Data.CommandType.Text)]
+        [RefreshProperties(RefreshProperties.All)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_CommandType)]
         public override CommandType CommandType
         {
             get
@@ -680,6 +714,10 @@ namespace Microsoft.Data.SqlClient
         // when the DataAdapter design wizard generates the insert/update/delete commands it will
         // set the DesignTimeVisible property to false so that cmds won't appear as individual objects
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DesignTimeVisible/*'/>
+        [DefaultValue(true)]
+        [DesignOnly(true)]
+        [Browsable(false)]
+        [EditorBrowsableAttribute(EditorBrowsableState.Never)]
         public override bool DesignTimeVisible
         {
             get
@@ -696,6 +734,9 @@ namespace Microsoft.Data.SqlClient
         public bool EnableOptimizedParameterBinding { get; set; }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Parameters/*'/>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_Parameters)]
         new public SqlParameterCollection Parameters
         {
             get
@@ -720,6 +761,9 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/UpdatedRowSource/*'/>
+        [DefaultValue(System.Data.UpdateRowSource.Both)]
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_UpdatedRowSource)]
         public override UpdateRowSource UpdatedRowSource
         {
             get
@@ -744,6 +788,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/StatementCompleted/*'/>
+        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_StatementCompleted)]
+        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_StatementCompleted)]
         public event StatementCompletedEventHandler StatementCompleted
         {
             add
@@ -2521,9 +2567,9 @@ namespace Microsoft.Data.SqlClient
                         throw result.Exception.InnerException;
                     }
                     return result.Result;
-                }, 
-                CancellationToken.None, 
-                TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.NotOnCanceled, 
+                },
+                CancellationToken.None,
+                TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.NotOnCanceled,
                 TaskScheduler.Default
             );
         }
@@ -3679,13 +3725,13 @@ namespace Microsoft.Data.SqlClient
                         // Read the results of describe parameter encryption.
                         command.ReadDescribeEncryptionParameterResults(describeParameterEncryptionDataReader, describeParameterEncryptionRpcOriginalRpcMap);
 
-    #if DEBUG
+#if DEBUG
                         // Failpoint to force the thread to halt to simulate cancellation of SqlCommand.
                         if (_sleepAfterReadDescribeEncryptionParameterResults)
                         {
                             Thread.Sleep(10000);
                         }
-    #endif
+#endif
                     }
                     catch (Exception e)
                     {
@@ -4843,7 +4889,7 @@ namespace Microsoft.Data.SqlClient
         private Task RunExecuteReaderTdsSetupContinuation(RunBehavior runBehavior, SqlDataReader ds, string optionSettings, Task writeTask)
         {
             Task task = AsyncHelper.CreateContinuationTaskWithState(
-                task: writeTask, 
+                task: writeTask,
                 state: _activeConnection,
                 onSuccess: (object state) =>
                 {
