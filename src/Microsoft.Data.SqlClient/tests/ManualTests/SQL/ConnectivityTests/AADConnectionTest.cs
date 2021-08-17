@@ -397,7 +397,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string connStrWithNoCred = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +
                 $"Authentication=Active Directory Managed Identity; User Id={userId}";
 
-            AggregateException e = Assert.Throws<AggregateException>(() => ConnectAndDisconnect(connStrWithNoCred));
+            Azure.Identity.CredentialUnavailableException e = Assert.Throws<Azure.Identity.CredentialUnavailableException>(() => ConnectAndDisconnect(connStrWithNoCred));
 
             string expectedMessage = "ManagedIdentityCredential authentication unavailable";
             Assert.Contains(expectedMessage, e.GetBaseException().Message);
