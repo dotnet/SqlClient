@@ -16,22 +16,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string newConnectionString = (new SqlConnectionStringBuilder(connectionString) { MaxPoolSize = 2, ConnectTimeout = 5 }).ConnectionString;
             SqlConnection.ClearAllPools();
 
-            using SqlConnection liveConnection = new SqlConnection(newConnectionString);
-            using SqlConnection deadConnection = new SqlConnection(newConnectionString);
+            using SqlConnection liveConnection = new(newConnectionString);
+            using SqlConnection deadConnection = new(newConnectionString);
             liveConnection.Open();
             deadConnection.Open();
-            InternalConnectionWrapper deadConnectionInternal = new InternalConnectionWrapper(deadConnection);
-            InternalConnectionWrapper liveConnectionInternal = new InternalConnectionWrapper(liveConnection);
+            InternalConnectionWrapper deadConnectionInternal = new(deadConnection);
+            InternalConnectionWrapper liveConnectionInternal = new(liveConnection);
             deadConnectionInternal.KillConnection();
             deadConnection.Close();
             liveConnection.Close();
 
             Task<InternalConnectionWrapper>[] tasks = new Task<InternalConnectionWrapper>[3];
-            Barrier syncBarrier = new Barrier(tasks.Length);
+            Barrier syncBarrier = new(tasks.Length);
             Func<InternalConnectionWrapper> taskFunction = (() => ReplacementConnectionUsesSemaphoreTask(newConnectionString, syncBarrier));
             for (int i = 0; i < tasks.Length; i++)
             {
-                tasks[i] = Task.Factory.StartNew<InternalConnectionWrapper>(taskFunction);
+                tasks[i] = Task.Factory.StartNew(taskFunction);
             }
 
             bool taskWithLiveConnection = false;
@@ -71,7 +71,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             });
 
             waitAllTask.Wait();
-            Assert.True(taskWithLiveConnection && taskWithNewConnection && taskWithCorrectException, string.Format("Tasks didn't finish as expected.\nTask with live connection: {0}\nTask with new connection: {1}\nTask with correct exception: {2}\n", taskWithLiveConnection, taskWithNewConnection, taskWithCorrectException));
+            Assert.True(taskWithLiveConnection && taskWithNewConnection && taskWithCorrectException,
+                $"Tasks didn't finish as expected.\n" +
+                $"Task with live connection: {taskWithLiveConnection}\n" +
+                $"Task with new connection: {taskWithNewConnection}\n" +
+                $"Task with correct exception: {taskWithCorrectException}\n");
         }
 
         /// <summary>
@@ -83,27 +87,25 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             InternalConnectionWrapper wrapper = null;
 
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = new(connectionString))
             {
                 connection.Open();
                 wrapper = new InternalConnectionWrapper(connection);
 
-                using (SqlCommand command = new SqlCommand("SELECT 5;", connection))
-                {
-                    DataTestUtility.AssertEqualsWithDescription(5, command.ExecuteScalar(), "Incorrect scalar result.");
-                }
+                using SqlCommand command = new("SELECT 5;", connection);
+
+                DataTestUtility.AssertEqualsWithDescription(5, command.ExecuteScalar(), "Incorrect scalar result.");
 
                 wrapper.KillConnection();
             }
 
-            using (SqlConnection connection2 = new SqlConnection(connectionString))
+            using (SqlConnection connection2 = new(connectionString))
             {
                 connection2.Open();
                 Assert.False(wrapper.IsInternalConnectionOf(connection2), "New connection has internal connection that was just killed");
-                using (SqlCommand command = new SqlCommand("SELECT 5;", connection2))
-                {
-                    DataTestUtility.AssertEqualsWithDescription(5, command.ExecuteScalar(), "Incorrect scalar result.");
-                }
+                using SqlCommand command = new("SELECT 5;", connection2);
+
+                DataTestUtility.AssertEqualsWithDescription(5, command.ExecuteScalar(), "Incorrect scalar result.");
             }
         }
 
@@ -116,11 +118,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             SqlConnection.ClearAllPools();
 
-            using SqlConnection conn1 = new SqlConnection(connectionString);
-            using SqlConnection conn2 = new SqlConnection(connectionString);
+            using SqlConnection conn1 = new(connectionString);
+            using SqlConnection conn2 = new(connectionString);
             conn1.Open();
             conn2.Open();
-            ConnectionPoolWrapper connectionPool = new ConnectionPoolWrapper(conn1);
+            ConnectionPoolWrapper connectionPool = new(conn1);
             Assert.Equal(2, connectionPool.ConnectionCount);
 
             connectionPool.Cleanup();
@@ -137,9 +139,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             connectionPool.Cleanup();
             Assert.Equal(0, connectionPool.ConnectionCount);
 
-            using SqlConnection conn3 = new SqlConnection(connectionString);
+            using SqlConnection conn3 = new(connectionString);
             conn3.Open();
-            InternalConnectionWrapper internalConnection3 = new InternalConnectionWrapper(conn3);
+            InternalConnectionWrapper internalConnection3 = new(conn3);
 
             conn3.Close();
             internalConnection3.KillConnection();
@@ -161,9 +163,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (ProxyServer proxy = ProxyServer.CreateAndStartProxy(newConnectionString, out newConnectionString))
             {
                 // Create one dead connection
-                using SqlConnection deadConnection = new SqlConnection(newConnectionString);
+                using SqlConnection deadConnection = new(newConnectionString);
                 deadConnection.Open();
-                InternalConnectionWrapper deadConnectionInternal = new InternalConnectionWrapper(deadConnection);
+                InternalConnectionWrapper deadConnectionInternal = new(deadConnection);
                 deadConnectionInternal.KillConnection();
 
                 // Block one live connection

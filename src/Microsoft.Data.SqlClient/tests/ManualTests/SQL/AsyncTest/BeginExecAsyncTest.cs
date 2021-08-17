@@ -34,20 +34,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void ExecuteTest()
         {
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+
+            using SqlCommand command = new(GenerateCommandText(), connection);
+            connection.Open();
+
+            IAsyncResult result = command.BeginExecuteNonQuery();
+            while (!result.IsCompleted)
             {
-
-                using SqlCommand command = new SqlCommand(GenerateCommandText(), connection);
-                connection.Open();
-
-                IAsyncResult result = command.BeginExecuteNonQuery();
-                while (!result.IsCompleted)
-                {
-                    System.Threading.Thread.Sleep(100);
-                }
-
-                Assert.True(command.EndExecuteNonQuery(result) > 0, "FAILED: BeginExecuteNonQuery did not complete successfully.");
+                System.Threading.Thread.Sleep(100);
             }
+
+            Assert.True(command.EndExecuteNonQuery(result) > 0, "FAILED: BeginExecuteNonQuery did not complete successfully.");
         }
 
         // Synapse: Parse error at line: 1, column: 201: Incorrect syntax near ';'.

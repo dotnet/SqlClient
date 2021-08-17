@@ -21,21 +21,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// <summary>
         /// Is this internal connection enlisted in a distributed transaction?
         /// </summary>
-        public bool IsEnlistedInTransaction
-        { get { return ConnectionHelper.IsEnlistedInTransaction(_internalConnection); } }
+        public bool IsEnlistedInTransaction => ConnectionHelper.IsEnlistedInTransaction(_internalConnection);
 
         /// <summary>
         /// Is this internal connection the root of a distributed transaction?
         /// </summary>
-        public bool IsTransactionRoot
-        { get { return ConnectionHelper.IsTransactionRoot(_internalConnection); } }
+        public bool IsTransactionRoot => ConnectionHelper.IsTransactionRoot(_internalConnection);
 
         /// <summary>
         /// True if this connection is the root of a transaction AND it is waiting for the transaction 
         /// to complete (i.e. it has been 'aged' or 'put into stasis'), otherwise false
         /// </summary>
-        public bool IsTxRootWaitingForTxEnd
-        { get { return ConnectionHelper.IsTxRootWaitingForTxEnd(_internalConnection); } }
+        public bool IsTxRootWaitingForTxEnd => ConnectionHelper.IsTxRootWaitingForTxEnd(_internalConnection);
 
         /// <summary>
         /// Gets the internal connection associated with the given SqlConnection

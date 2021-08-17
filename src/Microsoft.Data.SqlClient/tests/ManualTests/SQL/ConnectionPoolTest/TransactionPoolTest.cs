@@ -16,16 +16,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SqlConnection.ClearAllPools();
             ConnectionPoolWrapper connectionPool = null;
 
-            using (TransactionScope transScope = new TransactionScope())
+            using (TransactionScope transScope = new())
             {
-                using SqlConnection connection1 = new SqlConnection(connectionString);
-                using SqlConnection connection2 = new SqlConnection(connectionString);
+                using SqlConnection connection1 = new(connectionString);
+                using SqlConnection connection2 = new(connectionString);
                 connection1.Open();
                 connection2.Open();
                 connectionPool = new ConnectionPoolWrapper(connection1);
 
-                InternalConnectionWrapper internalConnection1 = new InternalConnectionWrapper(connection1);
-                InternalConnectionWrapper internalConnection2 = new InternalConnectionWrapper(connection2);
+                InternalConnectionWrapper internalConnection1 = new(connection1);
+                InternalConnectionWrapper internalConnection2 = new(connection2);
 
                 Assert.True(internalConnection1.IsEnlistedInTransaction, "First connection not in transaction");
                 Assert.True(internalConnection1.IsTransactionRoot, "First connection not transaction root");
@@ -34,7 +34,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 // Attempt to re-use root connection
                 connection1.Close();
-                using SqlConnection connection3 = new SqlConnection(connectionString);
+                using SqlConnection connection3 = new(connectionString);
                 connection3.Open();
 
                 Assert.True(connectionPool.ContainsConnection(connection3), "New connection in wrong pool");
@@ -42,14 +42,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                 // Attempt to re-use non-root connection
                 connection2.Close();
-                using SqlConnection connection4 = new SqlConnection(connectionString);
+                using SqlConnection connection4 = new(connectionString);
                 connection4.Open();
                 Assert.True(internalConnection2.IsInternalConnectionOf(connection4), "Connection did not re-use expected internal connection");
                 Assert.True(connectionPool.ContainsConnection(connection4), "New connection is in the wrong pool");
                 connection4.Close();
 
                 // Use a different connection string
-                using SqlConnection connection5 = new SqlConnection(connectionString + ";App=SqlConnectionPoolUnitTest;");
+                using SqlConnection connection5 = new(connectionString + ";App=SqlConnectionPoolUnitTest;");
                 connection5.Open();
                 Assert.False(internalConnection2.IsInternalConnectionOf(connection5), "Connection with different connection string re-used internal connection");
                 Assert.False(connectionPool.ContainsConnection(connection5), "Connection with different connection string is in same pool");
@@ -74,11 +74,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             using (TransactionScope transScope = new TransactionScope())
             {
-                using SqlConnection connection1 = new SqlConnection(connectionString);
-                using SqlConnection connection2 = new SqlConnection(connectionString);
+                using SqlConnection connection1 = new(connectionString);
+                using SqlConnection connection2 = new(connectionString);
                 connection1.Open();
                 connection2.Open();
-                InternalConnectionWrapper internalConnection1 = new InternalConnectionWrapper(connection1);
+                InternalConnectionWrapper internalConnection1 = new(connection1);
                 connectionPool = new ConnectionPoolWrapper(connection1);
 
                 connectionPool.Cleanup();
