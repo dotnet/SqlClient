@@ -127,6 +127,9 @@ namespace System
         }
     }
 
+    // This class is added temporary in order to have all Strings.resx as constant.
+    // NetFx is creating them on build time with powershell and target file located in netfx/tools folder and adds exact same class as below to obj folder for netfx.
+    // When we have the localization available for netcore we can follow the same pattern and add MetdaDataAttribute class and run them only on windows platform
     internal partial class StringsHelper
     {
         internal class ResourceNames
