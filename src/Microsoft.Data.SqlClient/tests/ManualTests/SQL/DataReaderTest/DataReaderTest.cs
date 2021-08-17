@@ -277,13 +277,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     using SqlDataReader reader = command.ExecuteReader();
                     reader.Read();
                     Assert.True(reader.IsDBNull(0));
-                    Assert.Equal(reader[0], DBNull.Value);
+                    Assert.Equal(DBNull.Value, reader[0]);
                     var result = reader.GetValue(0);
-                    Assert.True(result is DBNull);
-                    Exception ex = Record.Exception(() => reader.GetFieldValue<DBNull>(0));
-                    Assert.Null(ex);
-                    ex = Record.Exception(() => reader.GetFieldValue<byte[]>(0)); // backwards comparible cast support
-                    Assert.NotNull(ex);
+                    Assert.IsType<DBNull>(result);
+                    Assert.Equal(result, reader.GetFieldValue<DBNull>(0));
+                    Assert.Throws<SqlNullValueException>(() => reader.GetFieldValue<byte[]>(0));
                 }
                 finally
                 {
@@ -313,9 +311,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     Assert.Equal(0, value.Length);
                     Assert.NotNull(value.Value);
                     var result = reader.GetValue(0);
-                    Assert.True(result is byte[]);
-                    Exception ex = Record.Exception(() => reader.GetFieldValue<byte[]>(0));
-                    Assert.Null(ex);
+                    Assert.IsType<byte[]>(result);
+                    Assert.Equal(result, reader.GetFieldValue<byte[]>(0));
                 }
                 finally
                 {
