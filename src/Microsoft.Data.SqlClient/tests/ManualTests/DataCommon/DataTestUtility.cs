@@ -63,11 +63,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static string AADUserIdentityAccessToken = null;
         public const string UdtTestDbName = "UdtTestDb";
         public const string AKVKeyName = "TestSqlClientAzureKeyVaultProvider";
-
+        public const string EventSourcePrefix = "Microsoft.Data.SqlClient";
+        public const string MDSEventSourceName = "Microsoft.Data.SqlClient.EventSource";
+        public const string AKVEventSourceName = "Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.EventSource";
         private const string ManagedNetworkingAppContextSwitch = "Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows";
 
         private static Dictionary<string, bool> AvailableDatabases;
-        private static TraceEventListener TraceListener;
+        public static BaseEventListener TraceListener;
 
         static DataTestUtility()
         {
@@ -100,7 +102,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             if (TracingEnabled)
             {
-                TraceListener = new TraceEventListener();
+                TraceListener = new BaseEventListener();
             }
 
             if (UseManagedSNIOnWindows)
@@ -783,22 +785,46 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return res;
         }
 
-        public class TraceEventListener : EventListener
+        public class AKVEventListener : BaseEventListener
         {
-            public List<int> IDs = new List<int>();
+            public override string _name => AKVEventSourceName;
+        }
+
+        public class MDSEventListener : BaseEventListener
+        {
+            public override string _name => MDSEventSourceName;
+        }
+
+        public class BaseEventListener : EventListener
+        {
+            public List<int> IDs = new();
+            public List<EventWrittenEventArgs> EventData = new();
+
+            public virtual string _name => EventSourcePrefix;
 
             protected override void OnEventSourceCreated(EventSource eventSource)
             {
-                if (eventSource.Name.StartsWith("Microsoft.Data.SqlClient"))
+                if (eventSource.Name.StartsWith(_name))
                 {
-                    //// Collect all traces for better code coverage
-                    EnableEvents(eventSource, EventLevel.Informational, EventKeywords.All);
+                    // Collect all traces for better code coverage
+                    EnableEvents(eventSource, EventLevel.LogAlways, EventKeywords.All);
+                }
+                else
+                {
+                    DisableEvents(eventSource);
                 }
             }
 
             protected override void OnEventWritten(EventWrittenEventArgs eventData)
             {
-                IDs.Add(eventData.EventId);
+                if (_name == eventData.EventSource.Name)
+                {
+                    IDs.Add(eventData.EventId);
+                    if (EventData != null)
+                    {
+                        EventData.Add(eventData);
+                    }
+                }
             }
         }
     }

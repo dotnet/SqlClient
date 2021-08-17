@@ -15,6 +15,8 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         // Defines the singleton instance for the Resources ETW provider
         public static AKVEventSource Log = new();
 
+        private AKVEventSource() { }
+
         // Initialized static Scope IDs
         private static long s_nextScopeId = 0;
 
@@ -68,9 +70,10 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         {
             if (IsTraceEnabled())
             {
-                WriteTrace(memberName, p1 == null ? message :
+                WriteTrace(string.Format("Caller: {0}, Message: {1}", memberName,
+                    p1 == null ? message :
                     string.Format(message, p1.ToString().Length > 10 ?
-                    p1.ToString().Substring(0, 10) + "..." : p1));
+                    p1.ToString().Substring(0, 10) + "..." : p1)));
             }
         }
         [NonEvent]
@@ -93,23 +96,20 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         #endregion
 
         #region Write Events
-        [Event(1, Message = "Caller: {0}, Message: {1}", Level = EventLevel.Informational, Keywords = Keywords.Trace)]
-        internal void WriteTrace(string caller, string message) => WriteEvent(1, caller, message);
+        [Event(1, Level = EventLevel.Informational, Keywords = Keywords.Trace)]
+        internal void WriteTrace(string message) => WriteEvent(1, message);
 
-        [Event(2, Message = "Caller: {0}", Level = EventLevel.Informational, Task = Tasks.Scope, Opcode = EventOpcode.Start, Keywords = Keywords.Scope)]
+        [Event(2, Level = EventLevel.Informational, Task = Tasks.Scope, Opcode = EventOpcode.Start, Keywords = Keywords.Scope)]
         internal long ScopeEnter(string caller)
         {
             SetCurrentThreadActivityId(GetCorrelationActivityId());
             long scopeId = Interlocked.Increment(ref s_nextScopeId);
-            WriteEvent(2, caller + $", Entered Scope: {scopeId}", scopeId);
+            WriteEvent(2, string.Format("Entered Scope: {0}, Caller: {1}", scopeId, caller));
             return scopeId;
         }
 
-        [Event(3, Message = "Exited Scope: {0}, Correlation Activity Id: {1}", Level = EventLevel.Informational, Task = Tasks.Scope, Opcode = EventOpcode.Stop, Keywords = Keywords.Scope)]
-        internal void ScopeExit(long scopeId)
-        {
-            WriteEvent(3, scopeId);
-        }
+        [Event(3, Level = EventLevel.Informational, Task = Tasks.Scope, Opcode = EventOpcode.Stop, Keywords = Keywords.Scope)]
+        internal void ScopeExit(long scopeId) => WriteEvent(3, scopeId);
         #endregion
     }
 

@@ -84,7 +84,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         // insert 1 row data
                         Customer customer = new Customer(45, "Microsoft", "Corporation");
 
-                        DatabaseHelper.InsertCustomerData(sqlConn, tableName, customer);
+                        DatabaseHelper.InsertCustomerData(sqlConn, null, tableName, customer);
 
                         // Test INPUT parameter on an encrypted parameter
                         using (SqlCommand sqlCommand = new SqlCommand(@"SELECT CustomerId, FirstName, LastName FROM [@tableName] WHERE FirstName = @firstName",
@@ -177,7 +177,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         // insert 1 row data
                         Customer customer = new Customer(45, "Microsoft", "Corporation");
 
-                        DatabaseHelper.InsertCustomerData(sqlConn, tableName, customer);
+                        DatabaseHelper.InsertCustomerData(sqlConn, null, tableName, customer);
 
                         // Test INPUT parameter on an encrypted parameter
                         using (SqlCommand sqlCommand = new SqlCommand(@"SELECT CustomerId, FirstName, LastName FROM [@tableName] WHERE FirstName = @firstName",

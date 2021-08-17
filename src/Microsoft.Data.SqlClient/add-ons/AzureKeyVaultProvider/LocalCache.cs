@@ -40,7 +40,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// </summary>
         internal LocalCache(int maxSizeLimit = int.MaxValue)
         {
-            if(maxSizeLimit <= 0)
+            if (maxSizeLimit <= 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(maxSizeLimit));
             }
@@ -61,11 +61,13 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         {
             if (TimeToLive <= TimeSpan.Zero)
             {
+                AKVEventSource.Log.TryTraceEvent("Key caching found disabled, fetching key information.");
                 return createItem();
             }
 
             if (!_cache.TryGetValue(key, out TValue cacheEntry))
             {
+                AKVEventSource.Log.TryTraceEvent("Fetching key information.");
                 if (_cache.Count == _maxSize)
                 {
                     _cache.Compact(Max(0.10, 1.0 / _maxSize));
@@ -77,12 +79,14 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
                     AbsoluteExpirationRelativeToNow = TimeToLive
                 };
 
-                AKVEventSource.Log.TryTraceEvent("Encryption key added to local cache.");
-
                 _cache.Set(key, cacheEntry, cacheEntryOptions);
+                AKVEventSource.Log.TryTraceEvent("Entry added to local cache.");
+            }
+            else
+            {
+                AKVEventSource.Log.TryTraceEvent("Cached entry found.");
             }
 
-            AKVEventSource.Log.TryTraceEvent("Encryption key entry fetched from local cache.");
             return cacheEntry;
         }
 

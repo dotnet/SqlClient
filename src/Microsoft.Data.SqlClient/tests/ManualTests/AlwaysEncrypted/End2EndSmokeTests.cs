@@ -40,7 +40,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 // insert 1 row data
                 Customer customer = new Customer(45, "Microsoft", "Corporation");
 
-                DatabaseHelper.InsertCustomerData(sqlConn, tableName, customer);
+                DatabaseHelper.InsertCustomerData(sqlConn, null, tableName, customer);
 
                 using (SqlCommand sqlCommand = new SqlCommand(string.Format(selectQuery, tableName),
                                                             sqlConn, null, SqlCommandColumnEncryptionSetting.Enabled))
@@ -51,7 +51,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                         while (sqlDataReader.Read())
                         {
-                            CompareResults(sqlDataReader, types, totalColumnsInSelect);
+                            DatabaseHelper.CompareResults(sqlDataReader, types, totalColumnsInSelect);
                         }
                     }
                 }
@@ -80,7 +80,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 // insert 1 row data
                 Customer customer = new Customer(45, "Microsoft", "Corporation");
 
-                DatabaseHelper.InsertCustomerData(sqlConn, tableName, customer);
+                DatabaseHelper.InsertCustomerData(sqlConn, null, tableName, customer);
 
                 using (SqlCommand sqlCommand = new SqlCommand(string.Format(selectQuery, tableName),
                                                             sqlConn, null, SqlCommandColumnEncryptionSetting.Enabled))
@@ -116,85 +116,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                     if (sync)
                     {
-                        VerifyResultsSync(sqlCommand, types, totalColumnsInSelect);
+                        DatabaseHelper.VerifyResultsSync(sqlCommand, types, totalColumnsInSelect);
                     }
                     else
                     {
-                        Task verifyTask = VerifyResultsAsync(sqlCommand, types, totalColumnsInSelect);
+                        Task verifyTask = DatabaseHelper.VerifyResultsAsync(sqlCommand, types, totalColumnsInSelect);
                         verifyTask.Wait();
                     }
                 }
-            }
-        }
-
-        /// <summary>
-        /// Verify results of select statement with sync apis.
-        /// </summary>
-        /// <param name="sqlCommand"></param>
-        /// <param name="parameterTypes"></param>
-        /// <param name="totalColumnsInSelect"></param>
-        private void VerifyResultsSync(SqlCommand sqlCommand, string[] parameterTypes, int totalColumnsInSelect)
-        {
-            Assert.True(sqlCommand != null, "FAILED: sqlCommand should not be null.");
-            using (SqlDataReader sqlDataReader = sqlCommand.ExecuteReader())
-            {
-                Assert.True(sqlDataReader.HasRows, "FAILED: Select statement did not return any rows.");
-                while (sqlDataReader.Read())
-                {
-                    CompareResults(sqlDataReader, parameterTypes, totalColumnsInSelect);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Verify results of select statement with async apis.
-        /// </summary>
-        /// <param name="sqlCommand"></param>
-        /// <param name="parameterTypes"></param>
-        /// <param name="totalColumnsInSelect"></param>
-        private async Task VerifyResultsAsync(SqlCommand sqlCommand, string[] parameterTypes, int totalColumnsInSelect)
-        {
-            Assert.True(sqlCommand != null, "FAILED: sqlCommand should not be null.");
-            using (SqlDataReader sqlDataReader = await sqlCommand.ExecuteReaderAsync())
-            {
-                Assert.True(sqlDataReader.HasRows, "FAILED: Select statement did not return any rows.");
-                while (await sqlDataReader.ReadAsync())
-                {
-                    CompareResults(sqlDataReader, parameterTypes, totalColumnsInSelect);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Read data using sqlDataReader and compare results.
-        /// <summary>
-        /// <param name="sqlDataReader"></param>
-        /// <param name="parameterTypes"></param>
-        /// <param name="totalColumnsInSelect"></param>
-        private void CompareResults(SqlDataReader sqlDataReader, string[] parameterTypes, int totalColumnsInSelect)
-        {
-            int columnsRead = 0;
-
-            while (columnsRead < totalColumnsInSelect)
-            {
-                switch (parameterTypes[columnsRead])
-                {
-                    case "string":
-                        Assert.True((string.Equals(sqlDataReader.GetString(columnsRead), @"Microsoft", StringComparison.Ordinal))
-                            || (string.Equals(sqlDataReader.GetString(columnsRead), @"Corporation", StringComparison.Ordinal)),
-                            "FAILED: read string value isn't expected.");
-                        break;
-
-                    case "int":
-                        Assert.True(sqlDataReader.GetInt32(columnsRead) == 45, "FAILED: read int value does not match.");
-                        break;
-
-                    default:
-                        Assert.True(false, "FAILED: unexpected data type.");
-                        break;
-                }
-
-                columnsRead++;
             }
         }
 
