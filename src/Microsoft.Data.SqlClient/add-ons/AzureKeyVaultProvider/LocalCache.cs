@@ -67,7 +67,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
 
             if (!_cache.TryGetValue(key, out TValue cacheEntry))
             {
-                AKVEventSource.Log.TryTraceEvent("Fetching key information.");
+                AKVEventSource.Log.TryTraceEvent("Cached entry not found, creating new entry.");
                 if (_cache.Count == _maxSize)
                 {
                     _cache.Compact(Max(0.10, 1.0 / _maxSize));
