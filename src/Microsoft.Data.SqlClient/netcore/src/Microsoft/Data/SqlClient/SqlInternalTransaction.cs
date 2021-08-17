@@ -280,37 +280,34 @@ namespace Microsoft.Data.SqlClient
 
         internal void Commit()
         {
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlInternalTransaction.Commit | API | Object Id {0}", ObjectID);
-
-            if (_innerConnection.IsLockedForBulkCopy)
+            using (TryEventScope.Create("SqlInternalTransaction.Commit | API | Object Id {0}", ObjectID))
             {
-                throw SQL.ConnectionLockedForBcpEvent();
-            }
-
-            _innerConnection.ValidateConnectionForExecute(null);
-
-            // If this transaction has been completed, throw exception since it is unusable.
-            try
-            {
-                // COMMIT ignores transaction names, and so there is no reason to pass it anything.  COMMIT
-                // simply commits the transaction from the most recent BEGIN, nested or otherwise.
-                _innerConnection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Commit, null, IsolationLevel.Unspecified, null, false);
+                if (_innerConnection.IsLockedForBulkCopy)
                 {
-                    ZombieParent();
-                }
-            }
-            catch (Exception e)
-            {
-                if (ADP.IsCatchableExceptionType(e))
-                {
-                    CheckTransactionLevelAndZombie();
+                    throw SQL.ConnectionLockedForBcpEvent();
                 }
 
-                throw;
-            }
-            finally
-            {
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
+                _innerConnection.ValidateConnectionForExecute(null);
+
+                // If this transaction has been completed, throw exception since it is unusable.
+                try
+                {
+                    // COMMIT ignores transaction names, and so there is no reason to pass it anything.  COMMIT
+                    // simply commits the transaction from the most recent BEGIN, nested or otherwise.
+                    _innerConnection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Commit, null, IsolationLevel.Unspecified, null, false);
+                    {
+                        ZombieParent();
+                    }
+                }
+                catch (Exception e)
+                {
+                    if (ADP.IsCatchableExceptionType(e))
+                    {
+                        CheckTransactionLevelAndZombie();
+                    }
+
+                    throw;
+                }
             }
         }
 
@@ -390,112 +387,106 @@ namespace Microsoft.Data.SqlClient
 
         internal void Rollback()
         {
-            var scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlInternalTransaction.Rollback | API | Object Id {0}", ObjectID);
-            if (_innerConnection.IsLockedForBulkCopy)
+            using (TryEventScope.Create("SqlInternalTransaction.Rollback | API | Object Id {0}", ObjectID))
             {
-                throw SQL.ConnectionLockedForBcpEvent();
-            }
-
-            _innerConnection.ValidateConnectionForExecute(null);
-
-            try
-            {
-                // If no arg is given to ROLLBACK it will rollback to the outermost begin - rolling back
-                // all nested transactions as well as the outermost transaction.
-                _innerConnection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.IfRollback, null, IsolationLevel.Unspecified, null, false);
-
-                // Since Rollback will rollback to outermost begin, no need to check
-                // server transaction level.  This transaction has been completed.
-                Zombie();
-            }
-            catch (Exception e)
-            {
-                if (ADP.IsCatchableExceptionType(e))
+                if (_innerConnection.IsLockedForBulkCopy)
                 {
-                    CheckTransactionLevelAndZombie();
+                    throw SQL.ConnectionLockedForBcpEvent();
+                }
 
-                    if (!_disposing)
+                _innerConnection.ValidateConnectionForExecute(null);
+
+                try
+                {
+                    // If no arg is given to ROLLBACK it will rollback to the outermost begin - rolling back
+                    // all nested transactions as well as the outermost transaction.
+                    _innerConnection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.IfRollback, null, IsolationLevel.Unspecified, null, false);
+
+                    // Since Rollback will rollback to outermost begin, no need to check
+                    // server transaction level.  This transaction has been completed.
+                    Zombie();
+                }
+                catch (Exception e)
+                {
+                    if (ADP.IsCatchableExceptionType(e))
+                    {
+                        CheckTransactionLevelAndZombie();
+
+                        if (!_disposing)
+                        {
+                            throw;
+                        }
+                    }
+                    else
                     {
                         throw;
                     }
                 }
-                else
-                {
-                    throw;
-                }
-            }
-            finally
-            {
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
             }
         }
 
         internal void Rollback(string transactionName)
         {
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlInternalTransaction.Rollback | API | Object Id {0}, Transaction Name {1}", ObjectID, transactionName);
-            if (_innerConnection.IsLockedForBulkCopy)
+            using (TryEventScope.Create("SqlInternalTransaction.Rollback | API | Object Id {0}, Transaction Name {1}", ObjectID, transactionName))
             {
-                throw SQL.ConnectionLockedForBcpEvent();
-            }
-
-            _innerConnection.ValidateConnectionForExecute(null);
-
-            // ROLLBACK takes either a save point name or a transaction name.  It will rollback the
-            // transaction to either the save point with the save point name or begin with the
-            // transaction name.  NOTE: for simplicity it is possible to give all save point names
-            // the same name, and ROLLBACK will simply rollback to the most recent save point with the
-            // save point name.
-            if (string.IsNullOrEmpty(transactionName))
-                throw SQL.NullEmptyTransactionName();
-
-            try
-            {
-                _innerConnection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Rollback, transactionName, IsolationLevel.Unspecified, null, false);
-            }
-            catch (Exception e)
-            {
-                if (ADP.IsCatchableExceptionType(e))
+                if (_innerConnection.IsLockedForBulkCopy)
                 {
-                    CheckTransactionLevelAndZombie();
+                    throw SQL.ConnectionLockedForBcpEvent();
                 }
-                throw;
-            }
-            finally
-            {
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
+
+                _innerConnection.ValidateConnectionForExecute(null);
+
+                // ROLLBACK takes either a save point name or a transaction name.  It will rollback the
+                // transaction to either the save point with the save point name or begin with the
+                // transaction name.  NOTE: for simplicity it is possible to give all save point names
+                // the same name, and ROLLBACK will simply rollback to the most recent save point with the
+                // save point name.
+                if (string.IsNullOrEmpty(transactionName))
+                    throw SQL.NullEmptyTransactionName();
+
+                try
+                {
+                    _innerConnection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Rollback, transactionName, IsolationLevel.Unspecified, null, false);
+                }
+                catch (Exception e)
+                {
+                    if (ADP.IsCatchableExceptionType(e))
+                    {
+                        CheckTransactionLevelAndZombie();
+                    }
+                    throw;
+                }
             }
         }
 
         internal void Save(string savePointName)
         {
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlInternalTransaction.Save | API | Object Id {0}, Save Point Name {1}", ObjectID, savePointName);
-            _innerConnection.ValidateConnectionForExecute(null);
-
-            // ROLLBACK takes either a save point name or a transaction name.  It will rollback the
-            // transaction to either the save point with the save point name or begin with the
-            // transaction name.  So, to rollback a nested transaction you must have a save point.
-            // SAVE TRANSACTION MUST HAVE AN ARGUMENT!!!  Save Transaction without an arg throws an
-            // exception from the server.  So, an overload for SaveTransaction without an arg doesn't make
-            // sense to have.  Save Transaction does not affect the transaction level.
-            if (string.IsNullOrEmpty(savePointName))
-                throw SQL.NullEmptyTransactionName();
-
-            try
+            using (TryEventScope.Create("SqlInternalTransaction.Save | API | Object Id {0}, Save Point Name {1}", ObjectID, savePointName))
             {
-                _innerConnection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Save, savePointName, IsolationLevel.Unspecified, null, false);
-            }
-            catch (Exception e)
-            {
-                if (ADP.IsCatchableExceptionType(e))
+                _innerConnection.ValidateConnectionForExecute(null);
+
+                // ROLLBACK takes either a save point name or a transaction name.  It will rollback the
+                // transaction to either the save point with the save point name or begin with the
+                // transaction name.  So, to rollback a nested transaction you must have a save point.
+                // SAVE TRANSACTION MUST HAVE AN ARGUMENT!!!  Save Transaction without an arg throws an
+                // exception from the server.  So, an overload for SaveTransaction without an arg doesn't make
+                // sense to have.  Save Transaction does not affect the transaction level.
+                if (string.IsNullOrEmpty(savePointName))
+                    throw SQL.NullEmptyTransactionName();
+
+                try
                 {
-                    CheckTransactionLevelAndZombie();
+                    _innerConnection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Save, savePointName, IsolationLevel.Unspecified, null, false);
                 }
+                catch (Exception e)
+                {
+                    if (ADP.IsCatchableExceptionType(e))
+                    {
+                        CheckTransactionLevelAndZombie();
+                    }
 
-                throw;
-            }
-            finally
-            {
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
+                    throw;
+                }
             }
         }
 

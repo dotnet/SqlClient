@@ -141,48 +141,49 @@ namespace Microsoft.Data.SqlClient
             ZombieCheck();
 
             SqlStatistics statistics = null;
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlTransaction.Commit | API | Object Id {0}", ObjectID);
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlTransaction.Commit | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId);
-            try
+            using (TryEventScope.Create("SqlTransaction.Commit | API | Object Id {0}", ObjectID))
             {
-                statistics = SqlStatistics.StartTimer(Statistics);
-
-                _isFromAPI = true;
-
-                _internalTransaction.Commit();
-            }
-            catch (SqlException ex)
-            {
-                // GitHub Issue #130 - When a timeout exception has occurred on transaction completion request,
-                // this connection may not be in reusable state.
-                // We will abort this connection and make sure it does not go back to the pool.
-                var innerException = ex.InnerException as Win32Exception;
-                if (innerException != null && innerException.NativeErrorCode == TdsEnums.SNI_WAIT_TIMEOUT)
+                SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlTransaction.Commit | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId);
+                try
                 {
-                    _connection.Abort(ex);
-                }
-                e = ex;
-                throw;
-            }
-            catch (Exception ex)
-            {
-                e = ex;
-                throw;
-            }
-            finally
-            {
-                SqlStatistics.StopTimer(statistics);
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
-                if (e != null)
-                {
-                    s_diagnosticListener.WriteTransactionCommitError(operationId, _isolationLevel, _connection, InternalTransaction, e);
-                }
-                else
-                {
-                    s_diagnosticListener.WriteTransactionCommitAfter(operationId, _isolationLevel, _connection, InternalTransaction);
-                }
+                    statistics = SqlStatistics.StartTimer(Statistics);
 
-                _isFromAPI = false;
+                    _isFromAPI = true;
+
+                    _internalTransaction.Commit();
+                }
+                catch (SqlException ex)
+                {
+                    // GitHub Issue #130 - When a timeout exception has occurred on transaction completion request,
+                    // this connection may not be in reusable state.
+                    // We will abort this connection and make sure it does not go back to the pool.
+                    var innerException = ex.InnerException as Win32Exception;
+                    if (innerException != null && innerException.NativeErrorCode == TdsEnums.SNI_WAIT_TIMEOUT)
+                    {
+                        _connection.Abort(ex);
+                    }
+                    e = ex;
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    e = ex;
+                    throw;
+                }
+                finally
+                {
+                    SqlStatistics.StopTimer(statistics);
+                    if (e != null)
+                    {
+                        s_diagnosticListener.WriteTransactionCommitError(operationId, _isolationLevel, _connection, InternalTransaction, e);
+                    }
+                    else
+                    {
+                        s_diagnosticListener.WriteTransactionCommitAfter(operationId, _isolationLevel, _connection, InternalTransaction);
+                    }
+
+                    _isFromAPI = false;
+                }
             }
         }
 
@@ -216,34 +217,35 @@ namespace Microsoft.Data.SqlClient
                 ZombieCheck();
 
                 SqlStatistics statistics = null;
-                long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlTransaction.Rollback | API | Object Id {0}", ObjectID);
-                SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlTransaction.Rollback | API | Correlation | Object Id {0}, ActivityID {1}, Client Connection Id {2}", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId);
-                try
+                using (TryEventScope.Create("SqlTransaction.Rollback | API | Object Id {0}", ObjectID))
                 {
-                    statistics = SqlStatistics.StartTimer(Statistics);
-
-                    _isFromAPI = true;
-
-                    _internalTransaction.Rollback();
-                }
-                catch (Exception ex)
-                {
-                    e = ex;
-                    throw;
-                }
-                finally
-                {
-                    SqlStatistics.StopTimer(statistics);
-                    SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
-                    if (e != null)
+                    SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlTransaction.Rollback | API | Correlation | Object Id {0}, ActivityID {1}, Client Connection Id {2}", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId);
+                    try
                     {
-                        s_diagnosticListener.WriteTransactionRollbackError(operationId, _isolationLevel, _connection, InternalTransaction, e);
+                        statistics = SqlStatistics.StartTimer(Statistics);
+
+                        _isFromAPI = true;
+
+                        _internalTransaction.Rollback();
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        s_diagnosticListener.WriteTransactionRollbackAfter(operationId, _isolationLevel, _connection, InternalTransaction);
+                        e = ex;
+                        throw;
                     }
-                    _isFromAPI = false;
+                    finally
+                    {
+                        SqlStatistics.StopTimer(statistics);
+                        if (e != null)
+                        {
+                            s_diagnosticListener.WriteTransactionRollbackError(operationId, _isolationLevel, _connection, InternalTransaction, e);
+                        }
+                        else
+                        {
+                            s_diagnosticListener.WriteTransactionRollbackAfter(operationId, _isolationLevel, _connection, InternalTransaction);
+                        }
+                        _isFromAPI = false;
+                    }
                 }
             }
         }
@@ -255,36 +257,36 @@ namespace Microsoft.Data.SqlClient
             Guid operationId = s_diagnosticListener.WriteTransactionRollbackBefore(_isolationLevel, _connection, InternalTransaction, transactionName);
 
             ZombieCheck();
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlTransaction.Rollback | API | Object Id {0}, Transaction Name='{1}', ActivityID {2}, Client Connection Id {3}", ObjectID, transactionName, ActivityCorrelator.Current, Connection?.ClientConnectionId);
-            SqlStatistics statistics = null;
-            try
+            using (TryEventScope.Create(SqlClientEventSource.Log.TryScopeEnterEvent("SqlTransaction.Rollback | API | Object Id {0}, Transaction Name='{1}', ActivityID {2}, Client Connection Id {3}", ObjectID, transactionName, ActivityCorrelator.Current, Connection?.ClientConnectionId)))
             {
-                statistics = SqlStatistics.StartTimer(Statistics);
-
-                _isFromAPI = true;
-
-                _internalTransaction.Rollback(transactionName);
-            }
-            catch (Exception ex)
-            {
-                e = ex;
-                throw;
-            }
-            finally
-            {
-                SqlStatistics.StopTimer(statistics);
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
-                if (e != null)
+                SqlStatistics statistics = null;
+                try
                 {
-                    s_diagnosticListener.WriteTransactionRollbackError(operationId, _isolationLevel, _connection, InternalTransaction, e, transactionName);
+                    statistics = SqlStatistics.StartTimer(Statistics);
+
+                    _isFromAPI = true;
+
+                    _internalTransaction.Rollback(transactionName);
                 }
-                else
+                catch (Exception ex)
                 {
-                    s_diagnosticListener.WriteTransactionRollbackAfter(operationId, _isolationLevel, _connection, InternalTransaction, transactionName);
+                    e = ex;
+                    throw;
                 }
+                finally
+                {
+                    SqlStatistics.StopTimer(statistics);
+                    if (e != null)
+                    {
+                        s_diagnosticListener.WriteTransactionRollbackError(operationId, _isolationLevel, _connection, InternalTransaction, e, transactionName);
+                    }
+                    else
+                    {
+                        s_diagnosticListener.WriteTransactionRollbackAfter(operationId, _isolationLevel, _connection, InternalTransaction, transactionName);
+                    }
 
-                _isFromAPI = false;
-
+                    _isFromAPI = false;
+                }
             }
         }
 
@@ -294,17 +296,18 @@ namespace Microsoft.Data.SqlClient
             ZombieCheck();
 
             SqlStatistics statistics = null;
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlTransaction.Save | API | Object Id {0} | Save Point Name '{1}'", ObjectID, savePointName);
-            try
+            using (TryEventScope.Create("SqlTransaction.Save | API | Object Id {0} | Save Point Name '{1}'", ObjectID, savePointName))
             {
-                statistics = SqlStatistics.StartTimer(Statistics);
+                try
+                {
+                    statistics = SqlStatistics.StartTimer(Statistics);
 
-                _internalTransaction.Save(savePointName);
-            }
-            finally
-            {
-                SqlStatistics.StopTimer(statistics);
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
+                    _internalTransaction.Save(savePointName);
+                }
+                finally
+                {
+                    SqlStatistics.StopTimer(statistics);
+                }
             }
         }
 

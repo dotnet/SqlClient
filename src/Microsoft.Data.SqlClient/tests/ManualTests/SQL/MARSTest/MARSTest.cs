@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Reflection;
 using System.Threading;
@@ -14,6 +15,39 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public static class MARSTest
     {
         private static readonly string _connStr = (new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { MultipleActiveResultSets = true }).ConnectionString;
+
+        private static Dictionary<int, string> companyNames = new()
+        {
+            { 1, "Exotic Liquids" },
+            { 2, "New Orleans Cajun Delights" },
+            { 3, "Grandma Kelly's Homestead" },
+            { 4, "Tokyo Traders" },
+            { 5, "Cooperativa de Quesos 'Las Cabras'" },
+            { 6, "Mayumi's" },
+            { 7, "Pavlova, Ltd." },
+            { 8, "Specialty Biscuits, Ltd." },
+            { 9, "PB Knäckebröd AB" },
+            { 10, "Refrescos Americanas LTDA" },
+            { 11, "Heli Süßwaren GmbH & Co. KG" },
+            { 12, "Plutzer Lebensmittelgroßmärkte AG" },
+            { 13, "Nord-Ost-Fisch Handelsgesellschaft mbH" },
+            { 14, "Formaggi Fortini s.r.l." },
+            { 15, "Norske Meierier" },
+            { 16, "Bigfoot Breweries" },
+            { 17, "Svensk Sjöföda AB" },
+            { 18, "Aux joyeux ecclésiastiques" },
+            { 19, "New England Seafood Cannery" },
+            { 20, "Leka Trading" },
+            { 21, "Lyngbysild" },
+            { 22, "Zaanse Snoepfabriek" },
+            { 23, "Karkki Oy" },
+            { 24, "G'day, Mate" },
+            { 25, "Ma Maison" },
+            { 26, "Pasta Buttini s.r.l." },
+            { 27, "Escargots Nouveaux" },
+            { 28, "Gai pâturage" },
+            { 29, "Forêts d'érables" },
+        };
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         [PlatformSpecific(TestPlatforms.Windows)]
@@ -130,6 +164,49 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 #endif
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async Task MARSAsyncBusyReaderTest()
+        {
+            using SqlConnection con = new(_connStr);
+            con.Open();
+
+            using SqlCommand com1 = new("select * from Orders", con);
+            using SqlDataReader reader1 = await com1.ExecuteReaderAsync();
+
+            int rows1 = 0;
+            while (reader1.Read())
+            {
+                rows1++;
+                if (rows1 == 415)
+                {
+                    break;
+                }
+            }
+            Assert.Equal(415, rows1);
+
+            using SqlCommand com2 = new("select * from Orders", con);
+            using SqlDataReader reader2 = await com2.ExecuteReaderAsync();
+
+            int rows2 = 0;
+            while (reader2.Read())
+            {
+                rows2++;
+                if (rows2 == 415)
+                {
+                    break;
+                }
+            }
+            Assert.Equal(415, rows2);
+
+            for (int i = 415; i < 830; i++)
+            {
+                Assert.True(reader1.Read() && reader2.Read(), "MARS read failure");
+                Assert.Equal(reader1.GetInt32(0), reader2.GetInt32(0));
+            }
+
+            Assert.True(!reader1.Read() && !reader2.Read(), "MARS read should not have returned more rows");
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void MARSSyncBusyReaderTest()
         {
             var query = "SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10";
@@ -164,16 +241,38 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         for (int i = rowCount / 2; i < rowCount; i++)
                         {
                             Assert.True(reader1.Read() && reader2.Read(), "MARSSyncBusyReaderTest Failure #3");
-                            Assert.True(reader1.GetInt32(0) == reader2.GetInt32(0),
-                                        "MARSSyncBusyReaderTest, Failure #4" + "\n" +
-                                        "reader1.GetInt32(0): " + reader1.GetInt32(0) + "\n" +
-                                        "reader2.GetInt32(0): " + reader2.GetInt32(0));
+                            Assert.Equal(reader1.GetInt32(0), reader2.GetInt32(0));
                         }
 
                         Assert.False(reader1.Read() || reader2.Read(), "MARSSyncBusyReaderTest, Failure #5");
                     }
                 }
             }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async void MARSAsyncExecuteNonQueryTest()
+        {
+            using SqlConnection con = new(_connStr);
+            con.Open();
+
+            using SqlCommand com1 = new("select * from Orders", con);
+            using SqlCommand com2 = new("select * from Orders", con);
+            using SqlCommand com3 = new("select * from Orders", con);
+            using SqlCommand com4 = new("select * from Orders", con);
+            using SqlCommand com5 = new("select * from Orders", con);
+
+            Task result1 = com1.ExecuteNonQueryAsync();
+            Task result2 = com2.ExecuteNonQueryAsync();
+            Task result3 = com3.ExecuteNonQueryAsync();
+            Task result4 = com4.ExecuteNonQueryAsync();
+            Task result5 = com5.ExecuteNonQueryAsync();
+
+            await result1;
+            await result2;
+            await result3;
+            await result4;
+            await result5;
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
@@ -196,6 +295,66 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     comm5.ExecuteNonQuery();
                 }
             }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async void MARSAsyncExecuteReaderTest1()
+        {
+            using SqlConnection con = new(_connStr);
+            con.Open();
+
+            using SqlCommand com1 = new("select * from Orders", con);
+            using SqlCommand com2 = new("select * from Orders", con);
+            using SqlCommand com3 = new("select * from Orders", con);
+            using SqlCommand com4 = new("select * from Orders", con);
+            using SqlCommand com5 = new("select * from Orders", con);
+
+            Task<SqlDataReader> result1 = com1.ExecuteReaderAsync();
+            Task<SqlDataReader> result2 = com2.ExecuteReaderAsync();
+            Task<SqlDataReader> result3 = com3.ExecuteReaderAsync();
+            Task<SqlDataReader> result4 = com4.ExecuteReaderAsync();
+            Task<SqlDataReader> result5 = com5.ExecuteReaderAsync();
+
+            using SqlDataReader reader1 = await result1;
+            using SqlDataReader reader2 = await result2;
+            using SqlDataReader reader3 = await result3;
+            using SqlDataReader reader4 = await result4;
+            using SqlDataReader reader5 = await result5;
+
+            int rows = 0;
+            while (reader1.Read())
+            {
+                rows++;
+            }
+            Assert.Equal(830, rows);
+
+            rows = 0;
+            while (reader2.Read())
+            {
+                rows++;
+            }
+            Assert.Equal(830, rows);
+
+            rows = 0;
+            while (reader3.Read())
+            {
+                rows++;
+            }
+            Assert.Equal(830, rows);
+
+            rows = 0;
+            while (reader4.Read())
+            {
+                rows++;
+            }
+            Assert.Equal(830, rows);
+
+            rows = 0;
+            while (reader5.Read())
+            {
+                rows++;
+            }
+            Assert.Equal(830, rows);
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
@@ -252,6 +411,37 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async void MARSAsyncExecuteReaderTest2()
+        {
+            using SqlConnection con = new(_connStr);
+            con.Open();
+
+            using SqlCommand com1 = new("select * from Orders", con);
+            using SqlCommand com2 = new("select * from Orders", con);
+            using SqlCommand com3 = new("select * from Orders", con);
+            using SqlCommand com4 = new("select * from Orders", con);
+            using SqlCommand com5 = new("select * from Orders", con);
+
+            Task<SqlDataReader> result1 = com1.ExecuteReaderAsync();
+            Task<SqlDataReader> result2 = com2.ExecuteReaderAsync();
+            Task<SqlDataReader> result3 = com3.ExecuteReaderAsync();
+            Task<SqlDataReader> result4 = com4.ExecuteReaderAsync();
+            Task<SqlDataReader> result5 = com5.ExecuteReaderAsync();
+
+            using SqlDataReader reader1 = await result1;
+            using SqlDataReader reader2 = await result2;
+            using SqlDataReader reader3 = await result3;
+            using SqlDataReader reader4 = await result4;
+            using SqlDataReader reader5 = await result5;
+
+            for (int i = 0; i < 830; i++)
+            {
+                Assert.True(reader1.Read() && reader2.Read() && reader3.Read() && reader4.Read() && reader5.Read(), "MARSSyncExecuteReaderTest2 Failure #1");
+            }
+
+            Assert.False(reader1.Read() || reader2.Read() || reader3.Read() || reader4.Read() || reader5.Read(), "MARSSyncExecuteReaderTest2 Failure #2");
+        }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void MARSSyncExecuteReaderTest2()
@@ -273,6 +463,42 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async void MARSAsyncExecuteReaderTest3()
+        {
+            using SqlConnection con = new(_connStr);
+            con.Open();
+
+            using SqlCommand com1 = new("select * from Orders", con);
+            using SqlCommand com2 = new("select * from Orders", con);
+            using SqlCommand com3 = new("select * from Orders", con);
+            using SqlCommand com4 = new("select * from Orders", con);
+            using SqlCommand com5 = new("select * from Orders", con);
+
+            Task<SqlDataReader> result1 = com1.ExecuteReaderAsync();
+            Task<SqlDataReader> result2 = com2.ExecuteReaderAsync();
+            Task<SqlDataReader> result3 = com3.ExecuteReaderAsync();
+            Task<SqlDataReader> result4 = com4.ExecuteReaderAsync();
+            Task<SqlDataReader> result5 = com5.ExecuteReaderAsync();
+
+            using SqlDataReader reader1 = await result1;
+            using SqlDataReader reader2 = await result2;
+            using SqlDataReader reader3 = await result3;
+            using SqlDataReader reader4 = await result4;
+            using SqlDataReader reader5 = await result5;
+
+            for (int i = 0; i < 830; i++)
+            {
+                Assert.True(reader1.Read() && reader2.Read() && reader3.Read() && reader4.Read() && reader5.Read(), "MARSSyncExecuteReaderTest2 Failure #1");
+                Assert.Equal(reader1.GetInt32(0), reader2.GetInt32(0));
+                Assert.Equal(reader2.GetInt32(0), reader3.GetInt32(0));
+                Assert.Equal(reader3.GetInt32(0), reader4.GetInt32(0));
+                Assert.Equal(reader4.GetInt32(0), reader5.GetInt32(0));
+            }
+
+            Assert.False(reader1.Read() || reader2.Read() || reader3.Read() || reader4.Read() || reader5.Read(), "MARSSyncExecuteReaderTest2 Failure #2");
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void MARSSyncExecuteReaderTest3()
         {
             using (SqlConnection conn = new SqlConnection(_connStr))
@@ -288,20 +514,39 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     Assert.True(reader1.Read() && reader2.Read() && reader3.Read() && reader4.Read() && reader5.Read(), "MARSSyncExecuteReaderTest3 Failure #1");
 
                     // All reads succeeded - check values.
-                    Assert.True(reader1.GetInt32(0) == reader2.GetInt32(0) &&
-                                reader2.GetInt32(0) == reader3.GetInt32(0) &&
-                                reader3.GetInt32(0) == reader4.GetInt32(0) &&
-                                reader4.GetInt32(0) == reader5.GetInt32(0),
-                                "MARSSyncExecuteReaderTest3, Failure #2" + "\n" +
-                                "reader1.GetInt32(0): " + reader1.GetInt32(0) + "\n" +
-                                "reader2.GetInt32(0): " + reader2.GetInt32(0) + "\n" +
-                                "reader3.GetInt32(0): " + reader3.GetInt32(0) + "\n" +
-                                "reader4.GetInt32(0): " + reader4.GetInt32(0) + "\n" +
-                                "reader5.GetInt32(0): " + reader5.GetInt32(0));
+                    Assert.Equal(reader1.GetInt32(0), reader2.GetInt32(0));
+                    Assert.Equal(reader2.GetInt32(0), reader3.GetInt32(0));
+                    Assert.Equal(reader3.GetInt32(0), reader4.GetInt32(0));
+                    Assert.Equal(reader4.GetInt32(0), reader5.GetInt32(0));
 
                     Assert.False(reader1.Read() || reader2.Read() || reader3.Read() || reader4.Read() || reader5.Read(), "MARSSyncExecuteReaderTest3 Failure #3");
                 }
             }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async void MARSAsyncExecuteReaderTest4()
+        {
+            using SqlConnection con = new(_connStr);
+            con.Open();
+
+            using SqlCommand com1 = new("select * from Orders where OrderID = 10248", con);
+            using SqlCommand com2 = new("select * from Orders where OrderID = 10249", con);
+            using SqlCommand com3 = new("select * from Orders where OrderID = 10250", con);
+
+            Task<SqlDataReader> result1 = com1.ExecuteReaderAsync();
+            Task<SqlDataReader> result2 = com2.ExecuteReaderAsync();
+            Task<SqlDataReader> result3 = com3.ExecuteReaderAsync();
+
+            using SqlDataReader reader1 = await result1;
+            using SqlDataReader reader2 = await result2;
+            using SqlDataReader reader3 = await result3;
+
+            Assert.True(reader1.Read() && reader2.Read() && reader3.Read());
+
+            Assert.Equal(10248, reader1.GetInt32(0));
+            Assert.Equal(10249, reader2.GetInt32(0));
+            Assert.Equal(10250, reader3.GetInt32(0));
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
@@ -317,10 +562,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     Assert.True(reader1.Read() && reader2.Read() && reader3.Read(), "MARSSyncExecuteReaderTest4 failure #1");
 
-                    Assert.True(reader1.GetInt32(0) == 1 &&
-                                reader2.GetInt32(0) == 2 &&
-                                reader3.GetInt32(0) == 3,
-                                "MARSSyncExecuteReaderTest4 failure #2");
+                    Assert.Equal(1, reader1.GetInt32(0));
+                    Assert.Equal(2, reader2.GetInt32(0));
+                    Assert.Equal(3, reader3.GetInt32(0));
 
                     Assert.False(reader1.Read() || reader2.Read() || reader3.Read(), "MARSSyncExecuteReaderTest4 failure #3");
                 }
@@ -369,6 +613,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         }, openReaderExistsMessage);
                     }
                 }
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static async Task MarsScenarioClientJoin()
+        {
+            SqlConnectionStringBuilder builder = new(_connStr);
+            builder.MultipleActiveResultSets = true;
+            builder.ConnectTimeout = 5;
+            string connectionString = builder.ConnectionString;
+
+            using SqlConnection con = new(connectionString);
+            await con.OpenAsync();
+
+            SqlCommand productsCommand = new("SELECT SupplierID FROM dbo.Products ORDER BY UnitsInStock", con);
+            using SqlDataReader reader = await productsCommand.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                int supplier = reader.GetInt32(0);
+                using SqlCommand getSupplierCommand = new("SELECT CompanyName FROM dbo.Suppliers WHERE SupplierID = @ID", con);
+                getSupplierCommand.Parameters.Add(new SqlParameter("ID", SqlDbType.Int) { Value = supplier });
+                string name = (string)await getSupplierCommand.ExecuteScalarAsync();
+                Assert.Equal(companyNames[supplier], name);
             }
         }
     }
