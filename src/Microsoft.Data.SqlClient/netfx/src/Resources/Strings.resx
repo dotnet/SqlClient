@@ -2563,7 +2563,7 @@
     <value>Failed to authenticate the user {0} in Active Directory (Authentication={1}).</value>
   </data>
   <data name="SQL_MSALInnerException" xml:space="preserve">
-    <value>Error code 0x{0}; state {1}</value>
+    <value>Error code 0x{0}</value>
   </data>
   <data name="SQL_ChangePasswordRequiresYukon" xml:space="preserve">
     <value>ChangePassword requires SQL Server 9.0 or later.</value>
