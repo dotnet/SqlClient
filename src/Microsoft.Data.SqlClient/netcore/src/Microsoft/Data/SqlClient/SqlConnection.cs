@@ -635,7 +635,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CommandTimeout/*' />
-        [[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         [ResDescriptionAttribute(StringsHelper.ResourceNames.SqlConnection_ConnectionTimeout)]
         public int CommandTimeout
         {
