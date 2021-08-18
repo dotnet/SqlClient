@@ -1205,7 +1205,7 @@ namespace Microsoft.Data.SqlClient
                         switch (_encryptionOption & EncryptionOptions.OPTIONS_MASK)
                         {
                             case (EncryptionOptions.ON):
-                                if ((serverOption & EncryptionOptions.OPTIONS_MASK) != EncryptionOptions.ON)
+                                if ((serverOption & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.NOT_SUP)
                                 {
                                     _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByServer(), "", 0));
                                     _physicalStateObj.Dispose();
@@ -1229,8 +1229,7 @@ namespace Microsoft.Data.SqlClient
                                 break;
 
                             case (EncryptionOptions.NOT_SUP):
-                                // Server required encryption
-                                if ((serverOption & EncryptionOptions.OPTIONS_MASK) != EncryptionOptions.NOT_SUP)
+                                if ((serverOption & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.REQ)
                                 {
                                     _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByClient(), "", 0));
                                     _physicalStateObj.Dispose();
