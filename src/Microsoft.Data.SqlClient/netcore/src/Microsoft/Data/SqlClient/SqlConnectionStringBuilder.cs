@@ -33,9 +33,7 @@ namespace Microsoft.Data.SqlClient
             Pooling,
             MinPoolSize,
             MaxPoolSize,
-#if NETCOREAPP
             PoolBlockingPeriod,
-#endif
             MultipleActiveResultSets,
             Replication,
             ConnectTimeout,
@@ -101,6 +99,7 @@ namespace Microsoft.Data.SqlClient
         private bool _multipleActiveResultSets = DbConnectionStringDefaults.MultipleActiveResultSets;
         private bool _multiSubnetFailover = DbConnectionStringDefaults.MultiSubnetFailover;
         private bool _persistSecurityInfo = DbConnectionStringDefaults.PersistSecurityInfo;
+        private PoolBlockingPeriod _poolBlockingPeriod = DbConnectionStringDefaults.PoolBlockingPeriod;
         private bool _pooling = DbConnectionStringDefaults.Pooling;
         private bool _replication = DbConnectionStringDefaults.Replication;
         private bool _userInstance = DbConnectionStringDefaults.UserInstance;
@@ -116,9 +115,7 @@ namespace Microsoft.Data.SqlClient
             validKeywords[(int)Keywords.ApplicationIntent] = DbConnectionStringKeywords.ApplicationIntent;
             validKeywords[(int)Keywords.ApplicationName] = DbConnectionStringKeywords.ApplicationName;
             validKeywords[(int)Keywords.AttachDBFilename] = DbConnectionStringKeywords.AttachDBFilename;
-#if NETCOREAPP
             validKeywords[(int)Keywords.PoolBlockingPeriod] = DbConnectionStringKeywords.PoolBlockingPeriod;
-#endif
             validKeywords[(int)Keywords.CommandTimeout] = DbConnectionStringKeywords.CommandTimeout;
             validKeywords[(int)Keywords.ConnectTimeout] = DbConnectionStringKeywords.ConnectTimeout;
             validKeywords[(int)Keywords.CurrentLanguage] = DbConnectionStringKeywords.CurrentLanguage;
@@ -161,9 +158,7 @@ namespace Microsoft.Data.SqlClient
             hash.Add(DbConnectionStringKeywords.ApplicationIntent, Keywords.ApplicationIntent);
             hash.Add(DbConnectionStringKeywords.ApplicationName, Keywords.ApplicationName);
             hash.Add(DbConnectionStringKeywords.AttachDBFilename, Keywords.AttachDBFilename);
-#if NETCOREAPP
             hash.Add(DbConnectionStringKeywords.PoolBlockingPeriod, Keywords.PoolBlockingPeriod);
-#endif
             hash.Add(DbConnectionStringKeywords.CommandTimeout, Keywords.CommandTimeout);
             hash.Add(DbConnectionStringKeywords.ConnectTimeout, Keywords.ConnectTimeout);
             hash.Add(DbConnectionStringKeywords.CurrentLanguage, Keywords.CurrentLanguage);
@@ -213,9 +208,7 @@ namespace Microsoft.Data.SqlClient
             hash.Add(DbConnectionStringSynonyms.MULTIPLEACTIVERESULTSETS, Keywords.MultipleActiveResultSets);
             hash.Add(DbConnectionStringSynonyms.MULTISUBNETFAILOVER, Keywords.MultiSubnetFailover);
             hash.Add(DbConnectionStringSynonyms.NETWORKADDRESS, Keywords.DataSource);
-#if NETCOREAPP
             hash.Add(DbConnectionStringSynonyms.POOLBLOCKINGPERIOD, Keywords.PoolBlockingPeriod);
-#endif
             hash.Add(DbConnectionStringSynonyms.SERVER, Keywords.DataSource);
             hash.Add(DbConnectionStringSynonyms.DATABASE, Keywords.InitialCatalog);
             hash.Add(DbConnectionStringSynonyms.TRUSTEDCONNECTION, Keywords.IntegratedSecurity);
@@ -334,9 +327,9 @@ namespace Microsoft.Data.SqlClient
                         case Keywords.IPAddressPreference:
                             IPAddressPreference = ConvertToIPAddressPreference(keyword, value);
                             break;
-#if NETCOREAPP
-                        case Keywords.PoolBlockingPeriod: PoolBlockingPeriod = ConvertToPoolBlockingPeriod(keyword, value); break;
-#endif
+                        case Keywords.PoolBlockingPeriod:
+                            PoolBlockingPeriod = ConvertToPoolBlockingPeriod(keyword, value);
+                            break;
                         case Keywords.Encrypt:
                             Encrypt = ConvertToBoolean(value);
                             break;
@@ -764,6 +757,22 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/PoolBlockingPeriod/*' />
+        public PoolBlockingPeriod PoolBlockingPeriod
+        {
+            get { return _poolBlockingPeriod; }
+            set
+            {
+                if (!DbConnectionStringBuilderUtil.IsValidPoolBlockingPeriodValue(value))
+                {
+                    throw ADP.InvalidEnumerationValue(typeof(PoolBlockingPeriod), (int)value);
+                }
+
+                SetPoolBlockingPeriodValue(value);
+                _poolBlockingPeriod = value;
+            }
+        }
+
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Pooling/*' />
         public bool Pooling
         {
@@ -936,6 +945,9 @@ namespace Microsoft.Data.SqlClient
         private static SqlConnectionIPAddressPreference ConvertToIPAddressPreference(string keyword, object value)
             => DbConnectionStringBuilderUtil.ConvertToIPAddressPreference(keyword, value);
 
+        private static PoolBlockingPeriod ConvertToPoolBlockingPeriod(string keyword, object value)
+            => DbConnectionStringBuilderUtil.ConvertToPoolBlockingPeriod(keyword, value);
+
         private object GetAt(Keywords index)
         {
             switch (index)
@@ -946,9 +958,8 @@ namespace Microsoft.Data.SqlClient
                     return ApplicationName;
                 case Keywords.AttachDBFilename:
                     return AttachDBFilename;
-#if NETCOREAPP
-                case Keywords.PoolBlockingPeriod: return PoolBlockingPeriod;
-#endif
+                case Keywords.PoolBlockingPeriod:
+                    return PoolBlockingPeriod;
                 case Keywords.CommandTimeout:
                     return CommandTimeout;
                 case Keywords.ConnectTimeout:
@@ -1063,11 +1074,9 @@ namespace Microsoft.Data.SqlClient
                 case Keywords.Authentication:
                     _authentication = DbConnectionStringDefaults.Authentication;
                     break;
-#if NETCOREAPP
                 case Keywords.PoolBlockingPeriod:
                     _poolBlockingPeriod = DbConnectionStringDefaults.PoolBlockingPeriod;
                     break;
-#endif
                 case Keywords.CommandTimeout:
                     _commandTimeout = DbConnectionStringDefaults.CommandTimeout;
                     break;
@@ -1210,6 +1219,12 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(DbConnectionStringBuilderUtil.IsValidAuthenticationTypeValue(value), "Invalid value for AuthenticationType");
             base[DbConnectionStringKeywords.Authentication] = DbConnectionStringBuilderUtil.AuthenticationTypeToString(value);
+        }
+
+        private void SetPoolBlockingPeriodValue(PoolBlockingPeriod value)
+        {
+            Debug.Assert(DbConnectionStringBuilderUtil.IsValidPoolBlockingPeriodValue(value), "Invalid value for PoolBlockingPeriod");
+            base[DbConnectionStringKeywords.PoolBlockingPeriod] = DbConnectionStringBuilderUtil.PoolBlockingPeriodToString(value);
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ShouldSerialize/*' />
