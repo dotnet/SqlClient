@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Verify client encryption possibility.
         /// </summary>
-        public bool EncryptClientPossible => SNI.SNILoadHandle.SingletonInstance.EncryptClientPossible;
+        public bool ClientOSEncryptionSupport => SNI.SNILoadHandle.SingletonInstance.ClientOSEncryptionSupport;
 
         public TdsParserStateObject CreateTdsParserStateObject(TdsParser parser)
         {

@@ -50,7 +50,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Verify client encryption possibility.
         /// </summary>
-        private bool EncryptClientPossible => TdsParserStateObjectFactory.Singleton.EncryptClientPossible;
+        private bool ClientOSEncryptionSupport => TdsParserStateObjectFactory.Singleton.ClientOSEncryptionSupport;
 
         // Default state object for parser
         internal TdsParserStateObject _physicalStateObj = null; // Default stateObj and connection for Dbnetlib and non-MARS SNI.
@@ -469,8 +469,15 @@ namespace Microsoft.Data.SqlClient
                 _physicalStateObj.AssignPendingDNSInfo(serverInfo.UserProtocol, FQDNforDNSCahce, ref _connHandler.pendingSQLDNSObject);
             }
 
-            if (encrypt && !EncryptClientPossible)
+            if (!ClientOSEncryptionSupport)
             {
+                //If encryption is required, an error will throw.
+                if (encrypt)
+                {
+                    _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByClient(), "", 0));
+                    _physicalStateObj.Dispose();
+                    ThrowExceptionAndWarning(_physicalStateObj);
+                }
                 _encryptionOption = EncryptionOptions.NOT_SUP;
             }
 
@@ -684,13 +691,8 @@ namespace Microsoft.Data.SqlClient
                     case (int)PreLoginOptions.ENCRYPT:
                         if (_encryptionOption == EncryptionOptions.NOT_SUP)
                         {
-                            //If encryption is required, an error will throw.
-                            if (encrypt)
-                            {
-                                _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByClient(), "", 0));
-                                _physicalStateObj.Dispose();
-                                ThrowExceptionAndWarning(_physicalStateObj);
-                            }
+                            //If encryption is not required.
+                            payload[payloadLength] = (byte)EncryptionOptions.NOT_SUP;
                         }
                         else
                         {
@@ -880,7 +882,7 @@ namespace Microsoft.Data.SqlClient
                         switch (_encryptionOption)
                         {
                             case (EncryptionOptions.ON):
-                                if (serverOption == EncryptionOptions.NOT_SUP)
+                                if (serverOption != EncryptionOptions.ON)
                                 {
                                     _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByServer(), "", 0));
                                     _physicalStateObj.Dispose();
@@ -892,23 +894,20 @@ namespace Microsoft.Data.SqlClient
                             case (EncryptionOptions.OFF):
                                 if (serverOption == EncryptionOptions.OFF)
                                 {
-                                    if (EncryptClientPossible)
-                                    {
-                                        // Only encrypt login.
-                                        _encryptionOption = EncryptionOptions.LOGIN;
-                                    }
+                                    // Only encrypt login.
+                                    _encryptionOption = EncryptionOptions.LOGIN;
                                 }
                                 else if (serverOption == EncryptionOptions.REQ)
                                 {
                                     // Encrypt all.
                                     _encryptionOption = EncryptionOptions.ON;
                                 }
-
+                                // NOT_SUP: No encryption.
                                 break;
 
                             case (EncryptionOptions.NOT_SUP):
                                 // Server required encryption
-                                if (serverOption == EncryptionOptions.REQ)
+                                if (serverOption != EncryptionOptions.NOT_SUP)
                                 {
                                     _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByClient(), "", 0));
                                     _physicalStateObj.Dispose();

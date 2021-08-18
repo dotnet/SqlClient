@@ -26,7 +26,7 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Verify client encryption possibility.
         /// </summary>
-        public bool EncryptClientPossible => UseManagedSNI ? SNI.SNILoadHandle.SingletonInstance.EncryptClientPossible : SNILoadHandle.SingletonInstance.EncryptClientPossible;
+        public bool ClientOSEncryptionSupport => UseManagedSNI ? SNI.SNILoadHandle.SingletonInstance.ClientOSEncryptionSupport : SNILoadHandle.SingletonInstance.ClientOSEncryptionSupport;
 
         public TdsParserStateObject CreateTdsParserStateObject(TdsParser parser)
         {

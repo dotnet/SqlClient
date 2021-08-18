@@ -60,6 +60,6 @@ namespace Microsoft.Data.SqlClient.SNI
         /// Verify client encryption possibility
         /// </summary>
         // TODO: by adding support ENCRYPT_NOT_SUP, it could be calculated.
-        public bool EncryptClientPossible => true;
+        public bool ClientOSEncryptionSupport => true;
     }
 }

@@ -21,7 +21,7 @@ namespace Microsoft.Data.SqlClient
 
         private readonly UInt32 _sniStatus = TdsEnums.SNI_UNINITIALIZED;
         private readonly EncryptionOptions _encryptionOption = EncryptionOptions.OFF;
-        private bool? _encryptClientPossible = null;
+        private bool? _clientOSEncryptionSupport = null;
 
         private SNILoadHandle() : base(IntPtr.Zero, true)
         {
@@ -41,11 +41,11 @@ namespace Microsoft.Data.SqlClient
         /// <summary>
         /// Verify client encryption possibility.
         /// </summary>
-        public bool EncryptClientPossible
+        public bool ClientOSEncryptionSupport
         {
             get
             {
-                if (_encryptClientPossible is null)
+                if (_clientOSEncryptionSupport is null)
                 {
                     // VSDevDiv 479597: If initialize fails, don't call QueryInfo.
                     if (TdsEnums.SNI_SUCCESS == _sniStatus)
@@ -55,7 +55,7 @@ namespace Microsoft.Data.SqlClient
                             UInt32 value = 0;
                             // Query OS to find out whether encryption is supported.
                             SNINativeMethodWrapper.SNIQueryInfo(SNINativeMethodWrapper.QTypes.SNI_QUERY_CLIENT_ENCRYPT_POSSIBLE, ref value);
-                            _encryptClientPossible = value != 0;
+                            _clientOSEncryptionSupport = value != 0;
                         }
                         catch (Exception e)
                         {
@@ -63,17 +63,11 @@ namespace Microsoft.Data.SqlClient
                         }
                     }
                 }
-                return _encryptClientPossible.Value;
+                return _clientOSEncryptionSupport.Value;
             }
         }
 
-        public override bool IsInvalid
-        {
-            get
-            {
-                return (IntPtr.Zero == base.handle);
-            }
-        }
+        public override bool IsInvalid => (IntPtr.Zero == base.handle);
 
         override protected bool ReleaseHandle()
         {
@@ -90,21 +84,9 @@ namespace Microsoft.Data.SqlClient
             return true;
         }
 
-        public UInt32 SNIStatus
-        {
-            get
-            {
-                return _sniStatus;
-            }
-        }
+        public UInt32 SNIStatus => _sniStatus;
 
-        public EncryptionOptions Options
-        {
-            get
-            {
-                return _encryptionOption;
-            }
-        }
+        public EncryptionOptions Options => _encryptionOption;
 
         static private void ReadDispatcher(IntPtr key, IntPtr packet, UInt32 error)
         {
