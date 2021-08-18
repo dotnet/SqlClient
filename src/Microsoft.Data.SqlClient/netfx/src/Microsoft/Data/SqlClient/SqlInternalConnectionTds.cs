@@ -2906,6 +2906,11 @@ namespace Microsoft.Data.SqlClient
                     Thread.Sleep(sleepInterval);
                     sleepInterval *= 2;
                 }
+                // All other exceptions from MSAL/Azure Identity APIs
+                catch (Exception e)
+                {
+                    throw SqlException.CreateException(new() { new(0, (byte)0x00, (byte)TdsEnums.FATAL_ERROR_CLASS, ConnectionOptions.DataSource, e.Message, ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName, 0) }, "", this, e);
+                }
             }
 
             Debug.Assert(fedAuthToken != null, "fedAuthToken should not be null.");

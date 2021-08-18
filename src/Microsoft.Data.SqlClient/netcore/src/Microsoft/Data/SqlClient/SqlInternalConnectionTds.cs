@@ -2444,8 +2444,9 @@ namespace Microsoft.Data.SqlClient
                         || _timeout.MillisecondsRemaining <= sleepInterval)
                     {
                         SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.GetFedAuthToken.MSALException error:> {0}", msalException.ErrorCode);
+
                         // Error[0]
-                        SqlErrorCollection sqlErs = new SqlErrorCollection();
+                        SqlErrorCollection sqlErs = new();
                         sqlErs.Add(new SqlError(0, (byte)0x00, (byte)TdsEnums.MIN_ERROR_CLASS, ConnectionOptions.DataSource, StringsHelper.GetString(Strings.SQL_MSALFailure, username, ConnectionOptions.Authentication.ToString("G")), ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName, 0));
 
                         // Error[1]
@@ -2466,6 +2467,11 @@ namespace Microsoft.Data.SqlClient
 
                     Thread.Sleep(sleepInterval);
                     sleepInterval *= 2;
+                }
+                // All other exceptions from MSAL/Azure Identity APIs
+                catch (Exception e)
+                {
+                    throw SqlException.CreateException(new() { new(0, (byte)0x00, (byte)TdsEnums.FATAL_ERROR_CLASS, ConnectionOptions.DataSource, e.Message, ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName, 0) }, "", this, e);
                 }
             }
 

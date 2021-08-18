@@ -268,7 +268,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // connection fails with expected error message.
             string[] removeKeys = { "User ID", "Password", "UID", "PWD" };
             string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, removeKeys) + "User ID=; Password=;";
-            PlatformNotSupportedException e = Assert.Throws<PlatformNotSupportedException>(() => ConnectAndDisconnect(connStr));
+            SqlException e = Assert.Throws<SqlException>(() => ConnectAndDisconnect(connStr));
             
             string expectedMessage = "MSAL cannot determine the username (UPN) of the currently logged in user.For Integrated Windows Authentication and Username/Password flows, please use .WithUsername() before calling ExecuteAsync().";
             Assert.Contains(expectedMessage, e.Message);
@@ -400,7 +400,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string connStrWithNoCred = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) +
                 $"Authentication=Active Directory Managed Identity; User Id={userId}";
 
-            Azure.Identity.CredentialUnavailableException e = Assert.Throws<Azure.Identity.CredentialUnavailableException>(() => ConnectAndDisconnect(connStrWithNoCred));
+            SqlException e = Assert.Throws<SqlException>(() => ConnectAndDisconnect(connStrWithNoCred));
 
             string expectedMessage = "ManagedIdentityCredential authentication unavailable";
             Assert.Contains(expectedMessage, e.GetBaseException().Message);
