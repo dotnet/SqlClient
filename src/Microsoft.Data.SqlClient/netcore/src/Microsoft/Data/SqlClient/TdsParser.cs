@@ -5424,6 +5424,10 @@ namespace Microsoft.Data.SqlClient
                     break;
 
                 case SqlDbType.Timestamp:
+                    if (!LocalAppContextSwitches.LegacyRowVersionNullBehavior)
+                    {
+                        nullVal.SetToNullOfType(SqlBuffer.StorageType.SqlBinary);
+                    }
                     break;
 
                 default:
