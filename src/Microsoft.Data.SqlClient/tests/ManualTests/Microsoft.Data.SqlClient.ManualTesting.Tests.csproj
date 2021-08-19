@@ -71,6 +71,7 @@
     <Compile Include="SQL\RetryLogic\SqlCommandReliabilityTest.cs" />
     <Compile Include="SQL\RetryLogic\SqlConnectionReliabilityTest.cs" />
     <Compile Include="SQL\RetryLogic\SqlConfigurationManagerReliabilityTest.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\KeepNulls.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\OrderHint.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\OrderHintAsync.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\OrderHintDuplicateColumn.cs" />
@@ -78,6 +79,7 @@
     <Compile Include="SQL\SqlBulkCopyTest\OrderHintMissingTargetColumn.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\OrderHintTransaction.cs" />
     <Compile Include="SQL\DataClassificationTest\DataClassificationTest.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\TableLock.cs" />
     <Compile Include="TracingTests\EventSourceTest.cs" />
     <Compile Include="SQL\AdapterTest\AdapterTest.cs" />
     <Compile Include="SQL\AsyncTest\AsyncTimeoutTest.cs" />
@@ -124,6 +126,7 @@
     <Compile Include="SQL\SqlCommand\SqlCommandCompletedTest.cs" />
     <Compile Include="SQL\SqlCommand\SqlCommandCancelTest.cs" />
     <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.cs" />
+    <Compile Include="SQL\ConnectionPoolTest\PoolBlockPeriodTest.cs" />
     <Compile Include="SQL\ConnectivityTests\ConnectivityTest.cs" />
     <Compile Include="SQL\DataBaseSchemaTest\ConnectionSchemaTest.cs" />
     <Compile Include="SQL\DataReaderTest\DataReaderTest.cs" />
@@ -258,7 +261,6 @@
     <None Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode_Azure.bsl" />
   </ItemGroup>
   <ItemGroup Condition="('$(TargetGroup)' == 'netcoreapp' OR '$(TargetGroup)' == 'netfx') AND !$(ReferenceType.Contains('NetStandard'))">
-    <Compile Include="SQL\ConnectionPoolTest\PoolBlockPeriodTest.netcoreapp.cs" />
     <Compile Include="SQL\SqlFileStreamTest\SqlFileStreamTest.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netfx'">

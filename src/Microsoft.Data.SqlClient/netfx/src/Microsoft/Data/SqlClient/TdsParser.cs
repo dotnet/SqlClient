@@ -6208,8 +6208,10 @@ namespace Microsoft.Data.SqlClient
                     break;
 
                 case SqlDbType.Timestamp:
-                    // Dev10 Bug #479607 - this should have been the same as SqlDbType.Binary, but it's a rejected breaking change
-                    // Dev10 Bug #752790 - don't assert when it does happen
+                    if (!LocalAppContextSwitches.LegacyRowVersionNullBehavior)
+                    {
+                        nullVal.SetToNullOfType(SqlBuffer.StorageType.SqlBinary);
+                    }
                     break;
 
                 default:

@@ -117,6 +117,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public void TableLockTest()
+        {
+            TableLock.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_TableLock0"), AddGuid("SqlBulkCopyTest_TableLock1"));
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public void KeepNullsTest()
+        {
+            KeepNulls.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_KeepNulls0"), AddGuid("SqlBulkCopyTest_KeepNulls1"));
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public void TransactionTest()
         {
             Transaction.Test(_connStr, _connStr, AddGuid("SqlBulkCopyTest_Transaction0"));

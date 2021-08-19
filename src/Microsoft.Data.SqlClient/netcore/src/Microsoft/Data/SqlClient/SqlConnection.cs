@@ -1089,8 +1089,7 @@ namespace Microsoft.Data.SqlClient
         [SuppressMessage("Microsoft.Reliability", "CA2004:RemoveCallsToGCKeepAlive")]
         override protected DbTransaction BeginDbTransaction(System.Data.IsolationLevel isolationLevel)
         {
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlConnection.BeginDbTransaction | API | Object Id {0}, Isolation Level {1}", ObjectID, (int)isolationLevel);
-            try
+            using (TryEventScope.Create("SqlConnection.BeginDbTransaction | API | Object Id {0}, Isolation Level {1}", ObjectID, (int)isolationLevel))
             {
                 DbTransaction transaction = BeginTransaction(isolationLevel);
 
@@ -1102,10 +1101,6 @@ namespace Microsoft.Data.SqlClient
 
                 return transaction;
             }
-            finally
-            {
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
-            }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/BeginTransactionIsoTransactionName/*' />
@@ -1113,32 +1108,33 @@ namespace Microsoft.Data.SqlClient
         {
             WaitForPendingReconnection();
             SqlStatistics statistics = null;
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlConnection.BeginTransaction | API | Object Id {0}, Iso {1}, Transaction Name '{2}'", ObjectID, (int)iso, transactionName);
-            try
+            using (TryEventScope.Create(SqlClientEventSource.Log.TryScopeEnterEvent("SqlConnection.BeginTransaction | API | Object Id {0}, Iso {1}, Transaction Name '{2}'", ObjectID, (int)iso, transactionName)))
             {
-                statistics = SqlStatistics.StartTimer(Statistics);
-
-                SqlTransaction transaction;
-                bool isFirstAttempt = true;
-                do
+                try
                 {
-                    transaction = GetOpenTdsConnection().BeginSqlTransaction(iso, transactionName, isFirstAttempt); // do not reconnect twice
-                    Debug.Assert(isFirstAttempt || !transaction.InternalTransaction.ConnectionHasBeenRestored, "Restored connection on non-first attempt");
-                    isFirstAttempt = false;
-                } while (transaction.InternalTransaction.ConnectionHasBeenRestored);
+                    statistics = SqlStatistics.StartTimer(Statistics);
+
+                    SqlTransaction transaction;
+                    bool isFirstAttempt = true;
+                    do
+                    {
+                        transaction = GetOpenTdsConnection().BeginSqlTransaction(iso, transactionName, isFirstAttempt); // do not reconnect twice
+                        Debug.Assert(isFirstAttempt || !transaction.InternalTransaction.ConnectionHasBeenRestored, "Restored connection on non-first attempt");
+                        isFirstAttempt = false;
+                    } while (transaction.InternalTransaction.ConnectionHasBeenRestored);
 
 
-                //  The GetOpenConnection line above doesn't keep a ref on the outer connection (this),
-                //  and it could be collected before the inner connection can hook it to the transaction, resulting in
-                //  a transaction with a null connection property.  Use GC.KeepAlive to ensure this doesn't happen.
-                GC.KeepAlive(this);
+                    //  The GetOpenConnection line above doesn't keep a ref on the outer connection (this),
+                    //  and it could be collected before the inner connection can hook it to the transaction, resulting in
+                    //  a transaction with a null connection property.  Use GC.KeepAlive to ensure this doesn't happen.
+                    GC.KeepAlive(this);
 
-                return transaction;
-            }
-            finally
-            {
-                SqlStatistics.StopTimer(statistics);
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
+                    return transaction;
+                }
+                finally
+                {
+                    SqlStatistics.StopTimer(statistics);
+                }
             }
         }
 
@@ -1192,10 +1188,10 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Close/*' />
         public override void Close()
         {
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlConnection.Close | API | Object Id {0}", ObjectID);
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.Close | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}", ObjectID, ActivityCorrelator.Current, ClientConnectionId);
-            try
+            using (TryEventScope.Create("SqlConnection.Close | API | Object Id {0}", ObjectID))
             {
+                SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.Close | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}", ObjectID, ActivityCorrelator.Current, ClientConnectionId);
+
                 ConnectionState previousState = State;
                 Guid operationId = default(Guid);
                 Guid clientConnectionId = default(Guid);
@@ -1269,10 +1265,6 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
             }
-            finally
-            {
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
-            }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CreateCommand/*' />
@@ -1315,10 +1307,10 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenWithOverrides/*' />
         public void Open(SqlConnectionOverrides overrides)
         {
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlConnection.Open | API | Correlation | Object Id {0}, Activity Id {1}", ObjectID, ActivityCorrelator.Current);
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.Open | API | Correlation | Object Id {0}, Activity Id {1}", ObjectID, ActivityCorrelator.Current);
-            try
+            using (TryEventScope.Create("SqlConnection.Open | API | Correlation | Object Id {0}, Activity Id {1}", ObjectID, ActivityCorrelator.Current))
             {
+                SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.Open | API | Correlation | Object Id {0}, Activity Id {1}", ObjectID, ActivityCorrelator.Current);
+
                 Guid operationId = s_diagnosticListener.WriteConnectionOpenBefore(this);
 
                 PrepareStatisticsForNewConnection();
@@ -1352,10 +1344,6 @@ namespace Microsoft.Data.SqlClient
                         s_diagnosticListener.WriteConnectionOpenAfter(operationId, this);
                     }
                 }
-            }
-            finally
-            {
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
             }
         }
 
@@ -2078,10 +2066,10 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringNewPassword/*' />
         public static void ChangePassword(string connectionString, string newPassword)
         {
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlConnection.ChangePassword | API | Password change requested.");
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.ChangePassword | API | Correlation | ActivityID {0}", ActivityCorrelator.Current);
-            try
+            using (TryEventScope.Create("SqlConnection.ChangePassword | API | Password change requested."))
             {
+                SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.ChangePassword | API | Correlation | ActivityID {0}", ActivityCorrelator.Current);
+
                 if (string.IsNullOrEmpty(connectionString))
                 {
                     throw SQL.ChangePasswordArgumentMissing(nameof(newPassword));
@@ -2109,19 +2097,15 @@ namespace Microsoft.Data.SqlClient
 
                 ChangePassword(connectionString, connectionOptions, null, newPassword, null);
             }
-            finally
-            {
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
-            }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringCredentialNewSecurePassword/*' />
         public static void ChangePassword(string connectionString, SqlCredential credential, SecureString newSecurePassword)
         {
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("SqlConnection.ChangePassword | API | Password change requested.");
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.ChangePassword | API | Correlation | ActivityID {0}", ActivityCorrelator.Current);
-            try
+            using (TryEventScope.Create("SqlConnection.ChangePassword | API | Password change requested."))
             {
+                SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlConnection.ChangePassword | API | Correlation | ActivityID {0}", ActivityCorrelator.Current);
+
                 if (string.IsNullOrEmpty(connectionString))
                 {
                     throw SQL.ChangePasswordArgumentMissing(nameof(connectionString));
@@ -2169,10 +2153,6 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 ChangePassword(connectionString, connectionOptions, credential, null, newSecurePassword);
-            }
-            finally
-            {
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
             }
         }
 
