@@ -471,7 +471,7 @@ namespace Microsoft.Data.SqlClient
 
             if (!ClientOSEncryptionSupport)
             {
-                //If encryption is required, an error will throw.
+                //If encryption is required, an error will be thrown.
                 if (encrypt)
                 {
                     _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByClient(), "", 0));
@@ -691,7 +691,7 @@ namespace Microsoft.Data.SqlClient
                     case (int)PreLoginOptions.ENCRYPT:
                         if (_encryptionOption == EncryptionOptions.NOT_SUP)
                         {
-                            //If encryption is not required.
+                            //If OS doesn't support encryption and encryption is not required, inform server "not supported" by client.
                             payload[payloadLength] = (byte)EncryptionOptions.NOT_SUP;
                         }
                         else
