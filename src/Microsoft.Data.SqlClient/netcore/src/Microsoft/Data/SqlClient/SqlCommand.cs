@@ -432,7 +432,7 @@ namespace Microsoft.Data.SqlClient
         [DefaultValue(null)]
         [Editor("Microsoft.VSDesigner.Data.Design.DbConnectionEditor, " + AssemblyRef.MicrosoftVSDesigner, "System.Drawing.Design.UITypeEditor, " + AssemblyRef.SystemDrawing)]
         [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_Connection)]
+        [ResDescription(StringsHelper.ResourceNames.DbCommand_Connection)]
         new public SqlConnection Connection
         {
             get
@@ -530,8 +530,8 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Notification/*'/>
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)] // MDAC 90471
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Notification)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.SqlCommand_Notification)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Notification)]
+        [ResDescription(StringsHelper.ResourceNames.SqlCommand_Notification)]
         public SqlNotificationRequest Notification
         {
             get
@@ -565,7 +565,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Transaction/*'/>
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_Transaction)]
+        [ResDescription(StringsHelper.ResourceNames.DbCommand_Transaction)]
         new public SqlTransaction Transaction
         {
             get
@@ -611,7 +611,7 @@ namespace Microsoft.Data.SqlClient
         [Editor("Microsoft.VSDesigner.Data.SQL.Design.SqlCommandTextEditor, " + AssemblyRef.MicrosoftVSDesigner, "System.Drawing.Design.UITypeEditor, " + AssemblyRef.SystemDrawing)]
         [RefreshProperties(RefreshProperties.All)] // MDAC 67707
         [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_CommandText)]
+        [ResDescription(StringsHelper.ResourceNames.DbCommand_CommandText)]
         public override string CommandText
         {
             get
@@ -634,12 +634,12 @@ namespace Microsoft.Data.SqlClient
         [Browsable(false)]
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.TCE_SqlCommand_ColumnEncryptionSetting)]
+        [ResDescription(StringsHelper.ResourceNames.TCE_SqlCommand_ColumnEncryptionSetting)]
         public SqlCommandColumnEncryptionSetting ColumnEncryptionSetting => _columnEncryptionSetting;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandTimeout/*'/>
         [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_CommandTimeout)]
+        [ResDescription(StringsHelper.ResourceNames.DbCommand_CommandTimeout)]
         public override int CommandTimeout
         {
             get
@@ -683,7 +683,7 @@ namespace Microsoft.Data.SqlClient
         [DefaultValue(System.Data.CommandType.Text)]
         [RefreshProperties(RefreshProperties.All)]
         [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_CommandType)]
+        [ResDescription(StringsHelper.ResourceNames.DbCommand_CommandType)]
         public override CommandType CommandType
         {
             get
@@ -739,7 +739,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Parameters/*'/>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
         [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_Parameters)]
+        [ResDescription(StringsHelper.ResourceNames.DbCommand_Parameters)]
         new public SqlParameterCollection Parameters
         {
             get
@@ -766,7 +766,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/UpdatedRowSource/*'/>
         [DefaultValue(System.Data.UpdateRowSource.Both)]
         [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_UpdatedRowSource)]
+        [ResDescription(StringsHelper.ResourceNames.DbCommand_UpdatedRowSource)]
         public override UpdateRowSource UpdatedRowSource
         {
             get
@@ -792,7 +792,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/StatementCompleted/*'/>
         [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_StatementCompleted)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_StatementCompleted)]
+        [ResDescription(StringsHelper.ResourceNames.DbCommand_StatementCompleted)]
         public event StatementCompletedEventHandler StatementCompleted
         {
             add
