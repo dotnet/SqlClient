@@ -45,9 +45,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             {
                 if (sqlDataReader.FieldCount == 3)
                 {
-                    Assert.True(sqlDataReader.GetInt32(0) == 45, "Employee id didn't match.");
-                    Assert.True(sqlDataReader.GetString(1) == @"Microsoft", "Employee FirstName didn't match.");
-                    Assert.True(sqlDataReader.GetString(2) == @"Corporation", "Employee LastName didn't match.");
+                    Assert.Equal(45, sqlDataReader.GetInt32(0));
+                    Assert.Equal(@"Microsoft", sqlDataReader.GetString(1));
+                    Assert.Equal(@"Corporation", sqlDataReader.GetString(2));
                 }
                 else if (sqlDataReader.FieldCount == 1)
                 {

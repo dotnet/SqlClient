@@ -69,7 +69,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private const string ManagedNetworkingAppContextSwitch = "Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows";
 
         private static Dictionary<string, bool> AvailableDatabases;
-        public static BaseEventListener TraceListener;
+        private static BaseEventListener TraceListener;
 
         static DataTestUtility()
         {
@@ -787,24 +787,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public class AKVEventListener : BaseEventListener
         {
-            public override string _name => AKVEventSourceName;
+            public override string Name => AKVEventSourceName;
         }
 
         public class MDSEventListener : BaseEventListener
         {
-            public override string _name => MDSEventSourceName;
+            public override string Name => MDSEventSourceName;
         }
 
         public class BaseEventListener : EventListener
         {
-            public List<int> IDs = new();
-            public List<EventWrittenEventArgs> EventData = new();
+            public readonly List<int> IDs = new();
+            public readonly List<EventWrittenEventArgs> EventData = new();
 
-            public virtual string _name => EventSourcePrefix;
+            public virtual string Name => EventSourcePrefix;
 
             protected override void OnEventSourceCreated(EventSource eventSource)
             {
-                if (eventSource.Name.StartsWith(_name))
+                if (eventSource.Name.StartsWith(Name))
                 {
                     // Collect all traces for better code coverage
                     EnableEvents(eventSource, EventLevel.LogAlways, EventKeywords.All);
@@ -817,13 +817,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             protected override void OnEventWritten(EventWrittenEventArgs eventData)
             {
-                if (_name == eventData.EventSource.Name)
+                if (Name == eventData.EventSource.Name)
                 {
                     IDs.Add(eventData.EventId);
-                    if (EventData != null)
-                    {
-                        EventData.Add(eventData);
-                    }
+                    EventData.Add(eventData);
                 }
             }
         }

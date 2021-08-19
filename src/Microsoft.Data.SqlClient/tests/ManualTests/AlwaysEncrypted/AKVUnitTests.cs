@@ -36,7 +36,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 Assert.Equal(threadActivityId, item.ActivityId);
                 Assert.Equal(EventLevel.Informational, item.Level);
                 Assert.NotNull(item.Payload);
-                Assert.True(item.Payload.Count == 1);
+                Assert.Single(item.Payload);
                 switch (item.EventId)
                 {
                     case 1: // Trace
