@@ -94,7 +94,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 using (SqlConnection sqlConn = new SqlConnection(builder.ToString()))
                 {
                     sqlConn.Open();
-                    DatabaseHelper.InsertCustomerData(sqlConn, TrustedMasterKeyPathsTestTable.Name, customer);
+                    DatabaseHelper.InsertCustomerData(sqlConn, null, TrustedMasterKeyPathsTestTable.Name, customer);
                 }
             }
         }

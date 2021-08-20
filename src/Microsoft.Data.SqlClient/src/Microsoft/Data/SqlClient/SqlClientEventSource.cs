@@ -72,7 +72,9 @@ namespace Microsoft.Data.SqlClient
     internal partial class SqlClientEventSource : SqlClientEventSourceBase
     {
         // Defines the singleton instance for the Resources ETW provider
-        internal static readonly SqlClientEventSource Log = new SqlClientEventSource();
+        internal static readonly SqlClientEventSource Log = new();
+
+        private SqlClientEventSource() { }
 
         private const string NullStr = "null";
         private const string SqlCommand_ClassName = nameof(SqlCommand);

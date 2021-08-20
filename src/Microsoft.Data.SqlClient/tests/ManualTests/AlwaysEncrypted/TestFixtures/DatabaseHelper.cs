@@ -7,6 +7,8 @@ using System.Data;
 using System.Collections;
 using System.Collections.Generic;
 using System.Security.Cryptography;
+using Xunit;
+using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 {
@@ -15,19 +17,151 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         /// <summary>
         /// Insert Customer record into table
         /// </summary>
-        internal static void InsertCustomerData(SqlConnection sqlConnection, string tableName, Customer customer)
+        internal static void InsertCustomerData(SqlConnection sqlConnection, SqlTransaction transaction, string tableName, Customer customer)
         {
-            using (SqlCommand sqlCommand = new SqlCommand(
+            using SqlCommand sqlCommand = new(
                 $"INSERT INTO [{tableName}] (CustomerId, FirstName, LastName) VALUES (@CustomerId, @FirstName, @LastName);",
                 connection: sqlConnection,
-                transaction: null,
-                columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
-            {
-                sqlCommand.Parameters.AddWithValue(@"CustomerId", customer.Id);
-                sqlCommand.Parameters.AddWithValue(@"FirstName", customer.FirstName);
-                sqlCommand.Parameters.AddWithValue(@"LastName", customer.LastName);
+                transaction: transaction,
+                columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled);
 
-                sqlCommand.ExecuteNonQuery();
+            sqlCommand.Parameters.AddWithValue(@"CustomerId", customer.Id);
+            sqlCommand.Parameters.AddWithValue(@"FirstName", customer.FirstName);
+            sqlCommand.Parameters.AddWithValue(@"LastName", customer.LastName);
+            sqlCommand.ExecuteNonQuery();
+        }
+
+        /// <summary>
+        /// Validates that the results are the ones expected.
+        /// </summary>
+        /// <param name="sqlDataReader"></param>
+        public static void ValidateResultSet(SqlDataReader sqlDataReader)
+        {
+            // Validate the result set
+            int rowsFound = 0;
+
+            Assert.True(sqlDataReader.HasRows);
+            while (sqlDataReader.Read())
+            {
+                if (sqlDataReader.FieldCount == 3)
+                {
+                    Assert.Equal(45, sqlDataReader.GetInt32(0));
+                    Assert.Equal(@"Microsoft", sqlDataReader.GetString(1));
+                    Assert.Equal(@"Corporation", sqlDataReader.GetString(2));
+                }
+                else if (sqlDataReader.FieldCount == 1)
+                {
+                    Assert.True(sqlDataReader.GetString(0) == @"Microsoft" || sqlDataReader.GetString(0) == @"Corporation", "Employee FirstName didn't match.");
+                }
+
+                rowsFound++;
+            }
+
+            Assert.True(rowsFound == 1, "Incorrect number of rows returned in first execution.");
+        }
+
+        public static void VerifyRecordAbsent(SqlConnection sqlConnection, Customer customer, string tableName, SqlTransaction sqlTransaction = null)
+        {
+            using SqlCommand sqlCommand = new(
+                cmdText: $"SELECT * FROM [{tableName}] WHERE CustomerId = @CustomerId and FirstName = @FirstName;",
+                connection: sqlConnection,
+                transaction: sqlTransaction,
+                columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled);
+            sqlCommand.Parameters.AddWithValue(@"CustomerId", customer.Id);
+            sqlCommand.Parameters.AddWithValue(@"FirstName", customer.FirstName);
+
+            using SqlDataReader sqlDataReader = sqlCommand.ExecuteReader();
+            Assert.False(sqlDataReader.HasRows);
+        }
+
+        public static void VerifyRecordPresent(SqlConnection sqlConnection, Customer customer, string tableName, SqlTransaction sqlTransaction = null)
+        {
+            using SqlCommand sqlCommand = new(
+                cmdText: $"SELECT * FROM [{tableName}] WHERE CustomerId = @CustomerId and FirstName = @FirstName;",
+                connection: sqlConnection,
+                transaction: sqlTransaction,
+                columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled);
+            sqlCommand.Parameters.AddWithValue(@"CustomerId", customer.Id);
+            sqlCommand.Parameters.AddWithValue(@"FirstName", customer.FirstName);
+
+            using SqlDataReader sqlDataReader = sqlCommand.ExecuteReader();
+            Assert.True(sqlDataReader.HasRows);
+            while (sqlDataReader.Read())
+            {
+                Assert.True(string.Equals(sqlDataReader.GetDataTypeName(0), @"int", StringComparison.OrdinalIgnoreCase), "unexpected data type");
+                Assert.True(string.Equals(sqlDataReader.GetDataTypeName(1), @"nvarchar", StringComparison.InvariantCultureIgnoreCase), "unexpected data type");
+                Assert.True(string.Equals(sqlDataReader.GetDataTypeName(2), @"nvarchar", StringComparison.InvariantCultureIgnoreCase), "unexpected data type");
+
+                Assert.Equal(customer.Id, sqlDataReader.GetInt32(0));
+                Assert.Equal(customer.FirstName, sqlDataReader.GetString(1));
+                Assert.Equal(customer.LastName, sqlDataReader.GetString(2));
+            }
+        }
+
+        /// <summary>
+        /// Verify results of select statement with sync apis.
+        /// </summary>
+        /// <param name="sqlCommand"></param>
+        /// <param name="parameterTypes"></param>
+        /// <param name="totalColumnsInSelect"></param>
+        public static void VerifyResultsSync(SqlCommand sqlCommand, string[] parameterTypes, int totalColumnsInSelect)
+        {
+            Assert.True(sqlCommand != null, "FAILED: sqlCommand should not be null.");
+            using SqlDataReader sqlDataReader = sqlCommand.ExecuteReader();
+            Assert.True(sqlDataReader.HasRows, "FAILED: Select statement did not return any rows.");
+            while (sqlDataReader.Read())
+            {
+                CompareResults(sqlDataReader, parameterTypes, totalColumnsInSelect);
+            }
+        }
+
+        /// <summary>
+        /// Verify results of select statement with async apis.
+        /// </summary>
+        /// <param name="sqlCommand"></param>
+        /// <param name="parameterTypes"></param>
+        /// <param name="totalColumnsInSelect"></param>
+        public static async Task VerifyResultsAsync(SqlCommand sqlCommand, string[] parameterTypes, int totalColumnsInSelect)
+        {
+            Assert.True(sqlCommand != null, "FAILED: sqlCommand should not be null.");
+            using SqlDataReader sqlDataReader = await sqlCommand.ExecuteReaderAsync();
+            Assert.True(sqlDataReader.HasRows, "FAILED: Select statement did not return any rows.");
+            while (await sqlDataReader.ReadAsync())
+            {
+                CompareResults(sqlDataReader, parameterTypes, totalColumnsInSelect);
+            }
+        }
+
+        /// <summary>
+        /// Read data using sqlDataReader and compare results.
+        /// <summary>
+        /// <param name="sqlDataReader"></param>
+        /// <param name="parameterTypes"></param>
+        /// <param name="totalColumnsInSelect"></param>
+        public static void CompareResults(SqlDataReader sqlDataReader, string[] parameterTypes, int totalColumnsInSelect)
+        {
+            int columnsRead = 0;
+
+            while (columnsRead < totalColumnsInSelect)
+            {
+                switch (parameterTypes[columnsRead])
+                {
+                    case "string":
+                        Assert.True((string.Equals(sqlDataReader.GetString(columnsRead), @"Microsoft", StringComparison.Ordinal))
+                            || (string.Equals(sqlDataReader.GetString(columnsRead), @"Corporation", StringComparison.Ordinal)),
+                            "FAILED: read string value isn't expected.");
+                        break;
+
+                    case "int":
+                        Assert.True(sqlDataReader.GetInt32(columnsRead) == 45, "FAILED: read int value does not match.");
+                        break;
+
+                    default:
+                        Assert.True(false, "FAILED: unexpected data type.");
+                        break;
+                }
+
+                columnsRead++;
             }
         }
 
@@ -42,7 +176,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             byte[] randomBytes = new byte[length];
             RNGCryptoServiceProvider rngCsp = new RNGCryptoServiceProvider();
             rngCsp.GetBytes(randomBytes);
-
             return randomBytes;
         }
 
