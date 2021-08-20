@@ -327,6 +327,9 @@
     <Compile Include="..\..\src\Resources\ResCategoryAttribute.cs">
       <Link>Resources\ResCategoryAttribute.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Resources\ResDescriptionAttribute.cs">
+      <Link>Resources\ResDescriptionAttribute.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netstandard' OR '$(TargetGroup)' == 'netcoreapp' OR '$(IsUAPAssembly)' == 'true'">
     <Compile Include="Microsoft.Data.SqlClient.TypeForwards.cs" />
@@ -829,7 +832,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Microsoft\Data\SqlClient\AAsyncCallContext.cs" />
-    
     <Compile Include="Resources\Strings.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>

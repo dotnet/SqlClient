@@ -301,7 +301,7 @@ namespace Microsoft.Data.SqlClient
             string sourceColumn,
             DataRowVersion sourceVersion,
             object value
-        ) 
+        )
             : this(parameterName, dbType, size, sourceColumn)
         {
             Direction = direction;
@@ -327,7 +327,7 @@ namespace Microsoft.Data.SqlClient
             string xmlSchemaCollectionDatabase,
             string xmlSchemaCollectionOwningSchema,
             string xmlSchemaCollectionName
-        ) 
+        )
             : this()
         {
             ParameterName = parameterName;
@@ -370,10 +370,10 @@ namespace Microsoft.Data.SqlClient
         /// For unencrypted parameters, the encryption metadata should still be sent (and will indicate 
         /// that no encryption is needed).
         /// </summary>
-        internal bool HasReceivedMetadata 
-        { 
-            get => HasFlag(SqlParameterFlags.HasReceivedMetadata); 
-            set => SetFlag(SqlParameterFlags.HasReceivedMetadata, value); 
+        internal bool HasReceivedMetadata
+        {
+            get => HasFlag(SqlParameterFlags.HasReceivedMetadata);
+            set => SetFlag(SqlParameterFlags.HasReceivedMetadata, value);
         }
 
         /// <summary>
@@ -471,16 +471,17 @@ namespace Microsoft.Data.SqlClient
         public override void ResetDbType() => ResetSqlDbType();
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ParameterName/*' />
+        [ResCategory("Data")]
         public override string ParameterName
         {
             get => _parameterName ?? string.Empty;
             set
             {
                 if (
-                    string.IsNullOrEmpty(value) || 
+                    string.IsNullOrEmpty(value) ||
                     (value.Length < TdsEnums.MAX_PARAMETER_NAME_LENGTH) ||
                     (
-                        (value[0] == '@') && 
+                        (value[0] == '@') &&
                         (value.Length <= TdsEnums.MAX_PARAMETER_NAME_LENGTH)
                     )
                 )
@@ -690,8 +691,8 @@ namespace Microsoft.Data.SqlClient
         public string TypeName
         {
             get => _typeName ?? string.Empty;
-            set 
-            { 
+            set
+            {
                 _typeName = value;
                 IsDerivedParameterTypeName = false;
             }
@@ -835,6 +836,8 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceColumnNullMapping/*' />
+        [ResCategory("DataCategory_Update")]
+        [ResDescription("DbParameter_SourceColumnNullMapping")]
         public override bool SourceColumnNullMapping
         {
             get => HasFlag(SqlParameterFlags.SourceColumnNullMapping);
@@ -842,10 +845,11 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ToString/*' />
+        [ResCategory("Data")]
         public override string ToString() => ParameterName;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceVersion/*' />
-        [ResCategory("Update")]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Update)]
         public override DataRowVersion SourceVersion
         {
             get
@@ -1014,7 +1018,7 @@ namespace Microsoft.Data.SqlClient
                 SqlParameterFlags.CoercedValueIsSqlType |
                 SqlParameterFlags.ForceColumnEncryption |
                 SqlParameterFlags.IsDerivedParameterTypeName
-                // HasScale and HasReceivedMetadata deliberately omitted
+            // HasScale and HasReceivedMetadata deliberately omitted
             );
             destination._metaType = _metaType;
             destination._collation = _collation;
@@ -1991,7 +1995,7 @@ namespace Microsoft.Data.SqlClient
                 if (
                     (maxSizeInBytes > TdsEnums.TYPE_SIZE_LIMIT) ||
                     HasFlag(SqlParameterFlags.CoercedValueIsDataFeed) ||
-                    (sizeInCharacters == -1) || 
+                    (sizeInCharacters == -1) ||
                     (actualSizeInBytes == -1)
                 )
                 { // is size > size able to be described by 2 bytes
@@ -2006,7 +2010,7 @@ namespace Microsoft.Data.SqlClient
                             throw ADP.InvalidMetaDataValue();     //Xml should always have IsPartialLength = true
                         }
                         if (
-                            mt.SqlDbType == SqlDbType.NVarChar || 
+                            mt.SqlDbType == SqlDbType.NVarChar ||
                             mt.SqlDbType == SqlDbType.VarChar ||
                             mt.SqlDbType == SqlDbType.VarBinary
                         )

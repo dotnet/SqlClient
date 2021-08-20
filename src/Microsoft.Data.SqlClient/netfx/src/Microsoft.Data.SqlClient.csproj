@@ -414,6 +414,9 @@
     <Compile Include="..\..\src\Resources\ResCategoryAttribute.cs">
       <Link>Resources\ResCategoryAttribute.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Resources\ResDescriptionAttribute.cs">
+      <Link>Resources\ResDescriptionAttribute.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Microsoft\Data\Interop\SNINativeManagedWrapperX64.cs" />
@@ -427,8 +430,7 @@
     <Compile Include="Microsoft\Data\SqlClient\Server\SqlDataRecord.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\TriggerAction.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlFileStream.cs" />
-    <Compile Include="Microsoft\Data\SqlTypes\UnsafeNativeMethods.cs" />
-    <Compile Include="Resources\ResDescriptionAttribute.cs" />
+    <Compile Include="Microsoft\Data\SqlTypes\UnsafeNativeMethods.cs" /> 
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBuffer.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />
