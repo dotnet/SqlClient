@@ -18,22 +18,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData("ExecuteNonQueryAsync", 3)]
         public async void ValidateRetryCount_SqlCommand_Async(string methodName, int numOfTries)
         {
-            RetryLogicTestHelper.SetRetrySwitch(true);
-
             ErrorInfoRetryLogicProvider _errorInfoRetryProvider = new(
                 SqlConfigurableRetryFactory.CreateFixedRetryProvider(new SqlRetryLogicOption()
                 { NumberOfTries = numOfTries, TransientErrors = new[] { 50000 } }));
 
-            using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
-            connection.Open();
-
-            using SqlCommand cmd = connection.CreateCommand();
-            cmd.RetryLogicProvider = _errorInfoRetryProvider;
-            cmd.CommandText = "THROW 50000,'Error',0";
-
-            _errorInfoRetryProvider.CallCounter = 0;
             try
             {
+                RetryLogicTestHelper.SetRetrySwitch(true);
+
+                using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+                connection.Open();
+
+                using SqlCommand cmd = connection.CreateCommand();
+                cmd.RetryLogicProvider = _errorInfoRetryProvider;
+                cmd.CommandText = "THROW 50000,'Error',0";
+
+                _errorInfoRetryProvider.CallCounter = 0;
                 switch (methodName)
                 {
                     case "ExecuteScalarAsync":
@@ -41,12 +41,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         break;
                     case "ExecuteReaderAsync":
                         {
-                            using var _ = await cmd.ExecuteReaderAsync();
+                            using SqlDataReader _ = await cmd.ExecuteReaderAsync();
                             break;
                         }
                     case "ExecuteXmlReaderAsync":
                         {
-                            using var _ = await cmd.ExecuteXmlReaderAsync();
+                            using System.Xml.XmlReader _ = await cmd.ExecuteXmlReaderAsync();
                             break;
                         }
                     case "ExecuteNonQueryAsync":
@@ -61,7 +61,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 Assert.Equal(numOfTries, _errorInfoRetryProvider.CallCounter);
             }
-            RetryLogicTestHelper.SetRetrySwitch(false);
+            finally
+            {
+                RetryLogicTestHelper.SetRetrySwitch(false);
+            }
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
@@ -71,22 +74,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData("ExecuteNonQuery", 3)]
         public void ValidateRetryCount_SqlCommand_Sync(string methodName, int numOfTries)
         {
-            RetryLogicTestHelper.SetRetrySwitch(true);
-
             ErrorInfoRetryLogicProvider _errorInfoRetryProvider = new(
                 SqlConfigurableRetryFactory.CreateFixedRetryProvider(new SqlRetryLogicOption()
                 { NumberOfTries = numOfTries, TransientErrors = new[] { 50000 } }));
 
-            using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
-            connection.Open();
-
-            using SqlCommand cmd = connection.CreateCommand();
-            cmd.RetryLogicProvider = _errorInfoRetryProvider;
-            cmd.CommandText = "THROW 50000,'Error',0";
-
-            _errorInfoRetryProvider.CallCounter = 0;
             try
             {
+                RetryLogicTestHelper.SetRetrySwitch(true);
+
+                using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+                connection.Open();
+
+                using SqlCommand cmd = connection.CreateCommand();
+                cmd.RetryLogicProvider = _errorInfoRetryProvider;
+                cmd.CommandText = "THROW 50000,'Error',0";
+
+                _errorInfoRetryProvider.CallCounter = 0;
                 switch (methodName)
                 {
                     case "ExecuteScalar":
@@ -94,12 +97,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         break;
                     case "ExecuteReader":
                         {
-                            using var _ = cmd.ExecuteReader();
+                            using SqlDataReader _ = cmd.ExecuteReader();
                             break;
                         }
                     case "ExecuteXmlReader":
                         {
-                            using var _ = cmd.ExecuteXmlReader();
+                            using System.Xml.XmlReader _ = cmd.ExecuteXmlReader();
                             break;
                         }
                     case "ExecuteNonQuery":
@@ -114,7 +117,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 Assert.Equal(numOfTries, _errorInfoRetryProvider.CallCounter);
             }
-            RetryLogicTestHelper.SetRetrySwitch(false);
+            finally
+            {
+                RetryLogicTestHelper.SetRetrySwitch(false);
+            }
         }
 
         public class ErrorInfoRetryLogicProvider : SqlRetryLogicBaseProvider
