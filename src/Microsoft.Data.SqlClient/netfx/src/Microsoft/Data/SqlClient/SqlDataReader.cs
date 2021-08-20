@@ -5126,6 +5126,7 @@ namespace Microsoft.Data.SqlClient
                         state: context,
                         TaskScheduler.Default
                     );
+                    return source.Task;
                 }
             }
 
