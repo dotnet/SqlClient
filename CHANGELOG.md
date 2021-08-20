@@ -30,7 +30,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 [#1168](https://github.com/dotnet/SqlClient/pull/1168)
 - Fixed typo in Strings.resx in NetFx and NetCore
 [#1178](https://github.com/dotnet/SqlClient/pull/1178/files) and [#1136](https://github.com/dotnet/SqlClient/pull/1136)
-- Fixed [CI error](https://github.com/dotnet/SqlClient/pull/1041/checks?check_run_id=2889045989) by changing Strings.resx parameter `Sql_CanotCreateNormalizer` to `Sql_CannotCreateNormalizer1.
+- Fixed [CI error](https://github.com/dotnet/SqlClient/pull/1041/checks?check_run_id=2889045989) by changing Strings.resx parameter `Sql_CanotCreateNormalizer` to `Sql_CannotCreateNormalizer1`.
 [#1134](https://github.com/dotnet/SqlClient/pull/1134)
 - Fixed the issue with cached status of an async operation by resetting status to be ready for next operation.
 [#1128](https://github.com/dotnet/SqlClient/pull/1128)
