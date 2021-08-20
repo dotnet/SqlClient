@@ -66,6 +66,7 @@
     </Compile>
     <Compile Include="DataCommon\AADUtility.cs" />
     <Compile Include="SQL\ConfigurableIpPreferenceTest\ConfigurableIpPreferenceTest.cs" />
+    <Compile Include="SQL\RetryLogic\RetryLogicCounterTest.cs" />
     <Compile Include="SQL\RetryLogic\RetryLogicConfigHelper.cs" />
     <Compile Include="SQL\RetryLogic\RetryLogicTestHelper.cs" />
     <Compile Include="SQL\RetryLogic\SqlCommandReliabilityTest.cs" />
@@ -126,6 +127,7 @@
     <Compile Include="SQL\SqlCommand\SqlCommandCompletedTest.cs" />
     <Compile Include="SQL\SqlCommand\SqlCommandCancelTest.cs" />
     <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.cs" />
+    <Compile Include="SQL\ConnectionPoolTest\PoolBlockPeriodTest.cs" />
     <Compile Include="SQL\ConnectivityTests\ConnectivityTest.cs" />
     <Compile Include="SQL\DataBaseSchemaTest\ConnectionSchemaTest.cs" />
     <Compile Include="SQL\DataReaderTest\DataReaderTest.cs" />
@@ -260,7 +262,6 @@
     <None Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode_Azure.bsl" />
   </ItemGroup>
   <ItemGroup Condition="('$(TargetGroup)' == 'netcoreapp' OR '$(TargetGroup)' == 'netfx') AND !$(ReferenceType.Contains('NetStandard'))">
-    <Compile Include="SQL\ConnectionPoolTest\PoolBlockPeriodTest.netcoreapp.cs" />
     <Compile Include="SQL\SqlFileStreamTest\SqlFileStreamTest.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netfx'">
