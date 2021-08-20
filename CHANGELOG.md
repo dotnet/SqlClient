@@ -16,7 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Added `EventSource` tracing support in AKV Provider.
 [#1174](https://github.com/dotnet/SqlClient/pull/1174)
 - Added Activity tracking ability with `System.Diagnostics.Trace.CorrelationManager.ActivityId`.
-- Added new App Context Switch `UseManagedNetworkingOnWindows` to go back to Operating System's supported protocols.
+- Added new App Context Switch `UseSystemDefaultSecureProtocols` to go back to Operating System's supported protocols.
 [#1168](https://github.com/dotnet/SqlClient/pull/1168)
 - Added missing component model annotations to `SqlConnectionStringBuilder`, `SqlConnection`, `SqlCommand`, `SqlParameter` and `SqlDataAdapter`
 [#1152](https://github.com/dotnet/SqlClient/pull/1152)
@@ -26,7 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 [#1213](https://github.com/dotnet/SqlClient/pull/1213)
 - Fixed bug with LegacyRowVersionNullBehavior.
 [#1182](https://github.com/dotnet/SqlClient/pull/1182)
-- Fixed connection issue when TLS 1.3 is enabled on operating system by excluding TLS 1.3 from supported protocols. Default Operating System could be used by App Context Switch `UseManagedNetworkingOnWindows`.
+- Fixed connection issue when TLS 1.3 is enabled on operating system by excluding TLS 1.3 from supported protocols. Default Operating System could be used by App Context Switch `UseSystemDefaultSecureProtocols`.
 [#1168](https://github.com/dotnet/SqlClient/pull/1168)
 - Fixed typo in Strings.resx in NetFx and NetCore
 [#1178](https://github.com/dotnet/SqlClient/pull/1178/files) and [#1136](https://github.com/dotnet/SqlClient/pull/1136)
