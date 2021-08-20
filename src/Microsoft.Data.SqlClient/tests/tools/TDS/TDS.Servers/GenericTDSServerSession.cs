@@ -329,7 +329,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             userOptionsOption.NoCount = NoCount;
             userOptionsOption.ArithIgnore = ArithIgnore;
             userOptionsOption.ImplicitTransactions = ImplicitTransactions;
-            userOptionsOption.NumericRoundAbort = ImplicitTransactions;
+            userOptionsOption.NumericRoundAbort = NumericRoundAbort;
 
             // Register option with the collection
             options.Add(userOptionsOption);
