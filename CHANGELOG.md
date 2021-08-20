@@ -54,7 +54,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 [#1187](https://github.com/dotnet/SqlClient/pull/1187) and [#1188](https://github.com/dotnet/SqlClient/pull/1188)
 
 ### Breaking Changes over stable release 3.0.0
-- Connection property `Asynchronous Processing` is obselete in NetFx and has been removed.
+- Connection property `Asynchronous Processing` is obsolete in NetFx and has been removed.
 [#1148](https://github.com/dotnet/SqlClient/pull/1148)
 - The default value for connection Property `Encrypt` is set to true.
 [#1210](https://github.com/dotnet/SqlClient/pull/1210)
