@@ -2575,9 +2575,9 @@ namespace Microsoft.Data.SqlClient
                         throw result.Exception.InnerException;
                     }
                     return result.Result;
-                }, 
-                CancellationToken.None, 
-                TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.NotOnCanceled, 
+                },
+                CancellationToken.None,
+                TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.NotOnCanceled,
                 TaskScheduler.Default
             );
         }
@@ -2679,13 +2679,9 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteScalarAsync[@name="CancellationToken"]/*'/>
-        public override Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
-            => IsRetryEnabled ?
-                InternalExecuteScalarWithRetryAsync(cancellationToken) :
-                InternalExecuteScalarAsync(cancellationToken);
-
-        private Task<object> InternalExecuteScalarWithRetryAsync(CancellationToken cancellationToken)
-            => RetryLogicProvider.ExecuteAsync(this, () => InternalExecuteScalarAsync(cancellationToken), cancellationToken);
+        public override Task<object> ExecuteScalarAsync(CancellationToken cancellationToken) =>
+            // Do not use retry logic here as internal call to ExecuteReaderAsync handles retry logic.
+            InternalExecuteScalarAsync(cancellationToken);
 
         private Task<object> InternalExecuteScalarAsync(CancellationToken cancellationToken)
         {
@@ -3733,13 +3729,13 @@ namespace Microsoft.Data.SqlClient
                         // Read the results of describe parameter encryption.
                         command.ReadDescribeEncryptionParameterResults(describeParameterEncryptionDataReader, describeParameterEncryptionRpcOriginalRpcMap);
 
-    #if DEBUG
+#if DEBUG
                         // Failpoint to force the thread to halt to simulate cancellation of SqlCommand.
                         if (_sleepAfterReadDescribeEncryptionParameterResults)
                         {
                             Thread.Sleep(10000);
                         }
-    #endif
+#endif
                     }
                     catch (Exception e)
                     {
@@ -4897,7 +4893,7 @@ namespace Microsoft.Data.SqlClient
         private Task RunExecuteReaderTdsSetupContinuation(RunBehavior runBehavior, SqlDataReader ds, string optionSettings, Task writeTask)
         {
             Task task = AsyncHelper.CreateContinuationTaskWithState(
-                task: writeTask, 
+                task: writeTask,
                 state: _activeConnection,
                 onSuccess: (object state) =>
                 {

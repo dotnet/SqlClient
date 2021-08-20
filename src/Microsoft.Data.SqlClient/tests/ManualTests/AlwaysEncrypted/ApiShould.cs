@@ -62,36 +62,34 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         {
             CleanUpTable(connection, _tableName);
 
-            using (SqlConnection sqlConnection = new SqlConnection(connection))
+            using SqlConnection sqlConnection = new(connection);
+            sqlConnection.Open();
+
+            Customer customer = new Customer(40, "Microsoft", "Corporation");
+
+            // Start a transaction and either commit or rollback based on the test variation.
+            using (SqlTransaction sqlTransaction = sqlConnection.BeginTransaction())
             {
-                sqlConnection.Open();
+                DatabaseHelper.InsertCustomerData(sqlConnection, sqlTransaction, _tableName, customer);
 
-                Customer customer = new Customer(40, "Microsoft", "Corporation");
-
-                // Start a transaction and either commit or rollback based on the test variation.
-                using (SqlTransaction sqlTransaction = sqlConnection.BeginTransaction())
-                {
-                    InsertCustomerRecord(sqlConnection, sqlTransaction, customer);
-
-                    if (isCommitted)
-                    {
-                        sqlTransaction.Commit();
-                    }
-                    else
-                    {
-                        sqlTransaction.Rollback();
-                    }
-                }
-
-                // Data should be available on select if committed else, data should not be available.
                 if (isCommitted)
                 {
-                    VerifyRecordPresent(sqlConnection, customer);
+                    sqlTransaction.Commit();
                 }
                 else
                 {
-                    VerifyRecordAbsent(sqlConnection, customer);
+                    sqlTransaction.Rollback();
                 }
+            }
+
+            // Data should be available on select if committed else, data should not be available.
+            if (isCommitted)
+            {
+                DatabaseHelper.VerifyRecordPresent(sqlConnection, customer, _tableName);
+            }
+            else
+            {
+                DatabaseHelper.VerifyRecordAbsent(sqlConnection, customer, _tableName);
             }
         }
 
@@ -109,34 +107,34 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 using (SqlTransaction sqlTransaction = sqlConnection.BeginTransaction(System.Data.IsolationLevel.ReadUncommitted))
                 {
                     // Insert row no:1 and Save the state of the transaction to a named check point.
-                    Customer customer1 = new Customer(50, "Microsoft2", "Corporation2");
-                    InsertCustomerRecord(sqlConnection, sqlTransaction, customer1);
+                    Customer customer1 = new(50, "Microsoft2", "Corporation2");
+                    DatabaseHelper.InsertCustomerData(sqlConnection, sqlTransaction, _tableName, customer1);
                     sqlTransaction.Save(@"checkpoint");
 
                     // Insert row no:2
-                    Customer customer2 = new Customer(60, "Microsoft3", "Corporation3");
-                    InsertCustomerRecord(sqlConnection, sqlTransaction, customer2);
+                    Customer customer2 = new(60, "Microsoft3", "Corporation3");
+                    DatabaseHelper.InsertCustomerData(sqlConnection, sqlTransaction, _tableName, customer2);
 
                     // Read the data that was just inserted, both Row no:2 and Row no:1 should be available.
-                    VerifyRecordPresent(sqlConnection, customer1, sqlTransaction);
+                    DatabaseHelper.VerifyRecordPresent(sqlConnection, customer1, _tableName, sqlTransaction);
 
                     // Try to read the just inserted record under read-uncommitted mode.
-                    VerifyRecordPresent(sqlConnection, customer2, sqlTransaction);
+                    DatabaseHelper.VerifyRecordPresent(sqlConnection, customer2, _tableName, sqlTransaction);
 
                     // Rollback the transaction to the saved checkpoint, to lose the row no:2.
                     sqlTransaction.Rollback(@"checkpoint");
 
                     // Row no:2 should not be available.
-                    VerifyRecordAbsent(sqlConnection, customer2, sqlTransaction);
+                    DatabaseHelper.VerifyRecordAbsent(sqlConnection, customer2, _tableName, sqlTransaction);
 
                     // Row no:1 should still be available.
-                    VerifyRecordPresent(sqlConnection, customer1, sqlTransaction);
+                    DatabaseHelper.VerifyRecordPresent(sqlConnection, customer1, _tableName, sqlTransaction);
 
                     // Completely rollback the transaction.
                     sqlTransaction.Rollback();
 
                     // Now even row no:1 should not be available.
-                    VerifyRecordAbsent(sqlConnection, customer1, sqlTransaction);
+                    DatabaseHelper.VerifyRecordAbsent(sqlConnection, customer1, _tableName, sqlTransaction);
                 }
             }
         }
@@ -349,68 +347,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     DropHelperProcedures(new string[] { inputProcedureName, outputProcedureName }, connection);
                 }
 
-            }
-        }
-
-        private void VerifyRecordAbsent(SqlConnection sqlConnection, Customer customer, SqlTransaction sqlTransaction = null)
-        {
-            using (SqlCommand sqlCommand = new SqlCommand(
-                cmdText: $"SELECT * FROM [{_tableName}] WHERE CustomerId = @CustomerId and FirstName = @FirstName;",
-                connection: sqlConnection,
-                transaction: sqlTransaction,
-                columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
-            {
-                sqlCommand.Parameters.AddWithValue(@"CustomerId", customer.Id);
-                sqlCommand.Parameters.AddWithValue(@"FirstName", customer.FirstName);
-
-                using (SqlDataReader sqlDataReader = sqlCommand.ExecuteReader())
-                {
-                    Assert.False(sqlDataReader.HasRows);
-                }
-            }
-        }
-
-        private void VerifyRecordPresent(SqlConnection sqlConnection, Customer customer, SqlTransaction sqlTransaction = null)
-        {
-            using (SqlCommand sqlCommand = new SqlCommand(
-                cmdText: $"SELECT * FROM [{_tableName}] WHERE CustomerId = @CustomerId and FirstName = @FirstName;",
-                connection: sqlConnection,
-                transaction: sqlTransaction,
-                columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
-            {
-                sqlCommand.Parameters.AddWithValue(@"CustomerId", customer.Id);
-                sqlCommand.Parameters.AddWithValue(@"FirstName", customer.FirstName);
-
-                using (SqlDataReader sqlDataReader = sqlCommand.ExecuteReader())
-                {
-                    Assert.True(sqlDataReader.HasRows);
-                    while (sqlDataReader.Read())
-                    {
-                        Assert.True(string.Equals(sqlDataReader.GetDataTypeName(0), @"int", StringComparison.OrdinalIgnoreCase), "unexpected data type");
-                        Assert.True(string.Equals(sqlDataReader.GetDataTypeName(1), @"nvarchar", StringComparison.InvariantCultureIgnoreCase), "unexpected data type");
-                        Assert.True(string.Equals(sqlDataReader.GetDataTypeName(2), @"nvarchar", StringComparison.InvariantCultureIgnoreCase), "unexpected data type");
-
-                        Assert.Equal(customer.Id, sqlDataReader.GetInt32(0));
-                        Assert.Equal(customer.FirstName, sqlDataReader.GetString(1));
-                        Assert.Equal(customer.LastName, sqlDataReader.GetString(2));
-                    }
-                }
-            }
-        }
-
-        private void InsertCustomerRecord(SqlConnection sqlConnection, SqlTransaction sqlTransaction, Customer customer)
-        {
-            using (SqlCommand sqlCommand = new SqlCommand(
-                $"INSERT INTO [{_tableName}] (CustomerId, FirstName, LastName) VALUES (@CustomerId, @FirstName, @LastName);",
-                connection: sqlConnection,
-                transaction: sqlTransaction,
-                columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled))
-            {
-                sqlCommand.Parameters.AddWithValue(@"CustomerId", customer.Id);
-                sqlCommand.Parameters.AddWithValue(@"FirstName", customer.FirstName);
-                sqlCommand.Parameters.AddWithValue(@"LastName", customer.LastName);
-
-                sqlCommand.ExecuteNonQuery();
             }
         }
 
@@ -2990,7 +2926,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         }
     }
 
-    struct Customer
+    public struct Customer
     {
         public Customer(int id, string firstName, string lastName)
         {
