@@ -9658,7 +9658,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Error code 0x{0}; state {1}.
+        ///   Looks up a localized string similar to Error code 0x{0}..
         /// </summary>
         internal static string SQL_MSALInnerException {
             get {

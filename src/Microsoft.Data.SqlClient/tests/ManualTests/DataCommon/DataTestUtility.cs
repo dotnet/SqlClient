@@ -730,6 +730,29 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return paramValue.ToString();
         }
 
+        public static string FetchKeyInConnStr(string connStr, string[] keys)
+        {
+            // tokenize connection string and find matching key
+            if (connStr != null && keys != null)
+            {
+                string[] connProps = connStr.Split(';');
+                foreach (string cp in connProps)
+                {
+                    if (!string.IsNullOrEmpty(cp.Trim()))
+                    {
+                        foreach (var key in keys)
+                        {
+                            if (cp.Trim().ToLower().StartsWith(key.Trim().ToLower()))
+                            {
+                                return cp.Substring(cp.IndexOf('=') + 1);
+                            }
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
         public static string RemoveKeysInConnStr(string connStr, string[] keysToRemove)
         {
             // tokenize connection string and remove input keys.
