@@ -257,6 +257,12 @@ To use this feature, you must enable the following AppContext switch at applicat
 
 **"Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehavior"**
 
+## Enabling OS secure protocols preference
+
+TLS 1.3 has been excluded due to the fact that the driver lacks full support. To enable OS preferences as before, enable the following AppContext switch on application startup:
+
+**"Switch.Microsoft.Data.SqlClient.EnableSecureProtocolsByOS"**
+
 ## Debugging SqlClient on Linux from Windows
 
 For enhanced developer experience, we support debugging SqlClient on Linux from Windows, using the project "**Microsoft.Data.SqlClient.DockerLinuxTest**" that requires "Container Tools" to be enabled in Visual Studio. You may import configuration: [VS19Components.vsconfig](./tools/vsconfig/VS19Components.vsconfig) if not enabled already.
