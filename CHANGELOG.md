@@ -17,8 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Added
 - Added `SqlCommand.EnableOptimizedParameterBinding` property that when enabled increases performance for commands with very large numbers of parameters.
 [#1041](https://github.com/dotnet/SqlClient/pull/1041)
-Included `42108` and `42109` error codes to retriable transient errors list.
-[#1215](https://github.com/dotnet/SqlClient/pull/1215)
+- Included `42108` and `42109` error codes to retriable transient errors list. [#1215](https://github.com/dotnet/SqlClient/pull/1215)
 - Added new App Context switch to use OS enabled client protocols only 
 [#1168](https://github.com/dotnet/SqlClient/pull/1168)
 - Added `PoolBlockingPeriod` connection property support in .NET Standard.
