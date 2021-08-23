@@ -8,10 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Breaking changes over stable release 3.0.0
 - `Encrypt` connection setting default changed to true. [#1210](https://github.com/dotnet/SqlClient/pull/1210)
-- The driver now throws `SqlException` replacing `AggregateException` for active directory authentication modes.
-[#1213](https://github.com/dotnet/SqlClient/pull/1213)
-- Dropped obsolete `Asynchronous Processing` connection property from .NET Framework 
-[#1148](https://github.com/dotnet/SqlClient/pull/1148)
+- The driver now throws `SqlException` replacing `AggregateException` for active directory authentication modes.[#1213](https://github.com/dotnet/SqlClient/pull/1213)
+- Dropped obsolete `Asynchronous Processing` connection property from .NET Framework. [#1148](https://github.com/dotnet/SqlClient/pull/1148)
 
 ### Added
 - Added `SqlCommand.EnableOptimizedParameterBinding` property that when enabled increases performance for commands with very large numbers of parameters. [#1041](https://github.com/dotnet/SqlClient/pull/1041)
@@ -19,7 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Added new App Context switch to use OS enabled client protocols only. [#1168](https://github.com/dotnet/SqlClient/pull/1168)
 - Added `PoolBlockingPeriod` connection property support in .NET Standard. [#1181](https://github.com/dotnet/SqlClient/pull/1181)
 - Added support for `SqlDataReader.GetColumnSchema()` in .NET Standard. [#1181](https://github.com/dotnet/SqlClient/pull/1181)
-- Added PropertyGrid support with component model annotations to `SqlConnectionStringBuilder` properties for .NET Core.[#1152](https://github.com/dotnet/SqlClient/pull/1152)
+- Added PropertyGrid support with component model annotations to `SqlConnectionStringBuilder` properties for .NET Core. [#1152](https://github.com/dotnet/SqlClient/pull/1152)
 
 ### Fixed
 - Fixed issue with connectivity when TLS 1.3 is enabled on client and server. [#1168](https://github.com/dotnet/SqlClient/pull/1168)
@@ -29,7 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Fixed async deadlock scenarios in web contexts with configurable retry logic provider. [#1220](https://github.com/dotnet/SqlClient/pull/1220)
 - Fixed `EntryPointNotFoundException` in `InOutOfProcHelper` constructor. [#1120](https://github.com/dotnet/SqlClient/pull/1120)
 - Fixed async thread blocking issues on `SqlConnection.Open()` for active directory authentication modes. [#1213](https://github.com/dotnet/SqlClient/pull/1213)
-- Fixed driver behavior for always encrypted with secure enclaves to not fail when no user parameters have been provided.[#1115](https://github.com/dotnet/SqlClient/pull/1115)
+- Fixed driver behavior for always encrypted with secure enclaves to not fail when no user parameters have been provided. [#1115](https://github.com/dotnet/SqlClient/pull/1115)
 - Fixed bug with `LegacyRowVersionNullBehavior` App Context switch. [#1182](https://github.com/dotnet/SqlClient/pull/1182)
 - Fixed issues in Strings.resx file containing error messages. [#1136](https://github.com/dotnet/SqlClient/pull/1136) and
 [#1178](https://github.com/dotnet/SqlClient/pull/1178)
