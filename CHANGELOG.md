@@ -21,7 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Fixed
 - Fixed issue with connectivity when TLS 1.3 is enabled on client and server. [#1168](https://github.com/dotnet/SqlClient/pull/1168)
-- Fixed the issue with connection encryption to ensure connections fails when encryption is required. [#1210](https://github.com/dotnet/SqlClient/pull/1210)
+- Fixed issue with connection encryption to ensure connections fail when encryption is required. [#1210](https://github.com/dotnet/SqlClient/pull/1210)
 - Fixed issue where connection goes to unusable state. [#1128](https://github.com/dotnet/SqlClient/pull/1128)
 - Fixed recursive calls to `RetryLogicProvider` when calling `SqlCommand.ExecuteScalarAsync`. [#1220](https://github.com/dotnet/SqlClient/pull/1220)
 - Fixed async deadlock scenarios in web contexts with configurable retry logic provider. [#1220](https://github.com/dotnet/SqlClient/pull/1220)
