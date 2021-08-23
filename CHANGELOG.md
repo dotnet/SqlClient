@@ -36,6 +36,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 [#1134](https://github.com/dotnet/SqlClient/pull/1134)
 - Fixed the issue with cached status of an async operation by resetting status to be ready for next operation.
 [#1128](https://github.com/dotnet/SqlClient/pull/1128)
+- Fixed the poor performance issue with `ExecuteNonQuery` and many parameters.
+[#1041](https://github.com/dotnet/SqlClient/pull/1041)
 
 ### Changed
 - Changed `WeakReference` to `WeakReference<T>`.
