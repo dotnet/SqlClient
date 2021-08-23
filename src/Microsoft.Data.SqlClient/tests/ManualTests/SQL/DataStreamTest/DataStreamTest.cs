@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Buffers;
 using System.Data;
 using System.Data.SqlTypes;
 using System.IO;
@@ -43,7 +44,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             int packetSize = 514; // force small packet size so we can quickly check multi packet reads
 
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
             builder.PacketSize = 514;
             string connectionString = builder.ToString();
 
@@ -51,7 +52,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             byte[] outputData = null;
             string tableName = DataTestUtility.GetUniqueNameForSqlServer("data");
 
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = new(connectionString))
             {
                 await connection.OpenAsync();
 
@@ -59,23 +60,45 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     inputData = CreateBinaryTable(connection, tableName, packetSize);
 
-                    using (SqlCommand command = new SqlCommand($"SELECT foo FROM {tableName}", connection))
-                    using (SqlDataReader reader = await command.ExecuteReaderAsync(System.Data.CommandBehavior.SequentialAccess))
-                    {
-                        await reader.ReadAsync();
+                    using SqlCommand command = new($"SELECT foo FROM {tableName}", connection);
+                    using SqlDataReader reader = await command.ExecuteReaderAsync(System.Data.CommandBehavior.SequentialAccess);
+                    await reader.ReadAsync();
 
-                        using (Stream stream = reader.GetStream(0))
-                        using (CancellationTokenSource cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(60)))
-                        using (MemoryStream memory = new MemoryStream(16 * 1024))
-                        {
-                            await stream.CopyToAsync(memory, 37, cancellationTokenSource.Token); // prime number sized buffer to cause many cross packet partial reads
-                            outputData = memory.ToArray();
-                        }
-                    }
+                    using Stream stream = reader.GetStream(0);
+                    using CancellationTokenSource cancellationTokenSource = new(TimeSpan.FromSeconds(60));
+                    using MemoryStream memory = new(16 * 1024);
+
+                    // prime number sized buffer to cause many cross packet partial reads
+                    await LocalCopyTo(stream, memory, 37, cancellationTokenSource.Token);
+                    outputData = memory.ToArray();
                 }
                 finally
                 {
                     DataTestUtility.DropTable(connection, tableName);
+                }
+            }
+
+            static async Task LocalCopyTo(Stream source, Stream destination, int bufferSize, CancellationToken cancellationToken)
+            {
+                byte[] buffer = ArrayPool<byte>.Shared.Rent(bufferSize);
+                try
+                {
+                    int bytesRead;
+#if NETFRAMEWORK
+                    while ((bytesRead = await source.ReadAsync(buffer, 0, bufferSize, cancellationToken).ConfigureAwait(false)) != 0)
+                    {
+                        await destination.WriteAsync(buffer, 0, bytesRead, cancellationToken).ConfigureAwait(false);
+                    }
+#else
+                    while ((bytesRead = await source.ReadAsync(new Memory<byte>(buffer,0, bufferSize), cancellationToken).ConfigureAwait(false)) != 0)
+                    {
+                        await destination.WriteAsync(new ReadOnlyMemory<byte>(buffer, 0, bytesRead), cancellationToken).ConfigureAwait(false);
+                    }
+#endif 
+                }
+                finally
+                {
+                    ArrayPool<byte>.Shared.Return(buffer);
                 }
             }
 

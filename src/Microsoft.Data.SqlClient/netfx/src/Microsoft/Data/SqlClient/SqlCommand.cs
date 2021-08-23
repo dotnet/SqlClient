@@ -80,7 +80,8 @@ namespace Microsoft.Data.SqlClient
         /// Internal flag for testing purposes that forces all queries to internally end async calls.
         /// </summary>
         private static bool _forceInternalEndQuery = false;
-#endif 
+#endif
+        internal static readonly Action<object> s_cancelIgnoreFailure = CancelIgnoreFailureCallback;
 
         // devnote: Prepare
         // Against 7.0 Server (Sphinx) a prepare/unprepare requires an extra roundtrip to the server.
@@ -913,6 +914,12 @@ namespace Microsoft.Data.SqlClient
             {
                 return Parameters;
             }
+        }
+        
+        internal static void CancelIgnoreFailureCallback(object state)
+        {
+            SqlCommand command = (SqlCommand)state;
+            command.CancelIgnoreFailure();
         }
 
         internal void CancelIgnoreFailure()
@@ -2972,7 +2979,7 @@ namespace Microsoft.Data.SqlClient
                     source.SetCanceled();
                     return source.Task;
                 }
-                registration = cancellationToken.Register(CancelIgnoreFailure);
+                registration = cancellationToken.Register(s_cancelIgnoreFailure, this);
             }
 
             Task<int> returnedTask = source.Task;
@@ -3069,7 +3076,7 @@ namespace Microsoft.Data.SqlClient
                     source.SetCanceled();
                     return source.Task;
                 }
-                registration = cancellationToken.Register(CancelIgnoreFailure);
+                registration = cancellationToken.Register(s_cancelIgnoreFailure, this);
             }
 
             Task<SqlDataReader> returnedTask = source.Task;
@@ -3215,7 +3222,7 @@ namespace Microsoft.Data.SqlClient
                     source.SetCanceled();
                     return source.Task;
                 }
-                registration = cancellationToken.Register(CancelIgnoreFailure);
+                registration = cancellationToken.Register(s_cancelIgnoreFailure, this);
             }
 
             Task<XmlReader> returnedTask = source.Task;
