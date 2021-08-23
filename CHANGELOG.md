@@ -64,8 +64,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 [#1084](https://github.com/dotnet/SqlClient/pull/1084)
 
 ### Code Improvments
-- Added ValueTask stream overloads on SNI streams and Waits[#902](https://github.com/dotnet/SqlClient/pull/902)
-- Clean up AAsyncCallContext and SqlDataReader[#925](https://github.com/dotnet/SqlClient/pull/925)
+- Added ValueTask stream overloads on SNI streams and Waits [#902](https://github.com/dotnet/SqlClient/pull/902)
+- Clean up AAsyncCallContext and SqlDataReader [#925](https://github.com/dotnet/SqlClient/pull/925)
 - Rework MARSConnection state machine [#933](https://github.com/dotnet/SqlClient/pull/933)
 - Simplify SNIProxy [#934](https://github.com/dotnet/SqlClient/pull/934)
 - Sync SqlDataRecord [#1024](https://github.com/dotnet/SqlClient/pull/1024)
