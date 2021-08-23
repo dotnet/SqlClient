@@ -13,9 +13,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 [#1181](https://github.com/dotnet/SqlClient/pull/1181)
 - `SqlDataReader.GetColumnSchema()` API is now exposed in .NET Standard.
 [#1181](https://github.com/dotnet/SqlClient/pull/1181)
-- Added `EventSource` tracing support in AKV Provider.
-[#1174](https://github.com/dotnet/SqlClient/pull/1174)
-- Added Activity tracking ability with `System.Diagnostics.Trace.CorrelationManager.ActivityId`.
 - Added new App Context Switch `UseSystemDefaultSecureProtocols` to go back to Operating System's supported protocols.
 [#1168](https://github.com/dotnet/SqlClient/pull/1168)
 - Added missing component model annotations to `SqlConnectionStringBuilder`, `SqlConnection`, `SqlCommand`, `SqlParameter` and `SqlDataAdapter`
@@ -32,7 +29,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 [#1168](https://github.com/dotnet/SqlClient/pull/1168)
 - Fixed typo in Strings.resx in NetFx and NetCore
 [#1178](https://github.com/dotnet/SqlClient/pull/1178/files) and [#1136](https://github.com/dotnet/SqlClient/pull/1136)
-- Fixed [CI error](https://github.com/dotnet/SqlClient/pull/1041/checks?check_run_id=2889045989) by changing Strings.resx parameter `Sql_CanotCreateNormalizer` to `Sql_CannotCreateNormalizer1`.
+- Fixed typo by changing Strings.resx parameter `Sql_CanotCreateNormalizer` to `Sql_CannotCreateNormalizer1`.
 [#1134](https://github.com/dotnet/SqlClient/pull/1134)
 - Fixed the issue with cached status of an async operation by resetting status to be ready for next operation.
 [#1128](https://github.com/dotnet/SqlClient/pull/1128)
@@ -40,6 +37,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 [#1041](https://github.com/dotnet/SqlClient/pull/1041)
 
 ### Changed
+- Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `4.0.0-preview1.21232.1` [#1221](https://github.com/dotnet/SqlClient/pull/1221)
 - Changed `WeakReference` to `WeakReference<T>`.
 [#1141](https://github.com/dotnet/SqlClient/pull/1141)
 - Removed Designer attribute from `SqlCommand` and `SqlDataAdapter`
