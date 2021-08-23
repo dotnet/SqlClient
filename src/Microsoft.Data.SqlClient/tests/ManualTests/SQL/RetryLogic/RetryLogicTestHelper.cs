@@ -61,6 +61,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     49920,  // Cannot process request. Too many operations in progress for subscription "%ld".
                     4060,  // Cannot open database "%.*ls" requested by the login. The login failed.
                     4221,  // Login to read-secondary failed due to long wait on 'HADR_DATABASE_WAIT_FOR_TRANSITION_TO_VERSIONING'. The replica is not available for login because row versions are missing for transactions that were in-flight when the replica was recycled. The issue can be resolved by rolling back or committing the active transactions on the primary replica. Occurrences of this condition can be minimized by avoiding long write transactions on the primary.
+                    42108,  // Can not connect to the SQL pool since it is paused. Please resume the SQL pool and try again.
+                    42109,  // The SQL pool is warming up. Please try again.
                     40143,  // The service has encountered an error processing your request. Please try again.
                     40613,  // Database '%.*ls' on server '%.*ls' is not currently available. Please retry the connection later. If the problem persists, contact customer support, and provide them the session tracing ID of '%.*ls'.
                     40501,  // The service is currently busy. Retry the request after 10 seconds. Incident ID: %ls. Code: %d.

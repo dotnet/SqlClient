@@ -54,6 +54,8 @@ namespace Microsoft.Data.SqlClient
                     40501,  // The service is currently busy. Retry the request after 10 seconds. Incident ID: %ls. Code: %d.
                     40540,  // The service has encountered an error processing your request. Please try again.
                     40197,  // The service has encountered an error processing your request. Please try again. Error code %d.
+                    42108,  // Can not connect to the SQL pool since it is paused. Please resume the SQL pool and try again.
+                    42109,  // The SQL pool is warming up. Please try again.
                     10929,  // Resource ID: %d. The %s minimum guarantee is %d, maximum limit is %d and the current usage for the database is %d. However, the server is currently too busy to support requests greater than %d for this database. For more information, see http://go.microsoft.com/fwlink/?LinkId=267637. Otherwise, please try again later.
                     10928,  // Resource ID: %d. The %s limit for the database is %d and has been reached. For more information, see http://go.microsoft.com/fwlink/?LinkId=267637.
                     10060,  // An error has occurred while establishing a connection to the server. When connecting to SQL Server, this failure may be caused by the fact that under the default settings SQL Server does not allow remote connections. (provider: TCP Provider, error: 0 - A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.) (Microsoft SQL Server, Error: 10060)
