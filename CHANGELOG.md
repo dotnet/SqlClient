@@ -34,8 +34,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 [#1210](https://github.com/dotnet/SqlClient/pull/1210)
 - Fixed issue where connection goes to unusable state.
 [#1128](https://github.com/dotnet/SqlClient/pull/1128)
-- Fixed recursive calls to `RetryLogicProvider` when calling `SqlCommand.ExecuteScalarAsync` Default Operating System could be used by App Context Switch `UseSystemDefaultSecureProtocols`.
-[#1220](https://github.com/dotnet/SqlClient/pull/1220)
+- Fixed recursive calls to `RetryLogicProvider` when calling `SqlCommand.ExecuteScalarAsync`. [#1220](https://github.com/dotnet/SqlClient/pull/1220)
 - Fixed async deadlock scenarios in web contexts with configurable retry logic provider.
 [#1220](https://github.com/dotnet/SqlClient/pull/1220)
 - Fixed `EntryPointNotFoundException` in `InOutOfProcHelper` constructor.
