@@ -20,6 +20,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 [#1168](https://github.com/dotnet/SqlClient/pull/1168)
 - Added missing component model annotations to `SqlConnectionStringBuilder`, `SqlConnection`, `SqlCommand`, `SqlParameter` and `SqlDataAdapter`
 [#1152](https://github.com/dotnet/SqlClient/pull/1152)
+- The new public API `DisableOutputParameters` is added to `SqlCommand`.
+[#1041](https://github.com/dotnet/SqlClient/pull/1041)
 
 ### Fixed
 - Fixed async thread blocking on SqlConnection open for AAD modes.
@@ -46,12 +48,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 [#1125](https://github.com/dotnet/SqlClient/pull/1125)
 - Changed async thread blocking on SqlConnection open for AAD modes to throw `SqlException` instead of `AggregateException`.
 [#1213](https://github.com/dotnet/SqlClient/pull/1213)
-- Changed `SqlDataRecord` to remove `EnsureSubclassOverride` and ensure that all callsites with an ordinal parameter directly or indirectly call `ThrowIfInvalidOrdinal`.
+- Changed `SqlDataRecord` to remove `EnsureSubclassOverride` and ensure that all call sites with an ordinal parameter directly or indirectly call `ThrowIfInvalidOrdinal`.
 [#1133](https://github.com/dotnet/SqlClient/pull/1133)
 - Removed unused internal constructor and changed most of fields to readonly in `SqlDataRecord`.
 [#1133](https://github.com/dotnet/SqlClient/pull/1133)
 - EventSource tracing is simplified by implementing `using` block instead of `try/finally` block.
 [#1187](https://github.com/dotnet/SqlClient/pull/1187) and [#1188](https://github.com/dotnet/SqlClient/pull/1188)
+- The new public API `DisableOutputParameters` is added to `SqlCommand`.
+[#1041](https://github.com/dotnet/SqlClient/pull/1041)
 
 ### Breaking Changes over stable release 3.0.0
 - Connection property `Asynchronous Processing` is obsolete in NetFx and has been removed.
@@ -114,7 +118,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Fixed
 - Fixed wrong data blended with transactions in .NET Core by marking a connection as doomed if the transaction completes or aborts while there is an open result set[#1023](https://github.com/dotnet/SqlClient/pull/1023)
-- Fixed derived parameters containing incorrect typename [#1020](https://github.com/dotnet/SqlClient/pull/1020)
+- Fixed derived parameters containing incorrect TypeName [#1020](https://github.com/dotnet/SqlClient/pull/1020)
 - Fixed server connection leak possibilities when an exception occurs in pooling layer [#890](https://github.com/dotnet/SqlClient/pull/890)
 - Fixed IP connection resolving logic in .NET Core [#1016](https://github.com/dotnet/SqlClient/pull/1016) [#1031](https://github.com/dotnet/SqlClient/pull/1031)
 
