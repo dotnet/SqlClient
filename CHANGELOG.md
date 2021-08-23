@@ -4,66 +4,79 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
-## [Preview Release 4.0.0-preview1] - 2021-08-20
-
-### Added
-- Added [MSSQLSERVER_42109](https://docs.microsoft.com/en-us/sql/relational-databases/errors-events/mssqlserver-42109-database-engine-error?view=sql-server-ver15) and [MSSQLSERVER_42108](https://docs.microsoft.com/en-us/sql/relational-databases/errors-events/mssqlserver-42108-database-engine-error?view=sql-server-ver15) to retriable transient error list.
-[#1215](https://github.com/dotnet/SqlClient/pull/1215)
-- `PoolBlockingPeriod` is enabled for .NET Standard.
-[#1181](https://github.com/dotnet/SqlClient/pull/1181)
-- `SqlDataReader.GetColumnSchema()` API is now exposed in .NET Standard.
-[#1181](https://github.com/dotnet/SqlClient/pull/1181)
-- Added new App Context Switch `UseSystemDefaultSecureProtocols` to go back to Operating System's supported protocols.
-[#1168](https://github.com/dotnet/SqlClient/pull/1168)
-- Added missing component model annotations to `SqlConnectionStringBuilder`, `SqlConnection`, `SqlCommand`, `SqlParameter` and `SqlDataAdapter`
-[#1152](https://github.com/dotnet/SqlClient/pull/1152)
-- The new public API `DisableOutputParameters` is added to `SqlCommand`.
-[#1041](https://github.com/dotnet/SqlClient/pull/1041)
-
-### Fixed
-- Fixed async thread blocking on SqlConnection open for AAD modes.
-[#1213](https://github.com/dotnet/SqlClient/pull/1213)
-- Fixed bug with LegacyRowVersionNullBehavior.
-[#1182](https://github.com/dotnet/SqlClient/pull/1182)
-- Fixed connection issue when TLS 1.3 is enabled on operating system by excluding TLS 1.3 from supported protocols. Default Operating System could be used by App Context Switch `UseSystemDefaultSecureProtocols`.
-[#1168](https://github.com/dotnet/SqlClient/pull/1168)
-- Fixed typo in Strings.resx in NetFx and NetCore
-[#1178](https://github.com/dotnet/SqlClient/pull/1178/files) and [#1136](https://github.com/dotnet/SqlClient/pull/1136)
-- Fixed typo by changing Strings.resx parameter `Sql_CanotCreateNormalizer` to `Sql_CannotCreateNormalizer1`.
-[#1134](https://github.com/dotnet/SqlClient/pull/1134)
-- Fixed the issue with cached status of an async operation by resetting status to be ready for next operation.
-[#1128](https://github.com/dotnet/SqlClient/pull/1128)
-- Fixed the poor performance issue with `ExecuteNonQuery` and many parameters.
-[#1041](https://github.com/dotnet/SqlClient/pull/1041)
-
-### Changed
-- Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `4.0.0-preview1.21232.1` [#1221](https://github.com/dotnet/SqlClient/pull/1221)
-- Changed `WeakReference` to `WeakReference<T>`.
-[#1141](https://github.com/dotnet/SqlClient/pull/1141)
-- Removed Designer attribute from `SqlCommand` and `SqlDataAdapter`
-[#1132](https://github.com/dotnet/SqlClient/pull/1132)
-- Changed error code when certificate validation fails in Managed SNI.
-[#1130](https://github.com/dotnet/SqlClient/pull/1130)
-- Changed Configuarable retry logic error list.
-[#1125](https://github.com/dotnet/SqlClient/pull/1125)
-- Changed async thread blocking on SqlConnection open for AAD modes to throw `SqlException` instead of `AggregateException`.
-[#1213](https://github.com/dotnet/SqlClient/pull/1213)
-- Changed `SqlDataRecord` to remove `EnsureSubclassOverride` and ensure that all call sites with an ordinal parameter directly or indirectly call `ThrowIfInvalidOrdinal`.
-[#1133](https://github.com/dotnet/SqlClient/pull/1133)
-- Removed unused internal constructor and changed most of fields to readonly in `SqlDataRecord`.
-[#1133](https://github.com/dotnet/SqlClient/pull/1133)
-- EventSource tracing is simplified by implementing `using` block instead of `try/finally` block.
-[#1187](https://github.com/dotnet/SqlClient/pull/1187) and [#1188](https://github.com/dotnet/SqlClient/pull/1188)
-- The new public API `DisableOutputParameters` is added to `SqlCommand`.
-[#1041](https://github.com/dotnet/SqlClient/pull/1041)
+## [Preview Release 4.0.0-preview1] - 2021-08-23
 
 ### Breaking Changes over stable release 3.0.0
-- Connection property `Asynchronous Processing` is obsolete in NetFx and has been removed.
-[#1148](https://github.com/dotnet/SqlClient/pull/1148)
-- The default value for connection Property `Encrypt` is set to true.
+- Changed `Encrypt` connection string property to be `true` by default.
 [#1210](https://github.com/dotnet/SqlClient/pull/1210)
-- Async thread blocking on `SqlConnection open` is throwing `SqlException` instead of `AggregateException`.
+- The driver now throws `SqlException` replacing `AggregateException` for active directory authentication modes.
 [#1213](https://github.com/dotnet/SqlClient/pull/1213)
+- Dropped obsolete `Asynchronous Processing` connection property from .NET Framework 
+[#1148](https://github.com/dotnet/SqlClient/pull/1148)
+
+### Added
+- Added `SqlCommand.EnableOptimizedParameterBinding` property that when enabled increases performance for commands with very large numbers of parameters.
+[#1041](https://github.com/dotnet/SqlClient/pull/1041)
+Included `42108` and `42109` error codes to retriable transient errors list.
+[#1215](https://github.com/dotnet/SqlClient/pull/1215)
+- Added new App Context switch to use OS enabled client protocols only 
+[#1168](https://github.com/dotnet/SqlClient/pull/1168)
+- Added `PoolBlockingPeriod` connection property support in .NET Standard.
+[#1181](https://github.com/dotnet/SqlClient/pull/1181)
+- Added support for `SqlDataReader.GetColumnSchema()` in .NET Standard. 
+[#1181](https://github.com/dotnet/SqlClient/pull/1181)
+- Added PropertyGrid support with component model annotations to `SqlConnectionStringBuilder` properties for .NET Core.
+[#1152](https://github.com/dotnet/SqlClient/pull/1152)
+
+### Fixed
+- Fixed issue with connectivity when TLS 1.3 is enabled on client and server.
+[#1168](https://github.com/dotnet/SqlClient/pull/1168)
+- Fixed issue where connection goes to unusable state.
+[#1128](https://github.com/dotnet/SqlClient/pull/1128)
+- Fixed recursive calls to `RetryLogicProvider` when calling `SqlCommand.ExecuteScalarAsync` Default Operating System could be used by App Context Switch `UseSystemDefaultSecureProtocols`.
+[#1220](https://github.com/dotnet/SqlClient/pull/1220)
+- Fixed async deadlock scenarios in web contexts with configurable retry logic provider.
+[#1220](https://github.com/dotnet/SqlClient/pull/1220)
+- Fixed `EntryPointNotFoundException` in `InOutOfProcHelper` constructor.
+[#1120](https://github.com/dotnet/SqlClient/pull/1120)
+- Fixed async thread blocking issues on `SqlConnection.Open()` for active directory authentication modes.
+[#1213](https://github.com/dotnet/SqlClient/pull/1213)
+- Fixed driver behavior for always encrypted with secure enclaves to not fail when no user parameters have been provided.
+[#1115](https://github.com/dotnet/SqlClient/pull/1115)
+- Fixed bug with `LegacyRowVersionNullBehavior` App Context switch.
+[#1182](https://github.com/dotnet/SqlClient/pull/1182)
+- Fixed issues in Strings.resx file containing error messages
+[#1136](https://github.com/dotnet/SqlClient/pull/1136)
+[#1178](https://github.com/dotnet/SqlClient/pull/1178)
+
+### Changed
+- Updated error code to match with Windows when certificate validation fails in non-Windows client environments.
+[#1130](https://github.com/dotnet/SqlClient/pull/1130)
+- Removed designer attributes from `SqlCommand` and `SqlDataAdapter`
+[#1132](https://github.com/dotnet/SqlClient/pull/1132)
+- Updated configurable retry logic default retriable error list
+[#1125](https://github.com/dotnet/SqlClient/pull/1125)
+- Improved performance by changing `SqlParameter` bool fields to flags.
+[#1064](https://github.com/dotnet/SqlClient/pull/1064)
+- Improved performance by implementing static delegates.
+[#1060](https://github.com/dotnet/SqlClient/pull/1060)
+- Optimized async method allocations in .NET Framework by porting changes from .NET Core.
+[#1084](https://github.com/dotnet/SqlClient/pull/1084)
+
+### Code Improvments
+- Added ValueTask stream overloads on SNI streams and Waits[#902](https://github.com/dotnet/SqlClient/pull/902)
+- Clean up AAsyncCallContext and SqlDataReader[#925](https://github.com/dotnet/SqlClient/pull/925)
+- Rework MARSConnection state machine [#933](https://github.com/dotnet/SqlClient/pull/933)
+- Simplify SNIProxy [#934](https://github.com/dotnet/SqlClient/pull/934)
+- Sync SqlDataRecord [#1024](https://github.com/dotnet/SqlClient/pull/1024)
+- Share SqlNormalizer [#1057](https://github.com/dotnet/SqlClient/pull/1057)
+- Change WeakReference to WeakReference<T> [#1122](https://github.com/dotnet/SqlClient/pull/1122)
+- cleanup SqlDataRecord [#1133]((https://github.com/dotnet/SqlClient/pull/1133))
+- Update CannotCreateNormalize resource name in resource files [#1134](https://github.com/dotnet/SqlClient/pull/1134)
+- Replace WeakReference with WeakReference<T> [#1141](https://github.com/dotnet/SqlClient/pull/1141)
+- Simplify SNI tracing  ➕ Code Health [#1187](https://github.com/dotnet/SqlClient/pull/1187)
+- Simplify event tracing  ➕ Code Health [#1188](https://github.com/dotnet/SqlClient/pull/1188)
+
 
 
 ## [Stable Release 3.0.0] - 2021-06-09
