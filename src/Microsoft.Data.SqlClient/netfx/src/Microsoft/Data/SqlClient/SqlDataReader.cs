@@ -5816,6 +5816,12 @@ namespace Microsoft.Data.SqlClient
             return source.Task;
         }
 
+        /// <summary>
+        /// Begins an async call checking for cancellation and then setting up the callback for when data is available
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="context"></param>
+        /// <returns></returns>
         private Task<T> ExecuteAsyncCall<T>(AAsyncCallContext<T> context)
         {
             // _networkPacketTaskSource could be null if the connection was closed
@@ -5836,6 +5842,15 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <summary>
+        /// When data has become available for an async call it is woken and this method is called.
+        /// It will call the async execution func and if a Task is returned indicating more data
+        /// is needed it will wait until it is called again when more is available
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="task"></param>
+        /// <param name="context"></param>
+        /// <returns></returns>
         private Task<T> ExecuteAsyncCall<T>(Task task, AAsyncCallContext<T> context)
         {
             // this function must be an instance function called from the static callback because otherwise a compiler error
@@ -5889,6 +5904,13 @@ namespace Microsoft.Data.SqlClient
             return Task.FromException<T>(ADP.ExceptionWithStackTrace(ADP.ClosedConnectionError()));
         }
 
+        /// <summary>
+        /// When data has been successfully processed for an async call the async func will call this
+        /// function to set the result into the task and cleanup the async state ready for another call
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="task"></param>
+        /// <param name="context"></param>
         private void CompleteAsyncCall<T>(Task<T> task, AAsyncCallContext<T> context)
         {
             TaskCompletionSource<T> source = context._source;
