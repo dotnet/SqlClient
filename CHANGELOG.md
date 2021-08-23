@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Preview Release 4.0.0-preview1.xxxxx.x] - 2021-08-23
 
-### Breaking Changes over stable release 3.0.0
+### Breaking changes over stable release 3.0.0
 - `Encrypt` connection setting default changed to true. [#1210](https://github.com/dotnet/SqlClient/pull/1210)
 - The driver now throws `SqlException` replacing `AggregateException` for active directory authentication modes.
 [#1213](https://github.com/dotnet/SqlClient/pull/1213)
