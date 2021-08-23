@@ -61,21 +61,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 [#1060](https://github.com/dotnet/SqlClient/pull/1060)
 - Optimized async method allocations in .NET Framework by porting changes from .NET Core.
 [#1084](https://github.com/dotnet/SqlClient/pull/1084)
-
-### Code Improvments
-- Added ValueTask stream overloads on SNI streams and Waits [#902](https://github.com/dotnet/SqlClient/pull/902)
-- Clean up AAsyncCallContext and SqlDataReader [#925](https://github.com/dotnet/SqlClient/pull/925)
-- Rework MARSConnection state machine [#933](https://github.com/dotnet/SqlClient/pull/933)
-- Simplify SNIProxy [#934](https://github.com/dotnet/SqlClient/pull/934)
-- Sync SqlDataRecord [#1024](https://github.com/dotnet/SqlClient/pull/1024)
-- Share SqlNormalizer [#1057](https://github.com/dotnet/SqlClient/pull/1057)
-- Change WeakReference to WeakReference<T> [#1122](https://github.com/dotnet/SqlClient/pull/1122)
-- cleanup SqlDataRecord [#1133]((https://github.com/dotnet/SqlClient/pull/1133))
-- Update CannotCreateNormalize resource name in resource files [#1134](https://github.com/dotnet/SqlClient/pull/1134)
-- Replace WeakReference with WeakReference<T> [#1141](https://github.com/dotnet/SqlClient/pull/1141)
-- Simplify SNI tracing  ➕ Code Health [#1187](https://github.com/dotnet/SqlClient/pull/1187)
-- Simplify event tracing  ➕ Code Health [#1188](https://github.com/dotnet/SqlClient/pull/1188)
-
+- Various code improvements [#902](https://github.com/dotnet/SqlClient/pull/902) [#925](https://github.com/dotnet/SqlClient/pull/925) [#933](https://github.com/dotnet/SqlClient/pull/933) [#934](https://github.com/dotnet/SqlClient/pull/934) [#1024](https://github.com/dotnet/SqlClient/pull/1024) [#1057](https://github.com/dotnet/SqlClient/pull/1057) [#1122](https://github.com/dotnet/SqlClient/pull/1122) [#1133]((https://github.com/dotnet/SqlClient/pull/1133)) [#1134](https://github.com/dotnet/SqlClient/pull/1134) [#1141](https://github.com/dotnet/SqlClient/pull/1141) [#1187](https://github.com/dotnet/SqlClient/pull/1187) [#1188](https://github.com/dotnet/SqlClient/pull/1188)
 
 
 ## [Stable Release 3.0.0] - 2021-06-09
