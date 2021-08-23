@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ## [Preview Release 4.0.0-preview1] - 2021-08-23
 
 ### Breaking Changes over stable release 3.0.0
-- Changed `Encrypt` connection string property to be `true` by default.
+- `Encrypt` connection setting default changed to true.
 [#1210](https://github.com/dotnet/SqlClient/pull/1210)
 - The driver now throws `SqlException` replacing `AggregateException` for active directory authentication modes.
 [#1213](https://github.com/dotnet/SqlClient/pull/1213)
@@ -31,6 +31,8 @@ Included `42108` and `42109` error codes to retriable transient errors list.
 ### Fixed
 - Fixed issue with connectivity when TLS 1.3 is enabled on client and server.
 [#1168](https://github.com/dotnet/SqlClient/pull/1168)
+- Fixed the issue with connection encryption to ensure connections fails when encryption is required.
+[#1210](https://github.com/dotnet/SqlClient/pull/1210)
 - Fixed issue where connection goes to unusable state.
 [#1128](https://github.com/dotnet/SqlClient/pull/1128)
 - Fixed recursive calls to `RetryLogicProvider` when calling `SqlCommand.ExecuteScalarAsync` Default Operating System could be used by App Context Switch `UseSystemDefaultSecureProtocols`.
