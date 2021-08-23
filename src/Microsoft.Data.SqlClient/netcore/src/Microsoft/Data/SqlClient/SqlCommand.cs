@@ -2517,7 +2517,10 @@ namespace Microsoft.Data.SqlClient
                     throw result.Exception.InnerException;
                 }
                 return result.Result;
-            }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.NotOnCanceled, TaskScheduler.Default);
+            },
+                CancellationToken.None,
+                TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.NotOnCanceled,
+                TaskScheduler.Default);
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="default"]/*'/>
@@ -2617,13 +2620,9 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteScalarAsync[@name="CancellationToken"]/*'/>
-        public override Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
-            => IsRetryEnabled ?
-                InternalExecuteScalarWithRetryAsync(cancellationToken) :
-                InternalExecuteScalarAsync(cancellationToken);
-
-        private Task<object> InternalExecuteScalarWithRetryAsync(CancellationToken cancellationToken)
-            => RetryLogicProvider.ExecuteAsync(this, () => InternalExecuteScalarAsync(cancellationToken), cancellationToken);
+        public override Task<object> ExecuteScalarAsync(CancellationToken cancellationToken) =>
+            // Do not use retry logic here as internal call to ExecuteReaderAsync handles retry logic.
+            InternalExecuteScalarAsync(cancellationToken);
 
         private Task<object> InternalExecuteScalarAsync(CancellationToken cancellationToken)
         {
