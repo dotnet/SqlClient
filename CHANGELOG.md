@@ -14,53 +14,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 [#1148](https://github.com/dotnet/SqlClient/pull/1148)
 
 ### Added
-- Added `SqlCommand.EnableOptimizedParameterBinding` property that when enabled increases performance for commands with very large numbers of parameters.
-[#1041](https://github.com/dotnet/SqlClient/pull/1041)
+- Added `SqlCommand.EnableOptimizedParameterBinding` property that when enabled increases performance for commands with very large numbers of parameters. [#1041](https://github.com/dotnet/SqlClient/pull/1041)
 - Included `42108` and `42109` error codes to retriable transient errors list. [#1215](https://github.com/dotnet/SqlClient/pull/1215)
-- Added new App Context switch to use OS enabled client protocols only 
-[#1168](https://github.com/dotnet/SqlClient/pull/1168)
-- Added `PoolBlockingPeriod` connection property support in .NET Standard.
-[#1181](https://github.com/dotnet/SqlClient/pull/1181)
-- Added support for `SqlDataReader.GetColumnSchema()` in .NET Standard. 
-[#1181](https://github.com/dotnet/SqlClient/pull/1181)
-- Added PropertyGrid support with component model annotations to `SqlConnectionStringBuilder` properties for .NET Core.
-[#1152](https://github.com/dotnet/SqlClient/pull/1152)
+- Added new App Context switch to use OS enabled client protocols only. [#1168](https://github.com/dotnet/SqlClient/pull/1168)
+- Added `PoolBlockingPeriod` connection property support in .NET Standard. [#1181](https://github.com/dotnet/SqlClient/pull/1181)
+- Added support for `SqlDataReader.GetColumnSchema()` in .NET Standard. [#1181](https://github.com/dotnet/SqlClient/pull/1181)
+- Added PropertyGrid support with component model annotations to `SqlConnectionStringBuilder` properties for .NET Core.[#1152](https://github.com/dotnet/SqlClient/pull/1152)
 
 ### Fixed
-- Fixed issue with connectivity when TLS 1.3 is enabled on client and server.
-[#1168](https://github.com/dotnet/SqlClient/pull/1168)
-- Fixed the issue with connection encryption to ensure connections fails when encryption is required.
-[#1210](https://github.com/dotnet/SqlClient/pull/1210)
-- Fixed issue where connection goes to unusable state.
-[#1128](https://github.com/dotnet/SqlClient/pull/1128)
+- Fixed issue with connectivity when TLS 1.3 is enabled on client and server. [#1168](https://github.com/dotnet/SqlClient/pull/1168)
+- Fixed the issue with connection encryption to ensure connections fails when encryption is required. [#1210](https://github.com/dotnet/SqlClient/pull/1210)
+- Fixed issue where connection goes to unusable state. [#1128](https://github.com/dotnet/SqlClient/pull/1128)
 - Fixed recursive calls to `RetryLogicProvider` when calling `SqlCommand.ExecuteScalarAsync`. [#1220](https://github.com/dotnet/SqlClient/pull/1220)
-- Fixed async deadlock scenarios in web contexts with configurable retry logic provider.
-[#1220](https://github.com/dotnet/SqlClient/pull/1220)
-- Fixed `EntryPointNotFoundException` in `InOutOfProcHelper` constructor.
-[#1120](https://github.com/dotnet/SqlClient/pull/1120)
-- Fixed async thread blocking issues on `SqlConnection.Open()` for active directory authentication modes.
-[#1213](https://github.com/dotnet/SqlClient/pull/1213)
-- Fixed driver behavior for always encrypted with secure enclaves to not fail when no user parameters have been provided.
-[#1115](https://github.com/dotnet/SqlClient/pull/1115)
-- Fixed bug with `LegacyRowVersionNullBehavior` App Context switch.
-[#1182](https://github.com/dotnet/SqlClient/pull/1182)
-- Fixed issues in Strings.resx file containing error messages
-[#1136](https://github.com/dotnet/SqlClient/pull/1136)
+- Fixed async deadlock scenarios in web contexts with configurable retry logic provider. [#1220](https://github.com/dotnet/SqlClient/pull/1220)
+- Fixed `EntryPointNotFoundException` in `InOutOfProcHelper` constructor. [#1120](https://github.com/dotnet/SqlClient/pull/1120)
+- Fixed async thread blocking issues on `SqlConnection.Open()` for active directory authentication modes. [#1213](https://github.com/dotnet/SqlClient/pull/1213)
+- Fixed driver behavior for always encrypted with secure enclaves to not fail when no user parameters have been provided.[#1115](https://github.com/dotnet/SqlClient/pull/1115)
+- Fixed bug with `LegacyRowVersionNullBehavior` App Context switch. [#1182](https://github.com/dotnet/SqlClient/pull/1182)
+- Fixed issues in Strings.resx file containing error messages. [#1136](https://github.com/dotnet/SqlClient/pull/1136) and
 [#1178](https://github.com/dotnet/SqlClient/pull/1178)
 
 ### Changed
-- Updated error code to match with Windows when certificate validation fails in non-Windows client environments.
-[#1130](https://github.com/dotnet/SqlClient/pull/1130)
-- Removed designer attributes from `SqlCommand` and `SqlDataAdapter`
-[#1132](https://github.com/dotnet/SqlClient/pull/1132)
-- Updated configurable retry logic default retriable error list
-[#1125](https://github.com/dotnet/SqlClient/pull/1125)
-- Improved performance by changing `SqlParameter` bool fields to flags.
-[#1064](https://github.com/dotnet/SqlClient/pull/1064)
-- Improved performance by implementing static delegates.
-[#1060](https://github.com/dotnet/SqlClient/pull/1060)
-- Optimized async method allocations in .NET Framework by porting changes from .NET Core.
-[#1084](https://github.com/dotnet/SqlClient/pull/1084)
+- Updated error code to match with Windows when certificate validation fails in non-Windows client environments. [#1130](https://github.com/dotnet/SqlClient/pull/1130)
+- Removed designer attributes from `SqlCommand` and `SqlDataAdapter`. [#1132](https://github.com/dotnet/SqlClient/pull/1132)
+- Updated configurable retry logic default retriable error list. [#1125](https://github.com/dotnet/SqlClient/pull/1125)
+- Improved performance by changing `SqlParameter` bool fields to flags. [#1064](https://github.com/dotnet/SqlClient/pull/1064)
+- Improved performance by implementing static delegates. [#1060](https://github.com/dotnet/SqlClient/pull/1060)
+- Optimized async method allocations in .NET Framework by porting changes from .NET Core. [#1084](https://github.com/dotnet/SqlClient/pull/1084)
 - Various code improvements [#902](https://github.com/dotnet/SqlClient/pull/902) [#925](https://github.com/dotnet/SqlClient/pull/925) [#933](https://github.com/dotnet/SqlClient/pull/933) [#934](https://github.com/dotnet/SqlClient/pull/934) [#1024](https://github.com/dotnet/SqlClient/pull/1024) [#1057](https://github.com/dotnet/SqlClient/pull/1057) [#1122](https://github.com/dotnet/SqlClient/pull/1122) [#1133]((https://github.com/dotnet/SqlClient/pull/1133)) [#1134](https://github.com/dotnet/SqlClient/pull/1134) [#1141](https://github.com/dotnet/SqlClient/pull/1141) [#1187](https://github.com/dotnet/SqlClient/pull/1187) [#1188](https://github.com/dotnet/SqlClient/pull/1188)
 
 
