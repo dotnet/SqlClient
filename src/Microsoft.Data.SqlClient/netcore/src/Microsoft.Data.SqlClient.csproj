@@ -402,6 +402,8 @@
     <Compile Include="Microsoft\Data\SqlClient\SimulatorEnclaveProvider.NetCoreApp.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS'">
+    <Compile Include="Microsoft\Data\SqlClient\AAsyncCallContext.cs" />
+    <Compile Include="Resources\StringsHelper.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\MetadataUtilsSmi.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiEventSink.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiEventSink_Default.cs" />
@@ -831,13 +833,11 @@
     <Reference Include="System.Memory" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Microsoft\Data\SqlClient\AAsyncCallContext.cs" />
     <Compile Include="Resources\Strings.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>Strings.resx</DependentUpon>
     </Compile>
-    <Compile Include="Resources\StringsHelper.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\Microsoft.Data.SqlClient.SqlMetaData.xml">
