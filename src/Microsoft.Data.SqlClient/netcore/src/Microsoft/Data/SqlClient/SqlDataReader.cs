@@ -2644,7 +2644,7 @@ namespace Microsoft.Data.SqlClient
                 statistics = SqlStatistics.StartTimer(Statistics);
 
                 SetTimeout(_defaultTimeoutMilliseconds);
-                return GetFieldValueInternal<T>(i);
+                return GetFieldValueInternal<T>(i, isAsync: false);
             }
             finally
             {
@@ -2780,7 +2780,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private T GetFieldValueInternal<T>(int i)
+        private T GetFieldValueInternal<T>(int i, bool isAsync)
         {
             if (_currentTask != null)
             {
@@ -2788,13 +2788,14 @@ namespace Microsoft.Data.SqlClient
             }
 
             Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-            bool result = TryReadColumn(i, setTimeout: false);
+            bool forStreaming = typeof(T) == typeof(XmlReader) || typeof(T) == typeof(TextReader) || typeof(T) == typeof(Stream);
+            bool result = TryReadColumn(i, setTimeout: false, forStreaming: forStreaming);
             if (!result)
             {
                 throw SQL.SynchronousCallMayNotPend();
             }
 
-            return GetFieldValueFromSqlBufferInternal<T>(_data[i], _metaData[i], isAsync: false);
+            return GetFieldValueFromSqlBufferInternal<T>(_data[i], _metaData[i], isAsync: isAsync);
         }
 
         private T GetFieldValueFromSqlBufferInternal<T>(SqlBuffer data, _SqlMetaData metaData, bool isAsync)
@@ -3681,7 +3682,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private bool TryReadColumn(int i, bool setTimeout, bool allowPartiallyReadColumn = false)
+        private bool TryReadColumn(int i, bool setTimeout, bool allowPartiallyReadColumn = false, bool forStreaming = false)
         {
             CheckDataIsReady(columnIndex: i, permitAsync: true, allowPartiallyReadColumn: allowPartiallyReadColumn, methodName: null);
 
@@ -3693,7 +3694,7 @@ namespace Microsoft.Data.SqlClient
                 SetTimeout(_defaultTimeoutMilliseconds);
             }
 
-            if (!TryReadColumnInternal(i, readHeaderOnly: false))
+            if (!TryReadColumnInternal(i, readHeaderOnly: false, forStreaming: forStreaming))
             {
                 return false;
             }
@@ -3742,7 +3743,7 @@ namespace Microsoft.Data.SqlClient
             return TryReadColumnInternal(i, readHeaderOnly: true);
         }
 
-        internal bool TryReadColumnInternal(int i, bool readHeaderOnly = false)
+        internal bool TryReadColumnInternal(int i, bool readHeaderOnly = false, bool forStreaming = false)
         {
             AssertReaderState(requireData: true, permitAsync: true, columnIndex: i);
 
@@ -3833,12 +3834,35 @@ namespace Microsoft.Data.SqlClient
                         _sharedState._nextColumnHeaderToRead++;  // We read this one
                         _sharedState._columnDataBytesRemaining = (long)dataLength;
 
-                        if (isNull && columnMetaData.type != SqlDbType.Timestamp)
+                        if (isNull)
                         {
-                            TdsParser.GetNullSqlValue(_data[_sharedState._nextColumnDataToRead],
-                                columnMetaData,
-                                _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
-                                _parser.Connection);
+                            if (columnMetaData.type != SqlDbType.Timestamp)
+                            {
+                                TdsParser.GetNullSqlValue(_data[_sharedState._nextColumnDataToRead],
+                                    columnMetaData,
+                                    _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
+                                    _parser.Connection);
+                            }
+                        }
+                        else
+                        {
+                            if (!readHeaderOnly && !forStreaming)
+                            {
+                                // If we're in sequential mode try to read the data and then if it succeeds update shared
+                                // state so there are no remaining bytes and advance the next column to read
+                                if (!_parser.TryReadSqlValue(_data[_sharedState._nextColumnDataToRead], columnMetaData, (int)dataLength, _stateObj,
+                                    _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
+                                    columnMetaData.column))
+                                { // will read UDTs as VARBINARY.
+                                    return false;
+                                }
+                                _sharedState._columnDataBytesRemaining = 0;
+                                _sharedState._nextColumnDataToRead++;
+                            }
+                            else
+                            {
+                                _sharedState._columnDataBytesRemaining = (long)dataLength;
+                            }
                         }
                     }
                     else
@@ -5094,7 +5118,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         _stateObj._shouldHaveEnoughData = true;
 #endif
-                        return Task.FromResult(GetFieldValueInternal<T>(i));
+                        return Task.FromResult(GetFieldValueInternal<T>(i, isAsync:true));
 #if DEBUG
                     }
                     finally
