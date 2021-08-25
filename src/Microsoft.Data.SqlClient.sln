@@ -200,6 +200,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient.Do
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient.PerformanceTests", "Microsoft.Data.SqlClient\tests\PerformanceTests\Microsoft.Data.SqlClient.PerformanceTests.csproj", "{599A336B-2A5F-473D-8442-1223ED37C93E}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SqlBench3.0", "..\..\dev\SqlClient-Integrated\SqlBench3.0\SqlBench3.0.csproj", "{3F7F9B89-651E-4110-ADD4-10B81627498F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -472,6 +474,18 @@ Global
 		{599A336B-2A5F-473D-8442-1223ED37C93E}.Release|x64.Build.0 = Release|x64
 		{599A336B-2A5F-473D-8442-1223ED37C93E}.Release|x86.ActiveCfg = Release|x86
 		{599A336B-2A5F-473D-8442-1223ED37C93E}.Release|x86.Build.0 = Release|x86
+		{3F7F9B89-651E-4110-ADD4-10B81627498F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3F7F9B89-651E-4110-ADD4-10B81627498F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3F7F9B89-651E-4110-ADD4-10B81627498F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{3F7F9B89-651E-4110-ADD4-10B81627498F}.Debug|x64.Build.0 = Debug|Any CPU
+		{3F7F9B89-651E-4110-ADD4-10B81627498F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{3F7F9B89-651E-4110-ADD4-10B81627498F}.Debug|x86.Build.0 = Debug|Any CPU
+		{3F7F9B89-651E-4110-ADD4-10B81627498F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3F7F9B89-651E-4110-ADD4-10B81627498F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3F7F9B89-651E-4110-ADD4-10B81627498F}.Release|x64.ActiveCfg = Release|Any CPU
+		{3F7F9B89-651E-4110-ADD4-10B81627498F}.Release|x64.Build.0 = Release|Any CPU
+		{3F7F9B89-651E-4110-ADD4-10B81627498F}.Release|x86.ActiveCfg = Release|Any CPU
+		{3F7F9B89-651E-4110-ADD4-10B81627498F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -507,6 +521,7 @@ Global
 		{B499E477-C9B1-4087-A5CF-5C762D90E433} = {0CC4817A-12F3-4357-912C-09315FAAD008}
 		{B93A3149-67E8-491E-A1E5-19D65F9D9E98} = {0CC4817A-12F3-4357-912C-09315FAAD008}
 		{599A336B-2A5F-473D-8442-1223ED37C93E} = {0CC4817A-12F3-4357-912C-09315FAAD008}
+		{3F7F9B89-651E-4110-ADD4-10B81627498F} = {28E5EFE6-C9DD-4FF9-9FEC-532F72DFFA6E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {01D48116-37A2-4D33-B9EC-94793C702431}

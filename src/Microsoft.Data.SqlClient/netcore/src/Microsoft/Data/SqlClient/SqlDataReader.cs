@@ -815,9 +815,10 @@ namespace Microsoft.Data.SqlClient
             if (_stateObj.HasPendingData)
             {
                 byte token;
-                if (!_stateObj.TryPeekByte(out token))
+                result = _stateObj.TryPeekByte(out token);
+                if (result!=OperationStatus.Done)
                 {
-                    return false;
+                    return result;
                 }
 
                 Debug.Assert(TdsParser.IsValidTdsToken(token), $"Invalid token after performing CleanPartialRead: {token,-2:X2}");
@@ -988,9 +989,10 @@ namespace Microsoft.Data.SqlClient
                         else
                         {
                             byte token;
-                            if (!_stateObj.TryPeekByte(out token))
+                            result = _stateObj.TryPeekByte(out token);
+                            if (result != OperationStatus.Done)
                             {
-                                return false;
+                                return result;
                             }
 
                             Debug.Assert(TdsParser.IsValidTdsToken(token), $"DataReady is false, but next token is invalid: {token,-2:X2}");
@@ -3290,97 +3292,9 @@ namespace Microsoft.Data.SqlClient
                     bool success = false; // WebData 100390
                     _hasRows = false; // reset HasRows
 
-                // if we are specifically only processing a single result, then read all the results off the wire and detach
-                if (IsCommandBehavior(CommandBehavior.SingleResult))
-                {
-                    result = TryCloseInternal(false /*closeReader*/);
-                    if (result != OperationStatus.Done)
+                    // if we are specifically only processing a single result, then read all the results off the wire and detach
+                    if (IsCommandBehavior(CommandBehavior.SingleResult))
                     {
-                        more = false;
-                        return result;
-                    }
-
-                    // In the case of not closing the reader, null out the metadata AFTER
-                    // CloseInternal finishes - since CloseInternal may go to the wire
-                    // and use the metadata.
-                    ClearMetaData();
-                    more = success;
-                    return OperationStatus.Done;
-                }
-
-                if (null != _parser)
-                {
-                    // if there are more rows, then skip them, the user wants the next result
-                    bool moreRows = true;
-                    while (moreRows)
-                    {
-                        result = TryReadInternal(false, out moreRows);
-                        if (result != OperationStatus.Done)
-                        { // don't reset set the timeout value
-                            more = false;
-                            return result;
-                        }
-                    }
-                }
-
-                // we may be done, so continue only if we have not detached ourselves from the parser
-                if (null != _parser)
-                {
-                    bool moreResults;
-                    result = TryHasMoreResults(out moreResults);
-                    if (result != OperationStatus.Done)
-                    {
-                        more = false;
-                        return result;
-                    }
-                    if (moreResults)
-                    {
-                        _metaDataConsumed = false;
-                        _browseModeInfoConsumed = false;
-
-                        switch (_altRowStatus)
-                        {
-                            case ALTROWSTATUS.AltRow:
-                                int altRowId;
-                                result = _parser.TryGetAltRowId(_stateObj, out altRowId);
-                                if (result != OperationStatus.Done)
-                                {
-                                    more = false;
-                                    return result;
-                                }
-                                _SqlMetaDataSet altMetaDataSet = _altMetaDataSetCollection.GetAltMetaData(altRowId);
-                                if (altMetaDataSet != null)
-                                {
-                                    _metaData = altMetaDataSet;
-                                }
-                                Debug.Assert((_metaData != null), "Can't match up altrowmetadata");
-                                break;
-                            case ALTROWSTATUS.Done:
-                                // restore the row-metaData
-                                _metaData = _altMetaDataSetCollection.metaDataSet;
-                                Debug.Assert(_altRowStatus == ALTROWSTATUS.Done, "invalid AltRowStatus");
-                                _altRowStatus = ALTROWSTATUS.Null;
-                                break;
-                            default:
-                                result = TryConsumeMetaData();
-                                if (result != OperationStatus.Done)
-                                {
-                                    more = false;
-                                    return result;
-                                }
-                                if (_metaData == null)
-                                {
-                                    more = false;
-                                    return OperationStatus.Done;
-                                }
-                                break;
-                        }
-
-                        success = true;
-                    }
-                    else
-                    {
-                        // detach the parser from this reader now
                         result = TryCloseInternal(false /*closeReader*/);
                         if (result != OperationStatus.Done)
                         {
@@ -3391,27 +3305,116 @@ namespace Microsoft.Data.SqlClient
                         // In the case of not closing the reader, null out the metadata AFTER
                         // CloseInternal finishes - since CloseInternal may go to the wire
                         // and use the metadata.
-                        result = TrySetMetaData(null, false);
+                        ClearMetaData();
+                        more = success;
+                        return OperationStatus.Done;
+                    }
+
+                    if (null != _parser)
+                    {
+                        // if there are more rows, then skip them, the user wants the next result
+                        bool moreRows = true;
+                        while (moreRows)
+                        {
+                            result = TryReadInternal(false, out moreRows);
+                            if (result != OperationStatus.Done)
+                            { // don't reset set the timeout value
+                                more = false;
+                                return result;
+                            }
+                        }
+                    }
+
+                    // we may be done, so continue only if we have not detached ourselves from the parser
+                    if (null != _parser)
+                    {
+                        bool moreResults;
+                        result = TryHasMoreResults(out moreResults);
                         if (result != OperationStatus.Done)
                         {
                             more = false;
                             return result;
                         }
-                    }
-                }
-                else
-                {
-                    // Clear state in case of Read calling CloseInternal() then user calls NextResult()
-                    // and the case where the Read() above will do essentially the same thing.
-                    ClearMetaData();
-                }
+                        if (moreResults)
+                        {
+                            _metaDataConsumed = false;
+                            _browseModeInfoConsumed = false;
 
-                more = success;
-                return OperationStatus.Done;
-            }
-            finally
-            {
-                SqlStatistics.StopTimer(statistics);
+                            switch (_altRowStatus)
+                            {
+                                case ALTROWSTATUS.AltRow:
+                                    int altRowId;
+                                    result = _parser.TryGetAltRowId(_stateObj, out altRowId);
+                                    if (result != OperationStatus.Done)
+                                    {
+                                        more = false;
+                                        return result;
+                                    }
+                                    _SqlMetaDataSet altMetaDataSet = _altMetaDataSetCollection.GetAltMetaData(altRowId);
+                                    if (altMetaDataSet != null)
+                                    {
+                                        _metaData = altMetaDataSet;
+                                    }
+                                    Debug.Assert((_metaData != null), "Can't match up altrowmetadata");
+                                    break;
+                                case ALTROWSTATUS.Done:
+                                    // restore the row-metaData
+                                    _metaData = _altMetaDataSetCollection.metaDataSet;
+                                    Debug.Assert(_altRowStatus == ALTROWSTATUS.Done, "invalid AltRowStatus");
+                                    _altRowStatus = ALTROWSTATUS.Null;
+                                    break;
+                                default:
+                                    result = TryConsumeMetaData();
+                                    if (result != OperationStatus.Done)
+                                    {
+                                        more = false;
+                                        return result;
+                                    }
+                                    if (_metaData == null)
+                                    {
+                                        more = false;
+                                        return OperationStatus.Done;
+                                    }
+                                    break;
+                            }
+
+                            success = true;
+                        }
+                        else
+                        {
+                            // detach the parser from this reader now
+                            result = TryCloseInternal(false /*closeReader*/);
+                            if (result != OperationStatus.Done)
+                            {
+                                more = false;
+                                return result;
+                            }
+
+                            // In the case of not closing the reader, null out the metadata AFTER
+                            // CloseInternal finishes - since CloseInternal may go to the wire
+                            // and use the metadata.
+                            result = TrySetMetaData(null, false);
+                            if (result != OperationStatus.Done)
+                            {
+                                more = false;
+                                return result;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Clear state in case of Read calling CloseInternal() then user calls NextResult()
+                        // and the case where the Read() above will do essentially the same thing.
+                        ClearMetaData();
+                    }
+
+                    more = success;
+                    return OperationStatus.Done;
+                }
+                finally
+                {
+                    SqlStatistics.StopTimer(statistics);
+                }
             }
         }
 
@@ -3440,6 +3443,7 @@ namespace Microsoft.Data.SqlClient
         private OperationStatus TryReadInternal(bool setTimeout, out bool more)
         {
             SqlStatistics statistics = null;
+            OperationStatus result;
             using (TryEventScope.Create("SqlDataReader.TryReadInternal | API | Object Id {0}", ObjectID))
             {
                 RuntimeHelpers.PrepareConstrainedRegions();
@@ -3589,9 +3593,10 @@ namespace Microsoft.Data.SqlClient
                     if ((!_sharedState._dataReady) && (_stateObj.HasPendingData))
                     {
                         byte token;
-                        if (!_stateObj.TryPeekByte(out token))
+                        result = _stateObj.TryPeekByte(out token);
+                        if (result != OperationStatus.Done)
                         {
-                            return false;
+                            return result;
                         }
 
                         Debug.Assert(TdsParser.IsValidTdsToken(token), $"DataReady is false, but next token is invalid: {token,-2:X2}");

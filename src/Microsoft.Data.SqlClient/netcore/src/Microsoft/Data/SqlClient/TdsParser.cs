@@ -2515,9 +2515,10 @@ namespace Microsoft.Data.SqlClient
             if ((stateObj.HasPendingData) && (!dataReady))
             {
                 byte token;
-                if (!stateObj.TryPeekByte(out token))
+                result = stateObj.TryPeekByte(out token);
+                if (result != OperationStatus.Done)
                 {
-                    return false;
+                    return result;
                 }
                 Debug.Assert(IsValidTdsToken(token), $"DataReady is false, but next token is not valid: {token,-2:X2}");
             }

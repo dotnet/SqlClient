@@ -1359,7 +1359,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     _networkPacketTaskSource.TrySetResult(null);
                 }
-                return false;
+                return OperationStatus.NeedMoreData;
             }
 #endif
 
@@ -1419,7 +1419,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     _networkPacketTaskSource.TrySetResult(null);
                 }
-                return false;
+                return OperationStatus.NeedMoreData;
             }
 #endif
 
