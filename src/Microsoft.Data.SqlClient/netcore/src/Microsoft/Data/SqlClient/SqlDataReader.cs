@@ -87,7 +87,7 @@ namespace Microsoft.Data.SqlClient
         private int _columnDataCharsIndex;      // Column index that is currently loaded in _columnDataChars
 
         private Task _currentTask;
-        private Snapshot _snapshot;
+        private ReaderSnapshot _snapshot;
 
         private CancellationTokenSource _cancelAsyncOnCloseTokenSource;
         private CancellationToken _cancelAsyncOnCloseToken;
@@ -5160,6 +5160,74 @@ namespace Microsoft.Data.SqlClient
 
 #endif
 
+        internal sealed class ReaderSnapshot
+        {
+            public bool _dataReady;
+            public bool _haltRead;
+            public bool _metaDataConsumed;
+            public bool _browseModeInfoConsumed;
+            public bool _hasRows;
+            public ALTROWSTATUS _altRowStatus;
+            public int _nextColumnDataToRead;
+            public int _nextColumnHeaderToRead;
+            public long _columnDataBytesRead;
+            public long _columnDataBytesRemaining;
+
+            public _SqlMetaDataSet _metadata;
+            public _SqlMetaDataSetCollection _altMetaDataSetCollection;
+            public MultiPartTableName[] _tableNames;
+
+            public SqlSequentialStream _currentStream;
+            public SqlSequentialTextReader _currentTextReader;
+
+            internal void Capture(SqlDataReader reader)
+            {
+                _haltRead = reader._haltRead;
+                _metaDataConsumed = reader._metaDataConsumed;
+                _browseModeInfoConsumed = reader._browseModeInfoConsumed;
+                _hasRows = reader._hasRows;
+                _altRowStatus = reader._altRowStatus;
+                _columnDataBytesRead = reader._columnDataBytesRead;
+
+                _dataReady = reader._sharedState._dataReady;
+                _nextColumnDataToRead = reader._sharedState._nextColumnDataToRead;
+                _nextColumnHeaderToRead = reader._sharedState._nextColumnHeaderToRead;
+                _columnDataBytesRemaining = reader._sharedState._columnDataBytesRemaining;
+
+                // _metadata and _altaMetaDataSetCollection must be Cloned
+                // before they are updated
+                _metadata = reader._metaData;
+                _altMetaDataSetCollection = reader._altMetaDataSetCollection;
+                _tableNames = reader._tableNames;
+
+                _currentStream = reader._currentStream;
+                _currentTextReader = reader._currentTextReader;
+            }
+
+            internal void Restore(SqlDataReader reader)
+            {
+                reader._haltRead = _haltRead;
+                reader._metaDataConsumed = _metaDataConsumed;
+                reader._browseModeInfoConsumed = _browseModeInfoConsumed;
+                reader._hasRows = _hasRows;
+                reader._altRowStatus = _altRowStatus;
+                reader._columnDataBytesRead = _columnDataBytesRead;
+
+                reader._sharedState._nextColumnDataToRead = _nextColumnDataToRead;
+                reader._sharedState._nextColumnHeaderToRead = _nextColumnHeaderToRead;
+                reader._sharedState._dataReady = _dataReady;
+                reader._sharedState._columnDataBytesRemaining = _columnDataBytesRemaining;
+
+                reader._metaData = _metadata;
+                reader._altMetaDataSetCollection = _altMetaDataSetCollection;
+                reader._tableNames = _tableNames;
+
+                reader._currentStream = _currentStream;
+                reader._currentTextReader = _currentTextReader;
+            }
+
+        }
+
         internal abstract class SqlDataReaderAsyncCallContext<T> : AAsyncCallContext<SqlDataReader, T>
         {
             internal static readonly Action<Task<T>, object> s_completeCallback = CompleteAsyncCallCallback;
@@ -5481,28 +5549,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-
-        internal class Snapshot
-        {
-            public bool _dataReady;
-            public bool _haltRead;
-            public bool _metaDataConsumed;
-            public bool _browseModeInfoConsumed;
-            public bool _hasRows;
-            public ALTROWSTATUS _altRowStatus;
-            public int _nextColumnDataToRead;
-            public int _nextColumnHeaderToRead;
-            public long _columnDataBytesRead;
-            public long _columnDataBytesRemaining;
-
-            public _SqlMetaDataSet _metadata;
-            public _SqlMetaDataSetCollection _altMetaDataSetCollection;
-            public MultiPartTableName[] _tableNames;
-
-            public SqlSequentialStream _currentStream;
-            public SqlSequentialTextReader _currentTextReader;
-        }
-
         private void PrepareAsyncInvocation(bool useSnapshot)
         {
             // if there is already a snapshot, then the previous async command
@@ -5516,33 +5562,14 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (_connection?.InnerConnection is SqlInternalConnection sqlInternalConnection)
                     {
-                        _snapshot = Interlocked.Exchange(ref sqlInternalConnection.CachedDataReaderSnapshot, null) ?? new Snapshot();
+                        _snapshot = Interlocked.Exchange(ref sqlInternalConnection.CachedDataReaderSnapshot, null) ?? new ReaderSnapshot();
                     }
                     else
                     {
-                        _snapshot = new Snapshot();
+                        _snapshot = new ReaderSnapshot();
                     }
 
-                    _snapshot._dataReady = _sharedState._dataReady;
-                    _snapshot._haltRead = _haltRead;
-                    _snapshot._metaDataConsumed = _metaDataConsumed;
-                    _snapshot._browseModeInfoConsumed = _browseModeInfoConsumed;
-                    _snapshot._hasRows = _hasRows;
-                    _snapshot._altRowStatus = _altRowStatus;
-                    _snapshot._nextColumnDataToRead = _sharedState._nextColumnDataToRead;
-                    _snapshot._nextColumnHeaderToRead = _sharedState._nextColumnHeaderToRead;
-                    _snapshot._columnDataBytesRead = _columnDataBytesRead;
-                    _snapshot._columnDataBytesRemaining = _sharedState._columnDataBytesRemaining;
-
-                    // _metadata and _altaMetaDataSetCollection must be Cloned
-                    // before they are updated
-                    _snapshot._metadata = _metaData;
-                    _snapshot._altMetaDataSetCollection = _altMetaDataSetCollection;
-                    _snapshot._tableNames = _tableNames;
-
-                    _snapshot._currentStream = _currentStream;
-                    _snapshot._currentTextReader = _currentTextReader;
-
+                    _snapshot.Capture(this);
                     _stateObj.SetSnapshot();
                 }
             }
@@ -5607,23 +5634,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(((_snapshot != null) || (_stateObj._asyncReadWithoutSnapshot)), "Can not prepare for an async continuation if no async if setup");
             if (_snapshot != null)
             {
-                _sharedState._dataReady = _snapshot._dataReady;
-                _haltRead = _snapshot._haltRead;
-                _metaDataConsumed = _snapshot._metaDataConsumed;
-                _browseModeInfoConsumed = _snapshot._browseModeInfoConsumed;
-                _hasRows = _snapshot._hasRows;
-                _altRowStatus = _snapshot._altRowStatus;
-                _sharedState._nextColumnDataToRead = _snapshot._nextColumnDataToRead;
-                _sharedState._nextColumnHeaderToRead = _snapshot._nextColumnHeaderToRead;
-                _columnDataBytesRead = _snapshot._columnDataBytesRead;
-                _sharedState._columnDataBytesRemaining = _snapshot._columnDataBytesRemaining;
-
-                _metaData = _snapshot._metadata;
-                _altMetaDataSetCollection = _snapshot._altMetaDataSetCollection;
-                _tableNames = _snapshot._tableNames;
-
-                _currentStream = _snapshot._currentStream;
-                _currentTextReader = _snapshot._currentTextReader;
+                _snapshot.Restore(this);
 
                 _stateObj.PrepareReplaySnapshot();
             }
