@@ -4,10 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
-## [Preview Release 4.0.0-preview1.21236.1] - 2021-08-24
+## [Preview Release 4.0.0-preview1.21237.2] - 2021-08-25
 
 ### Breaking changes over stable release 3.0.0
-- `Encrypt` connection setting default changed to true. [#1210](https://github.com/dotnet/SqlClient/pull/1210)
+- Changed `Encrypt` connection string property to be `true` by default. [#1210](https://github.com/dotnet/SqlClient/pull/1210)
 - The driver now throws `SqlException` replacing `AggregateException` for active directory authentication modes. [#1213](https://github.com/dotnet/SqlClient/pull/1213)
 - Dropped obsolete `Asynchronous Processing` connection property from .NET Framework. [#1148](https://github.com/dotnet/SqlClient/pull/1148)
 
@@ -29,8 +29,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Fixed async thread blocking issues on `SqlConnection.Open()` for active directory authentication modes. [#1213](https://github.com/dotnet/SqlClient/pull/1213)
 - Fixed driver behavior for Always Encrypted with secure enclaves to not fail when no user parameters have been provided. [#1115](https://github.com/dotnet/SqlClient/pull/1115)
 - Fixed bug with `LegacyRowVersionNullBehavior` App Context switch. [#1182](https://github.com/dotnet/SqlClient/pull/1182)
-- Fixed issues in Strings.resx file containing error messages. [#1136](https://github.com/dotnet/SqlClient/pull/1136) and
-[#1178](https://github.com/dotnet/SqlClient/pull/1178)
+- Fixed issues in Strings.resx file containing error messages. [#1136](https://github.com/dotnet/SqlClient/pull/1136) [#1178](https://github.com/dotnet/SqlClient/pull/1178)
 
 ### Changed
 - Updated error code to match with Windows when certificate validation fails in non-Windows client environments. [#1130](https://github.com/dotnet/SqlClient/pull/1130)
@@ -39,8 +38,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - Improved performance by changing `SqlParameter` bool fields to flags. [#1064](https://github.com/dotnet/SqlClient/pull/1064)
 - Improved performance by implementing static delegates. [#1060](https://github.com/dotnet/SqlClient/pull/1060)
 - Optimized async method allocations in .NET Framework by porting changes from .NET Core. [#1084](https://github.com/dotnet/SqlClient/pull/1084)
-- Various code improvements [#902](https://github.com/dotnet/SqlClient/pull/902) [#925](https://github.com/dotnet/SqlClient/pull/925) [#933](https://github.com/dotnet/SqlClient/pull/933) [#934](https://github.com/dotnet/SqlClient/pull/934) [#1024](https://github.com/dotnet/SqlClient/pull/1024) [#1057](https://github.com/dotnet/SqlClient/pull/1057) [#1122](https://github.com/dotnet/SqlClient/pull/1122) [#1133]((https://github.com/dotnet/SqlClient/pull/1133)) [#1134](https://github.com/dotnet/SqlClient/pull/1134) [#1141](https://github.com/dotnet/SqlClient/pull/1141) [#1187](https://github.com/dotnet/SqlClient/pull/1187) [#1188](https://github.com/dotnet/SqlClient/pull/1188) [#1223](https://github.com/dotnet/SqlClient/pull/1223) [#1225](https://github.com/dotnet/SqlClient/pull/1225)
-
+- Various code improvements [#902](https://github.com/dotnet/SqlClient/pull/902) [#925](https://github.com/dotnet/SqlClient/pull/925) [#933](https://github.com/dotnet/SqlClient/pull/933) [#934](https://github.com/dotnet/SqlClient/pull/934) [#1024](https://github.com/dotnet/SqlClient/pull/1024) [#1057](https://github.com/dotnet/SqlClient/pull/1057) [#1122](https://github.com/dotnet/SqlClient/pull/1122) [#1133]((https://github.com/dotnet/SqlClient/pull/1133)) [#1134](https://github.com/dotnet/SqlClient/pull/1134) [#1141](https://github.com/dotnet/SqlClient/pull/1141) [#1187](https://github.com/dotnet/SqlClient/pull/1187) [#1188](https://github.com/dotnet/SqlClient/pull/1188) [#1223](https://github.com/dotnet/SqlClient/pull/1223) [#1225](https://github.com/dotnet/SqlClient/pull/1225)  [#1226](https://github.com/dotnet/SqlClient/pull/1226)
 
 ## [Stable Release 3.0.0] - 2021-06-09
 
