@@ -6270,7 +6270,7 @@ namespace Microsoft.Data.SqlClient
                     break;
             }
 
-            Debug.Assert((stateObj._longlen == 0) && (stateObj._longlenleft == 0), "ReadSqlValue did not read plp field completely, longlen =" + stateObj._longlen.ToString((IFormatProvider)null) + ",longlenleft=" + stateObj._longlenleft.ToString((IFormatProvider)null));
+            Debug.Assert((stateObj._longlen == 0) && (stateObj._longLenleft == 0), "ReadSqlValue did not read plp field completely, longlen =" + stateObj._longlen.ToString((IFormatProvider)null) + ",longlenleft=" + stateObj._longLenleft.ToString((IFormatProvider)null));
             return OperationStatus.Done;
         }
 
@@ -12657,7 +12657,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert((buff == null && len == 0) || (buff.Length >= offst + len), "Invalid length sent to ReadPlpUnicodeChars()!");
             Debug.Assert((stateObj._longlen != 0) && (stateObj._longlen != TdsEnums.SQL_PLP_NULL),
                         "Out of sync plp read request");
-            if (stateObj._longlenleft == 0)
+            if (stateObj._longLenleft == 0)
             {
                 Debug.Fail("Out of sync read request");
                 charsRead = 0;
@@ -12667,8 +12667,8 @@ namespace Microsoft.Data.SqlClient
             charsRead = len;
 
             // stateObj._longlenleft is in bytes
-            if ((stateObj._longlenleft >> 1) < (ulong)len)
-                charsRead = (int)(stateObj._longlenleft >> 1);
+            if ((stateObj._longLenleft >> 1) < (ulong)len)
+                charsRead = (int)(stateObj._longLenleft >> 1);
 
             for (int ii = 0; ii < charsRead; ii++)
             {
@@ -12679,7 +12679,8 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            stateObj._longlenleft -= ((ulong)charsRead << 1);
+            stateObj._longLenleft -= ((ulong)charsRead << 1);
+            stateObj._longLenLeftAssignedBy = 1;
             return OperationStatus.Done;
         }
 
@@ -12707,7 +12708,7 @@ namespace Microsoft.Data.SqlClient
 
             if (stateObj._longlen == 0)
             {
-                Debug.Assert(stateObj._longlenleft == 0);
+                Debug.Assert(stateObj._longLenleft == 0);
                 totalCharsRead = 0;
                 return OperationStatus.Done;       // No data
             }
@@ -12724,7 +12725,7 @@ namespace Microsoft.Data.SqlClient
                 buff = new char[(int)Math.Min((int)stateObj._longlen, len)];
             }
 
-            if (stateObj._longlenleft == 0)
+            if (stateObj._longLenleft == 0)
             {
                 ulong ignored;
                 OperationStatus result = stateObj.TryReadPlpLength(false, out ignored);
@@ -12733,7 +12734,7 @@ namespace Microsoft.Data.SqlClient
                     totalCharsRead = 0;
                     return result;
                 }
-                if (stateObj._longlenleft == 0)
+                if (stateObj._longLenleft == 0)
                 { // Data read complete
                     totalCharsRead = 0;
                     return OperationStatus.Done;
@@ -12744,7 +12745,7 @@ namespace Microsoft.Data.SqlClient
 
             while (charsLeft > 0)
             {
-                charsRead = (int)Math.Min((stateObj._longlenleft + 1) >> 1, (ulong)charsLeft);
+                charsRead = (int)Math.Min((stateObj._longLenleft + 1) >> 1, (ulong)charsLeft);
                 if ((buff == null) || (buff.Length < (offst + charsRead)))
                 {
                     // Grow the array
@@ -12767,7 +12768,7 @@ namespace Microsoft.Data.SqlClient
                     totalCharsRead += charsRead;
                 }
                 // Special case single byte left
-                if (stateObj._longlenleft == 1 && (charsLeft > 0))
+                if (stateObj._longLenleft == 1 && (charsLeft > 0))
                 {
                     byte b1;
                     OperationStatus result = stateObj.TryReadByte(out b1);
@@ -12775,21 +12776,23 @@ namespace Microsoft.Data.SqlClient
                     {
                         return result;
                     }
-                    stateObj._longlenleft--;
+                    stateObj._longLenleft--;
+                    stateObj._longLenLeftAssignedBy = 2;
                     ulong ignored;
                     result = stateObj.TryReadPlpLength(false, out ignored);
                     if (result != OperationStatus.Done)
                     {
                         return result;
                     }
-                    Debug.Assert((stateObj._longlenleft != 0), "ReadPlpUnicodeChars: Odd byte left at the end!");
+                    Debug.Assert((stateObj._longLenleft != 0), "ReadPlpUnicodeChars: Odd byte left at the end!");
                     byte b2;
                     result = stateObj.TryReadByte(out b2);
                     if (result != OperationStatus.Done)
                     {
                         return result;
                     }
-                    stateObj._longlenleft--;
+                    stateObj._longLenleft--;
+                    stateObj._longLenLeftAssignedBy = 3;
                     // Put it at the end of the array. At this point we know we have an extra byte.
                     buff[offst] = (char)(((b2 & 0xff) << 8) + (b1 & 0xff));
                     offst = checked((int)offst + 1);
@@ -12797,7 +12800,7 @@ namespace Microsoft.Data.SqlClient
                     charsLeft--;
                     totalCharsRead++;
                 }
-                if (stateObj._longlenleft == 0)
+                if (stateObj._longLenleft == 0)
                 { // Read the next chunk or cleanup state if hit the end
                     ulong ignored;
                     OperationStatus result = stateObj.TryReadPlpLength(false, out ignored);
@@ -12807,7 +12810,7 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 
-                if (stateObj._longlenleft == 0)   // Data read complete
+                if (stateObj._longLenleft == 0)   // Data read complete
                     break;
             }
             return OperationStatus.Done;
@@ -12822,7 +12825,7 @@ namespace Microsoft.Data.SqlClient
 
             if (stateObj._longlen == 0)
             {
-                Debug.Assert(stateObj._longlenleft == 0);
+                Debug.Assert(stateObj._longLenleft == 0);
                 return 0;       // No data
             }
 
@@ -12832,10 +12835,10 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert((buff == null && offst == 0) || (buff.Length >= offst + len), "Invalid length sent to ReadPlpAnsiChars()!");
             charsLeft = len;
 
-            if (stateObj._longlenleft == 0)
+            if (stateObj._longLenleft == 0)
             {
                 stateObj.ReadPlpLength(false);
-                if (stateObj._longlenleft == 0)
+                if (stateObj._longLenleft == 0)
                 {// Data read complete
                     stateObj._plpdecoder = null;
                     return 0;
@@ -12860,7 +12863,7 @@ namespace Microsoft.Data.SqlClient
 
             while (charsLeft > 0)
             {
-                bytesRead = (int)Math.Min(stateObj._longlenleft, (ulong)charsLeft);
+                bytesRead = (int)Math.Min(stateObj._longLenleft, (ulong)charsLeft);
                 if ((stateObj._bTmp == null) || (stateObj._bTmp.Length < bytesRead))
                 {
                     // Grow the array
@@ -12873,10 +12876,10 @@ namespace Microsoft.Data.SqlClient
                 charsLeft -= charsRead;
                 offst += charsRead;
                 totalcharsRead += charsRead;
-                if (stateObj._longlenleft == 0)  // Read the next chunk or cleanup state if hit the end
+                if (stateObj._longLenleft == 0)  // Read the next chunk or cleanup state if hit the end
                     stateObj.ReadPlpLength(false);
 
-                if (stateObj._longlenleft == 0)
+                if (stateObj._longLenleft == 0)
                 { // Data read complete
                     stateObj._plpdecoder = null;
                     break;
@@ -12904,7 +12907,7 @@ namespace Microsoft.Data.SqlClient
             int bytesSkipped;
             totalBytesSkipped = 0;
 
-            if (stateObj._longlenleft == 0)
+            if (stateObj._longLenleft == 0)
             {
                 ulong ignored;
                 OperationStatus result = stateObj.TryReadPlpLength(false, out ignored);
@@ -12915,22 +12918,23 @@ namespace Microsoft.Data.SqlClient
             }
 
             while ((totalBytesSkipped < cb) &&
-                    (stateObj._longlenleft > 0))
+                    (stateObj._longLenleft > 0))
             {
-                if (stateObj._longlenleft > int.MaxValue)
+                if (stateObj._longLenleft > int.MaxValue)
                     bytesSkipped = int.MaxValue;
                 else
-                    bytesSkipped = (int)stateObj._longlenleft;
+                    bytesSkipped = (int)stateObj._longLenleft;
                 bytesSkipped = ((cb - totalBytesSkipped) < (ulong)bytesSkipped) ? (int)(cb - totalBytesSkipped) : bytesSkipped;
                 OperationStatus result = stateObj.TrySkipBytes(bytesSkipped);
                 if (result != OperationStatus.Done)
                 {
                     return result;
                 }
-                stateObj._longlenleft -= (ulong)bytesSkipped;
+                stateObj._longLenleft -= (ulong)bytesSkipped;
+                stateObj._longLenLeftAssignedBy = 4;
                 totalBytesSkipped += (ulong)bytesSkipped;
 
-                if (stateObj._longlenleft == 0)
+                if (stateObj._longLenleft == 0)
                 {
                     ulong ignored;
                     result = stateObj.TryReadPlpLength(false, out ignored);
@@ -12946,15 +12950,15 @@ namespace Microsoft.Data.SqlClient
 
         internal ulong PlpBytesLeft(TdsParserStateObject stateObj)
         {
-            if ((stateObj._longlen != 0) && (stateObj._longlenleft == 0))
+            if ((stateObj._longlen != 0) && (stateObj._longLenleft == 0))
                 stateObj.ReadPlpLength(false);
 
-            return stateObj._longlenleft;
+            return stateObj._longLenleft;
         }
 
         internal OperationStatus TryPlpBytesLeft(TdsParserStateObject stateObj, out ulong left)
         {
-            if ((stateObj._longlen != 0) && (stateObj._longlenleft == 0))
+            if ((stateObj._longlen != 0) && (stateObj._longLenleft == 0))
             {
                 OperationStatus result = stateObj.TryReadPlpLength(false, out left);
                 if (result != OperationStatus.Done)
@@ -12963,7 +12967,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            left = stateObj._longlenleft;
+            left = stateObj._longLenleft;
             return OperationStatus.Done;
         }
 

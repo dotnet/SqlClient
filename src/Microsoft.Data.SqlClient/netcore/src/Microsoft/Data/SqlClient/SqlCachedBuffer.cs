@@ -82,7 +82,7 @@ namespace Microsoft.Data.SqlClient
                     return result;
                 }
             } while (plplength > 0);
-            Debug.Assert(stateObj._longlen == 0 && stateObj._longlenleft == 0);
+            Debug.Assert(stateObj._longlen == 0 && stateObj._longLenleft == 0);
 
             buffer = new SqlCachedBuffer(cachedBytes);
             return OperationStatus.Done;

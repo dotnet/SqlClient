@@ -79,6 +79,10 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="dataLength">Length of byte array to be allocated</param>
         public void Allocate(int headerLength, int dataLength)
         {
+            //if (_data == null || _data.Length < (headerLength + dataLength))
+            //{
+            //    _data = new byte[headerLength + dataLength]; //ArrayPool<byte>.Shared.Rent(headerLength + dataLength);
+            //}
             _data = ArrayPool<byte>.Shared.Rent(headerLength + dataLength);
             _dataCapacity = dataLength;
             _dataLength = 0;
@@ -194,7 +198,7 @@ namespace Microsoft.Data.SqlClient.SNI
             if (_data != null)
             {
                 Array.Clear(_data, 0, _headerLength + _dataLength);
-                ArrayPool<byte>.Shared.Return(_data, clearArray: false);
+                ArrayPool<byte>.Shared.Return(_data, clearArray: true);
 
                 _data = null;
                 _dataCapacity = 0;
@@ -254,6 +258,13 @@ namespace Microsoft.Data.SqlClient.SNI
             else
             {
                 _dataLength = t.Result;
+                if (_dataLength == 8000)
+                {
+                    if (_data[0] != 4)
+                    {
+                        Debugger.Break();
+                    }
+                }
 #if DEBUG
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIPacket), EventType.INFO, "Connection Id {0}, Packet Id {1} _dataLength {2} read from stream.", args0: _owner?.ConnectionId, args1: _id, args2: _dataLength);
 #endif
