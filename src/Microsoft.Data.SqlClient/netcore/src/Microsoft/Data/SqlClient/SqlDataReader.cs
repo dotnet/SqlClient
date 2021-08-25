@@ -816,7 +816,7 @@ namespace Microsoft.Data.SqlClient
             {
                 byte token;
                 result = _stateObj.TryPeekByte(out token);
-                if (result!=OperationStatus.Done)
+                if (result != OperationStatus.Done)
                 {
                     return result;
                 }
@@ -3590,14 +3590,14 @@ namespace Microsoft.Data.SqlClient
                     more = false;
 
 #if DEBUG
-                    if ((!_sharedState._dataReady) && (_stateObj.HasPendingData))
+                if ((!_sharedState._dataReady) && (_stateObj.HasPendingData))
+                {
+                    byte token;
+                    result = _stateObj.TryPeekByte(out token);
+                    if (result != OperationStatus.Done)
                     {
-                        byte token;
-                        result = _stateObj.TryPeekByte(out token);
-                        if (result != OperationStatus.Done)
-                        {
-                            return result;
-                        }
+                        return result;
+                    }
 
                         Debug.Assert(TdsParser.IsValidTdsToken(token), $"DataReady is false, but next token is invalid: {token,-2:X2}");
                     }
