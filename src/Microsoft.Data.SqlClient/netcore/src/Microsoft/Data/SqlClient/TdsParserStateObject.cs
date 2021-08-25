@@ -1050,27 +1050,33 @@ namespace Microsoft.Data.SqlClient
                 do
                 {
                     int copy = Math.Min(_inBytesRead - _inBytesUsed, _inputHeaderLen - _partialHeaderBytesRead);
-                    Debug.Assert(copy > 0, "ReadNetworkPacket read empty buffer");
 
-                    Buffer.BlockCopy(_inBuff, _inBytesUsed, _partialHeaderBuffer, _partialHeaderBytesRead, copy);
-                    _partialHeaderBytesRead += copy;
-                    _inBytesUsed += copy;
+                    // partial packet reads can cause there to be no data in the input buffer
+                    // so we cannot assert that we will have data here, instead we must check
+                    // and then request more data if none is available
+                    //Debug.Assert(copy > 0, "ReadNetworkPacket read empty buffer");
+
+                    if (copy > 0)
+                    {
+                        Buffer.BlockCopy(_inBuff, _inBytesUsed, _partialHeaderBuffer, _partialHeaderBytesRead, copy);
+                        _partialHeaderBytesRead += copy;
+                        _inBytesUsed += copy;
+                    }
 
                     Debug.Assert(_partialHeaderBytesRead <= _inputHeaderLen, "Read more bytes for header than required");
                     if (_partialHeaderBytesRead == _inputHeaderLen)
                     {
+                        ReadOnlySpan<byte> header = _partialHeaderBuffer.AsSpan(0, TdsEnums.HEADER_LEN);
                         // All read
                         _partialHeaderBytesRead = 0;
-                        _inBytesPacket = GetPacketDataLengthFromHeader(_partialHeaderBuffer.AsSpan(0, TdsEnums.HEADER_LEN));
+                        _messageStatus = Packet.GetStatusFromHeader(header); //_partialHeaderBuffer[1];
+                        _inBytesPacket = Packet.GetDataLengthFromHeader(header);
+                        _spid = Packet.GetSpidFromHeader(header);//_partialHeaderBuffer[TdsEnums.SPID_OFFSET] << 8 | _partialHeaderBuffer[TdsEnums.SPID_OFFSET + 1];
                         if (_inBytesPacket > _inBuff.Length)
                         {
                             Debugger.Break();
                         }
                         _inBytesPacketAssignedBy = 5;
-
-                        _messageStatus = _partialHeaderBuffer[1];
-                        _spid = _partialHeaderBuffer[TdsEnums.SPID_OFFSET] << 8 |
-                                  _partialHeaderBuffer[TdsEnums.SPID_OFFSET + 1];
                         SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.TryProcessHeader | ADV | State Object Id {0}, Client Connection Id {1}, Server process Id (SPID) {2}", _objectID, _parser?.Connection?.ClientConnectionId, _spid);
                     }
                     else
@@ -1104,34 +1110,33 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
+                ReadOnlySpan<byte> header = _inBuff.AsSpan(_inBytesUsed, TdsEnums.HEADER_LEN);
+                // normal header processing...
+                _messageStatus = Packet.GetStatusFromHeader(header); //_inBuff[_inBytesUsed + 1];
+                _inBytesPacket = Packet.GetDataLengthFromHeader(header);
+                _spid = Packet.GetSpidFromHeader(header); //_inBuff[_inBytesUsed + TdsEnums.SPID_OFFSET] << 8 | _inBuff[_inBytesUsed + TdsEnums.SPID_OFFSET + 1];
 
-                    // normal header processing...
-                    _messageStatus = _inBuff[_inBytesUsed + 1];
-                    _inBytesPacket = GetPacketDataLengthFromHeader(_inBuff.AsSpan(_inBytesUsed, TdsEnums.HEADER_LEN));
+                if (_inBytesPacket > _inBuff.Length)
+                {
+                    Debugger.Break();
+                }
+                _inBytesPacketAssignedBy = 10;
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.TryProcessHeader | ADV | State Object Id {0}, Client Connection Id {1}, Server process Id (SPID) {2}", _objectID, _parser?.Connection?.ClientConnectionId, _spid);
+                _inBytesUsed += _inputHeaderLen;
+
+                if (_inBytesPacket > _inBuff.Length)
+                {
+                    Debugger.Break();
+                }
+
+                if (_inBytesPacket - _inBytesRead > 0)
+                {
                     if (_inBytesPacket > _inBuff.Length)
                     {
                         Debugger.Break();
                     }
-                    _inBytesPacketAssignedBy = 10;
-                    _spid = _inBuff[_inBytesUsed + TdsEnums.SPID_OFFSET] << 8 |
-                                                    _inBuff[_inBytesUsed + TdsEnums.SPID_OFFSET + 1];
-                    SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.TryProcessHeader | ADV | State Object Id {0}, Client Connection Id {1}, Server process Id (SPID) {2}", _objectID, _parser?.Connection?.ClientConnectionId, _spid);
-                    _inBytesUsed += _inputHeaderLen;
-
-                    if (_inBytesPacket > _inBuff.Length)
-                    {
-                        Debugger.Break();
-                    }
-
-                    if (_inBytesPacket - _inBytesRead > 0)
-                    {
-                        if (_inBytesPacket > _inBuff.Length)
-                        {
-                            Debugger.Break();
-                        }
-                    }
+                }
                 
-               
                 AssertValidState();
             }
 
@@ -1140,7 +1145,10 @@ namespace Microsoft.Data.SqlClient
                 // either TDS stream is corrupted or there is multithreaded misuse of connection
                 throw SQL.ParsingError();
             }
-
+            if (_inBytesPacket == 0)
+            {
+                return OperationStatus.NeedMoreData;
+            }
             return OperationStatus.Done;
         }
 
@@ -1176,20 +1184,20 @@ namespace Microsoft.Data.SqlClient
                 if (!partialPacket.HasDataLength)
                 {
                     // we need to get enough bytes to read the packet header
-                    int headeBytesNeeded = Math.Min(0,TdsEnums.HEADER_LEN - partialPacket.CurrentLength);
+                    int headeBytesNeeded = Math.Max(0,TdsEnums.HEADER_LEN - partialPacket.CurrentLength);
                     if (headeBytesNeeded > 0)
                     {
                         int headerBytesAvailable = Math.Min(data.Length, headeBytesNeeded);
                         Span<byte> headerTarget = partialPacket.Buffer.AsSpan(partialPacket.CurrentLength, headerBytesAvailable);
                         ReadOnlySpan<byte> headerSource = data.Slice(0, headerBytesAvailable);
                         headerSource.CopyTo(headerTarget);
-                        partialPacket.SetCurrentLength(partialPacket.CurrentLength + headerBytesAvailable);
+                        partialPacket.CurrentLength = partialPacket.CurrentLength + headerBytesAvailable;
                         data = data.Slice(headerBytesAvailable);
                         bytesConsumed += headerBytesAvailable;
                     }
-                    if (partialPacket.HasHeaderBytes)
+                    if (partialPacket.HasHeader)
                     {
-                        partialPacket.DataLength = GetPacketDataLengthFromHeader(partialPacket.GetHeaderSpan());
+                        partialPacket.DataLength = Packet.GetDataLengthFromHeader(partialPacket);
                         if (partialPacket.DataLength > dataBuffer.Length)
                         {
                             Debugger.Break();
@@ -1208,7 +1216,7 @@ namespace Microsoft.Data.SqlClient
                         Span<byte> payloadTarget = partialPacket.Buffer.AsSpan(partialPacket.CurrentLength, payloadBytesAvailable);
                         ReadOnlySpan<byte> payloadSource = data.Slice(0, payloadBytesAvailable);
                         payloadSource.CopyTo(payloadTarget);
-                        partialPacket.SetCurrentLength(partialPacket.CurrentLength + payloadBytesAvailable);
+                        partialPacket.CurrentLength = partialPacket.CurrentLength + payloadBytesAvailable;
                         bytesConsumed += payloadBytesAvailable;
                         data = data.Slice(payloadBytesAvailable);
                     }
@@ -1216,27 +1224,25 @@ namespace Microsoft.Data.SqlClient
                     {
                         // the packet contains an entire packet and more data after that so we need
                         // to extract the following data into a new packet with a new buffer and return
-                        // it as the new remainer packet
+                        // it as the remainer packet
 
-                        //string a = Vizualize(partialPacket.Buffer, 0, partialPacket.Buffer.Length);
-
+                        int remainderLength = partialPacket.CurrentLength - partialPacket.RequiredLength;
                         remainderPacket = new Packet
                         {
                             Buffer = new byte[dataBuffer.Length],
-                            //CurrentLength = (partialPacket.CurrentLength - partialPacket.RequiredLength),
+                            CurrentLength = remainderLength,
                         };
-                        remainderPacket.SetCurrentLength(partialPacket.CurrentLength - partialPacket.RequiredLength);
                         Buffer.BlockCopy(
-                            partialPacket.Buffer, partialPacket.RequiredLength,
-                            remainderPacket.Buffer, 0,
-                            remainderPacket.CurrentLength
+                            partialPacket.Buffer, partialPacket.RequiredLength, // from
+                            remainderPacket.Buffer, 0, // to
+                            remainderPacket.CurrentLength // for
                         );
-                        partialPacket.SetCurrentLength(partialPacket.CurrentLength - remainderPacket.CurrentLength);
+                        partialPacket.CurrentLength = partialPacket.CurrentLength - remainderPacket.CurrentLength;
                         consumeRemainderPacket = true;
 
-                        if (remainderPacket.HasHeaderBytes)
+                        if (remainderPacket.HasHeader)
                         {
-                            remainderPacket.DataLength = GetPacketDataLengthFromHeader(remainderPacket.GetHeaderSpan());
+                            remainderPacket.DataLength = Packet.GetDataLengthFromHeader(remainderPacket);
                             if (remainderPacket.HasDataLength && remainderPacket.CurrentLength >= remainderPacket.RequiredLength)
                             {
                                 recurse = true;
@@ -1255,11 +1261,11 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (data.Length > 0)
                     {
-                        if (data[0] == 120)
-                        {
-                            var d = Vizualize(dataBuffer, dataOffset, dataLength);
-                            Debugger.Break();
-                        }
+                        //if (data[0] == 120)
+                        //{
+                        //    var d = Vizualize(dataBuffer, dataOffset, dataLength);
+                        //    Debugger.Break();
+                        //}
 
                         // some data has been taken from the buffer, put into the partial
                         // packet buffer and we have data left so move the data we have
@@ -1271,23 +1277,18 @@ namespace Microsoft.Data.SqlClient
                             dataLength - bytesConsumed // for
                         );
 
-                        // for debugging purposes fill the removed data area with an easily
-                        // recognisable pattern so we can see if it is misused
-                        Span<byte> removed = dataBuffer.AsSpan(dataOffset + (dataLength - bytesConsumed), (dataOffset + bytesConsumed));
-                        removed.Fill(0xFF);
-
-
-                        //string a = Vizualize(dataBuffer, dataOffset, dataLength - bytesConsumed);
-                        //string b = Vizualize(dataBuffer, dataOffset + (dataLength - bytesConsumed), bytesConsumed);
-
+                        //// for debugging purposes fill the removed data area with an easily
+                        //// recognisable pattern so we can see if it is misused
+                        //Span<byte> removed = dataBuffer.AsSpan(dataOffset + (dataLength - bytesConsumed), (dataOffset + bytesConsumed));
+                        //removed.Fill(0xFF);
 
                         // then recreate the data span so that we're looking at the data
                         // that has been moved
                         data = dataBuffer.AsSpan(dataOffset, dataLength - bytesConsumed);
-                        if (data[0] == 120)
-                        {
-                            Debugger.Break();
-                        }
+                        //if (data[0] == 120)
+                        //{
+                        //    Debugger.Break();
+                        //}
                     }
                     
                     newDataLength = dataLength - bytesConsumed;
@@ -1300,7 +1301,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     // we have enough bytes to read the packet header and see how
                     // much data we are expecting it to contain
-                    int packetDataLength = GetPacketDataLengthFromHeader(data.Slice(0, TdsEnums.HEADER_LEN));
+                    int packetDataLength = Packet.GetDataLengthFromHeader(data);
                     if (packetDataLength > dataBuffer.Length)
                     {
                         Debugger.Break();
@@ -1323,16 +1324,12 @@ namespace Microsoft.Data.SqlClient
                             {
                                 Buffer = dataBuffer,
                                 DataLength = packetDataLength,
-                                //CurrentLength = data.Length
+                                CurrentLength = data.Length
                             };
-                            remainderPacket.SetCurrentLength(data.Length);
                             consumeRemainderPacket = true;
-                            if (remainderPacket.HasHeaderBytes)
-                            {
-                                remainderPacket.DataLength = GetPacketDataLengthFromHeader(remainderPacket.GetHeaderSpan());
-
-                            }
-                            if (remainderPacket.HasDataLength && remainderPacket.CurrentLength >= remainderPacket.RequiredLength)
+                            //Debug.Assert(remainderPacket.HasHeader); // precondition of entering this block
+                            //Debug.Assert(remainderPacket.HasDataLength); // must have been set at construction
+                            if (remainderPacket.CurrentLength >= remainderPacket.RequiredLength)
                             {
                                 // the remainder packet contains more data than the packet so we need
                                 // to tell the caller to recurse into this function again once they have
@@ -1349,15 +1346,10 @@ namespace Microsoft.Data.SqlClient
                         {
                             Buffer = dataBuffer,
                             DataLength = packetDataLength,
-                            //CurrentLength = data.Length
+                            CurrentLength = data.Length
                         };
-                        remainderPacket.SetCurrentLength(data.Length);
                         consumeRemainderPacket = true;
-                        if (remainderPacket.HasHeaderBytes)
-                        {
-                            remainderPacket.DataLength = GetPacketDataLengthFromHeader(remainderPacket.GetHeaderSpan());
-
-                        }
+                        Debug.Assert(remainderPacket.HasHeader); // precondition of entering this block
                         if (remainderPacket.HasDataLength && remainderPacket.CurrentLength >= remainderPacket.RequiredLength)
                         {
                             // the remainder packet contains more data than the packet so we need
@@ -1366,7 +1358,7 @@ namespace Microsoft.Data.SqlClient
                             recurse = true;
                         }
                     }
-                    else // implied current length > required length
+                    else // implied: current length > required length
                     {
                         // more data than required so need to split it out but we can't do that
                         // here so we need to tell the caller to take the remainer packet and then
@@ -1375,9 +1367,8 @@ namespace Microsoft.Data.SqlClient
                         {
                             Buffer = dataBuffer,
                             DataLength = packetDataLength,
-                            //CurrentLength = data.Length
+                            CurrentLength = data.Length
                         };
-                        remainderPacket.SetCurrentLength(data.Length);
                         consumeRemainderPacket = true;
                         recurse = true;
                     }
@@ -1400,13 +1391,12 @@ namespace Microsoft.Data.SqlClient
                         remainderPacket = new Packet
                         {
                             Buffer = dataBuffer,
-                            //CurrentLength = data.Length
+                            CurrentLength = data.Length
                         };
-                        remainderPacket.SetCurrentLength(data.Length);
                         consumeRemainderPacket = true;
-                        if (remainderPacket.HasHeaderBytes)
+                        if (remainderPacket.HasHeader)
                         {
-                            remainderPacket.DataLength = GetPacketDataLengthFromHeader(remainderPacket.GetHeaderSpan());
+                            remainderPacket.DataLength = Packet.GetDataLengthFromHeader(remainderPacket.GetHeaderSpan());
                         }
                         if (remainderPacket.HasDataLength && remainderPacket.CurrentLength >= remainderPacket.RequiredLength)
                         {
@@ -1417,6 +1407,11 @@ namespace Microsoft.Data.SqlClient
                         }
                     }
                 }
+            }
+
+            if (remainderPacket != null && remainderPacket.HasHeader)
+            {
+                remainderPacket.Buffer[7] = 0xF;
             }
 
             if (consumePartialPacket && consumeInputDirectly)
@@ -1464,27 +1459,21 @@ namespace Microsoft.Data.SqlClient
             return buffer.ToString();
         }
 
-
-        private static int GetPacketDataLengthFromHeader(ReadOnlySpan<byte> header)
+        private void AddHistory(string value)
         {
-            return (header[TdsEnums.HEADER_LEN_FIELD_OFFSET] << 8 | header[TdsEnums.HEADER_LEN_FIELD_OFFSET + 1]) - TdsEnums.HEADER_LEN;
+            if (history == null)
+            {
+                history = new LinkedList<string>();
+            }
+            history.AddLast(value);
+            if (history.Count > 50)
+            {
+                history.RemoveFirst();
+            }
         }
 
-        private static int GetPacketSpidFromHeader(ReadOnlySpan<byte> header)
-        {
-            return (header[TdsEnums.HEADER_LEN_FIELD_OFFSET + 2] << 8 | header[TdsEnums.HEADER_LEN_FIELD_OFFSET + 3]);
-        }
-
-        private static int GetPacketIDFromHeader(ReadOnlySpan<byte> header)
-        {
-            return header[TdsEnums.HEADER_LEN_FIELD_OFFSET + 4];
-        }
-
-        private static bool GetPacketIsEOMFromHeader(ReadOnlySpan<byte> header)
-        {
-            return header[1] == 1;
-        }
-
+        internal bool _isLastPacket;
+        internal List<(int,int)> _packetSizeList = new List<(int,int)>(3000);
         private Packet _partialPacket => __partialPacket;
         private void SetPartialPacket(Packet packet, [CallerMemberName] string caller = null )
         {
@@ -1492,42 +1481,60 @@ namespace Microsoft.Data.SqlClient
             {
                 throw new InvalidOperationException("partial packet cannot be non-null when setting to non=null");
             }
-            if (packet!=null && packet.Buffer != null && packet.Buffer[0] == 120)
-            {
-                Debugger.Break();
-            }
+            //if (packet!=null && packet.Buffer != null && packet.Buffer[0] == 120)
+            //{
+            //    Debugger.Break();
+            //}
             __partialPacket = packet;
-
-            if (packet.HasHeaderBytes && packet.HasDataLength && packet.CurrentLength >= packet.RequiredLength)
-            {
-                //Debugger.Break();
-                if (packet.Buffer[0] == 4 && packet.Buffer[1] == 1) // if it's a data packet and the last packet in the sequence
-                {
-                    packet.Buffer[7]= 128; // set the unused window value so we can identify this header again
-                }
-            }
-            history.AddLast($"{caller}: set partial packet, length={packet.CurrentLength}, required={(packet.HasDataLength ? packet.RequiredLength : -1)}");
-            if (history.Count > 50)
-            {
-                history.RemoveFirst();
-            }
+            AddHistory($"{caller}: set partial, length={packet.CurrentLength}, required={(packet.HasDataLength ? packet.RequiredLength : -1)}, id={(packet.HasHeader ? Packet.GetIDFromHeader(packet.GetHeaderSpan()) : -1)}{(packet.HasHeader && Packet.GetIsEOMFromHeader(packet.GetHeaderSpan()) ? ", eom":"")}");
         }
+
         private void ClearPartialPacket([CallerMemberName] string caller = null)
         {
             Packet partialPacket = __partialPacket;
             __partialPacket = null;
             if (partialPacket != null)
             {
+                var header = partialPacket.GetHeaderSpan();
+                int packetId = Packet.GetIDFromHeader(header);
+                bool isEOM = Packet.GetIsEOMFromHeader(header);
                 partialPacket.Dispose();
+                AddHistory($"{caller} id={packetId}{(isEOM?", eom":"")}");
             }
-            else
+        }
+
+        public string SummarizePackets()
+        {
+            long sum = 0;
+            int count = 0;
+            int nonFullCount = 0;
+            int lastId = 0;
+            List<int> missingPackets = null;
+            for (int index = 0; index < _packetSizeList.Count; index++)
             {
-                history.AddLast($"{caller} cleared partial packet");
+                (int value, int id) = _packetSizeList[index];
+                if (index > 0)
+                {
+                    if ((lastId + 1) % 256 != id)
+                    {
+                        if (missingPackets == null)
+                        {
+                            missingPackets = new List<int>();
+                        }
+                        missingPackets.Add((lastId + 1) % byte.MaxValue);
+                    }
+                }
+                lastId = id;
+                sum += value;
+                count += 1;
+                if (value != 7988)
+                {
+                    nonFullCount += 1;
+                }
             }
-            if (history.Count > 50)
-            {
-                history.RemoveFirst();
-            }
+
+            string result = $"count:{count}, partial:{nonFullCount}, sum:{sum}, target:{20971520}{(missingPackets!=null?", missing:" + missingPackets.Count.ToString():"")}";
+            return result;
         }
 
 
@@ -1583,22 +1590,18 @@ namespace Microsoft.Data.SqlClient
                     CheckDisposed();
                     return _totalLength;
                 }
-                //set
-                //{
-                //    CheckDisposed();
-                //    _totalLength = value;
-                //}
+                set
+                {
+                    CheckDisposed();
+                    _totalLength = value;
+                }
             }
 
-            //string __caller;
-            //int __lineNo;
-            public void SetCurrentLength(int value/*, [CallerMemberName] string caller = null, [CallerLineNumber] int lineNo=-1*/)
-            {
-                CheckDisposed();
-                _totalLength = value;
-               // __caller = caller;
-                //__lineNo = lineNo;
-            }
+            //public void SetCurrentLength(int value/*, [CallerMemberName] string caller = null, [CallerLineNumber] int lineNo=-1*/)
+            //{
+            //    CheckDisposed();
+            //    _totalLength = value;
+            //}
             public int RequiredLength
             {
                 get
@@ -1612,15 +1615,17 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            public bool HasHeaderBytes => _totalLength >= TdsEnums.HEADER_LEN;
+            public bool HasHeader => _totalLength >= TdsEnums.HEADER_LEN;
 
             public bool HasDataLength => _dataLength >= 0;
+
+            public bool IsComplete => _dataLength != UnknownDataLength && (TdsEnums.HEADER_LEN + _dataLength) == _totalLength;
 
             public ReadOnlySpan<byte> GetHeaderSpan() => _buffer.AsSpan(0, TdsEnums.HEADER_LEN);
 
             public void Dispose()
             {
-                _disposed = false;
+                _disposed = true;
             }
 
             public void CheckDisposed()
@@ -1635,6 +1640,25 @@ namespace Microsoft.Data.SqlClient
             {
                 throw new ObjectDisposedException(nameof(Packet));
             }
+
+            internal static byte GetStatusFromHeader(ReadOnlySpan<byte> header) => header[1];
+
+            internal static int GetDataLengthFromHeader(ReadOnlySpan<byte> header)
+            {
+                return (header[TdsEnums.HEADER_LEN_FIELD_OFFSET] << 8 | header[TdsEnums.HEADER_LEN_FIELD_OFFSET + 1]) - TdsEnums.HEADER_LEN;
+            }
+            internal static int GetSpidFromHeader(ReadOnlySpan<byte> header)
+            {
+                return (header[TdsEnums.SPID_OFFSET] << 8 | header[TdsEnums.SPID_OFFSET + 1]);
+            }
+            internal static int GetIDFromHeader(ReadOnlySpan<byte> header)
+            {
+                return header[TdsEnums.HEADER_LEN_FIELD_OFFSET + 4];
+            }
+
+            internal static int GetDataLengthFromHeader(Packet packet) => GetDataLengthFromHeader(packet.GetHeaderSpan());
+
+            internal static bool GetIsEOMFromHeader(ReadOnlySpan<byte> header) => GetStatusFromHeader(header) == 1;
         }
 
         // This ensure that there is data available to be read in the buffer and that the header has been processed
@@ -2437,15 +2461,19 @@ namespace Microsoft.Data.SqlClient
                 if (chunklen == TdsEnums.SQL_PLP_CHUNK_TERMINATOR)
                 {
                     _longLenleft = 0;
+                    if (_longLenleft > 20971520)
+                    {
+                        Debugger.Break();
+                    }
                     _longlen = 0;
                 }
                 else
                 {
                     _longLenleft = (ulong)chunklen;
-                    //if (_longLenleft > (ulong)_inBuff.Length)
-                    //{
-                    //    Debugger.Break();
-                    //}
+                    if (_longLenleft > 20971520)
+                    {
+                        Debugger.Break();
+                    }
                     _longLenLeftAssignedBy = 5;
                 }
             }
@@ -2564,10 +2592,8 @@ namespace Microsoft.Data.SqlClient
             }
 
 
-            int iterationCount = 0;
             while (bytesLeft > 0)
             {
-                iterationCount++;
                 int bytesToRead = (int)Math.Min(_longLenleft, (ulong)bytesLeft);
                 if (buff.Length < (offset + bytesToRead))
                 {
@@ -2582,6 +2608,13 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 OperationStatus result = TryReadByteArray(buff.AsSpan(offset), bytesToRead, out bytesRead);
+                int pacetId = Packet.GetIDFromHeader(_inBuff);
+                AddHistory($"TryReadPLPBytes read:{bytesRead} id={pacetId}");
+                _packetSizeList.Add((bytesRead, pacetId));
+                if (_isLastPacket && _longLenleft!= (ulong)bytesRead)
+                {
+                    Debugger.Break();
+                }
                 Debug.Assert(bytesRead <= bytesLeft, "Read more bytes than we needed");
                 Debug.Assert((ulong)bytesRead <= _longLenleft, "Read more bytes than is available");
 
@@ -2770,7 +2803,7 @@ namespace Microsoft.Data.SqlClient
                 result = OperationStatus.NeedMoreData;
             }
 
-            if (result == OperationStatus.InvalidData && _partialPacket != null)
+            if (result == OperationStatus.InvalidData && _partialPacket != null && !_partialPacket.IsComplete)
             {
                 result = OperationStatus.NeedMoreData;
             }
@@ -2778,6 +2811,15 @@ namespace Microsoft.Data.SqlClient
             if (_syncOverAsync)
             {
                 ReadSniSyncOverAsync();
+                while (_inBytesRead == 0)
+                {
+                    // a partial packet must have taken the packet data so we
+                    // need to read more data to complete the packet but we 
+                    // can't return NeedMoreData in sync mode so we have to
+                    // spin fetching more data here until we have something
+                    // that the caller can read
+                    ReadSniSyncOverAsync();
+                }
                 return OperationStatus.Done;
             }
 
@@ -2815,6 +2857,11 @@ namespace Microsoft.Data.SqlClient
             }
 
             PacketHandle readPacket = default;
+            bool readFromNetwork = true;
+            if (_partialPacket != null && _partialPacket.IsComplete)
+            {
+                readFromNetwork = false;
+            }
 
             uint error;
 
@@ -2824,7 +2871,14 @@ namespace Microsoft.Data.SqlClient
                 Interlocked.Increment(ref _readingCount);
                 shouldDecrement = true;
 
-                readPacket = ReadSyncOverAsync(GetTimeoutRemaining(), out error);
+                if (readFromNetwork)
+                {
+                    readPacket = ReadSyncOverAsync(GetTimeoutRemaining(), out error);
+                }
+                else
+                {
+                    error = TdsEnums.SNI_SUCCESS;
+                }
 
                 Interlocked.Decrement(ref _readingCount);
                 shouldDecrement = false;
@@ -2837,9 +2891,12 @@ namespace Microsoft.Data.SqlClient
                 if (TdsEnums.SNI_SUCCESS == error)
                 { // Success - process results!
 
-                    Debug.Assert(!IsPacketEmpty(readPacket), "ReadNetworkPacket cannot be null in synchronous operation!");
+                    if (readFromNetwork)
+                    {
+                        Debug.Assert(!IsPacketEmpty(readPacket), "ReadNetworkPacket cannot be null in synchronous operation!");
+                    }
 
-                    ProcessSniPacket(readPacket, 0);
+                    ProcessSniPacket(readPacket, TdsEnums.SNI_SUCCESS, usePartialPacket: !readFromNetwork);
 #if DEBUG
                     if (_forcePendingReadsToWaitForUser)
                     {
@@ -2851,9 +2908,12 @@ namespace Microsoft.Data.SqlClient
 #endif
                 }
                 else
-                { // Failure!
-
-                    Debug.Assert(!IsValidPacket(readPacket), "unexpected readPacket without corresponding SNIPacketRelease");
+                { 
+                    // Failure!
+                    if (readFromNetwork)
+                    {
+                        Debug.Assert(!IsValidPacket(readPacket), "unexpected readPacket without corresponding SNIPacketRelease");
+                    }
 
                     ReadSniError(this, error);
                 }
@@ -2864,10 +2924,12 @@ namespace Microsoft.Data.SqlClient
                 {
                     Interlocked.Decrement(ref _readingCount);
                 }
-
-                if (!IsPacketEmpty(readPacket))
+                if (readFromNetwork)
                 {
-                    ReleasePacket(readPacket);
+                    if (!IsPacketEmpty(readPacket))
+                    {
+                        ReleasePacket(readPacket);
+                    }
                 }
 
                 AssertValidState();
@@ -3387,7 +3449,8 @@ namespace Microsoft.Data.SqlClient
 
 
         private int ProcessSniPacketInvokeCounter;
-        public void ProcessSniPacket(PacketHandle packet, uint error)
+        private int lastPacketId;
+        public void ProcessSniPacket(PacketHandle packet, uint error, bool usePartialPacket = false)
         {
             ProcessSniPacketInvokeCounter += 1;
             if (error != 0)
@@ -3405,8 +3468,26 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 uint dataSize = 0;
-
-                uint getDataError = SNIPacketGetData(packet, _inBuff, ref dataSize);
+                bool usedPartialPacket = false;
+                uint getDataError = 0;
+                //if (usePartialPacket)
+                //{
+                //    AddHistory($"ProcessSniPacket {(usePartialPacket ? nameof(usePartialPacket) : "")}, {(_partialPacket != null ? nameof(_partialPacket) : "")}, {((bool)(_partialPacket?.IsComplete) ? "IsComplete" : "")}");
+                //}
+                if (usePartialPacket && _snapshot == null && _partialPacket != null && _partialPacket.IsComplete)
+                {
+                    //Debug.Assert(_snapshot == null, "_snapshot must be null when processing partial packet instead of network read");
+                    //Debug.Assert(_partialPacket != null, "_partialPacket must not be null when usePartialPacket is true");
+                    //Debug.Assert(_partialPacket.IsComplete, "_partialPacket.IsComplete must be true to use it in place of a real read");
+                    SetBuffer(_partialPacket.Buffer, 0, _partialPacket.CurrentLength, $"ProcessSniPacket({ProcessSniPacketInvokeCounter}): sync catchup");
+                    ClearPartialPacket($"ProcessSniPacket({ProcessSniPacketInvokeCounter}): consumed partial");
+                    getDataError = TdsEnums.SNI_SUCCESS;
+                    usedPartialPacket = true;
+                }
+                else
+                {
+                    getDataError = SNIPacketGetData(packet, _inBuff, ref dataSize);
+                }
 
                 if (getDataError == TdsEnums.SNI_SUCCESS)
                 {
@@ -3416,9 +3497,12 @@ namespace Microsoft.Data.SqlClient
                         throw SQL.InvalidInternalPacketSize(StringsHelper.GetString(Strings.SqlMisc_InvalidArraySizeMessage));
                     }
 
-                    _lastSuccessfulIOTimer._value = DateTime.UtcNow.Ticks;
+                    if (!usedPartialPacket)
+                    {
+                        _lastSuccessfulIOTimer._value = DateTime.UtcNow.Ticks;
 
-                    SetBuffer(_inBuff, 0, (int)dataSize, $"ProcessSniPacket({ProcessSniPacketInvokeCounter}): from input");
+                        SetBuffer(_inBuff, 0, (int)dataSize, $"ProcessSniPacket({ProcessSniPacketInvokeCounter}): io");
+                    }
 
                     bool recurse;
                     bool appended = false;
@@ -3435,22 +3519,9 @@ namespace Microsoft.Data.SqlClient
                             out bool remainderPacketProduced,
                             out recurse
                         );
-                        if (remainderPacketProduced && remainderPacket.HasHeaderBytes && !remainderPacket.HasDataLength)
-                        {
-                            if (GetPacketIsEOMFromHeader(remainderPacket.GetHeaderSpan()))
-                            {
-                                Debugger.Break();
-                            }
-                        }
-                        //if (!consumeInputDirectly && !consumePartialPacket && !remainderPacketProduced)
-                        //{
-                        //    Debugger.Break();
-                        //}
-                        history.AddLast($"MultiplexPackets(,{_inBytesUsed},{_inBytesRead},{(_partialPacket!=null?nameof(_partialPacket):"")},{newDataOffset},{newDataLength},{(remainderPacket!=null?nameof(remainderPacket):"")}, {(consumeInputDirectly?nameof(consumeInputDirectly):"")}, {(consumePartialPacket?nameof(consumePartialPacket):"")}, {(remainderPacketProduced?nameof(remainderPacketProduced):"")}, {(recurse?nameof(recurse):"")}");
-                        if (history.Count > 50)
-                        {
-                            history.RemoveFirst();
-                        }
+                        bool bufferIsPartialCompleted = false;
+
+                        //AddHistory($"MultiplexPackets(,{_inBytesUsed},{_inBytesRead},{(_partialPacket!=null?nameof(_partialPacket):"")},{newDataOffset},{newDataLength},{(remainderPacket!=null?nameof(remainderPacket):"")}, {(consumeInputDirectly?nameof(consumeInputDirectly):"")}, {(consumePartialPacket?nameof(consumePartialPacket):"")}, {(remainderPacketProduced?nameof(remainderPacketProduced):"")}, {(recurse?nameof(recurse):"")}");
 
                         // if a partial packet was reconstructed it must be first
                         if (consumePartialPacket)
@@ -3463,7 +3534,9 @@ namespace Microsoft.Data.SqlClient
                             else
                             {
                                 SetBuffer(_partialPacket.Buffer, 0, _partialPacket.CurrentLength, $"ProcessSniPacket({ProcessSniPacketInvokeCounter}): from partial");
+                                bufferIsPartialCompleted = true;
                             }
+                            lastPacketId = Packet.GetIDFromHeader(_partialPacket.GetHeaderSpan());
                             ClearPartialPacket($"ProcessSniPacket({ProcessSniPacketInvokeCounter}): consumed partial");
                         }
 
@@ -3491,18 +3564,25 @@ namespace Microsoft.Data.SqlClient
                             // whatever is in the input buffer should not be directly consumed
                             // and is contained in the partial or remainder packets so make sure
                             // we don't process it
-                            SetBuffer(_inBuff, 0, 0, $"ProcessSniPacket({ProcessSniPacketInvokeCounter}): prevent");
+                            if (!bufferIsPartialCompleted)
+                            {
+                                SetBuffer(_inBuff, 0, 0, $"ProcessSniPacket({ProcessSniPacketInvokeCounter}): prevent");
+                            }
                         }
 
                         // if there is a remainder it must be last
                         if (remainderPacketProduced)
                         {
-                            SetPartialPacket(remainderPacket, $"ProcessSniPacket({ProcessSniPacketInvokeCounter}): set partial");
-                            // we are keeping the partial packet buffer so replace it with a new one
-                            SetBuffer(new byte[_inBuff.Length], 0, 0, $"ProcessSniPacket({ProcessSniPacketInvokeCounter}):saved in partial packet");
+                            SetPartialPacket(remainderPacket, $"ProcessSniPacket({ProcessSniPacketInvokeCounter}): set");
+                            if (!bufferIsPartialCompleted)
+                            {
+                                // we are keeping the partial packet buffer so replace it with a new one
+                                // unless we have already set the buffer to the partial packet buffer
+                                SetBuffer(new byte[_inBuff.Length], 0, 0, $"ProcessSniPacket({ProcessSniPacketInvokeCounter}): new");
+                            }
                         }
 
-                    } while (recurse);                    
+                    } while (recurse && _snapshot != null);                    
 
                     if (_snapshot != null)
                     {
@@ -3511,7 +3591,10 @@ namespace Microsoft.Data.SqlClient
                         {
                             _snapshot.MoveNext();
 #if DEBUG
-                            _snapshot.AssertCurrent();
+                            // multiple packets can be appended by demuxing but we should only move 
+                            // forward by a single packet so we can no longer assert that we are on
+                            // the last packet at this time
+                            //_snapshot.AssertCurrent();
 #endif
                         }
                     }
@@ -4793,17 +4876,21 @@ namespace Microsoft.Data.SqlClient
 
         internal void SetBuffer(byte[] buffer, int inBytesUsed, int inBytesRead, [CallerMemberName] string caller = null)
         {
-            if (history==null)
-            {
-                history = new LinkedList<string>();
-            }
             _inBuff = buffer;
             _inBytesUsed = inBytesUsed;
             _inBytesRead = inBytesRead;
-            history.AddLast($"{caller} set _inBytesRead={_inBytesRead}");
-            if (history.Count > 50)
+            //AddHistory($"{caller}");
+            if (inBytesRead > 8)
             {
-                history.RemoveFirst();
+                if (Packet.GetIsEOMFromHeader(buffer))
+                {
+                    if (Packet.GetIDFromHeader(buffer)>60)
+                    {
+                        //Debugger.Break();
+                        _isLastPacket = true;
+                    }
+                }
+
             }
         }
 
@@ -4899,13 +4986,13 @@ namespace Microsoft.Data.SqlClient
                 public PacketData NextPacket;
                 public PacketData PrevPacket;
 
-                public int PacketID => GetPacketIDFromHeader(Buffer.AsSpan(0, TdsEnums.HEADER_LEN));
+                public int PacketID => Packet.GetIDFromHeader(Buffer.AsSpan(0, TdsEnums.HEADER_LEN));
 
-                public int SPID => GetPacketSpidFromHeader(Buffer.AsSpan(0, TdsEnums.HEADER_LEN));
+                public int SPID => Packet.GetSpidFromHeader(Buffer.AsSpan(0, TdsEnums.HEADER_LEN));
 
-                public bool IsEOM => GetPacketIsEOMFromHeader(Buffer.AsSpan(0, TdsEnums.HEADER_LEN));
+                public bool IsEOM => Packet.GetIsEOMFromHeader(Buffer.AsSpan(0, TdsEnums.HEADER_LEN));
 
-                public int DataLength => GetPacketDataLengthFromHeader(Buffer.AsSpan(0, TdsEnums.HEADER_LEN));
+                public int DataLength => Packet.GetDataLengthFromHeader(Buffer.AsSpan(0, TdsEnums.HEADER_LEN));
 
                 public int TotalSize;
 
@@ -4946,21 +5033,21 @@ namespace Microsoft.Data.SqlClient
                         PrevPacket = null;
                     }
                     TotalSize = 0;
-                    SetStackInternal(null);
-                    SetPacketIdInternal(0);
+                    SetDebugStackInternal(null);
+                    SetDebugPacketIdInternal(0);
                 }
 
-                internal void SetStack(string value)
+                internal void SetDebugStack(string value)
                 {
-                    SetStackInternal(value);
+                    SetDebugStackInternal(value);
                 }
-                internal void SetPacketId(int value)
+                internal void SetDebugPacketId(int value)
                 {
-                    SetPacketIdInternal(value);
+                    SetDebugPacketIdInternal(value);
                 }
 
-                partial void SetStackInternal(string value);
-                partial void SetPacketIdInternal(int value);
+                partial void SetDebugStackInternal(string value);
+                partial void SetDebugPacketIdInternal(int value);
             }
 
 #if DEBUG
@@ -5010,15 +5097,9 @@ namespace Microsoft.Data.SqlClient
                 public int PacketId;
                 public string Stack;
 
-                partial void SetStackInternal(string value)
-                {
-                    Stack = value;
-                }
+                partial void SetDebugStackInternal(string value) => Stack = value;
 
-                partial void SetPacketIdInternal(int value)
-                {
-                    PacketId = value;
-                }
+                partial void SetDebugPacketIdInternal(int value) => PacketId = value;
 
 
                 public override string ToString()
@@ -5131,10 +5212,9 @@ namespace Microsoft.Data.SqlClient
 
             internal void AppendPacketData(byte[] buffer, int read)
             {
-                //if (buffer[0] != 4)
-                //{
-                //    Debugger.Break();
-                //}
+                Debug.Assert(buffer != null, "packet data cannot be null");
+                Debug.Assert(read >= TdsEnums.HEADER_LEN, "minimum packet length is TdsEnums.HEADER_LEN");
+                Debug.Assert(TdsEnums.HEADER_LEN + Packet.GetDataLengthFromHeader(buffer) == read, "partially read packets cannot be appended to the snapshot");
 #if DEBUG
                 for (PacketData current = _firstPacket; current != null; current = current.NextPacket)
                 {
@@ -5153,8 +5233,8 @@ namespace Microsoft.Data.SqlClient
                 packetData.Buffer = buffer;
                 packetData.Read = read;
 #if DEBUG
-                packetData.SetStack(_stateObj._lastStack);
-                packetData.SetPacketId(Interlocked.Increment(ref PacketCounter));
+                packetData.SetDebugStack(_stateObj._lastStack);
+                packetData.SetDebugPacketId(Interlocked.Increment(ref PacketCounter));
 #endif
                 if (_firstPacket is null)
                 {
