@@ -3835,8 +3835,8 @@ namespace Microsoft.Data.SqlClient
                             // If we're not in sequential access mode, we have to
                             // save the data we skip over so that the consumer
                             // can read it out of order
-                            _parser._physicalStateObj._packetSizeList.Clear();
-                            _parser._physicalStateObj._isLastPacket = false;
+                            //_parser._physicalStateObj._packetSizeList.Clear();
+                            //_parser._physicalStateObj._isLastPacket = false;
                             result = _parser.TryReadSqlValue(_data[_sharedState._nextColumnDataToRead], columnMetaData, (int)dataLength, _stateObj,
                                 _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
                                 columnMetaData.column, _command);

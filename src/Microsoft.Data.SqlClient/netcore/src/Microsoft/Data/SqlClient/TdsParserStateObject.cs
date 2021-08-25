@@ -107,7 +107,6 @@ namespace Microsoft.Data.SqlClient
         /// number of bytes left in packet
         /// </summary>
         internal int _inBytesPacket;
-        internal int _inBytesPacketAssignedBy;
 
         internal int _spid;                                 // SPID of the current connection
 
@@ -1066,17 +1065,12 @@ namespace Microsoft.Data.SqlClient
                     Debug.Assert(_partialHeaderBytesRead <= _inputHeaderLen, "Read more bytes for header than required");
                     if (_partialHeaderBytesRead == _inputHeaderLen)
                     {
-                        ReadOnlySpan<byte> header = _partialHeaderBuffer.AsSpan(0, TdsEnums.HEADER_LEN);
                         // All read
+                        ReadOnlySpan<byte> header = _partialHeaderBuffer.AsSpan(0, TdsEnums.HEADER_LEN);
                         _partialHeaderBytesRead = 0;
                         _messageStatus = Packet.GetStatusFromHeader(header); //_partialHeaderBuffer[1];
                         _inBytesPacket = Packet.GetDataLengthFromHeader(header);
                         _spid = Packet.GetSpidFromHeader(header);//_partialHeaderBuffer[TdsEnums.SPID_OFFSET] << 8 | _partialHeaderBuffer[TdsEnums.SPID_OFFSET + 1];
-                        if (_inBytesPacket > _inBuff.Length)
-                        {
-                            Debugger.Break();
-                        }
-                        _inBytesPacketAssignedBy = 5;
                         SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.TryProcessHeader | ADV | State Object Id {0}, Client Connection Id {1}, Server process Id (SPID) {2}", _objectID, _parser?.Connection?.ClientConnectionId, _spid);
                     }
                     else
@@ -1110,32 +1104,26 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                ReadOnlySpan<byte> header = _inBuff.AsSpan(_inBytesUsed, TdsEnums.HEADER_LEN);
                 // normal header processing...
+                ReadOnlySpan<byte> header = _inBuff.AsSpan(_inBytesUsed, TdsEnums.HEADER_LEN);
                 _messageStatus = Packet.GetStatusFromHeader(header); //_inBuff[_inBytesUsed + 1];
                 _inBytesPacket = Packet.GetDataLengthFromHeader(header);
                 _spid = Packet.GetSpidFromHeader(header); //_inBuff[_inBytesUsed + TdsEnums.SPID_OFFSET] << 8 | _inBuff[_inBytesUsed + TdsEnums.SPID_OFFSET + 1];
-
-                if (_inBytesPacket > _inBuff.Length)
-                {
-                    Debugger.Break();
-                }
-                _inBytesPacketAssignedBy = 10;
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.TryProcessHeader | ADV | State Object Id {0}, Client Connection Id {1}, Server process Id (SPID) {2}", _objectID, _parser?.Connection?.ClientConnectionId, _spid);
                 _inBytesUsed += _inputHeaderLen;
 
-                if (_inBytesPacket > _inBuff.Length)
-                {
-                    Debugger.Break();
-                }
+                //if (_inBytesPacket > _inBuff.Length)
+                //{
+                //    Debugger.Break();
+                //}
 
-                if (_inBytesPacket - _inBytesRead > 0)
-                {
-                    if (_inBytesPacket > _inBuff.Length)
-                    {
-                        Debugger.Break();
-                    }
-                }
+                //if (_inBytesPacket - _inBytesRead > 0)
+                //{
+                //    if (_inBytesPacket > _inBuff.Length)
+                //    {
+                //        Debugger.Break();
+                //    }
+                //}
                 
                 AssertValidState();
             }
@@ -1152,7 +1140,7 @@ namespace Microsoft.Data.SqlClient
             return OperationStatus.Done;
         }
 
-        LinkedList<string> history;
+        //LinkedList<string> history;
         private Packet __partialPacket;
 
         public static void MultiplexPackets(
@@ -1198,10 +1186,10 @@ namespace Microsoft.Data.SqlClient
                     if (partialPacket.HasHeader)
                     {
                         partialPacket.DataLength = Packet.GetDataLengthFromHeader(partialPacket);
-                        if (partialPacket.DataLength > dataBuffer.Length)
-                        {
-                            Debugger.Break();
-                        }
+                        //if (partialPacket.DataLength > dataBuffer.Length)
+                        //{
+                        //    Debugger.Break();
+                        //}
                     }
                 }
 
@@ -1302,10 +1290,10 @@ namespace Microsoft.Data.SqlClient
                     // we have enough bytes to read the packet header and see how
                     // much data we are expecting it to contain
                     int packetDataLength = Packet.GetDataLengthFromHeader(data);
-                    if (packetDataLength > dataBuffer.Length)
-                    {
-                        Debugger.Break();
-                    }
+                    //if (packetDataLength > dataBuffer.Length)
+                    //{
+                    //    Debugger.Break();
+                    //}
                     if (data.Length == TdsEnums.HEADER_LEN + packetDataLength)
                     {
                         if (!consumePartialPacket)
@@ -1421,61 +1409,61 @@ namespace Microsoft.Data.SqlClient
         }
 
 
-        public static string Vizualize(byte[] bytes, int offset, int length, int ignoreValue = 120)
-        {
-            var span = bytes.AsSpan(offset, length);
-            StringBuilder buffer = new StringBuilder();
-            buffer.Append("{");
-            string ignored = new string(' ', ignoreValue.ToString().Length);
-            if (length > 64)
-            {
-                buffer.Append(Environment.NewLine);
-            }
-            for (int index = 0; index < span.Length; index++)
-            {
-                if (index % 48 == 0)
-                {
-                    buffer.Append(Environment.NewLine);
-                    buffer.AppendFormat("{0:D4}: ",index);
-                } 
-                else
-                {
-                    buffer.Append(", ");
-                }
-                if (span[index] == ignoreValue)
-                {
-                    buffer.Append(ignored);
-                }
-                else
-                {
-                    buffer.AppendFormat("{0:D3}",span[index]);
-                }
-            }
-            if (length > 64)
-            {
-                buffer.Append(Environment.NewLine);
-            }
-            buffer.Append("}");
-            return buffer.ToString();
-        }
+        //public static string Vizualize(byte[] bytes, int offset, int length, int ignoreValue = 120)
+        //{
+        //    var span = bytes.AsSpan(offset, length);
+        //    StringBuilder buffer = new StringBuilder();
+        //    buffer.Append("{");
+        //    string ignored = new string(' ', ignoreValue.ToString().Length);
+        //    if (length > 64)
+        //    {
+        //        buffer.Append(Environment.NewLine);
+        //    }
+        //    for (int index = 0; index < span.Length; index++)
+        //    {
+        //        if (index % 48 == 0)
+        //        {
+        //            buffer.Append(Environment.NewLine);
+        //            buffer.AppendFormat("{0:D4}: ",index);
+        //        } 
+        //        else
+        //        {
+        //            buffer.Append(", ");
+        //        }
+        //        if (span[index] == ignoreValue)
+        //        {
+        //            buffer.Append(ignored);
+        //        }
+        //        else
+        //        {
+        //            buffer.AppendFormat("{0:D3}",span[index]);
+        //        }
+        //    }
+        //    if (length > 64)
+        //    {
+        //        buffer.Append(Environment.NewLine);
+        //    }
+        //    buffer.Append("}");
+        //    return buffer.ToString();
+        //}
 
-        private void AddHistory(string value)
-        {
-            if (history == null)
-            {
-                history = new LinkedList<string>();
-            }
-            history.AddLast(value);
-            if (history.Count > 50)
-            {
-                history.RemoveFirst();
-            }
-        }
+        //private void AddHistory(string value)
+        //{
+        //    if (history == null)
+        //    {
+        //        history = new LinkedList<string>();
+        //    }
+        //    history.AddLast(value);
+        //    if (history.Count > 50)
+        //    {
+        //        history.RemoveFirst();
+        //    }
+        //}
 
-        internal bool _isLastPacket;
-        internal List<(int,int)> _packetSizeList = new List<(int,int)>(3000);
+        //internal bool _isLastPacket;
+        //internal List<(int,int)> _packetSizeList = new List<(int,int)>(3000);
         private Packet _partialPacket => __partialPacket;
-        private void SetPartialPacket(Packet packet, [CallerMemberName] string caller = null )
+        private void SetPartialPacket(Packet packet/*, [CallerMemberName] string caller = null*/)
         {
             if (__partialPacket != null && packet != null)
             {
@@ -1486,10 +1474,10 @@ namespace Microsoft.Data.SqlClient
             //    Debugger.Break();
             //}
             __partialPacket = packet;
-            AddHistory($"{caller}: set partial, length={packet.CurrentLength}, required={(packet.HasDataLength ? packet.RequiredLength : -1)}, id={(packet.HasHeader ? Packet.GetIDFromHeader(packet.GetHeaderSpan()) : -1)}{(packet.HasHeader && Packet.GetIsEOMFromHeader(packet.GetHeaderSpan()) ? ", eom":"")}");
+            //AddHistory($"{caller}: set partial, length={packet.CurrentLength}, required={(packet.HasDataLength ? packet.RequiredLength : -1)}, id={(packet.HasHeader ? Packet.GetIDFromHeader(packet.GetHeaderSpan()) : -1)}{(packet.HasHeader && Packet.GetIsEOMFromHeader(packet.GetHeaderSpan()) ? ", eom":"")}");
         }
 
-        private void ClearPartialPacket([CallerMemberName] string caller = null)
+        private void ClearPartialPacket(/*[CallerMemberName] string caller = null*/)
         {
             Packet partialPacket = __partialPacket;
             __partialPacket = null;
@@ -1499,44 +1487,64 @@ namespace Microsoft.Data.SqlClient
                 int packetId = Packet.GetIDFromHeader(header);
                 bool isEOM = Packet.GetIsEOMFromHeader(header);
                 partialPacket.Dispose();
-                AddHistory($"{caller} id={packetId}{(isEOM?", eom":"")}");
+                //AddHistory($"{caller} id={packetId}{(isEOM?", eom":"")}");
             }
         }
 
-        public string SummarizePackets()
+        internal void SetBuffer(byte[] buffer, int inBytesUsed, int inBytesRead/*, [CallerMemberName] string caller = null*/)
         {
-            long sum = 0;
-            int count = 0;
-            int nonFullCount = 0;
-            int lastId = 0;
-            List<int> missingPackets = null;
-            for (int index = 0; index < _packetSizeList.Count; index++)
-            {
-                (int value, int id) = _packetSizeList[index];
-                if (index > 0)
-                {
-                    if ((lastId + 1) % 256 != id)
-                    {
-                        if (missingPackets == null)
-                        {
-                            missingPackets = new List<int>();
-                        }
-                        missingPackets.Add((lastId + 1) % byte.MaxValue);
-                    }
-                }
-                lastId = id;
-                sum += value;
-                count += 1;
-                if (value != 7988)
-                {
-                    nonFullCount += 1;
-                }
-            }
+            _inBuff = buffer;
+            _inBytesUsed = inBytesUsed;
+            _inBytesRead = inBytesRead;
+            //AddHistory($"{caller}");
+            //if (inBytesRead > 8)
+            //{
+            //    if (Packet.GetIsEOMFromHeader(buffer))
+            //    {
+            //        if (Packet.GetIDFromHeader(buffer) > 60)
+            //        {
+            //            //Debugger.Break();
+            //            _isLastPacket = true;
+            //        }
+            //    }
 
-            string result = $"count:{count}, partial:{nonFullCount}, sum:{sum}, target:{20971520}{(missingPackets!=null?", missing:" + missingPackets.Count.ToString():"")}";
-            return result;
+            //}
         }
 
+
+        ////public string SummarizePackets()
+        ////{
+        ////    long sum = 0;
+        ////    int count = 0;
+        ////    int nonFullCount = 0;
+        ////    int lastId = 0;
+        ////    List<int> missingPackets = null;
+        ////    for (int index = 0; index < _packetSizeList.Count; index++)
+        ////    {
+        ////        (int value, int id) = _packetSizeList[index];
+        ////        if (index > 0)
+        ////        {
+        ////            if ((lastId + 1) % 256 != id)
+        ////            {
+        ////                if (missingPackets == null)
+        ////                {
+        ////                    missingPackets = new List<int>();
+        ////                }
+        ////                missingPackets.Add((lastId + 1) % byte.MaxValue);
+        ////            }
+        ////        }
+        ////        lastId = id;
+        ////        sum += value;
+        ////        count += 1;
+        ////        if (value != 7988)
+        ////        {
+        ////            nonFullCount += 1;
+        ////        }
+        ////    }
+
+        ////    string result = $"count:{count}, partial:{nonFullCount}, sum:{sum}, target:{20971520}{(missingPackets!=null?", missing:" + missingPackets.Count.ToString():"")}";
+        ////    return result;
+        ////}
 
         public sealed class Packet
         {
@@ -1563,10 +1571,10 @@ namespace Microsoft.Data.SqlClient
                 set
                 {
                     CheckDisposed();
-                    if (value > 7992)
-                    {
-                        Debugger.Break();
-                    }
+                    //if (value > 7992)
+                    //{
+                    //    Debugger.Break();
+                    //}
                     _dataLength = value;
                 }
             }
@@ -1597,11 +1605,6 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            //public void SetCurrentLength(int value/*, [CallerMemberName] string caller = null, [CallerLineNumber] int lineNo=-1*/)
-            //{
-            //    CheckDisposed();
-            //    _totalLength = value;
-            //}
             public int RequiredLength
             {
                 get
@@ -2461,19 +2464,19 @@ namespace Microsoft.Data.SqlClient
                 if (chunklen == TdsEnums.SQL_PLP_CHUNK_TERMINATOR)
                 {
                     _longLenleft = 0;
-                    if (_longLenleft > 20971520)
-                    {
-                        Debugger.Break();
-                    }
+                    //if (_longLenleft > 20971520)
+                    //{
+                    //    Debugger.Break();
+                    //}
                     _longlen = 0;
                 }
                 else
                 {
                     _longLenleft = (ulong)chunklen;
-                    if (_longLenleft > 20971520)
-                    {
-                        Debugger.Break();
-                    }
+                    //if (_longLenleft > 20971520)
+                    //{
+                    //    Debugger.Break();
+                    //}
                     _longLenLeftAssignedBy = 5;
                 }
             }
@@ -2584,10 +2587,10 @@ namespace Microsoft.Data.SqlClient
 
             if (buff == null)
             {
-                if (_longLenleft > 5242880)
-                {
-                    Debugger.Break();
-                }
+                //if (_longLenleft > 5242880)
+                //{
+                //    Debugger.Break();
+                //}
                 buff = new byte[_longLenleft];
             }
 
@@ -2609,12 +2612,12 @@ namespace Microsoft.Data.SqlClient
 
                 OperationStatus result = TryReadByteArray(buff.AsSpan(offset), bytesToRead, out bytesRead);
                 int pacetId = Packet.GetIDFromHeader(_inBuff);
-                AddHistory($"TryReadPLPBytes read:{bytesRead} id={pacetId}");
-                _packetSizeList.Add((bytesRead, pacetId));
-                if (_isLastPacket && _longLenleft!= (ulong)bytesRead)
-                {
-                    Debugger.Break();
-                }
+                //AddHistory($"TryReadPLPBytes read:{bytesRead} id={pacetId}");
+                //_packetSizeList.Add((bytesRead, pacetId));
+                //if (_isLastPacket && _longLenleft!= (ulong)bytesRead)
+                //{
+                //    Debugger.Break();
+                //}
                 Debug.Assert(bytesRead <= bytesLeft, "Read more bytes than we needed");
                 Debug.Assert((ulong)bytesRead <= _longLenleft, "Read more bytes than is available");
 
@@ -2667,14 +2670,14 @@ namespace Microsoft.Data.SqlClient
                     break;
             }
 
-            if (totalBytesRead != buff.Length)
-            {
-                Debugger.Break();
-            }
-            if (_longLenleft != 0)
-            {
-                Debugger.Break();
-            }
+            //if (totalBytesRead != buff.Length)
+            //{
+            //    Debugger.Break();
+            //}
+            //if (_longLenleft != 0)
+            //{
+            //    Debugger.Break();
+            //}
             return OperationStatus.Done;
 
             static void StoreProgress(TdsParserStateObject stateObject, int size)
@@ -3448,11 +3451,11 @@ namespace Microsoft.Data.SqlClient
         }
 
 
-        private int ProcessSniPacketInvokeCounter;
-        private int lastPacketId;
+        //private int ProcessSniPacketInvokeCounter;
+        //private int lastPacketId;
         public void ProcessSniPacket(PacketHandle packet, uint error, bool usePartialPacket = false)
         {
-            ProcessSniPacketInvokeCounter += 1;
+            //ProcessSniPacketInvokeCounter += 1;
             if (error != 0)
             {
                 if ((_parser.State == TdsParserState.Closed) || (_parser.State == TdsParserState.Broken))
@@ -3470,17 +3473,13 @@ namespace Microsoft.Data.SqlClient
                 uint dataSize = 0;
                 bool usedPartialPacket = false;
                 uint getDataError = 0;
-                //if (usePartialPacket)
-                //{
-                //    AddHistory($"ProcessSniPacket {(usePartialPacket ? nameof(usePartialPacket) : "")}, {(_partialPacket != null ? nameof(_partialPacket) : "")}, {((bool)(_partialPacket?.IsComplete) ? "IsComplete" : "")}");
-                //}
                 if (usePartialPacket && _snapshot == null && _partialPacket != null && _partialPacket.IsComplete)
                 {
                     //Debug.Assert(_snapshot == null, "_snapshot must be null when processing partial packet instead of network read");
                     //Debug.Assert(_partialPacket != null, "_partialPacket must not be null when usePartialPacket is true");
                     //Debug.Assert(_partialPacket.IsComplete, "_partialPacket.IsComplete must be true to use it in place of a real read");
-                    SetBuffer(_partialPacket.Buffer, 0, _partialPacket.CurrentLength, $"ProcessSniPacket({ProcessSniPacketInvokeCounter}): sync catchup");
-                    ClearPartialPacket($"ProcessSniPacket({ProcessSniPacketInvokeCounter}): consumed partial");
+                    SetBuffer(_partialPacket.Buffer, 0, _partialPacket.CurrentLength/*, $"ProcessSniPacket({ProcessSniPacketInvokeCounter}): sync catchup"*/);
+                    ClearPartialPacket(/*$"ProcessSniPacket({ProcessSniPacketInvokeCounter}): consumed partial"*/);
                     getDataError = TdsEnums.SNI_SUCCESS;
                     usedPartialPacket = true;
                 }
@@ -3501,7 +3500,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         _lastSuccessfulIOTimer._value = DateTime.UtcNow.Ticks;
 
-                        SetBuffer(_inBuff, 0, (int)dataSize, $"ProcessSniPacket({ProcessSniPacketInvokeCounter}): io");
+                        SetBuffer(_inBuff, 0, (int)dataSize/*, $"ProcessSniPacket({ProcessSniPacketInvokeCounter}): io"*/);
                     }
 
                     bool recurse;
@@ -3521,9 +3520,7 @@ namespace Microsoft.Data.SqlClient
                         );
                         bool bufferIsPartialCompleted = false;
 
-                        //AddHistory($"MultiplexPackets(,{_inBytesUsed},{_inBytesRead},{(_partialPacket!=null?nameof(_partialPacket):"")},{newDataOffset},{newDataLength},{(remainderPacket!=null?nameof(remainderPacket):"")}, {(consumeInputDirectly?nameof(consumeInputDirectly):"")}, {(consumePartialPacket?nameof(consumePartialPacket):"")}, {(remainderPacketProduced?nameof(remainderPacketProduced):"")}, {(recurse?nameof(recurse):"")}");
-
-                        // if a partial packet was reconstructed it must be first
+                        // if a partial packet was reconstructed it must be handled first
                         if (consumePartialPacket)
                         {
                             if (_snapshot != null)
@@ -3533,11 +3530,11 @@ namespace Microsoft.Data.SqlClient
                             }
                             else
                             {
-                                SetBuffer(_partialPacket.Buffer, 0, _partialPacket.CurrentLength, $"ProcessSniPacket({ProcessSniPacketInvokeCounter}): from partial");
+                                SetBuffer(_partialPacket.Buffer, 0, _partialPacket.CurrentLength/*, $"ProcessSniPacket({ProcessSniPacketInvokeCounter}): from partial"*/);
                                 bufferIsPartialCompleted = true;
                             }
-                            lastPacketId = Packet.GetIDFromHeader(_partialPacket.GetHeaderSpan());
-                            ClearPartialPacket($"ProcessSniPacket({ProcessSniPacketInvokeCounter}): consumed partial");
+                            //lastPacketId = Packet.GetIDFromHeader(_partialPacket.GetHeaderSpan());
+                            ClearPartialPacket(/*$"ProcessSniPacket({ProcessSniPacketInvokeCounter}): consumed partial"*/);
                         }
 
                         // if the remaining data can be processed directly it must be second
@@ -3546,7 +3543,7 @@ namespace Microsoft.Data.SqlClient
                             // if some data was taken from the new packet adjust the counters
                             if (dataSize != newDataLength || 0 != newDataOffset)
                             {
-                                SetBuffer(_inBuff, newDataOffset, newDataLength, $"ProcessSniPacket({ProcessSniPacketInvokeCounter}): adjustment");
+                                SetBuffer(_inBuff, newDataOffset, newDataLength/*, $"ProcessSniPacket({ProcessSniPacketInvokeCounter}): adjustment"*/);
                             }
 
                             if (_snapshot != null)
@@ -3556,7 +3553,7 @@ namespace Microsoft.Data.SqlClient
                             }
                             else
                             {
-                                SetBuffer(_inBuff, 0, _inBytesRead, $"ProcessSniPacket({ProcessSniPacketInvokeCounter}): consume");
+                                SetBuffer(_inBuff, 0, _inBytesRead/*, $"ProcessSniPacket({ProcessSniPacketInvokeCounter}): consume"*/);
                             }
                         }
                         else
@@ -3566,19 +3563,19 @@ namespace Microsoft.Data.SqlClient
                             // we don't process it
                             if (!bufferIsPartialCompleted)
                             {
-                                SetBuffer(_inBuff, 0, 0, $"ProcessSniPacket({ProcessSniPacketInvokeCounter}): prevent");
+                                SetBuffer(_inBuff, 0, 0/*, $"ProcessSniPacket({ProcessSniPacketInvokeCounter}): prevent"*/);
                             }
                         }
 
                         // if there is a remainder it must be last
                         if (remainderPacketProduced)
                         {
-                            SetPartialPacket(remainderPacket, $"ProcessSniPacket({ProcessSniPacketInvokeCounter}): set");
+                            SetPartialPacket(remainderPacket/*, $"ProcessSniPacket({ProcessSniPacketInvokeCounter}): set"*/);
                             if (!bufferIsPartialCompleted)
                             {
                                 // we are keeping the partial packet buffer so replace it with a new one
                                 // unless we have already set the buffer to the partial packet buffer
-                                SetBuffer(new byte[_inBuff.Length], 0, 0, $"ProcessSniPacket({ProcessSniPacketInvokeCounter}): new");
+                                SetBuffer(new byte[_inBuff.Length], 0, 0/*, $"ProcessSniPacket({ProcessSniPacketInvokeCounter}): new"*/);
                             }
                         }
 
@@ -4536,10 +4533,10 @@ namespace Microsoft.Data.SqlClient
             }
 
             Debug.Assert(_inBytesPacket >= 0, "Packet must not be negative");
-            if (_inBytesPacket > _inBuff.Length)
-            {
-                Debugger.Break();
-            }
+            //if (_inBytesPacket > _inBuff.Length)
+            //{
+            //    Debugger.Break();
+            //}
         }
 
 
@@ -4873,27 +4870,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-
-        internal void SetBuffer(byte[] buffer, int inBytesUsed, int inBytesRead, [CallerMemberName] string caller = null)
-        {
-            _inBuff = buffer;
-            _inBytesUsed = inBytesUsed;
-            _inBytesRead = inBytesRead;
-            //AddHistory($"{caller}");
-            if (inBytesRead > 8)
-            {
-                if (Packet.GetIsEOMFromHeader(buffer))
-                {
-                    if (Packet.GetIDFromHeader(buffer)>60)
-                    {
-                        //Debugger.Break();
-                        _isLastPacket = true;
-                    }
-                }
-
-            }
-        }
-
         private sealed class StateSnapshot
         {            
             private sealed class StateObjectData
@@ -4934,7 +4910,6 @@ namespace Microsoft.Data.SqlClient
                 {
                     stateObj._inBytesUsed = _inBytesUsed;
                     stateObj._inBytesPacket = _inBytesPacket;
-                    stateObj._inBytesPacketAssignedBy = 1;
                     stateObj._messageStatus = _messageStatus;
                     stateObj._nullBitmapInfo = _nullBitmapInfo;
                     stateObj._cleanupMetaData = _cleanupMetaData;
@@ -5276,10 +5251,10 @@ namespace Microsoft.Data.SqlClient
                     {
                         _continueStateData ??= new StateObjectData();
                         _continueStateData.Capture(stateObj, trackStack: false);
-                        if (_continueStateData._longLenLeft > 0)
-                        {
-                            Debugger.Break();
-                        }
+                        //if (_continueStateData._longLenLeft > 0)
+                        //{
+                        //    Debugger.Break();
+                        //}
                         _continuePacket = _current;
                     }
                 }
