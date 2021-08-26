@@ -54,10 +54,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public AdapterTest()
         {
             // create random name for temp tables
-            _randomGuid = Guid.NewGuid().ToString();
-            _tempTable = Environment.MachineName + "_" + _randomGuid;
+            _tempTable = DataTestUtility.GetUniqueName("AdapterTest");
             _tempTable = _tempTable.Replace('-', '_');
 
+            _randomGuid = Guid.NewGuid().ToString();
             _tempKey = "employee_id_key_" + Environment.TickCount.ToString() + _randomGuid;
             _tempKey = _tempKey.Replace('-', '_');
 
@@ -768,25 +768,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void UpdateRefreshTest()
         {
+            string identTableName = DataTestUtility.GetUniqueName("ID_");
             string createIdentTable =
-                "CREATE TABLE ID_" + _tempTable + "(id int IDENTITY," +
+                $"CREATE TABLE {identTableName} (id int IDENTITY," +
                 "LastName nvarchar(50) NULL," +
                 "Firstname nvarchar(50) NULL)";
 
+            string spName = DataTestUtility.GetUniqueName("sp_insert",withBracket:false);
             string spCreateInsert =
-                "CREATE PROCEDURE sp_insert" + _tempTable +
+                $"CREATE PROCEDURE {spName}" +
                 "(@FirstName nvarchar(50), @LastName nvarchar(50), @id int OUTPUT) " +
                 "AS INSERT INTO " + _tempTable + " (FirstName, LastName) " +
                 "VALUES (@FirstName, @LastName); " +
                 "SELECT @id=@@IDENTITY";
 
-            string spDropInsert = "DROP PROCEDURE sp_insert" + _tempTable;
+            string spDropInsert = $"DROP PROCEDURE {spName}";
             bool dropSP = false;
 
             using (SqlDataAdapter adapter = new SqlDataAdapter())
             using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand cmd = new SqlCommand(null, conn))
-            using (SqlCommand temp = new SqlCommand("SELECT id, LastName, FirstName into " + _tempTable + " from ID_" + _tempTable, conn))
+            using (SqlCommand temp = new SqlCommand("SELECT id, LastName, FirstName into " + _tempTable + $" from {identTableName}", conn))
             using (SqlCommand tableClean = new SqlCommand("", conn))
             {
                 ExecuteNonQueryCommand(createIdentTable);
@@ -794,7 +796,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     adapter.InsertCommand = new SqlCommand()
                     {
-                        CommandText = "sp_insert" + _tempTable,
+                        CommandText = spName,
                         CommandType = CommandType.StoredProcedure
                     };
                     adapter.InsertCommand.Parameters.Add(new SqlParameter("@FirstName", SqlDbType.NVarChar, 50, "FirstName"));
@@ -853,7 +855,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     {
                         ExecuteNonQueryCommand(spDropInsert);
                         ExecuteNonQueryCommand("DROP TABLE " + _tempTable);
-                        ExecuteNonQueryCommand("DROP TABLE ID_" + _tempTable);
+                        ExecuteNonQueryCommand("DROP TABLE " + identTableName);
                     }
                 }
             }
@@ -1078,15 +1080,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void AutoGenErrorTest()
         {
+            string identTableName = DataTestUtility.GetUniqueName("ID_");
             string createIdentTable =
-                "CREATE TABLE ID_" + _tempTable + "(id int IDENTITY," +
+                $"CREATE TABLE {identTableName} (id int IDENTITY," +
                 "LastName nvarchar(50) NULL," +
                 "Firstname nvarchar(50) NULL)";
 
             try
             {
                 using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
-                using (SqlCommand cmd = new SqlCommand("SELECT * into " + _tempTable + " from ID_" + _tempTable, conn))
+                using (SqlCommand cmd = new SqlCommand($"SELECT * into {_tempTable} from {identTableName}", conn))
                 using (SqlDataAdapter adapter = new SqlDataAdapter())
                 {
                     ExecuteNonQueryCommand(createIdentTable);
@@ -1114,7 +1117,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             finally
             {
                 ExecuteNonQueryCommand("DROP TABLE " + _tempTable);
-                ExecuteNonQueryCommand("DROP TABLE ID_" + _tempTable);
+                ExecuteNonQueryCommand("DROP TABLE " + identTableName);
             }
         }
 
