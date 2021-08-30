@@ -492,7 +492,7 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 // All LocalDb endpoints are of the format host\instancename (case-insensitive) when it is not shared instance of localdb
                 // Therefore the length would be 2
-                if (tokensByBackSlash.Length == 2 && !isSharedInstance)
+                if (tokensByBackSlash.Length == 2)
                 {
                     if (!string.IsNullOrWhiteSpace(tokensByBackSlash[1]))
                     {
