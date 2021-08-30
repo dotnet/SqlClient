@@ -9,6 +9,7 @@ using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Microsoft.Data.SqlClient.SNI
 {
@@ -142,7 +143,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="cachedFQDN">Used for DNS Cache</param>
         /// <param name="pendingDNSInfo">Used for DNS Cache</param>       
         /// <returns>SNI handle</returns>
-        internal static SNIHandle CreateConnectionHandle(string fullServerName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[][] spnBuffer, 
+        internal static SNIHandle CreateConnectionHandle(string fullServerName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[][] spnBuffer,
                                         bool flushCache, bool async, bool parallel, bool isIntegratedSecurity, SqlConnectionIPAddressPreference ipPreference, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
         {
             instanceName = new byte[1];
@@ -480,23 +481,47 @@ namespace Microsoft.Data.SqlClient.SNI
 
             string[] tokensByBackSlash = workingDataSource.Split(BackSlashCharacter);
 
+            // The pattern we are looking for is (localdb)\.\<shared instance name>
+            // RegEx has a much better performance in .Net 5 and over. 
+            string pattern = @"^\S+\.\S+$";
+            bool isSharedInstance = Regex.IsMatch(workingDataSource, pattern) && tokensByBackSlash.Length == 3;
             error = false;
 
-            // All LocalDb endpoints are of the format host\instancename where host is always (LocalDb) (case-insensitive)
-            if (tokensByBackSlash.Length == 2 && LocalDbHost.Equals(tokensByBackSlash[0].TrimStart()))
+            // host should always be (localdb)
+            if (LocalDbHost.Equals(tokensByBackSlash[0].TrimStart()))
             {
-                if (!string.IsNullOrWhiteSpace(tokensByBackSlash[1]))
+                // All LocalDb endpoints are of the format host\instancename (case-insensitive) when it is not shared instance of localdb
+                // Therefore the length would be 2
+                if (tokensByBackSlash.Length == 2 && !isSharedInstance)
                 {
-                    instanceName = tokensByBackSlash[1].Trim();
+                    if (!string.IsNullOrWhiteSpace(tokensByBackSlash[1]))
+                    {
+                        instanceName = tokensByBackSlash[1].Trim();
+                    }
+                    else
+                    {
+                        SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBNoInstanceName, Strings.SNI_ERROR_51);
+                        error = true;
+                        return null;
+                    }
                 }
-                else
+                // All shared instances of localdb should be used as \.\ added to the connection string for example if a shared instance of LocalDB is named 
+                // AppData, connection string is in the format of (localdb)\.\AppData.
+                // More material could be found here https://docs.microsoft.com/en-us/sql/database-engine/configure-windows/sql-server-express-localdb?view=sql-server-ver15#connect-to-a-shared-instance-of-localdb
+                if (isSharedInstance)
                 {
-                    SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBNoInstanceName, Strings.SNI_ERROR_51);
-                    error = true;
-                    return null;
+                    if (!string.IsNullOrWhiteSpace(tokensByBackSlash[2]))
+                    {
+                        instanceName = tokensByBackSlash[2].Trim();
+                    }
+                    else
+                    {
+                        SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBNoInstanceName, Strings.SNI_ERROR_51);
+                        error = true;
+                        return null;
+                    }
                 }
             }
-
             return instanceName;
         }
 
