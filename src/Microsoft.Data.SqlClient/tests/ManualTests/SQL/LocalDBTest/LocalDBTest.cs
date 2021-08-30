@@ -39,7 +39,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
-        [ConditionalFact(nameof(IsLocalDBEnvironmentSet))]
+        [ConditionalTheory(nameof(IsLocalDBEnvironmentSet))]
         [ClassData(typeof(ConnectionStringsProvider))]
         public static void InvalidDBTest(string connectionString)
         {
