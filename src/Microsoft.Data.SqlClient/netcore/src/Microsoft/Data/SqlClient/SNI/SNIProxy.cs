@@ -493,7 +493,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 // AppData, connection string is in the format of (localdb)\.\AppData.
                 // More material could be found here https://docs.microsoft.com/en-us/sql/database-engine/configure-windows/sql-server-express-localdb?view=sql-server-ver15#connect-to-a-shared-instance-of-localdb
 
-                if (string.IsNullOrEmpty(tokensByBackSlash[instanceNameIndexNumber]))
+                if (!string.IsNullOrEmpty(tokensByBackSlash[instanceNameIndexNumber]))
                 {
                     instanceName = tokensByBackSlash[instanceNameIndexNumber].Trim();
                 }
