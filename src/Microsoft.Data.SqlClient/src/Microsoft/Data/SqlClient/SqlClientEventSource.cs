@@ -739,6 +739,15 @@ namespace Microsoft.Data.SqlClient
                 CorrelationTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr));
             }
         }
+
+        [NonEvent]
+        internal void TryCorrelationTraceEvent<T0, T1, T2, T3>(string message, T0 args0, T1 args1, T2 args2, T3 args3)
+        {
+            if (Log.IsCorrelationEnabled())
+            {
+                CorrelationTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr));
+            }
+        }
         #endregion
 
         #region State Dump without if statements
