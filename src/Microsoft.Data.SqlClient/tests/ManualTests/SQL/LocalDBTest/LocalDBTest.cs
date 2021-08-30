@@ -18,10 +18,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ClassData(typeof(ConnectionStringsProvider))]
         public static void LocalDBConnectionTest(string connectionString)
         {
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString);
-            builder.IntegratedSecurity = true;
-            builder.ConnectTimeout = 2;
-            builder.Encrypt = false;
+            SqlConnectionStringBuilder builder = new(connectionString)
+            {
+                IntegratedSecurity = true,
+                ConnectTimeout = 2,
+                Encrypt = false
+            };
             OpenConnection(builder.ConnectionString);
         }
 
@@ -30,11 +32,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ClassData(typeof(ConnectionStringsProvider))]
         public static void LocalDBMarsTest(string connectionString)
         {
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString);
-            builder.IntegratedSecurity = true;
-            builder.MultipleActiveResultSets = true;
-            builder.ConnectTimeout = 2;
-            builder.Encrypt = false;
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString)
+            {
+                IntegratedSecurity = true,
+                MultipleActiveResultSets = true,
+                ConnectTimeout = 2,
+                Encrypt = false
+            };
             OpenConnection(builder.ConnectionString);
         }
 
@@ -43,23 +47,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ClassData(typeof(ConnectionStringsProvider))]
         public static void InvalidDBTest(string connectionString)
         {
-            using (var connection = new SqlConnection(connectionString))
-            {
-                DataTestUtility.AssertThrowsWrapper<SqlException>(() => connection.Open());
-            }
+            using var connection = new SqlConnection(connectionString);
+            DataTestUtility.AssertThrowsWrapper<SqlException>(() => connection.Open());
         }
 
         private static void OpenConnection(string connString)
         {
-            using (SqlConnection connection = new SqlConnection(connString))
-            {
-                connection.Open();
-                using (SqlCommand command = new SqlCommand("SELECT @@SERVERNAME", connection))
-                {
-                    var result = command.ExecuteScalar();
-                    Assert.NotNull(result);
-                }
-            }
+            using SqlConnection connection = new(connString);
+            connection.Open();
+            using SqlCommand command = new SqlCommand("SELECT @@SERVERNAME", connection);
+            var result = command.ExecuteScalar();
+            Assert.NotNull(result);
         }
     }
     public class ConnectionStringsProvider : IEnumerable<object[]>

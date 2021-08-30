@@ -416,6 +416,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
         private string _workingDataSource;
         private string _dataSourceAfterTrimmingProtocol;
+
         internal bool IsBadDataSource { get; private set; } = false;
 
         internal bool IsSsrpRequired { get; private set; } = false;
@@ -480,46 +481,27 @@ namespace Microsoft.Data.SqlClient.SNI
             string workingDataSource = dataSource.ToLowerInvariant();
 
             string[] tokensByBackSlash = workingDataSource.Split(BackSlashCharacter);
-
-            // The pattern we are looking for is (localdb)\.\<shared instance name>
-            // RegEx has a much better performance in .Net 5 and over. 
-            string pattern = @"^\S+\.\S+$";
-            bool isSharedInstance = Regex.IsMatch(workingDataSource, pattern) && tokensByBackSlash.Length == 3;
             error = false;
+            int instanceNameIndexNumber = tokensByBackSlash.Length == 2 ? 1 : 2;
 
             // host should always be (localdb)
-            if (LocalDbHost.Equals(tokensByBackSlash[0].TrimStart()))
+            if (LocalDbHost.Equals(tokensByBackSlash[0].TrimStart()) && (tokensByBackSlash.Length == 2 || tokensByBackSlash.Length == 3))
             {
                 // All LocalDb endpoints are of the format host\instancename (case-insensitive) when it is not shared instance of localdb
                 // Therefore the length would be 2
-                if (tokensByBackSlash.Length == 2)
-                {
-                    if (!string.IsNullOrWhiteSpace(tokensByBackSlash[1]))
-                    {
-                        instanceName = tokensByBackSlash[1].Trim();
-                    }
-                    else
-                    {
-                        SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBNoInstanceName, Strings.SNI_ERROR_51);
-                        error = true;
-                        return null;
-                    }
-                }
                 // All shared instances of localdb should be used as \.\ added to the connection string for example if a shared instance of LocalDB is named 
                 // AppData, connection string is in the format of (localdb)\.\AppData.
                 // More material could be found here https://docs.microsoft.com/en-us/sql/database-engine/configure-windows/sql-server-express-localdb?view=sql-server-ver15#connect-to-a-shared-instance-of-localdb
-                if (isSharedInstance)
+
+                if (string.IsNullOrEmpty(tokensByBackSlash[instanceNameIndexNumber]))
                 {
-                    if (!string.IsNullOrWhiteSpace(tokensByBackSlash[2]))
-                    {
-                        instanceName = tokensByBackSlash[2].Trim();
-                    }
-                    else
-                    {
-                        SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBNoInstanceName, Strings.SNI_ERROR_51);
-                        error = true;
-                        return null;
-                    }
+                    instanceName = tokensByBackSlash[instanceNameIndexNumber].Trim();
+                }
+                else
+                {
+                    SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBNoInstanceName, Strings.SNI_ERROR_51);
+                    error = true;
+                    return null;
                 }
             }
             return instanceName;
