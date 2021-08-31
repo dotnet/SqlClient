@@ -667,7 +667,6 @@ namespace Microsoft.Data.SqlClient
         // cancel request.
         internal void Cancel(int objectID)
         {
-            // Keep looping until we either grabbed the lock (and therefore sent attention) or the connection closes\breaks
             if (
                 (_parser.State != TdsParserState.Closed) && (_parser.State != TdsParserState.Broken) &&
                 Interlocked.CompareExchange(ref _cancelState, CancelState.Unset, CancelState.Cancelled) == CancelState.Unset
