@@ -182,14 +182,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     cmd.ExecuteNonQuery();
                     _fileStreamDBName = dbName;
                 }
-                return _fileStreamDBName;
             }
-            catch (Exception e)
+            catch (SqlException e)
             {
                 Console.WriteLine("File Stream database could not be setup. " + e.Message);
                 FileStreamDirectory = null;
-                throw e;
             }
+            return _fileStreamDBName;
         }
 
         internal static void DropFileStreamDb()
@@ -205,7 +204,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 Console.WriteLine("File Stream database could not be dropped. " + e.Message);
                 FileStreamDirectory = null;
-                throw e;
             }
         }
 
