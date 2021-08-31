@@ -161,7 +161,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     if (!FileStreamDirectory.EndsWith("\\"))
                     {
-                        FileStreamDirectory += "\\\\";
+                        FileStreamDirectory += "\\";
                     }
 
                     string dbName = GetUniqueName("FS", false);
