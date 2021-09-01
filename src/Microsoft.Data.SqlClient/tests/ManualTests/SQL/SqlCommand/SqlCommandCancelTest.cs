@@ -599,6 +599,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ended = DateTime.UtcNow;
 
             Assert.NotNull(exception);
+            Assert.IsType<AggregateException>(exception);
+            Assert.NotNull(exception.InnerException);
+            Assert.IsType<SqlException>(exception.InnerException);
+            Assert.Contains("Operation cancelled by user.", exception.InnerException.Message);
             Assert.InRange((ended - started).TotalSeconds, cancelSeconds, delaySeconds - 1);
         }
 
