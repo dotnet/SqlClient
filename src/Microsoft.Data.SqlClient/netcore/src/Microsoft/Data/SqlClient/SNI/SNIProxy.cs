@@ -507,7 +507,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
                 else
                 {
-                    // set the sni error here
+                    SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBNoInstanceName, Strings.SNI_ERROR_51);
                     error = true;
                 }
             }
