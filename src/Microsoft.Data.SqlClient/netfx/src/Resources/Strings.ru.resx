@@ -1783,7 +1783,7 @@
     <value>Использование ключа "{0}" требует наличия ключа "{1}".</value>
   </data>
   <data name="ADP_InvalidConnectionOptionValueLength" xml:space="preserve">
-    <value>Длина значения для ключа "{0}" превышает его ограничение, установленное для "{1}".</value>
+    <value>Длина значения для ключа "{0}" превышает лимит “{1}”.</value>
   </data>
   <data name="ADP_KeywordNotSupported" xml:space="preserve">
     <value>Ключевое слово не поддерживается: "{0}".</value>
@@ -2563,7 +2563,7 @@
     <value>Не удалось проверить подлинность пользователя {0} в Active Directory (Authentication={1}).</value>
   </data>
   <data name="SQL_MSALInnerException" xml:space="preserve">
-    <value>Код ошибки 0x{0}; состояние {1}</value>
+    <value>Код ошибки: 0x{0}</value>
   </data>
   <data name="SQL_ChangePasswordRequiresYukon" xml:space="preserve">
     <value>Для ChangePassword требуется SQL Server 9.0 или более поздней версии.</value>
@@ -3049,7 +3049,7 @@
     <value>Подклассы не переопределяют необходимый метод.</value>
   </data>
   <data name="SQL_CannotCreateNormalizer" xml:space="preserve">
-    <value>Cannot create normalizer for '{0}'.</value>
+    <value>Не удается создать нормализатор для "{0}".</value>
   </data>
   <data name="Sql_InternalError" xml:space="preserve">
     <value>Внутренняя ошибка</value>
@@ -4613,5 +4613,8 @@
   </data>
   <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
     <value>Требуется неотрицательное число.</value>
+  </data>
+  <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
+    <value>У параметра "{0}" не может быть направления вывода или InputOutput, если EnableOptimizedParameterBinding включен в родительской команде.</value>
   </data>
 </root>

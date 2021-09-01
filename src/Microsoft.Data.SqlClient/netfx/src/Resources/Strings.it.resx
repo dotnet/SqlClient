@@ -1771,7 +1771,7 @@
     <value>I valori specificati per QuotePrefix e QuoteSuffix non corrispondono.</value>
   </data>
   <data name="ADP_InvalidArgumentLength" xml:space="preserve">
-    <value>La lunghezza dell'argomento "{0}" supera il limite di "{1}".</value>
+    <value>La lunghezza dell'argomento '{0}' supera il limite di '{1}'.</value>
   </data>
   <data name="SQL_WrongType" xml:space="preserve">
     <value>Previsto un argomento di tipo {1}. Ricevuto tipo {0}.</value>
@@ -1783,7 +1783,7 @@
     <value>L'utilizzo della chiave "{0}" richiede la presenza della chiave "{1}".</value>
   </data>
   <data name="ADP_InvalidConnectionOptionValueLength" xml:space="preserve">
-    <value>La lunghezza del valore per la chiave "{0}" supera il limite di "{1}".</value>
+    <value>La lunghezza del valore per la chiave '{0}' supera il limite di '{1}'.</value>
   </data>
   <data name="ADP_KeywordNotSupported" xml:space="preserve">
     <value>Parola chiave non supportata: '{0}'.</value>
@@ -2563,7 +2563,7 @@
     <value>Non è possibile autenticare l'utente {0} in Active Directory (Authentication={1}).</value>
   </data>
   <data name="SQL_MSALInnerException" xml:space="preserve">
-    <value>Codice errore: 0x{0}. Stato: {1}</value>
+    <value>Codice errore: 0x{0}</value>
   </data>
   <data name="SQL_ChangePasswordRequiresYukon" xml:space="preserve">
     <value>ChangePassword richiede SQL Server 9.0 o versione successiva.</value>
@@ -3049,7 +3049,7 @@
     <value>La sottoclasse non ha eseguito l'override di un metodo di richiesta.</value>
   </data>
   <data name="SQL_CannotCreateNormalizer" xml:space="preserve">
-    <value>Cannot create normalizer for '{0}'.</value>
+    <value>Impossibile creare un normalizzatore per '{0}'.</value>
   </data>
   <data name="Sql_InternalError" xml:space="preserve">
     <value>Errore interno</value>
@@ -4613,5 +4613,8 @@
   </data>
   <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
     <value>Numero non negativo obbligatorio.</value>
+  </data>
+  <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
+    <value>Il parametro '{0}' non può includere Output o InputOutput come valore di Direction quando nel comando padre è abilitato EnableOptimizedParameterBinding.</value>
   </data>
 </root>

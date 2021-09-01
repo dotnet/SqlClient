@@ -13,7 +13,6 @@ namespace Microsoft.Data.SqlClient.SNI
 {
     internal class SSRP
     {
-        private const string s_className = nameof(SSRP);
         private const char SemicolonSeparator = ';';
         private const int SqlServerBrowserPort = 1434;
 
@@ -27,8 +26,7 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(browserHostName), "browserHostName should not be null, empty, or whitespace");
             Debug.Assert(!string.IsNullOrWhiteSpace(instanceName), "instanceName should not be null, empty, or whitespace");
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent(s_className);
-            try
+            using (TrySNIEventScope.Create(nameof(SSRP)))
             {
                 byte[] instanceInfoRequest = CreateInstanceInfoRequest(instanceName);
                 byte[] responsePacket = null;
@@ -38,7 +36,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 }
                 catch (SocketException se)
                 {
-                    SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR, "SocketException Message = {0}", args0: se?.Message);
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.ERR, "SocketException Message = {0}", args0: se?.Message);
                     throw new Exception(SQLMessage.SqlServerBrowserNotAccessible(), se);
                 }
 
@@ -60,10 +58,6 @@ namespace Microsoft.Data.SqlClient.SNI
 
                 return ushort.Parse(elements[tcpIndex + 1]);
             }
-            finally
-            {
-                SqlClientEventSource.Log.TrySNIScopeLeaveEvent(scopeID);
-            }
         }
 
         /// <summary>
@@ -74,8 +68,7 @@ namespace Microsoft.Data.SqlClient.SNI
         private static byte[] CreateInstanceInfoRequest(string instanceName)
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(instanceName), "instanceName should not be null, empty, or whitespace");
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent(s_className);
-            try
+            using (TrySNIEventScope.Create(nameof(SSRP)))
             {
                 const byte ClntUcastInst = 0x04;
                 instanceName += char.MinValue;
@@ -86,10 +79,6 @@ namespace Microsoft.Data.SqlClient.SNI
                 Encoding.ASCII.GetBytes(instanceName, 0, instanceName.Length, requestPacket, 1);
 
                 return requestPacket;
-            }
-            finally
-            {
-                SqlClientEventSource.Log.TrySNIScopeLeaveEvent(scopeID);
             }
         }
 
@@ -151,8 +140,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>response packet from UDP server</returns>
         private static byte[] SendUDPRequest(string browserHostname, int port, byte[] requestPacket)
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent(s_className);
-            try
+            using (TrySNIEventScope.Create(nameof(SSRP)))
             {
                 Debug.Assert(!string.IsNullOrWhiteSpace(browserHostname), "browserhostname should not be null, empty, or whitespace");
                 Debug.Assert(port >= 0 && port <= 65535, "Invalid port");
@@ -170,19 +158,15 @@ namespace Microsoft.Data.SqlClient.SNI
                     Task<int> sendTask = client.SendAsync(requestPacket, requestPacket.Length, browserHostname, port);
                     Task<UdpReceiveResult> receiveTask = null;
                     
-                    SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.INFO, "Waiting for UDP Client to fetch Port info.");
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.INFO, "Waiting for UDP Client to fetch Port info.");
                     if (sendTask.Wait(sendTimeOutMs) && (receiveTask = client.ReceiveAsync()).Wait(receiveTimeOutMs))
                     {
-                        SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.INFO, "Received Port info from UDP Client.");
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.INFO, "Received Port info from UDP Client.");
                         responsePacket = receiveTask.Result.Buffer;
                     }
                 }
 
                 return responsePacket;
-            }
-            finally
-            {
-                SqlClientEventSource.Log.TrySNIScopeLeaveEvent(scopeID);
             }
         }
     }

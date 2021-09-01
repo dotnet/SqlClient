@@ -58,6 +58,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <summary>
+        /// Verify client encryption possibility.
+        /// </summary>
+        private bool ClientOSEncryptionSupport => SNILoadHandle.SingletonInstance.ClientOSEncryptionSupport;
 
         // ReliabilitySection Usage:
         //
@@ -644,6 +648,18 @@ namespace Microsoft.Data.SqlClient
             // for DNS Caching phase 1
             AssignPendingDNSInfo(serverInfo.UserProtocol, FQDNforDNSCahce);
 
+            if(!ClientOSEncryptionSupport)
+            {
+                //If encryption is required, an error will be thrown.
+                if (encrypt)
+                {
+                    _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByClient(), "", 0));
+                    _physicalStateObj.Dispose();
+                    ThrowExceptionAndWarning(_physicalStateObj);
+                }
+                _encryptionOption = EncryptionOptions.NOT_SUP;
+            }
+
             // UNDONE - send "" for instance now, need to fix later
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Sending prelogin handshake");
             SendPreLoginHandshake(instanceName, encrypt, !string.IsNullOrEmpty(certificate), useOriginalAddressInfo);
@@ -683,8 +699,8 @@ namespace Microsoft.Data.SqlClient
                 AssignPendingDNSInfo(serverInfo.UserProtocol, FQDNforDNSCahce);
 
                 SendPreLoginHandshake(instanceName, encrypt, !string.IsNullOrEmpty(certificate), useOriginalAddressInfo);
-                status = ConsumePreLoginHandshake(authType, encrypt, trustServerCert, integratedSecurity, serverCallback, clientCallback, out marsCapable,
-                                                  out _connHandler._fedAuthRequired);
+                status = ConsumePreLoginHandshake(authType, encrypt, trustServerCert, integratedSecurity, serverCallback, clientCallback, 
+                                                  out marsCapable, out _connHandler._fedAuthRequired);
 
                 // Don't need to check for Sphinx failure, since we've already consumed
                 // one pre-login packet and know we are connecting to Shiloh.
@@ -983,7 +999,7 @@ namespace Microsoft.Data.SqlClient
                     case (int)PreLoginOptions.ENCRYPT:
                         if (_encryptionOption == EncryptionOptions.NOT_SUP)
                         {
-                            // If OS doesn't support encryption, inform server not supported.
+                            //If OS doesn't support encryption and encryption is not required, inform server "not supported" by client.
                             payload[payloadLength] = (byte)EncryptionOptions.NOT_SUP;
                         }
                         else
@@ -1189,7 +1205,7 @@ namespace Microsoft.Data.SqlClient
                         switch (_encryptionOption & EncryptionOptions.OPTIONS_MASK)
                         {
                             case (EncryptionOptions.ON):
-                                if (serverOption == EncryptionOptions.NOT_SUP)
+                                if ((serverOption & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.NOT_SUP)
                                 {
                                     _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByServer(), "", 0));
                                     _physicalStateObj.Dispose();
@@ -1209,7 +1225,7 @@ namespace Microsoft.Data.SqlClient
                                     // Encrypt all.
                                     _encryptionOption = EncryptionOptions.ON | (_encryptionOption & ~EncryptionOptions.OPTIONS_MASK);
                                 }
-
+                                // NOT_SUP: No encryption.
                                 break;
 
                             case (EncryptionOptions.NOT_SUP):
@@ -6208,8 +6224,10 @@ namespace Microsoft.Data.SqlClient
                     break;
 
                 case SqlDbType.Timestamp:
-                    // Dev10 Bug #479607 - this should have been the same as SqlDbType.Binary, but it's a rejected breaking change
-                    // Dev10 Bug #752790 - don't assert when it does happen
+                    if (!LocalAppContextSwitches.LegacyRowVersionNullBehavior)
+                    {
+                        nullVal.SetToNullOfType(SqlBuffer.StorageType.SqlBinary);
+                    }
                     break;
 
                 default:
@@ -9880,6 +9898,7 @@ namespace Microsoft.Data.SqlClient
                         SqlParameter[] parameters = rpcext.parameters;
 
                         bool isAdvancedTraceOn = SqlClientEventSource.Log.IsAdvancedTraceOn();
+                        bool enableOptimizedParameterBinding = cmd.EnableOptimizedParameterBinding;
 
                         for (int i = (ii == startRpc) ? startParam : 0; i < parameters.Length; i++)
                         {
@@ -9888,7 +9907,11 @@ namespace Microsoft.Data.SqlClient
                             SqlParameter param = parameters[i];
                             // Since we are reusing the parameters array, we cannot rely on length to indicate no of parameters.
                             if (param == null)
+                            {
                                 break;      // End of parameters for this execute
+                            }
+
+                            ParameterDirection parameterDirection = param.Direction;
 
                             // Throw an exception if ForceColumnEncryption is set on a parameter and the ColumnEncryption is not enabled on SqlConnection or SqlCommand
                             if (param.ForceColumnEncryption &&
@@ -9900,10 +9923,15 @@ namespace Microsoft.Data.SqlClient
 
                             // Check if the applications wants to force column encryption to avoid sending sensitive data to server
                             if (param.ForceColumnEncryption && param.CipherMetadata == null
-                                && (param.Direction == ParameterDirection.Input || param.Direction == ParameterDirection.InputOutput))
+                                && (parameterDirection == ParameterDirection.Input || parameterDirection == ParameterDirection.InputOutput))
                             {
                                 // Application wants a parameter to be encrypted before sending it to server, however server doesnt think this parameter needs encryption.
                                 throw SQL.ParamUnExpectedEncryptionMetadata(param.ParameterName, rpcext.GetCommandTextOrRpcName());
+                            }
+
+                            if (enableOptimizedParameterBinding && (parameterDirection == ParameterDirection.Output || parameterDirection == ParameterDirection.InputOutput))
+                            {
+                                throw SQL.ParameterDirectionInvalidForOptimizedBinding(param.ParameterName);
                             }
 
                             // Validate parameters are not variable length without size and with null value.  MDAC 66522
@@ -9914,7 +9942,7 @@ namespace Microsoft.Data.SqlClient
 
                             if (mt.IsNewKatmaiType)
                             {
-                                WriteSmiParameter(param, i, 0 != (rpcext.paramoptions[i] & TdsEnums.RPC_PARAM_DEFAULT), stateObj, isAdvancedTraceOn);
+                                WriteSmiParameter(param, i, 0 != (rpcext.paramoptions[i] & TdsEnums.RPC_PARAM_DEFAULT), stateObj, enableOptimizedParameterBinding, isAdvancedTraceOn);
                                 continue;
                             }
 
@@ -9929,7 +9957,7 @@ namespace Microsoft.Data.SqlClient
                             bool isSqlVal = false;
                             bool isDataFeed = false;
                             // if we have an output param, set the value to null so we do not send it across to the server
-                            if (param.Direction == ParameterDirection.Output)
+                            if (parameterDirection == ParameterDirection.Output)
                             {
                                 isSqlVal = param.ParameterIsSqlType;  // We have to forward the TYPE info, we need to know what type we are returning.  Once we null the parameter we will no longer be able to distinguish what type were seeing.
                                 param.Value = null;
@@ -9946,7 +9974,7 @@ namespace Microsoft.Data.SqlClient
                                 }
                             }
 
-                            WriteParameterName(param.ParameterNameFixed, stateObj);
+                            WriteParameterName(param.ParameterNameFixed, stateObj, enableOptimizedParameterBinding);
 
                             // Write parameter status
                             stateObj.WriteByte(rpcext.paramoptions[i]);
@@ -10628,11 +10656,11 @@ namespace Microsoft.Data.SqlClient
         }
 
 
-        private void WriteParameterName(string parameterName, TdsParserStateObject stateObj)
+        private void WriteParameterName(string parameterName, TdsParserStateObject stateObj, bool isAnonymous)
         {
             // paramLen
             // paramName
-            if (!ADP.IsEmpty(parameterName))
+            if (!isAnonymous && !string.IsNullOrEmpty(parameterName))
             {
                 Debug.Assert(parameterName.Length <= 0xff, "parameter name can only be 255 bytes, shouldn't get to TdsParser!");
                 int tempLen = parameterName.Length & 0xff;
@@ -10646,7 +10674,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         private static readonly IEnumerable<SqlDataRecord> __tvpEmptyValue = new List<SqlDataRecord>().AsReadOnly();
-        private void WriteSmiParameter(SqlParameter param, int paramIndex, bool sendDefault, TdsParserStateObject stateObj, bool advancedTraceIsOn)
+        private void WriteSmiParameter(SqlParameter param, int paramIndex, bool sendDefault, TdsParserStateObject stateObj, bool isAnonymous, bool advancedTraceIsOn)
         {
             //
             // Determine Metadata
@@ -10706,7 +10734,7 @@ namespace Microsoft.Data.SqlClient
             //
             // Write parameter metadata
             //
-            WriteSmiParameterMetaData(metaData, sendDefault, stateObj);
+            WriteSmiParameterMetaData(metaData, sendDefault, isAnonymous, stateObj);
 
             //
             // Now write the value
@@ -10725,7 +10753,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Writes metadata portion of parameter stream from an SmiParameterMetaData object.
-        private void WriteSmiParameterMetaData(SmiParameterMetaData metaData, bool sendDefault, TdsParserStateObject stateObj)
+        private void WriteSmiParameterMetaData(SmiParameterMetaData metaData, bool sendDefault, bool isAnonymous, TdsParserStateObject stateObj)
         {
             // Determine status
             byte status = 0;
@@ -10740,7 +10768,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // Write everything out
-            WriteParameterName(metaData.Name, stateObj);
+            WriteParameterName(metaData.Name, stateObj, isAnonymous);
             stateObj.WriteByte(status);
             WriteSmiTypeInfo(metaData, stateObj);
         }

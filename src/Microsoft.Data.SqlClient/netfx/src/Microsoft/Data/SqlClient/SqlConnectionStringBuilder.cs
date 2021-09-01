@@ -37,7 +37,6 @@ namespace Microsoft.Data.SqlClient
             MinPoolSize,
             MaxPoolSize,
             PoolBlockingPeriod,
-            AsynchronousProcessing,
             ConnectionReset,
             MultipleActiveResultSets,
             Replication,
@@ -101,7 +100,6 @@ namespace Microsoft.Data.SqlClient
         private int _packetSize = DbConnectionStringDefaults.PacketSize;
         private int _connectRetryCount = DbConnectionStringDefaults.ConnectRetryCount;
         private int _connectRetryInterval = DbConnectionStringDefaults.ConnectRetryInterval;
-        private bool _asynchronousProcessing = DbConnectionStringDefaults.AsynchronousProcessing;
         private bool _connectionReset = DbConnectionStringDefaults.ConnectionReset;
         private bool _contextConnection = DbConnectionStringDefaults.ContextConnection;
         private bool _encrypt = DbConnectionStringDefaults.Encrypt;
@@ -131,7 +129,6 @@ namespace Microsoft.Data.SqlClient
             string[] validKeywords = new string[KeywordsCount];
             validKeywords[(int)Keywords.ApplicationIntent] = DbConnectionStringKeywords.ApplicationIntent;
             validKeywords[(int)Keywords.ApplicationName] = DbConnectionStringKeywords.ApplicationName;
-            validKeywords[(int)Keywords.AsynchronousProcessing] = DbConnectionStringKeywords.AsynchronousProcessing;
             validKeywords[(int)Keywords.AttachDBFilename] = DbConnectionStringKeywords.AttachDBFilename;
             validKeywords[(int)Keywords.PoolBlockingPeriod] = DbConnectionStringKeywords.PoolBlockingPeriod;
             validKeywords[(int)Keywords.ConnectionReset] = DbConnectionStringKeywords.ConnectionReset;
@@ -179,7 +176,6 @@ namespace Microsoft.Data.SqlClient
             Dictionary<string, Keywords> hash = new Dictionary<string, Keywords>(KeywordsCount + SqlConnectionString.SynonymCount, StringComparer.OrdinalIgnoreCase);
             hash.Add(DbConnectionStringKeywords.ApplicationIntent, Keywords.ApplicationIntent);
             hash.Add(DbConnectionStringKeywords.ApplicationName, Keywords.ApplicationName);
-            hash.Add(DbConnectionStringKeywords.AsynchronousProcessing, Keywords.AsynchronousProcessing);
             hash.Add(DbConnectionStringKeywords.AttachDBFilename, Keywords.AttachDBFilename);
             hash.Add(DbConnectionStringKeywords.PoolBlockingPeriod, Keywords.PoolBlockingPeriod);
             hash.Add(DbConnectionStringKeywords.ConnectTimeout, Keywords.ConnectTimeout);
@@ -225,7 +221,6 @@ namespace Microsoft.Data.SqlClient
             hash.Add(DbConnectionStringSynonyms.IPADDRESSPREFERENCE, Keywords.IPAddressPreference);
             hash.Add(DbConnectionStringSynonyms.APP, Keywords.ApplicationName);
             hash.Add(DbConnectionStringSynonyms.APPLICATIONINTENT, Keywords.ApplicationIntent);
-            hash.Add(DbConnectionStringSynonyms.Async, Keywords.AsynchronousProcessing);
             hash.Add(DbConnectionStringSynonyms.EXTENDEDPROPERTIES, Keywords.AttachDBFilename);
             hash.Add(DbConnectionStringSynonyms.INITIALFILENAME, Keywords.AttachDBFilename);
             hash.Add(DbConnectionStringSynonyms.CONNECTIONTIMEOUT, Keywords.ConnectTimeout);
@@ -370,11 +365,6 @@ namespace Microsoft.Data.SqlClient
                             Certificate = ConvertToString(value);
                             break;
 #endif
-#pragma warning disable 618 // Obsolete AsynchronousProcessing
-                        case Keywords.AsynchronousProcessing:
-                            AsynchronousProcessing = ConvertToBoolean(value);
-                            break;
-#pragma warning restore 618
                         case Keywords.PoolBlockingPeriod:
                             PoolBlockingPeriod = ConvertToPoolBlockingPeriod(keyword, value);
                             break;
@@ -468,22 +458,6 @@ namespace Microsoft.Data.SqlClient
             {
                 SetValue(DbConnectionStringKeywords.ApplicationName, value);
                 _applicationName = value;
-            }
-        }
-
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/AsynchronousProcessing/*' />
-        [DisplayName(DbConnectionStringKeywords.AsynchronousProcessing)]
-        [Obsolete("AsynchronousProcessing has been deprecated. SqlConnection will ignore the 'Asynchronous Processing' keyword and always allow asynchronous processing.")]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Initialization)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_AsynchronousProcessing)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public bool AsynchronousProcessing
-        {
-            get { return _asynchronousProcessing; }
-            set
-            {
-                SetValue(DbConnectionStringKeywords.AsynchronousProcessing, value);
-                _asynchronousProcessing = value;
             }
         }
 
@@ -1311,10 +1285,6 @@ namespace Microsoft.Data.SqlClient
                     return this.ApplicationIntent;
                 case Keywords.ApplicationName:
                     return ApplicationName;
-#pragma warning disable 618 // Obsolete AsynchronousProcessing
-                case Keywords.AsynchronousProcessing:
-                    return AsynchronousProcessing;
-#pragma warning restore 618
                 case Keywords.AttachDBFilename:
                     return AttachDBFilename;
                 case Keywords.PoolBlockingPeriod:
@@ -1467,9 +1437,6 @@ namespace Microsoft.Data.SqlClient
                     break;
                 case Keywords.ApplicationName:
                     _applicationName = DbConnectionStringDefaults.ApplicationName;
-                    break;
-                case Keywords.AsynchronousProcessing:
-                    _asynchronousProcessing = DbConnectionStringDefaults.AsynchronousProcessing;
                     break;
                 case Keywords.AttachDBFilename:
                     _attachDBFilename = DbConnectionStringDefaults.AttachDBFilename;

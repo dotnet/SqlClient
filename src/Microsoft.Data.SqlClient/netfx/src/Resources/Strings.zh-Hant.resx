@@ -1783,7 +1783,7 @@
     <value>必須要顯示索引鍵 '{1}' 才能使用索引鍵 '{0}'。</value>
   </data>
   <data name="ADP_InvalidConnectionOptionValueLength" xml:space="preserve">
-    <value>索引鍵 '{0}' 的長度超過其上限 '{1}'。</value>
+    <value>索引鍵 '{0}' 的值長度超過其上限 '{1}'。</value>
   </data>
   <data name="ADP_KeywordNotSupported" xml:space="preserve">
     <value>不支援關鍵字: '{0}'。</value>
@@ -2563,7 +2563,7 @@
     <value>無法在 Active Directory (Authentication={1}) 中驗證使用者 {0}。</value>
   </data>
   <data name="SQL_MSALInnerException" xml:space="preserve">
-    <value>錯誤碼 0x {0}; 狀態 {1}</value>
+    <value>錯誤碼 0x{0}</value>
   </data>
   <data name="SQL_ChangePasswordRequiresYukon" xml:space="preserve">
     <value>ChangePassword 需要 SQL Server 9.0 或更新的版本。</value>
@@ -3049,7 +3049,7 @@
     <value>子類別並未覆寫所需的方法。</value>
   </data>
   <data name="SQL_CannotCreateNormalizer" xml:space="preserve">
-    <value>Cannot create normalizer for '{0}'.</value>
+    <value>無法建立 '{0}' 的正規器。</value>
   </data>
   <data name="Sql_InternalError" xml:space="preserve">
     <value>內部錯誤</value>
@@ -4162,7 +4162,7 @@
     <value>內部錯誤。資料行加密金鑰不能是 Null。</value>
   </data>
   <data name="TCE_InvalidKeySize" xml:space="preserve">
-    <value>已成功解密資料行加密金鑰，但其長度 {1} 不符合演算法 '{0}' 的長度 {2}。請確認資料庫中該資料行加密金鑰的加密值。</value>
+    <value>已成功解密資料行加密金鑰，但其長度 {1} 不符合演算法 '{0}' 的長度 {2}。請驗證資料庫中該資料行加密金鑰的加密值。</value>
   </data>
   <data name="TCE_InvalidEncryptionType" xml:space="preserve">
     <value>為資料庫中資料行指定的加密類型 '{1}' 無效或已損毀。演算法 '{0}' 的有效加密類型為: {2}</value>
@@ -4613,5 +4613,8 @@
   </data>
   <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
     <value>需要非負數。</value>
+  </data>
+  <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
+    <value>在父命令上啟用 EnableOptimizedParameterBinding 時，參數 '{0}' 不能具有方向輸出或 InputOutput。</value>
   </data>
 </root>

@@ -63,11 +63,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static string AADUserIdentityAccessToken = null;
         public const string UdtTestDbName = "UdtTestDb";
         public const string AKVKeyName = "TestSqlClientAzureKeyVaultProvider";
-
+        public const string EventSourcePrefix = "Microsoft.Data.SqlClient";
+        public const string MDSEventSourceName = "Microsoft.Data.SqlClient.EventSource";
+        public const string AKVEventSourceName = "Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider.EventSource";
         private const string ManagedNetworkingAppContextSwitch = "Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows";
 
         private static Dictionary<string, bool> AvailableDatabases;
-        private static TraceEventListener TraceListener;
+        private static BaseEventListener TraceListener;
 
         static DataTestUtility()
         {
@@ -100,7 +102,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             if (TracingEnabled)
             {
-                TraceListener = new TraceEventListener();
+                TraceListener = new BaseEventListener();
             }
 
             if (UseManagedSNIOnWindows)
@@ -728,6 +730,29 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return paramValue.ToString();
         }
 
+        public static string FetchKeyInConnStr(string connStr, string[] keys)
+        {
+            // tokenize connection string and find matching key
+            if (connStr != null && keys != null)
+            {
+                string[] connProps = connStr.Split(';');
+                foreach (string cp in connProps)
+                {
+                    if (!string.IsNullOrEmpty(cp.Trim()))
+                    {
+                        foreach (var key in keys)
+                        {
+                            if (cp.Trim().ToLower().StartsWith(key.Trim().ToLower()))
+                            {
+                                return cp.Substring(cp.IndexOf('=') + 1);
+                            }
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
         public static string RemoveKeysInConnStr(string connStr, string[] keysToRemove)
         {
             // tokenize connection string and remove input keys.
@@ -783,22 +808,43 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return res;
         }
 
-        public class TraceEventListener : EventListener
+        public class AKVEventListener : BaseEventListener
         {
-            public List<int> IDs = new List<int>();
+            public override string Name => AKVEventSourceName;
+        }
+
+        public class MDSEventListener : BaseEventListener
+        {
+            public override string Name => MDSEventSourceName;
+        }
+
+        public class BaseEventListener : EventListener
+        {
+            public readonly List<int> IDs = new();
+            public readonly List<EventWrittenEventArgs> EventData = new();
+
+            public virtual string Name => EventSourcePrefix;
 
             protected override void OnEventSourceCreated(EventSource eventSource)
             {
-                if (eventSource.Name.Equals("Microsoft.Data.SqlClient.EventSource"))
+                if (eventSource.Name.StartsWith(Name))
                 {
-                    //// Collect all traces for better code coverage
-                    EnableEvents(eventSource, EventLevel.Informational, EventKeywords.All);
+                    // Collect all traces for better code coverage
+                    EnableEvents(eventSource, EventLevel.LogAlways, EventKeywords.All);
+                }
+                else
+                {
+                    DisableEvents(eventSource);
                 }
             }
 
             protected override void OnEventWritten(EventWrittenEventArgs eventData)
             {
-                IDs.Add(eventData.EventId);
+                if (Name == eventData.EventSource.Name)
+                {
+                    IDs.Add(eventData.EventId);
+                    EventData.Add(eventData);
+                }
             }
         }
     }

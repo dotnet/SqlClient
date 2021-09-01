@@ -264,7 +264,7 @@ namespace Microsoft.Data.SqlClient
         private static extern uint SNIGetInfoWrapper([In] SNIHandle pConn, SNINativeMethodWrapper.QTypes QType, out ProviderEnum provNum);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
-        private static extern uint SNIInitialize([In] IntPtr pmo);
+        private static extern uint SNIInitialize([In] bool useSystemDefaultSecureProtocols, [In] IntPtr pmo);
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         private static extern uint SNIOpenSyncExWrapper(ref SNI_CLIENT_CONSUMER_INFO pClientConsumerInfo, out IntPtr ppConn);
@@ -340,7 +340,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static uint SNIInitialize()
         {
-            return SNIInitialize(IntPtr.Zero);
+            return SNIInitialize(LocalAppContextSwitches.UseSystemDefaultSecureProtocols, IntPtr.Zero);
         }
 
         internal static unsafe uint SNIOpenMarsSession(ConsumerInfo consumerInfo, SNIHandle parent, ref IntPtr pConn, bool fSync, SqlConnectionIPAddressPreference ipPreference, SQLDNSInfo cachedDNSInfo)

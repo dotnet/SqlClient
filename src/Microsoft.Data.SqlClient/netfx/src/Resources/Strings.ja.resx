@@ -1783,7 +1783,7 @@
     <value>'{0}' キーを使用するには、キーとして '{1}' が指定されている必要があります。</value>
   </data>
   <data name="ADP_InvalidConnectionOptionValueLength" xml:space="preserve">
-    <value>キー '{0}' の値の長さが、上限の '{1}' を超えています。</value>
+    <value>キー '{0}' の値の長さが、制限 '{1}' を超えています。</value>
   </data>
   <data name="ADP_KeywordNotSupported" xml:space="preserve">
     <value>キーワード '{0}' はサポートされていません。</value>
@@ -2563,7 +2563,7 @@
     <value>ユーザー {0} を Active Directory (Authentication={1}) で認証できませんでした。</value>
   </data>
   <data name="SQL_MSALInnerException" xml:space="preserve">
-    <value>エラー コード 0x{0}、状態 {1}</value>
+    <value>エラー コード 0x{0}</value>
   </data>
   <data name="SQL_ChangePasswordRequiresYukon" xml:space="preserve">
     <value>ChangePassword を使用するには SQL Server 9.0 以降が必要です。</value>
@@ -3049,7 +3049,7 @@
     <value>サブクラスが、必要なメソッドをオーバーライドしませんでした。</value>
   </data>
   <data name="SQL_CannotCreateNormalizer" xml:space="preserve">
-    <value>Cannot create normalizer for '{0}'.</value>
+    <value>'{0}' のノーマライザーを作成できません。</value>
   </data>
   <data name="Sql_InternalError" xml:space="preserve">
     <value>内部エラー</value>
@@ -4613,5 +4613,8 @@
   </data>
   <data name="ArgumentOutOfRange_NeedNonNegNum" xml:space="preserve">
     <value>負でない数値が必要です。</value>
+  </data>
+  <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
+    <value>親コマンドで EnableOptimizedParameterBinding が有効になっている場合、パラメーター '{0}' に Direction 出力または InputOutput は指定できません。</value>
   </data>
 </root>

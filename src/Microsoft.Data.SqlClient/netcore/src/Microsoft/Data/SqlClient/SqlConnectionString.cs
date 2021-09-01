@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient
             internal const int Connect_Timeout = ADP.DefaultConnectionTimeout;
             internal const string Current_Language = _emptyString;
             internal const string Data_Source = _emptyString;
-            internal const bool Encrypt = false;
+            internal const bool Encrypt = true;
             internal const bool Enlist = true;
             internal const string FailoverPartner = _emptyString;
             internal const string Initial_Catalog = _emptyString;
@@ -41,6 +41,7 @@ namespace Microsoft.Data.SqlClient
             internal const int Packet_Size = 8000;
             internal const string Password = _emptyString;
             internal const bool Persist_Security_Info = false;
+            internal const PoolBlockingPeriod PoolBlockingPeriod = DbConnectionStringDefaults.PoolBlockingPeriod;
             internal const bool Pooling = true;
             internal const bool TrustServerCertificate = false;
             internal const string Type_System_Version = _emptyString;
@@ -62,11 +63,8 @@ namespace Microsoft.Data.SqlClient
         {
             internal const string ApplicationIntent = "application intent";
             internal const string Application_Name = "application name";
-            internal const string AsynchronousProcessing = "asynchronous processing";
             internal const string AttachDBFilename = "attachdbfilename";
-#if NETCOREAPP
             internal const string PoolBlockingPeriod = "pool blocking period";
-#endif
             internal const string ColumnEncryptionSetting = "column encryption setting";
             internal const string EnclaveAttestationUrl = "enclave attestation url";
             internal const string AttestationProtocol = "attestation protocol";
@@ -114,7 +112,6 @@ namespace Microsoft.Data.SqlClient
             internal const string APPLICATIONINTENT = "applicationintent";
             // application name
             internal const string APP = "app";
-            internal const string Async = "async";
             // attachDBFilename
             internal const string EXTENDED_PROPERTIES = "extended properties";
             internal const string INITIAL_FILE_NAME = "initial file name";
@@ -145,10 +142,8 @@ namespace Microsoft.Data.SqlClient
             // network library
             internal const string NET = "net";
             internal const string NETWORK = "network";
-#if NETCOREAPP
             // pool blocking period
             internal const string POOLBLOCKINGPERIOD = "poolblockingperiod";
-#endif
             // password
             internal const string Pwd = "pwd";
             // persist security info
@@ -163,12 +158,8 @@ namespace Microsoft.Data.SqlClient
             // make sure to update SynonymCount value below when adding or removing synonyms
         }
 
-#if NETCOREAPP
         internal const int SynonymCount = 26;
-#else
-        internal const int SynonymCount = 25;
-#endif
-        internal const int DeprecatedSynonymCount = 3;
+        internal const int DeprecatedSynonymCount = 2;
 
         internal enum TypeSystem
         {
@@ -209,6 +200,7 @@ namespace Microsoft.Data.SqlClient
         private readonly bool _enlist;
         private readonly bool _mars;
         private readonly bool _persistSecurityInfo;
+        private readonly PoolBlockingPeriod _poolBlockingPeriod;
         private readonly bool _pooling;
         private readonly bool _replication;
         private readonly bool _userInstance;
@@ -252,7 +244,6 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlConnectionString(string connectionString) : base(connectionString, GetParseSynonyms())
         {
-            ThrowUnsupportedIfKeywordSet(KEY.AsynchronousProcessing);
             ThrowUnsupportedIfKeywordSet(KEY.Connection_Reset);
             ThrowUnsupportedIfKeywordSet(KEY.Context_Connection);
 
@@ -263,9 +254,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             _integratedSecurity = ConvertValueToIntegratedSecurity();
-#if NETCOREAPP
             _poolBlockingPeriod = ConvertValueToPoolBlockingPeriod();
-#endif
             _encrypt = ConvertValueToBoolean(KEY.Encrypt, DEFAULT.Encrypt);
             _enlist = ConvertValueToBoolean(KEY.Enlist, DEFAULT.Enlist);
             _mars = ConvertValueToBoolean(KEY.MARS, DEFAULT.MARS);
@@ -522,9 +511,7 @@ namespace Microsoft.Data.SqlClient
             _commandTimeout = connectionOptions._commandTimeout;
             _connectTimeout = connectionOptions._connectTimeout;
             _loadBalanceTimeout = connectionOptions._loadBalanceTimeout;
-#if NETCOREAPP
             _poolBlockingPeriod = connectionOptions._poolBlockingPeriod;
-#endif
             _maxPoolSize = connectionOptions._maxPoolSize;
             _minPoolSize = connectionOptions._minPoolSize;
             _multiSubnetFailover = connectionOptions._multiSubnetFailover;
@@ -596,6 +583,7 @@ namespace Microsoft.Data.SqlClient
         internal string Password { get { return _password; } }
         internal string UserID { get { return _userID; } }
         internal string WorkstationId { get { return _workstationId; } }
+        internal PoolBlockingPeriod PoolBlockingPeriod { get { return _poolBlockingPeriod; } }
 
         internal TypeSystem TypeSystemVersion { get { return _typeSystemVersion; } }
         internal Version TypeSystemAssemblyVersion { get { return _typeSystemAssemblyVersion; } }
@@ -660,11 +648,8 @@ namespace Microsoft.Data.SqlClient
                 {
                     { KEY.ApplicationIntent, KEY.ApplicationIntent },
                     { KEY.Application_Name, KEY.Application_Name },
-                    { KEY.AsynchronousProcessing, KEY.AsynchronousProcessing },
                     { KEY.AttachDBFilename, KEY.AttachDBFilename },
-#if NETCOREAPP
                     { KEY.PoolBlockingPeriod, KEY.PoolBlockingPeriod},
-#endif
                     { KEY.Command_Timeout, KEY.Command_Timeout },
                     { KEY.Connect_Timeout, KEY.Connect_Timeout },
                     { KEY.Connection_Reset, KEY.Connection_Reset },
@@ -703,7 +688,6 @@ namespace Microsoft.Data.SqlClient
 
                     { SYNONYM.APP, KEY.Application_Name },
                     { SYNONYM.APPLICATIONINTENT, KEY.ApplicationIntent },
-                    { SYNONYM.Async, KEY.AsynchronousProcessing },
                     { SYNONYM.EXTENDED_PROPERTIES, KEY.AttachDBFilename },
                     { SYNONYM.INITIAL_FILE_NAME, KEY.AttachDBFilename },
                     { SYNONYM.CONNECTRETRYCOUNT, KEY.Connect_Retry_Count },
@@ -716,9 +700,7 @@ namespace Microsoft.Data.SqlClient
                     { SYNONYM.MULTIPLEACTIVERESULTSETS, KEY.MARS },
                     { SYNONYM.MULTISUBNETFAILOVER, KEY.MultiSubnetFailover },
                     { SYNONYM.NETWORK_ADDRESS, KEY.Data_Source },
-#if NETCOREAPP
                     { SYNONYM.POOLBLOCKINGPERIOD, KEY.PoolBlockingPeriod},
-#endif
                     { SYNONYM.SERVER, KEY.Data_Source },
                     { SYNONYM.DATABASE, KEY.Initial_Catalog },
                     { SYNONYM.TRUSTED_CONNECTION, KEY.Integrated_Security },
@@ -935,6 +917,24 @@ namespace Microsoft.Data.SqlClient
             catch (OverflowException e)
             {
                 throw ADP.InvalidConnectionOptionValue(KEY.IPAddressPreference, e);
+            }
+        }
+
+        internal Microsoft.Data.SqlClient.PoolBlockingPeriod ConvertValueToPoolBlockingPeriod()
+        {
+            string value;
+            if (!TryGetParsetableValue(KEY.PoolBlockingPeriod, out value))
+            {
+                return DEFAULT.PoolBlockingPeriod;
+            }
+
+            try
+            {
+                return DbConnectionStringBuilderUtil.ConvertToPoolBlockingPeriod(KEY.PoolBlockingPeriod, value);
+            }
+            catch (Exception e) when (e is FormatException || e is OverflowException)
+            {
+                throw ADP.InvalidConnectionOptionValue(KEY.PoolBlockingPeriod, e);
             }
         }
     }

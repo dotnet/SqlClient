@@ -4,13 +4,9 @@
     <AssemblyName>ManualTests</AssemblyName>
     <TargetGroup Condition="$(TargetFramework.StartsWith('net4'))">netfx</TargetGroup>
     <TargetGroup Condition="$(TargetGroup) == ''">netcoreapp</TargetGroup>
-    <OSGroup Condition="'$(OSGroup)' == ''">$(OS)</OSGroup>
-    <TargetsWindows Condition="'$(OSGroup)'=='Windows_NT'">true</TargetsWindows>
-    <TargetsUnix Condition="'$(OSGroup)'=='Unix'">true</TargetsUnix>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <CodeAnalysisRuleSet>Microsoft.Data.SqlClient.ManualTesting.Tests.ruleset</CodeAnalysisRuleSet>
-    <Configurations>Debug;Release;net461-Release;net461-Debug;netcoreapp2.1-Debug;netcoreapp2.1-Release;netcoreapp3.1-Debug;netcoreapp3.1-Release</Configurations>
-    <Platforms>AnyCPU;x86;x64</Platforms>
+    <RuntimeIdentifier Condition="'$(TargetGroup)'=='netfx'">win</RuntimeIdentifier>
     <DefineConstants Condition="'$(TargetGroup)'=='netcoreapp'">$(DefineConstants);NETCOREAPP</DefineConstants>
     <DefineConstants Condition="'$(TargetGroup)'=='netfx'">$(DefineConstants);NETFRAMEWORK</DefineConstants>
     <DefineConstants Condition="'$(TargetGroup)' == 'netcoreapp' AND !$(TargetFramework.StartsWith('netcoreapp'))">$(DefineConstants);NET50_OR_LATER</DefineConstants>
@@ -70,11 +66,13 @@
     </Compile>
     <Compile Include="DataCommon\AADUtility.cs" />
     <Compile Include="SQL\ConfigurableIpPreferenceTest\ConfigurableIpPreferenceTest.cs" />
+    <Compile Include="SQL\RetryLogic\RetryLogicCounterTest.cs" />
     <Compile Include="SQL\RetryLogic\RetryLogicConfigHelper.cs" />
     <Compile Include="SQL\RetryLogic\RetryLogicTestHelper.cs" />
     <Compile Include="SQL\RetryLogic\SqlCommandReliabilityTest.cs" />
     <Compile Include="SQL\RetryLogic\SqlConnectionReliabilityTest.cs" />
     <Compile Include="SQL\RetryLogic\SqlConfigurationManagerReliabilityTest.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\KeepNulls.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\OrderHint.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\OrderHintAsync.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\OrderHintDuplicateColumn.cs" />
@@ -82,6 +80,7 @@
     <Compile Include="SQL\SqlBulkCopyTest\OrderHintMissingTargetColumn.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\OrderHintTransaction.cs" />
     <Compile Include="SQL\DataClassificationTest\DataClassificationTest.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\TableLock.cs" />
     <Compile Include="TracingTests\EventSourceTest.cs" />
     <Compile Include="SQL\AdapterTest\AdapterTest.cs" />
     <Compile Include="SQL\AsyncTest\AsyncTimeoutTest.cs" />
@@ -128,6 +127,7 @@
     <Compile Include="SQL\SqlCommand\SqlCommandCompletedTest.cs" />
     <Compile Include="SQL\SqlCommand\SqlCommandCancelTest.cs" />
     <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.cs" />
+    <Compile Include="SQL\ConnectionPoolTest\PoolBlockPeriodTest.cs" />
     <Compile Include="SQL\ConnectivityTests\ConnectivityTest.cs" />
     <Compile Include="SQL\DataBaseSchemaTest\ConnectionSchemaTest.cs" />
     <Compile Include="SQL\DataReaderTest\DataReaderTest.cs" />
@@ -262,7 +262,6 @@
     <None Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode_Azure.bsl" />
   </ItemGroup>
   <ItemGroup Condition="('$(TargetGroup)' == 'netcoreapp' OR '$(TargetGroup)' == 'netfx') AND !$(ReferenceType.Contains('NetStandard'))">
-    <Compile Include="SQL\ConnectionPoolTest\PoolBlockPeriodTest.netcoreapp.cs" />
     <Compile Include="SQL\SqlFileStreamTest\SqlFileStreamTest.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netfx'">

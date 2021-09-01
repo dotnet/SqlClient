@@ -22,24 +22,24 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <summary>
         /// A mapping of the KeyClient objects to the corresponding Azure Key Vault URI
         /// </summary>
-        private readonly ConcurrentDictionary<Uri, KeyClient> _keyClientDictionary = new ConcurrentDictionary<Uri, KeyClient>();
+        private readonly ConcurrentDictionary<Uri, KeyClient> _keyClientDictionary = new();
 
         /// <summary>
         /// Holds references to the fetch key tasks and maps them to their corresponding Azure Key Vault Key Identifier (URI).
         /// These tasks will be used for returning the key in the event that the fetch task has not finished depositing the 
         /// key into the key dictionary.
         /// </summary>
-        private readonly ConcurrentDictionary<string, Task<Azure.Response<KeyVaultKey>>> _keyFetchTaskDictionary = new ConcurrentDictionary<string, Task<Azure.Response<KeyVaultKey>>>();
+        private readonly ConcurrentDictionary<string, Task<Azure.Response<KeyVaultKey>>> _keyFetchTaskDictionary = new();
 
         /// <summary>
         /// Holds references to the Azure Key Vault keys and maps them to their corresponding Azure Key Vault Key Identifier (URI).
         /// </summary>
-        private readonly ConcurrentDictionary<string, KeyVaultKey> _keyDictionary = new ConcurrentDictionary<string, KeyVaultKey>();
+        private readonly ConcurrentDictionary<string, KeyVaultKey> _keyDictionary = new();
 
         /// <summary>
         /// Holds references to the Azure Key Vault CryptographyClient objects and maps them to their corresponding Azure Key Vault Key Identifier (URI).
         /// </summary>
-        private readonly ConcurrentDictionary<string, CryptographyClient> _cryptoClientDictionary = new ConcurrentDictionary<string, CryptographyClient>();
+        private readonly ConcurrentDictionary<string, CryptographyClient> _cryptoClientDictionary = new();
 
         /// <summary>
         /// Constructs a new KeyCryptographer
@@ -75,15 +75,18 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         {
             if (_keyDictionary.TryGetValue(keyIdentifierUri, out KeyVaultKey key))
             {
+                AKVEventSource.Log.TryTraceEvent("Fetched master key from cache");
                 return key;
             }
 
             if (_keyFetchTaskDictionary.TryGetValue(keyIdentifierUri, out Task<Azure.Response<KeyVaultKey>> task))
             {
+                AKVEventSource.Log.TryTraceEvent("New Master key fetched.");
                 return Task.Run(() => task).GetAwaiter().GetResult();
             }
 
             // Not a public exception - not likely to occur.
+            AKVEventSource.Log.TryTraceEvent("Master key not found.");
             throw ADP.MasterKeyNotFound(keyIdentifierUri);
         }
 
@@ -112,18 +115,21 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         internal bool VerifyData(byte[] message, byte[] signature, string keyIdentifierUri)
         {
             CryptographyClient cryptographyClient = GetCryptographyClient(keyIdentifierUri);
+            AKVEventSource.Log.TryTraceEvent("Sending request to verify data");
             return cryptographyClient.VerifyData(RS256, message, signature).IsValid;
         }
 
         internal byte[] UnwrapKey(KeyWrapAlgorithm keyWrapAlgorithm, byte[] encryptedKey, string keyIdentifierUri)
         {
             CryptographyClient cryptographyClient = GetCryptographyClient(keyIdentifierUri);
+            AKVEventSource.Log.TryTraceEvent("Sending request to unwrap key.");
             return cryptographyClient.UnwrapKey(keyWrapAlgorithm, encryptedKey).Key;
         }
 
         internal byte[] WrapKey(KeyWrapAlgorithm keyWrapAlgorithm, byte[] key, string keyIdentifierUri)
         {
             CryptographyClient cryptographyClient = GetCryptographyClient(keyIdentifierUri);
+            AKVEventSource.Log.TryTraceEvent("Sending request to wrap key.");
             return cryptographyClient.WrapKey(keyWrapAlgorithm, key).EncryptedKey;
         }
 
@@ -134,7 +140,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
                 return client;
             }
 
-            CryptographyClient cryptographyClient = new CryptographyClient(GetKey(keyIdentifierUri).Id, TokenCredential);
+            CryptographyClient cryptographyClient = new(GetKey(keyIdentifierUri).Id, TokenCredential);
             _cryptoClientDictionary.TryAdd(keyIdentifierUri, cryptographyClient);
 
             return cryptographyClient;
@@ -169,7 +175,8 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         private Task<Azure.Response<KeyVaultKey>> FetchKeyFromKeyVault(Uri vaultUri, string keyName, string keyVersion)
         {
             _keyClientDictionary.TryGetValue(vaultUri, out KeyClient keyClient);
-           return keyClient?.GetKeyAsync(keyName, keyVersion);
+            AKVEventSource.Log.TryTraceEvent("Fetching requested master key: {0}", keyName);
+            return keyClient?.GetKeyAsync(keyName, keyVersion);
         }
 
         /// <summary>
@@ -181,6 +188,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         {
             if (key.KeyType != KeyType.Rsa && key.KeyType != KeyType.RsaHsm)
             {
+                AKVEventSource.Log.TryTraceEvent("Non-RSA KeyType received: {0}", key.KeyType);
                 throw ADP.NonRsaKeyFormat(key.KeyType.ToString());
             }
 
@@ -208,10 +216,13 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         /// <param name="masterKeyVersion">The version of the key</param>
         private void ParseAKVPath(string masterKeyPath, out Uri vaultUri, out string masterKeyName, out string masterKeyVersion)
         {
-            Uri masterKeyPathUri = new Uri(masterKeyPath);
+            Uri masterKeyPathUri = new(masterKeyPath);
             vaultUri = new Uri(masterKeyPathUri.GetLeftPart(UriPartial.Authority));
             masterKeyName = masterKeyPathUri.Segments[2];
             masterKeyVersion = masterKeyPathUri.Segments.Length > 3 ? masterKeyPathUri.Segments[3] : null;
+
+            AKVEventSource.Log.TryTraceEvent("Received Key Name: {0}", masterKeyName);
+            AKVEventSource.Log.TryTraceEvent("Received Key Version: {0}", masterKeyVersion);
         }
     }
 }

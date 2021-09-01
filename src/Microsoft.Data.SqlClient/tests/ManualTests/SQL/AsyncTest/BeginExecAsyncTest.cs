@@ -40,13 +40,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     SqlCommand command = new SqlCommand(GenerateCommandText(), connection);
                     connection.Open();
-
+                    
                     IAsyncResult result = command.BeginExecuteNonQuery();
                     while (!result.IsCompleted)
                     {
                         System.Threading.Thread.Sleep(100);
                     }
-
                     Assert.True(command.EndExecuteNonQuery(result) > 0, "FAILED: BeginExecuteNonQuery did not complete successfully.");
                 }
                 catch (SqlException ex)

@@ -269,7 +269,13 @@ namespace Microsoft.Data.SqlClient
 
             // Database '%.*ls' on server '%.*ls' is not currently available. Please retry the connection later.
             // If the problem persists, contact customer support, and provide them the session tracing ID of '%.*ls'.
-            40613
+            40613,
+
+            // Can not connect to the SQL pool since it is paused. Please resume the SQL pool and try again.
+            42108,
+
+            // The SQL pool is warming up. Please try again.
+            42109
         };
 
         internal SessionData CurrentSessionData
@@ -2352,7 +2358,9 @@ namespace Microsoft.Data.SqlClient
                             }
                             else
                             {
-                                _fedAuthToken = authProvider.AcquireTokenAsync(authParamsBuilder).Result.ToSqlFedAuthToken();
+                                // We use Task.Run here in all places to execute task synchronously in the same context.
+                                // Fixes block-over-async deadlock possibilities https://github.com/dotnet/SqlClient/issues/1209
+                                _fedAuthToken = Task.Run(async () => await authProvider.AcquireTokenAsync(authParamsBuilder)).GetAwaiter().GetResult().ToSqlFedAuthToken();
                                 _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
                             }
                             break;
@@ -2368,7 +2376,7 @@ namespace Microsoft.Data.SqlClient
                             else
                             {
                                 authParamsBuilder.WithUserId(ConnectionOptions.UserID);
-                                _fedAuthToken = authProvider.AcquireTokenAsync(authParamsBuilder).Result.ToSqlFedAuthToken();
+                                _fedAuthToken = Task.Run(async () => await authProvider.AcquireTokenAsync(authParamsBuilder)).GetAwaiter().GetResult().ToSqlFedAuthToken();
                                 _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
                             }
                             break;
@@ -2384,13 +2392,13 @@ namespace Microsoft.Data.SqlClient
                                 {
                                     username = _credential.UserId;
                                     authParamsBuilder.WithUserId(username).WithPassword(_credential.Password);
-                                    _fedAuthToken = authProvider.AcquireTokenAsync(authParamsBuilder).Result.ToSqlFedAuthToken();
+                                    _fedAuthToken = Task.Run(async () => await authProvider.AcquireTokenAsync(authParamsBuilder)).GetAwaiter().GetResult().ToSqlFedAuthToken();
                                 }
                                 else
                                 {
                                     username = ConnectionOptions.UserID;
                                     authParamsBuilder.WithUserId(username).WithPassword(ConnectionOptions.Password);
-                                    _fedAuthToken = authProvider.AcquireTokenAsync(authParamsBuilder).Result.ToSqlFedAuthToken();
+                                    _fedAuthToken = Task.Run(async () => await authProvider.AcquireTokenAsync(authParamsBuilder)).GetAwaiter().GetResult().ToSqlFedAuthToken();
                                 }
                                 _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
                             }
@@ -2444,8 +2452,9 @@ namespace Microsoft.Data.SqlClient
                         || _timeout.MillisecondsRemaining <= sleepInterval)
                     {
                         SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.GetFedAuthToken.MSALException error:> {0}", msalException.ErrorCode);
+
                         // Error[0]
-                        SqlErrorCollection sqlErs = new SqlErrorCollection();
+                        SqlErrorCollection sqlErs = new();
                         sqlErs.Add(new SqlError(0, (byte)0x00, (byte)TdsEnums.MIN_ERROR_CLASS, ConnectionOptions.DataSource, StringsHelper.GetString(Strings.SQL_MSALFailure, username, ConnectionOptions.Authentication.ToString("G")), ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName, 0));
 
                         // Error[1]
@@ -2466,6 +2475,11 @@ namespace Microsoft.Data.SqlClient
 
                     Thread.Sleep(sleepInterval);
                     sleepInterval *= 2;
+                }
+                // All other exceptions from MSAL/Azure Identity APIs
+                catch (Exception e)
+                {
+                    throw SqlException.CreateException(new() { new(0, (byte)0x00, (byte)TdsEnums.FATAL_ERROR_CLASS, ConnectionOptions.DataSource, e.Message, ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName, 0) }, "", this, e);
                 }
             }
 
@@ -2632,7 +2646,7 @@ namespace Microsoft.Data.SqlClient
                         Debug.Assert(_tceVersionSupported <= TdsEnums.MAX_SUPPORTED_TCE_VERSION, "Client support TCE version 2");
                         _parser.IsColumnEncryptionSupported = true;
                         _parser.TceVersionSupported = _tceVersionSupported;
-                        _parser.AreEnclaveRetriesSupported = _tceVersionSupported == 3; 
+                        _parser.AreEnclaveRetriesSupported = _tceVersionSupported == 3;
 
                         if (data.Length > 1)
                         {

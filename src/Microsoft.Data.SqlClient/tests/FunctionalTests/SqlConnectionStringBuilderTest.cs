@@ -70,6 +70,8 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("Password = some@pass#!@123")]
         [InlineData("Persist Security Info = false")]
         [InlineData("PersistSecurityInfo = true")]
+        [InlineData("PoolBlockingPeriod = Auto")]
+        [InlineData("PoolBlockingperiod = NeverBlock")]
         [InlineData("Pooling = no")]
         [InlineData("Pooling = false")]
         [InlineData("Replication = true")]
@@ -86,7 +88,6 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Theory]
-        [InlineData("Asynchronous Processing = True")]
         [InlineData("Context Connection = false")]
         [InlineData("Network Library = dbmssocn")]
         [InlineData("Network = dbnmpntw")]

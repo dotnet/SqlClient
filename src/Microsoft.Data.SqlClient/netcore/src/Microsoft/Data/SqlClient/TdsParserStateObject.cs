@@ -66,7 +66,7 @@ namespace Microsoft.Data.SqlClient
 
 
         protected readonly TdsParser _parser;                            // TdsParser pointer
-        private readonly WeakReference _owner = new WeakReference(null);   // the owner of this session, used to track when it's been orphaned
+        private readonly WeakReference<object> _owner = new WeakReference<object>(null);   // the owner of this session, used to track when it's been orphaned
         internal SqlDataReader.SharedState _readerState;                    // susbset of SqlDataReader state (if it is the owner) necessary for parsing abandoned results in TDS
         private int _activateCount;                     // 0 when we're in the pool, 1 when we're not, all others are an error
 
@@ -383,10 +383,11 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                Debug.Assert((0 == _activateCount && !_owner.IsAlive) // in pool
-                             || (1 == _activateCount && _owner.IsAlive && _owner.Target != null)
-                             || (1 == _activateCount && !_owner.IsAlive), "Unknown state on TdsParserStateObject.IsOrphaned!");
-                return (0 != _activateCount && !_owner.IsAlive);
+                bool isAlive = _owner.TryGetTarget(out object target);
+                Debug.Assert((0 == _activateCount && !isAlive) // in pool
+                             || (1 == _activateCount && isAlive && target != null)
+                             || (1 == _activateCount && !isAlive), "Unknown state on TdsParserStateObject.IsOrphaned!");
+                return (0 != _activateCount && !isAlive);
             }
         }
 
@@ -394,29 +395,22 @@ namespace Microsoft.Data.SqlClient
         {
             set
             {
-                Debug.Assert(value == null || !_owner.IsAlive || ((value is SqlDataReader) && (((SqlDataReader)value).Command == _owner.Target)), "Should not be changing the owner of an owned stateObj");
-                SqlDataReader reader = value as SqlDataReader;
-                if (reader == null)
-                {
-                    _readerState = null;
-                }
-                else
+                Debug.Assert(value == null || !_owner.TryGetTarget(out object target) || value is SqlDataReader reader1 && reader1.Command == target, "Should not be changing the owner of an owned stateObj");
+                if (value is SqlDataReader reader)
                 {
                     _readerState = reader._sharedState;
                 }
-                _owner.Target = value;
+                else
+                {
+                    _readerState = null;                    
+                }
+                _owner.SetTarget(value);
             }
         }
 
         internal abstract uint DisableSsl();
 
-        internal bool HasOwner
-        {
-            get
-            {
-                return _owner.IsAlive;
-            }
-        }
+        internal bool HasOwner => _owner.TryGetTarget(out object _);
 
         internal TdsParser Parser
         {
@@ -2526,6 +2520,12 @@ namespace Microsoft.Data.SqlClient
                     Debug.Assert(IsValidPacket(readPacket), "ReadNetworkPacket should not have been null on this async operation!");
                     // Evaluate this condition for MANAGED_SNI. This may not be needed because the network call is happening Async and only the callback can receive a success.
                     ReadAsyncCallback(IntPtr.Zero, readPacket, 0);
+
+                    // Only release packet for Managed SNI as for Native SNI packet is released in finally block.
+                    if (TdsParserStateObjectFactory.UseManagedSNI && !IsPacketEmpty(readPacket))
+                    {
+                        ReleasePacket(readPacket);
+                    }
                 }
                 else if (TdsEnums.SNI_SUCCESS_IO_PENDING != error)
                 { // FAILURE!
@@ -2867,6 +2867,7 @@ namespace Microsoft.Data.SqlClient
             //    to the outstanding GCRoot until AppDomain.Unload.
             // We live with the above for the time being due to the constraints of the current
             // reliability infrastructure provided by the CLR.
+            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObject.ReadAsyncCallback | Info | State Object Id {0}, received error {1} on idle connection", _objectID, (int)error);
 
             TaskCompletionSource<object> source = _networkPacketTaskSource;
 #if DEBUG
