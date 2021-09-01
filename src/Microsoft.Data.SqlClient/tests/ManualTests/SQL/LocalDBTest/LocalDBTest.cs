@@ -1,9 +1,6 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
-
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using Xunit;
 
@@ -15,7 +12,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
         [ConditionalTheory(nameof(IsLocalDBEnvironmentSet))]
-        [ClassData(typeof(ConnectionStringsProvider))]
+        [MemberData(nameof(LocalDbSourceProvider))]
         public static void LocalDBConnectionTest(string connectionString)
         {
             SqlConnectionStringBuilder builder = new(connectionString)
@@ -29,7 +26,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
         [ConditionalTheory(nameof(IsLocalDBEnvironmentSet))]
-        [ClassData(typeof(ConnectionStringsProvider))]
+        [MemberData(nameof(LocalDbSourceProvider))]
         public static void LocalDBMarsTest(string connectionString)
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString)
@@ -44,7 +41,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
         [ConditionalTheory(nameof(IsLocalDBEnvironmentSet))]
-        [ClassData(typeof(ConnectionStringsProvider))]
+        [MemberData(nameof(LocalDbSourceProvider))]
         public static void InvalidDBTest(string connectionString)
         {
             using var connection = new SqlConnection(connectionString);
@@ -59,16 +56,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             var result = command.ExecuteScalar();
             Assert.NotNull(result);
         }
-    }
-    public class ConnectionStringsProvider : IEnumerable<object[]>
-    {
-        public IEnumerator<object[]> GetEnumerator()
+
+        public static IEnumerable<object[]> LocalDbSourceProvider()
         {
-            foreach (var cnnString in DataTestUtility.LocalDbConnectionStrings)
-            {
-                yield return new object[] { cnnString };
-            }
+            return (IEnumerable<object[]>)DataTestUtility.LocalDbDataSources;
         }
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }

@@ -474,34 +474,41 @@ namespace Microsoft.Data.SqlClient.SNI
             }
         }
 
+        // LocalDbInstance name always starts with (localdb)
+        // possible scenarios:
+        // (localdb)\<instance name>
+        // or (localdb)\. which goes to default localdb
+        // or (localdb)\.\<sharedInstance name>
         internal static string GetLocalDBInstance(string dataSource, out bool error)
         {
             string instanceName = null;
 
-            string workingDataSource = dataSource.ToLowerInvariant();
-
-            string[] tokensByBackSlash = workingDataSource.Split(BackSlashCharacter);
+            // ReadOnlySpan is not supported in netstandard 2.0, but installing System.Memory solves the issue
+            ReadOnlySpan<char> input = dataSource.AsSpan().TrimStart();
             error = false;
-            int instanceNameIndexNumber = tokensByBackSlash.Length == 2 ? 1 : 2;
 
-            // host should always be (localdb)
-            if (LocalDbHost.Equals(tokensByBackSlash[0].TrimStart()) && (tokensByBackSlash.Length == 2 || tokensByBackSlash.Length == 3))
+            // NetStandard 2.0 does not support passing a string to ReadOnlySpan<char>
+            if (input.StartsWith(LocalDbHost.AsSpan().Trim(), StringComparison.InvariantCultureIgnoreCase))
             {
-                // All LocalDb endpoints are of the format host\instancename (case-insensitive) when it is not shared instance of localdb
-                // Therefore the length would be 2
-                // All shared instances of localdb should be used as \.\ added to the connection string for example if a shared instance of LocalDB is named 
-                // AppData, connection string is in the format of (localdb)\.\AppData.
-                // More material could be found here https://docs.microsoft.com/en-us/sql/database-engine/configure-windows/sql-server-express-localdb?view=sql-server-ver15#connect-to-a-shared-instance-of-localdb
-
-                if (!string.IsNullOrEmpty(tokensByBackSlash[instanceNameIndexNumber]))
+                // When netcoreapp support for netcoreapp2.1 is dropped these slice calls could be converted to System.Range\System.Index
+                // Such ad input = input[1..];
+                input = input.Slice(LocalDbHost.Length);
+                if (!input.IsEmpty && input[0] == '\\')
                 {
-                    instanceName = tokensByBackSlash[instanceNameIndexNumber].Trim();
+                    input = input.Slice(1);
+                    if (input.Length >= 2 && input[0] == '.' && input[1] == BackSlashCharacter)
+                    {
+                        input = input.Slice(2);
+                    }
+                }
+                if (!input.IsEmpty)
+                {
+                    instanceName = input.Trim().ToString();
                 }
                 else
                 {
-                    SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBNoInstanceName, Strings.SNI_ERROR_51);
+                    // set the sni error here
                     error = true;
-                    return null;
                 }
             }
             return instanceName;

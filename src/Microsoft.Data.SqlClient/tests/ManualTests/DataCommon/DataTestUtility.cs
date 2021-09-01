@@ -42,7 +42,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string LocalDbSharedInstanceName = null;
         public static List<string> AEConnStrings = new List<string>();
         public static List<string> AEConnStringsSetup = new List<string>();
-        public static List<string> LocalDbConnectionStrings = new();
+        public static List<string> LocalDbDataSources = new();
         public static bool EnclaveEnabled { get; private set; } = false;
         public static readonly bool TracingEnabled = false;
         public static readonly bool SupportsIntegratedSecurity = false;
@@ -155,8 +155,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             if (!string.IsNullOrEmpty(LocalDbAppName))
             {
-                LocalDbConnectionStrings.Add(@$"server=(localdb)\{LocalDbAppName}");
-                LocalDbConnectionStrings.Add(@$"server=(localdb)\.\{LocalDbSharedInstanceName}");
+                LocalDbDataSources.Add(@$"server=(localdb)\{LocalDbAppName}");
+                LocalDbDataSources.Add(@$"server=(localdb)\.\{LocalDbSharedInstanceName}");
+                LocalDbDataSources.Add(@$"server=(localdb)\.");
             }
         }
 
