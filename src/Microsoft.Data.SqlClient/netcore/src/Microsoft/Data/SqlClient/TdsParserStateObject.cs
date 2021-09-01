@@ -643,38 +643,34 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(caller != null, "Null caller for Cancel!");
             Debug.Assert(caller is SqlCommand || caller is SqlDataReader, "Calling API with invalid caller type: " + caller.GetType());
 
-            Interlocked.CompareExchange(ref _cancelState, CancelState.Cancelled, CancelState.Unset); // only change state if it is Unset, so don't check the return value
+            // only change state if it is Unset, so don't check the return value
+            Interlocked.CompareExchange(ref _cancelState, CancelState.Cancelled, CancelState.Unset);
 
-            if (
-                (_parser.State != TdsParserState.Closed) && (_parser.State != TdsParserState.Broken) &&
-                (_cancellationOwner.Target == caller)
-            )
+            if ((_parser.State != TdsParserState.Closed) && (_parser.State != TdsParserState.Broken) 
+                && (_cancellationOwner.Target == caller) && HasPendingData && !_attentionSent)
             {
-                if (HasPendingData && !_attentionSent)
+                bool hasParserLock = false;
+                // Keep looping until we have the parser lock (and so are allowed to write), or the connection closes\breaks
+                while ((!hasParserLock) && (_parser.State != TdsParserState.Closed) && (_parser.State != TdsParserState.Broken))
                 {
-                    bool hasParserLock = false;
-                    // Keep looping until we have the parser lock (and so are allowed to write), or the connection closes\breaks
-                    while ((!hasParserLock) && (_parser.State != TdsParserState.Closed) && (_parser.State != TdsParserState.Broken))
+                    try
                     {
-                        try
+                        _parser.Connection._parserLock.Wait(canReleaseFromAnyThread: false, timeout: _waitForCancellationLockPollTimeout, lockTaken: ref hasParserLock);
+                        if (hasParserLock)
                         {
-                            _parser.Connection._parserLock.Wait(canReleaseFromAnyThread: false, timeout: _waitForCancellationLockPollTimeout, lockTaken: ref hasParserLock);
-                            if (hasParserLock)
-                            {
-                                _parser.Connection.ThreadHasParserLockForClose = true;
-                                SendAttention();
-                            }
+                            _parser.Connection.ThreadHasParserLockForClose = true;
+                            SendAttention();
                         }
-                        finally
+                    }
+                    finally
+                    {
+                        if (hasParserLock)
                         {
-                            if (hasParserLock)
+                            if (_parser.Connection.ThreadHasParserLockForClose)
                             {
-                                if (_parser.Connection.ThreadHasParserLockForClose)
-                                {
-                                    _parser.Connection.ThreadHasParserLockForClose = false;
-                                }
-                                _parser.Connection._parserLock.Release();
+                                _parser.Connection.ThreadHasParserLockForClose = false;
                             }
+                            _parser.Connection._parserLock.Release();
                         }
                     }
                 }
