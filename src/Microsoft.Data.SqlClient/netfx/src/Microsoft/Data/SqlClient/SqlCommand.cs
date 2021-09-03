@@ -206,6 +206,8 @@ namespace Microsoft.Data.SqlClient
             [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
             internal void ResetAsyncState()
             {
+                SqlClientEventSource.Log.TryTraceEvent("CachedAsyncState.ResetAsyncState | API | ObjectId {0}, Client Connection Id {1}, AsyncCommandInProgress={2}",
+                                                       _cachedAsyncConnection?.ObjectID, _cachedAsyncConnection?.ClientConnectionId, _cachedAsyncConnection?.AsyncCommandInProgress);
                 _cachedAsyncCloseCount = -1;
                 _cachedAsyncResult = null;
                 if (_cachedAsyncConnection != null)
@@ -223,6 +225,7 @@ namespace Microsoft.Data.SqlClient
             {
                 Debug.Assert(activeConnection != null, "Unexpected null connection argument on SetActiveConnectionAndResult!");
                 TdsParser parser = activeConnection.Parser;
+                SqlClientEventSource.Log.TryTraceEvent("SqlCommand.SetActiveConnectionAndResult | API | ObjectId {0}, Client Connection Id {1}, MARS={2}", activeConnection?.ObjectID, activeConnection?.ClientConnectionId, parser?.MARSOn);
                 if ((parser == null) || (parser.State == TdsParserState.Closed) || (parser.State == TdsParserState.Broken))
                 {
                     throw ADP.ClosedConnectionError();
@@ -1320,6 +1323,9 @@ namespace Microsoft.Data.SqlClient
                 //_statistics = null;
                 //CommandText = null;
                 _cachedMetaData = null;
+
+                // reset async cache information to allow a second async execute
+                _cachedAsyncState?.ResetAsyncState();
             }
             // release unmanaged objects
             base.Dispose(disposing);
@@ -1615,6 +1621,10 @@ namespace Microsoft.Data.SqlClient
             {
                 throw ADP.ArgumentNull("asyncResult");
             }
+            SqlClientEventSource.Log.TryTraceEvent("SqlCommand.VerifyEndExecuteState | API | ObjectId {0}, Client Connection Id {1}, MARS={2}, AsyncCommandInProgress={3}",
+                                                    _activeConnection?.ObjectID, _activeConnection?.ClientConnectionId,
+                                                    _activeConnection?.Parser?.MARSOn, _activeConnection?.AsyncCommandInProgress);
+
             if (completionTask.IsCanceled)
             {
                 if (_stateObj != null)
@@ -1720,6 +1730,7 @@ namespace Microsoft.Data.SqlClient
             if (asyncException != null)
             {
                 // Leftover exception from the Begin...InternalReadStage
+                cachedAsyncState?.ResetAsyncState();
                 ReliablePutStateObject();
                 throw asyncException.InnerException;
             }
@@ -1787,6 +1798,9 @@ namespace Microsoft.Data.SqlClient
 
         private object InternalEndExecuteNonQuery(IAsyncResult asyncResult, string endMethod, bool isInternal)
         {
+            SqlClientEventSource.Log.TryTraceEvent("SqlCommand.InternalEndExecuteNonQuery | INFO | ObjectId {0}, Client Connection Id {1}, MARS={2}, AsyncCommandInProgress={3}",
+                                                    _activeConnection?.ObjectID, _activeConnection?.ClientConnectionId,
+                                                    _activeConnection?.Parser?.MARSOn, _activeConnection?.AsyncCommandInProgress);
             TdsParser bestEffortCleanupTarget = null;
             RuntimeHelpers.PrepareConstrainedRegions();
 
@@ -1907,6 +1921,8 @@ namespace Microsoft.Data.SqlClient
 
         private Task InternalExecuteNonQuery(TaskCompletionSource<object> completion, string methodName, bool sendToPipe, int timeout, out bool usedCache, bool asyncWrite = false, bool inRetry = false)
         {
+            SqlClientEventSource.Log.TryTraceEvent("SqlCommand.InternalExecuteNonQuery | INFO | ObjectId {0}, Client Connection Id {1}, AsyncCommandInProgress={2}",
+                                                    _activeConnection?.ObjectID, _activeConnection?.ClientConnectionId, _activeConnection?.AsyncCommandInProgress);
             bool async = (null != completion);
             usedCache = false;
 
@@ -2237,6 +2253,7 @@ namespace Microsoft.Data.SqlClient
             if (asyncException != null)
             {
                 // Leftover exception from the Begin...InternalReadStage
+                cachedAsyncState?.ResetAsyncState();
                 ReliablePutStateObject();
                 throw asyncException.InnerException;
             }
@@ -2492,6 +2509,7 @@ namespace Microsoft.Data.SqlClient
             if (asyncException != null)
             {
                 // Leftover exception from the Begin...InternalReadStage
+                cachedAsyncState?.ResetAsyncState();
                 ReliablePutStateObject();
                 throw asyncException.InnerException;
             }
@@ -2516,6 +2534,9 @@ namespace Microsoft.Data.SqlClient
 
         private SqlDataReader EndExecuteReaderInternal(IAsyncResult asyncResult)
         {
+            SqlClientEventSource.Log.TryTraceEvent("SqlCommand.EndExecuteReaderInternal | API | ObjectId {0}, Client Connection Id {1}, MARS={2}, AsyncCommandInProgress={3}",
+                                                    _activeConnection?.ObjectID, _activeConnection?.ClientConnectionId,
+                                                    _activeConnection?.Parser?.MARSOn, _activeConnection?.AsyncCommandInProgress);
             SqlStatistics statistics = null;
             bool success = false;
             int? sqlExceptionNumber = null;
@@ -2766,6 +2787,7 @@ namespace Microsoft.Data.SqlClient
         private void BeginExecuteReaderInternalReadStage(TaskCompletionSource<object> completion)
         {
             Debug.Assert(completion != null, "CompletionSource should not be null");
+            SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.BeginExecuteReaderInternalReadStage | INFO | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
             // Read SNI does not have catches for async exceptions, handle here.
             TdsParser bestEffortCleanupTarget = null;
             RuntimeHelpers.PrepareConstrainedRegions();
@@ -2827,7 +2849,9 @@ namespace Microsoft.Data.SqlClient
 
         private SqlDataReader InternalEndExecuteReader(IAsyncResult asyncResult, string endMethod, bool isInternal)
         {
-
+            SqlClientEventSource.Log.TryTraceEvent("SqlCommand.InternalEndExecuteReader | INFO | ObjectId {0}, Client Connection Id {1}, MARS={2}, AsyncCommandInProgress={3}",
+                                                    _activeConnection?.ObjectID, _activeConnection?.ClientConnectionId,
+                                                    _activeConnection?.Parser?.MARSOn, _activeConnection?.AsyncCommandInProgress);
             VerifyEndExecuteState((Task)asyncResult, endMethod);
             WaitForAsyncResults(asyncResult, isInternal);
 
