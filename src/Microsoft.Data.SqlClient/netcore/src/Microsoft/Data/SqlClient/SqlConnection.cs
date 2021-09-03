@@ -1575,9 +1575,21 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsync/*' />
         public override Task OpenAsync(CancellationToken cancellationToken)
-            => IsRetryEnabled ?
-                InternalOpenWithRetryAsync(cancellationToken) :
-                InternalOpenAsync(cancellationToken);
+        {
+            if (IsRetryEnabled)
+            {
+                return InternalOpenWithRetryAsync(cancellationToken);
+            }
+            else
+            {
+                Task resultTask = InternalOpenAsync(cancellationToken);
+                if (resultTask.IsCanceled)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                }
+                return resultTask;
+            }
+        }
 
         private Task InternalOpenAsync(CancellationToken cancellationToken)
         {
