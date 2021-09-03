@@ -2643,7 +2643,12 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="CancellationToken"]/*'/>
         new public Task<SqlDataReader> ExecuteReaderAsync(CancellationToken cancellationToken)
         {
-            return ExecuteReaderAsync(CommandBehavior.Default, cancellationToken);
+            Task<SqlDataReader> resultTask = ExecuteReaderAsync(CommandBehavior.Default, cancellationToken);
+            if (resultTask.IsCanceled)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+            }
+            return resultTask;
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="commandBehaviorAndCancellationToken"]/*'/>
