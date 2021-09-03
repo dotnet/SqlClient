@@ -56,5 +56,11 @@ namespace Microsoft.Data.SqlClient.SNI
                 return _encryptionOption;
             }
         }
+
+        /// <summary>
+        /// Verify client encryption possibility
+        /// </summary>
+        // TODO: by adding support ENCRYPT_NOT_SUP, it could be calculated.
+        public bool ClientOSEncryptionSupport => true;
     }
 }
