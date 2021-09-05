@@ -3452,21 +3452,21 @@ namespace Microsoft.Data.SqlClient
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
 
-                if (null != _parser)
-                {
-                    if (setTimeout)
+                    if (null != _parser)
                     {
-                        SetTimeout(_defaultTimeoutMilliseconds);
-                    }
-                    if (_sharedState._dataReady)
-                    {
-                        result = TryCleanPartialRead();
-                        if (result != OperationStatus.Done)
+                        if (setTimeout)
                         {
-                            more = false;
-                            return result;
+                            SetTimeout(_defaultTimeoutMilliseconds);
                         }
-                    }
+                        if (_sharedState._dataReady)
+                        {
+                            result = TryCleanPartialRead();
+                            if (result != OperationStatus.Done)
+                            {
+                                more = false;
+                                return result;
+                            }
+                        }
 
                         // clear out our buffers
                         SqlBuffer.Clear(_data);
@@ -3476,108 +3476,108 @@ namespace Microsoft.Data.SqlClient
                         _sharedState._columnDataBytesRemaining = -1; // unknown
                         _lastColumnWithDataChunkRead = -1;
 
-                    if (!_haltRead)
-                    {
-                        bool moreRows;
-                        result = TryHasMoreRows(out moreRows);
-                        if (result != OperationStatus.Done)
+                        if (!_haltRead)
                         {
-                            more = false;
-                            return result;
-                        }
-                        if (moreRows)
-                        {
-                            // read the row from the backend (unless it's an altrow were the marker is already inside the altrow ...)
-                            while (_stateObj.HasPendingData)
-                            {
-                                if (_altRowStatus != ALTROWSTATUS.AltRow)
-                                {
-                                    // if this is an ordinary row we let the run method consume the ROW token
-                                    result = _parser.TryRun(RunBehavior.ReturnImmediately, _command, this, null, _stateObj, out _sharedState._dataReady);
-                                    if (result != OperationStatus.Done)
-                                    {
-                                        more = false;
-                                        return result;
-                                    }
-                                    if (_sharedState._dataReady)
-                                    {
-                                        break;
-                                    }
-                                }
-                                else
-                                {
-                                    // ALTROW token and AltrowId are already consumed ...
-                                    Debug.Assert(_altRowStatus == ALTROWSTATUS.AltRow, "invalid AltRowStatus");
-                                    _altRowStatus = ALTROWSTATUS.Done;
-                                    _sharedState._dataReady = true;
-                                    break;
-                                }
-                            }
-                            if (_sharedState._dataReady)
-                            {
-                                _haltRead = IsCommandBehavior(CommandBehavior.SingleRow);
-                                more = true;
-                                return OperationStatus.Done;
-                            }
-                        }
-
-                        if (!_stateObj.HasPendingData)
-                        {
-                            result = TryCloseInternal(false /*closeReader*/);
-                            if (result != OperationStatus.Done)
-                            {
-                                more = false;
-                                return result;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        // if we did not get a row and halt is true, clean off rows of result
-                        // success must be false - or else we could have just read off row and set
-                        // halt to true
-                        bool moreRows;
-                        result = TryHasMoreRows(out moreRows);
-                        if (result != OperationStatus.Done)
-                        {
-                            more = false;
-                            return result;
-                        }
-                        while (moreRows)
-                        {
-                            // if we are in SingleRow mode, and we've read the first row,
-                            // read the rest of the rows, if any
-                            while (_stateObj.HasPendingData && !_sharedState._dataReady)
-                            {
-                                result = _parser.TryRun(RunBehavior.ReturnImmediately, _command, this, null, _stateObj, out _sharedState._dataReady);
-                                if (result != OperationStatus.Done)
-                                {
-                                    more = false;
-                                    return result;
-                                }
-                            }
-
-                            if (_sharedState._dataReady)
-                            {
-                                result = TryCleanPartialRead();
-                                if (result != OperationStatus.Done)
-                                {
-                                    more = false;
-                                    return result;
-                                }
-                            }
-
-                                // clear out our buffers
-                                SqlBuffer.Clear(_data);
-
-                            _sharedState._nextColumnHeaderToRead = 0;
+                            bool moreRows;
                             result = TryHasMoreRows(out moreRows);
                             if (result != OperationStatus.Done)
                             {
                                 more = false;
                                 return result;
                             }
+                            if (moreRows)
+                            {
+                                // read the row from the backend (unless it's an altrow were the marker is already inside the altrow ...)
+                                while (_stateObj.HasPendingData)
+                                {
+                                    if (_altRowStatus != ALTROWSTATUS.AltRow)
+                                    {
+                                        // if this is an ordinary row we let the run method consume the ROW token
+                                        result = _parser.TryRun(RunBehavior.ReturnImmediately, _command, this, null, _stateObj, out _sharedState._dataReady);
+                                        if (result != OperationStatus.Done)
+                                        {
+                                            more = false;
+                                            return result;
+                                        }
+                                        if (_sharedState._dataReady)
+                                        {
+                                            break;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        // ALTROW token and AltrowId are already consumed ...
+                                        Debug.Assert(_altRowStatus == ALTROWSTATUS.AltRow, "invalid AltRowStatus");
+                                        _altRowStatus = ALTROWSTATUS.Done;
+                                        _sharedState._dataReady = true;
+                                        break;
+                                    }
+                                }
+                                if (_sharedState._dataReady)
+                                {
+                                    _haltRead = IsCommandBehavior(CommandBehavior.SingleRow);
+                                    more = true;
+                                    return OperationStatus.Done;
+                                }
+                            }
+
+                            if (!_stateObj.HasPendingData)
+                            {
+                                result = TryCloseInternal(false /*closeReader*/);
+                                if (result != OperationStatus.Done)
+                                {
+                                    more = false;
+                                    return result;
+                                }
+                            }
                         }
+                        else
+                        {
+                            // if we did not get a row and halt is true, clean off rows of result
+                            // success must be false - or else we could have just read off row and set
+                            // halt to true
+                            bool moreRows;
+                            result = TryHasMoreRows(out moreRows);
+                            if (result != OperationStatus.Done)
+                            {
+                                more = false;
+                                return result;
+                            }
+                            while (moreRows)
+                            {
+                                // if we are in SingleRow mode, and we've read the first row,
+                                // read the rest of the rows, if any
+                                while (_stateObj.HasPendingData && !_sharedState._dataReady)
+                                {
+                                    result = _parser.TryRun(RunBehavior.ReturnImmediately, _command, this, null, _stateObj, out _sharedState._dataReady);
+                                    if (result != OperationStatus.Done)
+                                    {
+                                        more = false;
+                                        return result;
+                                    }
+                                }
+
+                                if (_sharedState._dataReady)
+                                {
+                                    result = TryCleanPartialRead();
+                                    if (result != OperationStatus.Done)
+                                    {
+                                        more = false;
+                                        return result;
+                                    }
+                                }
+
+                                // clear out our buffers
+                                SqlBuffer.Clear(_data);
+
+                                _sharedState._nextColumnHeaderToRead = 0;
+                                result = TryHasMoreRows(out moreRows);
+                                if (result != OperationStatus.Done)
+                                {
+                                    more = false;
+                                    return result;
+                                }
+                            }
 
                             // reset haltRead
                             _haltRead = false;
@@ -3590,14 +3590,14 @@ namespace Microsoft.Data.SqlClient
                     more = false;
 
 #if DEBUG
-                if ((!_sharedState._dataReady) && (_stateObj.HasPendingData))
-                {
-                    byte token;
-                    result = _stateObj.TryPeekByte(out token);
-                    if (result != OperationStatus.Done)
+                    if ((!_sharedState._dataReady) && (_stateObj.HasPendingData))
                     {
-                        return result;
-                    }
+                        byte token;
+                        result = _stateObj.TryPeekByte(out token);
+                        if (result != OperationStatus.Done)
+                        {
+                            return result;
+                        }
 
                         Debug.Assert(TdsParser.IsValidTdsToken(token), $"DataReady is false, but next token is invalid: {token,-2:X2}");
                     }

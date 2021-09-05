@@ -258,13 +258,6 @@ namespace Microsoft.Data.SqlClient.SNI
             else
             {
                 _dataLength = t.Result;
-                if (_dataLength == 8000)
-                {
-                    if (_data[0] != 4)
-                    {
-                        Debugger.Break();
-                    }
-                }
 #if DEBUG
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIPacket), EventType.INFO, "Connection Id {0}, Packet Id {1} _dataLength {2} read from stream.", args0: _owner?.ConnectionId, args1: _id, args2: _dataLength);
 #endif
