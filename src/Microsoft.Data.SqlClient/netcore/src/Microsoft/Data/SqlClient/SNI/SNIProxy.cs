@@ -493,13 +493,9 @@ namespace Microsoft.Data.SqlClient.SNI
                 // When netcoreapp support for netcoreapp2.1 is dropped these slice calls could be converted to System.Range\System.Index
                 // Such ad input = input[1..];
                 input = input.Slice(LocalDbHost.Length);
-                if (!input.IsEmpty && input[0] == '\\')
+                if (!input.IsEmpty && input[0] == BackSlashCharacter)
                 {
                     input = input.Slice(1);
-                    if (input.Length >= 2 && input[0] == '.' && input[1] == BackSlashCharacter)
-                    {
-                        input = input.Slice(2);
-                    }
                 }
                 if (!input.IsEmpty)
                 {
