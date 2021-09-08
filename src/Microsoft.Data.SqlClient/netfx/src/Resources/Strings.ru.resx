@@ -2563,7 +2563,7 @@
     <value>Не удалось проверить подлинность пользователя {0} в Active Directory (Authentication={1}).</value>
   </data>
   <data name="SQL_MSALInnerException" xml:space="preserve">
-    <value>Код ошибки 0x{0}; состояние {1}</value>
+    <value>Код ошибки: 0x{0}</value>
   </data>
   <data name="SQL_ChangePasswordRequiresYukon" xml:space="preserve">
     <value>Для ChangePassword требуется SQL Server 9.0 или более поздней версии.</value>

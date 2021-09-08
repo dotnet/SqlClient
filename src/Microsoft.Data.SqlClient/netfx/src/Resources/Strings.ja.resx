@@ -2563,7 +2563,7 @@
     <value>ユーザー {0} を Active Directory (Authentication={1}) で認証できませんでした。</value>
   </data>
   <data name="SQL_MSALInnerException" xml:space="preserve">
-    <value>エラー コード 0x{0}、状態 {1}</value>
+    <value>エラー コード 0x{0}</value>
   </data>
   <data name="SQL_ChangePasswordRequiresYukon" xml:space="preserve">
     <value>ChangePassword を使用するには SQL Server 9.0 以降が必要です。</value>

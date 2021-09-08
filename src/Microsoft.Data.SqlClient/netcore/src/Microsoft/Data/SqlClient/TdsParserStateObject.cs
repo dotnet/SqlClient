@@ -3218,7 +3218,8 @@ namespace Microsoft.Data.SqlClient
                     // Evaluate this condition for MANAGED_SNI. This may not be needed because the network call is happening Async and only the callback can receive a success.
                     ReadAsyncCallback(IntPtr.Zero, readPacket, 0);
 
-                    if (!IsPacketEmpty(readPacket))
+                    // Only release packet for Managed SNI as for Native SNI packet is released in finally block.
+                    if (TdsParserStateObjectFactory.UseManagedSNI && !IsPacketEmpty(readPacket))
                     {
                         ReleasePacket(readPacket);
                     }
