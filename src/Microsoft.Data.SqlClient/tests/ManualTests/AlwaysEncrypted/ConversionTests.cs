@@ -34,6 +34,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
         private ColumnEncryptionKey columnEncryptionKey;
         private SqlColumnEncryptionCertificateStoreProvider certStoreProvider = new SqlColumnEncryptionCertificateStoreProvider();
         private List<DbObject> _databaseObjects = new List<DbObject>();
+        private List<string> _tables = new();
 
         private class ColumnMetaData
         {
@@ -55,7 +56,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
         public ConversionTests()
         {
-            if(certificate == null)
+            if (certificate == null)
             {
                 certificate = CertificateUtility.CreateCertificate();
             }
@@ -111,57 +112,48 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 sqlConnectionEncrypted.Open();
                 sqlConnectionUnencrypted.Open();
 
-                try
+                // Select each value we just inserted with a predicate and verify that encrypted and unencrypted return the same result.
+                for (int i = 0; i < NumberOfRows; i++)
                 {
-                    // Select each value we just inserted with a predicate and verify that encrypted and unencrypted return the same result.
-                    for (int i = 0; i < NumberOfRows; i++)
+                    object value;
+
+                    // Use the retrieved values for DateTime2 and DateTimeOffset due to fractional insertion adjustment
+                    if (smallColumnInfo.ColumnType is SqlDbType.DateTime2 || smallColumnInfo.ColumnType is SqlDbType.DateTimeOffset)
                     {
-                        object value;
+                        value = valuesToSelect[i];
+                    }
+                    else
+                    {
+                        value = rawValues[i];
+                    }
 
-                        // Use the retrieved values for DateTime2 and DateTimeOffset due to fractional insertion adjustment
-                        if (smallColumnInfo.ColumnType is SqlDbType.DateTime2 || smallColumnInfo.ColumnType is SqlDbType.DateTimeOffset)
+                    using (SqlCommand cmdEncrypted = new SqlCommand(string.Format(@"SELECT {0} FROM [{1}] WHERE {0} = {2}", FirstColumnName, encryptedTableName, FirstParamName), sqlConnectionEncrypted, null, SqlCommandColumnEncryptionSetting.Enabled))
+                    using (SqlCommand cmdUnencrypted = new SqlCommand(string.Format(@"SELECT {0} FROM [{1}] WHERE {0} = {2}", FirstColumnName, unencryptedTableName, FirstParamName), sqlConnectionUnencrypted, null, SqlCommandColumnEncryptionSetting.Disabled))
+                    {
+                        SqlParameter paramEncrypted = new SqlParameter();
+                        paramEncrypted.ParameterName = FirstParamName;
+                        paramEncrypted.SqlDbType = largeDbType;
+                        SetParamSizeScalePrecision(ref paramEncrypted, largeColumnInfo);
+                        paramEncrypted.Value = value;
+                        cmdEncrypted.Parameters.Add(paramEncrypted);
+
+                        SqlParameter paramUnencrypted = new SqlParameter();
+                        paramUnencrypted.ParameterName = FirstParamName;
+                        paramUnencrypted.SqlDbType = largeDbType;
+                        SetParamSizeScalePrecision(ref paramUnencrypted, largeColumnInfo);
+                        paramUnencrypted.Value = value;
+                        cmdUnencrypted.Parameters.Add(paramUnencrypted);
+
+                        using (SqlDataReader readerUnencrypted = cmdUnencrypted.ExecuteReader())
+                        using (SqlDataReader readerEncrypted = cmdEncrypted.ExecuteReader())
                         {
-                            value = valuesToSelect[i];
-                        }
-                        else
-                        {
-                            value = rawValues[i];
-                        }
+                            // First check that we found some rows.
+                            Assert.True(readerEncrypted.HasRows, @"We didn't find any rows.");
 
-                        using (SqlCommand cmdEncrypted = new SqlCommand(string.Format(@"SELECT {0} FROM [{1}] WHERE {0} = {2}", FirstColumnName, encryptedTableName, FirstParamName), sqlConnectionEncrypted, null, SqlCommandColumnEncryptionSetting.Enabled))
-                        using (SqlCommand cmdUnencrypted = new SqlCommand(string.Format(@"SELECT {0} FROM [{1}] WHERE {0} = {2}", FirstColumnName, unencryptedTableName, FirstParamName), sqlConnectionUnencrypted, null, SqlCommandColumnEncryptionSetting.Disabled))
-                        {
-                            SqlParameter paramEncrypted = new SqlParameter();
-                            paramEncrypted.ParameterName = FirstParamName;
-                            paramEncrypted.SqlDbType = largeDbType;
-                            SetParamSizeScalePrecision(ref paramEncrypted, largeColumnInfo);
-                            paramEncrypted.Value = value;
-                            cmdEncrypted.Parameters.Add(paramEncrypted);
-
-                            SqlParameter paramUnencrypted = new SqlParameter();
-                            paramUnencrypted.ParameterName = FirstParamName;
-                            paramUnencrypted.SqlDbType = largeDbType;
-                            SetParamSizeScalePrecision(ref paramUnencrypted, largeColumnInfo);
-                            paramUnencrypted.Value = value;
-                            cmdUnencrypted.Parameters.Add(paramUnencrypted);
-
-                            using (SqlDataReader readerUnencrypted = cmdUnencrypted.ExecuteReader())
-                            using (SqlDataReader readerEncrypted = cmdEncrypted.ExecuteReader())
-                            {
-                                // First check that we found some rows.
-                                Assert.True(readerEncrypted.HasRows, @"We didn't find any rows.");
-
-                                // Now compare the result.
-                                CompareResults(readerEncrypted, readerUnencrypted);
-                            }
+                            // Now compare the result.
+                            CompareResults(readerEncrypted, readerUnencrypted);
                         }
                     }
-                }
-                finally
-                {
-                    // DropTables
-                    DropTableIfExists(sqlConnectionEncrypted, encryptedTableName);
-                    DropTableIfExists(sqlConnectionUnencrypted, unencryptedTableName);
                 }
             }
         }
@@ -206,61 +198,51 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 sqlConnectionEncrypted.Open();
                 sqlConnectionUnencrypted.Open();
 
-                try
+                // Select each value we just inserted with a predicate and verify that encrypted and unencrypted return the same result.
+                for (int i = 0; i < NumberOfRows; i++)
                 {
-                    // Select each value we just inserted with a predicate and verify that encrypted and unencrypted return the same result.
-                    for (int i = 0; i < NumberOfRows; i++)
+                    object value;
+
+                    // Use the retrieved values for DateTime2 and DateTimeOffset due to fractional insertion adjustment
+                    if (smallColumnInfo.ColumnType is SqlDbType.DateTime2 ||
+                        smallColumnInfo.ColumnType is SqlDbType.DateTimeOffset ||
+                        smallColumnInfo.ColumnType is SqlDbType.Char ||
+                        smallColumnInfo.ColumnType is SqlDbType.NChar)
                     {
-                        object value;
+                        value = valuesToSelect[i];
+                    }
+                    else
+                    {
+                        value = rawValues[i];
+                    }
 
-                        // Use the retrieved values for DateTime2 and DateTimeOffset due to fractional insertion adjustment
-                        if (smallColumnInfo.ColumnType is SqlDbType.DateTime2 ||
-                            smallColumnInfo.ColumnType is SqlDbType.DateTimeOffset ||
-                            smallColumnInfo.ColumnType is SqlDbType.Char ||
-                            smallColumnInfo.ColumnType is SqlDbType.NChar)
+                    using (SqlCommand cmdEncrypted = new SqlCommand(string.Format(@"SELECT {0} FROM [{1}] WHERE {0} = {2}", FirstColumnName, targetTableName, FirstParamName), sqlConnectionEncrypted, null, SqlCommandColumnEncryptionSetting.Enabled))
+                    using (SqlCommand cmdUnencrypted = new SqlCommand(string.Format(@"SELECT {0} FROM [{1}] WHERE {0} = {2}", FirstColumnName, witnessTableName, FirstParamName), sqlConnectionUnencrypted, null, SqlCommandColumnEncryptionSetting.Disabled))
+                    {
+                        SqlParameter paramEncrypted = new SqlParameter();
+                        paramEncrypted.ParameterName = FirstParamName;
+                        paramEncrypted.SqlDbType = largeDbType;
+                        SetParamSizeScalePrecision(ref paramEncrypted, largeColumnInfo);
+                        paramEncrypted.Value = value;
+                        cmdEncrypted.Parameters.Add(paramEncrypted);
+
+                        SqlParameter paramUnencrypted = new SqlParameter();
+                        paramUnencrypted.ParameterName = FirstParamName;
+                        paramUnencrypted.SqlDbType = largeDbType;
+                        SetParamSizeScalePrecision(ref paramUnencrypted, largeColumnInfo);
+                        paramUnencrypted.Value = value;
+                        cmdUnencrypted.Parameters.Add(paramUnencrypted);
+
+                        using (SqlDataReader readerUnencrypted = cmdUnencrypted.ExecuteReader())
+                        using (SqlDataReader readerEncrypted = cmdEncrypted.ExecuteReader())
                         {
-                            value = valuesToSelect[i];
-                        }
-                        else
-                        {
-                            value = rawValues[i];
-                        }
+                            // First check that we found some rows.
+                            Assert.True(readerEncrypted.HasRows, @"We didn't find any rows.");
 
-                        using (SqlCommand cmdEncrypted = new SqlCommand(string.Format(@"SELECT {0} FROM [{1}] WHERE {0} = {2}", FirstColumnName, targetTableName, FirstParamName), sqlConnectionEncrypted, null, SqlCommandColumnEncryptionSetting.Enabled))
-                        using (SqlCommand cmdUnencrypted = new SqlCommand(string.Format(@"SELECT {0} FROM [{1}] WHERE {0} = {2}", FirstColumnName, witnessTableName, FirstParamName), sqlConnectionUnencrypted, null, SqlCommandColumnEncryptionSetting.Disabled))
-                        {
-                            SqlParameter paramEncrypted = new SqlParameter();
-                            paramEncrypted.ParameterName = FirstParamName;
-                            paramEncrypted.SqlDbType = largeDbType;
-                            SetParamSizeScalePrecision(ref paramEncrypted, largeColumnInfo);
-                            paramEncrypted.Value = value;
-                            cmdEncrypted.Parameters.Add(paramEncrypted);
-
-                            SqlParameter paramUnencrypted = new SqlParameter();
-                            paramUnencrypted.ParameterName = FirstParamName;
-                            paramUnencrypted.SqlDbType = largeDbType;
-                            SetParamSizeScalePrecision(ref paramUnencrypted, largeColumnInfo);
-                            paramUnencrypted.Value = value;
-                            cmdUnencrypted.Parameters.Add(paramUnencrypted);
-
-                            using (SqlDataReader readerUnencrypted = cmdUnencrypted.ExecuteReader())
-                            using (SqlDataReader readerEncrypted = cmdEncrypted.ExecuteReader())
-                            {
-                                // First check that we found some rows.
-                                Assert.True(readerEncrypted.HasRows, @"We didn't find any rows.");
-
-                                // Now compare the result.
-                                CompareResults(readerEncrypted, readerUnencrypted);
-                            }
+                            // Now compare the result.
+                            CompareResults(readerEncrypted, readerUnencrypted);
                         }
                     }
-                }
-                finally
-                {
-                    // DropTables
-                    DropTableIfExists(sqlConnectionEncrypted, targetTableName);
-                    DropTableIfExists(sqlConnectionUnencrypted, witnessTableName);
-                    DropTableIfExists(sqlConnectionUnencrypted, originTableName);
                 }
             }
         }
@@ -293,43 +275,34 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 sqlConnectionEncrypted.Open();
                 sqlConnectionUnencrypted.Open();
 
-                try
+                foreach (ValueErrorTuple tuple in valueList)
                 {
-                    foreach (ValueErrorTuple tuple in valueList)
+                    using (SqlCommand sqlCmd = new SqlCommand(String.Format("INSERT INTO [{0}] VALUES ({1})", encryptedTableName, FirstParamName), sqlConnectionEncrypted, null, SqlCommandColumnEncryptionSetting.Enabled))
                     {
-                        using (SqlCommand sqlCmd = new SqlCommand(String.Format("INSERT INTO [{0}] VALUES ({1})", encryptedTableName, FirstParamName), sqlConnectionEncrypted, null, SqlCommandColumnEncryptionSetting.Enabled))
-                        {
-                            SqlParameter param = new SqlParameter();
-                            param.ParameterName = FirstParamName;
-                            param.SqlDbType = currentColumnInfo.ColumnType;
-                            SetParamSizeScalePrecision(ref param, currentColumnInfo);
-                            param.Value = tuple.Value;
-                            sqlCmd.Parameters.Add(param);
+                        SqlParameter param = new SqlParameter();
+                        param.ParameterName = FirstParamName;
+                        param.SqlDbType = currentColumnInfo.ColumnType;
+                        SetParamSizeScalePrecision(ref param, currentColumnInfo);
+                        param.Value = tuple.Value;
+                        sqlCmd.Parameters.Add(param);
 
-                            ExecuteAndCheckForError(sqlCmd, tuple.ExpectsError);
-                        }
+                        ExecuteAndCheckForError(sqlCmd, tuple.ExpectsError);
+                    }
 
-                        // Add same value to the unencrypted table
-                        using (SqlCommand sqlCmd = new SqlCommand(String.Format("INSERT INTO [{0}] VALUES ({1})", unencryptedTableName, FirstParamName), sqlConnectionUnencrypted, null, SqlCommandColumnEncryptionSetting.Disabled))
-                        {
-                            SqlParameter param = new SqlParameter();
-                            param.ParameterName = FirstParamName;
-                            param.SqlDbType = currentColumnInfo.ColumnType;
-                            SetParamSizeScalePrecision(ref param, currentColumnInfo);
-                            param.Value = tuple.Value;
-                            sqlCmd.Parameters.Add(param);
+                    // Add same value to the unencrypted table
+                    using (SqlCommand sqlCmd = new SqlCommand(String.Format("INSERT INTO [{0}] VALUES ({1})", unencryptedTableName, FirstParamName), sqlConnectionUnencrypted, null, SqlCommandColumnEncryptionSetting.Disabled))
+                    {
+                        SqlParameter param = new SqlParameter();
+                        param.ParameterName = FirstParamName;
+                        param.SqlDbType = currentColumnInfo.ColumnType;
+                        SetParamSizeScalePrecision(ref param, currentColumnInfo);
+                        param.Value = tuple.Value;
+                        sqlCmd.Parameters.Add(param);
 
-                            ExecuteAndCheckForError(sqlCmd, tuple.ExpectsError);
-                        }
-
+                        ExecuteAndCheckForError(sqlCmd, tuple.ExpectsError);
                     }
 
                     CompareTables(connString, encryptedTableName, unencryptedTableName);
-                }
-                finally
-                {
-                    DropTableIfExists(sqlConnectionEncrypted, encryptedTableName);
-                    DropTableIfExists(sqlConnectionUnencrypted, unencryptedTableName);
                 }
             }
         }
@@ -1305,6 +1278,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     command.ExecuteNonQuery();
                 }
             }
+            _tables.Add(tableName);
         }
 
         /// <summary>
@@ -1351,6 +1325,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                 using (SqlConnection sqlConnection = new SqlConnection(connectionStr))
                 {
                     sqlConnection.Open();
+                    foreach (string table in _tables)
+                    {
+                        DropTableIfExists(sqlConnection, table);
+                    }
                     _databaseObjects.ForEach(o => o.Drop(sqlConnection));
                 }
             }
