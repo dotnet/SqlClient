@@ -510,22 +510,22 @@ namespace Microsoft.Data.SqlClient
 
         #region Execution Trace
         [NonEvent]
-        internal void TryBeginExecuteEvent(int objectId, Guid? connectionId, string commandText, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
+        internal void TryBeginExecuteEvent(int objectId, string datasource, string database, string commandText, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
         {
             if (Log.IsExecutionTraceEnabled())
             {
                 BeginExecute(GetFormattedMessage(SqlCommand_ClassName, memberName, EventType.INFO,
-                    string.Format("Object Id {0}, Client Connection Id {1}, Command Text {2}", objectId, connectionId, commandText)));
+                    string.Format("Object Id {0}, Data Source Id {1}, Database {2}, Command Text {3}", objectId, datasource, database, commandText)));
             }
         }
 
         [NonEvent]
-        internal void TryEndExecuteEvent(int objectId, Guid? connectionId, int compositeState, int sqlExceptionNumber, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
+        internal void TryEndExecuteEvent(int objectId, int compositeState, int sqlExceptionNumber, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
         {
             if (Log.IsExecutionTraceEnabled())
             {
                 EndExecute(GetFormattedMessage(SqlCommand_ClassName, memberName, EventType.INFO,
-                    string.Format("Object Id {0}, Client Connection Id {1}, Composite State {2}, Sql Exception Number {3}", objectId, connectionId, compositeState, sqlExceptionNumber)));
+                    string.Format("Object Id {0}, Client Connection Id {1}, Composite State {2}, Sql Exception Number {3}", objectId, compositeState, sqlExceptionNumber)));
             }
         }
         #endregion
@@ -1106,7 +1106,7 @@ namespace Microsoft.Data.SqlClient
         public const string INFO = " | INFO | ";
         public const string ERR = " | ERR | ";
     }
-    
+
     internal readonly struct TrySNIEventScope : IDisposable
     {
         private readonly long _scopeId;

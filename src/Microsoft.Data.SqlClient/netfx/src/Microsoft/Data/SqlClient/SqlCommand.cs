@@ -915,7 +915,7 @@ namespace Microsoft.Data.SqlClient
                 return Parameters;
             }
         }
-        
+
         internal static void CancelIgnoreFailureCallback(object state)
         {
             SqlCommand command = (SqlCommand)state;
@@ -3027,9 +3027,9 @@ namespace Microsoft.Data.SqlClient
                         throw result.Exception.InnerException;
                     }
                     return result.Result;
-                }, 
-                CancellationToken.None, 
-                TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.NotOnCanceled, 
+                },
+                CancellationToken.None,
+                TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.NotOnCanceled,
                 TaskScheduler.Default
             );
         }
@@ -7626,7 +7626,7 @@ namespace Microsoft.Data.SqlClient
 
         private void WriteBeginExecuteEvent()
         {
-            SqlClientEventSource.Log.TryBeginExecuteEvent(ObjectID, Connection?.ClientConnectionId, CommandText);
+            SqlClientEventSource.Log.TryBeginExecuteEvent(ObjectID, Connection?.DataSource, Connection?.Database, CommandText);
         }
 
         /// <summary>
@@ -7653,7 +7653,7 @@ namespace Microsoft.Data.SqlClient
 
                 int compositeState = successFlag | isSqlExceptionFlag | synchronousFlag;
 
-                SqlClientEventSource.Log.TryEndExecuteEvent(ObjectID, Connection?.ClientConnectionId, compositeState, sqlExceptionNumber.GetValueOrDefault());
+                SqlClientEventSource.Log.TryEndExecuteEvent(ObjectID, compositeState, sqlExceptionNumber.GetValueOrDefault());
             }
         }
 
