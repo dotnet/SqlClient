@@ -6594,7 +6594,7 @@ namespace Microsoft.Data.SqlClient
 
         private void WriteBeginExecuteEvent()
         {
-            SqlClientEventSource.Log.TryBeginExecuteEvent(ObjectID, Connection?.DataSource, Connection?.Database, CommandText);
+            SqlClientEventSource.Log.BeginExecute(ObjectID, Connection?.DataSource, Connection?.Database, CommandText);
         }
 
         private void WriteEndExecuteEvent(bool success, int? sqlExceptionNumber, bool synchronous)
@@ -6615,7 +6615,7 @@ namespace Microsoft.Data.SqlClient
 
                 int compositeState = successFlag | isSqlExceptionFlag | synchronousFlag;
 
-                SqlClientEventSource.Log.TryEndExecuteEvent(ObjectID, compositeState, sqlExceptionNumber.GetValueOrDefault());
+                SqlClientEventSource.Log.EndExecute(ObjectID, compositeState, sqlExceptionNumber.GetValueOrDefault());
             }
         }
     }

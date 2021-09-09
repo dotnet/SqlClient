@@ -508,28 +508,6 @@ namespace Microsoft.Data.SqlClient
         }
         #endregion
 
-        #region Execution Trace
-        [NonEvent]
-        internal void TryBeginExecuteEvent(int objectId, string datasource, string database, string commandText, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
-        {
-            if (Log.IsExecutionTraceEnabled())
-            {
-                BeginExecute(GetFormattedMessage(SqlCommand_ClassName, memberName, EventType.INFO,
-                    string.Format("Object Id {0}, Data Source Id {1}, Database {2}, Command Text {3}", objectId, datasource, database, commandText)));
-            }
-        }
-
-        [NonEvent]
-        internal void TryEndExecuteEvent(int objectId, int compositeState, int sqlExceptionNumber, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
-        {
-            if (Log.IsExecutionTraceEnabled())
-            {
-                EndExecute(GetFormattedMessage(SqlCommand_ClassName, memberName, EventType.INFO,
-                    string.Format("Object Id {0}, Composite State {1}, Sql Exception Number {2}", objectId, compositeState, sqlExceptionNumber)));
-            }
-        }
-        #endregion
-
         #region Notification Trace
 
         #region Notification Traces without if statements
@@ -995,13 +973,25 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Write Events
-        [Event(BeginExecuteEventId, Keywords = Keywords.ExecutionTrace, Task = Tasks.ExecuteCommand, Opcode = EventOpcode.Start)]
-        internal void BeginExecute(string message) =>
-            WriteEvent(BeginExecuteEventId, message);
+        // Do no not change this Event writer as OpenTelemetry and ApplicationInsight are relating to the same format, unless you have check with them and they are able to change their design.
+        [Event(BeginExecuteEventId, Message = "SqlCommand.BeginExecute | INFO | Object ID {0}, Data Source {1}, Database{2} Command Text {3}", Keywords = Keywords.ExecutionTrace, Task = Tasks.ExecuteCommand, Opcode = EventOpcode.Start)]
+        internal void BeginExecute(int objectId, string dataSource, string database, string commandText)
+        {
+            if (Log.IsExecutionTraceEnabled())
+            {
+                WriteEvent(BeginExecuteEventId, objectId, dataSource, database, commandText);
+            }
+        }
 
-        [Event(EndExecuteEventId, Keywords = Keywords.ExecutionTrace, Task = Tasks.ExecuteCommand, Opcode = EventOpcode.Stop)]
-        internal void EndExecute(string message) =>
-            WriteEvent(EndExecuteEventId, message);
+        // Do no not change this Event writer as OpenTelemetry and ApplicationInsight are relating to the same format, unless you have check with them and they are able to change their design.
+        [Event(EndExecuteEventId, Message = "SqlCommand.EndExecute | INFO | Object ID {0}, Composite State {1}, SqlException Number {2}", Keywords = Keywords.ExecutionTrace, Task = Tasks.ExecuteCommand, Opcode = EventOpcode.Stop)]
+        internal void EndExecute(int objectId, int compositestate, int sqlExceptionNumber)
+        {
+            if (Log.IsExecutionTraceEnabled())
+            {
+                WriteEvent(EndExecuteEventId, objectId, compositestate, sqlExceptionNumber);
+            }
+        }
 
         [Event(TraceEventId, Level = EventLevel.Informational, Keywords = Keywords.Trace)]
         internal void Trace(string message) =>
