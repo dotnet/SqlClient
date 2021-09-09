@@ -525,7 +525,7 @@ namespace Microsoft.Data.SqlClient
             if (Log.IsExecutionTraceEnabled())
             {
                 EndExecute(GetFormattedMessage(SqlCommand_ClassName, memberName, EventType.INFO,
-                    string.Format("Object Id {0}, Client Connection Id {1}, Composite State {2}, Sql Exception Number {3}", objectId, compositeState, sqlExceptionNumber)));
+                    string.Format("Object Id {0}, Composite State {1}, Sql Exception Number {2}", objectId, compositeState, sqlExceptionNumber)));
             }
         }
         #endregion
