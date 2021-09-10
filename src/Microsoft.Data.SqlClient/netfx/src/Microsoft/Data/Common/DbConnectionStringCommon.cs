@@ -540,7 +540,8 @@ namespace Microsoft.Data.Common
             "ActiveDirectoryDeviceCodeFlow",
             "ActiveDirectoryManagedIdentity",
             "ActiveDirectoryMSI",
-            "ActiveDirectoryDefault"
+            "ActiveDirectoryDefault",
+            "ActiveDirectoryTokenCredential"
         };
 
         private static bool IsValidAuthenticationMethodEnum()
@@ -705,7 +706,7 @@ namespace Microsoft.Data.Common
 
         internal static bool IsValidAuthenticationTypeValue(SqlAuthenticationMethod value)
         {
-            Debug.Assert(Enum.GetNames(typeof(SqlAuthenticationMethod)).Length == 10, "SqlAuthenticationMethod enum has changed, update needed");
+            Debug.Assert(Enum.GetNames(typeof(SqlAuthenticationMethod)).Length == 11, "SqlAuthenticationMethod enum has changed, update needed");
             return value == SqlAuthenticationMethod.SqlPassword
                 || value == SqlAuthenticationMethod.ActiveDirectoryPassword
                 || value == SqlAuthenticationMethod.ActiveDirectoryIntegrated
@@ -715,6 +716,7 @@ namespace Microsoft.Data.Common
                 || value == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
                 || value == SqlAuthenticationMethod.ActiveDirectoryMSI
                 || value == SqlAuthenticationMethod.ActiveDirectoryDefault
+                || value == SqlAuthenticationMethod.ActiveDirectoryTokenCredential
 #if ADONET_CERT_AUTH
                 || value == SqlAuthenticationMethod.SqlCertificate
 #endif

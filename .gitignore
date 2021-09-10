@@ -361,3 +361,5 @@ MigrationBackup/
 
 # Config Json file
 **/config.json
+
+.idea/

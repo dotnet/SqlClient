@@ -7818,6 +7818,9 @@ namespace Microsoft.Data.SqlClient
                             case SqlAuthenticationMethod.ActiveDirectoryDefault:
                                 workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYDEFAULT;
                                 break;
+                            case SqlAuthenticationMethod.ActiveDirectoryTokenCredential:
+                                workflow = TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYTOKENCREDENTIAL;
+                                break;
                             default:
                                 Debug.Assert(false, "Unrecognized Authentication type for fedauth MSAL request");
                                 break;

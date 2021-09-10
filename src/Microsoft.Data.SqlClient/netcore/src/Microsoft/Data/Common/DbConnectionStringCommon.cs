@@ -109,6 +109,7 @@ namespace Microsoft.Data.Common
         internal const string ActiveDirectoryManagedIdentityString = "Active Directory Managed Identity";
         internal const string ActiveDirectoryMSIString = "Active Directory MSI";
         internal const string ActiveDirectoryDefaultString = "Active Directory Default";
+        internal const string ActiveDirectoryTokenCredentialString = "Active Directory TokenCredential";
 
 #if DEBUG
         private static string[] s_supportedAuthenticationModes =
@@ -122,7 +123,8 @@ namespace Microsoft.Data.Common
             "ActiveDirectoryDeviceCodeFlow",
             "ActiveDirectoryManagedIdentity",
             "ActiveDirectoryMSI",
-            "ActiveDirectoryDefault"
+            "ActiveDirectoryDefault",
+            "ActiveDirectoryTokenCredential"
         };
 
         private static bool IsValidAuthenticationMethodEnum()
@@ -202,6 +204,12 @@ namespace Microsoft.Data.Common
                 || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.ActiveDirectoryDefault, CultureInfo.InvariantCulture)))
             {
                 result = SqlAuthenticationMethod.ActiveDirectoryDefault;
+                isSuccess = true;
+            }
+            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ActiveDirectoryTokenCredentialString)
+                || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.ActiveDirectoryTokenCredential, CultureInfo.InvariantCulture)))
+            {
+                result = SqlAuthenticationMethod.ActiveDirectoryTokenCredential;
                 isSuccess = true;
             }
             else
@@ -648,7 +656,7 @@ namespace Microsoft.Data.Common
 
         internal static bool IsValidAuthenticationTypeValue(SqlAuthenticationMethod value)
         {
-            Debug.Assert(Enum.GetNames(typeof(SqlAuthenticationMethod)).Length == 10, "SqlAuthenticationMethod enum has changed, update needed");
+            Debug.Assert(Enum.GetNames(typeof(SqlAuthenticationMethod)).Length == 11, "SqlAuthenticationMethod enum has changed, update needed");
             return value == SqlAuthenticationMethod.SqlPassword
                 || value == SqlAuthenticationMethod.ActiveDirectoryPassword
                 || value == SqlAuthenticationMethod.ActiveDirectoryIntegrated
@@ -658,6 +666,7 @@ namespace Microsoft.Data.Common
                 || value == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
                 || value == SqlAuthenticationMethod.ActiveDirectoryMSI
                 || value == SqlAuthenticationMethod.ActiveDirectoryDefault
+                || value == SqlAuthenticationMethod.ActiveDirectoryTokenCredential
                 || value == SqlAuthenticationMethod.NotSpecified;
         }
 
