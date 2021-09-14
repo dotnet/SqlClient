@@ -13,21 +13,14 @@ namespace Microsoft.Data.SqlClient
 
         public static readonly TdsParserStateObjectFactory Singleton = new TdsParserStateObjectFactory();
 
-        public EncryptionOptions EncryptionOptions
-        {
-            get
-            {
-                return SNI.SNILoadHandle.SingletonInstance.Options;
-            }
-        }
+        public EncryptionOptions EncryptionOptions => SNI.SNILoadHandle.SingletonInstance.Options;
 
-        public uint SNIStatus
-        {
-            get
-            {
-                return SNI.SNILoadHandle.SingletonInstance.Status;
-            }
-        }
+        public uint SNIStatus => SNI.SNILoadHandle.SingletonInstance.Status;
+
+        /// <summary>
+        /// Verify client encryption possibility.
+        /// </summary>
+        public bool ClientOSEncryptionSupport => SNI.SNILoadHandle.SingletonInstance.ClientOSEncryptionSupport;
 
         public TdsParserStateObject CreateTdsParserStateObject(TdsParser parser)
         {
