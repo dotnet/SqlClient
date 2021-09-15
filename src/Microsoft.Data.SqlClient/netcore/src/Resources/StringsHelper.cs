@@ -11,8 +11,8 @@ namespace System
 {
     internal partial class StringsHelper : Strings
     {
-        static StringsHelper s_loader = null;
-        readonly ResourceManager _resources;
+        private static StringsHelper s_loader = null;
+        private readonly ResourceManager _resources;
 
         internal StringsHelper()
         {
