@@ -695,7 +695,7 @@ namespace Microsoft.Data.SqlTypes
             return System.IO.PathInternal.IsDeviceUNC(path)
 #endif
                 ? string.Format(CultureInfo.InvariantCulture, @"{0}\{1}", path.Replace(@"\\.", @"\??"), uniqueId)
-                                                            : string.Format(CultureInfo.InvariantCulture, @"\??\UNC\{0}\{1}", path.Trim('\\'), uniqueId);
+                : string.Format(CultureInfo.InvariantCulture, @"\??\UNC\{0}\{1}", path.Trim('\\'), uniqueId);
         }
     }
 }

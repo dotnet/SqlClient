@@ -17,6 +17,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static bool IsIntegratedSecurityEnvironmentSet() => DataTestUtility.IsIntegratedSecuritySetup();
 
         private static int[] s_insertedValues = { 11, 22 };
+        private static string s_fileStreamDBName = null;
 
         [PlatformSpecific(TestPlatforms.Windows)]
         [ConditionalFact(nameof(IsFileStreamEnvironmentSet), nameof(IsIntegratedSecurityEnvironmentSet), nameof(AreConnectionStringsSetup))]
@@ -26,7 +27,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 string connString = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
                 {
-                    InitialCatalog = DataTestUtility.SetupFileStreamDB()
+                    InitialCatalog = SetupFileStreamDB(ref DataTestUtility.FileStreamDirectory, DataTestUtility.TCPConnectionString)
                 }.ConnectionString;
 
                 using SqlConnection connection = new(connString);
@@ -76,7 +77,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                DataTestUtility.DropFileStreamDb();
+                DropFileStreamDb(ref DataTestUtility.FileStreamDirectory, DataTestUtility.TCPConnectionString);
             }
         }
 
@@ -88,7 +89,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 string connString = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
                 {
-                    InitialCatalog = DataTestUtility.SetupFileStreamDB()
+                    InitialCatalog = SetupFileStreamDB(ref DataTestUtility.FileStreamDirectory, DataTestUtility.TCPConnectionString)
                 }.ConnectionString;
 
                 using SqlConnection connection = new(connString);
@@ -134,8 +135,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-
-                DataTestUtility.DropFileStreamDb();
+                DropFileStreamDb(ref DataTestUtility.FileStreamDirectory, DataTestUtility.TCPConnectionString);
             }
         }
 
@@ -147,7 +147,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 string connString = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
                 {
-                    InitialCatalog = DataTestUtility.SetupFileStreamDB()
+                    InitialCatalog = SetupFileStreamDB(ref DataTestUtility.FileStreamDirectory, DataTestUtility.TCPConnectionString)
                 }.ConnectionString;
 
                 using SqlConnection connection = new(connString);
@@ -200,11 +200,66 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                DataTestUtility.DropFileStreamDb();
+                DropFileStreamDb(ref DataTestUtility.FileStreamDirectory, DataTestUtility.TCPConnectionString);
             }
         }
 
         #region Private helper methods
+
+        private static string SetupFileStreamDB(ref string fileStreamDir, string connString)
+        {
+            try
+            {
+                if (fileStreamDir != null)
+                {
+                    if (!fileStreamDir.EndsWith("\\"))
+                    {
+                        fileStreamDir += "\\";
+                    }
+
+                    string dbName = DataTestUtility.GetUniqueName("FS", false);
+                    string createDBQuery = @$"CREATE DATABASE [{dbName}]
+                                         ON PRIMARY
+                                          (NAME = PhotoLibrary_data,
+                                           FILENAME = '{fileStreamDir}PhotoLibrary_data.mdf'),
+                                         FILEGROUP FileStreamGroup CONTAINS FILESTREAM
+                                          (NAME = PhotoLibrary_blobs,
+                                           FILENAME = '{fileStreamDir}Photos')
+                                         LOG ON
+                                          (NAME = PhotoLibrary_log,
+                                           FILENAME = '{fileStreamDir}PhotoLibrary_log.ldf')";
+                    using SqlConnection con = new(new SqlConnectionStringBuilder(connString) { InitialCatalog = "master" }.ConnectionString);
+                    con.Open();
+                    using SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandText = createDBQuery;
+                    cmd.ExecuteNonQuery();
+                    s_fileStreamDBName = dbName;
+                }
+            }
+            catch (SqlException e)
+            {
+                Console.WriteLine("File Stream database could not be setup. " + e.Message);
+                fileStreamDir = null;
+            }
+            return s_fileStreamDBName;
+        }
+
+        private static void DropFileStreamDb(ref string fileStreamDir, string connString)
+        {
+            try
+            {
+                using SqlConnection con = new(new SqlConnectionStringBuilder(connString) { InitialCatalog = "master" }.ConnectionString);
+                con.Open();
+                DataTestUtility.DropDatabase(con, s_fileStreamDBName);
+                s_fileStreamDBName = null;
+            }
+            catch (SqlException e)
+            {
+                Console.WriteLine("File Stream database could not be dropped. " + e.Message);
+                fileStreamDir = null;
+            }
+        }
+
         private static string SetupTable(SqlConnection conn)
         {
             // Generate random table name

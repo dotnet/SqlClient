@@ -48,7 +48,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly bool IsAzureSynapse = false;
         public static Uri AKVBaseUri = null;
         public static string FileStreamDirectory = null;
-        private static string _fileStreamDBName = null;
 
         public static readonly string DNSCachingConnString = null;
         public static readonly string DNSCachingServerCR = null;  // this is for the control ring
@@ -150,60 +149,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     AEConnStrings.Add(TCPConnectionString);
                     AEConnStringsSetup.Add(TCPConnectionString);
                 }
-            }
-        }
-
-        public static string SetupFileStreamDB()
-        {
-            try
-            {
-                if (!IsFileStreamDbSetup())
-                {
-                    if (!FileStreamDirectory.EndsWith("\\"))
-                    {
-                        FileStreamDirectory += "\\";
-                    }
-
-                    string dbName = GetUniqueName("FS", false);
-                    string createDBQuery = @$"CREATE DATABASE [{dbName}]
-                                         ON PRIMARY
-                                          (NAME = PhotoLibrary_data,
-                                           FILENAME = '{FileStreamDirectory}PhotoLibrary_data.mdf'),
-                                         FILEGROUP FileStreamGroup CONTAINS FILESTREAM
-                                          (NAME = PhotoLibrary_blobs,
-                                           FILENAME = '{FileStreamDirectory}Photos')
-                                         LOG ON
-                                          (NAME = PhotoLibrary_log,
-                                           FILENAME = '{FileStreamDirectory}PhotoLibrary_log.ldf')";
-                    using SqlConnection con = new(new SqlConnectionStringBuilder(TCPConnectionString) { InitialCatalog = "master" }.ConnectionString);
-                    con.Open();
-                    using SqlCommand cmd = con.CreateCommand();
-                    cmd.CommandText = createDBQuery;
-                    cmd.ExecuteNonQuery();
-                    _fileStreamDBName = dbName;
-                }
-            }
-            catch (SqlException e)
-            {
-                Console.WriteLine("File Stream database could not be setup. " + e.Message);
-                FileStreamDirectory = null;
-            }
-            return _fileStreamDBName;
-        }
-
-        internal static void DropFileStreamDb()
-        {
-            try
-            {
-                using SqlConnection con = new(new SqlConnectionStringBuilder(TCPConnectionString) { InitialCatalog = "master" }.ConnectionString);
-                con.Open();
-                DropDatabase(con, _fileStreamDBName);
-                _fileStreamDBName = null;
-            }
-            catch (SqlException e)
-            {
-                Console.WriteLine("File Stream database could not be dropped. " + e.Message);
-                FileStreamDirectory = null;
             }
         }
 
@@ -546,8 +491,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static bool IsUserIdentityTokenSetup() => !string.IsNullOrEmpty(GetUserIdentityAccessToken());
 
         public static bool IsFileStreamSetup() => !string.IsNullOrEmpty(FileStreamDirectory);
-
-        internal static bool IsFileStreamDbSetup() => !string.IsNullOrEmpty(_fileStreamDBName);
 
         private static bool CheckException<TException>(Exception ex, string exceptionMessage, bool innerExceptionMustBeNull) where TException : Exception
         {

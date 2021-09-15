@@ -125,7 +125,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Null(cmd.Container);
             Assert.True(cmd.DesignTimeVisible);
             Assert.Null(cmd.Notification);
-#if NETFX
+#if NETFX && !NETSTANDARDREFERNCE
             // see https://github.com/dotnet/SqlClient/issues/17
             Assert.True(cmd.NotificationAutoEnlist);
 #endif
@@ -166,7 +166,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Null(cmd.Container);
             Assert.True(cmd.DesignTimeVisible);
             Assert.Null(cmd.Notification);
-#if NETFX
+#if NETFX && !NETSTANDARDREFERNCE
             // see https://github.com/dotnet/SqlClient/issues/17
             Assert.True(cmd.NotificationAutoEnlist);
 #endif
@@ -240,7 +240,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Null(cmd.Connection);
             Assert.False(cmd.DesignTimeVisible);
             Assert.Same(notificationReq, cmd.Notification);
-#if NETFX && !!NETSTANDARDREFERNCE
+#if NETFX && !NETSTANDARDREFERNCE
             // see https://github.com/dotnet/SqlClient/issues/17
             Assert.True(cmd.NotificationAutoEnlist);
 #endif
