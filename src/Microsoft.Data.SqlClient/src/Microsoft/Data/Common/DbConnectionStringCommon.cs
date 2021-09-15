@@ -10,165 +10,6 @@ using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.Common
 {
-
-    /*
-        internal sealed class NamedConnectionStringConverter : StringConverter {
-
-            public NamedConnectionStringConverter() {
-            }
-
-            public override bool GetStandardValuesSupported(ITypeDescriptorContext context) {
-                return true;
-            }
-
-            public override bool GetStandardValuesExclusive(ITypeDescriptorContext context) {
-                // Although theoretically this could be true, some people may want to just type in a name
-                return false;
-            }
-
-            public override StandardValuesCollection GetStandardValues(ITypeDescriptorContext context) {
-                StandardValuesCollection standardValues = null;
-                if (null != context) {
-                    DbConnectionStringBuilder instance = (context.Instance as DbConnectionStringBuilder);
-                    if (null != instance) {
-                        string myProviderName = instance.GetType().Namespace;
-
-                        List<string> myConnectionNames = new List<string>();
-                        foreach(System.Configuration.ConnectionStringSetting setting in System.Configuration.ConfigurationManager.ConnectionStrings) {
-                            if (myProviderName.EndsWith(setting.ProviderName)) {
-                                myConnectionNames.Add(setting.ConnectionName);
-                            }
-                        }
-                        standardValues = new StandardValuesCollection(myConnectionNames);
-                    }
-                }
-                return standardValues;
-            }
-        }
-    */
-
-
-    [Serializable()]
-    internal sealed class ReadOnlyCollection<T> : System.Collections.ICollection, ICollection<T>
-    {
-        private T[] _items;
-
-        internal ReadOnlyCollection(T[] items)
-        {
-            _items = items;
-#if DEBUG
-            for (int i = 0; i < items.Length; ++i)
-            {
-                Debug.Assert(null != items[i], "null item");
-            }
-#endif
-        }
-
-        public void CopyTo(T[] array, int arrayIndex)
-        {
-            Array.Copy(_items, 0, array, arrayIndex, _items.Length);
-        }
-
-        void System.Collections.ICollection.CopyTo(Array array, int arrayIndex)
-        {
-            Array.Copy(_items, 0, array, arrayIndex, _items.Length);
-        }
-
-
-        IEnumerator<T> IEnumerable<T>.GetEnumerator()
-        {
-            return new Enumerator<T>(_items);
-        }
-
-        public System.Collections.IEnumerator GetEnumerator()
-        {
-            return new Enumerator<T>(_items);
-        }
-
-        bool System.Collections.ICollection.IsSynchronized
-        {
-            get { return false; }
-        }
-
-        Object System.Collections.ICollection.SyncRoot
-        {
-            get { return _items; }
-        }
-
-        bool ICollection<T>.IsReadOnly
-        {
-            get { return true; }
-        }
-
-        void ICollection<T>.Add(T value)
-        {
-            throw new NotSupportedException();
-        }
-
-        void ICollection<T>.Clear()
-        {
-            throw new NotSupportedException();
-        }
-
-        bool ICollection<T>.Contains(T value)
-        {
-            return Array.IndexOf(_items, value) >= 0;
-        }
-
-        bool ICollection<T>.Remove(T value)
-        {
-            throw new NotSupportedException();
-        }
-
-        public int Count
-        {
-            get { return _items.Length; }
-        }
-
-        [Serializable()]
-        internal struct Enumerator<K> : IEnumerator<K>, System.Collections.IEnumerator
-        { // based on List<T>.Enumerator
-            private K[] _items;
-            private int _index;
-
-            internal Enumerator(K[] items)
-            {
-                _items = items;
-                _index = -1;
-            }
-
-            public void Dispose()
-            {
-            }
-
-            public bool MoveNext()
-            {
-                return (++_index < _items.Length);
-            }
-
-            public K Current
-            {
-                get
-                {
-                    return _items[_index];
-                }
-            }
-
-            Object System.Collections.IEnumerator.Current
-            {
-                get
-                {
-                    return _items[_index];
-                }
-            }
-
-            void System.Collections.IEnumerator.Reset()
-            {
-                _index = -1;
-            }
-        }
-    }
-
     internal static class DbConnectionStringBuilderUtil
     {
 
@@ -190,15 +31,15 @@ namespace Microsoft.Data.Common
                     else if (StringComparer.OrdinalIgnoreCase.Equals(tmp, "false") || StringComparer.OrdinalIgnoreCase.Equals(tmp, "no"))
                         return false;
                 }
-                return Boolean.Parse(svalue);
+                return bool.Parse(svalue);
             }
             try
             {
-                return ((IConvertible)value).ToBoolean(CultureInfo.InvariantCulture);
+                return Convert.ToBoolean(value, CultureInfo.InvariantCulture);
             }
             catch (InvalidCastException e)
             {
-                throw ADP.ConvertFailed(value.GetType(), typeof(Boolean), e);
+                throw ADP.ConvertFailed(value.GetType(), typeof(bool), e);
             }
         }
 
@@ -220,15 +61,15 @@ namespace Microsoft.Data.Common
                     else if (StringComparer.OrdinalIgnoreCase.Equals(tmp, "false") || StringComparer.OrdinalIgnoreCase.Equals(tmp, "no"))
                         return false;
                 }
-                return Boolean.Parse(svalue);
+                return bool.Parse(svalue);
             }
             try
             {
-                return ((IConvertible)value).ToBoolean(CultureInfo.InvariantCulture);
+                return Convert.ToBoolean(value, CultureInfo.InvariantCulture);
             }
             catch (InvalidCastException e)
             {
-                throw ADP.ConvertFailed(value.GetType(), typeof(Boolean), e);
+                throw ADP.ConvertFailed(value.GetType(), typeof(bool), e);
             }
         }
 
@@ -236,11 +77,11 @@ namespace Microsoft.Data.Common
         {
             try
             {
-                return ((IConvertible)value).ToInt32(CultureInfo.InvariantCulture);
+                return Convert.ToInt32(value, CultureInfo.InvariantCulture);
             }
             catch (InvalidCastException e)
             {
-                throw ADP.ConvertFailed(value.GetType(), typeof(Int32), e);
+                throw ADP.ConvertFailed(value.GetType(), typeof(int), e);
             }
         }
 
@@ -248,35 +89,31 @@ namespace Microsoft.Data.Common
         {
             try
             {
-                return ((IConvertible)value).ToString(CultureInfo.InvariantCulture);
+                return Convert.ToString(value, CultureInfo.InvariantCulture);
             }
             catch (InvalidCastException e)
             {
-                throw ADP.ConvertFailed(value.GetType(), typeof(String), e);
+                throw ADP.ConvertFailed(value.GetType(), typeof(string), e);
             }
         }
 
         #region <<PoolBlockingPeriod Utility>>
-        const string PoolBlockingPeriodAutoString = "Auto";
-        const string PoolBlockingPeriodAlwaysBlockString = "AlwaysBlock";
-        const string PoolBlockingPeriodNeverBlockString = "NeverBlock";
-
         internal static bool TryConvertToPoolBlockingPeriod(string value, out PoolBlockingPeriod result)
         {
             Debug.Assert(Enum.GetNames(typeof(PoolBlockingPeriod)).Length == 3, "PoolBlockingPeriod enum has changed, update needed");
             Debug.Assert(null != value, "TryConvertToPoolBlockingPeriod(null,...)");
 
-            if (StringComparer.OrdinalIgnoreCase.Equals(value, PoolBlockingPeriodAutoString))
+            if (StringComparer.OrdinalIgnoreCase.Equals(value, nameof(PoolBlockingPeriod.Auto)))
             {
                 result = PoolBlockingPeriod.Auto;
                 return true;
             }
-            else if (StringComparer.OrdinalIgnoreCase.Equals(value, PoolBlockingPeriodAlwaysBlockString))
+            else if (StringComparer.OrdinalIgnoreCase.Equals(value, nameof(PoolBlockingPeriod.AlwaysBlock)))
             {
                 result = PoolBlockingPeriod.AlwaysBlock;
                 return true;
             }
-            else if (StringComparer.OrdinalIgnoreCase.Equals(value, PoolBlockingPeriodNeverBlockString))
+            else if (StringComparer.OrdinalIgnoreCase.Equals(value, nameof(PoolBlockingPeriod.NeverBlock)))
             {
                 result = PoolBlockingPeriod.NeverBlock;
                 return true;
@@ -298,17 +135,14 @@ namespace Microsoft.Data.Common
         {
             Debug.Assert(IsValidPoolBlockingPeriodValue(value));
 
-            if (value == PoolBlockingPeriod.AlwaysBlock)
+            switch (value)
             {
-                return PoolBlockingPeriodAlwaysBlockString;
-            }
-            if (value == PoolBlockingPeriod.NeverBlock)
-            {
-                return PoolBlockingPeriodNeverBlockString;
-            }
-            else
-            {
-                return PoolBlockingPeriodAutoString;
+                case PoolBlockingPeriod.AlwaysBlock:
+                    return nameof(PoolBlockingPeriod.AlwaysBlock);
+                case PoolBlockingPeriod.NeverBlock:
+                    return nameof(PoolBlockingPeriod.NeverBlock);
+                default:
+                    return nameof(PoolBlockingPeriod.Auto);
             }
         }
 
@@ -393,20 +227,17 @@ namespace Microsoft.Data.Common
         }
         #endregion
 
-        const string ApplicationIntentReadWriteString = "ReadWrite";
-        const string ApplicationIntentReadOnlyString = "ReadOnly";
-
         internal static bool TryConvertToApplicationIntent(string value, out ApplicationIntent result)
         {
             Debug.Assert(Enum.GetNames(typeof(ApplicationIntent)).Length == 2, "ApplicationIntent enum has changed, update needed");
             Debug.Assert(null != value, "TryConvertToApplicationIntent(null,...)");
 
-            if (StringComparer.OrdinalIgnoreCase.Equals(value, ApplicationIntentReadOnlyString))
+            if (StringComparer.OrdinalIgnoreCase.Equals(value, nameof(ApplicationIntent.ReadOnly)))
             {
                 result = ApplicationIntent.ReadOnly;
                 return true;
             }
-            else if (StringComparer.OrdinalIgnoreCase.Equals(value, ApplicationIntentReadWriteString))
+            else if (StringComparer.OrdinalIgnoreCase.Equals(value, nameof(ApplicationIntent.ReadWrite)))
             {
                 result = ApplicationIntent.ReadWrite;
                 return true;
@@ -429,11 +260,11 @@ namespace Microsoft.Data.Common
             Debug.Assert(IsValidApplicationIntentValue(value));
             if (value == ApplicationIntent.ReadOnly)
             {
-                return ApplicationIntentReadOnlyString;
+                return nameof(ApplicationIntent.ReadOnly);
             }
             else
             {
-                return ApplicationIntentReadWriteString;
+                return nameof(ApplicationIntent.ReadWrite);
             }
         }
 
@@ -526,7 +357,7 @@ namespace Microsoft.Data.Common
         internal const string ActiveDirectoryManagedIdentityString = "Active Directory Managed Identity";
         internal const string ActiveDirectoryMSIString = "Active Directory MSI";
         internal const string ActiveDirectoryDefaultString = "Active Directory Default";
-        // const string SqlCertificateString = "Sql Certificate";
+        const string SqlCertificateString = "Sql Certificate";
 
 #if DEBUG
         private static string[] s_supportedAuthenticationModes =
@@ -623,7 +454,7 @@ namespace Microsoft.Data.Common
                 result = SqlAuthenticationMethod.ActiveDirectoryDefault;
                 isSuccess = true;
             }
-#if ADONET_CERT_AUTH
+#if ADONET_CERT_AUTH && NETFRAMEWORK
             else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, SqlCertificateString)
                 || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.SqlCertificate, CultureInfo.InvariantCulture))) {
                 result = SqlAuthenticationMethod.SqlCertificate;
@@ -638,12 +469,6 @@ namespace Microsoft.Data.Common
         }
 
         /// <summary>
-        /// Column Encryption Setting.
-        /// </summary>
-        const string ColumnEncryptionSettingEnabledString = "Enabled";
-        const string ColumnEncryptionSettingDisabledString = "Disabled";
-
-        /// <summary>
         /// Convert a string value to the corresponding SqlConnectionColumnEncryptionSetting.
         /// </summary>
         /// <param name="value"></param>
@@ -653,12 +478,12 @@ namespace Microsoft.Data.Common
         {
             bool isSuccess = false;
 
-            if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ColumnEncryptionSettingEnabledString))
+            if (StringComparer.InvariantCultureIgnoreCase.Equals(value, nameof(SqlConnectionColumnEncryptionSetting.Enabled)))
             {
                 result = SqlConnectionColumnEncryptionSetting.Enabled;
                 isSuccess = true;
             }
-            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ColumnEncryptionSettingDisabledString))
+            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, nameof(SqlConnectionColumnEncryptionSetting.Disabled)))
             {
                 result = SqlConnectionColumnEncryptionSetting.Disabled;
                 isSuccess = true;
@@ -694,9 +519,9 @@ namespace Microsoft.Data.Common
             switch (value)
             {
                 case SqlConnectionColumnEncryptionSetting.Enabled:
-                    return ColumnEncryptionSettingEnabledString;
+                    return nameof(SqlConnectionColumnEncryptionSetting.Enabled);
                 case SqlConnectionColumnEncryptionSetting.Disabled:
-                    return ColumnEncryptionSettingDisabledString;
+                    return nameof(SqlConnectionColumnEncryptionSetting.Disabled);
 
                 default:
                     return null;
@@ -715,7 +540,7 @@ namespace Microsoft.Data.Common
                 || value == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
                 || value == SqlAuthenticationMethod.ActiveDirectoryMSI
                 || value == SqlAuthenticationMethod.ActiveDirectoryDefault
-#if ADONET_CERT_AUTH
+#if ADONET_CERT_AUTH && NETFRAMEWORK
                 || value == SqlAuthenticationMethod.SqlCertificate
 #endif
                 || value == SqlAuthenticationMethod.NotSpecified;
@@ -745,7 +570,7 @@ namespace Microsoft.Data.Common
                     return ActiveDirectoryMSIString;
                 case SqlAuthenticationMethod.ActiveDirectoryDefault:
                     return ActiveDirectoryDefaultString;
-#if ADONET_CERT_AUTH
+#if ADONET_CERT_AUTH && NETFRAMEWORK
                 case SqlAuthenticationMethod.SqlCertificate:
                     return SqlCertificateString;
 #endif
@@ -901,16 +726,6 @@ namespace Microsoft.Data.Common
         }
 
         #region <<AttestationProtocol Utility>>
-
-        /// <summary>
-        /// Attestation Protocol.
-        /// </summary>
-        const string AttestationProtocolHGS = "HGS";
-        const string AttestationProtocolAAS = "AAS";
-#if ENCLAVE_SIMULATOR
-        const string AttestationProtocolSIM = "SIM";
-#endif
-
         /// <summary>
         ///  Convert a string value to the corresponding SqlConnectionAttestationProtocol
         /// </summary>
@@ -919,18 +734,18 @@ namespace Microsoft.Data.Common
         /// <returns></returns>
         internal static bool TryConvertToAttestationProtocol(string value, out SqlConnectionAttestationProtocol result)
         {
-            if (StringComparer.InvariantCultureIgnoreCase.Equals(value, AttestationProtocolHGS))
+            if (StringComparer.InvariantCultureIgnoreCase.Equals(value, nameof(SqlConnectionAttestationProtocol.HGS)))
             {
                 result = SqlConnectionAttestationProtocol.HGS;
                 return true;
             }
-            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, AttestationProtocolAAS))
+            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, nameof(SqlConnectionAttestationProtocol.AAS)))
             {
                 result = SqlConnectionAttestationProtocol.AAS;
                 return true;
             }
 #if ENCLAVE_SIMULATOR
-            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, AttestationProtocolSIM))
+            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, nameof(SqlConnectionAttestationProtocol.SIM)))
             {
                 result = SqlConnectionAttestationProtocol.SIM;
                 return true;
@@ -966,12 +781,12 @@ namespace Microsoft.Data.Common
             switch (value)
             {
                 case SqlConnectionAttestationProtocol.HGS:
-                    return AttestationProtocolHGS;
+                    return nameof(SqlConnectionAttestationProtocol.HGS);
                 case SqlConnectionAttestationProtocol.AAS:
-                    return AttestationProtocolAAS;
+                    return nameof(SqlConnectionAttestationProtocol.AAS);
 #if ENCLAVE_SIMULATOR
                 case SqlConnectionAttestationProtocol.SIM:
-                    return AttestationProtocolSIM;
+                    return nameof(SqlConnectionAttestationProtocol.SIM);
 #endif
                 default:
                     return null;
@@ -1147,20 +962,23 @@ namespace Microsoft.Data.Common
             }
         }
         #endregion
-
-        internal static bool IsValidCertificateValue(string value)
-        {
-            return string.IsNullOrEmpty(value)
-                || value.StartsWith("subject:", StringComparison.OrdinalIgnoreCase)
-                || value.StartsWith("sha1:", StringComparison.OrdinalIgnoreCase);
-        }
     }
 
     internal static class DbConnectionStringDefaults
     {
-        // all
-        //        internal const string NamedConnection           = "";
         private const string _emptyString = "";
+        internal const ApplicationIntent ApplicationIntent = Microsoft.Data.SqlClient.ApplicationIntent.ReadWrite;
+        internal const string ApplicationName =
+#if NETFRAMEWORK
+            "Framework Microsoft SqlClient Data Provider";
+#else
+            "Core Microsoft SqlClient Data Provider";
+#endif
+        internal const string AttachDBFilename = _emptyString;
+        internal const int CommandTimeout = 30;
+        internal const int ConnectTimeout = 15;
+
+#if NETFRAMEWORK
         // Odbc
         internal const string Driver = _emptyString;
         internal const string Dsn = _emptyString;
@@ -1176,16 +994,15 @@ namespace Microsoft.Data.Common
         internal const bool OmitOracleConnectionName = false;
 
         // SqlClient
-        internal const ApplicationIntent ApplicationIntent = Microsoft.Data.SqlClient.ApplicationIntent.ReadWrite;
-        internal const string ApplicationName = "Framework Microsoft SqlClient Data Provider";
-        internal const string AttachDBFilename = _emptyString;
-        internal const int CommandTimeout = 30;
-        internal const int ConnectTimeout = 15;
         internal const bool ConnectionReset = true;
         internal const bool ContextConnection = false;
+        internal static readonly bool TransparentNetworkIPResolution = LocalAppContextSwitches.DisableTNIRByDefault ? false : true;
+        internal const string NetworkLibrary = _emptyString;
+        internal const string Certificate = _emptyString;
+#endif
         internal const string CurrentLanguage = _emptyString;
         internal const string DataSource = _emptyString;
-        internal const bool Encrypt = false;
+        internal const bool Encrypt = true;
         internal const bool Enlist = true;
         internal const string FailoverPartner = _emptyString;
         internal const string InitialCatalog = _emptyString;
@@ -1193,10 +1010,8 @@ namespace Microsoft.Data.Common
         internal const int LoadBalanceTimeout = 0; // default of 0 means don't use
         internal const bool MultipleActiveResultSets = false;
         internal const bool MultiSubnetFailover = false;
-        internal static readonly bool TransparentNetworkIPResolution = LocalAppContextSwitches.DisableTNIRByDefault ? false : true;
         internal const int MaxPoolSize = 100;
         internal const int MinPoolSize = 0;
-        internal const string NetworkLibrary = _emptyString;
         internal const int PacketSize = 8000;
         internal const string Password = _emptyString;
         internal const bool PersistSecurityInfo = false;
@@ -1215,34 +1030,12 @@ namespace Microsoft.Data.Common
         internal const string EnclaveAttestationUrl = _emptyString;
         internal const SqlConnectionAttestationProtocol AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified;
         internal const SqlConnectionIPAddressPreference IPAddressPreference = SqlConnectionIPAddressPreference.IPv4First;
-        internal const string Certificate = _emptyString;
         internal const PoolBlockingPeriod PoolBlockingPeriod = SqlClient.PoolBlockingPeriod.Auto;
-    }
-
-    internal static class DbConnectionOptionKeywords
-    {
-        // Odbc
-        internal const string Driver = "driver";
-        internal const string Pwd = "pwd";
-        internal const string UID = "uid";
-
-        // OleDb
-        internal const string DataProvider = "data provider";
-        internal const string ExtendedProperties = "extended properties";
-        internal const string FileName = "file name";
-        internal const string Provider = "provider";
-        internal const string RemoteProvider = "remote provider";
-
-        // common keywords (OleDb, OracleClient, SqlClient)
-        internal const string Password = "password";
-        internal const string UserID = "user id";
     }
 
     internal static class DbConnectionStringKeywords
     {
-        // all
-        //        internal const string NamedConnection           = "Named Connection";
-
+#if NETFRAMEWORK
         // Odbc
         internal const string Driver = "Driver";
         internal const string Dsn = "Dsn";
@@ -1259,6 +1052,10 @@ namespace Microsoft.Data.Common
         internal const string OmitOracleConnectionName = "Omit Oracle Connection Name";
 
         // SqlClient
+        internal const string TransparentNetworkIPResolution = "Transparent Network IP Resolution";
+        internal const string Certificate = "Certificate";
+#endif
+        // SqlClient
         internal const string ApplicationIntent = "Application Intent";
         internal const string ApplicationName = "Application Name";
         internal const string AttachDBFilename = "AttachDbFilename";
@@ -1272,7 +1069,6 @@ namespace Microsoft.Data.Common
         internal const string InitialCatalog = "Initial Catalog";
         internal const string MultipleActiveResultSets = "Multiple Active Result Sets";
         internal const string MultiSubnetFailover = "Multi Subnet Failover";
-        internal const string TransparentNetworkIPResolution = "Transparent Network IP Resolution";
         internal const string NetworkLibrary = "Network Library";
         internal const string PacketSize = "Packet Size";
         internal const string Replication = "Replication";
@@ -1284,12 +1080,10 @@ namespace Microsoft.Data.Common
         internal const string ConnectRetryCount = "Connect Retry Count";
         internal const string ConnectRetryInterval = "Connect Retry Interval";
         internal const string Authentication = "Authentication";
-        internal const string Certificate = "Certificate";
         internal const string ColumnEncryptionSetting = "Column Encryption Setting";
         internal const string EnclaveAttestationUrl = "Enclave Attestation Url";
         internal const string AttestationProtocol = "Attestation Protocol";
         internal const string IPAddressPreference = "IP Address Preference";
-        internal const string PoolBlockingPeriod = "Pool Blocking Period";
 
         // common keywords (OleDb, OracleClient, SqlClient)
         internal const string DataSource = "Data Source";
@@ -1304,10 +1098,15 @@ namespace Microsoft.Data.Common
         internal const string MaxPoolSize = "Max Pool Size";
         internal const string Pooling = "Pooling";
         internal const string MinPoolSize = "Min Pool Size";
+        internal const string PoolBlockingPeriod = "Pool Blocking Period";
     }
 
     internal static class DbConnectionStringSynonyms
     {
+#if NETFRAMEWORK
+        //internal const string TransparentNetworkIPResolution = TRANSPARENTNETWORKIPRESOLUTION;
+        internal const string TRANSPARENTNETWORKIPRESOLUTION = "transparentnetworkipresolution";
+#endif
         //internal const string ApplicationName        = APP;
         internal const string APP = "app";
 
@@ -1363,8 +1162,6 @@ namespace Microsoft.Data.Common
         //internal const string PoolBlockingPeriod = POOLBLOCKINGPERIOD;
         internal const string POOLBLOCKINGPERIOD = "poolblockingperiod";
 
-        internal const string WorkaroundOracleBug914652 = "Workaround Oracle Bug 914652";
-
         //internal const string Password               = Pwd;
         internal const string Pwd = "pwd";
 
@@ -1373,9 +1170,6 @@ namespace Microsoft.Data.Common
 
         //internal const string TrustServerCertificate = TRUSTSERVERCERTIFICATE;
         internal const string TRUSTSERVERCERTIFICATE = "trustservercertificate";
-
-        //internal const string TransparentNetworkIPResolution = TRANSPARENTNETWORKIPRESOLUTION;
-        internal const string TRANSPARENTNETWORKIPRESOLUTION = "transparentnetworkipresolution";
 
         //internal const string UserID                 = UID+","+User;
         internal const string UID = "uid";
