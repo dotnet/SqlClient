@@ -508,6 +508,26 @@ namespace Microsoft.Data.SqlClient
         }
         #endregion
 
+        #region Execution Trace
+        [NonEvent]
+        internal void TryBeginExecuteEvent(int objectId, string dataSource, string database, string commandText, Guid? connectionId, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
+        {
+            if (Log.IsExecutionTraceEnabled())
+            {
+                BeginExecute(objectId, dataSource, database, commandText, GetFormattedMessage(SqlCommand_ClassName, memberName, EventType.INFO, $"Object Id {objectId}, Client connection Id {connectionId}, Command Text {commandText}"));
+            }
+        }
+
+        [NonEvent]
+        internal void TryEndExecuteEvent(int objectId, int compositeState, int sqlExceptionNumber, Guid? connectionId, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
+        {
+            if (Log.IsExecutionTraceEnabled())
+            {
+                EndExecute(objectId, compositeState, sqlExceptionNumber, GetFormattedMessage(SqlCommand_ClassName, memberName, EventType.INFO, $"Object Id {objectId}, Client Connection Id {connectionId}, Composite State {compositeState}, Sql Exception Number {sqlExceptionNumber}"));
+            }
+        }
+        #endregion
+
         #region Notification Trace
 
         #region Notification Traces without if statements
@@ -973,24 +993,19 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Write Events
-        // Do no not change this Event writer as OpenTelemetry and ApplicationInsight are relating to the same format, unless you have check with them and they are able to change their design.
-        [Event(BeginExecuteEventId, Message = "SqlCommand.BeginExecute | INFO | Object ID {0}, Data Source {1}, Database{2} Command Text {3}", Keywords = Keywords.ExecutionTrace, Task = Tasks.ExecuteCommand, Opcode = EventOpcode.Start)]
-        internal void BeginExecute(int objectId, string dataSource, string database, string commandText)
+        // Do no not change the first 4 arguments in this Event writer as OpenTelemetry and ApplicationInsight are relating to the same format, unless you have checked with them and they are able to change their design. Additional items could be added at the end.
+        [Event(BeginExecuteEventId, Keywords = Keywords.ExecutionTrace, Task = Tasks.ExecuteCommand, Opcode = EventOpcode.Start)]
+        internal void BeginExecute(int objectId, string dataSource, string database, string commandText, string message)
         {
-            if (Log.IsExecutionTraceEnabled())
-            {
-                WriteEvent(BeginExecuteEventId, objectId, dataSource, database, commandText);
-            }
+            WriteEvent(BeginExecuteEventId, objectId, dataSource, database, commandText, message);
         }
 
-        // Do no not change this Event writer as OpenTelemetry and ApplicationInsight are relating to the same format, unless you have check with them and they are able to change their design.
-        [Event(EndExecuteEventId, Message = "SqlCommand.EndExecute | INFO | Object ID {0}, Composite State {1}, SqlException Number {2}", Keywords = Keywords.ExecutionTrace, Task = Tasks.ExecuteCommand, Opcode = EventOpcode.Stop)]
-        internal void EndExecute(int objectId, int compositestate, int sqlExceptionNumber)
+        // Do no not change the first 3 arguments in this Event writer as OpenTelemetry and ApplicationInsight are relating to the same format, unless you have checked with them and they are able to change their design. Additional items could be added at the end.
+        [Event(EndExecuteEventId, Keywords = Keywords.ExecutionTrace, Task = Tasks.ExecuteCommand, Opcode = EventOpcode.Stop)]
+        internal void EndExecute(int objectId, int compositestate, int sqlExceptionNumber, string message)
         {
-            if (Log.IsExecutionTraceEnabled())
-            {
-                WriteEvent(EndExecuteEventId, objectId, compositestate, sqlExceptionNumber);
-            }
+
+            WriteEvent(EndExecuteEventId, objectId, compositestate, sqlExceptionNumber, message);
         }
 
         [Event(TraceEventId, Level = EventLevel.Informational, Keywords = Keywords.Trace)]
