@@ -202,6 +202,7 @@ namespace System
             internal const string DbCommand_Transaction = @"The transaction used by the command.";
             internal const string DbCommand_UpdatedRowSource = @"When used by a DataAdapter.Update, how command results are applied to the current DataRow.";
             internal const string DbCommand_StatementCompleted = @"When records are affected by a given statement by the execution of the command.";
+            internal const string SqlParameter_SourceColumnNullMapping = @"When used by DataAdapter.Update, the parameter value is changed from DBNull.Value into (Int32)1 or (Int32)0 if non-null.";
             internal const string SqlCommand_Notification = @"Notification values used by Microsoft SQL Server.";
             internal const string TCE_DbConnectionString_EnclaveAttestationUrl = @"Specifies an endpoint of an enclave attestation service, which will be used to verify whether the enclave, configured in the SQL Server instance for computations on database columns encrypted using Always Encrypted, is valid and secure.";
             internal const string TCE_SqlCommand_ColumnEncryptionSetting = @"Column encryption setting for the command. Overrides the connection level default.";
