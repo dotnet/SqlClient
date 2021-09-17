@@ -1001,7 +1001,8 @@ namespace Microsoft.Data.SqlClient
             WriteEvent(BeginExecuteEventId, objectId, dataSource, database, commandText, message);
         }
 
-        // Do no not change the first 3 arguments in this Event writer as OpenTelemetry and ApplicationInsight are relating to the same format, unless you have checked with them and they are able to change their design. Additional items could be added at the end.
+        // Do not change the first 3 arguments in this Event writer as OpenTelemetry and ApplicationInsight are relating to the same format, 
+        // unless you have checked with them and they are able to change their design. Additional items could be added at the end.
         [Event(EndExecuteEventId, Keywords = Keywords.ExecutionTrace, Task = Tasks.ExecuteCommand, Opcode = EventOpcode.Stop)]
         internal void EndExecute(int objectId, int compositestate, int sqlExceptionNumber, string message)
         {
