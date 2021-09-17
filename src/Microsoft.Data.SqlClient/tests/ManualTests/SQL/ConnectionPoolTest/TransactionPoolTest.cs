@@ -72,7 +72,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             SqlConnection.ClearAllPools();
             ConnectionPoolWrapper connectionPool = null;
 
-            using (TransactionScope transScope = new TransactionScope())
+            using (TransactionScope transScope = new())
             {
                 using SqlConnection connection1 = new(connectionString);
                 using SqlConnection connection2 = new(connectionString);
