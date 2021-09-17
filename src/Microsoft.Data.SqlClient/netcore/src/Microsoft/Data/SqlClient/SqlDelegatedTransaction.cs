@@ -212,7 +212,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     try
                     {
-                        // Safely access Transction status - as it's possible Transaction is not in right state.
+                        // Safely access Transaction status - as it's possible Transaction is not in right state.
                         if (Transaction?.TransactionInformation?.Status != TransactionStatus.Aborted)
                         {
                             throw SQL.PromotionFailed(promoteException);
