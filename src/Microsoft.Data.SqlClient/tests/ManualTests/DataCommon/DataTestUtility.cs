@@ -452,7 +452,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public static bool IsLocalDBInstalled() => !string.IsNullOrEmpty(LocalDbAppName?.Trim()) && !string.IsNullOrEmpty(LocalDbSharedInstanceName?.Trim());
+        public static bool IsLocalDBInstalled() => !string.IsNullOrEmpty(LocalDbAppName?.Trim()) && !string.IsNullOrEmpty(LocalDbSharedInstanceName?.Trim()) && IsIntegratedSecuritySetup();
 
         public static bool IsIntegratedSecuritySetup() => SupportsIntegratedSecurity;
 
