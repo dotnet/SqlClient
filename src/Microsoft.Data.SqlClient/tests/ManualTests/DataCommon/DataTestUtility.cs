@@ -42,7 +42,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string LocalDbSharedInstanceName = null;
         public static List<string> AEConnStrings = new List<string>();
         public static List<string> AEConnStringsSetup = new List<string>();
-        public static List<string> LocalDbDataSources = new();
         public static bool EnclaveEnabled { get; private set; } = false;
         public static readonly bool TracingEnabled = false;
         public static readonly bool SupportsIntegratedSecurity = false;
@@ -152,12 +151,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     AEConnStrings.Add(TCPConnectionString);
                     AEConnStringsSetup.Add(TCPConnectionString);
                 }
-            }
-            if (!string.IsNullOrEmpty(LocalDbAppName))
-            {
-                LocalDbDataSources.Add(@$"server=(localdb)\{LocalDbAppName}");
-                LocalDbDataSources.Add(@$"server=(localdb)\.\{LocalDbSharedInstanceName}");
-                LocalDbDataSources.Add(@$"server=(localdb)\.");
             }
         }
 
@@ -452,7 +445,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public static bool IsLocalDBInstalled() => !string.IsNullOrEmpty(LocalDbAppName?.Trim()) && !string.IsNullOrEmpty(LocalDbSharedInstanceName?.Trim()) && IsIntegratedSecuritySetup();
+        public static bool IsLocalDBInstalled() => !string.IsNullOrEmpty(LocalDbAppName?.Trim()) && !IsIntegratedSecuritySetup();
+        public static bool IsLocalDbSharedInstanceSetup() => !string.IsNullOrEmpty(LocalDbSharedInstanceName?.Trim()) && !IsIntegratedSecuritySetup();
 
         public static bool IsIntegratedSecuritySetup() => SupportsIntegratedSecurity;
 
