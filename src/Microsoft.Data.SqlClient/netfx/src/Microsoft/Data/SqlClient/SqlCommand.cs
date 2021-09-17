@@ -620,7 +620,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private static bool IsRetryEnabled => LocalAppContextSwitches.IsRetryEnabled;
+        private bool IsProviderRetriable => SqlConfigurableRetryFactory.IsRetriable(RetryLogicProvider);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RetryLogicProvider/*' />
         [
@@ -1382,7 +1382,7 @@ namespace Microsoft.Data.SqlClient
                     statistics = SqlStatistics.StartTimer(Statistics);
                     WriteBeginExecuteEvent();
                     SqlDataReader ds;
-                    ds = IsRetryEnabled ?
+                    ds = IsProviderRetriable ?
                         RunExecuteReaderWithRetry(0, RunBehavior.ReturnImmediately, true, ADP.ExecuteScalar) :
                         RunExecuteReader(0, RunBehavior.ReturnImmediately, true, ADP.ExecuteScalar);
                     object result = CompleteExecuteScalar(ds, false);
@@ -1462,7 +1462,7 @@ namespace Microsoft.Data.SqlClient
                     statistics = SqlStatistics.StartTimer(Statistics);
                     WriteBeginExecuteEvent();
                     bool usedCache;
-                    if (IsRetryEnabled)
+                    if (IsProviderRetriable)
                     {
                         InternalExecuteNonQueryWithRetry(ADP.ExecuteNonQuery, sendToPipe: false, CommandTimeout, out usedCache, asyncWrite: false, inRetry: false);
                     }
@@ -2092,7 +2092,7 @@ namespace Microsoft.Data.SqlClient
 
                     // use the reader to consume metadata
                     SqlDataReader ds;
-                    ds = IsRetryEnabled ?
+                    ds = IsProviderRetriable ?
                         RunExecuteReaderWithRetry(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, true, ADP.ExecuteXmlReader) :
                         RunExecuteReader(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, true, ADP.ExecuteXmlReader);
                     XmlReader result = CompleteXmlReader(ds);
@@ -2415,7 +2415,7 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
-                    return IsRetryEnabled ?
+                    return IsProviderRetriable ?
                             ExecuteReaderWithRetry(CommandBehavior.Default, ADP.ExecuteReader) :
                             ExecuteReader(CommandBehavior.Default, ADP.ExecuteReader);
                 }
@@ -2433,7 +2433,7 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlCommand.ExecuteReader|API|Correlation> ObjectID {0}, behavior={1}, ActivityID {2}", ObjectID, (int)behavior, ActivityCorrelator.Current);
 
-                return IsRetryEnabled ?
+                return IsProviderRetriable ?
                        ExecuteReaderWithRetry(behavior, ADP.ExecuteReader) :
                        ExecuteReader(behavior, ADP.ExecuteReader);
             }
@@ -2945,7 +2945,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteNonQueryAsync[@name="CancellationToken"]/*'/>
         public override Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
-            => IsRetryEnabled ?
+            => IsProviderRetriable ?
                 InternalExecuteNonQueryWithRetryAsync(cancellationToken) :
                 InternalExecuteNonQueryAsync(cancellationToken);
 
@@ -3024,25 +3024,25 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="default"]/*'/>
         new public Task<SqlDataReader> ExecuteReaderAsync()
-            => IsRetryEnabled ?
+            => IsProviderRetriable ?
                 InternalExecuteReaderWithRetryAsync(CommandBehavior.Default, CancellationToken.None) :
                 InternalExecuteReaderAsync(CommandBehavior.Default, CancellationToken.None);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="CommandBehavior"]/*'/>
         new public Task<SqlDataReader> ExecuteReaderAsync(CommandBehavior behavior)
-            => IsRetryEnabled ?
+            => IsProviderRetriable ?
                 InternalExecuteReaderWithRetryAsync(behavior, CancellationToken.None) :
                 InternalExecuteReaderAsync(behavior, CancellationToken.None);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="CancellationToken"]/*'/>
         new public Task<SqlDataReader> ExecuteReaderAsync(CancellationToken cancellationToken)
-            => IsRetryEnabled ?
+            => IsProviderRetriable ?
                 InternalExecuteReaderWithRetryAsync(CommandBehavior.Default, cancellationToken) :
                 InternalExecuteReaderAsync(CommandBehavior.Default, cancellationToken);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="commandBehaviorAndCancellationToken"]/*'/>
         new public Task<SqlDataReader> ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
-            => IsRetryEnabled ?
+            => IsProviderRetriable ?
                 InternalExecuteReaderWithRetryAsync(behavior, cancellationToken) :
                 InternalExecuteReaderAsync(behavior, cancellationToken);
 
@@ -3188,7 +3188,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReaderAsync[@name="CancellationToken"]/*'/>
         public Task<XmlReader> ExecuteXmlReaderAsync(CancellationToken cancellationToken)
-            => IsRetryEnabled ?
+            => IsProviderRetriable ?
                 InternalExecuteXmlReaderWithRetryAsync(cancellationToken) :
                 InternalExecuteXmlReaderAsync(cancellationToken);
 

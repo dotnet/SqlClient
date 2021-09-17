@@ -245,12 +245,6 @@ Scaled decimal parameter truncation can be enabled by enabling the below AppCont
 
 **"Switch.Microsoft.Data.SqlClient.TruncateScaledDecimal"**
 
-## Enabling configurable retry logic
-
-To use this feature, you must enable the following AppContext switch at application startup:
-
-**"Switch.Microsoft.Data.SqlClient.EnableRetryLogic"**
-
 ## Enabling row version null behavior
 
 `SqlDataReader` returns a `DBNull` value instead of an empty `byte[]`. To enable the legacy behavior, you must enable the following AppContext switch on application startup:
