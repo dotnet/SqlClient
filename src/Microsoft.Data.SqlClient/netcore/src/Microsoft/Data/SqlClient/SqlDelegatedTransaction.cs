@@ -179,6 +179,8 @@ namespace Microsoft.Data.SqlClient
                         {
                             promoteException = e;
 
+                            ADP.TraceExceptionWithoutRethrow(e);
+
                             // Doom the connection, to make sure that the transaction is
                             // eventually rolled back.
                             // VSTS 144562: doom the connection while having the lock on it to prevent race condition with "Transaction Ended" Event
@@ -187,6 +189,7 @@ namespace Microsoft.Data.SqlClient
                         catch (InvalidOperationException e)
                         {
                             promoteException = e;
+                            ADP.TraceExceptionWithoutRethrow(e);
                             connection.DoomThisConnection();
                         }
                     }
@@ -367,6 +370,8 @@ namespace Microsoft.Data.SqlClient
                             {
                                 commitException = e;
 
+                                ADP.TraceExceptionWithoutRethrow(e);
+
                                 // Doom the connection, to make sure that the transaction is
                                 // eventually rolled back.
                                 // VSTS 144562: doom the connection while having the lock on it to prevent race condition with "Transaction Ended" Event
@@ -375,6 +380,7 @@ namespace Microsoft.Data.SqlClient
                             catch (InvalidOperationException e)
                             {
                                 commitException = e;
+                                ADP.TraceExceptionWithoutRethrow(e);
                                 connection.DoomThisConnection();
                             }
                             if (commitException != null)
