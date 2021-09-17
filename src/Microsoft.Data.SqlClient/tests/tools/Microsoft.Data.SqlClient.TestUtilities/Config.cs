@@ -27,7 +27,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities
         public bool EnclaveEnabled = false;
         public bool TracingEnabled = false;
         public bool SupportsIntegratedSecurity = false;
-        public bool SupportsFileStream = false;
+        public string FileStreamDirectory = null;
         public bool UseManagedSNIOnWindows = false;
         public string DNSCachingConnString = null;
         public string DNSCachingServerCR = null;  // this is for the control ring
