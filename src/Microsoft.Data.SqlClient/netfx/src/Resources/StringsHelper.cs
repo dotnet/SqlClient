@@ -11,35 +11,22 @@ namespace Microsoft.Data
 {
     internal partial class StringsHelper : Strings
     {
-        static StringsHelper loader = null;
-        ResourceManager resources;
+        private static StringsHelper s_loader = null;
+        private readonly ResourceManager _resources;
 
         internal StringsHelper()
         {
-            resources = new ResourceManager("SqlClient.Resources.Strings", this.GetType().Assembly);
+            _resources = new ResourceManager("SqlClient.Resources.Strings", GetType().Assembly);
         }
 
         private static StringsHelper GetLoader()
         {
-            if (loader == null)
+            if (s_loader == null)
             {
-                StringsHelper sr = new StringsHelper();
-                Interlocked.CompareExchange(ref loader, sr, null);
+                StringsHelper sr = new();
+                Interlocked.CompareExchange(ref s_loader, sr, null);
             }
-            return loader;
-        }
-
-        private static CultureInfo CultureHelper
-        {
-            get { return null/*use ResourceManager default, CultureInfo.CurrentUICulture*/; }
-        }
-
-        public static ResourceManager Resources
-        {
-            get
-            {
-                return GetLoader().resources;
-            }
+            return s_loader;
         }
 
         public static string GetResourceString(string res)
@@ -50,12 +37,13 @@ namespace Microsoft.Data
 
             // If "res" is a resource id, temp will not be null, "res" will contain the retrieved resource string.
             // If "res" is not a resource id, temp will be null.
-            string temp = sys.resources.GetString(res, StringsHelper.Culture);
+            string temp = sys._resources.GetString(res, StringsHelper.Culture);
             if (temp != null)
                 res = temp;
 
             return res;
         }
+
         public static string GetString(string res, params object[] args)
         {
             res = GetResourceString(res);

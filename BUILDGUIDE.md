@@ -120,7 +120,7 @@ Manual Tests require the below setup to run:
   |LocalDbAppName | (Optional) If Local Db Testing is supported, this property configures the name of Local DB App instance available in client environment. Empty string value disables Local Db testing. | Name of Local Db App to connect to.|
   |LocalDbSharedInstanceName | (Optional) If Local Db testing is supported and an Instance of that is shared, this property configures the name of Shared Local Db Instance to connect to. | Name of Shared Local Db Instance. |
   |SupportsIntegratedSecurity | (Optional) Whether or not the USER running tests has integrated security access to the target SQL Server.| `true` OR `false`|
-  |SupportsFileStream | (Optional) Whether or not FileStream is enabled on SQL Server| `true` OR `false`|
+  |FileStreamDirectory | (Optional) If File Stream is enabled on SQL Server, pass local directory path to be used for setting up File Stream enabled database. |  `D:\\escaped\\absolute\\path\\to\\directory\\` |
   |UseManagedSNIOnWindows | (Optional) Enables testing with Managed SNI on Windows| `true` OR `false`|
   |IsAzureSynpase | (Optional) When set to 'true', test suite runs compatible tests for Azure Synapse/Parallel Data Warehouse. | `true` OR `false`|
 
