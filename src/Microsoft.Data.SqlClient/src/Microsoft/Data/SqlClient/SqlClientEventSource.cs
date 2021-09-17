@@ -68,6 +68,8 @@ namespace Microsoft.Data.SqlClient
         #endregion
     }
 
+    // Any changes to event writers might be considered as a breaking change.
+    // Other libraries such as OpenTelemetry and ApplicationInsight have based part of their code on BeginExecute and EndExecute arguments number.
     [EventSource(Name = "Microsoft.Data.SqlClient.EventSource")]
     internal partial class SqlClientEventSource : SqlClientEventSourceBase
     {
