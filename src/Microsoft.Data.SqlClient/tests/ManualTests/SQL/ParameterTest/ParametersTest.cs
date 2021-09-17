@@ -319,6 +319,67 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         #region Scaled Decimal Parameter & TVP Test
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [InlineData("CAST(1.0 as decimal(38, 37))", "1.0000000000000000000000000000")]
+        [InlineData("CAST(7.1234567890123456789012345678 as decimal(38, 35))", "7.1234567890123456789012345678")]
+        [InlineData("CAST(-7.1234567890123456789012345678 as decimal(38, 35))", "-7.1234567890123456789012345678")]
+        [InlineData("CAST(-0.1234567890123456789012345678 as decimal(38, 35))", "-0.1234567890123456789012345678")]
+        [InlineData("CAST(4210862852.86 as decimal(38, 20))", "4210862852.860000000000000000")]
+        [InlineData("CAST(0 as decimal(38, 36))", "0.0000000000000000000000000000")]
+        [InlineData("CAST(79228162514264337593543950335 as decimal(38, 9))", "79228162514264337593543950335")]
+        [InlineData("CAST(-79228162514264337593543950335 as decimal(38, 9))", "-79228162514264337593543950335")]
+        [InlineData("CAST(0.4210862852 as decimal(38, 38))", "0.4210862852000000000000000000")]
+        [InlineData("CAST(0.1234567890123456789012345678 as decimal(38, 38))", "0.1234567890123456789012345678")]
+        [InlineData("CAST(249454727.14678312032280248320 as decimal(38, 20))", "249454727.14678312032280248320")]
+        [InlineData("CAST(3961408124790879675.7769715711 as decimal(38, 10))", "3961408124790879675.7769715711")]
+        [InlineData("CAST(3961408124790879675776971571.1 as decimal(38, 1))", "3961408124790879675776971571.1")]
+        [InlineData("CAST(79228162514264337593543950335 as decimal(38, 0))", "79228162514264337593543950335")]
+        [InlineData("CAST(-79228162514264337593543950335 as decimal(38, 0))", "-79228162514264337593543950335")]
+        [InlineData("CAST(0.0000000000000000000000000001 as decimal(38, 38))", "0.0000000000000000000000000001")]
+        [InlineData("CAST(-0.0000000000000000000000000001 as decimal(38, 38))", "-0.0000000000000000000000000001")]
+        public static void SqlDecimalConvertToDecimal_TestInRange(string sqlDecimalValue, string expectedDecimalValue)
+        {
+            using(SqlConnection cnn = new(s_connString))
+            {
+                cnn.Open();
+                using(SqlCommand cmd = new($"SELECT {sqlDecimalValue} val"))
+                {
+                    cmd.Connection = cnn;
+                    using (SqlDataReader rdr = cmd.ExecuteReader())
+                    {
+                        Assert.True(rdr.Read(), "SqlDataReader must have a value");
+                        decimal retrunValue = rdr.GetDecimal(0);
+                        Assert.Equal(expectedDecimalValue, retrunValue.ToString());
+                    }
+                }
+            }
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [InlineData("CAST(7.9999999999999999999999999999 as decimal(38, 35))")]
+        [InlineData("CAST(8.1234567890123456789012345678 as decimal(38, 35))")]
+        [InlineData("CAST(-8.1234567890123456789012345678 as decimal(38, 35))")]
+        [InlineData("CAST(123456789012345678901234567890 as decimal(38, 0))")]
+        [InlineData("CAST(7922816251426433759354395.9999 as decimal(38, 8))")]
+        [InlineData("CAST(-7922816251426433759354395.9999 as decimal(38, 8))")]
+        [InlineData("CAST(0.123456789012345678901234567890 as decimal(38, 36))")]
+        public static void SqlDecimalConvertToDecimal_TestOutOfRange(string sqlDecimalValue)
+        {
+            using (SqlConnection cnn = new(s_connString))
+            {
+                cnn.Open();
+                using (SqlCommand cmd = new($"SELECT {sqlDecimalValue} val"))
+                {
+                    cmd.Connection = cnn;
+                    using (SqlDataReader rdr = cmd.ExecuteReader())
+                    {
+                        Assert.True(rdr.Read(), "SqlDataReader must have a value");
+                        Assert.Throws<OverflowException>(() => rdr.GetDecimal(0));
+                    }
+                }
+            }
+        }
+
         [Theory]
         [ClassData(typeof(ConnectionStringsProvider))]
         public static void TestScaledDecimalParameter_CommandInsert(string connectionString, bool truncateScaledDecimal)

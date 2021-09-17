@@ -16,7 +16,7 @@
     "AzureKeyVaultClientSecret": "",
     "SupportsIntegratedSecurity": true,
     "LocalDbAppName": "",
-    "SupportsFileStream": false,
+    "FileStreamDirectory": "",
     "UseManagedSNIOnWindows": false,
     "DNSCachingConnString": "",
     "DNSCachingServerCR": "",
