@@ -4,6 +4,35 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Preview Release 4.0.0-preview2.xxxxx.x] - 2021-09-20
+
+This update brings the below changes over the previous release:
+
+### Breaking changes over preview release v4.0.0-preview1
+
+- Removed `Configurable Retry Logic` safety switch. [#1254](https://github.com/dotnet/SqlClient/pull/1254) [Read more](#remove-configurable-retry-logic-safety-switch)
+
+### Added
+
+- Added support for `SqlFileStream` on Windows using .NET Standard 2.0 and above. [#1240](https://github.com/dotnet/SqlClient/pull/1240)
+
+### Fixed
+
+- Fixed `.NET decimal` conversion from `SqlDecimal`. [#1179](https://github.com/dotnet/SqlClient/pull/1179)
+- Fixed `Event Source` changes on **TryBeginExecuteEvent** and **WriteEndExecuteEvent** to address the failure on other MS products such as OpenTelemetry and Application Insight. [#1258](https://github.com/dotnet/SqlClient/pull/1258)
+- Fixed command's async cancellation. [#956](https://github.com/dotnet/SqlClient/pull/956)
+- Fixed deadlock in transaction using .NET Framework. [#1242](https://github.com/dotnet/SqlClient/pull/1242)
+- Fixed **localdb** `shared instance` using managed SNI. [#1237](https://github.com/dotnet/SqlClient/pull/1237)
+- Fixed unknown transaction state issues when prompting delegated transaction. [1216](https://github.com/dotnet/SqlClient/pull/1216)
+
+### Changed
+
+- Various code improvements [#1236](https://github.com/dotnet/SqlClient/pull/1236) [#1251](https://github.com/dotnet/SqlClient/pull/1251) [#1155](https://github.com/dotnet/SqlClient/pull/1155) [#1185](https://github.com/dotnet/SqlClient/pull/1185) 
+
+### Remove configurable retry logic safety switch
+
+The App Context switch "Switch.Microsoft.Data.SqlClient.EnableRetryLogic" will no longer be required to use the configurable retry logic feature. The feature is now supported in production. The default behavior of the feature will continue to be a non-retry policy, which will need to be overridden by client applications to enable retries.
+
 ## [Preview Release 4.0.0-preview1.21237.2] - 2021-08-25
 
 ### Breaking changes over stable release 3.0.0
