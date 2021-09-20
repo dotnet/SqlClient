@@ -27,7 +27,7 @@ This update brings the below changes over the previous release:
 
 ### Changed
 
-- Various code improvements [#1236](https://github.com/dotnet/SqlClient/pull/1236) [#1251](https://github.com/dotnet/SqlClient/pull/1251) [#1155](https://github.com/dotnet/SqlClient/pull/1155) [#1185](https://github.com/dotnet/SqlClient/pull/1185) 
+- Various code improvements [#1236](https://github.com/dotnet/SqlClient/pull/1236) [#1251](https://github.com/dotnet/SqlClient/pull/1251) [#1155](https://github.com/dotnet/SqlClient/pull/1155) [#1266](https://github.com/dotnet/SqlClient/pull/1266)
 
 ### Remove configurable retry logic safety switch
 
