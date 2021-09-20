@@ -39,6 +39,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string AKVClientId = null;
         public static readonly string AKVClientSecret = null;
         public static readonly string LocalDbAppName = null;
+        public static readonly string LocalDbSharedInstanceName = null;
         public static List<string> AEConnStrings = new List<string>();
         public static List<string> AEConnStringsSetup = new List<string>();
         public static bool EnclaveEnabled { get; private set; } = false;
@@ -84,6 +85,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             AADServicePrincipalId = c.AADServicePrincipalId;
             AADServicePrincipalSecret = c.AADServicePrincipalSecret;
             LocalDbAppName = c.LocalDbAppName;
+            LocalDbSharedInstanceName = c.LocalDbSharedInstanceName;
             SupportsIntegratedSecurity = c.SupportsIntegratedSecurity;
             FileStreamDirectory = c.FileStreamDirectory;
             EnclaveEnabled = c.EnclaveEnabled;
@@ -441,7 +443,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             cmd.ExecuteNonQuery();
         }
 
-        public static bool IsLocalDBInstalled() => !string.IsNullOrEmpty(LocalDbAppName?.Trim());
+        public static bool IsLocalDBInstalled() => !string.IsNullOrEmpty(LocalDbAppName?.Trim()) && IsIntegratedSecuritySetup();
+        public static bool IsLocalDbSharedInstanceSetup() => !string.IsNullOrEmpty(LocalDbSharedInstanceName?.Trim()) && IsIntegratedSecuritySetup();
 
         public static bool IsIntegratedSecuritySetup() => SupportsIntegratedSecurity;
 
