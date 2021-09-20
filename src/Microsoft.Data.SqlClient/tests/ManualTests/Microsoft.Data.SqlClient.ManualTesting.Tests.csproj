@@ -264,6 +264,10 @@
   </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netfx'">
     <Reference Include="System.Transactions" />
+    <Compile Include="SQL\ConnectionPoolTest\TransactionPoolTest.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="$(Configuration.Contains('Debug'))">
+    <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.Debug.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="$(TestsPath)tools\Microsoft.DotNet.XUnitExtensions\Microsoft.DotNet.XUnitExtensions.csproj">
