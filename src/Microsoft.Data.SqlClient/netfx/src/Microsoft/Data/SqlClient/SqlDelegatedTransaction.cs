@@ -255,9 +255,22 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 //Throw exception only if Transaction is still active and not yet aborted.
-                if (promoteException != null && Transaction.TransactionInformation.Status != SysTx.TransactionStatus.Aborted)
+                if (promoteException != null)
                 {
-                    throw SQL.PromotionFailed(promoteException);
+                    try
+                    {
+                        // Safely access Transction status - as it's possible Transaction is not in right state.
+                        if(Transaction?.TransactionInformation?.Status == SysTx.TransactionStatus.Aborted)
+                        {
+                            throw SQL.PromotionFailed(promoteException);
+                        }
+                    }
+                    catch(SysTx.TransactionException te)
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent("SqlDelegatedTransaction.Promote | RES | CPOOL | Object Id {0}, Client Connection Id {1}, Transaction exception occurred: {2}.", ObjectID, usersConnection?.ClientConnectionId, te.Message);
+                        // Throw promote exception if transaction state is unknown.
+                        throw SQL.PromotionFailed(promoteException);
+                    }
                 }
                 else
                 {
