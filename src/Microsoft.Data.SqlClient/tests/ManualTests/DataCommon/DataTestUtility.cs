@@ -443,8 +443,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             cmd.ExecuteNonQuery();
         }
 
-        public static bool IsLocalDBInstalled() => !string.IsNullOrEmpty(LocalDbAppName?.Trim()) && !IsIntegratedSecuritySetup();
-        public static bool IsLocalDbSharedInstanceSetup() => !string.IsNullOrEmpty(LocalDbSharedInstanceName?.Trim()) && !IsIntegratedSecuritySetup();
+        public static bool IsLocalDBInstalled() => !string.IsNullOrEmpty(LocalDbAppName?.Trim()) && IsIntegratedSecuritySetup();
+        public static bool IsLocalDbSharedInstanceSetup() => !string.IsNullOrEmpty(LocalDbSharedInstanceName?.Trim()) && IsIntegratedSecuritySetup();
 
         public static bool IsIntegratedSecuritySetup() => SupportsIntegratedSecurity;
 
