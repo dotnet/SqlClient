@@ -2790,7 +2790,9 @@ namespace Microsoft.Data.SqlClient
                             }
                             else
                             {
-                                fedAuthToken = authProvider.AcquireTokenAsync(authParamsBuilder).Result.ToSqlFedAuthToken();
+                                // We use Task.Run here in all places to execute task synchronously in the same context.
+                                // Fixes block-over-async deadlock possibilities https://github.com/dotnet/SqlClient/issues/1209
+                                fedAuthToken = Task.Run(async () => await authProvider.AcquireTokenAsync(authParamsBuilder)).GetAwaiter().GetResult().ToSqlFedAuthToken();
                                 _activeDirectoryAuthTimeoutRetryHelper.CachedToken = fedAuthToken;
                             }
                             break;
@@ -2806,7 +2808,7 @@ namespace Microsoft.Data.SqlClient
                             else
                             {
                                 authParamsBuilder.WithUserId(ConnectionOptions.UserID);
-                                fedAuthToken = authProvider.AcquireTokenAsync(authParamsBuilder).Result.ToSqlFedAuthToken();
+                                fedAuthToken = Task.Run(async () => await authProvider.AcquireTokenAsync(authParamsBuilder)).GetAwaiter().GetResult().ToSqlFedAuthToken();
                                 _activeDirectoryAuthTimeoutRetryHelper.CachedToken = fedAuthToken;
                             }
                             break;
@@ -2822,13 +2824,13 @@ namespace Microsoft.Data.SqlClient
                                 {
                                     username = _credential.UserId;
                                     authParamsBuilder.WithUserId(username).WithPassword(_credential.Password);
-                                    fedAuthToken = authProvider.AcquireTokenAsync(authParamsBuilder).Result.ToSqlFedAuthToken();
+                                    fedAuthToken = Task.Run(async () => await authProvider.AcquireTokenAsync(authParamsBuilder)).GetAwaiter().GetResult().ToSqlFedAuthToken();
                                 }
                                 else
                                 {
                                     username = ConnectionOptions.UserID;
                                     authParamsBuilder.WithUserId(username).WithPassword(ConnectionOptions.Password);
-                                    fedAuthToken = authProvider.AcquireTokenAsync(authParamsBuilder).Result.ToSqlFedAuthToken();
+                                    fedAuthToken = Task.Run(async () => await authProvider.AcquireTokenAsync(authParamsBuilder)).GetAwaiter().GetResult().ToSqlFedAuthToken();
                                 }
                                 _activeDirectoryAuthTimeoutRetryHelper.CachedToken = fedAuthToken;
                             }
