@@ -575,12 +575,12 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.Unix.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionCspProvider.Unix.cs" />
   </ItemGroup>
-  <!-- SqlFileStream Unix Netcoreapp only -->
-  <ItemGroup Condition="'$(TargetGroup)' == 'netcoreapp' AND '$(TargetsUnix)' == 'true'">
+  <!-- SqlFileStream Unix only -->
+  <ItemGroup Condition="'$(TargetsUnix)' == 'true'">
     <Compile Include="Microsoft\Data\SqlClient\SqlFileStream.Unsupported.cs" />
   </ItemGroup>
-  <!-- SqlFileStream Windows Netcoreapp only -->
-  <ItemGroup Condition="'$(TargetGroup)' == 'netcoreapp' AND '$(TargetsWindows)' == 'true'">
+  <!-- SqlFileStream Windows only -->
+  <ItemGroup Condition="'$(TargetsWindows)' == 'true'">
     <Compile Include="$(CommonPath)\CoreLib\Interop\Windows\kernel32\Interop.FileTypes.cs">
       <Link>Common\CoreLib\Interop\Windows\kernel32\Interop.FileTypes.cs</Link>
     </Compile>
@@ -856,15 +856,11 @@
     <PackageReference Include="System.Text.Encodings.Web" Version="$(SystemTextEncodingsWebVersion)" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" Version="$(MicrosoftDataSqlClientSNIRuntimeVersion)" />
     <PackageReference Condition="$(TargetGroup) == 'netcoreapp' " Include="System.Diagnostics.DiagnosticSource" Version="$(SystemDiagnosticsDiagnosticSourceVersion)" />
-    <PackageReference Include="System.Threading.Tasks" Version="$(SystemThreadingTasksVersion)" />
-    <PackageReference Include="System.Memory" Version="$(SystemMemoryVersion)" />
     <PackageReference Include="Azure.Identity" Version="$(AzureIdentityVersion)" />
     <PackageReference Include="Microsoft.Identity.Client" Version="$(MicrosoftIdentityClientVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="$(MicrosoftIdentityModelProtocolsOpenIdConnectVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="$(MicrosoftIdentityModelJsonWebTokensVersion)" />
-    <PackageReference Include="System.Globalization" Version="$(SystemGlobalizationVersion)" />
     <PackageReference Include="System.IO" Version="$(SystemIOVersion)" />
-    <PackageReference Include="System.Xml.ReaderWriter" Version="$(SystemXmlReaderWriterVersion)" />
     <PackageReference Include="System.Resources.ResourceManager" Version="$(SystemResourcesResourceManagerVersion)" />
     <PackageReference Include="System.Buffers" Version="$(SystemBuffersVersion)" />
     <PackageReference Include="System.Runtime.Caching" Version="$(SystemRuntimeCachingVersion)" />

@@ -68,6 +68,8 @@ namespace Microsoft.Data.SqlClient
         #endregion
     }
 
+    // Any changes to event writers might be considered as a breaking change.
+    // Other libraries such as OpenTelemetry and ApplicationInsight have based part of their code on BeginExecute and EndExecute arguments number.
     [EventSource(Name = "Microsoft.Data.SqlClient.EventSource")]
     internal partial class SqlClientEventSource : SqlClientEventSourceBase
     {
@@ -510,22 +512,20 @@ namespace Microsoft.Data.SqlClient
 
         #region Execution Trace
         [NonEvent]
-        internal void TryBeginExecuteEvent(int objectId, Guid? connectionId, string commandText, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
+        internal void TryBeginExecuteEvent(int objectId, string dataSource, string database, string commandText, Guid? connectionId, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
         {
             if (Log.IsExecutionTraceEnabled())
             {
-                BeginExecute(GetFormattedMessage(SqlCommand_ClassName, memberName, EventType.INFO,
-                    string.Format("Object Id {0}, Client Connection Id {1}, Command Text {2}", objectId, connectionId, commandText)));
+                BeginExecute(objectId, dataSource, database, commandText, GetFormattedMessage(SqlCommand_ClassName, memberName, EventType.INFO, $"Object Id {objectId}, Client connection Id {connectionId}, Command Text {commandText}"));
             }
         }
 
         [NonEvent]
-        internal void TryEndExecuteEvent(int objectId, Guid? connectionId, int compositeState, int sqlExceptionNumber, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
+        internal void TryEndExecuteEvent(int objectId, int compositeState, int sqlExceptionNumber, Guid? connectionId, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
         {
             if (Log.IsExecutionTraceEnabled())
             {
-                EndExecute(GetFormattedMessage(SqlCommand_ClassName, memberName, EventType.INFO,
-                    string.Format("Object Id {0}, Client Connection Id {1}, Composite State {2}, Sql Exception Number {3}", objectId, connectionId, compositeState, sqlExceptionNumber)));
+                EndExecute(objectId, compositeState, sqlExceptionNumber, GetFormattedMessage(SqlCommand_ClassName, memberName, EventType.INFO, $"Object Id {objectId}, Client Connection Id {connectionId}, Composite State {compositeState}, Sql Exception Number {sqlExceptionNumber}"));
             }
         }
         #endregion
@@ -995,13 +995,22 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region Write Events
+        // Do not change the first 4 arguments in this Event writer as OpenTelemetry and ApplicationInsight are relating to the same format, 
+        // unless you have checked with them and they are able to change their design. Additional items could be added at the end.
         [Event(BeginExecuteEventId, Keywords = Keywords.ExecutionTrace, Task = Tasks.ExecuteCommand, Opcode = EventOpcode.Start)]
-        internal void BeginExecute(string message) =>
-            WriteEvent(BeginExecuteEventId, message);
+        internal void BeginExecute(int objectId, string dataSource, string database, string commandText, string message)
+        {
+            WriteEvent(BeginExecuteEventId, objectId, dataSource, database, commandText, message);
+        }
 
+        // Do not change the first 3 arguments in this Event writer as OpenTelemetry and ApplicationInsight are relating to the same format, 
+        // unless you have checked with them and they are able to change their design. Additional items could be added at the end.
         [Event(EndExecuteEventId, Keywords = Keywords.ExecutionTrace, Task = Tasks.ExecuteCommand, Opcode = EventOpcode.Stop)]
-        internal void EndExecute(string message) =>
-            WriteEvent(EndExecuteEventId, message);
+        internal void EndExecute(int objectId, int compositestate, int sqlExceptionNumber, string message)
+        {
+
+            WriteEvent(EndExecuteEventId, objectId, compositestate, sqlExceptionNumber, message);
+        }
 
         [Event(TraceEventId, Level = EventLevel.Informational, Keywords = Keywords.Trace)]
         internal void Trace(string message) =>
@@ -1106,7 +1115,7 @@ namespace Microsoft.Data.SqlClient
         public const string INFO = " | INFO | ";
         public const string ERR = " | ERR | ";
     }
-    
+
     internal readonly struct TrySNIEventScope : IDisposable
     {
         private readonly long _scopeId;

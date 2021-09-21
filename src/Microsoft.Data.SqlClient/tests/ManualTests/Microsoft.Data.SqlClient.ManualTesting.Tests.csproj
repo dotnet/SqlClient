@@ -200,6 +200,7 @@
     <Compile Include="SQL\RandomStressTest\RandomStressTest.cs" />
     <Compile Include="SQL\SplitPacketTest\SplitPacketTest.cs" />
     <Compile Include="SQL\SqlNotificationTest\SqlNotificationTest.cs" />
+    <Compile Include="SQL\SqlFileStreamTest\SqlFileStreamTest.cs" />
     <Compile Include="SQL\TransactionTest\TransactionTest.cs" />
     <Compile Include="SQL\TransactionTest\TransactionEnlistmentTest.cs" />
     <Compile Include="SQL\UdtTest\SqlServerTypesTest.cs" />
@@ -261,11 +262,12 @@
     <None Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode.bsl" />
     <None Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode_Azure.bsl" />
   </ItemGroup>
-  <ItemGroup Condition="('$(TargetGroup)' == 'netcoreapp' OR '$(TargetGroup)' == 'netfx') AND !$(ReferenceType.Contains('NetStandard'))">
-    <Compile Include="SQL\SqlFileStreamTest\SqlFileStreamTest.cs" />
-  </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netfx'">
     <Reference Include="System.Transactions" />
+    <Compile Include="SQL\ConnectionPoolTest\TransactionPoolTest.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="$(Configuration.Contains('Debug'))">
+    <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.Debug.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="$(TestsPath)tools\Microsoft.DotNet.XUnitExtensions\Microsoft.DotNet.XUnitExtensions.csproj">

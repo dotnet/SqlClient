@@ -255,9 +255,22 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 //Throw exception only if Transaction is still active and not yet aborted.
-                if (promoteException != null && Transaction.TransactionInformation.Status != SysTx.TransactionStatus.Aborted)
+                if (promoteException != null)
                 {
-                    throw SQL.PromotionFailed(promoteException);
+                    try
+                    {
+                        // Safely access Transction status - as it's possible Transaction is not in right state.
+                        if(Transaction?.TransactionInformation?.Status == SysTx.TransactionStatus.Aborted)
+                        {
+                            throw SQL.PromotionFailed(promoteException);
+                        }
+                    }
+                    catch(SysTx.TransactionException te)
+                    {
+                        SqlClientEventSource.Log.TryTraceEvent("SqlDelegatedTransaction.Promote | RES | CPOOL | Object Id {0}, Client Connection Id {1}, Transaction exception occurred: {2}.", ObjectID, usersConnection?.ClientConnectionId, te.Message);
+                        // Throw promote exception if transaction state is unknown.
+                        throw SQL.PromotionFailed(promoteException);
+                    }
                 }
                 else
                 {
@@ -391,21 +404,23 @@ namespace Microsoft.Data.SqlClient
 #else
                     {
 #endif //DEBUG
-                        lock (connection)
+                        // If the connection is doomed, we can be certain that the
+                        // transaction will eventually be rolled back, and we shouldn't
+                        // attempt to commit it.
+                        if (connection.IsConnectionDoomed)
                         {
-                            // If the connection is doomed, we can be certain that the
-                            // transaction will eventually be rolled back or has already been aborted externally, and we shouldn't
-                            // attempt to commit it.
-                            if (connection.IsConnectionDoomed)
+                            lock (connection)
                             {
                                 _active = false; // set to inactive first, doesn't matter how the rest completes, this transaction is done.
                                 _connection = null;
-
-                                enlistment.Aborted(SQL.ConnectionDoomed());
                             }
-                            else
+                            enlistment.Aborted(SQL.ConnectionDoomed());
+                        }
+                        else
+                        {
+                            Exception commitException;
+                            lock (connection)
                             {
-                                Exception commitException;
                                 try
                                 {
                                     // Now that we've acquired the lock, make sure we still have valid state for this operation.
@@ -434,40 +449,40 @@ namespace Microsoft.Data.SqlClient
                                     ADP.TraceExceptionWithoutRethrow(e);
                                     connection.DoomThisConnection();
                                 }
-                                if (commitException != null)
+                            }
+                            if (commitException != null)
+                            {
+                                // connection.ExecuteTransaction failed with exception
+                                if (_internalTransaction.IsCommitted)
                                 {
-                                    // connection.ExecuteTransaction failed with exception
-                                    if (_internalTransaction.IsCommitted)
-                                    {
-                                        // Even though we got an exception, the transaction
-                                        // was committed by the server.
-                                        enlistment.Committed();
-                                    }
-                                    else if (_internalTransaction.IsAborted)
-                                    {
-                                        // The transaction was aborted, report that to
-                                        // SysTx.
-                                        enlistment.Aborted(commitException);
-                                    }
-                                    else
-                                    {
-                                        // The transaction is still active, we cannot
-                                        // know the state of the transaction.
-                                        enlistment.InDoubt(commitException);
-                                    }
-
-                                    // We eat the exception.  This is called on the SysTx
-                                    // thread, not the applications thread.  If we don't 
-                                    // eat the exception an UnhandledException will occur,
-                                    // causing the process to FailFast.
-                                }
-
-                                connection.CleanupConnectionOnTransactionCompletion(_atomicTransaction);
-                                if (commitException == null)
-                                {
-                                    // connection.ExecuteTransaction succeeded
+                                    // Even though we got an exception, the transaction
+                                    // was committed by the server.
                                     enlistment.Committed();
                                 }
+                                else if (_internalTransaction.IsAborted)
+                                {
+                                    // The transaction was aborted, report that to
+                                    // SysTx.
+                                    enlistment.Aborted(commitException);
+                                }
+                                else
+                                {
+                                    // The transaction is still active, we cannot
+                                    // know the state of the transaction.
+                                    enlistment.InDoubt(commitException);
+                                }
+
+                                // We eat the exception.  This is called on the SysTx
+                                // thread, not the applications thread.  If we don't 
+                                // eat the exception an UnhandledException will occur,
+                                // causing the process to FailFast.
+                            }
+
+                            connection.CleanupConnectionOnTransactionCompletion(_atomicTransaction);
+                            if (commitException == null)
+                            {
+                                // connection.ExecuteTransaction succeeded
+                                enlistment.Committed();
                             }
                         }
                     }

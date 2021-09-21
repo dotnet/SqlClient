@@ -9,6 +9,7 @@ using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Microsoft.Data.SqlClient.SNI
 {
@@ -142,7 +143,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="cachedFQDN">Used for DNS Cache</param>
         /// <param name="pendingDNSInfo">Used for DNS Cache</param>       
         /// <returns>SNI handle</returns>
-        internal static SNIHandle CreateConnectionHandle(string fullServerName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[][] spnBuffer, 
+        internal static SNIHandle CreateConnectionHandle(string fullServerName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[][] spnBuffer,
                                         bool flushCache, bool async, bool parallel, bool isIntegratedSecurity, SqlConnectionIPAddressPreference ipPreference, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
         {
             instanceName = new byte[1];
@@ -415,6 +416,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
         private string _workingDataSource;
         private string _dataSourceAfterTrimmingProtocol;
+
         internal bool IsBadDataSource { get; private set; } = false;
 
         internal bool IsSsrpRequired { get; private set; } = false;
@@ -472,31 +474,39 @@ namespace Microsoft.Data.SqlClient.SNI
             }
         }
 
+        // LocalDbInstance name always starts with (localdb)
+        // possible scenarios:
+        // (localdb)\<instance name>
+        // or (localdb)\. which goes to default localdb
+        // or (localdb)\.\<sharedInstance name>
         internal static string GetLocalDBInstance(string dataSource, out bool error)
         {
             string instanceName = null;
 
-            string workingDataSource = dataSource.ToLowerInvariant();
-
-            string[] tokensByBackSlash = workingDataSource.Split(BackSlashCharacter);
-
+            // ReadOnlySpan is not supported in netstandard 2.0, but installing System.Memory solves the issue
+            ReadOnlySpan<char> input = dataSource.AsSpan().TrimStart();
             error = false;
 
-            // All LocalDb endpoints are of the format host\instancename where host is always (LocalDb) (case-insensitive)
-            if (tokensByBackSlash.Length == 2 && LocalDbHost.Equals(tokensByBackSlash[0].TrimStart()))
+            // NetStandard 2.0 does not support passing a string to ReadOnlySpan<char>
+            if (input.StartsWith(LocalDbHost.AsSpan().Trim(), StringComparison.InvariantCultureIgnoreCase))
             {
-                if (!string.IsNullOrWhiteSpace(tokensByBackSlash[1]))
+                // When netcoreapp support for netcoreapp2.1 is dropped these slice calls could be converted to System.Range\System.Index
+                // Such ad input = input[1..];
+                input = input.Slice(LocalDbHost.Length);
+                if (!input.IsEmpty && input[0] == BackSlashCharacter)
                 {
-                    instanceName = tokensByBackSlash[1].Trim();
+                    input = input.Slice(1);
+                }
+                if (!input.IsEmpty)
+                {
+                    instanceName = input.Trim().ToString();
                 }
                 else
                 {
                     SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBNoInstanceName, Strings.SNI_ERROR_51);
                     error = true;
-                    return null;
                 }
             }
-
             return instanceName;
         }
 

@@ -310,7 +310,7 @@ namespace Microsoft.Data.SqlClient
 
         // Retry Logic
         private SqlRetryLogicBaseProvider _retryLogicProvider;
-        private static bool IsRetryEnabled => LocalAppContextSwitches.IsRetryEnabled;
+        private bool IsProviderRetriable => SqlConfigurableRetryFactory.IsRetriable(RetryLogicProvider);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetryLogicProvider/*' />
         [
@@ -1648,7 +1648,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
 
-                    if (!(IsRetryEnabled ? TryOpenWithRetry(null, overrides) : TryOpen(null, overrides)))
+                    if (!(IsProviderRetriable ? TryOpenWithRetry(null, overrides) : TryOpen(null, overrides)))
                     {
                         throw ADP.InternalError(ADP.InternalErrorCode.SynchronousConnectReturnedPending);
                     }
@@ -1882,7 +1882,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsync/*' />
         public override Task OpenAsync(CancellationToken cancellationToken)
-            => IsRetryEnabled ?
+            => IsProviderRetriable ?
                 InternalOpenWithRetryAsync(cancellationToken) :
                 InternalOpenAsync(cancellationToken);
 

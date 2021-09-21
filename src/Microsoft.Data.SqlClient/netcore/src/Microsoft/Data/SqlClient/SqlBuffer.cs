@@ -205,6 +205,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        #region Decimal
         internal decimal Decimal
         {
             get
@@ -215,6 +216,43 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (_value._numericInfo._data4 != 0 || _value._numericInfo._scale > 28)
                     {
+                        // Only removing trailing zeros from a decimal part won't hit its value!
+                        if (_value._numericInfo._scale > 0)
+                        {
+                            int zeroCnt = FindTrailingZerosAndPrec((uint)_value._numericInfo._data1, (uint)_value._numericInfo._data2, 
+                                                                   (uint)_value._numericInfo._data3, (uint)_value._numericInfo._data4, 
+                                                                   _value._numericInfo._scale, out int precision);
+
+                            int minScale = _value._numericInfo._scale - zeroCnt; // minimum possible sacle after removing the trailing zeros.
+
+                            if (zeroCnt > 0 && minScale <= 28 && precision <= 29)
+                            {
+                                SqlDecimal sqlValue = new(_value._numericInfo._precision, _value._numericInfo._scale, _value._numericInfo._positive, 
+                                                          _value._numericInfo._data1, _value._numericInfo._data2, 
+                                                          _value._numericInfo._data3, _value._numericInfo._data4);
+
+                                int integral = precision - minScale;
+                                int newPrec = 29;
+
+                                if (integral != 1 && precision != 29)
+                                {
+                                    newPrec = 28;
+                                }
+
+                                try
+                                {
+                                    // Precision could be 28 or 29
+                                    // ex: (precision == 29 && scale == 28)
+                                    // valid:   (+/-)7.1234567890123456789012345678
+                                    // invalid: (+/-)8.1234567890123456789012345678
+                                    return SqlDecimal.ConvertToPrecScale(sqlValue, newPrec, newPrec - integral).Value;
+                                }
+                                catch (OverflowException)
+                                {
+                                    throw new OverflowException(SQLResource.ConversionOverflowMessage);
+                                }
+                            }
+                        }
                         throw new OverflowException(SQLResource.ConversionOverflowMessage);
                     }
                     return new decimal(_value._numericInfo._data1, _value._numericInfo._data2, _value._numericInfo._data3, !_value._numericInfo._positive, _value._numericInfo._scale);
@@ -233,6 +271,85 @@ namespace Microsoft.Data.SqlClient
                 return (decimal)Value; // anything else we haven't thought of goes through boxing.
             }
         }
+
+        /// <summary>
+        /// Returns number of trailing zeros using the supplied parameters.
+        /// </summary>
+        /// <param name="data1">An 32-bit unsigned integer which will be combined with data2, data3, and data4</param>
+        /// <param name="data2">An 32-bit unsigned integer which will be combined with data1, data3, and data4</param>
+        /// <param name="data3">An 32-bit unsigned integer which will be combined with data1, data2, and data4</param>
+        /// <param name="data4">An 32-bit unsigned integer which will be combined with data1, data2, and data3</param>
+        /// <param name="scale">The number of decimal places</param>
+        /// <param name="valuablePrecision">OUT |The number of digits without trailing zeros</param>
+        /// <returns>Number of trailing zeros</returns>
+        private static int FindTrailingZerosAndPrec(uint data1, uint data2, uint data3, uint data4, byte scale, out int valuablePrecision)
+        {
+            // Make local copy of data to avoid modifying input.
+            Span<uint> rgulNumeric = stackalloc uint[4] { data1, data2, data3, data4 };
+            int zeroCnt = 0;    //Number of trailing zero digits
+            int precCnt = 0;    //Valuable precision
+            uint uiRem = 0;     //Remainder of a division by 10
+            int len = 4;        // Max possible items
+
+            //Retrieve each digit from the lowest significant digit
+            while (len > 1 || rgulNumeric[0] != 0)
+            {
+                SqlDecimalDivBy(rgulNumeric, ref len, 10, out uiRem);
+                if (uiRem == 0 && precCnt == 0)
+                {
+                    zeroCnt++;
+                }
+                else
+                {
+                    precCnt++;
+                }
+            }
+
+            if (uiRem == 0)
+            {
+                zeroCnt = scale;
+            }
+
+            // if scale of the number has not been reached, pad remaining number with zeros.
+            if (zeroCnt + precCnt <= scale)
+            {
+                precCnt = scale - zeroCnt + 1;
+            }
+            valuablePrecision = precCnt;
+            return zeroCnt;
+        }
+
+        /// <summary>
+        /// Multi-precision one super-digit divide in place.
+        /// U = U / D,
+        /// R = U % D
+        /// (Length of U can decrease)
+        /// </summary>
+        /// <param name="data">InOut | U</param>
+        /// <param name="len">InOut | Number of items with non-zero value in U between 1 to 4</param>
+        /// <param name="divisor">In     | D</param>
+        /// <param name="remainder">Out    | R</param>
+        private static void SqlDecimalDivBy(Span<uint> data, ref int len, uint divisor, out uint remainder)
+        {
+            uint uiCarry = 0;
+            ulong ulAccum;
+            ulong ulDivisor = (ulong)divisor;
+            int iLen = len;
+
+            while (iLen > 0)
+            {
+                iLen--;
+                ulAccum = (((ulong)uiCarry) << 32) + (ulong)(data[iLen]);
+                data[iLen] = (uint)(ulAccum / ulDivisor);
+                uiCarry = (uint)(ulAccum - (ulong)data[iLen] * ulDivisor);  // (ULONG) (ulAccum % divisor)
+            }
+            remainder = uiCarry;
+
+            // Normalize multi-precision number - remove leading zeroes
+            while (len > 1 && data[len - 1] == 0)
+            { len--; }
+        }
+        #endregion
 
         internal double Double
         {
