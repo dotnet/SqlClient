@@ -53,6 +53,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Breaking Changes
 - Modified column encryption key store provider registrations to give built-in system providers precedence over providers registered on connection and command instances. [#1101](https://github.com/dotnet/SqlClient/pull/1101)
 
+## [Stable Release 2.1.4] - 2021-09-20
+
+### Fixed
+
+- Fixed issue with connection encryption to ensure connections fail when encryption is required. [#1232](https://github.com/dotnet/SqlClient/pull/1232)
+- Fixed issue where connection goes to unusable state. [#1239](https://github.com/dotnet/SqlClient/pull/1239)
 
 ## [Stable Release 2.1.3] - 2021-05-21
 
