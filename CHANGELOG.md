@@ -27,7 +27,7 @@ This update brings the below changes over the previous release:
 
 ### Changed
 
-- Various code improvements [#1251](https://github.com/dotnet/SqlClient/pull/1251) [#1155](https://github.com/dotnet/SqlClient/pull/1155) [#1236](https://github.com/dotnet/SqlClient/pull/1236) [#1266](https://github.com/dotnet/SqlClient/pull/1266)
+- Various code improvements [#1155](https://github.com/dotnet/SqlClient/pull/1155) [#1236](https://github.com/dotnet/SqlClient/pull/1236) [#1251](https://github.com/dotnet/SqlClient/pull/1251) [#1266](https://github.com/dotnet/SqlClient/pull/1266)
 
 ## [Preview Release 4.0.0-preview1.21237.2] - 2021-08-25
 
