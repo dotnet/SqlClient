@@ -11,13 +11,13 @@ namespace Microsoft.Data.SqlClient
     // https://github.com/dotnet/extensions/blob/release/3.1/src/ObjectPool/src/DefaultObjectPool.cs
     internal sealed class Pool<T> where T : class
     {
-        private readonly Wrapper[] _items;
+        private readonly ObjectWrapper[] _items;
         private T _firstItem;
 
         public Pool(int maximumRetained)
         {
             // -1 due to _firstItem
-            _items = new Wrapper[maximumRetained - 1];
+            _items = new ObjectWrapper[maximumRetained - 1];
         }
 
         public bool TryGet(out T item)
@@ -59,7 +59,7 @@ namespace Microsoft.Data.SqlClient
 
         // PERF: the struct wrapper avoids array-covariance-checks from the runtime when assigning to elements of the array.
         [DebuggerDisplay("{Element}")]
-        private struct Wrapper
+        private struct ObjectWrapper
         {
             public T Element;
         }
