@@ -89,6 +89,9 @@
   </ItemGroup>
   <!-- Contains common items shared between NetFx and NetCore -->
   <ItemGroup>
+    <Compile Include="..\..\src\Microsoft\Data\ProviderBase\TimeoutTimer.cs">
+      <Link>Microsoft\Data\ProviderBase\TimeoutTimer.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\LocalAppContextSwitches.cs">
       <Link>Microsoft\Data\SqlClient\LocalAppContextSwitches.cs</Link>
     </Compile>
@@ -430,7 +433,7 @@
     <Compile Include="Microsoft\Data\SqlClient\Server\SqlDataRecord.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\TriggerAction.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlFileStream.cs" />
-    <Compile Include="Microsoft\Data\SqlTypes\UnsafeNativeMethods.cs" /> 
+    <Compile Include="Microsoft\Data\SqlTypes\UnsafeNativeMethods.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBuffer.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />
@@ -527,7 +530,6 @@
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbMetaDataFactory.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbReferenceCollection.cs" />
-    <Compile Include="Microsoft\Data\ProviderBase\TimeoutTimer.cs" />
     <Compile Include="Microsoft\Data\RelationshipConverter.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\MetadataUtilsSmi.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiConnection.cs" />

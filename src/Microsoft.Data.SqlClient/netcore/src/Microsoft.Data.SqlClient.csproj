@@ -444,7 +444,7 @@
     <Compile Include="$(CommonPath)\Microsoft\Data\ProviderBase\DbConnectionPoolGroup.cs">
       <Link>Common\Microsoft\Data\ProviderBase\DbConnectionPoolGroup.cs</Link>
     </Compile>
-    <Compile Include="$(CommonPath)\Microsoft\Data\ProviderBase\TimeoutTimer.cs">
+    <Compile Include="..\..\src\Microsoft\Data\ProviderBase\TimeoutTimer.cs">
       <Link>Common\Microsoft\Data\ProviderBase\TimeoutTimer.cs</Link>
     </Compile>
     <Compile Include="$(CommonPath)\Microsoft\Data\ProviderBase\DbReferenceCollection.cs">
