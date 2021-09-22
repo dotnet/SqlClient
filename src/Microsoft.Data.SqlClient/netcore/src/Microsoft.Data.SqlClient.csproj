@@ -531,7 +531,7 @@
     <Compile Include="Microsoft\Data\SqlClient\TdsParserSessionPool.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObject.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStaticMethods.cs" />
-    <Compile Include="$(CommonPath)\Microsoft\Data\Common\SQLResource.cs">
+    <Compile Include="..\..\src\Microsoft\Data\SqlTypes\SQLResource.cs">
       <Link>Microsoft\Data\SQLTypes\SQLResource.cs</Link>
     </Compile>
     <Compile Include="$(CommonPath)\System\NotImplemented.cs" />

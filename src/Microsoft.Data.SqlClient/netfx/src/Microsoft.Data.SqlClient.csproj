@@ -110,6 +110,9 @@
     <Compile Include="..\..\src\Microsoft\Data\Common\NameValuePair.cs">
       <Link>Microsoft\Data\Common\NameValuePair.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlTypes\SQLResource.cs">
+      <Link>Microsoft\Data\SqlTypes\SQLResource.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\Sql\SqlNotificationRequest.cs">
       <Link>Microsoft\Data\Sql\SqlNotificationRequest.cs</Link>
     </Compile>
@@ -430,7 +433,7 @@
     <Compile Include="Microsoft\Data\SqlClient\Server\SqlDataRecord.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\TriggerAction.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlFileStream.cs" />
-    <Compile Include="Microsoft\Data\SqlTypes\UnsafeNativeMethods.cs" /> 
+    <Compile Include="Microsoft\Data\SqlTypes\UnsafeNativeMethods.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBuffer.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />
@@ -507,7 +510,6 @@
     <Compile Include="Microsoft\Data\SqlTypes\SqlStreamChars.cs" />
     <Compile Include="Microsoft\Data\Common\NativeMethods.cs" />
     <Compile Include="Microsoft\Data\Common\GreenMethods.cs" />
-    <Compile Include="Microsoft\Data\Common\SQLResource.cs" />
     <Compile Include="Misc\ExternDll.cs" />
     <Compile Include="Common\src\Microsoft\Data\Common\NameValuePermission.cs" />
     <Compile Include="Microsoft\Data\Common\AdapterSwitches.cs" />
