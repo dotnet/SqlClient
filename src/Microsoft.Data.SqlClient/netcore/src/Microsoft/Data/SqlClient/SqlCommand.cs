@@ -506,7 +506,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private static bool IsRetryEnabled => LocalAppContextSwitches.IsRetryEnabled;
+        private bool IsProviderRetriable => SqlConfigurableRetryFactory.IsRetriable(RetryLogicProvider);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RetryLogicProvider/*' />
         [Browsable(false)]
@@ -1101,7 +1101,7 @@ namespace Microsoft.Data.SqlClient
                     statistics = SqlStatistics.StartTimer(Statistics);
                     WriteBeginExecuteEvent();
                     SqlDataReader ds;
-                    ds = IsRetryEnabled ?
+                    ds = IsProviderRetriable ?
                         RunExecuteReaderWithRetry(0, RunBehavior.ReturnImmediately, returnStream: true) :
                         RunExecuteReader(0, RunBehavior.ReturnImmediately, returnStream: true, method: nameof(ExecuteScalar));
                     success = true;
@@ -1192,7 +1192,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
                     WriteBeginExecuteEvent();
-                    if (IsRetryEnabled)
+                    if (IsProviderRetriable)
                     {
                         InternalExecuteNonQueryWithRetry(sendToPipe: false, timeout: CommandTimeout, out _, asyncWrite: false, inRetry: false);
                     }
@@ -1470,19 +1470,13 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 ThrowIfReconnectionHasBeenCanceled();
-                // lock on _stateObj prevents races with close/cancel.
-                // If we have already initiate the End call internally, we have already done that, so no point doing it again.
-                if (!_internalEndExecuteInitiated)
+                if (!_internalEndExecuteInitiated && _stateObj != null)
                 {
-                    lock (_stateObj)
-                    {
-                        return EndExecuteNonQueryInternal(asyncResult);
-                    }
+                    // call SetCancelStateClosed on the stateobject to ensure that cancel cannot 
+                    // happen after we have changed started the end processing
+                    _stateObj.SetCancelStateClosed();
                 }
-                else
-                {
-                    return EndExecuteNonQueryInternal(asyncResult);
-                }
+                return EndExecuteNonQueryInternal(asyncResult);
             }
         }
 
@@ -1706,7 +1700,7 @@ namespace Microsoft.Data.SqlClient
                     WriteBeginExecuteEvent();
                     // use the reader to consume metadata
                     SqlDataReader ds;
-                    ds = IsRetryEnabled ?
+                    ds = IsProviderRetriable ?
                         RunExecuteReaderWithRetry(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, returnStream: true) :
                         RunExecuteReader(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, returnStream: true);
                     success = true;
@@ -1904,19 +1898,15 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 ThrowIfReconnectionHasBeenCanceled();
-                // lock on _stateObj prevents races with close/cancel.
-                // If we have already initiate the End call internally, we have already done that, so no point doing it again.
-                if (!_internalEndExecuteInitiated)
+
+                if (!_internalEndExecuteInitiated && _stateObj != null)
                 {
-                    lock (_stateObj)
-                    {
-                        return EndExecuteXmlReaderInternal(asyncResult);
-                    }
+                    // call SetCancelStateClosed on the stateobject to ensure that cancel cannot 
+                    // happen after we have changed started the end processing
+                    _stateObj.SetCancelStateClosed();
                 }
-                else
-                {
-                    return EndExecuteXmlReaderInternal(asyncResult);
-                }
+
+                return EndExecuteXmlReaderInternal(asyncResult);
             }
         }
 
@@ -2043,7 +2033,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     WriteBeginExecuteEvent();
                     statistics = SqlStatistics.StartTimer(Statistics);
-                    return IsRetryEnabled ?
+                    return IsProviderRetriable ?
                         RunExecuteReaderWithRetry(behavior, RunBehavior.ReturnImmediately, returnStream: true) :
                         RunExecuteReader(behavior, RunBehavior.ReturnImmediately, returnStream: true);
                 }
@@ -2102,18 +2092,15 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 ThrowIfReconnectionHasBeenCanceled();
-                // lock on _stateObj prevents races with close/cancel.
-                if (!_internalEndExecuteInitiated)
+                
+                if (!_internalEndExecuteInitiated && _stateObj != null)
                 {
-                    lock (_stateObj)
-                    {
-                        return EndExecuteReaderInternal(asyncResult);
-                    }
+                    // call SetCancelStateClosed on the stateobject to ensure that cancel cannot happen after
+                    // we have changed started the end processing
+                    _stateObj.SetCancelStateClosed();
                 }
-                else
-                {
-                    return EndExecuteReaderInternal(asyncResult);
-                }
+
+                return EndExecuteReaderInternal(asyncResult);                
             }
         }
 
@@ -2548,7 +2535,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteNonQueryAsync[@name="CancellationToken"]/*'/>
         public override Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
-            => IsRetryEnabled ?
+            => IsProviderRetriable ?
                 InternalExecuteNonQueryWithRetryAsync(cancellationToken) :
                 InternalExecuteNonQueryAsync(cancellationToken);
 
@@ -2648,7 +2635,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="commandBehaviorAndCancellationToken"]/*'/>
         new public Task<SqlDataReader> ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
-            => IsRetryEnabled ?
+            => IsProviderRetriable ?
                 InternalExecuteReaderWithRetryAsync(behavior, cancellationToken) :
                 InternalExecuteReaderAsync(behavior, cancellationToken);
 
@@ -2821,7 +2808,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReaderAsync[@name="CancellationToken"]/*'/>
         public Task<XmlReader> ExecuteXmlReaderAsync(CancellationToken cancellationToken)
-            => IsRetryEnabled ?
+            => IsProviderRetriable ?
                 InternalExecuteXmlReaderWithRetryAsync(cancellationToken) :
                 InternalExecuteXmlReaderAsync(cancellationToken);
 
@@ -6594,7 +6581,7 @@ namespace Microsoft.Data.SqlClient
 
         private void WriteBeginExecuteEvent()
         {
-            SqlClientEventSource.Log.TryBeginExecuteEvent(ObjectID, Connection?.ClientConnectionId, CommandText);
+            SqlClientEventSource.Log.TryBeginExecuteEvent(ObjectID, Connection?.DataSource, Connection?.Database, CommandText, Connection?.ClientConnectionId);
         }
 
         private void WriteEndExecuteEvent(bool success, int? sqlExceptionNumber, bool synchronous)
@@ -6615,7 +6602,7 @@ namespace Microsoft.Data.SqlClient
 
                 int compositeState = successFlag | isSqlExceptionFlag | synchronousFlag;
 
-                SqlClientEventSource.Log.TryEndExecuteEvent(ObjectID, Connection?.ClientConnectionId, compositeState, sqlExceptionNumber.GetValueOrDefault());
+                SqlClientEventSource.Log.TryEndExecuteEvent(ObjectID, compositeState, sqlExceptionNumber.GetValueOrDefault(), Connection?.ClientConnectionId);
             }
         }
     }
