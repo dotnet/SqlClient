@@ -15,11 +15,11 @@ namespace Microsoft.Data.SqlClient.SNI
 #if DEBUG
         private static int s_packetId;
 #endif
-        private Pool<SNIPacket> _pool;
+        private SqlObjectPool<SNIPacket> _pool;
 
         protected SNIPhysicalHandle(int poolSize = DefaultPoolSize)
         {
-            _pool = new Pool<SNIPacket>(poolSize);
+            _pool = new SqlObjectPool<SNIPacket>(poolSize);
         }
 
         public override SNIPacket RentPacket(int headerSize, int dataSize)

@@ -9,12 +9,12 @@ namespace Microsoft.Data.SqlClient
 {
     // this is a very simple threadsafe pool derived from the aspnet/extensions default pool implementation
     // https://github.com/dotnet/extensions/blob/release/3.1/src/ObjectPool/src/DefaultObjectPool.cs
-    internal sealed class Pool<T> where T : class
+    internal sealed class SqlObjectPool<T> where T : class
     {
         private readonly ObjectWrapper[] _items;
         private T _firstItem;
 
-        public Pool(int maximumRetained)
+        public SqlObjectPool(int maximumRetained)
         {
             // -1 due to _firstItem
             _items = new ObjectWrapper[maximumRetained - 1];
