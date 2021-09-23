@@ -267,6 +267,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlBulkCopyColumnOrderHintCollection.cs">
       <Link>Microsoft\Data\SqlClient\SqlBulkCopyColumnOrderHintCollection.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlCachedBuffer.cs">
+      <Link>Microsoft\Data\SqlClient\SqlCachedBuffer.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientEncryptionAlgorithm.cs">
       <Link>Microsoft\Data\SqlClient\SqlClientEncryptionAlgorithm.cs</Link>
     </Compile>
@@ -430,12 +433,11 @@
     <Compile Include="Microsoft\Data\SqlClient\Server\SqlDataRecord.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\TriggerAction.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlFileStream.cs" />
-    <Compile Include="Microsoft\Data\SqlTypes\UnsafeNativeMethods.cs" /> 
+    <Compile Include="Microsoft\Data\SqlTypes\UnsafeNativeMethods.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBuffer.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopyColumnMappingCollection.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlCachedBuffer.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlCertificateCallbacks.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientFactory.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientMetaDataCollectionNames.cs" />
