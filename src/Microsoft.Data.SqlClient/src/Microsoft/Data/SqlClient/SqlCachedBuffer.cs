@@ -127,13 +127,6 @@ namespace Microsoft.Data.SqlClient
             return sx;
         }
 
-        // Prevent inlining so that reflection calls are not moved to caller that may be in a different assembly that may have a different grant set.
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal XmlReader ToXmlReader()
-        {
-            return SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(ToStream(), closeInput: false);
-        }
-
         public bool IsNull
         {
             get => _cachedBytes == null;
