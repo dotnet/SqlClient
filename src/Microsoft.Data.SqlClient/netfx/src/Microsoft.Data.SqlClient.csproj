@@ -516,7 +516,6 @@
     <Compile Include="Microsoft\Data\Common\AdapterSwitches.cs" />
     <Compile Include="Microsoft\Data\Common\AdapterUtil.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
-    <Compile Include="Microsoft\Data\Common\DbConnectionOptionKeywords.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionString.cs" />
     <Compile Include="Microsoft\Data\Common\UnsafeNativeMethods.cs" />
     <Compile Include="Microsoft\Data\Common\SafeNativeMethods.cs" />

@@ -979,26 +979,11 @@ namespace Microsoft.Data.Common
         internal const int ConnectTimeout = 15;
 
 #if NETFRAMEWORK
-        // Odbc
-        internal const string Driver = _emptyString;
-        internal const string Dsn = _emptyString;
-
-        // OleDb
-        internal const bool AdoNetPooler = false;
-        internal const string FileName = _emptyString;
-        internal const int OleDbServices = ~(/*DBPROPVAL_OS_AGR_AFTERSESSION*/0x00000008 | /*DBPROPVAL_OS_CLIENTCURSOR*/0x00000004); // -13
-        internal const string Provider = _emptyString;
-
-        // OracleClient
-        internal const bool Unicode = false;
-        internal const bool OmitOracleConnectionName = false;
-
         // SqlClient
         internal const bool ConnectionReset = true;
         internal const bool ContextConnection = false;
         internal static readonly bool TransparentNetworkIPResolution = LocalAppContextSwitches.DisableTNIRByDefault ? false : true;
         internal const string NetworkLibrary = _emptyString;
-        internal const string Certificate = _emptyString;
 #endif
         internal const string CurrentLanguage = _emptyString;
         internal const string DataSource = _emptyString;
