@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void EventCounter_HardConnectionsCounters_Functional()
         {
             //create a non-pooled connection
-            var stringBuilder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) {Pooling = false};
+            var stringBuilder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { Pooling = false };
 
             var ahc = SqlClientEventSourceProps.ActiveHardConnections;
             var npc = SqlClientEventSourceProps.NonPooledConnections;
@@ -56,7 +56,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void EventCounter_SoftConnectionsCounters_Functional()
         {
             //create a pooled connection
-            var stringBuilder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) {Pooling = true};
+            var stringBuilder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { Pooling = true };
 
             var ahc = SqlClientEventSourceProps.ActiveHardConnections;
             var asc = SqlClientEventSourceProps.ActiveSoftConnections;
@@ -125,10 +125,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void EventCounter_StasisCounters_Functional()
         {
-            var stringBuilder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) {Pooling = false};
+            var stringBuilder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { Pooling = false, Enlist = false };
 
             using (var conn = new SqlConnection(stringBuilder.ToString()))
             using (new TransactionScope())
@@ -150,14 +150,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void EventCounter_ReclaimedConnectionsCounter_Functional()
         {
             SqlConnection.ClearAllPools();
-            var stringBuilder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { Pooling = true, MaxPoolSize = 1};
+            var stringBuilder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { Pooling = true, MaxPoolSize = 1 };
 
             long rc = SqlClientEventSourceProps.ReclaimedConnections;
-            
+
             InternalConnectionWrapper internalConnection = CreateEmancipatedConnection(stringBuilder.ToString());
 
             GC.Collect();
-            GC.WaitForPendingFinalizers();       
+            GC.WaitForPendingFinalizers();
 
             using (SqlConnection conn = new SqlConnection(stringBuilder.ToString()))
             {
@@ -173,16 +173,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             SqlConnection.ClearAllPools();
 
-            var stringBuilder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { Pooling = true};
+            var stringBuilder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { Pooling = true };
 
             long acpg = SqlClientEventSourceProps.ActiveConnectionPoolGroups;
-            long iacpg = SqlClientEventSourceProps.InactiveConnectionPoolGroups;         
+            long iacpg = SqlClientEventSourceProps.InactiveConnectionPoolGroups;
 
-            using (SqlConnection conn = new SqlConnection(stringBuilder.ToString())) {
+            using (SqlConnection conn = new SqlConnection(stringBuilder.ToString()))
+            {
                 conn.Open();
 
                 // when calling open, we have 1 more active connection pool group
-                Assert.Equal(acpg + 1, SqlClientEventSourceProps.ActiveConnectionPoolGroups);       
+                Assert.Equal(acpg + 1, SqlClientEventSourceProps.ActiveConnectionPoolGroups);
 
                 conn.Close();
             }
@@ -196,17 +197,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             PruneConnectionPoolGroups();
             Assert.Equal(acpg, SqlClientEventSourceProps.ActiveConnectionPoolGroups);
             Assert.Equal(iacpg + 1, SqlClientEventSourceProps.InactiveConnectionPoolGroups);
-                        
+
             // Remove poolGroup from poolGroupsToRelease list
-             PruneConnectionPoolGroups();
-             Assert.Equal(iacpg, SqlClientEventSourceProps.ActiveConnectionPoolGroups);
+            PruneConnectionPoolGroups();
+            Assert.Equal(iacpg, SqlClientEventSourceProps.ActiveConnectionPoolGroups);
         }
 
         private static InternalConnectionWrapper CreateEmancipatedConnection(string connectionString)
         {
-           SqlConnection connection = new SqlConnection(connectionString);
-           connection.Open();
-           return new InternalConnectionWrapper(connection);
+            SqlConnection connection = new SqlConnection(connectionString);
+            connection.Open();
+            return new InternalConnectionWrapper(connection);
         }
 
         private void ClearConnectionPools()
@@ -241,7 +242,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 connectionFactoryField.FieldType.GetMethod("PruneConnectionPoolGroups",
                     BindingFlags.NonPublic | BindingFlags.Instance);
             Debug.Assert(pruneConnectionPoolGroupsMethod != null);
-            pruneConnectionPoolGroupsMethod.Invoke(connectionFactoryField.GetValue(null), new[] {(object)null});
+            pruneConnectionPoolGroupsMethod.Invoke(connectionFactoryField.GetValue(null), new[] { (object)null });
         }
 
         private static FieldInfo GetConnectionFactoryField()
