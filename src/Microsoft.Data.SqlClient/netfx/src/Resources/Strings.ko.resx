@@ -2563,7 +2563,7 @@
     <value>Active Directory의 {0} 사용자를 인증하지 못했습니다(Authentication={1}).</value>
   </data>
   <data name="SQL_MSALInnerException" xml:space="preserve">
-    <value>오류 코드 0x{0}, 상태 {1}</value>
+    <value>오류 코드 0x{0}</value>
   </data>
   <data name="SQL_ChangePasswordRequiresYukon" xml:space="preserve">
     <value>ChangePassword를 사용하려면 SQL Server 9.0 이상이 필요합니다.</value>
