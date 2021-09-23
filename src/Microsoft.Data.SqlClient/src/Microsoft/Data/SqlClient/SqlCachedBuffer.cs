@@ -15,10 +15,10 @@ namespace Microsoft.Data.SqlClient
     // Caches the bytes returned from partial length prefixed datatypes, like XML
     sealed internal class SqlCachedBuffer : System.Data.SqlTypes.INullable
     {
-        public static readonly SqlCachedBuffer Null = new SqlCachedBuffer();
-        private const int _maxChunkSize = 2048; // Arbitrary value for chunk size. Revisit this later for better perf
+        public static readonly SqlCachedBuffer Null = new();
+        private const int MaxChunkSize = 2048; // Arbitrary value for chunk size. Revisit this later for better perf
 
-        private List<byte[]> _cachedBytes;
+        private readonly List<byte[]> _cachedBytes;
 
         private SqlCachedBuffer()
         {
@@ -38,15 +38,13 @@ namespace Microsoft.Data.SqlClient
         // Reads off from the network buffer and caches bytes. Only reads one column value in the current row.
         internal static bool TryCreate(SqlMetaDataPriv metadata, TdsParser parser, TdsParserStateObject stateObj, out SqlCachedBuffer buffer)
         {
-            int cb = 0;
-            ulong plplength;
             byte[] byteArr;
 
-            List<byte[]> cachedBytes = new List<byte[]>();
+            List<byte[]> cachedBytes = new();
             buffer = null;
 
             // the very first length is already read.
-            if (!parser.TryPlpBytesLeft(stateObj, out plplength))
+            if (!parser.TryPlpBytesLeft(stateObj, out ulong plplength))
             {
                 return false;
             }
@@ -58,7 +56,7 @@ namespace Microsoft.Data.SqlClient
                     break;
                 do
                 {
-                    cb = (plplength > (ulong)_maxChunkSize) ? _maxChunkSize : (int)plplength;
+                    int cb = (plplength > (ulong)MaxChunkSize) ? MaxChunkSize : (int)plplength;
                     byteArr = new byte[cb];
                     if (!stateObj.TryReadPlpBytes(ref byteArr, 0, cb, out cb))
                     {
@@ -111,7 +109,7 @@ namespace Microsoft.Data.SqlClient
             {
                 return string.Empty;
             }
-            SqlXml sxml = new SqlXml(ToStream());
+            SqlXml sxml = new(ToStream());
             return sxml.Value;
         }
 
@@ -125,7 +123,7 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlXml ToSqlXml()
         {
-            SqlXml sx = new SqlXml(ToStream());
+            SqlXml sx = new(ToStream());
             return sx;
         }
 
@@ -140,7 +138,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                return (_cachedBytes == null) ? true : false;
+                return (_cachedBytes == null);
             }
         }
 
