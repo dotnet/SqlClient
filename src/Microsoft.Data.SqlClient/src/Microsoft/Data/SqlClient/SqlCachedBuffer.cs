@@ -32,7 +32,7 @@ namespace Microsoft.Data.SqlClient
 
         internal List<byte[]> CachedBytes
         {
-            get { return _cachedBytes; }
+            get => _cachedBytes;
         }
 
         // Reads off from the network buffer and caches bytes. Only reads one column value in the current row.
@@ -136,10 +136,7 @@ namespace Microsoft.Data.SqlClient
 
         public bool IsNull
         {
-            get
-            {
-                return (_cachedBytes == null);
-            }
+            get => _cachedBytes == null;
         }
 
 
