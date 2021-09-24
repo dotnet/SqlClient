@@ -1932,4 +1932,7 @@
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>Parameter '{0}' cannot have Direction Output or InputOutput when EnableOptimizedParameterBinding is enabled on the parent command.</value>
   </data>
+  <data name="SqlCommandBuilder_DataAdapter" xml:space="preserve">
+    <value>The DataAdapter for which to automatically generate SqlCommands.</value>
+  </data>
 </root>

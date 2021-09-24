@@ -3526,6 +3526,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The DataAdapter for which to automatically generate SqlCommands..
+        /// </summary>
+        internal static string SqlCommandBuilder_DataAdapter {
+            get {
+                return ResourceManager.GetString("SqlCommandBuilder_DataAdapter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot convert object of type &apos;{0}&apos; to object of type &apos;{1}&apos;..
         /// </summary>
         internal static string SqlConvert_ConvertFailed {
