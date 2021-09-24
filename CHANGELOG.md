@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Stable Release 3.0.1] - 2021-09-24
+
+### Fixed
+
+- Fixed async thread blocking issues on `SqlConnection.Open()` for active directory authentication modes. [#1270](https://github.com/dotnet/SqlClient/pull/1270)
+- Fixed unknown transaction state issues when prompting delegated transaction. [1247](https://github.com/dotnet/SqlClient/pull/1247)
+- Fixed issue with connection encryption to ensure connections fail when encryption is required. [#1233](https://github.com/dotnet/SqlClient/pull/1233)
+- Fixed bug with `LegacyRowVersionNullBehavior` App Context switch. [#1246](https://github.com/dotnet/SqlClient/pull/1246)
+- Fixed recursive calls to `RetryLogicProvider` when calling `SqlCommand.ExecuteScalarAsync`. [#1245](https://github.com/dotnet/SqlClient/pull/1245)
+- Fixed async deadlock scenarios in web contexts with configurable retry logic provider. [#1245](https://github.com/dotnet/SqlClient/pull/1245)
+- Fixed deadlock in transaction using .NET Framework. [#1243](https://github.com/dotnet/SqlClient/pull/1243)
+- Fixed issue where connection goes to unusable state. [#1238](https://github.com/dotnet/SqlClient/pull/1238)
+
 ## [Stable Release 3.0.0] - 2021-06-09
 
 ### Added
