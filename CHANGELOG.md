@@ -74,6 +74,7 @@ This update brings the below changes over the previous release:
 - Fixed issue with connection encryption to ensure connections fail when encryption is required. [#1233](https://github.com/dotnet/SqlClient/pull/1233)
 - Fixed bug with `LegacyRowVersionNullBehavior` App Context switch. [#1246](https://github.com/dotnet/SqlClient/pull/1246)
 - Fixed recursive calls to `RetryLogicProvider` when calling `SqlCommand.ExecuteScalarAsync`. [#1245](https://github.com/dotnet/SqlClient/pull/1245)
+- Fixed async deadlock scenarios in web contexts with configurable retry logic provider. [#1245](https://github.com/dotnet/SqlClient/pull/1245)
 - Fixed deadlock in transaction using .NET Framework. [#1243](https://github.com/dotnet/SqlClient/pull/1243)
 - Fixed issue where connection goes to unusable state. [#1238](https://github.com/dotnet/SqlClient/pull/1238)
 
