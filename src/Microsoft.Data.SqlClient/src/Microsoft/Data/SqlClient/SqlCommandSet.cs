@@ -16,31 +16,31 @@ namespace Microsoft.Data.SqlClient
     internal sealed class SqlCommandSet
     {
         private const string SqlIdentifierPattern = "^@[\\p{Lo}\\p{Lu}\\p{Ll}\\p{Lm}_@#][\\p{Lo}\\p{Lu}\\p{Ll}\\p{Lm}\\p{Nd}\uff3f_@#\\$]*$";
-        private static readonly Regex s_sqlIdentifierParser = new Regex(SqlIdentifierPattern, RegexOptions.ExplicitCapture | RegexOptions.Singleline);
+        private static readonly Regex s_sqlIdentifierParser = new(SqlIdentifierPattern, RegexOptions.ExplicitCapture | RegexOptions.Singleline);
 
-        private List<LocalCommand> _commandList = new List<LocalCommand>();
+        private List<LocalCommand> _commandList = new();
 
         private SqlCommand _batchCommand;
 
-        private static int _objectTypeCount; // EventSource Counter
-        internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
+        private static int s_objectTypeCount; // EventSource Counter
+        internal readonly int _objectID = System.Threading.Interlocked.Increment(ref s_objectTypeCount);
 
         private sealed class LocalCommand
         {
-            internal readonly string CommandText;
-            internal readonly SqlParameterCollection Parameters;
-            internal readonly int ReturnParameterIndex;
-            internal readonly CommandType CmdType;
-            internal readonly SqlCommandColumnEncryptionSetting ColumnEncryptionSetting;
+            internal readonly string _commandText;
+            internal readonly SqlParameterCollection _parameters;
+            internal readonly int _returnParameterIndex;
+            internal readonly CommandType _cmdType;
+            internal readonly SqlCommandColumnEncryptionSetting _columnEncryptionSetting;
 
             internal LocalCommand(string commandText, SqlParameterCollection parameters, int returnParameterIndex, CommandType cmdType, SqlCommandColumnEncryptionSetting columnEncryptionSetting)
             {
                 Debug.Assert(0 <= commandText.Length, "no text");
-                CommandText = commandText;
-                Parameters = parameters;
-                ReturnParameterIndex = returnParameterIndex;
-                CmdType = cmdType;
-                ColumnEncryptionSetting = columnEncryptionSetting;
+                _commandText = commandText;
+                _parameters = parameters;
+                _returnParameterIndex = returnParameterIndex;
+                _cmdType = cmdType;
+                _columnEncryptionSetting = columnEncryptionSetting;
             }
         }
 
@@ -145,7 +145,7 @@ namespace Microsoft.Data.SqlClient
                 // clone parameters so they aren't destroyed
                 for (int i = 0; i < collection.Count; ++i)
                 {
-                    SqlParameter p = new SqlParameter();
+                    SqlParameter p = new();
                     collection[i].CopyTo(p);
                     parameters.Add(p);
 
@@ -216,7 +216,7 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
             }
-            LocalCommand cmd = new LocalCommand(cmdText, parameters, returnParameterIndex, command.CommandType, command.ColumnEncryptionSetting);
+            LocalCommand cmd = new(cmdText, parameters, returnParameterIndex, command.CommandType, command.ColumnEncryptionSetting);
             CommandList.Add(cmd);
         }
 
@@ -297,7 +297,7 @@ namespace Microsoft.Data.SqlClient
                 for (int ii = 0; ii < _commandList.Count; ii++)
                 {
                     LocalCommand cmd = _commandList[ii];
-                    BatchCommand.AddBatchCommand(cmd.CommandText, cmd.Parameters, cmd.CmdType, cmd.ColumnEncryptionSetting);
+                    BatchCommand.AddBatchCommand(cmd._commandText, cmd._parameters, cmd._cmdType, cmd._columnEncryptionSetting);
                 }
 
                 return BatchCommand.ExecuteBatchRPCCommand();
@@ -305,7 +305,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         internal SqlParameter GetParameter(int commandIndex, int parameterIndex)
-            => CommandList[commandIndex].Parameters[parameterIndex];
+            => CommandList[commandIndex]._parameters[parameterIndex];
 
         internal bool GetBatchedAffected(int commandIdentifier, out int recordsAffected, out Exception error)
         {
@@ -316,7 +316,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         internal int GetParameterCount(int commandIndex)
-            => CommandList[commandIndex].Parameters.Count;
+            => CommandList[commandIndex]._parameters.Count;
 
         private void ValidateCommandBehavior(string method, CommandBehavior behavior)
         {
