@@ -3,9 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-#if NETFX
 using System.ComponentModel;
-#endif
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
@@ -18,9 +16,7 @@ using Microsoft.Data.Sql;
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/SqlCommandBuilder/*'/>
-#if NETFX
     [DesignerCategory("")]
-#endif
     public sealed class SqlCommandBuilder : DbCommandBuilder
     {
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/ctor1/*'/>
@@ -39,13 +35,11 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/CatalogLocation/*'/>
         /// <devnote>SqlServer only supports CatalogLocation.Start</devnote>
-#if NETFX
         [
         Browsable(false),
         EditorBrowsableAttribute(EditorBrowsableState.Never),
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
         ]
-#endif
         public override CatalogLocation CatalogLocation
         {
             get
@@ -63,13 +57,11 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/CatalogSeparator/*'/>
         /// <devnote>SqlServer only supports '.'</devnote>
-#if NETFX
         [
         Browsable(false),
         EditorBrowsableAttribute(EditorBrowsableState.Never),
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
         ]
-#endif
         public override string CatalogSeparator
         {
             get
@@ -86,13 +78,11 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/DataAdapter/*'/>
-#if NETFX
         [
         DefaultValue(null),
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update),
-        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlCommandBuilder_DataAdapter), // MDAC 60524
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlCommandBuilder_DataAdapter),
         ]
-#endif
         new public SqlDataAdapter DataAdapter
         {
             get
@@ -107,13 +97,11 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/QuotePrefix/*'/>
         /// <devnote>SqlServer only supports '.'</devnote>
-#if NETFX
         [
         Browsable(false),
         EditorBrowsableAttribute(EditorBrowsableState.Never),
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
         ]
-#endif
         public override string QuotePrefix
         {
             get
@@ -131,13 +119,11 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/QuoteSuffix/*'/>
-#if NETFX
         [
         Browsable(false),
         EditorBrowsableAttribute(EditorBrowsableState.Never),
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
         ]
-#endif
         public override string QuoteSuffix
         {
             get
@@ -155,13 +141,11 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/SchemaSeparator/*'/>
-#if NETFX
         [
         Browsable(false),
         EditorBrowsableAttribute(EditorBrowsableState.Never),
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
         ]
-#endif
         public override string SchemaSeparator
         {
             get
@@ -272,7 +256,7 @@ namespace Microsoft.Data.SqlClient
             }
 #if NETFX
             TdsParser bestEffortCleanupTarget = null;
-#endif // NETFX
+#endif
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
