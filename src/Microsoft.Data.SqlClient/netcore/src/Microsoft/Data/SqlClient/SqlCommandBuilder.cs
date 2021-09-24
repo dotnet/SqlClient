@@ -3,6 +3,9 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+#if NETFX
+using System.ComponentModel;
+#endif
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
@@ -15,6 +18,9 @@ using Microsoft.Data.Sql;
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/SqlCommandBuilder/*'/>
+#if NETFX
+    [DesignerCategory("")]
+#endif
     public sealed class SqlCommandBuilder : DbCommandBuilder
     {
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/ctor1/*'/>
@@ -33,6 +39,13 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/CatalogLocation/*'/>
         /// <devnote>SqlServer only supports CatalogLocation.Start</devnote>
+#if NETFX
+        [
+        Browsable(false),
+        EditorBrowsableAttribute(EditorBrowsableState.Never),
+        DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
+        ]
+#endif
         public override CatalogLocation CatalogLocation
         {
             get
@@ -50,6 +63,13 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/CatalogSeparator/*'/>
         /// <devnote>SqlServer only supports '.'</devnote>
+#if NETFX
+        [
+        Browsable(false),
+        EditorBrowsableAttribute(EditorBrowsableState.Never),
+        DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
+        ]
+#endif
         public override string CatalogSeparator
         {
             get
@@ -66,6 +86,13 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/DataAdapter/*'/>
+#if NETFX
+        [
+        DefaultValue(null),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlCommandBuilder_DataAdapter), // MDAC 60524
+        ]
+#endif
         new public SqlDataAdapter DataAdapter
         {
             get
@@ -80,6 +107,13 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/QuotePrefix/*'/>
         /// <devnote>SqlServer only supports '.'</devnote>
+#if NETFX
+        [
+        Browsable(false),
+        EditorBrowsableAttribute(EditorBrowsableState.Never),
+        DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
+        ]
+#endif
         public override string QuotePrefix
         {
             get
@@ -97,6 +131,13 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/QuoteSuffix/*'/>
+#if NETFX
+        [
+        Browsable(false),
+        EditorBrowsableAttribute(EditorBrowsableState.Never),
+        DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
+        ]
+#endif
         public override string QuoteSuffix
         {
             get
@@ -114,6 +155,13 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/SchemaSeparator/*'/>
+#if NETFX
+        [
+        Browsable(false),
+        EditorBrowsableAttribute(EditorBrowsableState.Never),
+        DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
+        ]
+#endif
         public override string SchemaSeparator
         {
             get
@@ -215,15 +263,40 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/DeriveParameters/*'/>
         public static void DeriveParameters(SqlCommand command)
         {
+#if NETFX
+            SqlConnection.ExecutePermission.Demand();
+#endif
             if (null == command)
             {
                 throw ADP.ArgumentNull(nameof(command));
             }
-
+#if NETFX
+            TdsParser bestEffortCleanupTarget = null;
+#endif // NETFX
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
-                command.DeriveParameters();
+#if NETFX
+#if DEBUG
+                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+
+                RuntimeHelpers.PrepareConstrainedRegions();
+                try {
+                    tdsReliabilitySection.Start();
+#else
+                {
+#endif // DEBUG
+                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(command.Connection);
+#endif // NETFX
+                    command.DeriveParameters();
+#if NETFX
+                }
+#if DEBUG
+                finally {
+                    tdsReliabilitySection.Stop();
+                }
+#endif // DEBUG
+#endif // NETFX
             }
             catch (OutOfMemoryException e)
             {
@@ -238,6 +311,9 @@ namespace Microsoft.Data.SqlClient
             catch (ThreadAbortException e)
             {
                 command?.Connection?.Abort(e);
+#if NETFX
+                SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+#endif
                 throw;
             }
         }
@@ -247,8 +323,11 @@ namespace Microsoft.Data.SqlClient
         {
             SqlCommand sqlCommand = srcCommand as SqlCommand;
             SqlNotificationRequest notificationRequest = sqlCommand.Notification;
-
             sqlCommand.Notification = null;
+#if NETFX
+            bool notificationAutoEnlist = sqlCommand.NotificationAutoEnlist;
+            sqlCommand.NotificationAutoEnlist = false;
+#endif
 
             try
             {
@@ -260,6 +339,9 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 sqlCommand.Notification = notificationRequest;
+#if NETFX
+                sqlCommand.NotificationAutoEnlist = notificationAutoEnlist;
+#endif
             }
 
         }
