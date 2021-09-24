@@ -331,10 +331,8 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                using (SqlDataReader dataReader = sqlCommand.ExecuteReader(CommandBehavior.SchemaOnly | CommandBehavior.KeyInfo))
-                {
-                    return dataReader.GetSchemaTable();
-                }
+                using SqlDataReader dataReader = sqlCommand.ExecuteReader(CommandBehavior.SchemaOnly | CommandBehavior.KeyInfo);
+                return dataReader.GetSchemaTable();
             }
             finally
             {
@@ -378,12 +376,11 @@ namespace Microsoft.Data.SqlClient
         public override string UnquoteIdentifier(string quotedIdentifier)
         {
             ADP.CheckArgumentNull(quotedIdentifier, nameof(quotedIdentifier));
-            string unquotedIdentifier;
             string quoteSuffixLocal = QuoteSuffix;
             string quotePrefixLocal = QuotePrefix;
             ConsistentQuoteDelimiters(quotePrefixLocal, quoteSuffixLocal);
             // ignoring the return value because an unquoted source string is OK here
-            ADP.RemoveStringQuotes(quotePrefixLocal, quoteSuffixLocal, quotedIdentifier, out unquotedIdentifier);
+            ADP.RemoveStringQuotes(quotePrefixLocal, quoteSuffixLocal, quotedIdentifier, out string unquotedIdentifier);
             return unquotedIdentifier;
         }
     }
