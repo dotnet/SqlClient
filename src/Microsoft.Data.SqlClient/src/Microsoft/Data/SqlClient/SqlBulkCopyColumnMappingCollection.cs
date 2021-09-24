@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient
         internal bool ReadOnly { get; set; }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/Item/*'/>
-        public SqlBulkCopyColumnMapping this[int index] => (SqlBulkCopyColumnMapping)this.List[index];
+        public SqlBulkCopyColumnMapping this[int index] => (SqlBulkCopyColumnMapping)List[index];
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/Add[@name="bulkCopyColumnMappingParameter"]/*'/>
         public SqlBulkCopyColumnMapping Add(SqlBulkCopyColumnMapping bulkCopyColumnMapping)
