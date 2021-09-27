@@ -288,6 +288,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlConnectionPoolProviderInfo.cs">
       <Link>Microsoft\Data\SqlClient\SqlConnectionPoolProviderInfo.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlDataAdapter.cs">
+      <Link>Microsoft\Data\SqlClient\SqlDataAdapter.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlEnclaveAttestationParameters.Crypto.cs">
       <Link>Microsoft\Data\SqlClient\SqlEnclaveAttestationParameters.Crypto.cs</Link>
     </Compile>
@@ -430,7 +433,7 @@
     <Compile Include="Microsoft\Data\SqlClient\Server\SqlDataRecord.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\TriggerAction.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlFileStream.cs" />
-    <Compile Include="Microsoft\Data\SqlTypes\UnsafeNativeMethods.cs" /> 
+    <Compile Include="Microsoft\Data\SqlTypes\UnsafeNativeMethods.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBuffer.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />
@@ -462,7 +465,6 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlCredential.cs">
       <Link>Microsoft\Data\SqlClient\SqlCredential.cs</Link>
     </Compile>
-    <Compile Include="Microsoft\Data\SqlClient\SqlDataAdapter.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDataReader.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDataReaderSmi.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.cs" />
