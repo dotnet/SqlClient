@@ -48,6 +48,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly bool UseManagedSNIOnWindows = false;
         public static readonly bool IsAzureSynapse = false;
         public static Uri AKVBaseUri = null;
+        public static readonly string MakecertPath = null;
         public static string FileStreamDirectory = null;
 
         public static readonly string DNSCachingConnString = null;
@@ -99,6 +100,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             IsDNSCachingSupportedTR = c.IsDNSCachingSupportedTR;
             EnclaveAzureDatabaseConnString = c.EnclaveAzureDatabaseConnString;
             UserManagedIdentityClientId = c.UserManagedIdentityClientId;
+            MakecertPath = c.MakecertPath;
 
             System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
 
