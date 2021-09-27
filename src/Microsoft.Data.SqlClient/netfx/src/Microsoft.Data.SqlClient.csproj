@@ -110,9 +110,6 @@
     <Compile Include="..\..\src\Microsoft\Data\Common\NameValuePair.cs">
       <Link>Microsoft\Data\Common\NameValuePair.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlConnectionPoolKey.cs">
-      <Link>Microsoft\Data\SqlClient\SqlConnectionPoolKey.cs</Link>
-    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\Sql\SqlNotificationRequest.cs">
       <Link>Microsoft\Data\Sql\SqlNotificationRequest.cs</Link>
     </Compile>
@@ -287,6 +284,9 @@
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlColumnEncryptionKeyStoreProvider.cs">
       <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionKeyStoreProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlConnectionPoolKey.cs">
+      <Link>Microsoft\Data\SqlClient\SqlConnectionPoolKey.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlConnectionPoolProviderInfo.cs">
       <Link>Microsoft\Data\SqlClient\SqlConnectionPoolProviderInfo.cs</Link>
