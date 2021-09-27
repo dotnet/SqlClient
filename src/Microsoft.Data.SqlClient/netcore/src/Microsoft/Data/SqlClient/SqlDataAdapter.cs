@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.Threading;
 using Microsoft.Data.Common;
 
+// NOTE: Since Microsoft.VSDesigner only supports SDS and it's not publicly published, it's not allowed to use it, and API scan will complain.
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/SqlDataAdapter/*' />
@@ -63,7 +64,6 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/DeleteCommand/*' />
         [DefaultValue(null)]
-        [Editor("Microsoft.VSDesigner.Data.Design.DBCommandEditor, " + AssemblyRef.MicrosoftVSDesigner, "System.Drawing.Design.UITypeEditor, " + AssemblyRef.SystemDrawing)]
         [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update)]
         [ResDescriptionAttribute(StringsHelper.ResourceNames.DbDataAdapter_DeleteCommand)]
         new public SqlCommand DeleteCommand
@@ -81,7 +81,6 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/InsertCommand/*' />
         [DefaultValue(null)]
-        [Editor("Microsoft.VSDesigner.Data.Design.DBCommandEditor, " + AssemblyRef.MicrosoftVSDesigner, "System.Drawing.Design.UITypeEditor, " + AssemblyRef.SystemDrawing)]
         [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update)]
         [ResDescriptionAttribute(StringsHelper.ResourceNames.DbDataAdapter_InsertCommand)]
         new public SqlCommand InsertCommand
@@ -99,7 +98,6 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/SelectCommand/*' />
         [DefaultValue(null)]
-        [Editor("Microsoft.VSDesigner.Data.Design.DBCommandEditor, " + AssemblyRef.MicrosoftVSDesigner, "System.Drawing.Design.UITypeEditor, " + AssemblyRef.SystemDrawing)]
         [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Fill)]
         [ResDescriptionAttribute(StringsHelper.ResourceNames.DbDataAdapter_SelectCommand)]
         new public SqlCommand SelectCommand
@@ -117,7 +115,6 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/UpdateCommand/*' />
         [DefaultValue(null)]
-        [Editor("Microsoft.VSDesigner.Data.Design.DBCommandEditor, " + AssemblyRef.MicrosoftVSDesigner, "System.Drawing.Design.UITypeEditor, " + AssemblyRef.SystemDrawing)]
         [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update)]
         [ResDescriptionAttribute(StringsHelper.ResourceNames.DbDataAdapter_UpdateCommand)]
         new public SqlCommand UpdateCommand

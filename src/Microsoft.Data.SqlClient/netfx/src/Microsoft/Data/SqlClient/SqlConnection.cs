@@ -29,6 +29,7 @@ using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Server;
 
 [assembly: InternalsVisibleTo("System.Data.DataSetExtensions, PublicKey=" + Microsoft.Data.SqlClient.AssemblyRef.EcmaPublicKeyFull)] // DevDiv Bugs 92166
+// NOTE: Since Microsoft.VSDesigner only supports SDS and it's not publicly published, it's not allowed to use it, and API scan will complain.
 namespace Microsoft.Data.SqlClient
 {
     using System.Diagnostics.Tracing;
@@ -755,7 +756,6 @@ namespace Microsoft.Data.SqlClient
         SettingsBindableAttribute(true),
         RefreshProperties(RefreshProperties.All),
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
-        Editor("Microsoft.VSDesigner.Data.SQL.Design.SqlConnectionStringEditor, " + AssemblyRef.MicrosoftVSDesigner, "System.Drawing.Design.UITypeEditor, " + AssemblyRef.SystemDrawing),
         ResDescriptionAttribute(StringsHelper.ResourceNames.SqlConnection_ConnectionString),
         ]
         override public string ConnectionString

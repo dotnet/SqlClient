@@ -11,11 +11,11 @@ using System.Diagnostics;
 using System.Globalization;
 using Microsoft.Data.Common;
 
+// NOTE: Since Microsoft.VSDesigner only supports SDS and it's not publicly published, it's not allowed to use it, and API scan will complain.
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/SqlParameterCollection/*' />    
     [
-    Editor("Microsoft.VSDesigner.Data.Design.DBParametersEditor, " + AssemblyRef.MicrosoftVSDesigner, "System.Drawing.Design.UITypeEditor, " + AssemblyRef.SystemDrawing),
     ListBindable(false)
     ]
     public sealed partial class SqlParameterCollection : DbParameterCollection
