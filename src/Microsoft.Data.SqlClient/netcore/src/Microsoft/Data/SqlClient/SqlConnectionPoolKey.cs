@@ -15,7 +15,30 @@ namespace Microsoft.Data.SqlClient
         private int _hashValue;
         private SqlCredential _credential;
         private readonly string _accessToken;
+        
+#if NETFX
+        private ServerCertificateValidationCallback _serverCertificateValidationCallback;
+        private ClientCertificateRetrievalCallback _clientCertificateRetrievalCallback;
+        private SqlClientOriginalNetworkAddressInfo _originalNetworkAddressInfo;
+#endif
 
+#if NETFX
+        internal SqlConnectionPoolKey(string connectionString,
+                                            SqlCredential credential,
+                                            string accessToken,
+                                            ServerCertificateValidationCallback serverCertificateValidationCallback,
+                                            ClientCertificateRetrievalCallback clientCertificateRetrievalCallback,
+                                            SqlClientOriginalNetworkAddressInfo originalNetworkAddressInfo) : base(connectionString)
+        {
+            Debug.Assert(_credential == null || _accessToken == null, "Credential and AccessToken can't have the value at the same time.");
+            _credential = credential;
+            _accessToken = accessToken;
+            _serverCertificateValidationCallback = serverCertificateValidationCallback;
+            _clientCertificateRetrievalCallback = clientCertificateRetrievalCallback;
+            _originalNetworkAddressInfo = originalNetworkAddressInfo;
+            CalculateHashCode();
+        }
+#else
         internal SqlConnectionPoolKey(string connectionString, SqlCredential credential, string accessToken) : base(connectionString)
         {
             Debug.Assert(_credential == null || _accessToken == null, "Credential and AccessToken can't have the value at the same time.");
@@ -23,11 +46,16 @@ namespace Microsoft.Data.SqlClient
             _accessToken = accessToken;
             CalculateHashCode();
         }
+#endif
 
         private SqlConnectionPoolKey(SqlConnectionPoolKey key) : base(key)
         {
             _credential = key.Credential;
             _accessToken = key.AccessToken;
+#if NETFX
+            _serverCertificateValidationCallback = key._serverCertificateValidationCallback;
+            _clientCertificateRetrievalCallback = key._clientCertificateRetrievalCallback;
+#endif
             CalculateHashCode();
         }
 
@@ -59,6 +87,31 @@ namespace Microsoft.Data.SqlClient
                 return _accessToken;
             }
         }
+#if NETFX
+        internal ServerCertificateValidationCallback ServerCertificateValidationCallback
+        {
+            get
+            {
+                return _serverCertificateValidationCallback;
+            }
+        }
+
+        internal ClientCertificateRetrievalCallback ClientCertificateRetrievalCallback
+        {
+            get
+            {
+                return _clientCertificateRetrievalCallback;
+            }
+        }
+
+        internal SqlClientOriginalNetworkAddressInfo OriginalNetworkAddressInfo
+        {
+            get
+            {
+                return _originalNetworkAddressInfo;
+            }
+        }
+#endif
 
         public override bool Equals(object obj)
         {
@@ -66,6 +119,11 @@ namespace Microsoft.Data.SqlClient
             return (key != null
                 && _credential == key._credential
                 && ConnectionString == key.ConnectionString
+#if NETFX
+                && _serverCertificateValidationCallback == key._serverCertificateValidationCallback
+                && _clientCertificateRetrievalCallback == key._clientCertificateRetrievalCallback
+                && _originalNetworkAddressInfo == key._originalNetworkAddressInfo)
+#endif
                 && string.CompareOrdinal(_accessToken, key._accessToken) == 0);
         }
 
@@ -92,6 +150,16 @@ namespace Microsoft.Data.SqlClient
                     _hashValue = _hashValue * 17 + _accessToken.GetHashCode();
                 }
             }
+
+#if NETFX
+            if (_originalNetworkAddressInfo != null)
+            {
+                unchecked
+                {
+                    _hashValue = _hashValue * 17 + _originalNetworkAddressInfo.GetHashCode();
+                }
+            }
+#endif
         }
     }
 }
