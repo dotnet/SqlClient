@@ -16,13 +16,13 @@ namespace Microsoft.Data.SqlClient
         private SqlCredential _credential;
         private readonly string _accessToken;
         
-#if NETFX
+#if NETFRAMEWORK
         private ServerCertificateValidationCallback _serverCertificateValidationCallback;
         private ClientCertificateRetrievalCallback _clientCertificateRetrievalCallback;
         private SqlClientOriginalNetworkAddressInfo _originalNetworkAddressInfo;
 #endif
 
-#if NETFX
+#if NETFRAMEWORK
         internal SqlConnectionPoolKey(string connectionString,
                                             SqlCredential credential,
                                             string accessToken,
@@ -52,7 +52,7 @@ namespace Microsoft.Data.SqlClient
         {
             _credential = key.Credential;
             _accessToken = key.AccessToken;
-#if NETFX
+#if NETFRAMEWORK
             _serverCertificateValidationCallback = key._serverCertificateValidationCallback;
             _clientCertificateRetrievalCallback = key._clientCertificateRetrievalCallback;
 #endif
@@ -87,7 +87,7 @@ namespace Microsoft.Data.SqlClient
                 return _accessToken;
             }
         }
-#if NETFX
+#if NETFRAMEWORK
         internal ServerCertificateValidationCallback ServerCertificateValidationCallback
         {
             get
@@ -119,10 +119,10 @@ namespace Microsoft.Data.SqlClient
             return (key != null
                 && _credential == key._credential
                 && ConnectionString == key.ConnectionString
-#if NETFX
+#if NETFRAMEWORK
                 && _serverCertificateValidationCallback == key._serverCertificateValidationCallback
                 && _clientCertificateRetrievalCallback == key._clientCertificateRetrievalCallback
-                && _originalNetworkAddressInfo == key._originalNetworkAddressInfo)
+                && _originalNetworkAddressInfo == key._originalNetworkAddressInfo
 #endif
                 && string.CompareOrdinal(_accessToken, key._accessToken) == 0);
         }
@@ -151,7 +151,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-#if NETFX
+#if NETFRAMEWORK
             if (_originalNetworkAddressInfo != null)
             {
                 unchecked
