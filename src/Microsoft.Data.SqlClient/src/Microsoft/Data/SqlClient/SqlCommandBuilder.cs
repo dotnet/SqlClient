@@ -247,20 +247,20 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/DeriveParameters/*'/>
         public static void DeriveParameters(SqlCommand command)
         {
-#if NETFX
+#if NETFRAMEWORK
             SqlConnection.ExecutePermission.Demand();
 #endif
             if (null == command)
             {
                 throw ADP.ArgumentNull(nameof(command));
             }
-#if NETFX
+#if NETFRAMEWORK
             TdsParser bestEffortCleanupTarget = null;
 #endif
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
-#if NETFX
+#if NETFRAMEWORK
 #if DEBUG
                 TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
 
@@ -271,16 +271,16 @@ namespace Microsoft.Data.SqlClient
                 {
 #endif // DEBUG
                     bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(command.Connection);
-#endif // NETFX
+#endif // NETFRAMEWORK
                     command.DeriveParameters();
-#if NETFX
+#if NETFRAMEWORK
                 }
 #if DEBUG
                 finally {
                     tdsReliabilitySection.Stop();
                 }
 #endif // DEBUG
-#endif // NETFX
+#endif // NETFRAMEWORK
             }
             catch (OutOfMemoryException e)
             {
@@ -295,7 +295,7 @@ namespace Microsoft.Data.SqlClient
             catch (ThreadAbortException e)
             {
                 command?.Connection?.Abort(e);
-#if NETFX
+#if NETFRAMEWORK
                 SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
 #endif
                 throw;
@@ -308,7 +308,7 @@ namespace Microsoft.Data.SqlClient
             SqlCommand sqlCommand = srcCommand as SqlCommand;
             SqlNotificationRequest notificationRequest = sqlCommand.Notification;
             sqlCommand.Notification = null;
-#if NETFX
+#if NETFRAMEWORK
             bool notificationAutoEnlist = sqlCommand.NotificationAutoEnlist;
             sqlCommand.NotificationAutoEnlist = false;
 #endif
@@ -321,7 +321,7 @@ namespace Microsoft.Data.SqlClient
             finally
             {
                 sqlCommand.Notification = notificationRequest;
-#if NETFX
+#if NETFRAMEWORK
                 sqlCommand.NotificationAutoEnlist = notificationAutoEnlist;
 #endif
             }
