@@ -13,13 +13,13 @@ namespace Microsoft.Data.SqlClient
     internal class SqlConnectionPoolKey : DbConnectionPoolKey
     {
         private int _hashValue;
-        private SqlCredential _credential;
+        private readonly SqlCredential _credential;
         private readonly string _accessToken;
         
 #if NETFRAMEWORK
-        private ServerCertificateValidationCallback _serverCertificateValidationCallback;
-        private ClientCertificateRetrievalCallback _clientCertificateRetrievalCallback;
-        private SqlClientOriginalNetworkAddressInfo _originalNetworkAddressInfo;
+        private readonly ServerCertificateValidationCallback _serverCertificateValidationCallback;
+        private readonly ClientCertificateRetrievalCallback _clientCertificateRetrievalCallback;
+        private readonly SqlClientOriginalNetworkAddressInfo _originalNetworkAddressInfo;
 #endif
 
 #if NETFRAMEWORK
@@ -115,8 +115,7 @@ namespace Microsoft.Data.SqlClient
 
         public override bool Equals(object obj)
         {
-            SqlConnectionPoolKey key = obj as SqlConnectionPoolKey;
-            return (key != null
+            return (obj is SqlConnectionPoolKey key
                 && _credential == key._credential
                 && ConnectionString == key.ConnectionString
 #if NETFRAMEWORK
