@@ -18,16 +18,16 @@ namespace Microsoft.Data.SqlClient
     // TODO: Add designer and toolbox attribute when Microsoft.VSDesigner.Data.VS.SqlDataAdapterDesigner uses Microsoft.Data.SqlClient
     public sealed class SqlDataAdapter : DbDataAdapter, IDbDataAdapter, ICloneable
     {
-        private static readonly object EventRowUpdated = new object();
-        private static readonly object EventRowUpdating = new object();
+        private static readonly object s_eventRowUpdated = new();
+        private static readonly object s_eventRowUpdating = new();
 
         private SqlCommand _deleteCommand, _insertCommand, _selectCommand, _updateCommand;
 
         private SqlCommandSet _commandSet;
         private int _updateBatchSize = 1;
 
-        private static int _objectTypeCount; // EventSource Counter
-        internal readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
+        private static int s_objectTypeCount; // EventSource Counter
+        internal readonly int _objectID = Interlocked.Increment(ref s_objectTypeCount);
 
         internal int ObjectID => _objectID;
 
@@ -46,7 +46,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/ctorSelectCommandTextSelectConnectionString/*' />
         public SqlDataAdapter(string selectCommandText, string selectConnectionString) : this()
         {
-            SqlConnection connection = new SqlConnection(selectConnectionString);
+            SqlConnection connection = new(selectConnectionString);
             SelectCommand = new SqlCommand(selectCommandText, connection);
         }
 
@@ -250,11 +250,11 @@ namespace Microsoft.Data.SqlClient
         {
             add
             {
-                Events.AddHandler(EventRowUpdated, value);
+                Events.AddHandler(s_eventRowUpdated, value);
             }
             remove
             {
-                Events.RemoveHandler(EventRowUpdated, value);
+                Events.RemoveHandler(s_eventRowUpdated, value);
             }
         }
 
@@ -265,7 +265,7 @@ namespace Microsoft.Data.SqlClient
         {
             add
             {
-                SqlRowUpdatingEventHandler handler = (SqlRowUpdatingEventHandler)Events[EventRowUpdating];
+                SqlRowUpdatingEventHandler handler = (SqlRowUpdatingEventHandler)Events[s_eventRowUpdating];
 
                 // Prevent someone from registering two different command builders on the adapter by
                 // silently removing the old one.
@@ -274,24 +274,24 @@ namespace Microsoft.Data.SqlClient
                     SqlRowUpdatingEventHandler d = (SqlRowUpdatingEventHandler)ADP.FindBuilder(handler);
                     if (null != d)
                     {
-                        Events.RemoveHandler(EventRowUpdating, d);
+                        Events.RemoveHandler(s_eventRowUpdating, d);
                     }
                 }
-                Events.AddHandler(EventRowUpdating, value);
+                Events.AddHandler(s_eventRowUpdating, value);
             }
             remove
             {
-                Events.RemoveHandler(EventRowUpdating, value);
+                Events.RemoveHandler(s_eventRowUpdating, value);
             }
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/OnRowUpdated/*' />
         override protected void OnRowUpdated(RowUpdatedEventArgs value)
         {
-            SqlRowUpdatedEventHandler handler = (SqlRowUpdatedEventHandler)Events[EventRowUpdated];
-            if ((null != handler) && (value is SqlRowUpdatedEventArgs))
+            SqlRowUpdatedEventHandler handler = (SqlRowUpdatedEventHandler)Events[s_eventRowUpdated];
+            if ((null != handler) && (value is SqlRowUpdatedEventArgs args))
             {
-                handler(this, (SqlRowUpdatedEventArgs)value);
+                handler(this, args);
             }
             base.OnRowUpdated(value);
         }
@@ -299,10 +299,10 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/OnRowUpdating/*' />
         override protected void OnRowUpdating(RowUpdatingEventArgs value)
         {
-            SqlRowUpdatingEventHandler handler = (SqlRowUpdatingEventHandler)Events[EventRowUpdating];
-            if ((null != handler) && (value is SqlRowUpdatingEventArgs))
+            SqlRowUpdatingEventHandler handler = (SqlRowUpdatingEventHandler)Events[s_eventRowUpdating];
+            if ((null != handler) && (value is SqlRowUpdatingEventArgs args))
             {
-                handler(this, (SqlRowUpdatingEventArgs)value);
+                handler(this, args);
             }
             base.OnRowUpdating(value);
         }
