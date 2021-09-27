@@ -138,11 +138,20 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                 _appDomainKeyHash = new Dictionary<string, int>(); // Dictionary stores the Start/Stop refcount per AppDomain for this container.
                 _com = new SqlCommand();
                 _com.Connection = _con;
+                bool? dbId = null;
 
                 // SQL BU DT 391534 - determine if broker is enabled on current database.
                 _com.CommandText = "select is_broker_enabled from sys.databases where database_id=db_id()";
 
-                if (!(bool)_com.ExecuteScalar())
+                // db_id() returns the database ID of the current database hence it will always be one line result
+                using SqlDataReader reader = _com.ExecuteReader(CommandBehavior.SingleRow);
+                while (reader.Read())
+                {
+                    dbId = reader.GetBoolean(0);
+                }
+                reader.Close();
+
+                if (dbId is null || !dbId.Value)
                 {
                     throw SQL.SqlDependencyDatabaseBrokerDisabled();
                 }
