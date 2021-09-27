@@ -7,12 +7,7 @@ using System.Globalization;
 using System.Resources;
 using System.Threading;
 
-namespace
-#if NETFRAMEWORK
-    Microsoft.Data
-#else
-    System
-#endif
+namespace Microsoft.Data
 {
     internal partial class StringsHelper : Strings
     {
@@ -21,11 +16,7 @@ namespace
 
         internal StringsHelper()
         {
-#if NETFRAMEWORK
             _resources = new ResourceManager("SqlClient.Resources.Strings", GetType().Assembly);
-#else
-            _resources = new ResourceManager("Microsoft.Data.SqlClient.Resources.Strings", GetType().Assembly);
-#endif
         }
 
         private static StringsHelper GetLoader()
