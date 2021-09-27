@@ -4,7 +4,6 @@
 
 namespace Microsoft.Data.SqlClient
 {
-
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/SqlClientMetaDataCollectionNames/*' />
     public static class SqlClientMetaDataCollectionNames
     {
