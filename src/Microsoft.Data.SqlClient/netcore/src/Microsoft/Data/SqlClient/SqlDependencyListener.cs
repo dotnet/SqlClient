@@ -107,7 +107,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                 {
                     dbId = reader.GetBoolean(0);
                 }
-                //reader.Close();
+                reader.Close();
 
                 if (dbId is null || !dbId.Value)
                 {
