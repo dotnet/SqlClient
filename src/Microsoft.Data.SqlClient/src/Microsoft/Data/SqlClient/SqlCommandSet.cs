@@ -277,14 +277,14 @@ namespace Microsoft.Data.SqlClient
 
         internal int ExecuteNonQuery()
         {
-#if NETFX
+#if NETFRAMEWORK
             SqlConnection.ExecutePermission.Demand();
 #else
             ValidateCommandBehavior(nameof(ExecuteNonQuery), CommandBehavior.Default);
 #endif
             using (TryEventScope.Create("SqlCommandSet.ExecuteNonQuery | API | Object Id {0}, Commands executed in Batch RPC mode", ObjectID))
             {
-#if NETFX
+#if NETFRAMEWORK
                 if (Connection.IsContextConnection)
                 {
                     throw SQL.BatchedUpdatesNotAvailableOnContextConnection();
