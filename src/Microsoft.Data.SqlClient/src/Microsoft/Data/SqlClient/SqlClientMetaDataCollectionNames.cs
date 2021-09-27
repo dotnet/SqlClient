@@ -44,9 +44,9 @@ namespace Microsoft.Data.SqlClient
         public static readonly string Views = "Views";
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/AllColumns/*' />
-        public static readonly string AllColumns = "AllColumns";  // supported starting from SQL Server 2008
+        public static readonly string AllColumns = "AllColumns";
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/ColumnSetColumns/*' />
-        public static readonly string ColumnSetColumns = "ColumnSetColumns";  // supported starting from SQL Server 2008
+        public static readonly string ColumnSetColumns = "ColumnSetColumns";
     }
 }
