@@ -118,12 +118,13 @@ namespace Microsoft.Data.SqlClient
             return (obj is SqlConnectionPoolKey key
                 && _credential == key._credential
                 && ConnectionString == key.ConnectionString
+                && string.CompareOrdinal(_accessToken, key._accessToken) == 0
 #if NETFRAMEWORK
                 && _serverCertificateValidationCallback == key._serverCertificateValidationCallback
                 && _clientCertificateRetrievalCallback == key._clientCertificateRetrievalCallback
                 && _originalNetworkAddressInfo == key._originalNetworkAddressInfo
 #endif
-                && string.CompareOrdinal(_accessToken, key._accessToken) == 0);
+                );
         }
 
         public override int GetHashCode()
