@@ -6,7 +6,16 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+#if NETFRAMEWORK
+using System.IO;
+#endif
 using System.Runtime.CompilerServices;
+#if NETFRAMEWORK
+using System.Runtime.Remoting;
+using System.Runtime.Serialization;
+using System.Runtime.Versioning;
+using System.Security.Permissions;
+#endif
 using System.Text;
 using System.Threading;
 using System.Xml;
@@ -192,6 +201,37 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+#if NETFRAMEWORK
+        // Private Class to add ObjRef as DataContract
+        [SecurityPermission(SecurityAction.Assert, Flags = SecurityPermissionFlag.RemotingConfiguration)]
+        [DataContract]
+        private class SqlClientObjRef
+        {
+            [DataMember]
+            private static ObjRef s_sqlObjRef;
+            internal static IRemotingTypeInfo _typeInfo;
+
+            private SqlClientObjRef() { }
+
+            public SqlClientObjRef(SqlDependencyProcessDispatcher dispatcher) : base()
+            {
+                s_sqlObjRef = RemotingServices.Marshal(dispatcher);
+                _typeInfo = s_sqlObjRef.TypeInfo;
+            }
+
+            internal static bool CanCastToSqlDependencyProcessDispatcher()
+            {
+                return _typeInfo.CanCastTo(typeof(SqlDependencyProcessDispatcher), s_sqlObjRef);
+            }
+
+            internal ObjRef GetObjRef()
+            {
+                return s_sqlObjRef;
+            }
+
+        }
+#endif
+
         // Instance members
 
         // SqlNotificationRequest required state members
@@ -228,26 +268,45 @@ namespace Microsoft.Data.SqlClient
         private static readonly string s_assemblyName = (typeof(SqlDependencyProcessDispatcher)).Assembly.FullName;
         private static readonly string s_typeName = (typeof(SqlDependencyProcessDispatcher)).FullName;
 
+        // EventSource members
+#if NETFRAMEWORK
+        private readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
+#endif
         private static int _objectTypeCount; // EventSourceCounter counter
         internal int ObjectID { get; } = Interlocked.Increment(ref _objectTypeCount);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/ctor2/*' />
         // Constructors
+#if NETFRAMEWORK
+        [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
+#endif
         public SqlDependency() : this(null, null, SQL.SqlDependencyTimeoutDefault)
         {
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/ctorCommand/*' />
+#if NETFRAMEWORK
+        [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
+#endif
         public SqlDependency(SqlCommand command) : this(command, null, SQL.SqlDependencyTimeoutDefault)
         {
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/ctorCommandOptionsTimeout/*' />
+#if NETFRAMEWORK
+        [HostProtection(ExternalThreading = true)]
+#endif
         public SqlDependency(SqlCommand command, string options, int timeout)
         {
             long scopeID = SqlClientEventSource.Log.TryNotificationScopeEnterEvent("<sc.SqlDependency|DEP> {0}, options: '{1}', timeout: '{2}'", ObjectID, options, timeout);
             try
             {
+#if NETFRAMEWORK
+                if (InOutOfProcHelper.InProc)
+                {
+                    throw SQL.SqlDepCannotBeCreatedInProc();
+                }
+#endif
                 if (timeout < 0)
                 {
                     throw SQL.InvalidSqlDependencyTimeout(nameof(timeout));
@@ -269,10 +328,22 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Public Properties
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/HasChanges/*' />
+/// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/HasChanges/*' />
+#if NETFRAMEWORK
+        [
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlDependency_HasChanges)
+        ]
+#endif
         public bool HasChanges => _dependencyFired;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/Id/*' />
+#if NETFRAMEWORK
+        [
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlDependency_Id)
+        ]
+#endif
         public string Id => _id;
 
         // Internal Properties
@@ -288,7 +359,13 @@ namespace Microsoft.Data.SqlClient
         internal int Timeout => _timeout;
 
         // Events
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/OnChange/*' />
+/// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/OnChange/*' />
+#if NETFRAMEWORK
+        [
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlDependency_OnChange)
+        ]
+#endif
         public event OnChangeEventHandler OnChange
         {
             // EventHandlers to be fired when dependency is notified.
@@ -305,10 +382,16 @@ namespace Microsoft.Data.SqlClient
                         {
                             if (_dependencyFired)
                             { // If fired, fire the new event immediately.
+#if NETFRAMEWORK
+                                SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.OnChange-Add|DEP> Dependency already fired, firing new event.");
+#endif
                                 sqlNotificationEvent = new SqlNotificationEventArgs(SqlNotificationType.Subscribe, SqlNotificationInfo.AlreadyChanged, SqlNotificationSource.Client);
                             }
                             else
                             {
+#if NETFRAMEWORK
+                                SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.OnChange-Add|DEP> Dependency has not fired, adding new event.");
+#endif
                                 EventContextPair pair = new EventContextPair(value, this);
                                 if (!_eventList.Contains(pair))
                                 {
@@ -358,7 +441,13 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Public Methods
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/AddCommandDependency/*' />
+/// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/AddCommandDependency/*' />
+#if NETFRAMEWORK
+        [
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlDependency_AddCommandDependency)
+        ]
+#endif
         public void AddCommandDependency(SqlCommand command)
         {
             // Adds command to dependency collection so we automatically create the SqlNotificationsRequest object
@@ -399,6 +488,14 @@ namespace Microsoft.Data.SqlClient
             long scopeID = SqlClientEventSource.Log.TryNotificationScopeEnterEvent("<sc.SqlDependency.Start|DEP> AppDomainKey: '{0}', queue: '{1}'", AppDomainKey, queue);
             try
             {
+#if NETFRAMEWORK
+                // The following code exists in Stop as well.  It exists here to demand permissions as high in the stack
+                // as possible.
+                if (InOutOfProcHelper.InProc)
+                {
+                    throw SQL.SqlDepCannotBeCreatedInProc();
+                }
+#endif
                 if (string.IsNullOrEmpty(connectionString))
                 {
                     if (null == connectionString)
@@ -417,6 +514,16 @@ namespace Microsoft.Data.SqlClient
                     queue = null; // Force to null - for proper hashtable comparison for default case.
                 }
 
+#if NETFRAMEWORK
+                // Create new connection options for demand on their connection string.  We modify the connection string
+                // and assert on our modified string when we create the container.
+                SqlConnectionString connectionStringObject = new SqlConnectionString(connectionString);
+                connectionStringObject.DemandPermission();
+                if (connectionStringObject.LocalDBInstance != null)
+                {
+                    LocalDBAPI.DemandLocalDBPermissions();
+                }
+#endif
                 // End duplicate Start/Stop logic.
 
                 bool errorOccurred = false;
@@ -428,7 +535,11 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (null == s_processDispatcher)
                         { // Ensure _processDispatcher reference is present - inside lock.
+#if NETFRAMEWORK
+                            ObtainProcessDispatcher();
+#else
                             s_processDispatcher = SqlDependencyProcessDispatcher.SingletonProcessDispatcher;
+#endif
                         }
 
                         if (useDefaults)
@@ -535,6 +646,14 @@ namespace Microsoft.Data.SqlClient
             long scopeID = SqlClientEventSource.Log.TryNotificationScopeEnterEvent("<sc.SqlDependency.Stop|DEP> AppDomainKey: '{0}', queue: '{1}'", AppDomainKey, queue);
             try
             {
+#if NETFRAMEWORK
+                // The following code exists in Stop as well.  It exists here to demand permissions as high in the stack
+                // as possible.
+                if (InOutOfProcHelper.InProc)
+                {
+                    throw SQL.SqlDepCannotBeCreatedInProc();
+                }
+#endif
                 if (string.IsNullOrEmpty(connectionString))
                 {
                     if (null == connectionString)
@@ -553,6 +672,16 @@ namespace Microsoft.Data.SqlClient
                     queue = null; // Force to null - for proper hashtable comparison for default case.
                 }
 
+#if NETFRAMEWORK
+                // Create new connection options for demand on their connection string.  We modify the connection string
+                // and assert on our modified string when we create the container.
+                SqlConnectionString connectionStringObject = new SqlConnectionString(connectionString);
+                connectionStringObject.DemandPermission();
+                if (connectionStringObject.LocalDBInstance != null)
+                {
+                    LocalDBAPI.DemandLocalDBPermissions();
+                }
+#endif
                 // End duplicate Start/Stop logic.
 
                 bool result = false;
@@ -869,6 +998,9 @@ namespace Microsoft.Data.SqlClient
                     int index = _serverList.BinarySearch(server, StringComparer.OrdinalIgnoreCase);
                     if (0 > index)
                     { // If less than 0, item was not found in list.
+#if NETFRAMEWORK
+                        SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.AddToServerList|DEP> Server not present in hashtable, adding server: '{0}'.", server);
+#endif
                         index = ~index; // BinarySearch returns the 2's compliment of where the item should be inserted to preserver a sorted list after insertion.
                         _serverList.Insert(index, server);
 
@@ -972,6 +1104,9 @@ namespace Microsoft.Data.SqlClient
             {
                 if (_expirationTime == DateTime.MaxValue)
                 {
+#if NETFRAMEWORK
+                    SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.StartTimer|DEP> We've timed out, executing logic.");
+#endif
                     int seconds = SQL.SqlDependencyServerTimeout;
                     if (0 != _timeout)
                     {
