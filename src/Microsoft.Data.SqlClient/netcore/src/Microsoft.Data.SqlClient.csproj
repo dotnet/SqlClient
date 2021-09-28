@@ -330,7 +330,7 @@
     <Compile Include="..\..\src\Resources\ResDescriptionAttribute.cs">
       <Link>Resources\ResDescriptionAttribute.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Resources\StringsHelper.cs" >
+    <Compile Include="..\..\src\Resources\StringsHelper.cs">
       <Link>Resources\StringsHelper.cs</Link>
     </Compile>
   </ItemGroup>

@@ -16,7 +16,7 @@ namespace Microsoft.Data
 
         internal StringsHelper()
         {
-            _resources = new ResourceManager("SqlClient.Resources.Strings", GetType().Assembly);
+            _resources = new ResourceManager("Microsoft.Data.SqlClient.Resources.Strings", GetType().Assembly);
         }
 
         private static StringsHelper GetLoader()
