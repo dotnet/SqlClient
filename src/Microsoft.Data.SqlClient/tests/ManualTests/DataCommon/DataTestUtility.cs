@@ -58,6 +58,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly bool IsDNSCachingSupportedTR = false;  // this is for the tenant ring
         public static readonly string UserManagedIdentityClientId = null;
 
+
         public static readonly string EnclaveAzureDatabaseConnString = null;
         public static bool ManagedIdentitySupported = true;
         public static string AADAccessToken = null;
@@ -72,6 +73,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static Dictionary<string, bool> AvailableDatabases;
         private static BaseEventListener TraceListener;
+
+        //Kerberos variables
+        public static readonly string KerberosDomainUser = null;
+        internal static readonly string KerberosDomainPassword = null;
+        public static readonly bool IsKerberos = false;
 
         static DataTestUtility()
         {
@@ -101,6 +107,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             EnclaveAzureDatabaseConnString = c.EnclaveAzureDatabaseConnString;
             UserManagedIdentityClientId = c.UserManagedIdentityClientId;
             MakecertPath = c.MakecertPath;
+            KerberosDomainPassword = c.KerberosDomainPassword;
+            KerberosDomainUser = c.KerberosDomainUser;
 
             System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
 
@@ -153,6 +161,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     AEConnStrings.Add(TCPConnectionString);
                     AEConnStringsSetup.Add(TCPConnectionString);
                 }
+            }
+            if (!string.IsNullOrEmpty(KerberosDomainUser) && !string.IsNullOrEmpty(KerberosDomainPassword))
+            {
+                IsKerberos = true;
             }
         }
 
@@ -214,6 +226,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             return result.AccessToken;
         });
+
+        public static bool IsKerberosTest()
+        {
+            return IsKerberos;
+        }
 
         public static bool IsDatabasePresent(string name)
         {
