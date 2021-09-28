@@ -41,7 +41,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             Assert.Matches(expectedMessage, e.Message);
         }
 
-#if NETFX
+#if NETFRAMEWORK
         [Fact]
         [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp)]
         public void CertificateWithNoPrivateKey()
@@ -68,7 +68,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         public static string thumbprint;
         public static byte[] cek;
         public static byte[] encryptedCek;
-#if NETFX
+#if NETFRAMEWORK
         public static X509Certificate2 masterKeyCertificateNPK; // no private key
         public static string thumbprintNPK; // No private key
         public static string masterKeyPathNPK;
@@ -84,8 +84,8 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             certificatePath = string.Format("CurrentUser/My/{0}", thumbprint);
             cek = Utility.GenerateRandomBytes(32);
             encryptedCek = certStoreProvider.EncryptColumnEncryptionKey(certificatePath, "RSA_OAEP", cek);
-#if NETFX
-            if(masterKeyCertificateNPK == null)
+#if NETFRAMEWORK
+            if (masterKeyCertificateNPK == null)
             {
                 masterKeyCertificateNPK = Utility.CreateCertificateWithNoPrivateKey();
             }
