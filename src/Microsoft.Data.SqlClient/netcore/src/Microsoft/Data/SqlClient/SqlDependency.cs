@@ -209,19 +209,19 @@ namespace Microsoft.Data.SqlClient
         {
             [DataMember]
             private static ObjRef s_sqlObjRef;
-            internal static IRemotingTypeInfo _typeInfo;
+            internal static IRemotingTypeInfo s_typeInfo;
 
             private SqlClientObjRef() { }
 
             public SqlClientObjRef(SqlDependencyProcessDispatcher dispatcher) : base()
             {
                 s_sqlObjRef = RemotingServices.Marshal(dispatcher);
-                _typeInfo = s_sqlObjRef.TypeInfo;
+                s_typeInfo = s_sqlObjRef.TypeInfo;
             }
 
             internal static bool CanCastToSqlDependencyProcessDispatcher()
             {
-                return _typeInfo.CanCastTo(typeof(SqlDependencyProcessDispatcher), s_sqlObjRef);
+                return s_typeInfo.CanCastTo(typeof(SqlDependencyProcessDispatcher), s_sqlObjRef);
             }
 
             internal ObjRef GetObjRef()
@@ -468,8 +468,117 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+#if NETFRAMEWORK
+        [System.Security.Permissions.ReflectionPermission(System.Security.Permissions.SecurityAction.Assert, MemberAccess = true)]
+        private static ObjectHandle CreateProcessDispatcher(_AppDomain masterDomain)
+        {
+            return masterDomain.CreateInstance(s_assemblyName, s_typeName);
+        }
+#endif
         // Static Methods - public & internal
 
+#if NETFRAMEWORK
+        // Method to obtain AppDomain reference and then obtain the reference to the process wide dispatcher for
+        // Start() and Stop() method calls on the individual SqlDependency instances.
+        // SxS: this method retrieves the primary AppDomain stored in native library. Since each System.Data.dll has its own copy of native
+        // library, this call is safe in SxS
+        [ResourceExposure(ResourceScope.None)]
+        [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
+        private static void ObtainProcessDispatcher()
+        {
+            byte[] nativeStorage = SNINativeMethodWrapper.GetData();
+
+            if (nativeStorage == null)
+            {
+                SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP> nativeStorage null, obtaining dispatcher AppDomain and creating ProcessDispatcher.");
+
+#if DEBUG       // Possibly expensive, limit to debug.
+                SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP> AppDomain.CurrentDomain.FriendlyName: {0}", AppDomain.CurrentDomain.FriendlyName);
+
+#endif
+                _AppDomain masterDomain = SNINativeMethodWrapper.GetDefaultAppDomain();
+
+                if (null != masterDomain)
+                {
+                    ObjectHandle handle = CreateProcessDispatcher(masterDomain);
+
+                    if (null != handle)
+                    {
+                        SqlDependencyProcessDispatcher dependency = (SqlDependencyProcessDispatcher)handle.Unwrap();
+
+                        if (null != dependency)
+                        {
+                            s_processDispatcher = dependency.SingletonProcessDispatcher; // Set to static instance.
+
+                            // Serialize and set in native.
+                            using (MemoryStream stream = new MemoryStream())
+                            {
+                                SqlClientObjRef objRef = new SqlClientObjRef(s_processDispatcher);
+                                DataContractSerializer serializer = new DataContractSerializer(objRef.GetType());
+                                GetSerializedObject(objRef, serializer, stream);
+                                SNINativeMethodWrapper.SetData(stream.ToArray()); // Native will be forced to synchronize and not overwrite.
+                            }
+                        }
+                        else
+                        {
+                            SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP|ERR> ERROR - ObjectHandle.Unwrap returned null!");
+                            throw ADP.InternalError(ADP.InternalErrorCode.SqlDependencyObtainProcessDispatcherFailureObjectHandle);
+                        }
+                    }
+                    else
+                    {
+                        SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP|ERR> ERROR - AppDomain.CreateInstance returned null!");
+                        throw ADP.InternalError(ADP.InternalErrorCode.SqlDependencyProcessDispatcherFailureCreateInstance);
+                    }
+                }
+                else
+                {
+                    SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP|ERR> ERROR - unable to obtain default AppDomain!");
+                    throw ADP.InternalError(ADP.InternalErrorCode.SqlDependencyProcessDispatcherFailureAppDomain);
+                }
+            }
+            else
+            {
+                SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP> nativeStorage not null, obtaining existing dispatcher AppDomain and ProcessDispatcher.");
+
+#if DEBUG       // Possibly expensive, limit to debug.
+                SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP> AppDomain.CurrentDomain.FriendlyName: {0}", AppDomain.CurrentDomain.FriendlyName);
+#endif
+                using (MemoryStream stream = new MemoryStream(nativeStorage))
+                {
+                    DataContractSerializer serializer = new DataContractSerializer(typeof(SqlClientObjRef));
+                    if (SqlClientObjRef.CanCastToSqlDependencyProcessDispatcher())
+                    {
+                        // Deserialize and set for appdomain.
+                        s_processDispatcher = GetDeserializedObject(serializer, stream);
+                    }
+                    else
+                    {
+                        throw new ArgumentException(Strings.SqlDependency_UnexpectedValueOnDeserialize);
+                    }
+                    SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP> processDispatcher obtained, ID: {0}", s_processDispatcher.ObjectID);
+                }
+            }
+        }
+
+        // ---------------------------------------------------------
+        // Static security asserted methods - limit scope of assert.
+        // ---------------------------------------------------------
+
+        [SecurityPermission(SecurityAction.Assert, Flags = SecurityPermissionFlag.SerializationFormatter)]
+        private static void GetSerializedObject(SqlClientObjRef objRef, DataContractSerializer serializer, MemoryStream stream)
+        {
+            serializer.WriteObject(stream, objRef);
+        }
+
+        [SecurityPermission(SecurityAction.Assert, Flags = SecurityPermissionFlag.SerializationFormatter)]
+        private static SqlDependencyProcessDispatcher GetDeserializedObject(DataContractSerializer serializer, MemoryStream stream)
+        {
+            object refResult = serializer.ReadObject(stream);
+            var result = RemotingServices.Unmarshal((refResult as SqlClientObjRef).GetObjRef());
+            return result as SqlDependencyProcessDispatcher;
+        }
+#endif // NETFRAMEWORK
         // Static Start/Stop methods
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StartConnectionString/*' />
         public static bool Start(string connectionString)
