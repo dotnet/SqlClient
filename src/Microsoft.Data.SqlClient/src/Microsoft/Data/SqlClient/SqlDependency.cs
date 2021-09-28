@@ -25,7 +25,7 @@ using Microsoft.Data.Sql;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/SqlDependency/*' />
+    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/SqlDependency/*' />
     public sealed class SqlDependency
     {
         // Private class encapsulating the user/identity information - either SQL Auth username or Windows identity.
@@ -275,7 +275,7 @@ namespace Microsoft.Data.SqlClient
         private static int _objectTypeCount; // EventSourceCounter counter
         internal int ObjectID { get; } = Interlocked.Increment(ref _objectTypeCount);
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/ctor2/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/ctor2/*' />
         // Constructors
 #if NETFRAMEWORK
         [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
@@ -284,7 +284,7 @@ namespace Microsoft.Data.SqlClient
         {
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/ctorCommand/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/ctorCommand/*' />
 #if NETFRAMEWORK
         [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
 #endif
@@ -292,7 +292,7 @@ namespace Microsoft.Data.SqlClient
         {
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/ctorCommandOptionsTimeout/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/ctorCommandOptionsTimeout/*' />
 #if NETFRAMEWORK
         [HostProtection(ExternalThreading = true)]
 #endif
@@ -328,7 +328,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Public Properties
-/// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/HasChanges/*' />
+/// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/HasChanges/*' />
 #if NETFRAMEWORK
         [
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
@@ -337,7 +337,7 @@ namespace Microsoft.Data.SqlClient
 #endif
         public bool HasChanges => _dependencyFired;
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/Id/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/Id/*' />
 #if NETFRAMEWORK
         [
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
@@ -359,7 +359,7 @@ namespace Microsoft.Data.SqlClient
         internal int Timeout => _timeout;
 
         // Events
-/// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/OnChange/*' />
+/// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/OnChange/*' />
 #if NETFRAMEWORK
         [
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
@@ -441,7 +441,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Public Methods
-/// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/AddCommandDependency/*' />
+/// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/AddCommandDependency/*' />
 #if NETFRAMEWORK
         [
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
@@ -580,13 +580,13 @@ namespace Microsoft.Data.SqlClient
         }
 #endif // NETFRAMEWORK
         // Static Start/Stop methods
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StartConnectionString/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StartConnectionString/*' />
         public static bool Start(string connectionString)
         {
             return Start(connectionString, null, true);
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StartConnectionStringQueue/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StartConnectionStringQueue/*' />
         public static bool Start(string connectionString, string queue)
         {
             return Start(connectionString, queue, false);
@@ -738,13 +738,13 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StopConnectionString/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StopConnectionString/*' />
         public static bool Stop(string connectionString)
         {
             return Stop(connectionString, null, true, false);
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StopConnectionStringQueue/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StopConnectionStringQueue/*' />
         public static bool Stop(string connectionString, string queue)
         {
             return Stop(connectionString, queue, false, false);
