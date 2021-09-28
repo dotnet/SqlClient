@@ -38,6 +38,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities
         public bool IsDNSCachingSupportedTR = false;  // this is for the tenant ring
         public string EnclaveAzureDatabaseConnString = null;
         public string UserManagedIdentityClientId = null;
+        public string MakecertPath = null;
 
         public static Config Load(string configPath = @"config.json")
         {
