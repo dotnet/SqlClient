@@ -31,7 +31,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Assert.False(string.IsNullOrWhiteSpace(certificateName), "FAILED: certificateName should not be null or empty.");
             Assert.False(string.IsNullOrWhiteSpace(certificateLocation), "FAILED: certificateLocation should not be null or empty.");
 
-            ProcessStartInfo processStartInfo = new ProcessStartInfo(@"makecert");
+            string makecertPath = string.IsNullOrEmpty(DataTestUtility.MakecertPath) ? "makecert" : DataTestUtility.MakecertPath;
+            ProcessStartInfo processStartInfo = new ProcessStartInfo(makecertPath);
             processStartInfo.Arguments = string.Format(@"-n ""CN={0}"" -pe -sr {1} -r -eku 1.3.6.1.5.5.8.2.2,1.3.6.1.4.1.311.10.3.11 -ss my -sky exchange -sp ""{2}"" -sy {3} -len 2048 -a sha256",
                                         certificateName,
                                         certificateLocation,
