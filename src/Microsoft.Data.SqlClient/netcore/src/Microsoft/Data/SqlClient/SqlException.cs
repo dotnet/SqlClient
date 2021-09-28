@@ -21,6 +21,9 @@ namespace Microsoft.Data.SqlClient
         private const int SqlExceptionHResult = unchecked((int)0x80131904);
 
         private SqlErrorCollection _errors;
+#if NETFRAMEWORK
+        [System.Runtime.Serialization.OptionalFieldAttribute(VersionAdded = 4)]
+#endif
         private Guid _clientConnectionId = Guid.Empty;
 
         private SqlException(string message, SqlErrorCollection errorCollection, Exception innerException, Guid conId) : base(message, innerException)
@@ -32,6 +35,9 @@ namespace Microsoft.Data.SqlClient
 
         private SqlException(SerializationInfo si, StreamingContext sc) : base(si, sc)
         {
+#if NETFRAMEWORK
+            _errors = (SqlErrorCollection)si.GetValue("Errors", typeof(SqlErrorCollection));
+#endif
             HResult = SqlExceptionHResult;
             foreach (SerializationEntry siEntry in si)
             {
@@ -64,6 +70,9 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Errors/*' />
         // runtime will call even if private...
+#if NETFRAMEWORK
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
+#endif
         public SqlErrorCollection Errors
         {
             get
@@ -84,6 +93,14 @@ namespace Microsoft.Data.SqlClient
                 return _clientConnectionId;
             }
         }
+
+#if NETFRAMEWORK
+        /*virtual protected*/
+        private bool ShouldSerializeErrors()
+        { // MDAC 65548
+            return ((null != _errors) && (0 < _errors.Count));
+        }
+#endif
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Class/*' />
         public byte Class
