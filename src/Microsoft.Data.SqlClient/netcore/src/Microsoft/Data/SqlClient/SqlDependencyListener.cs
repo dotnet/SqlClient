@@ -102,12 +102,13 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                 };
 
                 // db_id() returns the database ID of the current database hence it will always be one line result
-                using SqlDataReader reader = _com.ExecuteReader(CommandBehavior.SingleRow);
-                if (reader.Read() && reader[0] is not null)
+                using (SqlDataReader reader = _com.ExecuteReader(CommandBehavior.SingleRow))
                 {
-                    dbId = reader.GetBoolean(0);
+                    if (reader.Read() && reader[0] is not null)
+                    {
+                        dbId = reader.GetBoolean(0);
+                    }
                 }
-                reader.Close();
 
                 if (dbId is null || !dbId.Value)
                 {
