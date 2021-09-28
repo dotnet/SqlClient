@@ -54,10 +54,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public AdapterTest()
         {
             // create random name for temp tables
-            _randomGuid = Guid.NewGuid().ToString();
-            _tempTable = Environment.MachineName + "_" + _randomGuid;
+            _tempTable = DataTestUtility.GetUniqueName("AdapterTest");
             _tempTable = _tempTable.Replace('-', '_');
 
+            _randomGuid = Guid.NewGuid().ToString();
             _tempKey = "employee_id_key_" + Environment.TickCount.ToString() + _randomGuid;
             _tempKey = _tempKey.Replace('-', '_');
 
@@ -179,15 +179,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public void SqlVariantTest()
         {
             string tableName = DataTestUtility.GenerateObjectName();
-            try
+            // good test for null values and unicode strings
+            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlCommand cmd = new SqlCommand(null, conn))
+            using (SqlDataAdapter sqlAdapter = new SqlDataAdapter())
             {
-                ExecuteNonQueryCommand("CREATE TABLE " + tableName + " (c0_bigint bigint, c1_variant sql_variant)");
-
-                // good test for null values and unicode strings
-                using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
-                using (SqlCommand cmd = new SqlCommand(null, conn))
-                using (SqlDataAdapter sqlAdapter = new SqlDataAdapter())
+                try
                 {
+                    ExecuteNonQueryCommand("CREATE TABLE " + tableName + " (c0_bigint bigint, c1_variant sql_variant)");
+
                     cmd.Connection.Open();
 
                     // the ORDER BY clause tests that we correctly ignore the ORDER token
@@ -263,10 +263,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         }
                     }
                 }
-            }
-            finally
-            {
-                ExecuteNonQueryCommand("DROP TABLE " + tableName);
+                finally
+                {
+                    DataTestUtility.DropTable(conn, tableName);
+                }
             }
         }
 
@@ -659,7 +659,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
                 finally
                 {
-                    ExecuteNonQueryCommand("DROP TABLE " + _tempTable);
+                    DataTestUtility.DropTable(conn, _tempTable);
                 }
             }
         }
@@ -757,7 +757,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
                 finally
                 {
-                    ExecuteNonQueryCommand("DROP TABLE " + _tempTable);
+                    DataTestUtility.DropTable(conn, _tempTable);
                 }
             }
         }
@@ -768,25 +768,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void UpdateRefreshTest()
         {
+            string identTableName = DataTestUtility.GetUniqueName("ID_");
             string createIdentTable =
-                "CREATE TABLE ID_" + _tempTable + "(id int IDENTITY," +
+                $"CREATE TABLE {identTableName} (id int IDENTITY," +
                 "LastName nvarchar(50) NULL," +
                 "Firstname nvarchar(50) NULL)";
 
+            string spName = DataTestUtility.GetUniqueName("sp_insert", withBracket: false);
             string spCreateInsert =
-                "CREATE PROCEDURE sp_insert" + _tempTable +
+                $"CREATE PROCEDURE {spName}" +
                 "(@FirstName nvarchar(50), @LastName nvarchar(50), @id int OUTPUT) " +
                 "AS INSERT INTO " + _tempTable + " (FirstName, LastName) " +
                 "VALUES (@FirstName, @LastName); " +
                 "SELECT @id=@@IDENTITY";
 
-            string spDropInsert = "DROP PROCEDURE sp_insert" + _tempTable;
+            string spDropInsert = $"DROP PROCEDURE {spName}";
             bool dropSP = false;
 
             using (SqlDataAdapter adapter = new SqlDataAdapter())
             using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
             using (SqlCommand cmd = new SqlCommand(null, conn))
-            using (SqlCommand temp = new SqlCommand("SELECT id, LastName, FirstName into " + _tempTable + " from ID_" + _tempTable, conn))
+            using (SqlCommand temp = new SqlCommand("SELECT id, LastName, FirstName into " + _tempTable + $" from {identTableName}", conn))
             using (SqlCommand tableClean = new SqlCommand("", conn))
             {
                 ExecuteNonQueryCommand(createIdentTable);
@@ -794,7 +796,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     adapter.InsertCommand = new SqlCommand()
                     {
-                        CommandText = "sp_insert" + _tempTable,
+                        CommandText = spName,
                         CommandType = CommandType.StoredProcedure
                     };
                     adapter.InsertCommand.Parameters.Add(new SqlParameter("@FirstName", SqlDbType.NVarChar, 50, "FirstName"));
@@ -851,9 +853,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 {
                     if (dropSP)
                     {
-                        ExecuteNonQueryCommand(spDropInsert);
-                        ExecuteNonQueryCommand("DROP TABLE " + _tempTable);
-                        ExecuteNonQueryCommand("DROP TABLE ID_" + _tempTable);
+                        DataTestUtility.DropStoredProcedure(conn, spName);
+                        DataTestUtility.DropTable(conn, _tempTable);
+                        DataTestUtility.DropTable(conn, identTableName);
                     }
                 }
             }
@@ -873,18 +875,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 "VALUES (@val_cvarbin, @val_cimage)";
             bool dropSP = false;
 
-            try
-            {
-                ExecuteNonQueryCommand(createTable);
-                ExecuteNonQueryCommand(createSP);
-                dropSP = true;
 
-                using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
-                using (SqlCommand cmdInsert = new SqlCommand(procName, conn))
-                using (SqlCommand cmdSelect = new SqlCommand("select * from " + tableName, conn))
-                using (SqlCommand tableClean = new SqlCommand("delete " + tableName, conn))
-                using (SqlDataAdapter adapter = new SqlDataAdapter())
+            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlCommand cmdInsert = new SqlCommand(procName, conn))
+            using (SqlCommand cmdSelect = new SqlCommand("select * from " + tableName, conn))
+            using (SqlCommand tableClean = new SqlCommand("delete " + tableName, conn))
+            using (SqlDataAdapter adapter = new SqlDataAdapter())
+            {
+                try
                 {
+                    ExecuteNonQueryCommand(createTable);
+                    ExecuteNonQueryCommand(createSP);
+                    dropSP = true;
                     conn.Open();
 
                     cmdInsert.CommandType = CommandType.StoredProcedure;
@@ -905,13 +907,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     DataTestUtility.AssertEqualsWithDescription(DBNull.Value, ds.Tables[0].Rows[0][0], "Unexpected value.");
                     DataTestUtility.AssertEqualsWithDescription(DBNull.Value, ds.Tables[0].Rows[0][1], "Unexpected value.");
                 }
-            }
-            finally
-            {
-                if (dropSP)
+                finally
                 {
-                    ExecuteNonQueryCommand("DROP PROCEDURE " + procName);
-                    ExecuteNonQueryCommand("DROP TABLE " + tableName);
+                    if (dropSP)
+                    {
+                        DataTestUtility.DropStoredProcedure(conn, procName);
+                        DataTestUtility.DropTable(conn, tableName);
+                    }
                 }
             }
         }
@@ -930,18 +932,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 "VALUES (@val_cvarbin, @val_cimage)";
             bool dropSP = false;
 
-            try
-            {
-                ExecuteNonQueryCommand(createTable);
-                ExecuteNonQueryCommand(createSP);
-                dropSP = true;
 
-                using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
-                using (SqlCommand cmdInsert = new SqlCommand(procName, conn))
-                using (SqlCommand cmdSelect = new SqlCommand("select * from " + tableName, conn))
-                using (SqlCommand tableClean = new SqlCommand("delete " + tableName, conn))
-                using (SqlDataAdapter adapter = new SqlDataAdapter())
+            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlCommand cmdInsert = new SqlCommand(procName, conn))
+            using (SqlCommand cmdSelect = new SqlCommand("select * from " + tableName, conn))
+            using (SqlCommand tableClean = new SqlCommand("delete " + tableName, conn))
+            using (SqlDataAdapter adapter = new SqlDataAdapter())
+            {
+                try
                 {
+                    ExecuteNonQueryCommand(createTable);
+                    ExecuteNonQueryCommand(createSP);
+                    dropSP = true;
                     conn.Open();
 
                     cmdInsert.CommandType = CommandType.StoredProcedure;
@@ -978,13 +980,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     val = (byte[])(ds.Tables[0].Rows[0][1]);
                     Assert.True(ByteArraysEqual(expectedBytes2, val), "FAILED: Test 2: Unequal byte arrays.");
                 }
-            }
-            finally
-            {
-                if (dropSP)
+                finally
                 {
-                    ExecuteNonQueryCommand("DROP PROCEDURE " + procName);
-                    ExecuteNonQueryCommand("DROP TABLE " + tableName);
+                    if (dropSP)
+                    {
+                        DataTestUtility.DropStoredProcedure(conn, procName);
+                        DataTestUtility.DropTable(conn, tableName);
+                    }
                 }
             }
         }
@@ -1069,7 +1071,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
                 finally
                 {
-                    ExecuteNonQueryCommand("DROP TABLE " + _tempTable);
+                    DataTestUtility.DropTable(conn, _tempTable);
                 }
             }
         }
@@ -1078,16 +1080,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public void AutoGenErrorTest()
         {
+            string identTableName = DataTestUtility.GetUniqueName("ID_");
             string createIdentTable =
-                "CREATE TABLE ID_" + _tempTable + "(id int IDENTITY," +
+                $"CREATE TABLE {identTableName} (id int IDENTITY," +
                 "LastName nvarchar(50) NULL," +
                 "Firstname nvarchar(50) NULL)";
 
-            try
+            using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlCommand cmd = new SqlCommand($"SELECT * into {_tempTable} from {identTableName}", conn))
+            using (SqlDataAdapter adapter = new SqlDataAdapter())
             {
-                using (SqlConnection conn = new SqlConnection(DataTestUtility.TCPConnectionString))
-                using (SqlCommand cmd = new SqlCommand("SELECT * into " + _tempTable + " from ID_" + _tempTable, conn))
-                using (SqlDataAdapter adapter = new SqlDataAdapter())
+                try
                 {
                     ExecuteNonQueryCommand(createIdentTable);
 
@@ -1110,11 +1113,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     SqlCommandBuilder builder = new SqlCommandBuilder(adapter);
                     adapter.Update(ds, _tempTable);
                 }
-            }
-            finally
-            {
-                ExecuteNonQueryCommand("DROP TABLE " + _tempTable);
-                ExecuteNonQueryCommand("DROP TABLE ID_" + _tempTable);
+                finally
+                {
+                    DataTestUtility.DropTable(conn, _tempTable);
+                    DataTestUtility.DropTable(conn, identTableName);
+                }
             }
         }
 
@@ -1206,7 +1209,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
                 finally
                 {
-                    ExecuteNonQueryCommand("DROP TABLE " + _tempTable);
+                    DataTestUtility.DropTable(conn, _tempTable);
                 }
             }
         }
