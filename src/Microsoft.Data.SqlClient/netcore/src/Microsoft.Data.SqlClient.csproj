@@ -208,6 +208,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientEncryptionType.cs">
       <Link>Microsoft\Data\SqlClient\SqlClientEncryptionType.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientMetaDataCollectionNames.cs">
+      <Link>Microsoft\Data\SqlClient\SqlClientMetaDataCollectionNames.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientSymmetricKey.cs">
       <Link>Microsoft\Data\SqlClient\SqlClientSymmetricKey.cs</Link>
     </Compile>
@@ -481,7 +484,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlCachedBuffer.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientDiagnosticListenerExtensions.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientFactory.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlClientMetaDataCollectionNames.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlCommand.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlCommandBuilder.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlCommandSet.cs" />
