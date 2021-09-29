@@ -13,8 +13,8 @@ Microsoft.Data.SqlClient is a data provider for Microsoft SQL Server and Azure S
 The Microsoft.Data.SqlClient package supports the below environments:
 
 - .NET Framework 4.6.1+
-- .NET Core 2.1+
-- .NET Standard 2.0+.
+- .NET Core 3.1+
+- .NET Standard 2.0+
 
 The source code of this library is now available under the MIT license.
 
