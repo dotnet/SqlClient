@@ -309,6 +309,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlParameterCollection.cs">
       <Link>Microsoft\Data\SqlClient\SqlParameterCollection.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlReferenceCollection.cs">
+      <Link>Microsoft\Data\SqlClient\SqlReferenceCollection.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlRowUpdatedEvent.cs">
       <Link>Microsoft\Data\SqlClient\SqlRowUpdatedEvent.cs</Link>
     </Compile>
@@ -430,7 +433,7 @@
     <Compile Include="Microsoft\Data\SqlClient\Server\SqlDataRecord.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\TriggerAction.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlFileStream.cs" />
-    <Compile Include="Microsoft\Data\SqlTypes\UnsafeNativeMethods.cs" /> 
+    <Compile Include="Microsoft\Data\SqlTypes\UnsafeNativeMethods.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBuffer.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />
@@ -482,7 +485,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlNotificationEventArgs.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlParameter.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlQueryMetadataCache.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlReferenceCollection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlSequentialStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlSequentialStreamSmi.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlSequentialTextReader.cs" />
