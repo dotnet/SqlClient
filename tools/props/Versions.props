@@ -33,16 +33,12 @@
     <SystemConfigurationConfigurationManagerVersion>5.0.0</SystemConfigurationConfigurationManagerVersion>
     <SystemDiagnosticsDiagnosticSourceVersion>5.0.0</SystemDiagnosticsDiagnosticSourceVersion>
     <SystemDiagnosticsPerformanceCounterVersion>5.0.0</SystemDiagnosticsPerformanceCounterVersion>
-    <SystemGlobalizationVersion>4.3.0</SystemGlobalizationVersion>
-    <SystemMemoryVersion>4.5.4</SystemMemoryVersion>
     <SystemResourcesResourceManagerVersion>4.3.0</SystemResourcesResourceManagerVersion>
     <SystemRuntimeCachingVersion>5.0.0</SystemRuntimeCachingVersion>
     <SystemSecurityCryptographyCngVersion>5.0.0</SystemSecurityCryptographyCngVersion>
     <SystemSecurityPermissionsVersion>5.0.0</SystemSecurityPermissionsVersion>
     <SystemSecurityPrincipalWindowsVersion>5.0.0</SystemSecurityPrincipalWindowsVersion>
     <SystemTextEncodingCodePagesVersion>5.0.0</SystemTextEncodingCodePagesVersion>
-    <SystemThreadingTasksVersion>4.3.0</SystemThreadingTasksVersion>
-    <SystemXmlReaderWriterVersion>4.3.1</SystemXmlReaderWriterVersion>
   </PropertyGroup>
   <!-- NetStandard project dependencies -->
   <PropertyGroup>

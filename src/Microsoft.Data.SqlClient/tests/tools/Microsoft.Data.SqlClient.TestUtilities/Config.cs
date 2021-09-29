@@ -24,10 +24,11 @@ namespace Microsoft.Data.SqlClient.TestUtilities
         public string AzureKeyVaultClientId = null;
         public string AzureKeyVaultClientSecret = null;
         public string LocalDbAppName = null;
+        public string LocalDbSharedInstanceName = null;
         public bool EnclaveEnabled = false;
         public bool TracingEnabled = false;
         public bool SupportsIntegratedSecurity = false;
-        public bool SupportsFileStream = false;
+        public string FileStreamDirectory = null;
         public bool UseManagedSNIOnWindows = false;
         public string DNSCachingConnString = null;
         public string DNSCachingServerCR = null;  // this is for the control ring
@@ -37,6 +38,7 @@ namespace Microsoft.Data.SqlClient.TestUtilities
         public bool IsDNSCachingSupportedTR = false;  // this is for the tenant ring
         public string EnclaveAzureDatabaseConnString = null;
         public string UserManagedIdentityClientId = null;
+        public string MakecertPath = null;
 
         public static Config Load(string configPath = @"config.json")
         {

@@ -30,72 +30,70 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
       <group targetFramework="net461">
         <dependency id="Microsoft.Data.SqlClient.SNI" version="4.0.0-preview1.21232.1" />
         <dependency id="Azure.Identity" version="1.3.0" />
-        <dependency id="System.Text.Encodings.Web" version="4.7.2" />
         <dependency id="Microsoft.Identity.Client" version="4.22.0" />
-        <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.8.0" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="6.8.0" />
+        <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.8.0" />
+        <dependency id="System.Buffers" version="4.5.1" />
         <dependency id="System.Configuration.ConfigurationManager" version="5.0.0" exclude="Compile" />
+        <dependency id="System.IO" version="4.3.0" />
         <dependency id="System.Runtime.InteropServices.RuntimeInformation" version="4.3.0" />
-      </group>
-      <group targetFramework="netcoreapp2.1">
-        <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="4.0.0-preview1.21232.1" exclude="Compile" />
-        <dependency id="Microsoft.Win32.Registry" version="5.0.0" exclude="Compile" />
-        <dependency id="System.Security.Principal.Windows" version="5.0.0" exclude="Compile" />
-        <dependency id="System.Text.Encoding.CodePages" version="5.0.0" exclude="Compile" />
-        <dependency id="System.Diagnostics.DiagnosticSource" version="5.0.0" exclude="Compile" />
-        <dependency id="System.Configuration.ConfigurationManager" version="5.0.0" exclude="Compile" />
-        <dependency id="System.Runtime.Caching" version="5.0.0" exclude="Compile" />
-        <dependency id="Azure.Identity" version="1.3.0" />
+        <dependency id="System.Security.Cryptography.Algorithms" version="4.3.1" />
+        <dependency id="System.Security.Cryptography.Primitives" version="4.3.0" />
         <dependency id="System.Text.Encodings.Web" version="4.7.2" />
-        <dependency id="Microsoft.Identity.Client" version="4.22.0" exclude="Compile"/>
-        <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.8.0" />
-        <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="6.8.0" />
       </group>
       <group targetFramework="netcoreapp3.1">
         <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="4.0.0-preview1.21232.1" exclude="Compile" />
-        <dependency id="Microsoft.Win32.Registry" version="5.0.0" exclude="Compile" />
-        <dependency id="System.Security.Principal.Windows" version="5.0.0" exclude="Compile" />
-        <dependency id="System.Text.Encoding.CodePages" version="5.0.0" exclude="Compile" />
-        <dependency id="System.Diagnostics.DiagnosticSource" version="5.0.0" exclude="Compile" />
-        <dependency id="System.Configuration.ConfigurationManager" version="5.0.0" exclude="Compile" />
-        <dependency id="System.Runtime.Caching" version="5.0.0" exclude="Compile" />
         <dependency id="Azure.Identity" version="1.3.0" />
-        <dependency id="System.Text.Encodings.Web" version="4.7.2" />
         <dependency id="Microsoft.Identity.Client" version="4.22.0" exclude="Compile"/>
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.8.0" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="6.8.0" />
+        <dependency id="Microsoft.Win32.Registry" version="5.0.0" exclude="Compile" />
+        <dependency id="System.Buffers" version="4.5.1" />
+        <dependency id="System.Configuration.ConfigurationManager" version="5.0.0" exclude="Compile" />
+        <dependency id="System.Diagnostics.DiagnosticSource" version="5.0.0" exclude="Compile" />
+        <dependency id="System.IO" version="4.3.0" />
+        <dependency id="System.Runtime.Caching" version="5.0.0" exclude="Compile" />
+        <dependency id="System.Text.Encoding.CodePages" version="5.0.0" exclude="Compile" />
+        <dependency id="System.Text.Encodings.Web" version="4.7.2" />
+        <dependency id="System.Resources.ResourceManager" version="4.3.0" />
+        <dependency id="System.Security.Cryptography.Cng" version="5.0.0" />
+        <dependency id="System.Security.Principal.Windows" version="5.0.0" exclude="Compile" />
       </group>
       <group targetFramework="netstandard2.0">
         <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="4.0.0-preview1.21232.1" exclude="Compile" />
-        <dependency id="Microsoft.Win32.Registry" version="5.0.0" exclude="Compile" />
-        <dependency id="System.Buffers" version="4.5.1" exclude="Compile" />
-        <dependency id="System.Memory" version="4.5.4" exclude="Compile" />
-        <dependency id="System.Security.Principal.Windows" version="5.0.0" exclude="Compile" />
-        <dependency id="System.Text.Encoding.CodePages" version="5.0.0" exclude="Compile" />
-        <dependency id="System.Runtime.Caching" version="5.0.0" exclude="Compile" />
         <dependency id="Azure.Identity" version="1.3.0" />
-        <dependency id="System.Text.Encodings.Web" version="4.7.2" />
         <dependency id="Microsoft.Identity.Client" version="4.22.0" exclude="Compile"/>
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.8.0" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="6.8.0" />
+        <dependency id="Microsoft.Win32.Registry" version="5.0.0" exclude="Compile" />
+        <dependency id="System.Buffers" version="4.5.1" />
         <dependency id="System.Configuration.ConfigurationManager" version="5.0.0" exclude="Compile" />
-        <dependency id="System.Runtime.Loader" version="4.3.0" exclude="Compile" />
+        <dependency id="System.IO" version="4.3.0" />
+        <dependency id="System.Runtime.Caching" version="5.0.0" exclude="Compile" />
+        <dependency id="System.Text.Encoding.CodePages" version="5.0.0" exclude="Compile" />
+        <dependency id="System.Text.Encodings.Web" version="4.7.2" />
+        <dependency id="System.Runtime.Loader" version="4.3.0" />
+        <dependency id="System.Resources.ResourceManager" version="4.3.0" />
+        <dependency id="System.Security.Cryptography.Cng" version="5.0.0" />
+        <dependency id="System.Security.Principal.Windows" version="5.0.0" exclude="Compile" />
       </group>
       <group targetFramework="netstandard2.1">
         <dependency id="Microsoft.Data.SqlClient.SNI.runtime" version="4.0.0-preview1.21232.1" exclude="Compile" />
-        <dependency id="Microsoft.Win32.Registry" version="5.0.0" exclude="Compile" />
-        <dependency id="System.Buffers" version="4.5.1" exclude="Compile" />
-        <dependency id="System.Memory" version="4.5.4" exclude="Compile" />
-        <dependency id="System.Security.Principal.Windows" version="5.0.0" exclude="Compile" />
-        <dependency id="System.Text.Encoding.CodePages" version="5.0.0" exclude="Compile" />
-        <dependency id="System.Runtime.Caching" version="5.0.0" exclude="Compile" />
         <dependency id="Azure.Identity" version="1.3.0" />
-        <dependency id="System.Text.Encodings.Web" version="4.7.2" />
         <dependency id="Microsoft.Identity.Client" version="4.22.0" exclude="Compile"/>
         <dependency id="Microsoft.IdentityModel.Protocols.OpenIdConnect" version="6.8.0" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="6.8.0" />
+        <dependency id="Microsoft.Win32.Registry" version="5.0.0" exclude="Compile" />
+        <dependency id="System.Buffers" version="4.5.1" />
         <dependency id="System.Configuration.ConfigurationManager" version="5.0.0" exclude="Compile" />
-        <dependency id="System.Runtime.Loader" version="4.3.0" exclude="Compile" />
+        <dependency id="System.IO" version="4.3.0" />
+        <dependency id="System.Runtime.Caching" version="5.0.0" exclude="Compile" />
+        <dependency id="System.Text.Encoding.CodePages" version="5.0.0" exclude="Compile" />
+        <dependency id="System.Text.Encodings.Web" version="4.7.2" />
+        <dependency id="System.Runtime.Loader" version="4.3.0" />
+        <dependency id="System.Resources.ResourceManager" version="4.3.0" />
+        <dependency id="System.Security.Cryptography.Cng" version="5.0.0" />
+        <dependency id="System.Security.Principal.Windows" version="5.0.0" exclude="Compile" />
       </group>
     </dependencies>
     <frameworkAssemblies>
@@ -104,11 +102,6 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     </frameworkAssemblies>
     <references>
       <group targetFramework="net461">
-          <reference file="Microsoft.Data.SqlClient.dll" />
-          <reference file="Microsoft.Data.SqlClient.pdb" />
-          <reference file="Microsoft.Data.SqlClient.xml" />
-      </group>
-      <group targetFramework="netcoreapp2.1">
           <reference file="Microsoft.Data.SqlClient.dll" />
           <reference file="Microsoft.Data.SqlClient.pdb" />
           <reference file="Microsoft.Data.SqlClient.xml" />
@@ -139,10 +132,6 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$\Microsoft.Data.SqlClient\ref\net461\Microsoft.Data.SqlClient.xml" target="ref\net461\" exclude="" />
 
     <!-- ref NetCore -->
-    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\netcoreapp2.1\Microsoft.Data.SqlClient.dll" target="ref\netcoreapp2.1\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\netcoreapp2.1\Microsoft.Data.SqlClient.pdb" target="ref\netcoreapp2.1\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\netcoreapp2.1\Microsoft.Data.SqlClient.xml" target="ref\netcoreapp2.1\" exclude="" />
-
     <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\netcoreapp3.1\Microsoft.Data.SqlClient.dll" target="ref\netcoreapp3.1\" exclude="" />
     <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\netcoreapp3.1\Microsoft.Data.SqlClient.pdb" target="ref\netcoreapp3.1\" exclude="" />
     <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$\Microsoft.Data.SqlClient\ref\netcoreapp3.1\Microsoft.Data.SqlClient.xml" target="ref\netcoreapp3.1\" exclude="" />
@@ -174,10 +163,6 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.xml" target="lib\net461\" exclude="" />
 
     <!-- lib NetCore -->
-    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\netcoreapp2.1\Microsoft.Data.SqlClient.dll" target="lib\netcoreapp2.1\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\netcoreapp2.1\Microsoft.Data.SqlClient.pdb" target="lib\netcoreapp2.1\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\netcoreapp2.1\Microsoft.Data.SqlClient.xml" target="lib\netcoreapp2.1\" exclude="" />
-
     <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\netcoreapp3.1\Microsoft.Data.SqlClient.dll" target="lib\netcoreapp3.1\" exclude="" />
     <file src="..\..\artifacts\Project\bin\AnyOS\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\netcoreapp3.1\Microsoft.Data.SqlClient.pdb" target="lib\netcoreapp3.1\" exclude="" />
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\netcoreapp3.1\Microsoft.Data.SqlClient.xml" target="lib\netcoreapp3.1\" exclude="" />
@@ -196,11 +181,6 @@ When using NuGet 3.x this package requires at least version 3.4.</description>
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netfx\Microsoft.Data.SqlClient.pdb" target="runtimes\win\lib\net461\" exclude="" />
 
     <!-- runtimes NetCore -->
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\netcoreapp2.1\Microsoft.Data.SqlClient.dll" target="runtimes\win\lib\netcoreapp2.1\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\netcoreapp2.1\Microsoft.Data.SqlClient.pdb" target="runtimes\win\lib\netcoreapp2.1\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Unix\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\netcoreapp2.1\Microsoft.Data.SqlClient.dll" target="runtimes\unix\lib\netcoreapp2.1\" exclude="" />
-    <file src="..\..\artifacts\Project\bin\Unix\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\netcoreapp2.1\Microsoft.Data.SqlClient.pdb" target="runtimes\unix\lib\netcoreapp2.1\" exclude="" />
-
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\netcoreapp3.1\Microsoft.Data.SqlClient.dll" target="runtimes\win\lib\netcoreapp3.1\" exclude="" />
     <file src="..\..\artifacts\Project\bin\Windows_NT\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\netcoreapp3.1\Microsoft.Data.SqlClient.pdb" target="runtimes\win\lib\netcoreapp3.1\" exclude="" />
     <file src="..\..\artifacts\Project\bin\Unix\$Configuration$.AnyCPU\Microsoft.Data.SqlClient\netcore\netcoreapp3.1\Microsoft.Data.SqlClient.dll" target="runtimes\unix\lib\netcoreapp3.1\" exclude="" />

@@ -39,15 +39,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string AKVClientId = null;
         public static readonly string AKVClientSecret = null;
         public static readonly string LocalDbAppName = null;
+        public static readonly string LocalDbSharedInstanceName = null;
         public static List<string> AEConnStrings = new List<string>();
         public static List<string> AEConnStringsSetup = new List<string>();
         public static bool EnclaveEnabled { get; private set; } = false;
         public static readonly bool TracingEnabled = false;
         public static readonly bool SupportsIntegratedSecurity = false;
-        public static readonly bool SupportsFileStream = false;
         public static readonly bool UseManagedSNIOnWindows = false;
         public static readonly bool IsAzureSynapse = false;
         public static Uri AKVBaseUri = null;
+        public static readonly string MakecertPath = null;
+        public static string FileStreamDirectory = null;
 
         public static readonly string DNSCachingConnString = null;
         public static readonly string DNSCachingServerCR = null;  // this is for the control ring
@@ -84,8 +86,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             AADServicePrincipalId = c.AADServicePrincipalId;
             AADServicePrincipalSecret = c.AADServicePrincipalSecret;
             LocalDbAppName = c.LocalDbAppName;
+            LocalDbSharedInstanceName = c.LocalDbSharedInstanceName;
             SupportsIntegratedSecurity = c.SupportsIntegratedSecurity;
-            SupportsFileStream = c.SupportsFileStream;
+            FileStreamDirectory = c.FileStreamDirectory;
             EnclaveEnabled = c.EnclaveEnabled;
             TracingEnabled = c.TracingEnabled;
             UseManagedSNIOnWindows = c.UseManagedSNIOnWindows;
@@ -97,6 +100,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             IsDNSCachingSupportedTR = c.IsDNSCachingSupportedTR;
             EnclaveAzureDatabaseConnString = c.EnclaveAzureDatabaseConnString;
             UserManagedIdentityClientId = c.UserManagedIdentityClientId;
+            MakecertPath = c.MakecertPath;
 
             System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
 
@@ -437,13 +441,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// <param name="dbName">Database name without brackets.</param>
         public static void DropDatabase(SqlConnection sqlConnection, string dbName)
         {
-            using (SqlCommand cmd = new SqlCommand(string.Format("IF (EXISTS(SELECT 1 FROM sys.databases WHERE name = '{0}')) \nBEGIN \n ALTER DATABASE [{0}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE \n DROP DATABASE [{0}] \nEND", dbName), sqlConnection))
-            {
-                cmd.ExecuteNonQuery();
-            }
+            using SqlCommand cmd = new(string.Format("IF (EXISTS(SELECT 1 FROM sys.databases WHERE name = '{0}')) \nBEGIN \n ALTER DATABASE [{0}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE \n DROP DATABASE [{0}] \nEND", dbName), sqlConnection);
+            cmd.ExecuteNonQuery();
         }
 
-        public static bool IsLocalDBInstalled() => !string.IsNullOrEmpty(LocalDbAppName?.Trim());
+        public static bool IsLocalDBInstalled() => !string.IsNullOrEmpty(LocalDbAppName?.Trim()) && IsIntegratedSecuritySetup();
+        public static bool IsLocalDbSharedInstanceSetup() => !string.IsNullOrEmpty(LocalDbSharedInstanceName?.Trim()) && IsIntegratedSecuritySetup();
 
         public static bool IsIntegratedSecuritySetup() => SupportsIntegratedSecurity;
 
@@ -492,7 +495,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsUserIdentityTokenSetup() => !string.IsNullOrEmpty(GetUserIdentityAccessToken());
 
-        public static bool IsFileStreamSetup() => SupportsFileStream;
+        public static bool IsFileStreamSetup() => !string.IsNullOrEmpty(FileStreamDirectory);
 
         private static bool CheckException<TException>(Exception ex, string exceptionMessage, bool innerExceptionMustBeNull) where TException : Exception
         {

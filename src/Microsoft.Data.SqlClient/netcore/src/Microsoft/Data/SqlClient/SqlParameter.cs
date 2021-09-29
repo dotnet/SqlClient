@@ -837,7 +837,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceColumnNullMapping/*' />
         [ResCategory("DataCategory_Update")]
-        [ResDescription("DbParameter_SourceColumnNullMapping")]
+        [ResDescription(StringsHelper.ResourceNames.SqlParameter_SourceColumnNullMapping)]
         public override bool SourceColumnNullMapping
         {
             get => HasFlag(SqlParameterFlags.SourceColumnNullMapping);
