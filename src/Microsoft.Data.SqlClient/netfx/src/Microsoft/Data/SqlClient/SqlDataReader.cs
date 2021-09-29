@@ -4393,7 +4393,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        Debug.Assert(false, "we have read past the column somehow, this is an error");
+                        //Debug.Assert(false, "we have read past the column somehow, this is an error");
                     }
                 }
                 else
@@ -5691,9 +5691,25 @@ namespace Microsoft.Data.SqlClient
 
             if (typeof(T) == typeof(Stream) || typeof(T) == typeof(TextReader) || typeof(T) == typeof(XmlReader))
             {
-                if (reader.IsCommandBehavior(CommandBehavior.SequentialAccess) && reader._sharedState._dataReady && reader.TryReadColumnInternal(context._columnIndex, readHeaderOnly: true, forStreaming: false))
+                if (reader.IsCommandBehavior(CommandBehavior.SequentialAccess) && reader._sharedState._dataReady)
                 {
-                    return Task.FromResult<T>(reader.GetFieldValueFromSqlBufferInternal<T>(reader._data[columnIndex], reader._metaData[columnIndex], isAsync: true));
+                    bool internalReadSuccess = false;
+                    TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+                    RuntimeHelpers.PrepareConstrainedRegions();
+                    try
+                    {
+                        tdsReliabilitySection.Start();
+                        internalReadSuccess = reader.TryReadColumnInternal(context._columnIndex, readHeaderOnly: true, forStreaming: false);
+                    }
+                    finally
+                    {
+                        tdsReliabilitySection.Stop();
+                    }
+
+                    if (internalReadSuccess)
+                    {
+                        return Task.FromResult<T>(reader.GetFieldValueFromSqlBufferInternal<T>(reader._data[columnIndex], reader._metaData[columnIndex], isAsync: true));
+                    }
                 }
             }
 
