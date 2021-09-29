@@ -294,6 +294,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlEnclaveSession.cs">
       <Link>Microsoft\Data\SqlClient\SqlEnclaveSession.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlException.cs">
+      <Link>Microsoft\Data\SqlClient\SqlException.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlInfoMessageEventHandler.cs">
       <Link>Microsoft\Data\SqlClient\SqlInfoMessageEventHandler.cs</Link>
     </Compile>
@@ -430,7 +433,7 @@
     <Compile Include="Microsoft\Data\SqlClient\Server\SqlDataRecord.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\TriggerAction.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlFileStream.cs" />
-    <Compile Include="Microsoft\Data\SqlTypes\UnsafeNativeMethods.cs" /> 
+    <Compile Include="Microsoft\Data\SqlTypes\UnsafeNativeMethods.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBuffer.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />
@@ -472,7 +475,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlEnums.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlError.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlErrorCollection.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlException.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInfoMessageEvent.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionSmi.cs" />
