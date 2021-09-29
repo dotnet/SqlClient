@@ -135,7 +135,7 @@ namespace Microsoft.Data.SqlClient
             EnsureCanGetCol("GetFieldValue<T>", ordinal);
             SmiQueryMetaData metaData = _currentMetaData[ordinal];
 
-            if (_typeofINullable.IsAssignableFrom(typeof(T)))
+            if (typeof(INullable).IsAssignableFrom(typeof(T)))
             {
                 // If its a SQL Type or Nullable UDT
                 if (_currentConnection.IsKatmaiOrNewer)

@@ -15,7 +15,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class DataReaderStreamsTest
     {
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
         public static async Task GetFieldValueAsync_OfStream(CommandBehavior behavior, bool isExecuteAsync)
@@ -52,7 +51,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(originalData, outputData);
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
         public static async Task GetFieldValueAsync_OfXmlReader(CommandBehavior behavior, bool isExecuteAsync)
@@ -87,7 +85,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(originalXml, outputXml);
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
         public static async Task GetFieldValueAsync_OfTextReader(CommandBehavior behavior, bool isExecuteAsync)
@@ -122,7 +119,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(originalText, outputText);
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
         public static async void GetFieldValue_OfXmlReader(CommandBehavior behavior, bool isExecuteAsync)
@@ -157,7 +153,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(originalXml, outputXml);
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
         public static async void GetFieldValue_OfStream(CommandBehavior behavior, bool isExecuteAsync)
@@ -191,7 +186,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(originalData, outputData);
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
         public static async void GetFieldValue_OfTextReader(CommandBehavior behavior, bool isExecuteAsync)
@@ -226,7 +220,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(originalText, outputText);
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
         public static async void GetStream(CommandBehavior behavior, bool isExecuteAsync)
@@ -263,7 +256,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(originalData, outputData);
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
         public static async void GetXmlReader(CommandBehavior behavior, bool isExecuteAsync)
@@ -298,7 +290,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(originalXml, outputXml);
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
         public static async void GetTextReader(CommandBehavior behavior, bool isExecuteAsync)
@@ -333,7 +324,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Equal(originalText, outputText);
         }
 
-        [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(GetCommandBehaviourAndAccessorTypes))]
         public static void NullStreamProperties(CommandBehavior behavior, AccessorType accessorType)

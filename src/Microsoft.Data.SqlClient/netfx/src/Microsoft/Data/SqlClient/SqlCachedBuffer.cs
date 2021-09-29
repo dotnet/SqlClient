@@ -10,6 +10,7 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Xml;
+using Microsoft.Data.SqlTypes;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -134,26 +135,7 @@ namespace Microsoft.Data.SqlClient
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal XmlReader ToXmlReader()
         {
-            //XmlTextReader xr = new XmlTextReader(fragment, XmlNodeType.Element, null);
-            XmlReaderSettings readerSettings = new XmlReaderSettings();
-            readerSettings.ConformanceLevel = ConformanceLevel.Fragment;
-
-            // Call internal XmlReader.CreateSqlReader from System.Xml.
-            // Signature: internal static XmlReader CreateSqlReader(Stream input, XmlReaderSettings settings, XmlParserContext inputContext);
-            MethodInfo createSqlReaderMethodInfo = typeof(System.Xml.XmlReader).GetMethod("CreateSqlReader", BindingFlags.Static | BindingFlags.NonPublic);
-            object[] args = new object[3] { ToStream(), readerSettings, null };
-            XmlReader xr;
-
-            new System.Security.Permissions.ReflectionPermission(System.Security.Permissions.ReflectionPermissionFlag.MemberAccess).Assert();
-            try
-            {
-                xr = (XmlReader)createSqlReaderMethodInfo.Invoke(null, args);
-            }
-            finally
-            {
-                System.Security.Permissions.ReflectionPermission.RevertAssert();
-            }
-            return xr;
+            return SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(ToStream(), closeInput: false, async: false);
         }
 
         public bool IsNull
