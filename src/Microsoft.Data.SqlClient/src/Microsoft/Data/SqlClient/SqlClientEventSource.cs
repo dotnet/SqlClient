@@ -362,7 +362,7 @@ namespace Microsoft.Data.SqlClient
 
         #region Traces without if statements
         [NonEvent]
-        internal void TraceEvent<T0, T1>(string message, T0 args0, T1 args1, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
+        internal void TraceEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
             Trace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr));
         }
