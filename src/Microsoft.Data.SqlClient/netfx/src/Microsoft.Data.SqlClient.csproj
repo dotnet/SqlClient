@@ -282,6 +282,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientEncryptionType.cs">
       <Link>Microsoft\Data\SqlClient\SqlClientEncryptionType.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientMetaDataCollectionNames.cs">
+      <Link>Microsoft\Data\SqlClient\SqlClientMetaDataCollectionNames.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientSymmetricKey.cs">
       <Link>Microsoft\Data\SqlClient\SqlClientSymmetricKey.cs</Link>
     </Compile>
@@ -433,7 +436,7 @@
     <Compile Include="Microsoft\Data\SqlClient\Server\SqlDataRecord.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\TriggerAction.cs" />
     <Compile Include="Microsoft\Data\SqlTypes\SqlFileStream.cs" />
-    <Compile Include="Microsoft\Data\SqlTypes\UnsafeNativeMethods.cs" /> 
+    <Compile Include="Microsoft\Data\SqlTypes\UnsafeNativeMethods.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBuffer.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />
@@ -441,7 +444,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlCachedBuffer.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlCertificateCallbacks.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientFactory.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlClientMetaDataCollectionNames.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientOriginalAddressInfo.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientPermission.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientWrapperSmiStream.cs" />
@@ -560,8 +562,11 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>$(ResxFileName).resx</DependentUpon>
     </Compile>
-    <Compile Include="Resources\$(ResxFileName)Helper.cs" />
+    <Compile Include="..\..\src\Resources\StringsHelper.cs" >
+      <Link>Resources\StringsHelper.cs</Link>
+    </Compile>
     <EmbeddedResource Include="Resources\$(ResxFileName).resx">
+      <LogicalName>Microsoft.Data.SqlClient.Resources.Strings.resources</LogicalName>
       <CustomToolNamespace>System</CustomToolNamespace>
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>$(ResxFileName).Designer.cs</LastGenOutput>

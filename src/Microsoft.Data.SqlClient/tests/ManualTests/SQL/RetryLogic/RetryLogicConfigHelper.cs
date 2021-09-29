@@ -91,13 +91,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static SqlRetryLogicBaseProvider GetCommandProvider(object loader)
             => GetValue<SqlRetryLogicBaseProvider>(loader, s_configurationLoaderType, "CommandProvider");
 
-        public static void AssessProvider(SqlRetryLogicBaseProvider provider, RetryLogicConfigs option, bool switchValue)
-        {
-            AssessRetryLogic(provider.RetryLogic, option);
-
-            AppContext.TryGetSwitch(RetryLogicTestHelper.RetryAppContextSwitch, out bool value);
-            Assert.Equal(switchValue, value);
-        }
+        public static void AssessProvider(SqlRetryLogicBaseProvider provider, RetryLogicConfigs option) 
+            => AssessRetryLogic(provider.RetryLogic, option);
 
         public static void AssessRetryLogic(SqlRetryLogicBase retryLogic, RetryLogicConfigs option)
         {
@@ -142,9 +137,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public static object ReturnLoaderAndProviders(RetryLogicConfigs cnnCfg, RetryLogicConfigs cmdCfg, bool switchValue, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider)
+        public static object ReturnLoaderAndProviders(RetryLogicConfigs cnnCfg, RetryLogicConfigs cmdCfg, out SqlRetryLogicBaseProvider cnnProvider, out SqlRetryLogicBaseProvider cmdProvider)
         {
-            ApplyContextSwitchByManager(RetryLogicTestHelper.RetryAppContextSwitch, switchValue);
             var loaderObj = CreateLoader(cnnCfg, cmdCfg);
             cnnProvider = GetConnectionProvider(loaderObj);
             cmdProvider = GetCommandProvider(loaderObj);

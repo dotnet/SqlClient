@@ -14,13 +14,10 @@ namespace Microsoft.Data.SqlClient
         internal const string MakeReadAsyncBlockingString = @"Switch.Microsoft.Data.SqlClient.MakeReadAsyncBlocking";
         internal const string LegacyRowVersionNullString = @"Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehavior";
         internal const string UseSystemDefaultSecureProtocolsString = @"Switch.Microsoft.Data.SqlClient.UseSystemDefaultSecureProtocols";
-        // safety switch
-        internal const string EnableRetryLogicSwitch = "Switch.Microsoft.Data.SqlClient.EnableRetryLogic";
 
         private static bool _makeReadAsyncBlocking;
         private static bool? s_LegacyRowVersionNullBehavior;
         private static bool? s_UseSystemDefaultSecureProtocols;
-        private static bool? s_isRetryEnabled = null;
 
 #if !NETFRAMEWORK
         static LocalAppContextSwitches()
@@ -37,20 +34,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 #endif
-
-        internal static bool IsRetryEnabled
-        {
-            get
-            {
-                if (s_isRetryEnabled is null)
-                {
-                    bool result;
-                    result = AppContext.TryGetSwitch(EnableRetryLogicSwitch, out result) ? result : false;
-                    s_isRetryEnabled = result;
-                }
-                return s_isRetryEnabled.Value;
-            }
-        }
 
         public static bool MakeReadAsyncBlocking
         {
