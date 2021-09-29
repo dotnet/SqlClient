@@ -17,8 +17,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(GetCommandBehaviours))]
-        public static async Task GetFieldValueAsync_OfStream(CommandBehavior behavior)
+        [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
+        public static async Task GetFieldValueAsync_OfStream(CommandBehavior behavior, bool isExecuteAsync)
         {
             const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
             string connectionString = SetConnectionStringPacketSize(DataTestUtility.TCPConnectionString, PacketSize);
@@ -31,9 +31,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (SqlCommand command = new SqlCommand(query, connection))
             {
                 connection.Open();
-                using (SqlDataReader reader = command.ExecuteReader(behavior))
+                using (SqlDataReader reader = await ExecuteReader(command, behavior, isExecuteAsync))
                 {
-                    if (reader.Read())
+                    if (await Read(reader, isExecuteAsync))
                     {
                         using (MemoryStream buffer = new MemoryStream(originalData.Length))
                         using (Stream stream = await reader.GetFieldValueAsync<Stream>(1))
@@ -54,8 +54,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(GetCommandBehaviours))]
-        public static async Task GetFieldValueAsync_OfXmlReader(CommandBehavior behavior)
+        [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
+        public static async Task GetFieldValueAsync_OfXmlReader(CommandBehavior behavior, bool isExecuteAsync)
         {
             const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
             string connectionString = SetConnectionStringPacketSize(DataTestUtility.TCPConnectionString, PacketSize);
@@ -68,9 +68,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (SqlCommand command = new SqlCommand(query, connection))
             {
                 connection.Open();
-                using (SqlDataReader reader = command.ExecuteReader(behavior))
+                using (SqlDataReader reader = await ExecuteReader(command, behavior, isExecuteAsync))
                 {
-                    if (reader.Read())
+                    if (await Read(reader, isExecuteAsync))
                     {
                         using (XmlReader xmlReader = await reader.GetFieldValueAsync<XmlReader>(1))
                         {
@@ -89,8 +89,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(GetCommandBehaviours))]
-        public static async Task GetFieldValueAsync_OfTextReader(CommandBehavior behavior)
+        [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
+        public static async Task GetFieldValueAsync_OfTextReader(CommandBehavior behavior, bool isExecuteAsync)
         {
             const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
             string connectionString = SetConnectionStringPacketSize(DataTestUtility.TCPConnectionString, PacketSize);
@@ -103,9 +103,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (SqlCommand command = new SqlCommand(query, connection))
             {
                 connection.Open();
-                using (SqlDataReader reader = command.ExecuteReader(behavior))
+                using (SqlDataReader reader = await ExecuteReader(command, behavior, isExecuteAsync))
                 {
-                    if (reader.Read())
+                    if (await Read(reader, isExecuteAsync))
                     {
                         using (TextReader textReader = await reader.GetFieldValueAsync<TextReader>(1))
                         {
@@ -124,8 +124,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(GetCommandBehaviours))]
-        public static void GetFieldValue_OfXmlReader(CommandBehavior behavior)
+        [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
+        public static async void GetFieldValue_OfXmlReader(CommandBehavior behavior, bool isExecuteAsync)
         {
             const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
             string connectionString = SetConnectionStringPacketSize(DataTestUtility.TCPConnectionString, PacketSize);
@@ -138,9 +138,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (SqlCommand command = new SqlCommand(query, connection))
             {
                 connection.Open();
-                using (SqlDataReader reader = command.ExecuteReader(behavior))
+                using (SqlDataReader reader = await ExecuteReader(command, behavior, isExecuteAsync))
                 {
-                    if (reader.Read())
+                    if (await Read(reader, isExecuteAsync))
                     {
                         using (XmlReader xmlReader = reader.GetFieldValue<XmlReader>(1))
                         {
@@ -159,8 +159,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(GetCommandBehaviours))]
-        public static void GetFieldValue_OfStream(CommandBehavior behavior)
+        [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
+        public static async void GetFieldValue_OfStream(CommandBehavior behavior, bool isExecuteAsync)
         {
             const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
             string connectionString = SetConnectionStringPacketSize(DataTestUtility.TCPConnectionString, PacketSize);
@@ -173,9 +173,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (SqlCommand command = new SqlCommand(query, connection))
             {
                 connection.Open();
-                using (SqlDataReader reader = command.ExecuteReader(behavior))
+                using (SqlDataReader reader = await ExecuteReader(command, behavior, isExecuteAsync))
                 {
-                    if (reader.Read())
+                    if (await Read(reader, isExecuteAsync))
                     {
                         using (Stream stream = reader.GetFieldValue<Stream>(1))
                         {
@@ -193,8 +193,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(GetCommandBehaviours))]
-        public static void GetFieldValue_OfTextReader(CommandBehavior behavior)
+        [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
+        public static async void GetFieldValue_OfTextReader(CommandBehavior behavior, bool isExecuteAsync)
         {
             const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
             string connectionString = SetConnectionStringPacketSize(DataTestUtility.TCPConnectionString, PacketSize);
@@ -207,9 +207,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (SqlCommand command = new SqlCommand(query, connection))
             {
                 connection.Open();
-                using (SqlDataReader reader = command.ExecuteReader(behavior))
+                using (SqlDataReader reader = await ExecuteReader(command, behavior, isExecuteAsync))
                 {
-                    if (reader.Read())
+                    if (await Read(reader, isExecuteAsync))
                     {
                         using (TextReader textReader = reader.GetFieldValue<TextReader>(1))
                         {
@@ -228,8 +228,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(GetCommandBehaviours))]
-        public static void GetStream(CommandBehavior behavior)
+        [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
+        public static async void GetStream(CommandBehavior behavior, bool isExecuteAsync)
         {
             const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
             string connectionString = SetConnectionStringPacketSize(DataTestUtility.TCPConnectionString, PacketSize);
@@ -242,9 +242,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (SqlCommand command = new SqlCommand(query, connection))
             {
                 connection.Open();
-                using (SqlDataReader reader = command.ExecuteReader(behavior))
+                using (SqlDataReader reader = await ExecuteReader(command, behavior, isExecuteAsync))
                 {
-                    if (reader.Read())
+                    if (await Read(reader, isExecuteAsync))
                     {
                         using (MemoryStream buffer = new MemoryStream(originalData.Length))
                         using (Stream stream = reader.GetStream(1))
@@ -265,8 +265,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(GetCommandBehaviours))]
-        public static void GetXmlReader(CommandBehavior behavior)
+        [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
+        public static async void GetXmlReader(CommandBehavior behavior, bool isExecuteAsync)
         {
             const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
             string connectionString = SetConnectionStringPacketSize(DataTestUtility.TCPConnectionString, PacketSize);
@@ -279,9 +279,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (SqlCommand command = new SqlCommand(query, connection))
             {
                 connection.Open();
-                using (SqlDataReader reader = command.ExecuteReader(behavior))
+                using (SqlDataReader reader = await ExecuteReader(command, behavior, isExecuteAsync))
                 {
-                    if (reader.Read())
+                    if (await Read(reader, isExecuteAsync))
                     {
                         using (XmlReader xmlReader = reader.GetXmlReader(1))
                         {
@@ -300,8 +300,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [SkipOnTargetFramework(TargetFrameworkMonikers.NetFramework)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(GetCommandBehaviours))]
-        public static void GetTextReader(CommandBehavior behavior)
+        [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
+        public static async void GetTextReader(CommandBehavior behavior, bool isExecuteAsync)
         {
             const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
             string connectionString = SetConnectionStringPacketSize(DataTestUtility.TCPConnectionString, PacketSize);
@@ -314,9 +314,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             using (SqlCommand command = new SqlCommand(query, connection))
             {
                 connection.Open();
-                using (SqlDataReader reader = command.ExecuteReader(behavior))
+                using (SqlDataReader reader = await ExecuteReader(command, behavior, isExecuteAsync))
                 {
-                    if (reader.Read())
+                    if (await Read(reader, isExecuteAsync))
                     {
                         using (TextReader textReader = reader.GetTextReader(1))
                         {
@@ -407,7 +407,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
                         using (TextReader textReader = GetValue<TextReader>(reader, 1, accessorType))
                         {
-                            Assert.Equal(textReader.ReadToEnd(),  string.Empty);
+                            Assert.Equal(textReader.ReadToEnd(), string.Empty);
                         }
 
                         using (Stream stream = GetValue<Stream>(reader, 2, accessorType))
@@ -420,6 +420,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         }
 
+        private static async Task<SqlDataReader> ExecuteReader(SqlCommand command, CommandBehavior behavior, bool isExecuteAsync)
+            => isExecuteAsync ? await command.ExecuteReaderAsync(behavior) : command.ExecuteReader(behavior);
+
+        private static async Task<bool> Read(SqlDataReader reader, bool isExecuteAsync)
+            => isExecuteAsync ? await reader.ReadAsync() : reader.Read();
+
         public static IEnumerable<object[]> GetCommandBehaviourAndAccessorTypes()
         {
             foreach (CommandBehavior behavior in new CommandBehavior[] { CommandBehavior.Default, CommandBehavior.SequentialAccess })
@@ -431,10 +437,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public static IEnumerable<object[]> GetCommandBehaviours()
+        public static IEnumerable<object[]> GetCommandBehavioursAndIsAsync()
         {
-            yield return new object[] { CommandBehavior.Default };
-            yield return new object[] { CommandBehavior.SequentialAccess };
+            foreach (CommandBehavior behavior in new CommandBehavior[] { CommandBehavior.Default, CommandBehavior.SequentialAccess })
+            {
+                yield return new object[] { behavior, true };
+                yield return new object[] { behavior, false };
+            }
         }
 
         public enum AccessorType
