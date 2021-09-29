@@ -11,7 +11,9 @@ namespace Microsoft.Data.SqlClient
 {
     internal static class AssemblyRef
     {
-        internal const string MicrosoftVSDesigner = "Microsoft.VSDesigner, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
+        // NOTE: The current Microsoft.VSDesigner editor attributes are implemented for System.Data.SqlClient, and are not publicly available.
+        // New attributes that are designed to work with Microsoft.Data.SqlClient and are publicly documented should be included in future.
+        //internal const string MicrosoftVSDesigner = "Microsoft.VSDesigner, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
         internal const string SystemDrawing = "System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a";
         internal const string EcmaPublicKey = "b77a5c561934e089";
         internal const string EcmaPublicKeyFull = "00000000000000000400000000000000";
