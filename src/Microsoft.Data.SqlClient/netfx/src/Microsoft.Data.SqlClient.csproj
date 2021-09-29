@@ -558,8 +558,11 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>$(ResxFileName).resx</DependentUpon>
     </Compile>
-    <Compile Include="Resources\$(ResxFileName)Helper.cs" />
+    <Compile Include="..\..\src\Resources\StringsHelper.cs" >
+      <Link>Resources\StringsHelper.cs</Link>
+    </Compile>
     <EmbeddedResource Include="Resources\$(ResxFileName).resx">
+      <LogicalName>Microsoft.Data.SqlClient.Resources.Strings.resources</LogicalName>
       <CustomToolNamespace>System</CustomToolNamespace>
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>$(ResxFileName).Designer.cs</LastGenOutput>
