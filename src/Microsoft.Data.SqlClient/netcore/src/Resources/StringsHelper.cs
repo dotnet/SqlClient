@@ -2,33 +2,13 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System.Globalization;
-using System.Resources;
+using System;
 using System.Runtime.CompilerServices;
-using System.Threading;
 
-namespace System
+namespace Microsoft.Data
 {
     internal partial class StringsHelper : Strings
     {
-        private static StringsHelper s_loader = null;
-        private readonly ResourceManager _resources;
-
-        internal StringsHelper()
-        {
-            _resources = new ResourceManager("Microsoft.Data.SqlClient.Resources.Strings", GetType().Assembly);
-        }
-
-        private static StringsHelper GetLoader()
-        {
-            if (s_loader == null)
-            {
-                StringsHelper sr = new();
-                Interlocked.CompareExchange(ref s_loader, sr, null);
-            }
-            return s_loader;
-        }
-
         // This method is used to decide if we need to append the exception message parameters to the message when calling Strings.Format. 
         // by default it returns false.
         // Native code generators can replace the value this returns based on user input at the time of native code generation.
@@ -39,42 +19,6 @@ namespace System
         private static bool UsingResourceKeys()
         {
             return false;
-        }
-
-        public static string GetResourceString(string res)
-        {
-            StringsHelper sys = GetLoader();
-            if (sys == null)
-                return null;
-
-            // If "res" is a resource id, temp will not be null, "res" will contain the retrieved resource string.
-            // If "res" is not a resource id, temp will be null.
-            string temp = sys._resources.GetString(res, Culture);
-            if (temp != null)
-                res = temp;
-
-            return res;
-        }
-
-        public static string GetString(string res, params object[] args)
-        {
-            res = GetResourceString(res);
-            if (args != null && args.Length > 0)
-            {
-                for (int i = 0; i < args.Length; i++)
-                {
-                    string value = args[i] as string;
-                    if (value != null && value.Length > 1024)
-                    {
-                        args[i] = value.Substring(0, 1024 - 3) + "...";
-                    }
-                }
-                return string.Format(CultureInfo.CurrentCulture, res, args);
-            }
-            else
-            {
-                return res;
-            }
         }
 
         public static string Format(string resourceFormat, params object[] args)
