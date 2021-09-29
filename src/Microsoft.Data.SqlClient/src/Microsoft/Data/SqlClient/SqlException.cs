@@ -20,7 +20,7 @@ namespace Microsoft.Data.SqlClient
         private const string RoutingDestinationKey = "RoutingDestination";
         private const int SqlExceptionHResult = unchecked((int)0x80131904);
 
-        private SqlErrorCollection _errors;
+        private readonly SqlErrorCollection _errors;
 #if NETFRAMEWORK
         [System.Runtime.Serialization.OptionalFieldAttribute(VersionAdded = 4)]
 #endif
@@ -73,76 +73,31 @@ namespace Microsoft.Data.SqlClient
 #if NETFRAMEWORK
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
 #endif
-        public SqlErrorCollection Errors
-        {
-            get
-            {
-                if (_errors == null)
-                {
-                    _errors = new SqlErrorCollection();
-                }
-                return _errors;
-            }
-        }
+        public SqlErrorCollection Errors => _errors ?? new SqlErrorCollection();
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/ClientConnectionId/*' />
-        public Guid ClientConnectionId
-        {
-            get
-            {
-                return _clientConnectionId;
-            }
-        }
-
-#if NETFRAMEWORK
-        /*virtual protected*/
-        private bool ShouldSerializeErrors()
-        { // MDAC 65548
-            return ((null != _errors) && (0 < _errors.Count));
-        }
-#endif
+        public Guid ClientConnectionId => _clientConnectionId;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Class/*' />
-        public byte Class
-        {
-            get { return Errors.Count > 0 ? Errors[0].Class : default; }
-        }
+        public byte Class => Errors.Count > 0 ? Errors[0].Class : default;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/LineNumber/*' />
-        public int LineNumber
-        {
-            get { return Errors.Count > 0 ? Errors[0].LineNumber : default; }
-        }
+        public int LineNumber => Errors.Count > 0 ? Errors[0].LineNumber : default;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Number/*' />
-        public int Number
-        {
-            get { return Errors.Count > 0 ? Errors[0].Number : default; }
-        }
+        public int Number => Errors.Count > 0 ? Errors[0].Number : default;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Procedure/*' />
-        public string Procedure
-        {
-            get { return Errors.Count > 0 ? Errors[0].Procedure : default; }
-        }
+        public string Procedure => Errors.Count > 0 ? Errors[0].Procedure : default;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Server/*' />
-        public string Server
-        {
-            get { return Errors.Count > 0 ? Errors[0].Server : default; }
-        }
+        public string Server => Errors.Count > 0 ? Errors[0].Server : default;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/State/*' />
-        public byte State
-        {
-            get { return Errors.Count > 0 ? Errors[0].State : default; }
-        }
+        public byte State => Errors.Count > 0 ? Errors[0].State : default;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Source/*' />
-        override public string Source
-        {
-            get { return TdsEnums.SQL_PROVIDER_NAME; }
-        }
+        override public string Source => TdsEnums.SQL_PROVIDER_NAME;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/ToString/*' />
         public override string ToString()
