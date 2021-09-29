@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net472;netcoreapp2.1</TargetFrameworks>
+    <TargetFrameworks>net472;netcoreapp3.1</TargetFrameworks>
     <ExcludeFromSourceBuild>true</ExcludeFromSourceBuild>
     <PackageType>MSBuildSdk</PackageType>
     <IncludeBuildOutput>false</IncludeBuildOutput>
