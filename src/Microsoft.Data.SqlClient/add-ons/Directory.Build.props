@@ -18,8 +18,7 @@
   <PropertyGroup>
     <TargetNetFxVersion Condition="'$(TargetNetFxVersion)' == ''">net461</TargetNetFxVersion>
     <TargetNetStandardVersion Condition="'$(TargetNetStandardVersion)' == ''">netstandard2.0</TargetNetStandardVersion>
-    <TargetNetCoreVersion Condition="'$(ReferenceType)' == 'NetStandard' AND $(TargetNetStandardVersion)=='netstandard2.1'">netcoreapp3.1</TargetNetCoreVersion>
-    <TargetNetCoreVersion Condition="'$(TargetNetCoreVersion)' == ''">netcoreapp2.1</TargetNetCoreVersion>
+    <TargetNetCoreVersion Condition="'$(TargetNetCoreVersion)' == ''">netcoreapp3.1</TargetNetCoreVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -37,8 +36,7 @@
     <Otherwise>
       <PropertyGroup>
         <TargetFrameworks Condition="'$(TestTargetOS)' == 'Windowsnetstandard' OR '$(TestTargetOS)' == 'Unixnetstandard'">netstandard2.0;netstandard2.1</TargetFrameworks>
-        <TargetFrameworks Condition="'$(TestTargetOS)' == 'Windowsnetcoreapp' OR '$(TestTargetOS)' == 'Unixnetcoreapp'">netcoreapp2.1</TargetFrameworks>
-        <TargetFrameworks Condition="('$(TestTargetOS)' == 'Windowsnetcoreapp' OR '$(TestTargetOS)' == 'Unixnetcoreapp') AND ($(ReferenceType)=='NetStandard' AND $(TargetNetStandardVersion)=='netstandard2.1')">netcoreapp3.1</TargetFrameworks>
+        <TargetFrameworks Condition="'$(TestTargetOS)' == 'Windowsnetcoreapp' OR '$(TestTargetOS)' == 'Unixnetcoreapp'">netcoreapp3.1</TargetFrameworks>
         <TargetFrameworks Condition="'$(TestTargetOS)' == 'Windowsnetfx'">net461</TargetFrameworks>
       </PropertyGroup>
     </Otherwise>
