@@ -267,7 +267,7 @@ namespace Microsoft.Data.SqlClient
         //
         internal static Exception CannotGetDTCAddress()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_CannotGetDTCAddress));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_CannotGetDTCAddress));
         }
 
         internal static Exception InvalidInternalPacketSize(string str)
@@ -276,135 +276,135 @@ namespace Microsoft.Data.SqlClient
         }
         internal static Exception InvalidPacketSize()
         {
-            return ADP.ArgumentOutOfRange(System.StringsHelper.GetString(Strings.SQL_InvalidTDSPacketSize));
+            return ADP.ArgumentOutOfRange(StringsHelper.GetString(Strings.SQL_InvalidTDSPacketSize));
         }
         internal static Exception InvalidPacketSizeValue()
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_InvalidPacketSizeValue));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_InvalidPacketSizeValue));
         }
         internal static Exception InvalidSSPIPacketSize()
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_InvalidSSPIPacketSize));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_InvalidSSPIPacketSize));
         }
         internal static Exception AuthenticationAndIntegratedSecurity()
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_AuthenticationAndIntegratedSecurity));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_AuthenticationAndIntegratedSecurity));
         }
         internal static Exception IntegratedWithPassword()
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_IntegratedWithPassword));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_IntegratedWithPassword));
         }
         internal static Exception InteractiveWithPassword()
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_InteractiveWithPassword));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_InteractiveWithPassword));
         }
         internal static Exception DeviceFlowWithUsernamePassword()
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_DeviceFlowWithUsernamePassword));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_DeviceFlowWithUsernamePassword));
         }
         internal static Exception NonInteractiveWithPassword(string authenticationMode)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_NonInteractiveWithPassword, authenticationMode));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_NonInteractiveWithPassword, authenticationMode));
         }
         static internal Exception SettingIntegratedWithCredential()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_SettingIntegratedWithCredential));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SettingIntegratedWithCredential));
         }
         static internal Exception SettingInteractiveWithCredential()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_SettingInteractiveWithCredential));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SettingInteractiveWithCredential));
         }
         static internal Exception SettingDeviceFlowWithCredential()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_SettingDeviceFlowWithCredential));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SettingDeviceFlowWithCredential));
         }
         static internal Exception SettingNonInteractiveWithCredential(string authenticationMode)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_SettingNonInteractiveWithCredential, authenticationMode));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SettingNonInteractiveWithCredential, authenticationMode));
         }
         static internal Exception SettingCredentialWithIntegratedArgument()
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_SettingCredentialWithIntegrated));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_SettingCredentialWithIntegrated));
         }
         static internal Exception SettingCredentialWithInteractiveArgument()
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_SettingCredentialWithInteractive));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_SettingCredentialWithInteractive));
         }
         static internal Exception SettingCredentialWithDeviceFlowArgument()
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_SettingCredentialWithDeviceFlow));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_SettingCredentialWithDeviceFlow));
         }
         static internal Exception SettingCredentialWithNonInteractiveArgument(string authenticationMode)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_SettingCredentialWithNonInteractive, authenticationMode));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_SettingCredentialWithNonInteractive, authenticationMode));
         }
         static internal Exception SettingCredentialWithIntegratedInvalid()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_SettingCredentialWithIntegrated));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SettingCredentialWithIntegrated));
         }
         static internal Exception SettingCredentialWithInteractiveInvalid()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_SettingCredentialWithInteractive));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SettingCredentialWithInteractive));
         }
         static internal Exception SettingCredentialWithDeviceFlowInvalid()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_SettingCredentialWithDeviceFlow));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SettingCredentialWithDeviceFlow));
         }
         static internal Exception SettingCredentialWithNonInteractiveInvalid(string authenticationMode)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_SettingCredentialWithNonInteractive, authenticationMode));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SettingCredentialWithNonInteractive, authenticationMode));
         }
         internal static Exception NullEmptyTransactionName()
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_NullEmptyTransactionName));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_NullEmptyTransactionName));
         }
         internal static Exception UserInstanceFailoverNotCompatible()
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_UserInstanceFailoverNotCompatible));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_UserInstanceFailoverNotCompatible));
         }
         internal static Exception CredentialsNotProvided(SqlAuthenticationMethod auth)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_CredentialsNotProvided, DbConnectionStringBuilderUtil.AuthenticationTypeToString(auth)));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_CredentialsNotProvided, DbConnectionStringBuilderUtil.AuthenticationTypeToString(auth)));
         }
         internal static Exception ParsingErrorLibraryType(ParsingErrorState state, int libraryType)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_ParsingErrorAuthLibraryType, ((int)state).ToString(CultureInfo.InvariantCulture), libraryType));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ParsingErrorAuthLibraryType, ((int)state).ToString(CultureInfo.InvariantCulture), libraryType));
         }
         internal static Exception InvalidSQLServerVersionUnknown()
         {
-            return ADP.DataAdapter(System.StringsHelper.GetString(Strings.SQL_InvalidSQLServerVersionUnknown));
+            return ADP.DataAdapter(StringsHelper.GetString(Strings.SQL_InvalidSQLServerVersionUnknown));
         }
         internal static Exception SynchronousCallMayNotPend()
         {
-            return new Exception(System.StringsHelper.GetString(Strings.Sql_InternalError));
+            return new Exception(StringsHelper.GetString(Strings.Sql_InternalError));
         }
         internal static Exception ConnectionLockedForBcpEvent()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_ConnectionLockedForBcpEvent));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ConnectionLockedForBcpEvent));
         }
         internal static Exception InstanceFailure()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_InstanceFailure));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_InstanceFailure));
         }
         internal static Exception ChangePasswordArgumentMissing(string argumentName)
         {
-            return ADP.ArgumentNull(System.StringsHelper.GetString(Strings.SQL_ChangePasswordArgumentMissing, argumentName));
+            return ADP.ArgumentNull(StringsHelper.GetString(Strings.SQL_ChangePasswordArgumentMissing, argumentName));
         }
         internal static Exception ChangePasswordConflictsWithSSPI()
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_ChangePasswordConflictsWithSSPI));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_ChangePasswordConflictsWithSSPI));
         }
         internal static Exception ChangePasswordRequiresYukon()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_ChangePasswordRequiresYukon));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ChangePasswordRequiresYukon));
         }
         internal static Exception ChangePasswordUseOfUnallowedKey(string key)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_ChangePasswordUseOfUnallowedKey, key));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ChangePasswordUseOfUnallowedKey, key));
         }
         internal static Exception GlobalizationInvariantModeNotSupported()
         {
-            return ADP.NotSupported(System.StringsHelper.GetString(Strings.SQL_GlobalizationInvariantModeNotSupported));
+            return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_GlobalizationInvariantModeNotSupported));
         }
 
         //
@@ -412,92 +412,92 @@ namespace Microsoft.Data.SqlClient
         //
         internal static Exception GlobalTransactionsNotEnabled()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.GT_Disabled));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.GT_Disabled));
         }
         internal static Exception UnknownSysTxIsolationLevel(System.Transactions.IsolationLevel isolationLevel)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_UnknownSysTxIsolationLevel, isolationLevel.ToString()));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_UnknownSysTxIsolationLevel, isolationLevel.ToString()));
         }
 
 
         internal static Exception InvalidPartnerConfiguration(string server, string database)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_InvalidPartnerConfiguration, server, database));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_InvalidPartnerConfiguration, server, database));
         }
 
         internal static Exception BatchedUpdateColumnEncryptionSettingMismatch()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.TCE_BatchedUpdateColumnEncryptionSettingMismatch, "SqlCommandColumnEncryptionSetting", "SelectCommand", "InsertCommand", "UpdateCommand", "DeleteCommand"));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_BatchedUpdateColumnEncryptionSettingMismatch, "SqlCommandColumnEncryptionSetting", "SelectCommand", "InsertCommand", "UpdateCommand", "DeleteCommand"));
         }
         internal static Exception MARSUnsupportedOnConnection()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_MarsUnsupportedOnConnection));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_MarsUnsupportedOnConnection));
         }
 
         internal static Exception CannotModifyPropertyAsyncOperationInProgress([CallerMemberName] string property = "")
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_CannotModifyPropertyAsyncOperationInProgress, property));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_CannotModifyPropertyAsyncOperationInProgress, property));
         }
         internal static Exception NonLocalSSEInstance()
         {
-            return ADP.NotSupported(System.StringsHelper.GetString(Strings.SQL_NonLocalSSEInstance));
+            return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_NonLocalSSEInstance));
         }
 
         // SQL.ActiveDirectoryAuth
         //
         internal static Exception UnsupportedAuthentication(string authentication)
         {
-            return ADP.NotSupported(System.StringsHelper.GetString(Strings.SQL_UnsupportedAuthentication, authentication));
+            return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_UnsupportedAuthentication, authentication));
         }
 
         internal static Exception UnsupportedSqlAuthenticationMethod(SqlAuthenticationMethod authentication)
         {
-            return ADP.NotSupported(System.StringsHelper.GetString(Strings.SQL_UnsupportedSqlAuthenticationMethod, authentication));
+            return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_UnsupportedSqlAuthenticationMethod, authentication));
         }
 
         internal static Exception UnsupportedAuthenticationSpecified(SqlAuthenticationMethod authentication)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_UnsupportedAuthenticationSpecified, authentication));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_UnsupportedAuthenticationSpecified, authentication));
         }
 
         internal static Exception CannotCreateAuthProvider(string authentication, string type, Exception e)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_CannotCreateAuthProvider, authentication, type), e);
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_CannotCreateAuthProvider, authentication, type), e);
         }
 
         internal static Exception CannotCreateSqlAuthInitializer(string type, Exception e)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_CannotCreateAuthInitializer, type), e);
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_CannotCreateAuthInitializer, type), e);
         }
 
         internal static Exception CannotInitializeAuthProvider(string type, Exception e)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_CannotInitializeAuthProvider, type), e);
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_CannotInitializeAuthProvider, type), e);
         }
 
         internal static Exception UnsupportedAuthenticationByProvider(string authentication, string type)
         {
-            return ADP.NotSupported(System.StringsHelper.GetString(Strings.SQL_UnsupportedAuthenticationByProvider, type, authentication));
+            return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_UnsupportedAuthenticationByProvider, type, authentication));
         }
 
         internal static Exception CannotFindAuthProvider(string authentication)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_CannotFindAuthProvider, authentication));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_CannotFindAuthProvider, authentication));
         }
 
         internal static Exception CannotGetAuthProviderConfig(Exception e)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_CannotGetAuthProviderConfig), e);
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_CannotGetAuthProviderConfig), e);
         }
 
         internal static Exception ParameterCannotBeEmpty(string paramName)
         {
-            return ADP.ArgumentNull(System.StringsHelper.GetString(Strings.SQL_ParameterCannotBeEmpty, paramName));
+            return ADP.ArgumentNull(StringsHelper.GetString(Strings.SQL_ParameterCannotBeEmpty, paramName));
         }
 
         internal static Exception ParameterDirectionInvalidForOptimizedBinding(string paramName)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_ParameterDirectionInvalidForOptimizedBinding, paramName));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ParameterDirectionInvalidForOptimizedBinding, paramName));
         }
 
         internal static Exception ActiveDirectoryInteractiveTimeout()
@@ -517,7 +517,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static ArgumentOutOfRangeException NotSupportedEnumerationValue(Type type, int value)
         {
-            return ADP.ArgumentOutOfRange(System.StringsHelper.GetString(Strings.SQL_NotSupportedEnumerationValue, type.Name, value.ToString(System.Globalization.CultureInfo.InvariantCulture)), type.Name);
+            return ADP.ArgumentOutOfRange(StringsHelper.GetString(Strings.SQL_NotSupportedEnumerationValue, type.Name, value.ToString(System.Globalization.CultureInfo.InvariantCulture)), type.Name);
         }
 
         internal static ArgumentOutOfRangeException NotSupportedCommandType(CommandType value)
@@ -563,23 +563,23 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception OperationCancelled()
         {
-            Exception exception = ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_OperationCancelled));
+            Exception exception = ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_OperationCancelled));
             return exception;
         }
 
         internal static Exception PendingBeginXXXExists()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_PendingBeginXXXExists));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_PendingBeginXXXExists));
         }
 
         internal static ArgumentOutOfRangeException InvalidSqlDependencyTimeout(string param)
         {
-            return ADP.ArgumentOutOfRange(System.StringsHelper.GetString(Strings.SqlDependency_InvalidTimeout), param);
+            return ADP.ArgumentOutOfRange(StringsHelper.GetString(Strings.SqlDependency_InvalidTimeout), param);
         }
 
         internal static Exception NonXmlResult()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_NonXmlResult));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_NonXmlResult));
         }
 
         //
@@ -587,27 +587,27 @@ namespace Microsoft.Data.SqlClient
         //
         internal static Exception InvalidUdt3PartNameFormat()
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_InvalidUdt3PartNameFormat));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_InvalidUdt3PartNameFormat));
         }
         internal static Exception InvalidParameterTypeNameFormat()
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_InvalidParameterTypeNameFormat));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_InvalidParameterTypeNameFormat));
         }
         internal static Exception InvalidParameterNameLength(string value)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_InvalidParameterNameLength, value));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_InvalidParameterNameLength, value));
         }
         internal static Exception PrecisionValueOutOfRange(byte precision)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_PrecisionValueOutOfRange, precision.ToString(CultureInfo.InvariantCulture)));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_PrecisionValueOutOfRange, precision.ToString(CultureInfo.InvariantCulture)));
         }
         internal static Exception ScaleValueOutOfRange(byte scale)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_ScaleValueOutOfRange, scale.ToString(CultureInfo.InvariantCulture)));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_ScaleValueOutOfRange, scale.ToString(CultureInfo.InvariantCulture)));
         }
         internal static Exception TimeScaleValueOutOfRange(byte scale)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_TimeScaleValueOutOfRange, scale.ToString(CultureInfo.InvariantCulture)));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_TimeScaleValueOutOfRange, scale.ToString(CultureInfo.InvariantCulture)));
         }
         internal static Exception InvalidSqlDbType(SqlDbType value)
         {
@@ -615,41 +615,41 @@ namespace Microsoft.Data.SqlClient
         }
         internal static Exception UnsupportedTVPOutputParameter(ParameterDirection direction, string paramName)
         {
-            return ADP.NotSupported(System.StringsHelper.GetString(Strings.SqlParameter_UnsupportedTVPOutputParameter,
+            return ADP.NotSupported(StringsHelper.GetString(Strings.SqlParameter_UnsupportedTVPOutputParameter,
                         direction.ToString(), paramName));
         }
         internal static Exception DBNullNotSupportedForTVPValues(string paramName)
         {
-            return ADP.NotSupported(System.StringsHelper.GetString(Strings.SqlParameter_DBNullNotSupportedForTVP, paramName));
+            return ADP.NotSupported(StringsHelper.GetString(Strings.SqlParameter_DBNullNotSupportedForTVP, paramName));
         }
         internal static Exception UnexpectedTypeNameForNonStructParams(string paramName)
         {
-            return ADP.NotSupported(System.StringsHelper.GetString(Strings.SqlParameter_UnexpectedTypeNameForNonStruct, paramName));
+            return ADP.NotSupported(StringsHelper.GetString(Strings.SqlParameter_UnexpectedTypeNameForNonStruct, paramName));
         }
         internal static Exception ParameterInvalidVariant(string paramName)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_ParameterInvalidVariant, paramName));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ParameterInvalidVariant, paramName));
         }
 
         internal static Exception MustSetTypeNameForParam(string paramType, string paramName)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_ParameterTypeNameRequired, paramType, paramName));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_ParameterTypeNameRequired, paramType, paramName));
         }
         internal static Exception NullSchemaTableDataTypeNotSupported(string columnName)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.NullSchemaTableDataTypeNotSupported, columnName));
+            return ADP.Argument(StringsHelper.GetString(Strings.NullSchemaTableDataTypeNotSupported, columnName));
         }
         internal static Exception InvalidSchemaTableOrdinals()
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.InvalidSchemaTableOrdinals));
+            return ADP.Argument(StringsHelper.GetString(Strings.InvalidSchemaTableOrdinals));
         }
         internal static Exception EnumeratedRecordMetaDataChanged(string fieldName, int recordNumber)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_EnumeratedRecordMetaDataChanged, fieldName, recordNumber));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_EnumeratedRecordMetaDataChanged, fieldName, recordNumber));
         }
         internal static Exception EnumeratedRecordFieldCountChanged(int recordNumber)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_EnumeratedRecordFieldCountChanged, recordNumber));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_EnumeratedRecordFieldCountChanged, recordNumber));
         }
 
         //
@@ -661,59 +661,59 @@ namespace Microsoft.Data.SqlClient
         //
         internal static Exception InvalidTDSVersion()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_InvalidTDSVersion));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_InvalidTDSVersion));
         }
         internal static Exception ParsingError()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_ParsingError));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ParsingError));
         }
         internal static Exception ParsingError(ParsingErrorState state)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_ParsingErrorWithState, ((int)state).ToString(CultureInfo.InvariantCulture)));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ParsingErrorWithState, ((int)state).ToString(CultureInfo.InvariantCulture)));
         }
         internal static Exception ParsingError(ParsingErrorState state, Exception innerException)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_ParsingErrorWithState, ((int)state).ToString(CultureInfo.InvariantCulture)), innerException);
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ParsingErrorWithState, ((int)state).ToString(CultureInfo.InvariantCulture)), innerException);
         }
         internal static Exception ParsingErrorValue(ParsingErrorState state, int value)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_ParsingErrorValue, ((int)state).ToString(CultureInfo.InvariantCulture), value));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ParsingErrorValue, ((int)state).ToString(CultureInfo.InvariantCulture), value));
         }
         internal static Exception ParsingErrorFeatureId(ParsingErrorState state, int featureId)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_ParsingErrorFeatureId, ((int)state).ToString(CultureInfo.InvariantCulture), featureId));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ParsingErrorFeatureId, ((int)state).ToString(CultureInfo.InvariantCulture), featureId));
         }
         internal static Exception ParsingErrorToken(ParsingErrorState state, int token)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_ParsingErrorToken, ((int)state).ToString(CultureInfo.InvariantCulture), token));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ParsingErrorToken, ((int)state).ToString(CultureInfo.InvariantCulture), token));
         }
         internal static Exception ParsingErrorLength(ParsingErrorState state, int length)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_ParsingErrorLength, ((int)state).ToString(CultureInfo.InvariantCulture), length));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ParsingErrorLength, ((int)state).ToString(CultureInfo.InvariantCulture), length));
         }
         internal static Exception ParsingErrorStatus(ParsingErrorState state, int status)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_ParsingErrorStatus, ((int)state).ToString(CultureInfo.InvariantCulture), status));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ParsingErrorStatus, ((int)state).ToString(CultureInfo.InvariantCulture), status));
         }
         internal static Exception ParsingErrorOffset(ParsingErrorState state, int offset)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_ParsingErrorOffset, ((int)state).ToString(CultureInfo.InvariantCulture), offset));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ParsingErrorOffset, ((int)state).ToString(CultureInfo.InvariantCulture), offset));
         }
         internal static Exception MoneyOverflow(string moneyValue)
         {
-            return ADP.Overflow(System.StringsHelper.GetString(Strings.SQL_MoneyOverflow, moneyValue));
+            return ADP.Overflow(StringsHelper.GetString(Strings.SQL_MoneyOverflow, moneyValue));
         }
         internal static Exception SmallDateTimeOverflow(string datetime)
         {
-            return ADP.Overflow(System.StringsHelper.GetString(Strings.SQL_SmallDateTimeOverflow, datetime));
+            return ADP.Overflow(StringsHelper.GetString(Strings.SQL_SmallDateTimeOverflow, datetime));
         }
         internal static Exception SNIPacketAllocationFailure()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_SNIPacketAllocationFailure));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_SNIPacketAllocationFailure));
         }
         internal static Exception TimeOverflow(string time)
         {
-            return ADP.Overflow(System.StringsHelper.GetString(Strings.SQL_TimeOverflow, time));
+            return ADP.Overflow(StringsHelper.GetString(Strings.SQL_TimeOverflow, time));
         }
 
         //
@@ -721,47 +721,47 @@ namespace Microsoft.Data.SqlClient
         //
         internal static Exception InvalidRead()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_InvalidRead));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_InvalidRead));
         }
 
         internal static Exception NonBlobColumn(string columnName)
         {
-            return ADP.InvalidCast(System.StringsHelper.GetString(Strings.SQL_NonBlobColumn, columnName));
+            return ADP.InvalidCast(StringsHelper.GetString(Strings.SQL_NonBlobColumn, columnName));
         }
 
         internal static Exception NonCharColumn(string columnName)
         {
-            return ADP.InvalidCast(System.StringsHelper.GetString(Strings.SQL_NonCharColumn, columnName));
+            return ADP.InvalidCast(StringsHelper.GetString(Strings.SQL_NonCharColumn, columnName));
         }
 
         internal static Exception StreamNotSupportOnColumnType(string columnName)
         {
-            return ADP.InvalidCast(System.StringsHelper.GetString(Strings.SQL_StreamNotSupportOnColumnType, columnName));
+            return ADP.InvalidCast(StringsHelper.GetString(Strings.SQL_StreamNotSupportOnColumnType, columnName));
         }
 
         internal static Exception StreamNotSupportOnEncryptedColumn(string columnName)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.TCE_StreamNotSupportOnEncryptedColumn, columnName, "Stream"));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_StreamNotSupportOnEncryptedColumn, columnName, "Stream"));
         }
 
         internal static Exception SequentialAccessNotSupportedOnEncryptedColumn(string columnName)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.TCE_SequentialAccessNotSupportedOnEncryptedColumn, columnName, "CommandBehavior=SequentialAccess"));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_SequentialAccessNotSupportedOnEncryptedColumn, columnName, "CommandBehavior=SequentialAccess"));
         }
 
         internal static Exception TextReaderNotSupportOnColumnType(string columnName)
         {
-            return ADP.InvalidCast(System.StringsHelper.GetString(Strings.SQL_TextReaderNotSupportOnColumnType, columnName));
+            return ADP.InvalidCast(StringsHelper.GetString(Strings.SQL_TextReaderNotSupportOnColumnType, columnName));
         }
 
         internal static Exception XmlReaderNotSupportOnColumnType(string columnName)
         {
-            return ADP.InvalidCast(System.StringsHelper.GetString(Strings.SQL_XmlReaderNotSupportOnColumnType, columnName));
+            return ADP.InvalidCast(StringsHelper.GetString(Strings.SQL_XmlReaderNotSupportOnColumnType, columnName));
         }
 
         internal static Exception UDTUnexpectedResult(string exceptionText)
         {
-            return ADP.TypeLoad(System.StringsHelper.GetString(Strings.SQLUDT_Unexpected, exceptionText));
+            return ADP.TypeLoad(StringsHelper.GetString(Strings.SQLUDT_Unexpected, exceptionText));
         }
 
         internal static Exception DateTimeOverflow()
@@ -774,42 +774,42 @@ namespace Microsoft.Data.SqlClient
         //
         internal static Exception SqlCommandHasExistingSqlNotificationRequest()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQLNotify_AlreadyHasCommand));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQLNotify_AlreadyHasCommand));
         }
 
         internal static Exception SqlDepDefaultOptionsButNoStart()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SqlDependency_DefaultOptionsButNoStart));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SqlDependency_DefaultOptionsButNoStart));
         }
 
         internal static Exception SqlDependencyDatabaseBrokerDisabled()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SqlDependency_DatabaseBrokerDisabled));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SqlDependency_DatabaseBrokerDisabled));
         }
 
         internal static Exception SqlDependencyEventNoDuplicate()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SqlDependency_EventNoDuplicate));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SqlDependency_EventNoDuplicate));
         }
 
         internal static Exception SqlDependencyDuplicateStart()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SqlDependency_DuplicateStart));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SqlDependency_DuplicateStart));
         }
 
         internal static Exception SqlDependencyIdMismatch()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SqlDependency_IdMismatch));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SqlDependency_IdMismatch));
         }
 
         internal static Exception SqlDependencyNoMatchingServerStart()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SqlDependency_NoMatchingServerStart));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SqlDependency_NoMatchingServerStart));
         }
 
         internal static Exception SqlDependencyNoMatchingServerDatabaseStart()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SqlDependency_NoMatchingServerDatabaseStart));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SqlDependency_NoMatchingServerDatabaseStart));
         }
 
         //
@@ -824,7 +824,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static TransactionPromotionException PromotionFailed(Exception inner)
         {
-            TransactionPromotionException e = new TransactionPromotionException(System.StringsHelper.GetString(Strings.SqlDelegatedTransaction_PromotionFailed), inner);
+            TransactionPromotionException e = new TransactionPromotionException(StringsHelper.GetString(Strings.SqlDelegatedTransaction_PromotionFailed), inner);
             ADP.TraceExceptionAsReturnValue(e);
             return e;
         }
@@ -835,30 +835,30 @@ namespace Microsoft.Data.SqlClient
         //
         internal static Exception UnexpectedUdtTypeNameForNonUdtParams()
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQLUDT_UnexpectedUdtTypeName));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQLUDT_UnexpectedUdtTypeName));
         }
         internal static Exception MustSetUdtTypeNameForUdtParams()
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQLUDT_InvalidUdtTypeName));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQLUDT_InvalidUdtTypeName));
         }
         internal static Exception UDTInvalidSqlType(string typeName)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQLUDT_InvalidSqlType, typeName));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQLUDT_InvalidSqlType, typeName));
         }
 
         internal static Exception UDTInvalidSize(int maxSize, int maxSupportedSize)
         {
-            throw ADP.ArgumentOutOfRange(System.StringsHelper.GetString(Strings.SQLUDT_InvalidSize, maxSize, maxSupportedSize));
+            throw ADP.ArgumentOutOfRange(StringsHelper.GetString(Strings.SQLUDT_InvalidSize, maxSize, maxSupportedSize));
         }
 
         internal static Exception InvalidSqlDbTypeForConstructor(SqlDbType type)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SqlMetaData_InvalidSqlDbTypeForConstructorFormat, type.ToString()));
+            return ADP.Argument(StringsHelper.GetString(Strings.SqlMetaData_InvalidSqlDbTypeForConstructorFormat, type.ToString()));
         }
 
         internal static Exception NameTooLong(string parameterName)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SqlMetaData_NameTooLong), parameterName);
+            return ADP.Argument(StringsHelper.GetString(Strings.SqlMetaData_NameTooLong), parameterName);
         }
 
         internal static Exception InvalidSortOrder(SortOrder order)
@@ -868,40 +868,40 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception MustSpecifyBothSortOrderAndOrdinal(SortOrder order, int ordinal)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SqlMetaData_SpecifyBothSortOrderAndOrdinal, order.ToString(), ordinal));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SqlMetaData_SpecifyBothSortOrderAndOrdinal, order.ToString(), ordinal));
         }
 
         internal static Exception UnsupportedColumnTypeForSqlProvider(string columnName, string typeName)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SqlProvider_InvalidDataColumnType, columnName, typeName));
+            return ADP.Argument(StringsHelper.GetString(Strings.SqlProvider_InvalidDataColumnType, columnName, typeName));
         }
         internal static Exception InvalidColumnMaxLength(string columnName, long maxLength)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SqlProvider_InvalidDataColumnMaxLength, columnName, maxLength));
+            return ADP.Argument(StringsHelper.GetString(Strings.SqlProvider_InvalidDataColumnMaxLength, columnName, maxLength));
         }
         internal static Exception InvalidColumnPrecScale()
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SqlMisc_InvalidPrecScaleMessage));
+            return ADP.Argument(StringsHelper.GetString(Strings.SqlMisc_InvalidPrecScaleMessage));
         }
         internal static Exception NotEnoughColumnsInStructuredType()
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SqlProvider_NotEnoughColumnsInStructuredType));
+            return ADP.Argument(StringsHelper.GetString(Strings.SqlProvider_NotEnoughColumnsInStructuredType));
         }
         internal static Exception DuplicateSortOrdinal(int sortOrdinal)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SqlProvider_DuplicateSortOrdinal, sortOrdinal));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SqlProvider_DuplicateSortOrdinal, sortOrdinal));
         }
         internal static Exception MissingSortOrdinal(int sortOrdinal)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SqlProvider_MissingSortOrdinal, sortOrdinal));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SqlProvider_MissingSortOrdinal, sortOrdinal));
         }
         internal static Exception SortOrdinalGreaterThanFieldCount(int columnOrdinal, int sortOrdinal)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SqlProvider_SortOrdinalGreaterThanFieldCount, sortOrdinal, columnOrdinal));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SqlProvider_SortOrdinalGreaterThanFieldCount, sortOrdinal, columnOrdinal));
         }
         internal static Exception IEnumerableOfSqlDataRecordHasNoRows()
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.IEnumerableOfSqlDataRecordHasNoRows));
+            return ADP.Argument(StringsHelper.GetString(Strings.IEnumerableOfSqlDataRecordHasNoRows));
         }
 
 
@@ -912,11 +912,11 @@ namespace Microsoft.Data.SqlClient
         //
         internal static Exception BulkLoadMappingInaccessible()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_BulkLoadMappingInaccessible));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_BulkLoadMappingInaccessible));
         }
         internal static Exception BulkLoadMappingsNamesOrOrdinalsOnly()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_BulkLoadMappingsNamesOrOrdinalsOnly));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_BulkLoadMappingsNamesOrOrdinalsOnly));
         }
         internal static Exception BulkLoadCannotConvertValue(Type sourcetype, MetaType metatype, int ordinal, int rowNumber, bool isEncrypted, string columnName, string value, Exception e)
         {
@@ -927,16 +927,16 @@ namespace Microsoft.Data.SqlClient
             }
             if (rowNumber == -1)
             {
-                return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_BulkLoadCannotConvertValueWithoutRowNo, quotedValue, sourcetype.Name, metatype.TypeName, ordinal, columnName), e);
+                return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_BulkLoadCannotConvertValueWithoutRowNo, quotedValue, sourcetype.Name, metatype.TypeName, ordinal, columnName), e);
             }
             else
             {
-                return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_BulkLoadCannotConvertValue, quotedValue, sourcetype.Name, metatype.TypeName, ordinal, columnName, rowNumber), e);
+                return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_BulkLoadCannotConvertValue, quotedValue, sourcetype.Name, metatype.TypeName, ordinal, columnName, rowNumber), e);
             }
         }
         internal static Exception BulkLoadNonMatchingColumnMapping()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_BulkLoadNonMatchingColumnMapping));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_BulkLoadNonMatchingColumnMapping));
         }
         internal static Exception BulkLoadNonMatchingColumnName(string columnName)
         {
@@ -944,79 +944,79 @@ namespace Microsoft.Data.SqlClient
         }
         internal static Exception BulkLoadNonMatchingColumnName(string columnName, Exception e)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_BulkLoadNonMatchingColumnName, columnName), e);
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_BulkLoadNonMatchingColumnName, columnName), e);
         }
         internal static Exception BulkLoadNullEmptyColumnName(string paramName)
         {
-            return ADP.Argument(string.Format(System.StringsHelper.GetString(Strings.SQL_ParameterCannotBeEmpty), paramName));
+            return ADP.Argument(string.Format(StringsHelper.GetString(Strings.SQL_ParameterCannotBeEmpty), paramName));
         }
         internal static Exception BulkLoadUnspecifiedSortOrder()
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_BulkLoadUnspecifiedSortOrder));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_BulkLoadUnspecifiedSortOrder));
         }
         internal static Exception BulkLoadInvalidOrderHint()
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_BulkLoadInvalidOrderHint));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_BulkLoadInvalidOrderHint));
         }
         internal static Exception BulkLoadOrderHintInvalidColumn(string columnName)
         {
-            return ADP.InvalidOperation(string.Format(System.StringsHelper.GetString(Strings.SQL_BulkLoadOrderHintInvalidColumn), columnName));
+            return ADP.InvalidOperation(string.Format(StringsHelper.GetString(Strings.SQL_BulkLoadOrderHintInvalidColumn), columnName));
         }
         internal static Exception BulkLoadOrderHintDuplicateColumn(string columnName)
         {
-            return ADP.InvalidOperation(string.Format(System.StringsHelper.GetString(Strings.SQL_BulkLoadOrderHintDuplicateColumn), columnName));
+            return ADP.InvalidOperation(string.Format(StringsHelper.GetString(Strings.SQL_BulkLoadOrderHintDuplicateColumn), columnName));
         }
         internal static Exception BulkLoadStringTooLong(string tableName, string columnName, string truncatedValue)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_BulkLoadStringTooLong, tableName, columnName, truncatedValue));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_BulkLoadStringTooLong, tableName, columnName, truncatedValue));
         }
         internal static Exception BulkLoadInvalidVariantValue()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_BulkLoadInvalidVariantValue));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_BulkLoadInvalidVariantValue));
         }
         internal static Exception BulkLoadInvalidTimeout(int timeout)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_BulkLoadInvalidTimeout, timeout.ToString(CultureInfo.InvariantCulture)));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_BulkLoadInvalidTimeout, timeout.ToString(CultureInfo.InvariantCulture)));
         }
         internal static Exception BulkLoadExistingTransaction()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_BulkLoadExistingTransaction));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_BulkLoadExistingTransaction));
         }
         internal static Exception BulkLoadNoCollation()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_BulkLoadNoCollation));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_BulkLoadNoCollation));
         }
         internal static Exception BulkLoadConflictingTransactionOption()
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQL_BulkLoadConflictingTransactionOption));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_BulkLoadConflictingTransactionOption));
         }
         internal static Exception BulkLoadLcidMismatch(int sourceLcid, string sourceColumnName, int destinationLcid, string destinationColumnName)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.Sql_BulkLoadLcidMismatch, sourceLcid, sourceColumnName, destinationLcid, destinationColumnName));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.Sql_BulkLoadLcidMismatch, sourceLcid, sourceColumnName, destinationLcid, destinationColumnName));
         }
         internal static Exception InvalidOperationInsideEvent()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_BulkLoadInvalidOperationInsideEvent));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_BulkLoadInvalidOperationInsideEvent));
         }
         internal static Exception BulkLoadMissingDestinationTable()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_BulkLoadMissingDestinationTable));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_BulkLoadMissingDestinationTable));
         }
         internal static Exception BulkLoadInvalidDestinationTable(string tableName, Exception inner)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_BulkLoadInvalidDestinationTable, tableName), inner);
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_BulkLoadInvalidDestinationTable, tableName), inner);
         }
         internal static Exception BulkLoadBulkLoadNotAllowDBNull(string columnName)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_BulkLoadNotAllowDBNull, columnName));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_BulkLoadNotAllowDBNull, columnName));
         }
         internal static Exception BulkLoadPendingOperation()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_BulkLoadPendingOperation));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_BulkLoadPendingOperation));
         }
         internal static Exception InvalidTableDerivedPrecisionForTvp(string columnName, byte precision)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SqlParameter_InvalidTableDerivedPrecisionForTvp, precision, columnName, System.Data.SqlTypes.SqlDecimal.MaxPrecision));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SqlParameter_InvalidTableDerivedPrecisionForTvp, precision, columnName, System.Data.SqlTypes.SqlDecimal.MaxPrecision));
         }
 
         //
@@ -1024,17 +1024,17 @@ namespace Microsoft.Data.SqlClient
         //
         internal static Exception ConnectionDoomed()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_ConnectionDoomed));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ConnectionDoomed));
         }
 
         internal static Exception OpenResultCountExceeded()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_OpenResultCountExceeded));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_OpenResultCountExceeded));
         }
 
         internal static Exception UnsupportedSysTxForGlobalTransactions()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_UnsupportedSysTxVersion));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_UnsupportedSysTxVersion));
         }
 
         internal static readonly byte[] AttentionHeader = new byte[] {
@@ -1059,7 +1059,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal static Exception MultiSubnetFailoverWithFailoverPartner(bool serverProvidedFailoverPartner, SqlInternalConnectionTds internalConnection)
         {
-            string msg = System.StringsHelper.GetString(Strings.SQLMSF_FailoverPartnerNotSupported);
+            string msg = StringsHelper.GetString(Strings.SQLMSF_FailoverPartnerNotSupported);
             if (serverProvidedFailoverPartner)
             {
                 // Replacing InvalidOperation with SQL exception
@@ -1099,13 +1099,13 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception ROR_FailoverNotSupportedConnString()
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.SQLROR_FailoverNotSupported));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQLROR_FailoverNotSupported));
         }
 
         internal static Exception ROR_FailoverNotSupportedServer(SqlInternalConnectionTds internalConnection)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (System.StringsHelper.GetString(Strings.SQLROR_FailoverNotSupported)), "", 0));
+            errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (StringsHelper.GetString(Strings.SQLROR_FailoverNotSupported)), "", 0));
             SqlException exc = SqlException.CreateException(errors, null, internalConnection);
             exc._doNotReconnect = true;
             return exc;
@@ -1114,7 +1114,7 @@ namespace Microsoft.Data.SqlClient
         internal static Exception ROR_RecursiveRoutingNotSupported(SqlInternalConnectionTds internalConnection)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (System.StringsHelper.GetString(Strings.SQLROR_RecursiveRoutingNotSupported)), "", 0));
+            errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (StringsHelper.GetString(Strings.SQLROR_RecursiveRoutingNotSupported)), "", 0));
             SqlException exc = SqlException.CreateException(errors, null, internalConnection);
             exc._doNotReconnect = true;
             return exc;
@@ -1123,7 +1123,7 @@ namespace Microsoft.Data.SqlClient
         internal static Exception ROR_UnexpectedRoutingInfo(SqlInternalConnectionTds internalConnection)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (System.StringsHelper.GetString(Strings.SQLROR_UnexpectedRoutingInfo)), "", 0));
+            errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (StringsHelper.GetString(Strings.SQLROR_UnexpectedRoutingInfo)), "", 0));
             SqlException exc = SqlException.CreateException(errors, null, internalConnection);
             exc._doNotReconnect = true;
             return exc;
@@ -1132,7 +1132,7 @@ namespace Microsoft.Data.SqlClient
         internal static Exception ROR_InvalidRoutingInfo(SqlInternalConnectionTds internalConnection)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (System.StringsHelper.GetString(Strings.SQLROR_InvalidRoutingInfo)), "", 0));
+            errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (StringsHelper.GetString(Strings.SQLROR_InvalidRoutingInfo)), "", 0));
             SqlException exc = SqlException.CreateException(errors, null, internalConnection);
             exc._doNotReconnect = true;
             return exc;
@@ -1141,7 +1141,7 @@ namespace Microsoft.Data.SqlClient
         internal static Exception ROR_TimeoutAfterRoutingInfo(SqlInternalConnectionTds internalConnection)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (System.StringsHelper.GetString(Strings.SQLROR_TimeoutAfterRoutingInfo)), "", 0));
+            errors.Add(new SqlError(0, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, null, (StringsHelper.GetString(Strings.SQLROR_TimeoutAfterRoutingInfo)), "", 0));
             SqlException exc = SqlException.CreateException(errors, null, internalConnection);
             exc._doNotReconnect = true;
             return exc;
@@ -1169,7 +1169,7 @@ namespace Microsoft.Data.SqlClient
         internal static Exception CR_NextAttemptWillExceedQueryTimeout(SqlException innerException, Guid connectionId)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, 0, TdsEnums.MIN_ERROR_CLASS, null, System.StringsHelper.GetString(Strings.SQLCR_NextAttemptWillExceedQueryTimeout), "", 0));
+            errors.Add(new SqlError(0, 0, TdsEnums.MIN_ERROR_CLASS, null, StringsHelper.GetString(Strings.SQLCR_NextAttemptWillExceedQueryTimeout), "", 0));
             SqlException exc = SqlException.CreateException(errors, "", connectionId, innerException);
             return exc;
         }
@@ -1177,7 +1177,7 @@ namespace Microsoft.Data.SqlClient
         internal static Exception CR_EncryptionChanged(SqlInternalConnectionTds internalConnection)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, System.StringsHelper.GetString(Strings.SQLCR_EncryptionChanged), "", 0));
+            errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, StringsHelper.GetString(Strings.SQLCR_EncryptionChanged), "", 0));
             SqlException exc = SqlException.CreateException(errors, "", internalConnection);
             return exc;
         }
@@ -1185,7 +1185,7 @@ namespace Microsoft.Data.SqlClient
         internal static SqlException CR_AllAttemptsFailed(SqlException innerException, Guid connectionId)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, 0, TdsEnums.MIN_ERROR_CLASS, null, System.StringsHelper.GetString(Strings.SQLCR_AllAttemptsFailed), "", 0));
+            errors.Add(new SqlError(0, 0, TdsEnums.MIN_ERROR_CLASS, null, StringsHelper.GetString(Strings.SQLCR_AllAttemptsFailed), "", 0));
             SqlException exc = SqlException.CreateException(errors, "", connectionId, innerException);
             return exc;
         }
@@ -1193,7 +1193,7 @@ namespace Microsoft.Data.SqlClient
         internal static SqlException CR_NoCRAckAtReconnection(SqlInternalConnectionTds internalConnection)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, System.StringsHelper.GetString(Strings.SQLCR_NoCRAckAtReconnection), "", 0));
+            errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, StringsHelper.GetString(Strings.SQLCR_NoCRAckAtReconnection), "", 0));
             SqlException exc = SqlException.CreateException(errors, "", internalConnection);
             return exc;
         }
@@ -1201,7 +1201,7 @@ namespace Microsoft.Data.SqlClient
         internal static SqlException CR_TDSVersionNotPreserved(SqlInternalConnectionTds internalConnection)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, System.StringsHelper.GetString(Strings.SQLCR_TDSVestionNotPreserved), "", 0));
+            errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, StringsHelper.GetString(Strings.SQLCR_TDSVestionNotPreserved), "", 0));
             SqlException exc = SqlException.CreateException(errors, "", internalConnection);
             return exc;
         }
@@ -1209,7 +1209,7 @@ namespace Microsoft.Data.SqlClient
         internal static SqlException CR_UnrecoverableServer(Guid connectionId)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, System.StringsHelper.GetString(Strings.SQLCR_UnrecoverableServer), "", 0));
+            errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, StringsHelper.GetString(Strings.SQLCR_UnrecoverableServer), "", 0));
             SqlException exc = SqlException.CreateException(errors, "", connectionId);
             return exc;
         }
@@ -1217,22 +1217,22 @@ namespace Microsoft.Data.SqlClient
         internal static SqlException CR_UnrecoverableClient(Guid connectionId)
         {
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, System.StringsHelper.GetString(Strings.SQLCR_UnrecoverableClient), "", 0));
+            errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, StringsHelper.GetString(Strings.SQLCR_UnrecoverableClient), "", 0));
             SqlException exc = SqlException.CreateException(errors, "", connectionId);
             return exc;
         }
 
         internal static Exception StreamWriteNotSupported()
         {
-            return ADP.NotSupported(System.StringsHelper.GetString(Strings.SQL_StreamWriteNotSupported));
+            return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_StreamWriteNotSupported));
         }
         internal static Exception StreamReadNotSupported()
         {
-            return ADP.NotSupported(System.StringsHelper.GetString(Strings.SQL_StreamReadNotSupported));
+            return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_StreamReadNotSupported));
         }
         internal static Exception StreamSeekNotSupported()
         {
-            return ADP.NotSupported(System.StringsHelper.GetString(Strings.SQL_StreamSeekNotSupported));
+            return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_StreamSeekNotSupported));
         }
         internal static System.Data.SqlTypes.SqlNullValueException SqlNullValue()
         {
@@ -1241,31 +1241,31 @@ namespace Microsoft.Data.SqlClient
         }
         internal static Exception SubclassMustOverride()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SqlMisc_SubclassMustOverride));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SqlMisc_SubclassMustOverride));
         }
 
         // ProjectK\CoreCLR specific errors
         internal static Exception UnsupportedKeyword(string keyword)
         {
-            return ADP.NotSupported(System.StringsHelper.GetString(Strings.SQL_UnsupportedKeyword, keyword));
+            return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_UnsupportedKeyword, keyword));
         }
         internal static Exception NetworkLibraryKeywordNotSupported()
         {
-            return ADP.NotSupported(System.StringsHelper.GetString(Strings.SQL_NetworkLibraryNotSupported));
+            return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_NetworkLibraryNotSupported));
         }
         internal static Exception UnsupportedFeatureAndToken(SqlInternalConnectionTds internalConnection, string token)
         {
-            var innerException = ADP.NotSupported(System.StringsHelper.GetString(Strings.SQL_UnsupportedToken, token));
+            var innerException = ADP.NotSupported(StringsHelper.GetString(Strings.SQL_UnsupportedToken, token));
 
             SqlErrorCollection errors = new SqlErrorCollection();
-            errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, System.StringsHelper.GetString(Strings.SQL_UnsupportedFeature), "", 0));
+            errors.Add(new SqlError(0, 0, TdsEnums.FATAL_ERROR_CLASS, null, StringsHelper.GetString(Strings.SQL_UnsupportedFeature), "", 0));
             SqlException exc = SqlException.CreateException(errors, "", internalConnection, innerException);
             return exc;
         }
 
         internal static Exception BatchedUpdatesNotAvailableOnContextConnection()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SQL_BatchedUpdatesNotAvailableOnContextConnection));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_BatchedUpdatesNotAvailableOnContextConnection));
         }
         internal static Exception Azure_ManagedIdentityException(string msg)
         {
@@ -1284,39 +1284,39 @@ namespace Microsoft.Data.SqlClient
         internal static Exception InvalidKeyEncryptionAlgorithm(string encryptionAlgorithm, string validEncryptionAlgorithm, bool isSystemOp)
         {
             string message = isSystemOp ? Strings.TCE_InvalidKeyEncryptionAlgorithmSysErr : Strings.TCE_InvalidKeyEncryptionAlgorithm;
-            return ADP.Argument(System.StringsHelper.GetString(message, encryptionAlgorithm, validEncryptionAlgorithm), TdsEnums.TCE_PARAM_ENCRYPTION_ALGORITHM);
+            return ADP.Argument(StringsHelper.GetString(message, encryptionAlgorithm, validEncryptionAlgorithm), TdsEnums.TCE_PARAM_ENCRYPTION_ALGORITHM);
         }
 
         internal static Exception NullKeyEncryptionAlgorithm(bool isSystemOp)
         {
             string message = isSystemOp ? Strings.TCE_NullKeyEncryptionAlgorithmSysErr : Strings.TCE_NullKeyEncryptionAlgorithm;
-            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_ENCRYPTION_ALGORITHM, System.StringsHelper.GetString(message));
+            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_ENCRYPTION_ALGORITHM, StringsHelper.GetString(message));
         }
 
         internal static Exception EmptyColumnEncryptionKey()
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_EmptyColumnEncryptionKey), TdsEnums.TCE_PARAM_COLUMNENCRYPTION_KEY);
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_EmptyColumnEncryptionKey), TdsEnums.TCE_PARAM_COLUMNENCRYPTION_KEY);
         }
 
         internal static Exception NullColumnEncryptionKey()
         {
-            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_COLUMNENCRYPTION_KEY, System.StringsHelper.GetString(Strings.TCE_NullColumnEncryptionKey));
+            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_COLUMNENCRYPTION_KEY, StringsHelper.GetString(Strings.TCE_NullColumnEncryptionKey));
         }
 
         internal static Exception EmptyEncryptedColumnEncryptionKey()
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_EmptyEncryptedColumnEncryptionKey), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_EmptyEncryptedColumnEncryptionKey), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
         }
 
         internal static Exception NullEncryptedColumnEncryptionKey()
         {
-            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_ENCRYPTED_CEK, System.StringsHelper.GetString(Strings.TCE_NullEncryptedColumnEncryptionKey));
+            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_ENCRYPTED_CEK, StringsHelper.GetString(Strings.TCE_NullEncryptedColumnEncryptionKey));
         }
 
         internal static Exception LargeCertificatePathLength(int actualLength, int maxLength, bool isSystemOp)
         {
             string message = isSystemOp ? Strings.TCE_LargeCertificatePathLengthSysErr : Strings.TCE_LargeCertificatePathLength;
-            return ADP.Argument(System.StringsHelper.GetString(message, actualLength, maxLength), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+            return ADP.Argument(StringsHelper.GetString(message, actualLength, maxLength), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
 
         }
 
@@ -1324,250 +1324,250 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(2 == validLocations.Length);
             string message = isSystemOp ? Strings.TCE_NullCertificatePathSysErr : Strings.TCE_NullCertificatePath;
-            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, System.StringsHelper.GetString(message, validLocations[0], validLocations[1], @"/"));
+            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, StringsHelper.GetString(message, validLocations[0], validLocations[1], @"/"));
         }
 
         internal static Exception NullCspKeyPath(bool isSystemOp)
         {
             string message = isSystemOp ? Strings.TCE_NullCspPathSysErr : Strings.TCE_NullCspPath;
-            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, System.StringsHelper.GetString(message, @"/"));
+            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, StringsHelper.GetString(message, @"/"));
         }
 
         internal static Exception NullCngKeyPath(bool isSystemOp)
         {
             string message = isSystemOp ? Strings.TCE_NullCngPathSysErr : Strings.TCE_NullCngPath;
-            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, System.StringsHelper.GetString(message, @"/"));
+            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_MASTERKEY_PATH, StringsHelper.GetString(message, @"/"));
         }
 
         internal static Exception InvalidCertificatePath(string actualCertificatePath, string[] validLocations, bool isSystemOp)
         {
             Debug.Assert(2 == validLocations.Length);
             string message = isSystemOp ? Strings.TCE_InvalidCertificatePathSysErr : Strings.TCE_InvalidCertificatePath;
-            return ADP.Argument(System.StringsHelper.GetString(message, actualCertificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+            return ADP.Argument(StringsHelper.GetString(message, actualCertificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
         }
 
         internal static Exception InvalidCspPath(string masterKeyPath, bool isSystemOp)
         {
             string message = isSystemOp ? Strings.TCE_InvalidCspPathSysErr : Strings.TCE_InvalidCspPath;
-            return ADP.Argument(System.StringsHelper.GetString(message, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+            return ADP.Argument(StringsHelper.GetString(message, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
         }
 
         internal static Exception InvalidCngPath(string masterKeyPath, bool isSystemOp)
         {
             string message = isSystemOp ? Strings.TCE_InvalidCngPathSysErr : Strings.TCE_InvalidCngPath;
-            return ADP.Argument(System.StringsHelper.GetString(message, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+            return ADP.Argument(StringsHelper.GetString(message, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
         }
 
         internal static Exception EmptyCspName(string masterKeyPath, bool isSystemOp)
         {
             string message = isSystemOp ? Strings.TCE_EmptyCspNameSysErr : Strings.TCE_EmptyCspName;
-            return ADP.Argument(System.StringsHelper.GetString(message, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+            return ADP.Argument(StringsHelper.GetString(message, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
         }
 
         internal static Exception EmptyCngName(string masterKeyPath, bool isSystemOp)
         {
             string message = isSystemOp ? Strings.TCE_EmptyCngNameSysErr : Strings.TCE_EmptyCngName;
-            return ADP.Argument(System.StringsHelper.GetString(message, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+            return ADP.Argument(StringsHelper.GetString(message, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
         }
 
         internal static Exception EmptyCspKeyId(string masterKeyPath, bool isSystemOp)
         {
             string message = isSystemOp ? Strings.TCE_EmptyCspKeyIdSysErr : Strings.TCE_EmptyCspKeyId;
-            return ADP.Argument(System.StringsHelper.GetString(message, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+            return ADP.Argument(StringsHelper.GetString(message, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
         }
 
         internal static Exception EmptyCngKeyId(string masterKeyPath, bool isSystemOp)
         {
             string message = isSystemOp ? Strings.TCE_EmptyCngKeyIdSysErr : Strings.TCE_EmptyCngKeyId;
-            return ADP.Argument(System.StringsHelper.GetString(message, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+            return ADP.Argument(StringsHelper.GetString(message, masterKeyPath, @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
         }
 
         internal static Exception InvalidCspName(string cspName, string masterKeyPath, bool isSystemOp)
         {
             string message = isSystemOp ? Strings.TCE_InvalidCspNameSysErr : Strings.TCE_InvalidCspName;
-            return ADP.Argument(System.StringsHelper.GetString(message, cspName, masterKeyPath), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+            return ADP.Argument(StringsHelper.GetString(message, cspName, masterKeyPath), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
         }
 
         internal static Exception InvalidCspKeyIdentifier(string keyIdentifier, string masterKeyPath, bool isSystemOp)
         {
             string message = isSystemOp ? Strings.TCE_InvalidCspKeyIdSysErr : Strings.TCE_InvalidCspKeyId;
-            return ADP.Argument(System.StringsHelper.GetString(message, keyIdentifier, masterKeyPath), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+            return ADP.Argument(StringsHelper.GetString(message, keyIdentifier, masterKeyPath), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
         }
 
         internal static Exception InvalidCngKey(string masterKeyPath, string cngProviderName, string keyIdentifier, bool isSystemOp)
         {
             string message = isSystemOp ? Strings.TCE_InvalidCngKeySysErr : Strings.TCE_InvalidCngKey;
-            return ADP.Argument(System.StringsHelper.GetString(message, masterKeyPath, cngProviderName, keyIdentifier), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+            return ADP.Argument(StringsHelper.GetString(message, masterKeyPath, cngProviderName, keyIdentifier), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
         }
 
         internal static Exception InvalidCertificateLocation(string certificateLocation, string certificatePath, string[] validLocations, bool isSystemOp)
         {
             string message = isSystemOp ? Strings.TCE_InvalidCertificateLocationSysErr : Strings.TCE_InvalidCertificateLocation;
-            return ADP.Argument(System.StringsHelper.GetString(message, certificateLocation, certificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+            return ADP.Argument(StringsHelper.GetString(message, certificateLocation, certificatePath, validLocations[0], validLocations[1], @"/"), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
         }
 
         internal static Exception InvalidCertificateStore(string certificateStore, string certificatePath, string validCertificateStore, bool isSystemOp)
         {
             string message = isSystemOp ? Strings.TCE_InvalidCertificateStoreSysErr : Strings.TCE_InvalidCertificateStore;
-            return ADP.Argument(System.StringsHelper.GetString(message, certificateStore, certificatePath, validCertificateStore), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+            return ADP.Argument(StringsHelper.GetString(message, certificateStore, certificatePath, validCertificateStore), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
         }
 
         internal static Exception EmptyCertificateThumbprint(string certificatePath, bool isSystemOp)
         {
             string message = isSystemOp ? Strings.TCE_EmptyCertificateThumbprintSysErr : Strings.TCE_EmptyCertificateThumbprint;
-            return ADP.Argument(System.StringsHelper.GetString(message, certificatePath), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+            return ADP.Argument(StringsHelper.GetString(message, certificatePath), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
         }
 
         internal static Exception CertificateNotFound(string thumbprint, string certificateLocation, string certificateStore, bool isSystemOp)
         {
             string message = isSystemOp ? Strings.TCE_CertificateNotFoundSysErr : Strings.TCE_CertificateNotFound;
-            return ADP.Argument(System.StringsHelper.GetString(message, thumbprint, certificateLocation, certificateStore), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+            return ADP.Argument(StringsHelper.GetString(message, thumbprint, certificateLocation, certificateStore), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
         }
 
         internal static Exception InvalidAlgorithmVersionInEncryptedCEK(byte actual, byte expected)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_InvalidAlgorithmVersionInEncryptedCEK, actual.ToString(@"X2"), expected.ToString(@"X2")), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidAlgorithmVersionInEncryptedCEK, actual.ToString(@"X2"), expected.ToString(@"X2")), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
         }
 
         internal static Exception InvalidCiphertextLengthInEncryptedCEK(int actual, int expected, string certificateName)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_InvalidCiphertextLengthInEncryptedCEK, actual, expected, certificateName), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCiphertextLengthInEncryptedCEK, actual, expected, certificateName), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
         }
 
         internal static Exception InvalidCiphertextLengthInEncryptedCEKCsp(int actual, int expected, string masterKeyPath)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_InvalidCiphertextLengthInEncryptedCEKCsp, actual, expected, masterKeyPath), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCiphertextLengthInEncryptedCEKCsp, actual, expected, masterKeyPath), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
         }
 
         internal static Exception InvalidCiphertextLengthInEncryptedCEKCng(int actual, int expected, string masterKeyPath)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_InvalidCiphertextLengthInEncryptedCEKCng, actual, expected, masterKeyPath), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCiphertextLengthInEncryptedCEKCng, actual, expected, masterKeyPath), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
         }
 
         internal static Exception InvalidSignatureInEncryptedCEK(int actual, int expected, string masterKeyPath)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_InvalidSignatureInEncryptedCEK, actual, expected, masterKeyPath), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidSignatureInEncryptedCEK, actual, expected, masterKeyPath), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
         }
 
         internal static Exception InvalidSignatureInEncryptedCEKCsp(int actual, int expected, string masterKeyPath)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_InvalidSignatureInEncryptedCEKCsp, actual, expected, masterKeyPath), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidSignatureInEncryptedCEKCsp, actual, expected, masterKeyPath), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
         }
 
         internal static Exception InvalidSignatureInEncryptedCEKCng(int actual, int expected, string masterKeyPath)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_InvalidSignatureInEncryptedCEKCng, actual, expected, masterKeyPath), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidSignatureInEncryptedCEKCng, actual, expected, masterKeyPath), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
         }
 
         internal static Exception InvalidCertificateSignature(string certificatePath)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_InvalidCertificateSignature, certificatePath), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCertificateSignature, certificatePath), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
         }
 
         internal static Exception InvalidSignature(string masterKeyPath)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_InvalidSignature, masterKeyPath), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidSignature, masterKeyPath), TdsEnums.TCE_PARAM_ENCRYPTED_CEK);
         }
 
         internal static Exception CertificateWithNoPrivateKey(string keyPath, bool isSystemOp)
         {
             string message = isSystemOp ? Strings.TCE_CertificateWithNoPrivateKeySysErr : Strings.TCE_CertificateWithNoPrivateKey;
-            return ADP.Argument(System.StringsHelper.GetString(message, keyPath), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
+            return ADP.Argument(StringsHelper.GetString(message, keyPath), TdsEnums.TCE_PARAM_MASTERKEY_PATH);
         }
         #endregion Always Encrypted - Certificate Store Provider Errors
 
         #region Always Encrypted - Cryptographic Algorithms Error messages
         internal static Exception NullPlainText()
         {
-            return ADP.ArgumentNull(System.StringsHelper.GetString(Strings.TCE_NullPlainText));
+            return ADP.ArgumentNull(StringsHelper.GetString(Strings.TCE_NullPlainText));
         }
 
         internal static Exception NullCipherText()
         {
-            return ADP.ArgumentNull(System.StringsHelper.GetString(Strings.TCE_NullCipherText));
+            return ADP.ArgumentNull(StringsHelper.GetString(Strings.TCE_NullCipherText));
         }
 
         internal static Exception NullColumnEncryptionAlgorithm(string supportedAlgorithms)
         {
-            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_ENCRYPTION_ALGORITHM, System.StringsHelper.GetString(Strings.TCE_NullColumnEncryptionAlgorithm, supportedAlgorithms));
+            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_ENCRYPTION_ALGORITHM, StringsHelper.GetString(Strings.TCE_NullColumnEncryptionAlgorithm, supportedAlgorithms));
         }
 
         internal static Exception NullColumnEncryptionKeySysErr()
         {
-            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_ENCRYPTIONKEY, System.StringsHelper.GetString(Strings.TCE_NullColumnEncryptionKeySysErr));
+            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_ENCRYPTIONKEY, StringsHelper.GetString(Strings.TCE_NullColumnEncryptionKeySysErr));
         }
 
         internal static Exception InvalidKeySize(string algorithmName, int actualKeylength, int expectedLength)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_InvalidKeySize, algorithmName, actualKeylength, expectedLength), TdsEnums.TCE_PARAM_ENCRYPTIONKEY);
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidKeySize, algorithmName, actualKeylength, expectedLength), TdsEnums.TCE_PARAM_ENCRYPTIONKEY);
         }
 
         internal static Exception InvalidEncryptionType(string algorithmName, SqlClientEncryptionType encryptionType, params SqlClientEncryptionType[] validEncryptionTypes)
         {
             const string valueSeparator = @", ";
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_InvalidEncryptionType, algorithmName, encryptionType.ToString(), string.Join(valueSeparator, validEncryptionTypes.Select((validEncryptionType => @"'" + validEncryptionType + @"'")))), TdsEnums.TCE_PARAM_ENCRYPTIONTYPE);
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidEncryptionType, algorithmName, encryptionType.ToString(), string.Join(valueSeparator, validEncryptionTypes.Select((validEncryptionType => @"'" + validEncryptionType + @"'")))), TdsEnums.TCE_PARAM_ENCRYPTIONTYPE);
         }
 
         internal static Exception InvalidCipherTextSize(int actualSize, int minimumSize)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_InvalidCipherTextSize, actualSize, minimumSize), TdsEnums.TCE_PARAM_CIPHERTEXT);
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCipherTextSize, actualSize, minimumSize), TdsEnums.TCE_PARAM_CIPHERTEXT);
         }
 
         internal static Exception InvalidAlgorithmVersion(byte actual, byte expected)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_InvalidAlgorithmVersion, actual.ToString(@"X2"), expected.ToString(@"X2")), TdsEnums.TCE_PARAM_CIPHERTEXT);
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidAlgorithmVersion, actual.ToString(@"X2"), expected.ToString(@"X2")), TdsEnums.TCE_PARAM_CIPHERTEXT);
         }
 
         internal static Exception InvalidAuthenticationTag()
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_InvalidAuthenticationTag), TdsEnums.TCE_PARAM_CIPHERTEXT);
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidAuthenticationTag), TdsEnums.TCE_PARAM_CIPHERTEXT);
         }
         #endregion Always Encrypted - Cryptographic Algorithms Error messages
 
         #region Always Encrypted - Errors from sp_describe_parameter_encryption
         internal static Exception UnexpectedDescribeParamFormatParameterMetadata()
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_UnexpectedDescribeParamFormatParameterMetadata, "sp_describe_parameter_encryption"));
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_UnexpectedDescribeParamFormatParameterMetadata, "sp_describe_parameter_encryption"));
         }
 
         internal static Exception UnexpectedDescribeParamFormatAttestationInfo(string enclaveType)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_UnexpectedDescribeParamFormatAttestationInfo, "sp_describe_parameter_encryption", enclaveType));
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_UnexpectedDescribeParamFormatAttestationInfo, "sp_describe_parameter_encryption", enclaveType));
         }
 
         internal static Exception InvalidEncryptionKeyOrdinalEnclaveMetadata(int ordinal, int maxOrdinal)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.TCE_InvalidEncryptionKeyOrdinalEnclaveMetadata, ordinal, maxOrdinal));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_InvalidEncryptionKeyOrdinalEnclaveMetadata, ordinal, maxOrdinal));
         }
 
         internal static Exception InvalidEncryptionKeyOrdinalParameterMetadata(int ordinal, int maxOrdinal)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.TCE_InvalidEncryptionKeyOrdinalParameterMetadata, ordinal, maxOrdinal));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_InvalidEncryptionKeyOrdinalParameterMetadata, ordinal, maxOrdinal));
         }
 
         public static Exception MultipleRowsReturnedForAttestationInfo()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.TCE_MultipleRowsReturnedForAttestationInfo, "sp_describe_parameter_encryption"));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_MultipleRowsReturnedForAttestationInfo, "sp_describe_parameter_encryption"));
         }
 
         internal static Exception ParamEncryptionMetadataMissing(string paramName, string procedureName)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_ParamEncryptionMetaDataMissing, "sp_describe_parameter_encryption", paramName, procedureName));
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_ParamEncryptionMetaDataMissing, "sp_describe_parameter_encryption", paramName, procedureName));
         }
 
         internal static Exception ProcEncryptionMetadataMissing(string procedureName)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_ProcEncryptionMetaDataMissing, "sp_describe_parameter_encryption", procedureName));
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_ProcEncryptionMetaDataMissing, "sp_describe_parameter_encryption", procedureName));
         }
 
         internal static Exception UnableToVerifyColumnMasterKeySignature(Exception innerException)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.TCE_UnableToVerifyColumnMasterKeySignature, innerException.Message), innerException);
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_UnableToVerifyColumnMasterKeySignature, innerException.Message), innerException);
         }
 
         internal static Exception ColumnMasterKeySignatureVerificationFailed(string cmkPath)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.TCE_ColumnMasterKeySignatureVerificationFailed, cmkPath));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_ColumnMasterKeySignatureVerificationFailed, cmkPath));
         }
 
         internal static Exception InvalidKeyStoreProviderName(string providerName, List<string> systemProviders, List<string> customProviders)
@@ -1575,22 +1575,22 @@ namespace Microsoft.Data.SqlClient
             const string valueSeparator = @", ";
             string systemProviderStr = string.Join(valueSeparator, systemProviders.Select(provider => $"'{provider}'"));
             string customProviderStr = string.Join(valueSeparator, customProviders.Select(provider => $"'{provider}'"));
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_InvalidKeyStoreProviderName, providerName, systemProviderStr, customProviderStr));
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidKeyStoreProviderName, providerName, systemProviderStr, customProviderStr));
         }
 
         internal static Exception ParamInvalidForceColumnEncryptionSetting(string paramName, string procedureName)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.TCE_ParamInvalidForceColumnEncryptionSetting, TdsEnums.TCE_PARAM_FORCE_COLUMN_ENCRYPTION, paramName, procedureName, "SqlParameter"));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_ParamInvalidForceColumnEncryptionSetting, TdsEnums.TCE_PARAM_FORCE_COLUMN_ENCRYPTION, paramName, procedureName, "SqlParameter"));
         }
 
         internal static Exception ParamUnExpectedEncryptionMetadata(string paramName, string procedureName)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.TCE_ParamUnExpectedEncryptionMetadata, paramName, procedureName, TdsEnums.TCE_PARAM_FORCE_COLUMN_ENCRYPTION, "SqlParameter"));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_ParamUnExpectedEncryptionMetadata, paramName, procedureName, TdsEnums.TCE_PARAM_FORCE_COLUMN_ENCRYPTION, "SqlParameter"));
         }
 
         internal static Exception ColumnMasterKeySignatureNotFound(string cmkPath)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_ColumnMasterKeySignatureNotFound, cmkPath));
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_ColumnMasterKeySignatureNotFound, cmkPath));
         }
         #endregion Always Encrypted - Errors from sp_describe_parameter_encryption
 
@@ -1598,42 +1598,42 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception ExceptionWhenGeneratingEnclavePackage(Exception innerException)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.TCE_ExceptionWhenGeneratingEnclavePackage, innerException.Message), innerException);
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_ExceptionWhenGeneratingEnclavePackage, innerException.Message), innerException);
         }
 
         internal static Exception FailedToEncryptRegisterRulesBytePackage(Exception innerException)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.TCE_FailedToEncryptRegisterRulesBytePackage, innerException.Message), innerException);
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_FailedToEncryptRegisterRulesBytePackage, innerException.Message), innerException);
         }
 
         internal static Exception InvalidKeyIdUnableToCastToUnsignedShort(int keyId, Exception innerException)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_InvalidKeyIdUnableToCastToUnsignedShort, keyId, innerException.Message), innerException);
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidKeyIdUnableToCastToUnsignedShort, keyId, innerException.Message), innerException);
         }
 
         internal static Exception InvalidDatabaseIdUnableToCastToUnsignedInt(int databaseId, Exception innerException)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_InvalidDatabaseIdUnableToCastToUnsignedInt, databaseId, innerException.Message), innerException);
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidDatabaseIdUnableToCastToUnsignedInt, databaseId, innerException.Message), innerException);
         }
 
         internal static Exception InvalidAttestationParameterUnableToConvertToUnsignedInt(string variableName, int intValue, string enclaveType, Exception innerException)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_InvalidAttestationParameterUnableToConvertToUnsignedInt, enclaveType, intValue, variableName, innerException.Message), innerException);
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidAttestationParameterUnableToConvertToUnsignedInt, enclaveType, intValue, variableName, innerException.Message), innerException);
         }
 
         internal static Exception OffsetOutOfBounds(string argument, string type, string method)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_OffsetOutOfBounds, type, method));
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_OffsetOutOfBounds, type, method));
         }
 
         internal static Exception InsufficientBuffer(string argument, string type, string method)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_InsufficientBuffer, argument, type, method));
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InsufficientBuffer, argument, type, method));
         }
 
         internal static Exception ColumnEncryptionKeysNotFound()
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_ColumnEncryptionKeysNotFound));
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_ColumnEncryptionKeysNotFound));
         }
 
         #endregion Always Encrypted - Errors from secure channel Communication
@@ -1641,29 +1641,29 @@ namespace Microsoft.Data.SqlClient
         #region Always Encrypted - Errors when performing attestation
         internal static Exception AttestationInfoNotReturnedFromSqlServer(string enclaveType, string enclaveAttestationUrl)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_AttestationInfoNotReturnedFromSQLServer, enclaveType, enclaveAttestationUrl));
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_AttestationInfoNotReturnedFromSQLServer, enclaveType, enclaveAttestationUrl));
         }
         #endregion Always Encrypted - Errors when performing attestation
 
         #region Always Encrypted - Errors when establishing secure channel
         internal static Exception NullArgumentInConstructorInternal(string argumentName, string objectUnderConstruction)
         {
-            return ADP.ArgumentNull(argumentName, System.StringsHelper.GetString(Strings.TCE_NullArgumentInConstructorInternal, argumentName, objectUnderConstruction));
+            return ADP.ArgumentNull(argumentName, StringsHelper.GetString(Strings.TCE_NullArgumentInConstructorInternal, argumentName, objectUnderConstruction));
         }
 
         internal static Exception EmptyArgumentInConstructorInternal(string argumentName, string objectUnderConstruction)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_EmptyArgumentInConstructorInternal, argumentName, objectUnderConstruction));
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_EmptyArgumentInConstructorInternal, argumentName, objectUnderConstruction));
         }
 
         internal static Exception NullArgumentInternal(string argumentName, string type, string method)
         {
-            return ADP.ArgumentNull(argumentName, System.StringsHelper.GetString(Strings.TCE_NullArgumentInternal, argumentName, type, method));
+            return ADP.ArgumentNull(argumentName, StringsHelper.GetString(Strings.TCE_NullArgumentInternal, argumentName, type, method));
         }
 
         internal static Exception EmptyArgumentInternal(string argumentName, string type, string method)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_EmptyArgumentInternal, argumentName, type, method));
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_EmptyArgumentInternal, argumentName, type, method));
         }
         #endregion Always Encrypted - Errors when establishing secure channel
 
@@ -1671,47 +1671,47 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception CannotGetSqlColumnEncryptionEnclaveProviderConfig(Exception innerException)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.TCE_CannotGetSqlColumnEncryptionEnclaveProviderConfig, innerException.Message), innerException);
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_CannotGetSqlColumnEncryptionEnclaveProviderConfig, innerException.Message), innerException);
         }
 
         internal static Exception CannotCreateSqlColumnEncryptionEnclaveProvider(string providerName, string type, Exception innerException)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.TCE_CannotCreateSqlColumnEncryptionEnclaveProvider, providerName, type, innerException.Message), innerException);
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_CannotCreateSqlColumnEncryptionEnclaveProvider, providerName, type, innerException.Message), innerException);
         }
 
         internal static Exception SqlColumnEncryptionEnclaveProviderNameCannotBeEmpty()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.TCE_SqlColumnEncryptionEnclaveProviderNameCannotBeEmpty));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_SqlColumnEncryptionEnclaveProviderNameCannotBeEmpty));
         }
 
         internal static Exception NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe(string enclaveType)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.TCE_NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe, "sp_describe_parameter_encryption", enclaveType));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe, "sp_describe_parameter_encryption", enclaveType));
         }
 
         internal static Exception NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage(string enclaveType)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.TCE_NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage, enclaveType));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage, enclaveType));
         }
 
         internal static Exception EnclaveTypeNullForEnclaveBasedQuery()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.TCE_EnclaveTypeNullForEnclaveBasedQuery));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_EnclaveTypeNullForEnclaveBasedQuery));
         }
 
         internal static Exception EnclaveProvidersNotConfiguredForEnclaveBasedQuery()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.TCE_EnclaveProvidersNotConfiguredForEnclaveBasedQuery));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_EnclaveProvidersNotConfiguredForEnclaveBasedQuery));
         }
 
         internal static Exception EnclaveProviderNotFound(string enclaveType)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.TCE_EnclaveProviderNotFound, enclaveType));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_EnclaveProviderNotFound, enclaveType));
         }
 
         internal static Exception NullEnclaveSessionReturnedFromProvider(string enclaveType, string attestationUrl)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.TCE_NullEnclaveSessionReturnedFromProvider, enclaveType, attestationUrl));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_NullEnclaveSessionReturnedFromProvider, enclaveType, attestationUrl));
         }
 
         #endregion Always Encrypted - Enclave provider/configuration errors
@@ -1744,17 +1744,17 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception ColumnDecryptionFailed(string columnName, string serverName, Exception e)
         {
-            return GetExceptionArray(serverName, System.StringsHelper.GetString(Strings.TCE_ColumnDecryptionFailed, columnName), e);
+            return GetExceptionArray(serverName, StringsHelper.GetString(Strings.TCE_ColumnDecryptionFailed, columnName), e);
         }
 
         internal static Exception ParamEncryptionFailed(string paramName, string serverName, Exception e)
         {
-            return GetExceptionArray(serverName, System.StringsHelper.GetString(Strings.TCE_ParamEncryptionFailed, paramName), e);
+            return GetExceptionArray(serverName, StringsHelper.GetString(Strings.TCE_ParamEncryptionFailed, paramName), e);
         }
 
         internal static Exception ParamDecryptionFailed(string paramName, string serverName, Exception e)
         {
-            return GetExceptionArray(serverName, System.StringsHelper.GetString(Strings.TCE_ParamDecryptionFailed, paramName), e);
+            return GetExceptionArray(serverName, StringsHelper.GetString(Strings.TCE_ParamDecryptionFailed, paramName), e);
         }
         #endregion Always Encrypted - Generic toplevel failures
 
@@ -1762,17 +1762,17 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception UnknownColumnEncryptionAlgorithm(string algorithmName, string supportedAlgorithms)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_UnknownColumnEncryptionAlgorithm, algorithmName, supportedAlgorithms));
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_UnknownColumnEncryptionAlgorithm, algorithmName, supportedAlgorithms));
         }
 
         internal static Exception UnknownColumnEncryptionAlgorithmId(int algoId, string supportAlgorithmIds)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_UnknownColumnEncryptionAlgorithmId, algoId, supportAlgorithmIds), TdsEnums.TCE_PARAM_CIPHER_ALGORITHM_ID);
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_UnknownColumnEncryptionAlgorithmId, algoId, supportAlgorithmIds), TdsEnums.TCE_PARAM_CIPHER_ALGORITHM_ID);
         }
 
         internal static Exception UnsupportedNormalizationVersion(byte version)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_UnsupportedNormalizationVersion, version, "'1'", "SQL Server"));
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_UnsupportedNormalizationVersion, version, "'1'", "SQL Server"));
         }
 
         internal static Exception UnrecognizedKeyStoreProviderName(string providerName, List<string> systemProviders, List<string> customProviders)
@@ -1780,12 +1780,12 @@ namespace Microsoft.Data.SqlClient
             const string valueSeparator = @", ";
             string systemProviderStr = string.Join(valueSeparator, systemProviders.Select(provider => @"'" + provider + @"'"));
             string customProviderStr = string.Join(valueSeparator, customProviders.Select(provider => @"'" + provider + @"'"));
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_UnrecognizedKeyStoreProviderName, providerName, systemProviderStr, customProviderStr));
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_UnrecognizedKeyStoreProviderName, providerName, systemProviderStr, customProviderStr));
         }
 
         internal static Exception InvalidDataTypeForEncryptedParameter(string parameterName, int actualDataType, int expectedDataType)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_NullProviderValue, parameterName, actualDataType, expectedDataType));
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_NullProviderValue, parameterName, actualDataType, expectedDataType));
         }
 
         internal static Exception KeyDecryptionFailed(string providerName, string keyHex, Exception e)
@@ -1793,57 +1793,57 @@ namespace Microsoft.Data.SqlClient
 
             if (providerName.Equals(SqlColumnEncryptionCertificateStoreProvider.ProviderName))
             {
-                return GetExceptionArray(null, System.StringsHelper.GetString(Strings.TCE_KeyDecryptionFailedCertStore, providerName, keyHex), e);
+                return GetExceptionArray(null, StringsHelper.GetString(Strings.TCE_KeyDecryptionFailedCertStore, providerName, keyHex), e);
             }
             else
             {
-                return GetExceptionArray(null, System.StringsHelper.GetString(Strings.TCE_KeyDecryptionFailed, providerName, keyHex), e);
+                return GetExceptionArray(null, StringsHelper.GetString(Strings.TCE_KeyDecryptionFailed, providerName, keyHex), e);
             }
         }
 
         internal static Exception UntrustedKeyPath(string keyPath, string serverName)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_UntrustedKeyPath, keyPath, serverName));
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_UntrustedKeyPath, keyPath, serverName));
         }
 
         internal static Exception UnsupportedDatatypeEncryption(string dataType)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_UnsupportedDatatype, dataType));
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_UnsupportedDatatype, dataType));
         }
 
         internal static Exception ThrowDecryptionFailed(string keyStr, string valStr, Exception e)
         {
-            return GetExceptionArray(null, System.StringsHelper.GetString(Strings.TCE_DecryptionFailed, keyStr, valStr), e);
+            return GetExceptionArray(null, StringsHelper.GetString(Strings.TCE_DecryptionFailed, keyStr, valStr), e);
         }
 
         internal static Exception NullEnclaveSessionDuringQueryExecution(string enclaveType, string enclaveAttestationUrl)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_NullEnclaveSessionDuringQueryExecution, enclaveType, enclaveAttestationUrl));
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_NullEnclaveSessionDuringQueryExecution, enclaveType, enclaveAttestationUrl));
         }
 
         internal static Exception NullEnclavePackageForEnclaveBasedQuery(string enclaveType, string enclaveAttestationUrl)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_NullEnclavePackageForEnclaveBasedQuery, enclaveType, enclaveAttestationUrl));
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_NullEnclavePackageForEnclaveBasedQuery, enclaveType, enclaveAttestationUrl));
         }
 
         internal static Exception EnclaveProviderNotFound(string enclaveType, string attestationProtocol)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.TCE_EnclaveProviderNotFound, enclaveType, attestationProtocol));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_EnclaveProviderNotFound, enclaveType, attestationProtocol));
         }
 
         internal static Exception EnclaveTypeNotSupported(string enclaveType)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.TCE_EnclaveTypeNotSupported, enclaveType));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_EnclaveTypeNotSupported, enclaveType));
         }
 
         internal static Exception AttestationProtocolNotSupportEnclaveType(string attestationProtocolStr, string enclaveType)
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.TCE_AttestationProtocolNotSupportEnclaveType, attestationProtocolStr, enclaveType));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_AttestationProtocolNotSupportEnclaveType, attestationProtocolStr, enclaveType));
         }
 
         internal static Exception AttestationProtocolNotSpecifiedForGeneratingEnclavePackage()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_AttestationProtocolNotSpecifiedForGeneratingEnclavePackage));
         }
 
         #endregion Always Encrypted - Client side query processing errors
@@ -1852,27 +1852,27 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception TceNotSupported()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.TCE_NotSupportedByServer, "SQL Server"));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_NotSupportedByServer, "SQL Server"));
         }
 
         internal static Exception EnclaveComputationsNotSupported()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.TCE_EnclaveComputationsNotSupported));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_EnclaveComputationsNotSupported));
         }
 
         internal static Exception AttestationURLNotSupported()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.TCE_AttestationURLNotSupported));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_AttestationURLNotSupported));
         }
 
         internal static Exception AttestationProtocolNotSupported()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.TCE_AttestationProtocolNotSupported));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_AttestationProtocolNotSupported));
         }
 
         internal static Exception EnclaveTypeNotReturned()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.TCE_EnclaveTypeNotReturned));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_EnclaveTypeNotReturned));
         }
         #endregion Always Encrypted - SQL connection related error messages
 
@@ -1880,27 +1880,27 @@ namespace Microsoft.Data.SqlClient
 
         internal static Exception CanOnlyCallOnce()
         {
-            return ADP.InvalidOperation(System.StringsHelper.GetString(Strings.TCE_CanOnlyCallOnce));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.TCE_CanOnlyCallOnce));
         }
 
         internal static Exception NullCustomKeyStoreProviderDictionary()
         {
-            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_CLIENT_KEYSTORE_PROVIDERS, System.StringsHelper.GetString(Strings.TCE_NullCustomKeyStoreProviderDictionary));
+            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_CLIENT_KEYSTORE_PROVIDERS, StringsHelper.GetString(Strings.TCE_NullCustomKeyStoreProviderDictionary));
         }
 
         internal static Exception InvalidCustomKeyStoreProviderName(string providerName, string prefix)
         {
-            return ADP.Argument(System.StringsHelper.GetString(Strings.TCE_InvalidCustomKeyStoreProviderName, providerName, prefix), TdsEnums.TCE_PARAM_CLIENT_KEYSTORE_PROVIDERS);
+            return ADP.Argument(StringsHelper.GetString(Strings.TCE_InvalidCustomKeyStoreProviderName, providerName, prefix), TdsEnums.TCE_PARAM_CLIENT_KEYSTORE_PROVIDERS);
         }
 
         internal static Exception NullProviderValue(string providerName)
         {
-            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_CLIENT_KEYSTORE_PROVIDERS, System.StringsHelper.GetString(Strings.TCE_NullProviderValue, providerName));
+            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_CLIENT_KEYSTORE_PROVIDERS, StringsHelper.GetString(Strings.TCE_NullProviderValue, providerName));
         }
 
         internal static Exception EmptyProviderName()
         {
-            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_CLIENT_KEYSTORE_PROVIDERS, System.StringsHelper.GetString(Strings.TCE_EmptyProviderName));
+            return ADP.ArgumentNull(TdsEnums.TCE_PARAM_CLIENT_KEYSTORE_PROVIDERS, StringsHelper.GetString(Strings.TCE_EmptyProviderName));
         }
         #endregion Always Encrypted - Extensibility related error messages
 
@@ -1914,7 +1914,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(sniError > 0 && sniError <= (int)SNINativeMethodWrapper.SniSpecialErrors.MaxErrorValue, "SNI error is out of range");
 
             string errorMessageId = string.Format("SNI_ERROR_{0}", sniError);
-            return System.StringsHelper.GetResourceString(errorMessageId);
+            return StringsHelper.GetResourceString(errorMessageId);
         }
 
         // Default values for SqlDependency and SqlNotificationRequest
@@ -1939,123 +1939,123 @@ namespace Microsoft.Data.SqlClient
 
         internal static string CultureIdError()
         {
-            return System.StringsHelper.GetString(Strings.SQL_CultureIdError);
+            return StringsHelper.GetString(Strings.SQL_CultureIdError);
         }
         internal static string EncryptionNotSupportedByClient()
         {
-            return System.StringsHelper.GetString(Strings.SQL_EncryptionNotSupportedByClient);
+            return StringsHelper.GetString(Strings.SQL_EncryptionNotSupportedByClient);
         }
         internal static string EncryptionNotSupportedByServer()
         {
-            return System.StringsHelper.GetString(Strings.SQL_EncryptionNotSupportedByServer);
+            return StringsHelper.GetString(Strings.SQL_EncryptionNotSupportedByServer);
         }
         internal static string OperationCancelled()
         {
-            return System.StringsHelper.GetString(Strings.SQL_OperationCancelled);
+            return StringsHelper.GetString(Strings.SQL_OperationCancelled);
         }
         internal static string SevereError()
         {
-            return System.StringsHelper.GetString(Strings.SQL_SevereError);
+            return StringsHelper.GetString(Strings.SQL_SevereError);
         }
         internal static string SSPIInitializeError()
         {
-            return System.StringsHelper.GetString(Strings.SQL_SSPIInitializeError);
+            return StringsHelper.GetString(Strings.SQL_SSPIInitializeError);
         }
         internal static string SSPIGenerateError()
         {
-            return System.StringsHelper.GetString(Strings.SQL_SSPIGenerateError);
+            return StringsHelper.GetString(Strings.SQL_SSPIGenerateError);
         }
         internal static string SqlServerBrowserNotAccessible()
         {
-            return System.StringsHelper.GetString(Strings.SQL_SqlServerBrowserNotAccessible);
+            return StringsHelper.GetString(Strings.SQL_SqlServerBrowserNotAccessible);
         }
         internal static string KerberosTicketMissingError()
         {
-            return System.StringsHelper.GetString(Strings.SQL_KerberosTicketMissingError);
+            return StringsHelper.GetString(Strings.SQL_KerberosTicketMissingError);
         }
         internal static string Timeout()
         {
-            return System.StringsHelper.GetString(Strings.SQL_Timeout_Execution);
+            return StringsHelper.GetString(Strings.SQL_Timeout_Execution);
         }
         internal static string Timeout_PreLogin_Begin()
         {
-            return System.StringsHelper.GetString(Strings.SQL_Timeout_PreLogin_Begin);
+            return StringsHelper.GetString(Strings.SQL_Timeout_PreLogin_Begin);
         }
         internal static string Timeout_PreLogin_InitializeConnection()
         {
-            return System.StringsHelper.GetString(Strings.SQL_Timeout_PreLogin_InitializeConnection);
+            return StringsHelper.GetString(Strings.SQL_Timeout_PreLogin_InitializeConnection);
         }
         internal static string Timeout_PreLogin_SendHandshake()
         {
-            return System.StringsHelper.GetString(Strings.SQL_Timeout_PreLogin_SendHandshake);
+            return StringsHelper.GetString(Strings.SQL_Timeout_PreLogin_SendHandshake);
         }
         internal static string Timeout_PreLogin_ConsumeHandshake()
         {
-            return System.StringsHelper.GetString(Strings.SQL_Timeout_PreLogin_ConsumeHandshake);
+            return StringsHelper.GetString(Strings.SQL_Timeout_PreLogin_ConsumeHandshake);
         }
         internal static string Timeout_Login_Begin()
         {
-            return System.StringsHelper.GetString(Strings.SQL_Timeout_Login_Begin);
+            return StringsHelper.GetString(Strings.SQL_Timeout_Login_Begin);
         }
         internal static string Timeout_Login_ProcessConnectionAuth()
         {
-            return System.StringsHelper.GetString(Strings.SQL_Timeout_Login_ProcessConnectionAuth);
+            return StringsHelper.GetString(Strings.SQL_Timeout_Login_ProcessConnectionAuth);
         }
         internal static string Timeout_PostLogin()
         {
-            return System.StringsHelper.GetString(Strings.SQL_Timeout_PostLogin);
+            return StringsHelper.GetString(Strings.SQL_Timeout_PostLogin);
         }
         internal static string Timeout_FailoverInfo()
         {
-            return System.StringsHelper.GetString(Strings.SQL_Timeout_FailoverInfo);
+            return StringsHelper.GetString(Strings.SQL_Timeout_FailoverInfo);
         }
         internal static string Timeout_RoutingDestination()
         {
-            return System.StringsHelper.GetString(Strings.SQL_Timeout_RoutingDestinationInfo);
+            return StringsHelper.GetString(Strings.SQL_Timeout_RoutingDestinationInfo);
         }
         internal static string Duration_PreLogin_Begin(long PreLoginBeginDuration)
         {
-            return System.StringsHelper.GetString(Strings.SQL_Duration_PreLogin_Begin, PreLoginBeginDuration);
+            return StringsHelper.GetString(Strings.SQL_Duration_PreLogin_Begin, PreLoginBeginDuration);
         }
         internal static string Duration_PreLoginHandshake(long PreLoginBeginDuration, long PreLoginHandshakeDuration)
         {
-            return System.StringsHelper.GetString(Strings.SQL_Duration_PreLoginHandshake, PreLoginBeginDuration, PreLoginHandshakeDuration);
+            return StringsHelper.GetString(Strings.SQL_Duration_PreLoginHandshake, PreLoginBeginDuration, PreLoginHandshakeDuration);
         }
         internal static string Duration_Login_Begin(long PreLoginBeginDuration, long PreLoginHandshakeDuration, long LoginBeginDuration)
         {
-            return System.StringsHelper.GetString(Strings.SQL_Duration_Login_Begin, PreLoginBeginDuration, PreLoginHandshakeDuration, LoginBeginDuration);
+            return StringsHelper.GetString(Strings.SQL_Duration_Login_Begin, PreLoginBeginDuration, PreLoginHandshakeDuration, LoginBeginDuration);
         }
         internal static string Duration_Login_ProcessConnectionAuth(long PreLoginBeginDuration, long PreLoginHandshakeDuration, long LoginBeginDuration, long LoginAuthDuration)
         {
-            return System.StringsHelper.GetString(Strings.SQL_Duration_Login_ProcessConnectionAuth, PreLoginBeginDuration, PreLoginHandshakeDuration, LoginBeginDuration, LoginAuthDuration);
+            return StringsHelper.GetString(Strings.SQL_Duration_Login_ProcessConnectionAuth, PreLoginBeginDuration, PreLoginHandshakeDuration, LoginBeginDuration, LoginAuthDuration);
         }
         internal static string Duration_PostLogin(long PreLoginBeginDuration, long PreLoginHandshakeDuration, long LoginBeginDuration, long LoginAuthDuration, long PostLoginDuration)
         {
-            return System.StringsHelper.GetString(Strings.SQL_Duration_PostLogin, PreLoginBeginDuration, PreLoginHandshakeDuration, LoginBeginDuration, LoginAuthDuration, PostLoginDuration);
+            return StringsHelper.GetString(Strings.SQL_Duration_PostLogin, PreLoginBeginDuration, PreLoginHandshakeDuration, LoginBeginDuration, LoginAuthDuration, PostLoginDuration);
         }
         internal static string UserInstanceFailure()
         {
-            return System.StringsHelper.GetString(Strings.SQL_UserInstanceFailure);
+            return StringsHelper.GetString(Strings.SQL_UserInstanceFailure);
         }
         internal static string PreloginError()
         {
-            return System.StringsHelper.GetString(Strings.Snix_PreLogin);
+            return StringsHelper.GetString(Strings.Snix_PreLogin);
         }
         internal static string ExClientConnectionId()
         {
-            return System.StringsHelper.GetString(Strings.SQL_ExClientConnectionId);
+            return StringsHelper.GetString(Strings.SQL_ExClientConnectionId);
         }
         internal static string ExErrorNumberStateClass()
         {
-            return System.StringsHelper.GetString(Strings.SQL_ExErrorNumberStateClass);
+            return StringsHelper.GetString(Strings.SQL_ExErrorNumberStateClass);
         }
         internal static string ExOriginalClientConnectionId()
         {
-            return System.StringsHelper.GetString(Strings.SQL_ExOriginalClientConnectionId);
+            return StringsHelper.GetString(Strings.SQL_ExOriginalClientConnectionId);
         }
         internal static string ExRoutingDestination()
         {
-            return System.StringsHelper.GetString(Strings.SQL_ExRoutingDestination);
+            return StringsHelper.GetString(Strings.SQL_ExRoutingDestination);
         }
     }
 

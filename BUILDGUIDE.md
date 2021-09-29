@@ -64,7 +64,7 @@ msbuild -t:BuildNetCoreAllOS
 
 ```bash
 msbuild -t:BuildTestsNetCore
-# Build the tests for the .NET Core driver in 'Debug' Configuration. Default .NET Core version is 2.1.
+# Build the tests for the .NET Core driver in 'Debug' Configuration. Default .NET Core version is 3.1.
 ```
 
 ```bash
@@ -220,7 +220,7 @@ msbuild -t:BuildTestsNetFx -p:TargetNetFxVersion=net462
 ```bash
 msbuild -t:BuildTestsNetCore -p:TargetNetCoreVersion=netcoreapp3.1
 # Build the tests for custom TargetFramework (.NET Core)
-# Applicable values: netcoreapp2.1 | netcoreapp2.2 | netcoreapp3.1 | net5.0
+# Applicable values: netcoreapp3.1 | net5.0 | net6.0
 ```
 
 ### Running Tests:
@@ -232,7 +232,7 @@ dotnet test -p:TargetNetFxVersion=net462 ...
 
 dotnet test -p:TargetNetCoreVersion=netcoreapp3.1 ...
 # Use above property to run Functional Tests with custom TargetFramework (.NET Core)
-# Applicable values: netcoreapp2.1 | netcoreapp2.2 | netcoreapp3.1 | net5.0
+# Applicable values: netcoreapp3.1 | net5.0 | net6.0
 ```
 
 ## Using Managed SNI on Windows

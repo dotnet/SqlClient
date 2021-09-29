@@ -29,6 +29,8 @@ using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Server;
 
 [assembly: InternalsVisibleTo("System.Data.DataSetExtensions, PublicKey=" + Microsoft.Data.SqlClient.AssemblyRef.EcmaPublicKeyFull)] // DevDiv Bugs 92166
+// NOTE: The current Microsoft.VSDesigner editor attributes are implemented for System.Data.SqlClient, and are not publicly available.
+// New attributes that are designed to work with Microsoft.Data.SqlClient and are publicly documented should be included in future.
 namespace Microsoft.Data.SqlClient
 {
     using System.Diagnostics.Tracing;
@@ -755,7 +757,6 @@ namespace Microsoft.Data.SqlClient
         SettingsBindableAttribute(true),
         RefreshProperties(RefreshProperties.All),
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
-        Editor("Microsoft.VSDesigner.Data.SQL.Design.SqlConnectionStringEditor, " + AssemblyRef.MicrosoftVSDesigner, "System.Drawing.Design.UITypeEditor, " + AssemblyRef.SystemDrawing),
         ResDescriptionAttribute(StringsHelper.ResourceNames.SqlConnection_ConnectionString),
         ]
         override public string ConnectionString

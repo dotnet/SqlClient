@@ -64,12 +64,9 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNETTestSdkVersion)" />
     <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="$(SystemDiagnosticsDiagnosticSourceVersion)" />
     <PackageReference Include="Newtonsoft.Json" Version="$(NewtonsoftJsonVersion)" />
-    <Reference Condition="'$(TargetGroup)'=='netfx' OR '$(TargetFramework)'=='netcoreapp2.1'" Include="System.Transactions" />
+    <Reference Condition="'$(TargetGroup)'=='netfx'" Include="System.Transactions" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.1'">
-    <PackageReference Include="System.Data.Odbc" Version="$(SystemDataOdbcVersion21)" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' != 'netcoreapp2.1' AND '$(TargetGroup)' == 'netcoreapp'">
+  <ItemGroup Condition="'$(TargetGroup)' == 'netcoreapp'">
     <PackageReference Include="System.Data.Odbc" Version="$(SystemDataOdbcVersion)" />
   </ItemGroup>
   <ItemGroup Condition="$(TargetFramework.StartsWith('netcoreapp'))">
