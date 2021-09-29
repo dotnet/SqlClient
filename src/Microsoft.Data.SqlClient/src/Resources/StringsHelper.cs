@@ -16,12 +16,12 @@ namespace Microsoft.Data
 
         internal StringsHelper()
         {
-            _resources = new ResourceManager("SqlClient.Resources.Strings", GetType().Assembly);
+            _resources = new ResourceManager("Microsoft.Data.SqlClient.Resources.Strings", GetType().Assembly);
         }
 
         private static StringsHelper GetLoader()
         {
-            if (s_loader == null)
+            if (s_loader is null)
             {
                 StringsHelper sr = new();
                 Interlocked.CompareExchange(ref s_loader, sr, null);
@@ -32,27 +32,24 @@ namespace Microsoft.Data
         public static string GetResourceString(string res)
         {
             StringsHelper sys = GetLoader();
-            if (sys == null)
+            if (sys is null)
                 return null;
 
             // If "res" is a resource id, temp will not be null, "res" will contain the retrieved resource string.
             // If "res" is not a resource id, temp will be null.
             string temp = sys._resources.GetString(res, StringsHelper.Culture);
-            if (temp != null)
-                res = temp;
-
-            return res;
+            return temp ?? res;
         }
 
         public static string GetString(string res, params object[] args)
         {
             res = GetResourceString(res);
-            if (args != null && args.Length > 0)
+            if (args?.Length > 0)
             {
                 for (int i = 0; i < args.Length; i++)
                 {
                     string value = args[i] as string;
-                    if (value != null && value.Length > 1024)
+                    if (value?.Length > 1024)
                     {
                         args[i] = value.Substring(0, 1024 - 3) + "...";
                     }
