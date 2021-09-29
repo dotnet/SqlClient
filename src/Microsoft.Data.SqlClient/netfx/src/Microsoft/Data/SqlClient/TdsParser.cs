@@ -58,6 +58,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <summary>
+        /// Verify client encryption possibility.
+        /// </summary>
+        private bool ClientOSEncryptionSupport => SNILoadHandle.SingletonInstance.ClientOSEncryptionSupport;
 
         // ReliabilitySection Usage:
         //
@@ -644,6 +648,18 @@ namespace Microsoft.Data.SqlClient
             // for DNS Caching phase 1
             AssignPendingDNSInfo(serverInfo.UserProtocol, FQDNforDNSCahce);
 
+            if(!ClientOSEncryptionSupport)
+            {
+                //If encryption is required, an error will be thrown.
+                if (encrypt)
+                {
+                    _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByClient(), "", 0));
+                    _physicalStateObj.Dispose();
+                    ThrowExceptionAndWarning(_physicalStateObj);
+                }
+                _encryptionOption = EncryptionOptions.NOT_SUP;
+            }
+
             // UNDONE - send "" for instance now, need to fix later
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Sending prelogin handshake");
             SendPreLoginHandshake(instanceName, encrypt, !string.IsNullOrEmpty(certificate), useOriginalAddressInfo);
@@ -683,8 +699,8 @@ namespace Microsoft.Data.SqlClient
                 AssignPendingDNSInfo(serverInfo.UserProtocol, FQDNforDNSCahce);
 
                 SendPreLoginHandshake(instanceName, encrypt, !string.IsNullOrEmpty(certificate), useOriginalAddressInfo);
-                status = ConsumePreLoginHandshake(authType, encrypt, trustServerCert, integratedSecurity, serverCallback, clientCallback, out marsCapable,
-                                                  out _connHandler._fedAuthRequired);
+                status = ConsumePreLoginHandshake(authType, encrypt, trustServerCert, integratedSecurity, serverCallback, clientCallback, 
+                                                  out marsCapable, out _connHandler._fedAuthRequired);
 
                 // Don't need to check for Sphinx failure, since we've already consumed
                 // one pre-login packet and know we are connecting to Shiloh.
@@ -983,7 +999,7 @@ namespace Microsoft.Data.SqlClient
                     case (int)PreLoginOptions.ENCRYPT:
                         if (_encryptionOption == EncryptionOptions.NOT_SUP)
                         {
-                            // If OS doesn't support encryption, inform server not supported.
+                            //If OS doesn't support encryption and encryption is not required, inform server "not supported" by client.
                             payload[payloadLength] = (byte)EncryptionOptions.NOT_SUP;
                         }
                         else
@@ -1189,7 +1205,7 @@ namespace Microsoft.Data.SqlClient
                         switch (_encryptionOption & EncryptionOptions.OPTIONS_MASK)
                         {
                             case (EncryptionOptions.ON):
-                                if (serverOption == EncryptionOptions.NOT_SUP)
+                                if ((serverOption & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.NOT_SUP)
                                 {
                                     _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByServer(), "", 0));
                                     _physicalStateObj.Dispose();
@@ -1209,7 +1225,7 @@ namespace Microsoft.Data.SqlClient
                                     // Encrypt all.
                                     _encryptionOption = EncryptionOptions.ON | (_encryptionOption & ~EncryptionOptions.OPTIONS_MASK);
                                 }
-
+                                // NOT_SUP: No encryption.
                                 break;
 
                             case (EncryptionOptions.NOT_SUP):
@@ -6208,8 +6224,10 @@ namespace Microsoft.Data.SqlClient
                     break;
 
                 case SqlDbType.Timestamp:
-                    // Dev10 Bug #479607 - this should have been the same as SqlDbType.Binary, but it's a rejected breaking change
-                    // Dev10 Bug #752790 - don't assert when it does happen
+                    if (!LocalAppContextSwitches.LegacyRowVersionNullBehavior)
+                    {
+                        nullVal.SetToNullOfType(SqlBuffer.StorageType.SqlBinary);
+                    }
                     break;
 
                 default:

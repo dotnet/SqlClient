@@ -2563,7 +2563,7 @@
     <value>未能对 Active Directory 中的用户 {0} 进行身份验证(Authentication={1})。</value>
   </data>
   <data name="SQL_MSALInnerException" xml:space="preserve">
-    <value>错误代码 0x{0}；状态 {1}</value>
+    <value>错误代码 0x{0}</value>
   </data>
   <data name="SQL_ChangePasswordRequiresYukon" xml:space="preserve">
     <value>ChangePassword 要求 SQL Server 9.0 或更高版本。</value>

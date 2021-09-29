@@ -54,6 +54,10 @@ namespace Microsoft.SqlServer.TDS.Servers
                 case 40613:
                     return "Database on server is not currently available. Please retry the connection later. " +
                         "If the problem persists, contact customer support, and provide them the session tracing ID.";
+                case 42108:
+                    return "Can not connect to the SQL pool since it is paused. Please resume the SQL pool and try again.";
+                case 42109:
+                    return "The SQL pool is warming up. Please try again.";
             }
             return "Unknown server error occurred";
         }

@@ -1260,9 +1260,6 @@
   <data name="LocalDBNotSupported" xml:space="preserve">
     <value>LocalDB is not supported on this platform.</value>
   </data>
-  <data name="PlatformNotSupported_DataSqlClient" xml:space="preserve">
-    <value>Microsoft.Data.SqlClient is not supported on this platform.</value>
-  </data>
   <data name="SqlParameter_InvalidTableDerivedPrecisionForTvp" xml:space="preserve">
     <value>Precision '{0}' required to send all values in column '{1}' exceeds the maximum supported precision '{2}'. The values must all fit in a single precision.</value>
   </data>
@@ -1348,7 +1345,7 @@
     <value>Failed to authenticate the user {0} in Active Directory (Authentication={1}).</value>
   </data>
   <data name="SQL_MSALInnerException" xml:space="preserve">
-    <value>Error code 0x{0}; state {1}</value>
+    <value>Error code 0x{0}</value>
   </data>
   <data name="SQL_ParsingErrorWithState" xml:space="preserve">
     <value>Internal connection fatal error. Error state: {0}.</value>

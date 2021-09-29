@@ -312,8 +312,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 _validateCert = (options & TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE) != 0;
                 try
                 {
-
-                    _sslStream.AuthenticateAsClient(_targetServer);
+                    _sslStream.AuthenticateAsClient(_targetServer, null, SupportedProtocols, true);
                     _sslOverTdsStream.FinishHandshake();
                 }
                 catch (AuthenticationException aue)

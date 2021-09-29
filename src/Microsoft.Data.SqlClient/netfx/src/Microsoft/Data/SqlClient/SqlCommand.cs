@@ -26,6 +26,8 @@ using Microsoft.Data.SqlClient.Server;
 using SysTx = System.Transactions;
 using System.Collections.Concurrent;
 
+// NOTE: The current Microsoft.VSDesigner editor attributes are implemented for System.Data.SqlClient, and are not publicly available.
+// New attributes that are designed to work with Microsoft.Data.SqlClient and are publicly documented should be included in future.
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/SqlCommand/*'/>
@@ -80,7 +82,8 @@ namespace Microsoft.Data.SqlClient
         /// Internal flag for testing purposes that forces all queries to internally end async calls.
         /// </summary>
         private static bool _forceInternalEndQuery = false;
-#endif 
+#endif
+        internal static readonly Action<object> s_cancelIgnoreFailure = CancelIgnoreFailureCallback;
 
         // devnote: Prepare
         // Against 7.0 Server (Sphinx) a prepare/unprepare requires an extra roundtrip to the server.
@@ -491,7 +494,6 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Connection/*' />
         [
         DefaultValue(null),
-        Editor("Microsoft.VSDesigner.Data.Design.DbConnectionEditor, " + AssemblyRef.MicrosoftVSDesigner, "System.Drawing.Design.UITypeEditor, " + AssemblyRef.SystemDrawing),
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
         ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_Connection),
         ]
@@ -619,7 +621,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private static bool IsRetryEnabled => LocalAppContextSwitches.IsRetryEnabled;
+        private bool IsProviderRetriable => SqlConfigurableRetryFactory.IsRetriable(RetryLogicProvider);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RetryLogicProvider/*' />
         [
@@ -746,7 +748,6 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandText/*'/>
         [
         DefaultValue(""),
-        Editor("Microsoft.VSDesigner.Data.SQL.Design.SqlCommandTextEditor, " + AssemblyRef.MicrosoftVSDesigner, "System.Drawing.Design.UITypeEditor, " + AssemblyRef.SystemDrawing),
         RefreshProperties(RefreshProperties.All), // MDAC 67707
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
         ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_CommandText),
@@ -915,6 +916,12 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        internal static void CancelIgnoreFailureCallback(object state)
+        {
+            SqlCommand command = (SqlCommand)state;
+            command.CancelIgnoreFailure();
+        }
+
         internal void CancelIgnoreFailure()
         {
             // This method is used to route CancellationTokens to the Cancel method.
@@ -1023,110 +1030,111 @@ namespace Microsoft.Data.SqlClient
             }
 
             SqlStatistics statistics = null;
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlCommand.Prepare|API> {0}", ObjectID);
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlCommand.Prepare|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
-
-            statistics = SqlStatistics.StartTimer(Statistics);
-
-            // only prepare if batch with parameters
-            // MDAC BUG #'s 73776 & 72101
-            if (
-                this.IsPrepared && !this.IsDirty
-                || (this.CommandType == CommandType.StoredProcedure)
-                || (
-                        (System.Data.CommandType.Text == this.CommandType)
-                        && (0 == GetParameterCount(_parameters))
-                    )
-
-            )
+            using (TryEventScope.Create("<sc.SqlCommand.Prepare|API> {0}", ObjectID))
             {
-                if (null != Statistics)
+                SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlCommand.Prepare|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
+
+                statistics = SqlStatistics.StartTimer(Statistics);
+
+                // only prepare if batch with parameters
+                // MDAC BUG #'s 73776 & 72101
+                if (
+                    this.IsPrepared && !this.IsDirty
+                    || (this.CommandType == CommandType.StoredProcedure)
+                    || (
+                            (System.Data.CommandType.Text == this.CommandType)
+                            && (0 == GetParameterCount(_parameters))
+                        )
+
+                )
                 {
-                    Statistics.SafeIncrement(ref Statistics._prepares);
-                }
-                _hiddenPrepare = false;
-            }
-            else
-            {
-                // Validate the command outside of the try\catch to avoid putting the _stateObj on error
-                ValidateCommand(ADP.Prepare, false /*not async*/);
-
-                bool processFinallyBlock = true;
-                TdsParser bestEffortCleanupTarget = null;
-                RuntimeHelpers.PrepareConstrainedRegions();
-                try
-                {
-                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_activeConnection);
-
-                    // NOTE: The state object isn't actually needed for this, but it is still here for back-compat (since it does a bunch of checks)
-                    GetStateObject();
-
-                    // Loop through parameters ensuring that we do not have unspecified types, sizes, scales, or precisions
-                    if (null != _parameters)
+                    if (null != Statistics)
                     {
-                        int count = _parameters.Count;
-                        for (int i = 0; i < count; ++i)
-                        {
-                            _parameters[i].Prepare(this); // MDAC 67063
-                        }
+                        Statistics.SafeIncrement(ref Statistics._prepares);
                     }
+                    _hiddenPrepare = false;
+                }
+                else
+                {
+                    // Validate the command outside of the try\catch to avoid putting the _stateObj on error
+                    ValidateCommand(ADP.Prepare, false /*not async*/);
 
-#if DEBUG
-                    TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+                    bool processFinallyBlock = true;
+                    TdsParser bestEffortCleanupTarget = null;
                     RuntimeHelpers.PrepareConstrainedRegions();
                     try
                     {
-                        tdsReliabilitySection.Start();
+                        bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_activeConnection);
+
+                        // NOTE: The state object isn't actually needed for this, but it is still here for back-compat (since it does a bunch of checks)
+                        GetStateObject();
+
+                        // Loop through parameters ensuring that we do not have unspecified types, sizes, scales, or precisions
+                        if (null != _parameters)
+                        {
+                            int count = _parameters.Count;
+                            for (int i = 0; i < count; ++i)
+                            {
+                                _parameters[i].Prepare(this); // MDAC 67063
+                            }
+                        }
+
+#if DEBUG
+                        TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+                        RuntimeHelpers.PrepareConstrainedRegions();
+                        try
+                        {
+                            tdsReliabilitySection.Start();
 #else
                     {
 #endif //DEBUG
-                        InternalPrepare();
-                    }
+                            InternalPrepare();
+                        }
 #if DEBUG
+                        finally
+                        {
+                            tdsReliabilitySection.Stop();
+                        }
+#endif //DEBUG
+                    }
+                    catch (System.OutOfMemoryException e)
+                    {
+                        processFinallyBlock = false;
+                        _activeConnection.Abort(e);
+                        throw;
+                    }
+                    catch (System.StackOverflowException e)
+                    {
+                        processFinallyBlock = false;
+                        _activeConnection.Abort(e);
+                        throw;
+                    }
+                    catch (System.Threading.ThreadAbortException e)
+                    {
+                        processFinallyBlock = false;
+                        _activeConnection.Abort(e);
+
+                        SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+                        throw;
+                    }
+                    catch (Exception e)
+                    {
+                        processFinallyBlock = ADP.IsCatchableExceptionType(e);
+                        throw;
+                    }
                     finally
                     {
-                        tdsReliabilitySection.Stop();
-                    }
-#endif //DEBUG
-                }
-                catch (System.OutOfMemoryException e)
-                {
-                    processFinallyBlock = false;
-                    _activeConnection.Abort(e);
-                    throw;
-                }
-                catch (System.StackOverflowException e)
-                {
-                    processFinallyBlock = false;
-                    _activeConnection.Abort(e);
-                    throw;
-                }
-                catch (System.Threading.ThreadAbortException e)
-                {
-                    processFinallyBlock = false;
-                    _activeConnection.Abort(e);
+                        if (processFinallyBlock)
+                        {
+                            _hiddenPrepare = false; // The command is now officially prepared
 
-                    SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                    throw;
-                }
-                catch (Exception e)
-                {
-                    processFinallyBlock = ADP.IsCatchableExceptionType(e);
-                    throw;
-                }
-                finally
-                {
-                    if (processFinallyBlock)
-                    {
-                        _hiddenPrepare = false; // The command is now officially prepared
-
-                        ReliablePutStateObject();
+                            ReliablePutStateObject();
+                        }
                     }
                 }
+
+                SqlStatistics.StopTimer(statistics);
             }
-
-            SqlStatistics.StopTimer(statistics);
-            SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
         }
 
         private void InternalPrepare()
@@ -1200,125 +1208,126 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Cancel/*'/>
         public override void Cancel()
         {
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlCommand.Cancel | API > {0}", ObjectID);
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlCommand.Cancel|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
-
-            SqlStatistics statistics = null;
-            try
+            using (TryEventScope.Create("<sc.SqlCommand.Cancel | API > {0}", ObjectID))
             {
-                statistics = SqlStatistics.StartTimer(Statistics);
+                SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlCommand.Cancel|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
 
-                // If we are in reconnect phase simply cancel the waiting task
-                var reconnectCompletionSource = _reconnectionCompletionSource;
-                if (reconnectCompletionSource != null)
+                SqlStatistics statistics = null;
+                try
                 {
-                    if (reconnectCompletionSource.TrySetCanceled())
+                    statistics = SqlStatistics.StartTimer(Statistics);
+
+                    // If we are in reconnect phase simply cancel the waiting task
+                    var reconnectCompletionSource = _reconnectionCompletionSource;
+                    if (reconnectCompletionSource != null)
+                    {
+                        if (reconnectCompletionSource.TrySetCanceled())
+                        {
+                            return;
+                        }
+                    }
+
+                    // the pending data flag means that we are awaiting a response or are in the middle of processing a response
+                    // if we have no pending data, then there is nothing to cancel
+                    // if we have pending data, but it is not a result of this command, then we don't cancel either.  Note that
+                    // this model is implementable because we only allow one active command at any one time.  This code
+                    // will have to change we allow multiple outstanding batches
+                    if (null == _activeConnection)
                     {
                         return;
                     }
-                }
-
-                // the pending data flag means that we are awaiting a response or are in the middle of processing a response
-                // if we have no pending data, then there is nothing to cancel
-                // if we have pending data, but it is not a result of this command, then we don't cancel either.  Note that
-                // this model is implementable because we only allow one active command at any one time.  This code
-                // will have to change we allow multiple outstanding batches
-                if (null == _activeConnection)
-                {
-                    return;
-                }
-                SqlInternalConnectionTds connection = (_activeConnection.InnerConnection as SqlInternalConnectionTds);
-                if (null == connection)
-                {  // Fail with out locking
-                    return;
-                }
-
-                // The lock here is to protect against the command.cancel / connection.close race condition
-                // The SqlInternalConnectionTds is set to OpenBusy during close, once this happens the cast below will fail and
-                // the command will no longer be cancelable.  It might be desirable to be able to cancel the close operation, but this is
-                // outside of the scope of Whidbey RTM.  See (SqlConnection::Close) for other lock.
-                lock (connection)
-                {
-                    if (connection != (_activeConnection.InnerConnection as SqlInternalConnectionTds))
-                    { // make sure the connection held on the active connection is what we have stored in our temp connection variable, if not between getting "connection" and taking the lock, the connection has been closed
+                    SqlInternalConnectionTds connection = (_activeConnection.InnerConnection as SqlInternalConnectionTds);
+                    if (null == connection)
+                    {  // Fail with out locking
                         return;
                     }
 
-                    TdsParser parser = connection.Parser;
-                    if (null == parser)
+                    // The lock here is to protect against the command.cancel / connection.close race condition
+                    // The SqlInternalConnectionTds is set to OpenBusy during close, once this happens the cast below will fail and
+                    // the command will no longer be cancelable.  It might be desirable to be able to cancel the close operation, but this is
+                    // outside of the scope of Whidbey RTM.  See (SqlConnection::Close) for other lock.
+                    lock (connection)
                     {
-                        return;
-                    }
+                        if (connection != (_activeConnection.InnerConnection as SqlInternalConnectionTds))
+                        { // make sure the connection held on the active connection is what we have stored in our temp connection variable, if not between getting "connection" and taking the lock, the connection has been closed
+                            return;
+                        }
 
-                    TdsParser bestEffortCleanupTarget = null;
-                    RuntimeHelpers.PrepareConstrainedRegions();
-                    try
-                    {
-#if DEBUG
-                        TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+                        TdsParser parser = connection.Parser;
+                        if (null == parser)
+                        {
+                            return;
+                        }
 
+                        TdsParser bestEffortCleanupTarget = null;
                         RuntimeHelpers.PrepareConstrainedRegions();
                         try
                         {
-                            tdsReliabilitySection.Start();
+#if DEBUG
+                            TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+
+                            RuntimeHelpers.PrepareConstrainedRegions();
+                            try
+                            {
+                                tdsReliabilitySection.Start();
 #else
                         {
 #endif //DEBUG
-                            bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_activeConnection);
+                                bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_activeConnection);
 
-                            if (!_pendingCancel)
-                            { // Do nothing if aleady pending.
-                                // Before attempting actual cancel, set the _pendingCancel flag to false.
-                                // This denotes to other thread before obtaining stateObject from the
-                                // session pool that there is another thread wishing to cancel.
-                                // The period in question is between entering the ExecuteAPI and obtaining 
-                                // a stateObject.
-                                _pendingCancel = true;
+                                if (!_pendingCancel)
+                                { // Do nothing if aleady pending.
+                                  // Before attempting actual cancel, set the _pendingCancel flag to false.
+                                  // This denotes to other thread before obtaining stateObject from the
+                                  // session pool that there is another thread wishing to cancel.
+                                  // The period in question is between entering the ExecuteAPI and obtaining 
+                                  // a stateObject.
+                                    _pendingCancel = true;
 
-                                TdsParserStateObject stateObj = _stateObj;
-                                if (null != stateObj)
-                                {
-                                    stateObj.Cancel(ObjectID);
-                                }
-                                else
-                                {
-                                    SqlDataReader reader = connection.FindLiveReader(this);
-                                    if (reader != null)
+                                    TdsParserStateObject stateObj = _stateObj;
+                                    if (null != stateObj)
                                     {
-                                        reader.Cancel(ObjectID);
+                                        stateObj.Cancel(ObjectID);
+                                    }
+                                    else
+                                    {
+                                        SqlDataReader reader = connection.FindLiveReader(this);
+                                        if (reader != null)
+                                        {
+                                            reader.Cancel(ObjectID);
+                                        }
                                     }
                                 }
                             }
-                        }
 #if DEBUG
-                        finally
-                        {
-                            tdsReliabilitySection.Stop();
-                        }
+                            finally
+                            {
+                                tdsReliabilitySection.Stop();
+                            }
 #endif //DEBUG
-                    }
-                    catch (System.OutOfMemoryException e)
-                    {
-                        _activeConnection.Abort(e);
-                        throw;
-                    }
-                    catch (System.StackOverflowException e)
-                    {
-                        _activeConnection.Abort(e);
-                        throw;
-                    }
-                    catch (System.Threading.ThreadAbortException e)
-                    {
-                        _activeConnection.Abort(e);
-                        SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                        throw;
+                        }
+                        catch (System.OutOfMemoryException e)
+                        {
+                            _activeConnection.Abort(e);
+                            throw;
+                        }
+                        catch (System.StackOverflowException e)
+                        {
+                            _activeConnection.Abort(e);
+                            throw;
+                        }
+                        catch (System.Threading.ThreadAbortException e)
+                        {
+                            _activeConnection.Abort(e);
+                            SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+                            throw;
+                        }
                     }
                 }
-            }
-            finally
-            {
-                SqlStatistics.StopTimer(statistics);
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
+                finally
+                {
+                    SqlStatistics.StopTimer(statistics);
+                }
             }
         }
 
@@ -1361,34 +1370,35 @@ namespace Microsoft.Data.SqlClient
             _pendingCancel = false;
             SqlStatistics statistics = null;
 
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlCommand.ExecuteScalar|API> {0}", ObjectID);
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlCommand.ExecuteScalar|API|Correlation> ObjectID{0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
+            using (TryEventScope.Create("<sc.SqlCommand.ExecuteScalar|API> {0}", ObjectID))
+            {
+                SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlCommand.ExecuteScalar|API|Correlation> ObjectID{0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
 
-            bool success = false;
-            int? sqlExceptionNumber = null;
+                bool success = false;
+                int? sqlExceptionNumber = null;
 
-            try
-            {
-                statistics = SqlStatistics.StartTimer(Statistics);
-                WriteBeginExecuteEvent();
-                SqlDataReader ds;
-                ds = IsRetryEnabled ?
-                    RunExecuteReaderWithRetry(0, RunBehavior.ReturnImmediately, true, ADP.ExecuteScalar) :
-                    RunExecuteReader(0, RunBehavior.ReturnImmediately, true, ADP.ExecuteScalar);
-                object result = CompleteExecuteScalar(ds, false);
-                success = true;
-                return result;
-            }
-            catch (SqlException ex)
-            {
-                sqlExceptionNumber = ex.Number;
-                throw;
-            }
-            finally
-            {
-                SqlStatistics.StopTimer(statistics);
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
-                WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
+                try
+                {
+                    statistics = SqlStatistics.StartTimer(Statistics);
+                    WriteBeginExecuteEvent();
+                    SqlDataReader ds;
+                    ds = IsProviderRetriable ?
+                        RunExecuteReaderWithRetry(0, RunBehavior.ReturnImmediately, true, ADP.ExecuteScalar) :
+                        RunExecuteReader(0, RunBehavior.ReturnImmediately, true, ADP.ExecuteScalar);
+                    object result = CompleteExecuteScalar(ds, false);
+                    success = true;
+                    return result;
+                }
+                catch (SqlException ex)
+                {
+                    sqlExceptionNumber = ex.Number;
+                    throw;
+                }
+                finally
+                {
+                    SqlStatistics.StopTimer(statistics);
+                    WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
+                }
             }
         }
 
@@ -1441,37 +1451,38 @@ namespace Microsoft.Data.SqlClient
 
             SqlStatistics statistics = null;
 
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlCommand.ExecuteNonQuery|API> {0}", ObjectID);
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlCommand.ExecuteNonQuery|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
+            using (TryEventScope.Create("<sc.SqlCommand.ExecuteNonQuery|API> {0}", ObjectID))
+            {
+                SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlCommand.ExecuteNonQuery|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
 
-            bool success = false;
-            int? sqlExceptionNumber = null;
-            try
-            {
-                statistics = SqlStatistics.StartTimer(Statistics);
-                WriteBeginExecuteEvent();
-                bool usedCache;
-                if (IsRetryEnabled)
+                bool success = false;
+                int? sqlExceptionNumber = null;
+                try
                 {
-                    InternalExecuteNonQueryWithRetry(ADP.ExecuteNonQuery, sendToPipe: false, CommandTimeout, out usedCache, asyncWrite: false, inRetry: false);
+                    statistics = SqlStatistics.StartTimer(Statistics);
+                    WriteBeginExecuteEvent();
+                    bool usedCache;
+                    if (IsProviderRetriable)
+                    {
+                        InternalExecuteNonQueryWithRetry(ADP.ExecuteNonQuery, sendToPipe: false, CommandTimeout, out usedCache, asyncWrite: false, inRetry: false);
+                    }
+                    else
+                    {
+                        InternalExecuteNonQuery(null, ADP.ExecuteNonQuery, sendToPipe: false, CommandTimeout, out usedCache);
+                    }
+                    success = true;
+                    return _rowsAffected;
                 }
-                else
+                catch (SqlException ex)
                 {
-                    InternalExecuteNonQuery(null, ADP.ExecuteNonQuery, sendToPipe: false, CommandTimeout, out usedCache);
+                    sqlExceptionNumber = ex.Number;
+                    throw;
                 }
-                success = true;
-                return _rowsAffected;
-            }
-            catch (SqlException ex)
-            {
-                sqlExceptionNumber = ex.Number;
-                throw;
-            }
-            finally
-            {
-                SqlStatistics.StopTimer(statistics);
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
-                WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
+                finally
+                {
+                    SqlStatistics.StopTimer(statistics);
+                    WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
+                }
             }
         }
 
@@ -1486,17 +1497,19 @@ namespace Microsoft.Data.SqlClient
             _pendingCancel = false;
 
             SqlStatistics statistics = null;
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlCommand.ExecuteToPipe|INFO> {0}", ObjectID);
-            try
+
+            using (TryEventScope.Create("<sc.SqlCommand.ExecuteToPipe|INFO> {0}", ObjectID))
             {
-                statistics = SqlStatistics.StartTimer(Statistics);
-                bool usedCache;
-                InternalExecuteNonQuery(null, ADP.ExecuteNonQuery, true, CommandTimeout, out usedCache);
-            }
-            finally
-            {
-                SqlStatistics.StopTimer(statistics);
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
+                try
+                {
+                    statistics = SqlStatistics.StartTimer(Statistics);
+                    bool usedCache;
+                    InternalExecuteNonQuery(null, ADP.ExecuteNonQuery, true, CommandTimeout, out usedCache);
+                }
+                finally
+                {
+                    SqlStatistics.StopTimer(statistics);
+                }
             }
         }
 
@@ -1770,19 +1783,13 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 ThrowIfReconnectionHasBeenCanceled();
-                // lock on _stateObj prevents races with close/cancel.
-                // If we have already initiate the End call internally, we have already done that, so no point doing it again.
-                if (!_internalEndExecuteInitiated)
+                if (!_internalEndExecuteInitiated && _stateObj != null)
                 {
-                    lock (_stateObj)
-                    {
-                        return EndExecuteNonQueryInternal(asyncResult);
-                    }
+                    // call SetCancelStateClosed on the stateobject to ensure that cancel cannot 
+                    // happen after we have changed started the end processing
+                    _stateObj.SetCancelStateClosed();
                 }
-                else
-                {
-                    return EndExecuteNonQueryInternal(asyncResult);
-                }
+                return EndExecuteNonQueryInternal(asyncResult);
             }
         }
 
@@ -2072,35 +2079,36 @@ namespace Microsoft.Data.SqlClient
 
             SqlStatistics statistics = null;
 
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlCommand.ExecuteXmlReader|API> {0}", ObjectID);
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlCommand.ExecuteXmlReader|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
+            using (TryEventScope.Create("<sc.SqlCommand.ExecuteXmlReader|API> {0}", ObjectID))
+            {
+                SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlCommand.ExecuteXmlReader|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
 
-            bool success = false;
-            int? sqlExceptionNumber = null;
-            try
-            {
-                statistics = SqlStatistics.StartTimer(Statistics);
-                WriteBeginExecuteEvent();
+                bool success = false;
+                int? sqlExceptionNumber = null;
+                try
+                {
+                    statistics = SqlStatistics.StartTimer(Statistics);
+                    WriteBeginExecuteEvent();
 
-                // use the reader to consume metadata
-                SqlDataReader ds;
-                ds = IsRetryEnabled ?
-                    RunExecuteReaderWithRetry(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, true, ADP.ExecuteXmlReader) :
-                    RunExecuteReader(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, true, ADP.ExecuteXmlReader);
-                XmlReader result = CompleteXmlReader(ds);
-                success = true;
-                return result;
-            }
-            catch (SqlException ex)
-            {
-                sqlExceptionNumber = ex.Number;
-                throw;
-            }
-            finally
-            {
-                SqlStatistics.StopTimer(statistics);
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
-                WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
+                    // use the reader to consume metadata
+                    SqlDataReader ds;
+                    ds = IsProviderRetriable ?
+                        RunExecuteReaderWithRetry(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, true, ADP.ExecuteXmlReader) :
+                        RunExecuteReader(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, true, ADP.ExecuteXmlReader);
+                    XmlReader result = CompleteXmlReader(ds);
+                    success = true;
+                    return result;
+                }
+                catch (SqlException ex)
+                {
+                    sqlExceptionNumber = ex.Number;
+                    throw;
+                }
+                finally
+                {
+                    SqlStatistics.StopTimer(statistics);
+                    WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
+                }
             }
         }
 
@@ -2289,19 +2297,14 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 ThrowIfReconnectionHasBeenCanceled();
-                // lock on _stateObj prevents races with close/cancel.
-                // If we have already initiate the End call internally, we have already done that, so no point doing it again.
-                if (!_internalEndExecuteInitiated)
+                if (!_internalEndExecuteInitiated && _stateObj != null)
                 {
-                    lock (_stateObj)
-                    {
-                        return EndExecuteXmlReaderInternal(asyncResult);
-                    }
+                    // call SetCancelStateClosed on the stateobject to ensure that cancel cannot 
+                    // happen after we have changed started the end processing
+                    _stateObj.SetCancelStateClosed();
                 }
-                else
-                {
-                    return EndExecuteXmlReaderInternal(asyncResult);
-                }
+
+                return EndExecuteXmlReaderInternal(asyncResult);
             }
         }
 
@@ -2406,37 +2409,33 @@ namespace Microsoft.Data.SqlClient
         new public SqlDataReader ExecuteReader()
         {
             SqlStatistics statistics = null;
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlCommand.ExecuteReader|API> {0}", ObjectID);
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlCommand.ExecuteReader|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
-            try
+            using (TryEventScope.Create("<sc.SqlCommand.ExecuteReader|API> {0}", ObjectID))
             {
-                statistics = SqlStatistics.StartTimer(Statistics);
-                return IsRetryEnabled ?
-                        ExecuteReaderWithRetry(CommandBehavior.Default, ADP.ExecuteReader) :
-                        ExecuteReader(CommandBehavior.Default, ADP.ExecuteReader);
-            }
-            finally
-            {
-                SqlStatistics.StopTimer(statistics);
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
+                SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlCommand.ExecuteReader|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
+                try
+                {
+                    statistics = SqlStatistics.StartTimer(Statistics);
+                    return IsProviderRetriable ?
+                            ExecuteReaderWithRetry(CommandBehavior.Default, ADP.ExecuteReader) :
+                            ExecuteReader(CommandBehavior.Default, ADP.ExecuteReader);
+                }
+                finally
+                {
+                    SqlStatistics.StopTimer(statistics);
+                }
             }
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReader[@name="CommandBehavior"]/*'/>
         new public SqlDataReader ExecuteReader(CommandBehavior behavior)
         {
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlCommand.ExecuteReader|API> {0}, behavior={1}", ObjectID, (int)behavior);
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlCommand.ExecuteReader|API|Correlation> ObjectID {0}, behavior={1}, ActivityID {2}", ObjectID, (int)behavior, ActivityCorrelator.Current);
-
-            try
+            using (TryEventScope.Create("<sc.SqlCommand.ExecuteReader|API> {0}, behavior={1}", ObjectID, (int)behavior))
             {
-                return IsRetryEnabled ?
+                SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlCommand.ExecuteReader|API|Correlation> ObjectID {0}, behavior={1}, ActivityID {2}", ObjectID, (int)behavior, ActivityCorrelator.Current);
+
+                return IsProviderRetriable ?
                        ExecuteReaderWithRetry(behavior, ADP.ExecuteReader) :
                        ExecuteReader(behavior, ADP.ExecuteReader);
-            }
-            finally
-            {
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
             }
         }
 
@@ -2552,19 +2551,15 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 ThrowIfReconnectionHasBeenCanceled();
-                // lock on _stateObj prevents races with close/cancel.
-                // If we have already initiate the End call internally, we have already done that, so no point doing it again.
-                if (!_internalEndExecuteInitiated)
+
+                if (!_internalEndExecuteInitiated && _stateObj != null)
                 {
-                    lock (_stateObj)
-                    {
-                        return EndExecuteReaderInternal(asyncResult);
-                    }
+                    // call SetCancelStateClosed on the stateobject to ensure that cancel cannot happen after
+                    // we have changed started the end processing
+                    _stateObj.SetCancelStateClosed();
                 }
-                else
-                {
-                    return EndExecuteReaderInternal(asyncResult);
-                }
+
+                return EndExecuteReaderInternal(asyncResult);
             }
         }
 
@@ -2950,7 +2945,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteNonQueryAsync[@name="CancellationToken"]/*'/>
         public override Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
-            => IsRetryEnabled ?
+            => IsProviderRetriable ?
                 InternalExecuteNonQueryWithRetryAsync(cancellationToken) :
                 InternalExecuteNonQueryAsync(cancellationToken);
 
@@ -2969,7 +2964,7 @@ namespace Microsoft.Data.SqlClient
                     source.SetCanceled();
                     return source.Task;
                 }
-                registration = cancellationToken.Register(CancelIgnoreFailure);
+                registration = cancellationToken.Register(s_cancelIgnoreFailure, this);
             }
 
             Task<int> returnedTask = source.Task;
@@ -3017,9 +3012,9 @@ namespace Microsoft.Data.SqlClient
                         throw result.Exception.InnerException;
                     }
                     return result.Result;
-                }, 
-                CancellationToken.None, 
-                TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.NotOnCanceled, 
+                },
+                CancellationToken.None,
+                TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.NotOnCanceled,
                 TaskScheduler.Default
             );
         }
@@ -3029,25 +3024,25 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="default"]/*'/>
         new public Task<SqlDataReader> ExecuteReaderAsync()
-            => IsRetryEnabled ?
+            => IsProviderRetriable ?
                 InternalExecuteReaderWithRetryAsync(CommandBehavior.Default, CancellationToken.None) :
                 InternalExecuteReaderAsync(CommandBehavior.Default, CancellationToken.None);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="CommandBehavior"]/*'/>
         new public Task<SqlDataReader> ExecuteReaderAsync(CommandBehavior behavior)
-            => IsRetryEnabled ?
+            => IsProviderRetriable ?
                 InternalExecuteReaderWithRetryAsync(behavior, CancellationToken.None) :
                 InternalExecuteReaderAsync(behavior, CancellationToken.None);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="CancellationToken"]/*'/>
         new public Task<SqlDataReader> ExecuteReaderAsync(CancellationToken cancellationToken)
-            => IsRetryEnabled ?
+            => IsProviderRetriable ?
                 InternalExecuteReaderWithRetryAsync(CommandBehavior.Default, cancellationToken) :
                 InternalExecuteReaderAsync(CommandBehavior.Default, cancellationToken);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="commandBehaviorAndCancellationToken"]/*'/>
         new public Task<SqlDataReader> ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
-            => IsRetryEnabled ?
+            => IsProviderRetriable ?
                 InternalExecuteReaderWithRetryAsync(behavior, cancellationToken) :
                 InternalExecuteReaderAsync(behavior, cancellationToken);
 
@@ -3066,7 +3061,7 @@ namespace Microsoft.Data.SqlClient
                     source.SetCanceled();
                     return source.Task;
                 }
-                registration = cancellationToken.Register(CancelIgnoreFailure);
+                registration = cancellationToken.Register(s_cancelIgnoreFailure, this);
             }
 
             Task<SqlDataReader> returnedTask = source.Task;
@@ -3103,14 +3098,10 @@ namespace Microsoft.Data.SqlClient
             return returnedTask;
         }
 
-        private Task<object> InternalExecuteScalarWithRetryAsync(CancellationToken cancellationToken)
-            => RetryLogicProvider.ExecuteAsync(this, () => InternalExecuteScalarAsync(cancellationToken), cancellationToken);
-
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteScalarAsync[@name="CancellationToken"]/*'/>
-        public override Task<object> ExecuteScalarAsync(CancellationToken cancellationToken)
-            => IsRetryEnabled ?
-                InternalExecuteScalarWithRetryAsync(cancellationToken) :
-                InternalExecuteScalarAsync(cancellationToken);
+        public override Task<object> ExecuteScalarAsync(CancellationToken cancellationToken) =>
+            // Do not use retry logic here as internal call to ExecuteReaderAsync handles retry logic.
+            InternalExecuteScalarAsync(cancellationToken);
 
         private Task<object> InternalExecuteScalarAsync(CancellationToken cancellationToken)
         {
@@ -3197,7 +3188,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReaderAsync[@name="CancellationToken"]/*'/>
         public Task<XmlReader> ExecuteXmlReaderAsync(CancellationToken cancellationToken)
-            => IsRetryEnabled ?
+            => IsProviderRetriable ?
                 InternalExecuteXmlReaderWithRetryAsync(cancellationToken) :
                 InternalExecuteXmlReaderAsync(cancellationToken);
 
@@ -3216,7 +3207,7 @@ namespace Microsoft.Data.SqlClient
                     source.SetCanceled();
                     return source.Task;
                 }
-                registration = cancellationToken.Register(CancelIgnoreFailure);
+                registration = cancellationToken.Register(s_cancelIgnoreFailure, this);
             }
 
             Task<XmlReader> returnedTask = source.Task;
@@ -7620,7 +7611,7 @@ namespace Microsoft.Data.SqlClient
 
         private void WriteBeginExecuteEvent()
         {
-            SqlClientEventSource.Log.TryBeginExecuteEvent(ObjectID, Connection?.ClientConnectionId, CommandText);
+            SqlClientEventSource.Log.TryBeginExecuteEvent(ObjectID, Connection?.DataSource, Connection?.Database, CommandText, Connection?.ClientConnectionId);
         }
 
         /// <summary>
@@ -7647,7 +7638,7 @@ namespace Microsoft.Data.SqlClient
 
                 int compositeState = successFlag | isSqlExceptionFlag | synchronousFlag;
 
-                SqlClientEventSource.Log.TryEndExecuteEvent(ObjectID, Connection?.ClientConnectionId, compositeState, sqlExceptionNumber.GetValueOrDefault());
+                SqlClientEventSource.Log.TryEndExecuteEvent(ObjectID, compositeState, sqlExceptionNumber.GetValueOrDefault(), Connection?.ClientConnectionId);
             }
         }
 

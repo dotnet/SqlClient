@@ -29,6 +29,8 @@ using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Server;
 
 [assembly: InternalsVisibleTo("System.Data.DataSetExtensions, PublicKey=" + Microsoft.Data.SqlClient.AssemblyRef.EcmaPublicKeyFull)] // DevDiv Bugs 92166
+// NOTE: The current Microsoft.VSDesigner editor attributes are implemented for System.Data.SqlClient, and are not publicly available.
+// New attributes that are designed to work with Microsoft.Data.SqlClient and are publicly documented should be included in future.
 namespace Microsoft.Data.SqlClient
 {
     using System.Diagnostics.Tracing;
@@ -310,7 +312,7 @@ namespace Microsoft.Data.SqlClient
 
         // Retry Logic
         private SqlRetryLogicBaseProvider _retryLogicProvider;
-        private static bool IsRetryEnabled => LocalAppContextSwitches.IsRetryEnabled;
+        private bool IsProviderRetriable => SqlConfigurableRetryFactory.IsRetriable(RetryLogicProvider);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetryLogicProvider/*' />
         [
@@ -755,7 +757,6 @@ namespace Microsoft.Data.SqlClient
         SettingsBindableAttribute(true),
         RefreshProperties(RefreshProperties.All),
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
-        Editor("Microsoft.VSDesigner.Data.SQL.Design.SqlConnectionStringEditor, " + AssemblyRef.MicrosoftVSDesigner, "System.Drawing.Design.UITypeEditor, " + AssemblyRef.SystemDrawing),
         ResDescriptionAttribute(StringsHelper.ResourceNames.SqlConnection_ConnectionString),
         ]
         override public string ConnectionString
@@ -1327,8 +1328,7 @@ namespace Microsoft.Data.SqlClient
         [SuppressMessage("Microsoft.Reliability", "CA2004:RemoveCallsToGCKeepAlive")]
         override protected DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
         {
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<prov.SqlConnection.BeginDbTransaction|API> {0}, isolationLevel={1}", ObjectID, (int)isolationLevel);
-            try
+            using (TryEventScope.Create("<prov.SqlConnection.BeginDbTransaction|API> {0}, isolationLevel={1}", ObjectID, (int)isolationLevel))
             {
 
                 DbTransaction transaction = BeginTransaction(isolationLevel);
@@ -1340,10 +1340,6 @@ namespace Microsoft.Data.SqlClient
                 GC.KeepAlive(this);
 
                 return transaction;
-            }
-            finally
-            {
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
             }
         }
 
@@ -1484,96 +1480,95 @@ namespace Microsoft.Data.SqlClient
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Close/*' />
         override public void Close()
         {
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlConnection.Close|API> {0}", ObjectID);
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlConnection.Close|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
-
-            try
+            using (TryEventScope.Create("<sc.SqlConnection.Close|API> {0}", ObjectID))
             {
-                SqlStatistics statistics = null;
+                SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlConnection.Close|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
 
-                TdsParser bestEffortCleanupTarget = null;
-                RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 {
-#if DEBUG
-                    TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+                    SqlStatistics statistics = null;
 
+                    TdsParser bestEffortCleanupTarget = null;
                     RuntimeHelpers.PrepareConstrainedRegions();
                     try
                     {
-                        tdsReliabilitySection.Start();
+#if DEBUG
+                        TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+
+                        RuntimeHelpers.PrepareConstrainedRegions();
+                        try
+                        {
+                            tdsReliabilitySection.Start();
 #else
                     {
 #endif //DEBUG
-                        bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(this);
-                        statistics = SqlStatistics.StartTimer(Statistics);
+                            bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(this);
+                            statistics = SqlStatistics.StartTimer(Statistics);
 
-                        Task reconnectTask = _currentReconnectionTask;
-                        if (reconnectTask != null && !reconnectTask.IsCompleted)
-                        {
-                            CancellationTokenSource cts = _reconnectionCancellationSource;
-                            if (cts != null)
+                            Task reconnectTask = _currentReconnectionTask;
+                            if (reconnectTask != null && !reconnectTask.IsCompleted)
                             {
-                                cts.Cancel();
+                                CancellationTokenSource cts = _reconnectionCancellationSource;
+                                if (cts != null)
+                                {
+                                    cts.Cancel();
+                                }
+                                AsyncHelper.WaitForCompletion(reconnectTask, 0, null, rethrowExceptions: false); // we do not need to deal with possible exceptions in reconnection
+                                if (State != ConnectionState.Open)
+                                {// if we cancelled before the connection was opened
+                                    OnStateChange(DbConnectionInternal.StateChangeClosed);
+                                }
                             }
-                            AsyncHelper.WaitForCompletion(reconnectTask, 0, null, rethrowExceptions: false); // we do not need to deal with possible exceptions in reconnection
-                            if (State != ConnectionState.Open)
-                            {// if we cancelled before the connection was opened
-                                OnStateChange(DbConnectionInternal.StateChangeClosed);
-                            }
-                        }
-                        CancelOpenAndWait();
-                        CloseInnerConnection();
-                        GC.SuppressFinalize(this);
+                            CancelOpenAndWait();
+                            CloseInnerConnection();
+                            GC.SuppressFinalize(this);
 
-                        if (null != Statistics)
-                        {
-                            _statistics._closeTimestamp = ADP.TimerCurrent();
+                            if (null != Statistics)
+                            {
+                                _statistics._closeTimestamp = ADP.TimerCurrent();
+                            }
                         }
-                    }
 #if DEBUG
+                        finally
+                        {
+                            tdsReliabilitySection.Stop();
+                        }
+#endif //DEBUG
+                    }
+                    catch (System.OutOfMemoryException e)
+                    {
+                        Abort(e);
+                        throw;
+                    }
+                    catch (System.StackOverflowException e)
+                    {
+                        Abort(e);
+                        throw;
+                    }
+                    catch (System.Threading.ThreadAbortException e)
+                    {
+                        Abort(e);
+                        SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+                        throw;
+                    }
                     finally
                     {
-                        tdsReliabilitySection.Stop();
+                        SqlStatistics.StopTimer(statistics);
+                        //dispose windows identity once connection is closed.
+                        if (_lastIdentity != null)
+                        {
+                            _lastIdentity.Dispose();
+                        }
                     }
-#endif //DEBUG
-                }
-                catch (System.OutOfMemoryException e)
-                {
-                    Abort(e);
-                    throw;
-                }
-                catch (System.StackOverflowException e)
-                {
-                    Abort(e);
-                    throw;
-                }
-                catch (System.Threading.ThreadAbortException e)
-                {
-                    Abort(e);
-                    SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
-                    throw;
                 }
                 finally
                 {
-                    SqlStatistics.StopTimer(statistics);
-                    //dispose windows identity once connection is closed.
-                    if (_lastIdentity != null)
+                    SqlDebugContext sdc = _sdc;
+                    _sdc = null;
+                    if (sdc != null)
                     {
-                        _lastIdentity.Dispose();
+                        sdc.Dispose();
                     }
-                }
-            }
-            finally
-            {
-                SqlDebugContext sdc = _sdc;
-                _sdc = null;
-
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
-
-                if (sdc != null)
-                {
-                    sdc.Dispose();
                 }
             }
         }
@@ -1632,11 +1627,10 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenWithOverrides/*' />
         public void Open(SqlConnectionOverrides overrides)
         {
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlConnection.Open|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlConnection.Open|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
-
-            try
+            using (TryEventScope.Create("<sc.SqlConnection.Open|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current))
             {
+                SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlConnection.Open|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
+
                 if (StatisticsEnabled)
                 {
                     if (null == _statistics)
@@ -1655,7 +1649,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
 
-                    if (!(IsRetryEnabled ? TryOpenWithRetry(null, overrides) : TryOpen(null, overrides)))
+                    if (!(IsProviderRetriable ? TryOpenWithRetry(null, overrides) : TryOpen(null, overrides)))
                     {
                         throw ADP.InternalError(ADP.InternalErrorCode.SynchronousConnectReturnedPending);
                     }
@@ -1664,10 +1658,6 @@ namespace Microsoft.Data.SqlClient
                 {
                     SqlStatistics.StopTimer(statistics);
                 }
-            }
-            finally
-            {
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
             }
         }
 
@@ -1893,7 +1883,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsync/*' />
         public override Task OpenAsync(CancellationToken cancellationToken)
-            => IsRetryEnabled ?
+            => IsProviderRetriable ?
                 InternalOpenWithRetryAsync(cancellationToken) :
                 InternalOpenAsync(cancellationToken);
 
@@ -2686,11 +2676,10 @@ namespace Microsoft.Data.SqlClient
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringNewPassword/*' />
         public static void ChangePassword(string connectionString, string newPassword)
         {
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlConnection.ChangePassword|API>");
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlConnection.ChangePassword|API|Correlation> ActivityID {0}", ActivityCorrelator.Current);
-
-            try
+            using (TryEventScope.Create("<sc.SqlConnection.ChangePassword|API>"))
             {
+                SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlConnection.ChangePassword|API|Correlation> ActivityID {0}", ActivityCorrelator.Current);
+
                 if (ADP.IsEmpty(connectionString))
                 {
                     throw SQL.ChangePasswordArgumentMissing("connectionString");
@@ -2725,20 +2714,15 @@ namespace Microsoft.Data.SqlClient
 
                 ChangePassword(connectionString, connectionOptions, null, newPassword, null);
             }
-            finally
-            {
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
-            }
         }
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='/docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringCredentialNewSecurePassword/*' />
         public static void ChangePassword(string connectionString, SqlCredential credential, SecureString newSecurePassword)
         {
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.SqlConnection.ChangePassword|API>");
-            SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlConnection.ChangePassword|API|Correlation> ActivityID {0}", ActivityCorrelator.Current);
-
-            try
+            using (TryEventScope.Create("<sc.SqlConnection.ChangePassword|API>"))
             {
+                SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlConnection.ChangePassword|API|Correlation> ActivityID {0}", ActivityCorrelator.Current);
+
                 if (ADP.IsEmpty(connectionString))
                 {
                     throw SQL.ChangePasswordArgumentMissing("connectionString");
@@ -2794,10 +2778,6 @@ namespace Microsoft.Data.SqlClient
                 permissionSet.Demand();
 
                 ChangePassword(connectionString, connectionOptions, credential, null, newSecurePassword);
-            }
-            finally
-            {
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
             }
         }
 
