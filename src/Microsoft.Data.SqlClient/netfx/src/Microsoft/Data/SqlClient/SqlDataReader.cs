@@ -4331,7 +4331,7 @@ namespace Microsoft.Data.SqlClient
                         _sharedState._nextColumnDataToRead = _sharedState._nextColumnHeaderToRead;
                         _sharedState._nextColumnHeaderToRead++;
                     }
-                    else if (_sharedState._nextColumnDataToRead == i)
+                    else if (_sharedState._nextColumnHeaderToRead == i)
                     {
                         bool isNull;
                         ulong dataLength;
