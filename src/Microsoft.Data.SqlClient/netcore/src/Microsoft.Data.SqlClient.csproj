@@ -223,6 +223,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlCredential.cs">
       <Link>Microsoft\Data\SqlClient\SqlCredential.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlErrorCollection.cs">
+      <Link>Microsoft\Data\SqlClient\SqlErrorCollection.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlInfoMessageEventHandler.cs">
       <Link>Microsoft\Data\SqlClient\SqlInfoMessageEventHandler.cs</Link>
     </Compile>
@@ -506,7 +509,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlEnums.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlError.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlErrorCollection.cs" />
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlEnclaveSession.cs">
       <Link>Microsoft\Data\SqlClient\SqlEnclaveSession.cs</Link>
     </Compile>
