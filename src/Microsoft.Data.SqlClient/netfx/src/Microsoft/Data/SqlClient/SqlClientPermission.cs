@@ -57,7 +57,7 @@ namespace Microsoft.Data.SqlClient
             }
             if ((null == constr) || constr.IsEmpty)
             {
-                base.Add(ADP.StrEmpty, ADP.StrEmpty, KeyRestrictionBehavior.AllowOnly);
+                base.Add(ADP.s_strEmpty, ADP.s_strEmpty, KeyRestrictionBehavior.AllowOnly);
             }
         }
 
@@ -376,7 +376,7 @@ namespace Microsoft.Data.SqlClient
                         tmp = value.Restrictions;
                         tmp = EncodeXmlValue(tmp);
                         if (null == tmp)
-                        { tmp = ADP.StrEmpty; }
+                        { tmp = ADP.s_strEmpty; }
                         valueElement.AddAttribute(XmlStr._KeyRestrictions, tmp);
 
                         tmp = value.Behavior.ToString();

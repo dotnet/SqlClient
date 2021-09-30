@@ -417,6 +417,9 @@
     <Compile Include="..\..\src\Resources\ResDescriptionAttribute.cs">
       <Link>Resources\ResDescriptionAttribute.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\Common\AdapterUtilCommon.cs">
+      <Link>Microsoft\Data\Common\AdapterUtilCommon.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Microsoft\Data\Interop\SNINativeManagedWrapperX64.cs" />

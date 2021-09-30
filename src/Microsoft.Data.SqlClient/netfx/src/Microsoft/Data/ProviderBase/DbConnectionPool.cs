@@ -485,7 +485,7 @@ namespace Microsoft.Data.ProviderBase
                             DbConnectionPoolIdentity identity,
                             DbConnectionPoolProviderInfo connectionPoolProviderInfo)
         {
-            Debug.Assert(ADP.IsWindowsNT, "Attempting to construct a connection pool on Win9x?");
+            Debug.Assert(ADP.s_isWindowsNT, "Attempting to construct a connection pool on Win9x?");
             Debug.Assert(null != connectionPoolGroup, "null connectionPoolGroup");
 
             if ((null != identity) && identity.IsRestricted)
@@ -516,7 +516,7 @@ namespace Microsoft.Data.ProviderBase
             _pooledDbAuthenticationContexts = new ConcurrentDictionary<DbConnectionPoolAuthenticationContextKey, DbConnectionPoolAuthenticationContext>(concurrencyLevel: 4 * Environment.ProcessorCount /* default value in ConcurrentDictionary*/,
                                                                                                                                                         capacity: 2);
 
-            if (ADP.IsPlatformNT5)
+            if (ADP.s_isPlatformNT5)
             {
                 _transactedConnectionPool = new TransactedConnectionPool(this);
             }

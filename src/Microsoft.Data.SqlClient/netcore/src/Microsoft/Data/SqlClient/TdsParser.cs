@@ -5606,7 +5606,7 @@ namespace Microsoft.Data.SqlClient
                             }
                             else
                             {
-                                s = ADP.StrEmpty;
+                                s = ADP.s_strEmpty;
                             }
                         }
                         else
@@ -7430,7 +7430,7 @@ namespace Microsoft.Data.SqlClient
 
         internal int GetEncodingCharLength(string value, int numChars, int charOffset, Encoding encoding)
         {
-            if (value == null || value == ADP.StrEmpty)
+            if (value == null || value == ADP.s_strEmpty)
             {
                 return 0;
             }
@@ -9544,13 +9544,13 @@ namespace Microsoft.Data.SqlClient
 
             if (_isYukon && (mt.SqlDbType == SqlDbType.Xml))
             {
-                if (((param.XmlSchemaCollectionDatabase != null) && (param.XmlSchemaCollectionDatabase != ADP.StrEmpty)) ||
-                    ((param.XmlSchemaCollectionOwningSchema != null) && (param.XmlSchemaCollectionOwningSchema != ADP.StrEmpty)) ||
-                    ((param.XmlSchemaCollectionName != null) && (param.XmlSchemaCollectionName != ADP.StrEmpty)))
+                if (((param.XmlSchemaCollectionDatabase != null) && (param.XmlSchemaCollectionDatabase != ADP.s_strEmpty)) ||
+                    ((param.XmlSchemaCollectionOwningSchema != null) && (param.XmlSchemaCollectionOwningSchema != ADP.s_strEmpty)) ||
+                    ((param.XmlSchemaCollectionName != null) && (param.XmlSchemaCollectionName != ADP.s_strEmpty)))
                 {
                     stateObj.WriteByte(1);  //Schema present flag
 
-                    if ((param.XmlSchemaCollectionDatabase != null) && (param.XmlSchemaCollectionDatabase != ADP.StrEmpty))
+                    if ((param.XmlSchemaCollectionDatabase != null) && (param.XmlSchemaCollectionDatabase != ADP.s_strEmpty))
                     {
                         tempLen = (param.XmlSchemaCollectionDatabase).Length;
                         stateObj.WriteByte((byte)(tempLen));
@@ -9561,7 +9561,7 @@ namespace Microsoft.Data.SqlClient
                         stateObj.WriteByte(0);       // No dbname
                     }
 
-                    if ((param.XmlSchemaCollectionOwningSchema != null) && (param.XmlSchemaCollectionOwningSchema != ADP.StrEmpty))
+                    if ((param.XmlSchemaCollectionOwningSchema != null) && (param.XmlSchemaCollectionOwningSchema != ADP.s_strEmpty))
                     {
                         tempLen = (param.XmlSchemaCollectionOwningSchema).Length;
                         stateObj.WriteByte((byte)(tempLen));
@@ -9572,7 +9572,7 @@ namespace Microsoft.Data.SqlClient
                         stateObj.WriteByte(0);      // no xml schema name
                     }
 
-                    if ((param.XmlSchemaCollectionName != null) && (param.XmlSchemaCollectionName != ADP.StrEmpty))
+                    if ((param.XmlSchemaCollectionName != null) && (param.XmlSchemaCollectionName != ADP.s_strEmpty))
                     {
                         tempLen = (param.XmlSchemaCollectionName).Length;
                         WriteShort((short)(tempLen), stateObj);
