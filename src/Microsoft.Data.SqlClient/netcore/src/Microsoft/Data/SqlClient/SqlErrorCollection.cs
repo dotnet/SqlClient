@@ -5,10 +5,12 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlErrorCollection.xml' path='docs/members[@name="SqlErrorCollection"]/SqlErrorCollection/*' />
+    [Serializable, ListBindable(false)]
     public sealed class SqlErrorCollection : ICollection
     {
         // Ideally this would be typed as List<SqlError>, but that would make the non-generic
