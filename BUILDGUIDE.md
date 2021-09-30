@@ -64,7 +64,7 @@ msbuild -t:BuildNetCoreAllOS
 
 ```bash
 msbuild -t:BuildTestsNetCore
-# Build the tests for the .NET Core driver in 'Debug' Configuration. Default .NET Core version is 2.1.
+# Build the tests for the .NET Core driver in 'Debug' Configuration. Default .NET Core version is 3.1.
 ```
 
 ```bash
@@ -123,6 +123,7 @@ Manual Tests require the below setup to run:
   |FileStreamDirectory | (Optional) If File Stream is enabled on SQL Server, pass local directory path to be used for setting up File Stream enabled database. |  `D:\\escaped\\absolute\\path\\to\\directory\\` |
   |UseManagedSNIOnWindows | (Optional) Enables testing with Managed SNI on Windows| `true` OR `false`|
   |IsAzureSynpase | (Optional) When set to 'true', test suite runs compatible tests for Azure Synapse/Parallel Data Warehouse. | `true` OR `false`|
+  |MakecertPath | The full path to makecert.exe. This is not required if the path is present in the PATH environment variable. | `D:\\escaped\\absolute\\path\\to\\makecert.exe` |
 
 ### Commands to run Manual Tests:
 
@@ -219,7 +220,7 @@ msbuild -t:BuildTestsNetFx -p:TargetNetFxVersion=net462
 ```bash
 msbuild -t:BuildTestsNetCore -p:TargetNetCoreVersion=netcoreapp3.1
 # Build the tests for custom TargetFramework (.NET Core)
-# Applicable values: netcoreapp2.1 | netcoreapp2.2 | netcoreapp3.1 | net5.0
+# Applicable values: netcoreapp3.1 | net5.0 | net6.0
 ```
 
 ### Running Tests:
@@ -231,7 +232,7 @@ dotnet test -p:TargetNetFxVersion=net462 ...
 
 dotnet test -p:TargetNetCoreVersion=netcoreapp3.1 ...
 # Use above property to run Functional Tests with custom TargetFramework (.NET Core)
-# Applicable values: netcoreapp2.1 | netcoreapp2.2 | netcoreapp3.1 | net5.0
+# Applicable values: netcoreapp3.1 | net5.0 | net6.0
 ```
 
 ## Using Managed SNI on Windows

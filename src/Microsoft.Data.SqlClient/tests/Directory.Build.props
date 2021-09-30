@@ -17,8 +17,7 @@
   <!--These properties can be modified locally to target .NET version of choice to build and test entire test suite-->
   <PropertyGroup>
     <TargetNetFxVersion Condition="'$(TargetNetFxVersion)' == ''">net461</TargetNetFxVersion>
-    <TargetNetCoreVersion Condition="'$(ReferenceType)' == 'NetStandard' AND $(TargetNetStandardVersion)=='netstandard2.1'">netcoreapp3.1</TargetNetCoreVersion>
-    <TargetNetCoreVersion Condition="'$(TargetNetCoreVersion)' == ''">netcoreapp2.1</TargetNetCoreVersion>
+    <TargetNetCoreVersion Condition="'$(TargetNetCoreVersion)' == ''">netcoreapp3.1</TargetNetCoreVersion>
   </PropertyGroup>
 
   <Choose>
