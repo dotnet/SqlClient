@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient
         {
             Undefined = 0,
             NamesNames = 1,
-            NemesOrdinals = 2,
+            NamesOrdinals = 2,
             OrdinalsNames = 3,
             OrdinalsOrdinals = 4,
         }
@@ -132,7 +132,7 @@ namespace Microsoft.Data.SqlClient
             {
                 mappingSchema = a.SourceOrdinal != -1 ?
                     (a.DestinationOrdinal != -1 ? MappingSchema.OrdinalsOrdinals : MappingSchema.OrdinalsNames) :
-                    (a.DestinationOrdinal != -1 ? MappingSchema.NemesOrdinals : MappingSchema.NamesNames);
+                    (a.DestinationOrdinal != -1 ? MappingSchema.NamesOrdinals : MappingSchema.NamesNames);
 
                 if (_mappingSchema == MappingSchema.Undefined)
                 {
