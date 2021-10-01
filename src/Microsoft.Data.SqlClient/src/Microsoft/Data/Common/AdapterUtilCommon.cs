@@ -72,7 +72,7 @@ namespace Microsoft.Data.Common
             TraceException("<comm.ADP.TraceException|ERR|CATCH> '{0}'", e);
         }
 
-        internal static bool IsEmptyArray(string[] array) => array?.Length == 0;
+        internal static bool IsEmptyArray(string[] array) => (array is null) || (array.Length == 0);
 
         internal static bool IsNull(object value)
         {
@@ -592,24 +592,18 @@ namespace Microsoft.Data.Common
         internal static bool IsDirection(DbParameter value, ParameterDirection condition)
         {
 #if DEBUG
-            IsDirectionValid(condition);
+            switch (condition)
+            { // @perfnote: Enum.IsDefined
+                case ParameterDirection.Input:
+                case ParameterDirection.Output:
+                case ParameterDirection.InputOutput:
+                case ParameterDirection.ReturnValue:
+                    break;
+                default:
+                    throw ADP.InvalidParameterDirection(condition);
+            }
 #endif
             return (condition == (condition & value.Direction));
-
-            // local function
-            static void IsDirectionValid(ParameterDirection value)
-            {
-                switch (value)
-                { // @perfnote: Enum.IsDefined
-                    case ParameterDirection.Input:
-                    case ParameterDirection.Output:
-                    case ParameterDirection.InputOutput:
-                    case ParameterDirection.ReturnValue:
-                        break;
-                    default:
-                        throw ADP.InvalidParameterDirection(value);
-                }
-            }
         }
 
         internal static void IsNullOrSqlType(object value, out bool isNull, out bool isSqlType)
