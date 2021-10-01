@@ -7,13 +7,13 @@ namespace Microsoft.Data.SqlClient
     public sealed partial class SqlCommand : System.Data.Common.DbCommand
     {
         // SqlCommand expects IDisposable methods to be implemented via System.ComponentModel.Component, which it no longer inherits from
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Dispose/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Dispose/*'/>
         override protected void Dispose(bool disposing) { }
     }
     public sealed partial class SqlConnection : System.Data.Common.DbConnection
     {
         // SqlConnection expects IDisposable methods to be implemented via System.ComponentModel.Component, which it no longer inherits from
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Dispose/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Dispose/*'/>
         override protected void Dispose(bool disposing) { }
     }
     [System.ComponentModel.TypeConverter(typeof(SqlParameterConverter))]

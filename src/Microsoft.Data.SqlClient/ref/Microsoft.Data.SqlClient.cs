@@ -7,7 +7,7 @@
 [assembly: System.CLSCompliant(true)]
 namespace Microsoft.Data
 {
-    /// <include file='../../../../doc/snippets/Microsoft.Data/OperationAbortedException.xml' path='docs/members[@name="OperationAbortedException"]/OperationAbortedException/*' />
+    /// <include file='../../../doc/snippets/Microsoft.Data/OperationAbortedException.xml' path='docs/members[@name="OperationAbortedException"]/OperationAbortedException/*' />
     public sealed partial class OperationAbortedException : System.SystemException
     {
         internal OperationAbortedException() { }
@@ -15,886 +15,886 @@ namespace Microsoft.Data
 }
 namespace Microsoft.Data.Sql
 {
-    /// <include file='../../../../doc/snippets/Microsoft.Data.Sql/SqlNotificationRequest.xml' path='docs/members[@name="SqlNotificationRequest"]/SqlNotificationRequest/*' />
+    /// <include file='../../../doc/snippets/Microsoft.Data.Sql/SqlNotificationRequest.xml' path='docs/members[@name="SqlNotificationRequest"]/SqlNotificationRequest/*' />
     public sealed partial class SqlNotificationRequest
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.Sql/SqlNotificationRequest.xml' path='docs/members[@name="SqlNotificationRequest"]/ctor1/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.Sql/SqlNotificationRequest.xml' path='docs/members[@name="SqlNotificationRequest"]/ctor1/*' />
         public SqlNotificationRequest() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.Sql/SqlNotificationRequest.xml' path='docs/members[@name="SqlNotificationRequest"]/ctor2/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.Sql/SqlNotificationRequest.xml' path='docs/members[@name="SqlNotificationRequest"]/ctor2/*' />
         public SqlNotificationRequest(string userData, string options, int timeout) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.Sql/SqlNotificationRequest.xml' path='docs/members[@name="SqlNotificationRequest"]/Options/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.Sql/SqlNotificationRequest.xml' path='docs/members[@name="SqlNotificationRequest"]/Options/*' />
         public string Options { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.Sql/SqlNotificationRequest.xml' path='docs/members[@name="SqlNotificationRequest"]/Timeout/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.Sql/SqlNotificationRequest.xml' path='docs/members[@name="SqlNotificationRequest"]/Timeout/*' />
         public int Timeout { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.Sql/SqlNotificationRequest.xml' path='docs/members[@name="SqlNotificationRequest"]/UserData/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.Sql/SqlNotificationRequest.xml' path='docs/members[@name="SqlNotificationRequest"]/UserData/*' />
         public string UserData { get { throw null; } set { } }
     }
 }
 namespace Microsoft.Data.SqlTypes
 {
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/SqlFileStream/*' />
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/SqlFileStream/*' />
     public sealed partial class SqlFileStream : System.IO.Stream
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/ctor1/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/ctor1/*' />
         public SqlFileStream(string path, byte[] transactionContext, System.IO.FileAccess access) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/ctor2/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/ctor2/*' />
         public SqlFileStream(string path, byte[] transactionContext, System.IO.FileAccess access, System.IO.FileOptions options, System.Int64 allocationSize) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Name/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Name/*' />
         public string Name { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/TransactionContext/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/TransactionContext/*' />
         public byte[] TransactionContext { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/CanRead/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/CanRead/*' />
         public override bool CanRead { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/CanSeek/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/CanSeek/*' />
         public override bool CanSeek { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/CanTimeout/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/CanTimeout/*' />
         public override bool CanTimeout { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/CanWrite/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/CanWrite/*' />
         public override bool CanWrite { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Length/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Length/*' />
         public override long Length { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Position/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Position/*' />
         public override long Position { get { throw null; } set { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/ReadTimeout/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/ReadTimeout/*' />
         public override int ReadTimeout { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/WriteTimeout/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/WriteTimeout/*' />
         public override int WriteTimeout { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Flush/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Flush/*' />
         public override void Flush() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/BeginRead/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/BeginRead/*' />
         public override System.IAsyncResult BeginRead(byte[] buffer, int offset, int count, System.AsyncCallback callback, object state) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/EndRead/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/EndRead/*' />
         public override int EndRead(System.IAsyncResult asyncResult) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/BeginWrite/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/BeginWrite/*' />
         public override System.IAsyncResult BeginWrite(byte[] buffer, int offset, int count, System.AsyncCallback callback, System.Object state) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/EndWrite/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/EndWrite/*' />
         public override void EndWrite(System.IAsyncResult asyncResult) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Seek/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Seek/*' />
         public override long Seek(long offset, System.IO.SeekOrigin origin) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/SetLength/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/SetLength/*' />
         public override void SetLength(long value) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Read/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Read/*' />
         public override int Read(byte[] buffer, int offset, int count) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/ReadByte/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/ReadByte/*' />
         public override int ReadByte() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Write/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/Write/*' />
         public override void Write(byte[] buffer, int offset, int count) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/WriteByte/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlTypes/SqlFileStream.xml' path='docs/members[@name="SqlFileStream"]/WriteByte/*' />
         public override void WriteByte(byte value) { }
     }
 }
 namespace Microsoft.Data.SqlClient
 {
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ActiveDirectoryAuthenticationProvider/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ActiveDirectoryAuthenticationProvider/*'/>
     public sealed partial class ActiveDirectoryAuthenticationProvider : SqlAuthenticationProvider
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor/*'/>
         public ActiveDirectoryAuthenticationProvider() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor2/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor2/*'/>
         public ActiveDirectoryAuthenticationProvider(string applicationClientId) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ClearUserTokenCache/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ClearUserTokenCache/*'/>
         public static void ClearUserTokenCache() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor3/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor3/*'/>
         public ActiveDirectoryAuthenticationProvider(System.Func<Microsoft.Identity.Client.DeviceCodeResult, System.Threading.Tasks.Task> deviceCodeFlowCallbackMethod, string applicationClientId = null) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/AcquireTokenAsync/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/AcquireTokenAsync/*'/>
         public override System.Threading.Tasks.Task<SqlAuthenticationToken> AcquireTokenAsync(SqlAuthenticationParameters parameters) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetDeviceCodeFlowCallback/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetDeviceCodeFlowCallback/*'/>
         public void SetDeviceCodeFlowCallback(System.Func<Microsoft.Identity.Client.DeviceCodeResult, System.Threading.Tasks.Task> deviceCodeFlowCallbackMethod) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetAcquireAuthorizationCodeAsyncCallback/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetAcquireAuthorizationCodeAsyncCallback/*'/>
         public void SetAcquireAuthorizationCodeAsyncCallback(System.Func<System.Uri, System.Uri, System.Threading.CancellationToken, System.Threading.Tasks.Task<System.Uri>> acquireAuthorizationCodeAsyncCallback) { }
 #if NETFRAMEWORK
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetIWin32WindowFunc/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/SetIWin32WindowFunc/*'/>
         public void SetIWin32WindowFunc(System.Func<System.Windows.Forms.IWin32Window> iWin32WindowFunc) { }
 #endif // NETFRAMEWORK
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/IsSupported/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/IsSupported/*'/>
         public override bool IsSupported(SqlAuthenticationMethod authentication) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/BeforeLoad/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/BeforeLoad/*'/>
         public override void BeforeLoad(SqlAuthenticationMethod authentication) { }
-        /// <include file='../../../..//doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/BeforeUnload/*'/>
+        /// <include file='../../..//doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/BeforeUnload/*'/>
         public override void BeforeUnload(SqlAuthenticationMethod authentication) { }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/ApplicationIntent.xml' path='docs/members[@name="ApplicationIntent"]/ApplicationIntent/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/ApplicationIntent.xml' path='docs/members[@name="ApplicationIntent"]/ApplicationIntent/*'/>
     public enum ApplicationIntent
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/ApplicationIntent.xml' path='docs/members[@name="ApplicationIntent"]/ReadOnly/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/ApplicationIntent.xml' path='docs/members[@name="ApplicationIntent"]/ReadOnly/*'/>
         ReadOnly = 1,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/ApplicationIntent.xml' path='docs/members[@name="ApplicationIntent"]/ReadWrite/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/ApplicationIntent.xml' path='docs/members[@name="ApplicationIntent"]/ReadWrite/*'/>
         ReadWrite = 0
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/PoolBlockingPeriod.xml' path='docs/members[@name="PoolBlockingPeriod"]/PoolBlockingPeriod/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/PoolBlockingPeriod.xml' path='docs/members[@name="PoolBlockingPeriod"]/PoolBlockingPeriod/*'/>
     public enum PoolBlockingPeriod
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/PoolBlockingPeriod.xml' path='docs/members[@name="PoolBlockingPeriod"]/Auto/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/PoolBlockingPeriod.xml' path='docs/members[@name="PoolBlockingPeriod"]/Auto/*'/>
         Auto = 0,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/PoolBlockingPeriod.xml' path='docs/members[@name="PoolBlockingPeriod"]/AlwaysBlock/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/PoolBlockingPeriod.xml' path='docs/members[@name="PoolBlockingPeriod"]/AlwaysBlock/*'/>
         AlwaysBlock = 1,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/PoolBlockingPeriod.xml' path='docs/members[@name="PoolBlockingPeriod"]/NeverBlock/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/PoolBlockingPeriod.xml' path='docs/members[@name="PoolBlockingPeriod"]/NeverBlock/*'/>
         NeverBlock = 2,
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/OnChangeEventHandler.xml' path='docs/members[@name="OnChangeEventHandler"]/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/OnChangeEventHandler.xml' path='docs/members[@name="OnChangeEventHandler"]/*'/>
     public delegate void OnChangeEventHandler(object sender, Microsoft.Data.SqlClient.SqlNotificationEventArgs e);
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SortOrder.xml' path='docs/members[@name="SortOrder"]/SortOrder/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SortOrder.xml' path='docs/members[@name="SortOrder"]/SortOrder/*'/>
     public enum SortOrder
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SortOrder.xml' path='docs/members[@name="SortOrder"]/Unspecified/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SortOrder.xml' path='docs/members[@name="SortOrder"]/Unspecified/*'/>
         Unspecified = -1,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SortOrder.xml' path='docs/members[@name="SortOrder"]/Ascending/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SortOrder.xml' path='docs/members[@name="SortOrder"]/Ascending/*'/>
         Ascending = 0,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SortOrder.xml' path='docs/members[@name="SortOrder"]/Descending/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SortOrder.xml' path='docs/members[@name="SortOrder"]/Descending/*'/>
         Descending = 1
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationInitializer.xml' path='docs/members[@name="SqlAuthenticationInitializer"]/SqlAuthenticationInitializer/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationInitializer.xml' path='docs/members[@name="SqlAuthenticationInitializer"]/SqlAuthenticationInitializer/*'/>
     public abstract partial class SqlAuthenticationInitializer
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationInitializer.xml' path='docs/members[@name="SqlAuthenticationInitializer"]/ctor/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationInitializer.xml' path='docs/members[@name="SqlAuthenticationInitializer"]/ctor/*'/>
         protected SqlAuthenticationInitializer() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationInitializer.xml' path='docs/members[@name="SqlAuthenticationInitializer"]/Initialize/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationInitializer.xml' path='docs/members[@name="SqlAuthenticationInitializer"]/Initialize/*'/>
         public abstract void Initialize();
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/SqlAuthenticationMethod/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/SqlAuthenticationMethod/*'/>
     public enum SqlAuthenticationMethod
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryIntegrated/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryIntegrated/*'/>
         ActiveDirectoryIntegrated = 3,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryInteractive/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryInteractive/*'/>
         ActiveDirectoryInteractive = 4,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryPassword/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryPassword/*'/>
         ActiveDirectoryPassword = 2,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryServicePrincipal/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryServicePrincipal/*'/>
         ActiveDirectoryServicePrincipal = 5,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryDeviceCodeFlow/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryDeviceCodeFlow/*'/>
         ActiveDirectoryDeviceCodeFlow = 6,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryManagedIdentity/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryManagedIdentity/*'/>
         ActiveDirectoryManagedIdentity = 7,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryMSI/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryMSI/*'/>
         ActiveDirectoryMSI = 8,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryDefault/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryDefault/*'/>
         ActiveDirectoryDefault = 9,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/NotSpecified/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/NotSpecified/*'/>
         NotSpecified = 0,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/SqlPassword/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/SqlPassword/*'/>
         SqlPassword = 1
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/SqlAuthenticationParameters/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/SqlAuthenticationParameters/*'/>
     public partial class SqlAuthenticationParameters
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/ctor/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/ctor/*'/>
         protected SqlAuthenticationParameters(Microsoft.Data.SqlClient.SqlAuthenticationMethod authenticationMethod, string serverName, string databaseName, string resource, string authority, string userId, string password, System.Guid connectionId, int connectionTimeout) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/AuthenticationMethod/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/AuthenticationMethod/*'/>
         public Microsoft.Data.SqlClient.SqlAuthenticationMethod AuthenticationMethod { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/Authority/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/Authority/*'/>
         public string Authority { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/ConnectionId/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/ConnectionId/*'/>
         public System.Guid ConnectionId { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/DatabaseName/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/DatabaseName/*'/>
         public string DatabaseName { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/Password/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/Password/*'/>
         public string Password { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/Resource/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/Resource/*'/>
         public string Resource { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/ServerName/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/ServerName/*'/>
         public string ServerName { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/UserId/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/UserId/*'/>
         public string UserId { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/ConnectionTimeout/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/ConnectionTimeout/*'/>
         public int ConnectionTimeout { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/SqlAuthenticationProvider/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/SqlAuthenticationProvider/*'/>
     public abstract partial class SqlAuthenticationProvider
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/ctor/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/ctor/*'/>
         protected SqlAuthenticationProvider() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/AcquireTokenAsync/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/AcquireTokenAsync/*'/>
         public abstract System.Threading.Tasks.Task<Microsoft.Data.SqlClient.SqlAuthenticationToken> AcquireTokenAsync(Microsoft.Data.SqlClient.SqlAuthenticationParameters parameters);
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/BeforeLoad/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/BeforeLoad/*'/>
         public virtual void BeforeLoad(Microsoft.Data.SqlClient.SqlAuthenticationMethod authenticationMethod) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/BeforeUnload/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/BeforeUnload/*'/>
         public virtual void BeforeUnload(Microsoft.Data.SqlClient.SqlAuthenticationMethod authenticationMethod) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/GetProvider/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/GetProvider/*'/>
         public static Microsoft.Data.SqlClient.SqlAuthenticationProvider GetProvider(Microsoft.Data.SqlClient.SqlAuthenticationMethod authenticationMethod) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/IsSupported/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/IsSupported/*'/>
         public abstract bool IsSupported(Microsoft.Data.SqlClient.SqlAuthenticationMethod authenticationMethod);
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/SetProvider/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationProvider.xml' path='docs/members[@name="SqlAuthenticationProvider"]/SetProvider/*'/>
         public static bool SetProvider(Microsoft.Data.SqlClient.SqlAuthenticationMethod authenticationMethod, Microsoft.Data.SqlClient.SqlAuthenticationProvider provider) { throw null; }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationToken.xml' path='docs/members[@name="SqlAuthenticationToken"]/SqlAuthenticationToken/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationToken.xml' path='docs/members[@name="SqlAuthenticationToken"]/SqlAuthenticationToken/*'/>
     public partial class SqlAuthenticationToken
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationToken.xml' path='docs/members[@name="SqlAuthenticationToken"]/ctor/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationToken.xml' path='docs/members[@name="SqlAuthenticationToken"]/ctor/*'/>
         public SqlAuthenticationToken(string accessToken, System.DateTimeOffset expiresOn) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationToken.xml' path='docs/members[@name="SqlAuthenticationToken"]/AccessToken/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationToken.xml' path='docs/members[@name="SqlAuthenticationToken"]/AccessToken/*'/>
         public string AccessToken { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationToken.xml' path='docs/members[@name="SqlAuthenticationToken"]/ExpiresOn/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationToken.xml' path='docs/members[@name="SqlAuthenticationToken"]/ExpiresOn/*'/>
         public System.DateTimeOffset ExpiresOn { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/SqlBulkCopy/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/SqlBulkCopy/*'/>
     public sealed partial class SqlBulkCopy : System.IDisposable
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/ctor[@name="SqlConnectionParameter"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/ctor[@name="SqlConnectionParameter"]/*'/>
         public SqlBulkCopy(Microsoft.Data.SqlClient.SqlConnection connection) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/ctor[@name="SqlConnectionAndSqlBulkCopyOptionAndSqlTransactionParameters"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/ctor[@name="SqlConnectionAndSqlBulkCopyOptionAndSqlTransactionParameters"]/*'/>
         public SqlBulkCopy(Microsoft.Data.SqlClient.SqlConnection connection, Microsoft.Data.SqlClient.SqlBulkCopyOptions copyOptions, Microsoft.Data.SqlClient.SqlTransaction externalTransaction) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/ctor[@name="ConnectionStringParameter"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/ctor[@name="ConnectionStringParameter"]/*'/>
         public SqlBulkCopy(string connectionString) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/ctor[@name="ConnectionStringAndSqlBulkCopyOptionsParameters"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/ctor[@name="ConnectionStringAndSqlBulkCopyOptionsParameters"]/*'/>
         public SqlBulkCopy(string connectionString, Microsoft.Data.SqlClient.SqlBulkCopyOptions copyOptions) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/BatchSize/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/BatchSize/*'/>
         public int BatchSize { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/BulkCopyTimeout/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/BulkCopyTimeout/*'/>
         public int BulkCopyTimeout { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/EnableStreaming/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/EnableStreaming/*'/>
         public bool EnableStreaming { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/ColumnMappings/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/ColumnMappings/*'/>
         public Microsoft.Data.SqlClient.SqlBulkCopyColumnMappingCollection ColumnMappings { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/ColumnOrderHints/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/ColumnOrderHints/*'/>
         public SqlBulkCopyColumnOrderHintCollection ColumnOrderHints { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/DestinationTableName/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/DestinationTableName/*'/>
         public string DestinationTableName { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/NotifyAfter/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/NotifyAfter/*'/>
         public int NotifyAfter { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/RowsCopied/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/RowsCopied/*'/>
         public int RowsCopied { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/SqlRowsCopied/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/SqlRowsCopied/*'/>
         public event Microsoft.Data.SqlClient.SqlRowsCopiedEventHandler SqlRowsCopied { add { } remove { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/Close/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/Close/*'/>
         public void Close() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/System.IDisposable.Dispose/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/System.IDisposable.Dispose/*'/>
         void System.IDisposable.Dispose() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServer[@name="DbDataReaderParameter"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServer[@name="DbDataReaderParameter"]/*'/>
         public void WriteToServer(System.Data.Common.DbDataReader reader) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServer[@name="DataTableParameter"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServer[@name="DataTableParameter"]/*'/>
         public void WriteToServer(System.Data.DataTable table) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServer[@name="DataTableAndRowStateParameters"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServer[@name="DataTableAndRowStateParameters"]/*'/>
         public void WriteToServer(System.Data.DataTable table, System.Data.DataRowState rowState) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServer[@name="DataRowParameter"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServer[@name="DataRowParameter"]/*'/>
         public void WriteToServer(System.Data.DataRow[] rows) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServer[@name="IDataReaderParameter"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServer[@name="IDataReaderParameter"]/*'/>
         public void WriteToServer(System.Data.IDataReader reader) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="DbDataReaderParameter"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="DbDataReaderParameter"]/*'/>
         public System.Threading.Tasks.Task WriteToServerAsync(System.Data.Common.DbDataReader reader) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="DbDataReaderAndCancellationTokenParameters"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="DbDataReaderAndCancellationTokenParameters"]/*'/>
         public System.Threading.Tasks.Task WriteToServerAsync(System.Data.Common.DbDataReader reader, System.Threading.CancellationToken cancellationToken) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="DataRowParameter"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="DataRowParameter"]/*'/>
         public System.Threading.Tasks.Task WriteToServerAsync(System.Data.DataRow[] rows) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="DataRowAndCancellationTokenParameters"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="DataRowAndCancellationTokenParameters"]/*'/>
         public System.Threading.Tasks.Task WriteToServerAsync(System.Data.DataRow[] rows, System.Threading.CancellationToken cancellationToken) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="DataTableParameter"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="DataTableParameter"]/*'/>
         public System.Threading.Tasks.Task WriteToServerAsync(System.Data.DataTable table) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="DataTableAndDataRowStateParameter"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="DataTableAndDataRowStateParameter"]/*'/>
         public System.Threading.Tasks.Task WriteToServerAsync(System.Data.DataTable table, System.Data.DataRowState rowState) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="DataTableAndDataRowStateAndCancellationTokenParameters"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="DataTableAndDataRowStateAndCancellationTokenParameters"]/*'/>
         public System.Threading.Tasks.Task WriteToServerAsync(System.Data.DataTable table, System.Data.DataRowState rowState, System.Threading.CancellationToken cancellationToken) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="DataTableAndCancellationTokenParameters"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="DataTableAndCancellationTokenParameters"]/*'/>
         public System.Threading.Tasks.Task WriteToServerAsync(System.Data.DataTable table, System.Threading.CancellationToken cancellationToken) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="IDataReaderParameter"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="IDataReaderParameter"]/*'/>
         public System.Threading.Tasks.Task WriteToServerAsync(System.Data.IDataReader reader) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="IDataReaderAndCancellationTokenParameters"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopy.xml' path='docs/members[@name="SqlBulkCopy"]/WriteToServerAsync[@name="IDataReaderAndCancellationTokenParameters"]/*'/>
         public System.Threading.Tasks.Task WriteToServerAsync(System.Data.IDataReader reader, System.Threading.CancellationToken cancellationToken) { throw null; }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml' path='docs/members[@name="SqlBulkCopyColumnMapping"]/SqlBulkCopyColumnMapping/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml' path='docs/members[@name="SqlBulkCopyColumnMapping"]/SqlBulkCopyColumnMapping/*'/>
     public sealed partial class SqlBulkCopyColumnMapping
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml' path='docs/members[@name="SqlBulkCopyColumnMapping"]/ctor[@name="default"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml' path='docs/members[@name="SqlBulkCopyColumnMapping"]/ctor[@name="default"]/*'/>
         public SqlBulkCopyColumnMapping() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml' path='docs/members[@name="SqlBulkCopyColumnMapping"]/ctor[@name="sourceColumnOrdinalIntegerAnddestinationOrdinalInteger"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml' path='docs/members[@name="SqlBulkCopyColumnMapping"]/ctor[@name="sourceColumnOrdinalIntegerAnddestinationOrdinalInteger"]/*'/>
         public SqlBulkCopyColumnMapping(int sourceColumnOrdinal, int destinationOrdinal) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml' path='docs/members[@name="SqlBulkCopyColumnMapping"]/ctor[@name="sourceColumnOrdinalIntegerAnddestinationColumnString"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml' path='docs/members[@name="SqlBulkCopyColumnMapping"]/ctor[@name="sourceColumnOrdinalIntegerAnddestinationColumnString"]/*'/>
         public SqlBulkCopyColumnMapping(int sourceColumnOrdinal, string destinationColumn) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml' path='docs/members[@name="SqlBulkCopyColumnMapping"]/ctor[@name="sourceColumnStringAnddestinationOrdinalInteger"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml' path='docs/members[@name="SqlBulkCopyColumnMapping"]/ctor[@name="sourceColumnStringAnddestinationOrdinalInteger"]/*'/>
         public SqlBulkCopyColumnMapping(string sourceColumn, int destinationOrdinal) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml' path='docs/members[@name="SqlBulkCopyColumnMapping"]/ctor[@name="sourceColumnStringAnddestinationColumnString"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml' path='docs/members[@name="SqlBulkCopyColumnMapping"]/ctor[@name="sourceColumnStringAnddestinationColumnString"]/*'/>
         public SqlBulkCopyColumnMapping(string sourceColumn, string destinationColumn) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml' path='docs/members[@name="SqlBulkCopyColumnMapping"]/DestinationColumn/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml' path='docs/members[@name="SqlBulkCopyColumnMapping"]/DestinationColumn/*'/>
         public string DestinationColumn { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml' path='docs/members[@name="SqlBulkCopyColumnMapping"]/DestinationOrdinal/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml' path='docs/members[@name="SqlBulkCopyColumnMapping"]/DestinationOrdinal/*'/>
         public int DestinationOrdinal { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml' path='docs/members[@name="SqlBulkCopyColumnMapping"]/SourceColumn/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml' path='docs/members[@name="SqlBulkCopyColumnMapping"]/SourceColumn/*'/>
         public string SourceColumn { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml' path='docs/members[@name="SqlBulkCopyColumnMapping"]/SourceOrdinal/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMapping.xml' path='docs/members[@name="SqlBulkCopyColumnMapping"]/SourceOrdinal/*'/>
         public int SourceOrdinal { get { throw null; } set { } }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/SqlBulkCopyColumnMappingCollection/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/SqlBulkCopyColumnMappingCollection/*'/>
     public sealed partial class SqlBulkCopyColumnMappingCollection : System.Collections.CollectionBase
     {
         internal SqlBulkCopyColumnMappingCollection() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/Item/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/Item/*'/>
         public Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping this[int index] { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/Add[@name="bulkCopyColumnMappingParameter"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/Add[@name="bulkCopyColumnMappingParameter"]/*'/>
         public Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping Add(Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping bulkCopyColumnMapping) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/Add[@name="sourceColumnIndexIntegerAnddestinationColumnIndexInteger"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/Add[@name="sourceColumnIndexIntegerAnddestinationColumnIndexInteger"]/*'/>
         public Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping Add(int sourceColumnIndex, int destinationColumnIndex) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/Add[@name="sourceColumnIndexIntegerAnddestinationColumnString"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/Add[@name="sourceColumnIndexIntegerAnddestinationColumnString"]/*'/>
         public Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping Add(int sourceColumnIndex, string destinationColumn) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/Add[@name="sourceColumnStringAnddestinationColumnIndexInteger"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/Add[@name="sourceColumnStringAnddestinationColumnIndexInteger"]/*'/>
         public Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping Add(string sourceColumn, int destinationColumnIndex) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/Add[@name="sourceColumnStringAnddestinationColumnString"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/Add[@name="sourceColumnStringAnddestinationColumnString"]/*'/>
         public Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping Add(string sourceColumn, string destinationColumn) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/Clear/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/Clear/*'/>
         public new void Clear() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/Contains/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/Contains/*'/>
         public bool Contains(Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping value) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/CopyTo/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/CopyTo/*'/>
         public void CopyTo(Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping[] array, int index) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/IndexOf/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/IndexOf/*'/>
         public int IndexOf(Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping value) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/Insert/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/Insert/*'/>
         public void Insert(int index, Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/Remove/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/Remove/*'/>
         public void Remove(Microsoft.Data.SqlClient.SqlBulkCopyColumnMapping value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/RemoveAt/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnMappingCollection.xml' path='docs/members[@name="SqlBulkCopyColumnMappingCollection"]/RemoveAt/*'/>
         public new void RemoveAt(int index) { }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHint.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHint"]/SqlBulkCopyColumnOrderHint/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHint.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHint"]/SqlBulkCopyColumnOrderHint/*'/>
     public sealed class SqlBulkCopyColumnOrderHint
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHint.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHint"]/ctor[@name="columnStringAndsortOrderSortOrder"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHint.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHint"]/ctor[@name="columnStringAndsortOrderSortOrder"]/*'/>
         public SqlBulkCopyColumnOrderHint(string column, SortOrder sortOrder) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHint.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHint"]/Column/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHint.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHint"]/Column/*'/>
         public string Column { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHint.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHint"]/SortOrder/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHint.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHint"]/SortOrder/*'/>
         public SortOrder SortOrder { get { throw null; } set { } }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/SqlBulkCopyColumnOrderHintCollection/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/SqlBulkCopyColumnOrderHintCollection/*'/>
     public sealed class SqlBulkCopyColumnOrderHintCollection : System.Collections.CollectionBase
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/Item/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/Item/*'/>
         public SqlBulkCopyColumnOrderHint this[int index] { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/Add[@name="columnOrderHintParameter"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/Add[@name="columnOrderHintParameter"]/*'/>
         public SqlBulkCopyColumnOrderHint Add(SqlBulkCopyColumnOrderHint columnOrderHint) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/Add[@name="columnStringAndsortOrderSortOrder"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/Add[@name="columnStringAndsortOrderSortOrder"]/*'/>
         public SqlBulkCopyColumnOrderHint Add(string column, SortOrder sortOrder) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/Clear/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/Clear/*'/>
         public new void Clear() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/Contains/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/Contains/*'/>
         public bool Contains(SqlBulkCopyColumnOrderHint value) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/CopyTo/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/CopyTo/*'/>
         public void CopyTo(SqlBulkCopyColumnOrderHint[] array, int index) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/IndexOf/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/IndexOf/*'/>
         public int IndexOf(SqlBulkCopyColumnOrderHint value) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/Insert/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/Insert/*'/>
         public void Insert(int index, SqlBulkCopyColumnOrderHint columnOrderHint) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/Remove/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/Remove/*'/>
         public void Remove(SqlBulkCopyColumnOrderHint columnOrderHint) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/RemoveAt/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyColumnOrderHintCollection.xml' path='docs/members[@name="SqlBulkCopyColumnOrderHintCollection"]/RemoveAt/*'/>
         public new void RemoveAt(int index) { }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyOptions.xml' path='docs/members[@name="SqlBulkCopyOptions"]/SqlBulkCopyOptions/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyOptions.xml' path='docs/members[@name="SqlBulkCopyOptions"]/SqlBulkCopyOptions/*'/>
     [System.FlagsAttribute]
     public enum SqlBulkCopyOptions
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyOptions.xml' path='docs/members[@name="SqlBulkCopyOptions"]/AllowEncryptedValueModifications/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyOptions.xml' path='docs/members[@name="SqlBulkCopyOptions"]/AllowEncryptedValueModifications/*'/>
         AllowEncryptedValueModifications = 64,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyOptions.xml' path='docs/members[@name="SqlBulkCopyOptions"]/CheckConstraints/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyOptions.xml' path='docs/members[@name="SqlBulkCopyOptions"]/CheckConstraints/*'/>
         CheckConstraints = 2,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyOptions.xml' path='docs/members[@name="SqlBulkCopyOptions"]/Default/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyOptions.xml' path='docs/members[@name="SqlBulkCopyOptions"]/Default/*'/>
         Default = 0,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyOptions.xml' path='docs/members[@name="SqlBulkCopyOptions"]/FireTriggers/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyOptions.xml' path='docs/members[@name="SqlBulkCopyOptions"]/FireTriggers/*'/>
         FireTriggers = 16,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyOptions.xml' path='docs/members[@name="SqlBulkCopyOptions"]/KeepIdentity/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyOptions.xml' path='docs/members[@name="SqlBulkCopyOptions"]/KeepIdentity/*'/>
         KeepIdentity = 1,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyOptions.xml' path='docs/members[@name="SqlBulkCopyOptions"]/KeepNulls/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyOptions.xml' path='docs/members[@name="SqlBulkCopyOptions"]/KeepNulls/*'/>
         KeepNulls = 8,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyOptions.xml' path='docs/members[@name="SqlBulkCopyOptions"]/TableLock/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyOptions.xml' path='docs/members[@name="SqlBulkCopyOptions"]/TableLock/*'/>
         TableLock = 4,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyOptions.xml' path='docs/members[@name="SqlBulkCopyOptions"]/UseInternalTransaction/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyOptions.xml' path='docs/members[@name="SqlBulkCopyOptions"]/UseInternalTransaction/*'/>
         UseInternalTransaction = 32,
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/SqlClientFactory/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/SqlClientFactory/*'/>
     public sealed partial class SqlClientFactory : System.Data.Common.DbProviderFactory
 #if NETFRAMEWORK
         , System.IServiceProvider
 #endif // NETFRAMEWORK
     {
         internal SqlClientFactory() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/Instance/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/Instance/*'/>
         public static readonly Microsoft.Data.SqlClient.SqlClientFactory Instance;
 #if NETFRAMEWORK
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CanCreateDataSourceEnumerator/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CanCreateDataSourceEnumerator/*'/>
         public override bool CanCreateDataSourceEnumerator { get { throw null; } }
 #endif // NETFRAMEWORK
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateCommand/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateCommand/*'/>
         public override System.Data.Common.DbCommand CreateCommand() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateCommandBuilder/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateCommandBuilder/*'/>
         public override System.Data.Common.DbCommandBuilder CreateCommandBuilder() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateConnection/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateConnection/*'/>
         public override System.Data.Common.DbConnection CreateConnection() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateConnectionStringBuilder/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateConnectionStringBuilder/*'/>
         public override System.Data.Common.DbConnectionStringBuilder CreateConnectionStringBuilder() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateDataAdapter/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateDataAdapter/*'/>
         public override System.Data.Common.DbDataAdapter CreateDataAdapter() { throw null; }
 #if NETFRAMEWORK
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateDataSourceEnumerator/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateDataSourceEnumerator/*'/>
         public override System.Data.Common.DbDataSourceEnumerator CreateDataSourceEnumerator() { throw null; }
 
 #endif // NETFRAMEWORK
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateParameter/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateParameter/*'/>
         public override System.Data.Common.DbParameter CreateParameter() { throw null; }
 #if NETFRAMEWORK
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreatePermission/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreatePermission/*'/>
         public override System.Security.CodeAccessPermission CreatePermission(System.Security.Permissions.PermissionState state) { throw null; }
         object System.IServiceProvider.GetService(System.Type serviceType) { throw null; }
 #endif // NETFRAMEWORK
     }
 #if NETFRAMEWORK
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/SqlClientLogger/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/SqlClientLogger/*'/>
     public partial class SqlClientLogger
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/ctor/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/ctor/*'/>
         public SqlClientLogger() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/IsLoggingEnabled/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/IsLoggingEnabled/*'/>
         public bool IsLoggingEnabled { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/LogAssert/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/LogAssert/*'/>
         public bool LogAssert(bool value, string type, string method, string message) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/LogError/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/LogError/*'/>
         public void LogError(string type, string method, string message) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/LogInfo/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/LogInfo/*'/>
         public void LogInfo(string type, string method, string message) { }
     }
 #endif //NETFRAMEWORK
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/SqlClientMetaDataCollectionNames/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/SqlClientMetaDataCollectionNames/*'/>
     public static partial class SqlClientMetaDataCollectionNames
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/Columns/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/Columns/*'/>
         public static readonly string Columns;
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/Databases/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/Databases/*'/>
         public static readonly string Databases;
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/ForeignKeys/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/ForeignKeys/*'/>
         public static readonly string ForeignKeys;
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/IndexColumns/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/IndexColumns/*'/>
         public static readonly string IndexColumns;
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/Indexes/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/Indexes/*'/>
         public static readonly string Indexes;
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/ProcedureParameters/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/ProcedureParameters/*'/>
         public static readonly string ProcedureParameters;
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/Procedures/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/Procedures/*'/>
         public static readonly string Procedures;
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/Tables/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/Tables/*'/>
         public static readonly string Tables;
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/UserDefinedTypes/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/UserDefinedTypes/*'/>
         public static readonly string UserDefinedTypes;
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/Users/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/Users/*'/>
         public static readonly string Users;
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/ViewColumns/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/ViewColumns/*'/>
         public static readonly string ViewColumns;
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/Views/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/Views/*'/>
         public static readonly string Views;
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/AllColumns/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/AllColumns/*'/>
         public static readonly string AllColumns;
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/ColumnSetColumns/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/ColumnSetColumns/*'/>
         public static readonly string ColumnSetColumns;
     }
 #if NETCOREAPP || NETSTANDARD21_AND_ABOVE || NETFRAMEWORK
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/SqlConnectionAttestationProtocol/*' />
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/SqlConnectionAttestationProtocol/*' />
     public enum SqlConnectionAttestationProtocol
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/NotSpecified/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/NotSpecified/*' />
         NotSpecified = 0,
 
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/AAS/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/AAS/*' />
         AAS = 1,
 
 #if ENCLAVE_SIMULATOR
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/SIM/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/SIM/*' />
         SIM = 2,
 #endif
 
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/HGS/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/HGS/*' />
         HGS = 3
     }
 #endif
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionIPAddressPreference.xml' path='docs/members[@name="SqlConnectionIPAddressPreference"]/SqlConnectionIPAddressPreference/*' />
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionIPAddressPreference.xml' path='docs/members[@name="SqlConnectionIPAddressPreference"]/SqlConnectionIPAddressPreference/*' />
     public enum SqlConnectionIPAddressPreference
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionIPAddressPreference.xml' path='docs/members[@name="SqlConnectionIPAddressPreference"]/IPv4First/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionIPAddressPreference.xml' path='docs/members[@name="SqlConnectionIPAddressPreference"]/IPv4First/*' />
         IPv4First = 0,  // default
 
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionIPAddressPreference.xml' path='docs/members[@name="SqlConnectionIPAddressPreference"]/IPv6First/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionIPAddressPreference.xml' path='docs/members[@name="SqlConnectionIPAddressPreference"]/IPv6First/*' />
         IPv6First = 1,
 
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionIPAddressPreference.xml' path='docs/members[@name="SqlConnectionIPAddressPreference"]/UsePlatformDefault/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionIPAddressPreference.xml' path='docs/members[@name="SqlConnectionIPAddressPreference"]/UsePlatformDefault/*' />
         UsePlatformDefault = 2
     }
     
 #if NETFRAMEWORK
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/SqlClientPermission/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/SqlClientPermission/*'/>
     public sealed partial class SqlClientPermission : System.Data.Common.DBDataPermission
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/ctor[@name="default"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/ctor[@name="default"]/*'/>
         [System.ObsoleteAttribute("SqlClientPermission() has been deprecated.  Use the SqlClientPermission(PermissionState.None) constructor.  http://go.microsoft.com/fwlink/?linkid=14202", true)]
         public SqlClientPermission() : base(default(System.Security.Permissions.PermissionState)) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/ctor[@name="PermissionState"]//*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/ctor[@name="PermissionState"]//*'/>
         public SqlClientPermission(System.Security.Permissions.PermissionState state) : base(default(System.Security.Permissions.PermissionState)) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/ctor[@name="PermissionStateAndallowBlankPasswordBool"]//*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/ctor[@name="PermissionStateAndallowBlankPasswordBool"]//*'/>
         [System.ObsoleteAttribute("SqlClientPermission(PermissionState state, Boolean allowBlankPassword) has been deprecated.  Use the SqlClientPermission(PermissionState.None) constructor.  http://go.microsoft.com/fwlink/?linkid=14202", true)]
         public SqlClientPermission(System.Security.Permissions.PermissionState state, bool allowBlankPassword) : base(default(System.Security.Permissions.PermissionState)) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/Add/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/Add/*'/>
         public override void Add(string connectionString, string restrictions, System.Data.KeyRestrictionBehavior behavior) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/Copy/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/Copy/*'/>
         public override System.Security.IPermission Copy() { throw null; }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermissionAttribute.xml' path='docs/members[@name="SqlClientPermissionAttribute"]/SqlClientPermissionAttribute/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermissionAttribute.xml' path='docs/members[@name="SqlClientPermissionAttribute"]/SqlClientPermissionAttribute/*'/>
     [System.AttributeUsageAttribute(System.AttributeTargets.Method | System.AttributeTargets.Constructor | System.AttributeTargets.Class | System.AttributeTargets.Struct | System.AttributeTargets.Assembly, AllowMultiple = true, Inherited = false)]
     public sealed partial class SqlClientPermissionAttribute : System.Data.Common.DBDataPermissionAttribute
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermissionAttribute.xml' path='docs/members[@name="SqlClientPermissionAttribute"]/ctor/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermissionAttribute.xml' path='docs/members[@name="SqlClientPermissionAttribute"]/ctor/*'/>
         public SqlClientPermissionAttribute(System.Security.Permissions.SecurityAction action) : base(action) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermissionAttribute.xml' path='docs/members[@name="SqlClientPermissionAttribute"]/CreatePermission/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermissionAttribute.xml' path='docs/members[@name="SqlClientPermissionAttribute"]/CreatePermission/*'/>
         public override System.Security.IPermission CreatePermission() { throw null; }
     }
 #endif // NETFRAMEWORK
     
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCertificateStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionCertificateStoreProvider"]/SqlColumnEncryptionCertificateStoreProvider/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCertificateStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionCertificateStoreProvider"]/SqlColumnEncryptionCertificateStoreProvider/*'/>
     public partial class SqlColumnEncryptionCertificateStoreProvider : Microsoft.Data.SqlClient.SqlColumnEncryptionKeyStoreProvider
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCertificateStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionCertificateStoreProvider"]/ProviderName/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCertificateStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionCertificateStoreProvider"]/ProviderName/*'/>
         public const string ProviderName = "MSSQL_CERTIFICATE_STORE";
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCertificateStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionCertificateStoreProvider"]/ctor/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCertificateStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionCertificateStoreProvider"]/ctor/*'/>
         public SqlColumnEncryptionCertificateStoreProvider() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCertificateStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionCertificateStoreProvider"]/DecryptColumnEncryptionKey/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCertificateStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionCertificateStoreProvider"]/DecryptColumnEncryptionKey/*'/>
         public override byte[] DecryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] encryptedColumnEncryptionKey) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCertificateStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionCertificateStoreProvider"]/EncryptColumnEncryptionKey/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCertificateStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionCertificateStoreProvider"]/EncryptColumnEncryptionKey/*'/>
         public override byte[] EncryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] columnEncryptionKey) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCertificateStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionCertificateStoreProvider"]/SignColumnMasterKeyMetadata/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCertificateStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionCertificateStoreProvider"]/SignColumnMasterKeyMetadata/*'/>
         public override byte[] SignColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCertificateStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionCertificateStoreProvider"]/VerifyColumnMasterKeyMetadata/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCertificateStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionCertificateStoreProvider"]/VerifyColumnMasterKeyMetadata/*'/>
         public override bool VerifyColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations, byte[] signature) { throw null; }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/SqlColumnEncryptionCngProvider/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/SqlColumnEncryptionCngProvider/*'/>
     public partial class SqlColumnEncryptionCngProvider : Microsoft.Data.SqlClient.SqlColumnEncryptionKeyStoreProvider
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/ProviderName/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/ProviderName/*'/>
         public const string ProviderName = "MSSQL_CNG_STORE";
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/ctor/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/ctor/*'/>
         public SqlColumnEncryptionCngProvider() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/DecryptColumnEncryptionKey/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/DecryptColumnEncryptionKey/*'/>
         public override byte[] DecryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] encryptedColumnEncryptionKey) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/EncryptColumnEncryptionKey/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/EncryptColumnEncryptionKey/*'/>
         public override byte[] EncryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] columnEncryptionKey) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/SignColumnMasterKeyMetadata/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/SignColumnMasterKeyMetadata/*'/>
         public override byte[] SignColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/VerifyColumnMasterKeyMetadata/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCngProvider.xml' path='docs/members[@name="SqlColumnEncryptionCngProvider"]/VerifyColumnMasterKeyMetadata/*'/>
         public override bool VerifyColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations, byte[] signature) { throw null; }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/SqlColumnEncryptionCspProvider/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/SqlColumnEncryptionCspProvider/*'/>
     public partial class SqlColumnEncryptionCspProvider : Microsoft.Data.SqlClient.SqlColumnEncryptionKeyStoreProvider
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/ProviderName/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/ProviderName/*'/>
         public const string ProviderName = "MSSQL_CSP_PROVIDER";
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/ctor/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/ctor/*'/>
         public SqlColumnEncryptionCspProvider() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/DecryptColumnEncryptionKey/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/DecryptColumnEncryptionKey/*'/>
         public override byte[] DecryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] encryptedColumnEncryptionKey) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/EncryptColumnEncryptionKey/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/EncryptColumnEncryptionKey/*'/>
         public override byte[] EncryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] columnEncryptionKey) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/SignColumnMasterKeyMetadata/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/SignColumnMasterKeyMetadata/*'/>
         public override byte[] SignColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/VerifyColumnMasterKeyMetadata/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionCspProvider.xml' path='docs/members[@name="SqlColumnEncryptionCspProvider"]/VerifyColumnMasterKeyMetadata/*'/>
         public override bool VerifyColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations, byte[] signature) { throw null; }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionKeyStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionKeyStoreProvider"]/SqlColumnEncryptionKeyStoreProvider/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionKeyStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionKeyStoreProvider"]/SqlColumnEncryptionKeyStoreProvider/*'/>
     public abstract partial class SqlColumnEncryptionKeyStoreProvider
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionKeyStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionKeyStoreProvider"]/ctor/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionKeyStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionKeyStoreProvider"]/ctor/*'/>
         protected SqlColumnEncryptionKeyStoreProvider() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionKeyStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionKeyStoreProvider"]/DecryptColumnEncryptionKey/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionKeyStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionKeyStoreProvider"]/DecryptColumnEncryptionKey/*'/>
         public abstract byte[] DecryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] encryptedColumnEncryptionKey);
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionKeyStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionKeyStoreProvider"]/EncryptColumnEncryptionKey/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionKeyStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionKeyStoreProvider"]/EncryptColumnEncryptionKey/*'/>
         public abstract byte[] EncryptColumnEncryptionKey(string masterKeyPath, string encryptionAlgorithm, byte[] columnEncryptionKey);
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionKeyStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionKeyStoreProvider"]/SignColumnMasterKeyMetadata/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionKeyStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionKeyStoreProvider"]/SignColumnMasterKeyMetadata/*'/>
         public virtual byte[] SignColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionKeyStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionKeyStoreProvider"]/VerifyColumnMasterKeyMetadata/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionKeyStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionKeyStoreProvider"]/VerifyColumnMasterKeyMetadata/*'/>
         public virtual bool VerifyColumnMasterKeyMetadata(string masterKeyPath, bool allowEnclaveComputations, byte[] signature) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionKeyStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionKeyStoreProvider"]/ColumnEncryptionKeyCacheTtl/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionKeyStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionKeyStoreProvider"]/ColumnEncryptionKeyCacheTtl/*'/>
         public virtual System.TimeSpan? ColumnEncryptionKeyCacheTtl { get { throw null; } set { } }
     }
 #if NETCOREAPP || NETSTANDARD
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSetting"]/SqlCommandColumnEncryptionSetting/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSetting"]/SqlCommandColumnEncryptionSetting/*'/>
     public enum SqlCommandColumnEncryptionSetting
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSetting"]/Disabled/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSetting"]/Disabled/*'/>
         Disabled = 3,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSetting"]/Enabled/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSetting"]/Enabled/*'/>
         Enabled = 1,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSetting"]/ResultSetOnly/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSetting"]/ResultSetOnly/*'/>
         ResultSetOnly = 2,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSetting"]/UseConnectionSetting/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSetting"]/UseConnectionSetting/*'/>
         UseConnectionSetting = 0,
     }
 #endif 
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/SqlCommand/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/SqlCommand/*'/>
     [System.ComponentModel.DefaultEventAttribute("RecordsAffected")]
     [System.ComponentModel.ToolboxItemAttribute(true)]
     public sealed partial class SqlCommand : System.Data.Common.DbCommand, System.ICloneable
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ctor[@name="default"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ctor[@name="default"]/*'/>
         public SqlCommand() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ctor[@name="cmdTextString"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ctor[@name="cmdTextString"]/*'/>
         public SqlCommand(string cmdText) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ctor[@name="cmdTextStringAndSqlConnection"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ctor[@name="cmdTextStringAndSqlConnection"]/*'/>
         public SqlCommand(string cmdText, Microsoft.Data.SqlClient.SqlConnection connection) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ctor[@name="cmdTextStringAndSqlConnectionAndSqlTransaction"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ctor[@name="cmdTextStringAndSqlConnectionAndSqlTransaction"]/*'/>
         public SqlCommand(string cmdText, Microsoft.Data.SqlClient.SqlConnection connection, Microsoft.Data.SqlClient.SqlTransaction transaction) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ctor[@name="cmdTextStringAndSqlConnectionAndSqlTransactionAndSqlCommandColumnEncryptionSetting"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ctor[@name="cmdTextStringAndSqlConnectionAndSqlTransactionAndSqlCommandColumnEncryptionSetting"]/*'/>
         public SqlCommand(string cmdText, Microsoft.Data.SqlClient.SqlConnection connection, Microsoft.Data.SqlClient.SqlTransaction transaction, Microsoft.Data.SqlClient.SqlCommandColumnEncryptionSetting columnEncryptionSetting) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ColumnEncryptionSetting/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ColumnEncryptionSetting/*'/>
         [System.ComponentModel.BrowsableAttribute(false)]
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
         public Microsoft.Data.SqlClient.SqlCommandColumnEncryptionSetting ColumnEncryptionSetting { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandText/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandText/*'/>
         [System.ComponentModel.DefaultValueAttribute("")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public override string CommandText { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandTimeout/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandTimeout/*'/>
         public override int CommandTimeout { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandType/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandType/*'/>
         [System.ComponentModel.DefaultValueAttribute(1)]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public override System.Data.CommandType CommandType { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Connection/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Connection/*'/>
         [System.ComponentModel.DefaultValueAttribute(null)]
         public new Microsoft.Data.SqlClient.SqlConnection Connection { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DbConnection/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DbConnection/*'/>
         protected override System.Data.Common.DbConnection DbConnection { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DbParameterCollection/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DbParameterCollection/*'/>
         protected override System.Data.Common.DbParameterCollection DbParameterCollection { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DbTransaction/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DbTransaction/*'/>
         protected override System.Data.Common.DbTransaction DbTransaction { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DesignTimeVisible/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/DesignTimeVisible/*'/>
         [System.ComponentModel.BrowsableAttribute(false)]
         [System.ComponentModel.DefaultValueAttribute(true)]
         [System.ComponentModel.DesignOnlyAttribute(true)]
         [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Never)]
         public override bool DesignTimeVisible { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EnableOptimizedParameterBinding/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EnableOptimizedParameterBinding/*'/>
         public bool EnableOptimizedParameterBinding { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Parameters/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Parameters/*'/>
         public new Microsoft.Data.SqlClient.SqlParameterCollection Parameters { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Transaction/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Transaction/*'/>
         [System.ComponentModel.BrowsableAttribute(false)]
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
         public new Microsoft.Data.SqlClient.SqlTransaction Transaction { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/UpdatedRowSource/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/UpdatedRowSource/*'/>
         [System.ComponentModel.DefaultValueAttribute(3)]
         public override System.Data.UpdateRowSource UpdatedRowSource { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/StatementCompleted/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/StatementCompleted/*'/>
         public event System.Data.StatementCompletedEventHandler StatementCompleted { add { } remove { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteNonQuery[@name="default"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteNonQuery[@name="default"]/*'/>
 #if NETFRAMEWORK
         [System.Security.Permissions.HostProtectionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, ExternalThreading = true)]
 #endif // NETFRAMEWORK
         public System.IAsyncResult BeginExecuteNonQuery() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteNonQuery[@name="AsyncCallbackAndStateObject"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteNonQuery[@name="AsyncCallbackAndStateObject"]/*'/>
 #if NETFRAMEWORK
         [System.Security.Permissions.HostProtectionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, ExternalThreading = true)]
 #endif // NETFRAMEWORK
         public System.IAsyncResult BeginExecuteNonQuery(System.AsyncCallback callback, object stateObject) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteReader[@name="default"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteReader[@name="default"]/*'/>
 #if NETFRAMEWORK
         [System.Security.Permissions.HostProtectionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, ExternalThreading = true)]
 #endif // NETFRAMEWORK
         public System.IAsyncResult BeginExecuteReader() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteReader[@name="AsyncCallbackAndstateObject"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteReader[@name="AsyncCallbackAndstateObject"]/*'/>
 #if NETFRAMEWORK
         [System.Security.Permissions.HostProtectionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, ExternalThreading = true)]
 #endif // NETFRAMEWORK
         public System.IAsyncResult BeginExecuteReader(System.AsyncCallback callback, object stateObject) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteReader[@name="AsyncCallbackAndstateObjectAndCommandBehavior"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteReader[@name="AsyncCallbackAndstateObjectAndCommandBehavior"]/*'/>
 #if NETFRAMEWORK
         [System.Security.Permissions.HostProtectionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, ExternalThreading = true)]
 #endif // NETFRAMEWORK
         public System.IAsyncResult BeginExecuteReader(System.AsyncCallback callback, object stateObject, System.Data.CommandBehavior behavior) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteReader[@name="CommandBehavior"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteReader[@name="CommandBehavior"]/*'/>
 #if NETFRAMEWORK
         [System.Security.Permissions.HostProtectionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, ExternalThreading = true)]
 #endif // NETFRAMEWORK
         public System.IAsyncResult BeginExecuteReader(System.Data.CommandBehavior behavior) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteXmlReader[@name="default"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteXmlReader[@name="default"]/*'/>
 #if NETFRAMEWORK
         [System.Security.Permissions.HostProtectionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, ExternalThreading = true)]
 #endif // NETFRAMEWORK
         public System.IAsyncResult BeginExecuteXmlReader() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteXmlReader[@name="AsyncCallbackAndstateObject"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/BeginExecuteXmlReader[@name="AsyncCallbackAndstateObject"]/*'/>
 #if NETFRAMEWORK
         [System.Security.Permissions.HostProtectionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, ExternalThreading = true)]
 #endif // NETFRAMEWORK
         public System.IAsyncResult BeginExecuteXmlReader(System.AsyncCallback callback, object stateObject) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Cancel/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Cancel/*'/>
         public override void Cancel() { }
         object System.ICloneable.Clone() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Clone/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Clone/*'/>
         public Microsoft.Data.SqlClient.SqlCommand Clone() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CreateDbParameter/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CreateDbParameter/*'/>
         protected override System.Data.Common.DbParameter CreateDbParameter() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CreateParameter/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CreateParameter/*'/>
         public new Microsoft.Data.SqlClient.SqlParameter CreateParameter() { throw null; }
 #if NETFRAMEWORK
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Dispose/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Dispose/*'/>
         protected override void Dispose(bool disposing) { }
 #endif // NETFRAMEWORK
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EndExecuteNonQuery[@name="IAsyncResult"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EndExecuteNonQuery[@name="IAsyncResult"]/*'/>
         public int EndExecuteNonQuery(System.IAsyncResult asyncResult) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EndExecuteReader[@name="IAsyncResult2"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EndExecuteReader[@name="IAsyncResult2"]/*'/>
         public Microsoft.Data.SqlClient.SqlDataReader EndExecuteReader(System.IAsyncResult asyncResult) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EndExecuteXmlReader[@name="IAsyncResult"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EndExecuteXmlReader[@name="IAsyncResult"]/*'/>
         public System.Xml.XmlReader EndExecuteXmlReader(System.IAsyncResult asyncResult) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteDbDataReader[@name="CommandBehavior"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteDbDataReader[@name="CommandBehavior"]/*'/>
         protected override System.Data.Common.DbDataReader ExecuteDbDataReader(System.Data.CommandBehavior behavior) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteDbDataReaderAsync/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteDbDataReaderAsync/*'/>
         protected override System.Threading.Tasks.Task<System.Data.Common.DbDataReader> ExecuteDbDataReaderAsync(System.Data.CommandBehavior behavior, System.Threading.CancellationToken cancellationToken) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteNonQuery[@name="default"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteNonQuery[@name="default"]/*'/>
         public override int ExecuteNonQuery() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteNonQueryAsync[@name="CancellationToken"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteNonQueryAsync[@name="CancellationToken"]/*'/>
         public override System.Threading.Tasks.Task<int> ExecuteNonQueryAsync(System.Threading.CancellationToken cancellationToken) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReader[@name="default"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReader[@name="default"]/*'/>
         public new Microsoft.Data.SqlClient.SqlDataReader ExecuteReader() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReader[@name="CommandBehavior"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReader[@name="CommandBehavior"]/*'/>
         public new Microsoft.Data.SqlClient.SqlDataReader ExecuteReader(System.Data.CommandBehavior behavior) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="default"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="default"]/*'/>
         public new System.Threading.Tasks.Task<Microsoft.Data.SqlClient.SqlDataReader> ExecuteReaderAsync() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="CommandBehavior"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="CommandBehavior"]/*'/>
         public new System.Threading.Tasks.Task<Microsoft.Data.SqlClient.SqlDataReader> ExecuteReaderAsync(System.Data.CommandBehavior behavior) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="commandBehaviorAndCancellationToken"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="commandBehaviorAndCancellationToken"]/*'/>
         public new System.Threading.Tasks.Task<Microsoft.Data.SqlClient.SqlDataReader> ExecuteReaderAsync(System.Data.CommandBehavior behavior, System.Threading.CancellationToken cancellationToken) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="CancellationToken"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteReaderAsync[@name="CancellationToken"]/*'/>
         public new System.Threading.Tasks.Task<Microsoft.Data.SqlClient.SqlDataReader> ExecuteReaderAsync(System.Threading.CancellationToken cancellationToken) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteScalar/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteScalar/*'/>
         public override object ExecuteScalar() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteScalarAsync[@name="CancellationToken"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteScalarAsync[@name="CancellationToken"]/*'/>
         public override System.Threading.Tasks.Task<object> ExecuteScalarAsync(System.Threading.CancellationToken cancellationToken) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReader[@name="default"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReader[@name="default"]/*'/>
         public System.Xml.XmlReader ExecuteXmlReader() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReaderAsync[@name="default"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReaderAsync[@name="default"]/*'/>
         public System.Threading.Tasks.Task<System.Xml.XmlReader> ExecuteXmlReaderAsync() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReaderAsync[@name="CancellationToken"]/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ExecuteXmlReaderAsync[@name="CancellationToken"]/*'/>
         public System.Threading.Tasks.Task<System.Xml.XmlReader> ExecuteXmlReaderAsync(System.Threading.CancellationToken cancellationToken) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Prepare/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Prepare/*'/>
         public override void Prepare() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Notification/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Notification/*'/>
         [System.ComponentModel.BrowsableAttribute(false)]
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
         public Microsoft.Data.Sql.SqlNotificationRequest Notification { get { throw null; } set { } }
 #if NETFRAMEWORK
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/NotificationAutoEnlist/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/NotificationAutoEnlist/*'/>
         [System.ComponentModel.DefaultValueAttribute(true)]
         public bool NotificationAutoEnlist { get { throw null; } set { } }
 #endif // NETFRAMEWORK
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RegisterColumnEncryptionKeyStoreProvidersOnCommand/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RegisterColumnEncryptionKeyStoreProvidersOnCommand/*' />
         public void RegisterColumnEncryptionKeyStoreProvidersOnCommand(System.Collections.Generic.IDictionary<string, Microsoft.Data.SqlClient.SqlColumnEncryptionKeyStoreProvider> customProviders) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ResetCommandTimeout/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ResetCommandTimeout/*'/>
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(System.ComponentModel.DesignerSerializationVisibility.Content)]
         public void ResetCommandTimeout() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RetryLogicProvider/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RetryLogicProvider/*' />
         public SqlRetryLogicBaseProvider RetryLogicProvider { get { throw null; } set { } }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/SqlCommandBuilder/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/SqlCommandBuilder/*'/>
     public sealed class SqlCommandBuilder : System.Data.Common.DbCommandBuilder
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/ctor1/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/ctor1/*'/>
         public SqlCommandBuilder() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/ctor2/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/ctor2/*'/>
         public SqlCommandBuilder(Microsoft.Data.SqlClient.SqlDataAdapter adapter) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/CatalogLocation/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/CatalogLocation/*'/>
         [System.ComponentModel.BrowsableAttribute(false)]
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
         [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Never)]
         public override System.Data.Common.CatalogLocation CatalogLocation { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/CatalogSeparator/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/CatalogSeparator/*'/>
         [System.ComponentModel.BrowsableAttribute(false)]
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
         [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Never)]
         public override string CatalogSeparator { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/DataAdapter/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/DataAdapter/*'/>
         [System.ComponentModel.DefaultValueAttribute(null)]
         public new Microsoft.Data.SqlClient.SqlDataAdapter DataAdapter { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/DeriveParameters/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/DeriveParameters/*'/>
         public static void DeriveParameters(Microsoft.Data.SqlClient.SqlCommand command) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/QuotePrefix/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/QuotePrefix/*'/>
         [System.ComponentModel.BrowsableAttribute(false)]
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
         [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Never)]
         public override string QuotePrefix { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/QuoteSuffix/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/QuoteSuffix/*'/>
         [System.ComponentModel.BrowsableAttribute(false)]
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
         [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Never)]
         public override string QuoteSuffix { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/SchemaSeparator/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/SchemaSeparator/*'/>
         [System.ComponentModel.BrowsableAttribute(false)]
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
         [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Never)]
         public override string SchemaSeparator { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/ApplyParameterInfo/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/ApplyParameterInfo/*'/>
         protected override void ApplyParameterInfo(System.Data.Common.DbParameter parameter, System.Data.DataRow datarow, System.Data.StatementType statementType, bool whereClause) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetDeleteCommand2/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetDeleteCommand2/*'/>
         public new Microsoft.Data.SqlClient.SqlCommand GetDeleteCommand() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetDeleteCommand3/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetDeleteCommand3/*'/>
         public new Microsoft.Data.SqlClient.SqlCommand GetDeleteCommand(bool useColumnsForParameterNames) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetInsertCommand2/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetInsertCommand2/*'/>
         public new Microsoft.Data.SqlClient.SqlCommand GetInsertCommand() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetInsertCommand3/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetInsertCommand3/*'/>
         public new Microsoft.Data.SqlClient.SqlCommand GetInsertCommand(bool useColumnsForParameterNames) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetParameterName1/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetParameterName1/*'/>
         protected override string GetParameterName(int parameterOrdinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetParameterName2/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetParameterName2/*'/>
         protected override string GetParameterName(string parameterName) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetParameterPlaceholder/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetParameterPlaceholder/*'/>
         protected override string GetParameterPlaceholder(int parameterOrdinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetSchemaTable/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetSchemaTable/*'/>
         protected override System.Data.DataTable GetSchemaTable(System.Data.Common.DbCommand srcCommand) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetUpdateCommand2/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetUpdateCommand2/*'/>
         public new Microsoft.Data.SqlClient.SqlCommand GetUpdateCommand() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetUpdateCommand3/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetUpdateCommand3/*'/>
         public new Microsoft.Data.SqlClient.SqlCommand GetUpdateCommand(bool useColumnsForParameterNames) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/InitializeCommand/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/InitializeCommand/*'/>
         protected override System.Data.Common.DbCommand InitializeCommand(System.Data.Common.DbCommand command) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/QuoteIdentifier/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/QuoteIdentifier/*'/>
         public override string QuoteIdentifier(string unquotedIdentifier) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/SetRowUpdatingHandler/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/SetRowUpdatingHandler/*'/>
         protected override void SetRowUpdatingHandler(System.Data.Common.DbDataAdapter adapter) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/UnquoteIdentifier/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/UnquoteIdentifier/*'/>
         public override string UnquoteIdentifier(string quotedIdentifier) { throw null; }
     }
 #if NETFRAMEWORK
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSetting"]/SqlCommandColumnEncryptionSetting/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSetting"]/SqlCommandColumnEncryptionSetting/*'/>
     public enum SqlCommandColumnEncryptionSetting
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSetting"]/Disabled/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSetting"]/Disabled/*'/>
         Disabled = 3,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSetting"]/Enabled/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSetting"]/Enabled/*'/>
         Enabled = 1,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSetting"]/ResultSetOnly/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSetting"]/ResultSetOnly/*'/>
         ResultSetOnly = 2,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSetting"]/UseConnectionSetting/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSetting"]/UseConnectionSetting/*'/>
         UseConnectionSetting = 0,
     }
 #endif // NETFRAMEWORK
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/SqlConnection/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/SqlConnection/*'/>
     [System.ComponentModel.DefaultEventAttribute("InfoMessage")]
     public sealed partial class SqlConnection : System.Data.Common.DbConnection, System.ICloneable
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctor2/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctor2/*'/>
         public SqlConnection() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionString/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionString/*'/>
         public SqlConnection(string connectionString) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionStringCredential/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionStringCredential/*'/>
         public SqlConnection(string connectionString, Microsoft.Data.SqlClient.SqlCredential credential) { }
 #if NETCOREAPP
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionKeyCacheTtl/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionKeyCacheTtl/*'/>
         public static System.TimeSpan ColumnEncryptionKeyCacheTtl { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionQueryMetadataCacheEnabled/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionQueryMetadataCacheEnabled/*'/>
         public static bool ColumnEncryptionQueryMetadataCacheEnabled { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionTrustedMasterKeyPaths/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionTrustedMasterKeyPaths/*'/>
         public static System.Collections.Generic.IDictionary<string, System.Collections.Generic.IList<string>> ColumnEncryptionTrustedMasterKeyPaths { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisterColumnEncryptionKeyStoreProviders/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisterColumnEncryptionKeyStoreProviders/*'/>
         public static void RegisterColumnEncryptionKeyStoreProviders(System.Collections.Generic.IDictionary<string, Microsoft.Data.SqlClient.SqlColumnEncryptionKeyStoreProvider> customProviders) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisterColumnEncryptionKeyStoreProvidersOnConnection/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisterColumnEncryptionKeyStoreProvidersOnConnection/*' />
         public void RegisterColumnEncryptionKeyStoreProvidersOnConnection(System.Collections.Generic.IDictionary<string, Microsoft.Data.SqlClient.SqlColumnEncryptionKeyStoreProvider> customProviders) { }
 #endif // NETCOREAPP
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/AccessToken/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/AccessToken/*'/>
         [System.ComponentModel.BrowsableAttribute(false)]
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
         public string AccessToken { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ClientConnectionId/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ClientConnectionId/*'/>
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
         public System.Guid ClientConnectionId { get { throw null; } }
 
@@ -912,316 +912,316 @@ namespace Microsoft.Data.SqlClient
 #endif // NETCOREAPP
         object System.ICloneable.Clone() { throw null; }
 #if NETFRAMEWORK
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionKeyCacheTtl/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionKeyCacheTtl/*'/>
         [System.ComponentModel.DefaultValueAttribute(null)]
         public static System.TimeSpan ColumnEncryptionKeyCacheTtl { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionQueryMetadataCacheEnabled/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionQueryMetadataCacheEnabled/*'/>
         [System.ComponentModel.DefaultValueAttribute(null)]
         public static bool ColumnEncryptionQueryMetadataCacheEnabled { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionTrustedMasterKeyPaths/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionTrustedMasterKeyPaths/*'/>
         [System.ComponentModel.DefaultValueAttribute(null)]
         public static System.Collections.Generic.IDictionary<string, System.Collections.Generic.IList<string>> ColumnEncryptionTrustedMasterKeyPaths { get { throw null; } }
 #endif // NETFRAMEWORK
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CommandTimeout/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CommandTimeout/*' />
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
         public int CommandTimeout { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ConnectionString/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ConnectionString/*'/>
         [System.ComponentModel.DefaultValueAttribute("")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         [System.ComponentModel.SettingsBindableAttribute(true)]
         public override string ConnectionString { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ConnectionTimeout/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ConnectionTimeout/*'/>
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
         public override int ConnectionTimeout { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Credential/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Credential/*'/>
         [System.ComponentModel.BrowsableAttribute(false)]
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
         public Microsoft.Data.SqlClient.SqlCredential Credential { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Database/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Database/*'/>
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
         public override string Database { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/DataSource/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/DataSource/*'/>
         [System.ComponentModel.BrowsableAttribute(true)]
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
         public override string DataSource { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/FireInfoMessageEventOnUserErrors/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/FireInfoMessageEventOnUserErrors/*'/>
         public bool FireInfoMessageEventOnUserErrors { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/PacketSize/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/PacketSize/*'/>
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
         public int PacketSize { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ServerVersion/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ServerVersion/*'/>
         [System.ComponentModel.BrowsableAttribute(false)]
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
         public override string ServerVersion { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ServerProcessId/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ServerProcessId/*'/>
         public int ServerProcessId { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/State/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/State/*'/>
         [System.ComponentModel.BrowsableAttribute(false)]
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
         public override System.Data.ConnectionState State { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/StatisticsEnabled/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/StatisticsEnabled/*'/>
         [System.ComponentModel.DefaultValueAttribute(false)]
         public bool StatisticsEnabled { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/WorkstationId/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/WorkstationId/*'/>
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
         public string WorkstationId { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/InfoMessage/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/InfoMessage/*'/>
         public event Microsoft.Data.SqlClient.SqlInfoMessageEventHandler InfoMessage { add { } remove { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/BeginDbTransaction/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/BeginDbTransaction/*'/>
         protected override System.Data.Common.DbTransaction BeginDbTransaction(System.Data.IsolationLevel isolationLevel) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/BeginTransaction2/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/BeginTransaction2/*'/>
         public new Microsoft.Data.SqlClient.SqlTransaction BeginTransaction() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/BeginTransactionIso/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/BeginTransactionIso/*'/>
         public new Microsoft.Data.SqlClient.SqlTransaction BeginTransaction(System.Data.IsolationLevel iso) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/BeginTransactionIsoTransactionName/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/BeginTransactionIsoTransactionName/*'/>
         public Microsoft.Data.SqlClient.SqlTransaction BeginTransaction(System.Data.IsolationLevel iso, string transactionName) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/BeginTransactionTransactionName/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/BeginTransactionTransactionName/*'/>
         public Microsoft.Data.SqlClient.SqlTransaction BeginTransaction(string transactionName) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ChangeDatabase/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ChangeDatabase/*'/>
         public override void ChangeDatabase(string database)
         {
 #if NETCOREAPP
             throw null;
 #endif
         }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringCredentialNewSecurePassword/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringCredentialNewSecurePassword/*'/>
         public static void ChangePassword(string connectionString, Microsoft.Data.SqlClient.SqlCredential credential, System.Security.SecureString newSecurePassword)
         {
 #if NETCOREAPP
             throw null;
 #endif
         }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringNewPassword/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringNewPassword/*'/>
         public static void ChangePassword(string connectionString, string newPassword)
         {
 #if NETCOREAPP
             throw null;
 #endif
         }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ClearAllPools/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ClearAllPools/*'/>
         public static void ClearAllPools()
         {
 #if NETCOREAPP
             throw null;
 #endif
         }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ClearPool/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ClearPool/*'/>
         public static void ClearPool(Microsoft.Data.SqlClient.SqlConnection connection)
         {
 #if NETCOREAPP
             throw null;
 #endif
         }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Close/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Close/*'/>
         public override void Close()
         {
 #if NETCOREAPP
             throw null;
 #endif
         }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CreateCommand/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CreateCommand/*'/>
         public new Microsoft.Data.SqlClient.SqlCommand CreateCommand() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CreateDbCommand/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CreateDbCommand/*'/>
         protected override System.Data.Common.DbCommand CreateDbCommand() { throw null; }
 #if NETFRAMEWORK
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Dispose/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Dispose/*'/>
         protected override void Dispose(bool disposing) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/EnlistDistributedTransaction/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/EnlistDistributedTransaction/*'/>
         public void EnlistDistributedTransaction(System.EnterpriseServices.ITransaction transaction) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/EnlistTransaction/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/EnlistTransaction/*'/>
         public override void EnlistTransaction(System.Transactions.Transaction transaction) { }
 #endif // NETFRAMEWORK
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchema2/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchema2/*'/>
         public override System.Data.DataTable GetSchema() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionName/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionName/*'/>
         public override System.Data.DataTable GetSchema(string collectionName) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionNameRestrictionValues/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/GetSchemaCollectionNameRestrictionValues/*'/>
         public override System.Data.DataTable GetSchema(string collectionName, string[] restrictionValues) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Open/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Open/*'/>
         public override void Open() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenWithOverrides/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenWithOverrides/*'/>
         public void Open(SqlConnectionOverrides overrides) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsync/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsync/*'/>
         public override System.Threading.Tasks.Task OpenAsync(System.Threading.CancellationToken cancellationToken) { throw null; }
 #if NETFRAMEWORK
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisterColumnEncryptionKeyStoreProviders/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisterColumnEncryptionKeyStoreProviders/*'/>
         public static void RegisterColumnEncryptionKeyStoreProviders(System.Collections.Generic.IDictionary<string, Microsoft.Data.SqlClient.SqlColumnEncryptionKeyStoreProvider> customProviders) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisterColumnEncryptionKeyStoreProvidersOnConnection/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisterColumnEncryptionKeyStoreProvidersOnConnection/*' />
         public void RegisterColumnEncryptionKeyStoreProvidersOnConnection(System.Collections.Generic.IDictionary<string, Microsoft.Data.SqlClient.SqlColumnEncryptionKeyStoreProvider> customProviders) { }
 #endif // NETFRAMEWORK
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ResetStatistics/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ResetStatistics/*'/>
         public void ResetStatistics() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetrieveStatistics/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetrieveStatistics/*'/>
         public System.Collections.IDictionary RetrieveStatistics() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetrieveInternalInfo/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetrieveInternalInfo/*'/>
         public System.Collections.Generic.IDictionary<string, object> RetrieveInternalInfo() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetryLogicProvider/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetryLogicProvider/*' />
         public SqlRetryLogicBaseProvider RetryLogicProvider { get { throw null; } set { } }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionColumnEncryptionSetting.xml' path='docs/members[@name="SqlConnectionColumnEncryptionSetting"]/SqlConnectionColumnEncryptionSetting/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionColumnEncryptionSetting.xml' path='docs/members[@name="SqlConnectionColumnEncryptionSetting"]/SqlConnectionColumnEncryptionSetting/*'/>
     public enum SqlConnectionColumnEncryptionSetting
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionColumnEncryptionSetting.xml' path='docs/members[@name="SqlConnectionColumnEncryptionSetting"]/Disabled/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionColumnEncryptionSetting.xml' path='docs/members[@name="SqlConnectionColumnEncryptionSetting"]/Disabled/*'/>
         Disabled = 0,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionColumnEncryptionSetting.xml' path='docs/members[@name="SqlConnectionColumnEncryptionSetting"]/Enabled/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionColumnEncryptionSetting.xml' path='docs/members[@name="SqlConnectionColumnEncryptionSetting"]/Enabled/*'/>
         Enabled = 1,
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionOverrides.xml' path='docs/members[@name="SqlConnectionOverrides"]/SqlConnectionOverrides/*' />
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionOverrides.xml' path='docs/members[@name="SqlConnectionOverrides"]/SqlConnectionOverrides/*' />
     public enum SqlConnectionOverrides
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionOverrides.xml' path='docs/members[@name="SqlConnectionOverrides"]/None/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionOverrides.xml' path='docs/members[@name="SqlConnectionOverrides"]/None/*' />
         None = 0,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionOverrides.xml' path='docs/members[@name="SqlConnectionOverrides"]/OpenWithoutRetry/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionOverrides.xml' path='docs/members[@name="SqlConnectionOverrides"]/OpenWithoutRetry/*' />
         OpenWithoutRetry = 1,
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/SqlConnectionStringBuilder/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/SqlConnectionStringBuilder/*'/>
     [System.ComponentModel.DefaultPropertyAttribute("DataSource")]
     public sealed partial class SqlConnectionStringBuilder : System.Data.Common.DbConnectionStringBuilder
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ctor2/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ctor2/*'/>
         public SqlConnectionStringBuilder() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ctorConnectionString/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ctorConnectionString/*'/>
         public SqlConnectionStringBuilder(string connectionString) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ApplicationIntent/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ApplicationIntent/*'/>
         [System.ComponentModel.DisplayNameAttribute("Application Intent")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public Microsoft.Data.SqlClient.ApplicationIntent ApplicationIntent { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ApplicationName/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ApplicationName/*'/>
         [System.ComponentModel.DisplayNameAttribute("Application Name")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public string ApplicationName { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/AttachDBFilename/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/AttachDBFilename/*'/>
         [System.ComponentModel.DisplayNameAttribute("AttachDbFilename")]
         [System.ComponentModel.EditorAttribute("System.Windows.Forms.Design.FileNameEditor, System.Design, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a", "System.Drawing.Design.UITypeEditor, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public string AttachDBFilename { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Authentication/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Authentication/*'/>
         [System.ComponentModel.DisplayNameAttribute("Authentication")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public Microsoft.Data.SqlClient.SqlAuthenticationMethod Authentication { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ColumnEncryptionSetting/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ColumnEncryptionSetting/*'/>
         [System.ComponentModel.DisplayNameAttribute("Column Encryption Setting")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public Microsoft.Data.SqlClient.SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/CommandTimeout/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/CommandTimeout/*'/>
         [System.ComponentModel.DisplayNameAttribute("Command Timeout")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public int CommandTimeout { get { throw null; } set { } }
 #if NETFRAMEWORK
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectionReset/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectionReset/*'/>
         [System.ComponentModel.BrowsableAttribute(false)]
         [System.ComponentModel.DisplayNameAttribute("Connection Reset")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         [System.ObsoleteAttribute("ConnectionReset has been deprecated.  SqlConnection will ignore the 'connection reset' keyword and always reset the connection.")]
         public bool ConnectionReset { get { throw null; } set { } }
 #endif // NETFRAMEWORK
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectRetryCount/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectRetryCount/*'/>
         [System.ComponentModel.DisplayNameAttribute("Connect Retry Count")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public int ConnectRetryCount { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectRetryInterval/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectRetryInterval/*'/>
         [System.ComponentModel.DisplayNameAttribute("Connect Retry Interval")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public int ConnectRetryInterval { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectTimeout/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectTimeout/*'/>
         [System.ComponentModel.DisplayNameAttribute("Connect Timeout")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public int ConnectTimeout { get { throw null; } set { } }
 #if NETFRAMEWORK
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ContextConnection/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ContextConnection/*'/>
         [System.ComponentModel.DisplayNameAttribute("Context Connection")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         [System.ObsoleteAttribute("ContextConnection has been deprecated.  SqlConnection will ignore the 'Context Connection' keyword.")]
         public bool ContextConnection { get { throw null; } set { } }
 #endif // NETFRAMEWORK
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/CurrentLanguage/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/CurrentLanguage/*'/>
         [System.ComponentModel.DisplayNameAttribute("Current Language")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public string CurrentLanguage { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/DataSource/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/DataSource/*'/>
         [System.ComponentModel.DisplayNameAttribute("Data Source")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public string DataSource { get { throw null; } set { } }
 #if NETCOREAPP || NETSTANDARD21_AND_ABOVE
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/AttestationProtocol/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/AttestationProtocol/*' />
         [System.ComponentModel.DisplayNameAttribute("Attestation Protocol")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public Microsoft.Data.SqlClient.SqlConnectionAttestationProtocol AttestationProtocol { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/EnclaveAttestationUrl/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/EnclaveAttestationUrl/*'/>
         [System.ComponentModel.DisplayNameAttribute("Enclave Attestation Url")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public string EnclaveAttestationUrl { get { throw null; } set { } }
 #endif
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/IPAddressPreference/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/IPAddressPreference/*'/>
         [System.ComponentModel.DisplayNameAttribute("IP Address Preference")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public Microsoft.Data.SqlClient.SqlConnectionIPAddressPreference IPAddressPreference { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Encrypt/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Encrypt/*'/>
         [System.ComponentModel.DisplayNameAttribute("Encrypt")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public bool Encrypt { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Enlist/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Enlist/*'/>
         [System.ComponentModel.DisplayNameAttribute("Enlist")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public bool Enlist { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/FailoverPartner/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/FailoverPartner/*'/>
         [System.ComponentModel.DisplayNameAttribute("Failover Partner")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public string FailoverPartner { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/InitialCatalog/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/InitialCatalog/*'/>
         [System.ComponentModel.DisplayNameAttribute("Initial Catalog")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public string InitialCatalog { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/IntegratedSecurity/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/IntegratedSecurity/*'/>
         [System.ComponentModel.DisplayNameAttribute("Integrated Security")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public bool IntegratedSecurity { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/IsFixedSize/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/IsFixedSize/*'/>
         public override bool IsFixedSize { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Item/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Item/*'/>
         public override object this[string keyword] { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Keys/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Keys/*'/>
         public override System.Collections.ICollection Keys { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/LoadBalanceTimeout/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/LoadBalanceTimeout/*'/>
         [System.ComponentModel.DisplayNameAttribute("Load Balance Timeout")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public int LoadBalanceTimeout { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/MaxPoolSize/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/MaxPoolSize/*'/>
         [System.ComponentModel.DisplayNameAttribute("Max Pool Size")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public int MaxPoolSize { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/MinPoolSize/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/MinPoolSize/*'/>
         [System.ComponentModel.DisplayNameAttribute("Min Pool Size")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public int MinPoolSize { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/MultipleActiveResultSets/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/MultipleActiveResultSets/*'/>
         [System.ComponentModel.DisplayNameAttribute("Multiple Active Result Sets")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public bool MultipleActiveResultSets { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/MultiSubnetFailover/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/MultiSubnetFailover/*'/>
         [System.ComponentModel.DisplayNameAttribute("Multi Subnet Failover")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public bool MultiSubnetFailover { get { throw null; } set { } }
 #if NETFRAMEWORK
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/NetworkLibrary/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/NetworkLibrary/*'/>
         [System.ComponentModel.DisplayNameAttribute("Network Library")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public string NetworkLibrary { get { throw null; } set { } }
 #endif // NETFRAMEWORK
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/PacketSize/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/PacketSize/*'/>
         [System.ComponentModel.DisplayNameAttribute("Packet Size")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public int PacketSize { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Password/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Password/*'/>
         [System.ComponentModel.DisplayNameAttribute("Password")]
         [System.ComponentModel.PasswordPropertyTextAttribute(true)]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public string Password { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/PersistSecurityInfo/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/PersistSecurityInfo/*'/>
         [System.ComponentModel.DisplayNameAttribute("Persist Security Info")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public bool PersistSecurityInfo { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/PoolBlockingPeriod/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/PoolBlockingPeriod/*'/>
         [System.ComponentModel.DisplayNameAttribute("Pool Blocking Period")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
 #if NETFRAMEWORK
@@ -1229,381 +1229,381 @@ namespace Microsoft.Data.SqlClient
 #else
         public PoolBlockingPeriod PoolBlockingPeriod { get { throw null; } set { } }
 #endif // NETFRAMEWORK
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Pooling/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Pooling/*'/>
         [System.ComponentModel.DisplayNameAttribute("Pooling")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public bool Pooling { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Replication/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Replication/*'/>
         [System.ComponentModel.DisplayNameAttribute("Replication")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public bool Replication { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TransactionBinding/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TransactionBinding/*'/>
         [System.ComponentModel.DisplayNameAttribute("Transaction Binding")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public string TransactionBinding { get { throw null; } set { } }
 #if NETFRAMEWORK
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TransparentNetworkIPResolution/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TransparentNetworkIPResolution/*'/>
         [System.ComponentModel.DisplayNameAttribute("Transparent Network IP Resolution")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public bool TransparentNetworkIPResolution { get { throw null; } set { } }
 #endif
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TrustServerCertificate/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TrustServerCertificate/*'/>
         [System.ComponentModel.DisplayNameAttribute("Trust Server Certificate")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public bool TrustServerCertificate { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TypeSystemVersion/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TypeSystemVersion/*'/>
         [System.ComponentModel.DisplayNameAttribute("Type System Version")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public string TypeSystemVersion { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/UserID/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/UserID/*'/>
         [System.ComponentModel.DisplayNameAttribute("User ID")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public string UserID { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/UserInstance/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/UserInstance/*'/>
         [System.ComponentModel.DisplayNameAttribute("User Instance")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public bool UserInstance { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Values/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Values/*'/>
         public override System.Collections.ICollection Values { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/WorkstationID/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/WorkstationID/*'/>
         [System.ComponentModel.DisplayNameAttribute("Workstation ID")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public string WorkstationID { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Clear/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Clear/*'/>
         public override void Clear() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ContainsKey/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ContainsKey/*'/>
         public override bool ContainsKey(string keyword) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Remove/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Remove/*'/>
         public override bool Remove(string keyword) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ShouldSerialize/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ShouldSerialize/*'/>
         public override bool ShouldSerialize(string keyword) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TryGetValue/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TryGetValue/*'/>
         public override bool TryGetValue(string keyword, out object value) { throw null; }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCredential.xml' path='docs/members[@name="SqlCredential"]/SqlCredential/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCredential.xml' path='docs/members[@name="SqlCredential"]/SqlCredential/*'/>
     public sealed class SqlCredential
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCredential.xml' path='docs/members[@name="SqlCredential"]/ctor/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCredential.xml' path='docs/members[@name="SqlCredential"]/ctor/*'/>
         public SqlCredential(string userId, System.Security.SecureString password) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCredential.xml' path='docs/members[@name="SqlCredential"]/Password/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCredential.xml' path='docs/members[@name="SqlCredential"]/Password/*'/>
         public System.Security.SecureString Password { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCredential.xml' path='docs/members[@name="SqlCredential"]/UserId/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCredential.xml' path='docs/members[@name="SqlCredential"]/UserId/*'/>
         public string UserId { get { throw null; } }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/SqlDataAdapter/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/SqlDataAdapter/*'/>
     [System.ComponentModel.DefaultEventAttribute("RowUpdated")]
     public sealed partial class SqlDataAdapter : System.Data.Common.DbDataAdapter, System.Data.IDataAdapter, System.Data.IDbDataAdapter, System.ICloneable
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/ctor2/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/ctor2/*'/>
         public SqlDataAdapter() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/ctorSelectCommand/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/ctorSelectCommand/*'/>
         public SqlDataAdapter(Microsoft.Data.SqlClient.SqlCommand selectCommand) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/ctorSelectCommandTextSelectConnection/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/ctorSelectCommandTextSelectConnection/*'/>
         public SqlDataAdapter(string selectCommandText, Microsoft.Data.SqlClient.SqlConnection selectConnection) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/ctorSelectCommandTextSelectConnectionString/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/ctorSelectCommandTextSelectConnectionString/*'/>
         public SqlDataAdapter(string selectCommandText, string selectConnectionString) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/DeleteCommand/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/DeleteCommand/*'/>
         [System.ComponentModel.DefaultValueAttribute(null)]
         public new Microsoft.Data.SqlClient.SqlCommand DeleteCommand { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/InsertCommand/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/InsertCommand/*'/>
         [System.ComponentModel.DefaultValueAttribute(null)]
         public new Microsoft.Data.SqlClient.SqlCommand InsertCommand { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/SelectCommand/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/SelectCommand/*'/>
         [System.ComponentModel.DefaultValueAttribute(null)]
         public new Microsoft.Data.SqlClient.SqlCommand SelectCommand { get { throw null; } set { } }
         System.Data.IDbCommand System.Data.IDbDataAdapter.DeleteCommand { get { throw null; } set { } }
         System.Data.IDbCommand System.Data.IDbDataAdapter.InsertCommand { get { throw null; } set { } }
         System.Data.IDbCommand System.Data.IDbDataAdapter.SelectCommand { get { throw null; } set { } }
         System.Data.IDbCommand System.Data.IDbDataAdapter.UpdateCommand { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/UpdateBatchSize/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/UpdateBatchSize/*'/>
         public override int UpdateBatchSize { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/UpdateCommand/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/UpdateCommand/*'/>
         [System.ComponentModel.DefaultValueAttribute(null)]
         public new Microsoft.Data.SqlClient.SqlCommand UpdateCommand { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/RowUpdated/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/RowUpdated/*'/>
         public event Microsoft.Data.SqlClient.SqlRowUpdatedEventHandler RowUpdated { add { } remove { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/RowUpdating/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/RowUpdating/*'/>
         public event Microsoft.Data.SqlClient.SqlRowUpdatingEventHandler RowUpdating { add { } remove { } }
 #if NETFRAMEWORK
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/AddToBatch/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/AddToBatch/*'/>
         protected override int AddToBatch(System.Data.IDbCommand command) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/ClearBatch/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/ClearBatch/*'/>
         protected override void ClearBatch() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/CreateRowUpdatedEvent/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/CreateRowUpdatedEvent/*'/>
         protected override System.Data.Common.RowUpdatedEventArgs CreateRowUpdatedEvent(System.Data.DataRow dataRow, System.Data.IDbCommand command, System.Data.StatementType statementType, System.Data.Common.DataTableMapping tableMapping) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/CreateRowUpdatingEvent/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/CreateRowUpdatingEvent/*'/>
         protected override System.Data.Common.RowUpdatingEventArgs CreateRowUpdatingEvent(System.Data.DataRow dataRow, System.Data.IDbCommand command, System.Data.StatementType statementType, System.Data.Common.DataTableMapping tableMapping) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/ExecuteBatch/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/ExecuteBatch/*'/>
         protected override int ExecuteBatch() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/GetBatchedParameter/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/GetBatchedParameter/*'/>
         protected override System.Data.IDataParameter GetBatchedParameter(int commandIdentifier, int parameterIndex) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/GetBatchedRecordsAffected/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/GetBatchedRecordsAffected/*'/>
         protected override bool GetBatchedRecordsAffected(int commandIdentifier, out int recordsAffected, out System.Exception error) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/InitializeBatching/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/InitializeBatching/*'/>
         protected override void InitializeBatching() { }
 #endif // NETFRAMEWORK
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/OnRowUpdated/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/OnRowUpdated/*'/>
         protected override void OnRowUpdated(System.Data.Common.RowUpdatedEventArgs value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/OnRowUpdating/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/OnRowUpdating/*'/>
         protected override void OnRowUpdating(System.Data.Common.RowUpdatingEventArgs value) { }
         object System.ICloneable.Clone() { throw null; }
 #if NETFRAMEWORK
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/TerminateBatching/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/TerminateBatching/*'/>
         protected override void TerminateBatching() { }
 #endif // NETFRAMEWORK
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/SqlDataReader/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/SqlDataReader/*'/>
     public partial class SqlDataReader : System.Data.Common.DbDataReader, System.Data.IDataReader, System.IDisposable
     {
         internal SqlDataReader() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/Connection/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/Connection/*'/>
         protected Microsoft.Data.SqlClient.SqlConnection Connection { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/Depth/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/Depth/*'/>
         public override int Depth { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/FieldCount/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/FieldCount/*'/>
         public override int FieldCount { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/HasRows/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/HasRows/*'/>
         public override bool HasRows { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/IsClosed/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/IsClosed/*'/>
         public override bool IsClosed { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/ItemI/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/ItemI/*'/>
         public override object this[int i] { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/ItemName/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/ItemName/*'/>
         public override object this[string name] { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/RecordsAffected/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/RecordsAffected/*'/>
         public override int RecordsAffected { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/SensitivityClassification/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/SensitivityClassification/*'/>
         public Microsoft.Data.SqlClient.DataClassification.SensitivityClassification SensitivityClassification { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/VisibleFieldCount/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/VisibleFieldCount/*'/>
         public override int VisibleFieldCount { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/Close/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/Close/*'/>
         public override void Close() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetBoolean/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetBoolean/*'/>
         public override bool GetBoolean(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetByte/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetByte/*'/>
         public override byte GetByte(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetBytes/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetBytes/*'/>
         public override long GetBytes(int i, long dataIndex, byte[] buffer, int bufferIndex, int length) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetChar/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetChar/*'/>
         [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Never)]
         public override char GetChar(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetChars/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetChars/*'/>
         public override long GetChars(int i, long dataIndex, char[] buffer, int bufferIndex, int length) { throw null; }
 #if NETCOREAPP
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetColumnSchema/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetColumnSchema/*'/>
         public System.Collections.ObjectModel.ReadOnlyCollection<System.Data.Common.DbColumn> GetColumnSchema() { throw null; }
 #endif // NETCOREAPP
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetDataTypeName/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetDataTypeName/*'/>
         public override string GetDataTypeName(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetDateTime/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetDateTime/*'/>
         public override System.DateTime GetDateTime(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetDateTimeOffset/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetDateTimeOffset/*'/>
         public virtual System.DateTimeOffset GetDateTimeOffset(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetDecimal/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetDecimal/*'/>
         public override decimal GetDecimal(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetDouble/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetDouble/*'/>
         public override double GetDouble(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetEnumerator/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetEnumerator/*'/>
         public override System.Collections.IEnumerator GetEnumerator() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetFieldType/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetFieldType/*'/>
         public override System.Type GetFieldType(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetFieldValue/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetFieldValue/*'/>
         public override T GetFieldValue<T>(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetFieldValueAsync/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetFieldValueAsync/*'/>
         public override System.Threading.Tasks.Task<T> GetFieldValueAsync<T>(int i, System.Threading.CancellationToken cancellationToken) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetFloat/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetFloat/*'/>
         public override float GetFloat(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetGuid/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetGuid/*'/>
         public override System.Guid GetGuid(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetInt16/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetInt16/*'/>
         public override short GetInt16(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetInt32/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetInt32/*'/>
         public override int GetInt32(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetInt64/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetInt64/*'/>
         public override long GetInt64(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetName/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetName/*'/>
         public override string GetName(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetOrdinal/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetOrdinal/*'/>
         public override int GetOrdinal(string name) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetProviderSpecificFieldType/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetProviderSpecificFieldType/*'/>
         public override System.Type GetProviderSpecificFieldType(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetProviderSpecificValue/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetProviderSpecificValue/*'/>
         public override object GetProviderSpecificValue(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetProviderSpecificValues/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetProviderSpecificValues/*'/>
         public override int GetProviderSpecificValues(object[] values) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlBinary/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlBinary/*'/>
         public virtual System.Data.SqlTypes.SqlBinary GetSqlBinary(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlBoolean/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlBoolean/*'/>
         public virtual System.Data.SqlTypes.SqlBoolean GetSqlBoolean(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlByte/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlByte/*'/>
         public virtual System.Data.SqlTypes.SqlByte GetSqlByte(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlBytes/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlBytes/*'/>
         public virtual System.Data.SqlTypes.SqlBytes GetSqlBytes(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlChars/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlChars/*'/>
         public virtual System.Data.SqlTypes.SqlChars GetSqlChars(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlDateTime/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlDateTime/*'/>
         public virtual System.Data.SqlTypes.SqlDateTime GetSqlDateTime(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlDecimal/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlDecimal/*'/>
         public virtual System.Data.SqlTypes.SqlDecimal GetSqlDecimal(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlDouble/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlDouble/*'/>
         public virtual System.Data.SqlTypes.SqlDouble GetSqlDouble(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlGuid/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlGuid/*'/>
         public virtual System.Data.SqlTypes.SqlGuid GetSqlGuid(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlInt16/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlInt16/*'/>
         public virtual System.Data.SqlTypes.SqlInt16 GetSqlInt16(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlInt32/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlInt32/*'/>
         public virtual System.Data.SqlTypes.SqlInt32 GetSqlInt32(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlInt64/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlInt64/*'/>
         public virtual System.Data.SqlTypes.SqlInt64 GetSqlInt64(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlMoney/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlMoney/*'/>
         public virtual System.Data.SqlTypes.SqlMoney GetSqlMoney(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlSingle/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlSingle/*'/>
         public virtual System.Data.SqlTypes.SqlSingle GetSqlSingle(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlString/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlString/*'/>
         public virtual System.Data.SqlTypes.SqlString GetSqlString(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlValue/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlValue/*'/>
         public virtual object GetSqlValue(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlValues/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlValues/*'/>
         public virtual int GetSqlValues(object[] values) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlXml/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlXml/*'/>
         public virtual System.Data.SqlTypes.SqlXml GetSqlXml(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSchemaTable/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSchemaTable/*'/>
         public override System.Data.DataTable GetSchemaTable() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetStream/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetStream/*'/>
         public override System.IO.Stream GetStream(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetString/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetString/*'/>
         public override string GetString(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetTextReader/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetTextReader/*'/>
         public override System.IO.TextReader GetTextReader(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetTimeSpan/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetTimeSpan/*'/>
         public virtual System.TimeSpan GetTimeSpan(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetValue/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetValue/*'/>
         public override object GetValue(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetValues/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetValues/*'/>
         public override int GetValues(object[] values) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetXmlReader/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetXmlReader/*'/>
         public virtual System.Xml.XmlReader GetXmlReader(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/IsCommandBehavior/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/IsCommandBehavior/*'/>
         protected internal bool IsCommandBehavior(System.Data.CommandBehavior condition) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/IsDBNull/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/IsDBNull/*'/>
         public override bool IsDBNull(int i) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/IsDBNullAsync/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/IsDBNullAsync/*'/>
         public override System.Threading.Tasks.Task<bool> IsDBNullAsync(int i, System.Threading.CancellationToken cancellationToken) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/NextResult/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/NextResult/*'/>
         public override bool NextResult() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/NextResultAsync/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/NextResultAsync/*'/>
         public override System.Threading.Tasks.Task<bool> NextResultAsync(System.Threading.CancellationToken cancellationToken) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/Read/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/Read/*'/>
         public override bool Read() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/ReadAsync/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/ReadAsync/*'/>
         public override System.Threading.Tasks.Task<bool> ReadAsync(System.Threading.CancellationToken cancellationToken) { throw null; }
         [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Never)]
         System.Data.IDataReader System.Data.IDataRecord.GetData(int i) { throw null; }
     }
 #if NETFRAMEWORK
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SQLDebugging.xml' path='docs/members[@name="SQLDebugging"]/SQLDebugging/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SQLDebugging.xml' path='docs/members[@name="SQLDebugging"]/SQLDebugging/*'/>
     [System.Runtime.InteropServices.ClassInterfaceAttribute(System.Runtime.InteropServices.ClassInterfaceType.None)]
     [System.Runtime.InteropServices.ComVisibleAttribute(true)]
     [System.Runtime.InteropServices.GuidAttribute("afef65ad-4577-447a-a148-83acadd3d4b9")]
     [System.Security.Permissions.PermissionSetAttribute(System.Security.Permissions.SecurityAction.LinkDemand, Name = "FullTrust")]
     public sealed partial class SQLDebugging
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SQLDebugging.xml' path='docs/members[@name="SQLDebugging"]/ctor/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SQLDebugging.xml' path='docs/members[@name="SQLDebugging"]/ctor/*'/>
         public SQLDebugging() { }
     }
 #endif // NETFRAMEWORK
 
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/SqlDependency/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/SqlDependency/*'/>
     public sealed partial class SqlDependency
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/ctor2/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/ctor2/*'/>
 #if NETFRAMEWORK
         [System.Security.Permissions.HostProtectionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, ExternalThreading = true)]
 #endif // NETFRAMEWORK
         public SqlDependency() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/ctorCommand/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/ctorCommand/*'/>
 #if NETFRAMEWORK
         [System.Security.Permissions.HostProtectionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, ExternalThreading = true)]
 #endif // NETFRAMEWORK
         public SqlDependency(Microsoft.Data.SqlClient.SqlCommand command) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/ctorCommandOptionsTimeout/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/ctorCommandOptionsTimeout/*'/>
 #if NETFRAMEWORK
         [System.Security.Permissions.HostProtectionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, ExternalThreading = true)]
 #endif // NETFRAMEWORK
         public SqlDependency(Microsoft.Data.SqlClient.SqlCommand command, string options, int timeout) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/HasChanges/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/HasChanges/*'/>
         public bool HasChanges { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/Id/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/Id/*'/>
         public string Id { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/OnChange/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/OnChange/*'/>
         public event Microsoft.Data.SqlClient.OnChangeEventHandler OnChange { add { } remove { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/AddCommandDependency/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/AddCommandDependency/*'/>
         public void AddCommandDependency(Microsoft.Data.SqlClient.SqlCommand command) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StartConnectionString/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StartConnectionString/*'/>
 #if NETFRAMEWORK
         [System.Security.Permissions.HostProtectionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, ExternalThreading = true)]
 #endif // NETFRAMEWORK
         public static bool Start(string connectionString) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StartConnectionStringQueue/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StartConnectionStringQueue/*'/>
 #if NETFRAMEWORK
         [System.Security.Permissions.HostProtectionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, ExternalThreading = true)]
 #endif // NETFRAMEWORK
         public static bool Start(string connectionString, string queue) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StopConnectionString/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StopConnectionString/*'/>
 #if NETFRAMEWORK
         [System.Security.Permissions.HostProtectionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, ExternalThreading = true)]
 #endif // NETFRAMEWORK
         public static bool Stop(string connectionString) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StopConnectionStringQueue/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StopConnectionStringQueue/*'/>
 #if NETFRAMEWORK
         [System.Security.Permissions.HostProtectionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, ExternalThreading = true)]
 #endif // NETFRAMEWORK
         public static bool Stop(string connectionString, string queue) { throw null; }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml' path='docs/members[@name="SqlError"]/SqlError/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml' path='docs/members[@name="SqlError"]/SqlError/*'/>
     public sealed partial class SqlError
     {
         internal SqlError() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml' path='docs/members[@name="SqlError"]/Class/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml' path='docs/members[@name="SqlError"]/Class/*'/>
         public byte Class { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml' path='docs/members[@name="SqlError"]/LineNumber/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml' path='docs/members[@name="SqlError"]/LineNumber/*'/>
         public int LineNumber { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml' path='docs/members[@name="SqlError"]/Message/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml' path='docs/members[@name="SqlError"]/Message/*'/>
         public string Message { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml' path='docs/members[@name="SqlError"]/Number/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml' path='docs/members[@name="SqlError"]/Number/*'/>
         public int Number { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml' path='docs/members[@name="SqlError"]/Procedure/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml' path='docs/members[@name="SqlError"]/Procedure/*'/>
         public string Procedure { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml' path='docs/members[@name="SqlError"]/Server/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml' path='docs/members[@name="SqlError"]/Server/*'/>
         public string Server { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml' path='docs/members[@name="SqlError"]/Source/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml' path='docs/members[@name="SqlError"]/Source/*'/>
         public string Source { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml' path='docs/members[@name="SqlError"]/State/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml' path='docs/members[@name="SqlError"]/State/*'/>
         public byte State { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml' path='docs/members[@name="SqlError"]/ToString/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml' path='docs/members[@name="SqlError"]/ToString/*'/>
         public override string ToString() { throw null; }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlErrorCollection.xml' path='docs/members[@name="SqlErrorCollection"]/SqlErrorCollection/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlErrorCollection.xml' path='docs/members[@name="SqlErrorCollection"]/SqlErrorCollection/*'/>
     [System.ComponentModel.ListBindableAttribute(false)]
     public sealed partial class SqlErrorCollection : System.Collections.ICollection, System.Collections.IEnumerable
     {
         internal SqlErrorCollection() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlErrorCollection.xml' path='docs/members[@name="SqlErrorCollection"]/Count/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlErrorCollection.xml' path='docs/members[@name="SqlErrorCollection"]/Count/*'/>
         public int Count { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlErrorCollection.xml' path='docs/members[@name="SqlErrorCollection"]/Item/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlErrorCollection.xml' path='docs/members[@name="SqlErrorCollection"]/Item/*'/>
         public Microsoft.Data.SqlClient.SqlError this[int index] { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlErrorCollection.xml' path='docs/members[@name="SqlErrorCollection"]/System.Collections.ICollection.IsSynchronized/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlErrorCollection.xml' path='docs/members[@name="SqlErrorCollection"]/System.Collections.ICollection.IsSynchronized/*'/>
         bool System.Collections.ICollection.IsSynchronized { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlErrorCollection.xml' path='docs/members[@name="SqlErrorCollection"]/System.Collections.ICollection.SyncRoot/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlErrorCollection.xml' path='docs/members[@name="SqlErrorCollection"]/System.Collections.ICollection.SyncRoot/*'/>
         object System.Collections.ICollection.SyncRoot { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlErrorCollection.xml' path='docs/members[@name="SqlErrorCollection"]/CopyToArrayIndex1/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlErrorCollection.xml' path='docs/members[@name="SqlErrorCollection"]/CopyToArrayIndex1/*'/>
         public void CopyTo(System.Array array, int index) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlErrorCollection.xml' path='docs/members[@name="SqlErrorCollection"]/CopyToArrayIndex2/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlErrorCollection.xml' path='docs/members[@name="SqlErrorCollection"]/CopyToArrayIndex2/*'/>
         public void CopyTo(Microsoft.Data.SqlClient.SqlError[] array, int index) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlErrorCollection.xml' path='docs/members[@name="SqlErrorCollection"]/GetEnumerator/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlErrorCollection.xml' path='docs/members[@name="SqlErrorCollection"]/GetEnumerator/*'/>
         public System.Collections.IEnumerator GetEnumerator() { throw null; }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/SqlException/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/SqlException/*'/>
     [System.Serializable]
     public sealed partial class SqlException : System.Data.Common.DbException
     {
@@ -1611,508 +1611,508 @@ namespace Microsoft.Data.SqlClient
 #if NETFRAMEWORK
         private SqlException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
 #endif // NETFRAMEWORK
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Class/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Class/*'/>
         public byte Class { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/ClientConnectionId/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/ClientConnectionId/*'/>
         public System.Guid ClientConnectionId { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Errors/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Errors/*'/>
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(System.ComponentModel.DesignerSerializationVisibility.Content)]
         public Microsoft.Data.SqlClient.SqlErrorCollection Errors { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/LineNumber/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/LineNumber/*'/>
         public int LineNumber { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Number/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Number/*'/>
         public int Number { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Procedure/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Procedure/*'/>
         public string Procedure { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Server/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Server/*'/>
         public string Server { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Source/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/Source/*'/>
         public override string Source { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/State/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/State/*'/>
         public byte State { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/GetObjectData/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/GetObjectData/*'/>
         [System.Security.Permissions.SecurityPermissionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, Flags = System.Security.Permissions.SecurityPermissionFlag.SerializationFormatter)]
         public override void GetObjectData(System.Runtime.Serialization.SerializationInfo si, System.Runtime.Serialization.StreamingContext context) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/ToString/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlException.xml' path='docs/members[@name="SqlException"]/ToString/*'/>
         public override string ToString() { throw null; }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlInfoMessageEventArgs.xml' path='docs/members[@name="SqlInfoMessageEventArgs"]/SqlInfoMessageEventArgs/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlInfoMessageEventArgs.xml' path='docs/members[@name="SqlInfoMessageEventArgs"]/SqlInfoMessageEventArgs/*'/>
     public sealed partial class SqlInfoMessageEventArgs : System.EventArgs
     {
         internal SqlInfoMessageEventArgs() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlInfoMessageEventArgs.xml' path='docs/members[@name="SqlInfoMessageEventArgs"]/Errors/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlInfoMessageEventArgs.xml' path='docs/members[@name="SqlInfoMessageEventArgs"]/Errors/*'/>
         public Microsoft.Data.SqlClient.SqlErrorCollection Errors { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlInfoMessageEventArgs.xml' path='docs/members[@name="SqlInfoMessageEventArgs"]/Message/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlInfoMessageEventArgs.xml' path='docs/members[@name="SqlInfoMessageEventArgs"]/Message/*'/>
         public string Message { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlInfoMessageEventArgs.xml' path='docs/members[@name="SqlInfoMessageEventArgs"]/Source/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlInfoMessageEventArgs.xml' path='docs/members[@name="SqlInfoMessageEventArgs"]/Source/*'/>
         public string Source { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlInfoMessageEventArgs.xml' path='docs/members[@name="SqlInfoMessageEventArgs"]/ToString/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlInfoMessageEventArgs.xml' path='docs/members[@name="SqlInfoMessageEventArgs"]/ToString/*'/>
         public override string ToString() { throw null; }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlInfoMessageEventHandler.xml' path='docs/members[@name="SqlInfoMessageEventHandler"]/SqlInfoMessageEventHandler/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlInfoMessageEventHandler.xml' path='docs/members[@name="SqlInfoMessageEventHandler"]/SqlInfoMessageEventHandler/*'/>
     public delegate void SqlInfoMessageEventHandler(object sender, Microsoft.Data.SqlClient.SqlInfoMessageEventArgs e);
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationEventArgs.xml' path='docs/members[@name="SqlNotificationEventArgs"]/SqlNotificationEventArgs/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationEventArgs.xml' path='docs/members[@name="SqlNotificationEventArgs"]/SqlNotificationEventArgs/*'/>
     public partial class SqlNotificationEventArgs : System.EventArgs
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationEventArgs.xml' path='docs/members[@name="SqlNotificationEventArgs"]/ctor/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationEventArgs.xml' path='docs/members[@name="SqlNotificationEventArgs"]/ctor/*'/>
         public SqlNotificationEventArgs(Microsoft.Data.SqlClient.SqlNotificationType type, Microsoft.Data.SqlClient.SqlNotificationInfo info, Microsoft.Data.SqlClient.SqlNotificationSource source) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationEventArgs.xml' path='docs/members[@name="SqlNotificationEventArgs"]/Info/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationEventArgs.xml' path='docs/members[@name="SqlNotificationEventArgs"]/Info/*'/>
         public Microsoft.Data.SqlClient.SqlNotificationInfo Info { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationEventArgs.xml' path='docs/members[@name="SqlNotificationEventArgs"]/Source/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationEventArgs.xml' path='docs/members[@name="SqlNotificationEventArgs"]/Source/*'/>
         public Microsoft.Data.SqlClient.SqlNotificationSource Source { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationEventArgs.xml' path='docs/members[@name="SqlNotificationEventArgs"]/Type/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationEventArgs.xml' path='docs/members[@name="SqlNotificationEventArgs"]/Type/*'/>
         public Microsoft.Data.SqlClient.SqlNotificationType Type { get { throw null; } }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/SqlNotificationInfo/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/SqlNotificationInfo/*'/>
     public enum SqlNotificationInfo
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/AlreadyChanged/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/AlreadyChanged/*'/>
         AlreadyChanged = -2,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/Alter/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/Alter/*'/>
         Alter = 5,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/Delete/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/Delete/*'/>
         Delete = 3,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/Drop/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/Drop/*'/>
         Drop = 4,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/Error/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/Error/*'/>
         Error = 7,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/Expired/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/Expired/*'/>
         Expired = 12,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/Insert/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/Insert/*'/>
         Insert = 1,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/Invalid/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/Invalid/*'/>
         Invalid = 9,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/Isolation/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/Isolation/*'/>
         Isolation = 11,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/Merge/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/Merge/*'/>
         Merge = 16,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/Options/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/Options/*'/>
         Options = 10,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/PreviousFire/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/PreviousFire/*'/>
         PreviousFire = 14,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/Query/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/Query/*'/>
         Query = 8,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/Resource/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/Resource/*'/>
         Resource = 13,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/Restart/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/Restart/*'/>
         Restart = 6,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/TemplateLimit/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/TemplateLimit/*'/>
         TemplateLimit = 15,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/Truncate/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/Truncate/*'/>
         Truncate = 0,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/Unknown/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/Unknown/*'/>
         Unknown = -1,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/Update/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationInfo.xml' path='docs/members[@name="SqlNotificationInfo"]/Update/*'/>
         Update = 2
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationSource.xml' path='docs/members[@name="SqlNotificationSource"]/SqlNotificationSource/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationSource.xml' path='docs/members[@name="SqlNotificationSource"]/SqlNotificationSource/*'/>
     public enum SqlNotificationSource
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationSource.xml' path='docs/members[@name="SqlNotificationSource"]/Client/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationSource.xml' path='docs/members[@name="SqlNotificationSource"]/Client/*'/>
         Client = -2,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationSource.xml' path='docs/members[@name="SqlNotificationSource"]/Data/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationSource.xml' path='docs/members[@name="SqlNotificationSource"]/Data/*'/>
         Data = 0,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationSource.xml' path='docs/members[@name="SqlNotificationSource"]/Database/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationSource.xml' path='docs/members[@name="SqlNotificationSource"]/Database/*'/>
         Database = 3,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationSource.xml' path='docs/members[@name="SqlNotificationSource"]/Environment/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationSource.xml' path='docs/members[@name="SqlNotificationSource"]/Environment/*'/>
         Environment = 6,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationSource.xml' path='docs/members[@name="SqlNotificationSource"]/Execution/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationSource.xml' path='docs/members[@name="SqlNotificationSource"]/Execution/*'/>
         Execution = 7,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationSource.xml' path='docs/members[@name="SqlNotificationSource"]/Object/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationSource.xml' path='docs/members[@name="SqlNotificationSource"]/Object/*'/>
         Object = 2,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationSource.xml' path='docs/members[@name="SqlNotificationSource"]/Owner/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationSource.xml' path='docs/members[@name="SqlNotificationSource"]/Owner/*'/>
         Owner = 8,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationSource.xml' path='docs/members[@name="SqlNotificationSource"]/Statement/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationSource.xml' path='docs/members[@name="SqlNotificationSource"]/Statement/*'/>
         Statement = 5,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationSource.xml' path='docs/members[@name="SqlNotificationSource"]/System/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationSource.xml' path='docs/members[@name="SqlNotificationSource"]/System/*'/>
         System = 4,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationSource.xml' path='docs/members[@name="SqlNotificationSource"]/Timeout/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationSource.xml' path='docs/members[@name="SqlNotificationSource"]/Timeout/*'/>
         Timeout = 1,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationSource.xml' path='docs/members[@name="SqlNotificationSource"]/Unknown/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationSource.xml' path='docs/members[@name="SqlNotificationSource"]/Unknown/*'/>
         Unknown = -1
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationType.xml' path='docs/members[@name="SqlNotificationType"]/SqlNotificationType/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationType.xml' path='docs/members[@name="SqlNotificationType"]/SqlNotificationType/*'/>
     public enum SqlNotificationType
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationType.xml' path='docs/members[@name="SqlNotificationType"]/Change/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationType.xml' path='docs/members[@name="SqlNotificationType"]/Change/*'/>
         Change = 0,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationType.xml' path='docs/members[@name="SqlNotificationType"]/Subscribe/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationType.xml' path='docs/members[@name="SqlNotificationType"]/Subscribe/*'/>
         Subscribe = 1,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationType.xml' path='docs/members[@name="SqlNotificationType"]/Unknown/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationType.xml' path='docs/members[@name="SqlNotificationType"]/Unknown/*'/>
         Unknown = -1
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SqlParameter/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SqlParameter/*'/>
     public sealed partial class SqlParameter : System.Data.Common.DbParameter, System.Data.IDataParameter, System.Data.IDbDataParameter, System.ICloneable
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctor2/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctor2/*'/>
         public SqlParameter() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbType/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbType/*'/>
         public SqlParameter(string parameterName, System.Data.SqlDbType dbType) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbTypeSize/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbTypeSize/*'/>
         public SqlParameter(string parameterName, System.Data.SqlDbType dbType, int size) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbTypeSizeDirectionIsNullablePrecisionScaleSourceColumnSourceVersionValue/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbTypeSizeDirectionIsNullablePrecisionScaleSourceColumnSourceVersionValue/*'/>
         [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
         public SqlParameter(string parameterName, System.Data.SqlDbType dbType, int size, System.Data.ParameterDirection direction, bool isNullable, byte precision, byte scale, string sourceColumn, System.Data.DataRowVersion sourceVersion, object value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbTypeSizeDirectionPrecisionScaleSourceColumnSourceVersionSourceColumnNullMappingValue/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbTypeSizeDirectionPrecisionScaleSourceColumnSourceVersionSourceColumnNullMappingValue/*'/>
         public SqlParameter(string parameterName, System.Data.SqlDbType dbType, int size, System.Data.ParameterDirection direction, byte precision, byte scale, string sourceColumn, System.Data.DataRowVersion sourceVersion, bool sourceColumnNullMapping, object value, string xmlSchemaCollectionDatabase, string xmlSchemaCollectionOwningSchema, string xmlSchemaCollectionName) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbTypeSizeSourceColumn/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbTypeSizeSourceColumn/*'/>
         public SqlParameter(string parameterName, System.Data.SqlDbType dbType, int size, string sourceColumn) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameValue/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameValue/*'/>
         public SqlParameter(string parameterName, object value) { }
         object System.ICloneable.Clone() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/CompareInfo/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/CompareInfo/*'/>
         [System.ComponentModel.BrowsableAttribute(false)]
         public System.Data.SqlTypes.SqlCompareOptions CompareInfo { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/DbType/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/DbType/*'/>
         public override System.Data.DbType DbType { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Direction/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Direction/*'/>
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public override System.Data.ParameterDirection Direction { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ForceColumnEncryption/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ForceColumnEncryption/*'/>
         [System.ComponentModel.DefaultValueAttribute(false)]
         public bool ForceColumnEncryption { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } [System.Runtime.CompilerServices.CompilerGeneratedAttribute]set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/IsNullable/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/IsNullable/*'/>
         [System.ComponentModel.DefaultValueAttribute(false)]
         public override bool IsNullable { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/LocaleId/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/LocaleId/*'/>
         [System.ComponentModel.BrowsableAttribute(false)]
         public int LocaleId { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Offset/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Offset/*'/>
         [System.ComponentModel.BrowsableAttribute(false)]
         [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
         public int Offset { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ParameterName/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ParameterName/*'/>
         public override string ParameterName { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Precision/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Precision/*'/>
         [System.ComponentModel.DefaultValueAttribute((byte)0)]
         public new byte Precision { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Scale/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Scale/*'/>
         [System.ComponentModel.DefaultValueAttribute((byte)0)]
         public new byte Scale { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Size/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Size/*'/>
         public override int Size { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceColumn/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceColumn/*'/>
         public override string SourceColumn { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceColumnNullMapping/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceColumnNullMapping/*'/>
         public override bool SourceColumnNullMapping { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceVersion/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceVersion/*'/>
         public override System.Data.DataRowVersion SourceVersion { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SqlDbType/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SqlDbType/*'/>
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         [System.Data.Common.DbProviderSpecificTypePropertyAttribute(true)]
         public System.Data.SqlDbType SqlDbType { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SqlValue/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SqlValue/*'/>
         [System.ComponentModel.BrowsableAttribute(false)]
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
         public object SqlValue { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/TypeName/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/TypeName/*'/>
         [System.ComponentModel.BrowsableAttribute(false)]
         [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
         public string TypeName { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/UdtTypeName/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/UdtTypeName/*'/>
         [System.ComponentModel.BrowsableAttribute(false)]
         [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
         public string UdtTypeName { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Value/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Value/*'/>
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         [System.ComponentModel.TypeConverterAttribute(typeof(System.ComponentModel.StringConverter))]
         public override object Value { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/XmlSchemaCollectionDatabase/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/XmlSchemaCollectionDatabase/*'/>
         public string XmlSchemaCollectionDatabase { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/XmlSchemaCollectionName/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/XmlSchemaCollectionName/*'/>
         public string XmlSchemaCollectionName { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/XmlSchemaCollectionOwningSchema/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/XmlSchemaCollectionOwningSchema/*'/>
         public string XmlSchemaCollectionOwningSchema { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ResetDbType/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ResetDbType/*'/>
         public override void ResetDbType() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ResetSqlDbType/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ResetSqlDbType/*'/>
         public void ResetSqlDbType() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ToString/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ToString/*'/>
         public override string ToString() { throw null; }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/SqlParameterCollection/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/SqlParameterCollection/*'/>
     [System.ComponentModel.ListBindableAttribute(false)]
     public sealed partial class SqlParameterCollection : System.Data.Common.DbParameterCollection
     {
         internal SqlParameterCollection() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/Count/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/Count/*'/>
         public override int Count { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/IsFixedSize/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/IsFixedSize/*'/>
         public override bool IsFixedSize { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/IsReadOnly/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/IsReadOnly/*'/>
         public override bool IsReadOnly { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/ItemIndex/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/ItemIndex/*'/>
         [System.ComponentModel.BrowsableAttribute(false)]
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
         public new Microsoft.Data.SqlClient.SqlParameter this[int index] { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/ItemParameterName/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/ItemParameterName/*'/>
         [System.ComponentModel.BrowsableAttribute(false)]
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
         public new Microsoft.Data.SqlClient.SqlParameter this[string parameterName] { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/SyncRoot/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/SyncRoot/*'/>
         public override object SyncRoot { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/AddValue1/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/AddValue1/*'/>
         public Microsoft.Data.SqlClient.SqlParameter Add(Microsoft.Data.SqlClient.SqlParameter value) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/AddValue2/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/AddValue2/*'/>
         [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Never)]
         public override int Add(object value) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/AddParameterNameSqlDbType/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/AddParameterNameSqlDbType/*'/>
         public Microsoft.Data.SqlClient.SqlParameter Add(string parameterName, System.Data.SqlDbType sqlDbType) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/AddParameterNameSqlDbTypeSize/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/AddParameterNameSqlDbTypeSize/*'/>
         public Microsoft.Data.SqlClient.SqlParameter Add(string parameterName, System.Data.SqlDbType sqlDbType, int size) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/AddParameterNameSqlDbTypeSizeSourceColumn/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/AddParameterNameSqlDbTypeSizeSourceColumn/*'/>
         public Microsoft.Data.SqlClient.SqlParameter Add(string parameterName, System.Data.SqlDbType sqlDbType, int size, string sourceColumn) { throw null; }
 #if NETFRAMEWORK
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/AddParameterNameValue/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/AddParameterNameValue/*'/>
         [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Never)]
         [System.ObsoleteAttribute("Add(String parameterName, Object value) has been deprecated.  Use AddWithValue(String parameterName, Object value).  http://go.microsoft.com/fwlink/?linkid=14202", false)]
         public Microsoft.Data.SqlClient.SqlParameter Add(string parameterName, object value) { throw null; }
 #endif // NETFRAMEWORK
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/AddRangeValues1/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/AddRangeValues1/*'/>
         public void AddRange(Microsoft.Data.SqlClient.SqlParameter[] values) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/AddRangeValues2/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/AddRangeValues2/*'/>
         public override void AddRange(System.Array values) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/AddWithValue/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/AddWithValue/*'/>
         public Microsoft.Data.SqlClient.SqlParameter AddWithValue(string parameterName, object value) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/Clear/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/Clear/*'/>
         public override void Clear() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/ContainsValue1/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/ContainsValue1/*'/>
         public bool Contains(Microsoft.Data.SqlClient.SqlParameter value) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/ContainsValue2/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/ContainsValue2/*'/>
         public override bool Contains(object value) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/ContainsValue3/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/ContainsValue3/*'/>
         public override bool Contains(string value) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/CopyToArrayIndex1/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/CopyToArrayIndex1/*'/>
         public override void CopyTo(System.Array array, int index) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/CopyToArrayIndex2/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/CopyToArrayIndex2/*'/>
         public void CopyTo(Microsoft.Data.SqlClient.SqlParameter[] array, int index) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/GetEnumerator/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/GetEnumerator/*'/>
         public override System.Collections.IEnumerator GetEnumerator() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/GetParameterIndex/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/GetParameterIndex/*'/>
         protected override System.Data.Common.DbParameter GetParameter(int index) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/GetParameterParameterName/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/GetParameterParameterName/*'/>
         protected override System.Data.Common.DbParameter GetParameter(string parameterName) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/IndexOfValue1/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/IndexOfValue1/*'/>
         public int IndexOf(Microsoft.Data.SqlClient.SqlParameter value) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/IndexOfValue2/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/IndexOfValue2/*'/>
         public override int IndexOf(object value) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/IndexOfParameterName/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/IndexOfParameterName/*'/>
         public override int IndexOf(string parameterName) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/InsertIndexValue1/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/InsertIndexValue1/*'/>
         public void Insert(int index, Microsoft.Data.SqlClient.SqlParameter value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/InsertIndexValue2/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/InsertIndexValue2/*'/>
         public override void Insert(int index, object value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/RemoveValue1/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/RemoveValue1/*'/>
         public void Remove(Microsoft.Data.SqlClient.SqlParameter value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/RemoveValue2/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/RemoveValue2/*'/>
         public override void Remove(object value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/RemoveAtIndex/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/RemoveAtIndex/*'/>
         public override void RemoveAt(int index) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/RemoveAtParameterName/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/RemoveAtParameterName/*'/>
         public override void RemoveAt(string parameterName) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/SetParameterIndexValue/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/SetParameterIndexValue/*'/>
         protected override void SetParameter(int index, System.Data.Common.DbParameter value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/SetParameterParameterNameValue/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameterCollection.xml' path='docs/members[@name="SqlParameterCollection"]/SetParameterParameterNameValue/*'/>
         protected override void SetParameter(string parameterName, System.Data.Common.DbParameter value) { }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRowsCopiedEventArgs.xml' path='docs/members[@name="SqlRowsCopiedEventArgs"]/SqlRowsCopiedEventArgs/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRowsCopiedEventArgs.xml' path='docs/members[@name="SqlRowsCopiedEventArgs"]/SqlRowsCopiedEventArgs/*'/>
     public partial class SqlRowsCopiedEventArgs : System.EventArgs
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRowsCopiedEventArgs.xml' path='docs/members[@name="SqlRowsCopiedEventArgs"]/ctor/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRowsCopiedEventArgs.xml' path='docs/members[@name="SqlRowsCopiedEventArgs"]/ctor/*'/>
         public SqlRowsCopiedEventArgs(long rowsCopied) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRowsCopiedEventArgs.xml' path='docs/members[@name="SqlRowsCopiedEventArgs"]/Abort/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRowsCopiedEventArgs.xml' path='docs/members[@name="SqlRowsCopiedEventArgs"]/Abort/*'/>
         public bool Abort { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRowsCopiedEventArgs.xml' path='docs/members[@name="SqlRowsCopiedEventArgs"]/RowsCopied/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRowsCopiedEventArgs.xml' path='docs/members[@name="SqlRowsCopiedEventArgs"]/RowsCopied/*'/>
         public long RowsCopied { get { throw null; } }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRowsCopiedEventHandler.xml' path='docs/members[@name="SqlRowsCopiedEventHandler"]/SqlRowsCopiedEventHandler/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRowsCopiedEventHandler.xml' path='docs/members[@name="SqlRowsCopiedEventHandler"]/SqlRowsCopiedEventHandler/*'/>
     public delegate void SqlRowsCopiedEventHandler(object sender, Microsoft.Data.SqlClient.SqlRowsCopiedEventArgs e);
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRowUpdatedEventArgs.xml' path='docs/members[@name="SqlRowUpdatedEventArgs"]/SqlRowUpdatedEventArgs/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRowUpdatedEventArgs.xml' path='docs/members[@name="SqlRowUpdatedEventArgs"]/SqlRowUpdatedEventArgs/*'/>
     public sealed partial class SqlRowUpdatedEventArgs : System.Data.Common.RowUpdatedEventArgs
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRowUpdatedEventArgs.xml' path='docs/members[@name="SqlRowUpdatedEventArgs"]/ctor/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRowUpdatedEventArgs.xml' path='docs/members[@name="SqlRowUpdatedEventArgs"]/ctor/*'/>
         public SqlRowUpdatedEventArgs(System.Data.DataRow row, System.Data.IDbCommand command, System.Data.StatementType statementType, System.Data.Common.DataTableMapping tableMapping)
             : base(row, command, statementType, tableMapping) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRowUpdatedEventArgs.xml' path='docs/members[@name="SqlRowUpdatedEventArgs"]/Command/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRowUpdatedEventArgs.xml' path='docs/members[@name="SqlRowUpdatedEventArgs"]/Command/*'/>
         public new Microsoft.Data.SqlClient.SqlCommand Command { get { throw null; } }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRowUpdatedEventHandler.xml' path='docs/members[@name="SqlRowUpdatedEventHandler"]/SqlRowUpdatedEventHandler/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRowUpdatedEventHandler.xml' path='docs/members[@name="SqlRowUpdatedEventHandler"]/SqlRowUpdatedEventHandler/*'/>
     public delegate void SqlRowUpdatedEventHandler(object sender, Microsoft.Data.SqlClient.SqlRowUpdatedEventArgs e);
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRowUpdatingEventArgs.xml' path='docs/members[@name="SqlRowUpdatingEventArgs"]/SqlRowUpdatingEventArgs/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRowUpdatingEventArgs.xml' path='docs/members[@name="SqlRowUpdatingEventArgs"]/SqlRowUpdatingEventArgs/*'/>
     public sealed partial class SqlRowUpdatingEventArgs : System.Data.Common.RowUpdatingEventArgs
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRowUpdatingEventArgs.xml' path='docs/members[@name="SqlRowUpdatingEventArgs"]/ctor/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRowUpdatingEventArgs.xml' path='docs/members[@name="SqlRowUpdatingEventArgs"]/ctor/*'/>
         public SqlRowUpdatingEventArgs(System.Data.DataRow row, System.Data.IDbCommand command, System.Data.StatementType statementType, System.Data.Common.DataTableMapping tableMapping)
             : base(row, command, statementType, tableMapping) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRowUpdatingEventArgs.xml' path='docs/members[@name="SqlRowUpdatingEventArgs"]/BaseCommand/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRowUpdatingEventArgs.xml' path='docs/members[@name="SqlRowUpdatingEventArgs"]/BaseCommand/*'/>
         protected override System.Data.IDbCommand BaseCommand { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRowUpdatingEventArgs.xml' path='docs/members[@name="SqlRowUpdatingEventArgs"]/Command/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRowUpdatingEventArgs.xml' path='docs/members[@name="SqlRowUpdatingEventArgs"]/Command/*'/>
         public new Microsoft.Data.SqlClient.SqlCommand Command { get { throw null; } set { } }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRowUpdatingEventHandler.xml' path='docs/members[@name="SqlRowUpdatingEventHandler"]/SqlRowUpdatingEventHandler/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRowUpdatingEventHandler.xml' path='docs/members[@name="SqlRowUpdatingEventHandler"]/SqlRowUpdatingEventHandler/*'/>
     public delegate void SqlRowUpdatingEventHandler(object sender, Microsoft.Data.SqlClient.SqlRowUpdatingEventArgs e);
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/SqlTransaction/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/SqlTransaction/*'/>
     public sealed partial class SqlTransaction : System.Data.Common.DbTransaction
     {
         internal SqlTransaction() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Connection/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Connection/*'/>
         public new Microsoft.Data.SqlClient.SqlConnection Connection { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/DbConnection/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/DbConnection/*'/>
         protected override System.Data.Common.DbConnection DbConnection { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/IsolationLevel/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/IsolationLevel/*'/>
         public override System.Data.IsolationLevel IsolationLevel { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Commit/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Commit/*'/>
         public override void Commit() { }
 #if NETFRAMEWORK
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Dispose/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Dispose/*'/>
 #else
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/DisposeDisposing/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/DisposeDisposing/*'/>
 #endif // NETFRAMEWORK
         protected override void Dispose(bool disposing) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Rollback1/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Rollback1/*'/>
         public override void Rollback() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Rollback2/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Rollback2/*'/>
         public void Rollback(string transactionName) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Save/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Save/*'/>
         public void Save(string savePointName) { }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryingEventArgs.xml' path='docs/members[@name="SqlRetryingEventArgs"]/SqlRetryingEventArgs/*' />
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryingEventArgs.xml' path='docs/members[@name="SqlRetryingEventArgs"]/SqlRetryingEventArgs/*' />
     public sealed class SqlRetryingEventArgs : System.EventArgs
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryingEventArgs.xml' path='docs/members[@name="SqlRetryingEventArgs"]/ctor/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryingEventArgs.xml' path='docs/members[@name="SqlRetryingEventArgs"]/ctor/*' />
         public SqlRetryingEventArgs(int retryCount, System.TimeSpan delay, System.Collections.Generic.IList<System.Exception> exceptions) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryingEventArgs.xml' path='docs/members[@name="SqlRetryingEventArgs"]/RetryCount/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryingEventArgs.xml' path='docs/members[@name="SqlRetryingEventArgs"]/RetryCount/*' />
         public int RetryCount { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryingEventArgs.xml' path='docs/members[@name="SqlRetryingEventArgs"]/Delay/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryingEventArgs.xml' path='docs/members[@name="SqlRetryingEventArgs"]/Delay/*' />
         public System.TimeSpan Delay { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryingEventArgs.xml' path='docs/members[@name="SqlRetryingEventArgs"]/Cancel/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryingEventArgs.xml' path='docs/members[@name="SqlRetryingEventArgs"]/Cancel/*' />
         public bool Cancel { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryingEventArgs.xml' path='docs/members[@name="SqlRetryingEventArgs"]/Exceptions/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryingEventArgs.xml' path='docs/members[@name="SqlRetryingEventArgs"]/Exceptions/*' />
         public System.Collections.Generic.IList<System.Exception> Exceptions { get { throw null; } }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/SqlRetryIntervalBaseEnumerator/*' />
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/SqlRetryIntervalBaseEnumerator/*' />
     public abstract class SqlRetryIntervalBaseEnumerator : System.Collections.Generic.IEnumerator<System.TimeSpan>, System.ICloneable
     {
         private readonly System.TimeSpan _minValue = System.TimeSpan.Zero;
         private readonly System.TimeSpan _maxValue = System.TimeSpan.FromSeconds(120);
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/GapTimeInterval/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/GapTimeInterval/*' />
         public System.TimeSpan GapTimeInterval { get { throw null; } protected set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/MaxTimeInterval/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/MaxTimeInterval/*' />
         public System.TimeSpan MaxTimeInterval { get { throw null; } protected set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/MinTimeInterval/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/MinTimeInterval/*' />
         public System.TimeSpan MinTimeInterval { get { throw null; } protected set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/Current/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/Current/*' />
         public System.TimeSpan Current { get { throw null; } protected set { } }
         object System.Collections.IEnumerator.Current { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/ctor1/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/ctor1/*' />
         public SqlRetryIntervalBaseEnumerator() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/ctor2/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/ctor2/*' />
         public SqlRetryIntervalBaseEnumerator(System.TimeSpan timeInterval, System.TimeSpan maxTime, System.TimeSpan minTime) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/Reset/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/Reset/*' />
         public virtual void Reset() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/Validate/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/Validate/*' />
         protected virtual void Validate(System.TimeSpan timeInterval, System.TimeSpan maxTimeInterval, System.TimeSpan minTimeInterval) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/GetNextInterval/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/GetNextInterval/*' />
         protected abstract System.TimeSpan GetNextInterval();
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/MoveNext/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/MoveNext/*' />
         public virtual bool MoveNext() { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/Dispose/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/Dispose/*' />
         public virtual void Dispose() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/Clone/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryIntervalBaseEnumerator.xml' path='docs/members[@name="SqlRetryIntervalBaseEnumerator"]/Clone/*' />
         public virtual object Clone() { throw null; }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBase.xml' path='docs/members[@name="SqlRetryLogicBase"]/SqlRetryLogicBase/*' />
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBase.xml' path='docs/members[@name="SqlRetryLogicBase"]/SqlRetryLogicBase/*' />
     public abstract class SqlRetryLogicBase : System.ICloneable
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBase.xml' path='docs/members[@name="SqlRetryLogicBase"]/NumberOfTries/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBase.xml' path='docs/members[@name="SqlRetryLogicBase"]/NumberOfTries/*' />
         public int NumberOfTries { get { throw null; } protected set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBase.xml' path='docs/members[@name="SqlRetryLogicBase"]/Current/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBase.xml' path='docs/members[@name="SqlRetryLogicBase"]/Current/*' />
         public int Current { get { throw null; } protected set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBase.xml' path='docs/members[@name="SqlRetryLogicBase"]/RetryIntervalEnumerator/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBase.xml' path='docs/members[@name="SqlRetryLogicBase"]/RetryIntervalEnumerator/*' />
         public SqlRetryIntervalBaseEnumerator RetryIntervalEnumerator { get { throw null; } protected set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBase.xml' path='docs/members[@name="SqlRetryLogicBase"]/TransientPredicate/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBase.xml' path='docs/members[@name="SqlRetryLogicBase"]/TransientPredicate/*' />
         public System.Predicate<System.Exception> TransientPredicate { get { throw null; } protected set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBase.xml' path='docs/members[@name="SqlRetryLogicBase"]/RetryCondition/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBase.xml' path='docs/members[@name="SqlRetryLogicBase"]/RetryCondition/*' />
         public virtual bool RetryCondition(object sender) { throw null; }
-        ///<include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBase.xml' path='docs/members[@name="SqlRetryLogicBase"]/TryNextInterval/*' />
+        ///<include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBase.xml' path='docs/members[@name="SqlRetryLogicBase"]/TryNextInterval/*' />
         public abstract bool TryNextInterval(out System.TimeSpan intervalTime);
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBase.xml' path='docs/members[@name="SqlRetryLogicBase"]/Reset/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBase.xml' path='docs/members[@name="SqlRetryLogicBase"]/Reset/*' />
         public abstract void Reset();
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBase.xml' path='docs/members[@name="SqlRetryLogicBase"]/Clone/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBase.xml' path='docs/members[@name="SqlRetryLogicBase"]/Clone/*' />
         public virtual object Clone() { throw null; }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBaseProvider.xml' path='docs/members[@name="SqlRetryLogicBaseProvider"]/SqlRetryLogicBaseProvider/*' />
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBaseProvider.xml' path='docs/members[@name="SqlRetryLogicBaseProvider"]/SqlRetryLogicBaseProvider/*' />
     public abstract class SqlRetryLogicBaseProvider
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBaseProvider.xml' path='docs/members[@name="SqlRetryLogicBaseProvider"]/Retrying/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBaseProvider.xml' path='docs/members[@name="SqlRetryLogicBaseProvider"]/Retrying/*' />
         public System.EventHandler<SqlRetryingEventArgs> Retrying { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBaseProvider.xml' path='docs/members[@name="SqlRetryLogicBaseProvider"]/RetryLogic/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBaseProvider.xml' path='docs/members[@name="SqlRetryLogicBaseProvider"]/RetryLogic/*' />
         public SqlRetryLogicBase RetryLogic { get { throw null; } protected set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBaseProvider.xml' path='docs/members[@name="SqlRetryLogicBaseProvider"]/Execute/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBaseProvider.xml' path='docs/members[@name="SqlRetryLogicBaseProvider"]/Execute/*' />
         public abstract TResult Execute<TResult>(object sender, System.Func<TResult> function);
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBaseProvider.xml' path='docs/members[@name="SqlRetryLogicBaseProvider"]/ExecuteAsync1/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBaseProvider.xml' path='docs/members[@name="SqlRetryLogicBaseProvider"]/ExecuteAsync1/*' />
         public abstract System.Threading.Tasks.Task<TResult> ExecuteAsync<TResult>(object sender, System.Func<System.Threading.Tasks.Task<TResult>> function, System.Threading.CancellationToken cancellationToken = default);
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBaseProvider.xml' path='docs/members[@name="SqlRetryLogicBaseProvider"]/ExecuteAsync2/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicBaseProvider.xml' path='docs/members[@name="SqlRetryLogicBaseProvider"]/ExecuteAsync2/*' />
         public abstract System.Threading.Tasks.Task ExecuteAsync(object sender, System.Func<System.Threading.Tasks.Task> function, System.Threading.CancellationToken cancellationToken = default);
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicOption.xml' path='docs/members[@name="SqlRetryLogicOption"]/SqlRetryLogicOption/*' />
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicOption.xml' path='docs/members[@name="SqlRetryLogicOption"]/SqlRetryLogicOption/*' />
     public sealed class SqlRetryLogicOption
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicOption.xml' path='docs/members[@name="SqlRetryLogicOption"]/NumberOfTries/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicOption.xml' path='docs/members[@name="SqlRetryLogicOption"]/NumberOfTries/*' />
         public int NumberOfTries { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicOption.xml' path='docs/members[@name="SqlRetryLogicOption"]/DeltaTime/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicOption.xml' path='docs/members[@name="SqlRetryLogicOption"]/DeltaTime/*' />
         public System.TimeSpan DeltaTime { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicOption.xml' path='docs/members[@name="SqlRetryLogicOption"]/MinTimeInterval/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicOption.xml' path='docs/members[@name="SqlRetryLogicOption"]/MinTimeInterval/*' />
         public System.TimeSpan MinTimeInterval { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicOption.xml' path='docs/members[@name="SqlRetryLogicOption"]/MaxTimeInterval/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicOption.xml' path='docs/members[@name="SqlRetryLogicOption"]/MaxTimeInterval/*' />
         public System.TimeSpan MaxTimeInterval { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicOption.xml' path='docs/members[@name="SqlRetryLogicOption"]/TransientErrors/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicOption.xml' path='docs/members[@name="SqlRetryLogicOption"]/TransientErrors/*' />
         public System.Collections.Generic.IEnumerable<int> TransientErrors { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicOption.xml' path='docs/members[@name="SqlRetryLogicOption"]/AuthorizedSqlCondition/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlRetryLogicOption.xml' path='docs/members[@name="SqlRetryLogicOption"]/AuthorizedSqlCondition/*' />
         public System.Predicate<string> AuthorizedSqlCondition { get { throw null; } set { } }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/SqlConfigurableRetryFactory/*' />
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/SqlConfigurableRetryFactory/*' />
     public sealed class SqlConfigurableRetryFactory
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/CreateExponentialRetryProvider/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/CreateExponentialRetryProvider/*' />
         public static SqlRetryLogicBaseProvider CreateExponentialRetryProvider(SqlRetryLogicOption retryLogicOption) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/CreateIncrementalRetryProvider/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/CreateIncrementalRetryProvider/*' />
         public static SqlRetryLogicBaseProvider CreateIncrementalRetryProvider(SqlRetryLogicOption retryLogicOption) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/CreateFixedRetryProvider/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/CreateFixedRetryProvider/*' />
         public static SqlRetryLogicBaseProvider CreateFixedRetryProvider(SqlRetryLogicOption retryLogicOption) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/CreateNoneRetryProvider/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConfigurableRetryFactory.xml' path='docs/members[@name="SqlConfigurableRetryFactory"]/CreateNoneRetryProvider/*' />
         public static SqlRetryLogicBaseProvider CreateNoneRetryProvider() { throw null; }
     }
 }
 namespace Microsoft.Data.SqlClient.Server
 {
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/DataAccessKind.xml' path='docs/members[@name="DataAccessKind"]/DataAccessKind/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/DataAccessKind.xml' path='docs/members[@name="DataAccessKind"]/DataAccessKind/*'/>
     public enum DataAccessKind
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/DataAccessKind.xml' path='docs/members[@name="DataAccessKind"]/None/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/DataAccessKind.xml' path='docs/members[@name="DataAccessKind"]/None/*'/>
         None = 0,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/DataAccessKind.xml' path='docs/members[@name="DataAccessKind"]/Read/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/DataAccessKind.xml' path='docs/members[@name="DataAccessKind"]/Read/*'/>
         Read = 1
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/Format.xml' path='docs/members[@name="Format"]/Format/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/Format.xml' path='docs/members[@name="Format"]/Format/*'/>
     public enum Format
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/Format.xml' path='docs/members[@name="Format"]/Unknown/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/Format.xml' path='docs/members[@name="Format"]/Unknown/*'/>
         Unknown = 0,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/Format.xml' path='docs/members[@name="Format"]/Native/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/Format.xml' path='docs/members[@name="Format"]/Native/*'/>
         Native = 1,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/Format.xml' path='docs/members[@name="Format"]/UserDefined/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/Format.xml' path='docs/members[@name="Format"]/UserDefined/*'/>
         UserDefined = 2
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/IBinarySerialize.xml' path='docs/members[@name="IBinarySerialize"]/IBinarySerialize/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/IBinarySerialize.xml' path='docs/members[@name="IBinarySerialize"]/IBinarySerialize/*'/>
     public interface IBinarySerialize
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/IBinarySerialize.xml' path='docs/members[@name="IBinarySerialize"]/Read/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/IBinarySerialize.xml' path='docs/members[@name="IBinarySerialize"]/Read/*'/>
         void Read(System.IO.BinaryReader r);
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/IBinarySerialize.xml' path='docs/members[@name="IBinarySerialize"]/Write/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/IBinarySerialize.xml' path='docs/members[@name="IBinarySerialize"]/Write/*'/>
         void Write(System.IO.BinaryWriter w);
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/InvalidUdtException.xml' path='docs/members[@name="InvalidUdtException"]/InvalidUdtException/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/InvalidUdtException.xml' path='docs/members[@name="InvalidUdtException"]/InvalidUdtException/*'/>
     [System.Serializable]
     public sealed partial class InvalidUdtException : System.SystemException
     {
@@ -2121,486 +2121,486 @@ namespace Microsoft.Data.SqlClient.Server
         private InvalidUdtException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
 #endif // NETFRAMEWORK
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SqlDataRecord/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SqlDataRecord/*'/>
     public partial class SqlDataRecord : System.Data.IDataRecord
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/ctor/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/ctor/*'/>
         public SqlDataRecord(params Microsoft.Data.SqlClient.Server.SqlMetaData[] metaData) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/FieldCount/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/FieldCount/*'/>
         public virtual int FieldCount { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/ItemOrdinal/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/ItemOrdinal/*'/>
         public virtual object this[int ordinal] { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/ItemName/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/ItemName/*'/>
         public virtual object this[string name] { get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetBoolean/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetBoolean/*'/>
         public virtual bool GetBoolean(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetByte/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetByte/*'/>
         public virtual byte GetByte(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetBytes/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetBytes/*'/>
         public virtual long GetBytes(int ordinal, long fieldOffset, byte[] buffer, int bufferOffset, int length) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetChar/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetChar/*'/>
         public virtual char GetChar(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetChars/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetChars/*'/>
         public virtual long GetChars(int ordinal, long fieldOffset, char[] buffer, int bufferOffset, int length) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetData/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetData/*'/>
         System.Data.IDataReader System.Data.IDataRecord.GetData(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetDataTypeName/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetDataTypeName/*'/>
         public virtual string GetDataTypeName(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetDateTime/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetDateTime/*'/>
         public virtual System.DateTime GetDateTime(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetDateTimeOffset/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetDateTimeOffset/*'/>
         public virtual System.DateTimeOffset GetDateTimeOffset(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetDecimal/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetDecimal/*'/>
         public virtual decimal GetDecimal(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetDouble/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetDouble/*'/>
         public virtual double GetDouble(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetFieldType/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetFieldType/*'/>
         public virtual System.Type GetFieldType(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetFloat/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetFloat/*'/>
         public virtual float GetFloat(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetGuid/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetGuid/*'/>
         public virtual System.Guid GetGuid(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetInt16/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetInt16/*'/>
         public virtual short GetInt16(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetInt32/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetInt32/*'/>
         public virtual int GetInt32(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetInt64/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetInt64/*'/>
         public virtual long GetInt64(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetName/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetName/*'/>
         public virtual string GetName(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetOrdinal/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetOrdinal/*'/>
         public virtual int GetOrdinal(string name) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlBinary/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlBinary/*'/>
         public virtual System.Data.SqlTypes.SqlBinary GetSqlBinary(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlBoolean/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlBoolean/*'/>
         public virtual System.Data.SqlTypes.SqlBoolean GetSqlBoolean(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlByte/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlByte/*'/>
         public virtual System.Data.SqlTypes.SqlByte GetSqlByte(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlBytes/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlBytes/*'/>
         public virtual System.Data.SqlTypes.SqlBytes GetSqlBytes(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlChars/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlChars/*'/>
         public virtual System.Data.SqlTypes.SqlChars GetSqlChars(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlDateTime/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlDateTime/*'/>
         public virtual System.Data.SqlTypes.SqlDateTime GetSqlDateTime(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlDecimal/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlDecimal/*'/>
         public virtual System.Data.SqlTypes.SqlDecimal GetSqlDecimal(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlDouble/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlDouble/*'/>
         public virtual System.Data.SqlTypes.SqlDouble GetSqlDouble(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlFieldType/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlFieldType/*'/>
         public virtual System.Type GetSqlFieldType(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlGuid/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlGuid/*'/>
         public virtual System.Data.SqlTypes.SqlGuid GetSqlGuid(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlInt16/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlInt16/*'/>
         public virtual System.Data.SqlTypes.SqlInt16 GetSqlInt16(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlInt32/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlInt32/*'/>
         public virtual System.Data.SqlTypes.SqlInt32 GetSqlInt32(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlInt64/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlInt64/*'/>
         public virtual System.Data.SqlTypes.SqlInt64 GetSqlInt64(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlMetaData/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlMetaData/*'/>
         public virtual Microsoft.Data.SqlClient.Server.SqlMetaData GetSqlMetaData(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlMoney/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlMoney/*'/>
         public virtual System.Data.SqlTypes.SqlMoney GetSqlMoney(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlSingle/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlSingle/*'/>
         public virtual System.Data.SqlTypes.SqlSingle GetSqlSingle(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlString/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlString/*'/>
         public virtual System.Data.SqlTypes.SqlString GetSqlString(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlValue/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlValue/*'/>
         public virtual object GetSqlValue(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlValues/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlValues/*'/>
         public virtual int GetSqlValues(object[] values) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlXml/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlXml/*'/>
         public virtual System.Data.SqlTypes.SqlXml GetSqlXml(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetString/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetString/*'/>
         public virtual string GetString(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetTimeSpan/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetTimeSpan/*'/>
         public virtual System.TimeSpan GetTimeSpan(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetValue/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetValue/*'/>
         public virtual object GetValue(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetValues/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetValues/*'/>
         public virtual int GetValues(object[] values) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/IsDBNull/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/IsDBNull/*'/>
         public virtual bool IsDBNull(int ordinal) { throw null; }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetBoolean/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetBoolean/*'/>
         public virtual void SetBoolean(int ordinal, bool value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetByte/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetByte/*'/>
         public virtual void SetByte(int ordinal, byte value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetBytes/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetBytes/*'/>
         public virtual void SetBytes(int ordinal, long fieldOffset, byte[] buffer, int bufferOffset, int length) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetChar/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetChar/*'/>
         public virtual void SetChar(int ordinal, char value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetChars/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetChars/*'/>
         public virtual void SetChars(int ordinal, long fieldOffset, char[] buffer, int bufferOffset, int length) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetDateTime/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetDateTime/*'/>
         public virtual void SetDateTime(int ordinal, System.DateTime value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetDateTimeOffset/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetDateTimeOffset/*'/>
         public virtual void SetDateTimeOffset(int ordinal, System.DateTimeOffset value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetDBNull/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetDBNull/*'/>
         public virtual void SetDBNull(int ordinal) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetDecimal/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetDecimal/*'/>
         public virtual void SetDecimal(int ordinal, decimal value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetDouble/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetDouble/*'/>
         public virtual void SetDouble(int ordinal, double value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetFloat/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetFloat/*'/>
         public virtual void SetFloat(int ordinal, float value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetGuid/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetGuid/*'/>
         public virtual void SetGuid(int ordinal, System.Guid value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetInt16/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetInt16/*'/>
         public virtual void SetInt16(int ordinal, short value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetInt32/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetInt32/*'/>
         public virtual void SetInt32(int ordinal, int value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetInt64/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetInt64/*'/>
         public virtual void SetInt64(int ordinal, long value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetSqlBinary/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetSqlBinary/*'/>
         public virtual void SetSqlBinary(int ordinal, System.Data.SqlTypes.SqlBinary value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetSqlBoolean/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetSqlBoolean/*'/>
         public virtual void SetSqlBoolean(int ordinal, System.Data.SqlTypes.SqlBoolean value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetSqlByte/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetSqlByte/*'/>
         public virtual void SetSqlByte(int ordinal, System.Data.SqlTypes.SqlByte value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetSqlBytes/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetSqlBytes/*'/>
         public virtual void SetSqlBytes(int ordinal, System.Data.SqlTypes.SqlBytes value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetSqlChars/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetSqlChars/*'/>
         public virtual void SetSqlChars(int ordinal, System.Data.SqlTypes.SqlChars value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetSqlDateTime/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetSqlDateTime/*'/>
         public virtual void SetSqlDateTime(int ordinal, System.Data.SqlTypes.SqlDateTime value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetSqlDecimal/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetSqlDecimal/*'/>
         public virtual void SetSqlDecimal(int ordinal, System.Data.SqlTypes.SqlDecimal value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetSqlDouble/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetSqlDouble/*'/>
         public virtual void SetSqlDouble(int ordinal, System.Data.SqlTypes.SqlDouble value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetSqlGuid/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetSqlGuid/*'/>
         public virtual void SetSqlGuid(int ordinal, System.Data.SqlTypes.SqlGuid value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetSqlInt16/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetSqlInt16/*'/>
         public virtual void SetSqlInt16(int ordinal, System.Data.SqlTypes.SqlInt16 value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetSqlInt32/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetSqlInt32/*'/>
         public virtual void SetSqlInt32(int ordinal, System.Data.SqlTypes.SqlInt32 value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetSqlInt64/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetSqlInt64/*'/>
         public virtual void SetSqlInt64(int ordinal, System.Data.SqlTypes.SqlInt64 value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetSqlMoney/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetSqlMoney/*'/>
         public virtual void SetSqlMoney(int ordinal, System.Data.SqlTypes.SqlMoney value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetSqlSingle/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetSqlSingle/*'/>
         public virtual void SetSqlSingle(int ordinal, System.Data.SqlTypes.SqlSingle value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetSqlString/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetSqlString/*'/>
         public virtual void SetSqlString(int ordinal, System.Data.SqlTypes.SqlString value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetSqlXml/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetSqlXml/*'/>
         public virtual void SetSqlXml(int ordinal, System.Data.SqlTypes.SqlXml value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetString/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetString/*'/>
         public virtual void SetString(int ordinal, string value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetTimeSpan/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetTimeSpan/*'/>
         public virtual void SetTimeSpan(int ordinal, System.TimeSpan value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetValue/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetValue/*'/>
         public virtual void SetValue(int ordinal, object value) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetValues/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetValues/*'/>
         public virtual int SetValues(params object[] values) { throw null; }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFacetAttribute.xml' path='docs/members[@name="SqlFacetAttribute"]/SqlFacetAttribute/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFacetAttribute.xml' path='docs/members[@name="SqlFacetAttribute"]/SqlFacetAttribute/*'/>
     [System.AttributeUsageAttribute(System.AttributeTargets.Field | System.AttributeTargets.Property | System.AttributeTargets.ReturnValue | System.AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
     public partial class SqlFacetAttribute : System.Attribute
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFacetAttribute.xml' path='docs/members[@name="SqlFacetAttribute"]/ctor/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFacetAttribute.xml' path='docs/members[@name="SqlFacetAttribute"]/ctor/*'/>
         public SqlFacetAttribute() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFacetAttribute.xml' path='docs/members[@name="SqlFacetAttribute"]/IsFixedLength/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFacetAttribute.xml' path='docs/members[@name="SqlFacetAttribute"]/IsFixedLength/*'/>
         public bool IsFixedLength { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFacetAttribute.xml' path='docs/members[@name="SqlFacetAttribute"]/IsNullable/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFacetAttribute.xml' path='docs/members[@name="SqlFacetAttribute"]/IsNullable/*'/>
         public bool IsNullable { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFacetAttribute.xml' path='docs/members[@name="SqlFacetAttribute"]/MaxSize/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFacetAttribute.xml' path='docs/members[@name="SqlFacetAttribute"]/MaxSize/*'/>
         public int MaxSize { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFacetAttribute.xml' path='docs/members[@name="SqlFacetAttribute"]/Precision/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFacetAttribute.xml' path='docs/members[@name="SqlFacetAttribute"]/Precision/*'/>
         public int Precision { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFacetAttribute.xml' path='docs/members[@name="SqlFacetAttribute"]/Scale/*'/>
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFacetAttribute.xml' path='docs/members[@name="SqlFacetAttribute"]/Scale/*'/>
         public int Scale { get { throw null; } set { } }
     }
-    /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/SqlFunctionAttribute/*' />
+    /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/SqlFunctionAttribute/*' />
     [System.AttributeUsage(System.AttributeTargets.Method, AllowMultiple = false, Inherited = false), System.SerializableAttribute]
     public partial class SqlFunctionAttribute : System.Attribute
     {
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/ctor/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/ctor/*' />
         public SqlFunctionAttribute() { }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/IsDeterministic/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/IsDeterministic/*' />
         public bool IsDeterministic { get { throw null; } set { } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/DataAccess/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/DataAccess/*' />
         public DataAccessKind DataAccess { get { throw null; } set { } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/SystemDataAccess/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/SystemDataAccess/*' />
         public SystemDataAccessKind SystemDataAccess { get { throw null; } set { } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/IsPrecise/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/IsPrecise/*' />
         public bool IsPrecise { get { throw null; } set { } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/Name/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/Name/*' />
         public string Name { get { throw null; } set { } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/TableDefinition/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/TableDefinition/*' />
         public string TableDefinition { get { throw null; } set { } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/FillRowMethodName/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/FillRowMethodName/*' />
         public string FillRowMethodName { get { throw null; } set { } }
     }
-    /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/SqlMetaData/*' />
+    /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/SqlMetaData/*' />
     public sealed partial class SqlMetaData
     {
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbType/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbType/*' />
         public SqlMetaData(string name, System.Data.SqlDbType dbType) { }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal/*' />
         public SqlMetaData(string name, System.Data.SqlDbType dbType, bool useServerDefault, bool isUniqueKey, Microsoft.Data.SqlClient.SortOrder columnSortOrder, int sortOrdinal) { }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypePrecisionScale/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypePrecisionScale/*' />
         public SqlMetaData(string name, System.Data.SqlDbType dbType, byte precision, byte scale) { }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypePrecisionScaleUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypePrecisionScaleUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal/*' />
         public SqlMetaData(string name, System.Data.SqlDbType dbType, byte precision, byte scale, bool useServerDefault, bool isUniqueKey, Microsoft.Data.SqlClient.SortOrder columnSortOrder, int sortOrdinal) { }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeMaxLength/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeMaxLength/*' />
         public SqlMetaData(string name, System.Data.SqlDbType dbType, long maxLength) { }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeMaxLengthUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeMaxLengthUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal/*' />
         public SqlMetaData(string name, System.Data.SqlDbType dbType, long maxLength, bool useServerDefault, bool isUniqueKey, Microsoft.Data.SqlClient.SortOrder columnSortOrder, int sortOrdinal) { }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeMaxLengthPrecisionScaleLocaleCompareOptionsUserDefinedType/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeMaxLengthPrecisionScaleLocaleCompareOptionsUserDefinedType/*' />
         public SqlMetaData(string name, System.Data.SqlDbType dbType, long maxLength, byte precision, byte scale, long locale, System.Data.SqlTypes.SqlCompareOptions compareOptions, System.Type userDefinedType) { }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeMaxLengthPrecisionScaleLocaleCompareOptionsUserDefinedTypeUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeMaxLengthPrecisionScaleLocaleCompareOptionsUserDefinedTypeUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal/*' />
         public SqlMetaData(string name, System.Data.SqlDbType dbType, long maxLength, byte precision, byte scale, long localeId, System.Data.SqlTypes.SqlCompareOptions compareOptions, System.Type userDefinedType, bool useServerDefault, bool isUniqueKey, Microsoft.Data.SqlClient.SortOrder columnSortOrder, int sortOrdinal) { }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeMaxLengthLocaleCompareOptions/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeMaxLengthLocaleCompareOptions/*' />
         public SqlMetaData(string name, System.Data.SqlDbType dbType, long maxLength, long locale, System.Data.SqlTypes.SqlCompareOptions compareOptions) { }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeMaxLengthLocaleCompareOptionsUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeMaxLengthLocaleCompareOptionsUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal/*' />
         public SqlMetaData(string name, System.Data.SqlDbType dbType, long maxLength, long locale, System.Data.SqlTypes.SqlCompareOptions compareOptions, bool useServerDefault, bool isUniqueKey, Microsoft.Data.SqlClient.SortOrder columnSortOrder, int sortOrdinal) { }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeDatabaseOwningSchemaObjectName/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeDatabaseOwningSchemaObjectName/*' />
         public SqlMetaData(string name, System.Data.SqlDbType dbType, string database, string owningSchema, string objectName) { }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeDatabaseOwningSchemaObjectNameUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeDatabaseOwningSchemaObjectNameUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal/*' />
         public SqlMetaData(string name, System.Data.SqlDbType dbType, string database, string owningSchema, string objectName, bool useServerDefault, bool isUniqueKey, Microsoft.Data.SqlClient.SortOrder columnSortOrder, int sortOrdinal) { }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeUserDefinedType/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeUserDefinedType/*' />
         public SqlMetaData(string name, System.Data.SqlDbType dbType, System.Type userDefinedType) { }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeUserDefinedTypeServerTypeName/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeUserDefinedTypeServerTypeName/*' />
         public SqlMetaData(string name, System.Data.SqlDbType dbType, System.Type userDefinedType, string serverTypeName) { }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeUserDefinedTypeServerTypeNameUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/ctorNameDbTypeUserDefinedTypeServerTypeNameUseServerDefaultIsUniqueKeyColumnSortOrderSortOrdinal/*' />
         public SqlMetaData(string name, System.Data.SqlDbType dbType, System.Type userDefinedType, string serverTypeName, bool useServerDefault, bool isUniqueKey, Microsoft.Data.SqlClient.SortOrder columnSortOrder, int sortOrdinal) { }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/CompareOptions/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/CompareOptions/*' />
         public System.Data.SqlTypes.SqlCompareOptions CompareOptions { get { throw null; } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/DbType/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/DbType/*' />
         public System.Data.DbType DbType { get { throw null; } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/IsUniqueKey/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/IsUniqueKey/*' />
         public bool IsUniqueKey { get { throw null; } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/LocaleId/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/LocaleId/*' />
         public long LocaleId { get { throw null; } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/Max/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/Max/*' />
         public static long Max { get { throw null; } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/MaxLength/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/MaxLength/*' />
         public long MaxLength { get { throw null; } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/Name/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/Name/*' />
         public string Name { get { throw null; } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/Precision/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/Precision/*' />
         public byte Precision { get { throw null; } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/Scale/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/Scale/*' />
         public byte Scale { get { throw null; } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/SortOrder/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/SortOrder/*' />
         public Microsoft.Data.SqlClient.SortOrder SortOrder { get { throw null; } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/SortOrdinal/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/SortOrdinal/*' />
         public int SortOrdinal { get { throw null; } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/SqlDbType/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/SqlDbType/*' />
         public System.Data.SqlDbType SqlDbType { get { throw null; } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/Type/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/Type/*' />
         public System.Type Type { get { throw null; } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/TypeName/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/TypeName/*' />
         public string TypeName { get { throw null; } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/UseServerDefault/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/UseServerDefault/*' />
         public bool UseServerDefault { get { throw null; } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/XmlSchemaCollectionDatabase/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/XmlSchemaCollectionDatabase/*' />
         public string XmlSchemaCollectionDatabase { get { throw null; } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/XmlSchemaCollectionName/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/XmlSchemaCollectionName/*' />
         public string XmlSchemaCollectionName { get { throw null; } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/XmlSchemaCollectionOwningSchema/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/XmlSchemaCollectionOwningSchema/*' />
         public string XmlSchemaCollectionOwningSchema { get { throw null; } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue1/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue1/*' />
         public bool Adjust(bool value) { throw null; }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue2/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue2/*' />
         public byte Adjust(byte value) { throw null; }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue3/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue3/*' />
         public byte[] Adjust(byte[] value) { throw null; }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue4/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue4/*' />
         public char Adjust(char value) { throw null; }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue5/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue5/*' />
         public char[] Adjust(char[] value) { throw null; }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue6/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue6/*' />
         public System.Data.SqlTypes.SqlBinary Adjust(System.Data.SqlTypes.SqlBinary value) { throw null; }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue7/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue7/*' />
         public System.Data.SqlTypes.SqlBoolean Adjust(System.Data.SqlTypes.SqlBoolean value) { throw null; }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue8/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue8/*' />
         public System.Data.SqlTypes.SqlByte Adjust(System.Data.SqlTypes.SqlByte value) { throw null; }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue9/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue9/*' />
         public System.Data.SqlTypes.SqlBytes Adjust(System.Data.SqlTypes.SqlBytes value) { throw null; }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue10/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue10/*' />
         public System.Data.SqlTypes.SqlChars Adjust(System.Data.SqlTypes.SqlChars value) { throw null; }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue11/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue11/*' />
         public System.Data.SqlTypes.SqlDateTime Adjust(System.Data.SqlTypes.SqlDateTime value) { throw null; }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue12/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue12/*' />
         public System.Data.SqlTypes.SqlDecimal Adjust(System.Data.SqlTypes.SqlDecimal value) { throw null; }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue13/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue13/*' />
         public System.Data.SqlTypes.SqlDouble Adjust(System.Data.SqlTypes.SqlDouble value) { throw null; }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue14/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue14/*' />
         public System.Data.SqlTypes.SqlGuid Adjust(System.Data.SqlTypes.SqlGuid value) { throw null; }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue15/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue15/*' />
         public System.Data.SqlTypes.SqlInt16 Adjust(System.Data.SqlTypes.SqlInt16 value) { throw null; }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue16/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue16/*' />
         public System.Data.SqlTypes.SqlInt32 Adjust(System.Data.SqlTypes.SqlInt32 value) { throw null; }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue17/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue17/*' />
         public System.Data.SqlTypes.SqlInt64 Adjust(System.Data.SqlTypes.SqlInt64 value) { throw null; }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue18/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue18/*' />
         public System.Data.SqlTypes.SqlMoney Adjust(System.Data.SqlTypes.SqlMoney value) { throw null; }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue19/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue19/*' />
         public System.Data.SqlTypes.SqlSingle Adjust(System.Data.SqlTypes.SqlSingle value) { throw null; }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue20/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue20/*' />
         public System.Data.SqlTypes.SqlString Adjust(System.Data.SqlTypes.SqlString value) { throw null; }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue21/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue21/*' />
         public System.Data.SqlTypes.SqlXml Adjust(System.Data.SqlTypes.SqlXml value) { throw null; }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue22/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue22/*' />
         public System.DateTime Adjust(System.DateTime value) { throw null; }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue23/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue23/*' />
         public System.DateTimeOffset Adjust(System.DateTimeOffset value) { throw null; }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue24/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue24/*' />
         public decimal Adjust(decimal value) { throw null; }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue25/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue25/*' />
         public double Adjust(double value) { throw null; }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue26/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue26/*' />
         public System.Guid Adjust(System.Guid value) { throw null; }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue27/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue27/*' />
         public short Adjust(short value) { throw null; }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue28/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue28/*' />
         public int Adjust(int value) { throw null; }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue29/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue29/*' />
         public long Adjust(long value) { throw null; }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue30/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue30/*' />
         public object Adjust(object value) { throw null; }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue31/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue31/*' />
         public float Adjust(float value) { throw null; }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue32/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue32/*' />
         public string Adjust(string value) { throw null; }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue33/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/AdjustValue33/*' />
         public System.TimeSpan Adjust(System.TimeSpan value) { throw null; }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/InferFromValue/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/InferFromValue/*' />
         public static Microsoft.Data.SqlClient.Server.SqlMetaData InferFromValue(object value, string name) { throw null; }
     }
-    /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMethodAttribute.xml' path='docs/members[@name="SqlMethodAttribute"]/SqlMethodAttribute/*' />
+    /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMethodAttribute.xml' path='docs/members[@name="SqlMethodAttribute"]/SqlMethodAttribute/*' />
     [System.AttributeUsage(System.AttributeTargets.Method, AllowMultiple = false, Inherited = false), System.SerializableAttribute]
     public sealed partial class SqlMethodAttribute : SqlFunctionAttribute
     {
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMethodAttribute.xml' path='docs/members[@name="SqlMethodAttribute"]/ctor/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMethodAttribute.xml' path='docs/members[@name="SqlMethodAttribute"]/ctor/*' />
         public SqlMethodAttribute() { }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMethodAttribute.xml' path='docs/members[@name="SqlMethodAttribute"]/OnNullCall/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMethodAttribute.xml' path='docs/members[@name="SqlMethodAttribute"]/OnNullCall/*' />
         public bool OnNullCall { get { throw null; } set { } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMethodAttribute.xml' path='docs/members[@name="SqlMethodAttribute"]/IsMutator/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMethodAttribute.xml' path='docs/members[@name="SqlMethodAttribute"]/IsMutator/*' />
         public bool IsMutator { get { throw null; } set { } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMethodAttribute.xml' path='docs/members[@name="SqlMethodAttribute"]/InvokeIfReceiverIsNull/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMethodAttribute.xml' path='docs/members[@name="SqlMethodAttribute"]/InvokeIfReceiverIsNull/*' />
         public bool InvokeIfReceiverIsNull { get { throw null; } set { } }
     }
-    /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedAggregateAttribute.xml' path='docs/members[@name="SqlUserDefinedAggregateAttribute"]/SqlUserDefinedAggregateAttribute/*' />
+    /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedAggregateAttribute.xml' path='docs/members[@name="SqlUserDefinedAggregateAttribute"]/SqlUserDefinedAggregateAttribute/*' />
     [System.AttributeUsage(System.AttributeTargets.Class | System.AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
     public sealed partial class SqlUserDefinedAggregateAttribute : System.Attribute
     {
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedAggregateAttribute.xml' path='docs/members[@name="SqlUserDefinedAggregateAttribute"]/MaxByteSizeValue/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedAggregateAttribute.xml' path='docs/members[@name="SqlUserDefinedAggregateAttribute"]/MaxByteSizeValue/*' />
         public const int MaxByteSizeValue = 8000;
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedAggregateAttribute.xml' path='docs/members[@name="SqlUserDefinedAggregateAttribute"]/ctor/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedAggregateAttribute.xml' path='docs/members[@name="SqlUserDefinedAggregateAttribute"]/ctor/*' />
         public SqlUserDefinedAggregateAttribute(Format format) { }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedAggregateAttribute.xml' path='docs/members[@name="SqlUserDefinedAggregateAttribute"]/MaxByteSize/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedAggregateAttribute.xml' path='docs/members[@name="SqlUserDefinedAggregateAttribute"]/MaxByteSize/*' />
         public int MaxByteSize { get { throw null; } set { } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedAggregateAttribute.xml' path='docs/members[@name="SqlUserDefinedAggregateAttribute"]/IsInvariantToDuplicates/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedAggregateAttribute.xml' path='docs/members[@name="SqlUserDefinedAggregateAttribute"]/IsInvariantToDuplicates/*' />
         public bool IsInvariantToDuplicates { get { throw null; } set { } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedAggregateAttribute.xml' path='docs/members[@name="SqlUserDefinedAggregateAttribute"]/IsInvariantToNulls/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedAggregateAttribute.xml' path='docs/members[@name="SqlUserDefinedAggregateAttribute"]/IsInvariantToNulls/*' />
         public bool IsInvariantToNulls { get { throw null; } set { } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedAggregateAttribute.xml' path='docs/members[@name="SqlUserDefinedAggregateAttribute"]/IsInvariantToOrder/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedAggregateAttribute.xml' path='docs/members[@name="SqlUserDefinedAggregateAttribute"]/IsInvariantToOrder/*' />
         public bool IsInvariantToOrder { get { throw null; } set { } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedAggregateAttribute.xml' path='docs/members[@name="SqlUserDefinedAggregateAttribute"]/IsNullIfEmpty/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedAggregateAttribute.xml' path='docs/members[@name="SqlUserDefinedAggregateAttribute"]/IsNullIfEmpty/*' />
         public bool IsNullIfEmpty { get { throw null; } set { } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedAggregateAttribute.xml' path='docs/members[@name="SqlUserDefinedAggregateAttribute"]/Format/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedAggregateAttribute.xml' path='docs/members[@name="SqlUserDefinedAggregateAttribute"]/Format/*' />
         public Format Format { get { throw null; } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedAggregateAttribute.xml' path='docs/members[@name="SqlUserDefinedAggregateAttribute"]/Name/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedAggregateAttribute.xml' path='docs/members[@name="SqlUserDefinedAggregateAttribute"]/Name/*' />
         public string Name { get { throw null; } set { } }
     }
-    /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedTypeAttribute.xml' path='docs/members[@name="SqlUserDefinedTypeAttribute"]/SqlUserDefinedTypeAttribute/*' />
+    /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedTypeAttribute.xml' path='docs/members[@name="SqlUserDefinedTypeAttribute"]/SqlUserDefinedTypeAttribute/*' />
     [System.AttributeUsage(System.AttributeTargets.Class | System.AttributeTargets.Struct, AllowMultiple = false, Inherited = true)]
     public sealed partial class SqlUserDefinedTypeAttribute : System.Attribute
     {
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedTypeAttribute.xml' path='docs/members[@name="SqlUserDefinedTypeAttribute"]/ctor/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedTypeAttribute.xml' path='docs/members[@name="SqlUserDefinedTypeAttribute"]/ctor/*' />
         public SqlUserDefinedTypeAttribute(Format format) { }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedTypeAttribute.xml' path='docs/members[@name="SqlUserDefinedTypeAttribute"]/MaxByteSize/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedTypeAttribute.xml' path='docs/members[@name="SqlUserDefinedTypeAttribute"]/MaxByteSize/*' />
         public int MaxByteSize { get { throw null; } set { } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedTypeAttribute.xml' path='docs/members[@name="SqlUserDefinedTypeAttribute"]/IsFixedLength/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedTypeAttribute.xml' path='docs/members[@name="SqlUserDefinedTypeAttribute"]/IsFixedLength/*' />
         public bool IsFixedLength { get { throw null; } set { } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedTypeAttribute.xml' path='docs/members[@name="SqlUserDefinedTypeAttribute"]/IsByteOrdered/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedTypeAttribute.xml' path='docs/members[@name="SqlUserDefinedTypeAttribute"]/IsByteOrdered/*' />
         public bool IsByteOrdered { get { throw null; } set { } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedTypeAttribute.xml' path='docs/members[@name="SqlUserDefinedTypeAttribute"]/Format/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedTypeAttribute.xml' path='docs/members[@name="SqlUserDefinedTypeAttribute"]/Format/*' />
         public Format Format { get { throw null; } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedTypeAttribute.xml' path='docs/members[@name="SqlUserDefinedTypeAttribute"]/ValidationMethodName/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedTypeAttribute.xml' path='docs/members[@name="SqlUserDefinedTypeAttribute"]/ValidationMethodName/*' />
         public string ValidationMethodName { get { throw null; } set { } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedTypeAttribute.xml' path='docs/members[@name="SqlUserDefinedTypeAttribute"]/Name/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedTypeAttribute.xml' path='docs/members[@name="SqlUserDefinedTypeAttribute"]/Name/*' />
         public string Name { get { throw null; } set { } }
     }
-    /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SystemDataAccessKind.xml' path='docs/members[@name="SystemDataAccessKind"]/SystemDataAccessKind/*' />
+    /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SystemDataAccessKind.xml' path='docs/members[@name="SystemDataAccessKind"]/SystemDataAccessKind/*' />
     public enum SystemDataAccessKind
     {
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SystemDataAccessKind.xml' path='docs/members[@name="SystemDataAccessKind"]/None/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SystemDataAccessKind.xml' path='docs/members[@name="SystemDataAccessKind"]/None/*' />
         None = 0,
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SystemDataAccessKind.xml' path='docs/members[@name="SystemDataAccessKind"]/Read/*' />
+        /// <include file='./../../../doc/snippets/Microsoft.Data.SqlClient.Server/SystemDataAccessKind.xml' path='docs/members[@name="SystemDataAccessKind"]/Read/*' />
         Read = 1
     }
 }
 namespace Microsoft.Data.SqlClient.DataClassification
 {
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/ColumnSensitivity.xml' path='docs/members[@name="ColumnSensitivity"]/ColumnSensitivity/*' />
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/ColumnSensitivity.xml' path='docs/members[@name="ColumnSensitivity"]/ColumnSensitivity/*' />
     public partial class ColumnSensitivity
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/ColumnSensitivity.xml' path='docs/members[@name="ColumnSensitivity"]/ctor/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/ColumnSensitivity.xml' path='docs/members[@name="ColumnSensitivity"]/ctor/*' />
         public ColumnSensitivity(System.Collections.Generic.IList<Microsoft.Data.SqlClient.DataClassification.SensitivityProperty> sensitivityProperties) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/ColumnSensitivity.xml' path='docs/members[@name="ColumnSensitivity"]/GetSensitivityProperties/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/ColumnSensitivity.xml' path='docs/members[@name="ColumnSensitivity"]/GetSensitivityProperties/*' />
         public System.Collections.ObjectModel.ReadOnlyCollection<Microsoft.Data.SqlClient.DataClassification.SensitivityProperty> SensitivityProperties { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/InformationType.xml' path='docs/members[@name="InformationType"]/InformationType/*' />
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/InformationType.xml' path='docs/members[@name="InformationType"]/InformationType/*' />
     public partial class InformationType
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/InformationType.xml' path='docs/members[@name="InformationType"]/ctor/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/InformationType.xml' path='docs/members[@name="InformationType"]/ctor/*' />
         public InformationType(string name, string id) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/InformationType.xml' path='docs/members[@name="InformationType"]/Id/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/InformationType.xml' path='docs/members[@name="InformationType"]/Id/*' />
         public string Id { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/InformationType.xml' path='docs/members[@name="InformationType"]/Name/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/InformationType.xml' path='docs/members[@name="InformationType"]/Name/*' />
         public string Name { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/Label.xml' path='docs/members[@name="Label"]/Label/*' />
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/Label.xml' path='docs/members[@name="Label"]/Label/*' />
     public partial class Label
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/Label.xml' path='docs/members[@name="Label"]/ctor/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/Label.xml' path='docs/members[@name="Label"]/ctor/*' />
         public Label(string name, string id) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/Label.xml' path='docs/members[@name="Label"]/Id/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/Label.xml' path='docs/members[@name="Label"]/Id/*' />
         public string Id { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/Label.xml' path='docs/members[@name="Label"]/Name/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/Label.xml' path='docs/members[@name="Label"]/Name/*' />
         public string Name { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityRank.xml' path='docs/members[@name="SensitivityRank"]/SensitivityRank/*' />
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityRank.xml' path='docs/members[@name="SensitivityRank"]/SensitivityRank/*' />
     public enum SensitivityRank
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityRank.xml' path='docs/members[@name="SensitivityRank"]/NotDefined/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityRank.xml' path='docs/members[@name="SensitivityRank"]/NotDefined/*' />
         NOT_DEFINED = -1,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityRank.xml' path='docs/members[@name="SensitivityRank"]/None/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityRank.xml' path='docs/members[@name="SensitivityRank"]/None/*' />
         NONE = 0,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityRank.xml' path='docs/members[@name="SensitivityRank"]/Low/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityRank.xml' path='docs/members[@name="SensitivityRank"]/Low/*' />
         LOW = 10,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityRank.xml' path='docs/members[@name="SensitivityRank"]/Medium/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityRank.xml' path='docs/members[@name="SensitivityRank"]/Medium/*' />
         MEDIUM = 20,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityRank.xml' path='docs/members[@name="SensitivityRank"]/High/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityRank.xml' path='docs/members[@name="SensitivityRank"]/High/*' />
         HIGH = 30,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityRank.xml' path='docs/members[@name="SensitivityRank"]/Critical/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityRank.xml' path='docs/members[@name="SensitivityRank"]/Critical/*' />
         CRITICAL = 40
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityClassification.xml' path='docs/members[@name="SensitivityClassification"]/SensitivityClassification/*' />
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityClassification.xml' path='docs/members[@name="SensitivityClassification"]/SensitivityClassification/*' />
     public partial class SensitivityClassification
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityClassification.xml' path='docs/members[@name="SensitivityClassification"]/ctor/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityClassification.xml' path='docs/members[@name="SensitivityClassification"]/ctor/*' />
         public SensitivityClassification(System.Collections.Generic.IList<Microsoft.Data.SqlClient.DataClassification.Label> labels, System.Collections.Generic.IList<Microsoft.Data.SqlClient.DataClassification.InformationType> informationTypes, System.Collections.Generic.IList<Microsoft.Data.SqlClient.DataClassification.ColumnSensitivity> columnSensitivity, SensitivityRank sensitivityRank) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityClassification.xml' path='docs/members[@name="SensitivityClassification"]/ColumnSensitivities/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityClassification.xml' path='docs/members[@name="SensitivityClassification"]/ColumnSensitivities/*' />
         public System.Collections.ObjectModel.ReadOnlyCollection<Microsoft.Data.SqlClient.DataClassification.ColumnSensitivity> ColumnSensitivities { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityClassification.xml' path='docs/members[@name="SensitivityClassification"]/InformationTypes/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityClassification.xml' path='docs/members[@name="SensitivityClassification"]/InformationTypes/*' />
         public System.Collections.ObjectModel.ReadOnlyCollection<Microsoft.Data.SqlClient.DataClassification.InformationType> InformationTypes { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityClassification.xml' path='docs/members[@name="SensitivityClassification"]/Labels/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityClassification.xml' path='docs/members[@name="SensitivityClassification"]/Labels/*' />
         public System.Collections.ObjectModel.ReadOnlyCollection<Microsoft.Data.SqlClient.DataClassification.Label> Labels { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityClassification.xml' path='docs/members[@name="SensitivityClassification"]/SensitivityRank/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityClassification.xml' path='docs/members[@name="SensitivityClassification"]/SensitivityRank/*' />
         public SensitivityRank SensitivityRank { get { throw null; } }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityProperty.xml' path='docs/members[@name="SensitivityProperty"]/SensitivityProperty/*' />
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityProperty.xml' path='docs/members[@name="SensitivityProperty"]/SensitivityProperty/*' />
     public partial class SensitivityProperty
     {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityProperty.xml' path='docs/members[@name="SensitivityProperty"]/ctor/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityProperty.xml' path='docs/members[@name="SensitivityProperty"]/ctor/*' />
         public SensitivityProperty(Microsoft.Data.SqlClient.DataClassification.Label label, Microsoft.Data.SqlClient.DataClassification.InformationType informationType, SensitivityRank sensitivityRank) { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityProperty.xml' path='docs/members[@name="SensitivityProperty"]/InformationType/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityProperty.xml' path='docs/members[@name="SensitivityProperty"]/InformationType/*' />
         public Microsoft.Data.SqlClient.DataClassification.InformationType InformationType { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityProperty.xml' path='docs/members[@name="SensitivityProperty"]/Label/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityProperty.xml' path='docs/members[@name="SensitivityProperty"]/Label/*' />
         public Microsoft.Data.SqlClient.DataClassification.Label Label { [System.Runtime.CompilerServices.CompilerGeneratedAttribute]get { throw null; } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityProperty.xml' path='docs/members[@name="SensitivityProperty"]/SensitivityRank/*' />
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient.DataClassification/SensitivityProperty.xml' path='docs/members[@name="SensitivityProperty"]/SensitivityRank/*' />
         public SensitivityRank SensitivityRank { get { throw null; } }
     }
 }
