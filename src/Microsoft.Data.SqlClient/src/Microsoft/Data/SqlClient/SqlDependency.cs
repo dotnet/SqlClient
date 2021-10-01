@@ -6,11 +6,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
-#if NETFRAMEWORK
-using System.IO;
-#endif
 using System.Runtime.CompilerServices;
 #if NETFRAMEWORK
+using System.IO;
 using System.Runtime.Remoting;
 using System.Runtime.Serialization;
 using System.Runtime.Versioning;
@@ -380,16 +378,12 @@ namespace Microsoft.Data.SqlClient
                         {
                             if (_dependencyFired)
                             { // If fired, fire the new event immediately.
-#if NETFRAMEWORK
                                 SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.OnChange-Add|DEP> Dependency already fired, firing new event.");
-#endif
                                 sqlNotificationEvent = new SqlNotificationEventArgs(SqlNotificationType.Subscribe, SqlNotificationInfo.AlreadyChanged, SqlNotificationSource.Client);
                             }
                             else
                             {
-#if NETFRAMEWORK
                                 SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.OnChange-Add|DEP> Dependency has not fired, adding new event.");
-#endif
                                 EventContextPair pair = new(value, this);
                                 if (!_eventList.Contains(pair))
                                 {
@@ -493,7 +487,7 @@ namespace Microsoft.Data.SqlClient
 #if DEBUG       // Possibly expensive, limit to debug.
                 SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP> AppDomain.CurrentDomain.FriendlyName: {0}", AppDomain.CurrentDomain.FriendlyName);
 
-#endif
+#endif // DEBUG
                 _AppDomain masterDomain = SNINativeMethodWrapper.GetDefaultAppDomain();
 
                 if (null != masterDomain)
@@ -541,7 +535,7 @@ namespace Microsoft.Data.SqlClient
 
 #if DEBUG       // Possibly expensive, limit to debug.
                 SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP> AppDomain.CurrentDomain.FriendlyName: {0}", AppDomain.CurrentDomain.FriendlyName);
-#endif
+#endif // DEBUG
                 using (MemoryStream stream = new(nativeStorage))
                 {
                     DataContractSerializer serializer = new(typeof(SqlClientObjRef));
@@ -646,7 +640,7 @@ namespace Microsoft.Data.SqlClient
                             ObtainProcessDispatcher();
 #else
                             s_processDispatcher = SqlDependencyProcessDispatcher.SingletonProcessDispatcher;
-#endif
+#endif // NETFRAMEWORK
                         }
 
                         if (useDefaults)
@@ -1105,9 +1099,7 @@ namespace Microsoft.Data.SqlClient
                     int index = _serverList.BinarySearch(server, StringComparer.OrdinalIgnoreCase);
                     if (0 > index)
                     { // If less than 0, item was not found in list.
-#if NETFRAMEWORK
                         SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.AddToServerList|DEP> Server not present in hashtable, adding server: '{0}'.", server);
-#endif
                         index = ~index; // BinarySearch returns the 2's compliment of where the item should be inserted to preserver a sorted list after insertion.
                         _serverList.Insert(index, server);
 
@@ -1211,9 +1203,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (_expirationTime == DateTime.MaxValue)
                 {
-#if NETFRAMEWORK
                     SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.StartTimer|DEP> We've timed out, executing logic.");
-#endif
                     int seconds = SQL.SqlDependencyServerTimeout;
                     if (0 != _timeout)
                     {
