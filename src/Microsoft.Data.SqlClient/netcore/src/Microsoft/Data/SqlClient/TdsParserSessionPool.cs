@@ -60,8 +60,7 @@ namespace Microsoft.Data.SqlClient
             // When being deactivated, we check all the sessions in the
             // cache to make sure they're cleaned up and then we dispose of
             // sessions that are past what we want to keep around.
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.TdsParserSessionPool.Deactivate|ADV> {0} deactivating cachedCount={1}", ObjectID, _cachedCount);
-            try
+            using (TryEventScope.Create("<sc.TdsParserSessionPool.Deactivate|ADV> {0} deactivating cachedCount={1}", ObjectID, _cachedCount))
             {
                 lock (_cache)
                 {
@@ -87,10 +86,6 @@ namespace Microsoft.Data.SqlClient
                     // TODO: re-enable this assert when the connection isn't doomed.
                     //Debug.Assert (_cachedCount < MaxInactiveCount, "non-orphaned connection past initial allocation?");
                 }
-            }
-            finally
-            {
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
             }
         }
 

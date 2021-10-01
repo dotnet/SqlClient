@@ -13,12 +13,11 @@ namespace Microsoft.Data.SqlClient
         private const string TypeName = nameof(LocalAppContextSwitches);
         internal const string MakeReadAsyncBlockingString = @"Switch.Microsoft.Data.SqlClient.MakeReadAsyncBlocking";
         internal const string LegacyRowVersionNullString = @"Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehavior";
-        // safety switch
-        internal const string EnableRetryLogicSwitch = "Switch.Microsoft.Data.SqlClient.EnableRetryLogic";
+        internal const string UseSystemDefaultSecureProtocolsString = @"Switch.Microsoft.Data.SqlClient.UseSystemDefaultSecureProtocols";
 
         private static bool _makeReadAsyncBlocking;
         private static bool? s_LegacyRowVersionNullBehavior;
-        private static bool? s_isRetryEnabled = null;
+        private static bool? s_UseSystemDefaultSecureProtocols;
 
 #if !NETFRAMEWORK
         static LocalAppContextSwitches()
@@ -35,20 +34,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 #endif
-
-        internal static bool IsRetryEnabled
-        {
-            get
-            {
-                if (s_isRetryEnabled is null)
-                {
-                    bool result;
-                    result = AppContext.TryGetSwitch(EnableRetryLogicSwitch, out result) ? result : false;
-                    s_isRetryEnabled = result;
-                }
-                return s_isRetryEnabled.Value;
-            }
-        }
 
         public static bool MakeReadAsyncBlocking
         {
@@ -70,14 +55,28 @@ namespace Microsoft.Data.SqlClient
             {
                 if (s_LegacyRowVersionNullBehavior is null)
                 {
-                    bool value = false;
-                    if (AppContext.TryGetSwitch(LegacyRowVersionNullString, out bool providedValue))
-                    {
-                         value = providedValue;
-                    }
-                    s_LegacyRowVersionNullBehavior = value;
+                    bool result;
+                    result = AppContext.TryGetSwitch(LegacyRowVersionNullString, out result) ? result : false;
+                    s_LegacyRowVersionNullBehavior = result;
                 }
                 return s_LegacyRowVersionNullBehavior.Value;
+            }
+        }
+
+        /// <summary>
+        /// For backward compatibility, this switch can be on to jump back on OS preferences.
+        /// </summary>
+        public static bool UseSystemDefaultSecureProtocols
+        {
+            get
+            {
+                if (s_UseSystemDefaultSecureProtocols is null)
+                {
+                    bool result;
+                    result = AppContext.TryGetSwitch(UseSystemDefaultSecureProtocolsString, out result) ? result : false;
+                    s_UseSystemDefaultSecureProtocols = result;
+                }
+                return s_UseSystemDefaultSecureProtocols.Value;
             }
         }
     }

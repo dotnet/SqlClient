@@ -47,6 +47,11 @@ namespace Microsoft.Data.SqlClient
         internal readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
         internal int ObjectID => _objectID;
 
+        /// <summary>
+        /// Verify client encryption possibility.
+        /// </summary>
+        private bool ClientOSEncryptionSupport => TdsParserStateObjectFactory.Singleton.ClientOSEncryptionSupport;
+
         // Default state object for parser
         internal TdsParserStateObject _physicalStateObj = null; // Default stateObj and connection for Dbnetlib and non-MARS SNI.
 
@@ -466,6 +471,18 @@ namespace Microsoft.Data.SqlClient
                 _physicalStateObj.AssignPendingDNSInfo(serverInfo.UserProtocol, FQDNforDNSCahce, ref _connHandler.pendingSQLDNSObject);
             }
 
+            if (!ClientOSEncryptionSupport)
+            {
+                //If encryption is required, an error will be thrown.
+                if (encrypt)
+                {
+                    _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByClient(), "", 0));
+                    _physicalStateObj.Dispose();
+                    ThrowExceptionAndWarning(_physicalStateObj);
+                }
+                _encryptionOption = EncryptionOptions.NOT_SUP;
+            }
+
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Sending prelogin handshake");
             SendPreLoginHandshake(instanceName, encrypt);
 
@@ -676,7 +693,7 @@ namespace Microsoft.Data.SqlClient
                     case (int)PreLoginOptions.ENCRYPT:
                         if (_encryptionOption == EncryptionOptions.NOT_SUP)
                         {
-                            // If OS doesn't support encryption, inform server not supported.
+                            //If OS doesn't support encryption and encryption is not required, inform server "not supported" by client.
                             payload[payloadLength] = (byte)EncryptionOptions.NOT_SUP;
                         }
                         else
@@ -887,7 +904,7 @@ namespace Microsoft.Data.SqlClient
                                     // Encrypt all.
                                     _encryptionOption = EncryptionOptions.ON;
                                 }
-
+                                // NOT_SUP: No encryption.
                                 break;
 
                             case (EncryptionOptions.NOT_SUP):
@@ -1303,8 +1320,7 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlError ProcessSNIError(TdsParserStateObject stateObj)
         {
-            long scopeID = SqlClientEventSource.Log.TryScopeEnterEvent("<sc.TdsParser.ProcessSNIError|ERR>");
-            try
+            using (TryEventScope.Create("<sc.TdsParser.ProcessSNIError|ERR>"))
             {
 #if DEBUG
                 // There is an exception here for MARS as its possible that another thread has closed the connection just as we see an error
@@ -1436,10 +1452,6 @@ namespace Microsoft.Data.SqlClient
 
                 return new SqlError(infoNumber: (int)details.nativeError, errorState: 0x00, TdsEnums.FATAL_ERROR_CLASS, _server,
                     errorMessage, details.function, (int)details.lineNumber, win32ErrorCode: details.nativeError, details.exception);
-            }
-            finally
-            {
-                SqlClientEventSource.Log.TryScopeLeaveEvent(scopeID);
             }
         }
 
@@ -5438,6 +5450,10 @@ namespace Microsoft.Data.SqlClient
                     break;
 
                 case SqlDbType.Timestamp:
+                    if (!LocalAppContextSwitches.LegacyRowVersionNullBehavior)
+                    {
+                        nullVal.SetToNullOfType(SqlBuffer.StorageType.SqlBinary);
+                    }
                     break;
 
                 default:

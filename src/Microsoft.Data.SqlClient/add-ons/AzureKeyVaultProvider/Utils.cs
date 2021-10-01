@@ -72,50 +72,50 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
     internal static class ADP
     {
         internal static ArgumentNullException NullArgument(string name) =>
-            new ArgumentNullException(name);
+            new(name);
 
         internal static ArgumentException EmptyArgument(string name) =>
-            new ArgumentException(string.Format(Strings.EmptyArgumentInternal, name));
+            new(string.Format(Strings.EmptyArgumentInternal, name));
 
         internal static ArgumentException NullOrWhitespaceForEach(string name) =>
-            new ArgumentException(string.Format(Strings.NullOrWhitespaceForEach, name));
+            new(string.Format(Strings.NullOrWhitespaceForEach, name));
 
         internal static KeyNotFoundException MasterKeyNotFound(string masterKeyPath) =>
-            new KeyNotFoundException(string.Format(CultureInfo.InvariantCulture, Strings.InvalidSignatureTemplate, masterKeyPath));
+            new(string.Format(CultureInfo.InvariantCulture, Strings.InvalidSignatureTemplate, masterKeyPath));
 
         internal static FormatException NonRsaKeyFormat(string keyType) =>
-            new FormatException(string.Format(CultureInfo.InvariantCulture, Strings.NonRsaKeyTemplate, keyType));
+            new(string.Format(CultureInfo.InvariantCulture, Strings.NonRsaKeyTemplate, keyType));
 
         internal static ArgumentException InvalidCipherTextLength(ushort cipherTextLength, int keySizeInBytes, string masterKeyPath) =>
-            new ArgumentException(string.Format(CultureInfo.InvariantCulture, Strings.InvalidCiphertextLengthTemplate,
+            new(string.Format(CultureInfo.InvariantCulture, Strings.InvalidCiphertextLengthTemplate,
                 cipherTextLength, keySizeInBytes, masterKeyPath), Constants.AeParamEncryptedCek);
 
         internal static ArgumentNullException NullAlgorithm(bool isSystemOp) =>
-            new ArgumentNullException(Constants.AeParamEncryptionAlgorithm, (isSystemOp ? Strings.NullAlgorithmInternal : Strings.NullAlgorithm));
+            new(Constants.AeParamEncryptionAlgorithm, (isSystemOp ? Strings.NullAlgorithmInternal : Strings.NullAlgorithm));
 
         internal static ArgumentException InvalidKeyAlgorithm(string encryptionAlgorithm) =>
-            new ArgumentException(string.Format(CultureInfo.InvariantCulture, Strings.InvalidKeyAlgorithm, encryptionAlgorithm,
+            new(string.Format(CultureInfo.InvariantCulture, Strings.InvalidKeyAlgorithm, encryptionAlgorithm,
                 "RSA_OAEP' or 'RSA-OAEP")/* For supporting both algorithm formats.*/, Constants.AeParamEncryptionAlgorithm);
 
         internal static ArgumentException InvalidSignatureLengthTemplate(int signatureLength, int keySizeInBytes, string masterKeyPath) =>
-            new ArgumentException(string.Format(CultureInfo.InvariantCulture, Strings.InvalidSignatureLengthTemplate,
+            new(string.Format(CultureInfo.InvariantCulture, Strings.InvalidSignatureLengthTemplate,
                 signatureLength, keySizeInBytes, masterKeyPath), Constants.AeParamEncryptedCek);
 
         internal static Exception InvalidAlgorithmVersion(string encryptedBytes, string firstVersionBytes) =>
-            new ArgumentException(string.Format(CultureInfo.InvariantCulture, Strings.InvalidAlgorithmVersionTemplate, 
+            new ArgumentException(string.Format(CultureInfo.InvariantCulture, Strings.InvalidAlgorithmVersionTemplate,
                 encryptedBytes, firstVersionBytes), Constants.AeParamEncryptedCek);
 
         internal static ArgumentException InvalidSignatureTemplate(string masterKeyPath) =>
             new ArgumentException(string.Format(CultureInfo.InvariantCulture, Strings.InvalidSignatureTemplate, masterKeyPath),
                 Constants.AeParamEncryptedCek);
 
-        internal static CryptographicException InvalidSignature() => new CryptographicException(Strings.InvalidSignature);
+        internal static CryptographicException InvalidSignature() => new(Strings.InvalidSignature);
 
-        internal static CryptographicException NullHashFound() => new CryptographicException(Strings.NullHash);
+        internal static CryptographicException NullHashFound() => new(Strings.NullHash);
 
-        internal static CryptographicException CipherTextLengthMismatch() => new CryptographicException(Strings.CipherTextLengthMismatch);
+        internal static CryptographicException CipherTextLengthMismatch() => new(Strings.CipherTextLengthMismatch);
 
-        internal static CryptographicException HashLengthMismatch() => new CryptographicException(Strings.HashLengthMismatch);
+        internal static CryptographicException HashLengthMismatch() => new(Strings.HashLengthMismatch);
 
         internal static ArgumentException InvalidAKVPath(string masterKeyPath, bool isSystemOp)
         {
@@ -130,7 +130,7 @@ namespace Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider
         }
 
         internal static ArgumentException InvalidAKVUrl(string masterKeyPath) =>
-            new ArgumentException(string.Format(CultureInfo.InvariantCulture, Strings.InvalidAkvUrlTemplate, masterKeyPath), Constants.AeParamMasterKeyPath);
+            new(string.Format(CultureInfo.InvariantCulture, Strings.InvalidAkvUrlTemplate, masterKeyPath), Constants.AeParamMasterKeyPath);
 
         internal static Exception InvalidAKVUrlTrustedEndpoints(string masterKeyPath, string endpoints) =>
             new ArgumentException(string.Format(CultureInfo.InvariantCulture, Strings.InvalidAkvKeyPathTrustedTemplate, masterKeyPath, endpoints),

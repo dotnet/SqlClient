@@ -15,62 +15,48 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class DataReaderTest
     {
-        private static object s_rowVersionLock = new object();
+        private static readonly object s_rowVersionLock = new();
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void LoadReaderIntoDataTableToTestGetSchemaTable()
         {
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
-            {
-                connection.Open();
-                var dt = new DataTable();
-                using (SqlCommand command = connection.CreateCommand())
-                {
-                    command.CommandText = "select 3 as [three], 4 as [four]";
-                    // Datatables internally call IDataReader.GetSchemaTable()
-                    dt.Load(command.ExecuteReader());
-                    Assert.Equal(2, dt.Columns.Count);
-                    Assert.Equal("three", dt.Columns[0].ColumnName);
-                    Assert.Equal("four", dt.Columns[1].ColumnName);
-                    Assert.Equal(1, dt.Rows.Count);
-                    Assert.Equal(3, (int)dt.Rows[0][0]);
-                    Assert.Equal(4, (int)dt.Rows[0][1]);
-                }
-            }
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            connection.Open();
+            var dt = new DataTable();
+            using SqlCommand command = connection.CreateCommand();
+            command.CommandText = "select 3 as [three], 4 as [four]";
+            // Datatables internally call IDataReader.GetSchemaTable()
+            dt.Load(command.ExecuteReader());
+            Assert.Equal(2, dt.Columns.Count);
+            Assert.Equal("three", dt.Columns[0].ColumnName);
+            Assert.Equal("four", dt.Columns[1].ColumnName);
+            Assert.Equal(1, dt.Rows.Count);
+            Assert.Equal(3, (int)dt.Rows[0][0]);
+            Assert.Equal(4, (int)dt.Rows[0][1]);
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void MultiQuerySchema()
         {
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+            connection.Open();
+            using SqlCommand command = connection.CreateCommand();
+            // Use multiple queries
+            command.CommandText = "SELECT 1 as ColInteger;  SELECT 'STRING' as ColString";
+            using SqlDataReader reader = command.ExecuteReader();
+            HashSet<string> columnNames = new();
+            do
             {
-                connection.Open();
-
-                using (SqlCommand command = connection.CreateCommand())
+                DataTable schemaTable = reader.GetSchemaTable();
+                foreach (DataRow myField in schemaTable.Rows)
                 {
-                    // Use multiple queries
-                    command.CommandText = "SELECT 1 as ColInteger;  SELECT 'STRING' as ColString";
-                    using (SqlDataReader reader = command.ExecuteReader())
-                    {
-                        HashSet<string> columnNames = new HashSet<string>();
-                        do
-                        {
-                            DataTable schemaTable = reader.GetSchemaTable();
-                            foreach (DataRow myField in schemaTable.Rows)
-                            {
-                                columnNames.Add(myField["ColumnName"].ToString());
-                            }
-
-                        } while (reader.NextResult());
-
-                        Assert.Contains("ColInteger", columnNames);
-                        Assert.Contains("ColString", columnNames);
-                    }
+                    columnNames.Add(myField["ColumnName"].ToString());
                 }
-            }
-        }
 
+            } while (reader.NextResult());
+            Assert.Contains("ColInteger", columnNames);
+            Assert.Contains("ColString", columnNames);
+        }
 
         // Checks for the IsColumnSet bit in the GetSchemaTable for Sparse columns
         // TODO Synapse:  Cannot find data type 'xml'.
@@ -82,17 +68,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             // TSQL for "CREATE TABLE" with sparse columns
             // table name will be provided as an argument
-            StringBuilder createBuilder = new StringBuilder("CREATE TABLE {0} ([ID] int PRIMARY KEY, [CSET] xml COLUMN_SET FOR ALL_SPARSE_COLUMNS NULL");
+            StringBuilder createBuilder = new("CREATE TABLE {0} ([ID] int PRIMARY KEY, [CSET] xml COLUMN_SET FOR ALL_SPARSE_COLUMNS NULL");
 
             // TSQL to create the same table, but without the column set column and without sparse
             // also, it has only 1024 columns, which is the server limit in this case
-            StringBuilder createNonSparseBuilder = new StringBuilder("CREATE TABLE {0} ([ID] int PRIMARY KEY");
+            StringBuilder createNonSparseBuilder = new("CREATE TABLE {0} ([ID] int PRIMARY KEY");
 
             // TSQL to select all columns from the sparse table, without columnset one
-            StringBuilder selectBuilder = new StringBuilder("SELECT [ID]");
+            StringBuilder selectBuilder = new("SELECT [ID]");
 
             // TSQL to select all columns from the sparse table, with a limit of 1024 (for bulk-copy test)
-            StringBuilder selectNonSparseBuilder = new StringBuilder("SELECT [ID]");
+            StringBuilder selectNonSparseBuilder = new("SELECT [ID]");
 
             // add sparse columns
             for (int c = 0; c < sparseColumns; c++)
@@ -109,29 +95,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string createStatementFormat = createBuilder.ToString();
 
             // add a row with nulls only
-            using (SqlConnection con = new SqlConnection(DataTestUtility.TCPConnectionString))
-            using (SqlCommand cmd = con.CreateCommand())
+            using SqlConnection con = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using SqlCommand cmd = con.CreateCommand();
+            try
             {
-                try
-                {
-                    con.Open();
+                con.Open();
 
-                    cmd.CommandType = CommandType.Text;
-                    cmd.CommandText = string.Format(createStatementFormat, tempTableName);
-                    cmd.ExecuteNonQuery();
+                cmd.CommandType = CommandType.Text;
+                cmd.CommandText = string.Format(createStatementFormat, tempTableName);
+                cmd.ExecuteNonQuery();
 
-                    cmd.CommandText = string.Format("INSERT INTO {0} ([ID]) VALUES (0)", tempTableName);// insert row with values set to their defaults (DBNULL)
-                    cmd.ExecuteNonQuery();
+                cmd.CommandText = string.Format("INSERT INTO {0} ([ID]) VALUES (0)", tempTableName);// insert row with values set to their defaults (DBNULL)
+                cmd.ExecuteNonQuery();
 
-                    // run the test cases
-                    Assert.True(IsColumnBitSet(con, string.Format("SELECT [ID], [CSET], [C1] FROM {0}", tempTableName), indexOfColumnSet: 1));
-                }
-                finally
-                {
-                    // drop the temp table to release its resources
-                    cmd.CommandText = "DROP TABLE " + tempTableName;
-                    cmd.ExecuteNonQuery();
-                }
+                // run the test cases
+                Assert.True(IsColumnBitSet(con, string.Format("SELECT [ID], [CSET], [C1] FROM {0}", tempTableName), indexOfColumnSet: 1));
+            }
+            finally
+            {
+                // drop the temp table to release its resources
+                cmd.CommandText = "DROP TABLE " + tempTableName;
+                cmd.ExecuteNonQuery();
             }
         }
 
@@ -143,50 +127,46 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Remove square brackets
             var dbName = databaseName.Substring(1, databaseName.Length - 2);
 
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
             {
                 InitialCatalog = dbName,
                 Pooling = false
             };
 
-            using (SqlConnection con = new SqlConnection(DataTestUtility.TCPConnectionString))
-            using (SqlCommand cmd = con.CreateCommand())
+            using SqlConnection con = new(DataTestUtility.TCPConnectionString);
+            using SqlCommand cmd = con.CreateCommand();
+            try
             {
-                try
+                con.Open();
+
+                // Create collated database
+                cmd.CommandText = $"CREATE DATABASE {databaseName} COLLATE KAZAKH_90_CI_AI";
+                cmd.ExecuteNonQuery();
+
+                //Create connection without pooling in order to delete database later.
+                using (SqlConnection dbCon = new(builder.ConnectionString))
+                using (SqlCommand dbCmd = dbCon.CreateCommand())
                 {
-                    con.Open();
+                    var data = "TestData";
 
-                    // Create collated database
-                    cmd.CommandText = $"CREATE DATABASE {databaseName} COLLATE KAZAKH_90_CI_AI";
-                    cmd.ExecuteNonQuery();
-
-                    //Create connection without pooling in order to delete database later.
-                    using (SqlConnection dbCon = new SqlConnection(builder.ConnectionString))
-                    using (SqlCommand dbCmd = dbCon.CreateCommand())
-                    {
-                        var data = "TestData";
-
-                        dbCon.Open();
-                        dbCmd.CommandText = $"SELECT '{data}'";
-                        using (SqlDataReader reader = dbCmd.ExecuteReader())
-                        {
-                            reader.Read();
-                            Assert.Equal(data, reader.GetString(0));
-                        }
-                    }
-
-                    // Let connection close safely before dropping database for slow servers.
-                    Thread.Sleep(500);
+                    dbCon.Open();
+                    dbCmd.CommandText = $"SELECT '{data}'";
+                    using SqlDataReader reader = dbCmd.ExecuteReader();
+                    reader.Read();
+                    Assert.Equal(data, reader.GetString(0));
                 }
-                catch (SqlException e)
-                {
-                    Assert.True(false, $"Unexpected Exception occurred: {e.Message}");
-                }
-                finally
-                {
-                    cmd.CommandText = $"DROP DATABASE {databaseName}";
-                    cmd.ExecuteNonQuery();
-                }
+
+                // Let connection close safely before dropping database for slow servers.
+                Thread.Sleep(500);
+            }
+            catch (SqlException e)
+            {
+                Assert.True(false, $"Unexpected Exception occurred: {e.Message}");
+            }
+            finally
+            {
+                cmd.CommandText = $"DROP DATABASE {databaseName}";
+                cmd.ExecuteNonQuery();
             }
         }
 
@@ -194,22 +174,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             bool columnSetPresent = false;
             {
-                using (SqlCommand cmd = con.CreateCommand())
+                using SqlCommand cmd = con.CreateCommand();
+                cmd.CommandText = selectQuery;
+                using SqlDataReader reader = cmd.ExecuteReader();
+                DataTable schemaTable = reader.GetSchemaTable();
+                for (int i = 0; i < schemaTable.Rows.Count; i++)
                 {
-                    cmd.CommandText = selectQuery;
-                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    bool isColumnSet = (bool)schemaTable.Rows[i]["IsColumnSet"];
+
+                    if (indexOfColumnSet == i)
                     {
-                        DataTable schemaTable = reader.GetSchemaTable();
-
-                        for (int i = 0; i < schemaTable.Rows.Count; i++)
-                        {
-                            bool isColumnSet = (bool)schemaTable.Rows[i]["IsColumnSet"];
-
-                            if (indexOfColumnSet == i)
-                            {
-                                columnSetPresent = true;
-                            }
-                        }
+                        columnSetPresent = true;
                     }
                 }
             }
@@ -229,49 +204,43 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string tempTableName = DataTestUtility.GenerateObjectName();
 
             string createQuery = $@"
-create table [{tempTableName}] (
-	user_id int not null identity(1,1),
-	first_name varchar(100) null,
-	last_name varchar(100) null);
+                create table [{tempTableName}] (
+	                user_id int not null identity(1,1),
+	                first_name varchar(100) null,
+	                last_name varchar(100) null);
 
-alter table [{tempTableName}] add constraint pk_{tempTableName}_user_id primary key (user_id);
+                alter table [{tempTableName}] add constraint pk_{tempTableName}_user_id primary key (user_id);
 
-insert into [{tempTableName}] (first_name,last_name) values ('Joe','Smith')
-";
+                insert into [{tempTableName}] (first_name,last_name) values ('Joe','Smith')
+                ";
 
             string dataQuery = $@"select first_name, last_name from [{tempTableName}]";
-
 
             int fieldCount = 0;
             int visibleFieldCount = 0;
             Type[] types = null;
             string[] names = null;
 
-            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlConnection connection = new(DataTestUtility.TCPConnectionString))
             {
                 connection.Open();
 
                 try
                 {
-                    using (SqlCommand createCommand = new SqlCommand(createQuery, connection))
+                    using (SqlCommand createCommand = new(createQuery, connection))
                     {
                         createCommand.ExecuteNonQuery();
                     }
-
-                    using (SqlCommand queryCommand = new SqlCommand(dataQuery, connection))
+                    using SqlCommand queryCommand = new(dataQuery, connection);
+                    using SqlDataReader reader = queryCommand.ExecuteReader(CommandBehavior.KeyInfo);
+                    fieldCount = reader.FieldCount;
+                    visibleFieldCount = reader.VisibleFieldCount;
+                    types = new Type[fieldCount];
+                    names = new string[fieldCount];
+                    for (int index = 0; index < fieldCount; index++)
                     {
-                        using (SqlDataReader reader = queryCommand.ExecuteReader(CommandBehavior.KeyInfo))
-                        {
-                            fieldCount = reader.FieldCount;
-                            visibleFieldCount = reader.VisibleFieldCount;
-                            types = new Type[fieldCount];
-                            names = new string[fieldCount];
-                            for (int index = 0; index < fieldCount; index++)
-                            {
-                                types[index] = reader.GetFieldType(index);
-                                names[index] = reader.GetName(index);
-                            }
-                        }
+                        types[index] = reader.GetFieldType(index);
+                        names[index] = reader.GetName(index);
                     }
                 }
                 finally
@@ -301,20 +270,18 @@ insert into [{tempTableName}] (first_name,last_name) values ('Joe','Smith')
                 bool? originalValue = SetLegacyRowVersionNullBehavior(false);
                 try
                 {
-                    using (SqlConnection con = new SqlConnection(DataTestUtility.TCPConnectionString))
-                    {
-                        con.Open();
-                        using (SqlCommand command = con.CreateCommand())
-                        {
-                            command.CommandText = "select cast(null as rowversion) rv";
-                            using (SqlDataReader reader = command.ExecuteReader())
-                            {
-                                reader.Read();
-                                Assert.True(reader.IsDBNull(0));
-                                Assert.Equal(reader[0], DBNull.Value);
-                            }
-                        }
-                    }
+                    using SqlConnection con = new(DataTestUtility.TCPConnectionString);
+                    con.Open();
+                    using SqlCommand command = con.CreateCommand();
+                    command.CommandText = "select cast(null as rowversion) rv";
+                    using SqlDataReader reader = command.ExecuteReader();
+                    reader.Read();
+                    Assert.True(reader.IsDBNull(0));
+                    Assert.Equal(DBNull.Value, reader[0]);
+                    var result = reader.GetValue(0);
+                    Assert.IsType<DBNull>(result);
+                    Assert.Equal(result, reader.GetFieldValue<DBNull>(0));
+                    Assert.Throws<SqlNullValueException>(() => reader.GetFieldValue<byte[]>(0));
                 }
                 finally
                 {
@@ -332,23 +299,20 @@ insert into [{tempTableName}] (first_name,last_name) values ('Joe','Smith')
                 bool? originalValue = SetLegacyRowVersionNullBehavior(true);
                 try
                 {
-                    using (SqlConnection con = new SqlConnection(DataTestUtility.TCPConnectionString))
-                    {
-                        con.Open();
-                        using (SqlCommand command = con.CreateCommand())
-                        {
-                            command.CommandText = "select cast(null as rowversion) rv";
-                            using (SqlDataReader reader = command.ExecuteReader())
-                            {
-                                reader.Read();
-                                Assert.False(reader.IsDBNull(0));
-                                SqlBinary value = reader.GetSqlBinary(0);
-                                Assert.False(value.IsNull);
-                                Assert.Equal(0, value.Length);
-                                Assert.NotNull(value.Value);
-                            }
-                        }
-                    }
+                    using SqlConnection con = new(DataTestUtility.TCPConnectionString);
+                    con.Open();
+                    using SqlCommand command = con.CreateCommand();
+                    command.CommandText = "select cast(null as rowversion) rv";
+                    using SqlDataReader reader = command.ExecuteReader();
+                    reader.Read();
+                    Assert.False(reader.IsDBNull(0));
+                    SqlBinary value = reader.GetSqlBinary(0);
+                    Assert.False(value.IsNull);
+                    Assert.Equal(0, value.Length);
+                    Assert.NotNull(value.Value);
+                    var result = reader.GetValue(0);
+                    Assert.IsType<byte[]>(result);
+                    Assert.Equal(result, reader.GetFieldValue<byte[]>(0));
                 }
                 finally
                 {

@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Null(cmd.Container);
             Assert.True(cmd.DesignTimeVisible);
             Assert.Null(cmd.Notification);
-#if NETFX
+#if NETFRAMEWORK
             // see https://github.com/dotnet/SqlClient/issues/17
             Assert.True(cmd.NotificationAutoEnlist);
 #endif
@@ -46,7 +46,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Null(cmd.Container);
             Assert.True(cmd.DesignTimeVisible);
             Assert.Null(cmd.Notification);
-#if NETFX
+#if NETFRAMEWORK
             // see https://github.com/dotnet/SqlClient/issues/17
             Assert.True(cmd.NotificationAutoEnlist);
 #endif
@@ -64,7 +64,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Null(cmd.Container);
             Assert.True(cmd.DesignTimeVisible);
             Assert.Null(cmd.Notification);
-#if NETFX
+#if NETFRAMEWORK
             // see https://github.com/dotnet/SqlClient/issues/17
             Assert.True(cmd.NotificationAutoEnlist);
 #endif
@@ -89,7 +89,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Null(cmd.Container);
             Assert.True(cmd.DesignTimeVisible);
             Assert.Null(cmd.Notification);
-#if NETFX
+#if NETFRAMEWORK
             // see https://github.com/dotnet/SqlClient/issues/17
             Assert.True(cmd.NotificationAutoEnlist);
 #endif
@@ -107,7 +107,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Null(cmd.Container);
             Assert.True(cmd.DesignTimeVisible);
             Assert.Null(cmd.Notification);
-#if NETFX
+#if NETFRAMEWORK
             // see https://github.com/dotnet/SqlClient/issues/17
             Assert.True(cmd.NotificationAutoEnlist);
 #endif
@@ -125,7 +125,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Null(cmd.Container);
             Assert.True(cmd.DesignTimeVisible);
             Assert.Null(cmd.Notification);
-#if NETFX
+#if NETFRAMEWORK && !NETSTANDARDREFERNCE
             // see https://github.com/dotnet/SqlClient/issues/17
             Assert.True(cmd.NotificationAutoEnlist);
 #endif
@@ -166,7 +166,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Null(cmd.Container);
             Assert.True(cmd.DesignTimeVisible);
             Assert.Null(cmd.Notification);
-#if NETFX
+#if NETFRAMEWORK && !NETSTANDARDREFERNCE
             // see https://github.com/dotnet/SqlClient/issues/17
             Assert.True(cmd.NotificationAutoEnlist);
 #endif
@@ -184,7 +184,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Null(cmd.Container);
             Assert.True(cmd.DesignTimeVisible);
             Assert.Null(cmd.Notification);
-#if NETFX
+#if NETFRAMEWORK && !NETSTANDARDREFERNCE
             // see https://github.com/dotnet/SqlClient/issues/17
             Assert.True(cmd.NotificationAutoEnlist);
 #endif
@@ -202,7 +202,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Null(cmd.Container);
             Assert.True(cmd.DesignTimeVisible);
             Assert.Null(cmd.Notification);
-#if NETFX
+#if NETFRAMEWORK && !NETSTANDARDREFERNCE
             // see https://github.com/dotnet/SqlClient/issues/17
             Assert.True(cmd.NotificationAutoEnlist);
 #endif
@@ -224,7 +224,7 @@ namespace Microsoft.Data.SqlClient.Tests
             cmd.CommandType = CommandType.StoredProcedure;
             cmd.DesignTimeVisible = false;
             cmd.Notification = notificationReq;
-#if NETFX
+#if NETFRAMEWORK && !NETSTANDARDREFERNCE
             // see https://github.com/dotnet/SqlClient/issues/17
             Assert.True(cmd.NotificationAutoEnlist);
 #endif
@@ -240,7 +240,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Null(cmd.Connection);
             Assert.False(cmd.DesignTimeVisible);
             Assert.Same(notificationReq, cmd.Notification);
-#if NETFX
+#if NETFRAMEWORK && !NETSTANDARDREFERNCE
             // see https://github.com/dotnet/SqlClient/issues/17
             Assert.True(cmd.NotificationAutoEnlist);
 #endif

@@ -1420,15 +1420,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Microsoft.Data.SqlClient is not supported on this platform..
-        /// </summary>
-        internal static string PlatformNotSupported_DataSqlClient {
-            get {
-                return ResourceManager.GetString("PlatformNotSupported_DataSqlClient", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Security Warning: The negotiated {0} is an insecure protocol and is supported for backward compatibility only. The recommended protocol version is TLS 1.2 and later..
         /// </summary>
         internal static string SEC_ProtocolWarning {
@@ -2797,15 +2788,6 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Cannot use &apos;Authentication={0}&apos; with &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
-        /// </summary>
-        internal static string SQL_NonInteractiveWithPassword {
-            get {
-                return ResourceManager.GetString("SQL_NonInteractiveWithPassword", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to The connection does not support MultipleActiveResultSets..
         /// </summary>
         internal static string SQL_MarsUnsupportedOnConnection {
@@ -2833,7 +2815,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Error code 0x{0}; state {1}.
+        ///   Looks up a localized string similar to Error code 0x{0}.
         /// </summary>
         internal static string SQL_MSALInnerException {
             get {
@@ -2865,6 +2847,15 @@ namespace System {
         internal static string SQL_NonCharColumn {
             get {
                 return ResourceManager.GetString("SQL_NonCharColumn", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication={0}&apos; with &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
+        /// </summary>
+        internal static string SQL_NonInteractiveWithPassword {
+            get {
+                return ResourceManager.GetString("SQL_NonInteractiveWithPassword", resourceCulture);
             }
         }
         
@@ -4451,12 +4442,15 @@ namespace System {
                 return ResourceManager.GetString("TCE_DbConnectionString_AttestationProtocol", resourceCulture);
             }
         }
-
+        
         /// <summary>
-        ///   Looks up a localized string similar to Specifies an IP address preference when connecting to SQL instances.
+        ///   Looks up a localized string similar to Specifies an IP address preference when connecting to SQL instances..
         /// </summary>
-        internal static string TCE_DbConnectionString_IPAddressPreference
-            => ResourceManager.GetString("TCE_DbConnectionString_IPAddressPreference", resourceCulture);
+        internal static string TCE_DbConnectionString_IPAddressPreference {
+            get {
+                return ResourceManager.GetString("TCE_DbConnectionString_IPAddressPreference", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to Decryption failed. The last 10 bytes of the encrypted column encryption key are: &apos;{0}&apos;. The first 10 bytes of ciphertext are: &apos;{1}&apos;..

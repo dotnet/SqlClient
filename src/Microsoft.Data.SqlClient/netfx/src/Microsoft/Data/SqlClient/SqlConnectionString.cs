@@ -31,7 +31,7 @@ namespace Microsoft.Data.SqlClient
             internal const bool Context_Connection = false;
             internal const string Current_Language = _emptyString;
             internal const string Data_Source = _emptyString;
-            internal const bool Encrypt = false;
+            internal const bool Encrypt = true;
             internal const bool Enlist = true;
             internal const string FailoverPartner = _emptyString;
             internal const string Initial_Catalog = _emptyString;

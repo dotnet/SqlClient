@@ -75,37 +75,25 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                     sqlSetupStrategyCsp = new SQLSetupStrategyCspExt(cspPath);
                     string tableName = sqlSetupStrategyCsp.CspProviderTable.Name;
 
-                    using (SqlConnection sqlConn = new SqlConnection(connectionString))
-                    {
-                        sqlConn.Open();
+                    using SqlConnection sqlConn = new(connectionString);
+                    sqlConn.Open();
 
-                        Table.DeleteData(tableName, sqlConn);
+                    Table.DeleteData(tableName, sqlConn);
 
-                        // insert 1 row data
-                        Customer customer = new Customer(45, "Microsoft", "Corporation");
+                    // insert 1 row data
+                    Customer customer = new Customer(45, "Microsoft", "Corporation");
 
-                        DatabaseHelper.InsertCustomerData(sqlConn, tableName, customer);
+                    DatabaseHelper.InsertCustomerData(sqlConn, null, tableName, customer);
 
-                        // Test INPUT parameter on an encrypted parameter
-                        using (SqlCommand sqlCommand = new SqlCommand(@"SELECT CustomerId, FirstName, LastName FROM [@tableName] WHERE FirstName = @firstName",
-                                                                    sqlConn, null, SqlCommandColumnEncryptionSetting.Enabled))
-                        {
-                            sqlCommand.Parameters.AddWithValue(@"tableName", tableName);
-                            SqlParameter customerFirstParam = sqlCommand.Parameters.AddWithValue(@"firstName", @"Microsoft");
-                            customerFirstParam.Direction = System.Data.ParameterDirection.Input;
+                    // Test INPUT parameter on an encrypted parameter
+                    using SqlCommand sqlCommand = new(@$"SELECT CustomerId, FirstName, LastName FROM [{tableName}] WHERE FirstName = @firstName",
+                                                                sqlConn, null, SqlCommandColumnEncryptionSetting.Enabled);
+                    SqlParameter customerFirstParam = sqlCommand.Parameters.AddWithValue(@"firstName", @"Microsoft");
+                    customerFirstParam.Direction = System.Data.ParameterDirection.Input;
 
-                            using (SqlDataReader sqlDataReader = sqlCommand.ExecuteReader())
-                            {
-                                ValidateResultSet(sqlDataReader);
-                                Console.WriteLine(@"INFO: Successfully validated using a certificate using provider:{0}", providerName);
-                            }
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(@"INFO: Failed to validate using a certificate using provider:{0}", providerName);
-                    Console.WriteLine(@"Exception: {0}", e.Message);
+                    using SqlDataReader sqlDataReader = sqlCommand.ExecuteReader();
+                    ValidateResultSet(sqlDataReader);
+                    Console.WriteLine(@"INFO: Successfully validated using a certificate using provider:{0}", providerName);
                 }
                 finally
                 {
@@ -168,35 +156,25 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
 
                 try
                 {
-                    using (SqlConnection sqlConn = new SqlConnection(connectionString))
-                    {
-                        sqlConn.Open();
+                    using SqlConnection sqlConn = new(connectionString);
+                    sqlConn.Open();
 
-                        Table.DeleteData(tableName, sqlConn);
+                    Table.DeleteData(tableName, sqlConn);
 
-                        // insert 1 row data
-                        Customer customer = new Customer(45, "Microsoft", "Corporation");
+                    // insert 1 row data
+                    Customer customer = new Customer(45, "Microsoft", "Corporation");
 
-                        DatabaseHelper.InsertCustomerData(sqlConn, tableName, customer);
+                    DatabaseHelper.InsertCustomerData(sqlConn, null, tableName, customer);
 
-                        // Test INPUT parameter on an encrypted parameter
-                        using (SqlCommand sqlCommand = new SqlCommand(@"SELECT CustomerId, FirstName, LastName FROM [@tableName] WHERE FirstName = @firstName",
-                                                                    sqlConn, null, SqlCommandColumnEncryptionSetting.Enabled))
-                        {
-                            sqlCommand.Parameters.AddWithValue(@"tableName", tableName);
-                            SqlParameter customerFirstParam = sqlCommand.Parameters.AddWithValue(@"firstName", @"Microsoft");
-                            customerFirstParam.Direction = System.Data.ParameterDirection.Input;
+                    // Test INPUT parameter on an encrypted parameter
+                    using SqlCommand sqlCommand = new(@$"SELECT CustomerId, FirstName, LastName FROM [{tableName}] WHERE FirstName = @firstName",
+                                                                sqlConn, null, SqlCommandColumnEncryptionSetting.Enabled);
+                    SqlParameter customerFirstParam = sqlCommand.Parameters.AddWithValue(@"firstName", @"Microsoft");
+                    Console.WriteLine(@"Exception: {0}");
+                    customerFirstParam.Direction = System.Data.ParameterDirection.Input;
 
-                            using (SqlDataReader sqlDataReader = sqlCommand.ExecuteReader())
-                            {
-                                ValidateResultSet(sqlDataReader);
-                            }
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(@"Exception: {0}", e.Message);
+                    using SqlDataReader sqlDataReader = sqlCommand.ExecuteReader();
+                    ValidateResultSet(sqlDataReader);
                 }
                 finally
                 {

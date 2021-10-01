@@ -4,6 +4,7 @@
 
 using System;
 using System.Data;
+using System.Threading.Tasks;
 using System.Transactions;
 using Xunit;
 
@@ -44,6 +45,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void TestManualEnlistment_Enlist_TxScopeComplete()
         {
             RunTestSet(TestCase_ManualEnlistment_Enlist_TxScopeComplete);
+        }
+
+        [SkipOnTargetFramework(TargetFrameworkMonikers.Netcoreapp)]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public static void TestEnlistmentPrepare_TxScopeComplete()
+        {
+            try
+            {
+                using TransactionScope txScope = new(TransactionScopeOption.RequiresNew, new TransactionOptions()
+                {
+                    IsolationLevel = System.Transactions.IsolationLevel.ReadCommitted,
+                    Timeout = TransactionManager.DefaultTimeout
+                }, TransactionScopeAsyncFlowOption.Enabled);
+
+                using SqlConnection connection = new(DataTestUtility.TCPConnectionString);
+                connection.Open();
+                System.Transactions.Transaction.Current.EnlistDurable(EnlistmentForPrepare.s_id, new EnlistmentForPrepare(), EnlistmentOptions.None);
+                txScope.Complete();
+                Assert.False(true, "Expected exception not thrown.");
+            }
+            catch (Exception e)
+            {
+                Assert.True(e is TransactionAbortedException);
+            }
         }
 
         private static void TestCase_AutoEnlistment_TxScopeComplete()
@@ -166,6 +191,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             DataTable result = DataTestUtility.RunQuery(ConnectionString, $"select col2 from {TestTableName} where col1 = {InputCol1}");
             Assert.True(result.Rows.Count == 1);
             Assert.True(string.Equals(result.Rows[0][0], InputCol2));
+        }
+
+        class EnlistmentForPrepare : IEnlistmentNotification
+        {
+            public static readonly Guid s_id = Guid.NewGuid();
+            // fail during prepare, this will cause scope.Complete to throw
+            public void Prepare(PreparingEnlistment preparingEnlistment) => preparingEnlistment.ForceRollback();
+            public void Commit(Enlistment enlistment) => enlistment.Done();
+            public void Rollback(Enlistment enlistment) => enlistment.Done();
+            public void InDoubt(Enlistment enlistment) => enlistment.Done();
         }
 
         private static string TestTableName;
