@@ -29,24 +29,24 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
     // Class to contain/store all relevant information about a connection that waits on the SSB queue.
     private class SqlConnectionContainer
     {
-        private SqlConnection _con;
-        private SqlCommand _com;
-        private SqlParameter _conversationGuidParam;
-        private SqlParameter _timeoutParam;
-        private SqlConnectionContainerHashHelper _hashHelper;
+        private readonly SqlConnection _con;
+        private readonly SqlCommand _com;
+        private readonly SqlParameter _conversationGuidParam;
+        private readonly SqlParameter _timeoutParam;
+        private readonly SqlConnectionContainerHashHelper _hashHelper;
 #if NETFRAMEWORK
-        private WindowsIdentity _windowsIdentity;
+        private readonly WindowsIdentity _windowsIdentity;
 #endif
-        private string _queue;
-        private string _receiveQuery;
+        private readonly string _queue;
+        private readonly string _receiveQuery;
         private string _beginConversationQuery;
         private string _endConversationQuery;
         private string _concatQuery;
         private readonly int _defaultWaitforTimeout = 60000; // Waitfor(Receive) timeout (milleseconds)
-        private string _escapedQueueName;
-        private string _sprocName;
+        private readonly string _escapedQueueName;
+        private readonly string _sprocName;
         private string _dialogHandle;
-        private string _cachedServer;
+        private readonly string _cachedServer;
         private string _cachedDatabase;
         private volatile bool _errorState = false;
         private volatile bool _stop = false; // Can probably simplify this slightly - one bool instead of two.
@@ -55,10 +55,10 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
         private int _startCount = 0;     // Each container class is called once per Start() - we refCount 
                                          // to track when we can dispose.
         private Timer _retryTimer = null;
-        private Dictionary<string, int> _appDomainKeyHash = null;  // AppDomainKey->Open RefCount
+        private readonly Dictionary<string, int> _appDomainKeyHash = null;  // AppDomainKey->Open RefCount
 
-        private static int _objectTypeCount; // EventSource counter
-        internal int ObjectID { get; } = Interlocked.Increment(ref _objectTypeCount);
+        private static int s_objectTypeCount; // EventSource counter
+        internal int ObjectID { get; } = Interlocked.Increment(ref s_objectTypeCount);
 
         // Constructor
 
@@ -285,7 +285,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
             long scopeID = SqlClientEventSource.Log.TryNotificationScopeEnterEvent("<sc.SqlConnectionContainer.AsynchronouslyQueryServiceBrokerQueue|DEP> {0}", ObjectID);
             try
             {
-                AsyncCallback callback = new AsyncCallback(AsyncResultCallback);
+                AsyncCallback callback = new(AsyncResultCallback);
                 _com.BeginExecuteReader(callback, null, CommandBehavior.Default); // NO LOCK NEEDED
             }
             finally
@@ -351,7 +351,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
             long scopeID = SqlClientEventSource.Log.TryNotificationScopeEnterEvent("<sc.SqlConnectionContainer.CreateQueueAndService|DEP> {0}", ObjectID);
             try
             {
-                SqlCommand com = new SqlCommand()
+                SqlCommand com = new()
                 {
                     Connection = _con
                 };
@@ -439,7 +439,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                                 + " END;"
                           + " BEGIN DIALOG @dialog_handle FROM SERVICE " + _escapedQueueName + " TO SERVICE " + nameLiteral;
 
-                    SqlParameter param = new SqlParameter()
+                    SqlParameter param = new()
                     {
                         ParameterName = "@dialog_handle",
                         DbType = DbType.Guid,
@@ -1218,7 +1218,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                     }
 
                     // Create a new XmlTextReader on the Message node value. Prohibit DTD processing when dealing with untrusted sources.
-                    using (XmlTextReader xmlMessageReader = new XmlTextReader(xmlReader.Value, XmlNodeType.Element, null) { DtdProcessing = DtdProcessing.Prohibit })
+                    using (XmlTextReader xmlMessageReader = new(xmlReader.Value, XmlNodeType.Element, null) { DtdProcessing = DtdProcessing.Prohibit })
                     {
                         // Proceed to the Text Node.
                         if (!xmlMessageReader.Read())
@@ -1260,10 +1260,10 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
 
         // As a result, we will not use _connectionStringBuilder as part of Equals or GetHashCode.
 
-        private DbConnectionPoolIdentity _identity;
-        private string _connectionString;
-        private string _queue;
-        private SqlConnectionStringBuilder _connectionStringBuilder; // Not to be used for comparison!
+        private readonly DbConnectionPoolIdentity _identity;
+        private readonly string _connectionString;
+        private readonly string _queue;
+        private readonly SqlConnectionStringBuilder _connectionStringBuilder; // Not to be used for comparison!
 
         internal SqlConnectionContainerHashHelper(DbConnectionPoolIdentity identity, string connectionString,
                                                   string queue, SqlConnectionStringBuilder connectionStringBuilder)
@@ -1285,7 +1285,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
         {
             SqlConnectionContainerHashHelper temp = (SqlConnectionContainerHashHelper)value;
 
-            bool result = false;
+            bool result;
 
             // Ignore SqlConnectionStringBuilder, since it is present largely for debug purposes.
 
@@ -1358,14 +1358,14 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
 
     // SqlDependencyProcessDispatcher static members
 
-    private static SqlDependencyProcessDispatcher s_staticInstance = new SqlDependencyProcessDispatcher(null);
+    private static readonly SqlDependencyProcessDispatcher s_staticInstance = new(null);
 
     // Dictionaries used as maps.
-    private Dictionary<SqlConnectionContainerHashHelper, SqlConnectionContainer> _connectionContainers;                 // NT_ID+ConStr+Service->Container
-    private Dictionary<string, SqlDependencyPerAppDomainDispatcher> _sqlDependencyPerAppDomainDispatchers; // AppDomainKey->Callback
+    private readonly Dictionary<SqlConnectionContainerHashHelper, SqlConnectionContainer> _connectionContainers;                 // NT_ID+ConStr+Service->Container
+    private readonly Dictionary<string, SqlDependencyPerAppDomainDispatcher> _sqlDependencyPerAppDomainDispatchers; // AppDomainKey->Callback
 
-    private static int _objectTypeCount; //EventSource counter
-    internal int ObjectID { get; } = Interlocked.Increment(ref _objectTypeCount);
+    private static int s_objectTypeCount; //EventSource counter
+    internal int ObjectID { get; } = Interlocked.Increment(ref s_objectTypeCount);
     // Constructors
 
     // Private constructor - only called by public constructor for static initialization.
@@ -1521,7 +1521,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
             Debug.Assert(this == s_staticInstance, "Instance method called on non _staticInstance instance!");
             lock (_connectionContainers)
             {
-                List<SqlConnectionContainerHashHelper> containersToRemove = new List<SqlConnectionContainerHashHelper>();
+                List<SqlConnectionContainerHashHelper> containersToRemove = new();
 
                 foreach (KeyValuePair<SqlConnectionContainerHashHelper, SqlConnectionContainer> entry in _connectionContainers)
                 {
@@ -1589,15 +1589,15 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
         Debug.Assert(this == s_staticInstance, "Instance method called on non _staticInstance instance!");
         return Start(
             connectionString,
-            out string dummyValue1,
-            out DbConnectionPoolIdentity dummyValue3,
-            out dummyValue1,
-            out dummyValue1,
+            out _,
+            out _,
+            out _,
+            out _,
             ref queue,
                 appDomainKey,
                 dispatcher,
-            out bool dummyValue2,
-            out dummyValue2,
+            out _,
+            out _,
                 false);
     }
 
