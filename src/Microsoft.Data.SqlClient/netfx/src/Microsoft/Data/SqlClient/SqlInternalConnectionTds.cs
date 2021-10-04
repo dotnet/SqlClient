@@ -2566,7 +2566,7 @@ namespace Microsoft.Data.SqlClient
         /// <param name="fedAuthInfo">Federated Authentication Info.</param>
         internal void OnFedAuthInfo(SqlFedAuthInfo fedAuthInfo)
         {
-            Debug.Assert((ConnectionOptions.HasUserIdKeyword && ConnectionOptions.HasPasswordKeyword)
+            Debug.Assert((ConnectionOptions._hasUserIdKeyword && ConnectionOptions._hasPasswordKeyword)
                          || _credential != null
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity

@@ -4,6 +4,7 @@
 
 using System;
 using System.IO;
+using System.Text;
 
 namespace Microsoft.Data.Common
 {
@@ -13,8 +14,8 @@ namespace Microsoft.Data.Common
         {
             int copyPosition = 0;
 
-            System.Text.StringBuilder builder = new(_usersConnectionString.Length);
-            for (NameValuePair current = KeyChain; null != current; current = current.Next)
+            StringBuilder builder = new(_usersConnectionString.Length);
+            for (NameValuePair current = _keyChain; null != current; current = current.Next)
             {
                 if (string.Equals(current.Name, DbConnectionStringKeywords.AttachDBFilename, StringComparison.InvariantCultureIgnoreCase))
                 {

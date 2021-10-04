@@ -556,32 +556,32 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.AuthenticationAndIntegratedSecurity();
             }
 
-            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && (HasUserIdKeyword || HasPasswordKeyword))
+            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && (_hasUserIdKeyword || _hasPasswordKeyword))
             {
                 throw SQL.IntegratedWithUserIDAndPassword();
             }
 
-            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive && (HasPasswordKeyword))
+            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive && (_hasPasswordKeyword))
             {
                 throw SQL.InteractiveWithPassword();
             }
 
-            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow && (HasUserIdKeyword || HasPasswordKeyword))
+            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow && (_hasUserIdKeyword || _hasPasswordKeyword))
             {
                 throw SQL.DeviceFlowWithUsernamePassword();
             }
 
-            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity && HasPasswordKeyword)
+            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity && _hasPasswordKeyword)
             {
                 throw SQL.NonInteractiveWithPassword(DbConnectionStringBuilderUtil.ActiveDirectoryManagedIdentityString);
             }
 
-            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI && HasPasswordKeyword)
+            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI && _hasPasswordKeyword)
             {
                 throw SQL.NonInteractiveWithPassword(DbConnectionStringBuilderUtil.ActiveDirectoryMSIString);
             }
 
-            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryDefault && HasPasswordKeyword)
+            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryDefault && _hasPasswordKeyword)
             {
                 throw SQL.NonInteractiveWithPassword(DbConnectionStringBuilderUtil.ActiveDirectoryDefaultString);
             }
@@ -1110,8 +1110,6 @@ namespace Microsoft.Data.SqlClient
 
         internal bool ConvertValueToEncrypt()
         {
-            // If the Authentication keyword is provided, default to Encrypt=true;
-            // otherwise keep old default for backwards compatibility
             bool defaultEncryptValue = !base.Parsetable.ContainsKey(KEY.Authentication) ? DEFAULT.Encrypt : true;
             return ConvertValueToBoolean(KEY.Encrypt, defaultEncryptValue);
         }

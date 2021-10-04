@@ -99,15 +99,15 @@ namespace Microsoft.Data.Common
         private static readonly Regex s_connectionStringQuoteValueRegex = new Regex(ConnectionStringQuoteValuePattern, RegexOptions.Compiled);
         private static readonly Regex s_connectionStringQuoteOdbcValueRegex = new Regex(ConnectionStringQuoteOdbcValuePattern, RegexOptions.ExplicitCapture | RegexOptions.Compiled);
 
-        internal readonly bool HasPasswordKeyword;
-        internal readonly bool HasUserIdKeyword;
-        internal readonly NameValuePair KeyChain;
+        internal readonly bool _hasPasswordKeyword;
+        internal readonly bool _hasUserIdKeyword;
+        internal readonly NameValuePair _keyChain;
 
         private readonly string _usersConnectionString;
         private readonly Dictionary<string, string> _parsetable;
 
         internal Dictionary<string, string> Parsetable => _parsetable;
-        public bool IsEmpty => KeyChain == null;
+        public bool IsEmpty => _keyChain == null;
 
         public DbConnectionOptions(string connectionString, Dictionary<string, string> synonyms)
         {
@@ -117,9 +117,9 @@ namespace Microsoft.Data.Common
             // first pass on parsing, initial syntax check
             if (0 < _usersConnectionString.Length)
             {
-                KeyChain = ParseInternal(_parsetable, _usersConnectionString, true, synonyms, false);
-                HasPasswordKeyword = (_parsetable.ContainsKey(KEY.Password) || _parsetable.ContainsKey(SYNONYM.Pwd));
-                HasUserIdKeyword = (_parsetable.ContainsKey(KEY.User_ID) || _parsetable.ContainsKey(SYNONYM.UID));
+                _keyChain = ParseInternal(_parsetable, _usersConnectionString, true, synonyms, false);
+                _hasPasswordKeyword = (_parsetable.ContainsKey(KEY.Password) || _parsetable.ContainsKey(SYNONYM.Pwd));
+                _hasUserIdKeyword = (_parsetable.ContainsKey(KEY.User_ID) || _parsetable.ContainsKey(SYNONYM.UID));
             }
         }
 
@@ -127,9 +127,9 @@ namespace Microsoft.Data.Common
         { // Clone used by SqlConnectionString
             _usersConnectionString = connectionOptions._usersConnectionString;
             _parsetable = connectionOptions._parsetable;
-            KeyChain = connectionOptions.KeyChain;
-            HasPasswordKeyword = connectionOptions.HasPasswordKeyword;
-            HasUserIdKeyword = connectionOptions.HasUserIdKeyword;
+            _keyChain = connectionOptions._keyChain;
+            _hasPasswordKeyword = connectionOptions._hasPasswordKeyword;
+            _hasUserIdKeyword = connectionOptions._hasUserIdKeyword;
         }
 
         internal bool TryGetParsetableValue(string key, out string value) => _parsetable.TryGetValue(key, out value);
@@ -137,10 +137,9 @@ namespace Microsoft.Data.Common
         // same as Boolean, but with SSPI thrown in as valid yes
         public bool ConvertValueToIntegratedSecurity()
         {
-            string value;
-            return _parsetable.TryGetValue(KEY.Integrated_Security, out value) && value != null ?
-                ConvertValueToIntegratedSecurityInternal(value) :
-                false;
+            return _parsetable.TryGetValue(KEY.Integrated_Security, out string value) && value != null ?
+                   ConvertValueToIntegratedSecurityInternal(value) :
+                   false;
         }
 
         internal bool ConvertValueToIntegratedSecurityInternal(string stringValue)
@@ -165,10 +164,9 @@ namespace Microsoft.Data.Common
 
         public int ConvertValueToInt32(string keyName, int defaultValue)
         {
-            string value;
-            return _parsetable.TryGetValue(keyName, out value) && value != null ?
-                ConvertToInt32Internal(keyName, value) :
-                defaultValue;
+            return _parsetable.TryGetValue(keyName, out string value) && value != null ?
+                   ConvertToInt32Internal(keyName, value) :
+                   defaultValue;
         }
 
         internal static int ConvertToInt32Internal(string keyname, string stringValue)
@@ -201,14 +199,14 @@ namespace Microsoft.Data.Common
         private string UsersConnectionString(bool hidePassword, bool forceHidePassword)
         {
             string connectionString = _usersConnectionString;
-            if (HasPasswordKeyword && (forceHidePassword || (hidePassword && !HasPersistablePassword)))
+            if (_hasPasswordKeyword && (forceHidePassword || (hidePassword && !HasPersistablePassword)))
             {
                 ReplacePasswordPwd(out connectionString, false);
             }
             return connectionString ?? string.Empty;
         }
 
-        internal bool HasPersistablePassword => HasPasswordKeyword ?
+        internal bool HasPersistablePassword => _hasPasswordKeyword ?
             ConvertValueToBoolean(KEY.Persist_Security_Info, DbConnectionStringDefaults.PersistSecurityInfo) :
             true; // no password means persistable password so we don't have to munge
 
@@ -725,7 +723,7 @@ namespace Microsoft.Data.Common
             int copyPosition = 0;
             NameValuePair head = null, tail = null, next = null;
             StringBuilder builder = new StringBuilder(_usersConnectionString.Length);
-            for (NameValuePair current = KeyChain; null != current; current = current.Next)
+            for (NameValuePair current = _keyChain; null != current; current = current.Next)
             {
                 if(!string.Equals(KEY.Password, current.Name, StringComparison.InvariantCultureIgnoreCase) &&
                    !string.Equals(SYNONYM.Pwd, current.Name, StringComparison.InvariantCultureIgnoreCase))

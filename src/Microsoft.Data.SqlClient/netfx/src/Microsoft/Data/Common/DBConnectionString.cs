@@ -81,9 +81,9 @@ namespace Microsoft.Data.Common
 
             // grab all the parsed details from DbConnectionOptions
             _encryptedUsersConnectionString = connectionOptions.UsersConnectionString(false);
-            _hasPassword = connectionOptions.HasPasswordKeyword;
+            _hasPassword = connectionOptions._hasPasswordKeyword;
             _parsetable = connectionOptions.Parsetable;
-            _keychain = connectionOptions.KeyChain;
+            _keychain = connectionOptions._keyChain;
 
             // we do not want to serialize out user password unless directed so by "persist security info=true"
             // otherwise all instances of user's password will be replaced with "*"

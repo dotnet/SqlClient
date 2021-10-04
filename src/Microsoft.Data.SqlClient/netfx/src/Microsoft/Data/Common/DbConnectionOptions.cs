@@ -4,8 +4,8 @@
 
 using System;
 using System.Runtime.Versioning;
+using System.Security;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace Microsoft.Data.Common
 {
@@ -13,9 +13,9 @@ namespace Microsoft.Data.Common
     {
         public string this[string keyword] => _parsetable[keyword];
 
-        private System.Security.PermissionSet _permissionset;
+        private PermissionSet _permissionset;
 
-        protected internal virtual System.Security.PermissionSet CreatePermissionSet() => null;
+        protected internal virtual PermissionSet CreatePermissionSet() => null;
 
         internal void DemandPermission()
         {
@@ -59,7 +59,7 @@ namespace Microsoft.Data.Common
             int copyPosition = 0;
 
             StringBuilder builder = new(_usersConnectionString.Length);
-            for (NameValuePair current = KeyChain; null != current; current = current.Next)
+            for (NameValuePair current = _keyChain; null != current; current = current.Next)
             {
                 if ((current.Name == keyword) && (current.Value == this[keyword]))
                 {
@@ -85,8 +85,8 @@ namespace Microsoft.Data.Common
 
         internal static void AppendKeyValuePairBuilder(StringBuilder builder, string keyName, string keyValue, bool useOdbcRules = false)
         {
-            ADP.CheckArgumentNull(builder, "builder");
-            ADP.CheckArgumentLength(keyName, "keyName");
+            ADP.CheckArgumentNull(builder, nameof(builder));
+            ADP.CheckArgumentLength(keyName, nameof(keyName));
 
             if ((null == keyName) || !s_connectionStringValidKeyRegex.IsMatch(keyName))
             {
