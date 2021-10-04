@@ -238,6 +238,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlParameterCollection.cs">
       <Link>Microsoft\Data\SqlClient\SqlParameterCollection.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlObjectPool.cs">
+      <Link>Microsoft\Data\SqlClient\SqlObjectPool.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlRowUpdatedEvent.cs">
       <Link>Microsoft\Data\SqlClient\SqlRowUpdatedEvent.cs</Link>
     </Compile>
@@ -554,7 +557,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNINpHandle.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIPacket.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIPacket.Debug.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIPacketPool.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIPhysicalHandle.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIProxy.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIStreams.cs" />
