@@ -9,9 +9,9 @@ namespace Microsoft.Data.SqlClient
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationEventArgs.xml' path='docs/members[@name="SqlNotificationEventArgs"]/SqlNotificationEventArgs/*' />
     public class SqlNotificationEventArgs : EventArgs
     {
-        private SqlNotificationType _type;
-        private SqlNotificationInfo _info;
-        private SqlNotificationSource _source;
+        private readonly SqlNotificationType _type;
+        private readonly SqlNotificationInfo _info;
+        private readonly SqlNotificationSource _source;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationEventArgs.xml' path='docs/members[@name="SqlNotificationEventArgs"]/ctor/*' />
         public SqlNotificationEventArgs(SqlNotificationType type, SqlNotificationInfo info, SqlNotificationSource source)
@@ -30,6 +30,6 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlNotificationEventArgs.xml' path='docs/members[@name="SqlNotificationEventArgs"]/Source/*' />
         public SqlNotificationSource Source => _source;
 
-        internal static SqlNotificationEventArgs s_notifyError = new SqlNotificationEventArgs(SqlNotificationType.Subscribe, SqlNotificationInfo.Error, SqlNotificationSource.Object);
+        internal static SqlNotificationEventArgs s_notifyError = new(SqlNotificationType.Subscribe, SqlNotificationInfo.Error, SqlNotificationSource.Object);
     }
 }
