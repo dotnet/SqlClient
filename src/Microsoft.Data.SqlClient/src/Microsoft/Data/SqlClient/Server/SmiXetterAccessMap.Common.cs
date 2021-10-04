@@ -7,13 +7,13 @@ using System.Diagnostics;
 namespace Microsoft.Data.SqlClient.Server
 {
     // Formal encoding of SMI's metadata-to-ITypedSetter/-from-ITypedGetter validity rules
-    internal class SmiXetterAccessMap
+    internal partial class SmiXetterAccessMap
     {
         // A couple of private constants to make the getter/setter access tables more readable
         private const bool X = true;
         private const bool _ = false;
 
-
+ 
         private static bool[,] s_isSetterAccessValid = {
             // Setters as columns (abbreviated from XetterTypeCode names)
             // SqlDbTypes as rows
@@ -101,5 +101,7 @@ namespace Microsoft.Data.SqlClient.Server
 
             return s_isSetterAccessValid[(int)metaData.SqlDbType, (int)xetterType];
         }
+
+
     }
 }
