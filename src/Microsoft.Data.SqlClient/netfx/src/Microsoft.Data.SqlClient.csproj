@@ -213,6 +213,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlRecordBuffer.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlRecordBuffer.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlDataRecord.Common.cs">
+      <Link>Microsoft\Data\SqlClient\Server\SqlDataRecord.Common.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SmiMetaData.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiMetaData.cs</Link>
     </Compile>
