@@ -607,7 +607,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlColumnEncryptionKeyStoreProvider.xml' path='docs/members[@name="SqlColumnEncryptionKeyStoreProvider"]/ColumnEncryptionKeyCacheTtl/*'/>
         public virtual System.TimeSpan? ColumnEncryptionKeyCacheTtl { get { throw null; } set { } }
     }
-#if NETCOREAPP || NETSTANDARD
+#if NETCOREAPP || NETSTANDARD || NETFRAMEWORK
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSetting"]/SqlCommandColumnEncryptionSetting/*'/>
     public enum SqlCommandColumnEncryptionSetting
     {
@@ -854,20 +854,6 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/UnquoteIdentifier/*'/>
         public override string UnquoteIdentifier(string quotedIdentifier) { throw null; }
     }
-#if NETFRAMEWORK
-    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSetting"]/SqlCommandColumnEncryptionSetting/*'/>
-    public enum SqlCommandColumnEncryptionSetting
-    {
-        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSetting"]/Disabled/*'/>
-        Disabled = 3,
-        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSetting"]/Enabled/*'/>
-        Enabled = 1,
-        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSetting"]/ResultSetOnly/*'/>
-        ResultSetOnly = 2,
-        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandColumnEncryptionSetting.xml' path='docs/members[@name="SqlCommandColumnEncryptionSetting"]/UseConnectionSetting/*'/>
-        UseConnectionSetting = 0,
-    }
-#endif // NETFRAMEWORK
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/SqlConnection/*'/>
     [System.ComponentModel.DefaultEventAttribute("InfoMessage")]
     public sealed partial class SqlConnection : System.Data.Common.DbConnection, System.ICloneable
@@ -878,18 +864,22 @@ namespace Microsoft.Data.SqlClient
         public SqlConnection(string connectionString) { }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionStringCredential/*'/>
         public SqlConnection(string connectionString, Microsoft.Data.SqlClient.SqlCredential credential) { }
-#if NETCOREAPP
+#if NETCOREAPP || NETFRAMEWORK
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionKeyCacheTtl/*'/>
+        [System.ComponentModel.DefaultValueAttribute(null)]
         public static System.TimeSpan ColumnEncryptionKeyCacheTtl { get { throw null; } set { } }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionQueryMetadataCacheEnabled/*'/>
+
+        [System.ComponentModel.DefaultValueAttribute(null)] 
         public static bool ColumnEncryptionQueryMetadataCacheEnabled { get { throw null; } set { } }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionTrustedMasterKeyPaths/*'/>
+        [System.ComponentModel.DefaultValueAttribute(null)]
         public static System.Collections.Generic.IDictionary<string, System.Collections.Generic.IList<string>> ColumnEncryptionTrustedMasterKeyPaths { get { throw null; } }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisterColumnEncryptionKeyStoreProviders/*'/>
         public static void RegisterColumnEncryptionKeyStoreProviders(System.Collections.Generic.IDictionary<string, Microsoft.Data.SqlClient.SqlColumnEncryptionKeyStoreProvider> customProviders) { }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisterColumnEncryptionKeyStoreProvidersOnConnection/*' />
         public void RegisterColumnEncryptionKeyStoreProvidersOnConnection(System.Collections.Generic.IDictionary<string, Microsoft.Data.SqlClient.SqlColumnEncryptionKeyStoreProvider> customProviders) { }
-#endif // NETCOREAPP
+#endif // NETCOREAPP || NETFRAMEWORK
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/AccessToken/*'/>
         [System.ComponentModel.BrowsableAttribute(false)]
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
@@ -911,17 +901,6 @@ namespace Microsoft.Data.SqlClient
         internal string SQLDNSCachingSupportedStateBeforeRedirect { get { throw null; } }
 #endif // NETCOREAPP
         object System.ICloneable.Clone() { throw null; }
-#if NETFRAMEWORK
-        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionKeyCacheTtl/*'/>
-        [System.ComponentModel.DefaultValueAttribute(null)]
-        public static System.TimeSpan ColumnEncryptionKeyCacheTtl { get { throw null; } set { } }
-        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionQueryMetadataCacheEnabled/*'/>
-        [System.ComponentModel.DefaultValueAttribute(null)]
-        public static bool ColumnEncryptionQueryMetadataCacheEnabled { get { throw null; } set { } }
-        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionTrustedMasterKeyPaths/*'/>
-        [System.ComponentModel.DefaultValueAttribute(null)]
-        public static System.Collections.Generic.IDictionary<string, System.Collections.Generic.IList<string>> ColumnEncryptionTrustedMasterKeyPaths { get { throw null; } }
-#endif // NETFRAMEWORK
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CommandTimeout/*' />
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
         public int CommandTimeout { get { throw null; } }
@@ -1043,12 +1022,6 @@ namespace Microsoft.Data.SqlClient
         public void Open(SqlConnectionOverrides overrides) { }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsync/*'/>
         public override System.Threading.Tasks.Task OpenAsync(System.Threading.CancellationToken cancellationToken) { throw null; }
-#if NETFRAMEWORK
-        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisterColumnEncryptionKeyStoreProviders/*'/>
-        public static void RegisterColumnEncryptionKeyStoreProviders(System.Collections.Generic.IDictionary<string, Microsoft.Data.SqlClient.SqlColumnEncryptionKeyStoreProvider> customProviders) { }
-        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisterColumnEncryptionKeyStoreProvidersOnConnection/*' />
-        public void RegisterColumnEncryptionKeyStoreProvidersOnConnection(System.Collections.Generic.IDictionary<string, Microsoft.Data.SqlClient.SqlColumnEncryptionKeyStoreProvider> customProviders) { }
-#endif // NETFRAMEWORK
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ResetStatistics/*'/>
         public void ResetStatistics() { }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetrieveStatistics/*'/>
@@ -1142,7 +1115,7 @@ namespace Microsoft.Data.SqlClient
         [System.ComponentModel.DisplayNameAttribute("Data Source")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public string DataSource { get { throw null; } set { } }
-#if NETCOREAPP || NETSTANDARD21_AND_ABOVE
+#if NETCOREAPP || NETSTANDARD21_AND_ABOVE || NETFRAMEWORK
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/AttestationProtocol/*' />
         [System.ComponentModel.DisplayNameAttribute("Attestation Protocol")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
@@ -1224,11 +1197,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/PoolBlockingPeriod/*'/>
         [System.ComponentModel.DisplayNameAttribute("Pool Blocking Period")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
-#if NETFRAMEWORK
-        public Microsoft.Data.SqlClient.PoolBlockingPeriod PoolBlockingPeriod { get { throw null; } set { } }
-#else
         public PoolBlockingPeriod PoolBlockingPeriod { get { throw null; } set { } }
-#endif // NETFRAMEWORK
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Pooling/*'/>
         [System.ComponentModel.DisplayNameAttribute("Pooling")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
@@ -1324,6 +1293,11 @@ namespace Microsoft.Data.SqlClient
         public event Microsoft.Data.SqlClient.SqlRowUpdatedEventHandler RowUpdated { add { } remove { } }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/RowUpdating/*'/>
         public event Microsoft.Data.SqlClient.SqlRowUpdatingEventHandler RowUpdating { add { } remove { } }
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/OnRowUpdated/*'/>
+        protected override void OnRowUpdated(System.Data.Common.RowUpdatedEventArgs value) { }
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/OnRowUpdating/*'/>
+        protected override void OnRowUpdating(System.Data.Common.RowUpdatingEventArgs value) { }
+        object System.ICloneable.Clone() { throw null; }
 #if NETFRAMEWORK
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/AddToBatch/*'/>
         protected override int AddToBatch(System.Data.IDbCommand command) { throw null; }
@@ -1341,13 +1315,6 @@ namespace Microsoft.Data.SqlClient
         protected override bool GetBatchedRecordsAffected(int commandIdentifier, out int recordsAffected, out System.Exception error) { throw null; }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/InitializeBatching/*'/>
         protected override void InitializeBatching() { }
-#endif // NETFRAMEWORK
-        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/OnRowUpdated/*'/>
-        protected override void OnRowUpdated(System.Data.Common.RowUpdatedEventArgs value) { }
-        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/OnRowUpdating/*'/>
-        protected override void OnRowUpdating(System.Data.Common.RowUpdatingEventArgs value) { }
-        object System.ICloneable.Clone() { throw null; }
-#if NETFRAMEWORK
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/TerminateBatching/*'/>
         protected override void TerminateBatching() { }
 #endif // NETFRAMEWORK
@@ -1389,7 +1356,7 @@ namespace Microsoft.Data.SqlClient
         public override char GetChar(int i) { throw null; }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetChars/*'/>
         public override long GetChars(int i, long dataIndex, char[] buffer, int bufferIndex, int length) { throw null; }
-#if NETCOREAPP
+#if NETCOREAPP || NETSTANDARD
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetColumnSchema/*'/>
         public System.Collections.ObjectModel.ReadOnlyCollection<System.Data.Common.DbColumn> GetColumnSchema() { throw null; }
 #endif // NETCOREAPP
@@ -1963,11 +1930,7 @@ namespace Microsoft.Data.SqlClient
         public override System.Data.IsolationLevel IsolationLevel { get { throw null; } }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Commit/*'/>
         public override void Commit() { }
-#if NETFRAMEWORK
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Dispose/*'/>
-#else
-        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/DisposeDisposing/*'/>
-#endif // NETFRAMEWORK
         protected override void Dispose(bool disposing) { }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Rollback1/*'/>
         public override void Rollback() { }
