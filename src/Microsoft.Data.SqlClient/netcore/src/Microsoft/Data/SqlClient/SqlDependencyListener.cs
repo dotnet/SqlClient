@@ -8,6 +8,12 @@ using System.Data;
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+#if NETFRAMEWORK
+using System.Runtime.CompilerServices;
+using System.Runtime.Versioning;
+using System.Security.Principal;
+using Microsoft.Data;
+#endif
 using System.Threading;
 using System.Xml;
 using Microsoft.Data.Common;
@@ -28,6 +34,9 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
         private SqlParameter _conversationGuidParam;
         private SqlParameter _timeoutParam;
         private SqlConnectionContainerHashHelper _hashHelper;
+#if NETFRAMEWORK
+        private WindowsIdentity _windowsIdentity;
+#endif
         private string _queue;
         private string _receiveQuery;
         private string _beginConversationQuery;
@@ -86,11 +95,27 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                 // Assert permission for this particular connection string since it differs from the user passed string
                 // which we have already demanded upon.  
                 SqlConnectionString connStringObj = (SqlConnectionString)_con.ConnectionOptions;
-
+#if NETFRAMEWORK
+                connStringObj.CreatePermissionSet().Assert();
+                if (connStringObj.LocalDBInstance != null)
+                {
+                    // If it is LocalDB, we demanded LocalDB permissions too
+                    LocalDBAPI.AssertLocalDBPermissions();
+                }
+#endif
                 _con.Open();
 
                 _cachedServer = _con.DataSource;
 
+#if NETFRAMEWORK
+                if (hashHelper.Identity != null)
+                {
+                    // For now, DbConnectionPoolIdentity does not cache WindowsIdentity.
+                    // That means for every container creation, we create a WindowsIdentity twice.
+                    // We may want to improve this.
+                    _windowsIdentity = DbConnectionPoolIdentity.GetCurrentWindowsIdentity();
+                }
+#endif
                 _escapedQueueName = SqlConnection.FixupDatabaseTransactionName(_queue); // Properly escape to prevent SQL Injection.
                 _appDomainKeyHash = new Dictionary<string, int>(); // Dictionary stores the Start/Stop refcount per AppDomain for this container.
                 _com = new SqlCommand()
@@ -612,6 +637,12 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
             }
         }
 
+#if NETFRAMEWORK
+        // SxS: this method uses WindowsIdentity.Impersonate to impersonate the current thread with the
+        // credentials used to create this SqlConnectionContainer.
+        [ResourceExposure(ResourceScope.None)]
+        [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
+#endif
         private void Restart(object unused)
         {
             long scopeID = SqlClientEventSource.Log.TryNotificationScopeEnterEvent("<sc.SqlConnectionContainer.Restart|DEP> {0}", ObjectID);
@@ -645,7 +676,31 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                     {
                         if (!_stop)
                         {
+#if NETFRAMEWORK
+                            if (null != _hashHelper.Identity)
+                            { // Only impersonate if Integrated Security.
+                                WindowsImpersonationContext context = null;
+                                RuntimeHelpers.PrepareConstrainedRegions(); // CER for context.Undo.
+                                try
+                                {
+                                    context = _windowsIdentity.Impersonate();
+#endif 
                             _con.Open();
+#if NETFRAMEWORK
+                                }
+                                finally
+                                {
+                                    if (null != context)
+                                    {
+                                        context.Undo();
+                                    }
+                                }
+                            }
+                            else
+                            { // Else SQL Authentication.
+                                _con.Open();
+                            }
+#endif
                         }
                     }
 
@@ -976,6 +1031,13 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                     {
                         _stopped = true;
                         _con.Dispose(); // Close and dispose connection.
+#if NETFRAMEWORK
+                        //dispose windows identity
+                        if (_windowsIdentity != null)
+                        {
+                            _windowsIdentity.Dispose();
+                        }
+#endif
                     }
                 }
             }
