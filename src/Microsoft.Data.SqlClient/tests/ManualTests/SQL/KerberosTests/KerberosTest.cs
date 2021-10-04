@@ -15,47 +15,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [PlatformSpecific(TestPlatforms.AnyUnix)]
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsKerberosTest))]
         [ClassData(typeof(ConnectionStringsProvider))]
-        public void IsKerBerosSetupTest(string connection)
+        public void IsKerBerosSetupTestAsync(string connectionStr)
         {
-            try
-            {
-                Task t = Task.Run(() => KerberosTicketManagemnt.Init(DataTestUtility.KerberosDomainUser)).ContinueWith((i) =>
-                {
-                    using var conn = new SqlConnection(connection);
-                    try
-                    {
-                        conn.Open();
-                        using var command = new SqlCommand("SELECT auth_scheme from sys.dm_exec_connections where session_id = @@spid", conn);
-                        using SqlDataReader reader = command.ExecuteReader();
-                        while (reader.Read())
-                        {
-                            Assert.Equal("KERBEROS", reader.GetString(0));
-                        }
-                    }
-                    catch (SqlException ex)
-                    {
-                        Console.WriteLine(ex.Message);
-                        Assert.False(true);
-                    }
-                });
-            }
-            catch (Exception ex)
-            {
-                Assert.True(false, ex.Message);
-            }
-        }
+            KerberosTicketManagemnt.Init(DataTestUtility.KerberosDomainUser);
+            using SqlConnection conn = new(connectionStr);
 
-        public class ConnectionStringsProvider : IEnumerable<object[]>
-        {
-            public IEnumerator<object[]> GetEnumerator()
-            {
-                foreach (var cnnString in DataTestUtility.ConnectionStrings)
-                {
-                    yield return new object[] { cnnString };
-                }
-            }
-
-            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+            conn.Open();
+            using SqlCommand command = new("SELECT auth_scheme from sys.dm_exec_connections where session_id = @@spid", conn);
+            using SqlDataReader reader = command.ExecuteReader();
+            Assert.True(reader.Read(), "Expected to receive one row data");
+            Assert.Equal("KERBEROS", reader.GetString(0));
         }
     }
+
+    public class ConnectionStringsProvider : IEnumerable<object[]>
+    {
+        public IEnumerator<object[]> GetEnumerator()
+        {
+            foreach (var cnnString in DataTestUtility.ConnectionStrings)
+            {
+                yield return new object[] { cnnString };
+            }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    }
+}
 }

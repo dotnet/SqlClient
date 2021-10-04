@@ -77,7 +77,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         //Kerberos variables
         public static readonly string KerberosDomainUser = null;
         internal static readonly string KerberosDomainPassword = null;
-        public static readonly bool IsKerberos = false;
 
         static DataTestUtility()
         {
@@ -162,10 +161,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     AEConnStringsSetup.Add(TCPConnectionString);
                 }
             }
-            if (!string.IsNullOrEmpty(KerberosDomainUser) && !string.IsNullOrEmpty(KerberosDomainPassword))
-            {
-                IsKerberos = true;
-            }
         }
 
         public static IEnumerable<string> ConnectionStrings
@@ -227,10 +222,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return result.AccessToken;
         });
 
-        public static bool IsKerberosTest()
-        {
-            return IsKerberos;
-        }
+        public static bool IsKerberosTest => !string.IsNullOrEmpty(KerberosDomainUser) && !string.IsNullOrEmpty(KerberosDomainPassword);
 
         public static bool IsDatabasePresent(string name)
         {

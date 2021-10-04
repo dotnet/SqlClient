@@ -7,6 +7,8 @@ using System.Diagnostics;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+    // This class is not used much since we are using Intengrated Authentication.
+    // When support per User is added will be used more frequently.
     internal static class KerberosTicketManagemnt
     {
         private static readonly string s_cmdPrompt = "/bin/bash";
