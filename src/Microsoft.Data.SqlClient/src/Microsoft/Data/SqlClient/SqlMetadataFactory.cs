@@ -15,9 +15,8 @@ namespace Microsoft.Data.SqlClient
     internal sealed class SqlMetaDataFactory : DbMetaDataFactory
     {
 
-        private const string _serverVersionNormalized90 = "09.00.0000";
-        private const string _serverVersionNormalized90782 = "09.00.0782";
-        private const string _serverVersionNormalized10 = "10.00.0000";
+        private const string ServerVersionNormalized90 = "09.00.0000";
+        private const string ServerVersionNormalized10 = "10.00.0000";
 
 
         public SqlMetaDataFactory(Stream XMLStream,
@@ -45,7 +44,7 @@ namespace Microsoft.Data.SqlClient
                 "on assemblies.assembly_id = types.assembly_id ";
 
             // pre 9.0/Yukon servers do not have UDTs
-            if (0 > string.Compare(ServerVersion, _serverVersionNormalized90, StringComparison.OrdinalIgnoreCase))
+            if (0 > string.Compare(ServerVersion, ServerVersionNormalized90, StringComparison.OrdinalIgnoreCase))
             {
                 return;
             }
@@ -53,7 +52,6 @@ namespace Microsoft.Data.SqlClient
             // Execute the SELECT statement
             SqlCommand command = connection.CreateCommand();
             command.CommandText = sqlCommand;
-            DataRow newRow = null;
             DataColumn providerDbtype = dataTypesTable.Columns[DbMetaDataColumnNames.ProviderDbType];
             DataColumn columnSize = dataTypesTable.Columns[DbMetaDataColumnNames.ColumnSize];
             DataColumn isFixedLength = dataTypesTable.Columns[DbMetaDataColumnNames.IsFixedLength];
@@ -94,7 +92,7 @@ namespace Microsoft.Data.SqlClient
                 {
 
                     reader.GetValues(values);
-                    newRow = dataTypesTable.NewRow();
+                    DataRow newRow = dataTypesTable.NewRow();
 
                     newRow[providerDbtype] = SqlDbType.Udt;
 
@@ -123,7 +121,7 @@ namespace Microsoft.Data.SqlClient
                         (values[versionRevisionIndex] != DBNull.Value))
                     {
 
-                        StringBuilder nameString = new StringBuilder();
+                        StringBuilder nameString = new();
                         nameString.Append(values[assemblyClassIndex].ToString());
                         nameString.Append(", ");
                         nameString.Append(values[assemblyNameIndex].ToString());
@@ -148,7 +146,7 @@ namespace Microsoft.Data.SqlClient
 
                             nameString.Append(", PublicKeyToken=");
 
-                            StringBuilder resultString = new StringBuilder();
+                            StringBuilder resultString = new();
                             byte[] byteArrayValue = (byte[])values[publicKeyIndex];
                             foreach (byte b in byteArrayValue)
                             {
@@ -179,7 +177,7 @@ namespace Microsoft.Data.SqlClient
 
             // TODO: update this check once the server upgrades major version number!!!
             // pre 9.0/Yukon servers do not have Table types
-            if (0 > string.Compare(ServerVersion, _serverVersionNormalized10, StringComparison.OrdinalIgnoreCase))
+            if (0 > string.Compare(ServerVersion, ServerVersionNormalized10, StringComparison.OrdinalIgnoreCase))
             {
                 return;
             }
@@ -187,7 +185,6 @@ namespace Microsoft.Data.SqlClient
             // Execute the SELECT statement
             SqlCommand command = connection.CreateCommand();
             command.CommandText = sqlCommand;
-            DataRow newRow = null;
             DataColumn providerDbtype = dataTypesTable.Columns[DbMetaDataColumnNames.ProviderDbType];
             DataColumn columnSize = dataTypesTable.Columns[DbMetaDataColumnNames.ColumnSize];
             DataColumn isSearchable = dataTypesTable.Columns[DbMetaDataColumnNames.IsSearchable];
@@ -217,7 +214,7 @@ namespace Microsoft.Data.SqlClient
                 {
 
                     reader.GetValues(values);
-                    newRow = dataTypesTable.NewRow();
+                    DataRow newRow = dataTypesTable.NewRow();
 
                     newRow[providerDbtype] = SqlDbType.Structured;
 
