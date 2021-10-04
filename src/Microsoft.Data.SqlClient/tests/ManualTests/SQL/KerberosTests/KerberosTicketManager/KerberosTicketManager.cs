@@ -39,9 +39,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 };
                 proc.Start();
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                throw;
+                Console.WriteLine(e.Message);
             }
         }
     }
