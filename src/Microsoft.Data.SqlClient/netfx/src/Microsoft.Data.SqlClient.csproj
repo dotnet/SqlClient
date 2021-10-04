@@ -300,6 +300,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlInfoMessageEventHandler.cs">
       <Link>Microsoft\Data\SqlClient\SqlInfoMessageEventHandler.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlNotificationEventArgs.cs">
+      <Link>Microsoft\Data\SqlClient\SqlNotificationEventArgs.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlNotificationInfo.cs">
       <Link>Microsoft\Data\SqlClient\SqlNotificationInfo.cs</Link>
     </Compile>
@@ -481,7 +484,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
     <Compile Include="Microsoft\Data\SqlClient\sqlinternaltransaction.cs" />
     <Compile Include="Microsoft\Data\SqlClient\sqlmetadatafactory.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlNotificationEventArgs.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlParameter.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlQueryMetadataCache.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlReferenceCollection.cs" />
