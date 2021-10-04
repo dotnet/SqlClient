@@ -31,6 +31,7 @@
   <ItemGroup>
     <NetFxDriver Include="**/netfx/**/Microsoft.Data.SqlClient*.csproj" Condition="'$(IsEnabledWindows)' == 'true'" />
     <NetCoreDriver Include="**/netcore/**/Microsoft.Data.SqlClient*.csproj" />
+    <NetRefDriver Include="**/ref/**/Microsoft.Data.SqlClient*.csproj" />
     <AKVProvider Include="**/add-ons/**/AzureKeyVaultProvider/*.csproj" />
 
     <FunctionalTests Condition="$(ReferenceType.Contains('NetStandard'))" Include="**/NSLibrary/Microsoft.Data.SqlClient.NSLibrary.csproj" />
@@ -55,14 +56,18 @@
   </ItemGroup>
 
   <!-- Top Level Build targets -->
-  <Target Name="Restore" DependsOnTargets="RestoreNetCore;RestoreNetFx" />
-  <Target Name="BuildAll" DependsOnTargets="BuildNetFx;BuildNetCore" />
-  <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildTools;BuildNetFx;BuildNetCoreAllOS;GenerateNugetPackage" />
+  <Target Name="Restore" DependsOnTargets="RestoreNetCore;RestoreNetFx;RestoreNetRef" />
+  <Target Name="BuildAll" DependsOnTargets="BuildNetFx;BuildNetCore;BuildNetRef" />
+  <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildTools;BuildNetFx;BuildNetRef;BuildNetCoreAllOS;GenerateNugetPackage" />
   <Target Name="BuildTestsNetCore" DependsOnTargets="RestoreTestsNetCore;BuildAKVNetCore;BuildFunctionalTestsNetCore;BuildManualTestsNetCore" />
   <Target Name="BuildTestsNetFx" DependsOnTargets="RestoreTestsNetFx;BuildAKVNetFx;BuildFunctionalTestsNetFx;BuildManualTestsNetFx;" />
 
   <Target Name="RestoreNetCore">
     <MSBuild Projects="@(NetCoreDriver)" Targets="restore" />
+  </Target>
+
+  <Target Name="RestoreNetRef">
+    <MSBuild Projects="@(NetRefDriver)" Targets="restore" />
   </Target>
 
   <Target Name="RestoreTestsNetCore">
@@ -93,6 +98,11 @@
   <Target Name="BuildNetCore" DependsOnTargets="RestoreNetCore">
     <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);Platform=AnyCPU;$(ProjectProperties)" />
   </Target>
+
+  <Target Name="BuildNetRef" DependsOnTargets="RestoreNetRef">
+    <MSBuild Projects="@(NetRefDriver)" Properties="$(CI);Platform=AnyCPU;$(ProjectProperties)" />
+  </Target>
+  
 
   <Target Name="BuildNetCoreAllOS" DependsOnTargets="RestoreNetCore">
     <MSBuild Projects="@(NetCoreDriver)" Properties="$(CI);$(ProjectProperties);Platform=AnyCPU;OSGroup=Unix;" RemoveProperties="TargetsWindows;TargetsUnix;" />
