@@ -13,7 +13,7 @@ using Microsoft.Data.SqlTypes;
 namespace Microsoft.Data.SqlClient
 {
     // Caches the bytes returned from partial length prefixed datatypes, like XML
-    sealed internal class SqlCachedBuffer : System.Data.SqlTypes.INullable
+    internal sealed class SqlCachedBuffer : INullable
     {
         public static readonly SqlCachedBuffer Null = new();
         private const int MaxChunkSize = 2048; // Arbitrary value for chunk size. Revisit this later for better perf
@@ -35,7 +35,9 @@ namespace Microsoft.Data.SqlClient
             get => _cachedBytes;
         }
 
-        // Reads off from the network buffer and caches bytes. Only reads one column value in the current row.
+        /// <summary>
+        /// Reads off from the network buffer and caches bytes. Only reads one column value in the current row.
+        /// </summary>
         internal static bool TryCreate(SqlMetaDataPriv metadata, TdsParser parser, TdsParserStateObject stateObj, out SqlCachedBuffer buffer)
         {
             byte[] byteArr;
@@ -53,7 +55,9 @@ namespace Microsoft.Data.SqlClient
             do
             {
                 if (plplength == 0)
+                {
                     break;
+                }
                 do
                 {
                     int cb = (plplength > (ulong)MaxChunkSize) ? MaxChunkSize : (int)plplength;
