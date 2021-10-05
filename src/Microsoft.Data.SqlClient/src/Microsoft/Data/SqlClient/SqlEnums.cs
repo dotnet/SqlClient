@@ -57,22 +57,22 @@ namespace Microsoft.Data.SqlClient
 
         public MetaType(byte precision, byte scale, int fixedLength, bool isFixed, bool isLong, bool isPlp, byte tdsType, byte nullableTdsType, string typeName, Type classType, Type sqlType, SqlDbType sqldbType, DbType dbType, byte propBytes)
         {
-            this.Precision = precision;
-            this.Scale = scale;
-            this.FixedLength = fixedLength;
-            this.IsFixed = isFixed;
-            this.IsLong = isLong;
-            this.IsPlp = isPlp;
+            Precision = precision;
+            Scale = scale;
+            FixedLength = fixedLength;
+            IsFixed = isFixed;
+            IsLong = isLong;
+            IsPlp = isPlp;
 
-            this.TDSType = tdsType;
-            this.NullableType = nullableTdsType;
-            this.TypeName = typeName;
-            this.SqlDbType = sqldbType;
-            this.DbType = dbType;
+            TDSType = tdsType;
+            NullableType = nullableTdsType;
+            TypeName = typeName;
+            SqlDbType = sqldbType;
+            DbType = dbType;
 
-            this.ClassType = classType;
-            this.SqlType = sqlType;
-            this.PropBytes = propBytes;
+            ClassType = classType;
+            SqlType = sqlType;
+            PropBytes = propBytes;
 
             IsAnsiType = _IsAnsiType(sqldbType);
             IsBinType = _IsBinType(sqldbType);
@@ -266,81 +266,46 @@ namespace Microsoft.Data.SqlClient
         internal static MetaType GetMetaTypeFromDbType(DbType target)
         {
             // if we can't map it, we need to throw
-            switch (target)
+            return target switch
             {
-                case DbType.AnsiString:
-                    return s_metaVarChar;
-                case DbType.AnsiStringFixedLength:
-                    return s_metaChar;
-                case DbType.Binary:
-                    return MetaVarBinary;
-                case DbType.Byte:
-                    return s_metaTinyInt;
-                case DbType.Boolean:
-                    return s_metaBit;
-                case DbType.Currency:
-                    return s_metaMoney;
-                case DbType.Date:
-                    return s_metaDate;
-                case DbType.DateTime:
-                    return s_metaDateTime;
-                case DbType.Decimal:
-                    return MetaDecimal;
-                case DbType.Double:
-                    return s_metaFloat;
-                case DbType.Guid:
-                    return s_metaUniqueId;
-                case DbType.Int16:
-                    return s_metaSmallInt;
-                case DbType.Int32:
-                    return s_metaInt;
-                case DbType.Int64:
-                    return s_metaBigInt;
-                case DbType.Object:
-                    return s_metaVariant;
-                case DbType.Single:
-                    return s_metaReal;
-                case DbType.String:
-                    return MetaNVarChar;
-                case DbType.StringFixedLength:
-                    return s_metaNChar;
-                case DbType.Time:
-                    return MetaTime;
-                case DbType.Xml:
-                    return MetaXml;
-                case DbType.DateTime2:
-                    return s_metaDateTime2;
-                case DbType.DateTimeOffset:
-                    return MetaDateTimeOffset;
-                case DbType.SByte:                  // unsupported
-                case DbType.UInt16:
-                case DbType.UInt32:
-                case DbType.UInt64:
-                case DbType.VarNumeric:
-                default:
-                    throw ADP.DbTypeNotSupported(target, typeof(SqlDbType)); // no direct mapping, error out
-            }
+                DbType.AnsiString => s_metaVarChar,
+                DbType.AnsiStringFixedLength => s_metaChar,
+                DbType.Binary => MetaVarBinary,
+                DbType.Byte => s_metaTinyInt,
+                DbType.Boolean => s_metaBit,
+                DbType.Currency => s_metaMoney,
+                DbType.Date => s_metaDate,
+                DbType.DateTime => s_metaDateTime,
+                DbType.Decimal => MetaDecimal,
+                DbType.Double => s_metaFloat,
+                DbType.Guid => s_metaUniqueId,
+                DbType.Int16 => s_metaSmallInt,
+                DbType.Int32 => s_metaInt,
+                DbType.Int64 => s_metaBigInt,
+                DbType.Object => s_metaVariant,
+                DbType.Single => s_metaReal,
+                DbType.String => MetaNVarChar,
+                DbType.StringFixedLength => s_metaNChar,
+                DbType.Time => MetaTime,
+                DbType.Xml => MetaXml,
+                DbType.DateTime2 => s_metaDateTime2,
+                DbType.DateTimeOffset => MetaDateTimeOffset,
+                // unsupported
+                _ => throw ADP.DbTypeNotSupported(target, typeof(SqlDbType)),// no direct mapping, error out
+            };
         }
 
         internal static MetaType GetMaxMetaTypeFromMetaType(MetaType mt)
         {
             // if we can't map it, we need to throw
-            switch (mt.SqlDbType)
+            return mt.SqlDbType switch
             {
-                case SqlDbType.VarBinary:
-                case SqlDbType.Binary:
-                    return MetaMaxVarBinary;
-                case SqlDbType.VarChar:
-                case SqlDbType.Char:
-                    return MetaMaxVarChar;
-                case SqlDbType.NVarChar:
-                case SqlDbType.NChar:
-                    return MetaMaxNVarChar;
-                case SqlDbType.Udt:
-                    return s_metaMaxUdt;
-                default:
-                    return mt;
-            }
+                SqlDbType.VarBinary or SqlDbType.Binary => MetaMaxVarBinary,
+                SqlDbType.VarChar or SqlDbType.Char => MetaMaxVarChar,
+                SqlDbType.NVarChar or SqlDbType.NChar => MetaMaxNVarChar,
+                SqlDbType.Udt => s_metaMaxUdt,
+                _ => mt,
+            };
         }
 
         //
@@ -564,39 +529,54 @@ namespace Microsoft.Data.SqlClient
             if (ADP.IsNull(sqlVal))
                 return comVal;
 
-            if (sqlVal is SqlSingle)
-                comVal = ((SqlSingle)sqlVal).Value;
-            else if (sqlVal is SqlString)
-                comVal = ((SqlString)sqlVal).Value;
-            else if (sqlVal is SqlDouble)
-                comVal = ((SqlDouble)sqlVal).Value;
-            else if (sqlVal is SqlBinary)
-                comVal = ((SqlBinary)sqlVal).Value;
-            else if (sqlVal is SqlGuid)
-                comVal = ((SqlGuid)sqlVal).Value;
-            else if (sqlVal is SqlBoolean)
-                comVal = ((SqlBoolean)sqlVal).Value;
-            else if (sqlVal is SqlByte)
-                comVal = ((SqlByte)sqlVal).Value;
-            else if (sqlVal is SqlInt16)
-                comVal = ((SqlInt16)sqlVal).Value;
-            else if (sqlVal is SqlInt32)
-                comVal = ((SqlInt32)sqlVal).Value;
-            else if (sqlVal is SqlInt64)
-                comVal = ((SqlInt64)sqlVal).Value;
-            else if (sqlVal is SqlDecimal)
-                comVal = ((SqlDecimal)sqlVal).Value;
-            else if (sqlVal is SqlDateTime)
-                comVal = ((SqlDateTime)sqlVal).Value;
-            else if (sqlVal is SqlMoney)
-                comVal = ((SqlMoney)sqlVal).Value;
-            else if (sqlVal is SqlXml)
-                comVal = ((SqlXml)sqlVal).Value;
-            else
+            switch (sqlVal)
             {
-                AssertIsUserDefinedTypeInstance(sqlVal, "unknown SqlType class stored in sqlVal");
+                case SqlSingle:
+                    comVal = ((SqlSingle)sqlVal).Value;
+                    break;
+                case SqlString:
+                    comVal = ((SqlString)sqlVal).Value;
+                    break;
+                case SqlDouble:
+                    comVal = ((SqlDouble)sqlVal).Value;
+                    break;
+                case SqlBinary:
+                    comVal = ((SqlBinary)sqlVal).Value;
+                    break;
+                case SqlGuid:
+                    comVal = ((SqlGuid)sqlVal).Value;
+                    break;
+                case SqlBoolean:
+                    comVal = ((SqlBoolean)sqlVal).Value;
+                    break;
+                case SqlByte:
+                    comVal = ((SqlByte)sqlVal).Value;
+                    break;
+                case SqlInt16:
+                    comVal = ((SqlInt16)sqlVal).Value;
+                    break;
+                case SqlInt32:
+                    comVal = ((SqlInt32)sqlVal).Value;
+                    break;
+                case SqlInt64:
+                    comVal = ((SqlInt64)sqlVal).Value;
+                    break;
+                case SqlDecimal:
+                    comVal = ((SqlDecimal)sqlVal).Value;
+                    break;
+                case SqlDateTime:
+                    comVal = ((SqlDateTime)sqlVal).Value;
+                    break;
+                case SqlMoney:
+                    comVal = ((SqlMoney)sqlVal).Value;
+                    break;
+                case SqlXml:
+                    comVal = ((SqlXml)sqlVal).Value;
+                    break;
+                default:
+                    AssertIsUserDefinedTypeInstance(sqlVal, "unknown SqlType class stored in sqlVal");
+                    break;
             }
-
 
             return comVal;
         }
@@ -631,41 +611,61 @@ namespace Microsoft.Data.SqlClient
             object sqlVal = null;
             if ((null != comVal) && (DBNull.Value != comVal))
             {
-                if (comVal is float)
-                    sqlVal = new SqlSingle((float)comVal);
-                else if (comVal is string)
-                    sqlVal = new SqlString((string)comVal);
-                else if (comVal is double)
-                    sqlVal = new SqlDouble((double)comVal);
-                else if (comVal is byte[])
-                    sqlVal = new SqlBinary((byte[])comVal);
-                else if (comVal is char)
-                    sqlVal = new SqlString(((char)comVal).ToString());
-                else if (comVal is char[])
-                    sqlVal = new SqlChars((char[])comVal);
-                else if (comVal is System.Guid)
-                    sqlVal = new SqlGuid((Guid)comVal);
-                else if (comVal is bool)
-                    sqlVal = new SqlBoolean((bool)comVal);
-                else if (comVal is byte)
-                    sqlVal = new SqlByte((byte)comVal);
-                else if (comVal is short)
-                    sqlVal = new SqlInt16((short)comVal);
-                else if (comVal is int)
-                    sqlVal = new SqlInt32((int)comVal);
-                else if (comVal is long)
-                    sqlVal = new SqlInt64((long)comVal);
-                else if (comVal is decimal)
-                    sqlVal = new SqlDecimal((decimal)comVal);
-                else if (comVal is DateTime)
+                switch (comVal)
                 {
-                    // devnote: Do not use with SqlDbType.Date and SqlDbType.DateTime2. See comment at top of method.
-                    sqlVal = new SqlDateTime((DateTime)comVal);
+                    case float:
+                        sqlVal = new SqlSingle((float)comVal);
+                        break;
+                    case string:
+                        sqlVal = new SqlString((string)comVal);
+                        break;
+                    case double:
+                        sqlVal = new SqlDouble((double)comVal);
+                        break;
+                    case byte[]:
+                        sqlVal = new SqlBinary((byte[])comVal);
+                        break;
+                    case char:
+                        sqlVal = new SqlString(((char)comVal).ToString());
+                        break;
+                    case char[]:
+                        sqlVal = new SqlChars((char[])comVal);
+                        break;
+                    case System.Guid:
+                        sqlVal = new SqlGuid((Guid)comVal);
+                        break;
+                    case bool:
+                        sqlVal = new SqlBoolean((bool)comVal);
+                        break;
+                    case byte:
+                        sqlVal = new SqlByte((byte)comVal);
+                        break;
+                    case short:
+                        sqlVal = new SqlInt16((short)comVal);
+                        break;
+                    case int:
+                        sqlVal = new SqlInt32((int)comVal);
+                        break;
+                    case long:
+                        sqlVal = new SqlInt64((long)comVal);
+                        break;
+                    case decimal:
+                        sqlVal = new SqlDecimal((decimal)comVal);
+                        break;
+                    case DateTime:
+                        // devnote: Do not use with SqlDbType.Date and SqlDbType.DateTime2. See comment at top of method.
+                        sqlVal = new SqlDateTime((DateTime)comVal);
+                        break;
+                    case XmlReader:
+                        sqlVal = new SqlXml((XmlReader)comVal);
+                        break;
+                    case TimeSpan:
+                    case DateTimeOffset:
+                        sqlVal = comVal;
+                        break;
+                    default:
+                        break;
                 }
-                else if (comVal is XmlReader)
-                    sqlVal = new SqlXml((XmlReader)comVal);
-                else if (comVal is TimeSpan || comVal is DateTimeOffset)
-                    sqlVal = comVal;
 #if DEBUG
                 else
                     Debug.Fail("unknown SqlType class stored in sqlVal");
@@ -697,18 +697,12 @@ namespace Microsoft.Data.SqlClient
                 case OleDbType.Date:
                 case OleDbType.DBTimeStamp:
                 case OleDbType.Filetime:
-                    switch (typeName)
+                    sqlType = typeName switch
                     {
-                        case MetaTypeName.SMALLDATETIME:
-                            sqlType = SqlDbType.SmallDateTime;
-                            break;
-                        case MetaTypeName.DATETIME2:
-                            sqlType = SqlDbType.DateTime2;
-                            break;
-                        default:
-                            sqlType = SqlDbType.DateTime;
-                            break;
-                    }
+                        MetaTypeName.SMALLDATETIME => SqlDbType.SmallDateTime,
+                        MetaTypeName.DATETIME2 => SqlDbType.DateTime2,
+                        _ => SqlDbType.DateTime,
+                    };
                     break;
                 case OleDbType.Decimal:
                 case OleDbType.Numeric:
@@ -948,7 +942,7 @@ namespace Microsoft.Data.SqlClient
         // MetaVariant has two bytes of properties for numeric/decimal types
         // 1 byte precision
         // 1 byte scale
-        internal static readonly MetaType MetaDecimal = new             (38, 4, 17, true, false, false, TdsEnums.SQLNUMERICN, TdsEnums.SQLNUMERICN, MetaTypeName.DECIMAL, typeof(decimal), typeof(SqlDecimal), SqlDbType.Decimal, DbType.Decimal, 2);
+        internal static readonly MetaType MetaDecimal = new(38, 4, 17, true, false, false, TdsEnums.SQLNUMERICN, TdsEnums.SQLNUMERICN, MetaTypeName.DECIMAL, typeof(decimal), typeof(SqlDecimal), SqlDbType.Decimal, DbType.Decimal, 2);
 
         internal static readonly MetaType MetaXml = new(255, 255, -1, false, true, true, TdsEnums.SQLXMLTYPE, TdsEnums.SQLXMLTYPE, MetaTypeName.XML, typeof(string), typeof(SqlXml), SqlDbType.Xml, DbType.Xml, 0);
 
