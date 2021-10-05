@@ -403,15 +403,20 @@ namespace Microsoft.Data.SqlClient
     public sealed partial class SqlClientFactory : System.Data.Common.DbProviderFactory
 #if NETFRAMEWORK
         , System.IServiceProvider
-#endif // NETFRAMEWORK
     {
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CanCreateDataSourceEnumerator/*'/>
+        public override bool CanCreateDataSourceEnumerator { get { throw null; } }
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateDataSourceEnumerator/*'/>
+        public override System.Data.Common.DbDataSourceEnumerator CreateDataSourceEnumerator() { throw null; }
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreatePermission/*'/>
+        public override System.Security.CodeAccessPermission CreatePermission(System.Security.Permissions.PermissionState state) { throw null; }
+        object System.IServiceProvider.GetService(System.Type serviceType) { throw null; }
+#else
+    {
+#endif // NETFRAMEWORK
         internal SqlClientFactory() { }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/Instance/*'/>
         public static readonly Microsoft.Data.SqlClient.SqlClientFactory Instance;
-#if NETFRAMEWORK
-        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CanCreateDataSourceEnumerator/*'/>
-        public override bool CanCreateDataSourceEnumerator { get { throw null; } }
-#endif // NETFRAMEWORK
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateCommand/*'/>
         public override System.Data.Common.DbCommand CreateCommand() { throw null; }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateCommandBuilder/*'/>
@@ -422,18 +427,8 @@ namespace Microsoft.Data.SqlClient
         public override System.Data.Common.DbConnectionStringBuilder CreateConnectionStringBuilder() { throw null; }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateDataAdapter/*'/>
         public override System.Data.Common.DbDataAdapter CreateDataAdapter() { throw null; }
-#if NETFRAMEWORK
-        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateDataSourceEnumerator/*'/>
-        public override System.Data.Common.DbDataSourceEnumerator CreateDataSourceEnumerator() { throw null; }
-
-#endif // NETFRAMEWORK
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateParameter/*'/>
         public override System.Data.Common.DbParameter CreateParameter() { throw null; }
-#if NETFRAMEWORK
-        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreatePermission/*'/>
-        public override System.Security.CodeAccessPermission CreatePermission(System.Security.Permissions.PermissionState state) { throw null; }
-        object System.IServiceProvider.GetService(System.Type serviceType) { throw null; }
-#endif // NETFRAMEWORK
     }
 #if NETFRAMEWORK
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/SqlClientLogger/*'/>
@@ -501,7 +496,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionAttestationProtocol.xml' path='docs/members[@name="SqlConnectionAttestationProtocol"]/HGS/*' />
         HGS = 3
     }
-#endif
+#endif // NETCOREAPP || NETSTANDARD21_AND_ABOVE || NETFRAMEWORK
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionIPAddressPreference.xml' path='docs/members[@name="SqlConnectionIPAddressPreference"]/SqlConnectionIPAddressPreference/*' />
     public enum SqlConnectionIPAddressPreference
     {
@@ -516,7 +511,7 @@ namespace Microsoft.Data.SqlClient
     }
     
 #if NETFRAMEWORK
-        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/SqlClientPermission/*'/>
+    /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/SqlClientPermission/*'/>
     public sealed partial class SqlClientPermission : System.Data.Common.DBDataPermission
     {
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientPermission.xml' path='docs/members[@name="SqlClientPermission"]/ctor[@name="default"]/*'/>
@@ -727,10 +722,6 @@ namespace Microsoft.Data.SqlClient
         protected override System.Data.Common.DbParameter CreateDbParameter() { throw null; }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CreateParameter/*'/>
         public new Microsoft.Data.SqlClient.SqlParameter CreateParameter() { throw null; }
-#if NETFRAMEWORK
-        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Dispose/*'/>
-        protected override void Dispose(bool disposing) { }
-#endif // NETFRAMEWORK
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EndExecuteNonQuery[@name="IAsyncResult"]/*'/>
         public int EndExecuteNonQuery(System.IAsyncResult asyncResult) { throw null; }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/EndExecuteReader[@name="IAsyncResult2"]/*'/>
@@ -773,11 +764,6 @@ namespace Microsoft.Data.SqlClient
         [System.ComponentModel.BrowsableAttribute(false)]
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
         public Microsoft.Data.Sql.SqlNotificationRequest Notification { get { throw null; } set { } }
-#if NETFRAMEWORK
-        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/NotificationAutoEnlist/*'/>
-        [System.ComponentModel.DefaultValueAttribute(true)]
-        public bool NotificationAutoEnlist { get { throw null; } set { } }
-#endif // NETFRAMEWORK
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RegisterColumnEncryptionKeyStoreProvidersOnCommand/*' />
         public void RegisterColumnEncryptionKeyStoreProvidersOnCommand(System.Collections.Generic.IDictionary<string, Microsoft.Data.SqlClient.SqlColumnEncryptionKeyStoreProvider> customProviders) { }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/ResetCommandTimeout/*'/>
@@ -785,6 +771,13 @@ namespace Microsoft.Data.SqlClient
         public void ResetCommandTimeout() { }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/RetryLogicProvider/*' />
         public SqlRetryLogicBaseProvider RetryLogicProvider { get { throw null; } set { } }
+#if NETFRAMEWORK
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Dispose/*'/>
+        protected override void Dispose(bool disposing) { }
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/NotificationAutoEnlist/*'/>
+        [System.ComponentModel.DefaultValueAttribute(true)]
+        public bool NotificationAutoEnlist { get { throw null; } set { } }
+#endif // NETFRAMEWORK
     }
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/SqlCommandBuilder/*'/>
     public sealed class SqlCommandBuilder : System.Data.Common.DbCommandBuilder
@@ -864,12 +857,11 @@ namespace Microsoft.Data.SqlClient
         public SqlConnection(string connectionString) { }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ctorConnectionStringCredential/*'/>
         public SqlConnection(string connectionString, Microsoft.Data.SqlClient.SqlCredential credential) { }
-#if NETCOREAPP || NETFRAMEWORK
+#if NETCOREAPP || NETSTANDARD || NETFRAMEWORK
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionKeyCacheTtl/*'/>
         [System.ComponentModel.DefaultValueAttribute(null)]
         public static System.TimeSpan ColumnEncryptionKeyCacheTtl { get { throw null; } set { } }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionQueryMetadataCacheEnabled/*'/>
-
         [System.ComponentModel.DefaultValueAttribute(null)] 
         public static bool ColumnEncryptionQueryMetadataCacheEnabled { get { throw null; } set { } }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ColumnEncryptionTrustedMasterKeyPaths/*'/>
@@ -879,7 +871,7 @@ namespace Microsoft.Data.SqlClient
         public static void RegisterColumnEncryptionKeyStoreProviders(System.Collections.Generic.IDictionary<string, Microsoft.Data.SqlClient.SqlColumnEncryptionKeyStoreProvider> customProviders) { }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RegisterColumnEncryptionKeyStoreProvidersOnConnection/*' />
         public void RegisterColumnEncryptionKeyStoreProvidersOnConnection(System.Collections.Generic.IDictionary<string, Microsoft.Data.SqlClient.SqlColumnEncryptionKeyStoreProvider> customProviders) { }
-#endif // NETCOREAPP || NETFRAMEWORK
+#endif // NETCOREAPP || NETSTANDARD ||NETFRAMEWORK
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/AccessToken/*'/>
         [System.ComponentModel.BrowsableAttribute(false)]
         [System.ComponentModel.DesignerSerializationVisibilityAttribute(0)]
@@ -957,47 +949,17 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/BeginTransactionTransactionName/*'/>
         public Microsoft.Data.SqlClient.SqlTransaction BeginTransaction(string transactionName) { throw null; }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ChangeDatabase/*'/>
-        public override void ChangeDatabase(string database)
-        {
-#if NETCOREAPP
-            throw null;
-#endif
-        }
+        public override void ChangeDatabase(string database) { throw null; }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringCredentialNewSecurePassword/*'/>
-        public static void ChangePassword(string connectionString, Microsoft.Data.SqlClient.SqlCredential credential, System.Security.SecureString newSecurePassword)
-        {
-#if NETCOREAPP
-            throw null;
-#endif
-        }
+        public static void ChangePassword(string connectionString, Microsoft.Data.SqlClient.SqlCredential credential, System.Security.SecureString newSecurePassword) { throw null; }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ChangePasswordConnectionStringNewPassword/*'/>
-        public static void ChangePassword(string connectionString, string newPassword)
-        {
-#if NETCOREAPP
-            throw null;
-#endif
-        }
+        public static void ChangePassword(string connectionString, string newPassword) { throw null; }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ClearAllPools/*'/>
-        public static void ClearAllPools()
-        {
-#if NETCOREAPP
-            throw null;
-#endif
-        }
+        public static void ClearAllPools() { throw null; }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/ClearPool/*'/>
-        public static void ClearPool(Microsoft.Data.SqlClient.SqlConnection connection)
-        {
-#if NETCOREAPP
-            throw null;
-#endif
-        }
+        public static void ClearPool(Microsoft.Data.SqlClient.SqlConnection connection) { throw null; }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/Close/*'/>
-        public override void Close()
-        {
-#if NETCOREAPP
-            throw null;
-#endif
-        }
+        public override void Close() { throw null; }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CreateCommand/*'/>
         public new Microsoft.Data.SqlClient.SqlCommand CreateCommand() { throw null; }
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CreateDbCommand/*'/>
@@ -1087,6 +1049,19 @@ namespace Microsoft.Data.SqlClient
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         [System.ObsoleteAttribute("ConnectionReset has been deprecated.  SqlConnection will ignore the 'connection reset' keyword and always reset the connection.")]
         public bool ConnectionReset { get { throw null; } set { } }
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ContextConnection/*'/>
+        [System.ComponentModel.DisplayNameAttribute("Context Connection")]
+        [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
+        [System.ObsoleteAttribute("ContextConnection has been deprecated.  SqlConnection will ignore the 'Context Connection' keyword.")]
+        public bool ContextConnection { get { throw null; } set { } }
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/NetworkLibrary/*'/>
+        [System.ComponentModel.DisplayNameAttribute("Network Library")]
+        [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
+        public string NetworkLibrary { get { throw null; } set { } }
+        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TransparentNetworkIPResolution/*'/>
+        [System.ComponentModel.DisplayNameAttribute("Transparent Network IP Resolution")]
+        [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
+        public bool TransparentNetworkIPResolution { get { throw null; } set { } }
 #endif // NETFRAMEWORK
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectRetryCount/*'/>
         [System.ComponentModel.DisplayNameAttribute("Connect Retry Count")]
@@ -1100,13 +1075,6 @@ namespace Microsoft.Data.SqlClient
         [System.ComponentModel.DisplayNameAttribute("Connect Timeout")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public int ConnectTimeout { get { throw null; } set { } }
-#if NETFRAMEWORK
-        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ContextConnection/*'/>
-        [System.ComponentModel.DisplayNameAttribute("Context Connection")]
-        [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
-        [System.ObsoleteAttribute("ContextConnection has been deprecated.  SqlConnection will ignore the 'Context Connection' keyword.")]
-        public bool ContextConnection { get { throw null; } set { } }
-#endif // NETFRAMEWORK
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/CurrentLanguage/*'/>
         [System.ComponentModel.DisplayNameAttribute("Current Language")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
@@ -1175,12 +1143,6 @@ namespace Microsoft.Data.SqlClient
         [System.ComponentModel.DisplayNameAttribute("Multi Subnet Failover")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public bool MultiSubnetFailover { get { throw null; } set { } }
-#if NETFRAMEWORK
-        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/NetworkLibrary/*'/>
-        [System.ComponentModel.DisplayNameAttribute("Network Library")]
-        [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
-        public string NetworkLibrary { get { throw null; } set { } }
-#endif // NETFRAMEWORK
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/PacketSize/*'/>
         [System.ComponentModel.DisplayNameAttribute("Packet Size")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
@@ -1210,12 +1172,6 @@ namespace Microsoft.Data.SqlClient
         [System.ComponentModel.DisplayNameAttribute("Transaction Binding")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
         public string TransactionBinding { get { throw null; } set { } }
-#if NETFRAMEWORK
-        /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TransparentNetworkIPResolution/*'/>
-        [System.ComponentModel.DisplayNameAttribute("Transparent Network IP Resolution")]
-        [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
-        public bool TransparentNetworkIPResolution { get { throw null; } set { } }
-#endif
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TrustServerCertificate/*'/>
         [System.ComponentModel.DisplayNameAttribute("Trust Server Certificate")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
