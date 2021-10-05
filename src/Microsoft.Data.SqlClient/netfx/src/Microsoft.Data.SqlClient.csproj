@@ -563,7 +563,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>$(ResxFileName).resx</DependentUpon>
     </Compile>
-    <Compile Include="..\..\src\Resources\StringsHelper.cs" >
+    <Compile Include="..\..\src\Resources\StringsHelper.cs">
       <Link>Resources\StringsHelper.cs</Link>
     </Compile>
     <EmbeddedResource Include="Resources\$(ResxFileName).resx">

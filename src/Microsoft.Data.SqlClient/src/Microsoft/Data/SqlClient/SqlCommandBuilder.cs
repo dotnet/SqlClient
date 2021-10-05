@@ -16,7 +16,7 @@ using Microsoft.Data.Sql;
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/SqlCommandBuilder/*'/>
-    [DesignerCategory("")]
+    [DesignerCategory()]
     public sealed class SqlCommandBuilder : DbCommandBuilder
     {
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/ctor1/*'/>
@@ -83,7 +83,7 @@ namespace Microsoft.Data.SqlClient
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update),
         ResDescriptionAttribute(StringsHelper.ResourceNames.SqlCommandBuilder_DataAdapter),
         ]
-        new public SqlDataAdapter DataAdapter
+        public new SqlDataAdapter DataAdapter
         {
             get
             {
@@ -167,27 +167,27 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetInsertCommand2/*'/>
-        new public SqlCommand GetInsertCommand()
+        public new SqlCommand GetInsertCommand()
             => (SqlCommand)base.GetInsertCommand();
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetInsertCommand3/*'/>
-        new public SqlCommand GetInsertCommand(bool useColumnsForParameterNames)
+        public new SqlCommand GetInsertCommand(bool useColumnsForParameterNames)
             => (SqlCommand)base.GetInsertCommand(useColumnsForParameterNames);
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetUpdateCommand2/*'/>
-        new public SqlCommand GetUpdateCommand()
+        public new SqlCommand GetUpdateCommand()
             => (SqlCommand)base.GetUpdateCommand();
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetUpdateCommand3/*'/>
-        new public SqlCommand GetUpdateCommand(bool useColumnsForParameterNames)
+        public new SqlCommand GetUpdateCommand(bool useColumnsForParameterNames)
             => (SqlCommand)base.GetUpdateCommand(useColumnsForParameterNames);
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetDeleteCommand2/*'/>
-        new public SqlCommand GetDeleteCommand()
+        public new SqlCommand GetDeleteCommand()
             => (SqlCommand)base.GetDeleteCommand();
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetDeleteCommand3/*'/>
-        new public SqlCommand GetDeleteCommand(bool useColumnsForParameterNames)
+        public new SqlCommand GetDeleteCommand(bool useColumnsForParameterNames)
             => (SqlCommand)base.GetDeleteCommand(useColumnsForParameterNames);
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/ApplyParameterInfo/*'/>
