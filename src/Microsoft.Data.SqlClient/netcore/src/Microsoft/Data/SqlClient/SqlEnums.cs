@@ -6,6 +6,9 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+#if NETFRAMEWORK
+using System.Data.OleDb;
+#endif
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Globalization;
@@ -673,8 +676,111 @@ namespace Microsoft.Data.SqlClient
 
         internal static SqlDbType GetSqlDbTypeFromOleDbType(short dbType, string typeName)
         {
+#if NETFRAMEWORK
+            SqlDbType sqlType = SqlDbType.Variant;
+            switch ((OleDbType)dbType)
+            {
+                case OleDbType.BigInt:
+                    sqlType = SqlDbType.BigInt;
+                    break;
+                case OleDbType.Boolean:
+                    sqlType = SqlDbType.Bit;
+                    break;
+                case OleDbType.Char:
+                case OleDbType.VarChar:
+                    // these guys are ambiguous - server sends over DBTYPE_STR in both cases
+                    sqlType = (typeName == MetaTypeName.CHAR) ? SqlDbType.Char : SqlDbType.VarChar;
+                    break;
+                case OleDbType.Currency:
+                    sqlType = (typeName == MetaTypeName.SMALLMONEY) ? SqlDbType.SmallMoney : SqlDbType.Money;
+                    break;
+                case OleDbType.Date:
+                case OleDbType.DBTimeStamp:
+                case OleDbType.Filetime:
+                    switch (typeName)
+                    {
+                        case MetaTypeName.SMALLDATETIME:
+                            sqlType = SqlDbType.SmallDateTime;
+                            break;
+                        case MetaTypeName.DATETIME2:
+                            sqlType = SqlDbType.DateTime2;
+                            break;
+                        default:
+                            sqlType = SqlDbType.DateTime;
+                            break;
+                    }
+                    break;
+                case OleDbType.Decimal:
+                case OleDbType.Numeric:
+                    sqlType = SqlDbType.Decimal;
+                    break;
+                case OleDbType.Double:
+                    sqlType = SqlDbType.Float;
+                    break;
+                case OleDbType.Guid:
+                    sqlType = SqlDbType.UniqueIdentifier;
+                    break;
+                case OleDbType.Integer:
+                    sqlType = SqlDbType.Int;
+                    break;
+                case OleDbType.LongVarBinary:
+                    sqlType = SqlDbType.Image;
+                    break;
+                case OleDbType.LongVarChar:
+                    sqlType = SqlDbType.Text;
+                    break;
+                case OleDbType.LongVarWChar:
+                    sqlType = SqlDbType.NText;
+                    break;
+                case OleDbType.Single:
+                    sqlType = SqlDbType.Real;
+                    break;
+                case OleDbType.SmallInt:
+                case OleDbType.UnsignedSmallInt:
+                    sqlType = SqlDbType.SmallInt;
+                    break;
+                case OleDbType.TinyInt:
+                case OleDbType.UnsignedTinyInt:
+                    sqlType = SqlDbType.TinyInt;
+                    break;
+                case OleDbType.VarBinary:
+                case OleDbType.Binary:
+                    sqlType = (typeName == MetaTypeName.BINARY) ? SqlDbType.Binary : SqlDbType.VarBinary;
+                    break;
+                case OleDbType.Variant:
+                    sqlType = SqlDbType.Variant;
+                    break;
+                case OleDbType.VarWChar:
+                case OleDbType.WChar:
+                case OleDbType.BSTR:
+                    // these guys are ambiguous - server sends over DBTYPE_WSTR in both cases
+                    // BSTR is always assumed to be NVARCHAR
+                    sqlType = (typeName == MetaTypeName.NCHAR) ? SqlDbType.NChar : SqlDbType.NVarChar;
+                    break;
+                case OleDbType.DBDate: // Date
+                    sqlType = SqlDbType.Date;
+                    break;
+                case (OleDbType)132: // Udt
+                    sqlType = SqlDbType.Udt;
+                    break;
+                case (OleDbType)141: // Xml
+                    sqlType = SqlDbType.Xml;
+                    break;
+                case (OleDbType)145: // Time
+                    sqlType = SqlDbType.Time;
+                    break;
+                case (OleDbType)146: // DateTimeOffset
+                    sqlType = SqlDbType.DateTimeOffset;
+                    break;
+                // TODO: Handle Structured types for derive parameters
+                default:
+                    break; // no direct mapping, just use SqlDbType.Variant;
+            }
+            return sqlType;
+#else 
             // OleDbTypes not supported
             return SqlDbType.Variant;
+#endif // NETFRAMEWORK
         }
 
         internal static MetaType GetSqlDataType(int tdsType, uint userType, int length)
