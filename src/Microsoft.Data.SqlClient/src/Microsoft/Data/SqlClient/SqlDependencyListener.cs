@@ -690,10 +690,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                                 }
                                 finally
                                 {
-                                    if (null != context)
-                                    {
-                                        context.Undo();
-                                    }
+                                    context?.Undo();
                                 }
                             }
                             else
@@ -1033,10 +1030,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                         _con.Dispose(); // Close and dispose connection.
 #if NETFRAMEWORK
                         //dispose windows identity
-                        if (_windowsIdentity != null)
-                        {
-                            _windowsIdentity.Dispose();
-                        }
+                        _windowsIdentity?.Dispose();
 #endif
                     }
                 }
