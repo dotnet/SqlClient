@@ -5,9 +5,7 @@
 using System;
 using System.Data;
 using System.Data.SqlTypes;
-using System.Diagnostics;
 using Microsoft.Data.Common;
-using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient.Server
 {
@@ -111,8 +109,6 @@ namespace Microsoft.Data.SqlClient.Server
 
             return copyLength;
         }
-
-
       
         private void SetValueFrameworkSpecific(int ordinal, object value)
         {
@@ -138,18 +134,10 @@ namespace Microsoft.Data.SqlClient.Server
                 ValueUtilsSmi.SetCompatibleValue(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value, typeCode, offset: 0);
             }
         }
-
-
-   
+  
         private void SetTimeSpanFrameworkSpecific(int ordinal, TimeSpan value) => ValueUtilsSmi.SetTimeSpan(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value, SmiVersion >= SmiContextFactory.KatmaiVersion);
-
    
         private void SetDateTimeOffsetFrameworkSpecific(int ordinal, DateTimeOffset value) => ValueUtilsSmi.SetDateTimeOffset(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value, SmiVersion >= SmiContextFactory.KatmaiVersion);
-
-
-          internal SmiRecordBuffer RecordBuffer => _recordBuffer;
-
-        internal SmiContext RecordContext => _recordContext;
 
         private ulong SmiVersion => InOutOfProcHelper.InProc ? SmiContextFactory.Instance.NegotiatedSmiVersion : SmiContextFactory.LatestVersion;
  }

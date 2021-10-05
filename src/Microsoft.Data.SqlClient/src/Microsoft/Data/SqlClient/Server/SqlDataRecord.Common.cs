@@ -5,7 +5,6 @@
 using System;
 using System.Data;
 using System.Data.SqlTypes;
-using System.Diagnostics;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 
@@ -54,15 +53,13 @@ namespace Microsoft.Data.SqlClient.Server
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetFieldType/*' />
         public virtual Type GetFieldType(int ordinal)
         {
-               return GetFieldTypeFrameworkSpecific(ordinal);
-          
+               return GetFieldTypeFrameworkSpecific(ordinal);         
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetValue/*' />
         public virtual object GetValue(int ordinal)
         {
             return GetValueFrameworkSpecific(ordinal);
-
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetValues/*' />
@@ -185,8 +182,7 @@ namespace Microsoft.Data.SqlClient.Server
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlValue/*' />
         public virtual object GetSqlValue(int ordinal)
         {
-             return GetSqlValueFrameworkSpecific(ordinal);
-          
+             return GetSqlValueFrameworkSpecific(ordinal);         
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlValues/*' />
@@ -211,10 +207,8 @@ namespace Microsoft.Data.SqlClient.Server
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlBytes/*' />
         public virtual SqlBytes GetSqlBytes(int ordinal)
-        {
-           
-                return GetSqlBytesFrameworkSpecific(ordinal);
-         
+        {           
+                return GetSqlBytesFrameworkSpecific(ordinal);         
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlXml/*' />
@@ -443,14 +437,6 @@ namespace Microsoft.Data.SqlClient.Server
             _eventSink.ProcessMessagesAndThrow();
 #endif
         }
-
-        //
-        //  SqlDataRecord private members
-        //
-    
-        internal SqlMetaData[] InternalGetMetaData() => _columnMetaData;
-
-        internal SmiExtendedMetaData[] InternalGetSmiMetaData() => _columnSmiMetaData;
 
         internal SmiExtendedMetaData GetSmiMetaData(int ordinal)
         {
