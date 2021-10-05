@@ -214,8 +214,7 @@ namespace Microsoft.Data.SqlClient.Server
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlXml/*' />
         public virtual SqlXml GetSqlXml(int ordinal)
         {
-           return GetSqlXmlFrameworkSpecific(ordinal);
-          
+           return GetSqlXmlFrameworkSpecific(ordinal);          
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlBoolean/*' />
@@ -227,8 +226,7 @@ namespace Microsoft.Data.SqlClient.Server
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlChars/*' />
         public virtual SqlChars GetSqlChars(int ordinal)
         {
-            return GetSqlCharsFrameworkSpecific(ordinal);
-        
+            return GetSqlCharsFrameworkSpecific(ordinal);       
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlInt16/*' />
@@ -265,15 +263,13 @@ namespace Microsoft.Data.SqlClient.Server
         // ISqlUpdateableRecord Implementation
         public virtual int SetValues(params object[] values)
         {
-             return SetValuesFrameworkSpecific(values);
-          
+             return SetValuesFrameworkSpecific(values);        
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetValue/*' />
         public virtual void SetValue(int ordinal, object value)
         {
-                SetValueFrameworkSpecific(ordinal,value);
-           
+            SetValueFrameworkSpecific(ordinal,value);           
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetBoolean/*' />
@@ -317,15 +313,13 @@ namespace Microsoft.Data.SqlClient.Server
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetTimeSpan/*' />
         public virtual void SetTimeSpan(int ordinal, TimeSpan value)
         {
-             SetTimeSpanFrameworkSpecific(ordinal, value);
-    
+             SetTimeSpanFrameworkSpecific(ordinal, value);    
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetDateTimeOffset/*' />
         public virtual void SetDateTimeOffset(int ordinal, DateTimeOffset value)
         {
-              SetDateTimeOffsetFrameworkSpecific(ordinal, value);
-           
+              SetDateTimeOffsetFrameworkSpecific(ordinal, value);           
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetDBNull/*' />

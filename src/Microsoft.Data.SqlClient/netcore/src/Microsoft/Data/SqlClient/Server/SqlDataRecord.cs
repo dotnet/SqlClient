@@ -5,30 +5,20 @@
 using System;
 using System.Data;
 using System.Data.SqlTypes;
-using System.Diagnostics;
 using Microsoft.Data.Common;
-using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient.Server
 {
     /// <include file='../../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SqlDataRecord/*' />
     public partial class SqlDataRecord : IDataRecord
-    {
-       
-     
-     
-       private Type GetFieldTypeFrameworkSpecific(int ordinal) => MetaType.GetMetaTypeFromSqlDbType(GetSqlMetaData(ordinal).SqlDbType, false).ClassType;
+    {   
+        private Type GetFieldTypeFrameworkSpecific(int ordinal) => MetaType.GetMetaTypeFromSqlDbType(GetSqlMetaData(ordinal).SqlDbType, false).ClassType;
 
-   
         private object GetValueFrameworkSpecific(int ordinal) => ValueUtilsSmi.GetValue200(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
-
       
         private object GetSqlValueFrameworkSpecific(int ordinal) => ValueUtilsSmi.GetSqlValue200(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
-
-
     
         private SqlBytes GetSqlBytesFrameworkSpecific(int ordinal) => ValueUtilsSmi.GetSqlBytes(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
-
 
         private SqlXml GetSqlXmlFrameworkSpecific(int ordinal) => ValueUtilsSmi.GetSqlXml(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
 
@@ -89,8 +79,7 @@ namespace Microsoft.Data.SqlClient.Server
             ValueUtilsSmi.SetCompatibleValueV200(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value, typeCode, offset: 0, length: 0, peekAhead: null);
         }
 
- 
-        private void SetTimeSpanFrameworkSpecific(int ordinal, TimeSpan value) => ValueUtilsSmi.SetTimeSpan(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value);
+         private void SetTimeSpanFrameworkSpecific(int ordinal, TimeSpan value) => ValueUtilsSmi.SetTimeSpan(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value);
 
          private void SetDateTimeOffsetFrameworkSpecific(int ordinal, DateTimeOffset value) => ValueUtilsSmi.SetDateTimeOffset(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value);
 
