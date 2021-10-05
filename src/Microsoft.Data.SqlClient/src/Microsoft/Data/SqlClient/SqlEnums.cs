@@ -664,12 +664,11 @@ namespace Microsoft.Data.SqlClient
                         sqlVal = comVal;
                         break;
                     default:
+#if DEBUG
+                        Debug.Fail("unknown SqlType class stored in sqlVal");
+#endif
                         break;
                 }
-#if DEBUG
-                else
-                    Debug.Fail("unknown SqlType class stored in sqlVal");
-#endif
             }
             return sqlVal;
         }
