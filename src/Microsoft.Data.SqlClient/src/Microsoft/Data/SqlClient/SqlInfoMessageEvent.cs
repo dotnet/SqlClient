@@ -15,32 +15,20 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlInfoMessageEventArgs.xml' path='docs/members[@name="SqlInfoMessageEventArgs"]/Errors/*' />
-        public SqlErrorCollection Errors
-        {
-            get { return _exception.Errors; }
-        }
+        public SqlErrorCollection Errors => _exception.Errors;
 
-        private bool ShouldSerializeErrors()
-        { // MDAC 65548
-            return (null != _exception) && (0 < _exception.Errors.Count);
-        }
+        // MDAC 65548
+        private bool ShouldSerializeErrors() => (null != _exception) && (0 < _exception.Errors.Count);
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlInfoMessageEventArgs.xml' path='docs/members[@name="SqlInfoMessageEventArgs"]/Message/*' />
-        public string Message
-        { // MDAC 68482
-            get { return _exception.Message; }
-        }
+        public string Message => _exception.Message;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlInfoMessageEventArgs.xml' path='docs/members[@name="SqlInfoMessageEventArgs"]/Source/*' />
-        public string Source
-        { // MDAC 68482
-            get { return _exception.Source; }
-        }
+        // MDAC 68482
+        public string Source => _exception.Source;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlInfoMessageEventArgs.xml' path='docs/members[@name="SqlInfoMessageEventArgs"]/ToString/*' />
-        override public string ToString()
-        { // MDAC 68482
-            return Message;
-        }
+        // MDAC 68482
+        override public string ToString() => Message;
     }
 }
