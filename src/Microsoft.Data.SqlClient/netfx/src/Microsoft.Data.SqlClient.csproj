@@ -312,6 +312,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlParameterCollection.cs">
       <Link>Microsoft\Data\SqlClient\SqlParameterCollection.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlQueryMetadataCache.cs">
+      <Link>Microsoft\Data\SqlClient\SqlQueryMetadataCache.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlRowUpdatedEvent.cs">
       <Link>Microsoft\Data\SqlClient\SqlRowUpdatedEvent.cs</Link>
     </Compile>
@@ -486,7 +489,6 @@
     <Compile Include="Microsoft\Data\SqlClient\sqlmetadatafactory.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlNotificationEventArgs.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlParameter.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlQueryMetadataCache.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlReferenceCollection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlSequentialStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlSequentialStreamSmi.cs" />
@@ -562,7 +564,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>$(ResxFileName).resx</DependentUpon>
     </Compile>
-    <Compile Include="..\..\src\Resources\StringsHelper.cs" >
+    <Compile Include="..\..\src\Resources\StringsHelper.cs">
       <Link>Resources\StringsHelper.cs</Link>
     </Compile>
     <EmbeddedResource Include="Resources\$(ResxFileName).resx">
