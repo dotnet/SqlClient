@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Xml;
 using Microsoft.Data.SqlTypes;
@@ -145,7 +144,5 @@ namespace Microsoft.Data.SqlClient
                 return (_cachedBytes == null) ? true : false;
             }
         }
-
     }
-
 }

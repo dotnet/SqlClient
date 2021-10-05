@@ -121,6 +121,40 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
+        public static async Task GetFieldValueAsync_Char_OfTextReader(CommandBehavior behavior, bool isExecuteAsync)
+        {
+            const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
+            string connectionString = SetConnectionStringPacketSize(DataTestUtility.TCPConnectionString, PacketSize);
+            string originalText = new ('c', PacketSize * 4);
+            string query = CreateCharDataQuery(originalText);
+
+            string streamTypeName = null;
+            string outputText = null;
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlCommand command = new SqlCommand(query, connection))
+            {
+                connection.Open();
+                using (SqlDataReader reader = await ExecuteReader(command, behavior, isExecuteAsync))
+                {
+                    if (await Read(reader, isExecuteAsync))
+                    {
+                        using (TextReader textReader = await reader.GetFieldValueAsync<TextReader>(1))
+                        {
+                            streamTypeName = textReader.GetType().Name;
+                            outputText = await textReader.ReadToEndAsync();
+                        }
+                    }
+                }
+            }
+
+            Assert.True(behavior != CommandBehavior.SequentialAccess || streamTypeName.Contains("Sequential"));
+            Assert.NotNull(outputText);
+            Assert.Equal(originalText.Length, outputText.Length);
+            Assert.Equal(originalText, outputText);
+        }
+
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(GetCommandBehavioursAndIsAsync))]
         public static async void GetFieldValue_OfXmlReader(CommandBehavior behavior, bool isExecuteAsync)
         {
             const int PacketSize = 512; // force minimun packet size so that the test data spans multiple packets to test sequential access spanning
@@ -407,7 +441,33 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
                 }
             }
+        }
 
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(GetCommandBehaviourAndAccessorTypes))]
+        public static void InvalidCastExceptionStream(CommandBehavior behavior, AccessorType accessorType)
+        {
+            string query = "SELECT convert(xml,NULL) AS XmlData, convert(nvarchar(max),NULL) as TextData";
+
+            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            using (SqlCommand command = new SqlCommand(query, connection))
+            {
+                connection.Open();
+
+                using (SqlDataReader reader = command.ExecuteReader(behavior))
+                {
+                    Assert.True(reader.Read(), "It's excpected to read a row.");
+
+                    InvalidCastException ex = Assert.Throws<InvalidCastException>(() => GetValue<TextReader>(reader, 0, accessorType));
+                    Assert.Contains("The GetTextReader function can only be used on columns of type Char, NChar, NText, NVarChar, Text or VarChar.", ex.Message);
+
+                    ex = Assert.Throws<InvalidCastException>(() => GetValue<Stream>(reader, 0, accessorType));
+                    Assert.Contains("The GetStream function can only be used on columns of type Binary, Image, Udt or VarBinary.", ex.Message);
+
+                    ex = Assert.Throws<InvalidCastException>(() => GetValue<XmlReader>(reader, 1, accessorType));
+                    Assert.Contains("The GetXmlReader function can only be used on columns of type Xml.", ex.Message);
+                }
+            }
         }
 
         private static async Task<SqlDataReader> ExecuteReader(SqlCommand command, CommandBehavior behavior, bool isExecuteAsync)
@@ -568,6 +628,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             StringBuilder queryBuilder = new StringBuilder(originalText.Length + 128);
             queryBuilder.Append("SELECT 1 as DummyField, convert(nvarchar(max),'");
+            queryBuilder.Append(originalText);
+            queryBuilder.Append("') AS Data");
+            return queryBuilder.ToString();
+        }
+
+        private static string CreateCharDataQuery(string originalText)
+        {
+            StringBuilder queryBuilder = new StringBuilder(originalText.Length + 128);
+            queryBuilder.Append($"SELECT 1 as DummyField, convert(char({originalText.Length}),'");
             queryBuilder.Append(originalText);
             queryBuilder.Append("') AS Data");
             return queryBuilder.ToString();

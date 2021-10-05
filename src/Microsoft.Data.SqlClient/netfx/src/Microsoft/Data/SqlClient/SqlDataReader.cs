@@ -4393,7 +4393,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        //Debug.Assert(false, "we have read past the column somehow, this is an error");
+                        Debug.Assert(false, "we have read past the column somehow, this is an error");
                     }
                 }
                 else
