@@ -30,10 +30,7 @@ namespace Microsoft.Data.SqlClient
             _cachedBytes = cachedBytes;
         }
 
-        internal List<byte[]> CachedBytes
-        {
-            get => _cachedBytes;
-        }
+        internal List<byte[]> CachedBytes =>_cachedBytes;
 
         /// <summary>
         /// Reads off from the network buffer and caches bytes. Only reads one column value in the current row.
@@ -107,7 +104,9 @@ namespace Microsoft.Data.SqlClient
         override public string ToString()
         {
             if (IsNull)
+            {
                 throw new SqlNullValueException();
+            }
 
             if (_cachedBytes.Count == 0)
             {
@@ -120,7 +119,10 @@ namespace Microsoft.Data.SqlClient
         internal SqlString ToSqlString()
         {
             if (IsNull)
+            {
                 return SqlString.Null;
+            }
+
             string str = ToString();
             return new SqlString(str);
         }
@@ -131,11 +133,6 @@ namespace Microsoft.Data.SqlClient
             return sx;
         }
 
-        public bool IsNull
-        {
-            get => _cachedBytes == null;
-        }
-
-
+        public bool IsNull => _cachedBytes == null;
     }
 }
