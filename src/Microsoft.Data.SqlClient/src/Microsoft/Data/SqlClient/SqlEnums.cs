@@ -331,6 +331,7 @@ namespace Microsoft.Data.SqlClient
                     if (dataType == typeof(byte[]))
                     {
                         // Must not default to image if inferLen is false
+                        // MDAC 90455
                         if (!inferLen || ((byte[])value).Length <= TdsEnums.TYPE_SIZE_LIMIT)
                         {
                             return MetaVarBinary;
@@ -357,7 +358,7 @@ namespace Microsoft.Data.SqlClient
                     else if (dataType == typeof(SqlBytes))
                         return MetaVarBinary;
                     else if (dataType == typeof(SqlChars))
-                        return MetaNVarChar;
+                        return MetaNVarChar; // MDAC 87587
                     else if (dataType == typeof(SqlDateTime))
                         return s_metaDateTime;
                     else if (dataType == typeof(SqlDouble))
@@ -382,7 +383,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         return ((inferLen && !((SqlString)value).IsNull)
                             ? PromoteStringType(((SqlString)value).Value)
-                            : MetaNVarChar);
+                            : MetaNVarChar); // MDAC 87587
                     }
                     else if (dataType == typeof(IEnumerable<DbDataRecord>) || dataType == typeof(DataTable))
                     {
