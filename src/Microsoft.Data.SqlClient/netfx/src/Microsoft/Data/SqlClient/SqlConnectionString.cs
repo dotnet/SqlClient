@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.Versioning;
@@ -219,7 +220,7 @@ namespace Microsoft.Data.SqlClient
             internal const string ExplicitUnbind = "Explicit Unbind";
         }
 
-        static private Hashtable _sqlClientSynonyms;
+        private static Dictionary<string, string> s_sqlClientSynonyms;
         static private Hashtable _netlibMapping;
 
         private readonly bool _integratedSecurity;
@@ -281,7 +282,7 @@ namespace Microsoft.Data.SqlClient
         // SxS: reading Software\\Microsoft\\MSSQLServer\\Client\\SuperSocketNetLib\Encrypt value from registry
         [ResourceExposure(ResourceScope.None)]
         [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
-        internal SqlConnectionString(string connectionString) : base(connectionString, GetParseSynonyms(), false)
+        internal SqlConnectionString(string connectionString) : base(connectionString, GetParseSynonyms())
         {
 
             bool runningInProc = InOutOfProcHelper.InProc;
@@ -352,10 +353,10 @@ namespace Microsoft.Data.SqlClient
                 // When using a context connection, we need to ensure that no
                 // other connection string keywords are specified.
 
-                foreach (DictionaryEntry entry in Parsetable)
+                foreach (KeyValuePair<string, string> entry in Parsetable)
                 {
-                    if ((string)entry.Key != KEY.Context_Connection &&
-                        (string)entry.Key != KEY.Type_System_Version)
+                    if (entry.Key != KEY.Context_Connection &&
+                        entry.Key != KEY.Type_System_Version)
                     {
                         throw SQL.ContextAllowsLimitedKeywords();
                     }
@@ -555,32 +556,32 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.AuthenticationAndIntegratedSecurity();
             }
 
-            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && (HasUserIdKeyword || HasPasswordKeyword))
+            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && (_hasUserIdKeyword || _hasPasswordKeyword))
             {
                 throw SQL.IntegratedWithUserIDAndPassword();
             }
 
-            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive && (HasPasswordKeyword))
+            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive && (_hasPasswordKeyword))
             {
                 throw SQL.InteractiveWithPassword();
             }
 
-            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow && (HasUserIdKeyword || HasPasswordKeyword))
+            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow && (_hasUserIdKeyword || _hasPasswordKeyword))
             {
                 throw SQL.DeviceFlowWithUsernamePassword();
             }
 
-            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity && HasPasswordKeyword)
+            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity && _hasPasswordKeyword)
             {
                 throw SQL.NonInteractiveWithPassword(DbConnectionStringBuilderUtil.ActiveDirectoryManagedIdentityString);
             }
 
-            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI && HasPasswordKeyword)
+            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryMSI && _hasPasswordKeyword)
             {
                 throw SQL.NonInteractiveWithPassword(DbConnectionStringBuilderUtil.ActiveDirectoryMSIString);
             }
 
-            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryDefault && HasPasswordKeyword)
+            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryDefault && _hasPasswordKeyword)
             {
                 throw SQL.NonInteractiveWithPassword(DbConnectionStringBuilderUtil.ActiveDirectoryDefaultString);
             }
@@ -783,89 +784,91 @@ namespace Microsoft.Data.SqlClient
 
         // this hashtable is meant to be read-only translation of parsed string
         // keywords/synonyms to a known keyword string
-        internal static Hashtable GetParseSynonyms()
+        internal static Dictionary<string, string> GetParseSynonyms()
         {
-
-            Hashtable hash = _sqlClientSynonyms;
-            if (null == hash)
+            Dictionary<string, string> synonyms = s_sqlClientSynonyms;
+            if (synonyms is null)
             {
-                hash = new Hashtable(SqlConnectionStringBuilder.KeywordsCount + SynonymCount);
-                hash.Add(KEY.ApplicationIntent, KEY.ApplicationIntent);
-                hash.Add(KEY.Application_Name, KEY.Application_Name);
-                hash.Add(KEY.AttachDBFilename, KEY.AttachDBFilename);
-                hash.Add(KEY.PoolBlockingPeriod, KEY.PoolBlockingPeriod);
-                hash.Add(KEY.Connect_Timeout, KEY.Connect_Timeout);
-                hash.Add(KEY.Command_Timeout, KEY.Command_Timeout);
-                hash.Add(KEY.Connection_Reset, KEY.Connection_Reset);
-                hash.Add(KEY.Context_Connection, KEY.Context_Connection);
-                hash.Add(KEY.Current_Language, KEY.Current_Language);
-                hash.Add(KEY.Data_Source, KEY.Data_Source);
-                hash.Add(KEY.Encrypt, KEY.Encrypt);
-                hash.Add(KEY.Enlist, KEY.Enlist);
-                hash.Add(KEY.FailoverPartner, KEY.FailoverPartner);
-                hash.Add(KEY.Initial_Catalog, KEY.Initial_Catalog);
-                hash.Add(KEY.Integrated_Security, KEY.Integrated_Security);
-                hash.Add(KEY.Load_Balance_Timeout, KEY.Load_Balance_Timeout);
-                hash.Add(KEY.MARS, KEY.MARS);
-                hash.Add(KEY.Max_Pool_Size, KEY.Max_Pool_Size);
-                hash.Add(KEY.Min_Pool_Size, KEY.Min_Pool_Size);
-                hash.Add(KEY.MultiSubnetFailover, KEY.MultiSubnetFailover);
-                hash.Add(KEY.TransparentNetworkIPResolution, KEY.TransparentNetworkIPResolution);
-                hash.Add(KEY.Network_Library, KEY.Network_Library);
-                hash.Add(KEY.Packet_Size, KEY.Packet_Size);
-                hash.Add(KEY.Password, KEY.Password);
-                hash.Add(KEY.Persist_Security_Info, KEY.Persist_Security_Info);
-                hash.Add(KEY.Pooling, KEY.Pooling);
-                hash.Add(KEY.Replication, KEY.Replication);
-                hash.Add(KEY.TrustServerCertificate, KEY.TrustServerCertificate);
-                hash.Add(KEY.TransactionBinding, KEY.TransactionBinding);
-                hash.Add(KEY.Type_System_Version, KEY.Type_System_Version);
-                hash.Add(KEY.ColumnEncryptionSetting, KEY.ColumnEncryptionSetting);
-                hash.Add(KEY.EnclaveAttestationUrl, KEY.EnclaveAttestationUrl);
-                hash.Add(KEY.AttestationProtocol, KEY.AttestationProtocol);
-                hash.Add(KEY.User_ID, KEY.User_ID);
-                hash.Add(KEY.User_Instance, KEY.User_Instance);
-                hash.Add(KEY.Workstation_Id, KEY.Workstation_Id);
-                hash.Add(KEY.Connect_Retry_Count, KEY.Connect_Retry_Count);
-                hash.Add(KEY.Connect_Retry_Interval, KEY.Connect_Retry_Interval);
-                hash.Add(KEY.Authentication, KEY.Authentication);
-                hash.Add(KEY.IPAddressPreference, KEY.IPAddressPreference);
+                int count = SqlConnectionStringBuilder.KeywordsCount + SynonymCount;
+                synonyms = new Dictionary<string, string>(count)
+                {
+                    { KEY.ApplicationIntent, KEY.ApplicationIntent},
+                    { KEY.Application_Name, KEY.Application_Name },
+                    { KEY.AttachDBFilename, KEY.AttachDBFilename },
+                    { KEY.PoolBlockingPeriod, KEY.PoolBlockingPeriod },
+                    { KEY.Connect_Timeout, KEY.Connect_Timeout },
+                    { KEY.Command_Timeout, KEY.Command_Timeout },
+                    { KEY.Connection_Reset, KEY.Connection_Reset },
+                    { KEY.Context_Connection, KEY.Context_Connection },
+                    { KEY.Current_Language, KEY.Current_Language },
+                    { KEY.Data_Source, KEY.Data_Source },
+                    { KEY.Encrypt, KEY.Encrypt },
+                    { KEY.Enlist, KEY.Enlist },
+                    { KEY.FailoverPartner, KEY.FailoverPartner },
+                    { KEY.Initial_Catalog, KEY.Initial_Catalog },
+                    { KEY.Integrated_Security, KEY.Integrated_Security },
+                    { KEY.Load_Balance_Timeout, KEY.Load_Balance_Timeout },
+                    { KEY.MARS, KEY.MARS },
+                    { KEY.Max_Pool_Size, KEY.Max_Pool_Size },
+                    { KEY.Min_Pool_Size, KEY.Min_Pool_Size },
+                    { KEY.MultiSubnetFailover, KEY.MultiSubnetFailover },
+                    { KEY.TransparentNetworkIPResolution, KEY.TransparentNetworkIPResolution },
+                    { KEY.Network_Library, KEY.Network_Library },
+                    { KEY.Packet_Size, KEY.Packet_Size },
+                    { KEY.Password, KEY.Password },
+                    { KEY.Persist_Security_Info, KEY.Persist_Security_Info },
+                    { KEY.Pooling, KEY.Pooling },
+                    { KEY.Replication, KEY.Replication },
+                    { KEY.TrustServerCertificate, KEY.TrustServerCertificate },
+                    { KEY.TransactionBinding, KEY.TransactionBinding },
+                    { KEY.Type_System_Version, KEY.Type_System_Version },
+                    { KEY.ColumnEncryptionSetting, KEY.ColumnEncryptionSetting },
+                    { KEY.EnclaveAttestationUrl, KEY.EnclaveAttestationUrl },
+                    { KEY.AttestationProtocol, KEY.AttestationProtocol },
+                    { KEY.User_ID, KEY.User_ID },
+                    { KEY.User_Instance, KEY.User_Instance },
+                    { KEY.Workstation_Id, KEY.Workstation_Id },
+                    { KEY.Connect_Retry_Count, KEY.Connect_Retry_Count },
+                    { KEY.Connect_Retry_Interval, KEY.Connect_Retry_Interval },
+                    { KEY.Authentication, KEY.Authentication },
+                    { KEY.IPAddressPreference, KEY.IPAddressPreference },
 #if ADONET_CERT_AUTH
-                hash.Add(KEY.Certificate,                    KEY.Certificate);
+                    { KEY.Certificate, KEY.Certificate },
 #endif
-                hash.Add(SYNONYM.APPLICATIONINTENT, KEY.ApplicationIntent);
-                hash.Add(SYNONYM.APP, KEY.Application_Name);
-                hash.Add(SYNONYM.EXTENDED_PROPERTIES, KEY.AttachDBFilename);
-                hash.Add(SYNONYM.INITIAL_FILE_NAME, KEY.AttachDBFilename);
-                hash.Add(SYNONYM.CONNECTION_TIMEOUT, KEY.Connect_Timeout);
-                hash.Add(SYNONYM.CONNECTRETRYCOUNT, KEY.Connect_Retry_Count);
-                hash.Add(SYNONYM.CONNECTRETRYINTERVAL, KEY.Connect_Retry_Interval);
-                hash.Add(SYNONYM.TIMEOUT, KEY.Connect_Timeout);
-                hash.Add(SYNONYM.LANGUAGE, KEY.Current_Language);
-                hash.Add(SYNONYM.ADDR, KEY.Data_Source);
-                hash.Add(SYNONYM.ADDRESS, KEY.Data_Source);
-                hash.Add(SYNONYM.MULTIPLEACTIVERESULTSETS, KEY.MARS);
-                hash.Add(SYNONYM.MULTISUBNETFAILOVER, KEY.MultiSubnetFailover);
-                hash.Add(SYNONYM.NETWORK_ADDRESS, KEY.Data_Source);
-                hash.Add(SYNONYM.SERVER, KEY.Data_Source);
-                hash.Add(SYNONYM.DATABASE, KEY.Initial_Catalog);
-                hash.Add(SYNONYM.TRUSTED_CONNECTION, KEY.Integrated_Security);
-                hash.Add(SYNONYM.Connection_Lifetime, KEY.Load_Balance_Timeout);
-                hash.Add(SYNONYM.NET, KEY.Network_Library);
-                hash.Add(SYNONYM.NETWORK, KEY.Network_Library);
-                hash.Add(SYNONYM.Pwd, KEY.Password);
-                hash.Add(SYNONYM.POOLBLOCKINGPERIOD, KEY.PoolBlockingPeriod);
-                hash.Add(SYNONYM.PERSISTSECURITYINFO, KEY.Persist_Security_Info);
-                hash.Add(SYNONYM.TRANSPARENTNETWORKIPRESOLUTION, KEY.TransparentNetworkIPResolution);
-                hash.Add(SYNONYM.TRUSTSERVERCERTIFICATE, KEY.TrustServerCertificate);
-                hash.Add(SYNONYM.UID, KEY.User_ID);
-                hash.Add(SYNONYM.User, KEY.User_ID);
-                hash.Add(SYNONYM.WSID, KEY.Workstation_Id);
-                hash.Add(SYNONYM.IPADDRESSPREFERENCE, KEY.IPAddressPreference);
-                Debug.Assert(SqlConnectionStringBuilder.KeywordsCount + SynonymCount == hash.Count, "incorrect initial ParseSynonyms size");
-                _sqlClientSynonyms = hash;
+                    { SYNONYM.APPLICATIONINTENT, KEY.ApplicationIntent },
+                    { SYNONYM.APP, KEY.Application_Name },
+                    { SYNONYM.EXTENDED_PROPERTIES, KEY.AttachDBFilename },
+                    { SYNONYM.INITIAL_FILE_NAME, KEY.AttachDBFilename },
+                    { SYNONYM.CONNECTION_TIMEOUT, KEY.Connect_Timeout },
+                    { SYNONYM.CONNECTRETRYCOUNT, KEY.Connect_Retry_Count },
+                    { SYNONYM.CONNECTRETRYINTERVAL, KEY.Connect_Retry_Interval },
+                    { SYNONYM.TIMEOUT, KEY.Connect_Timeout },
+                    { SYNONYM.LANGUAGE, KEY.Current_Language },
+                    { SYNONYM.ADDR, KEY.Data_Source },
+                    { SYNONYM.ADDRESS, KEY.Data_Source },
+                    { SYNONYM.MULTIPLEACTIVERESULTSETS, KEY.MARS },
+                    { SYNONYM.MULTISUBNETFAILOVER, KEY.MultiSubnetFailover },
+                    { SYNONYM.NETWORK_ADDRESS, KEY.Data_Source },
+                    { SYNONYM.SERVER, KEY.Data_Source },
+                    { SYNONYM.DATABASE, KEY.Initial_Catalog },
+                    { SYNONYM.TRUSTED_CONNECTION, KEY.Integrated_Security },
+                    { SYNONYM.Connection_Lifetime, KEY.Load_Balance_Timeout },
+                    { SYNONYM.NET, KEY.Network_Library },
+                    { SYNONYM.NETWORK, KEY.Network_Library },
+                    { SYNONYM.Pwd, KEY.Password },
+                    { SYNONYM.POOLBLOCKINGPERIOD, KEY.PoolBlockingPeriod },
+                    { SYNONYM.PERSISTSECURITYINFO, KEY.Persist_Security_Info },
+                    { SYNONYM.TRANSPARENTNETWORKIPRESOLUTION, KEY.TransparentNetworkIPResolution },
+                    { SYNONYM.TRUSTSERVERCERTIFICATE, KEY.TrustServerCertificate },
+                    { SYNONYM.UID, KEY.User_ID },
+                    { SYNONYM.User, KEY.User_ID },
+                    { SYNONYM.WSID, KEY.Workstation_Id },
+                    { SYNONYM.IPADDRESSPREFERENCE, KEY.IPAddressPreference }
+                };
+                Debug.Assert(count == synonyms.Count, "incorrect initial ParseSynonyms size");
+                s_sqlClientSynonyms = synonyms;
             }
-            return hash;
+            return synonyms;
         }
 
         internal string ObtainWorkstationId()
@@ -964,8 +967,8 @@ namespace Microsoft.Data.SqlClient
 
         internal Microsoft.Data.SqlClient.ApplicationIntent ConvertValueToApplicationIntent()
         {
-            object value = base.Parsetable[KEY.ApplicationIntent];
-            if (value == null)
+            string value;
+            if (!base.Parsetable.TryGetValue(KEY.ApplicationIntent, out value))
             {
                 return DEFAULT.ApplicationIntent;
             }
@@ -989,8 +992,8 @@ namespace Microsoft.Data.SqlClient
 
         internal Microsoft.Data.SqlClient.PoolBlockingPeriod ConvertValueToPoolBlockingPeriod()
         {
-            object value = base.Parsetable[KEY.PoolBlockingPeriod];
-            if (value == null)
+            string value;
+            if (!base.Parsetable.TryGetValue(KEY.PoolBlockingPeriod, out value))
             {
                 return DEFAULT.PoolBlockingPeriod;
             }
@@ -1011,10 +1014,8 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlAuthenticationMethod ConvertValueToAuthenticationType()
         {
-            object value = base.Parsetable[KEY.Authentication];
-
-            string valStr = value as string;
-            if (valStr == null)
+            string valStr;
+            if (!base.Parsetable.TryGetValue(KEY.Authentication, out valStr))
             {
                 return DEFAULT.Authentication;
             }
@@ -1039,10 +1040,8 @@ namespace Microsoft.Data.SqlClient
         /// <returns></returns>
         internal SqlConnectionColumnEncryptionSetting ConvertValueToColumnEncryptionSetting()
         {
-            object value = base.Parsetable[KEY.ColumnEncryptionSetting];
-
-            string valStr = value as string;
-            if (valStr == null)
+            string valStr;
+            if (!base.Parsetable.TryGetValue(KEY.ColumnEncryptionSetting, out valStr))
             {
                 return DEFAULT.ColumnEncryptionSetting;
             }
@@ -1063,10 +1062,8 @@ namespace Microsoft.Data.SqlClient
 
         internal SqlConnectionAttestationProtocol ConvertValueToAttestationProtocol()
         {
-            object value = base.Parsetable[KEY.AttestationProtocol];
-
-            string valStr = value as string;
-            if (valStr == null)
+            string valStr;
+            if (!base.Parsetable.TryGetValue(KEY.AttestationProtocol, out valStr))
             {
                 return DEFAULT.AttestationProtocol;
             }
@@ -1091,10 +1088,8 @@ namespace Microsoft.Data.SqlClient
         /// <returns></returns>
         internal SqlConnectionIPAddressPreference ConvertValueToIPAddressPreference()
         {
-            object value = base.Parsetable[KEY.IPAddressPreference];
-
-            string valStr = value as string;
-            if (valStr == null)
+            string valStr;
+            if (!base.Parsetable.TryGetValue(KEY.IPAddressPreference, out valStr))
             {
                 return DEFAULT.s_IPAddressPreference;
             }
@@ -1115,10 +1110,7 @@ namespace Microsoft.Data.SqlClient
 
         internal bool ConvertValueToEncrypt()
         {
-            // If the Authentication keyword is provided, default to Encrypt=true;
-            // otherwise keep old default for backwards compatibility
-            object authValue = base.Parsetable[KEY.Authentication];
-            bool defaultEncryptValue = (authValue == null) ? DEFAULT.Encrypt : true;
+            bool defaultEncryptValue = !base.Parsetable.ContainsKey(KEY.Authentication) ? DEFAULT.Encrypt : true;
             return ConvertValueToBoolean(KEY.Encrypt, defaultEncryptValue);
         }
     }
