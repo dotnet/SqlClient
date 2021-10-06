@@ -140,14 +140,6 @@ namespace Microsoft.Data.SqlClient
             return SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(ToStream(), closeInput: false, async: false);
         }
 
-        public bool IsNull
-        {
-            get
-            {
-                return (_cachedBytes == null) ? true : false;
-            }
-        }
-
         public bool IsNull => _cachedBytes == null;
     }
 }
