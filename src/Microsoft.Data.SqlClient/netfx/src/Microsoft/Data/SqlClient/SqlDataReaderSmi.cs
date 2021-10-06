@@ -135,7 +135,7 @@ namespace Microsoft.Data.SqlClient
             EnsureCanGetCol("GetFieldValue<T>", ordinal);
             SmiQueryMetaData metaData = _currentMetaData[ordinal];
 
-            if (_typeofINullable.IsAssignableFrom(typeof(T)))
+            if (typeof(INullable).IsAssignableFrom(typeof(T)))
             {
                 // If its a SQL Type or Nullable UDT
                 if (_currentConnection.IsKatmaiOrNewer)
@@ -1044,7 +1044,7 @@ namespace Microsoft.Data.SqlClient
                 stream = ValueUtilsSmi.GetStream(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal], bypassTypeCheck: true);
             }
 
-            return SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(stream);
+            return SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(stream, closeInput: false, async: false);
         }
 
         //
