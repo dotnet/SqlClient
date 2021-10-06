@@ -278,10 +278,23 @@ namespace Microsoft.Data.SqlClient.Server
         {
             throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
         }
+#if NETFRAMEWORK
+        // valid for multi-valued types only
+        internal virtual bool NextElement(SmiEventSink sink)
+        {
+            if (!CanGet)
+            {
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
+            }
+            else
+            {
+                throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
+            }
+        }
+#endif
+#endregion
 
-        #endregion
-
-        #region Setters
+#region Setters
 
         // Set value to null
         //  valid for all types
@@ -555,7 +568,7 @@ namespace Microsoft.Data.SqlClient.Server
                 throw ADP.InternalError(ADP.InternalErrorCode.UnimplementedSMIMethod);
             }
         }
-        #endregion
+#endregion
 
     }
 }
