@@ -2059,7 +2059,7 @@ namespace Microsoft.Data.SqlClient
                 (connectionOptions.Authentication == SqlAuthenticationMethod.SqlPassword ||
                     connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword ||
                     connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal) &&
-                (!connectionOptions.HasUserIdKeyword || !connectionOptions.HasPasswordKeyword) &&
+                (!connectionOptions._hasUserIdKeyword || !connectionOptions._hasPasswordKeyword) &&
                 _credential == null)
             {
                 throw SQL.CredentialsNotProvided(connectionOptions.Authentication);
