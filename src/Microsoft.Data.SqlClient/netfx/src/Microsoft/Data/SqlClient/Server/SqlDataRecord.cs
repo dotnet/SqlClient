@@ -128,10 +128,8 @@ namespace Microsoft.Data.SqlClient.Server
         }
   
         private void SetTimeSpanFrameworkSpecific(int ordinal, TimeSpan value) => ValueUtilsSmi.SetTimeSpan(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value, SmiVersion >= SmiContextFactory.KatmaiVersion);
-   
         private void SetDateTimeOffsetFrameworkSpecific(int ordinal, DateTimeOffset value) => ValueUtilsSmi.SetDateTimeOffset(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value, SmiVersion >= SmiContextFactory.KatmaiVersion);
 
         private ulong SmiVersion => InOutOfProcHelper.InProc ? SmiContextFactory.Instance.NegotiatedSmiVersion : SmiContextFactory.LatestVersion;
- }
+    }
 }
-
