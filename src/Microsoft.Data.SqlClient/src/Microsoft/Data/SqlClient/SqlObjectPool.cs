@@ -5,29 +5,29 @@
 using System.Diagnostics;
 using System.Threading;
 
-namespace Microsoft.Data.SqlClient.SNI
+namespace Microsoft.Data.SqlClient
 {
     // this is a very simple threadsafe pool derived from the aspnet/extensions default pool implementation
     // https://github.com/dotnet/extensions/blob/release/3.1/src/ObjectPool/src/DefaultObjectPool.cs
-    internal sealed class SNIPacketPool
+    internal sealed class SqlObjectPool<T> where T : class
     {
-        private readonly PacketWrapper[] _items;
-        private SNIPacket _firstItem;
+        private readonly ObjectWrapper[] _items;
+        private T _firstItem;
 
-        public SNIPacketPool(int maximumRetained)
+        public SqlObjectPool(int maximumRetained)
         {
             // -1 due to _firstItem
-            _items = new PacketWrapper[maximumRetained - 1];
+            _items = new ObjectWrapper[maximumRetained - 1];
         }
 
-        public bool TryGet(out SNIPacket packet)
+        public bool TryGet(out T item)
         {
-            packet = null;
-            SNIPacket item = _firstItem;
-            if (item != null && Interlocked.CompareExchange(ref _firstItem, null, item) == item)
+            item = null;
+            T taken = _firstItem;
+            if (taken != null && Interlocked.CompareExchange(ref _firstItem, null, taken) == taken)
             {
                 // took first item
-                packet = item;
+                item = taken;
                 return true;
             }
             else
@@ -35,10 +35,10 @@ namespace Microsoft.Data.SqlClient.SNI
                 var items = _items;
                 for (var i = 0; i < items.Length; i++)
                 {
-                    item = items[i].Element;
-                    if (item != null && Interlocked.CompareExchange(ref items[i].Element, null, item) == item)
+                    taken = items[i].Element;
+                    if (taken != null && Interlocked.CompareExchange(ref items[i].Element, null, taken) == taken)
                     {
-                        packet = item;
+                        item = taken;
                         return true;
                     }
                 }
@@ -46,12 +46,12 @@ namespace Microsoft.Data.SqlClient.SNI
             return false;
         }
 
-        public void Return(SNIPacket packet)
+        public void Return(T item)
         {
-            if (_firstItem != null || Interlocked.CompareExchange(ref _firstItem, packet, null) != null)
+            if (_firstItem != null || Interlocked.CompareExchange(ref _firstItem, item, null) != null)
             {
                 var items = _items;
-                for (var i = 0; i < items.Length && Interlocked.CompareExchange(ref items[i].Element, packet, null) != null; ++i)
+                for (var i = 0; i < items.Length && Interlocked.CompareExchange(ref items[i].Element, item, null) != null; ++i)
                 {
                 }
             }
@@ -59,9 +59,9 @@ namespace Microsoft.Data.SqlClient.SNI
 
         // PERF: the struct wrapper avoids array-covariance-checks from the runtime when assigning to elements of the array.
         [DebuggerDisplay("{Element}")]
-        private struct PacketWrapper
+        private struct ObjectWrapper
         {
-            public SNIPacket Element;
+            public T Element;
         }
     }
 }
