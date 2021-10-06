@@ -9,6 +9,7 @@ namespace Microsoft.Data.SqlClient
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml' path='docs/members[@name="SqlError"]/SqlError/*' />
     public sealed class SqlError
     {
+        // bug fix - MDAC 48965 - missing source of exception
         internal SqlError(int infoNumber, byte errorState, byte errorClass, string server, string errorMessage, string procedure, int lineNumber, uint win32ErrorCode, Exception exception = null)
             : this(infoNumber, errorState, errorClass, server, errorMessage, procedure, lineNumber, exception)
         {
@@ -33,6 +34,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlError.xml' path='docs/members[@name="SqlError"]/ToString/*' />
+        // bug fix - MDAC #49280 - SqlError does not implement ToString();
         // There is no exception stack included because the correct exception stack is only available
         // on SqlException, and to obtain that the SqlError would have to have backpointers all the
         // way back to SqlException.  If the user needs a call stack, they can obtain it on SqlException.
