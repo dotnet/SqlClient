@@ -32,9 +32,11 @@ namespace Microsoft.Data.SqlClient
         public int Count => _errors.Count;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlErrorCollection.xml' path='docs/members[@name="SqlErrorCollection"]/System.Collections.ICollection.SyncRoot/*' />
+        // MDAC 68481
         object ICollection.SyncRoot => this;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlErrorCollection.xml' path='docs/members[@name="SqlErrorCollection"]/System.Collections.ICollection.IsSynchronized/*' />
+        // MDAC 68481
         bool ICollection.IsSynchronized => false;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlErrorCollection.xml' path='docs/members[@name="SqlErrorCollection"]/Item/*' />
