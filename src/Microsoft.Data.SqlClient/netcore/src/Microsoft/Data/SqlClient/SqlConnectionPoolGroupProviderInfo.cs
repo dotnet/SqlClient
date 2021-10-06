@@ -11,6 +11,9 @@ namespace Microsoft.Data.SqlClient
         private string _alias;
         private string _failoverPartner;
         private bool _useFailoverPartner;
+#if NETFRAMEWORK
+        private System.Security.PermissionSet _failoverPermissionSet;
+#endif
 
         internal SqlConnectionPoolGroupProviderInfo(SqlConnectionString connectionOptions)
         {
@@ -61,7 +64,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-
         internal void FailoverCheck(SqlInternalConnection connection, bool actualUseFailoverPartner, SqlConnectionString userConnectionOptions, string actualFailoverPartner)
         {
             if (UseFailoverPartner != actualUseFailoverPartner)
@@ -78,14 +80,68 @@ namespace Microsoft.Data.SqlClient
                 //       lock short, but we only do this when we get a new
                 //       failover partner.
 
+#if NETFRAMEWORK
+                System.Security.PermissionSet failoverPermissionSet = CreateFailoverPermission(userConnectionOptions, actualFailoverPartner);
+#endif
                 lock (this)
                 {
                     if (_failoverPartner != actualFailoverPartner)
                     {
                         _failoverPartner = actualFailoverPartner;
+#if NETFRAMEWORK
+                        _failoverPermissionSet = failoverPermissionSet;
+#endif
                     }
                 }
             }
         }
+
+#if NETFRAMEWORK
+        private System.Security.PermissionSet CreateFailoverPermission(SqlConnectionString userConnectionOptions, string actualFailoverPartner)
+        {
+            string keywordToReplace;
+
+            // RULES FOR CONSTRUCTING THE CONNECTION STRING TO DEMAND ON:
+            //
+            // 1) If no Failover Partner was specified in the original string:
+            //
+            //          Server=actualFailoverPartner
+            //
+            // 2) If Failover Partner was specified in the original string:
+            //
+            //          Server=originalValue; Failover Partner=actualFailoverPartner
+            //
+            // NOTE: in all cases, when we get a failover partner name from 
+            //       the server, we will use that name over what was specified  
+            //       in the original connection string.
+
+            if (null == userConnectionOptions[SqlConnectionString.KEY.FailoverPartner])
+            {
+                keywordToReplace = SqlConnectionString.KEY.Data_Source;
+            }
+            else
+            {
+                keywordToReplace = SqlConnectionString.KEY.FailoverPartner;
+            }
+
+            string failoverConnectionString = userConnectionOptions.ExpandKeyword(keywordToReplace, actualFailoverPartner);
+            return (new SqlConnectionString(failoverConnectionString)).CreatePermissionSet();
+        }
+
+        internal void FailoverPermissionDemand()
+        {
+            if (_useFailoverPartner)
+            {
+                // Note that we only demand when there is a permission set, which only
+                // happens once we've identified a failover situation in FailoverCheck
+                System.Security.PermissionSet failoverPermissionSet = _failoverPermissionSet;
+                if (null != failoverPermissionSet)
+                {
+                    // demand on pooled failover connections
+                    failoverPermissionSet.Demand();
+                }
+            }
+        }
+#endif
     }
 }
