@@ -21,8 +21,8 @@ namespace Microsoft.Data.SqlClient.Server
     //       thrown in the native to managed boundary...
     internal abstract class SmiEventSink
     {
-
-        #region Active methods
+#if NETFRAMEWORK
+#region Active methods
 
         // Called at end of stream whether errors or no
         internal abstract void BatchCompleted();
@@ -80,10 +80,10 @@ namespace Microsoft.Data.SqlClient.Server
         // Called when a transaction is started (ENVCHANGE token)
         internal abstract void TransactionStarted(long transactionId);
 
-        #endregion
+#endregion
 
-        #region OBSOLETE METHODS
-        #region OBSOLETED as of V200 but active in previous version
+#region OBSOLETE METHODS
+#region OBSOLETED as of V200 but active in previous version
         // Called zero or one time when output parameters are available (errors could prevent event from occuring)
         internal virtual void ParametersAvailable(SmiParameterMetaData[] metaData, ITypedGettersV3 paramValues)
         {
@@ -108,9 +108,9 @@ namespace Microsoft.Data.SqlClient.Server
             Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
         }
 
-        #endregion
+#endregion
 
-        #region OBSOLETED and never shipped (without ObsoleteAttribute)
+#region OBSOLETED and never shipped (without ObsoleteAttribute)
         // Called when a new row arrives (ROW token)
         internal virtual void RowAvailable(ITypedGetters rowData)
         {
@@ -123,8 +123,10 @@ namespace Microsoft.Data.SqlClient.Server
             Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
         }
 
-        #endregion
-        #endregion
+#endregion
+#endregion
+   
+#endif    
     }
 }
 

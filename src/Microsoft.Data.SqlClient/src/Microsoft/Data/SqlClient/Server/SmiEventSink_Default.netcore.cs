@@ -6,31 +6,16 @@ using System.Diagnostics;
 
 namespace Microsoft.Data.SqlClient.Server
 {
-    internal class SmiEventSink_Default : SmiEventSink
+    internal partial class SmiEventSink_Default : SmiEventSink
     {
-        private SqlErrorCollection _errors;
-        private SqlErrorCollection _warnings;
-
-
         internal bool HasMessages
         {
             get
             {
-                {
-                    bool result = (null != _errors || null != _warnings);
-                    return result;
-                }
+                bool result = (null != _errors || null != _warnings);
+                return result;
             }
         }
-
-        virtual internal string ServerVersion
-        {
-            get
-            {
-                return null;
-            }
-        }
-
 
         protected virtual void DispatchMessages()
         {
@@ -101,11 +86,6 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
-
-
-        internal SmiEventSink_Default()
-        {
-        }
     }
 }
 

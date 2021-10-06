@@ -6,14 +6,10 @@ using System.Diagnostics;
 
 namespace Microsoft.Data.SqlClient.Server
 {
-    internal class SmiEventSink_Default : SmiEventSink
+    internal partial class SmiEventSink_Default : SmiEventSink
     {
 
         private SmiEventSink _parent;     // next level up, which we'll defer to if we don't need to handle the event.
-
-        private SqlErrorCollection _errors;
-        private SqlErrorCollection _warnings;
-
         private SqlErrorCollection Errors
         {
             get
@@ -41,14 +37,6 @@ namespace Microsoft.Data.SqlClient.Server
                     bool result = (null != _errors || null != _warnings);
                     return result;
                 }
-            }
-        }
-
-        virtual internal string ServerVersion
-        {
-            get
-            {
-                return null;
             }
         }
 
@@ -204,11 +192,6 @@ namespace Microsoft.Data.SqlClient.Server
             TransactionEnded,
             TransactionRolledBack,
             TransactionStarted,
-        }
-
-
-        internal SmiEventSink_Default()
-        {
         }
 
         internal SmiEventSink_Default(SmiEventSink parent)
