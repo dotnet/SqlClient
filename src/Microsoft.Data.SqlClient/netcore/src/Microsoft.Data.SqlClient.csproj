@@ -336,8 +336,8 @@
     <Compile Include="..\..\src\Resources\StringsHelper.cs">
       <Link>Resources\StringsHelper.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\Common\AdapterUtilCommon.cs">
-      <Link>Microsoft\Data\Common\AdapterUtilCommon.cs</Link>
+    <Compile Include="..\..\src\Microsoft\Data\Common\AdapterUtil.cs">
+      <Link>Microsoft\Data\Common\AdapterUtil.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netstandard' OR '$(TargetGroup)' == 'netcoreapp' OR '$(IsUAPAssembly)' == 'true'">
@@ -433,9 +433,6 @@
     <Compile Include="Microsoft\Data\SqlClient\Server\SqlDataRecord.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\ValueUtilsSmi.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDbColumn.cs" />
-    <Compile Include="$(CommonPath)\Microsoft\Data\Common\AdapterUtil.cs">
-      <Link>Microsoft\Data\Common\AdapterUtil.cs</Link>
-    </Compile>
     <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
     <Compile Include="$(CommonPath)\Microsoft\Data\Common\DbConnectionOptions.Common.cs">
       <Link>Microsoft\Data\Common\DbConnectionOptions.Common.cs</Link>

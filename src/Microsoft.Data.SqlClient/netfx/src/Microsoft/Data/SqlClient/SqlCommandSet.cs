@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Data.Common;
@@ -134,7 +135,7 @@ namespace Microsoft.Data.SqlClient
 
             if (ADP.IsEmpty(cmdText))
             {
-                throw ADP.CommandTextRequired(ADP.Append);
+                throw ADP.CommandTextRequired(nameof(Append));
             }
 
             CommandType commandType = command.CommandType;
@@ -300,7 +301,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw SQL.BatchedUpdatesNotAvailableOnContextConnection();
                 }
-                ValidateCommandBehavior(ADP.ExecuteNonQuery, CommandBehavior.Default);
+                ValidateCommandBehavior(nameof(ExecuteNonQuery), CommandBehavior.Default);
                 BatchCommand.BatchRPCMode = true;
                 BatchCommand.ClearBatchCommand();
                 BatchCommand.Parameters.Clear();

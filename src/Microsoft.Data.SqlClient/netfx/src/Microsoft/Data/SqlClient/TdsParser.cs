@@ -12348,15 +12348,15 @@ namespace Microsoft.Data.SqlClient
             {
                 if (buffer == null)
                 {
-                    throw ADP.ArgumentNull(ADP.ParameterBuffer);
+                    throw ADP.ArgumentNull(nameof(buffer));
                 }
                 if (offset < 0)
                 {
-                    throw ADP.ArgumentOutOfRange(ADP.ParameterOffset);
+                    throw ADP.ArgumentOutOfRange(nameof(offset));
                 }
                 if (count < 0)
                 {
-                    throw ADP.ArgumentOutOfRange(ADP.ParameterCount);
+                    throw ADP.ArgumentOutOfRange(nameof(count));
                 }
                 try
                 {
@@ -12476,15 +12476,15 @@ namespace Microsoft.Data.SqlClient
             {
                 if (buffer == null)
                 {
-                    throw ADP.ArgumentNull(ADP.ParameterBuffer);
+                    throw ADP.ArgumentNull(nameof(buffer));
                 }
                 if (offset < 0)
                 {
-                    throw ADP.ArgumentOutOfRange(ADP.ParameterOffset);
+                    throw ADP.ArgumentOutOfRange(nameof(offset));
                 }
                 if (count < 0)
                 {
-                    throw ADP.ArgumentOutOfRange(ADP.ParameterCount);
+                    throw ADP.ArgumentOutOfRange(nameof(count));
                 }
                 try
                 {
