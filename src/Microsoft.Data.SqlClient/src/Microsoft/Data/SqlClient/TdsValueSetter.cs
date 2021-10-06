@@ -363,9 +363,7 @@ namespace Microsoft.Data.SqlClient
             {
                 Debug.Assert(null != _variantType && SqlDbType.NVarChar == _variantType.SqlDbType, "Invalid variant type");
 
-                SqlCollation collation = new SqlCollation();
-                collation.LCID = checked((int)_variantType.LocaleId);
-                collation.SqlCompareOptions = _variantType.CompareOptions;
+                SqlCollation collation = SqlCollation.FromLCIDAndSort(checked((int)_variantType.LocaleId), _variantType.CompareOptions);
 
                 if (length * ADP.CharSize > TdsEnums.TYPE_SIZE_LIMIT)
                 { // send as varchar for length greater than 4000
@@ -380,16 +378,16 @@ namespace Microsoft.Data.SqlClient
                         bytes = _stateObj.Parser._defaultEncoding.GetBytes(value.ToCharArray(offset, length));
                     }
                     _stateObj.Parser.WriteSqlVariantHeader(9 + bytes.Length, TdsEnums.SQLBIGVARCHAR, 7, _stateObj);
-                    _stateObj.Parser.WriteUnsignedInt(collation.info, _stateObj); // propbytes: collation.Info
-                    _stateObj.WriteByte(collation.sortId); // propbytes: collation.SortId
+                    _stateObj.Parser.WriteUnsignedInt(collation._info, _stateObj); // propbytes: collation.Info
+                    _stateObj.WriteByte(collation._sortId); // propbytes: collation.SortId
                     _stateObj.Parser.WriteShort(bytes.Length, _stateObj); // propbyte: varlen
                     _stateObj.WriteByteArray(bytes, bytes.Length, 0);
                 }
                 else
                 {
                     _stateObj.Parser.WriteSqlVariantHeader(9 + length * ADP.CharSize, TdsEnums.SQLNVARCHAR, 7, _stateObj);
-                    _stateObj.Parser.WriteUnsignedInt(collation.info, _stateObj); // propbytes: collation.Info
-                    _stateObj.WriteByte(collation.sortId); // propbytes: collation.SortId
+                    _stateObj.Parser.WriteUnsignedInt(collation._info, _stateObj); // propbytes: collation.Info
+                    _stateObj.WriteByte(collation._sortId); // propbytes: collation.SortId
                     _stateObj.Parser.WriteShort(length * ADP.CharSize, _stateObj); // propbyte: varlen
                     _stateObj.Parser.WriteString(value, length, offset, _stateObj);
                 }
