@@ -133,7 +133,7 @@ namespace Microsoft.Data.SqlClient
         [MethodImpl(MethodImplOptions.NoInlining)]
         internal XmlReader ToXmlReader()
         {
-            return SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(ToStream(), closeInput: false);
+            return SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(ToStream(), closeInput: false, async: false);
         }
 
         public bool IsNull
