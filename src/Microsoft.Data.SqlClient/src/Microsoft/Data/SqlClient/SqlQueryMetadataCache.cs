@@ -23,7 +23,7 @@ namespace Microsoft.Data.SqlClient
         const int CacheTrimThreshold = 300; // Threshold above the cache size when we start trimming.
 
         private readonly MemoryCache _cache;
-        private static readonly SqlQueryMetadataCache _singletonInstance = new();
+        private static readonly SqlQueryMetadataCache s_singletonInstance = new();
         private int _inTrim = 0;
         private long _cacheHits = 0;
         private long _cacheMisses = 0;
@@ -39,7 +39,7 @@ namespace Microsoft.Data.SqlClient
 
         internal static SqlQueryMetadataCache GetInstance()
         {
-            return _singletonInstance;
+            return s_singletonInstance;
         }
 
         /// <summary>
@@ -73,8 +73,7 @@ namespace Microsoft.Data.SqlClient
             // Iterate over all the parameters and try to get their cipher MD.
             foreach (SqlParameter param in sqlCommand.Parameters)
             {
-                SqlCipherMetadata paramCiperMetadata;
-                bool found = cipherMetadataDictionary.TryGetValue(param.ParameterNameFixed, out paramCiperMetadata);
+                bool found = cipherMetadataDictionary.TryGetValue(param.ParameterNameFixed, out SqlCipherMetadata paramCiperMetadata);
 
                 // If we failed to identify the encryption for a specific parameter, clear up the cipher MD of all parameters and exit.
                 if (!found)
@@ -274,15 +273,6 @@ namespace Microsoft.Data.SqlClient
         private void IncrementCacheMisses()
         {
             Interlocked.Increment(ref _cacheMisses);
-        }
-
-        /// <summary>
-        /// Resets the counters for the cache hits and misses in the query metadata cache.
-        /// </summary>
-        private void ResetCacheCounts()
-        {
-            _cacheHits = 0;
-            _cacheMisses = 0;
         }
 
         private (string, string) GetCacheLookupKeysFromSqlCommand(SqlCommand sqlCommand)
