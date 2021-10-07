@@ -222,8 +222,8 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SmiMetaData.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiMetaData.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlSer.Common.cs">
-      <Link>Microsoft\Data\SqlClient\Server\SqlSer.Common.cs</Link>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlSer.cs">
+      <Link>Microsoft\Data\SqlClient\Server\SqlSer.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\ColumnEncryptionKeyInfo.cs">
       <Link>Microsoft\Data\SqlClient\ColumnEncryptionKeyInfo.cs</Link>
@@ -564,7 +564,6 @@
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiTypedGetterSetter.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiXetterAccessMap.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\ValueUtilsSmi.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\Server\sqlser.cs" />
     <Compile Include="Microsoft\Data\Sql\SqlGenericUtil.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(BuildSimulator)' == 'true'">

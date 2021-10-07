@@ -137,7 +137,17 @@ namespace Microsoft.Data.SqlClient.Server
 
         internal static SqlUserDefinedTypeAttribute GetUdtAttribute(Type t)
         {
-           return GetUdtAttributeFrameworkSpecific(t);
+            SqlUserDefinedTypeAttribute udtAttr = null;
+            object[] attr = GetCustomAttributes(t);
+            if (attr != null && attr.Length == 1)
+            {
+                udtAttr = (SqlUserDefinedTypeAttribute)attr[0];
+            }
+            else
+            {
+                throw InvalidUdtException.Create(t, Strings.SqlUdtReason_NoUdtAttribute);
+            }
+            return udtAttr;
         }
 
         // Create a new serializer for the given type.
@@ -196,16 +206,38 @@ namespace Microsoft.Data.SqlClient.Server
 
         public override void Serialize(Stream s, object o)
         {
-            SerializeFrameworkSpecific(s, o);
+            BinaryWriter w = new BinaryWriter(s);
+
+#if NETFRAMEWORK
+            if (o is Microsoft.SqlServer.Server.IBinarySerialize)
+            {
+                ((SqlServer.Server.IBinarySerialize)o).Write(w);
+                return;
+            }
+#endif
+            ((IBinarySerialize)o).Write(w);
+            
         }
 
-        // Prevent inlining so that reflection calls are not moved
-        // to a caller that may be in a different assembly that may
-        // have a different grant set.
-        [MethodImpl(MethodImplOptions.NoInlining)]
+            // Prevent inlining so that reflection calls are not moved
+            // to a caller that may be in a different assembly that may
+            // have a different grant set.
+            [MethodImpl(MethodImplOptions.NoInlining)]
         public override object Deserialize(Stream s)
         {
-          return DeserializeFrameworkSpecific(s);
+            object instance = Activator.CreateInstance(_type);
+            BinaryReader r = new BinaryReader(s);
+
+#if NETFRAMEWORK
+            if (instance is Microsoft.SqlServer.Server.IBinarySerialize)
+            {
+                ((SqlServer.Server.IBinarySerialize)instance).Read(r);
+                return instance;
+            }
+#endif
+           ((IBinarySerialize)instance).Read(r);
+            return instance;
+
         }
     }
 
