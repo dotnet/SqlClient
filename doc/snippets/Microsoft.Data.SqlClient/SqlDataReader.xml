@@ -319,7 +319,8 @@
             <summary>Synchronously gets the value of the specified column as a type. <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetFieldValueAsync``1(System.Int32,System.Threading.CancellationToken)" /> is the asynchronous version of this method.</summary>
             <returns>The returned type object.</returns>
             <remarks>
-            <format type="text/markdown"><![CDATA[  
+            <format type="text/markdown">
+  <![CDATA[  
   
 ## Remarks  
  `T` can be one of the following types:  
@@ -332,7 +333,8 @@
 |SqlBoolean|SqlByte|SqlDateTime|SqlDecimal|  
 |SqlDouble|SqlGuid|SqlInt16|SqlInt32|  
 |SqlInt64|SqlMoney|SqlSingle|SqlString|  
-|String|UDT, which can be any CLR type marked with <xref:Microsoft.Data.SqlClient.Server.SqlUserDefinedTypeAttribute>.|||  
+|Stream|String|TextReader|UDT, which can be any CLR type marked with <xref:Microsoft.Data.SqlClient.Server.SqlUserDefinedTypeAttribute>.|
+|XmlReader||||
   
  For more information, see [SqlClient Streaming Support](/sql/connect/ado-net/sqlclient-streaming-support).  
   
@@ -359,7 +361,8 @@
             <summary>Asynchronously gets the value of the specified column as a type. <see cref="M:Microsoft.Data.SqlClient.SqlDataReader.GetFieldValue``1(System.Int32)" /> is the synchronous version of this method.</summary>
             <returns>The returned type object.</returns>
             <remarks>
-            <format type="text/markdown"><![CDATA[  
+            <format type="text/markdown">
+    <![CDATA[  
   
 ## Remarks  
  `T` can be one of the following types:  
@@ -372,7 +375,8 @@
 |SqlBoolean|SqlByte|SqlDateTime|SqlDecimal|  
 |SqlDouble|SqlGuid|SqlInt16|SqlInt32|  
 |SqlInt64|SqlMoney|SqlSingle|SqlString|  
-|String|UDT, which can be any CLR type marked with <xref:Microsoft.Data.SqlClient.Server.SqlUserDefinedTypeAttribute>.|||  
+|Stream|String|TextReader|UDT, which can be any CLR type marked with <xref:Microsoft.Data.SqlClient.Server.SqlUserDefinedTypeAttribute>.|
+|XmlReader||||
   
  For more information, see [SqlClient Streaming Support](/sql/connect/ado-net/sqlclient-streaming-support).  
   

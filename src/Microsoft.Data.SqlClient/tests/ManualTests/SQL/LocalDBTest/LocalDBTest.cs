@@ -25,6 +25,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
         [ConditionalFact(nameof(IsLocalDBEnvironmentSet))]
+        public static void LocalDBEncryptionNotSupportedTest()
+        {
+            // Encryption is not supported by SQL Local DB.
+            // But connection should succeed as encryption is disabled by driver.
+            ConnectionWithEncryptionTest(s_localDbConnectionString);
+        }
+
+        [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
+        [ConditionalFact(nameof(IsLocalDBEnvironmentSet))]
         public static void LocalDBMarsTest()
         {
             ConnectionWithMarsTest(s_localDbConnectionString);
@@ -40,6 +49,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         #endregion
 
         #region SharedLocalDb tests
+        [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
+        [ConditionalFact(nameof(IsLocalDbSharedInstanceSet))]
+        public static void SharedLocalDbEncryptionTest()
+        {
+            foreach (string connectionString in s_sharedLocalDbInstances)
+            {
+                // Encryption is not supported by SQL Local DB.
+                // But connection should succeed as encryption is disabled by driver.
+                ConnectionWithEncryptionTest(connectionString);
+            }
+        }
+
         [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
         [ConditionalFact(nameof(IsLocalDbSharedInstanceSet))]
         public static void SharedLocalDbMarsTest()
@@ -67,18 +88,28 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 IntegratedSecurity = true,
                 MultipleActiveResultSets = true,
-                ConnectTimeout = 2,
-                Encrypt = false
+                ConnectTimeout = 2
             };
             OpenConnection(builder.ConnectionString);
         }
-        private static void ConnectionTest(string connectionString)
+
+        private static void ConnectionWithEncryptionTest(string connectionString)
         {
             SqlConnectionStringBuilder builder = new(connectionString)
             {
                 IntegratedSecurity = true,
                 ConnectTimeout = 2,
-                Encrypt = false
+                Encrypt = true
+            };
+            OpenConnection(builder.ConnectionString);
+        }
+
+        private static void ConnectionTest(string connectionString)
+        {
+            SqlConnectionStringBuilder builder = new(connectionString)
+            {
+                IntegratedSecurity = true,
+                ConnectTimeout = 2
             };
             OpenConnection(builder.ConnectionString);
         }
@@ -87,6 +118,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             using SqlConnection connection = new(connString);
             connection.Open();
+            Assert.Equal(System.Data.ConnectionState.Open, connection.State);
             using SqlCommand command = new SqlCommand("SELECT @@SERVERNAME", connection);
             var result = command.ExecuteScalar();
             Assert.NotNull(result);
