@@ -51,16 +51,10 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetFieldType/*' />
-        public virtual Type GetFieldType(int ordinal)
-        {
-               return GetFieldTypeFrameworkSpecific(ordinal);         
-        }
+        public virtual Type GetFieldType(int ordinal) => GetFieldTypeFrameworkSpecific(ordinal);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetValue/*' />
-        public virtual object GetValue(int ordinal)
-        {
-            return GetValueFrameworkSpecific(ordinal);
-        }
+        public virtual object GetValue(int ordinal) => GetValueFrameworkSpecific(ordinal);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetValues/*' />
         public virtual int GetValues(object[] values)
@@ -180,10 +174,7 @@ namespace Microsoft.Data.SqlClient.Server
         public virtual Type GetSqlFieldType(int ordinal) => MetaType.GetMetaTypeFromSqlDbType(GetSqlMetaData(ordinal).SqlDbType, false).SqlType;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlValue/*' />
-        public virtual object GetSqlValue(int ordinal)
-        {
-             return GetSqlValueFrameworkSpecific(ordinal);         
-        }
+        public virtual object GetSqlValue(int ordinal) => GetSqlValueFrameworkSpecific(ordinal);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlValues/*' />
         public virtual int GetSqlValues(object[] values)
@@ -206,16 +197,10 @@ namespace Microsoft.Data.SqlClient.Server
         public virtual SqlBinary GetSqlBinary(int ordinal) => ValueUtilsSmi.GetSqlBinary(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlBytes/*' />
-        public virtual SqlBytes GetSqlBytes(int ordinal)
-        {           
-                return GetSqlBytesFrameworkSpecific(ordinal);         
-        }
+        public virtual SqlBytes GetSqlBytes(int ordinal) => GetSqlBytesFrameworkSpecific(ordinal);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlXml/*' />
-        public virtual SqlXml GetSqlXml(int ordinal)
-        {
-           return GetSqlXmlFrameworkSpecific(ordinal);          
-        }
+        public virtual SqlXml GetSqlXml(int ordinal) => GetSqlXmlFrameworkSpecific(ordinal);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlBoolean/*' />
         public virtual SqlBoolean GetSqlBoolean(int ordinal) => ValueUtilsSmi.GetSqlBoolean(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
@@ -224,10 +209,7 @@ namespace Microsoft.Data.SqlClient.Server
         public virtual SqlByte GetSqlByte(int ordinal) => ValueUtilsSmi.GetSqlByte(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlChars/*' />
-        public virtual SqlChars GetSqlChars(int ordinal)
-        {
-            return GetSqlCharsFrameworkSpecific(ordinal);       
-        }
+        public virtual SqlChars GetSqlChars(int ordinal) => GetSqlCharsFrameworkSpecific(ordinal);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/GetSqlInt16/*' />
         public virtual SqlInt16 GetSqlInt16(int ordinal) => ValueUtilsSmi.GetSqlInt16(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal));
@@ -261,16 +243,10 @@ namespace Microsoft.Data.SqlClient.Server
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetValues/*' />
         // ISqlUpdateableRecord Implementation
-        public virtual int SetValues(params object[] values)
-        {
-             return SetValuesFrameworkSpecific(values);        
-        }
+        public virtual int SetValues(params object[] values) => SetValuesFrameworkSpecific(values);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetValue/*' />
-        public virtual void SetValue(int ordinal, object value)
-        {
-            SetValueFrameworkSpecific(ordinal,value);           
-        }
+        public virtual void SetValue(int ordinal, object value) => SetValueFrameworkSpecific(ordinal, value);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetBoolean/*' />
         public virtual void SetBoolean(int ordinal, bool value) => ValueUtilsSmi.SetBoolean(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value);
@@ -311,16 +287,10 @@ namespace Microsoft.Data.SqlClient.Server
         public virtual void SetDateTime(int ordinal, DateTime value) => ValueUtilsSmi.SetDateTime(_eventSink, _recordBuffer, ordinal, GetSmiMetaData(ordinal), value);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetTimeSpan/*' />
-        public virtual void SetTimeSpan(int ordinal, TimeSpan value)
-        {
-             SetTimeSpanFrameworkSpecific(ordinal, value);    
-        }
+        public virtual void SetTimeSpan(int ordinal, TimeSpan value) => SetTimeSpanFrameworkSpecific(ordinal, value);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetDateTimeOffset/*' />
-        public virtual void SetDateTimeOffset(int ordinal, DateTimeOffset value)
-        {
-              SetDateTimeOffsetFrameworkSpecific(ordinal, value);           
-        }
+        public virtual void SetDateTimeOffset(int ordinal, DateTimeOffset value) => SetDateTimeOffsetFrameworkSpecific(ordinal, value);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetDBNull/*' />
         public virtual void SetDBNull(int ordinal)
