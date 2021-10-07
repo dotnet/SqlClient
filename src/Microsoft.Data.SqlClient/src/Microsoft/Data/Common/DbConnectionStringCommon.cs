@@ -12,7 +12,6 @@ namespace Microsoft.Data.Common
 {
     internal static class DbConnectionStringBuilderUtil
     {
-
         internal static bool ConvertToBoolean(object value)
         {
             Debug.Assert(null != value, "ConvertToBoolean(null)");
@@ -135,15 +134,12 @@ namespace Microsoft.Data.Common
         {
             Debug.Assert(IsValidPoolBlockingPeriodValue(value));
 
-            switch (value)
+            return value switch
             {
-                case PoolBlockingPeriod.AlwaysBlock:
-                    return nameof(PoolBlockingPeriod.AlwaysBlock);
-                case PoolBlockingPeriod.NeverBlock:
-                    return nameof(PoolBlockingPeriod.NeverBlock);
-                default:
-                    return nameof(PoolBlockingPeriod.Auto);
-            }
+                PoolBlockingPeriod.AlwaysBlock => nameof(PoolBlockingPeriod.AlwaysBlock),
+                PoolBlockingPeriod.NeverBlock => nameof(PoolBlockingPeriod.NeverBlock),
+                _ => nameof(PoolBlockingPeriod.Auto),
+            };
         }
 
         /// <summary>
@@ -160,14 +156,13 @@ namespace Microsoft.Data.Common
         {
             Debug.Assert(null != value, "ConvertToPoolBlockingPeriod(null)");
             string sValue = (value as string);
-            PoolBlockingPeriod result;
             if (null != sValue)
             {
                 // We could use Enum.TryParse<PoolBlockingPeriod> here, but it accepts value combinations like
                 // "ReadOnly, ReadWrite" which are unwelcome here
                 // Also, Enum.TryParse is 100x slower than plain StringComparer.OrdinalIgnoreCase.Equals method.
 
-                if (TryConvertToPoolBlockingPeriod(sValue, out result))
+                if (TryConvertToPoolBlockingPeriod(sValue, out PoolBlockingPeriod result))
                 {
                     return result;
                 }
@@ -187,10 +182,10 @@ namespace Microsoft.Data.Common
                 // the value is not string, try other options
                 PoolBlockingPeriod eValue;
 
-                if (value is PoolBlockingPeriod)
+                if (value is PoolBlockingPeriod period)
                 {
                     // quick path for the most common case
-                    eValue = (PoolBlockingPeriod)value;
+                    eValue = period;
                 }
                 else if (value.GetType().IsEnum)
                 {
@@ -282,14 +277,13 @@ namespace Microsoft.Data.Common
         {
             Debug.Assert(null != value, "ConvertToApplicationIntent(null)");
             string sValue = (value as string);
-            ApplicationIntent result;
             if (null != sValue)
             {
                 // We could use Enum.TryParse<ApplicationIntent> here, but it accepts value combinations like
                 // "ReadOnly, ReadWrite" which are unwelcome here
                 // Also, Enum.TryParse is 100x slower than plain StringComparer.OrdinalIgnoreCase.Equals method.
 
-                if (TryConvertToApplicationIntent(sValue, out result))
+                if (TryConvertToApplicationIntent(sValue, out ApplicationIntent result))
                 {
                     return result;
                 }
@@ -309,10 +303,10 @@ namespace Microsoft.Data.Common
                 // the value is not string, try other options
                 ApplicationIntent eValue;
 
-                if (value is ApplicationIntent)
+                if (value is ApplicationIntent intent)
                 {
                     // quick path for the most common case
-                    eValue = (ApplicationIntent)value;
+                    eValue = intent;
                 }
                 else if (value.GetType().IsEnum)
                 {
@@ -360,7 +354,7 @@ namespace Microsoft.Data.Common
         const string SqlCertificateString = "Sql Certificate";
 
 #if DEBUG
-        private static string[] s_supportedAuthenticationModes =
+        private static readonly string[] s_supportedAuthenticationModes =
         {
             "NotSpecified",
             "SqlPassword",
@@ -516,16 +510,12 @@ namespace Microsoft.Data.Common
         {
             Debug.Assert(IsValidColumnEncryptionSetting(value), "value is not a valid connection level column encryption setting.");
 
-            switch (value)
+            return value switch
             {
-                case SqlConnectionColumnEncryptionSetting.Enabled:
-                    return nameof(SqlConnectionColumnEncryptionSetting.Enabled);
-                case SqlConnectionColumnEncryptionSetting.Disabled:
-                    return nameof(SqlConnectionColumnEncryptionSetting.Disabled);
-
-                default:
-                    return null;
-            }
+                SqlConnectionColumnEncryptionSetting.Enabled => nameof(SqlConnectionColumnEncryptionSetting.Enabled),
+                SqlConnectionColumnEncryptionSetting.Disabled => nameof(SqlConnectionColumnEncryptionSetting.Disabled),
+                _ => null,
+            };
         }
 
         internal static bool IsValidAuthenticationTypeValue(SqlAuthenticationMethod value)
@@ -550,33 +540,22 @@ namespace Microsoft.Data.Common
         {
             Debug.Assert(IsValidAuthenticationTypeValue(value));
 
-            switch (value)
+            return value switch
             {
-                case SqlAuthenticationMethod.SqlPassword:
-                    return SqlPasswordString;
-                case SqlAuthenticationMethod.ActiveDirectoryPassword:
-                    return ActiveDirectoryPasswordString;
-                case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
-                    return ActiveDirectoryIntegratedString;
-                case SqlAuthenticationMethod.ActiveDirectoryInteractive:
-                    return ActiveDirectoryInteractiveString;
-                case SqlAuthenticationMethod.ActiveDirectoryServicePrincipal:
-                    return ActiveDirectoryServicePrincipalString;
-                case SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow:
-                    return ActiveDirectoryDeviceCodeFlowString;
-                case SqlAuthenticationMethod.ActiveDirectoryManagedIdentity:
-                    return ActiveDirectoryManagedIdentityString;
-                case SqlAuthenticationMethod.ActiveDirectoryMSI:
-                    return ActiveDirectoryMSIString;
-                case SqlAuthenticationMethod.ActiveDirectoryDefault:
-                    return ActiveDirectoryDefaultString;
+                SqlAuthenticationMethod.SqlPassword => SqlPasswordString,
+                SqlAuthenticationMethod.ActiveDirectoryPassword => ActiveDirectoryPasswordString,
+                SqlAuthenticationMethod.ActiveDirectoryIntegrated => ActiveDirectoryIntegratedString,
+                SqlAuthenticationMethod.ActiveDirectoryInteractive => ActiveDirectoryInteractiveString,
+                SqlAuthenticationMethod.ActiveDirectoryServicePrincipal => ActiveDirectoryServicePrincipalString,
+                SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow => ActiveDirectoryDeviceCodeFlowString,
+                SqlAuthenticationMethod.ActiveDirectoryManagedIdentity => ActiveDirectoryManagedIdentityString,
+                SqlAuthenticationMethod.ActiveDirectoryMSI => ActiveDirectoryMSIString,
+                SqlAuthenticationMethod.ActiveDirectoryDefault => ActiveDirectoryDefaultString,
 #if ADONET_CERT_AUTH && NETFRAMEWORK
-                case SqlAuthenticationMethod.SqlCertificate:
-                    return SqlCertificateString;
+                SqlAuthenticationMethod.SqlCertificate => SqlCertificateString,
 #endif
-                default:
-                    return null;
-            }
+                _ => null
+            };
         }
 
         internal static SqlAuthenticationMethod ConvertToAuthenticationType(string keyword, object value)
@@ -587,10 +566,9 @@ namespace Microsoft.Data.Common
             }
 
             string sValue = (value as string);
-            SqlAuthenticationMethod result;
             if (null != sValue)
             {
-                if (TryConvertToAuthenticationType(sValue, out result))
+                if (TryConvertToAuthenticationType(sValue, out SqlAuthenticationMethod result))
                 {
                     return result;
                 }
@@ -610,10 +588,10 @@ namespace Microsoft.Data.Common
                 // the value is not string, try other options
                 SqlAuthenticationMethod eValue;
 
-                if (value is SqlAuthenticationMethod)
+                if (value is SqlAuthenticationMethod method)
                 {
                     // quick path for the most common case
-                    eValue = (SqlAuthenticationMethod)value;
+                    eValue = method;
                 }
                 else if (value.GetType().IsEnum)
                 {
@@ -663,10 +641,9 @@ namespace Microsoft.Data.Common
             }
 
             string sValue = (value as string);
-            SqlConnectionColumnEncryptionSetting result;
             if (null != sValue)
             {
-                if (TryConvertToColumnEncryptionSetting(sValue, out result))
+                if (TryConvertToColumnEncryptionSetting(sValue, out SqlConnectionColumnEncryptionSetting result))
                 {
                     return result;
                 }
@@ -686,10 +663,10 @@ namespace Microsoft.Data.Common
                 // the value is not string, try other options
                 SqlConnectionColumnEncryptionSetting eValue;
 
-                if (value is SqlConnectionColumnEncryptionSetting)
+                if (value is SqlConnectionColumnEncryptionSetting setting)
                 {
                     // quick path for the most common case
-                    eValue = (SqlConnectionColumnEncryptionSetting)value;
+                    eValue = setting;
                 }
                 else if (value.GetType().IsEnum)
                 {
@@ -778,19 +755,15 @@ namespace Microsoft.Data.Common
         {
             Debug.Assert(IsValidAttestationProtocol(value), "value is not a valid attestation protocol");
 
-            switch (value)
+            return value switch
             {
-                case SqlConnectionAttestationProtocol.HGS:
-                    return nameof(SqlConnectionAttestationProtocol.HGS);
-                case SqlConnectionAttestationProtocol.AAS:
-                    return nameof(SqlConnectionAttestationProtocol.AAS);
+                SqlConnectionAttestationProtocol.AAS => nameof(SqlConnectionAttestationProtocol.AAS),
+                SqlConnectionAttestationProtocol.HGS => nameof(SqlConnectionAttestationProtocol.HGS),
 #if ENCLAVE_SIMULATOR
-                case SqlConnectionAttestationProtocol.SIM:
-                    return nameof(SqlConnectionAttestationProtocol.SIM);
+                SqlConnectionAttestationProtocol.SIM => nameof(SqlConnectionAttestationProtocol.SIM),
 #endif
-                default:
-                    return null;
-            }
+                _ => null
+            };
         }
 
         internal static SqlConnectionAttestationProtocol ConvertToAttestationProtocol(string keyword, object value)
@@ -801,13 +774,12 @@ namespace Microsoft.Data.Common
             }
 
             string sValue = (value as string);
-            SqlConnectionAttestationProtocol result;
 
             if (null != sValue)
             {
                 // try again after remove leading & trailing whitespaces.
                 sValue = sValue.Trim();
-                if (TryConvertToAttestationProtocol(sValue, out result))
+                if (TryConvertToAttestationProtocol(sValue, out SqlConnectionAttestationProtocol result))
                 {
                     return result;
                 }
@@ -820,9 +792,9 @@ namespace Microsoft.Data.Common
                 // the value is not string, try other options
                 SqlConnectionAttestationProtocol eValue;
 
-                if (value is SqlConnectionAttestationProtocol)
+                if (value is SqlConnectionAttestationProtocol protocol)
                 {
-                    eValue = (SqlConnectionAttestationProtocol)value;
+                    eValue = protocol;
                 }
                 else if (value.GetType().IsEnum)
                 {
@@ -966,7 +938,6 @@ namespace Microsoft.Data.Common
 
     internal static class DbConnectionStringDefaults
     {
-        private const string _emptyString = "";
         internal const ApplicationIntent ApplicationIntent = Microsoft.Data.SqlClient.ApplicationIntent.ReadWrite;
         internal const string ApplicationName =
 #if NETFRAMEWORK
@@ -974,23 +945,22 @@ namespace Microsoft.Data.Common
 #else
             "Core Microsoft SqlClient Data Provider";
 #endif
-        internal const string AttachDBFilename = _emptyString;
+        internal const string AttachDBFilename = "";
         internal const int CommandTimeout = 30;
         internal const int ConnectTimeout = 15;
 
 #if NETFRAMEWORK
-        // SqlClient
         internal const bool ConnectionReset = true;
         internal const bool ContextConnection = false;
-        internal static readonly bool TransparentNetworkIPResolution = LocalAppContextSwitches.DisableTNIRByDefault ? false : true;
-        internal const string NetworkLibrary = _emptyString;
+        internal static readonly bool TransparentNetworkIPResolution = !LocalAppContextSwitches.DisableTNIRByDefault;
+        internal const string NetworkLibrary = "";
 #endif
-        internal const string CurrentLanguage = _emptyString;
-        internal const string DataSource = _emptyString;
+        internal const string CurrentLanguage = "";
+        internal const string DataSource = "";
         internal const bool Encrypt = true;
         internal const bool Enlist = true;
-        internal const string FailoverPartner = _emptyString;
-        internal const string InitialCatalog = _emptyString;
+        internal const string FailoverPartner = "";
+        internal const string InitialCatalog = "";
         internal const bool IntegratedSecurity = false;
         internal const int LoadBalanceTimeout = 0; // default of 0 means don't use
         internal const bool MultipleActiveResultSets = false;
@@ -998,21 +968,21 @@ namespace Microsoft.Data.Common
         internal const int MaxPoolSize = 100;
         internal const int MinPoolSize = 0;
         internal const int PacketSize = 8000;
-        internal const string Password = _emptyString;
+        internal const string Password = "";
         internal const bool PersistSecurityInfo = false;
         internal const bool Pooling = true;
         internal const bool TrustServerCertificate = false;
         internal const string TypeSystemVersion = "Latest";
-        internal const string UserID = _emptyString;
+        internal const string UserID = "";
         internal const bool UserInstance = false;
         internal const bool Replication = false;
-        internal const string WorkstationID = _emptyString;
+        internal const string WorkstationID = "";
         internal const string TransactionBinding = "Implicit Unbind";
         internal const int ConnectRetryCount = 1;
         internal const int ConnectRetryInterval = 10;
         internal static readonly SqlAuthenticationMethod Authentication = SqlAuthenticationMethod.NotSpecified;
         internal static readonly SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Disabled;
-        internal const string EnclaveAttestationUrl = _emptyString;
+        internal const string EnclaveAttestationUrl = "";
         internal const SqlConnectionAttestationProtocol AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified;
         internal const SqlConnectionIPAddressPreference IPAddressPreference = SqlConnectionIPAddressPreference.IPv4First;
         internal const PoolBlockingPeriod PoolBlockingPeriod = SqlClient.PoolBlockingPeriod.Auto;
