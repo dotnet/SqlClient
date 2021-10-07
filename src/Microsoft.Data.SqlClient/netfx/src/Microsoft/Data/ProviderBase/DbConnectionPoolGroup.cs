@@ -191,7 +191,7 @@ namespace Microsoft.Data.ProviderBase
             {
                 Debug.Assert(ADP.IsWindowsNT, "should not be pooling on Win9x");
 
-                DbConnectionPoolIdentity currentIdentity = DbConnectionPoolIdentity.NoIdentity;
+                DbConnectionPoolIdentity currentIdentity = DbConnectionPoolIdentity.s_noIdentity;
                 if (_poolGroupOptions.PoolByIdentity)
                 {
                     // if we're pooling by identity (because integrated security is

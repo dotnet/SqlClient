@@ -149,7 +149,7 @@ namespace Microsoft.Data.ProviderBase
             DbConnectionPool pool = null;
             if (null != _poolGroupOptions)
             {
-                DbConnectionPoolIdentity currentIdentity = DbConnectionPoolIdentity.NoIdentity;
+                DbConnectionPoolIdentity currentIdentity = DbConnectionPoolIdentity.s_noIdentity;
 
                 if (_poolGroupOptions.PoolByIdentity)
                 {

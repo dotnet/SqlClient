@@ -2067,7 +2067,7 @@ namespace Microsoft.Data.SqlClient
 
             if (_impersonateIdentity != null)
             {
-                using (WindowsIdentity identity = DbConnectionPoolIdentity.GetCurrentWindowsIdentity())
+                using (WindowsIdentity identity = WindowsIdentity.GetCurrent())
                 {
                     if (_impersonateIdentity.User == identity.User)
                     {
@@ -2086,7 +2086,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (this.UsesIntegratedSecurity(connectionOptions) || this.UsesCertificate(connectionOptions) || this.UsesActiveDirectoryIntegrated(connectionOptions))
                 {
-                    _lastIdentity = DbConnectionPoolIdentity.GetCurrentWindowsIdentity();
+                    _lastIdentity = WindowsIdentity.GetCurrent();
                 }
                 else
                 {

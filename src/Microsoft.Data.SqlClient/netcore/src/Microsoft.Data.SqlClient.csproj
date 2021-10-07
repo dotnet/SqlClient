@@ -73,6 +73,9 @@
     <Compile Include="..\..\src\Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContext.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContext.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.cs">
+      <Link>Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContextKey.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContextKey.cs</Link>
     </Compile>
@@ -651,7 +654,9 @@
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Managed.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.uap.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\LocalDB.uap.cs" />
-    <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Unix.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Unix.cs">
+      <Link>Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Unix.cs</Link>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.Unix.cs" />
     <Compile Include="Microsoft\Data\SqlClient\PacketHandle.Unix.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SessionHandle.Unix.cs" />
@@ -663,7 +668,9 @@
     <Compile Include="Microsoft\Data\SqlClient\TdsParserSafeHandles.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\LocalDB.Windows.cs" />
-    <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Windows.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Windows.cs">
+      <Link>Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Windows.cs</Link>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.Windows.cs" />
     <Compile Include="$(CommonPath)\Interop\Windows\kernel32\Interop.LoadLibraryEx.cs">
       <Link>Common\Interop\Windows\kernel32\Interop.LoadLibraryEx.cs</Link>
@@ -808,7 +815,9 @@
     </Compile>
   </ItemGroup>
   <ItemGroup Condition="'$(TargetsWindows)' != 'true' AND '$(OSGroup)' != 'AnyOS'">
-    <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Unix.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Unix.cs">
+      <Link>Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.Unix.cs</Link>
+    </Compile>
     <Compile Include="Interop\SNINativeMethodWrapper.Unix.cs" />
     <Compile Include="$(CommonPath)\System\Net\Security\NegotiateStreamPal.Unix.cs">
       <Link>Common\System\Net\Security\NegotiateStreamPal.Unix.cs</Link>

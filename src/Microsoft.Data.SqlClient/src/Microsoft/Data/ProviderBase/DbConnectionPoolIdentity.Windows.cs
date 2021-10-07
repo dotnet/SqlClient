@@ -3,15 +3,18 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Runtime.Versioning;
 using System.Security.Principal;
 using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data.ProviderBase
 {
-    partial class DbConnectionPoolIdentity
+    internal sealed partial class DbConnectionPoolIdentity
     {
-        private static DbConnectionPoolIdentity s_lastIdentity = null;
+        private static DbConnectionPoolIdentity s_lastIdentity;
 
+        [ResourceExposure(ResourceScope.None)] // SxS: this method does not create named objects
+        [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
         internal static DbConnectionPoolIdentity GetCurrent()
         {
             return TdsParserStateObjectFactory.UseManagedSNI ? GetCurrentManaged() : GetCurrentNative();

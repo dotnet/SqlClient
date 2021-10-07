@@ -131,7 +131,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                     // For now, DbConnectionPoolIdentity does not cache WindowsIdentity.
                     // That means for every container creation, we create a WindowsIdentity twice.
                     // We may want to improve this.
-                    _windowsIdentity = DbConnectionPoolIdentity.GetCurrentWindowsIdentity();
+                    _windowsIdentity = WindowsIdentity.GetCurrent();
                 }
 
                 _escapedQueueName = SqlConnection.FixupDatabaseTransactionName(_queue); // Properly escape to prevent SQL Injection.
