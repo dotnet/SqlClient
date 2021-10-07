@@ -430,7 +430,6 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientFactory.xml' path='docs/members[@name="SqlClientFactory"]/CreateParameter/*'/>
         public override System.Data.Common.DbParameter CreateParameter() { throw null; }
     }
-#if NETFRAMEWORK
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/SqlClientLogger/*'/>
     public partial class SqlClientLogger
     {
@@ -445,7 +444,6 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientLogger.xml' path='docs/members[@name="SqlClientLogger"]/LogInfo/*'/>
         public void LogInfo(string type, string method, string message) { }
     }
-#endif //NETFRAMEWORK
     /// <include file='../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/SqlClientMetaDataCollectionNames/*'/>
     public static partial class SqlClientMetaDataCollectionNames
     {
