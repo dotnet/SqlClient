@@ -34,6 +34,7 @@
   <ItemGroup Condition="'$(TargetGroup)' == 'net461'">
     <Reference Include="System.EnterpriseServices" />
     <Reference Include="System.Transactions" />
+    <Compile Include="Microsoft.Data.SqlClient.NetFx.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Identity.Client" Version="$(MicrosoftIdentityClientVersion)" />
