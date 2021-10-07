@@ -9560,13 +9560,13 @@ namespace Microsoft.Data.SqlClient
 
             if (_isYukon && (mt.SqlDbType == SqlDbType.Xml))
             {
-                if (((param.XmlSchemaCollectionDatabase != null) && (param.XmlSchemaCollectionDatabase != "")) ||
-                    ((param.XmlSchemaCollectionOwningSchema != null) && (param.XmlSchemaCollectionOwningSchema != "")) ||
-                    ((param.XmlSchemaCollectionName != null) && (param.XmlSchemaCollectionName != "")))
+                if (!string.IsNullOrEmpty(param.XmlSchemaCollectionDatabase) ||
+                    !string.IsNullOrEmpty(param.XmlSchemaCollectionOwningSchema) ||
+                    !string.IsNullOrEmpty(param.XmlSchemaCollectionName))
                 {
                     stateObj.WriteByte(1);  //Schema present flag
 
-                    if ((param.XmlSchemaCollectionDatabase != null) && (param.XmlSchemaCollectionDatabase != ""))
+                    if (!string.IsNullOrEmpty(param.XmlSchemaCollectionDatabase))
                     {
                         tempLen = (param.XmlSchemaCollectionDatabase).Length;
                         stateObj.WriteByte((byte)(tempLen));
@@ -9577,7 +9577,7 @@ namespace Microsoft.Data.SqlClient
                         stateObj.WriteByte(0);       // No dbname
                     }
 
-                    if ((param.XmlSchemaCollectionOwningSchema != null) && (param.XmlSchemaCollectionOwningSchema != ""))
+                    if (!string.IsNullOrEmpty(param.XmlSchemaCollectionOwningSchema))
                     {
                         tempLen = (param.XmlSchemaCollectionOwningSchema).Length;
                         stateObj.WriteByte((byte)(tempLen));
@@ -9588,7 +9588,7 @@ namespace Microsoft.Data.SqlClient
                         stateObj.WriteByte(0);      // no xml schema name
                     }
 
-                    if ((param.XmlSchemaCollectionName != null) && (param.XmlSchemaCollectionName != ""))
+                    if (!string.IsNullOrEmpty(param.XmlSchemaCollectionName))
                     {
                         tempLen = (param.XmlSchemaCollectionName).Length;
                         WriteShort((short)(tempLen), stateObj);

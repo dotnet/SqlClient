@@ -614,11 +614,7 @@ namespace Microsoft.Data.SqlClient
         [ResDescription(StringsHelper.ResourceNames.DbCommand_CommandText)]
         public override string CommandText
         {
-            get
-            {
-                string value = _commandText;
-                return (value ?? "");
-            }
+            get => _commandText ?? "";
             set
             {
                 if (_commandText != value)

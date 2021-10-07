@@ -754,11 +754,7 @@ namespace Microsoft.Data.SqlClient
         ]
         public override string CommandText
         {
-            get
-            {
-                string value = _commandText;
-                return (value ?? "");
-            }
+            get => _commandText ?? "";
             set
             {
                 SqlClientEventSource.Log.TryTraceEvent("<sc.SqlCommand.set_CommandText|API> {0}, String Value = '{1}'", ObjectID, value);
