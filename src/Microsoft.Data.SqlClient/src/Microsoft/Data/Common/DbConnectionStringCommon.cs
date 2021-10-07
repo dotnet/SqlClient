@@ -15,8 +15,7 @@ namespace Microsoft.Data.Common
         internal static bool ConvertToBoolean(object value)
         {
             Debug.Assert(null != value, "ConvertToBoolean(null)");
-            string svalue = (value as string);
-            if (null != svalue)
+            if (value is string svalue)
             {
                 if (StringComparer.OrdinalIgnoreCase.Equals(svalue, "true") || StringComparer.OrdinalIgnoreCase.Equals(svalue, "yes"))
                     return true;
@@ -45,8 +44,7 @@ namespace Microsoft.Data.Common
         internal static bool ConvertToIntegratedSecurity(object value)
         {
             Debug.Assert(null != value, "ConvertToIntegratedSecurity(null)");
-            string svalue = (value as string);
-            if (null != svalue)
+            if (value is string svalue)
             {
                 if (StringComparer.OrdinalIgnoreCase.Equals(svalue, "sspi") || StringComparer.OrdinalIgnoreCase.Equals(svalue, "true") || StringComparer.OrdinalIgnoreCase.Equals(svalue, "yes"))
                     return true;
@@ -155,8 +153,7 @@ namespace Microsoft.Data.Common
         internal static PoolBlockingPeriod ConvertToPoolBlockingPeriod(string keyword, object value)
         {
             Debug.Assert(null != value, "ConvertToPoolBlockingPeriod(null)");
-            string sValue = (value as string);
-            if (null != sValue)
+            if (value is string sValue)
             {
                 // We could use Enum.TryParse<PoolBlockingPeriod> here, but it accepts value combinations like
                 // "ReadOnly, ReadWrite" which are unwelcome here
@@ -276,8 +273,7 @@ namespace Microsoft.Data.Common
         internal static ApplicationIntent ConvertToApplicationIntent(string keyword, object value)
         {
             Debug.Assert(null != value, "ConvertToApplicationIntent(null)");
-            string sValue = (value as string);
-            if (null != sValue)
+            if (value is string sValue)
             {
                 // We could use Enum.TryParse<ApplicationIntent> here, but it accepts value combinations like
                 // "ReadOnly, ReadWrite" which are unwelcome here
@@ -565,8 +561,7 @@ namespace Microsoft.Data.Common
                 return DbConnectionStringDefaults.Authentication;
             }
 
-            string sValue = (value as string);
-            if (null != sValue)
+            if (value is string sValue)
             {
                 if (TryConvertToAuthenticationType(sValue, out SqlAuthenticationMethod result))
                 {
@@ -640,8 +635,7 @@ namespace Microsoft.Data.Common
                 return DbConnectionStringDefaults.ColumnEncryptionSetting;
             }
 
-            string sValue = (value as string);
-            if (null != sValue)
+            if (value is string sValue)
             {
                 if (TryConvertToColumnEncryptionSetting(sValue, out SqlConnectionColumnEncryptionSetting result))
                 {
@@ -773,9 +767,7 @@ namespace Microsoft.Data.Common
                 return DbConnectionStringDefaults.AttestationProtocol;
             }
 
-            string sValue = (value as string);
-
-            if (null != sValue)
+            if (value is string sValue)
             {
                 // try again after remove leading & trailing whitespaces.
                 sValue = sValue.Trim();
