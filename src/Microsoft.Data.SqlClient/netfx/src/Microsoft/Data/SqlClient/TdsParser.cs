@@ -6403,11 +6403,11 @@ namespace Microsoft.Data.SqlClient
                             }
                             if (length > 0)
                             {
-                                s = new String(cc, 0, length);
+                                s = new string(cc, 0, length);
                             }
                             else
                             {
-                                s = ADP.s_strEmpty;
+                                s = "";
                             }
                         }
                         else
@@ -8241,7 +8241,7 @@ namespace Microsoft.Data.SqlClient
         {
             // UNDONE: (PERF) this is an expensive way to get the length.  Also, aren't we
             // UNDONE: (PERF) going through these steps twice when we write out a value?
-            if (value == null || value == ADP.s_strEmpty)
+            if (string.IsNullOrEmpty(value))
             {
                 return 0;
             }
@@ -10337,13 +10337,13 @@ namespace Microsoft.Data.SqlClient
 
                             if (_isYukon && (mt.SqlDbType == SqlDbType.Xml))
                             {
-                                if (((param.XmlSchemaCollectionDatabase != null) && (param.XmlSchemaCollectionDatabase != ADP.s_strEmpty)) ||
-                                    ((param.XmlSchemaCollectionOwningSchema != null) && (param.XmlSchemaCollectionOwningSchema != ADP.s_strEmpty)) ||
-                                    ((param.XmlSchemaCollectionName != null) && (param.XmlSchemaCollectionName != ADP.s_strEmpty)))
+                                if (((param.XmlSchemaCollectionDatabase != null) && (param.XmlSchemaCollectionDatabase != "")) ||
+                                    ((param.XmlSchemaCollectionOwningSchema != null) && (param.XmlSchemaCollectionOwningSchema != "")) ||
+                                    ((param.XmlSchemaCollectionName != null) && (param.XmlSchemaCollectionName != "")))
                                 {
                                     stateObj.WriteByte(1);   //Schema present flag
 
-                                    if ((param.XmlSchemaCollectionDatabase != null) && (param.XmlSchemaCollectionDatabase != ADP.s_strEmpty))
+                                    if ((param.XmlSchemaCollectionDatabase != null) && (param.XmlSchemaCollectionDatabase != ""))
                                     {
                                         tempLen = (param.XmlSchemaCollectionDatabase).Length;
                                         stateObj.WriteByte((byte)(tempLen));
@@ -10354,7 +10354,7 @@ namespace Microsoft.Data.SqlClient
                                         stateObj.WriteByte(0);       // No dbname
                                     }
 
-                                    if ((param.XmlSchemaCollectionOwningSchema != null) && (param.XmlSchemaCollectionOwningSchema != ADP.s_strEmpty))
+                                    if ((param.XmlSchemaCollectionOwningSchema != null) && (param.XmlSchemaCollectionOwningSchema != ""))
                                     {
                                         tempLen = (param.XmlSchemaCollectionOwningSchema).Length;
                                         stateObj.WriteByte((byte)(tempLen));
@@ -10364,7 +10364,7 @@ namespace Microsoft.Data.SqlClient
                                     {
                                         stateObj.WriteByte(0);      // no xml schema name
                                     }
-                                    if ((param.XmlSchemaCollectionName != null) && (param.XmlSchemaCollectionName != ADP.s_strEmpty))
+                                    if ((param.XmlSchemaCollectionName != null) && (param.XmlSchemaCollectionName != ""))
                                     {
                                         tempLen = (param.XmlSchemaCollectionName).Length;
                                         WriteShort((short)(tempLen), stateObj);
