@@ -11,14 +11,14 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient.Server
 {
-    internal partial class SerializationHelperSql9
+    internal class SerializationHelperSql9
     {
         // Don't let anyone create an instance of this class.
         private SerializationHelperSql9() { }
 
         // Get the m_size of the serialized stream for this type, in bytes.
         // This method creates an instance of the type using the public
-        // no-argument constructor, serializes it, and returns the
+        // no-argument constructor, serializes it, and returns the m_size
         // in bytes.
         // Prevent inlining so that reflection calls are not moved to caller that may be in a different assembly that may have a different grant set.
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -198,7 +198,7 @@ namespace Microsoft.Data.SqlClient.Server
         public override object Deserialize(Stream s) => _normalizer.DeNormalizeTopObject(_type, s);
     }
 
-    internal sealed partial class BinarySerializeSerializer : Serializer
+    internal sealed class BinarySerializeSerializer : Serializer
     {
         internal BinarySerializeSerializer(Type t) : base(t)
         {
@@ -219,10 +219,10 @@ namespace Microsoft.Data.SqlClient.Server
             
         }
 
-            // Prevent inlining so that reflection calls are not moved
-            // to a caller that may be in a different assembly that may
-            // have a different grant set.
-            [MethodImpl(MethodImplOptions.NoInlining)]
+        // Prevent inlining so that reflection calls are not moved
+        // to a caller that may be in a different assembly that may
+        // have a different grant set.
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public override object Deserialize(Stream s)
         {
             object instance = Activator.CreateInstance(_type);
