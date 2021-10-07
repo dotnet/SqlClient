@@ -926,6 +926,12 @@ namespace Microsoft.Data.Common
             }
         }
         #endregion
+
+#if ADONET_CERT_AUTH && NETFRAMEWORK
+        internal static bool IsValidCertificateValue(string value) => string.IsNullOrEmpty(value)
+                                                              || value.StartsWith("subject:", StringComparison.OrdinalIgnoreCase)
+                                                              || value.StartsWith("sha1:", StringComparison.OrdinalIgnoreCase);
+#endif
     }
 
     internal static class DbConnectionStringDefaults
@@ -946,6 +952,9 @@ namespace Microsoft.Data.Common
         internal const bool ContextConnection = false;
         internal static readonly bool TransparentNetworkIPResolution = !LocalAppContextSwitches.DisableTNIRByDefault;
         internal const string NetworkLibrary = "";
+#if ADONET_CERT_AUTH
+        internal const string Certificate = "";
+#endif
 #endif
         internal const string CurrentLanguage = "";
         internal const string DataSource = "";
