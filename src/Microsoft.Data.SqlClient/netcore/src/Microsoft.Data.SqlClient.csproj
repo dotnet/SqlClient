@@ -76,6 +76,9 @@
     <Compile Include="..\..\src\Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContextKey.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContextKey.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\ProviderBase\DbMetaDataFactory.cs">
+      <Link>Common\Microsoft\Data\ProviderBase\DbMetaDataFactory.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\ProviderBase\FieldNameLookup.cs">
       <Link>Microsoft\Data\ProviderBase\FieldNameLookup.cs</Link>
     </Compile>
@@ -471,9 +474,6 @@
     </Compile>
     <Compile Include="$(CommonPath)\Microsoft\Data\ProviderBase\DbReferenceCollection.cs">
       <Link>Common\Microsoft\Data\ProviderBase\DbReferenceCollection.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Microsoft\Data\ProviderBase\DbMetaDataFactory.cs">
-      <Link>Common\Microsoft\Data\ProviderBase\DbMetaDataFactory.cs</Link>
     </Compile>
     <Compile Include="$(CommonPath)\Microsoft\Data\ProviderBase\DbConnectionClosed.cs">
       <Link>Common\Microsoft\Data\ProviderBase\DbConnectionClosed.cs</Link>
