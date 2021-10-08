@@ -8,6 +8,11 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Threading;
+#if NETFRAMEWORK
+using System.Collections;
+using System.Globalization;
+using System.Runtime.Versioning;
+#endif
 using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
@@ -55,6 +60,16 @@ namespace Microsoft.Data.SqlClient
             internal const string EnclaveAttestationUrl = _emptyString;
             internal static readonly SqlConnectionAttestationProtocol AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified;
             internal static readonly SqlConnectionIPAddressPreference s_IPAddressPreference = SqlConnectionIPAddressPreference.IPv4First;
+#if NETFRAMEWORK
+            internal static readonly bool TransparentNetworkIPResolution = DbConnectionStringDefaults.TransparentNetworkIPResolution;
+            internal const bool Asynchronous = false;
+            internal const bool Connection_Reset = true;
+            internal const bool Context_Connection = false;
+            internal const string Network_Library = _emptyString;
+#if ADONET_CERT_AUTH
+            internal const  string Certificate = _emptyString;
+#endif
+#endif // NETFRAMEWORK
         }
 
         // SqlConnection ConnectionString Options
@@ -101,6 +116,12 @@ namespace Microsoft.Data.SqlClient
             internal const string Connect_Retry_Count = "connect retry count";
             internal const string Connect_Retry_Interval = "connect retry interval";
             internal const string Authentication = "authentication";
+#if NETFRAMEWORK
+            internal const string TransparentNetworkIPResolution = "transparent network ip resolution";
+#if ADONET_CERT_AUTH
+            internal const string Certificate = "certificate";
+#endif
+#endif // NETFRAMEWORK
         }
 
         // Constant for the number of duplicate options in the connection string
@@ -155,11 +176,33 @@ namespace Microsoft.Data.SqlClient
             internal const string User = "user";
             // workstation id
             internal const string WSID = "wsid";
+            
+#if NETFRAMEWORK
+            internal const string TRANSPARENTNETWORKIPRESOLUTION = "transparentnetworkipresolution";
+#endif
+            
             // make sure to update SynonymCount value below when adding or removing synonyms
         }
 
+#if NETFRAMEWORK
+        internal const int SynonymCount = 29;
+
+        // the following are all inserted as keys into the _netlibMapping hash
+        internal static class NETLIB
+        {
+            internal const string AppleTalk = "dbmsadsn";
+            internal const string BanyanVines = "dbmsvinn";
+            internal const string IPXSPX = "dbmsspxn";
+            internal const string Multiprotocol = "dbmsrpcn";
+            internal const string NamedPipes = "dbnmpntw";
+            internal const string SharedMemory = "dbmslpcn";
+            internal const string TCPIP = "dbmssocn";
+            internal const string VIA = "dbmsgnet";
+        }
+#else
         internal const int SynonymCount = 26;
         internal const int DeprecatedSynonymCount = 2;
+#endif // NETFRAMEWORK
 
         internal enum TypeSystem
         {
@@ -242,8 +285,28 @@ namespace Microsoft.Data.SqlClient
 
         private readonly string _expandedAttachDBFilename; // expanded during construction so that CreatePermissionSet & Expand are consistent
 
+#if NETFRAMEWORK
+        static private Hashtable _netlibMapping;
+        private readonly bool _connectionReset;
+        private readonly bool _contextConnection;
+        private readonly bool _transparentNetworkIPResolution;
+        private readonly string _networkLibrary;
+
+#if ADONET_CERT_AUTH
+        private readonly string _certificate;
+#endif
+#endif // NETFRAMEWORK
+
+#if NETFRAMEWORK
+        // SxS: reading Software\\Microsoft\\MSSQLServer\\Client\\SuperSocketNetLib\Encrypt value from registry
+        [ResourceExposure(ResourceScope.None)]
+        [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
+#endif
         internal SqlConnectionString(string connectionString) : base(connectionString, GetParseSynonyms())
         {
+#if NETFRAMEWORK
+            bool runningInProc = InOutOfProcHelper.InProc;
+#else
             ThrowUnsupportedIfKeywordSet(KEY.Connection_Reset);
             ThrowUnsupportedIfKeywordSet(KEY.Context_Connection);
 
@@ -252,6 +315,7 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.NetworkLibraryKeywordNotSupported();
             }
+#endif
 
             _integratedSecurity = ConvertValueToIntegratedSecurity();
             _poolBlockingPeriod = ConvertValueToPoolBlockingPeriod();
@@ -330,6 +394,70 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.InvalidPacketSizeValue();
             }
 
+#if NETFRAMEWORK
+            // SQLPT 41700: Ignore ResetConnection=False (still validate the keyword/value)
+            _connectionReset = ConvertValueToBoolean(KEY.Connection_Reset, DEFAULT.Connection_Reset);
+            _contextConnection = ConvertValueToBoolean(KEY.Context_Connection, DEFAULT.Context_Connection);
+            _encrypt = ConvertValueToEncrypt();
+            _enlist = ConvertValueToBoolean(KEY.Enlist, ADP.IsWindowsNT);
+            _transparentNetworkIPResolution = ConvertValueToBoolean(KEY.TransparentNetworkIPResolution, DEFAULT.TransparentNetworkIPResolution);
+            _networkLibrary = ConvertValueToString(KEY.Network_Library, null);
+
+#if ADONET_CERT_AUTH
+            _certificate = ConvertValueToString(KEY.Certificate,         DEFAULT.Certificate);
+#endif
+
+            if (_contextConnection)
+            {
+                // We have to be running in the engine for you to request a
+                // context connection.
+
+                if (!runningInProc)
+                {
+                    throw SQL.ContextUnavailableOutOfProc();
+                }
+
+                // When using a context connection, we need to ensure that no
+                // other connection string keywords are specified.
+
+                foreach (KeyValuePair<string, string> entry in Parsetable)
+                {
+                    if (entry.Key != KEY.Context_Connection &&
+                        entry.Key != KEY.Type_System_Version)
+                    {
+                        throw SQL.ContextAllowsLimitedKeywords();
+                    }
+                }
+            }
+
+            if (!_encrypt)
+            {    // Support legacy registry encryption settings
+                const string folder = "Software\\Microsoft\\MSSQLServer\\Client\\SuperSocketNetLib";
+                const string value = "Encrypt";
+
+                Object obj = ADP.LocalMachineRegistryValue(folder, value);
+                if ((obj is Int32) && (1 == (int)obj))
+                {         // If the registry key exists
+                    _encrypt = true;
+                }
+            }
+
+            if (null != _networkLibrary)
+            { // MDAC 83525
+                string networkLibrary = _networkLibrary.Trim().ToLower(CultureInfo.InvariantCulture);
+                Hashtable netlib = NetlibMapping();
+                if (!netlib.ContainsKey(networkLibrary))
+                {
+                    throw ADP.InvalidConnectionOptionValue(KEY.Network_Library);
+                }
+                _networkLibrary = (string)netlib[networkLibrary];
+            }
+            else
+            {
+                _networkLibrary = DEFAULT.Network_Library;
+            }
+#endif // NETFRAMEWORK
+
             ValidateValueLength(_applicationName, TdsEnums.MAXLEN_APPNAME, KEY.Application_Name);
             ValidateValueLength(_currentLanguage, TdsEnums.MAXLEN_LANGUAGE, KEY.Current_Language);
             ValidateValueLength(_dataSource, TdsEnums.MAXLEN_SERVERNAME, KEY.Data_Source);
@@ -358,7 +486,12 @@ namespace Microsoft.Data.SqlClient
             }
 
             // expand during construction so that CreatePermissionSet and Expand are consistent
+#if NETFRAMEWORK
+            string datadir = null;
+            _expandedAttachDBFilename = ExpandDataDirectory(KEY.AttachDBFilename, _attachDBFileName, ref datadir);
+#else
             _expandedAttachDBFilename = ExpandDataDirectory(KEY.AttachDBFilename, _attachDBFileName);
+#endif // NETFRAMEWORK
             if (null != _expandedAttachDBFilename)
             {
                 if (0 <= _expandedAttachDBFilename.IndexOf('|'))
@@ -371,6 +504,10 @@ namespace Microsoft.Data.SqlClient
                     // fail fast to verify LocalHost when using |DataDirectory|
                     // still must check again at connect time
                     string host = _dataSource;
+#if NETFRAMEWORK
+                    string protocol = _networkLibrary;
+                    TdsParserStaticMethods.AliasRegistryLookup(ref host, ref protocol);
+#endif
                     VerifyLocalHostAndFixup(ref host, true, false /*don't fix-up*/);
                 }
             }
@@ -400,6 +537,12 @@ namespace Microsoft.Data.SqlClient
             }
             else if (typeSystemVersionString.Equals(TYPESYSTEMVERSION.SQL_Server_2000, StringComparison.OrdinalIgnoreCase))
             {
+#if NETFRAMEWORK
+                if (_contextConnection)
+                {
+                    throw SQL.ContextAllowsOnlyTypeSystem2005();
+                }
+#endif
                 _typeSystemVersion = TypeSystem.SQLServer2000;
             }
             else if (typeSystemVersionString.Equals(TYPESYSTEMVERSION.SQL_Server_2005, StringComparison.OrdinalIgnoreCase))
@@ -439,7 +582,9 @@ namespace Microsoft.Data.SqlClient
             }
 
             if (_applicationIntent == ApplicationIntent.ReadOnly && !string.IsNullOrEmpty(_failoverPartner))
+            {
                 throw SQL.ROR_FailoverNotSupportedConnString();
+            }
 
             if ((_connectRetryCount < 0) || (_connectRetryCount > 255))
             {
@@ -456,10 +601,17 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.AuthenticationAndIntegratedSecurity();
             }
 
+#if NETFRAMEWORK
+            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && (_hasUserIdKeyword || _hasPasswordKeyword))
+            {
+                throw SQL.IntegratedWithUserIDAndPassword();
+            }
+#else
             if (Authentication == SqlClient.SqlAuthenticationMethod.ActiveDirectoryIntegrated && _hasPasswordKeyword)
             {
                 throw SQL.IntegratedWithPassword();
             }
+#endif
 
             if (Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive && _hasPasswordKeyword)
             {
@@ -485,6 +637,26 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.NonInteractiveWithPassword(DbConnectionStringBuilderUtil.ActiveDirectoryDefaultString);
             }
+#if ADONET_CERT_AUTH && NETFRAMEWORK
+
+            if (!DbConnectionStringBuilderUtil.IsValidCertificateValue(_certificate)) {
+                throw ADP.InvalidConnectionOptionValue(KEY.Certificate);
+            }
+
+            if (!string.IsNullOrEmpty(_certificate)) {
+
+                if (Authentication == SqlClient.SqlAuthenticationMethod.NotSpecified && !_integratedSecurity) {
+                    _authType = SqlClient.SqlAuthenticationMethod.SqlCertificate;
+                }
+
+                if (Authentication == SqlClient.SqlAuthenticationMethod.SqlCertificate && (HasUserIdKeyword || HasPasswordKeyword || _integratedSecurity)) {
+                    throw SQL.InvalidCertAuth();
+                }
+            }
+            else if (Authentication == SqlClient.SqlAuthenticationMethod.SqlCertificate) {
+                throw ADP.InvalidConnectionOptionValue(KEY.Authentication);
+            }
+#endif
         }
 
         // This c-tor is used to create SSE and user instance connection strings when user instance is set to true
@@ -536,7 +708,16 @@ namespace Microsoft.Data.SqlClient
             _columnEncryptionSetting = connectionOptions._columnEncryptionSetting;
             _enclaveAttestationUrl = connectionOptions._enclaveAttestationUrl;
             _attestationProtocol = connectionOptions._attestationProtocol;
-
+#if NETFRAMEWORK
+            _connectionReset = connectionOptions._connectionReset;
+            _contextConnection = connectionOptions._contextConnection;
+            _transparentNetworkIPResolution = connectionOptions._transparentNetworkIPResolution;
+            _networkLibrary = connectionOptions._networkLibrary;
+            _typeSystemAssemblyVersion = connectionOptions._typeSystemAssemblyVersion;
+#if ADONET_CERT_AUTH
+            _certificate = connectionOptions._certificate;
+#endif
+#endif // NETFRAMEWORK
             ValidateValueLength(_dataSource, TdsEnums.MAXLEN_SERVERNAME, KEY.Data_Source);
         }
 
@@ -585,6 +766,19 @@ namespace Microsoft.Data.SqlClient
         internal string WorkstationId { get { return _workstationId; } }
         internal PoolBlockingPeriod PoolBlockingPeriod { get { return _poolBlockingPeriod; } }
 
+#if NETFRAMEWORK
+#if ADONET_CERT_AUTH
+        internal string Certificate { get { return _certificate; } }
+        internal bool UsesCertificate { get { return _authType == SqlClient.SqlAuthenticationMethod.SqlCertificate; } }
+#else
+        internal string Certificate { get { return null; } }
+        internal bool UsesCertificate { get { return false; } }
+#endif
+        internal bool ContextConnection { get { return _contextConnection; } }
+        internal bool TransparentNetworkIPResolution { get { return _transparentNetworkIPResolution; } }
+        internal string NetworkLibrary { get { return _networkLibrary; } }
+#endif // NETFRAMEWORK
+
         internal TypeSystem TypeSystemVersion { get { return _typeSystemVersion; } }
         internal Version TypeSystemAssemblyVersion { get { return _typeSystemAssemblyVersion; } }
 
@@ -600,11 +794,24 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+#if NETFRAMEWORK
+        protected internal override System.Security.PermissionSet CreatePermissionSet()
+        {
+            System.Security.PermissionSet permissionSet = new System.Security.PermissionSet(System.Security.Permissions.PermissionState.None);
+            permissionSet.AddPermission(new SqlClientPermission(this));
+            return permissionSet;
+        }
+#endif
+
         protected internal override string Expand()
         {
             if (null != _expandedAttachDBFilename)
             {
+#if NETFRAMEWORK
+                return ExpandKeyword(KEY.AttachDBFilename, _expandedAttachDBFilename);
+#else
                 return ExpandAttachDbFileName(_expandedAttachDBFilename);
+#endif
             }
             else
             {
@@ -643,7 +850,11 @@ namespace Microsoft.Data.SqlClient
             Dictionary<string, string> synonyms = s_sqlClientSynonyms;
             if (null == synonyms)
             {
+#if NETFRAMEWORK
+                int count = SqlConnectionStringBuilder.KeywordsCount + SynonymCount;
+#else
                 int count = SqlConnectionStringBuilder.KeywordsCount + SqlConnectionStringBuilder.DeprecatedKeywordsCount + SynonymCount + DeprecatedSynonymCount;
+#endif // NETFRAMEWORK
                 synonyms = new Dictionary<string, string>(count)
                 {
                     { KEY.ApplicationIntent, KEY.ApplicationIntent },
@@ -713,6 +924,14 @@ namespace Microsoft.Data.SqlClient
                     { SYNONYM.UID, KEY.User_ID },
                     { SYNONYM.User, KEY.User_ID },
                     { SYNONYM.WSID, KEY.Workstation_Id },
+#if NETFRAMEWORK
+#if ADONET_CERT_AUTH
+                    { KEY.Certificate, KEY.Certificate },
+#endif
+                    { KEY.TransparentNetworkIPResolution, KEY.TransparentNetworkIPResolution },
+                    { SYNONYM.POOLBLOCKINGPERIOD, KEY.PoolBlockingPeriod },
+                    { SYNONYM.TRANSPARENTNETWORKIPRESOLUTION, KEY.TransparentNetworkIPResolution },
+#endif // NETFRAMEWORK
                     { SYNONYM.IPADDRESSPREFERENCE, KEY.IPAddressPreference }
                 };
                 Debug.Assert(synonyms.Count == count, "incorrect initial ParseSynonyms size");
@@ -738,6 +957,48 @@ namespace Microsoft.Data.SqlClient
             return result;
         }
 
+#if NETFRAMEWORK
+        static internal Hashtable NetlibMapping()
+        {
+            const int NetLibCount = 8;
+
+            Hashtable hash = _netlibMapping;
+            if (null == hash)
+            {
+                hash = new Hashtable(NetLibCount);
+                hash.Add(NETLIB.TCPIP, TdsEnums.TCP);
+                hash.Add(NETLIB.NamedPipes, TdsEnums.NP);
+                hash.Add(NETLIB.Multiprotocol, TdsEnums.RPC);
+                hash.Add(NETLIB.BanyanVines, TdsEnums.BV);
+                hash.Add(NETLIB.AppleTalk, TdsEnums.ADSP);
+                hash.Add(NETLIB.IPXSPX, TdsEnums.SPX);
+                hash.Add(NETLIB.VIA, TdsEnums.VIA);
+                hash.Add(NETLIB.SharedMemory, TdsEnums.LPC);
+                Debug.Assert(NetLibCount == hash.Count, "incorrect initial NetlibMapping size");
+                _netlibMapping = hash;
+            }
+            return hash;
+        }
+
+        static internal bool ValidProtocol(string protocol)
+        {
+            switch (protocol)
+            {
+                case TdsEnums.TCP:
+                case TdsEnums.NP:
+                case TdsEnums.VIA:
+                case TdsEnums.LPC:
+                    return true;
+
+                //              case TdsEnums.RPC  :  Invalid Protocols
+                //              case TdsEnums.BV   :
+                //              case TdsEnums.ADSP :
+                //              case TdsEnums.SPX  :
+                default:
+                    return false;
+            }
+        }
+#endif
 
         private void ValidateValueLength(string value, int limit, string key)
         {
@@ -816,6 +1077,7 @@ namespace Microsoft.Data.SqlClient
             // ArgumentException and other types are raised as is (no wrapping)
         }
 
+#if NETCOREAPP || NETSTANDARD
         internal void ThrowUnsupportedIfKeywordSet(string keyword)
         {
             if (ContainsKey(keyword))
@@ -823,6 +1085,7 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.UnsupportedKeyword(keyword);
             }
         }
+#endif
 
         internal SqlAuthenticationMethod ConvertValueToAuthenticationType()
         {
@@ -937,5 +1200,13 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.InvalidConnectionOptionValue(KEY.PoolBlockingPeriod, e);
             }
         }
+        
+#if NETFRAMEWORK
+        internal bool ConvertValueToEncrypt()
+        {
+            bool defaultEncryptValue = !base.Parsetable.ContainsKey(KEY.Authentication) ? DEFAULT.Encrypt : true;
+            return ConvertValueToBoolean(KEY.Encrypt, defaultEncryptValue);
+        }
+#endif
     }
 }
