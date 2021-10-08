@@ -31,21 +31,9 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal string FailoverPartner
-        {
-            get
-            {
-                return _failoverPartner;
-            }
-        }
+        internal string FailoverPartner => _failoverPartner;
 
-        internal bool UseFailoverPartner
-        {
-            get
-            {
-                return _useFailoverPartner;
-            }
-        }
+        internal bool UseFailoverPartner => _useFailoverPartner;
 
         internal void AliasCheck(string server)
         {
@@ -84,7 +72,7 @@ namespace Microsoft.Data.SqlClient
                 //       failover partner.
 
 #if NETFRAMEWORK
-                System.Security.PermissionSet failoverPermissionSet = CreateFailoverPermission(userConnectionOptions, actualFailoverPartner);
+                PermissionSet failoverPermissionSet = CreateFailoverPermission(userConnectionOptions, actualFailoverPartner);
 #endif
                 lock (this)
                 {
@@ -100,7 +88,7 @@ namespace Microsoft.Data.SqlClient
         }
 
 #if NETFRAMEWORK
-        private System.Security.PermissionSet CreateFailoverPermission(SqlConnectionString userConnectionOptions, string actualFailoverPartner)
+        private PermissionSet CreateFailoverPermission(SqlConnectionString userConnectionOptions, string actualFailoverPartner)
         {
             string keywordToReplace;
 
@@ -137,7 +125,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // Note that we only demand when there is a permission set, which only
                 // happens once we've identified a failover situation in FailoverCheck
-                System.Security.PermissionSet failoverPermissionSet = _failoverPermissionSet;
+                PermissionSet failoverPermissionSet = _failoverPermissionSet;
                 if (null != failoverPermissionSet)
                 {
                     // demand on pooled failover connections
