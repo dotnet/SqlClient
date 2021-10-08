@@ -85,7 +85,5 @@ namespace Microsoft.Data.SqlClient.Server
                 DispatchMessages();
             }
         }
-
     }
 }
-

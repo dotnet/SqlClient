@@ -22,7 +22,6 @@ namespace Microsoft.Data.SqlClient.Server
     internal abstract class SmiEventSink
     {
 #if NETFRAMEWORK
-#region Active methods
 
         // Called at end of stream whether errors or no
         internal abstract void BatchCompleted();
@@ -80,7 +79,6 @@ namespace Microsoft.Data.SqlClient.Server
         // Called when a transaction is started (ENVCHANGE token)
         internal abstract void TransactionStarted(long transactionId);
 
-#endregion
 
 #region OBSOLETE METHODS
 #region OBSOLETED as of V200 but active in previous version
@@ -129,4 +127,3 @@ namespace Microsoft.Data.SqlClient.Server
 #endif    
     }
 }
-

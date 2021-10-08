@@ -8,7 +8,6 @@ namespace Microsoft.Data.SqlClient.Server
 {
     internal partial class SmiEventSink_Default : SmiEventSink
     {
-
         private SmiEventSink _parent;     // next level up, which we'll defer to if we don't need to handle the event.
         private SqlErrorCollection Errors
         {
