@@ -151,8 +151,8 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SmiMetaData.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiMetaData.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlDataRecord.Common.cs">
-      <Link>Microsoft\Data\SqlClient\Server\SqlDataRecord.Common.cs</Link>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlDataRecord.cs">
+      <Link>Microsoft\Data\SqlClient\Server\SqlDataRecord.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlDataRecord.netcore.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlDataRecord.netcore.cs</Link>

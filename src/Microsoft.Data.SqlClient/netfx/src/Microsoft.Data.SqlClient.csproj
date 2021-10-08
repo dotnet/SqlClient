@@ -219,8 +219,8 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlRecordBuffer.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlRecordBuffer.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlDataRecord.Common.cs">
-      <Link>Microsoft\Data\SqlClient\Server\SqlDataRecord.Common.cs</Link>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlDataRecord.cs">
+      <Link>Microsoft\Data\SqlClient\Server\SqlDataRecord.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlDataRecord.netfx.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlDataRecord.netfx.cs</Link>
