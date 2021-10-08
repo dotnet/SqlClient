@@ -12,6 +12,8 @@ using System.Threading;
 using System.Collections;
 using System.Globalization;
 using System.Runtime.Versioning;
+using System.Security;
+using System.Security.Permissions;
 #endif
 using Microsoft.Data.Common;
 
@@ -25,18 +27,17 @@ namespace Microsoft.Data.SqlClient
 
         internal static partial class DEFAULT
         {
-            private const string _emptyString = "";
             internal const ApplicationIntent ApplicationIntent = DbConnectionStringDefaults.ApplicationIntent;
             internal const string Application_Name = TdsEnums.SQL_PROVIDER_NAME;
-            internal const string AttachDBFilename = _emptyString;
+            internal const string AttachDBFilename = "";
             internal const int Command_Timeout = ADP.DefaultCommandTimeout;
             internal const int Connect_Timeout = ADP.DefaultConnectionTimeout;
-            internal const string Current_Language = _emptyString;
-            internal const string Data_Source = _emptyString;
+            internal const string Current_Language = "";
+            internal const string Data_Source = "";
             internal const bool Encrypt = true;
             internal const bool Enlist = true;
-            internal const string FailoverPartner = _emptyString;
-            internal const string Initial_Catalog = _emptyString;
+            internal const string FailoverPartner = "";
+            internal const string Initial_Catalog = "";
             internal const bool Integrated_Security = false;
             internal const int Load_Balance_Timeout = 0; // default of 0 means don't use
             internal const bool MARS = false;
@@ -44,30 +45,30 @@ namespace Microsoft.Data.SqlClient
             internal const int Min_Pool_Size = 0;
             internal const bool MultiSubnetFailover = DbConnectionStringDefaults.MultiSubnetFailover;
             internal const int Packet_Size = 8000;
-            internal const string Password = _emptyString;
+            internal const string Password = "";
             internal const bool Persist_Security_Info = false;
             internal const PoolBlockingPeriod PoolBlockingPeriod = DbConnectionStringDefaults.PoolBlockingPeriod;
             internal const bool Pooling = true;
             internal const bool TrustServerCertificate = false;
-            internal const string Type_System_Version = _emptyString;
-            internal const string User_ID = _emptyString;
+            internal const string Type_System_Version = "";
+            internal const string User_ID = "";
             internal const bool User_Instance = false;
             internal const bool Replication = false;
             internal const int Connect_Retry_Count = 1;
             internal const int Connect_Retry_Interval = 10;
-            internal static readonly SqlAuthenticationMethod Authentication = SqlAuthenticationMethod.NotSpecified;
+            internal static readonly SqlAuthenticationMethod s_authentication = SqlAuthenticationMethod.NotSpecified;
             internal const SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Disabled;
-            internal const string EnclaveAttestationUrl = _emptyString;
-            internal static readonly SqlConnectionAttestationProtocol AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified;
-            internal static readonly SqlConnectionIPAddressPreference s_IPAddressPreference = SqlConnectionIPAddressPreference.IPv4First;
+            internal const string EnclaveAttestationUrl = "";
+            internal static readonly SqlConnectionAttestationProtocol s_attestationProtocol = SqlConnectionAttestationProtocol.NotSpecified;
+            internal static readonly SqlConnectionIPAddressPreference s_ipAddressPreference = SqlConnectionIPAddressPreference.IPv4First;
 #if NETFRAMEWORK
-            internal static readonly bool TransparentNetworkIPResolution = DbConnectionStringDefaults.TransparentNetworkIPResolution;
+            internal static readonly bool s_transparentNetworkIPResolution = DbConnectionStringDefaults.TransparentNetworkIPResolution;
             internal const bool Asynchronous = false;
             internal const bool Connection_Reset = true;
             internal const bool Context_Connection = false;
-            internal const string Network_Library = _emptyString;
+            internal const string Network_Library = "";
 #if ADONET_CERT_AUTH
-            internal const  string Certificate = _emptyString;
+            internal const  string Certificate = "";
 #endif
 #endif // NETFRAMEWORK
         }
@@ -280,13 +281,13 @@ namespace Microsoft.Data.SqlClient
 
         private readonly TypeSystem _typeSystemVersion;
         private readonly Version _typeSystemAssemblyVersion;
-        private static readonly Version constTypeSystemAsmVersion10 = new Version("10.0.0.0");
-        private static readonly Version constTypeSystemAsmVersion11 = new Version("11.0.0.0");
+        private static readonly Version s_constTypeSystemAsmVersion10 = new("10.0.0.0");
+        private static readonly Version s_constTypeSystemAsmVersion11 = new("11.0.0.0");
 
         private readonly string _expandedAttachDBFilename; // expanded during construction so that CreatePermissionSet & Expand are consistent
 
 #if NETFRAMEWORK
-        static private Hashtable _netlibMapping;
+        static private Hashtable s_netlibMapping;
         private readonly bool _connectionReset;
         private readonly bool _contextConnection;
         private readonly bool _transparentNetworkIPResolution;
@@ -400,7 +401,7 @@ namespace Microsoft.Data.SqlClient
             _contextConnection = ConvertValueToBoolean(KEY.Context_Connection, DEFAULT.Context_Connection);
             _encrypt = ConvertValueToEncrypt();
             _enlist = ConvertValueToBoolean(KEY.Enlist, ADP.IsWindowsNT);
-            _transparentNetworkIPResolution = ConvertValueToBoolean(KEY.TransparentNetworkIPResolution, DEFAULT.TransparentNetworkIPResolution);
+            _transparentNetworkIPResolution = ConvertValueToBoolean(KEY.TransparentNetworkIPResolution, DEFAULT.s_transparentNetworkIPResolution);
             _networkLibrary = ConvertValueToString(KEY.Network_Library, null);
 
 #if ADONET_CERT_AUTH
@@ -435,8 +436,8 @@ namespace Microsoft.Data.SqlClient
                 const string folder = "Software\\Microsoft\\MSSQLServer\\Client\\SuperSocketNetLib";
                 const string value = "Encrypt";
 
-                Object obj = ADP.LocalMachineRegistryValue(folder, value);
-                if ((obj is Int32) && (1 == (int)obj))
+                object obj = ADP.LocalMachineRegistryValue(folder, value);
+                if ((obj is int) && (1 == (int)obj))
                 {         // If the registry key exists
                     _encrypt = true;
                 }
@@ -519,7 +520,7 @@ namespace Microsoft.Data.SqlClient
             {
                 ValidateValueLength(_attachDBFileName, TdsEnums.MAXLEN_ATTACHDBFILE, KEY.AttachDBFilename);
             }
-            _typeSystemAssemblyVersion = constTypeSystemAsmVersion10;
+            _typeSystemAssemblyVersion = s_constTypeSystemAsmVersion10;
 
             if (true == _userInstance && !string.IsNullOrEmpty(_failoverPartner))
             {
@@ -556,7 +557,7 @@ namespace Microsoft.Data.SqlClient
             else if (typeSystemVersionString.Equals(TYPESYSTEMVERSION.SQL_Server_2012, StringComparison.OrdinalIgnoreCase))
             {
                 _typeSystemVersion = TypeSystem.SQLServer2012;
-                _typeSystemAssemblyVersion = constTypeSystemAsmVersion11;
+                _typeSystemAssemblyVersion = s_constTypeSystemAsmVersion11;
             }
             else
             {
@@ -795,9 +796,9 @@ namespace Microsoft.Data.SqlClient
         }
 
 #if NETFRAMEWORK
-        protected internal override System.Security.PermissionSet CreatePermissionSet()
+        protected internal override PermissionSet CreatePermissionSet()
         {
-            System.Security.PermissionSet permissionSet = new System.Security.PermissionSet(System.Security.Permissions.PermissionState.None);
+            PermissionSet permissionSet = new(PermissionState.None);
             permissionSet.AddPermission(new SqlClientPermission(this));
             return permissionSet;
         }
@@ -962,41 +963,37 @@ namespace Microsoft.Data.SqlClient
         {
             const int NetLibCount = 8;
 
-            Hashtable hash = _netlibMapping;
+            Hashtable hash = s_netlibMapping;
             if (null == hash)
             {
-                hash = new Hashtable(NetLibCount);
-                hash.Add(NETLIB.TCPIP, TdsEnums.TCP);
-                hash.Add(NETLIB.NamedPipes, TdsEnums.NP);
-                hash.Add(NETLIB.Multiprotocol, TdsEnums.RPC);
-                hash.Add(NETLIB.BanyanVines, TdsEnums.BV);
-                hash.Add(NETLIB.AppleTalk, TdsEnums.ADSP);
-                hash.Add(NETLIB.IPXSPX, TdsEnums.SPX);
-                hash.Add(NETLIB.VIA, TdsEnums.VIA);
-                hash.Add(NETLIB.SharedMemory, TdsEnums.LPC);
+                hash = new Hashtable(NetLibCount)
+                {
+                    { NETLIB.TCPIP, TdsEnums.TCP },
+                    { NETLIB.NamedPipes, TdsEnums.NP },
+                    { NETLIB.Multiprotocol, TdsEnums.RPC },
+                    { NETLIB.BanyanVines, TdsEnums.BV },
+                    { NETLIB.AppleTalk, TdsEnums.ADSP },
+                    { NETLIB.IPXSPX, TdsEnums.SPX },
+                    { NETLIB.VIA, TdsEnums.VIA },
+                    { NETLIB.SharedMemory, TdsEnums.LPC }
+                };
                 Debug.Assert(NetLibCount == hash.Count, "incorrect initial NetlibMapping size");
-                _netlibMapping = hash;
+                s_netlibMapping = hash;
             }
             return hash;
         }
 
         static internal bool ValidProtocol(string protocol)
         {
-            switch (protocol)
+            return protocol switch
             {
-                case TdsEnums.TCP:
-                case TdsEnums.NP:
-                case TdsEnums.VIA:
-                case TdsEnums.LPC:
-                    return true;
-
+                TdsEnums.TCP or TdsEnums.NP or TdsEnums.VIA or TdsEnums.LPC => true,
                 //              case TdsEnums.RPC  :  Invalid Protocols
                 //              case TdsEnums.BV   :
                 //              case TdsEnums.ADSP :
                 //              case TdsEnums.SPX  :
-                default:
-                    return false;
-            }
+                _ => false,
+            };
         }
 #endif
 
@@ -1054,8 +1051,7 @@ namespace Microsoft.Data.SqlClient
 
         internal ApplicationIntent ConvertValueToApplicationIntent()
         {
-            string value;
-            if (!TryGetParsetableValue(KEY.ApplicationIntent, out value))
+            if (!TryGetParsetableValue(KEY.ApplicationIntent, out string value))
             {
                 return DEFAULT.ApplicationIntent;
             }
@@ -1091,7 +1087,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (!TryGetParsetableValue(KEY.Authentication, out string value))
             {
-                return DEFAULT.Authentication;
+                return DEFAULT.s_authentication;
             }
 
             try
@@ -1141,7 +1137,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (!TryGetParsetableValue(KEY.AttestationProtocol, out string value))
             {
-                return DEFAULT.AttestationProtocol;
+                return DEFAULT.s_attestationProtocol;
             }
 
             try
@@ -1166,7 +1162,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (!TryGetParsetableValue(KEY.IPAddressPreference, out string value))
             {
-                return DEFAULT.s_IPAddressPreference;
+                return DEFAULT.s_ipAddressPreference;
             }
 
             try
@@ -1185,8 +1181,7 @@ namespace Microsoft.Data.SqlClient
 
         internal Microsoft.Data.SqlClient.PoolBlockingPeriod ConvertValueToPoolBlockingPeriod()
         {
-            string value;
-            if (!TryGetParsetableValue(KEY.PoolBlockingPeriod, out value))
+            if (!TryGetParsetableValue(KEY.PoolBlockingPeriod, out string value))
             {
                 return DEFAULT.PoolBlockingPeriod;
             }
@@ -1204,7 +1199,7 @@ namespace Microsoft.Data.SqlClient
 #if NETFRAMEWORK
         internal bool ConvertValueToEncrypt()
         {
-            bool defaultEncryptValue = !base.Parsetable.ContainsKey(KEY.Authentication) ? DEFAULT.Encrypt : true;
+            bool defaultEncryptValue = !Parsetable.ContainsKey(KEY.Authentication) ? DEFAULT.Encrypt : true;
             return ConvertValueToBoolean(KEY.Encrypt, defaultEncryptValue);
         }
 #endif
