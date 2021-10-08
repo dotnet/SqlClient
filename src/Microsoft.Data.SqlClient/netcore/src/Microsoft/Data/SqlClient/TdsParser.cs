@@ -10124,11 +10124,11 @@ namespace Microsoft.Data.SqlClient
                 // Add appropriate SortOrder flag
                 byte flags = 0;
                 SmiOrderProperty.SmiColumnOrder columnOrder = orderProperty[i];
-                if (SortOrder.Ascending == columnOrder.Order)
+                if (SortOrder.Ascending == columnOrder._order)
                 {
                     flags = TdsEnums.TVP_ORDERASC_FLAG;
                 }
-                else if (SortOrder.Descending == columnOrder.Order)
+                else if (SortOrder.Descending == columnOrder._order)
                 {
                     flags = TdsEnums.TVP_ORDERDESC_FLAG;
                 }

@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient.Server
     {
         private const int SelectorCount = 3;  // number of elements in SmiPropertySelector
 
-        private SmiMetaDataProperty[] _properties;
+        private readonly SmiMetaDataProperty[] _properties;
         private bool _isReadOnly;
 
         // Singleton empty instances to ensure each property is always non-null
@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient.Server
         private static readonly SmiOrderProperty s_emptySortOrder = new SmiOrderProperty(new List<SmiOrderProperty.SmiColumnOrder>());
         private static readonly SmiUniqueKeyProperty s_emptyUniqueKey = new SmiUniqueKeyProperty(new List<bool>());
 
-        internal static readonly SmiMetaDataPropertyCollection EmptyInstance = CreateEmptyInstance();
+        internal static readonly SmiMetaDataPropertyCollection s_emptyInstance = CreateEmptyInstance();
 
         private static SmiMetaDataPropertyCollection CreateEmptyInstance()
         {
@@ -86,7 +86,7 @@ namespace Microsoft.Data.SqlClient.Server
     // Property defining a list of column ordinals that define a unique key
     internal class SmiUniqueKeyProperty : SmiMetaDataProperty
     {
-        private IList<bool> _columns;
+        private readonly IList<bool> _columns;
 
         internal SmiUniqueKeyProperty(IList<bool> columnIsKey)
         {
@@ -147,10 +147,10 @@ namespace Microsoft.Data.SqlClient.Server
     {
         internal struct SmiColumnOrder
         {
-            internal int SortOrdinal;
-            internal SortOrder Order;
+            internal int _sortOrdinal;
+            internal SortOrder _order;
 
-            internal string TraceString() => string.Format(CultureInfo.InvariantCulture, "{0} {1}", SortOrdinal, Order);
+            internal string TraceString() => string.Format(CultureInfo.InvariantCulture, "{0} {1}", _sortOrdinal, _order);
         }
 
         private readonly IList<SmiColumnOrder> _columns;
@@ -166,8 +166,8 @@ namespace Microsoft.Data.SqlClient.Server
                 if (_columns.Count <= ordinal)
                 {
                     SmiColumnOrder order = new SmiColumnOrder();
-                    order.Order = SortOrder.Unspecified;
-                    order.SortOrdinal = -1;
+                    order._order = SortOrder.Unspecified;
+                    order._sortOrdinal = -1;
                     return order;
                 }
                 else
@@ -201,7 +201,7 @@ namespace Microsoft.Data.SqlClient.Server
                     delimit = true;
                 }
 
-                if (Microsoft.Data.SqlClient.SortOrder.Unspecified != columnOrd.Order)
+                if (Microsoft.Data.SqlClient.SortOrder.Unspecified != columnOrd._order)
                 {
                     returnValue += columnOrd.TraceString();
                 }
