@@ -14,6 +14,26 @@ namespace Microsoft.Data.Common
 {
     partial class DbConnectionOptions
     {
+        // instances of this class are intended to be immutable, i.e readonly
+        // used by pooling classes so it is much easier to verify correctness
+        // when not worried about the class being modified during execution
+
+        // connection string common keywords
+        private static class KEY
+        {
+            internal const string Integrated_Security = DbConnectionStringKeywords.IntegratedSecurity;
+            internal const string Password = DbConnectionStringKeywords.Password;
+            internal const string Persist_Security_Info = DbConnectionStringKeywords.PersistSecurityInfo;
+            internal const string User_ID = DbConnectionStringKeywords.UserID;
+        }
+
+        // known connection string common synonyms
+        private static class SYNONYM
+        {
+            internal const string Pwd = DbConnectionStringSynonyms.Pwd;
+            internal const string UID = DbConnectionStringSynonyms.UID;
+        }
+
 #if DEBUG
         /*private const string ConnectionStringPatternV1 =
              "[\\s;]*"
@@ -79,52 +99,115 @@ namespace Microsoft.Data.Common
         private static readonly Regex s_connectionStringQuoteValueRegex = new Regex(ConnectionStringQuoteValuePattern, RegexOptions.Compiled);
         private static readonly Regex s_connectionStringQuoteOdbcValueRegex = new Regex(ConnectionStringQuoteOdbcValuePattern, RegexOptions.ExplicitCapture | RegexOptions.Compiled);
 
-        // connection string common keywords
-        private static class KEY
-        {
-            internal const string Integrated_Security = "integrated security";
-            internal const string Password = "password";
-            internal const string Persist_Security_Info = "persist security info";
-            internal const string User_ID = "user id";
-            internal const string AttachDBFileName = "attachdbfilename";
-        }
-
-        // known connection string common synonyms
-        private static class SYNONYM
-        {
-            internal const string Pwd = "pwd";
-            internal const string UID = "uid";
-        }
-
-        internal readonly bool HasPasswordKeyword;
-        internal readonly bool HasUserIdKeyword;
+        internal readonly bool _hasPasswordKeyword;
+        internal readonly bool _hasUserIdKeyword;
+        internal readonly NameValuePair _keyChain;
 
         private readonly string _usersConnectionString;
         private readonly Dictionary<string, string> _parsetable;
-        internal readonly NameValuePair _keyChain;
 
-        internal Dictionary<string, string> Parsetable
+        internal Dictionary<string, string> Parsetable => _parsetable;
+        public bool IsEmpty => _keyChain == null;
+
+        public DbConnectionOptions(string connectionString, Dictionary<string, string> synonyms)
         {
-            get { return _parsetable; }
+            _parsetable = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
+            _usersConnectionString = ((null != connectionString) ? connectionString : "");
+
+            // first pass on parsing, initial syntax check
+            if (0 < _usersConnectionString.Length)
+            {
+                _keyChain = ParseInternal(_parsetable, _usersConnectionString, true, synonyms, false);
+                _hasPasswordKeyword = (_parsetable.ContainsKey(KEY.Password) || _parsetable.ContainsKey(SYNONYM.Pwd));
+                _hasUserIdKeyword = (_parsetable.ContainsKey(KEY.User_ID) || _parsetable.ContainsKey(SYNONYM.UID));
+            }
         }
 
-        public string UsersConnectionString(bool hidePassword) =>
-            UsersConnectionString(hidePassword, false);
+        protected DbConnectionOptions(DbConnectionOptions connectionOptions)
+        { // Clone used by SqlConnectionString
+            _usersConnectionString = connectionOptions._usersConnectionString;
+            _parsetable = connectionOptions._parsetable;
+            _keyChain = connectionOptions._keyChain;
+            _hasPasswordKeyword = connectionOptions._hasPasswordKeyword;
+            _hasUserIdKeyword = connectionOptions._hasUserIdKeyword;
+        }
+
+        internal bool TryGetParsetableValue(string key, out string value) => _parsetable.TryGetValue(key, out value);
+
+        // same as Boolean, but with SSPI thrown in as valid yes
+        public bool ConvertValueToIntegratedSecurity()
+        {
+            return _parsetable.TryGetValue(KEY.Integrated_Security, out string value) && value != null ?
+                   ConvertValueToIntegratedSecurityInternal(value) :
+                   false;
+        }
+
+        internal bool ConvertValueToIntegratedSecurityInternal(string stringValue)
+        {
+            if (CompareInsensitiveInvariant(stringValue, "sspi") || CompareInsensitiveInvariant(stringValue, "true") || CompareInsensitiveInvariant(stringValue, "yes"))
+                return true;
+            else if (CompareInsensitiveInvariant(stringValue, "false") || CompareInsensitiveInvariant(stringValue, "no"))
+                return false;
+            else
+            {
+                string tmp = stringValue.Trim();  // Remove leading & trailing whitespace.
+                if (CompareInsensitiveInvariant(tmp, "sspi") || CompareInsensitiveInvariant(tmp, "true") || CompareInsensitiveInvariant(tmp, "yes"))
+                    return true;
+                else if (CompareInsensitiveInvariant(tmp, "false") || CompareInsensitiveInvariant(tmp, "no"))
+                    return false;
+                else
+                {
+                    throw ADP.InvalidConnectionOptionValue(KEY.Integrated_Security);
+                }
+            }
+        }
+
+        public int ConvertValueToInt32(string keyName, int defaultValue)
+        {
+            return _parsetable.TryGetValue(keyName, out string value) && value != null ?
+                   ConvertToInt32Internal(keyName, value) :
+                   defaultValue;
+        }
+
+        internal static int ConvertToInt32Internal(string keyname, string stringValue)
+        {
+            try
+            {
+                return int.Parse(stringValue, System.Globalization.NumberStyles.Integer, CultureInfo.InvariantCulture);
+            }
+            catch (FormatException e)
+            {
+                throw ADP.InvalidConnectionOptionValue(keyname, e);
+            }
+            catch (OverflowException e)
+            {
+                throw ADP.InvalidConnectionOptionValue(keyname, e);
+            }
+        }
+
+        public string ConvertValueToString(string keyName, string defaultValue)
+            => _parsetable.TryGetValue(keyName, out string value) && value != null ? value : defaultValue;
+
+        public bool ContainsKey(string keyword) => _parsetable.ContainsKey(keyword);
+
+        protected internal virtual string Expand() => _usersConnectionString;
+
+        public string UsersConnectionString(bool hidePassword) => UsersConnectionString(hidePassword, false);
 
         internal string UsersConnectionStringForTrace() => UsersConnectionString(true, true);
 
         private string UsersConnectionString(bool hidePassword, bool forceHidePassword)
         {
             string connectionString = _usersConnectionString;
-            if (HasPasswordKeyword && (forceHidePassword || (hidePassword && !HasPersistablePassword)))
+            if (_hasPasswordKeyword && (forceHidePassword || (hidePassword && !HasPersistablePassword)))
             {
                 ReplacePasswordPwd(out connectionString, false);
             }
             return connectionString ?? string.Empty;
         }
 
-        internal bool HasPersistablePassword => HasPasswordKeyword ?
-            ConvertValueToBoolean(KEY.Persist_Security_Info, false) :
+        internal bool HasPersistablePassword => _hasPasswordKeyword ?
+            ConvertValueToBoolean(KEY.Persist_Security_Info, DbConnectionStringDefaults.PersistSecurityInfo) :
             true; // no password means persistable password so we don't have to munge
 
         public bool ConvertValueToBoolean(string keyName, bool defaultValue)
@@ -155,8 +238,8 @@ namespace Microsoft.Data.Common
             }
         }
 
-        private static bool CompareInsensitiveInvariant(string strvalue, string strconst) =>
-            (0 == StringComparer.OrdinalIgnoreCase.Compare(strvalue, strconst));
+        private static bool CompareInsensitiveInvariant(string strvalue, string strconst) 
+            => (0 == StringComparer.OrdinalIgnoreCase.Compare(strvalue, strconst));
 
         [System.Diagnostics.Conditional("DEBUG")]
         private static void DebugTraceKeyValuePair(string keyname, string keyvalue, Dictionary<string, string> synonyms)
@@ -164,9 +247,10 @@ namespace Microsoft.Data.Common
             if (SqlClientEventSource.Log.IsAdvancedTraceOn())
             {
                 Debug.Assert(string.Equals(keyname, keyname?.ToLower(), StringComparison.InvariantCulture), "missing ToLower");
-                string realkeyname = ((null != synonyms) ? (string)synonyms[keyname] : keyname);
+                string realkeyname = ((null != synonyms) ? synonyms[keyname] : keyname);
 
-                if ((KEY.Password != realkeyname) && (SYNONYM.Pwd != realkeyname))
+                if (!string.Equals(KEY.Password, realkeyname, StringComparison.InvariantCultureIgnoreCase) &&
+                   !string.Equals(SYNONYM.Pwd, realkeyname, StringComparison.InvariantCultureIgnoreCase))
                 {
                     // don't trace passwords ever!
                     if (null != keyvalue)
@@ -450,7 +534,7 @@ namespace Microsoft.Data.Common
             {
 #if DEBUG
                 bool compValue = s_connectionStringValidKeyRegex.IsMatch(keyname);
-                Debug.Assert(((0 < keyname.Length) && (';' != keyname[0]) && !Char.IsWhiteSpace(keyname[0]) && (-1 == keyname.IndexOf('\u0000'))) == compValue, "IsValueValid mismatch with regex");
+                Debug.Assert(((0 < keyname.Length) && (';' != keyname[0]) && !char.IsWhiteSpace(keyname[0]) && (-1 == keyname.IndexOf('\u0000'))) == compValue, "IsValueValid mismatch with regex");
 #endif
                 return ((0 < keyname.Length) && (';' != keyname[0]) && !char.IsWhiteSpace(keyname[0]) && (-1 == keyname.IndexOf('\u0000')));
             }
@@ -595,14 +679,14 @@ namespace Microsoft.Data.Common
                     }
 #if DEBUG
                     DebugTraceKeyValuePair(keyname, keyvalue, synonyms);
-
+#endif
                     Debug.Assert(IsKeyNameValid(keyname), "ParseFailure, invalid keyname");
                     Debug.Assert(IsValueValidInternal(keyvalue), "parse failure, invalid keyvalue");
-#endif
-                    string synonym;
-                    string realkeyname = null != synonyms ?
-                        (synonyms.TryGetValue(keyname, out synonym) ? synonym : null) :
-                        keyname;
+
+                    string realkeyname = (synonyms is not null) ?
+                                         (synonyms.TryGetValue(keyname, out string synonym) ? synonym : null) :
+                                          keyname;
+
                     if (!IsKeyNameValid(realkeyname))
                     {
                         throw ADP.KeywordNotSupported(keyname);
@@ -641,7 +725,8 @@ namespace Microsoft.Data.Common
             StringBuilder builder = new StringBuilder(_usersConnectionString.Length);
             for (NameValuePair current = _keyChain; null != current; current = current.Next)
             {
-                if ((KEY.Password != current.Name) && (SYNONYM.Pwd != current.Name))
+                if(!string.Equals(KEY.Password, current.Name, StringComparison.InvariantCultureIgnoreCase) &&
+                   !string.Equals(SYNONYM.Pwd, current.Name, StringComparison.InvariantCultureIgnoreCase))
                 {
                     builder.Append(_usersConnectionString, copyPosition, current.Length);
                     if (fakePassword)
