@@ -138,12 +138,9 @@ namespace Microsoft.Data.SqlClient
                 {
                     _mappingSchema = mappingSchema;
                 }
-                else
+                else if (_mappingSchema != mappingSchema)
                 {
-                    if (_mappingSchema != mappingSchema)
-                    {
-                        throw SQL.BulkLoadMappingsNamesOrOrdinalsOnly();
-                    }
+                    throw SQL.BulkLoadMappingsNamesOrOrdinalsOnly();
                 }
             }
         }
