@@ -301,9 +301,6 @@
      <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SmiEventSink_Default.Common.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiEventSink_Default.Common.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SmiEventSink_Default.netcore.cs">
-      <Link>Microsoft\Data\SqlClient\Server\SmiEventSink_Default.netcore.cs</Link>
-    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\Common\SqlRetryingEventArgs.cs">
       <Link>Microsoft\Data\SqlClient\Reliability\SqlRetryingEventArgs.cs</Link>
     </Compile>
