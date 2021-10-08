@@ -396,6 +396,13 @@ namespace Microsoft.Data.SqlClient
                     authType == SqlAuthenticationMethod.NotSpecified ? SqlAuthenticationMethod.SqlPassword.ToString() : authType.ToString());
             }
 
+            // Encryption is not supported on SQL Local DB - disable it for current session.
+            if (connHandler.ConnectionOptions.LocalDBInstance != null && encrypt)
+            {
+                encrypt = false;
+                SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Encryption will be disabled as target server is a SQL Local DB instance.");
+            }
+
             _sniSpnBuffer = null;
 
             // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
