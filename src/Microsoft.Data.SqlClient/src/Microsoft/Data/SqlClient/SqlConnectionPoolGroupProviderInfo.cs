@@ -6,13 +6,13 @@ using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient
 {
-    sealed internal class SqlConnectionPoolGroupProviderInfo : DbConnectionPoolGroupProviderInfo
+    internal sealed class SqlConnectionPoolGroupProviderInfo : DbConnectionPoolGroupProviderInfo
     {
         private string _alias;
         private string _failoverPartner;
         private bool _useFailoverPartner;
 #if NETFRAMEWORK
-        private System.Security.PermissionSet _failoverPermissionSet;
+        private PermissionSet _failoverPermissionSet;
 #endif
 
         internal SqlConnectionPoolGroupProviderInfo(SqlConnectionString connectionOptions)
