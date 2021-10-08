@@ -569,7 +569,7 @@ namespace Microsoft.Data.SqlClient.Server
                         Type SqlCharsType = (typeof(SqlChars));
                         Type[] argTypes = new Type[] { typeof(SqlStreamChars) };
                         SqlChars SqlCharsInstance = (SqlChars)SqlCharsType.GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance,
-                              null, argTypes, null).Invoke(new Object[] { sc });
+                              null, argTypes, null).Invoke(new object[] { sc });
                         result = SqlCharsInstance;
                     }
 #else
@@ -1383,7 +1383,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         // null return values for SqlClient 1.1-compatible GetSqlValue()
-        private static object[] s_typeSpecificNullForSqlValue = {
+        private static readonly object[] s_typeSpecificNullForSqlValue = {
             SqlInt64.Null,      // SqlDbType.BigInt
             SqlBinary.Null,     // SqlDbType.Binary
             SqlBoolean.Null,    // SqlDbType.Bit
@@ -1425,7 +1425,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             Type t = metaData.Type;
             Debug.Assert(t != null, "Unexpected null of Udt type on NullUdtInstance!");
-            return t.InvokeMember("Null", BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.Static, null, null, new Object[] { }, CultureInfo.InvariantCulture);
+            return t.InvokeMember("Null", BindingFlags.Public | BindingFlags.GetProperty | BindingFlags.Static, null, null, new object[] { }, CultureInfo.InvariantCulture);
         }
 
         // Strongly-typed setters are a bit simpler than their corresponding getters.
@@ -2117,8 +2117,7 @@ namespace Microsoft.Data.SqlClient.Server
                             { // block to scope sqlReader local to avoid conflicts
                                 Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.SqlDecimal));
                                 // Support full fidelity for SqlDataReader
-                                SqlDataReader sqlReader = reader as SqlDataReader;
-                                if (null != sqlReader)
+                                if (reader is SqlDataReader sqlReader)
                                 {
                                     SetSqlDecimal_Unchecked(sink, setters, i, sqlReader.GetSqlDecimal(i));
                                 }
@@ -2193,8 +2192,7 @@ namespace Microsoft.Data.SqlClient.Server
                         case SqlDbType.Xml:
                             {
                                 Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.SqlXml));
-                                SqlDataReader sqlReader = reader as SqlDataReader;
-                                if (null != sqlReader)
+                                if (reader is SqlDataReader sqlReader)
                                 {
                                     SetSqlXml_Unchecked(sink, setters, i, sqlReader.GetSqlXml(i));
                                 }
@@ -2207,10 +2205,9 @@ namespace Microsoft.Data.SqlClient.Server
                         case SqlDbType.Variant:
                             {  // block to scope sqlReader local and avoid conflicts
                                 // Support better options for SqlDataReader
-                                SqlDataReader sqlReader = reader as SqlDataReader;
                                 SqlBuffer.StorageType storageType = SqlBuffer.StorageType.Empty;
                                 object o;
-                                if (null != sqlReader)
+                                if (reader is SqlDataReader sqlReader)
                                 {
                                     o = sqlReader.GetSqlValue(i);
                                     storageType = sqlReader.GetVariantInternalStorageType(i);
@@ -2249,9 +2246,8 @@ namespace Microsoft.Data.SqlClient.Server
                         case SqlDbType.Time:
                             { // block to scope sqlReader local and avoid conflicts
                                 Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.TimeSpan));
-                                SqlDataReader sqlReader = reader as SqlDataReader;
                                 TimeSpan ts;
-                                if (null != sqlReader)
+                                if (reader is SqlDataReader sqlReader)
                                 {
                                     ts = sqlReader.GetTimeSpan(i);
                                 }
@@ -2265,9 +2261,8 @@ namespace Microsoft.Data.SqlClient.Server
                         case SqlDbType.DateTimeOffset:
                             { // block to scope sqlReader local and avoid conflicts
                                 Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.DateTimeOffset));
-                                SqlDataReader sqlReader = reader as SqlDataReader;
                                 DateTimeOffset dto;
-                                if (null != sqlReader)
+                                if (reader is SqlDataReader sqlReader)
                                 {
                                     dto = sqlReader.GetDateTimeOffset(i);
                                 }
@@ -2414,9 +2409,8 @@ namespace Microsoft.Data.SqlClient.Server
                         case SqlDbType.Time:
                             { // block to scope sqlReader local and avoid conflicts
                                 Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.TimeSpan));
-                                SqlDataRecord sqlRecord = record as SqlDataRecord;
                                 TimeSpan ts;
-                                if (null != sqlRecord)
+                                if (record is SqlDataRecord sqlRecord)
                                 {
                                     ts = sqlRecord.GetTimeSpan(i);
                                 }
@@ -2430,9 +2424,8 @@ namespace Microsoft.Data.SqlClient.Server
                         case SqlDbType.DateTimeOffset:
                             { // block to scope sqlReader local and avoid conflicts
                                 Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.DateTimeOffset));
-                                SqlDataRecord sqlRecord = record as SqlDataRecord;
                                 DateTimeOffset dto;
-                                if (null != sqlRecord)
+                                if (record is SqlDataRecord sqlRecord)
                                 {
                                     dto = sqlRecord.GetDateTimeOffset(i);
                                 }
@@ -2506,8 +2499,8 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         // Hard coding smalldatetime limits...
-        private static readonly DateTime s_dtSmallMax = new DateTime(2079, 06, 06, 23, 59, 29, 998);
-        private static readonly DateTime s_dtSmallMin = new DateTime(1899, 12, 31, 23, 59, 29, 999);
+        private static readonly DateTime s_dtSmallMax = new(2079, 06, 06, 23, 59, 29, 998);
+        private static readonly DateTime s_dtSmallMin = new(1899, 12, 31, 23, 59, 29, 999);
         private static void VerifyDateTimeRange(SqlDbType dbType, DateTime value)
         {
             if (SqlDbType.SmallDateTime == dbType && (s_dtSmallMax < value || s_dtSmallMin > value))
@@ -2517,7 +2510,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         private static readonly TimeSpan s_timeMin = TimeSpan.Zero;
-        private static readonly TimeSpan s_timeMax = new TimeSpan(TimeSpan.TicksPerDay - 1);
+        private static readonly TimeSpan s_timeMax = new(TimeSpan.TicksPerDay - 1);
         private static void VerifyTimeRange(SqlDbType dbType, TimeSpan value)
         {
             if (SqlDbType.Time == dbType && (s_timeMin > value || value > s_timeMax))
@@ -2599,7 +2592,6 @@ namespace Microsoft.Data.SqlClient.Server
 
         private static void SetBytes_FromRecord(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, SqlDataRecord record, int offset)
         {
-            int length = 0;
 
             // Deal with large values by sending bufferLength of NoLengthLimit (== assume 
             //  CheckXetParameters will ignore requested-length checks in this case
@@ -2608,7 +2600,7 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 bufferLength = NoLengthLimit;
             }
-            length = CheckXetParameters(metaData.SqlDbType, metaData.MaxLength, NoLengthLimit /* actual */, 0, checked((int)bufferLength), offset, checked((int)bufferLength));
+            int length = CheckXetParameters(metaData.SqlDbType, metaData.MaxLength, NoLengthLimit /* actual */, 0, checked((int)bufferLength), offset, checked((int)bufferLength));
 
             int chunkSize;
             if (length > __maxByteChunkSize || length < 0)
@@ -2649,11 +2641,10 @@ namespace Microsoft.Data.SqlClient.Server
 
         private static void SetBytes_FromReader(SmiEventSink_Default sink, SmiTypedGetterSetter setters, int ordinal, SmiMetaData metaData, DbDataReader reader, int offset)
         {
-            int length = 0;
 
             // Deal with large values by sending bufferLength of NoLengthLimit (== assume 
             //  CheckXetParameters will ignore requested-length checks in this case)
-            length = CheckXetParameters(metaData.SqlDbType, metaData.MaxLength, NoLengthLimit /* actual */, 0, NoLengthLimit /* buffer length */, offset, NoLengthLimit /* requested length */ );
+            int length = CheckXetParameters(metaData.SqlDbType, metaData.MaxLength, NoLengthLimit /* actual */, 0, NoLengthLimit /* buffer length */, offset, NoLengthLimit /* requested length */ );
 
             // Use fixed chunk size for all cases to avoid inquiring from reader.
             int chunkSize = __maxByteChunkSize;
@@ -2704,7 +2695,6 @@ namespace Microsoft.Data.SqlClient.Server
 
         private static void SetChars_FromRecord(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, SqlDataRecord record, int offset)
         {
-            int length = 0;
 
             // Deal with large values by sending bufferLength of NoLengthLimit
             //  CheckXetParameters will ignore length checks in this case
@@ -2713,7 +2703,7 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 bufferLength = NoLengthLimit;
             }
-            length = CheckXetParameters(metaData.SqlDbType, metaData.MaxLength, NoLengthLimit /* actual */, 0, checked((int)bufferLength), offset, checked((int)bufferLength - offset));
+            int length = CheckXetParameters(metaData.SqlDbType, metaData.MaxLength, NoLengthLimit /* actual */, 0, checked((int)bufferLength), offset, checked((int)bufferLength - offset));
 
             int chunkSize;
             if (length > __maxCharChunkSize || length < 0)
@@ -2787,11 +2777,10 @@ namespace Microsoft.Data.SqlClient.Server
         // Use chunking via SetChars to transfer a value from a reader to a gettersetter
         private static void SetChars_FromReader(SmiEventSink_Default sink, SmiTypedGetterSetter setters, int ordinal, SmiMetaData metaData, DbDataReader reader, int offset)
         {
-            int length = 0;
 
             // Deal with large values by sending bufferLength of NoLengthLimit (== assume 
             //  CheckXetParameters will ignore requested-length checks in this case)
-            length = CheckXetParameters(metaData.SqlDbType, metaData.MaxLength, NoLengthLimit /* actual */, 0, NoLengthLimit /* buffer length */, offset, NoLengthLimit /* requested length */ );
+            int length = CheckXetParameters(metaData.SqlDbType, metaData.MaxLength, NoLengthLimit /* actual */, 0, NoLengthLimit /* buffer length */, offset, NoLengthLimit /* requested length */ );
 
             // Use fixed chunk size for all cases to avoid inquiring from reader.
             int chunkSize;
@@ -3067,7 +3056,7 @@ namespace Microsoft.Data.SqlClient.Server
         private const bool X = true;
         private const bool _ = false;
 
-        private static bool[,] s_canAccessGetterDirectly = {
+        private static readonly bool[,] s_canAccessGetterDirectly = {
             // SqlDbTypes as columns (abbreviated, but in order)
             //  ExtendedClrTypeCodes as rows
 
@@ -3120,7 +3109,7 @@ namespace Microsoft.Data.SqlClient.Server
     //     BI, Bin, Bit, Ch, DT, Dec, Fl, Im, Int, Mny, NCh, NTx, NVC, Rl, UI, SDT, SI, SMn, Txt, TS, TI, VBn, VCh, Var, 24, Xml, 26, 27, 28, Udt, St, Dat, Tm, DT2, DTO
         };
 
-        private static bool[,] s_canAccessSetterDirectly = {
+        private static readonly bool[,] s_canAccessSetterDirectly = {
         // Setters as columns (labels are abreviated from ExtendedClrTypeCode names)
         // SqlDbTypes as rows
     //     BI, Bin, Bit, Ch, DT, Dec, Fl, Im, Int, Mny, NCh, NTx, NVC, Rl, UI, SDT, SI, SMn, Txt, TS, TI, VBn, VCh, Var, 24, Xml, 26, 27, 28, Udt, St, Dat, Tm, DT2, DTO
@@ -3402,11 +3391,11 @@ namespace Microsoft.Data.SqlClient.Server
                 , context
 #endif
                 );
-            SqlXml result = new SqlXml(copy);
+            SqlXml result = new(copy);
             return result;
         }
 
-        private static String GetString_Unchecked(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal)
+        private static string GetString_Unchecked(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal)
         {
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
@@ -3414,7 +3403,7 @@ namespace Microsoft.Data.SqlClient.Server
             // Inproc process, the getter is InProcRecordBuffer (implemented in SqlAcess), string will be
             // truncated to 4000 (if length is more than 4000). If MemoryRecordBuffer getter is used, data 
             // is not truncated. Please refer VSDD 479655 for more detailed information regarding the string length.
-            String result = getters.GetString(sink, ordinal);
+            string result = getters.GetString(sink, ordinal);
             sink.ProcessMessagesAndThrow();
             return result;
         }
@@ -3452,7 +3441,6 @@ namespace Microsoft.Data.SqlClient.Server
             int nWritten = 0;
             do
             {
-                int nRead = 0;
                 int readSize = constBinBufferSize;
                 if (len > 0 && nWritten + readSize > len)
                 {
@@ -3461,7 +3449,7 @@ namespace Microsoft.Data.SqlClient.Server
 
                 Debug.Assert(readSize >= 0);
 
-                nRead = feed._source.Read(buff, 0, readSize);
+                int nRead = feed._source.Read(buff, 0, readSize);
 
                 if (nRead == 0)
                 {
@@ -3485,7 +3473,6 @@ namespace Microsoft.Data.SqlClient.Server
             int nWritten = 0;
             do
             {
-                int nRead = 0;
                 int readSize = constTextBufferSize;
                 if (len > 0 && nWritten + readSize > len)
                 {
@@ -3494,7 +3481,7 @@ namespace Microsoft.Data.SqlClient.Server
 
                 Debug.Assert(readSize >= 0);
 
-                nRead = feed._source.Read(buff, 0, readSize);
+                int nRead = feed._source.Read(buff, 0, readSize);
 
                 if (nRead == 0)
                 {
@@ -3924,7 +3911,7 @@ namespace Microsoft.Data.SqlClient.Server
         private static void SetXmlReader_Unchecked(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, XmlReader xmlReader)
         {
             // set up writer
-            XmlWriterSettings WriterSettings = new XmlWriterSettings();
+            XmlWriterSettings WriterSettings = new();
             WriterSettings.CloseOutput = false;		// don't close the memory stream
             WriterSettings.ConformanceLevel = ConformanceLevel.Fragment;
             WriterSettings.Encoding = System.Text.Encoding.Unicode;
@@ -4051,8 +4038,7 @@ namespace Microsoft.Data.SqlClient.Server
             finally
             {
                 // Clean up!
-                IDisposable disposable = enumerator as IDisposable;
-                if (null != disposable)
+                if (enumerator is IDisposable disposable)
                 {
                     disposable.Dispose();
                 }

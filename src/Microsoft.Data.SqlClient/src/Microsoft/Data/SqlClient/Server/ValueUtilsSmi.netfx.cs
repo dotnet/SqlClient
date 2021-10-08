@@ -134,8 +134,8 @@ namespace Microsoft.Data.SqlClient.Server
         internal static SqlBuffer.StorageType SqlDbTypeToStorageType(SqlDbType dbType)
         {
             int index = unchecked((int)dbType);
-            Debug.Assert(index >= 0 && index < __dbTypeToStorageType.Length, string.Format(CultureInfo.InvariantCulture, "Unexpected dbType value: {0}", dbType));
-            return __dbTypeToStorageType[index];
+            Debug.Assert(index >= 0 && index < s_dbTypeToStorageType.Length, string.Format(CultureInfo.InvariantCulture, "Unexpected dbType value: {0}", dbType));
+            return s_dbTypeToStorageType[index];
         }
 
         private static void GetNullOutputParameterSmi(SmiMetaData metaData, SqlBuffer targetBuffer, ref object result)
@@ -210,7 +210,7 @@ namespace Microsoft.Data.SqlClient.Server
                     case SqlDbType.DateTime:
                     case SqlDbType.SmallDateTime:
                         {
-                            SqlDateTime dt = new SqlDateTime(GetDateTime_Unchecked(sink, getters, ordinal));
+                            SqlDateTime dt = new(GetDateTime_Unchecked(sink, getters, ordinal));
                             targetBuffer.SetToDateTime(dt.DayTicks, dt.TimeTicks);
                             break;
                         }
@@ -313,7 +313,7 @@ namespace Microsoft.Data.SqlClient.Server
             return result;
         }
 
-        private static SqlBuffer.StorageType[] __dbTypeToStorageType = new SqlBuffer.StorageType[] {
+        private static readonly SqlBuffer.StorageType[] s_dbTypeToStorageType = new SqlBuffer.StorageType[] {
             SqlBuffer.StorageType.Int64,            // BigInt
             SqlBuffer.StorageType.SqlBinary,        // Binary
             SqlBuffer.StorageType.Boolean,          // Bit
@@ -482,7 +482,7 @@ namespace Microsoft.Data.SqlClient.Server
         // spool a Stream into a scratch stream from the Smi interface and return it as a SqlStreamChars
         internal static SqlStreamChars CopyIntoNewSmiScratchStreamChars(Stream source, SmiEventSink_Default sink, SmiContext context)
         {
-            SqlClientWrapperSmiStreamChars dest = new SqlClientWrapperSmiStreamChars(sink, context.GetScratchStream(sink));
+            SqlClientWrapperSmiStreamChars dest = new(sink, context.GetScratchStream(sink));
 
             int chunkSize;
             if (source.CanSeek && __maxByteChunkSize > source.Length)
