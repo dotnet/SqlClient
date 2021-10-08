@@ -53,42 +53,20 @@ namespace Microsoft.Data.SqlClient.Server
 
         internal SmiMetaDataProperty this[SmiPropertySelector key]
         {
-            get
-            {
-                return _properties[(int)key];
-            }
+            get => _properties[(int)key];
             set
             {
-                if (null == value)
-                {
-                    throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
-                }
                 EnsureWritable();
-                _properties[(int)key] = value;
+                _properties[(int)key] = value ?? throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
         }
 
-        internal bool IsReadOnly
-        {
-            get
-            {
-                return _isReadOnly;
-            }
-        }
+        internal bool IsReadOnly => _isReadOnly;
 
-        internal IEnumerable<SmiMetaDataProperty> Values
-        {
-            get
-            {
-                return new List<SmiMetaDataProperty>(_properties);
-            }
-        }
+        internal IEnumerable<SmiMetaDataProperty> Values => new List<SmiMetaDataProperty>(_properties);
 
         // Allow switching to read only, but not back.
-        internal void SetReadOnly()
-        {
-            _isReadOnly = true;
-        }
+        internal void SetReadOnly() => _isReadOnly = true;
 
         private void EnsureWritable()
         {
@@ -172,18 +150,12 @@ namespace Microsoft.Data.SqlClient.Server
             internal int SortOrdinal;
             internal SortOrder Order;
 
-            internal string TraceString()
-            {
-                return string.Format(CultureInfo.InvariantCulture, "{0} {1}", SortOrdinal, Order);
-            }
+            internal string TraceString() => string.Format(CultureInfo.InvariantCulture, "{0} {1}", SortOrdinal, Order);
         }
 
-        private IList<SmiColumnOrder> _columns;
+        private readonly IList<SmiColumnOrder> _columns;
 
-        internal SmiOrderProperty(IList<SmiColumnOrder> columnOrders)
-        {
-            _columns = new System.Collections.ObjectModel.ReadOnlyCollection<SmiColumnOrder>(columnOrders);
-        }
+        internal SmiOrderProperty(IList<SmiColumnOrder> columnOrders) => _columns = new System.Collections.ObjectModel.ReadOnlyCollection<SmiColumnOrder>(columnOrders);
 
         // Readonly list of the columnorder instances making up the sort order
         //  order in list indicates precedence
@@ -245,16 +217,13 @@ namespace Microsoft.Data.SqlClient.Server
     {
         #region private fields
 
-        private IList<bool> _defaults;
+        private readonly IList<bool> _defaults;
 
         #endregion
 
         #region internal interface
 
-        internal SmiDefaultFieldsProperty(IList<bool> defaultFields)
-        {
-            _defaults = new System.Collections.ObjectModel.ReadOnlyCollection<bool>(defaultFields);
-        }
+        internal SmiDefaultFieldsProperty(IList<bool> defaultFields) => _defaults = new System.Collections.ObjectModel.ReadOnlyCollection<bool>(defaultFields);
 
         internal bool this[int ordinal]
         {
