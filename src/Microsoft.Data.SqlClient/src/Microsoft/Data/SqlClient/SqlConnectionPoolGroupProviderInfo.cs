@@ -2,6 +2,9 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#if NETFRAMEWORK
+using System.Security;
+#endif
 using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient
