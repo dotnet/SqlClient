@@ -53,7 +53,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal void FailoverCheck(SqlInternalConnection connection, bool actualUseFailoverPartner, SqlConnectionString userConnectionOptions, string actualFailoverPartner)
+        internal void FailoverCheck(bool actualUseFailoverPartner, SqlConnectionString userConnectionOptions, string actualFailoverPartner)
         {
             if (UseFailoverPartner != actualUseFailoverPartner)
             {
