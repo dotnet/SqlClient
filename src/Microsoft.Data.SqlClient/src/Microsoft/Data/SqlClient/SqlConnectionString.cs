@@ -640,13 +640,15 @@ namespace Microsoft.Data.SqlClient
             }
 #if ADONET_CERT_AUTH && NETFRAMEWORK
 
-            if (!DbConnectionStringBuilderUtil.IsValidCertificateValue(_certificate)) {
+            if (!DbConnectionStringBuilderUtil.IsValidCertificateValue(_certificate))
+            {
                 throw ADP.InvalidConnectionOptionValue(KEY.Certificate);
             }
 
-            if (!string.IsNullOrEmpty(_certificate)) {
-
-                if (Authentication == SqlClient.SqlAuthenticationMethod.NotSpecified && !_integratedSecurity) {
+            if (!string.IsNullOrEmpty(_certificate))
+            {
+                if (Authentication == SqlClient.SqlAuthenticationMethod.NotSpecified && !_integratedSecurity)
+                {
                     _authType = SqlClient.SqlAuthenticationMethod.SqlCertificate;
                 }
 
@@ -654,7 +656,8 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.InvalidCertAuth();
                 }
             }
-            else if (Authentication == SqlClient.SqlAuthenticationMethod.SqlCertificate) {
+            else if (Authentication == SqlClient.SqlAuthenticationMethod.SqlCertificate)
+            {
                 throw ADP.InvalidConnectionOptionValue(KEY.Authentication);
             }
 #endif
@@ -722,68 +725,68 @@ namespace Microsoft.Data.SqlClient
             ValidateValueLength(_dataSource, TdsEnums.MAXLEN_SERVERNAME, KEY.Data_Source);
         }
 
-        internal bool IntegratedSecurity { get { return _integratedSecurity; } }
+        internal bool IntegratedSecurity => _integratedSecurity;
 
         // We always initialize in Async mode so that both synchronous and asynchronous methods
         // will work.  In the future we can deprecate the keyword entirely.
-        internal bool Asynchronous { get { return true; } }
+        internal bool Asynchronous => true;
         // SQLPT 41700: Ignore ResetConnection=False, always reset the connection for security
-        internal bool ConnectionReset { get { return true; } }
-        //        internal bool EnableUdtDownload { get { return _enableUdtDownload;} }
-        internal bool Encrypt { get { return _encrypt; } }
-        internal bool TrustServerCertificate { get { return _trustServerCertificate; } }
-        internal bool Enlist { get { return _enlist; } }
-        internal bool MARS { get { return _mars; } }
-        internal bool MultiSubnetFailover { get { return _multiSubnetFailover; } }
-        internal SqlAuthenticationMethod Authentication { get { return _authType; } }
-        internal SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting { get { return _columnEncryptionSetting; } }
-        internal string EnclaveAttestationUrl { get { return _enclaveAttestationUrl; } }
-        internal SqlConnectionAttestationProtocol AttestationProtocol { get { return _attestationProtocol; } }
+        internal bool ConnectionReset => true;
+        //        internal bool EnableUdtDownload => _enableUdtDownload;} }
+        internal bool Encrypt => _encrypt;
+        internal bool TrustServerCertificate => _trustServerCertificate;
+        internal bool Enlist => _enlist;
+        internal bool MARS => _mars;
+        internal bool MultiSubnetFailover => _multiSubnetFailover;
+        internal SqlAuthenticationMethod Authentication => _authType;
+        internal SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting => _columnEncryptionSetting;
+        internal string EnclaveAttestationUrl => _enclaveAttestationUrl;
+        internal SqlConnectionAttestationProtocol AttestationProtocol => _attestationProtocol;
         internal SqlConnectionIPAddressPreference IPAddressPreference => _ipAddressPreference;
-        internal bool PersistSecurityInfo { get { return _persistSecurityInfo; } }
-        internal bool Pooling { get { return _pooling; } }
-        internal bool Replication { get { return _replication; } }
-        internal bool UserInstance { get { return _userInstance; } }
+        internal bool PersistSecurityInfo => _persistSecurityInfo;
+        internal bool Pooling => _pooling;
+        internal bool Replication => _replication;
+        internal bool UserInstance => _userInstance;
 
-        internal int CommandTimeout { get { return _commandTimeout; } }
-        internal int ConnectTimeout { get { return _connectTimeout; } }
-        internal int LoadBalanceTimeout { get { return _loadBalanceTimeout; } }
-        internal int MaxPoolSize { get { return _maxPoolSize; } }
-        internal int MinPoolSize { get { return _minPoolSize; } }
-        internal int PacketSize { get { return _packetSize; } }
-        internal int ConnectRetryCount { get { return _connectRetryCount; } }
-        internal int ConnectRetryInterval { get { return _connectRetryInterval; } }
+        internal int CommandTimeout => _commandTimeout;
+        internal int ConnectTimeout => _connectTimeout;
+        internal int LoadBalanceTimeout => _loadBalanceTimeout;
+        internal int MaxPoolSize => _maxPoolSize;
+        internal int MinPoolSize => _minPoolSize;
+        internal int PacketSize => _packetSize;
+        internal int ConnectRetryCount => _connectRetryCount;
+        internal int ConnectRetryInterval => _connectRetryInterval;
 
-        internal ApplicationIntent ApplicationIntent { get { return _applicationIntent; } }
-        internal string ApplicationName { get { return _applicationName; } }
-        internal string AttachDBFilename { get { return _attachDBFileName; } }
-        internal string CurrentLanguage { get { return _currentLanguage; } }
-        internal string DataSource { get { return _dataSource; } }
-        internal string LocalDBInstance { get { return _localDBInstance; } }
-        internal string FailoverPartner { get { return _failoverPartner; } }
-        internal string InitialCatalog { get { return _initialCatalog; } }
-        internal string Password { get { return _password; } }
-        internal string UserID { get { return _userID; } }
-        internal string WorkstationId { get { return _workstationId; } }
-        internal PoolBlockingPeriod PoolBlockingPeriod { get { return _poolBlockingPeriod; } }
+        internal ApplicationIntent ApplicationIntent => _applicationIntent;
+        internal string ApplicationName => _applicationName;
+        internal string AttachDBFilename => _attachDBFileName;
+        internal string CurrentLanguage => _currentLanguage;
+        internal string DataSource => _dataSource;
+        internal string LocalDBInstance => _localDBInstance;
+        internal string FailoverPartner => _failoverPartner;
+        internal string InitialCatalog => _initialCatalog;
+        internal string Password => _password;
+        internal string UserID => _userID;
+        internal string WorkstationId => _workstationId;
+        internal PoolBlockingPeriod PoolBlockingPeriod => _poolBlockingPeriod;
 
 #if NETFRAMEWORK
 #if ADONET_CERT_AUTH
-        internal string Certificate { get { return _certificate; } }
-        internal bool UsesCertificate { get { return _authType == SqlClient.SqlAuthenticationMethod.SqlCertificate; } }
+        internal string Certificate => _certificate;
+        internal bool UsesCertificate => _authType == SqlClient.SqlAuthenticationMethod.SqlCertificate;
 #else
-        internal string Certificate { get { return null; } }
-        internal bool UsesCertificate { get { return false; } }
+        internal string Certificate => null;
+        internal bool UsesCertificate => false;
 #endif
-        internal bool ContextConnection { get { return _contextConnection; } }
-        internal bool TransparentNetworkIPResolution { get { return _transparentNetworkIPResolution; } }
-        internal string NetworkLibrary { get { return _networkLibrary; } }
+        internal bool ContextConnection => _contextConnection;
+        internal bool TransparentNetworkIPResolution => _transparentNetworkIPResolution;
+        internal string NetworkLibrary => _networkLibrary;
 #endif // NETFRAMEWORK
 
-        internal TypeSystem TypeSystemVersion { get { return _typeSystemVersion; } }
-        internal Version TypeSystemAssemblyVersion { get { return _typeSystemAssemblyVersion; } }
+        internal TypeSystem TypeSystemVersion => _typeSystemVersion;
+        internal Version TypeSystemAssemblyVersion => _typeSystemAssemblyVersion;
 
-        internal TransactionBindingEnum TransactionBinding { get { return _transactionBinding; } }
+        internal TransactionBindingEnum TransactionBinding => _transactionBinding;
 
         internal bool EnforceLocalHost
         {
