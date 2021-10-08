@@ -1172,42 +1172,42 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                         catch (ArgumentException e)
                         {
                             ADP.TraceExceptionWithoutRethrow(e); // Discard failure, but trace.
-                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDependencyProcessDispatcher.ProcessMessage|DEP|ERR> Exception thrown - Enum.Parse failed to parse the value '{0}' of the attribute '{1}'.", xmlReader.Value, xmlReader.LocalName);
+                            SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependencyProcessDispatcher.ProcessMessage|DEP|ERR> Exception thrown - Enum.Parse failed to parse the value '{0}' of the attribute '{1}'.", xmlReader.Value, xmlReader.LocalName);
                             return null;
                         }
                     }
 
                     if (MessageAttributes.All != messageAttributes)
                     {
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDependencyProcessDispatcher.ProcessMessage|DEP|ERR> Not all expected attributes in Message; messageAttributes = '{0}'.", (int)messageAttributes);
+                        SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependencyProcessDispatcher.ProcessMessage|DEP|ERR> Not all expected attributes in Message; messageAttributes = '{0}'.", (int)messageAttributes);
                         return null;
                     }
 
                     // Proceed to the "Message" node.
                     if (!xmlReader.Read())
                     {
-                        SqlClientEventSource.Log.TryTraceEvent("<Sc.SqlDependencyProcessDispatcher.ProcessMessage|DEP|ERR> unexpected Read failure on xml or unexpected structure of xml.");
+                        SqlClientEventSource.Log.TryNotificationTraceEvent("<Sc.SqlDependencyProcessDispatcher.ProcessMessage|DEP|ERR> unexpected Read failure on xml or unexpected structure of xml.");
                         return null;
                     }
 
                     // Verify state after Read().
                     if ((XmlNodeType.Element != xmlReader.NodeType) || (0 != string.Compare(xmlReader.LocalName, MessageNode, StringComparison.OrdinalIgnoreCase)))
                     {
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDependencyProcessDispatcher.ProcessMessage|DEP|ERR> unexpected Read failure on xml or unexpected structure of xml.");
+                        SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependencyProcessDispatcher.ProcessMessage|DEP|ERR> unexpected Read failure on xml or unexpected structure of xml.");
                         return null;
                     }
 
                     // Proceed to the Text Node.
                     if (!xmlReader.Read())
                     {
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDependencyProcessDispatcher.ProcessMessage|DEP|ERR> unexpected Read failure on xml or unexpected structure of xml.");
+                        SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependencyProcessDispatcher.ProcessMessage|DEP|ERR> unexpected Read failure on xml or unexpected structure of xml.");
                         return null;
                     }
 
                     // Verify state after Read().
                     if (xmlReader.NodeType != XmlNodeType.Text)
                     {
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDependencyProcessDispatcher.ProcessMessage|DEP|ERR> unexpected Read failure on xml or unexpected structure of xml.");
+                        SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependencyProcessDispatcher.ProcessMessage|DEP|ERR> unexpected Read failure on xml or unexpected structure of xml.");
                         return null;
                     }
 
@@ -1217,7 +1217,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                         // Proceed to the Text Node.
                         if (!xmlMessageReader.Read())
                         {
-                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDependencyProcessDispatcher.ProcessMessage|DEP|ERR> unexpected Read failure on xml or unexpected structure of xml.");
+                            SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependencyProcessDispatcher.ProcessMessage|DEP|ERR> unexpected Read failure on xml or unexpected structure of xml.");
                             return null;
                         }
 
@@ -1228,7 +1228,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                         }
                         else
                         {
-                            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDependencyProcessDispatcher.ProcessMessage|DEP|ERR> unexpected Read failure on xml or unexpected structure of xml.");
+                            SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependencyProcessDispatcher.ProcessMessage|DEP|ERR> unexpected Read failure on xml or unexpected structure of xml.");
                             return null;
                         }
                     }
@@ -1237,7 +1237,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                 }
                 else
                 {
-                    SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDependencyProcessDispatcher.ProcessMessage|DEP|ERR> unexpected Read failure on xml or unexpected structure of xml.");
+                    SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependencyProcessDispatcher.ProcessMessage|DEP|ERR> unexpected Read failure on xml or unexpected structure of xml.");
                     return null; // failure
                 }
             }
