@@ -352,11 +352,6 @@ namespace Microsoft.Data.SqlClient
             return DiagnosticScope.CreateCommandScope(@this, command, transaction, operationName);
         }
 
-        public static DiagnosticScope CreateConnectionOpenScope(this SqlDiagnosticListener @this, SqlConnection connection, [CallerMemberName] string operationName = "")
-        {
-            return DiagnosticScope.CreateConnectionOpenScope(@this, connection, operationName);
-        }
-
         public static DiagnosticTransactionScope CreateTransactionCommitScope(this SqlDiagnosticListener @this, IsolationLevel isolationLevel, SqlConnection connection, SqlInternalTransaction transaction, [CallerMemberName] string operationName = "")
         {
             return DiagnosticTransactionScope.CreateTransactionCommitScope(@this, isolationLevel, connection, transaction, operationName);
@@ -418,16 +413,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     break;
 
-                //case ConnectionCloseOperation:
-                //    if (_exception != null)
-                //    {
-                //        _diagnostics.WriteConnectionCloseError(_operationId, (Guid)_context2, (SqlConnection)_context1, _exception, _operationName);
-                //    }
-                //    else
-                //    {
-                //        _diagnostics.WriteConnectionCloseAfter(_operationId, (Guid)_context2, (SqlConnection)_context1, _operationName);
-                //    }
-                //    break;
+                    // ConnectionCloseOperation is not implemented because it is conditionally emitted and that requires manual calls to the write apis
             }
         }
 
@@ -441,14 +427,6 @@ namespace Microsoft.Data.SqlClient
             Guid operationId = diagnostics.WriteCommandBefore(command, transaction, operationName);
             return new DiagnosticScope(diagnostics, CommandOperation, operationId, operationName, command, transaction);
         }
-
-        public static DiagnosticScope CreateConnectionOpenScope(SqlDiagnosticListener diagnostics, SqlConnection connection, [CallerMemberName] string operationName = "")
-        {
-            Guid operationId = diagnostics.WriteConnectionOpenBefore(connection, operationName);
-            return new DiagnosticScope(diagnostics, ConnectionOpenOperation, operationId, operationName, connection, null);
-        }
-
-        // GetConnectionCloseScope is not implemented because it is conditionally emitted and that requires manual calls to the write apis
     }
 
     internal ref struct DiagnosticTransactionScope //: IDisposable //ref structs cannot implement interfaces but the compiler will use pattern matching
