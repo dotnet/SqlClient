@@ -183,7 +183,11 @@ namespace Microsoft.Data.SqlClient.Server
                 SqlDbType dbType,
                 bool isMultiValued,
                 object value,
-                Type udtType)
+                Type udtType
+#if NETFRAMEWORK
+                ,ulong smiVersion
+#endif
+            )
         {
             ExtendedClrTypeCode extendedCode = ExtendedClrTypeCode.Invalid;
 
@@ -205,6 +209,10 @@ namespace Microsoft.Data.SqlClient.Server
                             extendedCode = ExtendedClrTypeCode.Int64;
                         else if (value.GetType() == typeof(SqlInt64))
                             extendedCode = ExtendedClrTypeCode.SqlInt64;
+#if NETFRAMEWORK
+                        else if (Type.GetTypeCode(value.GetType()) == TypeCode.Int64)
+                             extendedCode = ExtendedClrTypeCode.Int64;
+#endif
                         break;
                     case SqlDbType.Binary:
                     case SqlDbType.VarBinary:
@@ -224,6 +232,10 @@ namespace Microsoft.Data.SqlClient.Server
                             extendedCode = ExtendedClrTypeCode.Boolean;
                         else if (value.GetType() == typeof(SqlBoolean))
                             extendedCode = ExtendedClrTypeCode.SqlBoolean;
+#if NETFRAMEWORK
+                        else if (Type.GetTypeCode(value.GetType()) == TypeCode.Boolean)
+                            extendedCode = ExtendedClrTypeCode.Boolean;
+#endif
                         break;
                     case SqlDbType.Char:
                     case SqlDbType.NChar:
@@ -243,33 +255,62 @@ namespace Microsoft.Data.SqlClient.Server
                             extendedCode = ExtendedClrTypeCode.SqlChars;
                         else if (value.GetType() == typeof(char))
                             extendedCode = ExtendedClrTypeCode.Char;
+#if NETFRAMEWORK
+                        else if (Type.GetTypeCode(value.GetType()) == TypeCode.Char)
+                            extendedCode = ExtendedClrTypeCode.Char;
+                        else if (Type.GetTypeCode(value.GetType()) == TypeCode.String)
+                            extendedCode = ExtendedClrTypeCode.String;
+#endif
                         break;
                     case SqlDbType.Date:
                     case SqlDbType.DateTime2:
+#if NETFRAMEWORK
+                        if (smiVersion >= SmiContextFactory.KatmaiVersion)
+                        {
+                            goto case SqlDbType.DateTime;
+                        }
+                        break;
+#endif
                     case SqlDbType.DateTime:
                     case SqlDbType.SmallDateTime:
                         if (value.GetType() == typeof(DateTime))
                             extendedCode = ExtendedClrTypeCode.DateTime;
                         else if (value.GetType() == typeof(SqlDateTime))
                             extendedCode = ExtendedClrTypeCode.SqlDateTime;
+#if NETFRAMEWORK
+                        else if (Type.GetTypeCode(value.GetType()) == TypeCode.DateTime)
+                            extendedCode = ExtendedClrTypeCode.DateTime;
+#endif
                         break;
                     case SqlDbType.Decimal:
                         if (value.GetType() == typeof(decimal))
                             extendedCode = ExtendedClrTypeCode.Decimal;
                         else if (value.GetType() == typeof(SqlDecimal))
                             extendedCode = ExtendedClrTypeCode.SqlDecimal;
+#if NETFRAMEWORK
+                        else if (Type.GetTypeCode(value.GetType()) == TypeCode.Decimal)
+                            extendedCode = ExtendedClrTypeCode.Decimal;
+#endif
                         break;
                     case SqlDbType.Real:
                         if (value.GetType() == typeof(float))
                             extendedCode = ExtendedClrTypeCode.Single;
                         else if (value.GetType() == typeof(SqlSingle))
                             extendedCode = ExtendedClrTypeCode.SqlSingle;
+#if NETFRAMEWORK
+                        else if (Type.GetTypeCode(value.GetType()) == TypeCode.Single)
+                            extendedCode = ExtendedClrTypeCode.Single;
+#endif
                         break;
                     case SqlDbType.Int:
                         if (value.GetType() == typeof(int))
                             extendedCode = ExtendedClrTypeCode.Int32;
                         else if (value.GetType() == typeof(SqlInt32))
                             extendedCode = ExtendedClrTypeCode.SqlInt32;
+#if NETFRAMEWORK
+                        else if (Type.GetTypeCode(value.GetType()) == TypeCode.Int32)
+                            extendedCode = ExtendedClrTypeCode.Int32;
+#endif
                         break;
                     case SqlDbType.Money:
                     case SqlDbType.SmallMoney:
@@ -277,12 +318,20 @@ namespace Microsoft.Data.SqlClient.Server
                             extendedCode = ExtendedClrTypeCode.SqlMoney;
                         else if (value.GetType() == typeof(decimal))
                             extendedCode = ExtendedClrTypeCode.Decimal;
+#if NETFRAMEWORK
+                        else if (Type.GetTypeCode(value.GetType()) == TypeCode.Decimal)
+                            extendedCode = ExtendedClrTypeCode.Decimal;
+#endif
                         break;
                     case SqlDbType.Float:
                         if (value.GetType() == typeof(SqlDouble))
                             extendedCode = ExtendedClrTypeCode.SqlDouble;
                         else if (value.GetType() == typeof(double))
                             extendedCode = ExtendedClrTypeCode.Double;
+#if NETFRAMEWORK
+                        else if (Type.GetTypeCode(value.GetType()) == TypeCode.Double)
+                            extendedCode = ExtendedClrTypeCode.Double;
+#endif
                         break;
                     case SqlDbType.UniqueIdentifier:
                         if (value.GetType() == typeof(SqlGuid))
@@ -301,6 +350,10 @@ namespace Microsoft.Data.SqlClient.Server
                             extendedCode = ExtendedClrTypeCode.Byte;
                         else if (value.GetType() == typeof(SqlByte))
                             extendedCode = ExtendedClrTypeCode.SqlByte;
+#if NETFRAMEWORK
+                        else if (Type.GetTypeCode(value.GetType()) == TypeCode.Byte)
+                            extendedCode = ExtendedClrTypeCode.Byte;
+#endif
                         break;
                     case SqlDbType.Variant:
                         // SqlDbType doesn't help us here, call general-purpose function
@@ -325,11 +378,19 @@ namespace Microsoft.Data.SqlClient.Server
                         }
                         break;
                     case SqlDbType.Time:
-                        if (value.GetType() == typeof(TimeSpan))
+                        if (value.GetType() == typeof(TimeSpan)
+#if NETFRAMEWORK
+                        && smiVersion >= SmiContextFactory.KatmaiVersion
+#endif
+                            )
                             extendedCode = ExtendedClrTypeCode.TimeSpan;
                         break;
                     case SqlDbType.DateTimeOffset:
-                        if (value.GetType() == typeof(DateTimeOffset))
+                        if (value.GetType() == typeof(DateTimeOffset)
+#if NETFRAMEWORK
+                        && smiVersion >= SmiContextFactory.KatmaiVersion
+#endif
+                            )
                             extendedCode = ExtendedClrTypeCode.DateTimeOffset;
                         break;
                     case SqlDbType.Xml:
@@ -439,7 +500,8 @@ namespace Microsoft.Data.SqlClient.Server
                     source.TypeSpecificNamePart2,
                     source.TypeSpecificNamePart3,
                     true,
-                    source.Type);
+                    source.Type
+                    );
             }
 
             return new SqlMetaData(source.Name,
@@ -448,8 +510,13 @@ namespace Microsoft.Data.SqlClient.Server
                 source.Precision,
                 source.Scale,
                 source.LocaleId,
-                source.CompareOptions,
-                null);
+                source.CompareOptions
+#if NETFRAMEWORK
+                , source.Type
+#else
+                , null
+#endif
+                );
         }
 
         // Convert SqlMetaData instance to an SmiExtendedMetaData instance.
@@ -509,8 +576,12 @@ namespace Microsoft.Data.SqlClient.Server
                                             source.Precision,
                                             source.Scale,
                                             source.LocaleId,
-                                            source.CompareOptions,
-                                            null,
+                                            source.CompareOptions
+#if NETFRAMEWORK
+                                            ,source.Type,
+#else
+                                            ,null,
+#endif
                                             source.Name,
                                             typeSpecificNamePart1,
                                             typeSpecificNamePart2,
@@ -526,6 +597,9 @@ namespace Microsoft.Data.SqlClient.Server
                     firstMd.Scale == secondMd.Scale &&
                     firstMd.CompareOptions == secondMd.CompareOptions &&
                     firstMd.LocaleId == secondMd.LocaleId &&
+#if NETFRAMEWORK
+                    firstMd.Type == secondMd.Type &&
+#endif
                     firstMd.SqlDbType != SqlDbType.Structured &&  // SqlMetaData doesn't support Structured types
                     !firstMd.IsMultiValued;  // SqlMetaData doesn't have a "multivalued" option
         }
@@ -644,8 +718,12 @@ namespace Microsoft.Data.SqlClient.Server
                                         precision,
                                         scale,
                                         columnLocale.LCID,
-                                        SmiMetaData.DefaultNVarChar.CompareOptions,
-                                        null,
+                                        SmiMetaData.DefaultNVarChar.CompareOptions
+#if NETFRAMEWORK
+                                        ,column.DataType,
+#else
+                                        ,null,
+#endif
                                         false,  // no support for multi-valued columns in a TVP yet
                                         null,   // no support for structured columns yet
                                         null,   // no support for structured columns yet
@@ -959,5 +1037,27 @@ namespace Microsoft.Data.SqlClient.Server
                             null,
                             null);
         }
+
+#if NETFRAMEWORK
+
+        static internal bool IsValidForSmiVersion(SmiExtendedMetaData md, ulong smiVersion)
+        {
+            if (SmiContextFactory.LatestVersion == smiVersion)
+            {
+                return true;
+            }
+            else
+            {
+                // Yukon doesn't support Structured nor the new time types
+                Debug.Assert(SmiContextFactory.YukonVersion == smiVersion, "Other versions should have been eliminated during link stage");
+                return md.SqlDbType != SqlDbType.Structured &&
+                        md.SqlDbType != SqlDbType.Date &&
+                        md.SqlDbType != SqlDbType.DateTime2 &&
+                        md.SqlDbType != SqlDbType.DateTimeOffset &&
+                        md.SqlDbType != SqlDbType.Time;
+            }
+        }
+
+#endif
     }
 }
