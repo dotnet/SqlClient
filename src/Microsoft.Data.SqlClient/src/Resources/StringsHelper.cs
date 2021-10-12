@@ -54,7 +54,11 @@ namespace Microsoft.Data
                         args[i] = value.Substring(0, 1024 - 3) + "...";
                     }
                 }
+            #if NETFRAMEWORK
                 return string.Format(CultureInfo.CurrentCulture, res, args);
+            #else
+                return Format(res, args);
+            #endif
             }
             else
             {
