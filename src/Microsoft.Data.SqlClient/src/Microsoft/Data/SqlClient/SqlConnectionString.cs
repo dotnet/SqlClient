@@ -320,8 +320,6 @@ namespace Microsoft.Data.SqlClient
 
             _integratedSecurity = ConvertValueToIntegratedSecurity();
             _poolBlockingPeriod = ConvertValueToPoolBlockingPeriod();
-            _encrypt = ConvertValueToBoolean(KEY.Encrypt, DEFAULT.Encrypt);
-            _enlist = ConvertValueToBoolean(KEY.Enlist, DEFAULT.Enlist);
             _mars = ConvertValueToBoolean(KEY.MARS, DEFAULT.MARS);
             _persistSecurityInfo = ConvertValueToBoolean(KEY.Persist_Security_Info, DEFAULT.Persist_Security_Info);
             _pooling = ConvertValueToBoolean(KEY.Pooling, DEFAULT.Pooling);
@@ -400,7 +398,7 @@ namespace Microsoft.Data.SqlClient
             _connectionReset = ConvertValueToBoolean(KEY.Connection_Reset, DEFAULT.Connection_Reset);
             _contextConnection = ConvertValueToBoolean(KEY.Context_Connection, DEFAULT.Context_Connection);
             _encrypt = ConvertValueToEncrypt();
-            _enlist = ConvertValueToBoolean(KEY.Enlist, ADP.IsWindowsNT);
+            _enlist = ConvertValueToBoolean(KEY.Enlist, ADP.s_isWindowsNT);
             _transparentNetworkIPResolution = ConvertValueToBoolean(KEY.TransparentNetworkIPResolution, DEFAULT.s_transparentNetworkIPResolution);
             _networkLibrary = ConvertValueToString(KEY.Network_Library, null);
 

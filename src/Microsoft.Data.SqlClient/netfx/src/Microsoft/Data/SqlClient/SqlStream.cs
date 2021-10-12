@@ -111,19 +111,19 @@ namespace Microsoft.Data.SqlClient
 
             if ((null == _reader))
             {
-                throw ADP.StreamClosed(ADP.Read);
+                throw ADP.StreamClosed(nameof(Read));
             }
             if (null == buffer)
             {
-                throw ADP.ArgumentNull(ADP.ParameterBuffer);
+                throw ADP.ArgumentNull(nameof(buffer));
             }
             if ((offset < 0) || (count < 0))
             {
-                throw ADP.ArgumentOutOfRange(String.Empty, (offset < 0 ? ADP.ParameterOffset : ADP.ParameterCount));
+                throw ADP.ArgumentOutOfRange(string.Empty, (offset < 0 ? nameof(offset) : nameof(count)));
             }
             if (buffer.Length - offset < count)
             {
-                throw ADP.ArgumentOutOfRange(ADP.ParameterCount);
+                throw ADP.ArgumentOutOfRange(nameof(count));
             }
 
             // Need to find out if we should add byte order mark or not. 
@@ -412,22 +412,22 @@ namespace Microsoft.Data.SqlClient
 
             if (null == _cachedBytes)
             {
-                throw ADP.StreamClosed(ADP.Read);
+                throw ADP.StreamClosed(nameof(Read));
             }
 
             if (null == buffer)
             {
-                throw ADP.ArgumentNull(ADP.ParameterBuffer);
+                throw ADP.ArgumentNull(nameof(buffer));
             }
 
             if ((offset < 0) || (count < 0))
             {
-                throw ADP.ArgumentOutOfRange(String.Empty, (offset < 0 ? ADP.ParameterOffset : ADP.ParameterCount));
+                throw ADP.ArgumentOutOfRange(string.Empty, (offset < 0 ? nameof(offset) : nameof(count)));
             }
 
             if (buffer.Length - offset < count)
             {
-                throw ADP.ArgumentOutOfRange(ADP.ParameterCount);
+                throw ADP.ArgumentOutOfRange(nameof(count));
             }
 
             if (_cachedBytes.Count <= _currentArrayIndex)
@@ -469,27 +469,27 @@ namespace Microsoft.Data.SqlClient
 
             if (null == _cachedBytes)
             {
-                throw ADP.StreamClosed(ADP.Read);
+                throw ADP.StreamClosed(nameof(Read));
             }
 
             switch (origin)
             {
                 case SeekOrigin.Begin:
-                    SetInternalPosition(offset, ADP.ParameterOffset);
+                    SetInternalPosition(offset, nameof(offset));
                     break;
 
                 case SeekOrigin.Current:
                     pos = offset + Position;
-                    SetInternalPosition(pos, ADP.ParameterOffset);
+                    SetInternalPosition(pos, nameof(offset));
                     break;
 
                 case SeekOrigin.End:
                     pos = TotalLength + offset;
-                    SetInternalPosition(pos, ADP.ParameterOffset);
+                    SetInternalPosition(pos, nameof(offset));
                     break;
 
                 default:
-                    throw ADP.InvalidSeekOrigin(ADP.ParameterOffset);
+                    throw ADP.InvalidSeekOrigin(nameof(offset));
             }
             return pos;
         }
@@ -598,7 +598,7 @@ namespace Microsoft.Data.SqlClient
             int cnt = 0;
             if (dataIndex < _charsRemoved)
             {
-                throw ADP.NonSeqByteAccess(dataIndex, _charsRemoved, ADP.GetChars);
+                throw ADP.NonSeqByteAccess(dataIndex, _charsRemoved, nameof(GetChars));
             }
             else if (dataIndex > _charsRemoved)
             {
