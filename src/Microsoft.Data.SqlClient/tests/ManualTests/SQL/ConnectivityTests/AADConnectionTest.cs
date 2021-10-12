@@ -213,7 +213,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
-        public static void testADPasswordAuthentication()
+        public static void TestADPasswordAuthentication()
         {
             // Connect to Azure DB with password and retrieve user name.
             using (SqlConnection conn = new SqlConnection(DataTestUtility.AADPasswordConnectionString))
@@ -234,8 +234,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
-        public static void testCustomProviderAuthentication()
+        public static void TestCustomProviderAuthentication()
         {
+            var backupProvider = SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword);
             SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, new CustomSqlAuthenticationProvider());
             // Connect to Azure DB with password and retrieve user name using custom authentication provider
             using (SqlConnection conn = new SqlConnection(DataTestUtility.AADPasswordConnectionString))
@@ -253,6 +254,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     Assert.Equal(expected, customerId);
                 }
             }
+            // Reset to driver internal provider.
+            SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, backupProvider);
         }
 
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
