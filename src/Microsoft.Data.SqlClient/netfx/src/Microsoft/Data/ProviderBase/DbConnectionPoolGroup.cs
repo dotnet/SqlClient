@@ -51,7 +51,7 @@ namespace Microsoft.Data.ProviderBase
         internal DbConnectionPoolGroup(DbConnectionOptions connectionOptions, DbConnectionPoolKey key, DbConnectionPoolGroupOptions poolGroupOptions)
         {
             Debug.Assert(null != connectionOptions, "null connection options");
-            Debug.Assert(null == poolGroupOptions || ADP.IsWindowsNT, "should not have pooling options on Win9x");
+            Debug.Assert(null == poolGroupOptions || ADP.s_isWindowsNT, "should not have pooling options on Win9x");
 
             _connectionOptions = connectionOptions;
             _poolKey = key;
@@ -189,7 +189,7 @@ namespace Microsoft.Data.ProviderBase
             DbConnectionPool pool = null;
             if (null != _poolGroupOptions)
             {
-                Debug.Assert(ADP.IsWindowsNT, "should not be pooling on Win9x");
+                Debug.Assert(ADP.s_isWindowsNT, "should not be pooling on Win9x");
 
                 DbConnectionPoolIdentity currentIdentity = DbConnectionPoolIdentity.NoIdentity;
                 if (_poolGroupOptions.PoolByIdentity)

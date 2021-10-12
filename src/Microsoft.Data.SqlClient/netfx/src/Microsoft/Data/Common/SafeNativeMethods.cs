@@ -143,7 +143,7 @@ namespace Microsoft.Data.Common
             [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
             static internal void ClearErrorInfo()
             { // MDAC 68199
-                SafeNativeMethods.SetErrorInfo(0, ADP.PtrZero);
+                SafeNativeMethods.SetErrorInfo(0, ADP.s_ptrZero);
             }
         }
 

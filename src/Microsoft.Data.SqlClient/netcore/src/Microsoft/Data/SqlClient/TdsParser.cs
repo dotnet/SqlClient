@@ -396,6 +396,13 @@ namespace Microsoft.Data.SqlClient
                     authType == SqlAuthenticationMethod.NotSpecified ? SqlAuthenticationMethod.SqlPassword.ToString() : authType.ToString());
             }
 
+            // Encryption is not supported on SQL Local DB - disable it for current session.
+            if (connHandler.ConnectionOptions.LocalDBInstance != null && encrypt)
+            {
+                encrypt = false;
+                SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Encryption will be disabled as target server is a SQL Local DB instance.");
+            }
+
             _sniSpnBuffer = null;
 
             // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
@@ -5615,7 +5622,7 @@ namespace Microsoft.Data.SqlClient
                             }
                             else
                             {
-                                s = ADP.StrEmpty;
+                                s = "";
                             }
                         }
                         else
@@ -7439,7 +7446,7 @@ namespace Microsoft.Data.SqlClient
 
         internal int GetEncodingCharLength(string value, int numChars, int charOffset, Encoding encoding)
         {
-            if (value == null || value == ADP.StrEmpty)
+            if (string.IsNullOrEmpty(value))
             {
                 return 0;
             }
@@ -9553,13 +9560,13 @@ namespace Microsoft.Data.SqlClient
 
             if (_isYukon && (mt.SqlDbType == SqlDbType.Xml))
             {
-                if (((param.XmlSchemaCollectionDatabase != null) && (param.XmlSchemaCollectionDatabase != ADP.StrEmpty)) ||
-                    ((param.XmlSchemaCollectionOwningSchema != null) && (param.XmlSchemaCollectionOwningSchema != ADP.StrEmpty)) ||
-                    ((param.XmlSchemaCollectionName != null) && (param.XmlSchemaCollectionName != ADP.StrEmpty)))
+                if (!string.IsNullOrEmpty(param.XmlSchemaCollectionDatabase) ||
+                    !string.IsNullOrEmpty(param.XmlSchemaCollectionOwningSchema) ||
+                    !string.IsNullOrEmpty(param.XmlSchemaCollectionName))
                 {
                     stateObj.WriteByte(1);  //Schema present flag
 
-                    if ((param.XmlSchemaCollectionDatabase != null) && (param.XmlSchemaCollectionDatabase != ADP.StrEmpty))
+                    if (!string.IsNullOrEmpty(param.XmlSchemaCollectionDatabase))
                     {
                         tempLen = (param.XmlSchemaCollectionDatabase).Length;
                         stateObj.WriteByte((byte)(tempLen));
@@ -9570,7 +9577,7 @@ namespace Microsoft.Data.SqlClient
                         stateObj.WriteByte(0);       // No dbname
                     }
 
-                    if ((param.XmlSchemaCollectionOwningSchema != null) && (param.XmlSchemaCollectionOwningSchema != ADP.StrEmpty))
+                    if (!string.IsNullOrEmpty(param.XmlSchemaCollectionOwningSchema))
                     {
                         tempLen = (param.XmlSchemaCollectionOwningSchema).Length;
                         stateObj.WriteByte((byte)(tempLen));
@@ -9581,7 +9588,7 @@ namespace Microsoft.Data.SqlClient
                         stateObj.WriteByte(0);      // no xml schema name
                     }
 
-                    if ((param.XmlSchemaCollectionName != null) && (param.XmlSchemaCollectionName != ADP.StrEmpty))
+                    if (!string.IsNullOrEmpty(param.XmlSchemaCollectionName))
                     {
                         tempLen = (param.XmlSchemaCollectionName).Length;
                         WriteShort((short)(tempLen), stateObj);
