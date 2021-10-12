@@ -28,47 +28,47 @@ namespace Microsoft.Data.SqlClient
         internal static partial class DEFAULT
         {
             internal const ApplicationIntent ApplicationIntent = DbConnectionStringDefaults.ApplicationIntent;
-            internal const string Application_Name = TdsEnums.SQL_PROVIDER_NAME;
-            internal const string AttachDBFilename = "";
-            internal const int Command_Timeout = ADP.DefaultCommandTimeout;
-            internal const int Connect_Timeout = ADP.DefaultConnectionTimeout;
-            internal const string Current_Language = "";
-            internal const string Data_Source = "";
-            internal const bool Encrypt = true;
-            internal const bool Enlist = true;
-            internal const string FailoverPartner = "";
-            internal const string Initial_Catalog = "";
-            internal const bool Integrated_Security = false;
-            internal const int Load_Balance_Timeout = 0; // default of 0 means don't use
-            internal const bool MARS = false;
-            internal const int Max_Pool_Size = 100;
-            internal const int Min_Pool_Size = 0;
+            internal const string Application_Name = DbConnectionStringDefaults.ApplicationName;
+            internal const string AttachDBFilename = DbConnectionStringDefaults.AttachDBFilename;
+            internal const int Command_Timeout = DbConnectionStringDefaults.CommandTimeout;
+            internal const int Connect_Timeout = DbConnectionStringDefaults.ConnectTimeout;
+            internal const string Current_Language = DbConnectionStringDefaults.CurrentLanguage;
+            internal const string Data_Source = DbConnectionStringDefaults.DataSource;
+            internal const bool Encrypt = DbConnectionStringDefaults.Encrypt;
+            internal const bool Enlist = DbConnectionStringDefaults.Enlist;
+            internal const string FailoverPartner = DbConnectionStringDefaults.FailoverPartner;
+            internal const string Initial_Catalog = DbConnectionStringDefaults.InitialCatalog;
+            internal const bool Integrated_Security = DbConnectionStringDefaults.IntegratedSecurity;
+            internal const int Load_Balance_Timeout = DbConnectionStringDefaults.LoadBalanceTimeout;
+            internal const bool MARS = DbConnectionStringDefaults.MultipleActiveResultSets;
+            internal const int Max_Pool_Size = DbConnectionStringDefaults.MaxPoolSize;
+            internal const int Min_Pool_Size = DbConnectionStringDefaults.MinPoolSize;
             internal const bool MultiSubnetFailover = DbConnectionStringDefaults.MultiSubnetFailover;
-            internal const int Packet_Size = 8000;
-            internal const string Password = "";
-            internal const bool Persist_Security_Info = false;
+            internal const int Packet_Size = DbConnectionStringDefaults.PacketSize;
+            internal const string Password = DbConnectionStringDefaults.Password;
+            internal const bool Persist_Security_Info = DbConnectionStringDefaults.PersistSecurityInfo;
             internal const PoolBlockingPeriod PoolBlockingPeriod = DbConnectionStringDefaults.PoolBlockingPeriod;
-            internal const bool Pooling = true;
-            internal const bool TrustServerCertificate = false;
-            internal const string Type_System_Version = "";
-            internal const string User_ID = "";
-            internal const bool User_Instance = false;
-            internal const bool Replication = false;
-            internal const int Connect_Retry_Count = 1;
-            internal const int Connect_Retry_Interval = 10;
-            internal static readonly SqlAuthenticationMethod s_authentication = SqlAuthenticationMethod.NotSpecified;
-            internal const SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Disabled;
-            internal const string EnclaveAttestationUrl = "";
-            internal static readonly SqlConnectionAttestationProtocol s_attestationProtocol = SqlConnectionAttestationProtocol.NotSpecified;
-            internal static readonly SqlConnectionIPAddressPreference s_ipAddressPreference = SqlConnectionIPAddressPreference.IPv4First;
+            internal const bool Pooling = DbConnectionStringDefaults.Pooling;
+            internal const bool TrustServerCertificate = DbConnectionStringDefaults.TrustServerCertificate;
+            internal const string Type_System_Version = DbConnectionStringDefaults.TypeSystemVersion;
+            internal const string User_ID = DbConnectionStringDefaults.UserID;
+            internal const bool User_Instance = DbConnectionStringDefaults.UserInstance;
+            internal const bool Replication = DbConnectionStringDefaults.Replication;
+            internal const int Connect_Retry_Count = DbConnectionStringDefaults.ConnectRetryCount;
+            internal const int Connect_Retry_Interval = DbConnectionStringDefaults.ConnectRetryInterval;
+            internal const string EnclaveAttestationUrl = DbConnectionStringDefaults.EnclaveAttestationUrl;
+            internal const SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = DbConnectionStringDefaults.ColumnEncryptionSetting;
+            internal static readonly SqlAuthenticationMethod s_authentication = DbConnectionStringDefaults.Authentication;
+            internal static readonly SqlConnectionAttestationProtocol s_attestationProtocol = DbConnectionStringDefaults.AttestationProtocol;
+            internal static readonly SqlConnectionIPAddressPreference s_ipAddressPreference = DbConnectionStringDefaults.IPAddressPreference;
 #if NETFRAMEWORK
             internal static readonly bool s_transparentNetworkIPResolution = DbConnectionStringDefaults.TransparentNetworkIPResolution;
-            internal const bool Asynchronous = false;
-            internal const bool Connection_Reset = true;
-            internal const bool Context_Connection = false;
-            internal const string Network_Library = "";
+            internal const bool Asynchronous = DbConnectionStringDefaults.Asynchronous;
+            internal const bool Connection_Reset = DbConnectionStringDefaults.ConnectionReset;
+            internal const bool Context_Connection = DbConnectionStringDefaults.ContextConnection;
+            internal const string Network_Library = DbConnectionStringDefaults.NetworkLibrary;
 #if ADONET_CERT_AUTH
-            internal const  string Certificate = "";
+            internal const  string Certificate = DbConnectionStringDefaults.Certificate;
 #endif
 #endif // NETFRAMEWORK
         }
@@ -77,50 +77,50 @@ namespace Microsoft.Data.SqlClient
         // keys must be lowercase!
         internal static class KEY
         {
-            internal const string ApplicationIntent = "application intent";
-            internal const string Application_Name = "application name";
-            internal const string AttachDBFilename = "attachdbfilename";
-            internal const string PoolBlockingPeriod = "pool blocking period";
-            internal const string ColumnEncryptionSetting = "column encryption setting";
-            internal const string EnclaveAttestationUrl = "enclave attestation url";
-            internal const string AttestationProtocol = "attestation protocol";
-            internal const string IPAddressPreference = "ip address preference";
+            internal const string ApplicationIntent = DbConnectionStringKeywords.ApplicationIntent;
+            internal const string Application_Name = DbConnectionStringKeywords.ApplicationName;
+            internal const string AttachDBFilename = DbConnectionStringKeywords.AttachDBFilename;
+            internal const string PoolBlockingPeriod = DbConnectionStringKeywords.PoolBlockingPeriod;
+            internal const string ColumnEncryptionSetting = DbConnectionStringKeywords.ColumnEncryptionSetting;
+            internal const string EnclaveAttestationUrl = DbConnectionStringKeywords.EnclaveAttestationUrl;
+            internal const string AttestationProtocol = DbConnectionStringKeywords.AttestationProtocol;
+            internal const string IPAddressPreference = DbConnectionStringKeywords.IPAddressPreference;
 
-            internal const string Command_Timeout = "command timeout";
-            internal const string Connect_Timeout = "connect timeout";
-            internal const string Connection_Reset = "connection reset";
-            internal const string Context_Connection = "context connection";
-            internal const string Current_Language = "current language";
-            internal const string Data_Source = "data source";
-            internal const string Encrypt = "encrypt";
-            internal const string Enlist = "enlist";
-            internal const string FailoverPartner = "failover partner";
-            internal const string Initial_Catalog = "initial catalog";
-            internal const string Integrated_Security = "integrated security";
-            internal const string Load_Balance_Timeout = "load balance timeout";
-            internal const string MARS = "multiple active result sets";
-            internal const string Max_Pool_Size = "max pool size";
-            internal const string Min_Pool_Size = "min pool size";
-            internal const string MultiSubnetFailover = "multi subnet failover";
-            internal const string Network_Library = "network library";
-            internal const string Packet_Size = "packet size";
-            internal const string Password = "password";
-            internal const string Persist_Security_Info = "persist security info";
-            internal const string Pooling = "pooling";
-            internal const string TransactionBinding = "transaction binding";
-            internal const string TrustServerCertificate = "trust server certificate";
-            internal const string Type_System_Version = "type system version";
-            internal const string User_ID = "user id";
-            internal const string User_Instance = "user instance";
-            internal const string Workstation_Id = "workstation id";
-            internal const string Replication = "replication";
-            internal const string Connect_Retry_Count = "connect retry count";
-            internal const string Connect_Retry_Interval = "connect retry interval";
-            internal const string Authentication = "authentication";
+            internal const string Command_Timeout = DbConnectionStringKeywords.CommandTimeout;
+            internal const string Connect_Timeout = DbConnectionStringKeywords.ConnectTimeout;
+            internal const string Connection_Reset = DbConnectionStringKeywords.ConnectionReset;
+            internal const string Context_Connection = DbConnectionStringKeywords.ContextConnection;
+            internal const string Current_Language = DbConnectionStringKeywords.CurrentLanguage;
+            internal const string Data_Source = DbConnectionStringKeywords.DataSource;
+            internal const string Encrypt = DbConnectionStringKeywords.Encrypt;
+            internal const string Enlist = DbConnectionStringKeywords.Enlist;
+            internal const string FailoverPartner = DbConnectionStringKeywords.FailoverPartner;
+            internal const string Initial_Catalog = DbConnectionStringKeywords.InitialCatalog;
+            internal const string Integrated_Security = DbConnectionStringKeywords.IntegratedSecurity;
+            internal const string Load_Balance_Timeout = DbConnectionStringKeywords.LoadBalanceTimeout;
+            internal const string MARS = DbConnectionStringKeywords.MultipleActiveResultSets;
+            internal const string Max_Pool_Size = DbConnectionStringKeywords.MaxPoolSize;
+            internal const string Min_Pool_Size = DbConnectionStringKeywords.MinPoolSize;
+            internal const string MultiSubnetFailover = DbConnectionStringKeywords.MultiSubnetFailover;
+            internal const string Network_Library = DbConnectionStringKeywords.NetworkLibrary;
+            internal const string Packet_Size = DbConnectionStringKeywords.PacketSize;
+            internal const string Password = DbConnectionStringKeywords.Password;
+            internal const string Persist_Security_Info = DbConnectionStringKeywords.PersistSecurityInfo;
+            internal const string Pooling = DbConnectionStringKeywords.Pooling;
+            internal const string TransactionBinding = DbConnectionStringKeywords.TransactionBinding;
+            internal const string TrustServerCertificate = DbConnectionStringKeywords.TrustServerCertificate;
+            internal const string Type_System_Version = DbConnectionStringKeywords.TypeSystemVersion;
+            internal const string User_ID = DbConnectionStringKeywords.UserID;
+            internal const string User_Instance = DbConnectionStringKeywords.UserInstance;
+            internal const string Workstation_Id = DbConnectionStringKeywords.WorkstationID;
+            internal const string Replication = DbConnectionStringKeywords.Replication;
+            internal const string Connect_Retry_Count = DbConnectionStringKeywords.ConnectRetryCount;
+            internal const string Connect_Retry_Interval = DbConnectionStringKeywords.ConnectRetryInterval;
+            internal const string Authentication = DbConnectionStringKeywords.Authentication;
 #if NETFRAMEWORK
-            internal const string TransparentNetworkIPResolution = "transparent network ip resolution";
+            internal const string TransparentNetworkIPResolution = DbConnectionStringKeywords.TransparentNetworkIPResolution;
 #if ADONET_CERT_AUTH
-            internal const string Certificate = "certificate";
+            internal const string Certificate = DbConnectionStringKeywords.Certificate;
 #endif
 #endif // NETFRAMEWORK
         }
@@ -129,57 +129,57 @@ namespace Microsoft.Data.SqlClient
         private static class SYNONYM
         {
             // ip address preference
-            internal const string IPADDRESSPREFERENCE = "ipaddresspreference";
+            internal const string IPADDRESSPREFERENCE = DbConnectionStringSynonyms.IPADDRESSPREFERENCE;
             //application intent
-            internal const string APPLICATIONINTENT = "applicationintent";
+            internal const string APPLICATIONINTENT = DbConnectionStringSynonyms.APPLICATIONINTENT;
             // application name
-            internal const string APP = "app";
+            internal const string APP = DbConnectionStringSynonyms.APP;
             // attachDBFilename
-            internal const string EXTENDED_PROPERTIES = "extended properties";
-            internal const string INITIAL_FILE_NAME = "initial file name";
+            internal const string EXTENDED_PROPERTIES = DbConnectionStringSynonyms.EXTENDEDPROPERTIES;
+            internal const string INITIAL_FILE_NAME = DbConnectionStringSynonyms.INITIALFILENAME;
             // connect timeout
-            internal const string CONNECTION_TIMEOUT = "connection timeout";
-            internal const string TIMEOUT = "timeout";
+            internal const string CONNECTION_TIMEOUT = DbConnectionStringSynonyms.CONNECTIONTIMEOUT;
+            internal const string TIMEOUT = DbConnectionStringSynonyms.TIMEOUT;
             // current language
-            internal const string LANGUAGE = "language";
+            internal const string LANGUAGE = DbConnectionStringSynonyms.LANGUAGE;
             // data source
-            internal const string ADDR = "addr";
-            internal const string ADDRESS = "address";
-            internal const string SERVER = "server";
-            internal const string NETWORK_ADDRESS = "network address";
+            internal const string ADDR = DbConnectionStringSynonyms.ADDR;
+            internal const string ADDRESS = DbConnectionStringSynonyms.ADDRESS;
+            internal const string SERVER = DbConnectionStringSynonyms.SERVER;
+            internal const string NETWORK_ADDRESS = DbConnectionStringSynonyms.NETWORKADDRESS;
             // initial catalog
-            internal const string DATABASE = "database";
+            internal const string DATABASE = DbConnectionStringSynonyms.DATABASE;
             // integrated security
-            internal const string TRUSTED_CONNECTION = "trusted_connection";
+            internal const string TRUSTED_CONNECTION = DbConnectionStringSynonyms.TRUSTEDCONNECTION;
             //connect retry count
-            internal const string CONNECTRETRYCOUNT = "connectretrycount";
+            internal const string CONNECTRETRYCOUNT = DbConnectionStringSynonyms.CONNECTRETRYCOUNT;
             //connect retry interval
-            internal const string CONNECTRETRYINTERVAL = "connectretryinterval";
+            internal const string CONNECTRETRYINTERVAL = DbConnectionStringSynonyms.CONNECTRETRYINTERVAL;
             // load balance timeout
-            internal const string Connection_Lifetime = "connection lifetime";
+            internal const string Connection_Lifetime = DbConnectionStringSynonyms.ConnectionLifetime;
             // multiple active result sets
-            internal const string MULTIPLEACTIVERESULTSETS = "multipleactiveresultsets";
+            internal const string MULTIPLEACTIVERESULTSETS = DbConnectionStringSynonyms.MULTIPLEACTIVERESULTSETS;
             // multi subnet failover
-            internal const string MULTISUBNETFAILOVER = "multisubnetfailover";
+            internal const string MULTISUBNETFAILOVER = DbConnectionStringSynonyms.MULTISUBNETFAILOVER;
             // network library
-            internal const string NET = "net";
-            internal const string NETWORK = "network";
+            internal const string NET = DbConnectionStringSynonyms.NET;
+            internal const string NETWORK = DbConnectionStringSynonyms.NETWORK;
             // pool blocking period
-            internal const string POOLBLOCKINGPERIOD = "poolblockingperiod";
+            internal const string POOLBLOCKINGPERIOD = DbConnectionStringSynonyms.POOLBLOCKINGPERIOD;
             // password
-            internal const string Pwd = "pwd";
+            internal const string Pwd = DbConnectionStringSynonyms.Pwd;
             // persist security info
-            internal const string PERSISTSECURITYINFO = "persistsecurityinfo";
+            internal const string PERSISTSECURITYINFO = DbConnectionStringSynonyms.PERSISTSECURITYINFO;
             // trust server certificate
-            internal const string TRUSTSERVERCERTIFICATE = "trustservercertificate";
+            internal const string TRUSTSERVERCERTIFICATE = DbConnectionStringSynonyms.TRUSTSERVERCERTIFICATE;
             // user id
-            internal const string UID = "uid";
-            internal const string User = "user";
+            internal const string UID = DbConnectionStringSynonyms.UID;
+            internal const string User = DbConnectionStringSynonyms.User;
             // workstation id
-            internal const string WSID = "wsid";
-            
+            internal const string WSID = DbConnectionStringSynonyms.WSID;
+
 #if NETFRAMEWORK
-            internal const string TRANSPARENTNETWORKIPRESOLUTION = "transparentnetworkipresolution";
+            internal const string TRANSPARENTNETWORKIPRESOLUTION = DbConnectionStringSynonyms.TRANSPARENTNETWORKIPRESOLUTION;
 #endif
             
             // make sure to update SynonymCount value below when adding or removing synonyms

@@ -1211,12 +1211,14 @@ namespace Microsoft.Data.Common
         internal const int ConnectRetryCount = 1;
         internal const int ConnectRetryInterval = 10;
         internal static readonly SqlAuthenticationMethod Authentication = SqlAuthenticationMethod.NotSpecified;
-        internal static readonly SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Disabled;
+        internal const SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Disabled;
         internal const string EnclaveAttestationUrl = _emptyString;
         internal const SqlConnectionAttestationProtocol AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified;
         internal const SqlConnectionIPAddressPreference IPAddressPreference = SqlConnectionIPAddressPreference.IPv4First;
         internal const string Certificate = _emptyString;
         internal const PoolBlockingPeriod PoolBlockingPeriod = SqlClient.PoolBlockingPeriod.Auto;
+
+        internal const bool Asynchronous = false;
     }
 
     internal static class DbConnectionOptionKeywords
