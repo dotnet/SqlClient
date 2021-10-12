@@ -95,10 +95,6 @@ namespace Microsoft.Data.SqlClient
         private CancellationTokenSource _cancelAsyncOnCloseTokenSource;
         private CancellationToken _cancelAsyncOnCloseToken;
 
-        // Used for checking if the Type parameter provided to GetValue<T> is an INullable
-        internal static readonly Type _typeofINullable = typeof(INullable);
-        private static readonly Type _typeofSqlString = typeof(SqlString);
-
         private SqlSequentialStream _currentStream;
         private SqlSequentialTextReader _currentTextReader;
 
@@ -1739,7 +1735,7 @@ namespace Microsoft.Data.SqlClient
                 // Wrap the sequential stream in an XmlReader
                 _currentStream = new SqlSequentialStream(this, i);
                 _lastColumnWithDataChunkRead = i;
-                return SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(_currentStream, closeInput: true);
+                return SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(_currentStream, closeInput: true, async: false);
             }
             else
             {
@@ -1749,7 +1745,7 @@ namespace Microsoft.Data.SqlClient
                 if (_data[i].IsNull)
                 {
                     // A 'null' stream
-                    return SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(new MemoryStream(new byte[0], writable: false), closeInput: true);
+                    return SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(new MemoryStream(new byte[0], writable: false), closeInput: true, async: false);
                 }
                 else
                 {
@@ -1936,7 +1932,7 @@ namespace Microsoft.Data.SqlClient
 
                         if (dataIndex < _columnDataBytesRead)
                         {
-                            throw ADP.NonSeqByteAccess(dataIndex, _columnDataBytesRead, ADP.GetBytes);
+                            throw ADP.NonSeqByteAccess(dataIndex, _columnDataBytesRead, nameof(GetBytes));
                         }
 
                         // if the dataIndex is not equal to bytes read, then we have to skip bytes
@@ -2423,7 +2419,7 @@ namespace Microsoft.Data.SqlClient
                 if ((_sharedState._nextColumnDataToRead == (i + 1)) && (_sharedState._nextColumnHeaderToRead == (i + 1)) && (_columnDataChars != null) && (IsCommandBehavior(CommandBehavior.SequentialAccess)) && (dataIndex < _columnDataCharsRead))
                 {
                     // Don't allow re-read of same chars in sequential access mode
-                    throw ADP.NonSeqByteAccess(dataIndex, _columnDataCharsRead, ADP.GetChars);
+                    throw ADP.NonSeqByteAccess(dataIndex, _columnDataCharsRead, nameof(GetChars));
                 }
 
                 if (_columnDataCharsIndex != i)
@@ -2542,7 +2538,7 @@ namespace Microsoft.Data.SqlClient
                     if (dataIndex < _columnDataCharsRead)
                     {
                         // Don't allow re-read of same chars in sequential access mode
-                        throw ADP.NonSeqByteAccess(dataIndex, _columnDataCharsRead, ADP.GetChars);
+                        throw ADP.NonSeqByteAccess(dataIndex, _columnDataCharsRead, nameof(GetChars));
                     }
 
                     // If we start reading the new column, either dataIndex is 0 or
@@ -3036,7 +3032,7 @@ namespace Microsoft.Data.SqlClient
                 statistics = SqlStatistics.StartTimer(Statistics);
 
                 SetTimeout(_defaultTimeoutMilliseconds);
-                return GetFieldValueInternal<T>(i);
+                return GetFieldValueInternal<T>(i, isAsync: false);
             }
             finally
             {
@@ -3172,7 +3168,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private T GetFieldValueInternal<T>(int i)
+        private T GetFieldValueInternal<T>(int i, bool isAsync)
         {
             if (_currentTask != null)
             {
@@ -3180,22 +3176,125 @@ namespace Microsoft.Data.SqlClient
             }
 
             Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-            bool result = TryReadColumn(i, setTimeout: false);
+            bool forStreaming = typeof(T) == typeof(XmlReader) || typeof(T) == typeof(TextReader) || typeof(T) == typeof(Stream);
+            bool result = TryReadColumn(i, setTimeout: false, forStreaming: forStreaming);
             if (!result)
-            { throw SQL.SynchronousCallMayNotPend(); }
+            {
+                throw SQL.SynchronousCallMayNotPend();
+            }
 
-            return GetFieldValueFromSqlBufferInternal<T>(_data[i], _metaData[i]);
+            return GetFieldValueFromSqlBufferInternal<T>(_data[i], _metaData[i], isAsync: isAsync);
         }
 
-        private T GetFieldValueFromSqlBufferInternal<T>(SqlBuffer data, _SqlMetaData metaData)
+        private T GetFieldValueFromSqlBufferInternal<T>(SqlBuffer data, _SqlMetaData metaData, bool isAsync)
         {
-            Type typeofT = typeof(T);
-            if (_typeofINullable.IsAssignableFrom(typeofT))
+            if (typeof(T) == typeof(XmlReader))
+            {
+                // XmlReader only allowed on XML types
+                if (metaData.metaType.SqlDbType != SqlDbType.Xml)
+                {
+                    throw SQL.XmlReaderNotSupportOnColumnType(metaData.column);
+                }
+
+                if (IsCommandBehavior(CommandBehavior.SequentialAccess))
+                {
+                    // Wrap the sequential stream in an XmlReader
+                    _currentStream = new SqlSequentialStream(this, metaData.ordinal);
+                    _lastColumnWithDataChunkRead = metaData.ordinal;
+                    return (T)(object)SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(_currentStream, closeInput: true, async: isAsync);
+                }
+                else
+                {
+                    if (data.IsNull)
+                    {
+                        // A 'null' stream
+                        return (T)(object)SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(new MemoryStream(Array.Empty<byte>(), writable: false), closeInput: true, async: isAsync);
+                    }
+                    else
+                    {
+                        // Grab already read data
+                        return (T)(object)data.SqlXml.CreateReader();
+                    }
+                }
+            }
+            else if (typeof(T) == typeof(TextReader))
+            {
+                // Xml type is not supported
+                MetaType metaType = metaData.metaType;
+                if (metaData.cipherMD != null)
+                {
+                    Debug.Assert(metaData.baseTI != null, "_metaData[i].baseTI should not be null.");
+                    metaType = metaData.baseTI.metaType;
+                }
+
+                if (
+                    (!metaType.IsCharType && metaType.SqlDbType != SqlDbType.Variant) ||
+                    (metaType.SqlDbType == SqlDbType.Xml)
+                )
+                {
+                    throw SQL.TextReaderNotSupportOnColumnType(metaData.column);
+                }
+
+                // For non-variant types with sequential access, we support proper streaming
+                if ((metaType.SqlDbType != SqlDbType.Variant) && IsCommandBehavior(CommandBehavior.SequentialAccess))
+                {
+                    if (metaData.cipherMD != null)
+                    {
+                        throw SQL.SequentialAccessNotSupportedOnEncryptedColumn(metaData.column);
+                    }
+
+                    System.Text.Encoding encoding = SqlUnicodeEncoding.SqlUnicodeEncodingInstance;
+                    if (!metaType.IsNCharType)
+                    {
+                        encoding = metaData.encoding;
+                    }
+
+                    _currentTextReader = new SqlSequentialTextReader(this, metaData.ordinal, encoding);
+                    _lastColumnWithDataChunkRead = metaData.ordinal;
+                    return (T)(object)_currentTextReader;
+                }
+                else
+                {
+                    string value = data.IsNull ? string.Empty : data.SqlString.Value;
+                    return (T)(object)new StringReader(value);
+                }
+
+            }
+            else if (typeof(T) == typeof(Stream))
+            {
+                if (metaData != null && metaData.cipherMD != null)
+                {
+                    throw SQL.StreamNotSupportOnEncryptedColumn(metaData.column);
+                }
+
+                // Stream is only for Binary, Image, VarBinary, Udt, Xml and Timestamp(RowVersion) types
+                MetaType metaType = metaData.metaType;
+                if (
+                    (!metaType.IsBinType || metaType.SqlDbType == SqlDbType.Timestamp) &&
+                    metaType.SqlDbType != SqlDbType.Variant
+                )
+                {
+                    throw SQL.StreamNotSupportOnColumnType(metaData.column);
+                }
+
+                if ((metaType.SqlDbType != SqlDbType.Variant) && (IsCommandBehavior(CommandBehavior.SequentialAccess)))
+                {
+                    _currentStream = new SqlSequentialStream(this, metaData.ordinal);
+                    _lastColumnWithDataChunkRead = metaData.ordinal;
+                    return (T)(object)_currentStream;
+                }
+                else
+                {
+                    byte[] value = data.IsNull ? Array.Empty<byte>() : data.SqlBinary.Value;
+                    return (T)(object)new MemoryStream(value, writable: false);
+                }
+            }
+            else if (typeof(INullable).IsAssignableFrom(typeof(T)))
             {
                 // If its a SQL Type or Nullable UDT
                 object rawValue = GetSqlValueFromSqlBufferInternal(data, metaData);
 
-                if (typeofT == _typeofSqlString)
+                if (typeof(T) == typeof(SqlString))
                 {
                     // Special case: User wants SqlString, but we have a SqlXml
                     // SqlXml can not be typecast into a SqlString, but we need to support SqlString on XML Types - so do a manual conversion
@@ -3217,61 +3316,17 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                if (typeof(XmlReader) == typeofT)
+                // Otherwise Its a CLR or non-Nullable UDT
+                try
                 {
-                    if (metaData.metaType.SqlDbType != SqlDbType.Xml)
-                    {
-                        throw SQL.XmlReaderNotSupportOnColumnType(metaData.column);
-                    }
-                    else
-                    {
-                        object clrValue = null;
-                        if (!data.IsNull)
-                        {
-                            clrValue = GetValueFromSqlBufferInternal(data, metaData);
-                        }
-                        if (clrValue is null)
-                        { // covers IsNull and when there is data which is present but is a clr null somehow
-                            return (T)(object)SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(
-                                new MemoryStream(Array.Empty<byte>(), writable: false),
-                                closeInput: true
-                            );
-                        }
-                        else if (clrValue.GetType() == typeof(string))
-                        {
-                            return (T)(object)SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(
-                                new StringReader(clrValue as string),
-                                closeInput: true
-                            );
-                        }
-                        else
-                        {
-                            // try the type cast to throw the invalid cast exception and inform the user what types they're trying to use and that why it is wrong
-                            return (T)clrValue;
-                        }
-                    }
+                    return (T)GetValueFromSqlBufferInternal(data, metaData);
                 }
-                else
+                catch (InvalidCastException) when (data.IsNull)
                 {
-                    // Otherwise Its a CLR or non-Nullable UDT
-                    try
-                    {
-                        return (T)GetValueFromSqlBufferInternal(data, metaData);
-                    }
-                    catch (InvalidCastException)
-                    {
-                        if (data.IsNull)
-                        {
-                            // If the value was actually null, then we should throw a SqlNullValue instead
-                            throw SQL.SqlNullValue();
-                        }
-                        else
-                        {
-                            // Legitmate InvalidCast, rethrow
-                            throw;
-                        }
-                    }
+                    // If the value was actually null, then we should throw a SqlNullValue instead
+                    throw SQL.SqlNullValue();
                 }
+                
             }
         }
 
@@ -4040,10 +4095,12 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
             bool result = TryReadColumn(i, setTimeout, allowPartiallyReadColumn);
             if (!result)
-            { throw SQL.SynchronousCallMayNotPend(); }
+            {
+                throw SQL.SynchronousCallMayNotPend();
+            }
         }
 
-        private bool TryReadColumn(int i, bool setTimeout, bool allowPartiallyReadColumn = false)
+        private bool TryReadColumn(int i, bool setTimeout, bool allowPartiallyReadColumn = false, bool forStreaming = false)
         {
             CheckDataIsReady(columnIndex: i, permitAsync: true, allowPartiallyReadColumn: allowPartiallyReadColumn);
 
@@ -4068,7 +4125,7 @@ namespace Microsoft.Data.SqlClient
                         SetTimeout(_defaultTimeoutMilliseconds);
                     }
 
-                    if (!TryReadColumnInternal(i, readHeaderOnly: false))
+                    if (!TryReadColumnInternal(i, readHeaderOnly: false, forStreaming: forStreaming))
                     {
                         return false;
                     }
@@ -4158,7 +4215,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     tdsReliabilitySection.Start();
 #endif //DEBUG
-                return TryReadColumnInternal(i, readHeaderOnly: true);
+                    return TryReadColumnInternal(i, readHeaderOnly: true, forStreaming: false);
 #if DEBUG
                 }
                 finally
@@ -4196,7 +4253,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private bool TryReadColumnInternal(int i, bool readHeaderOnly = false)
+        internal bool TryReadColumnInternal(int i, bool readHeaderOnly/* = false*/, bool forStreaming)
         {
             AssertReaderState(requireData: true, permitAsync: true, columnIndex: i);
 
@@ -4260,17 +4317,84 @@ namespace Microsoft.Data.SqlClient
             {
                 _SqlMetaData columnMetaData = _metaData[_sharedState._nextColumnHeaderToRead];
 
-                if ((isSequentialAccess) && (_sharedState._nextColumnHeaderToRead < i))
+                if (isSequentialAccess)
                 {
-                    // SkipValue is no-op if the column appears in NBC bitmask
-                    // if not, it skips regular and PLP types
-                    if (!_parser.TrySkipValue(columnMetaData, _sharedState._nextColumnHeaderToRead, _stateObj))
+                    if (_sharedState._nextColumnHeaderToRead < i)
                     {
-                        return false;
-                    }
+                        // SkipValue is no-op if the column appears in NBC bitmask
+                        // if not, it skips regular and PLP types
+                        if (!_parser.TrySkipValue(columnMetaData, _sharedState._nextColumnHeaderToRead, _stateObj))
+                        {
+                            return false;
+                        }
 
-                    _sharedState._nextColumnDataToRead = _sharedState._nextColumnHeaderToRead;
-                    _sharedState._nextColumnHeaderToRead++;
+                        _sharedState._nextColumnDataToRead = _sharedState._nextColumnHeaderToRead;
+                        _sharedState._nextColumnHeaderToRead++;
+                    }
+                    else if (_sharedState._nextColumnHeaderToRead == i)
+                    {
+                        bool isNull;
+                        ulong dataLength;
+                        if (
+                            !_parser.TryProcessColumnHeader(
+                                columnMetaData, 
+                                _stateObj, 
+                                _sharedState._nextColumnHeaderToRead, 
+                                out isNull, 
+                                out dataLength
+                            )
+                        )
+                        {
+                            return false;
+                        }
+
+                        _sharedState._nextColumnDataToRead = _sharedState._nextColumnHeaderToRead;
+                        _sharedState._nextColumnHeaderToRead++;  // We read this one
+                        _sharedState._columnDataBytesRemaining = (long)dataLength;
+
+                        if (isNull)
+                        {
+                            if (columnMetaData.type != SqlDbType.Timestamp)
+                            {
+                                TdsParser.GetNullSqlValue(
+                                    _data[_sharedState._nextColumnDataToRead],
+                                    columnMetaData,
+                                    _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
+                                    _parser.Connection
+                                );
+                            }
+                        }
+                        else
+                        {
+                            if (!readHeaderOnly && !forStreaming)
+                            {
+                                // If we're in sequential mode try to read the data and then if it succeeds update shared
+                                // state so there are no remaining bytes and advance the next column to read
+                                if (
+                                    !_parser.TryReadSqlValue(
+                                        _data[_sharedState._nextColumnDataToRead], 
+                                        columnMetaData, 
+                                        (int)dataLength, _stateObj,
+                                        _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
+                                        columnMetaData.column
+                                    )
+                                )
+                                { // will read UDTs as VARBINARY.
+                                    return false;
+                                }
+                                _sharedState._columnDataBytesRemaining = 0;
+                                _sharedState._nextColumnDataToRead++;
+                            }
+                            else
+                            {
+                                _sharedState._columnDataBytesRemaining = (long)dataLength;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Debug.Assert(false, "we have read past the column somehow, this is an error");
+                    }
                 }
                 else
                 {
@@ -4288,10 +4412,12 @@ namespace Microsoft.Data.SqlClient
                     // if LegacyRowVersionNullBehavior is enabled, Timestamp type must enter "else" block.
                     if (isNull && (!LocalAppContextSwitches.LegacyRowVersionNullBehavior || columnMetaData.type != SqlDbType.Timestamp))
                     {
-                        TdsParser.GetNullSqlValue(_data[_sharedState._nextColumnDataToRead],
-                                columnMetaData,
-                                _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
-                                _parser.Connection);
+                        TdsParser.GetNullSqlValue(
+                            _data[_sharedState._nextColumnDataToRead],
+                            columnMetaData,
+                            _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
+                            _parser.Connection
+                        );
 
                         if (!readHeaderOnly)
                         {
@@ -5467,7 +5593,7 @@ namespace Microsoft.Data.SqlClient
                     var metaData = _metaData;
                     if ((data != null) && (metaData != null))
                     {
-                        return Task.FromResult<T>(GetFieldValueFromSqlBufferInternal<T>(data[i], metaData[i]));
+                        return Task.FromResult<T>(GetFieldValueFromSqlBufferInternal<T>(data[i], metaData[i], isAsync: false));
                     }
                     else
                     {
@@ -5507,7 +5633,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         _stateObj._shouldHaveEnoughData = true;
 #endif
-                    return Task.FromResult(GetFieldValueInternal<T>(i));
+                    return Task.FromResult(GetFieldValueInternal<T>(i, isAsync: true));
 #if DEBUG
                     }
                     finally
@@ -5563,9 +5689,33 @@ namespace Microsoft.Data.SqlClient
                 reader.PrepareForAsyncContinuation();
             }
 
+            if (typeof(T) == typeof(Stream) || typeof(T) == typeof(TextReader) || typeof(T) == typeof(XmlReader))
+            {
+                if (reader.IsCommandBehavior(CommandBehavior.SequentialAccess) && reader._sharedState._dataReady)
+                {
+                    bool internalReadSuccess = false;
+                    TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+                    RuntimeHelpers.PrepareConstrainedRegions();
+                    try
+                    {
+                        tdsReliabilitySection.Start();
+                        internalReadSuccess = reader.TryReadColumnInternal(context._columnIndex, readHeaderOnly: true, forStreaming: false);
+                    }
+                    finally
+                    {
+                        tdsReliabilitySection.Stop();
+                    }
+
+                    if (internalReadSuccess)
+                    {
+                        return Task.FromResult<T>(reader.GetFieldValueFromSqlBufferInternal<T>(reader._data[columnIndex], reader._metaData[columnIndex], isAsync: true));
+                    }
+                }
+            }
+
             if (reader.TryReadColumn(columnIndex, setTimeout: false))
             {
-                return Task.FromResult<T>(reader.GetFieldValueFromSqlBufferInternal<T>(reader._data[columnIndex], reader._metaData[columnIndex]));
+                return Task.FromResult<T>(reader.GetFieldValueFromSqlBufferInternal<T>(reader._data[columnIndex], reader._metaData[columnIndex], isAsync: false));
             }
             else
             {
