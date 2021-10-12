@@ -11094,15 +11094,22 @@ namespace Microsoft.Data.SqlClient
                     {
                         Debug.Assert(actualLength == 16, "Invalid length for guid type in com+ object");
                         Span<byte> b = stackalloc byte[16];
-                        SqlGuid sqlGuid = (SqlGuid)value;
-
-                        if (sqlGuid.IsNull)
+                        //SqlGuid sqlGuid = (SqlGuid)value;
+                        if (value is Guid guid)
                         {
-                            b.Clear(); // this is needed because initlocals may be supressed in framework assemblies meaning the memory is not automaticaly zeroed
+                            FillGuidBytes(guid, b);
                         }
                         else
                         {
-                            FillGuidBytes(sqlGuid.Value, b);
+                            SqlGuid sqlGuid = (SqlGuid)value;
+                            if (sqlGuid.IsNull)
+                            {
+                                b.Clear(); // this is needed because initlocals may be supressed in framework assemblies meaning the memory is not automaticaly zeroed
+                            }
+                            else
+                            {
+                                FillGuidBytes(sqlGuid.Value, b);
+                            }
                         }
                         stateObj.WriteByteSpan(b);
                         break;

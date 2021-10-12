@@ -386,7 +386,6 @@ namespace Microsoft.Data.SqlClient
                     return ((SqlGuid)_object).Value;
                 }
                 return (Guid)Value;
-
             }
             set
             {
@@ -1386,4 +1385,4 @@ namespace Microsoft.Data.SqlClient
             return (T)(object)_value._single;
         }
     }
-}// namespace
+}
