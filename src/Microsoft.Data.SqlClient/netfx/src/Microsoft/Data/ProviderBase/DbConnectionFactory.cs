@@ -449,7 +449,7 @@ namespace Microsoft.Data.ProviderBase
                 }
 
                 // We don't support connection pooling on Win9x; it lacks too many of the APIs we require.
-                if ((null == poolOptions) && ADP.IsWindowsNT)
+                if ((null == poolOptions) && ADP.s_isWindowsNT)
                 {
                     if (null != connectionPoolGroup)
                     {
