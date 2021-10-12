@@ -294,7 +294,7 @@ namespace Microsoft.Data.SqlClient
             _connectionReset = ConvertValueToBoolean(KEY.Connection_Reset, DEFAULT.Connection_Reset);
             _contextConnection = ConvertValueToBoolean(KEY.Context_Connection, DEFAULT.Context_Connection);
             _encrypt = ConvertValueToEncrypt();
-            _enlist = ConvertValueToBoolean(KEY.Enlist, ADP.IsWindowsNT);
+            _enlist = ConvertValueToBoolean(KEY.Enlist, ADP.s_isWindowsNT);
             _mars = ConvertValueToBoolean(KEY.MARS, DEFAULT.MARS);
             _persistSecurityInfo = ConvertValueToBoolean(KEY.Persist_Security_Info, DEFAULT.Persist_Security_Info);
             _pooling = ConvertValueToBoolean(KEY.Pooling, DEFAULT.Pooling);

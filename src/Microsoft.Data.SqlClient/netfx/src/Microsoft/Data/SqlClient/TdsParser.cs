@@ -529,7 +529,15 @@ namespace Microsoft.Data.SqlClient
 
             //Create LocalDB instance if necessary
             if (connHandler.ConnectionOptions.LocalDBInstance != null)
+            {
                 LocalDBAPI.CreateLocalDBInstance(connHandler.ConnectionOptions.LocalDBInstance);
+                if (encrypt)
+                {
+                    // Encryption is not supported on SQL Local DB - disable it for current session.
+                    encrypt = false;
+                    SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Encryption will be disabled as target server is a SQL Local DB instance.");
+                }
+            }
 
             // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
             if (integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
@@ -6395,11 +6403,11 @@ namespace Microsoft.Data.SqlClient
                             }
                             if (length > 0)
                             {
-                                s = new String(cc, 0, length);
+                                s = new string(cc, 0, length);
                             }
                             else
                             {
-                                s = ADP.StrEmpty;
+                                s = "";
                             }
                         }
                         else
@@ -8233,7 +8241,7 @@ namespace Microsoft.Data.SqlClient
         {
             // UNDONE: (PERF) this is an expensive way to get the length.  Also, aren't we
             // UNDONE: (PERF) going through these steps twice when we write out a value?
-            if (value == null || value == ADP.StrEmpty)
+            if (string.IsNullOrEmpty(value))
             {
                 return 0;
             }
@@ -10329,13 +10337,13 @@ namespace Microsoft.Data.SqlClient
 
                             if (_isYukon && (mt.SqlDbType == SqlDbType.Xml))
                             {
-                                if (((param.XmlSchemaCollectionDatabase != null) && (param.XmlSchemaCollectionDatabase != ADP.StrEmpty)) ||
-                                    ((param.XmlSchemaCollectionOwningSchema != null) && (param.XmlSchemaCollectionOwningSchema != ADP.StrEmpty)) ||
-                                    ((param.XmlSchemaCollectionName != null) && (param.XmlSchemaCollectionName != ADP.StrEmpty)))
+                                if (!string.IsNullOrEmpty(param.XmlSchemaCollectionDatabase) ||
+                                    !string.IsNullOrEmpty(param.XmlSchemaCollectionOwningSchema) ||
+                                    !string.IsNullOrEmpty(param.XmlSchemaCollectionName))
                                 {
                                     stateObj.WriteByte(1);   //Schema present flag
 
-                                    if ((param.XmlSchemaCollectionDatabase != null) && (param.XmlSchemaCollectionDatabase != ADP.StrEmpty))
+                                    if (!string.IsNullOrEmpty(param.XmlSchemaCollectionDatabase))
                                     {
                                         tempLen = (param.XmlSchemaCollectionDatabase).Length;
                                         stateObj.WriteByte((byte)(tempLen));
@@ -10346,7 +10354,7 @@ namespace Microsoft.Data.SqlClient
                                         stateObj.WriteByte(0);       // No dbname
                                     }
 
-                                    if ((param.XmlSchemaCollectionOwningSchema != null) && (param.XmlSchemaCollectionOwningSchema != ADP.StrEmpty))
+                                    if (!string.IsNullOrEmpty(param.XmlSchemaCollectionOwningSchema))
                                     {
                                         tempLen = (param.XmlSchemaCollectionOwningSchema).Length;
                                         stateObj.WriteByte((byte)(tempLen));
@@ -10356,7 +10364,7 @@ namespace Microsoft.Data.SqlClient
                                     {
                                         stateObj.WriteByte(0);      // no xml schema name
                                     }
-                                    if ((param.XmlSchemaCollectionName != null) && (param.XmlSchemaCollectionName != ADP.StrEmpty))
+                                    if (!string.IsNullOrEmpty(param.XmlSchemaCollectionName))
                                     {
                                         tempLen = (param.XmlSchemaCollectionName).Length;
                                         WriteShort((short)(tempLen), stateObj);
@@ -12357,15 +12365,15 @@ namespace Microsoft.Data.SqlClient
             {
                 if (buffer == null)
                 {
-                    throw ADP.ArgumentNull(ADP.ParameterBuffer);
+                    throw ADP.ArgumentNull(nameof(buffer));
                 }
                 if (offset < 0)
                 {
-                    throw ADP.ArgumentOutOfRange(ADP.ParameterOffset);
+                    throw ADP.ArgumentOutOfRange(nameof(offset));
                 }
                 if (count < 0)
                 {
-                    throw ADP.ArgumentOutOfRange(ADP.ParameterCount);
+                    throw ADP.ArgumentOutOfRange(nameof(count));
                 }
                 try
                 {
@@ -12485,15 +12493,15 @@ namespace Microsoft.Data.SqlClient
             {
                 if (buffer == null)
                 {
-                    throw ADP.ArgumentNull(ADP.ParameterBuffer);
+                    throw ADP.ArgumentNull(nameof(buffer));
                 }
                 if (offset < 0)
                 {
-                    throw ADP.ArgumentOutOfRange(ADP.ParameterOffset);
+                    throw ADP.ArgumentOutOfRange(nameof(offset));
                 }
                 if (count < 0)
                 {
-                    throw ADP.ArgumentOutOfRange(ADP.ParameterCount);
+                    throw ADP.ArgumentOutOfRange(nameof(count));
                 }
                 try
                 {
