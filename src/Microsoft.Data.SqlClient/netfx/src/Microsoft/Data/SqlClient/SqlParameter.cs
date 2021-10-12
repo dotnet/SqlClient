@@ -381,10 +381,6 @@ namespace Microsoft.Data.SqlClient
             set
             {
                 SqlCollation collation = _collation;
-                if (null == collation)
-                {
-                    _collation = collation = new SqlCollation();
-                }
 
                 // Copied from SQLString.x_iValidSqlCompareOptionMask
                 SqlCompareOptions validSqlCompareOptionMask =
@@ -396,7 +392,11 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw ADP.ArgumentOutOfRange(nameof(CompareInfo));
                 }
-                collation.SqlCompareOptions = value;
+
+                if (collation == null || collation.SqlCompareOptions != value)
+                {
+                    _collation = SqlCollation.FromLCIDAndSort(collation?.LCID ?? 0, value);
+                }
             }
         }
 
@@ -499,15 +499,16 @@ namespace Microsoft.Data.SqlClient
             set
             {
                 SqlCollation collation = _collation;
-                if (null == collation)
-                {
-                    _collation = collation = new SqlCollation();
-                }
+
                 if (value != (SqlCollation.MaskLcid & value))
                 {
                     throw ADP.ArgumentOutOfRange(nameof(LocaleId));
                 }
-                collation.LCID = value;
+
+                if (collation == null || collation.LCID != value)
+                {
+                    _collation = SqlCollation.FromLCIDAndSort(value, collation?.SqlCompareOptions ?? SqlCompareOptions.None);
+                }
             }
         }
 

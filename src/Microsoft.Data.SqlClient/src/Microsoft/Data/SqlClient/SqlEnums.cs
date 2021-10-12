@@ -905,7 +905,7 @@ namespace Microsoft.Data.SqlClient
         // We have an internal type for smallvarbinarys stored on TdsEnums. We
         // store on TdsEnums instead of SqlDbType because we do not want to expose
         // this type to the user.
-        private static readonly MetaType s_metaSmallVarBinary = new(255, 255, -1, false, false, false, TdsEnums.SQLVARBINARY, TdsEnums.SQLBIGBINARY, ADP.StrEmpty, typeof(byte[]), typeof(SqlBinary), TdsEnums.SmallVarBinary, DbType.Binary, 2);
+        private static readonly MetaType s_metaSmallVarBinary = new(255, 255, -1, false, false, false, TdsEnums.SQLVARBINARY, TdsEnums.SQLBIGBINARY, "", typeof(byte[]), typeof(SqlBinary), TdsEnums.SmallVarBinary, DbType.Binary, 2);
 
         internal static readonly MetaType MetaImage = new(255, 255, -1, false, true, false, TdsEnums.SQLIMAGE, TdsEnums.SQLIMAGE, MetaTypeName.IMAGE, typeof(byte[]), typeof(SqlBinary), SqlDbType.Image, DbType.Binary, 0);
 

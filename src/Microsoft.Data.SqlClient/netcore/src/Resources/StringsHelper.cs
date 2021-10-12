@@ -23,7 +23,7 @@ namespace Microsoft.Data
 
         public static string Format(string resourceFormat, params object[] args)
         {
-            if (args != null)
+            if (args is not null)
             {
                 if (UsingResourceKeys())
                 {

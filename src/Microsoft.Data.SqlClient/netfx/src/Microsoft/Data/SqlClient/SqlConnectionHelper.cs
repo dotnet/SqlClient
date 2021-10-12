@@ -128,7 +128,7 @@ namespace Microsoft.Data.SqlClient
             }
             if (!flag)
             {
-                throw ADP.OpenConnectionPropertySet(ADP.ConnectionString, connectionInternal.State);
+                throw ADP.OpenConnectionPropertySet(nameof(ConnectionString), connectionInternal.State);
             }
 
             if (SqlClientEventSource.Log.IsTraceEnabled())
