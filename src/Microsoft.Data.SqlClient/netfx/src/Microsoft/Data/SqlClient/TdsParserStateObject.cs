@@ -2269,7 +2269,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (TdsEnums.SNI_SUCCESS == error)
                 { // Success - process results!
-                    Debug.Assert(ADP.PtrZero != readPacket, "ReadNetworkPacket cannot be null in synchronous operation!");
+                    Debug.Assert(ADP.s_ptrZero != readPacket, "ReadNetworkPacket cannot be null in synchronous operation!");
                     ProcessSniPacket(readPacket, 0);
 #if DEBUG
                     if (_forcePendingReadsToWaitForUser)
@@ -2589,8 +2589,8 @@ namespace Microsoft.Data.SqlClient
 
                 if (TdsEnums.SNI_SUCCESS == error)
                 { // Success - process results!
-                    Debug.Assert(ADP.PtrZero != readPacket, "ReadNetworkPacket should not have been null on this async operation!");
-                    ReadAsyncCallback(ADP.PtrZero, readPacket, 0);
+                    Debug.Assert(ADP.s_ptrZero != readPacket, "ReadNetworkPacket should not have been null on this async operation!");
+                    ReadAsyncCallback(ADP.s_ptrZero, readPacket, 0);
                 }
                 else if (TdsEnums.SNI_SUCCESS_IO_PENDING != error)
                 { // FAILURE!
