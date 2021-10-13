@@ -288,13 +288,7 @@ namespace Microsoft.Data.SqlClient
 
         public override bool CanSeek => true;
 
-        public override bool CanWrite
-        {
-            get
-            {
-                return false;
-            }
-        }
+        public override bool CanWrite => false;
 
         public override long Length => TotalLength;
 
@@ -442,15 +436,9 @@ namespace Microsoft.Data.SqlClient
             return pos;
         }
 
-        public override void SetLength(long value)
-        {
-            throw ADP.NotSupported();
-        }
+        public override void SetLength(long value) => throw ADP.NotSupported();
 
-        public override void Write(byte[] buffer, int offset, int count)
-        {
-            throw ADP.NotSupported();
-        }
+        public override void Write(byte[] buffer, int offset, int count) => throw ADP.NotSupported();
 
         private void SetInternalPosition(long lPos, string argumentName)
         {
