@@ -84,7 +84,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                     _queue = _hashHelper.Queue;
                 }
 #if DEBUG
-                SqlConnectionString connectionStringOptions = new SqlConnectionString(_hashHelper.ConnectionStringBuilder.ConnectionString);
+                SqlConnectionString connectionStringOptions = new(_hashHelper.ConnectionStringBuilder.ConnectionString);
                 SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlConnectionContainer|DEP> Modified connection string: '{0}'", connectionStringOptions.UsersConnectionStringForTrace());
 #endif
 
@@ -1633,7 +1633,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                                                                 out user,
                                                                     queueService);
 #if DEBUG
-            SqlConnectionString connectionStringOptions = new SqlConnectionString(connectionStringBuilder.ConnectionString);
+            SqlConnectionString connectionStringOptions = new(connectionStringBuilder.ConnectionString);
             SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependencyProcessDispatcher.Start|DEP> Modified connection string: '{0}'", connectionStringOptions.UsersConnectionStringForTrace());
 #endif
 
@@ -1710,7 +1710,7 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                                                               out user,
                                                                   queueService);
 #if DEBUG
-            SqlConnectionString connectionStringOptions = new SqlConnectionString(connectionStringBuilder.ConnectionString);
+            SqlConnectionString connectionStringOptions = new(connectionStringBuilder.ConnectionString);
             SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependencyProcessDispatcher.Stop|DEP> Modified connection string: '{0}'", connectionStringOptions.UsersConnectionStringForTrace());
 #endif
 
