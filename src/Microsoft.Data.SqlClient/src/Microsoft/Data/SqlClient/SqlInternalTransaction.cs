@@ -17,7 +17,7 @@ namespace Microsoft.Data.SqlClient
         Aborted = 2,
         Committed = 3,
         Unknown = 4,
-    }
+    };
 
     internal enum TransactionType
     {
