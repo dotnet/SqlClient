@@ -74,7 +74,6 @@ namespace Microsoft.Data.SqlClient
         }
 
         // SqlConnection ConnectionString Options
-        // keys must be lowercase!
         internal static class KEY
         {
             internal const string ApplicationIntent = DbConnectionStringKeywords.ApplicationIntent;
@@ -858,7 +857,7 @@ namespace Microsoft.Data.SqlClient
 #else
                 int count = SqlConnectionStringBuilder.KeywordsCount + SqlConnectionStringBuilder.DeprecatedKeywordsCount + SynonymCount + DeprecatedSynonymCount;
 #endif // NETFRAMEWORK
-                synonyms = new Dictionary<string, string>(count)
+                synonyms = new Dictionary<string, string>(count, StringComparer.OrdinalIgnoreCase)
                 {
                     { KEY.ApplicationIntent, KEY.ApplicationIntent },
                     { KEY.Application_Name, KEY.Application_Name },
