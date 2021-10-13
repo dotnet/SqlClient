@@ -931,7 +931,6 @@ namespace Microsoft.Data.SqlClient
                     { KEY.Certificate, KEY.Certificate },
 #endif
                     { KEY.TransparentNetworkIPResolution, KEY.TransparentNetworkIPResolution },
-                    { SYNONYM.POOLBLOCKINGPERIOD, KEY.PoolBlockingPeriod },
                     { SYNONYM.TRANSPARENTNETWORKIPRESOLUTION, KEY.TransparentNetworkIPResolution },
 #endif // NETFRAMEWORK
                     { SYNONYM.IPADDRESSPREFERENCE, KEY.IPAddressPreference }
