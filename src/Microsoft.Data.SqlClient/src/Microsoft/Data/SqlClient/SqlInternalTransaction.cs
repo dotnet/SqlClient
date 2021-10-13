@@ -66,81 +66,34 @@ namespace Microsoft.Data.SqlClient
             ConnectionHasBeenRestored = false;
         }
 
-        internal bool HasParentTransaction
-        {
-            get
-            {
+        internal bool HasParentTransaction =>
                 // Return true if we are an API started local transaction, or if we were a TSQL
                 // started local transaction and were then wrapped with a parent transaction as
                 // a result of a later API begin transaction.
-                bool result = ((TransactionType.LocalFromAPI == _transactionType) ||
-                                (TransactionType.LocalFromTSQL == _transactionType && _parent != null));
-                return result;
-            }
-        }
+                (TransactionType.LocalFromAPI == _transactionType) ||
+                                (TransactionType.LocalFromTSQL == _transactionType && _parent != null);
 
-        internal bool IsAborted
-        {
-            get
-            {
-                return (TransactionState.Aborted == _transactionState);
-            }
-        }
+        internal bool IsAborted => TransactionState.Aborted == _transactionState;
 
-        internal bool IsActive
-        {
-            get
-            {
-                return (TransactionState.Active == _transactionState);
-            }
-        }
+        internal bool IsActive => TransactionState.Active == _transactionState;
 
-        internal bool IsCommitted
-        {
-            get
-            {
-                return (TransactionState.Committed == _transactionState);
-            }
-        }
+        internal bool IsCommitted => TransactionState.Committed == _transactionState;
 
-        internal bool IsCompleted
-        {
-            get
-            {
-                return (TransactionState.Aborted == _transactionState
+        internal bool IsCompleted => TransactionState.Aborted == _transactionState
                      || TransactionState.Committed == _transactionState
-                     || TransactionState.Unknown == _transactionState);
-            }
-        }
+                     || TransactionState.Unknown == _transactionState;
 
-        internal bool IsDelegated
-        {
-            get
-            {
-                bool result = (TransactionType.Delegated == _transactionType);
-                return result;
-            }
-        }
+        internal bool IsDelegated => TransactionType.Delegated == _transactionType;
 
-        internal bool IsDistributed
-        {
-            get
-            {
-                bool result = (TransactionType.Distributed == _transactionType);
-                return result;
-            }
-        }
+        internal bool IsDistributed => TransactionType.Distributed == _transactionType;
 
-        internal bool IsLocal
-        {
-            get
-            {
-                bool result = (TransactionType.LocalFromTSQL == _transactionType
+        internal bool IsLocal => TransactionType.LocalFromTSQL == _transactionType
                             || TransactionType.LocalFromAPI == _transactionType
-                            );
-                return result;
-            }
-        }
+#if NETFRAMEWORK
+                            || TransactionType.Context == _transactionType
+#endif
+
+                            ;
 
         internal bool IsOrphaned
         {
@@ -172,29 +125,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal bool IsZombied
-        {
-            get
-            {
-                return (null == _innerConnection);
-            }
-        }
+        internal bool IsZombied => null == _innerConnection;
 
-        internal int ObjectID
-        {
-            get
-            {
-                return _objectID;
-            }
-        }
+        internal int ObjectID => _objectID;
 
-        internal int OpenResultsCount
-        {
-            get
-            {
-                return _openResultCount;
-            }
-        }
+        internal int OpenResultsCount => _openResultCount;
 
         internal SqlTransaction Parent
         {
@@ -213,10 +148,7 @@ namespace Microsoft.Data.SqlClient
 
         internal long TransactionId
         {
-            get
-            {
-                return _transactionId;
-            }
+            get => _transactionId;
             set
             {
                 Debug.Assert(NullTransactionId == _transactionId, "setting transaction cookie while one is active?");
@@ -224,10 +156,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal void Activate()
-        {
-            _transactionState = TransactionState.Active;
-        }
+        internal void Activate() => _transactionState = TransactionState.Active;
 
         private void CheckTransactionLevelAndZombie()
         {
@@ -245,6 +174,10 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw;
                 }
+#if NETFRAMEWORK
+                ADP.TraceExceptionWithoutRethrow(e);
+#endif
+
                 Zombie(); // If exception caught when trying to check level, zombie.
             }
         }
@@ -267,6 +200,9 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
+#if NETFRAMEWORK
+                TdsParser.ReliabilitySection.Assert("unreliable call to CloseFromConnection");  // you need to setup for a thread abort somewhere before you call this method
+#endif
                 if (processFinallyBlock)
                 {
                     // Always ensure we're zombied; Yukon will send an EnvChange that
@@ -295,6 +231,18 @@ namespace Microsoft.Data.SqlClient
                     // COMMIT ignores transaction names, and so there is no reason to pass it anything.  COMMIT
                     // simply commits the transaction from the most recent BEGIN, nested or otherwise.
                     _innerConnection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Commit, null, IsolationLevel.Unspecified, null, false);
+#if NETFRAMEWORK
+                    // SQL BU DT 291159 - perform full Zombie on pre-Yukon, but do not actually
+                    // complete internal transaction until informed by server in the case of Yukon
+                    // or later.
+                    if (!IsZombied && !_innerConnection.IsYukonOrNewer)
+                    {
+                        // Since nested transactions are no longer allowed, set flag to false.
+                        // This transaction has been completed.
+                        Zombie();
+                    }
+                    else
+#endif
                     {
                         ZombieParent();
                     }
@@ -330,8 +278,8 @@ namespace Microsoft.Data.SqlClient
 
         internal void Dispose()
         {
-            this.Dispose(true);
-            System.GC.SuppressFinalize(this);
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         private void Dispose(bool disposing)
@@ -361,9 +309,11 @@ namespace Microsoft.Data.SqlClient
                 SqlParameter parameter = new SqlParameter("@out", SqlDbType.Int);
                 parameter.Direction = ParameterDirection.Output;
                 transactionLevelCommand.Parameters.Add(parameter);
-
+#if NETFRAMEWORK
+                transactionLevelCommand.RunExecuteReader(CommandBehavior.Default, RunBehavior.UntilDone, returnStream: false, nameof(GetServerTransactionLevel));
+#else
                 transactionLevelCommand.RunExecuteReader(CommandBehavior.Default, RunBehavior.UntilDone, returnStream: false);
-
+#endif
                 return (int)parameter.Value;
             }
         }
@@ -447,6 +397,15 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     _innerConnection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Rollback, transactionName, IsolationLevel.Unspecified, null, false);
+#if NETFRAMEWORK
+                    if (!IsZombied && !_innerConnection.IsYukonOrNewer)
+                    {
+                        // Check if Zombied before making round-trip to server.
+                        // Against Yukon we receive an envchange on the ExecuteTransaction above on the
+                        // parser that calls back into SqlTransaction for the Zombie() call.
+                        CheckTransactionLevelAndZombie();
+                    }
+#endif
                 }
                 catch (Exception e)
                 {
@@ -509,7 +468,8 @@ namespace Microsoft.Data.SqlClient
             // Number 1 needs to be done whenever a SqlTransaction object is completed.  Number
             // 2 is only done when a transaction is actually completed.  Since users can begin
             // transactions both in and outside of the API, and since nested begins are not actual
-            // transactions we need to distinguish between #1 and #2.
+            // transactions we need to distinguish between #1 and #2.See SQL BU DT 291159
+            // for further details.
 
             ZombieParent();
 
@@ -526,15 +486,19 @@ namespace Microsoft.Data.SqlClient
         {
             if (_parent != null && _parent.TryGetTarget(out SqlTransaction parent))
             {
-                 parent.Zombie();
+                parent.Zombie();
             }
             _parent = null;
         }
 
-        internal string TraceString()
-        {
-            return string.Format(/*IFormatProvider*/ null, "(ObjId={0}, tranId={1}, state={2}, type={3}, open={4}, disp={5}",
-                        ObjectID, _transactionId, _transactionState, _transactionType, _openResultCount, _disposing);
-        }
+        internal string TraceString() => string.Format(/*IFormatProvider*/ null, 
+            "(ObjId={0}, tranId={1}, state={2}, type={3}, open={4}, disp={5}",
+            ObjectID, _transactionId, _transactionState, _transactionType, _openResultCount, _disposing);
+
+#if NETFRAMEWORK
+
+        internal bool IsContext => TransactionType.Context == _transactionType;
+
+#endif
     }
-}
+        }
