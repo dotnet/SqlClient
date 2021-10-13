@@ -5,7 +5,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -75,13 +74,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     207    // invalid column name
                };
 
-        internal static readonly string s_ExceedErrMsgPattern = SystemDataResourceManager.Instance.SqlRetryLogic_RetryExceeded;
-        internal static readonly string s_CancelErrMsgPattern = SystemDataResourceManager.Instance.SqlRetryLogic_RetryCanceled;
+        internal static readonly string s_exceedErrMsgPattern = SystemDataResourceManager.Instance.SqlRetryLogic_RetryExceeded;
+        internal static readonly string s_cancelErrMsgPattern = SystemDataResourceManager.Instance.SqlRetryLogic_RetryCanceled;
 
         public static IEnumerable<object[]> GetConnectionStrings()
         {
             var builder = new SqlConnectionStringBuilder();
-            foreach (var cnnString in DataTestUtility.ConnectionStrings)
+
+            foreach (var cnnString in DataTestUtility.GetConnectionStrings(withEnclave: false))
             {
                 builder.Clear();
                 builder.ConnectionString = cnnString;
@@ -150,8 +150,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static IEnumerable<object[]> GetNoneRetriableCondition()
         {
-            yield return new object[] { DataTestUtility.TCPConnectionString, null};
-            yield return new object[] { DataTestUtility.TCPConnectionString, SqlConfigurableRetryFactory.CreateNoneRetryProvider()};
+            yield return new object[] { DataTestUtility.TCPConnectionString, null };
+            yield return new object[] { DataTestUtility.TCPConnectionString, SqlConfigurableRetryFactory.CreateNoneRetryProvider() };
         }
 
         private static IEnumerable<object[]> GetRetryStrategies(SqlRetryLogicOption retryLogicOption)
