@@ -1932,7 +1932,7 @@ namespace Microsoft.Data.SqlClient
 
                         if (dataIndex < _columnDataBytesRead)
                         {
-                            throw ADP.NonSeqByteAccess(dataIndex, _columnDataBytesRead, ADP.GetBytes);
+                            throw ADP.NonSeqByteAccess(dataIndex, _columnDataBytesRead, nameof(GetBytes));
                         }
 
                         // if the dataIndex is not equal to bytes read, then we have to skip bytes
@@ -2419,7 +2419,7 @@ namespace Microsoft.Data.SqlClient
                 if ((_sharedState._nextColumnDataToRead == (i + 1)) && (_sharedState._nextColumnHeaderToRead == (i + 1)) && (_columnDataChars != null) && (IsCommandBehavior(CommandBehavior.SequentialAccess)) && (dataIndex < _columnDataCharsRead))
                 {
                     // Don't allow re-read of same chars in sequential access mode
-                    throw ADP.NonSeqByteAccess(dataIndex, _columnDataCharsRead, ADP.GetChars);
+                    throw ADP.NonSeqByteAccess(dataIndex, _columnDataCharsRead, nameof(GetChars));
                 }
 
                 if (_columnDataCharsIndex != i)
@@ -2538,7 +2538,7 @@ namespace Microsoft.Data.SqlClient
                     if (dataIndex < _columnDataCharsRead)
                     {
                         // Don't allow re-read of same chars in sequential access mode
-                        throw ADP.NonSeqByteAccess(dataIndex, _columnDataCharsRead, ADP.GetChars);
+                        throw ADP.NonSeqByteAccess(dataIndex, _columnDataCharsRead, nameof(GetChars));
                     }
 
                     // If we start reading the new column, either dataIndex is 0 or
