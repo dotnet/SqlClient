@@ -16,10 +16,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         class CustomSqlAuthenticationProvider : SqlAuthenticationProvider
         {
+            string _appClientId;
+
+            internal CustomSqlAuthenticationProvider(string appClientId)
+            {
+                _appClientId = appClientId;
+            }
+
             public override async Task<SqlAuthenticationToken> AcquireTokenAsync(SqlAuthenticationParameters parameters)
             {
                 string s_defaultScopeSuffix = "/.default";
-                string appClientId = "2fd908ad-0664-4344-b9be-cd3e8b574c38";
                 string scope = parameters.Resource.EndsWith(s_defaultScopeSuffix) ? parameters.Resource : parameters.Resource + s_defaultScopeSuffix;
 
                 _ = parameters.ServerName;
@@ -33,7 +39,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 string authority = parameters.Authority.Remove(seperatorIndex + 1);
                 var options = new TokenCredentialOptions() { AuthorityHost = new(authority) };
 
-                AccessToken token = await new UsernamePasswordCredential(parameters.UserId, parameters.Password, tenantId, appClientId, options).GetTokenAsync(new TokenRequestContext(scopes));
+                AccessToken token = await new UsernamePasswordCredential(parameters.UserId, parameters.Password, tenantId, _appClientId, options).GetTokenAsync(new TokenRequestContext(scopes));
                 return new SqlAuthenticationToken(token.Token, token.ExpiresOn);
             }
 
@@ -199,7 +205,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Contains(expectedMessage, e.Message);
         }
 
-
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
         public static void GetAccessTokenByPasswordTest()
         {
@@ -236,8 +241,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
         public static void TestCustomProviderAuthentication()
         {
-            var backupProvider = SqlAuthenticationProvider.GetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword);
-            SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, new CustomSqlAuthenticationProvider());
+            SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, new CustomSqlAuthenticationProvider(DataTestUtility.ApplicationClientId));
             // Connect to Azure DB with password and retrieve user name using custom authentication provider
             using (SqlConnection conn = new SqlConnection(DataTestUtility.AADPasswordConnectionString))
             {
@@ -255,7 +259,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
             // Reset to driver internal provider.
-            SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, backupProvider);
+            SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, new ActiveDirectoryAuthenticationProvider(DataTestUtility.ApplicationClientId));
         }
 
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
