@@ -24,7 +24,7 @@ namespace Microsoft.Data.ProviderBase
         private const int Win32_CreateWellKnownSid = 5;
 
         static public readonly DbConnectionPoolIdentity NoIdentity = new DbConnectionPoolIdentity(String.Empty, false, true);
-        static private readonly byte[] NetworkSid = (ADP.IsWindowsNT ? CreateWellKnownSid(WellKnownSidType.NetworkSid) : null);
+        static private readonly byte[] NetworkSid = (ADP.s_isWindowsNT ? CreateWellKnownSid(WellKnownSidType.NetworkSid) : null);
         static private DbConnectionPoolIdentity _lastIdentity = null;
 
         private readonly string _sidString;
@@ -100,7 +100,7 @@ namespace Microsoft.Data.ProviderBase
             //          to validate the user on 9x, so simply don't.  It is a known issue in
             //          native, and we will handle this the same way.
 
-            if (!ADP.IsWindowsNT)
+            if (!ADP.s_isWindowsNT)
             {
                 return NoIdentity;
             }

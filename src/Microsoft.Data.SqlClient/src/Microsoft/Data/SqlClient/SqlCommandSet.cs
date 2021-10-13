@@ -289,7 +289,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw SQL.BatchedUpdatesNotAvailableOnContextConnection();
                 }
-                ValidateCommandBehavior(ADP.ExecuteNonQuery, CommandBehavior.Default);
+                ValidateCommandBehavior(nameof(ExecuteNonQuery), CommandBehavior.Default);
 #endif
                 BatchCommand.BatchRPCMode = true;
                 BatchCommand.ClearBatchCommand();
@@ -328,4 +328,3 @@ namespace Microsoft.Data.SqlClient
         }
     }
 }
-
