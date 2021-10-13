@@ -23,7 +23,7 @@ namespace Microsoft.Data
 
         public static string Format(string resourceFormat, params object[] args)
         {
-            if (args != null)
+            if (args is not null)
             {
                 if (UsingResourceKeys())
                 {
@@ -158,6 +158,7 @@ namespace Microsoft.Data
             internal const string TCE_DbConnectionString_AttestationProtocol = @"Specifies an attestation protocol for its corresponding enclave attestation service.";
             internal const string TCE_DbConnectionString_IPAddressPreference = @"Specifies an IP address preference when connecting to SQL instances.";
             internal const string SqlConnection_ServerProcessId = @"Server Process Id (SPID) of the active connection.";
+            internal const string SqlCommandBuilder_DataAdapter = @"The DataAdapter for which to automatically generate SqlCommands.";
         }
     }
 }

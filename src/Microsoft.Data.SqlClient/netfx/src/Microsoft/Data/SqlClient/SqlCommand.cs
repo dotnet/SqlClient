@@ -754,11 +754,7 @@ namespace Microsoft.Data.SqlClient
         ]
         public override string CommandText
         {
-            get
-            {
-                string value = _commandText;
-                return ((null != value) ? value : ADP.StrEmpty);
-            }
+            get => _commandText ?? "";
             set
             {
                 SqlClientEventSource.Log.TryTraceEvent("<sc.SqlCommand.set_CommandText|API> {0}, String Value = '{1}'", ObjectID, value);
@@ -796,7 +792,7 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.TryTraceEvent("<sc.SqlCommand.set_CommandTimeout|API> {0}, {1}", ObjectID, value);
                 if (value < 0)
                 {
-                    throw ADP.InvalidCommandTimeout(value);
+                    throw ADP.InvalidCommandTimeout(value, nameof(CommandTimeout));
                 }
 
                 if (value != _commandTimeout)
@@ -1057,7 +1053,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     // Validate the command outside of the try\catch to avoid putting the _stateObj on error
-                    ValidateCommand(ADP.Prepare, false /*not async*/);
+                    ValidateCommand(nameof(Prepare), false /*not async*/);
 
                     bool processFinallyBlock = true;
                     TdsParser bestEffortCleanupTarget = null;
@@ -1383,8 +1379,8 @@ namespace Microsoft.Data.SqlClient
                     WriteBeginExecuteEvent();
                     SqlDataReader ds;
                     ds = IsProviderRetriable ?
-                        RunExecuteReaderWithRetry(0, RunBehavior.ReturnImmediately, true, ADP.ExecuteScalar) :
-                        RunExecuteReader(0, RunBehavior.ReturnImmediately, true, ADP.ExecuteScalar);
+                        RunExecuteReaderWithRetry(0, RunBehavior.ReturnImmediately, true, nameof(ExecuteScalar)) :
+                        RunExecuteReader(0, RunBehavior.ReturnImmediately, true, nameof(ExecuteScalar));
                     object result = CompleteExecuteScalar(ds, false);
                     success = true;
                     return result;
@@ -1464,11 +1460,11 @@ namespace Microsoft.Data.SqlClient
                     bool usedCache;
                     if (IsProviderRetriable)
                     {
-                        InternalExecuteNonQueryWithRetry(ADP.ExecuteNonQuery, sendToPipe: false, CommandTimeout, out usedCache, asyncWrite: false, inRetry: false);
+                        InternalExecuteNonQueryWithRetry(nameof(ExecuteNonQuery), sendToPipe: false, CommandTimeout, out usedCache, asyncWrite: false, inRetry: false);
                     }
                     else
                     {
-                        InternalExecuteNonQuery(null, ADP.ExecuteNonQuery, sendToPipe: false, CommandTimeout, out usedCache);
+                        InternalExecuteNonQuery(null, nameof(ExecuteNonQuery), sendToPipe: false, CommandTimeout, out usedCache);
                     }
                     success = true;
                     return _rowsAffected;
@@ -1504,7 +1500,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
                     bool usedCache;
-                    InternalExecuteNonQuery(null, ADP.ExecuteNonQuery, true, CommandTimeout, out usedCache);
+                    InternalExecuteNonQuery(null, nameof(ExecuteNonQuery), true, CommandTimeout, out usedCache);
                 }
                 finally
                 {
@@ -1562,7 +1558,7 @@ namespace Microsoft.Data.SqlClient
                 bool usedCache;
                 try
                 { // InternalExecuteNonQuery already has reliability block, but if failure will not put stateObj back into pool.
-                    Task execNQ = InternalExecuteNonQuery(localCompletion, ADP.BeginExecuteNonQuery, false, timeout, out usedCache, asyncWrite, inRetry: inRetry);
+                    Task execNQ = InternalExecuteNonQuery(localCompletion, nameof(BeginExecuteNonQuery), false, timeout, out usedCache, asyncWrite, inRetry: inRetry);
                     if (execNQ != null)
                     {
                         AsyncHelper.ContinueTaskWithState(execNQ, localCompletion, this, (object state) => ((SqlCommand)state).BeginExecuteNonQueryInternalReadStage(localCompletion));
@@ -1587,7 +1583,7 @@ namespace Microsoft.Data.SqlClient
 
                 // When we use query caching for parameter encryption we need to retry on specific errors.
                 // In these cases finalize the call internally and trigger a retry when needed.
-                if (!TriggerInternalEndAndRetryIfNecessary(behavior, stateObject, timeout, ADP.EndExecuteNonQuery, usedCache, inRetry, asyncWrite, globalCompletion, localCompletion, InternalEndExecuteNonQuery, BeginExecuteNonQueryInternal))
+                if (!TriggerInternalEndAndRetryIfNecessary(behavior, stateObject, timeout, nameof(EndExecuteNonQuery), usedCache, inRetry, asyncWrite, globalCompletion, localCompletion, InternalEndExecuteNonQuery, BeginExecuteNonQueryInternal))
                 {
                     globalCompletion = localCompletion;
                 }
@@ -1625,7 +1621,7 @@ namespace Microsoft.Data.SqlClient
 #endif //DEBUG
                     bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_activeConnection);
                     // must finish caching information before ReadSni which can activate the callback before returning
-                    cachedAsyncState.SetActiveConnectionAndResult(completion, ADP.EndExecuteNonQuery, _activeConnection);
+                    cachedAsyncState.SetActiveConnectionAndResult(completion, nameof(EndExecuteNonQuery), _activeConnection);
                     _stateObj.ReadSni(completion);
                 }
 #if DEBUG
@@ -1801,7 +1797,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
-                int result = (int)InternalEndExecuteNonQuery(asyncResult, ADP.EndExecuteNonQuery, isInternal: false);
+                int result = (int)InternalEndExecuteNonQuery(asyncResult, nameof(EndExecuteNonQuery), isInternal: false);
                 success = true;
                 return result;
             }
@@ -2093,8 +2089,8 @@ namespace Microsoft.Data.SqlClient
                     // use the reader to consume metadata
                     SqlDataReader ds;
                     ds = IsProviderRetriable ?
-                        RunExecuteReaderWithRetry(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, true, ADP.ExecuteXmlReader) :
-                        RunExecuteReader(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, true, ADP.ExecuteXmlReader);
+                        RunExecuteReaderWithRetry(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, true, nameof(ExecuteXmlReader)) :
+                        RunExecuteReader(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, true, nameof(ExecuteXmlReader));
                     XmlReader result = CompleteXmlReader(ds);
                     success = true;
                     return result;
@@ -2162,7 +2158,7 @@ namespace Microsoft.Data.SqlClient
                 Task writeTask;
                 try
                 { // InternalExecuteNonQuery already has reliability block, but if failure will not put stateObj back into pool.
-                    RunExecuteReader(behavior, RunBehavior.ReturnImmediately, true, ADP.BeginExecuteXmlReader, localCompletion, timeout, out writeTask, out usedCache, asyncWrite, inRetry);
+                    RunExecuteReader(behavior, RunBehavior.ReturnImmediately, true, nameof(BeginExecuteXmlReader), localCompletion, timeout, out writeTask, out usedCache, asyncWrite, inRetry);
                 }
                 catch (Exception e)
                 {
@@ -2188,7 +2184,7 @@ namespace Microsoft.Data.SqlClient
 
                 // When we use query caching for parameter encryption we need to retry on specific errors.
                 // In these cases finalize the call internally and trigger a retry when needed.
-                if (!TriggerInternalEndAndRetryIfNecessary(behavior, stateObject, timeout, ADP.EndExecuteXmlReader, usedCache, inRetry, asyncWrite, globalCompletion, localCompletion, InternalEndExecuteReader, BeginExecuteXmlReaderInternal))
+                if (!TriggerInternalEndAndRetryIfNecessary(behavior, stateObject, timeout, nameof(EndExecuteXmlReader), usedCache, inRetry, asyncWrite, globalCompletion, localCompletion, InternalEndExecuteReader, BeginExecuteXmlReaderInternal))
                 {
                     globalCompletion = localCompletion;
                 }
@@ -2226,7 +2222,7 @@ namespace Microsoft.Data.SqlClient
 #endif //DEBUG
                     bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_activeConnection);
                     // must finish caching information before ReadSni which can activate the callback before returning
-                    cachedAsyncState.SetActiveConnectionAndResult(completion, ADP.EndExecuteXmlReader, _activeConnection);
+                    cachedAsyncState.SetActiveConnectionAndResult(completion, nameof(EndExecuteXmlReader), _activeConnection);
                     _stateObj.ReadSni(completion);
                 }
 #if DEBUG
@@ -2314,7 +2310,7 @@ namespace Microsoft.Data.SqlClient
             int? sqlExceptionNumber = null;
             try
             {
-                XmlReader result = CompleteXmlReader(InternalEndExecuteReader(asyncResult, ADP.EndExecuteXmlReader, isInternal: false), true);
+                XmlReader result = CompleteXmlReader(InternalEndExecuteReader(asyncResult, nameof(EndExecuteXmlReader), isInternal: false), true);
                 success = true;
                 return result;
             }
@@ -2399,7 +2395,7 @@ namespace Microsoft.Data.SqlClient
         protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
         {
             SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlCommand.ExecuteDbDataReader|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
-            return ExecuteReader(behavior, ADP.ExecuteReader);
+            return ExecuteReader(behavior, nameof(ExecuteReader));
         }
 
         private SqlDataReader ExecuteReaderWithRetry(CommandBehavior behavior, string method)
@@ -2416,8 +2412,8 @@ namespace Microsoft.Data.SqlClient
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
                     return IsProviderRetriable ?
-                            ExecuteReaderWithRetry(CommandBehavior.Default, ADP.ExecuteReader) :
-                            ExecuteReader(CommandBehavior.Default, ADP.ExecuteReader);
+                            ExecuteReaderWithRetry(CommandBehavior.Default, nameof(ExecuteReader)) :
+                            ExecuteReader(CommandBehavior.Default, nameof(ExecuteReader));
                 }
                 finally
                 {
@@ -2434,8 +2430,8 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlCommand.ExecuteReader|API|Correlation> ObjectID {0}, behavior={1}, ActivityID {2}", ObjectID, (int)behavior, ActivityCorrelator.Current);
 
                 return IsProviderRetriable ?
-                       ExecuteReaderWithRetry(behavior, ADP.ExecuteReader) :
-                       ExecuteReader(behavior, ADP.ExecuteReader);
+                       ExecuteReaderWithRetry(behavior, nameof(ExecuteReader)) :
+                       ExecuteReader(behavior, nameof(ExecuteReader));
             }
         }
 
@@ -2574,7 +2570,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
-                SqlDataReader result = InternalEndExecuteReader(asyncResult, ADP.EndExecuteReader, isInternal: false);
+                SqlDataReader result = InternalEndExecuteReader(asyncResult, nameof(EndExecuteReader), isInternal: false);
                 success = true;
                 return result;
             }
@@ -2643,7 +2639,7 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     // InternalExecuteNonQuery already has reliability block, but if failure will not put stateObj back into pool.
-                    RunExecuteReader(behavior, RunBehavior.ReturnImmediately, true, ADP.BeginExecuteReader, localCompletion, timeout, out writeTask, out usedCache, asyncWrite, inRetry);
+                    RunExecuteReader(behavior, RunBehavior.ReturnImmediately, true, nameof(BeginExecuteReader), localCompletion, timeout, out writeTask, out usedCache, asyncWrite, inRetry);
                 }
                 catch (Exception e)
                 {
@@ -2669,7 +2665,7 @@ namespace Microsoft.Data.SqlClient
 
                 // When we use query caching for parameter encryption we need to retry on specific errors.
                 // In these cases finalize the call internally and trigger a retry when needed.
-                if (!TriggerInternalEndAndRetryIfNecessary(behavior, stateObject, timeout, ADP.EndExecuteReader, usedCache, inRetry, asyncWrite, globalCompletion, localCompletion, InternalEndExecuteReader, BeginExecuteReaderInternal))
+                if (!TriggerInternalEndAndRetryIfNecessary(behavior, stateObject, timeout, nameof(EndExecuteReader), usedCache, inRetry, asyncWrite, globalCompletion, localCompletion, InternalEndExecuteReader, BeginExecuteReaderInternal))
                 {
                     globalCompletion = localCompletion;
                 }
@@ -2837,7 +2833,7 @@ namespace Microsoft.Data.SqlClient
 #endif //DEBUG
                     bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_activeConnection);
                     // must finish caching information before ReadSni which can activate the callback before returning
-                    cachedAsyncState.SetActiveConnectionAndResult(completion, ADP.EndExecuteReader, _activeConnection);
+                    cachedAsyncState.SetActiveConnectionAndResult(completion, nameof(EndExecuteReader), _activeConnection);
                     _stateObj.ReadSni(completion);
                 }
 #if DEBUG
@@ -3432,7 +3428,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // validate that we have a valid connection
-            ValidateCommand(ADP.DeriveParameters, false /*not async*/);
+            ValidateCommand(nameof(DeriveParameters), false /*not async*/);
 
             // Use common parser for SqlClient and OleDb - parse into 4 parts - Server, Catalog, Schema, ProcedureName
             string[] parsedSProc = MultipartIdentifier.ParseMultipartIdentifier(CommandText, "[\"", "]\"", Strings.SQL_SqlCommandCommandText, false);
@@ -3569,8 +3565,7 @@ namespace Microsoft.Data.SqlClient
                     else
                     {
                         p.SqlDbType = MetaType.GetSqlDbTypeFromOleDbType((short)r[colNames[(int)ProcParamsColIndex.DataType]],
-                            ADP.IsNull(r[colNames[(int)ProcParamsColIndex.TypeName]]) ?
-                                ADP.StrEmpty :
+                            ADP.IsNull(r[colNames[(int)ProcParamsColIndex.TypeName]]) ? "" :
                                 (string)r[colNames[(int)ProcParamsColIndex.TypeName]]);
                     }
 
