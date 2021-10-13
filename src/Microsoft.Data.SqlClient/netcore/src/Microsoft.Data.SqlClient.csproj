@@ -241,6 +241,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlColumnEncryptionKeyStoreProvider.cs">
       <Link>Microsoft\Data\SqlClient\SqlColumnEncryptionKeyStoreProvider.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlCommandBuilder.cs">
+      <Link>Microsoft\Data\SqlClient\SqlCommandBuilder.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlCommandSet.cs">
       <Link>Microsoft\Data\SqlClient\SqlCommandSet.cs</Link>
     </Compile>
@@ -510,7 +513,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlClientDiagnosticListenerExtensions.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientFactory.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlCommand.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlCommandBuilder.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionFactory.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionHelper.cs" />
