@@ -33,10 +33,16 @@ namespace Microsoft.Data.SqlClient
         private readonly string _applicationClientId = ActiveDirectoryAuthentication.AdoClientId;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor/*'/>
-        public ActiveDirectoryAuthenticationProvider() => new ActiveDirectoryAuthenticationProvider(DefaultDeviceFlowCallback);
+        public ActiveDirectoryAuthenticationProvider()
+            : this(DefaultDeviceFlowCallback)
+        {
+        }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor2/*'/>
-        public ActiveDirectoryAuthenticationProvider(string applicationClientId) => new ActiveDirectoryAuthenticationProvider(DefaultDeviceFlowCallback, applicationClientId);
+        public ActiveDirectoryAuthenticationProvider(string applicationClientId)
+            : this(DefaultDeviceFlowCallback, applicationClientId)
+        {
+        }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/ActiveDirectoryAuthenticationProvider.xml' path='docs/members[@name="ActiveDirectoryAuthenticationProvider"]/ctor3/*'/>
         public ActiveDirectoryAuthenticationProvider(Func<DeviceCodeResult, Task> deviceCodeFlowCallbackMethod, string applicationClientId = null)
@@ -215,7 +221,7 @@ namespace Microsoft.Data.SqlClient
             {
                 // Fetch available accounts from 'app' instance
                 System.Collections.Generic.IEnumerator<IAccount> accounts = (await app.GetAccountsAsync()).GetEnumerator();
-                
+
                 IAccount account = default;
                 if (accounts.MoveNext())
                 {
@@ -343,7 +349,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private Task DefaultDeviceFlowCallback(DeviceCodeResult result)
+        private static Task DefaultDeviceFlowCallback(DeviceCodeResult result)
         {
             // This will print the message on the console which tells the user where to go sign-in using
             // a separate browser and the code to enter once they sign in.
