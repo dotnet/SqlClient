@@ -78,11 +78,7 @@ namespace Microsoft.Data.SqlClient
 
             if (null == _reader)
             {
-                throw ADP.StreamClosed(
-#if NETFRAMEWORK
-                        ADP.Read
-#endif
-                    );
+                throw ADP.StreamClosed();
             }
             if (null == buffer)
             {
@@ -343,11 +339,7 @@ namespace Microsoft.Data.SqlClient
 
             if (null == _cachedBytes)
             {
-                throw ADP.StreamClosed(
-#if NETFRAMEWORK
-                        ADP.Read
-#endif
-                    );
+                throw ADP.StreamClosed();
             }
 
             if (null == buffer)
@@ -407,11 +399,7 @@ namespace Microsoft.Data.SqlClient
 
             if (null == _cachedBytes)
             {
-                throw ADP.StreamClosed(
-#if NETFRAMEWORK
-                        ADP.Read
-#endif
-                    );
+                throw ADP.StreamClosed();
             }
 
             switch (origin)
