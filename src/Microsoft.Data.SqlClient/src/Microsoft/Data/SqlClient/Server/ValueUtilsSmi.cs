@@ -3399,7 +3399,7 @@ namespace Microsoft.Data.SqlClient.Server
         {
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 
-            // Note: depending on different getters, the result string maybed truncated, e.g. for 
+            // Note: depending on different getters, the result string may be truncated, e.g. for 
             // Inproc process, the getter is InProcRecordBuffer (implemented in SqlAcess), string will be
             // truncated to 4000 (if length is more than 4000). If MemoryRecordBuffer getter is used, data 
             // is not truncated. Please refer VSDD 479655 for more detailed information regarding the string length.
