@@ -7061,14 +7061,12 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLUNIQUEID:
                     {
                         Debug.Assert(length == 16, "invalid length for SqlGuid type!");
-
                         byte[] b = _guidTemp;
                         _guidTemp = null;
-                        if (b != null)
+                        if (b == null)
                         {
                             b = new byte[GUID_SIZE];
                         }
-
                         if (!stateObj.TryReadByteArray(b, 0, length))
                         {
                             return false;
