@@ -89,93 +89,66 @@ namespace Microsoft.Data.SqlClient
         }
 
         // properties should be inlined so there should be no perf penalty for using these accessor functions
-        public int TypeId
-        {             // partial length prefixed (xml, nvarchar(max),...)
-            get { return 0; }
-        }
+        public int TypeId => 0;  // partial length prefixed (xml, nvarchar(max),...)
 
-        private static bool _IsAnsiType(SqlDbType type)
-        {
-            return (type == SqlDbType.Char ||
-                   type == SqlDbType.VarChar ||
-                   type == SqlDbType.Text);
-        }
+        private static bool _IsAnsiType(SqlDbType type) =>
+            type == SqlDbType.Char || type == SqlDbType.VarChar || type == SqlDbType.Text;
 
         // is this type size expressed as count of characters or bytes?
-        private static bool _IsSizeInCharacters(SqlDbType type)
-        {
-            return (type == SqlDbType.NChar ||
-                   type == SqlDbType.NVarChar ||
-                   type == SqlDbType.Xml ||
-                   type == SqlDbType.NText);
-        }
+        private static bool _IsSizeInCharacters(SqlDbType type) => 
+            type == SqlDbType.NChar ||
+            type == SqlDbType.NVarChar ||
+            type == SqlDbType.Xml ||
+            type == SqlDbType.NText;
 
-        private static bool _IsCharType(SqlDbType type)
-        {
-            return (type == SqlDbType.NChar ||
-                   type == SqlDbType.NVarChar ||
-                   type == SqlDbType.NText ||
-                   type == SqlDbType.Char ||
-                   type == SqlDbType.VarChar ||
-                   type == SqlDbType.Text ||
-                   type == SqlDbType.Xml);
-        }
+        private static bool _IsCharType(SqlDbType type) =>
+            type == SqlDbType.NChar ||
+            type == SqlDbType.NVarChar ||
+            type == SqlDbType.NText ||
+            type == SqlDbType.Char ||
+            type == SqlDbType.VarChar ||
+            type == SqlDbType.Text ||
+            type == SqlDbType.Xml;
 
-        private static bool _IsNCharType(SqlDbType type)
-        {
-            return (type == SqlDbType.NChar ||
-                   type == SqlDbType.NVarChar ||
-                   type == SqlDbType.NText ||
-                   type == SqlDbType.Xml);
-        }
+        private static bool _IsNCharType(SqlDbType type) =>
+            type == SqlDbType.NChar ||
+            type == SqlDbType.NVarChar ||
+            type == SqlDbType.NText ||
+            type == SqlDbType.Xml;
 
-        private static bool _IsBinType(SqlDbType type)
-        {
-            return (type == SqlDbType.Image ||
-                   type == SqlDbType.Binary ||
-                   type == SqlDbType.VarBinary ||
-                   type == SqlDbType.Timestamp ||
-                   type == SqlDbType.Udt ||
-                   (int)type == 24 /*SqlSmallVarBinary*/);
-        }
+        private static bool _IsBinType(SqlDbType type) =>
+            type == SqlDbType.Image ||
+            type == SqlDbType.Binary ||
+            type == SqlDbType.VarBinary ||
+            type == SqlDbType.Timestamp ||
+            type == SqlDbType.Udt ||
+            (int)type == 24 /*SqlSmallVarBinary*/;
 
-        private static bool _Is70Supported(SqlDbType type)
-        {
-            return ((type != SqlDbType.BigInt) && ((int)type > 0) &&
-                   ((int)type <= (int)SqlDbType.VarChar));
-        }
+        private static bool _Is70Supported(SqlDbType type) =>
+            type != SqlDbType.BigInt &&
+            (int)type > 0 &&
+            (int)type <= (int)SqlDbType.VarChar;
 
-        private static bool _Is80Supported(SqlDbType type)
-        {
-            return ((int)type >= 0 &&
-                ((int)type <= (int)SqlDbType.Variant));
-        }
+        private static bool _Is80Supported(SqlDbType type) =>
+            (int)type >= 0 &&
+            (int)type <= (int)SqlDbType.Variant;
 
-        private static bool _Is90Supported(SqlDbType type)
-        {
-            return _Is80Supported(type) ||
-                    SqlDbType.Xml == type ||
-                    SqlDbType.Udt == type;
-        }
+        private static bool _Is90Supported(SqlDbType type) =>
+            _Is80Supported(type) ||
+            SqlDbType.Xml == type ||
+            SqlDbType.Udt == type;
 
-        private static bool _Is100Supported(SqlDbType type)
-        {
-            return _Is90Supported(type) ||
-                    SqlDbType.Date == type ||
-                    SqlDbType.Time == type ||
-                    SqlDbType.DateTime2 == type ||
-                    SqlDbType.DateTimeOffset == type;
-        }
+        private static bool _Is100Supported(SqlDbType type) =>
+            _Is90Supported(type) ||
+            SqlDbType.Date == type ||
+            SqlDbType.Time == type ||
+            SqlDbType.DateTime2 == type ||
+            SqlDbType.DateTimeOffset == type;
 
-        private static bool _IsNewKatmaiType(SqlDbType type)
-        {
-            return SqlDbType.Structured == type;
-        }
+        private static bool _IsNewKatmaiType(SqlDbType type) => SqlDbType.Structured == type;
 
-        internal static bool _IsVarTime(SqlDbType type)
-        {
-            return (type == SqlDbType.Time || type == SqlDbType.DateTime2 || type == SqlDbType.DateTimeOffset);
-        }
+        internal static bool _IsVarTime(SqlDbType type) =>
+            type == SqlDbType.Time || type == SqlDbType.DateTime2 || type == SqlDbType.DateTimeOffset;
 
         //
         // map SqlDbType to MetaType class
@@ -311,15 +284,10 @@ namespace Microsoft.Data.SqlClient
         //
         // map COM+ Type to MetaType class
         //
-        internal static MetaType GetMetaTypeFromType(Type dataType)
-        {
-            return GetMetaTypeFromValue(dataType, null, false, true);
-        }
+        internal static MetaType GetMetaTypeFromType(Type dataType) => GetMetaTypeFromValue(dataType, null, false, true);
 
-        internal static MetaType GetMetaTypeFromValue(object value, bool streamAllowed = true)
-        {
-            return GetMetaTypeFromValue(value.GetType(), value, true, streamAllowed);
-        }
+        internal static MetaType GetMetaTypeFromValue(object value, bool streamAllowed = true) => 
+            GetMetaTypeFromValue(value.GetType(), value, true, streamAllowed);
 
         private static MetaType GetMetaTypeFromValue(Type dataType, object value, bool inferLen, bool streamAllowed)
         {
@@ -600,7 +568,7 @@ namespace Microsoft.Data.SqlClient
         private static void AssertIsUserDefinedTypeInstance(object sqlValue, string failedAssertMessage)
         {
             Type type = sqlValue.GetType();
-            Microsoft.Data.SqlClient.Server.SqlUserDefinedTypeAttribute[] attributes = (Microsoft.Data.SqlClient.Server.SqlUserDefinedTypeAttribute[])type.GetCustomAttributes(typeof(Microsoft.Data.SqlClient.Server.SqlUserDefinedTypeAttribute), true);
+            SqlUserDefinedTypeAttribute[] attributes = (SqlUserDefinedTypeAttribute[])type.GetCustomAttributes(typeof(SqlUserDefinedTypeAttribute), true);
 
             Debug.Assert(attributes.Length > 0, failedAssertMessage);
         }
@@ -873,10 +841,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal static MetaType GetDefaultMetaType()
-        {
-            return MetaNVarChar;
-        }
+        internal static MetaType GetDefaultMetaType() => MetaNVarChar;
 
         // Converts an XmlReader into String
         internal static string GetStringFromXml(XmlReader xmlreader)
