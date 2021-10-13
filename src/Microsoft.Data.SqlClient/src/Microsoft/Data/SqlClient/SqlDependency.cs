@@ -131,10 +131,7 @@ namespace Microsoft.Data.SqlClient
                 return result;
             }
 
-            public override int GetHashCode()
-            {
-                return _database.GetHashCode();
-            }
+            public override int GetHashCode() => _database.GetHashCode();
         }
 
         // Private class encapsulating the event and it's registered execution context.
@@ -180,10 +177,7 @@ namespace Microsoft.Data.SqlClient
                 return result;
             }
 
-            public override int GetHashCode()
-            {
-                return _eventHandler.GetHashCode();
-            }
+            public override int GetHashCode() => _eventHandler.GetHashCode();
 
             internal void Invoke(SqlNotificationEventArgs args)
             {
@@ -216,16 +210,9 @@ namespace Microsoft.Data.SqlClient
                 s_typeInfo = s_sqlObjRef.TypeInfo;
             }
 
-            internal static bool CanCastToSqlDependencyProcessDispatcher()
-            {
-                return s_typeInfo.CanCastTo(typeof(SqlDependencyProcessDispatcher), s_sqlObjRef);
-            }
+            internal static bool CanCastToSqlDependencyProcessDispatcher() => s_typeInfo.CanCastTo(typeof(SqlDependencyProcessDispatcher), s_sqlObjRef);
 
-            internal ObjRef GetObjRef()
-            {
-                return s_sqlObjRef;
-            }
-
+            internal ObjRef GetObjRef() => s_sqlObjRef;
         }
 #endif
 
@@ -462,10 +449,7 @@ namespace Microsoft.Data.SqlClient
 
 #if NETFRAMEWORK
         [System.Security.Permissions.ReflectionPermission(System.Security.Permissions.SecurityAction.Assert, MemberAccess = true)]
-        private static ObjectHandle CreateProcessDispatcher(_AppDomain masterDomain)
-        {
-            return masterDomain.CreateInstance(s_assemblyName, s_typeName);
-        }
+        private static ObjectHandle CreateProcessDispatcher(_AppDomain masterDomain) => masterDomain.CreateInstance(s_assemblyName, s_typeName);
 #endif
         // Static Methods - public & internal
 
@@ -573,16 +557,10 @@ namespace Microsoft.Data.SqlClient
 #endif // NETFRAMEWORK
         // Static Start/Stop methods
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StartConnectionString/*' />
-        public static bool Start(string connectionString)
-        {
-            return Start(connectionString, null, true);
-        }
+        public static bool Start(string connectionString) => Start(connectionString, null, true);
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StartConnectionStringQueue/*' />
-        public static bool Start(string connectionString, string queue)
-        {
-            return Start(connectionString, queue, false);
-        }
+        public static bool Start(string connectionString, string queue) => Start(connectionString, queue, false);
 
         internal static bool Start(string connectionString, string queue, bool useDefaults)
         {
@@ -731,16 +709,10 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StopConnectionString/*' />
-        public static bool Stop(string connectionString)
-        {
-            return Stop(connectionString, null, true, false);
-        }
+        public static bool Stop(string connectionString) => Stop(connectionString, null, true, false);
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StopConnectionStringQueue/*' />
-        public static bool Stop(string connectionString, string queue)
-        {
-            return Stop(connectionString, queue, false, false);
-        }
+        public static bool Stop(string connectionString, string queue) => Stop(connectionString, queue, false, false);
 
         internal static bool Stop(string connectionString, string queue, bool useDefaults, bool startFailed)
         {
