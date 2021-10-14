@@ -5,9 +5,9 @@
 using System;
 using System.Diagnostics;
 using System.Security;
+using System.Threading;
 using System.Threading.Tasks;
-using Azure.Core;
-using Azure.Identity;
+using Microsoft.Identity.Client;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -31,16 +31,23 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 _ = parameters.ServerName;
                 _ = parameters.DatabaseName;
                 _ = parameters.ConnectionId;
-                _ = parameters.ConnectionTimeout;
+
+                var cts = new CancellationTokenSource();
+                cts.CancelAfter(parameters.ConnectionTimeout * 1000);
 
                 string[] scopes = new string[] { scope };
-                int seperatorIndex = parameters.Authority.LastIndexOf('/');
-                string tenantId = parameters.Authority.Substring(seperatorIndex + 1);
-                string authority = parameters.Authority.Remove(seperatorIndex + 1);
-                var options = new TokenCredentialOptions() { AuthorityHost = new(authority) };
+                SecureString password = new SecureString();
+                foreach (char c in parameters.Password)
+                    password.AppendChar(c);
+                password.MakeReadOnly();
 
-                AccessToken token = await new UsernamePasswordCredential(parameters.UserId, parameters.Password, tenantId, _appClientId, options).GetTokenAsync(new TokenRequestContext(scopes));
-                return new SqlAuthenticationToken(token.Token, token.ExpiresOn);
+                AuthenticationResult result = await PublicClientApplicationBuilder.Create(_appClientId)
+                .WithAuthority(parameters.Authority)
+                .Build().AcquireTokenByUsernamePassword(scopes, parameters.UserId, password)
+                    .WithCorrelationId(parameters.ConnectionId)
+                    .ExecuteAsync(cancellationToken: cts.Token);
+
+                return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
             }
 
             public override bool IsSupported(SqlAuthenticationMethod authenticationMethod)
