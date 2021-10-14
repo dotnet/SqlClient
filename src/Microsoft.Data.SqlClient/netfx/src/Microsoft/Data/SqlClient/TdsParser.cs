@@ -33,7 +33,6 @@ namespace Microsoft.Data.SqlClient
     {
         private static int _objectTypeCount; // EventSource Counter
         private readonly SqlClientLogger _logger = new SqlClientLogger();
-        private readonly string _typeName;
 
         internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
 
@@ -251,6 +250,7 @@ namespace Microsoft.Data.SqlClient
 
         // size of Guid  (e.g. _clientConnectionId, ActivityId.Id)
         private const int GUID_SIZE = 16;
+        private byte[] _tempGuidBytes;
 
         // NOTE: You must take the internal connection's _parserLock before modifying this
         internal bool _asyncWrite = false;
@@ -320,7 +320,6 @@ namespace Microsoft.Data.SqlClient
             _fMARS = MARS; // may change during Connect to pre Yukon servers
             _physicalStateObj = new TdsParserStateObject(this);
             DataClassificationVersion = TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED;
-            _typeName = GetType().Name;
         }
 
         internal SqlInternalConnectionTds Connection
@@ -1341,7 +1340,7 @@ namespace Microsoft.Data.SqlClient
                             if (!string.IsNullOrEmpty(warningMessage))
                             {
                                 // This logs console warning of insecure protocol in use.
-                                _logger.LogWarning(_typeName, MethodBase.GetCurrentMethod().Name, warningMessage);
+                                _logger.LogWarning(GetType().Name, MethodBase.GetCurrentMethod().Name, warningMessage);
                             }
 
                             // Validate server certificate
@@ -7061,15 +7060,19 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.SQLUNIQUEID:
                     {
-                        Debug.Assert(length == 16, "invalid length for SqlGuid type!");
+                        Debug.Assert(length == GUID_SIZE, "invalid length for SqlGuid type!");
 
-                        byte[] b = new byte[length];
-
+                        byte[] b = _tempGuidBytes;
+                        if (b is null)
+                        {
+                            b = new byte[GUID_SIZE];
+                        }
                         if (!stateObj.TryReadByteArray(b, 0, length))
                         {
                             return false;
                         }
-                        value.SqlGuid = SqlTypeWorkarounds.SqlGuidCtor(b, true);   // doesn't copy the byte array
+                        value.Guid = new Guid(b);
+                        _tempGuidBytes = b;
                         break;
                     }
 
@@ -12073,7 +12076,15 @@ namespace Microsoft.Data.SqlClient
 
                 case TdsEnums.SQLUNIQUEID:
                     {
-                        byte[] b = ((SqlGuid)value).ToByteArray();
+                        byte[] b;
+                        if (value is Guid guid)
+                        {
+                            b = guid.ToByteArray();
+                        }
+                        else
+                        {
+                            b = ((SqlGuid)value).ToByteArray();
+                        }
 
                         Debug.Assert((actualLength == b.Length) && (actualLength == 16), "Invalid length for guid type in com+ object");
                         stateObj.WriteByteArray(b, actualLength, 0);

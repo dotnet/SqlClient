@@ -87,13 +87,8 @@ namespace Microsoft.Data.SqlClient
 
         private Task _currentTask;
         private Snapshot _snapshot;
-
         private CancellationTokenSource _cancelAsyncOnCloseTokenSource;
         private CancellationToken _cancelAsyncOnCloseToken;
-
-        // Used for checking if the Type parameter provided to GetValue<T> is an INullable
-        internal static readonly Type _typeofINullable = typeof(INullable);
-        private static readonly Type s_typeofSqlString = typeof(SqlString);
 
         private SqlSequentialStream _currentStream;
         private SqlSequentialTextReader _currentTextReader;
@@ -2955,7 +2950,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     // If its a SQL Type or Nullable UDT
                     object rawValue = GetSqlValueFromSqlBufferInternal(data, metaData);
-                    if (typeof(T) == s_typeofSqlString)
+                    if (typeof(T) == typeof(SqlString))
                     {
                         // Special case: User wants SqlString, but we have a SqlXml
                         // SqlXml can not be typecast into a SqlString, but we need to support SqlString on XML Types - so do a manual conversion
@@ -2986,6 +2981,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     catch (InvalidCastException) when (data.IsNull)
                     {
+                        // If the value was actually null, then we should throw a SqlNullValue instead
                         throw SQL.SqlNullValue();
                     }
 

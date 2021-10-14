@@ -42,7 +42,6 @@ namespace Microsoft.Data.SqlClient
     {
         private static int _objectTypeCount; // EventSource counter
         private readonly SqlClientLogger _logger = new SqlClientLogger();
-        private readonly string _typeName;
 
         internal readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
         internal int ObjectID => _objectID;
@@ -194,7 +193,6 @@ namespace Microsoft.Data.SqlClient
 
             _physicalStateObj = TdsParserStateObjectFactory.Singleton.CreateTdsParserStateObject(this);
             DataClassificationVersion = TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED;
-            _typeName = GetType().Name;
         }
 
         internal SqlInternalConnectionTds Connection
@@ -963,7 +961,7 @@ namespace Microsoft.Data.SqlClient
                             if (!string.IsNullOrEmpty(warningMessage))
                             {
                                 // This logs console warning of insecure protocol in use.
-                                _logger.LogWarning(_typeName, MethodBase.GetCurrentMethod().Name, warningMessage);
+                                _logger.LogWarning(GetType().Name, MethodBase.GetCurrentMethod().Name, warningMessage);
                             }
 
                             // create a new packet encryption changes the internal packet size
@@ -11094,15 +11092,21 @@ namespace Microsoft.Data.SqlClient
                     {
                         Debug.Assert(actualLength == 16, "Invalid length for guid type in com+ object");
                         Span<byte> b = stackalloc byte[16];
-                        SqlGuid sqlGuid = (SqlGuid)value;
-
-                        if (sqlGuid.IsNull)
+                        if (value is Guid guid)
                         {
-                            b.Clear(); // this is needed because initlocals may be supressed in framework assemblies meaning the memory is not automaticaly zeroed
+                            FillGuidBytes(guid, b);
                         }
                         else
                         {
-                            FillGuidBytes(sqlGuid.Value, b);
+                            SqlGuid sqlGuid = (SqlGuid)value;
+                            if (sqlGuid.IsNull)
+                            {
+                                b.Clear(); // this is needed because initlocals may be supressed in framework assemblies meaning the memory is not automaticaly zeroed
+                            }
+                            else
+                            {
+                                FillGuidBytes(sqlGuid.Value, b);
+                            }
                         }
                         stateObj.WriteByteSpan(b);
                         break;
