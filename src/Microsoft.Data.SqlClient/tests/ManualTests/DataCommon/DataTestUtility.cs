@@ -163,25 +163,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public static IEnumerable<string> ConnectionStrings
+        public static IEnumerable<string> ConnectionStrings => GetConnectionStrings(withEnclave: true);
+
+        public static IEnumerable<string> GetConnectionStrings(bool withEnclave)
         {
-            get
+            if (!string.IsNullOrEmpty(TCPConnectionString))
             {
-                if (!string.IsNullOrEmpty(TCPConnectionString))
+                yield return TCPConnectionString;
+            }
+            // Named Pipes are not supported on Unix platform and for Azure DB
+            if (Environment.OSVersion.Platform != PlatformID.Unix && IsNotAzureServer() && !string.IsNullOrEmpty(NPConnectionString))
+            {
+                yield return NPConnectionString;
+            }
+            if (withEnclave && EnclaveEnabled)
+            {
+                foreach (var connStr in AEConnStrings)
                 {
-                    yield return TCPConnectionString;
-                }
-                // Named Pipes are not supported on Unix platform and for Azure DB
-                if (Environment.OSVersion.Platform != PlatformID.Unix && IsNotAzureServer() && !string.IsNullOrEmpty(NPConnectionString))
-                {
-                    yield return NPConnectionString;
-                }
-                if (EnclaveEnabled)
-                {
-                    foreach (var connStr in AEConnStrings)
-                    {
-                        yield return connStr;
-                    }
+                    yield return connStr;
                 }
             }
         }
