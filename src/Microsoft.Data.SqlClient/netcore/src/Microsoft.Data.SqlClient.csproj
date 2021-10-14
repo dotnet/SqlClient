@@ -259,6 +259,12 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlDataAdapter.cs">
       <Link>Microsoft\Data\SqlClient\SqlDataAdapter.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlDependencyUtils.cs">
+      <Link>Microsoft\Data\SqlClient\SqlDependencyUtils.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlDependencyUtils.AppDomain.cs">
+      <Link>Microsoft\Data\SqlClient\SqlDependencyUtils.AppDomain.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlErrorCollection.cs">
       <Link>Microsoft\Data\SqlClient\SqlErrorCollection.cs</Link>
     </Compile>
@@ -455,6 +461,9 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlClientEventSource.NetCoreApp.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netcoreapp'">
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlDependencyUtils.AssemblyLoadContext.cs">
+      <Link>Microsoft\Data\SqlClient\SqlDependencyUtils.AssemblyLoadContext.cs</Link>
+    </Compile>
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPool.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionString.NetCoreApp.cs" />
@@ -463,7 +472,6 @@
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SslOverTdsStream.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionFactory.AssemblyLoadContext.cs" />    
-    <Compile Include="Microsoft\Data\SqlClient\SqlDependencyUtils.AssemblyLoadContext.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIStreams.ValueTask.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetFramework)' != 'netstandard2.0' AND '$(BuildSimulator)' == 'true'">
@@ -538,8 +546,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlDataReader.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDependency.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDependencyListener.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlDependencyUtils.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlDependencyUtils.AppDomain.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlEnums.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlError.cs" />

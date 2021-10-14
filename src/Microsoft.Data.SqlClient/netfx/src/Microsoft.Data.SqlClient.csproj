@@ -336,6 +336,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlDataAdapter.cs">
       <Link>Microsoft\Data\SqlClient\SqlDataAdapter.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlDependencyUtils.cs">
+      <Link>Microsoft\Data\SqlClient\SqlDependencyUtils.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlEnclaveAttestationParameters.Crypto.cs">
       <Link>Microsoft\Data\SqlClient\SqlEnclaveAttestationParameters.Crypto.cs</Link>
     </Compile>
@@ -527,7 +530,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDependency.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDependencyListener.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlDependencyUtils.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlEnums.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlError.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlException.cs" />
