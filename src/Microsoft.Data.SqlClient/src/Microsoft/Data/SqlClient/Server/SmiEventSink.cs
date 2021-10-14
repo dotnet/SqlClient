@@ -4,25 +4,25 @@
 
 namespace Microsoft.Data.SqlClient.Server
 {
-
-    // SqlEventSink is implemented by calling code.  In all methods that accept
-    // a SqlEventSink directly the sink must be able to handle multiple callbacks 
-    // without control returning from the original call.
-
-    // Methods that do not accept SmiEventSync are (generally) ProcessEvent on
-    // the SmiEventStream methods returning a SmiEventStream and methods that 
-    // are certain to never call to the server (most will, for in-proc back end). 
-
-    // Methods are commented with their corresponding TDS token
-
-    // NOTE: Throwing from these methods will not usually produce the desired
-    //       effect -- the managed to native boundary will eat any exceptions,
-    //       and will cause a simple "Something bad happened" exception to be
-    //       thrown in the native to managed boundary...
+    /// <summary>
+    /// SqlEventSink is implemented by calling code.  In all methods that accept
+    /// a SqlEventSink directly the sink must be able to handle multiple callbacks 
+    /// without control returning from the original call.
+    ///
+    /// Methods that do not accept SmiEventSync are (generally) ProcessEvent on
+    /// the SmiEventStream methods returning a SmiEventStream and methods that 
+    /// are certain to never call to the server (most will, for in-proc back end). 
+    ///
+    /// Methods are commented with their corresponding TDS token
+    ///
+    /// NOTE: Throwing from these methods will not usually produce the desired
+    ///       effect -- the managed to native boundary will eat any exceptions,
+    ///       and will cause a simple "Something bad happened" exception to be
+    ///       thrown in the native to managed boundary...
+    /// </summary>
     internal abstract class SmiEventSink
     {
-
-        #region Active methods
+#if NETFRAMEWORK
 
         // Called at end of stream whether errors or no
         internal abstract void BatchCompleted();
@@ -80,10 +80,9 @@ namespace Microsoft.Data.SqlClient.Server
         // Called when a transaction is started (ENVCHANGE token)
         internal abstract void TransactionStarted(long transactionId);
 
-        #endregion
 
-        #region OBSOLETE METHODS
-        #region OBSOLETED as of V200 but active in previous version
+#region OBSOLETE METHODS
+#region OBSOLETED as of V200 but active in previous version
         // Called zero or one time when output parameters are available (errors could prevent event from occuring)
         internal virtual void ParametersAvailable(SmiParameterMetaData[] metaData, ITypedGettersV3 paramValues)
         {
@@ -108,9 +107,9 @@ namespace Microsoft.Data.SqlClient.Server
             Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
         }
 
-        #endregion
+#endregion
 
-        #region OBSOLETED and never shipped (without ObsoleteAttribute)
+#region OBSOLETED and never shipped (without ObsoleteAttribute)
         // Called when a new row arrives (ROW token)
         internal virtual void RowAvailable(ITypedGetters rowData)
         {
@@ -123,8 +122,9 @@ namespace Microsoft.Data.SqlClient.Server
             Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.UnimplementedSMIMethod);
         }
 
-        #endregion
-        #endregion
+#endregion
+#endregion
+   
+#endif    
     }
 }
-
