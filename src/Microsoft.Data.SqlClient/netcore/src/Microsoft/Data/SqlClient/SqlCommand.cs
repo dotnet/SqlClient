@@ -614,11 +614,7 @@ namespace Microsoft.Data.SqlClient
         [ResDescription(StringsHelper.ResourceNames.DbCommand_CommandText)]
         public override string CommandText
         {
-            get
-            {
-                string value = _commandText;
-                return ((null != value) ? value : ADP.StrEmpty);
-            }
+            get => _commandText ?? "";
             set
             {
                 if (_commandText != value)
@@ -3187,8 +3183,7 @@ namespace Microsoft.Data.SqlClient
                     else
                     {
                         p.SqlDbType = MetaType.GetSqlDbTypeFromOleDbType((short)r[colNames[(int)ProcParamsColIndex.DataType]],
-                            ADP.IsNull(r[colNames[(int)ProcParamsColIndex.TypeName]]) ?
-                                ADP.StrEmpty :
+                            ADP.IsNull(r[colNames[(int)ProcParamsColIndex.TypeName]]) ? "" :
                                 (string)r[colNames[(int)ProcParamsColIndex.TypeName]]);
                     }
 
