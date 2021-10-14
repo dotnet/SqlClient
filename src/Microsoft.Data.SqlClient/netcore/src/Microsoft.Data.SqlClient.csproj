@@ -325,6 +325,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlRecordBuffer.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlRecordBuffer.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\ValueUtilsSmi.cs">
+      <Link>Microsoft\Data\SqlClient\Server\ValueUtilsSmi.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SignatureVerificationCache.cs">
       <Link>Microsoft\Data\SqlClient\SignatureVerificationCache.cs</Link>
     </Compile>
@@ -487,7 +490,6 @@
     <Compile Include="Microsoft\Data\SqlClient\Server\MetadataUtilsSmi.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiMetaDataProperty.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiXetterAccessMap.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\Server\ValueUtilsSmi.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDbColumn.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
     <Compile Include="$(CommonPath)\Microsoft\Data\ProviderBase\DbConnectionInternal.cs">
