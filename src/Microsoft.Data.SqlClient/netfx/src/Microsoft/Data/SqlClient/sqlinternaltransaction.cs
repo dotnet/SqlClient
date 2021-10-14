@@ -394,7 +394,7 @@ namespace Microsoft.Data.SqlClient
 
                 // UNDONE: use a singleton select here
                 // UNDONE: execute without SqlClientPermission.Demand()
-                transactionLevelCommand.RunExecuteReader(0, RunBehavior.UntilDone, false /* returnDataStream */, ADP.GetServerTransactionLevel);
+                transactionLevelCommand.RunExecuteReader(0, RunBehavior.UntilDone, false /* returnDataStream */, nameof(GetServerTransactionLevel));
 
                 return (int)parameter.Value;
             }
