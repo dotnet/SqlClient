@@ -708,7 +708,7 @@ namespace Microsoft.Data.SqlClient
 
             public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
             {
-                if (typeof(System.ComponentModel.Design.Serialization.InstanceDescriptor) == destinationType)
+                if (typeof(InstanceDescriptor) == destinationType)
                 {
                     return true;
                 }
@@ -1726,8 +1726,7 @@ namespace Microsoft.Data.SqlClient
         public override bool Remove(string keyword)
         {
             ADP.CheckArgumentNull(keyword, nameof(keyword));
-            Keywords index;
-            if (s_keywords.TryGetValue(keyword, out index))
+            if (s_keywords.TryGetValue(keyword, out Keywords index))
             {
                 if (base.Remove(s_validKeywords[(int)index]))
                 {
@@ -1742,15 +1741,13 @@ namespace Microsoft.Data.SqlClient
         public override bool ShouldSerialize(string keyword)
         {
             ADP.CheckArgumentNull(keyword, nameof(keyword));
-            Keywords index;
-            return s_keywords.TryGetValue(keyword, out index) && base.ShouldSerialize(s_validKeywords[(int)index]);
+            return s_keywords.TryGetValue(keyword, out Keywords index) && base.ShouldSerialize(s_validKeywords[(int)index]);
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TryGetValue/*' />
         public override bool TryGetValue(string keyword, out object value)
         {
-            Keywords index;
-            if (s_keywords.TryGetValue(keyword, out index))
+            if (s_keywords.TryGetValue(keyword, out Keywords index))
             {
                 value = GetAt(index);
                 return true;
@@ -1821,35 +1818,18 @@ namespace Microsoft.Data.SqlClient
             {
                 if (null != value)
                 {
-                    switch (value.Trim().ToLower(CultureInfo.InvariantCulture))
+                    value = value.Trim().ToLower(CultureInfo.InvariantCulture) switch
                     {
-                        case SqlConnectionString.NETLIB.AppleTalk:
-                            value = SqlConnectionString.NETLIB.AppleTalk;
-                            break;
-                        case SqlConnectionString.NETLIB.BanyanVines:
-                            value = SqlConnectionString.NETLIB.BanyanVines;
-                            break;
-                        case SqlConnectionString.NETLIB.IPXSPX:
-                            value = SqlConnectionString.NETLIB.IPXSPX;
-                            break;
-                        case SqlConnectionString.NETLIB.Multiprotocol:
-                            value = SqlConnectionString.NETLIB.Multiprotocol;
-                            break;
-                        case SqlConnectionString.NETLIB.NamedPipes:
-                            value = SqlConnectionString.NETLIB.NamedPipes;
-                            break;
-                        case SqlConnectionString.NETLIB.SharedMemory:
-                            value = SqlConnectionString.NETLIB.SharedMemory;
-                            break;
-                        case SqlConnectionString.NETLIB.TCPIP:
-                            value = SqlConnectionString.NETLIB.TCPIP;
-                            break;
-                        case SqlConnectionString.NETLIB.VIA:
-                            value = SqlConnectionString.NETLIB.VIA;
-                            break;
-                        default:
-                            throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.NetworkLibrary);
-                    }
+                        SqlConnectionString.NETLIB.AppleTalk => SqlConnectionString.NETLIB.AppleTalk,
+                        SqlConnectionString.NETLIB.BanyanVines => SqlConnectionString.NETLIB.BanyanVines,
+                        SqlConnectionString.NETLIB.IPXSPX => SqlConnectionString.NETLIB.IPXSPX,
+                        SqlConnectionString.NETLIB.Multiprotocol => SqlConnectionString.NETLIB.Multiprotocol,
+                        SqlConnectionString.NETLIB.NamedPipes => SqlConnectionString.NETLIB.NamedPipes,
+                        SqlConnectionString.NETLIB.SharedMemory => SqlConnectionString.NETLIB.SharedMemory,
+                        SqlConnectionString.NETLIB.TCPIP => SqlConnectionString.NETLIB.TCPIP,
+                        SqlConnectionString.NETLIB.VIA => SqlConnectionString.NETLIB.VIA,
+                        _ => throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.NetworkLibrary),
+                    };
                 }
                 SetValue(DbConnectionStringKeywords.NetworkLibrary, value);
                 _networkLibrary = value;
