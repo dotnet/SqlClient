@@ -6,7 +6,7 @@
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
 using System.Collections.Concurrent;
-using System.Data.Common;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 
@@ -126,7 +126,7 @@ namespace Microsoft.Data.ProviderBase
             // Then, if a new collection was created, release the pools from the old collection
             if (oldPoolCollection != null)
             {
-                foreach (var entry in oldPoolCollection)
+                foreach (KeyValuePair<DbConnectionPoolIdentity, DbConnectionPool> entry in oldPoolCollection)
                 {
                     DbConnectionPool pool = entry.Value;
                     if (pool != null)
@@ -186,8 +186,8 @@ namespace Microsoft.Data.ProviderBase
                             // Did someone already add it to the list?
                             if (!_poolCollection.TryGetValue(currentIdentity, out pool))
                             {
-                                DbConnectionPoolProviderInfo connectionPoolProviderInfo = connectionFactory.CreateConnectionPoolProviderInfo(this.ConnectionOptions);
-                                DbConnectionPool newPool = new DbConnectionPool(connectionFactory, this, currentIdentity, connectionPoolProviderInfo);
+                                DbConnectionPoolProviderInfo connectionPoolProviderInfo = connectionFactory.CreateConnectionPoolProviderInfo(ConnectionOptions);
+                                DbConnectionPool newPool = new(connectionFactory, this, currentIdentity, connectionPoolProviderInfo);
 
                                 if (MarkPoolGroupAsActive())
                                 {
@@ -259,7 +259,7 @@ namespace Microsoft.Data.ProviderBase
                 {
                     var newPoolCollection = new ConcurrentDictionary<DbConnectionPoolIdentity, DbConnectionPool>();
 
-                    foreach (var entry in _poolCollection)
+                    foreach (KeyValuePair<DbConnectionPoolIdentity, DbConnectionPool> entry in _poolCollection)
                     {
                         DbConnectionPool pool = entry.Value;
                         if (pool != null)
