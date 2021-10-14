@@ -5,6 +5,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
@@ -1178,13 +1179,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Keys/*' />
-        public override ICollection Keys
-        {
-            get
-            {
-                return new Microsoft.Data.Common.ReadOnlyCollection<string>(_validKeywords);
-            }
-        }
+        public override ICollection Keys => new ReadOnlyCollection<string>(_validKeywords);
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Values/*' />
         public override ICollection Values
@@ -1198,7 +1193,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     values[i] = GetAt((Keywords)i);
                 }
-                return new Microsoft.Data.Common.ReadOnlyCollection<object>(values);
+                return new ReadOnlyCollection<object>(values);
             }
         }
 
