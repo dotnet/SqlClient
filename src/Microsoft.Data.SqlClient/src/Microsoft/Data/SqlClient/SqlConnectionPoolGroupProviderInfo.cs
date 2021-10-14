@@ -2,46 +2,36 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using Microsoft.Data.Common;
+using System.Security;
 using Microsoft.Data.ProviderBase;
 
 namespace Microsoft.Data.SqlClient
 {
-    sealed internal class SqlConnectionPoolGroupProviderInfo : DbConnectionPoolGroupProviderInfo
+    internal sealed class SqlConnectionPoolGroupProviderInfo : DbConnectionPoolGroupProviderInfo
     {
         private string _alias;
-        private System.Security.PermissionSet _failoverPermissionSet;
         private string _failoverPartner;
         private bool _useFailoverPartner;
+#if NETFRAMEWORK
+        private PermissionSet _failoverPermissionSet;
+#endif
 
         internal SqlConnectionPoolGroupProviderInfo(SqlConnectionString connectionOptions)
         {
             // This is for the case where the user specified the failover partner
-            // in the connection string and we have not yet connected to get the 
+            // in the connection string and we have not yet connected to get the
             // env change.
             _failoverPartner = connectionOptions.FailoverPartner;
 
-            if (ADP.IsEmpty(_failoverPartner))
+            if (string.IsNullOrEmpty(_failoverPartner))
             {
                 _failoverPartner = null;
             }
         }
 
-        internal string FailoverPartner
-        {
-            get
-            {
-                return _failoverPartner;
-            }
-        }
+        internal string FailoverPartner => _failoverPartner;
 
-        internal bool UseFailoverPartner
-        {
-            get
-            {
-                return _useFailoverPartner;
-            }
-        }
+        internal bool UseFailoverPartner => _useFailoverPartner;
 
         internal void AliasCheck(string server)
         {
@@ -55,7 +45,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else if (_alias != server)
                     {
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.SqlConnectionPoolGroupProviderInfo|INFO> alias change detected. Clearing PoolGroup");
+                        SqlClientEventSource.Log.TryTraceEvent("SqlConnectionPoolGroupProviderInfo.AliasCheck | Info | Alias change detected. Clearing PoolGroup.");
                         base.PoolGroup.Clear();
                         _alias = server;
                     }
@@ -63,7 +53,40 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private System.Security.PermissionSet CreateFailoverPermission(SqlConnectionString userConnectionOptions, string actualFailoverPartner)
+        internal void FailoverCheck(bool actualUseFailoverPartner, SqlConnectionString userConnectionOptions, string actualFailoverPartner)
+        {
+            if (UseFailoverPartner != actualUseFailoverPartner)
+            {
+                SqlClientEventSource.Log.TryTraceEvent("SqlConnectionPoolGroupProviderInfo.FailoverCheck | Info | Failover detected. Failover partner '{0}'. Clearing PoolGroup", actualFailoverPartner);
+                base.PoolGroup.Clear();
+                _useFailoverPartner = actualUseFailoverPartner;
+            }
+            // Only construct a new permission set when we're connecting to the
+            // primary data source, not the failover partner.
+            if (!_useFailoverPartner && _failoverPartner != actualFailoverPartner)
+            {
+                // NOTE: we optimistically generate the permission set to keep
+                //       lock short, but we only do this when we get a new
+                //       failover partner.
+
+#if NETFRAMEWORK
+                PermissionSet failoverPermissionSet = CreateFailoverPermission(userConnectionOptions, actualFailoverPartner);
+#endif
+                lock (this)
+                {
+                    if (_failoverPartner != actualFailoverPartner)
+                    {
+                        _failoverPartner = actualFailoverPartner;
+#if NETFRAMEWORK
+                        _failoverPermissionSet = failoverPermissionSet;
+#endif
+                    }
+                }
+            }
+        }
+
+#if NETFRAMEWORK
+        private PermissionSet CreateFailoverPermission(SqlConnectionString userConnectionOptions, string actualFailoverPartner)
         {
             string keywordToReplace;
 
@@ -94,45 +117,13 @@ namespace Microsoft.Data.SqlClient
             return (new SqlConnectionString(failoverConnectionString)).CreatePermissionSet();
         }
 
-        internal void FailoverCheck(SqlInternalConnection connection, bool actualUseFailoverPartner, SqlConnectionString userConnectionOptions, string actualFailoverPartner)
-        {
-            if (UseFailoverPartner != actualUseFailoverPartner)
-            {
-                // TODO: will connections in progress somehow be active for two different datasources?
-                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlConnectionPoolGroupProviderInfo|INFO> Failover detected. failover partner='{0}'. Clearing PoolGroup", actualFailoverPartner);
-
-                base.PoolGroup.Clear();
-                _useFailoverPartner = actualUseFailoverPartner;
-            }
-            // Only construct a new permission set when we're connecting to the
-            // primary data source, not the failover partner.
-            if (!_useFailoverPartner && _failoverPartner != actualFailoverPartner)
-            {
-                // NOTE: we optimisitically generate the permission set to keep 
-                //       lock short, but we only do this when we get a new
-                //       failover partner.
-                // TODO: it seems to me that being optimistic here may not be such a good idea; what if there are 100s of concurrent failovers?
-
-                System.Security.PermissionSet failoverPermissionSet = CreateFailoverPermission(userConnectionOptions, actualFailoverPartner);
-
-                lock (this)
-                {
-                    if (_failoverPartner != actualFailoverPartner)
-                    {
-                        _failoverPartner = actualFailoverPartner;
-                        _failoverPermissionSet = failoverPermissionSet;
-                    }
-                }
-            }
-        }
-
         internal void FailoverPermissionDemand()
         {
             if (_useFailoverPartner)
             {
                 // Note that we only demand when there is a permission set, which only
                 // happens once we've identified a failover situation in FailoverCheck
-                System.Security.PermissionSet failoverPermissionSet = _failoverPermissionSet;
+                PermissionSet failoverPermissionSet = _failoverPermissionSet;
                 if (null != failoverPermissionSet)
                 {
                     // demand on pooled failover connections
@@ -140,5 +131,6 @@ namespace Microsoft.Data.SqlClient
                 }
             }
         }
+#endif
     }
 }

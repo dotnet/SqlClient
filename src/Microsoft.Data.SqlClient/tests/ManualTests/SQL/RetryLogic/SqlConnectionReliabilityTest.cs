@@ -12,12 +12,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public class SqlConnectionReliabilityTest
     {
         internal const string InvalidInitialCatalog = "InvalidInitialCatalog_for_retry";
-        private readonly string _exceedErrMsgPattern = RetryLogicTestHelper.s_ExceedErrMsgPattern;
-        private readonly string _cancelErrMsgPattern = RetryLogicTestHelper.s_CancelErrMsgPattern;
+        private readonly string _exceedErrMsgPattern = RetryLogicTestHelper.s_exceedErrMsgPattern;
+        private readonly string _cancelErrMsgPattern = RetryLogicTestHelper.s_cancelErrMsgPattern;
 
         #region Sync
-        [Theory]
-        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCatalog), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCatalog), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
         public void ConnectionRetryOpenInvalidCatalogFailed(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             int numberOfTries = provider.RetryLogic.NumberOfTries;
@@ -33,8 +33,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [Theory]
-        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCatalog), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCatalog), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
         public void ConnectionCancelRetryOpenInvalidCatalog(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             int cancelAfterRetries = provider.RetryLogic.NumberOfTries - 1;
@@ -51,8 +51,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         [ActiveIssue(14590, TestPlatforms.Windows)]
         // avoid creating a new database in Azure
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse))]
-        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyLongRunner), parameters: new object[] { 10 }, MemberType = typeof(RetryLogicTestHelper))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsNotAzureSynapse), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyLongRunner), parameters: new object[] { 10 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
         public void CreateDatabaseWhileTryingToConnect(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             int currentRetries = 0;
@@ -98,8 +98,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.True(currentRetries > 0);
         }
 
-        [Theory]
-        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCatalog), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCatalog), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
         public void ConcurrentExecution(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             int numberOfTries = provider.RetryLogic.NumberOfTries;
@@ -131,7 +131,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
-        [MemberData(nameof(RetryLogicTestHelper.GetNoneRetriableCondition), MemberType = typeof(RetryLogicTestHelper))]
+        [MemberData(nameof(RetryLogicTestHelper.GetNoneRetriableCondition), MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
         public void DefaultOpenWithoutRetry(string connectionString, SqlRetryLogicBaseProvider cnnProvider)
         {
             var cnnString = new SqlConnectionStringBuilder(connectionString)
@@ -154,8 +154,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         #endregion
 
         #region Async
-        [Theory]
-        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCatalog), parameters: new object[] { 5 }, MemberType = typeof(RetryLogicTestHelper))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCatalog), parameters: new object[] { 5 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
         public async void ConnectionRetryOpenAsyncInvalidCatalogFailed(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             int numberOfTries = provider.RetryLogic.NumberOfTries;
@@ -171,8 +171,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        [Theory]
-        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCatalog), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        [MemberData(nameof(RetryLogicTestHelper.GetConnectionAndRetryStrategyInvalidCatalog), parameters: new object[] { 2 }, MemberType = typeof(RetryLogicTestHelper), DisableDiscoveryEnumeration = true)]
         public async void ConnectionCancelRetryOpenAsyncInvalidCatalog(string cnnString, SqlRetryLogicBaseProvider provider)
         {
             int numberOfTries = provider.RetryLogic.NumberOfTries;
