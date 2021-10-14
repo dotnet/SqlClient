@@ -1966,7 +1966,7 @@ namespace Microsoft.Data.SqlClient
                 // We must wait for CompleteLogin to finish for to have the
                 // env change from the server to know its designated failover
                 // partner; save this information in _currentFailoverPartner.
-                PoolGroupProviderInfo.FailoverCheck(this, false, connectionOptions, ServerProvidedFailOverPartner);
+                PoolGroupProviderInfo.FailoverCheck(false, connectionOptions, ServerProvidedFailOverPartner);
             }
             CurrentDataSource = originalServerInfo.UserServerName;
         }
@@ -2235,7 +2235,7 @@ namespace Microsoft.Data.SqlClient
                 // We must wait for CompleteLogin to finish for to have the
                 // env change from the server to know its designated failover
                 // partner; save this information in _currentFailoverPartner.
-                PoolGroupProviderInfo.FailoverCheck(this, useFailoverHost, connectionOptions, ServerProvidedFailOverPartner);
+                PoolGroupProviderInfo.FailoverCheck(useFailoverHost, connectionOptions, ServerProvidedFailOverPartner);
             }
             CurrentDataSource = (useFailoverHost ? failoverHost : primaryServerInfo.UserServerName);
         }

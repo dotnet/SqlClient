@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
@@ -14,10 +15,11 @@ using Microsoft.Data.Sql;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/SqlCommandBuilder/*'/>
+    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/SqlCommandBuilder/*'/>
+    [DesignerCategory()]
     public sealed class SqlCommandBuilder : DbCommandBuilder
     {
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/ctor1/*'/>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/ctor1/*'/>
         public SqlCommandBuilder() : base()
         {
             GC.SuppressFinalize(this);
@@ -25,14 +27,19 @@ namespace Microsoft.Data.SqlClient
             base.QuoteSuffix = "]";
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/ctor2/*'/>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/ctor2/*'/>
         public SqlCommandBuilder(SqlDataAdapter adapter) : this()
         {
             DataAdapter = adapter;
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/CatalogLocation/*'/>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/CatalogLocation/*'/>
         /// <devnote>SqlServer only supports CatalogLocation.Start</devnote>
+        [
+        Browsable(false),
+        EditorBrowsableAttribute(EditorBrowsableState.Never),
+        DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
+        ]
         public override CatalogLocation CatalogLocation
         {
             get
@@ -48,8 +55,13 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/CatalogSeparator/*'/>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/CatalogSeparator/*'/>
         /// <devnote>SqlServer only supports '.'</devnote>
+        [
+        Browsable(false),
+        EditorBrowsableAttribute(EditorBrowsableState.Never),
+        DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
+        ]
         public override string CatalogSeparator
         {
             get
@@ -65,8 +77,13 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/DataAdapter/*'/>
-        new public SqlDataAdapter DataAdapter
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/DataAdapter/*'/>
+        [
+        DefaultValue(null),
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Update),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlCommandBuilder_DataAdapter),
+        ]
+        public new SqlDataAdapter DataAdapter
         {
             get
             {
@@ -78,8 +95,13 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/QuotePrefix/*'/>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/QuotePrefix/*'/>
         /// <devnote>SqlServer only supports '.'</devnote>
+        [
+        Browsable(false),
+        EditorBrowsableAttribute(EditorBrowsableState.Never),
+        DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
+        ]
         public override string QuotePrefix
         {
             get
@@ -96,7 +118,12 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/QuoteSuffix/*'/>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/QuoteSuffix/*'/>
+        [
+        Browsable(false),
+        EditorBrowsableAttribute(EditorBrowsableState.Never),
+        DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
+        ]
         public override string QuoteSuffix
         {
             get
@@ -113,7 +140,12 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/SchemaSeparator/*'/>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/SchemaSeparator/*'/>
+        [
+        Browsable(false),
+        EditorBrowsableAttribute(EditorBrowsableState.Never),
+        DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
+        ]
         public override string SchemaSeparator
         {
             get
@@ -134,31 +166,31 @@ namespace Microsoft.Data.SqlClient
             base.RowUpdatingHandler(ruevent);
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetInsertCommand2/*'/>
-        new public SqlCommand GetInsertCommand()
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetInsertCommand2/*'/>
+        public new SqlCommand GetInsertCommand()
             => (SqlCommand)base.GetInsertCommand();
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetInsertCommand3/*'/>
-        new public SqlCommand GetInsertCommand(bool useColumnsForParameterNames)
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetInsertCommand3/*'/>
+        public new SqlCommand GetInsertCommand(bool useColumnsForParameterNames)
             => (SqlCommand)base.GetInsertCommand(useColumnsForParameterNames);
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetUpdateCommand2/*'/>
-        new public SqlCommand GetUpdateCommand()
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetUpdateCommand2/*'/>
+        public new SqlCommand GetUpdateCommand()
             => (SqlCommand)base.GetUpdateCommand();
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetUpdateCommand3/*'/>
-        new public SqlCommand GetUpdateCommand(bool useColumnsForParameterNames)
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetUpdateCommand3/*'/>
+        public new SqlCommand GetUpdateCommand(bool useColumnsForParameterNames)
             => (SqlCommand)base.GetUpdateCommand(useColumnsForParameterNames);
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetDeleteCommand2/*'/>
-        new public SqlCommand GetDeleteCommand()
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetDeleteCommand2/*'/>
+        public new SqlCommand GetDeleteCommand()
             => (SqlCommand)base.GetDeleteCommand();
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetDeleteCommand3/*'/>
-        new public SqlCommand GetDeleteCommand(bool useColumnsForParameterNames)
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetDeleteCommand3/*'/>
+        public new SqlCommand GetDeleteCommand(bool useColumnsForParameterNames)
             => (SqlCommand)base.GetDeleteCommand(useColumnsForParameterNames);
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/ApplyParameterInfo/*'/>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/ApplyParameterInfo/*'/>
         protected override void ApplyParameterInfo(DbParameter parameter, DataRow datarow, StatementType statementType, bool whereClause)
         {
             SqlParameter p = (SqlParameter)parameter;
@@ -190,15 +222,15 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetParameterName1/*'/>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetParameterName1/*'/>
         protected override string GetParameterName(int parameterOrdinal)
             => ("@p" + parameterOrdinal.ToString(CultureInfo.InvariantCulture));
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetParameterName2/*'/>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetParameterName2/*'/>
         protected override string GetParameterName(string parameterName)
             => ("@" + parameterName);
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetParameterPlaceholder/*'/>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetParameterPlaceholder/*'/>
         protected override string GetParameterPlaceholder(int parameterOrdinal)
             => ("@p" + parameterOrdinal.ToString(CultureInfo.InvariantCulture));
 
@@ -212,18 +244,43 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/DeriveParameters/*'/>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/DeriveParameters/*'/>
         public static void DeriveParameters(SqlCommand command)
         {
+#if NETFRAMEWORK
+            SqlConnection.ExecutePermission.Demand();
+#endif
             if (null == command)
             {
                 throw ADP.ArgumentNull(nameof(command));
             }
-
+#if NETFRAMEWORK
+            TdsParser bestEffortCleanupTarget = null;
+#endif
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
-                command.DeriveParameters();
+#if NETFRAMEWORK
+#if DEBUG
+                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+
+                RuntimeHelpers.PrepareConstrainedRegions();
+                try {
+                    tdsReliabilitySection.Start();
+#else
+                {
+#endif // DEBUG
+                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(command.Connection);
+#endif // NETFRAMEWORK
+                    command.DeriveParameters();
+#if NETFRAMEWORK
+                }
+#if DEBUG
+                finally {
+                    tdsReliabilitySection.Stop();
+                }
+#endif // DEBUG
+#endif // NETFRAMEWORK
             }
             catch (OutOfMemoryException e)
             {
@@ -238,37 +295,44 @@ namespace Microsoft.Data.SqlClient
             catch (ThreadAbortException e)
             {
                 command?.Connection?.Abort(e);
+#if NETFRAMEWORK
+                SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+#endif
                 throw;
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetSchemaTable/*'/>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/GetSchemaTable/*'/>
         protected override DataTable GetSchemaTable(DbCommand srcCommand)
         {
             SqlCommand sqlCommand = srcCommand as SqlCommand;
             SqlNotificationRequest notificationRequest = sqlCommand.Notification;
-
             sqlCommand.Notification = null;
+#if NETFRAMEWORK
+            bool notificationAutoEnlist = sqlCommand.NotificationAutoEnlist;
+            sqlCommand.NotificationAutoEnlist = false;
+#endif
 
             try
             {
-                using (SqlDataReader dataReader = sqlCommand.ExecuteReader(CommandBehavior.SchemaOnly | CommandBehavior.KeyInfo))
-                {
-                    return dataReader.GetSchemaTable();
-                }
+                using SqlDataReader dataReader = sqlCommand.ExecuteReader(CommandBehavior.SchemaOnly | CommandBehavior.KeyInfo);
+                return dataReader.GetSchemaTable();
             }
             finally
             {
                 sqlCommand.Notification = notificationRequest;
+#if NETFRAMEWORK
+                sqlCommand.NotificationAutoEnlist = notificationAutoEnlist;
+#endif
             }
 
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/InitializeCommand/*'/>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/InitializeCommand/*'/>
         protected override DbCommand InitializeCommand(DbCommand command)
             => (SqlCommand)base.InitializeCommand(command);
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/QuoteIdentifier/*'/>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/QuoteIdentifier/*'/>
         public override string QuoteIdentifier(string unquotedIdentifier)
         {
             ADP.CheckArgumentNull(unquotedIdentifier, nameof(unquotedIdentifier));
@@ -278,7 +342,7 @@ namespace Microsoft.Data.SqlClient
             return ADP.BuildQuotedString(quotePrefixLocal, quoteSuffixLocal, unquotedIdentifier);
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/SetRowUpdatingHandler/*'/>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/SetRowUpdatingHandler/*'/>
         protected override void SetRowUpdatingHandler(DbDataAdapter adapter)
         {
             Debug.Assert(adapter is SqlDataAdapter, "Adapter is not a SqlDataAdapter.");
@@ -292,16 +356,15 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/UnquoteIdentifier/*'/>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommandBuilder.xml' path='docs/members[@name="SqlCommandBuilder"]/UnquoteIdentifier/*'/>
         public override string UnquoteIdentifier(string quotedIdentifier)
         {
             ADP.CheckArgumentNull(quotedIdentifier, nameof(quotedIdentifier));
-            string unquotedIdentifier;
             string quoteSuffixLocal = QuoteSuffix;
             string quotePrefixLocal = QuotePrefix;
             ConsistentQuoteDelimiters(quotePrefixLocal, quoteSuffixLocal);
             // ignoring the return value because an unquoted source string is OK here
-            ADP.RemoveStringQuotes(quotePrefixLocal, quoteSuffixLocal, quotedIdentifier, out unquotedIdentifier);
+            ADP.RemoveStringQuotes(quotePrefixLocal, quoteSuffixLocal, quotedIdentifier, out string unquotedIdentifier);
             return unquotedIdentifier;
         }
     }
