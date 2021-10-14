@@ -52,6 +52,9 @@ namespace Microsoft.Data.ProviderBase
         internal DbConnectionPoolGroup(DbConnectionOptions connectionOptions, DbConnectionPoolKey key, DbConnectionPoolGroupOptions poolGroupOptions)
         {
             Debug.Assert(null != connectionOptions, "null connection options");
+#if NETFRAMEWORK
+            Debug.Assert(null == poolGroupOptions || ADP.s_isWindowsNT, "should not have pooling options on Win9x");
+#endif
 
             _connectionOptions = connectionOptions;
             _poolKey = key;
@@ -129,6 +132,9 @@ namespace Microsoft.Data.ProviderBase
                     if (pool != null)
                     {
                         DbConnectionFactory connectionFactory = pool.ConnectionFactory;
+#if NETFRAMEWORK
+                        connectionFactory.PerformanceCounters.NumberOfActiveConnectionPools.Decrement();
+#endif
                         connectionFactory.QueuePoolForRelease(pool, true);
                     }
                 }
@@ -149,6 +155,10 @@ namespace Microsoft.Data.ProviderBase
             DbConnectionPool pool = null;
             if (null != _poolGroupOptions)
             {
+#if NETFRAMEWORK
+                Debug.Assert(ADP.s_isWindowsNT, "should not be pooling on Win9x");
+#endif
+
                 DbConnectionPoolIdentity currentIdentity = DbConnectionPoolIdentity.NoIdentity;
 
                 if (_poolGroupOptions.PoolByIdentity)
@@ -188,6 +198,9 @@ namespace Microsoft.Data.ProviderBase
                                     bool addResult = _poolCollection.TryAdd(currentIdentity, newPool);
                                     Debug.Assert(addResult, "No other pool with current identity should exist at this point");
                                     SqlClientEventSource.Log.EnterActiveConnectionPool();
+#if NETFRAMEWORK
+                                    connectionFactory.PerformanceCounters.NumberOfActiveConnectionPools.Increment();
+#endif
                                     pool = newPool;
                                 }
                                 else
@@ -263,6 +276,9 @@ namespace Microsoft.Data.ProviderBase
                                 // pool into a list of pools to be released when they
                                 // are completely empty.
                                 DbConnectionFactory connectionFactory = pool.ConnectionFactory;
+#if NETFRAMEWORK
+                                connectionFactory.PerformanceCounters.NumberOfActiveConnectionPools.Decrement();
+#endif
                                 connectionFactory.QueuePoolForRelease(pool, false);
                             }
                             else
