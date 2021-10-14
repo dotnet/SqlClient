@@ -64,20 +64,23 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\DataClassification\SensitivityClassification.cs">
       <Link>Microsoft\Data\SqlClient\DataClassification\SensitivityClassification.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\ProviderBase\DbConnectionPoolProviderInfo.cs">
-      <Link>Microsoft\Data\ProviderBase\DbConnectionPoolProviderInfo.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\ProviderBase\DbConnectionPoolOptions.cs">
-      <Link>Microsoft\Data\ProviderBase\DbConnectionPoolOptions.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\ProviderBase\DbConnectionPoolGroupProviderInfo.cs">
-      <Link>Microsoft\Data\ProviderBase\DbConnectionPoolGroupProviderInfo.cs</Link>
-    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContext.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContext.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContextKey.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContextKey.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\ProviderBase\DbConnectionPoolGroup.cs">
+      <Link>Microsoft\Data\ProviderBase\DbConnectionPoolGroup.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\ProviderBase\DbConnectionPoolGroupProviderInfo.cs">
+      <Link>Microsoft\Data\ProviderBase\DbConnectionPoolGroupProviderInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\ProviderBase\DbConnectionPoolOptions.cs">
+      <Link>Microsoft\Data\ProviderBase\DbConnectionPoolOptions.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\ProviderBase\DbConnectionPoolProviderInfo.cs">
+      <Link>Microsoft\Data\ProviderBase\DbConnectionPoolProviderInfo.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\ProviderBase\DbMetaDataFactory.cs">
       <Link>Common\Microsoft\Data\ProviderBase\DbMetaDataFactory.cs</Link>
@@ -495,9 +498,6 @@
     </Compile>
     <Compile Include="$(CommonPath)\Microsoft\Data\ProviderBase\DbConnectionFactory.cs">
       <Link>Common\Microsoft\Data\ProviderBase\DbConnectionFactory.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Microsoft\Data\ProviderBase\DbConnectionPoolGroup.cs">
-      <Link>Common\Microsoft\Data\ProviderBase\DbConnectionPoolGroup.cs</Link>
     </Compile>
     <Compile Include="$(CommonPath)\Microsoft\Data\ProviderBase\DbReferenceCollection.cs">
       <Link>Common\Microsoft\Data\ProviderBase\DbReferenceCollection.cs</Link>
