@@ -86,7 +86,12 @@ namespace Microsoft.Data.SqlClient
                 _dependencyIdToDependencyHash = new Dictionary<string, SqlDependency>();
                 _notificationIdToDependenciesHash = new Dictionary<string, DependencyList>();
                 _commandHashToNotificationId = new Dictionary<string, string>();
+#if NETFRAMEWORK
+                _timeoutTimer = new Timer(new TimerCallback(TimeoutTimerCallback), null, Timeout.Infinite, Timeout.Infinite);
 
+                // If rude abort - we'll leak.  This is acceptable for now.  
+                AppDomain.CurrentDomain.DomainUnload += new EventHandler(this.UnloadEventHandler);
+#else
                 _timeoutTimer = ADP.UnsafeCreateTimer(
                     new TimerCallback(TimeoutTimerCallback),
                     null,
@@ -95,6 +100,7 @@ namespace Microsoft.Data.SqlClient
 
                 SubscribeToAppDomainUnload();
                 SubscribeToAssemblyLoadContextUnload();
+#endif // NETFRAMEWORK
             }
             finally
             {
