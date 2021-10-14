@@ -7,6 +7,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.ComponentModel.Design.Serialization;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
@@ -20,16 +21,14 @@ namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/SqlConnectionStringBuilder/*' />
     [DefaultProperty(DbConnectionStringKeywords.DataSource)]
-#if NETFRAMEWORK
-    [System.ComponentModel.TypeConverterAttribute(typeof(SqlConnectionStringBuilder.SqlConnectionStringBuilderConverter))]
-#endif
+    [TypeConverter(typeof(SqlConnectionStringBuilderConverter))]
     public sealed class SqlConnectionStringBuilder : DbConnectionStringBuilder
     {
         /// <summary>
         /// specific ordering for ConnectionString output construction
         /// </summary>
         private enum Keywords
-        {   // NamedConnection,
+        {
             DataSource,
             FailoverPartner,
             AttachDBFilename,
@@ -79,15 +78,16 @@ namespace Microsoft.Data.SqlClient
 
             CommandTimeout,
             IPAddressPreference,
+
 #if NETFRAMEWORK && ADONET_CERT_AUTH
             Certificate,
 #endif
-            // keep the count value last
+            // keep the KeywordsCount value last
             KeywordsCount
         }
 
+        #region Fields
         internal const int KeywordsCount = (int)Keywords.KeywordsCount;
-        internal const int DeprecatedKeywordsCount = 3;
 
         private static readonly string[] s_validKeywords = CreateValidKeywords();
         private static readonly Dictionary<string, Keywords> s_keywords = CreateKeywordsDictionary();
@@ -139,7 +139,12 @@ namespace Microsoft.Data.SqlClient
 #if ADONET_CERT_AUTH
         private string _certificate = DbConnectionStringDefaults.Certificate;
 #endif
+#else
+        internal const int DeprecatedKeywordsCount = 3;
 #endif
+        #endregion //Fields
+
+        #region Private Methods
         private static string[] CreateValidKeywords()
         {
             string[] validKeywords = new string[KeywordsCount];
@@ -179,7 +184,6 @@ namespace Microsoft.Data.SqlClient
             validKeywords[(int)Keywords.EnclaveAttestationUrl] = DbConnectionStringKeywords.EnclaveAttestationUrl;
             validKeywords[(int)Keywords.AttestationProtocol] = DbConnectionStringKeywords.AttestationProtocol;
             validKeywords[(int)Keywords.IPAddressPreference] = DbConnectionStringKeywords.IPAddressPreference;
-
 #if NETFRAMEWORK
             validKeywords[(int)Keywords.ConnectionReset] = DbConnectionStringKeywords.ConnectionReset;
             validKeywords[(int)Keywords.ContextConnection] = DbConnectionStringKeywords.ContextConnection;
@@ -194,7 +198,7 @@ namespace Microsoft.Data.SqlClient
 
         private static Dictionary<string, Keywords> CreateKeywordsDictionary()
         {
-            Dictionary<string, Keywords> hash = new(KeywordsCount + SqlConnectionString.SynonymCount, StringComparer.OrdinalIgnoreCase)
+            Dictionary<string, Keywords> pairs = new(KeywordsCount + SqlConnectionString.SynonymCount, StringComparer.OrdinalIgnoreCase)
             {
                 { DbConnectionStringKeywords.ApplicationIntent, Keywords.ApplicationIntent },
                 { DbConnectionStringKeywords.ApplicationName, Keywords.ApplicationName },
@@ -272,879 +276,37 @@ namespace Microsoft.Data.SqlClient
                 { DbConnectionStringSynonyms.User, Keywords.UserID },
                 { DbConnectionStringSynonyms.WSID, Keywords.WorkstationID }
             };
-            Debug.Assert((KeywordsCount + SqlConnectionString.SynonymCount) == hash.Count, "initial expected size is incorrect");
-            return hash;
+            Debug.Assert((KeywordsCount + SqlConnectionString.SynonymCount) == pairs.Count, "initial expected size is incorrect");
+            return pairs;
         }
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ctor2/*' />
-        public SqlConnectionStringBuilder() : this((string)null)
-        {
-        }
+        private static bool ConvertToBoolean(object value) => DbConnectionStringBuilderUtil.ConvertToBoolean(value);
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ctorConnectionString/*' />
-        public SqlConnectionStringBuilder(string connectionString) : base()
-        {
-            if (!string.IsNullOrEmpty(connectionString))
-            {
-                ConnectionString = connectionString;
-            }
-        }
+        private static int ConvertToInt32(object value) => DbConnectionStringBuilderUtil.ConvertToInt32(value);
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Item/*' />
-        public override object this[string keyword]
-        {
-            get
-            {
-                Keywords index = GetIndex(keyword);
-                return GetAt(index);
-            }
-            set
-            {
-                if (null != value)
-                {
-                    Keywords index = GetIndex(keyword);
-                    switch (index)
-                    {
-                        case Keywords.ApplicationIntent:
-                            ApplicationIntent = ConvertToApplicationIntent(keyword, value);
-                            break;
-                        case Keywords.ApplicationName:
-                            ApplicationName = ConvertToString(value);
-                            break;
-                        case Keywords.AttachDBFilename:
-                            AttachDBFilename = ConvertToString(value);
-                            break;
-                        case Keywords.CurrentLanguage:
-                            CurrentLanguage = ConvertToString(value);
-                            break;
-                        case Keywords.DataSource:
-                            DataSource = ConvertToString(value);
-                            break;
-                        case Keywords.FailoverPartner:
-                            FailoverPartner = ConvertToString(value);
-                            break;
-                        case Keywords.InitialCatalog:
-                            InitialCatalog = ConvertToString(value);
-                            break;
-                        //                  case Keywords.NamedConnection:          NamedConnection = ConvertToString(value); break;
-                        case Keywords.Password:
-                            Password = ConvertToString(value);
-                            break;
-                        case Keywords.UserID:
-                            UserID = ConvertToString(value);
-                            break;
-                        case Keywords.TransactionBinding:
-                            TransactionBinding = ConvertToString(value);
-                            break;
-                        case Keywords.TypeSystemVersion:
-                            TypeSystemVersion = ConvertToString(value);
-                            break;
-                        case Keywords.WorkstationID:
-                            WorkstationID = ConvertToString(value);
-                            break;
+        private static bool ConvertToIntegratedSecurity(object value) => DbConnectionStringBuilderUtil.ConvertToIntegratedSecurity(value);
 
-                        case Keywords.CommandTimeout:
-                            CommandTimeout = ConvertToInt32(value);
-                            break;
-                        case Keywords.ConnectTimeout:
-                            ConnectTimeout = ConvertToInt32(value);
-                            break;
-                        case Keywords.LoadBalanceTimeout:
-                            LoadBalanceTimeout = ConvertToInt32(value);
-                            break;
-                        case Keywords.MaxPoolSize:
-                            MaxPoolSize = ConvertToInt32(value);
-                            break;
-                        case Keywords.MinPoolSize:
-                            MinPoolSize = ConvertToInt32(value);
-                            break;
-                        case Keywords.PacketSize:
-                            PacketSize = ConvertToInt32(value);
-                            break;
+        private static SqlAuthenticationMethod ConvertToAuthenticationType(string keyword, object value) => DbConnectionStringBuilderUtil.ConvertToAuthenticationType(keyword, value);
 
-                        case Keywords.IntegratedSecurity:
-                            IntegratedSecurity = ConvertToIntegratedSecurity(value);
-                            break;
-                        case Keywords.Authentication:
-                            Authentication = ConvertToAuthenticationType(keyword, value);
-                            break;
-                        case Keywords.ColumnEncryptionSetting:
-                            ColumnEncryptionSetting = ConvertToColumnEncryptionSetting(keyword, value);
-                            break;
-                        case Keywords.EnclaveAttestationUrl:
-                            EnclaveAttestationUrl = ConvertToString(value);
-                            break;
-                        case Keywords.AttestationProtocol:
-                            AttestationProtocol = ConvertToAttestationProtocol(keyword, value);
-                            break;
-                        case Keywords.IPAddressPreference:
-                            IPAddressPreference = ConvertToIPAddressPreference(keyword, value);
-                            break;
-                        case Keywords.PoolBlockingPeriod:
-                            PoolBlockingPeriod = ConvertToPoolBlockingPeriod(keyword, value);
-                            break;
-                        case Keywords.Encrypt:
-                            Encrypt = ConvertToBoolean(value);
-                            break;
-                        case Keywords.TrustServerCertificate:
-                            TrustServerCertificate = ConvertToBoolean(value);
-                            break;
-                        case Keywords.Enlist:
-                            Enlist = ConvertToBoolean(value);
-                            break;
-                        case Keywords.MultipleActiveResultSets:
-                            MultipleActiveResultSets = ConvertToBoolean(value);
-                            break;
-                        case Keywords.MultiSubnetFailover:
-                            MultiSubnetFailover = ConvertToBoolean(value);
-                            break;
-                        case Keywords.PersistSecurityInfo:
-                            PersistSecurityInfo = ConvertToBoolean(value);
-                            break;
-                        case Keywords.Pooling:
-                            Pooling = ConvertToBoolean(value);
-                            break;
-                        case Keywords.Replication:
-                            Replication = ConvertToBoolean(value);
-                            break;
-                        case Keywords.UserInstance:
-                            UserInstance = ConvertToBoolean(value);
-                            break;
-                        case Keywords.ConnectRetryCount:
-                            ConnectRetryCount = ConvertToInt32(value);
-                            break;
-                        case Keywords.ConnectRetryInterval:
-                            ConnectRetryInterval = ConvertToInt32(value);
-                            break;
-#if NETFRAMEWORK
-#pragma warning disable 618 // Obsolete properties
-                        case Keywords.ConnectionReset:
-                            ConnectionReset = ConvertToBoolean(value);
-                            break;
-                        case Keywords.ContextConnection:
-                            ContextConnection = ConvertToBoolean(value);
-                            break;
-#pragma warning restore 618
-                        case Keywords.NetworkLibrary:
-                            NetworkLibrary = ConvertToString(value);
-                            break;
-                        case Keywords.TransparentNetworkIPResolution:
-                            TransparentNetworkIPResolution = ConvertToBoolean(value);
-                            break;
-#if ADONET_CERT_AUTH
-                        case Keywords.Certificate:
-                            Certificate = ConvertToString(value);
-                            break;
-#endif
-#endif
-                        default:
-                            Debug.Fail("unexpected keyword");
-                            throw UnsupportedKeyword(keyword);
-                    }
-                }
-                else
-                {
-                    Remove(keyword);
-                }
-            }
-        }
+        private static string ConvertToString(object value) => DbConnectionStringBuilderUtil.ConvertToString(value);
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ApplicationIntent/*' />
-        [DisplayNameAttribute(DbConnectionStringKeywords.ApplicationIntent)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Initialization)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_ApplicationIntent)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public ApplicationIntent ApplicationIntent
-        {
-            get { return _applicationIntent; }
-            set
-            {
-                if (!DbConnectionStringBuilderUtil.IsValidApplicationIntentValue(value))
-                {
-                    throw ADP.InvalidEnumerationValue(typeof(ApplicationIntent), (int)value);
-                }
-
-                SetApplicationIntentValue(value);
-                _applicationIntent = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ApplicationName/*' />
-        [DisplayNameAttribute(DbConnectionStringKeywords.ApplicationName)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Context)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_ApplicationName)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public string ApplicationName
-        {
-            get { return _applicationName; }
-            set
-            {
-                SetValue(DbConnectionStringKeywords.ApplicationName, value);
-                _applicationName = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/AttachDBFilename/*' />
-        [DisplayNameAttribute(DbConnectionStringKeywords.AttachDBFilename)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Source)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_AttachDBFilename)]
-        [EditorAttribute("System.Windows.Forms.Design.FileNameEditor, System.Design, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a", "System.Drawing.Design.UITypeEditor, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a")]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public string AttachDBFilename
-        {
-            get { return _attachDBFilename; }
-            set
-            {
-                SetValue(DbConnectionStringKeywords.AttachDBFilename, value);
-                _attachDBFilename = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/CommandTimeout/*' />
-        [DisplayNameAttribute(DbConnectionStringKeywords.CommandTimeout)]
-        [ResCategory(StringsHelper.ResourceNames.DataCategory_Initialization)]
-        [ResDescription(StringsHelper.ResourceNames.DbCommand_CommandTimeout)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public int CommandTimeout
-        {
-            get { return _commandTimeout; }
-            set
-            {
-                if (value < 0)
-                {
-                    throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.CommandTimeout);
-                }
-                SetValue(DbConnectionStringKeywords.CommandTimeout, value);
-                _commandTimeout = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectTimeout/*' />
-        [DisplayNameAttribute(DbConnectionStringKeywords.ConnectTimeout)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Initialization)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_ConnectTimeout)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public int ConnectTimeout
-        {
-            get { return _connectTimeout; }
-            set
-            {
-                if (value < 0)
-                {
-                    throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.ConnectTimeout);
-                }
-                SetValue(DbConnectionStringKeywords.ConnectTimeout, value);
-                _connectTimeout = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/CurrentLanguage/*' />
-        [DisplayNameAttribute(DbConnectionStringKeywords.CurrentLanguage)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Initialization)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_CurrentLanguage)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public string CurrentLanguage
-        {
-            get { return _currentLanguage; }
-            set
-            {
-                SetValue(DbConnectionStringKeywords.CurrentLanguage, value);
-                _currentLanguage = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/DataSource/*' />
-        [DisplayNameAttribute(DbConnectionStringKeywords.DataSource)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Source)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_DataSource)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-#if NETFRAMEWORK
-        [TypeConverter(typeof(SqlDataSourceConverter))]
-#endif
-        public string DataSource
-        {
-            get { return _dataSource; }
-            set
-            {
-                SetValue(DbConnectionStringKeywords.DataSource, value);
-                _dataSource = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Encrypt/*' />
-        [DisplayNameAttribute(DbConnectionStringKeywords.Encrypt)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Security)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_Encrypt)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public bool Encrypt
-        {
-            get { return _encrypt; }
-            set
-            {
-                SetValue(DbConnectionStringKeywords.Encrypt, value);
-                _encrypt = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ColumnEncryptionSetting/*' />
-        [DisplayNameAttribute(DbConnectionStringKeywords.ColumnEncryptionSetting)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Security)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.TCE_DbConnectionString_ColumnEncryptionSetting)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting
-        {
-            get { return _columnEncryptionSetting; }
-            set
-            {
-                if (!DbConnectionStringBuilderUtil.IsValidColumnEncryptionSetting(value))
-                {
-                    throw ADP.InvalidEnumerationValue(typeof(SqlConnectionColumnEncryptionSetting), (int)value);
-                }
-
-                SetColumnEncryptionSettingValue(value);
-                _columnEncryptionSetting = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/EnclaveAttestationUrl/*' />
-        [DisplayNameAttribute(DbConnectionStringKeywords.EnclaveAttestationUrl)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Security)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.TCE_DbConnectionString_EnclaveAttestationUrl)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public string EnclaveAttestationUrl
-        {
-            get { return _enclaveAttestationUrl; }
-            set
-            {
-                SetValue(DbConnectionStringKeywords.EnclaveAttestationUrl, value);
-                _enclaveAttestationUrl = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/AttestationProtocol/*' />
-        [DisplayNameAttribute(DbConnectionStringKeywords.AttestationProtocol)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Security)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.TCE_DbConnectionString_AttestationProtocol)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public SqlConnectionAttestationProtocol AttestationProtocol
-        {
-            get { return _attestationProtocol; }
-            set
-            {
-                if (!DbConnectionStringBuilderUtil.IsValidAttestationProtocol(value))
-                {
-                    throw ADP.InvalidEnumerationValue(typeof(SqlConnectionAttestationProtocol), (int)value);
-                }
-
-                SetAttestationProtocolValue(value);
-                _attestationProtocol = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/IPAddressPreference/*' />
-        [DisplayNameAttribute(DbConnectionStringKeywords.IPAddressPreference)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Security)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.TCE_DbConnectionString_IPAddressPreference)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public SqlConnectionIPAddressPreference IPAddressPreference
-        {
-            get => _ipAddressPreference;
-            set
-            {
-                if (!DbConnectionStringBuilderUtil.IsValidIPAddressPreference(value))
-                {
-                    throw ADP.InvalidEnumerationValue(typeof(SqlConnectionIPAddressPreference), (int)value);
-                }
-
-                SetIPAddressPreferenceValue(value);
-                _ipAddressPreference = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TrustServerCertificate/*' />
-        [DisplayNameAttribute(DbConnectionStringKeywords.TrustServerCertificate)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Security)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_TrustServerCertificate)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public bool TrustServerCertificate
-        {
-            get { return _trustServerCertificate; }
-            set
-            {
-                SetValue(DbConnectionStringKeywords.TrustServerCertificate, value);
-                _trustServerCertificate = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Enlist/*' />
-        [DisplayNameAttribute(DbConnectionStringKeywords.Enlist)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Pooling)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_Enlist)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public bool Enlist
-        {
-            get { return _enlist; }
-            set
-            {
-                SetValue(DbConnectionStringKeywords.Enlist, value);
-                _enlist = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/FailoverPartner/*' />
-        [DisplayNameAttribute(DbConnectionStringKeywords.FailoverPartner)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Source)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_FailoverPartner)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-#if NETFRAMEWORK
-        [TypeConverter(typeof(SqlDataSourceConverter))]
-#endif
-        public string FailoverPartner
-        {
-            get { return _failoverPartner; }
-            set
-            {
-                SetValue(DbConnectionStringKeywords.FailoverPartner, value);
-                _failoverPartner = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/InitialCatalog/*' />
-        [DisplayNameAttribute(DbConnectionStringKeywords.InitialCatalog)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Source)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_InitialCatalog)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        [TypeConverter(typeof(SqlInitialCatalogConverter))]
-        public string InitialCatalog
-        {
-            get { return _initialCatalog; }
-            set
-            {
-                SetValue(DbConnectionStringKeywords.InitialCatalog, value);
-                _initialCatalog = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/IntegratedSecurity/*' />
-        [DisplayNameAttribute(DbConnectionStringKeywords.IntegratedSecurity)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Security)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_IntegratedSecurity)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public bool IntegratedSecurity
-        {
-            get { return _integratedSecurity; }
-            set
-            {
-                SetValue(DbConnectionStringKeywords.IntegratedSecurity, value);
-                _integratedSecurity = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Authentication/*' />
-        [DisplayNameAttribute(DbConnectionStringKeywords.Authentication)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Security)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_Authentication)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public SqlAuthenticationMethod Authentication
-        {
-            get { return _authentication; }
-            set
-            {
-                if (!DbConnectionStringBuilderUtil.IsValidAuthenticationTypeValue(value))
-                {
-                    throw ADP.InvalidEnumerationValue(typeof(SqlAuthenticationMethod), (int)value);
-                }
-
-                SetAuthenticationValue(value);
-                _authentication = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/LoadBalanceTimeout/*' />
-        [DisplayNameAttribute(DbConnectionStringKeywords.LoadBalanceTimeout)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Pooling)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_LoadBalanceTimeout)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public int LoadBalanceTimeout
-        {
-            get { return _loadBalanceTimeout; }
-            set
-            {
-                if (value < 0)
-                {
-                    throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.LoadBalanceTimeout);
-                }
-                SetValue(DbConnectionStringKeywords.LoadBalanceTimeout, value);
-                _loadBalanceTimeout = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/MaxPoolSize/*' />
-        [DisplayNameAttribute(DbConnectionStringKeywords.MaxPoolSize)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Pooling)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_MaxPoolSize)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public int MaxPoolSize
-        {
-            get { return _maxPoolSize; }
-            set
-            {
-                if (value < 1)
-                {
-                    throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.MaxPoolSize);
-                }
-                SetValue(DbConnectionStringKeywords.MaxPoolSize, value);
-                _maxPoolSize = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectRetryCount/*' />
-        [DisplayNameAttribute(DbConnectionStringKeywords.ConnectRetryCount)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_ConnectionResilency)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_ConnectRetryCount)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public int ConnectRetryCount
-        {
-            get { return _connectRetryCount; }
-            set
-            {
-                if ((value < 0) || (value > 255))
-                {
-                    throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.ConnectRetryCount);
-                }
-                SetValue(DbConnectionStringKeywords.ConnectRetryCount, value);
-                _connectRetryCount = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectRetryInterval/*' />
-        [DisplayNameAttribute(DbConnectionStringKeywords.ConnectRetryInterval)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_ConnectionResilency)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_ConnectRetryInterval)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public int ConnectRetryInterval
-        {
-            get { return _connectRetryInterval; }
-            set
-            {
-                if ((value < 1) || (value > 60))
-                {
-                    throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.ConnectRetryInterval);
-                }
-                SetValue(DbConnectionStringKeywords.ConnectRetryInterval, value);
-                _connectRetryInterval = value;
-            }
-        }
-
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/MinPoolSize/*' />
-        [DisplayNameAttribute(DbConnectionStringKeywords.MinPoolSize)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Pooling)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_MinPoolSize)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public int MinPoolSize
-        {
-            get { return _minPoolSize; }
-            set
-            {
-                if (value < 0)
-                {
-                    throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.MinPoolSize);
-                }
-                SetValue(DbConnectionStringKeywords.MinPoolSize, value);
-                _minPoolSize = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/MultipleActiveResultSets/*' />
-        [DisplayNameAttribute(DbConnectionStringKeywords.MultipleActiveResultSets)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Advanced)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_MultipleActiveResultSets)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public bool MultipleActiveResultSets
-        {
-            get { return _multipleActiveResultSets; }
-            set
-            {
-                SetValue(DbConnectionStringKeywords.MultipleActiveResultSets, value);
-                _multipleActiveResultSets = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/MultiSubnetFailover/*' />
-        [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", Justification = "Reviewed and Approved by UE")]
-        [DisplayNameAttribute(DbConnectionStringKeywords.MultiSubnetFailover)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Source)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_MultiSubnetFailover)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public bool MultiSubnetFailover
-        {
-            get { return _multiSubnetFailover; }
-            set
-            {
-                SetValue(DbConnectionStringKeywords.MultiSubnetFailover, value);
-                _multiSubnetFailover = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/PacketSize/*' />
-        [DisplayNameAttribute(DbConnectionStringKeywords.PacketSize)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Advanced)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_PacketSize)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public int PacketSize
-        {
-            get { return _packetSize; }
-            set
-            {
-                if ((value < TdsEnums.MIN_PACKET_SIZE) || (TdsEnums.MAX_PACKET_SIZE < value))
-                {
-                    throw SQL.InvalidPacketSizeValue();
-                }
-                SetValue(DbConnectionStringKeywords.PacketSize, value);
-                _packetSize = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Password/*' />
-        [DisplayNameAttribute(DbConnectionStringKeywords.Password)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Security)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_Password)]
-        [PasswordPropertyTextAttribute(true)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public string Password
-        {
-            get { return _password; }
-            set
-            {
-                SetValue(DbConnectionStringKeywords.Password, value);
-                _password = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/PersistSecurityInfo/*' />
-        [DisplayNameAttribute(DbConnectionStringKeywords.PersistSecurityInfo)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Security)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_PersistSecurityInfo)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public bool PersistSecurityInfo
-        {
-            get { return _persistSecurityInfo; }
-            set
-            {
-                SetValue(DbConnectionStringKeywords.PersistSecurityInfo, value);
-                _persistSecurityInfo = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/PoolBlockingPeriod/*' />
-        [DisplayName(DbConnectionStringKeywords.PoolBlockingPeriod)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Pooling)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_PoolBlockingPeriod)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public PoolBlockingPeriod PoolBlockingPeriod
-        {
-            get { return _poolBlockingPeriod; }
-            set
-            {
-                if (!DbConnectionStringBuilderUtil.IsValidPoolBlockingPeriodValue(value))
-                {
-                    throw ADP.InvalidEnumerationValue(typeof(PoolBlockingPeriod), (int)value);
-                }
-
-                SetPoolBlockingPeriodValue(value);
-                _poolBlockingPeriod = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Pooling/*' />
-        [DisplayNameAttribute(DbConnectionStringKeywords.Pooling)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Pooling)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_Pooling)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public bool Pooling
-        {
-            get { return _pooling; }
-            set
-            {
-                SetValue(DbConnectionStringKeywords.Pooling, value);
-                _pooling = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Replication/*' />
-        [DisplayNameAttribute(DbConnectionStringKeywords.Replication)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Replication)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_Replication)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public bool Replication
-        {
-            get { return _replication; }
-            set
-            {
-                SetValue(DbConnectionStringKeywords.Replication, value);
-                _replication = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TransactionBinding/*' />
-        [DisplayNameAttribute(DbConnectionStringKeywords.TransactionBinding)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Advanced)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_TransactionBinding)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public string TransactionBinding
-        {
-            get { return _transactionBinding; }
-            set
-            {
-                SetValue(DbConnectionStringKeywords.TransactionBinding, value);
-                _transactionBinding = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TypeSystemVersion/*' />
-        [DisplayNameAttribute(DbConnectionStringKeywords.TypeSystemVersion)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Advanced)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_TypeSystemVersion)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public string TypeSystemVersion
-        {
-            get { return _typeSystemVersion; }
-            set
-            {
-                SetValue(DbConnectionStringKeywords.TypeSystemVersion, value);
-                _typeSystemVersion = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/UserID/*' />
-        [DisplayNameAttribute(DbConnectionStringKeywords.UserID)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Security)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_UserID)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public string UserID
-        {
-            get { return _userID; }
-            set
-            {
-                SetValue(DbConnectionStringKeywords.UserID, value);
-                _userID = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/UserInstance/*' />
-        [DisplayNameAttribute(DbConnectionStringKeywords.UserInstance)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Source)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_UserInstance)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public bool UserInstance
-        {
-            get { return _userInstance; }
-            set
-            {
-                SetValue(DbConnectionStringKeywords.UserInstance, value);
-                _userInstance = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/WorkstationID/*' />
-        [DisplayNameAttribute(DbConnectionStringKeywords.WorkstationID)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Context)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_WorkstationID)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public string WorkstationID
-        {
-            get { return _workstationID; }
-            set
-            {
-                SetValue(DbConnectionStringKeywords.WorkstationID, value);
-                _workstationID = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/IsFixedSize/*' />
-        public override bool IsFixedSize => true;
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Keys/*' />
-        public override ICollection Keys => new System.Collections.ObjectModel.ReadOnlyCollection<string>(s_validKeywords);
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Values/*' />
-        public override ICollection Values
-        {
-            get
-            {
-                // written this way so if the ordering of Keywords & _validKeywords changes
-                // this is one less place to maintain
-                object[] values = new object[s_validKeywords.Length];
-                for (int i = 0; i < values.Length; ++i)
-                {
-                    values[i] = GetAt((Keywords)i);
-                }
-                return new System.Collections.ObjectModel.ReadOnlyCollection<object>(values);
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Clear/*' />
-        public override void Clear()
-        {
-            base.Clear();
-            for (int i = 0; i < s_validKeywords.Length; ++i)
-            {
-                Reset((Keywords)i);
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ContainsKey/*' />
-        public override bool ContainsKey(string keyword)
-        {
-            ADP.CheckArgumentNull(keyword, nameof(keyword));
-            return s_keywords.ContainsKey(keyword);
-        }
-
-        private static bool ConvertToBoolean(object value)
-        {
-            return DbConnectionStringBuilderUtil.ConvertToBoolean(value);
-        }
-        private static int ConvertToInt32(object value)
-        {
-            return DbConnectionStringBuilderUtil.ConvertToInt32(value);
-        }
-        private static bool ConvertToIntegratedSecurity(object value)
-        {
-            return DbConnectionStringBuilderUtil.ConvertToIntegratedSecurity(value);
-        }
-        private static SqlAuthenticationMethod ConvertToAuthenticationType(string keyword, object value)
-        {
-            return DbConnectionStringBuilderUtil.ConvertToAuthenticationType(keyword, value);
-        }
-        private static string ConvertToString(object value)
-        {
-            return DbConnectionStringBuilderUtil.ConvertToString(value);
-        }
-        private static ApplicationIntent ConvertToApplicationIntent(string keyword, object value)
-        {
-            return DbConnectionStringBuilderUtil.ConvertToApplicationIntent(keyword, value);
-        }
+        private static ApplicationIntent ConvertToApplicationIntent(string keyword, object value) => DbConnectionStringBuilderUtil.ConvertToApplicationIntent(keyword, value);
 
         /// <summary>
         /// Convert to SqlConnectionColumnEncryptionSetting.
         /// </summary>
         /// <param name="keyword"></param>
         /// <param name="value"></param>
-        private static SqlConnectionColumnEncryptionSetting ConvertToColumnEncryptionSetting(string keyword, object value)
-        {
-            return DbConnectionStringBuilderUtil.ConvertToColumnEncryptionSetting(keyword, value);
-        }
+        private static SqlConnectionColumnEncryptionSetting ConvertToColumnEncryptionSetting(string keyword, object value) 
+            => DbConnectionStringBuilderUtil.ConvertToColumnEncryptionSetting(keyword, value);
 
         /// <summary>
         /// Convert to SqlConnectionAttestationProtocol
         /// </summary>
         /// <param name="keyword"></param>
         /// <param name="value"></param>
-        private static SqlConnectionAttestationProtocol ConvertToAttestationProtocol(string keyword, object value)
-        {
-            return DbConnectionStringBuilderUtil.ConvertToAttestationProtocol(keyword, value);
-        }
+        private static SqlConnectionAttestationProtocol ConvertToAttestationProtocol(string keyword, object value) 
+            => DbConnectionStringBuilderUtil.ConvertToAttestationProtocol(keyword, value);
 
         /// <summary>
         /// Convert to SqlConnectionIPAddressPreference
@@ -1259,29 +421,12 @@ namespace Microsoft.Data.SqlClient
         private Keywords GetIndex(string keyword)
         {
             ADP.CheckArgumentNull(keyword, nameof(keyword));
-            Keywords index;
-            if (s_keywords.TryGetValue(keyword, out index))
+            if (s_keywords.TryGetValue(keyword, out Keywords index))
             {
                 return index;
             }
 
             throw UnsupportedKeyword(keyword);
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Remove/*' />
-        public override bool Remove(string keyword)
-        {
-            ADP.CheckArgumentNull(keyword, nameof(keyword));
-            Keywords index;
-            if (s_keywords.TryGetValue(keyword, out index))
-            {
-                if (base.Remove(s_validKeywords[(int)index]))
-                {
-                    Reset(index);
-                    return true;
-                }
-            }
-            return false;
         }
 
         private void Reset(Keywords index)
@@ -1421,24 +566,22 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private void SetValue(string keyword, bool value)
-        {
-            base[keyword] = value.ToString();
-        }
-        private void SetValue(string keyword, int value)
-        {
-            base[keyword] = value.ToString((System.IFormatProvider)null);
-        }
+        private void SetValue(string keyword, bool value) => base[keyword] = value.ToString();
+
+        private void SetValue(string keyword, int value) => base[keyword] = value.ToString((System.IFormatProvider)null);
+
         private void SetValue(string keyword, string value)
         {
             ADP.CheckArgumentNull(value, keyword);
             base[keyword] = value;
         }
+
         private void SetApplicationIntentValue(ApplicationIntent value)
         {
             Debug.Assert(DbConnectionStringBuilderUtil.IsValidApplicationIntentValue(value), "invalid value for ApplicationIntent");
             base[DbConnectionStringKeywords.ApplicationIntent] = DbConnectionStringBuilderUtil.ApplicationIntentToString(value);
         }
+
         private void SetColumnEncryptionSettingValue(SqlConnectionColumnEncryptionSetting value)
         {
             Debug.Assert(DbConnectionStringBuilderUtil.IsValidColumnEncryptionSetting(value), "Invalid value for SqlConnectionColumnEncryptionSetting");
@@ -1469,27 +612,6 @@ namespace Microsoft.Data.SqlClient
             base[DbConnectionStringKeywords.PoolBlockingPeriod] = DbConnectionStringBuilderUtil.PoolBlockingPeriodToString(value);
         }
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ShouldSerialize/*' />
-        public override bool ShouldSerialize(string keyword)
-        {
-            ADP.CheckArgumentNull(keyword, nameof(keyword));
-            Keywords index;
-            return s_keywords.TryGetValue(keyword, out index) && base.ShouldSerialize(s_validKeywords[(int)index]);
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TryGetValue/*' />
-        public override bool TryGetValue(string keyword, out object value)
-        {
-            Keywords index;
-            if (s_keywords.TryGetValue(keyword, out index))
-            {
-                value = GetAt(index);
-                return true;
-            }
-            value = null;
-            return false;
-        }
-
         private Exception UnsupportedKeyword(string keyword)
         {
 #if !NETFRAMEWORK
@@ -1509,14 +631,9 @@ namespace Microsoft.Data.SqlClient
         private sealed class SqlInitialCatalogConverter : StringConverter
         {
             // converter classes should have public ctor
-            public SqlInitialCatalogConverter()
-            {
-            }
+            public SqlInitialCatalogConverter() {}
 
-            public override bool GetStandardValuesSupported(ITypeDescriptorContext context)
-            {
-                return GetStandardValuesSupportedInternal(context);
-            }
+            public override bool GetStandardValuesSupported(ITypeDescriptorContext context) => GetStandardValuesSupportedInternal(context);
 
             private bool GetStandardValuesSupportedInternal(ITypeDescriptorContext context)
             {
@@ -1537,11 +654,8 @@ namespace Microsoft.Data.SqlClient
                 return flag;
             }
 
-            public override bool GetStandardValuesExclusive(ITypeDescriptorContext context)
-            {
-                // Although theoretically this could be true, some people may want to just type in a name
-                return false;
-            }
+            // Although theoretically this could be true, some people may want to just type in a name
+            public override bool GetStandardValuesExclusive(ITypeDescriptorContext context) => false;
 
             public override StandardValuesCollection GetStandardValues(ITypeDescriptorContext context)
             {
@@ -1587,129 +701,53 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-#if NETFRAMEWORK
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectionReset/*' />
-        [Browsable(false)]
-        [DisplayName(DbConnectionStringKeywords.ConnectionReset)]
-        [Obsolete("ConnectionReset has been deprecated. SqlConnection will ignore the 'connection reset' keyword and always reset the connection.")] // SQLPT 41700
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Pooling)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_ConnectionReset)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public bool ConnectionReset
+        internal sealed class SqlConnectionStringBuilderConverter : ExpandableObjectConverter
         {
-            get { return _connectionReset; }
-            set
-            {
-                SetValue(DbConnectionStringKeywords.ConnectionReset, value);
-                _connectionReset = value;
-            }
-        }
+            // converter classes should have public ctor
+            public SqlConnectionStringBuilderConverter() { }
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ContextConnection/*' />
-        [DisplayName(DbConnectionStringKeywords.ContextConnection)]
-        [Obsolete("ContextConnection has been deprecated. SqlConnection will ignore the 'Context Connection' keyword.")]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Source)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_ContextConnection)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public bool ContextConnection
-        {
-            get { return _contextConnection; }
-            set
+            public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
             {
-                SetValue(DbConnectionStringKeywords.ContextConnection, value);
-                _contextConnection = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TransparentNetworkIPResolution/*' />
-        [DisplayName(DbConnectionStringKeywords.TransparentNetworkIPResolution)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Source)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_TransparentNetworkIPResolution)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public bool TransparentNetworkIPResolution
-        {
-            get { return _transparentNetworkIPResolution; }
-            set
-            {
-                SetValue(DbConnectionStringKeywords.TransparentNetworkIPResolution, value);
-                _transparentNetworkIPResolution = value;
-            }
-        }
-
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/NetworkLibrary/*' />
-        [DisplayName(DbConnectionStringKeywords.NetworkLibrary)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Advanced)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_NetworkLibrary)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        [TypeConverter(typeof(NetworkLibraryConverter))]
-        public string NetworkLibrary
-        {
-            get { return _networkLibrary; }
-            set
-            {
-                if (null != value)
+                if (typeof(System.ComponentModel.Design.Serialization.InstanceDescriptor) == destinationType)
                 {
-                    switch (value.Trim().ToLower(CultureInfo.InvariantCulture))
+                    return true;
+                }
+                return base.CanConvertTo(context, destinationType);
+            }
+
+            public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
+            {
+                if (destinationType == null)
+                {
+                    throw ADP.ArgumentNull(nameof(destinationType));
+                }
+                if (typeof(InstanceDescriptor) == destinationType)
+                {
+                    SqlConnectionStringBuilder obj = (value as SqlConnectionStringBuilder);
+                    if (null != obj)
                     {
-                        case SqlConnectionString.NETLIB.AppleTalk:
-                            value = SqlConnectionString.NETLIB.AppleTalk;
-                            break;
-                        case SqlConnectionString.NETLIB.BanyanVines:
-                            value = SqlConnectionString.NETLIB.BanyanVines;
-                            break;
-                        case SqlConnectionString.NETLIB.IPXSPX:
-                            value = SqlConnectionString.NETLIB.IPXSPX;
-                            break;
-                        case SqlConnectionString.NETLIB.Multiprotocol:
-                            value = SqlConnectionString.NETLIB.Multiprotocol;
-                            break;
-                        case SqlConnectionString.NETLIB.NamedPipes:
-                            value = SqlConnectionString.NETLIB.NamedPipes;
-                            break;
-                        case SqlConnectionString.NETLIB.SharedMemory:
-                            value = SqlConnectionString.NETLIB.SharedMemory;
-                            break;
-                        case SqlConnectionString.NETLIB.TCPIP:
-                            value = SqlConnectionString.NETLIB.TCPIP;
-                            break;
-                        case SqlConnectionString.NETLIB.VIA:
-                            value = SqlConnectionString.NETLIB.VIA;
-                            break;
-                        default:
-                            throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.NetworkLibrary);
+                        return ConvertToInstanceDescriptor(obj);
                     }
                 }
-                SetValue(DbConnectionStringKeywords.NetworkLibrary, value);
-                _networkLibrary = value;
+                return base.ConvertTo(context, culture, value, destinationType);
+            }
+
+            private InstanceDescriptor ConvertToInstanceDescriptor(SqlConnectionStringBuilder options)
+            {
+                Type[] ctorParams = new Type[] { typeof(string) };
+                object[] ctorValues = new object[] { options.ConnectionString };
+                ConstructorInfo ctor = typeof(SqlConnectionStringBuilder).GetConstructor(ctorParams);
+                return new InstanceDescriptor(ctor, ctorValues);
             }
         }
 
-#if ADONET_CERT_AUTH
-        [DisplayName(DbConnectionStringKeywords.Certificate)]
-        [ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Security)]
-        [ResDescriptionAttribute(StringsHelper.ResourceNames.DbConnectionString_Certificate)]
-        [RefreshPropertiesAttribute(RefreshProperties.All)]
-        public string Certificate {
-            get { return _certificate; }
-            set {
-                if (!DbConnectionStringBuilderUtil.IsValidCertificateValue(value)) {
-                    throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.Certificate);
-                }
-
-                SetValue(DbConnectionStringKeywords.Certificate, value);
-                _certificate = value;
-            }
-        }
-#else
-        internal string Certificate => null;
-#endif
-
+#if NETFRAMEWORK
         private sealed class SqlDataSourceConverter : StringConverter
         {
             private StandardValuesCollection _standardValues;
 
             // converter classes should have public ctor
-            public SqlDataSourceConverter(){}
+            public SqlDataSourceConverter() { }
 
             public override bool GetStandardValuesSupported(ITypeDescriptorContext context) => true;
 
@@ -1754,10 +792,10 @@ namespace Microsoft.Data.SqlClient
 
         private sealed class NetworkLibraryConverter : TypeConverter
         {
-            //            private const string AppleTalk     = "Apple Talk (DBMSADSN)";  Invalid protocals
-            //            private const string BanyanVines   = "Banyan VINES (DBMSVINN)";
-            //            private const string IPXSPX        = "NWLink IPX/SPX (DBMSSPXN)";
-            //            private const string Multiprotocol = "Multiprotocol (DBMSRPCN)";
+            // private const string AppleTalk     = "Apple Talk (DBMSADSN)";  Invalid protocals
+            // private const string BanyanVines   = "Banyan VINES (DBMSVINN)";
+            // private const string IPXSPX        = "NWLink IPX/SPX (DBMSSPXN)";
+            // private const string Multiprotocol = "Multiprotocol (DBMSRPCN)";
             private const string NamedPipes = "Named Pipes (DBNMPNTW)";   // valid protocols
             private const string SharedMemory = "Shared Memory (DBMSLPCN)";
             private const string TCPIP = "TCP/IP (DBMSSOCN)";
@@ -1767,7 +805,7 @@ namespace Microsoft.Data.SqlClient
             private StandardValuesCollection _standardValues;
 
             // converter classes should have public ctor
-            public NetworkLibraryConverter() {}
+            public NetworkLibraryConverter() { }
 
             public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
                 // Only know how to convert from a string
@@ -1843,49 +881,8 @@ namespace Microsoft.Data.SqlClient
                 return standardValues;
             }
         }
-
-        internal sealed class SqlConnectionStringBuilderConverter : ExpandableObjectConverter
-        {
-            // converter classes should have public ctor
-            public SqlConnectionStringBuilderConverter() {}
-
-            public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
-            {
-                if (typeof(System.ComponentModel.Design.Serialization.InstanceDescriptor) == destinationType)
-                {
-                    return true;
-                }
-                return base.CanConvertTo(context, destinationType);
-            }
-
-            public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
-            {
-                if (destinationType == null)
-                {
-                    throw ADP.ArgumentNull(nameof(destinationType));
-                }
-                if (typeof(System.ComponentModel.Design.Serialization.InstanceDescriptor) == destinationType)
-                {
-                    SqlConnectionStringBuilder obj = (value as SqlConnectionStringBuilder);
-                    if (null != obj)
-                    {
-                        return ConvertToInstanceDescriptor(obj);
-                    }
-                }
-                return base.ConvertTo(context, culture, value, destinationType);
-            }
-
-            private System.ComponentModel.Design.Serialization.InstanceDescriptor ConvertToInstanceDescriptor(SqlConnectionStringBuilder options)
-            {
-                Type[] ctorParams = new Type[] { typeof(string) };
-                object[] ctorValues = new object[] { options.ConnectionString };
-                ConstructorInfo ctor = typeof(SqlConnectionStringBuilder).GetConstructor(ctorParams);
-                return new System.ComponentModel.Design.Serialization.InstanceDescriptor(ctor, ctorValues);
-            }
-        }
-#else
-
-        private static readonly string[] s_notSupportedKeywords = new string[] {
+#else    
+        private static readonly string[] s_notSupportedKeywords = new string[DeprecatedKeywordsCount] {
             DbConnectionStringKeywords.ConnectionReset,
             DbConnectionStringKeywords.ContextConnection,
             DbConnectionStringKeywords.TransactionBinding,
@@ -1898,5 +895,985 @@ namespace Microsoft.Data.SqlClient
             DbConnectionStringSynonyms.NETWORK
         };
 #endif
+        #endregion //Private Methods
+
+        #region Public APIs
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ctor2/*' />
+        public SqlConnectionStringBuilder() : this(null)
+        {
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ctorConnectionString/*' />
+        public SqlConnectionStringBuilder(string connectionString) : base()
+        {
+            if (!string.IsNullOrEmpty(connectionString))
+            {
+                ConnectionString = connectionString;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Item/*' />
+        public override object this[string keyword]
+        {
+            get
+            {
+                Keywords index = GetIndex(keyword);
+                return GetAt(index);
+            }
+            set
+            {
+                if (null != value)
+                {
+                    Keywords index = GetIndex(keyword);
+                    switch (index)
+                    {
+                        case Keywords.ApplicationIntent:
+                            ApplicationIntent = ConvertToApplicationIntent(keyword, value);
+                            break;
+                        case Keywords.ApplicationName:
+                            ApplicationName = ConvertToString(value);
+                            break;
+                        case Keywords.AttachDBFilename:
+                            AttachDBFilename = ConvertToString(value);
+                            break;
+                        case Keywords.CurrentLanguage:
+                            CurrentLanguage = ConvertToString(value);
+                            break;
+                        case Keywords.DataSource:
+                            DataSource = ConvertToString(value);
+                            break;
+                        case Keywords.FailoverPartner:
+                            FailoverPartner = ConvertToString(value);
+                            break;
+                        case Keywords.InitialCatalog:
+                            InitialCatalog = ConvertToString(value);
+                            break;
+                        case Keywords.Password:
+                            Password = ConvertToString(value);
+                            break;
+                        case Keywords.UserID:
+                            UserID = ConvertToString(value);
+                            break;
+                        case Keywords.TransactionBinding:
+                            TransactionBinding = ConvertToString(value);
+                            break;
+                        case Keywords.TypeSystemVersion:
+                            TypeSystemVersion = ConvertToString(value);
+                            break;
+                        case Keywords.WorkstationID:
+                            WorkstationID = ConvertToString(value);
+                            break;
+
+                        case Keywords.CommandTimeout:
+                            CommandTimeout = ConvertToInt32(value);
+                            break;
+                        case Keywords.ConnectTimeout:
+                            ConnectTimeout = ConvertToInt32(value);
+                            break;
+                        case Keywords.LoadBalanceTimeout:
+                            LoadBalanceTimeout = ConvertToInt32(value);
+                            break;
+                        case Keywords.MaxPoolSize:
+                            MaxPoolSize = ConvertToInt32(value);
+                            break;
+                        case Keywords.MinPoolSize:
+                            MinPoolSize = ConvertToInt32(value);
+                            break;
+                        case Keywords.PacketSize:
+                            PacketSize = ConvertToInt32(value);
+                            break;
+
+                        case Keywords.IntegratedSecurity:
+                            IntegratedSecurity = ConvertToIntegratedSecurity(value);
+                            break;
+                        case Keywords.Authentication:
+                            Authentication = ConvertToAuthenticationType(keyword, value);
+                            break;
+                        case Keywords.ColumnEncryptionSetting:
+                            ColumnEncryptionSetting = ConvertToColumnEncryptionSetting(keyword, value);
+                            break;
+                        case Keywords.EnclaveAttestationUrl:
+                            EnclaveAttestationUrl = ConvertToString(value);
+                            break;
+                        case Keywords.AttestationProtocol:
+                            AttestationProtocol = ConvertToAttestationProtocol(keyword, value);
+                            break;
+                        case Keywords.IPAddressPreference:
+                            IPAddressPreference = ConvertToIPAddressPreference(keyword, value);
+                            break;
+                        case Keywords.PoolBlockingPeriod:
+                            PoolBlockingPeriod = ConvertToPoolBlockingPeriod(keyword, value);
+                            break;
+                        case Keywords.Encrypt:
+                            Encrypt = ConvertToBoolean(value);
+                            break;
+                        case Keywords.TrustServerCertificate:
+                            TrustServerCertificate = ConvertToBoolean(value);
+                            break;
+                        case Keywords.Enlist:
+                            Enlist = ConvertToBoolean(value);
+                            break;
+                        case Keywords.MultipleActiveResultSets:
+                            MultipleActiveResultSets = ConvertToBoolean(value);
+                            break;
+                        case Keywords.MultiSubnetFailover:
+                            MultiSubnetFailover = ConvertToBoolean(value);
+                            break;
+                        case Keywords.PersistSecurityInfo:
+                            PersistSecurityInfo = ConvertToBoolean(value);
+                            break;
+                        case Keywords.Pooling:
+                            Pooling = ConvertToBoolean(value);
+                            break;
+                        case Keywords.Replication:
+                            Replication = ConvertToBoolean(value);
+                            break;
+                        case Keywords.UserInstance:
+                            UserInstance = ConvertToBoolean(value);
+                            break;
+                        case Keywords.ConnectRetryCount:
+                            ConnectRetryCount = ConvertToInt32(value);
+                            break;
+                        case Keywords.ConnectRetryInterval:
+                            ConnectRetryInterval = ConvertToInt32(value);
+                            break;
+#if NETFRAMEWORK
+#pragma warning disable 618 // Obsolete properties
+                        case Keywords.ConnectionReset:
+                            ConnectionReset = ConvertToBoolean(value);
+                            break;
+                        case Keywords.ContextConnection:
+                            ContextConnection = ConvertToBoolean(value);
+                            break;
+#pragma warning restore 618
+                        case Keywords.NetworkLibrary:
+                            NetworkLibrary = ConvertToString(value);
+                            break;
+                        case Keywords.TransparentNetworkIPResolution:
+                            TransparentNetworkIPResolution = ConvertToBoolean(value);
+                            break;
+#if ADONET_CERT_AUTH
+                        case Keywords.Certificate:
+                            Certificate = ConvertToString(value);
+                            break;
+#endif
+#endif
+                        default:
+                            Debug.Fail("unexpected keyword");
+                            throw UnsupportedKeyword(keyword);
+                    }
+                }
+                else
+                {
+                    Remove(keyword);
+                }
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ApplicationIntent/*' />
+        [DisplayName(DbConnectionStringKeywords.ApplicationIntent)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Initialization)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_ApplicationIntent)]
+        [RefreshProperties(RefreshProperties.All)]
+        public ApplicationIntent ApplicationIntent
+        {
+            get { return _applicationIntent; }
+            set
+            {
+                if (!DbConnectionStringBuilderUtil.IsValidApplicationIntentValue(value))
+                {
+                    throw ADP.InvalidEnumerationValue(typeof(ApplicationIntent), (int)value);
+                }
+
+                SetApplicationIntentValue(value);
+                _applicationIntent = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ApplicationName/*' />
+        [DisplayName(DbConnectionStringKeywords.ApplicationName)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Context)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_ApplicationName)]
+        [RefreshProperties(RefreshProperties.All)]
+        public string ApplicationName
+        {
+            get { return _applicationName; }
+            set
+            {
+                SetValue(DbConnectionStringKeywords.ApplicationName, value);
+                _applicationName = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/AttachDBFilename/*' />
+        [DisplayName(DbConnectionStringKeywords.AttachDBFilename)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Source)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_AttachDBFilename)]
+        [Editor("System.Windows.Forms.Design.FileNameEditor, System.Design, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a", "System.Drawing.Design.UITypeEditor, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a")]
+        [RefreshProperties(RefreshProperties.All)]
+        public string AttachDBFilename
+        {
+            get { return _attachDBFilename; }
+            set
+            {
+                SetValue(DbConnectionStringKeywords.AttachDBFilename, value);
+                _attachDBFilename = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/CommandTimeout/*' />
+        [DisplayName(DbConnectionStringKeywords.CommandTimeout)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Initialization)]
+        [ResDescription(StringsHelper.ResourceNames.DbCommand_CommandTimeout)]
+        [RefreshProperties(RefreshProperties.All)]
+        public int CommandTimeout
+        {
+            get { return _commandTimeout; }
+            set
+            {
+                if (value < 0)
+                {
+                    throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.CommandTimeout);
+                }
+                SetValue(DbConnectionStringKeywords.CommandTimeout, value);
+                _commandTimeout = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectTimeout/*' />
+        [DisplayName(DbConnectionStringKeywords.ConnectTimeout)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Initialization)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_ConnectTimeout)]
+        [RefreshProperties(RefreshProperties.All)]
+        public int ConnectTimeout
+        {
+            get { return _connectTimeout; }
+            set
+            {
+                if (value < 0)
+                {
+                    throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.ConnectTimeout);
+                }
+                SetValue(DbConnectionStringKeywords.ConnectTimeout, value);
+                _connectTimeout = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/CurrentLanguage/*' />
+        [DisplayName(DbConnectionStringKeywords.CurrentLanguage)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Initialization)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_CurrentLanguage)]
+        [RefreshProperties(RefreshProperties.All)]
+        public string CurrentLanguage
+        {
+            get { return _currentLanguage; }
+            set
+            {
+                SetValue(DbConnectionStringKeywords.CurrentLanguage, value);
+                _currentLanguage = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/DataSource/*' />
+        [DisplayName(DbConnectionStringKeywords.DataSource)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Source)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_DataSource)]
+        [RefreshProperties(RefreshProperties.All)]
+#if NETFRAMEWORK
+        [TypeConverter(typeof(SqlDataSourceConverter))]
+#endif
+        public string DataSource
+        {
+            get { return _dataSource; }
+            set
+            {
+                SetValue(DbConnectionStringKeywords.DataSource, value);
+                _dataSource = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Encrypt/*' />
+        [DisplayName(DbConnectionStringKeywords.Encrypt)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Security)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_Encrypt)]
+        [RefreshProperties(RefreshProperties.All)]
+        public bool Encrypt
+        {
+            get { return _encrypt; }
+            set
+            {
+                SetValue(DbConnectionStringKeywords.Encrypt, value);
+                _encrypt = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ColumnEncryptionSetting/*' />
+        [DisplayName(DbConnectionStringKeywords.ColumnEncryptionSetting)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Security)]
+        [ResDescription(StringsHelper.ResourceNames.TCE_DbConnectionString_ColumnEncryptionSetting)]
+        [RefreshProperties(RefreshProperties.All)]
+        public SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting
+        {
+            get { return _columnEncryptionSetting; }
+            set
+            {
+                if (!DbConnectionStringBuilderUtil.IsValidColumnEncryptionSetting(value))
+                {
+                    throw ADP.InvalidEnumerationValue(typeof(SqlConnectionColumnEncryptionSetting), (int)value);
+                }
+
+                SetColumnEncryptionSettingValue(value);
+                _columnEncryptionSetting = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/EnclaveAttestationUrl/*' />
+        [DisplayName(DbConnectionStringKeywords.EnclaveAttestationUrl)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Security)]
+        [ResDescription(StringsHelper.ResourceNames.TCE_DbConnectionString_EnclaveAttestationUrl)]
+        [RefreshProperties(RefreshProperties.All)]
+        public string EnclaveAttestationUrl
+        {
+            get { return _enclaveAttestationUrl; }
+            set
+            {
+                SetValue(DbConnectionStringKeywords.EnclaveAttestationUrl, value);
+                _enclaveAttestationUrl = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/AttestationProtocol/*' />
+        [DisplayName(DbConnectionStringKeywords.AttestationProtocol)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Security)]
+        [ResDescription(StringsHelper.ResourceNames.TCE_DbConnectionString_AttestationProtocol)]
+        [RefreshProperties(RefreshProperties.All)]
+        public SqlConnectionAttestationProtocol AttestationProtocol
+        {
+            get { return _attestationProtocol; }
+            set
+            {
+                if (!DbConnectionStringBuilderUtil.IsValidAttestationProtocol(value))
+                {
+                    throw ADP.InvalidEnumerationValue(typeof(SqlConnectionAttestationProtocol), (int)value);
+                }
+
+                SetAttestationProtocolValue(value);
+                _attestationProtocol = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/IPAddressPreference/*' />
+        [DisplayName(DbConnectionStringKeywords.IPAddressPreference)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Security)]
+        [ResDescription(StringsHelper.ResourceNames.TCE_DbConnectionString_IPAddressPreference)]
+        [RefreshProperties(RefreshProperties.All)]
+        public SqlConnectionIPAddressPreference IPAddressPreference
+        {
+            get => _ipAddressPreference;
+            set
+            {
+                if (!DbConnectionStringBuilderUtil.IsValidIPAddressPreference(value))
+                {
+                    throw ADP.InvalidEnumerationValue(typeof(SqlConnectionIPAddressPreference), (int)value);
+                }
+
+                SetIPAddressPreferenceValue(value);
+                _ipAddressPreference = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TrustServerCertificate/*' />
+        [DisplayName(DbConnectionStringKeywords.TrustServerCertificate)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Security)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_TrustServerCertificate)]
+        [RefreshProperties(RefreshProperties.All)]
+        public bool TrustServerCertificate
+        {
+            get { return _trustServerCertificate; }
+            set
+            {
+                SetValue(DbConnectionStringKeywords.TrustServerCertificate, value);
+                _trustServerCertificate = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Enlist/*' />
+        [DisplayName(DbConnectionStringKeywords.Enlist)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Pooling)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_Enlist)]
+        [RefreshProperties(RefreshProperties.All)]
+        public bool Enlist
+        {
+            get { return _enlist; }
+            set
+            {
+                SetValue(DbConnectionStringKeywords.Enlist, value);
+                _enlist = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/FailoverPartner/*' />
+        [DisplayName(DbConnectionStringKeywords.FailoverPartner)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Source)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_FailoverPartner)]
+        [RefreshProperties(RefreshProperties.All)]
+#if NETFRAMEWORK
+        [TypeConverter(typeof(SqlDataSourceConverter))]
+#endif
+        public string FailoverPartner
+        {
+            get { return _failoverPartner; }
+            set
+            {
+                SetValue(DbConnectionStringKeywords.FailoverPartner, value);
+                _failoverPartner = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/InitialCatalog/*' />
+        [DisplayName(DbConnectionStringKeywords.InitialCatalog)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Source)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_InitialCatalog)]
+        [RefreshProperties(RefreshProperties.All)]
+        [TypeConverter(typeof(SqlInitialCatalogConverter))]
+        public string InitialCatalog
+        {
+            get { return _initialCatalog; }
+            set
+            {
+                SetValue(DbConnectionStringKeywords.InitialCatalog, value);
+                _initialCatalog = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/IntegratedSecurity/*' />
+        [DisplayName(DbConnectionStringKeywords.IntegratedSecurity)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Security)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_IntegratedSecurity)]
+        [RefreshProperties(RefreshProperties.All)]
+        public bool IntegratedSecurity
+        {
+            get { return _integratedSecurity; }
+            set
+            {
+                SetValue(DbConnectionStringKeywords.IntegratedSecurity, value);
+                _integratedSecurity = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Authentication/*' />
+        [DisplayName(DbConnectionStringKeywords.Authentication)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Security)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_Authentication)]
+        [RefreshProperties(RefreshProperties.All)]
+        public SqlAuthenticationMethod Authentication
+        {
+            get { return _authentication; }
+            set
+            {
+                if (!DbConnectionStringBuilderUtil.IsValidAuthenticationTypeValue(value))
+                {
+                    throw ADP.InvalidEnumerationValue(typeof(SqlAuthenticationMethod), (int)value);
+                }
+
+                SetAuthenticationValue(value);
+                _authentication = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/LoadBalanceTimeout/*' />
+        [DisplayName(DbConnectionStringKeywords.LoadBalanceTimeout)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Pooling)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_LoadBalanceTimeout)]
+        [RefreshProperties(RefreshProperties.All)]
+        public int LoadBalanceTimeout
+        {
+            get { return _loadBalanceTimeout; }
+            set
+            {
+                if (value < 0)
+                {
+                    throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.LoadBalanceTimeout);
+                }
+                SetValue(DbConnectionStringKeywords.LoadBalanceTimeout, value);
+                _loadBalanceTimeout = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/MaxPoolSize/*' />
+        [DisplayName(DbConnectionStringKeywords.MaxPoolSize)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Pooling)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_MaxPoolSize)]
+        [RefreshProperties(RefreshProperties.All)]
+        public int MaxPoolSize
+        {
+            get { return _maxPoolSize; }
+            set
+            {
+                if (value < 1)
+                {
+                    throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.MaxPoolSize);
+                }
+                SetValue(DbConnectionStringKeywords.MaxPoolSize, value);
+                _maxPoolSize = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectRetryCount/*' />
+        [DisplayName(DbConnectionStringKeywords.ConnectRetryCount)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_ConnectionResilency)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_ConnectRetryCount)]
+        [RefreshProperties(RefreshProperties.All)]
+        public int ConnectRetryCount
+        {
+            get { return _connectRetryCount; }
+            set
+            {
+                if ((value < 0) || (value > 255))
+                {
+                    throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.ConnectRetryCount);
+                }
+                SetValue(DbConnectionStringKeywords.ConnectRetryCount, value);
+                _connectRetryCount = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectRetryInterval/*' />
+        [DisplayName(DbConnectionStringKeywords.ConnectRetryInterval)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_ConnectionResilency)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_ConnectRetryInterval)]
+        [RefreshProperties(RefreshProperties.All)]
+        public int ConnectRetryInterval
+        {
+            get { return _connectRetryInterval; }
+            set
+            {
+                if ((value < 1) || (value > 60))
+                {
+                    throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.ConnectRetryInterval);
+                }
+                SetValue(DbConnectionStringKeywords.ConnectRetryInterval, value);
+                _connectRetryInterval = value;
+            }
+        }
+
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/MinPoolSize/*' />
+        [DisplayName(DbConnectionStringKeywords.MinPoolSize)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Pooling)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_MinPoolSize)]
+        [RefreshProperties(RefreshProperties.All)]
+        public int MinPoolSize
+        {
+            get { return _minPoolSize; }
+            set
+            {
+                if (value < 0)
+                {
+                    throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.MinPoolSize);
+                }
+                SetValue(DbConnectionStringKeywords.MinPoolSize, value);
+                _minPoolSize = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/MultipleActiveResultSets/*' />
+        [DisplayName(DbConnectionStringKeywords.MultipleActiveResultSets)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Advanced)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_MultipleActiveResultSets)]
+        [RefreshProperties(RefreshProperties.All)]
+        public bool MultipleActiveResultSets
+        {
+            get { return _multipleActiveResultSets; }
+            set
+            {
+                SetValue(DbConnectionStringKeywords.MultipleActiveResultSets, value);
+                _multipleActiveResultSets = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/MultiSubnetFailover/*' />
+        [SuppressMessage("Microsoft.Naming", "CA1704:IdentifiersShouldBeSpelledCorrectly", Justification = "Reviewed and Approved by UE")]
+        [DisplayName(DbConnectionStringKeywords.MultiSubnetFailover)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Source)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_MultiSubnetFailover)]
+        [RefreshProperties(RefreshProperties.All)]
+        public bool MultiSubnetFailover
+        {
+            get { return _multiSubnetFailover; }
+            set
+            {
+                SetValue(DbConnectionStringKeywords.MultiSubnetFailover, value);
+                _multiSubnetFailover = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/PacketSize/*' />
+        [DisplayName(DbConnectionStringKeywords.PacketSize)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Advanced)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_PacketSize)]
+        [RefreshProperties(RefreshProperties.All)]
+        public int PacketSize
+        {
+            get { return _packetSize; }
+            set
+            {
+                if ((value < TdsEnums.MIN_PACKET_SIZE) || (TdsEnums.MAX_PACKET_SIZE < value))
+                {
+                    throw SQL.InvalidPacketSizeValue();
+                }
+                SetValue(DbConnectionStringKeywords.PacketSize, value);
+                _packetSize = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Password/*' />
+        [DisplayName(DbConnectionStringKeywords.Password)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Security)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_Password)]
+        [PasswordPropertyText(true)]
+        [RefreshProperties(RefreshProperties.All)]
+        public string Password
+        {
+            get { return _password; }
+            set
+            {
+                SetValue(DbConnectionStringKeywords.Password, value);
+                _password = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/PersistSecurityInfo/*' />
+        [DisplayName(DbConnectionStringKeywords.PersistSecurityInfo)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Security)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_PersistSecurityInfo)]
+        [RefreshProperties(RefreshProperties.All)]
+        public bool PersistSecurityInfo
+        {
+            get { return _persistSecurityInfo; }
+            set
+            {
+                SetValue(DbConnectionStringKeywords.PersistSecurityInfo, value);
+                _persistSecurityInfo = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/PoolBlockingPeriod/*' />
+        [DisplayName(DbConnectionStringKeywords.PoolBlockingPeriod)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Pooling)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_PoolBlockingPeriod)]
+        [RefreshProperties(RefreshProperties.All)]
+        public PoolBlockingPeriod PoolBlockingPeriod
+        {
+            get { return _poolBlockingPeriod; }
+            set
+            {
+                if (!DbConnectionStringBuilderUtil.IsValidPoolBlockingPeriodValue(value))
+                {
+                    throw ADP.InvalidEnumerationValue(typeof(PoolBlockingPeriod), (int)value);
+                }
+
+                SetPoolBlockingPeriodValue(value);
+                _poolBlockingPeriod = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Pooling/*' />
+        [DisplayName(DbConnectionStringKeywords.Pooling)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Pooling)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_Pooling)]
+        [RefreshProperties(RefreshProperties.All)]
+        public bool Pooling
+        {
+            get { return _pooling; }
+            set
+            {
+                SetValue(DbConnectionStringKeywords.Pooling, value);
+                _pooling = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Replication/*' />
+        [DisplayName(DbConnectionStringKeywords.Replication)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Replication)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_Replication)]
+        [RefreshProperties(RefreshProperties.All)]
+        public bool Replication
+        {
+            get { return _replication; }
+            set
+            {
+                SetValue(DbConnectionStringKeywords.Replication, value);
+                _replication = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TransactionBinding/*' />
+        [DisplayName(DbConnectionStringKeywords.TransactionBinding)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Advanced)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_TransactionBinding)]
+        [RefreshProperties(RefreshProperties.All)]
+        public string TransactionBinding
+        {
+            get { return _transactionBinding; }
+            set
+            {
+                SetValue(DbConnectionStringKeywords.TransactionBinding, value);
+                _transactionBinding = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TypeSystemVersion/*' />
+        [DisplayName(DbConnectionStringKeywords.TypeSystemVersion)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Advanced)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_TypeSystemVersion)]
+        [RefreshProperties(RefreshProperties.All)]
+        public string TypeSystemVersion
+        {
+            get { return _typeSystemVersion; }
+            set
+            {
+                SetValue(DbConnectionStringKeywords.TypeSystemVersion, value);
+                _typeSystemVersion = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/UserID/*' />
+        [DisplayName(DbConnectionStringKeywords.UserID)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Security)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_UserID)]
+        [RefreshProperties(RefreshProperties.All)]
+        public string UserID
+        {
+            get { return _userID; }
+            set
+            {
+                SetValue(DbConnectionStringKeywords.UserID, value);
+                _userID = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/UserInstance/*' />
+        [DisplayName(DbConnectionStringKeywords.UserInstance)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Source)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_UserInstance)]
+        [RefreshProperties(RefreshProperties.All)]
+        public bool UserInstance
+        {
+            get { return _userInstance; }
+            set
+            {
+                SetValue(DbConnectionStringKeywords.UserInstance, value);
+                _userInstance = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/WorkstationID/*' />
+        [DisplayName(DbConnectionStringKeywords.WorkstationID)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Context)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_WorkstationID)]
+        [RefreshProperties(RefreshProperties.All)]
+        public string WorkstationID
+        {
+            get { return _workstationID; }
+            set
+            {
+                SetValue(DbConnectionStringKeywords.WorkstationID, value);
+                _workstationID = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/IsFixedSize/*' />
+        public override bool IsFixedSize => true;
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Keys/*' />
+        public override ICollection Keys => new ReadOnlyCollection<string>(s_validKeywords);
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Values/*' />
+        public override ICollection Values
+        {
+            get
+            {
+                // written this way so if the ordering of Keywords & _validKeywords changes
+                // this is one less place to maintain
+                object[] values = new object[s_validKeywords.Length];
+                for (int i = 0; i < values.Length; ++i)
+                {
+                    values[i] = GetAt((Keywords)i);
+                }
+                return new ReadOnlyCollection<object>(values);
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Clear/*' />
+        public override void Clear()
+        {
+            base.Clear();
+            for (int i = 0; i < s_validKeywords.Length; ++i)
+            {
+                Reset((Keywords)i);
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ContainsKey/*' />
+        public override bool ContainsKey(string keyword)
+        {
+            ADP.CheckArgumentNull(keyword, nameof(keyword));
+            return s_keywords.ContainsKey(keyword);
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Remove/*' />
+        public override bool Remove(string keyword)
+        {
+            ADP.CheckArgumentNull(keyword, nameof(keyword));
+            Keywords index;
+            if (s_keywords.TryGetValue(keyword, out index))
+            {
+                if (base.Remove(s_validKeywords[(int)index]))
+                {
+                    Reset(index);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ShouldSerialize/*' />
+        public override bool ShouldSerialize(string keyword)
+        {
+            ADP.CheckArgumentNull(keyword, nameof(keyword));
+            Keywords index;
+            return s_keywords.TryGetValue(keyword, out index) && base.ShouldSerialize(s_validKeywords[(int)index]);
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TryGetValue/*' />
+        public override bool TryGetValue(string keyword, out object value)
+        {
+            Keywords index;
+            if (s_keywords.TryGetValue(keyword, out index))
+            {
+                value = GetAt(index);
+                return true;
+            }
+            value = null;
+            return false;
+        }
+
+#if NETFRAMEWORK
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ConnectionReset/*' />
+        [Browsable(false)]
+        [DisplayName(DbConnectionStringKeywords.ConnectionReset)]
+        [Obsolete("ConnectionReset has been deprecated. SqlConnection will ignore the 'connection reset' keyword and always reset the connection.")] // SQLPT 41700
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Pooling)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_ConnectionReset)]
+        [RefreshProperties(RefreshProperties.All)]
+        public bool ConnectionReset
+        {
+            get { return _connectionReset; }
+            set
+            {
+                SetValue(DbConnectionStringKeywords.ConnectionReset, value);
+                _connectionReset = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ContextConnection/*' />
+        [DisplayName(DbConnectionStringKeywords.ContextConnection)]
+        [Obsolete("ContextConnection has been deprecated. SqlConnection will ignore the 'Context Connection' keyword.")]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Source)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_ContextConnection)]
+        [RefreshProperties(RefreshProperties.All)]
+        public bool ContextConnection
+        {
+            get { return _contextConnection; }
+            set
+            {
+                SetValue(DbConnectionStringKeywords.ContextConnection, value);
+                _contextConnection = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/TransparentNetworkIPResolution/*' />
+        [DisplayName(DbConnectionStringKeywords.TransparentNetworkIPResolution)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Source)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_TransparentNetworkIPResolution)]
+        [RefreshProperties(RefreshProperties.All)]
+        public bool TransparentNetworkIPResolution
+        {
+            get { return _transparentNetworkIPResolution; }
+            set
+            {
+                SetValue(DbConnectionStringKeywords.TransparentNetworkIPResolution, value);
+                _transparentNetworkIPResolution = value;
+            }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/NetworkLibrary/*' />
+        [DisplayName(DbConnectionStringKeywords.NetworkLibrary)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Advanced)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_NetworkLibrary)]
+        [RefreshProperties(RefreshProperties.All)]
+        [TypeConverter(typeof(NetworkLibraryConverter))]
+        public string NetworkLibrary
+        {
+            get { return _networkLibrary; }
+            set
+            {
+                if (null != value)
+                {
+                    switch (value.Trim().ToLower(CultureInfo.InvariantCulture))
+                    {
+                        case SqlConnectionString.NETLIB.AppleTalk:
+                            value = SqlConnectionString.NETLIB.AppleTalk;
+                            break;
+                        case SqlConnectionString.NETLIB.BanyanVines:
+                            value = SqlConnectionString.NETLIB.BanyanVines;
+                            break;
+                        case SqlConnectionString.NETLIB.IPXSPX:
+                            value = SqlConnectionString.NETLIB.IPXSPX;
+                            break;
+                        case SqlConnectionString.NETLIB.Multiprotocol:
+                            value = SqlConnectionString.NETLIB.Multiprotocol;
+                            break;
+                        case SqlConnectionString.NETLIB.NamedPipes:
+                            value = SqlConnectionString.NETLIB.NamedPipes;
+                            break;
+                        case SqlConnectionString.NETLIB.SharedMemory:
+                            value = SqlConnectionString.NETLIB.SharedMemory;
+                            break;
+                        case SqlConnectionString.NETLIB.TCPIP:
+                            value = SqlConnectionString.NETLIB.TCPIP;
+                            break;
+                        case SqlConnectionString.NETLIB.VIA:
+                            value = SqlConnectionString.NETLIB.VIA;
+                            break;
+                        default:
+                            throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.NetworkLibrary);
+                    }
+                }
+                SetValue(DbConnectionStringKeywords.NetworkLibrary, value);
+                _networkLibrary = value;
+            }
+        }
+
+#if ADONET_CERT_AUTH
+        [DisplayName(DbConnectionStringKeywords.Certificate)]
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Security)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_Certificate)]
+        [RefreshProperties(RefreshProperties.All)]
+        public string Certificate {
+            get { return _certificate; }
+            set {
+                if (!DbConnectionStringBuilderUtil.IsValidCertificateValue(value)) {
+                    throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.Certificate);
+                }
+
+                SetValue(DbConnectionStringKeywords.Certificate, value);
+                _certificate = value;
+            }
+        }
+#endif
+#endif
+        #endregion // Public APIs
     }
 }
