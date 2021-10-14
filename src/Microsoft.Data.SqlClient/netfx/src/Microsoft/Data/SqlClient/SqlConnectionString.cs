@@ -594,15 +594,15 @@ namespace Microsoft.Data.SqlClient
 
             if (!string.IsNullOrEmpty(_certificate)) {
 
-                if (Authentication == SqlClient.SqlAuthenticationMethod.NotSpecified && !_integratedSecurity) {
-                    _authType = SqlClient.SqlAuthenticationMethod.SqlCertificate;
+                if (Authentication == SqlAuthenticationMethod.NotSpecified && !_integratedSecurity) {
+                    _authType = SqlAuthenticationMethod.SqlCertificate;
                 }
 
-                if (Authentication == SqlClient.SqlAuthenticationMethod.SqlCertificate && (HasUserIdKeyword || HasPasswordKeyword || _integratedSecurity)) {
+                if (Authentication == SqlAuthenticationMethod.SqlCertificate && (_hasUserIdKeyword || _hasPasswordKeyword || _integratedSecurity)) {
                     throw SQL.InvalidCertAuth();
                 }
             }
-            else if (Authentication == SqlClient.SqlAuthenticationMethod.SqlCertificate) {
+            else if (Authentication == SqlAuthenticationMethod.SqlCertificate) {
                 throw ADP.InvalidConnectionOptionValue(KEY.Authentication);
             }
 #endif
