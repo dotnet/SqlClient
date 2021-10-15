@@ -42,18 +42,12 @@ namespace Microsoft.Data.SqlClient
             MinPoolSize,
             MaxPoolSize,
             PoolBlockingPeriod,
-#if NETFRAMEWORK
-            ConnectionReset,
-#endif
             MultipleActiveResultSets,
             Replication,
             ConnectTimeout,
             Encrypt,
             TrustServerCertificate,
             LoadBalanceTimeout,
-#if NETFRAMEWORK
-            NetworkLibrary,
-#endif
             PacketSize,
             TypeSystemVersion,
             Authentication,
@@ -61,26 +55,24 @@ namespace Microsoft.Data.SqlClient
             CurrentLanguage,
             WorkstationID,
             UserInstance,
-#if NETFRAMEWORK
-            ContextConnection,
-#endif
             TransactionBinding,
             ApplicationIntent,
             MultiSubnetFailover,
-#if NETFRAMEWORK
-            TransparentNetworkIPResolution,
-#endif
             ConnectRetryCount,
             ConnectRetryInterval,
             ColumnEncryptionSetting,
             EnclaveAttestationUrl,
             AttestationProtocol,
-
             CommandTimeout,
             IPAddressPreference,
-
-#if NETFRAMEWORK && ADONET_CERT_AUTH
+#if NETFRAMEWORK
+            ConnectionReset,
+            NetworkLibrary,
+            ContextConnection,
+            TransparentNetworkIPResolution,
+#if ADONET_CERT_AUTH
             Certificate,
+#endif
 #endif
             // keep the KeywordsCount value last
             KeywordsCount
@@ -297,7 +289,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="keyword"></param>
         /// <param name="value"></param>
-        private static SqlConnectionColumnEncryptionSetting ConvertToColumnEncryptionSetting(string keyword, object value) 
+        private static SqlConnectionColumnEncryptionSetting ConvertToColumnEncryptionSetting(string keyword, object value)
             => DbConnectionStringBuilderUtil.ConvertToColumnEncryptionSetting(keyword, value);
 
         /// <summary>
@@ -305,7 +297,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         /// <param name="keyword"></param>
         /// <param name="value"></param>
-        private static SqlConnectionAttestationProtocol ConvertToAttestationProtocol(string keyword, object value) 
+        private static SqlConnectionAttestationProtocol ConvertToAttestationProtocol(string keyword, object value)
             => DbConnectionStringBuilderUtil.ConvertToAttestationProtocol(keyword, value);
 
         /// <summary>
@@ -631,7 +623,7 @@ namespace Microsoft.Data.SqlClient
         private sealed class SqlInitialCatalogConverter : StringConverter
         {
             // converter classes should have public ctor
-            public SqlInitialCatalogConverter() {}
+            public SqlInitialCatalogConverter() { }
 
             public override bool GetStandardValuesSupported(ITypeDescriptorContext context) => GetStandardValuesSupportedInternal(context);
 
@@ -640,10 +632,10 @@ namespace Microsoft.Data.SqlClient
                 // Only say standard values are supported if the connection string has enough
                 // information set to instantiate a connection and retrieve a list of databases
                 bool flag = false;
-                if (null != context)
+                if (context is not null)
                 {
                     SqlConnectionStringBuilder constr = (context.Instance as SqlConnectionStringBuilder);
-                    if (null != constr)
+                    if (constr is not null)
                     {
                         if ((0 < constr.DataSource.Length) && (constr.IntegratedSecurity || (0 < constr.UserID.Length)))
                         {
@@ -717,14 +709,14 @@ namespace Microsoft.Data.SqlClient
 
             public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
             {
-                if (destinationType == null)
+                if (destinationType is null)
                 {
                     throw ADP.ArgumentNull(nameof(destinationType));
                 }
                 if (typeof(InstanceDescriptor) == destinationType)
                 {
                     SqlConnectionStringBuilder obj = (value as SqlConnectionStringBuilder);
-                    if (null != obj)
+                    if (obj is not null)
                     {
                         return ConvertToInstanceDescriptor(obj);
                     }
@@ -756,7 +748,7 @@ namespace Microsoft.Data.SqlClient
             public override StandardValuesCollection GetStandardValues(ITypeDescriptorContext context)
             {
                 StandardValuesCollection dataSourceNames = _standardValues;
-                if (null == _standardValues)
+                if (_standardValues is null)
                 {
                     // Get the sources rowset for the SQLOLEDB enumerator
                     DataTable table = SqlClientFactory.Instance.CreateDataSourceEnumerator().GetDataSources();
@@ -771,7 +763,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         string server = rows[i][serverName] as string;
                         string instance = rows[i][instanceName] as string;
-                        if ((null == instance) || (0 == instance.Length) || ("MSSQLSERVER" == instance))
+                        if ((instance is null) || (0 == instance.Length) || ("MSSQLSERVER" == instance))
                         {
                             serverNames[i] = server;
                         }
@@ -814,7 +806,7 @@ namespace Microsoft.Data.SqlClient
             public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
             {
                 string svalue = (value as string);
-                if (null != svalue)
+                if (svalue is not null)
                 {
                     svalue = svalue.Trim();
                     if (StringComparer.OrdinalIgnoreCase.Equals(svalue, NamedPipes))
@@ -867,7 +859,7 @@ namespace Microsoft.Data.SqlClient
             public override StandardValuesCollection GetStandardValues(ITypeDescriptorContext context)
             {
                 StandardValuesCollection standardValues = _standardValues;
-                if (null == standardValues)
+                if (standardValues is null)
                 {
                     string[] names = new string[] {
                         NamedPipes,
@@ -915,14 +907,10 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Item/*' />
         public override object this[string keyword]
         {
-            get
-            {
-                Keywords index = GetIndex(keyword);
-                return GetAt(index);
-            }
+            get => GetAt(GetIndex(keyword));
             set
             {
-                if (null != value)
+                if (value is not null)
                 {
                     Keywords index = GetIndex(keyword);
                     switch (index)
@@ -1077,7 +1065,7 @@ namespace Microsoft.Data.SqlClient
         [RefreshProperties(RefreshProperties.All)]
         public ApplicationIntent ApplicationIntent
         {
-            get { return _applicationIntent; }
+            get => _applicationIntent;
             set
             {
                 if (!DbConnectionStringBuilderUtil.IsValidApplicationIntentValue(value))
@@ -1097,7 +1085,7 @@ namespace Microsoft.Data.SqlClient
         [RefreshProperties(RefreshProperties.All)]
         public string ApplicationName
         {
-            get { return _applicationName; }
+            get => _applicationName;
             set
             {
                 SetValue(DbConnectionStringKeywords.ApplicationName, value);
@@ -1113,7 +1101,7 @@ namespace Microsoft.Data.SqlClient
         [RefreshProperties(RefreshProperties.All)]
         public string AttachDBFilename
         {
-            get { return _attachDBFilename; }
+            get => _attachDBFilename;
             set
             {
                 SetValue(DbConnectionStringKeywords.AttachDBFilename, value);
@@ -1128,7 +1116,7 @@ namespace Microsoft.Data.SqlClient
         [RefreshProperties(RefreshProperties.All)]
         public int CommandTimeout
         {
-            get { return _commandTimeout; }
+            get => _commandTimeout;
             set
             {
                 if (value < 0)
@@ -1147,7 +1135,7 @@ namespace Microsoft.Data.SqlClient
         [RefreshProperties(RefreshProperties.All)]
         public int ConnectTimeout
         {
-            get { return _connectTimeout; }
+            get => _connectTimeout;
             set
             {
                 if (value < 0)
@@ -1166,7 +1154,7 @@ namespace Microsoft.Data.SqlClient
         [RefreshProperties(RefreshProperties.All)]
         public string CurrentLanguage
         {
-            get { return _currentLanguage; }
+            get => _currentLanguage;
             set
             {
                 SetValue(DbConnectionStringKeywords.CurrentLanguage, value);
@@ -1184,7 +1172,7 @@ namespace Microsoft.Data.SqlClient
 #endif
         public string DataSource
         {
-            get { return _dataSource; }
+            get => _dataSource;
             set
             {
                 SetValue(DbConnectionStringKeywords.DataSource, value);
@@ -1199,7 +1187,7 @@ namespace Microsoft.Data.SqlClient
         [RefreshProperties(RefreshProperties.All)]
         public bool Encrypt
         {
-            get { return _encrypt; }
+            get => _encrypt;
             set
             {
                 SetValue(DbConnectionStringKeywords.Encrypt, value);
@@ -1214,7 +1202,7 @@ namespace Microsoft.Data.SqlClient
         [RefreshProperties(RefreshProperties.All)]
         public SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting
         {
-            get { return _columnEncryptionSetting; }
+            get => _columnEncryptionSetting;
             set
             {
                 if (!DbConnectionStringBuilderUtil.IsValidColumnEncryptionSetting(value))
@@ -1234,7 +1222,7 @@ namespace Microsoft.Data.SqlClient
         [RefreshProperties(RefreshProperties.All)]
         public string EnclaveAttestationUrl
         {
-            get { return _enclaveAttestationUrl; }
+            get => _enclaveAttestationUrl;
             set
             {
                 SetValue(DbConnectionStringKeywords.EnclaveAttestationUrl, value);
@@ -1249,7 +1237,7 @@ namespace Microsoft.Data.SqlClient
         [RefreshProperties(RefreshProperties.All)]
         public SqlConnectionAttestationProtocol AttestationProtocol
         {
-            get { return _attestationProtocol; }
+            get => _attestationProtocol;
             set
             {
                 if (!DbConnectionStringBuilderUtil.IsValidAttestationProtocol(value))
@@ -1289,7 +1277,7 @@ namespace Microsoft.Data.SqlClient
         [RefreshProperties(RefreshProperties.All)]
         public bool TrustServerCertificate
         {
-            get { return _trustServerCertificate; }
+            get => _trustServerCertificate;
             set
             {
                 SetValue(DbConnectionStringKeywords.TrustServerCertificate, value);
@@ -1304,7 +1292,7 @@ namespace Microsoft.Data.SqlClient
         [RefreshProperties(RefreshProperties.All)]
         public bool Enlist
         {
-            get { return _enlist; }
+            get => _enlist;
             set
             {
                 SetValue(DbConnectionStringKeywords.Enlist, value);
@@ -1322,7 +1310,7 @@ namespace Microsoft.Data.SqlClient
 #endif
         public string FailoverPartner
         {
-            get { return _failoverPartner; }
+            get => _failoverPartner;
             set
             {
                 SetValue(DbConnectionStringKeywords.FailoverPartner, value);
@@ -1338,7 +1326,7 @@ namespace Microsoft.Data.SqlClient
         [TypeConverter(typeof(SqlInitialCatalogConverter))]
         public string InitialCatalog
         {
-            get { return _initialCatalog; }
+            get => _initialCatalog;
             set
             {
                 SetValue(DbConnectionStringKeywords.InitialCatalog, value);
@@ -1353,7 +1341,7 @@ namespace Microsoft.Data.SqlClient
         [RefreshProperties(RefreshProperties.All)]
         public bool IntegratedSecurity
         {
-            get { return _integratedSecurity; }
+            get => _integratedSecurity;
             set
             {
                 SetValue(DbConnectionStringKeywords.IntegratedSecurity, value);
@@ -1368,7 +1356,7 @@ namespace Microsoft.Data.SqlClient
         [RefreshProperties(RefreshProperties.All)]
         public SqlAuthenticationMethod Authentication
         {
-            get { return _authentication; }
+            get => _authentication;
             set
             {
                 if (!DbConnectionStringBuilderUtil.IsValidAuthenticationTypeValue(value))
@@ -1388,7 +1376,7 @@ namespace Microsoft.Data.SqlClient
         [RefreshProperties(RefreshProperties.All)]
         public int LoadBalanceTimeout
         {
-            get { return _loadBalanceTimeout; }
+            get => _loadBalanceTimeout;
             set
             {
                 if (value < 0)
@@ -1407,7 +1395,7 @@ namespace Microsoft.Data.SqlClient
         [RefreshProperties(RefreshProperties.All)]
         public int MaxPoolSize
         {
-            get { return _maxPoolSize; }
+            get => _maxPoolSize;
             set
             {
                 if (value < 1)
@@ -1426,7 +1414,7 @@ namespace Microsoft.Data.SqlClient
         [RefreshProperties(RefreshProperties.All)]
         public int ConnectRetryCount
         {
-            get { return _connectRetryCount; }
+            get => _connectRetryCount;
             set
             {
                 if ((value < 0) || (value > 255))
@@ -1445,7 +1433,7 @@ namespace Microsoft.Data.SqlClient
         [RefreshProperties(RefreshProperties.All)]
         public int ConnectRetryInterval
         {
-            get { return _connectRetryInterval; }
+            get => _connectRetryInterval;
             set
             {
                 if ((value < 1) || (value > 60))
@@ -1465,7 +1453,7 @@ namespace Microsoft.Data.SqlClient
         [RefreshProperties(RefreshProperties.All)]
         public int MinPoolSize
         {
-            get { return _minPoolSize; }
+            get => _minPoolSize;
             set
             {
                 if (value < 0)
@@ -1484,7 +1472,7 @@ namespace Microsoft.Data.SqlClient
         [RefreshProperties(RefreshProperties.All)]
         public bool MultipleActiveResultSets
         {
-            get { return _multipleActiveResultSets; }
+            get => _multipleActiveResultSets;
             set
             {
                 SetValue(DbConnectionStringKeywords.MultipleActiveResultSets, value);
@@ -1500,7 +1488,7 @@ namespace Microsoft.Data.SqlClient
         [RefreshProperties(RefreshProperties.All)]
         public bool MultiSubnetFailover
         {
-            get { return _multiSubnetFailover; }
+            get => _multiSubnetFailover;
             set
             {
                 SetValue(DbConnectionStringKeywords.MultiSubnetFailover, value);
@@ -1515,7 +1503,7 @@ namespace Microsoft.Data.SqlClient
         [RefreshProperties(RefreshProperties.All)]
         public int PacketSize
         {
-            get { return _packetSize; }
+            get => _packetSize;
             set
             {
                 if ((value < TdsEnums.MIN_PACKET_SIZE) || (TdsEnums.MAX_PACKET_SIZE < value))
@@ -1535,7 +1523,7 @@ namespace Microsoft.Data.SqlClient
         [RefreshProperties(RefreshProperties.All)]
         public string Password
         {
-            get { return _password; }
+            get => _password;
             set
             {
                 SetValue(DbConnectionStringKeywords.Password, value);
@@ -1550,7 +1538,7 @@ namespace Microsoft.Data.SqlClient
         [RefreshProperties(RefreshProperties.All)]
         public bool PersistSecurityInfo
         {
-            get { return _persistSecurityInfo; }
+            get => _persistSecurityInfo;
             set
             {
                 SetValue(DbConnectionStringKeywords.PersistSecurityInfo, value);
@@ -1565,7 +1553,7 @@ namespace Microsoft.Data.SqlClient
         [RefreshProperties(RefreshProperties.All)]
         public PoolBlockingPeriod PoolBlockingPeriod
         {
-            get { return _poolBlockingPeriod; }
+            get => _poolBlockingPeriod;
             set
             {
                 if (!DbConnectionStringBuilderUtil.IsValidPoolBlockingPeriodValue(value))
@@ -1585,7 +1573,7 @@ namespace Microsoft.Data.SqlClient
         [RefreshProperties(RefreshProperties.All)]
         public bool Pooling
         {
-            get { return _pooling; }
+            get => _pooling;
             set
             {
                 SetValue(DbConnectionStringKeywords.Pooling, value);
@@ -1600,7 +1588,7 @@ namespace Microsoft.Data.SqlClient
         [RefreshProperties(RefreshProperties.All)]
         public bool Replication
         {
-            get { return _replication; }
+            get => _replication;
             set
             {
                 SetValue(DbConnectionStringKeywords.Replication, value);
@@ -1615,7 +1603,7 @@ namespace Microsoft.Data.SqlClient
         [RefreshProperties(RefreshProperties.All)]
         public string TransactionBinding
         {
-            get { return _transactionBinding; }
+            get => _transactionBinding;
             set
             {
                 SetValue(DbConnectionStringKeywords.TransactionBinding, value);
@@ -1630,7 +1618,7 @@ namespace Microsoft.Data.SqlClient
         [RefreshProperties(RefreshProperties.All)]
         public string TypeSystemVersion
         {
-            get { return _typeSystemVersion; }
+            get => _typeSystemVersion;
             set
             {
                 SetValue(DbConnectionStringKeywords.TypeSystemVersion, value);
@@ -1645,7 +1633,7 @@ namespace Microsoft.Data.SqlClient
         [RefreshProperties(RefreshProperties.All)]
         public string UserID
         {
-            get { return _userID; }
+            get => _userID;
             set
             {
                 SetValue(DbConnectionStringKeywords.UserID, value);
@@ -1660,7 +1648,7 @@ namespace Microsoft.Data.SqlClient
         [RefreshProperties(RefreshProperties.All)]
         public bool UserInstance
         {
-            get { return _userInstance; }
+            get => _userInstance;
             set
             {
                 SetValue(DbConnectionStringKeywords.UserInstance, value);
@@ -1675,7 +1663,7 @@ namespace Microsoft.Data.SqlClient
         [RefreshProperties(RefreshProperties.All)]
         public string WorkstationID
         {
-            get { return _workstationID; }
+            get => _workstationID;
             set
             {
                 SetValue(DbConnectionStringKeywords.WorkstationID, value);
@@ -1766,7 +1754,7 @@ namespace Microsoft.Data.SqlClient
         [RefreshProperties(RefreshProperties.All)]
         public bool ConnectionReset
         {
-            get { return _connectionReset; }
+            get => _connectionReset;
             set
             {
                 SetValue(DbConnectionStringKeywords.ConnectionReset, value);
@@ -1782,7 +1770,7 @@ namespace Microsoft.Data.SqlClient
         [RefreshProperties(RefreshProperties.All)]
         public bool ContextConnection
         {
-            get { return _contextConnection; }
+            get => _contextConnection;
             set
             {
                 SetValue(DbConnectionStringKeywords.ContextConnection, value);
@@ -1797,7 +1785,7 @@ namespace Microsoft.Data.SqlClient
         [RefreshProperties(RefreshProperties.All)]
         public bool TransparentNetworkIPResolution
         {
-            get { return _transparentNetworkIPResolution; }
+            get => _transparentNetworkIPResolution;
             set
             {
                 SetValue(DbConnectionStringKeywords.TransparentNetworkIPResolution, value);
@@ -1813,10 +1801,10 @@ namespace Microsoft.Data.SqlClient
         [TypeConverter(typeof(NetworkLibraryConverter))]
         public string NetworkLibrary
         {
-            get { return _networkLibrary; }
+            get => _networkLibrary;
             set
             {
-                if (null != value)
+                if (value is not null)
                 {
                     value = value.Trim().ToLower(CultureInfo.InvariantCulture) switch
                     {
@@ -1842,7 +1830,7 @@ namespace Microsoft.Data.SqlClient
         [ResDescription(StringsHelper.ResourceNames.DbConnectionString_Certificate)]
         [RefreshProperties(RefreshProperties.All)]
         public string Certificate {
-            get { return _certificate; }
+            get => _certificate;
             set {
                 if (!DbConnectionStringBuilderUtil.IsValidCertificateValue(value)) {
                     throw ADP.InvalidConnectionOptionValue(DbConnectionStringKeywords.Certificate);
