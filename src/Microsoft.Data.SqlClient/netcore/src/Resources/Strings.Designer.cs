@@ -943,6 +943,24 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Update.
+        /// </summary>
+        internal static string DataCategory_Update {
+            get {
+                return ResourceManager.GetString("DataCategory_Update", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to XML.
+        /// </summary>
+        internal static string DataCategory_Xml {
+            get {
+                return ResourceManager.GetString("DataCategory_Xml", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Internal error occurred when retrying the download of the HGS root certificate after the initial request failed. Contact Customer Support Services..
         /// </summary>
         internal static string EnclaveRetrySleepInSecondsValueException {

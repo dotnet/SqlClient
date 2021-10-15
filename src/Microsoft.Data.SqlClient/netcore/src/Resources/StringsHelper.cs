@@ -76,6 +76,7 @@ namespace Microsoft.Data
         {
             internal const string DataCategory_Data = @"Data";
             internal const string DataCategory_Update = @"Update";
+            internal const string DataCategory_Xml = @"XML";
             internal const string DbCommand_CommandTimeout = @"Time to wait for command to execute.";
             internal const string DbConnection_State = @"The ConnectionState indicating whether the connection is open or closed.";
             internal const string DataCategory_Fill = @"Fill";

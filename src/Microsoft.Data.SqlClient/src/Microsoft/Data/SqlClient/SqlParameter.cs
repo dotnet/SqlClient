@@ -13,11 +13,11 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
-using System.Text;
-using System.Threading;
 using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Server;
+using System.Text;
+using System.Threading;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -44,7 +44,6 @@ namespace Microsoft.Data.SqlClient
         {
             _source = source;
         }
-
         internal static UnicodeEncoding DefaultEncoding
         {
             get
@@ -64,13 +63,10 @@ namespace Microsoft.Data.SqlClient
     {
         internal XmlReader _source;
 
-        internal XmlDataFeed(XmlReader source)
-        {
-            _source = source;
-        }
+        internal XmlDataFeed(XmlReader source) => _source = source;
     }
 
-    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SqlParameter/*' />
+    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SqlParameter/*' />
     [TypeConverter(typeof(SqlParameter.SqlParameterConverter))]
     public sealed partial class SqlParameter : DbParameter, IDbDataParameter, ICloneable
     {
@@ -247,7 +243,7 @@ namespace Microsoft.Data.SqlClient
         private DataRowVersion _sourceVersion;
         private SqlParameterFlags _flags;
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctor2/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctor2/*' />
         public SqlParameter() : base()
         {
             _flags = SqlParameterFlags.IsNull;
@@ -255,14 +251,14 @@ namespace Microsoft.Data.SqlClient
             _direction = ParameterDirection.Input;
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbType/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbType/*' />
         public SqlParameter(string parameterName, SqlDbType dbType) : this()
         {
             ParameterName = parameterName;
             SqlDbType = dbType;
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameValue/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameValue/*' />
         public SqlParameter(string parameterName, object value) : this()
         {
             Debug.Assert(!(value is SqlDbType), "use SqlParameter(string, SqlDbType)");
@@ -271,7 +267,7 @@ namespace Microsoft.Data.SqlClient
             Value = value;
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbTypeSize/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbTypeSize/*' />
         public SqlParameter(string parameterName, SqlDbType dbType, int size) : this()
         {
             ParameterName = parameterName;
@@ -279,7 +275,7 @@ namespace Microsoft.Data.SqlClient
             Size = size;
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbTypeSizeSourceColumn/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbTypeSizeSourceColumn/*' />
         public SqlParameter(string parameterName, SqlDbType dbType, int size, string sourceColumn) : this()
         {
             ParameterName = parameterName;
@@ -288,7 +284,7 @@ namespace Microsoft.Data.SqlClient
             SourceColumn = sourceColumn;
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbTypeSizeDirectionIsNullablePrecisionScaleSourceColumnSourceVersionValue/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbTypeSizeDirectionIsNullablePrecisionScaleSourceColumnSourceVersionValue/*' />
         [EditorBrowsable(EditorBrowsableState.Advanced)]
         public SqlParameter(
             string parameterName,
@@ -312,7 +308,7 @@ namespace Microsoft.Data.SqlClient
             Value = value;
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbTypeSizeDirectionPrecisionScaleSourceColumnSourceVersionSourceColumnNullMappingValue/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ctorParameterNameDbTypeSizeDirectionPrecisionScaleSourceColumnSourceVersionSourceColumnNullMappingValue/*' />
         public SqlParameter(
             string parameterName,
             SqlDbType dbType,
@@ -381,7 +377,7 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal byte NormalizationRuleVersion => CipherMetadata?.NormalizationRuleVersion ?? 0x00;
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/CompareInfo/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/CompareInfo/*' />
         [Browsable(false)]
         public SqlCompareOptions CompareInfo
         {
@@ -417,34 +413,34 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/XmlSchemaCollectionDatabase/*' />
-        [ResCategory("XML")]
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/XmlSchemaCollectionDatabase/*' />
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Xml)]
         public string XmlSchemaCollectionDatabase
         {
             get => _xmlSchemaCollection?.Database ?? string.Empty;
             set => EnsureXmlSchemaCollection().Database = value;
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/XmlSchemaCollectionOwningSchema/*' />
-        [ResCategory("XML")]
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/XmlSchemaCollectionOwningSchema/*' />
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Xml)]
         public string XmlSchemaCollectionOwningSchema
         {
             get => _xmlSchemaCollection?.OwningSchema ?? string.Empty;
             set => EnsureXmlSchemaCollection().OwningSchema = value;
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/XmlSchemaCollectionName/*' />
-        [ResCategory("XML")]
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/XmlSchemaCollectionName/*' />
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Xml)]
         public string XmlSchemaCollectionName
         {
             get => _xmlSchemaCollection?.Name ?? string.Empty;
             set => EnsureXmlSchemaCollection().Name = value;
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ForceColumnEncryption/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ForceColumnEncryption/*' />
         [
         DefaultValue(false),
-        ResCategory("Data")
+        ResCategory(StringsHelper.ResourceNames.DataCategory_Data)
         ]
         public bool ForceColumnEncryption
         {
@@ -452,7 +448,7 @@ namespace Microsoft.Data.SqlClient
             set => SetFlag(SqlParameterFlags.ForceColumnEncryption, value);
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/DbType/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/DbType/*' />
         public override DbType DbType
         {
             get => GetMetaTypeOnly().DbType;
@@ -467,11 +463,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ResetDbType/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ResetDbType/*' />
         public override void ResetDbType() => ResetSqlDbType();
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ParameterName/*' />
-        [ResCategory("Data")]
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ParameterName/*' />
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
         public override string ParameterName
         {
             get => _parameterName ?? string.Empty;
@@ -499,7 +495,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/LocaleId/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/LocaleId/*' />
         [Browsable(false)]
         public int LocaleId
         {
@@ -529,10 +525,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Precision/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Precision/*' />
         [
         DefaultValue((byte)0),
-        ResCategory("Data")
+        ResCategory(StringsHelper.ResourceNames.DataCategory_Data)
         ]
         public new byte Precision
         {
@@ -542,10 +538,10 @@ namespace Microsoft.Data.SqlClient
 
         private bool ShouldSerializePrecision() => _precision != 0;
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Scale/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Scale/*' />
         [
         DefaultValue((byte)0),
-        ResCategory("Data")
+        ResCategory(StringsHelper.ResourceNames.DataCategory_Data)
         ]
         public new byte Scale
         {
@@ -579,10 +575,10 @@ namespace Microsoft.Data.SqlClient
 
         private bool ShouldSerializeScale() => _scale != 0; // V1.0 compat, ignore _hasScale
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SqlDbType/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SqlDbType/*' />
         [
         RefreshProperties(RefreshProperties.All),
-        ResCategory("Data"),
+        ResCategory(StringsHelper.ResourceNames.DataCategory_Data),
         DbProviderSpecificTypeProperty(true)
         ]
         public SqlDbType SqlDbType
@@ -612,7 +608,7 @@ namespace Microsoft.Data.SqlClient
 
         private bool ShouldSerializeSqlDbType() => _metaType != null;
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ResetSqlDbType/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ResetSqlDbType/*' />
         public void ResetSqlDbType()
         {
             if (_metaType != null)
@@ -622,7 +618,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SqlValue/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SqlValue/*' />
         [
         Browsable(false),
         DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
@@ -673,7 +669,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/UdtTypeName/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/UdtTypeName/*' />
         [
         Browsable(false),
         EditorBrowsable(EditorBrowsableState.Advanced)
@@ -684,7 +680,7 @@ namespace Microsoft.Data.SqlClient
             set => _udtTypeName = value;
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/TypeName/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/TypeName/*' />
         [
         Browsable(false),
         EditorBrowsable(EditorBrowsableState.Advanced)
@@ -699,10 +695,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Value/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Value/*' />
         [
         RefreshProperties(RefreshProperties.All),
-        ResCategory("Data"),
+        ResCategory(StringsHelper.ResourceNames.DataCategory_Data),
         TypeConverter(typeof(StringConverter)),
         ]
         public override object Value
@@ -741,10 +737,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Direction/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Direction/*' />
         [
         RefreshProperties(RefreshProperties.All),
-        ResCategory("Data"),
+        ResCategory(StringsHelper.ResourceNames.DataCategory_Data),
         ]
         public override ParameterDirection Direction
         {
@@ -769,14 +765,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/IsNullable/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/IsNullable/*' />
         public override bool IsNullable
         {
             get => HasFlag(SqlParameterFlags.IsNullable);
             set => SetFlag(SqlParameterFlags.IsNullable, value);
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Offset/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Offset/*' />
         public int Offset
         {
             get => _offset;
@@ -790,8 +786,8 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Size/*' />
-        [ResCategory("Data")]
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/Size/*' />
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Data)]
         public override int Size
         {
             get
@@ -828,28 +824,25 @@ namespace Microsoft.Data.SqlClient
 
         private bool ShouldSerializeSize() => _size != 0;
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceColumn/*' />
-        [ResCategory("Update")]
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceColumn/*' />
+        [ResCategory(StringsHelper.ResourceNames.DataCategory_Update)]
         public override string SourceColumn
         {
             get => _sourceColumn ?? string.Empty;
             set => _sourceColumn = value;
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceColumnNullMapping/*' />
-        [ResCategory("DataCategory_Update")]
-        [ResDescription(StringsHelper.ResourceNames.SqlParameter_SourceColumnNullMapping)]
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceColumnNullMapping/*' />
         public override bool SourceColumnNullMapping
         {
             get => HasFlag(SqlParameterFlags.SourceColumnNullMapping);
             set => SetFlag(SqlParameterFlags.SourceColumnNullMapping, value);
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ToString/*' />
-        [ResCategory("Data")]
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ToString/*' />
         public override string ToString() => ParameterName;
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceVersion/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceVersion/*' />
         [ResCategory(StringsHelper.ResourceNames.DataCategory_Update)]
         public override DataRowVersion SourceVersion
         {
@@ -874,8 +867,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/System.ICloneable.Clone/*' />
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/System.ICloneable.Clone/*' />
         object ICloneable.Clone() => new SqlParameter(this);
+
 
         private object CoercedValue
         {
@@ -993,6 +988,8 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        internal bool SizeInferred => 0 == _size;
+
         internal INullable ValueAsINullable => _valueAsINullable;
 
         internal bool IsDerivedParameterTypeName
@@ -1048,6 +1045,10 @@ namespace Microsoft.Data.SqlClient
 
         internal object CompareExchangeParent(object value, object comparand)
         {
+            // the interlock guarantees same parameter won't belong to multiple collections
+            // at the same time, but to actually occur the user must really try
+            // since we never declared thread safety, we don't care at this time
+            //return System.Threading.Interlocked.CompareExchange(ref _parent, value, comparand);
             object parent = _parent;
             if (comparand == parent)
             {
@@ -1246,8 +1247,12 @@ namespace Microsoft.Data.SqlClient
                                     hasDefault = true;
                                 }
 
-                                sort[i].Order = colMeta.SortOrder;
-                                if (SortOrder.Unspecified != colMeta.SortOrder)
+                                PropertyInfo serverTypeNameProperty = colMeta.GetType().GetProperty("SortOrder", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                                MethodInfo getter = serverTypeNameProperty.GetGetMethod(nonPublic: true);
+                                SortOrder sortOrder = (SortOrder)getter.Invoke(colMeta, null);
+
+                                sort[i].Order = sortOrder;
+                                if (SortOrder.Unspecified != sortOrder)
                                 {
                                     // SqlMetaData takes care of checking for negative sort ordinals with specified sort order
 
@@ -1500,7 +1505,7 @@ namespace Microsoft.Data.SqlClient
                         case SqlDbType.NText:
                         case SqlDbType.Xml:
                             {
-                                coercedSize = ((!HasFlag(SqlParameterFlags.IsNull)) && (!HasFlag(SqlParameterFlags.CoercedValueIsDataFeed))) ? (StringSize(val, HasFlag(SqlParameterFlags.CoercedValueIsSqlType))) : 0;
+                                coercedSize = ((!HasFlag(SqlParameterFlags.IsNull)) && (!HasFlag(SqlParameterFlags.CoercedValueIsDataFeed))) ? StringSize(val, HasFlag(SqlParameterFlags.CoercedValueIsSqlType)) : 0;
                                 _actualSize = (ShouldSerializeSize() ? Size : 0);
                                 _actualSize = (ShouldSerializeSize() && (_actualSize <= coercedSize)) ? _actualSize : coercedSize;
                                 if (_actualSize == -1)
@@ -1515,7 +1520,7 @@ namespace Microsoft.Data.SqlClient
                         case SqlDbType.Text:
                             {
                                 // for these types, ActualSize is the num of chars, not actual bytes - since non-unicode chars are not always uniform size
-                                coercedSize = ((!HasFlag(SqlParameterFlags.IsNull)) && (!HasFlag(SqlParameterFlags.CoercedValueIsDataFeed))) ? (StringSize(val, HasFlag(SqlParameterFlags.CoercedValueIsSqlType))) : 0;
+                                coercedSize = (!HasFlag(SqlParameterFlags.IsNull) && (!HasFlag(SqlParameterFlags.CoercedValueIsDataFeed))) ? (StringSize(val, HasFlag(SqlParameterFlags.CoercedValueIsSqlType))) : 0;
                                 _actualSize = (ShouldSerializeSize() ? Size : 0);
                                 _actualSize = (ShouldSerializeSize() && (_actualSize <= coercedSize)) ? _actualSize : coercedSize;
                                 if (_actualSize == -1)
@@ -1528,7 +1533,7 @@ namespace Microsoft.Data.SqlClient
                         case SqlDbType.VarBinary:
                         case SqlDbType.Image:
                         case SqlDbType.Timestamp:
-                            coercedSize = ((!HasFlag(SqlParameterFlags.IsNull)) && (!HasFlag(SqlParameterFlags.CoercedValueIsDataFeed))) ? (BinarySize(val, HasFlag(SqlParameterFlags.CoercedValueIsSqlType))) : 0;
+                            coercedSize = (!HasFlag(SqlParameterFlags.IsNull) && (!HasFlag(SqlParameterFlags.CoercedValueIsDataFeed))) ? (BinarySize(val, HasFlag(SqlParameterFlags.CoercedValueIsSqlType))) : 0;
                             _actualSize = (ShouldSerializeSize() ? Size : 0);
                             _actualSize = ((ShouldSerializeSize() && (_actualSize <= coercedSize)) ? _actualSize : coercedSize);
                             if (_actualSize == -1)
@@ -1539,7 +1544,12 @@ namespace Microsoft.Data.SqlClient
                         case SqlDbType.Udt:
                             if (!IsNull)
                             {
+#if NETFRAMEWORK
+                                //call the static function
+                                coercedSize = AssemblyCache.GetLength(val);
+#else
                                 coercedSize = SerializationHelperSql9.SizeInBytes(val);
+#endif
                             }
                             break;
                         case SqlDbType.Structured:
@@ -1627,7 +1637,11 @@ namespace Microsoft.Data.SqlClient
         internal SmiParameterMetaData MetaDataForSmi(out ParameterPeekAheadValue peekAhead)
         {
             peekAhead = null;
-            MetaType mt = ValidateTypeLengths();
+            MetaType mt = ValidateTypeLengths(
+#if NETFRAMEWORK
+                true /* Yukon or newer */ 
+#endif
+                );
             long actualLen = GetActualSize();
             long maxLen = Size;
 
@@ -1670,6 +1684,7 @@ namespace Microsoft.Data.SqlClient
             {
                 maxLen = -1;
             }
+
 
             int localeId = LocaleId;
             if (localeId == 0 && mt.IsCharType)
@@ -1866,10 +1881,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private void PropertyChanging()
-        {
-            _internalMetaType = null;
-        }
+        private void PropertyChanging() => _internalMetaType = null;
 
         private void PropertyTypeChanging()
         {
@@ -1878,6 +1890,11 @@ namespace Microsoft.Data.SqlClient
         }
 
         internal void ResetParent() => _parent = null;
+
+        private void SetFlag(SqlParameterFlags flag, bool value)
+        {
+            _flags = value ? _flags | flag : _flags & ~flag;
+        }
 
         internal void SetSqlBuffer(SqlBuffer buff)
         {
@@ -1891,15 +1908,7 @@ namespace Microsoft.Data.SqlClient
             _actualSize = -1;
         }
 
-        private void SetFlag(SqlParameterFlags flag, bool value)
-        {
-            _flags = value ? _flags | flag : _flags & ~flag;
-        }
-
-        internal void SetUdtLoadError(Exception e)
-        {
-            _udtLoadError = e;
-        }
+        internal void SetUdtLoadError(Exception e) => _udtLoadError = e;
 
         internal void Validate(int index, bool isCommandProc)
         {
@@ -1916,6 +1925,8 @@ namespace Microsoft.Data.SqlClient
                 ((null == _value) || Convert.IsDBNull(_value)) &&
                 (SqlDbType != SqlDbType.Timestamp) &&
                 (SqlDbType != SqlDbType.Udt) &&
+                // BUG: (VSTFDevDiv - 479609): Output parameter with size 0 throws for XML, TEXT, NTEXT, IMAGE.
+                // NOTE: (VSTFDevDiv - 479609): Not Fixed for TEXT, NTEXT, IMAGE as these are deprecated LOB types.
                 (SqlDbType != SqlDbType.Xml) &&
                 !metaType.IsVarTime
             )
@@ -1967,7 +1978,11 @@ namespace Microsoft.Data.SqlClient
 
         // func will change type to that with a 4 byte length if the type has a two
         // byte length and a parameter length > than that expressible in 2 bytes
-        internal MetaType ValidateTypeLengths()
+        internal MetaType ValidateTypeLengths(
+#if NETFRAMEWORK
+            bool yukonOrNewer
+#endif
+            )
         {
             MetaType mt = InternalMetaType;
             // Since the server will automatically reject any
@@ -1980,8 +1995,30 @@ namespace Microsoft.Data.SqlClient
                 long actualSizeInBytes = GetActualSize();
                 long sizeInCharacters = Size;
 
+                // Bug: VSTFDevDiv #636867
+                // Notes:
+                // 'actualSizeInBytes' is the size of value passed; 
+                // 'sizeInCharacters' is the parameter size;
+                // 'actualSizeInBytes' is in bytes; 
+                // 'this.Size' is in charaters; 
+                // 'sizeInCharacters' is in characters; 
+                // 'TdsEnums.TYPE_SIZE_LIMIT' is in bytes;
+                // For Non-NCharType and for non-Yukon or greater variables, size should be maintained;
+                // Reverting changes from bug VSTFDevDiv # 479739 as it caused an regression;
+                // Modifed variable names from 'size' to 'sizeInCharacters', 'actualSize' to 'actualSizeInBytes', and 
+                // 'maxSize' to 'maxSizeInBytes'
+                // The idea is to
+                //  1) revert the regression from bug 479739
+                //  2) fix as many scenarios as possible including bug 636867
+                //  3) cause no additional regression from 3.5 sp1
+                // Keeping these goals in mind - the following are the changes we are making
+
                 long maxSizeInBytes;
-                if (mt.IsNCharType)
+                if (mt.IsNCharType
+#if NETFRAMEWORK
+                    && yukonOrNewer
+#endif
+                    )
                 {
                     maxSizeInBytes = ((sizeInCharacters * sizeof(char)) > actualSizeInBytes) ? sizeInCharacters * sizeof(char) : actualSizeInBytes;
                 }
@@ -1999,8 +2036,59 @@ namespace Microsoft.Data.SqlClient
                     (sizeInCharacters == -1) ||
                     (actualSizeInBytes == -1)
                 )
-                { // is size > size able to be described by 2 bytes
-                    // Convert the parameter to its max type
+                {
+#if NETFRAMEWORK
+                    // is size > size able to be described by 2 bytes
+                    if (yukonOrNewer)
+                    {
+                        // Convert the parameter to its max type
+                        mt = MetaType.GetMaxMetaTypeFromMetaType(mt);
+                        _metaType = mt;
+                        InternalMetaType = mt;
+                        if (!mt.IsPlp)
+                        {
+                            if (mt.SqlDbType == SqlDbType.Xml)
+                            {
+                                throw ADP.InvalidMetaDataValue();     //Xml should always have IsPartialLength = true
+                            }
+                            if (
+                                mt.SqlDbType == SqlDbType.NVarChar ||
+                                mt.SqlDbType == SqlDbType.VarChar ||
+                                mt.SqlDbType == SqlDbType.VarBinary
+                            )
+                            {
+                                Size = (int)SmiMetaData.UnlimitedMaxLengthIndicator;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        switch (mt.SqlDbType)
+                        { // widening the SqlDbType is automatic
+                            case SqlDbType.Binary:
+                            case SqlDbType.VarBinary:
+                                mt = MetaType.GetMetaTypeFromSqlDbType(SqlDbType.Image, false);
+                                _metaType = mt; // do not use SqlDbType property which calls PropertyTypeChanging resetting coerced value
+                                InternalMetaType = mt;
+                                break;
+                            case SqlDbType.Char:
+                            case SqlDbType.VarChar:
+                                mt = MetaType.GetMetaTypeFromSqlDbType(SqlDbType.Text, false);
+                                _metaType = mt;
+                                InternalMetaType = mt;
+                                break;
+                            case SqlDbType.NChar:
+                            case SqlDbType.NVarChar:
+                                mt = MetaType.GetMetaTypeFromSqlDbType(SqlDbType.NText, false);
+                                _metaType = mt;
+                                InternalMetaType = mt;
+                                break;
+                            default:
+                                Debug.Assert(false, "Missed metatype in SqlCommand.BuildParamList()");
+                                break;
+                        }
+                    }
+#else
                     mt = MetaType.GetMaxMetaTypeFromMetaType(mt);
                     _metaType = mt;
                     InternalMetaType = mt;
@@ -2019,6 +2107,8 @@ namespace Microsoft.Data.SqlClient
                             Size = (int)SmiMetaData.UnlimitedMaxLengthIndicator;
                         }
                     }
+
+#endif
                 }
             }
             return mt;
@@ -2130,6 +2220,7 @@ namespace Microsoft.Data.SqlClient
             }
             return 0;
         }
+
 
         // Coerced Value is also used in SqlBulkCopy.ConvertValue(object value, _SqlMetaData metadata)
         internal static object CoerceValue(object value, MetaType destinationType, out bool coercedToDataFeed, out bool typeChanged, bool allowStreaming = true)
