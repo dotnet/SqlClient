@@ -558,7 +558,12 @@
       <Link>Microsoft\Data\SqlClient\SqlStatistics.cs</Link>
     </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlStream.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlTransaction.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlTransaction.netcore.cs">
+      <Link>Microsoft\Data\SqlClient\SqlTransaction.netcore.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlTransaction.cs">
+      <Link>Microsoft\Data\SqlClient\SqlTransaction.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlUdtInfo.cs">
       <Link>Microsoft\Data\SqlClient\SqlUdtInfo.cs</Link>
     </Compile>
