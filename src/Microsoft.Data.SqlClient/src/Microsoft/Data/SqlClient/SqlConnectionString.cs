@@ -3,29 +3,27 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Threading;
-#if NETFRAMEWORK
-using System.Collections;
-using System.Globalization;
 using System.Runtime.Versioning;
 using System.Security;
 using System.Security.Permissions;
-#endif
 using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal sealed partial class SqlConnectionString : DbConnectionOptions
+    internal sealed class SqlConnectionString : DbConnectionOptions
     {
         // instances of this class are intended to be immutable, i.e readonly
         // used by pooling classes so it is much easier to verify correctness
         // when not worried about the class being modified during execution
 
-        internal static partial class DEFAULT
+        internal static class DEFAULT
         {
             internal const ApplicationIntent ApplicationIntent = DbConnectionStringDefaults.ApplicationIntent;
             internal const string Application_Name = DbConnectionStringDefaults.ApplicationName;
@@ -58,11 +56,11 @@ namespace Microsoft.Data.SqlClient
             internal const int Connect_Retry_Interval = DbConnectionStringDefaults.ConnectRetryInterval;
             internal const string EnclaveAttestationUrl = DbConnectionStringDefaults.EnclaveAttestationUrl;
             internal const SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = DbConnectionStringDefaults.ColumnEncryptionSetting;
-            internal static readonly SqlAuthenticationMethod s_authentication = DbConnectionStringDefaults.Authentication;
-            internal static readonly SqlConnectionAttestationProtocol s_attestationProtocol = DbConnectionStringDefaults.AttestationProtocol;
-            internal static readonly SqlConnectionIPAddressPreference s_ipAddressPreference = DbConnectionStringDefaults.IPAddressPreference;
+            internal static readonly SqlAuthenticationMethod Authentication = DbConnectionStringDefaults.Authentication;
+            internal static readonly SqlConnectionAttestationProtocol AttestationProtocol = DbConnectionStringDefaults.AttestationProtocol;
+            internal static readonly SqlConnectionIPAddressPreference IpAddressPreference = DbConnectionStringDefaults.IPAddressPreference;
 #if NETFRAMEWORK
-            internal static readonly bool s_transparentNetworkIPResolution = DbConnectionStringDefaults.TransparentNetworkIPResolution;
+            internal static readonly bool TransparentNetworkIPResolution = DbConnectionStringDefaults.TransparentNetworkIPResolution;
             internal const bool Asynchronous = DbConnectionStringDefaults.Asynchronous;
             internal const bool Connection_Reset = DbConnectionStringDefaults.ConnectionReset;
             internal const bool Context_Connection = DbConnectionStringDefaults.ContextConnection;
@@ -184,26 +182,6 @@ namespace Microsoft.Data.SqlClient
             // make sure to update SynonymCount value below when adding or removing synonyms
         }
 
-#if NETFRAMEWORK
-        internal const int SynonymCount = 29;
-
-        // the following are all inserted as keys into the _netlibMapping hash
-        internal static class NETLIB
-        {
-            internal const string AppleTalk = "dbmsadsn";
-            internal const string BanyanVines = "dbmsvinn";
-            internal const string IPXSPX = "dbmsspxn";
-            internal const string Multiprotocol = "dbmsrpcn";
-            internal const string NamedPipes = "dbnmpntw";
-            internal const string SharedMemory = "dbmslpcn";
-            internal const string TCPIP = "dbmssocn";
-            internal const string VIA = "dbmsgnet";
-        }
-#else
-        internal const int SynonymCount = 26;
-        internal const int DeprecatedSynonymCount = 2;
-#endif // NETFRAMEWORK
-
         internal enum TypeSystem
         {
             Latest = 2008,
@@ -233,6 +211,13 @@ namespace Microsoft.Data.SqlClient
             internal const string ImplicitUnbind = "Implicit Unbind";
             internal const string ExplicitUnbind = "Explicit Unbind";
         }
+
+#if NETFRAMEWORK
+        internal const int SynonymCount = 29;
+#else
+        internal const int SynonymCount = 26;
+        internal const int DeprecatedSynonymCount = 2;
+#endif // NETFRAMEWORK
 
         private static Dictionary<string, string> s_sqlClientSynonyms;
 
@@ -284,18 +269,6 @@ namespace Microsoft.Data.SqlClient
         private static readonly Version s_constTypeSystemAsmVersion11 = new("11.0.0.0");
 
         private readonly string _expandedAttachDBFilename; // expanded during construction so that CreatePermissionSet & Expand are consistent
-
-#if NETFRAMEWORK
-        static private Hashtable s_netlibMapping;
-        private readonly bool _connectionReset;
-        private readonly bool _contextConnection;
-        private readonly bool _transparentNetworkIPResolution;
-        private readonly string _networkLibrary;
-
-#if ADONET_CERT_AUTH
-        private readonly string _certificate;
-#endif
-#endif // NETFRAMEWORK
 
 #if NETFRAMEWORK
         // SxS: reading Software\\Microsoft\\MSSQLServer\\Client\\SuperSocketNetLib\Encrypt value from registry
@@ -398,7 +371,7 @@ namespace Microsoft.Data.SqlClient
             _contextConnection = ConvertValueToBoolean(KEY.Context_Connection, DEFAULT.Context_Connection);
             _encrypt = ConvertValueToEncrypt();
             _enlist = ConvertValueToBoolean(KEY.Enlist, ADP.s_isWindowsNT);
-            _transparentNetworkIPResolution = ConvertValueToBoolean(KEY.TransparentNetworkIPResolution, DEFAULT.s_transparentNetworkIPResolution);
+            _transparentNetworkIPResolution = ConvertValueToBoolean(KEY.TransparentNetworkIPResolution, DEFAULT.TransparentNetworkIPResolution);
             _networkLibrary = ConvertValueToString(KEY.Network_Library, null);
 
 #if ADONET_CERT_AUTH
@@ -768,18 +741,6 @@ namespace Microsoft.Data.SqlClient
         internal string WorkstationId => _workstationId;
         internal PoolBlockingPeriod PoolBlockingPeriod => _poolBlockingPeriod;
 
-#if NETFRAMEWORK
-#if ADONET_CERT_AUTH
-        internal string Certificate => _certificate;
-        internal bool UsesCertificate => _authType == SqlClient.SqlAuthenticationMethod.SqlCertificate;
-#else
-        internal string Certificate => null;
-        internal bool UsesCertificate => false;
-#endif
-        internal bool ContextConnection => _contextConnection;
-        internal bool TransparentNetworkIPResolution => _transparentNetworkIPResolution;
-        internal string NetworkLibrary => _networkLibrary;
-#endif // NETFRAMEWORK
 
         internal TypeSystem TypeSystemVersion => _typeSystemVersion;
         internal Version TypeSystemAssemblyVersion => _typeSystemAssemblyVersion;
@@ -796,14 +757,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-#if NETFRAMEWORK
-        protected internal override PermissionSet CreatePermissionSet()
-        {
-            PermissionSet permissionSet = new(PermissionState.None);
-            permissionSet.AddPermission(new SqlClientPermission(this));
-            return permissionSet;
-        }
-#endif
 
         protected internal override string Expand()
         {
@@ -852,11 +805,11 @@ namespace Microsoft.Data.SqlClient
             Dictionary<string, string> synonyms = s_sqlClientSynonyms;
             if (null == synonyms)
             {
-#if NETFRAMEWORK
+
                 int count = SqlConnectionStringBuilder.KeywordsCount + SynonymCount;
-#else
-                int count = SqlConnectionStringBuilder.KeywordsCount + SqlConnectionStringBuilder.DeprecatedKeywordsCount + SynonymCount + DeprecatedSynonymCount;
-#endif // NETFRAMEWORK
+#if !NETFRAMEWORK
+                count += SqlConnectionStringBuilder.DeprecatedKeywordsCount + DeprecatedSynonymCount;
+#endif
                 synonyms = new Dictionary<string, string>(count, StringComparer.OrdinalIgnoreCase)
                 {
                     { KEY.ApplicationIntent, KEY.ApplicationIntent },
@@ -958,45 +911,6 @@ namespace Microsoft.Data.SqlClient
             return result;
         }
 
-#if NETFRAMEWORK
-        static internal Hashtable NetlibMapping()
-        {
-            const int NetLibCount = 8;
-
-            Hashtable hash = s_netlibMapping;
-            if (null == hash)
-            {
-                hash = new Hashtable(NetLibCount)
-                {
-                    { NETLIB.TCPIP, TdsEnums.TCP },
-                    { NETLIB.NamedPipes, TdsEnums.NP },
-                    { NETLIB.Multiprotocol, TdsEnums.RPC },
-                    { NETLIB.BanyanVines, TdsEnums.BV },
-                    { NETLIB.AppleTalk, TdsEnums.ADSP },
-                    { NETLIB.IPXSPX, TdsEnums.SPX },
-                    { NETLIB.VIA, TdsEnums.VIA },
-                    { NETLIB.SharedMemory, TdsEnums.LPC }
-                };
-                Debug.Assert(NetLibCount == hash.Count, "incorrect initial NetlibMapping size");
-                s_netlibMapping = hash;
-            }
-            return hash;
-        }
-
-        static internal bool ValidProtocol(string protocol)
-        {
-            return protocol switch
-            {
-                TdsEnums.TCP or TdsEnums.NP or TdsEnums.VIA or TdsEnums.LPC => true,
-                //              case TdsEnums.RPC  :  Invalid Protocols
-                //              case TdsEnums.BV   :
-                //              case TdsEnums.ADSP :
-                //              case TdsEnums.SPX  :
-                _ => false,
-            };
-        }
-#endif
-
         private void ValidateValueLength(string value, int limit, string key)
         {
             if (limit < value.Length)
@@ -1087,7 +1001,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (!TryGetParsetableValue(KEY.Authentication, out string value))
             {
-                return DEFAULT.s_authentication;
+                return DEFAULT.Authentication;
             }
 
             try
@@ -1137,7 +1051,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (!TryGetParsetableValue(KEY.AttestationProtocol, out string value))
             {
-                return DEFAULT.s_attestationProtocol;
+                return DEFAULT.AttestationProtocol;
             }
 
             try
@@ -1162,7 +1076,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (!TryGetParsetableValue(KEY.IPAddressPreference, out string value))
             {
-                return DEFAULT.s_ipAddressPreference;
+                return DEFAULT.IpAddressPreference;
             }
 
             try
@@ -1195,13 +1109,89 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.InvalidConnectionOptionValue(KEY.PoolBlockingPeriod, e);
             }
         }
-        
+
 #if NETFRAMEWORK
+        protected internal override PermissionSet CreatePermissionSet()
+        {
+            PermissionSet permissionSet = new(PermissionState.None);
+            permissionSet.AddPermission(new SqlClientPermission(this));
+            return permissionSet;
+        }
+
         internal bool ConvertValueToEncrypt()
         {
             bool defaultEncryptValue = !Parsetable.ContainsKey(KEY.Authentication) ? DEFAULT.Encrypt : true;
             return ConvertValueToBoolean(KEY.Encrypt, defaultEncryptValue);
         }
+
+        static internal Hashtable NetlibMapping()
+        {
+            const int NetLibCount = 8;
+
+            Hashtable hash = s_netlibMapping;
+            if (null == hash)
+            {
+                hash = new Hashtable(NetLibCount)
+                {
+                    { NETLIB.TCPIP, TdsEnums.TCP },
+                    { NETLIB.NamedPipes, TdsEnums.NP },
+                    { NETLIB.Multiprotocol, TdsEnums.RPC },
+                    { NETLIB.BanyanVines, TdsEnums.BV },
+                    { NETLIB.AppleTalk, TdsEnums.ADSP },
+                    { NETLIB.IPXSPX, TdsEnums.SPX },
+                    { NETLIB.VIA, TdsEnums.VIA },
+                    { NETLIB.SharedMemory, TdsEnums.LPC }
+                };
+                Debug.Assert(NetLibCount == hash.Count, "incorrect initial NetlibMapping size");
+                s_netlibMapping = hash;
+            }
+            return hash;
+        }
+        static internal bool ValidProtocol(string protocol)
+        {
+            return protocol switch
+            {
+                TdsEnums.TCP or TdsEnums.NP or TdsEnums.VIA or TdsEnums.LPC => true,
+                //              case TdsEnums.RPC  :  Invalid Protocols
+                //              case TdsEnums.BV   :
+                //              case TdsEnums.ADSP :
+                //              case TdsEnums.SPX  :
+                _ => false,
+            };
+        }
+
+        // the following are all inserted as keys into the _netlibMapping hash
+        internal static class NETLIB
+        {
+            internal const string AppleTalk = "dbmsadsn";
+            internal const string BanyanVines = "dbmsvinn";
+            internal const string IPXSPX = "dbmsspxn";
+            internal const string Multiprotocol = "dbmsrpcn";
+            internal const string NamedPipes = "dbnmpntw";
+            internal const string SharedMemory = "dbmslpcn";
+            internal const string TCPIP = "dbmssocn";
+            internal const string VIA = "dbmsgnet";
+        }
+
+        private static Hashtable s_netlibMapping;
+        private readonly bool _connectionReset;
+        private readonly bool _contextConnection;
+        private readonly bool _transparentNetworkIPResolution;
+        private readonly string _networkLibrary;
+
+        internal bool ContextConnection => _contextConnection;
+        internal bool TransparentNetworkIPResolution => _transparentNetworkIPResolution;
+        internal string NetworkLibrary => _networkLibrary;
+
+#if ADONET_CERT_AUTH
+        private readonly string _certificate;
+        internal string Certificate => _certificate;
+        internal bool UsesCertificate => _authType == SqlClient.SqlAuthenticationMethod.SqlCertificate;
+#else
+        internal string Certificate => null;
+        internal bool UsesCertificate => false;
 #endif
+
+#endif // NETFRAMEWORK
     }
 }
