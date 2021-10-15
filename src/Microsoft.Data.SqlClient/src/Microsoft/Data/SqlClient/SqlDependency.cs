@@ -7,6 +7,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+#if NETFRAMEWORK
+using System.IO;
+using System.Runtime.Remoting;
+using System.Runtime.Serialization;
+using System.Runtime.Versioning;
+using System.Security.Permissions;
+#endif
 using System.Text;
 using System.Threading;
 using System.Xml;
@@ -16,14 +23,14 @@ using Microsoft.Data.Sql;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/SqlDependency/*' />
+    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/SqlDependency/*' />
     public sealed class SqlDependency
     {
         // Private class encapsulating the user/identity information - either SQL Auth username or Windows identity.
         internal class IdentityUserNamePair
         {
-            private DbConnectionPoolIdentity _identity;
-            private string _userName;
+            private readonly DbConnectionPoolIdentity _identity;
+            private readonly string _userName;
 
             internal IdentityUserNamePair(DbConnectionPoolIdentity identity, string userName)
             {
@@ -71,8 +78,7 @@ namespace Microsoft.Data.SqlClient
 
             public override int GetHashCode()
             {
-                int hashValue = 0;
-
+                int hashValue;
                 if (null != _identity)
                 {
                     hashValue = _identity.GetHashCode();
@@ -89,8 +95,8 @@ namespace Microsoft.Data.SqlClient
         // Private class encapsulating the database, service info and hash logic.
         private class DatabaseServicePair
         {
-            private string _database;
-            private string _service; // Store the value, but don't use for equality or hashcode!
+            private readonly string _database;
+            private readonly string _service; // Store the value, but don't use for equality or hashcode!
 
             internal DatabaseServicePair(string database, string service)
             {
@@ -125,21 +131,18 @@ namespace Microsoft.Data.SqlClient
                 return result;
             }
 
-            public override int GetHashCode()
-            {
-                return _database.GetHashCode();
-            }
+            public override int GetHashCode() => _database.GetHashCode();
         }
 
         // Private class encapsulating the event and it's registered execution context.
         internal class EventContextPair
         {
-            private OnChangeEventHandler _eventHandler;
-            private ExecutionContext _context;
-            private SqlDependency _dependency;
+            private readonly OnChangeEventHandler _eventHandler;
+            private readonly ExecutionContext _context;
+            private readonly SqlDependency _dependency;
             private SqlNotificationEventArgs _args;
 
-            private static ContextCallback s_contextCallback = new ContextCallback(InvokeCallback);
+            private static readonly ContextCallback s_contextCallback = new(InvokeCallback);
 
             internal EventContextPair(OnChangeEventHandler eventHandler, SqlDependency dependency)
             {
@@ -174,10 +177,7 @@ namespace Microsoft.Data.SqlClient
                 return result;
             }
 
-            public override int GetHashCode()
-            {
-                return _eventHandler.GetHashCode();
-            }
+            public override int GetHashCode() => _eventHandler.GetHashCode();
 
             internal void Invoke(SqlNotificationEventArgs args)
             {
@@ -192,62 +192,104 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+#if NETFRAMEWORK
+        // Private Class to add ObjRef as DataContract
+        [SecurityPermission(SecurityAction.Assert, Flags = SecurityPermissionFlag.RemotingConfiguration)]
+        [DataContract]
+        private class SqlClientObjRef
+        {
+            [DataMember]
+            private static ObjRef s_sqlObjRef;
+            internal static IRemotingTypeInfo s_typeInfo;
+
+            private SqlClientObjRef() { }
+
+            public SqlClientObjRef(SqlDependencyProcessDispatcher dispatcher) : base()
+            {
+                s_sqlObjRef = RemotingServices.Marshal(dispatcher);
+                s_typeInfo = s_sqlObjRef.TypeInfo;
+            }
+
+            internal static bool CanCastToSqlDependencyProcessDispatcher() => s_typeInfo.CanCastTo(typeof(SqlDependencyProcessDispatcher), s_sqlObjRef);
+
+            internal ObjRef GetObjRef() => s_sqlObjRef;
+        }
+#endif
+
         // Instance members
 
         // SqlNotificationRequest required state members
 
         // Only used for SqlDependency.Id.
         private readonly string _id = Guid.NewGuid().ToString() + ";" + s_appDomainKey;
-        private string _options; // Concat of service & db, in the form "service=x;local database=y".
-        private int _timeout;
+        private readonly string _options; // Concat of service & db, in the form "service=x;local database=y".
+        private readonly int _timeout;
 
         // Various SqlDependency required members
         private bool _dependencyFired = false;
         // We are required to implement our own event collection to preserve ExecutionContext on callback.
-        private List<EventContextPair> _eventList = new List<EventContextPair>();
-        private object _eventHandlerLock = new object(); // Lock for event serialization.
+        private List<EventContextPair> _eventList = new();
+        private readonly object _eventHandlerLock = new(); // Lock for event serialization.
         // Track the time that this dependency should time out. If the server didn't send a change
         // notification or a time-out before this point then the client will perform a client-side 
         // timeout.
         private DateTime _expirationTime = DateTime.MaxValue;
         // Used for invalidation of dependencies based on which servers they rely upon.
         // It's possible we will over invalidate if unexpected server failure occurs (but not server down).
-        private List<string> _serverList = new List<string>();
+        private readonly List<string> _serverList = new();
 
         // Static members
 
-        private static object s_startStopLock = new object();
+        private static readonly object s_startStopLock = new();
         private static readonly string s_appDomainKey = Guid.NewGuid().ToString();
         // Hashtable containing all information to match from a server, user, database triple to the service started for that 
         // triple.  For each server, there can be N users.  For each user, there can be N databases.  For each server, user, 
         // database, there can only be one service.
-        private static Dictionary<string, Dictionary<IdentityUserNamePair, List<DatabaseServicePair>>> s_serverUserHash =
-                   new Dictionary<string, Dictionary<IdentityUserNamePair, List<DatabaseServicePair>>>(StringComparer.OrdinalIgnoreCase);
+        private static readonly Dictionary<string, Dictionary<IdentityUserNamePair, List<DatabaseServicePair>>> s_serverUserHash =
+                   new(StringComparer.OrdinalIgnoreCase);
         private static SqlDependencyProcessDispatcher s_processDispatcher = null;
+#if NETFRAMEWORK
         // The following two strings are used for AppDomain.CreateInstance.
         private static readonly string s_assemblyName = (typeof(SqlDependencyProcessDispatcher)).Assembly.FullName;
         private static readonly string s_typeName = (typeof(SqlDependencyProcessDispatcher)).FullName;
+#endif 
 
-        private static int _objectTypeCount; // EventSourceCounter counter
-        internal int ObjectID { get; } = Interlocked.Increment(ref _objectTypeCount);
+        // EventSource members
+        private static int s_objectTypeCount; // EventSourceCounter counter
+        internal int ObjectID { get; } = Interlocked.Increment(ref s_objectTypeCount);
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/ctor2/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/ctor2/*' />
         // Constructors
+#if NETFRAMEWORK
+        [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
+#endif
         public SqlDependency() : this(null, null, SQL.SqlDependencyTimeoutDefault)
         {
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/ctorCommand/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/ctorCommand/*' />
+#if NETFRAMEWORK
+        [System.Security.Permissions.HostProtectionAttribute(ExternalThreading = true)]
+#endif
         public SqlDependency(SqlCommand command) : this(command, null, SQL.SqlDependencyTimeoutDefault)
         {
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/ctorCommandOptionsTimeout/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/ctorCommandOptionsTimeout/*' />
+#if NETFRAMEWORK
+        [HostProtection(ExternalThreading = true)]
+#endif
         public SqlDependency(SqlCommand command, string options, int timeout)
         {
             long scopeID = SqlClientEventSource.Log.TryNotificationScopeEnterEvent("<sc.SqlDependency|DEP> {0}, options: '{1}', timeout: '{2}'", ObjectID, options, timeout);
             try
             {
+#if NETFRAMEWORK
+                if (InOutOfProcHelper.InProc)
+                {
+                    throw SQL.SqlDepCannotBeCreatedInProc();
+                }
+#endif
                 if (timeout < 0)
                 {
                     throw SQL.InvalidSqlDependencyTimeout(nameof(timeout));
@@ -269,10 +311,22 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Public Properties
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/HasChanges/*' />
+/// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/HasChanges/*' />
+#if NETFRAMEWORK
+        [
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlDependency_HasChanges)
+        ]
+#endif
         public bool HasChanges => _dependencyFired;
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/Id/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/Id/*' />
+#if NETFRAMEWORK
+        [
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlDependency_Id)
+        ]
+#endif
         public string Id => _id;
 
         // Internal Properties
@@ -288,7 +342,13 @@ namespace Microsoft.Data.SqlClient
         internal int Timeout => _timeout;
 
         // Events
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/OnChange/*' />
+/// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/OnChange/*' />
+#if NETFRAMEWORK
+        [
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlDependency_OnChange)
+        ]
+#endif
         public event OnChangeEventHandler OnChange
         {
             // EventHandlers to be fired when dependency is notified.
@@ -305,11 +365,13 @@ namespace Microsoft.Data.SqlClient
                         {
                             if (_dependencyFired)
                             { // If fired, fire the new event immediately.
+                                SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.OnChange-Add|DEP> Dependency already fired, firing new event.");
                                 sqlNotificationEvent = new SqlNotificationEventArgs(SqlNotificationType.Subscribe, SqlNotificationInfo.AlreadyChanged, SqlNotificationSource.Client);
                             }
                             else
                             {
-                                EventContextPair pair = new EventContextPair(value, this);
+                                SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.OnChange-Add|DEP> Dependency has not fired, adding new event.");
+                                EventContextPair pair = new(value, this);
                                 if (!_eventList.Contains(pair))
                                 {
                                     _eventList.Add(pair);
@@ -339,7 +401,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (null != value)
                     {
-                        EventContextPair pair = new EventContextPair(value, this);
+                        EventContextPair pair = new(value, this);
                         lock (_eventHandlerLock)
                         {
                             int index = _eventList.IndexOf(pair);
@@ -358,7 +420,13 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Public Methods
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/AddCommandDependency/*' />
+/// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/AddCommandDependency/*' />
+#if NETFRAMEWORK
+        [
+        ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlDependency_AddCommandDependency)
+        ]
+#endif
         public void AddCommandDependency(SqlCommand command)
         {
             // Adds command to dependency collection so we automatically create the SqlNotificationsRequest object
@@ -379,26 +447,134 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+#if NETFRAMEWORK
+        [System.Security.Permissions.ReflectionPermission(System.Security.Permissions.SecurityAction.Assert, MemberAccess = true)]
+        private static ObjectHandle CreateProcessDispatcher(_AppDomain masterDomain) => masterDomain.CreateInstance(s_assemblyName, s_typeName);
+#endif
         // Static Methods - public & internal
 
-        // Static Start/Stop methods
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StartConnectionString/*' />
-        public static bool Start(string connectionString)
+#if NETFRAMEWORK
+        // Method to obtain AppDomain reference and then obtain the reference to the process wide dispatcher for
+        // Start() and Stop() method calls on the individual SqlDependency instances.
+        // SxS: this method retrieves the primary AppDomain stored in native library. Since each System.Data.dll has its own copy of native
+        // library, this call is safe in SxS
+        [ResourceExposure(ResourceScope.None)]
+        [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
+        private static void ObtainProcessDispatcher()
         {
-            return Start(connectionString, null, true);
+            byte[] nativeStorage = SNINativeMethodWrapper.GetData();
+
+            if (nativeStorage == null)
+            {
+                SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP> nativeStorage null, obtaining dispatcher AppDomain and creating ProcessDispatcher.");
+
+#if DEBUG       // Possibly expensive, limit to debug.
+                SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP> AppDomain.CurrentDomain.FriendlyName: {0}", AppDomain.CurrentDomain.FriendlyName);
+
+#endif // DEBUG
+                _AppDomain masterDomain = SNINativeMethodWrapper.GetDefaultAppDomain();
+
+                if (null != masterDomain)
+                {
+                    ObjectHandle handle = CreateProcessDispatcher(masterDomain);
+
+                    if (null != handle)
+                    {
+                        SqlDependencyProcessDispatcher dependency = (SqlDependencyProcessDispatcher)handle.Unwrap();
+
+                        if (null != dependency)
+                        {
+                            s_processDispatcher = dependency.SingletonProcessDispatcher; // Set to static instance.
+
+                            // Serialize and set in native.
+                            using (MemoryStream stream = new())
+                            {
+                                SqlClientObjRef objRef = new(s_processDispatcher);
+                                DataContractSerializer serializer = new(objRef.GetType());
+                                GetSerializedObject(objRef, serializer, stream);
+                                SNINativeMethodWrapper.SetData(stream.ToArray()); // Native will be forced to synchronize and not overwrite.
+                            }
+                        }
+                        else
+                        {
+                            SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP|ERR> ERROR - ObjectHandle.Unwrap returned null!");
+                            throw ADP.InternalError(ADP.InternalErrorCode.SqlDependencyObtainProcessDispatcherFailureObjectHandle);
+                        }
+                    }
+                    else
+                    {
+                        SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP|ERR> ERROR - AppDomain.CreateInstance returned null!");
+                        throw ADP.InternalError(ADP.InternalErrorCode.SqlDependencyProcessDispatcherFailureCreateInstance);
+                    }
+                }
+                else
+                {
+                    SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP|ERR> ERROR - unable to obtain default AppDomain!");
+                    throw ADP.InternalError(ADP.InternalErrorCode.SqlDependencyProcessDispatcherFailureAppDomain);
+                }
+            }
+            else
+            {
+                SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP> nativeStorage not null, obtaining existing dispatcher AppDomain and ProcessDispatcher.");
+
+#if DEBUG       // Possibly expensive, limit to debug.
+                SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP> AppDomain.CurrentDomain.FriendlyName: {0}", AppDomain.CurrentDomain.FriendlyName);
+#endif // DEBUG
+                using (MemoryStream stream = new(nativeStorage))
+                {
+                    DataContractSerializer serializer = new(typeof(SqlClientObjRef));
+                    if (SqlClientObjRef.CanCastToSqlDependencyProcessDispatcher())
+                    {
+                        // Deserialize and set for appdomain.
+                        s_processDispatcher = GetDeserializedObject(serializer, stream);
+                    }
+                    else
+                    {
+                        throw new ArgumentException(Strings.SqlDependency_UnexpectedValueOnDeserialize);
+                    }
+                    SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.ObtainProcessDispatcher|DEP> processDispatcher obtained, ID: {0}", s_processDispatcher.ObjectID);
+                }
+            }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StartConnectionStringQueue/*' />
-        public static bool Start(string connectionString, string queue)
+        // ---------------------------------------------------------
+        // Static security asserted methods - limit scope of assert.
+        // ---------------------------------------------------------
+
+        [SecurityPermission(SecurityAction.Assert, Flags = SecurityPermissionFlag.SerializationFormatter)]
+        private static void GetSerializedObject(SqlClientObjRef objRef, DataContractSerializer serializer, MemoryStream stream)
         {
-            return Start(connectionString, queue, false);
+            serializer.WriteObject(stream, objRef);
         }
+
+        [SecurityPermission(SecurityAction.Assert, Flags = SecurityPermissionFlag.SerializationFormatter)]
+        private static SqlDependencyProcessDispatcher GetDeserializedObject(DataContractSerializer serializer, MemoryStream stream)
+        {
+            object refResult = serializer.ReadObject(stream);
+            var result = RemotingServices.Unmarshal((refResult as SqlClientObjRef).GetObjRef());
+            return result as SqlDependencyProcessDispatcher;
+        }
+#endif // NETFRAMEWORK
+        // Static Start/Stop methods
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StartConnectionString/*' />
+        public static bool Start(string connectionString) => Start(connectionString, null, true);
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StartConnectionStringQueue/*' />
+        public static bool Start(string connectionString, string queue) => Start(connectionString, queue, false);
 
         internal static bool Start(string connectionString, string queue, bool useDefaults)
         {
             long scopeID = SqlClientEventSource.Log.TryNotificationScopeEnterEvent("<sc.SqlDependency.Start|DEP> AppDomainKey: '{0}', queue: '{1}'", AppDomainKey, queue);
             try
             {
+#if NETFRAMEWORK
+                // The following code exists in Stop as well.  It exists here to demand permissions as high in the stack
+                // as possible.
+                if (InOutOfProcHelper.InProc)
+                {
+                    throw SQL.SqlDepCannotBeCreatedInProc();
+                }
+#endif
                 if (string.IsNullOrEmpty(connectionString))
                 {
                     if (null == connectionString)
@@ -417,6 +593,16 @@ namespace Microsoft.Data.SqlClient
                     queue = null; // Force to null - for proper hashtable comparison for default case.
                 }
 
+#if NETFRAMEWORK
+                // Create new connection options for demand on their connection string.  We modify the connection string
+                // and assert on our modified string when we create the container.
+                SqlConnectionString connectionStringObject = new(connectionString);
+                connectionStringObject.DemandPermission();
+                if (connectionStringObject.LocalDBInstance != null)
+                {
+                    LocalDBAPI.DemandLocalDBPermissions();
+                }
+#endif
                 // End duplicate Start/Stop logic.
 
                 bool errorOccurred = false;
@@ -428,7 +614,11 @@ namespace Microsoft.Data.SqlClient
                     {
                         if (null == s_processDispatcher)
                         { // Ensure _processDispatcher reference is present - inside lock.
+#if NETFRAMEWORK
+                            ObtainProcessDispatcher();
+#else
                             s_processDispatcher = SqlDependencyProcessDispatcher.SingletonProcessDispatcher;
+#endif // NETFRAMEWORK
                         }
 
                         if (useDefaults)
@@ -461,8 +651,8 @@ namespace Microsoft.Data.SqlClient
                             {
                                 if (appDomainStart && !errorOccurred)
                                 { // If success, add to hashtable.
-                                    IdentityUserNamePair identityUser = new IdentityUserNamePair(identity, user);
-                                    DatabaseServicePair databaseService = new DatabaseServicePair(database, service);
+                                    IdentityUserNamePair identityUser = new(identity, user);
+                                    DatabaseServicePair databaseService = new(database, service);
                                     if (!AddToServerUserHash(server, identityUser, databaseService))
                                     {
                                         try
@@ -518,23 +708,25 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StopConnectionString/*' />
-        public static bool Stop(string connectionString)
-        {
-            return Stop(connectionString, null, true, false);
-        }
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StopConnectionString/*' />
+        public static bool Stop(string connectionString) => Stop(connectionString, null, true, false);
 
-        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StopConnectionStringQueue/*' />
-        public static bool Stop(string connectionString, string queue)
-        {
-            return Stop(connectionString, queue, false, false);
-        }
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDependency.xml' path='docs/members[@name="SqlDependency"]/StopConnectionStringQueue/*' />
+        public static bool Stop(string connectionString, string queue) => Stop(connectionString, queue, false, false);
 
         internal static bool Stop(string connectionString, string queue, bool useDefaults, bool startFailed)
         {
             long scopeID = SqlClientEventSource.Log.TryNotificationScopeEnterEvent("<sc.SqlDependency.Stop|DEP> AppDomainKey: '{0}', queue: '{1}'", AppDomainKey, queue);
             try
             {
+#if NETFRAMEWORK
+                // The following code exists in Stop as well.  It exists here to demand permissions as high in the stack
+                // as possible.
+                if (InOutOfProcHelper.InProc)
+                {
+                    throw SQL.SqlDepCannotBeCreatedInProc();
+                }
+#endif
                 if (string.IsNullOrEmpty(connectionString))
                 {
                     if (null == connectionString)
@@ -553,6 +745,16 @@ namespace Microsoft.Data.SqlClient
                     queue = null; // Force to null - for proper hashtable comparison for default case.
                 }
 
+#if NETFRAMEWORK
+                // Create new connection options for demand on their connection string.  We modify the connection string
+                // and assert on our modified string when we create the container.
+                SqlConnectionString connectionStringObject = new(connectionString);
+                connectionStringObject.DemandPermission();
+                if (connectionStringObject.LocalDBInstance != null)
+                {
+                    LocalDBAPI.DemandLocalDBPermissions();
+                }
+#endif
                 // End duplicate Start/Stop logic.
 
                 bool result = false;
@@ -592,8 +794,8 @@ namespace Microsoft.Data.SqlClient
                                     if (appDomainStop && !startFailed)
                                     { // If success, remove from hashtable.
                                         Debug.Assert(!string.IsNullOrEmpty(server) && !string.IsNullOrEmpty(database), "Server or Database null/Empty upon successful Stop()!");
-                                        IdentityUserNamePair identityUser = new IdentityUserNamePair(identity, user);
-                                        DatabaseServicePair databaseService = new DatabaseServicePair(database, service);
+                                        IdentityUserNamePair identityUser = new(identity, user);
+                                        DatabaseServicePair databaseService = new(database, service);
                                         RemoveFromServerUserHash(server, identityUser, databaseService);
                                     }
                                 }
@@ -810,7 +1012,7 @@ namespace Microsoft.Data.SqlClient
                         databaseList = identityDatabaseHash[identityUser];
                     }
 
-                    DatabaseServicePair pair = new DatabaseServicePair(database, null);
+                    DatabaseServicePair pair = new(database, null);
                     DatabaseServicePair resultingPair = null;
                     int index = databaseList.IndexOf(pair);
                     if (index != -1)
@@ -869,6 +1071,7 @@ namespace Microsoft.Data.SqlClient
                     int index = _serverList.BinarySearch(server, StringComparer.OrdinalIgnoreCase);
                     if (0 > index)
                     { // If less than 0, item was not found in list.
+                        SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.AddToServerList|DEP> Server not present in hashtable, adding server: '{0}'.", server);
                         index = ~index; // BinarySearch returns the 2's compliment of where the item should be inserted to preserver a sorted list after insertion.
                         _serverList.Insert(index, server);
 
@@ -972,6 +1175,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (_expirationTime == DateTime.MaxValue)
                 {
+                    SqlClientEventSource.Log.TryNotificationTraceEvent("<sc.SqlDependency.StartTimer|DEP> We've timed out, executing logic.");
                     int seconds = SQL.SqlDependencyServerTimeout;
                     if (0 != _timeout)
                     {
@@ -1074,7 +1278,7 @@ namespace Microsoft.Data.SqlClient
                 // All types should properly support a .ToString for the values except
                 // byte[], char[], and XmlReader.
 
-                StringBuilder builder = new StringBuilder();
+                StringBuilder builder = new();
 
                 // add the Connection string and the Command text
                 builder.AppendFormat("{0};{1}", connectionString, command.CommandText);
