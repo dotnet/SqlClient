@@ -163,6 +163,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlDataRecord.netcore.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlDataRecord.netcore.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SmiMetaDataProperty.cs">
+      <Link>Microsoft\Data\SqlClient\Server\SmiMetaDataProperty.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\ColumnEncryptionKeyInfo.cs">
       <Link>Microsoft\Data\SqlClient\ColumnEncryptionKeyInfo.cs</Link>
     </Compile>
@@ -503,7 +506,6 @@
     </EmbeddedResource>
     <Compile Include="Microsoft\Data\SqlClient\AAsyncCallContext.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\MetadataUtilsSmi.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\Server\SmiMetaDataProperty.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiXetterAccessMap.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDbColumn.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
