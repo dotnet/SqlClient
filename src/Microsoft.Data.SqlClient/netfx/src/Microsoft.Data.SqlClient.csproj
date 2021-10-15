@@ -351,6 +351,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlErrorCollection.cs">
       <Link>Microsoft\Data\SqlClient\SqlErrorCollection.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlException.cs">
+      <Link>Microsoft\Data\SqlClient\SqlException.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlInfoMessageEventHandler.cs">
       <Link>Microsoft\Data\SqlClient\SqlInfoMessageEventHandler.cs</Link>
     </Compile>
@@ -536,7 +539,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlDependencyUtils.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlEnums.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlError.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlException.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInfoMessageEvent.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionSmi.cs" />
