@@ -5,12 +5,57 @@
 using System;
 using System.Diagnostics;
 using System.Security;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Identity.Client;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class AADConnectionsTest
     {
+        class CustomSqlAuthenticationProvider : SqlAuthenticationProvider
+        {
+            string _appClientId;
+
+            internal CustomSqlAuthenticationProvider(string appClientId)
+            {
+                _appClientId = appClientId;
+            }
+
+            public override async Task<SqlAuthenticationToken> AcquireTokenAsync(SqlAuthenticationParameters parameters)
+            {
+                string s_defaultScopeSuffix = "/.default";
+                string scope = parameters.Resource.EndsWith(s_defaultScopeSuffix) ? parameters.Resource : parameters.Resource + s_defaultScopeSuffix;
+
+                _ = parameters.ServerName;
+                _ = parameters.DatabaseName;
+                _ = parameters.ConnectionId;
+
+                var cts = new CancellationTokenSource();
+                cts.CancelAfter(parameters.ConnectionTimeout * 1000);
+
+                string[] scopes = new string[] { scope };
+                SecureString password = new SecureString();
+                foreach (char c in parameters.Password)
+                    password.AppendChar(c);
+                password.MakeReadOnly();
+
+                AuthenticationResult result = await PublicClientApplicationBuilder.Create(_appClientId)
+                .WithAuthority(parameters.Authority)
+                .Build().AcquireTokenByUsernamePassword(scopes, parameters.UserId, password)
+                    .WithCorrelationId(parameters.ConnectionId)
+                    .ExecuteAsync(cancellationToken: cts.Token);
+
+                return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
+            }
+
+            public override bool IsSupported(SqlAuthenticationMethod authenticationMethod)
+            {
+                return authenticationMethod.Equals(SqlAuthenticationMethod.ActiveDirectoryPassword);
+            }
+        }
+
         private static void ConnectAndDisconnect(string connectionString, SqlCredential credential = null)
         {
             using (SqlConnection conn = new SqlConnection(connectionString))
@@ -167,7 +212,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Contains(expectedMessage, e.Message);
         }
 
-
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
         public static void GetAccessTokenByPasswordTest()
         {
@@ -181,7 +225,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
-        public static void testADPasswordAuthentication()
+        public static void TestADPasswordAuthentication()
         {
             // Connect to Azure DB with password and retrieve user name.
             using (SqlConnection conn = new SqlConnection(DataTestUtility.AADPasswordConnectionString))
@@ -199,6 +243,30 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     Assert.Equal(expected, customerId);
                 }
             }
+        }
+
+        [ConditionalFact(nameof(IsAADConnStringsSetup))]
+        public static void TestCustomProviderAuthentication()
+        {
+            SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, new CustomSqlAuthenticationProvider(DataTestUtility.ApplicationClientId));
+            // Connect to Azure DB with password and retrieve user name using custom authentication provider
+            using (SqlConnection conn = new SqlConnection(DataTestUtility.AADPasswordConnectionString))
+            {
+                conn.Open();
+                using (SqlCommand sqlCommand = new SqlCommand
+                (
+                    cmdText: $"SELECT SUSER_SNAME();",
+                    connection: conn,
+                    transaction: null
+                ))
+                {
+                    string customerId = (string)sqlCommand.ExecuteScalar();
+                    string expected = DataTestUtility.RetrieveValueFromConnStr(DataTestUtility.AADPasswordConnectionString, new string[] { "User ID", "UID" });
+                    Assert.Equal(expected, customerId);
+                }
+            }
+            // Reset to driver internal provider.
+            SqlAuthenticationProvider.SetProvider(SqlAuthenticationMethod.ActiveDirectoryPassword, new ActiveDirectoryAuthenticationProvider(DataTestUtility.ApplicationClientId));
         }
 
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
@@ -269,7 +337,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string[] removeKeys = { "User ID", "Password", "UID", "PWD" };
             string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, removeKeys) + "User ID=; Password=;";
             SqlException e = Assert.Throws<SqlException>(() => ConnectAndDisconnect(connStr));
-            
+
             string expectedMessage = "MSAL cannot determine the username (UPN) of the currently logged in user.For Integrated Windows Authentication and Username/Password flows, please use .WithUsername() before calling ExecuteAsync().";
             Assert.Contains(expectedMessage, e.Message);
         }
@@ -504,13 +572,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void ConnectionSpeed()
         {
             var connString = DataTestUtility.AADPasswordConnectionString;
-            
+
             //Ensure server endpoints are warm
             using (var connectionDrill = new SqlConnection(connString))
             {
                 connectionDrill.Open();
             }
-            
+
             SqlConnection.ClearAllPools();
             ActiveDirectoryAuthenticationProvider.ClearUserTokenCache();
 
@@ -529,7 +597,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     secondConnectionTime.Stop();
                 }
             }
-            
+
             // Subsequent AAD connections within a short timeframe should use an auth token cached from the connection pool
             // Second connection speed in tests was typically 10-15% of the first connection time. Using 30% since speeds may vary.
             Assert.True(((double)secondConnectionTime.ElapsedMilliseconds / firstConnectionTime.ElapsedMilliseconds) < 0.30, $"Second AAD connection too slow ({secondConnectionTime.ElapsedMilliseconds}ms)! (More than 30% of the first ({firstConnectionTime.ElapsedMilliseconds}ms).)");
