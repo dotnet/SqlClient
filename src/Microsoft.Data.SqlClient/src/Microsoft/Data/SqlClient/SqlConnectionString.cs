@@ -292,6 +292,8 @@ namespace Microsoft.Data.SqlClient
 
             _integratedSecurity = ConvertValueToIntegratedSecurity();
             _poolBlockingPeriod = ConvertValueToPoolBlockingPeriod();
+            _encrypt = ConvertValueToBoolean(KEY.Encrypt, DEFAULT.Encrypt);
+            _enlist = ConvertValueToBoolean(KEY.Enlist, DEFAULT.Enlist);
             _mars = ConvertValueToBoolean(KEY.MARS, DEFAULT.MARS);
             _persistSecurityInfo = ConvertValueToBoolean(KEY.Persist_Security_Info, DEFAULT.Persist_Security_Info);
             _pooling = ConvertValueToBoolean(KEY.Pooling, DEFAULT.Pooling);
@@ -578,7 +580,7 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.IntegratedWithUserIDAndPassword();
             }
 #else
-            if (Authentication == SqlClient.SqlAuthenticationMethod.ActiveDirectoryIntegrated && _hasPasswordKeyword)
+            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _hasPasswordKeyword)
             {
                 throw SQL.IntegratedWithPassword();
             }
@@ -1093,7 +1095,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal Microsoft.Data.SqlClient.PoolBlockingPeriod ConvertValueToPoolBlockingPeriod()
+        internal PoolBlockingPeriod ConvertValueToPoolBlockingPeriod()
         {
             if (!TryGetParsetableValue(KEY.PoolBlockingPeriod, out string value))
             {
@@ -1186,7 +1188,7 @@ namespace Microsoft.Data.SqlClient
 #if ADONET_CERT_AUTH
         private readonly string _certificate;
         internal string Certificate => _certificate;
-        internal bool UsesCertificate => _authType == SqlClient.SqlAuthenticationMethod.SqlCertificate;
+        internal bool UsesCertificate => _authType == SqlAuthenticationMethod.SqlCertificate;
 #else
         internal string Certificate => null;
         internal bool UsesCertificate => false;
