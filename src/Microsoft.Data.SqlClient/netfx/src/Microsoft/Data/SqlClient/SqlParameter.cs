@@ -1238,7 +1238,7 @@ namespace Microsoft.Data.SqlClient
                                 MethodInfo getter = serverTypeNameProperty.GetGetMethod(nonPublic: true);
                                 SortOrder sortOrder = (SortOrder)getter.Invoke(colMeta, null);
 
-                                sort[i].Order = sortOrder;
+                                sort[i]._order = sortOrder;
                                 if (SortOrder.Unspecified != sortOrder)
                                 {
                                     // SqlMetaData takes care of checking for negative sort ordinals with specified sort order
@@ -1255,7 +1255,7 @@ namespace Microsoft.Data.SqlClient
                                         throw SQL.DuplicateSortOrdinal(colMeta.SortOrdinal);
                                     }
 
-                                    sort[i].SortOrdinal = colMeta.SortOrdinal;
+                                    sort[i]._sortOrdinal = colMeta.SortOrdinal;
                                     sortOrdinalSpecified[colMeta.SortOrdinal] = true;
                                     if (colMeta.SortOrdinal > maxSortOrdinal)
                                     {
