@@ -163,8 +163,11 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlDataRecord.netcore.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlDataRecord.netcore.cs</Link>
     </Compile>
-  <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SmiXetterAccessMap.Common.cs">
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SmiXetterAccessMap.Common.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiXetterAccessMap.Common.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SmiMetaDataProperty.cs">
+      <Link>Microsoft\Data\SqlClient\Server\SmiMetaDataProperty.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\ColumnEncryptionKeyInfo.cs">
       <Link>Microsoft\Data\SqlClient\ColumnEncryptionKeyInfo.cs</Link>
@@ -207,6 +210,9 @@
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlBulkCopyColumnMapping.cs">
       <Link>Microsoft\Data\SqlClient\SqlBulkCopyColumnMapping.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlBulkCopyColumnMappingCollection.cs">
+      <Link>Microsoft\Data\SqlClient\SqlBulkCopyColumnMappingCollection.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlBulkCopyOptions.cs">
       <Link>Microsoft\Data\SqlClient\SqlBulkCopyOptions.cs</Link>
@@ -262,11 +268,23 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlDataAdapter.cs">
       <Link>Microsoft\Data\SqlClient\SqlDataAdapter.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlDependency.cs">
+      <Link>Microsoft\Data\SqlClient\SqlDependency.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlEnums.cs">
+      <Link>Microsoft\Data\SqlClient\SqlEnums.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlErrorCollection.cs">
       <Link>Microsoft\Data\SqlClient\SqlErrorCollection.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlException.cs">
+      <Link>Microsoft\Data\SqlClient\SqlException.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlInfoMessageEventHandler.cs">
       <Link>Microsoft\Data\SqlClient\SqlInfoMessageEventHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlNotificationEventArgs.cs">
+      <Link>Microsoft\Data\SqlClient\SqlNotificationEventArgs.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlNotificationInfo.cs">
       <Link>Microsoft\Data\SqlClient\SqlNotificationInfo.cs</Link>
@@ -285,6 +303,9 @@
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlQueryMetadataCache.cs">
       <Link>Microsoft\Data\SqlClient\SqlQueryMetadataCache.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlReferenceCollection.cs">
+      <Link>Microsoft\Data\SqlClient\SqlReferenceCollection.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlRowUpdatedEvent.cs">
       <Link>Microsoft\Data\SqlClient\SqlRowUpdatedEvent.cs</Link>
@@ -324,6 +345,9 @@
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlRecordBuffer.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlRecordBuffer.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\ValueUtilsSmi.cs">
+      <Link>Microsoft\Data\SqlClient\Server\ValueUtilsSmi.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SignatureVerificationCache.cs">
       <Link>Microsoft\Data\SqlClient\SignatureVerificationCache.cs</Link>
@@ -485,8 +509,6 @@
     </EmbeddedResource>
     <Compile Include="Microsoft\Data\SqlClient\AAsyncCallContext.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\MetadataUtilsSmi.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\Server\SmiMetaDataProperty.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\Server\ValueUtilsSmi.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDbColumn.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
     <Compile Include="$(CommonPath)\Microsoft\Data\ProviderBase\DbConnectionInternal.cs">
@@ -521,7 +543,6 @@
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBuffer.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopyColumnMappingCollection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientDiagnosticListenerExtensions.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientFactory.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlCommand.cs" />
@@ -535,25 +556,20 @@
       <Link>Microsoft\Data\SqlClient\SqlConnectionTimeoutErrorInternal.cs</Link>
     </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlDataReader.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlDependency.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDependencyListener.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDependencyUtils.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDependencyUtils.AppDomain.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlEnums.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlError.cs" />
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlEnclaveSession.cs">
       <Link>Microsoft\Data\SqlClient\SqlEnclaveSession.cs</Link>
     </Compile>
-    <Compile Include="Microsoft\Data\SqlClient\SqlException.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInfoMessageEvent.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalTransaction.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlMetadataFactory.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlNotificationEventArgs.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlParameter.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlReferenceCollection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlSequentialStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlSequentialTextReader.cs" />
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlStatistics.cs">

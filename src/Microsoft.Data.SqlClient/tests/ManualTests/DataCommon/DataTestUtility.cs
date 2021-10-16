@@ -64,6 +64,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static string AADAccessToken = null;
         public static string AADSystemIdentityAccessToken = null;
         public static string AADUserIdentityAccessToken = null;
+        public const string ApplicationClientId = "2fd908ad-0664-4344-b9be-cd3e8b574c38";
         public const string UdtTestDbName = "UdtTestDb";
         public const string AKVKeyName = "TestSqlClientAzureKeyVaultProvider";
         public const string EventSourcePrefix = "Microsoft.Data.SqlClient";
