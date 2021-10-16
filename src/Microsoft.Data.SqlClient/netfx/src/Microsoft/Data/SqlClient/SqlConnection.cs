@@ -2505,7 +2505,7 @@ namespace Microsoft.Data.SqlClient
             string mapFileName;
 
             // If Win2k or later, prepend "Global\\" to enable this to work through TerminalServices.
-            if (ADP.IsPlatformNT5)
+            if (ADP.s_isPlatformNT5)
             {
                 mapFileName = "Global\\" + TdsEnums.SDCI_MAPFILENAME;
             }
@@ -2518,10 +2518,10 @@ namespace Microsoft.Data.SqlClient
 
             hFileMap = NativeMethods.OpenFileMappingA(0x4/*FILE_MAP_READ*/, false, mapFileName);
 
-            if (ADP.PtrZero != hFileMap)
+            if (ADP.s_ptrZero != hFileMap)
             {
                 IntPtr pMemMap = NativeMethods.MapViewOfFile(hFileMap, 0x4/*FILE_MAP_READ*/, 0, 0, IntPtr.Zero);
-                if (ADP.PtrZero != pMemMap)
+                if (ADP.s_ptrZero != pMemMap)
                 {
                     SqlDebugContext sdc = new SqlDebugContext();
                     sdc.hMemMap = hFileMap;
@@ -2812,7 +2812,7 @@ namespace Microsoft.Data.SqlClient
         // updates our context with any changes made to the memory-mapped data by an external process
         static private void RefreshMemoryMappedData(SqlDebugContext sdc)
         {
-            Debug.Assert(ADP.PtrZero != sdc.pMemMap, "SQL Debug: invalid null value for pMemMap!");
+            Debug.Assert(ADP.s_ptrZero != sdc.pMemMap, "SQL Debug: invalid null value for pMemMap!");
             // copy memory mapped file contents into managed types
             MEMMAP memMap = (MEMMAP)Marshal.PtrToStructure(sdc.pMemMap, typeof(MEMMAP));
             sdc.dbgpid = memMap.dbgpid;
@@ -3178,7 +3178,7 @@ namespace Microsoft.Data.SqlClient
             string mapFileName;
 
             // If Win2k or later, prepend "Global\\" to enable this to work through TerminalServices.
-            if (ADP.IsPlatformNT5)
+            if (ADP.s_isPlatformNT5)
             {
                 mapFileName = "Global\\" + TdsEnums.SDCI_MAPFILENAME;
             }
@@ -3199,7 +3199,7 @@ namespace Microsoft.Data.SqlClient
             Marshal.WriteIntPtr(pSecurityAttributes, 4, pSecurityDescriptor); // lpSecurityDescriptor = pSecurityDescriptor
             Marshal.WriteInt32(pSecurityAttributes, 8, 0); // bInheritHandle = FALSE
             hFileMap = NativeMethods.CreateFileMappingA(
-            ADP.InvalidPtr/*INVALID_HANDLE_VALUE*/,
+            ADP.s_invalidPtr/*INVALID_HANDLE_VALUE*/,
             pSecurityAttributes,
             0x4/*PAGE_READWRITE*/,
             0,
@@ -3290,8 +3290,8 @@ namespace Microsoft.Data.SqlClient
         internal uint tid = 0;
         internal bool active = false;
         // memory-mapped data
-        internal IntPtr pMemMap = ADP.PtrZero;
-        internal IntPtr hMemMap = ADP.PtrZero;
+        internal IntPtr pMemMap = ADP.s_ptrZero;
+        internal IntPtr hMemMap = ADP.s_ptrZero;
         internal uint dbgpid = 0;
         internal bool fOption = false;
         internal string machineName = null;

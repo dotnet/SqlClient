@@ -6,14 +6,9 @@ using System.Diagnostics;
 
 namespace Microsoft.Data.SqlClient.Server
 {
-    internal class SmiEventSink_Default : SmiEventSink
+    internal partial class SmiEventSink_Default : SmiEventSink
     {
-
         private SmiEventSink _parent;     // next level up, which we'll defer to if we don't need to handle the event.
-
-        private SqlErrorCollection _errors;
-        private SqlErrorCollection _warnings;
-
         private SqlErrorCollection Errors
         {
             get
@@ -27,41 +22,10 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
-        internal bool HasMessages
-        {
-            get
-            {
-                SmiEventSink_Default parent = (SmiEventSink_Default)_parent;
-                if (null != parent)
-                {
-                    return parent.HasMessages;
-                }
-                else
-                {
-                    bool result = (null != _errors || null != _warnings);
-                    return result;
-                }
-            }
-        }
-
-        virtual internal string ServerVersion
-        {
-            get
-            {
-                return null;
-            }
-        }
-
         internal SmiEventSink Parent
         {
-            get
-            {
-                return _parent;
-            }
-            set
-            {
-                _parent = value;
-            }
+            get => _parent;
+            set => _parent = value;
         }
 
         private SqlErrorCollection Warnings
@@ -77,86 +41,12 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
-        protected virtual void DispatchMessages(bool ignoreNonFatalMessages)
+        internal void ProcessMessagesAndThrow(bool ignoreNonFatalMessages)
         {
-            // virtual because we want a default implementation in the cases
-            // where we don't have a connection to process stuff, but we want to
-            // provide the connection the ability to fire info messages when it
-            // hooks up.
-            SmiEventSink_Default parent = (SmiEventSink_Default)_parent;
-            if (null != parent)
+            if (HasMessages)
             {
-                parent.DispatchMessages(ignoreNonFatalMessages);
+                DispatchMessages(ignoreNonFatalMessages);
             }
-            else
-            {
-                SqlException errors = ProcessMessages(true, ignoreNonFatalMessages);   // ignore warnings, because there's no place to send them...
-                if (null != errors)
-                {
-                    throw errors;
-                }
-            }
-        }
-
-        protected SqlException ProcessMessages(bool ignoreWarnings, bool ignoreNonFatalMessages)
-        {
-            SqlException result = null;
-            SqlErrorCollection temp = null;  // temp variable to store that which is being thrown - so that local copies can be deleted
-
-            if (null != _errors)
-            {
-                Debug.Assert(0 != _errors.Count, "empty error collection?"); // must be something in the collection
-
-                if (ignoreNonFatalMessages)
-                {
-                    temp = new SqlErrorCollection();
-                    foreach (SqlError error in _errors)
-                    {
-                        if (error.Class >= TdsEnums.FATAL_ERROR_CLASS)
-                        {
-                            temp.Add(error);
-                        }
-                    }
-                    if (temp.Count <= 0)
-                    {
-                        temp = null;
-                    }
-                }
-                else
-                {
-                    if (null != _warnings)
-                    {
-                        // When we throw an exception we place all the warnings that
-                        // occurred at the end of the collection - after all the errors.
-                        // That way the user can see all the errors AND warnings that
-                        // occurred for the exception.
-                        foreach (SqlError warning in _warnings)
-                        {
-                            _errors.Add(warning);
-                        }
-                    }
-                    temp = _errors;
-                }
-
-                _errors = null;
-                _warnings = null;
-            }
-            else
-            {
-                Debug.Assert(null == _warnings || 0 != _warnings.Count, "empty warning collection?");// must be something in the collection
-
-                if (!ignoreWarnings)
-                {
-                    temp = _warnings;
-                }
-                _warnings = null;
-            }
-
-            if (null != temp)
-            {
-                result = SqlException.CreateException(temp, ServerVersion);
-            }
-            return result;
         }
 
         internal void CleanMessages()
@@ -170,19 +60,6 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 _errors = null;
                 _warnings = null;
-            }
-        }
-
-        internal void ProcessMessagesAndThrow()
-        {
-            ProcessMessagesAndThrow(false);
-        }
-
-        internal void ProcessMessagesAndThrow(bool ignoreNonFatalMessages)
-        {
-            if (HasMessages)
-            {
-                DispatchMessages(ignoreNonFatalMessages);
             }
         }
 
@@ -206,25 +83,19 @@ namespace Microsoft.Data.SqlClient.Server
             TransactionStarted,
         }
 
-
-        internal SmiEventSink_Default()
-        {
-        }
-
         internal SmiEventSink_Default(SmiEventSink parent)
         {
             _parent = parent;
         }
 
-
-        // NOTE: See the note in SmiEventSink about throwing from these methods;
-        //       We're throwing here because we don't want to miss something, but
-        //       you'll need to turn on Bid tracing to figure out what it is that
-        //       was thrown, because they will be eaten by the server and replaced
-        //       with a different exception.
-
-
+        // <summary>
+        //NOTE: See the note in SmiEventSink about throwing from these methods;
+        // We're throwing here because we don't want to miss something, but
+        //you'll need to turn on Bid tracing to figure out what it is that
+        //was thrown, because they will be eaten by the server and replaced
+        //with a different exception.
         // Called at end of stream
+        //</summary>
         internal override void BatchCompleted()
         {
             if (null == _parent)
