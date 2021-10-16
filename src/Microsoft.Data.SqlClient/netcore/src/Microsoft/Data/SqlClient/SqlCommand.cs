@@ -1082,51 +1082,37 @@ namespace Microsoft.Data.SqlClient
             // between entry into Execute* API and the thread obtaining the stateObject.
             _pendingCancel = false;
 
-            SqlStatistics statistics = null;
-            Exception e = null;
-            bool success = false;
-            int? sqlExceptionNumber = null;
-            Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
-
+            using (DiagnosticScope diagnosticScope = _diagnosticListener.CreateCommandScope(this, _transaction))
             using (TryEventScope.Create("SqlCommand.ExecuteScalar | API | ObjectId {0}", ObjectID))
             {
+                SqlStatistics statistics = null;
+                bool success = false;
+                int? sqlExceptionNumber = null;
                 SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.ExecuteScalar | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
 
                 try
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
                     WriteBeginExecuteEvent();
-                    SqlDataReader ds;
-                    ds = IsProviderRetriable ?
+                    SqlDataReader ds = IsProviderRetriable ?
                         RunExecuteReaderWithRetry(0, RunBehavior.ReturnImmediately, returnStream: true) :
                         RunExecuteReader(0, RunBehavior.ReturnImmediately, returnStream: true, method: nameof(ExecuteScalar));
                     success = true;
-
                     return CompleteExecuteScalar(ds, false);
                 }
                 catch (Exception ex)
                 {
-                    if (ex is SqlException)
+                    diagnosticScope.SetException(ex);
+                    if (ex is SqlException sqlException)
                     {
-                        SqlException exception = (SqlException)ex;
-                        sqlExceptionNumber = exception.Number;
+                        sqlExceptionNumber = sqlException.Number;
                     }
-
-                    e = ex;
                     throw;
                 }
                 finally
                 {
                     SqlStatistics.StopTimer(statistics);
                     WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
-                    if (e != null)
-                    {
-                        _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
-                    }
-                    else
-                    {
-                        _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
-                    }
                 }
             }
         }
@@ -1176,12 +1162,12 @@ namespace Microsoft.Data.SqlClient
             // between entry into Execute* API and the thread obtaining the stateObject.
             _pendingCancel = false;
 
-            SqlStatistics statistics = null;
-            Exception e = null;
-            Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
-
+            using (var diagnosticScope = _diagnosticListener.CreateCommandScope(this, _transaction))
             using (TryEventScope.Create("SqlCommand.ExecuteNonQuery | API | Object Id {0}", ObjectID))
             {
+                SqlStatistics statistics = null;
+                bool success = false;
+                int? sqlExceptionNumber = null;
                 SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.ExecuteNonQuery | API | Correlation | Object Id {0}, ActivityID {1}, Client Connection Id {2}, Command Text {3}", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
 
                 try
@@ -1196,24 +1182,22 @@ namespace Microsoft.Data.SqlClient
                     {
                         InternalExecuteNonQuery(completion: null, sendToPipe: false, timeout: CommandTimeout, out _);
                     }
+                    success = true;
                     return _rowsAffected;
                 }
                 catch (Exception ex)
                 {
-                    e = ex;
+                    diagnosticScope.SetException(ex);
+                    if (ex is SqlException sqlException)
+                    {
+                        sqlExceptionNumber = sqlException.Number;
+                    }
                     throw;
                 }
                 finally
                 {
                     SqlStatistics.StopTimer(statistics);
-                    if (e != null)
-                    {
-                        _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
-                    }
-                    else
-                    {
-                        _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
-                    }
+                    WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
                 }
             }
         }
@@ -1680,14 +1664,12 @@ namespace Microsoft.Data.SqlClient
             // between entry into Execute* API and the thread obtaining the stateObject.
             _pendingCancel = false;
 
-            SqlStatistics statistics = null;
-            bool success = false;
-            int? sqlExceptionNumber = null;
-            Exception e = null;
-            Guid operationId = _diagnosticListener.WriteCommandBefore(this, _transaction);
-
+            using (DiagnosticScope diagnosticScope = _diagnosticListener.CreateCommandScope(this, _transaction))
             using (TryEventScope.Create("SqlCommand.ExecuteXmlReader | API | Object Id {0}", ObjectID))
             {
+                SqlStatistics statistics = null;
+                bool success = false;
+                int? sqlExceptionNumber = null;
                 SqlClientEventSource.Log.TryCorrelationTraceEvent("SqlCommand.ExecuteXmlReader | API | Correlation | Object Id {0}, Activity Id {1}, Client Connection Id {2}, Command Text '{3}'", ObjectID, ActivityCorrelator.Current, Connection?.ClientConnectionId, CommandText);
 
                 try
@@ -1695,8 +1677,7 @@ namespace Microsoft.Data.SqlClient
                     statistics = SqlStatistics.StartTimer(Statistics);
                     WriteBeginExecuteEvent();
                     // use the reader to consume metadata
-                    SqlDataReader ds;
-                    ds = IsProviderRetriable ?
+                    SqlDataReader ds = IsProviderRetriable ?
                         RunExecuteReaderWithRetry(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, returnStream: true) :
                         RunExecuteReader(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, returnStream: true);
                     success = true;
@@ -1704,27 +1685,17 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (Exception ex)
                 {
-                    e = ex;
-                    if (ex is SqlException)
+                    diagnosticScope.SetException(ex);
+                    if (ex is SqlException sqlException)
                     {
-                        SqlException exception = (SqlException)ex;
-                        sqlExceptionNumber = exception.Number;
+                        sqlExceptionNumber = sqlException.Number;
                     }
-
                     throw;
                 }
                 finally
                 {
                     SqlStatistics.StopTimer(statistics);
                     WriteEndExecuteEvent(success, sqlExceptionNumber, synchronous: true);
-                    if (e != null)
-                    {
-                        _diagnosticListener.WriteCommandError(operationId, this, _transaction, e);
-                    }
-                    else
-                    {
-                        _diagnosticListener.WriteCommandAfter(operationId, this, _transaction);
-                    }
                 }
             }
         }
