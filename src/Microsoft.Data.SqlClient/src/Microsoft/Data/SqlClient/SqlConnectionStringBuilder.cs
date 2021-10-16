@@ -284,27 +284,12 @@ namespace Microsoft.Data.SqlClient
 
         private static ApplicationIntent ConvertToApplicationIntent(string keyword, object value) => DbConnectionStringBuilderUtil.ConvertToApplicationIntent(keyword, value);
 
-        /// <summary>
-        /// Convert to SqlConnectionColumnEncryptionSetting.
-        /// </summary>
-        /// <param name="keyword"></param>
-        /// <param name="value"></param>
         private static SqlConnectionColumnEncryptionSetting ConvertToColumnEncryptionSetting(string keyword, object value)
             => DbConnectionStringBuilderUtil.ConvertToColumnEncryptionSetting(keyword, value);
 
-        /// <summary>
-        /// Convert to SqlConnectionAttestationProtocol
-        /// </summary>
-        /// <param name="keyword"></param>
-        /// <param name="value"></param>
         private static SqlConnectionAttestationProtocol ConvertToAttestationProtocol(string keyword, object value)
             => DbConnectionStringBuilderUtil.ConvertToAttestationProtocol(keyword, value);
 
-        /// <summary>
-        /// Convert to SqlConnectionIPAddressPreference
-        /// </summary>
-        /// <param name="keyword"></param>
-        /// <param name="value"></param>
         private static SqlConnectionIPAddressPreference ConvertToIPAddressPreference(string keyword, object value)
             => DbConnectionStringBuilderUtil.ConvertToIPAddressPreference(keyword, value);
 
