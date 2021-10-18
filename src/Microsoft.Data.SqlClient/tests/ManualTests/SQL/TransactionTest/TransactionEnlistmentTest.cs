@@ -51,10 +51,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
         public static void TestEnlistmentPrepare_TxScopeComplete()
         {
-            if (!System.Diagnostics.Debugger.IsAttached)
-            {
-                System.Diagnostics.Debugger.Launch();
-            }
             try
             {
                 using TransactionScope txScope = new(TransactionScopeOption.RequiresNew, new TransactionOptions()
