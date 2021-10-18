@@ -708,17 +708,6 @@ namespace Microsoft.Data.SqlClient
             return reader;
         }
 
-        internal SqlCommand FindLiveCommand(TdsParserStateObject stateObj)
-        {
-            SqlCommand command = null;
-            SqlReferenceCollection referenceCollection = (SqlReferenceCollection)ReferenceCollection;
-            if (null != referenceCollection)
-            {
-                command = referenceCollection.FindLiveCommand(stateObj);
-            }
-            return command;
-        }
-
         static internal TdsParser GetBestEffortCleanupTarget(SqlConnection connection)
         {
             if (null != connection)
