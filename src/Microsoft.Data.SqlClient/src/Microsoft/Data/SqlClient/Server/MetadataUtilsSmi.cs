@@ -13,21 +13,24 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient.Server
 {
-    // Utilities for manipulating smi-related metadata.
-    //
-    //  Since this class is built on top of SMI, SMI should not have a dependency on this class
-    //
-    //  These are all based off of knowing the clr type of the value
-    //  as an ExtendedClrTypeCode enum for rapid access.
+    /// <summary>
+    /// Utilities for manipulating smi-related metadata.
+    ///   Since this class is built on top of SMI, SMI should not have a dependency on this class
+    ///  These are all based off of knowing the clr type of the value
+    ///  as an ExtendedClrTypeCode enum for rapid access.
+    /// </summary>
     internal class MetaDataUtilsSmi
     {
         internal const SqlDbType InvalidSqlDbType = (SqlDbType)(-1);
         internal const long InvalidMaxLength = -2;
 
-        // Standard type inference map to get SqlDbType when all you know is the value's type (typecode)
-        //  This map's index is off by one (add one to typecode locate correct entry) in order 
-        //  to support ExtendedSqlDbType.Invalid
-        //  This array is meant to be accessed from InferSqlDbTypeFromTypeCode.
+
+        /// <summary>
+        ///  Standard type inference map to get SqlDbType when all you know is the value's type (typecode)
+        /// This map's index is off by one (add one to typecode locate correct entry) in order 
+        /// to support ExtendedSqlDbType.Invalid
+        /// This array is meant to be accessed from InferSqlDbTypeFromTypeCode.
+        /// </summary>
         private static readonly SqlDbType[] s_extendedTypeCodeToSqlDbTypeMap = {
             InvalidSqlDbType,               // Invalid extended type code
             SqlDbType.Bit,                  // System.Boolean
@@ -74,8 +77,11 @@ namespace Microsoft.Data.SqlClient.Server
             SqlDbType.DateTimeOffset,       // System.DateTimeOffset
         };
 
-        // Dictionary to map from clr type object to ExtendedClrTypeCodeMap enum.
-        // This dictionary should only be accessed from DetermineExtendedTypeCode and class ctor for setup.
+
+        /// <summary>
+        /// Dictionary to map from clr type object to ExtendedClrTypeCodeMap enum.
+        /// This dictionary should only be accessed from DetermineExtendedTypeCode and class ctor for setup.
+        /// </summary>
         private static readonly Dictionary<Type, ExtendedClrTypeCode> s_typeToExtendedTypeCodeMap = CreateTypeToExtendedTypeCodeMap();
 
         private static Dictionary<Type, ExtendedClrTypeCode> CreateTypeToExtendedTypeCodeMap()
@@ -130,12 +136,9 @@ namespace Microsoft.Data.SqlClient.Server
             return dictionary;
         }
 
-        internal static bool IsCharOrXmlType(SqlDbType type)
-        {
-            return IsUnicodeType(type) ||
+        internal static bool IsCharOrXmlType(SqlDbType type) => IsUnicodeType(type) ||
                     IsAnsiType(type) ||
                     type == SqlDbType.Xml;
-        }
 
         internal static bool IsUnicodeType(SqlDbType type)
         {
@@ -144,29 +147,21 @@ namespace Microsoft.Data.SqlClient.Server
                     type == SqlDbType.NText;
         }
 
-        internal static bool IsAnsiType(SqlDbType type)
-        {
-            return type == SqlDbType.Char ||
+        internal static bool IsAnsiType(SqlDbType type) => type == SqlDbType.Char ||
                     type == SqlDbType.VarChar ||
                     type == SqlDbType.Text;
-        }
 
-        internal static bool IsBinaryType(SqlDbType type)
-        {
-            return type == SqlDbType.Binary ||
+        internal static bool IsBinaryType(SqlDbType type) => type == SqlDbType.Binary ||
                     type == SqlDbType.VarBinary ||
                     type == SqlDbType.Image;
-        }
 
         // Does this type use PLP format values?
-        internal static bool IsPlpFormat(SmiMetaData metaData)
-        {
-            return metaData.MaxLength == SmiMetaData.UnlimitedMaxLengthIndicator ||
+        internal static bool IsPlpFormat(SmiMetaData metaData) => 
+                    metaData.MaxLength == SmiMetaData.UnlimitedMaxLengthIndicator ||
                     metaData.SqlDbType == SqlDbType.Image ||
                     metaData.SqlDbType == SqlDbType.NText ||
                     metaData.SqlDbType == SqlDbType.Text ||
                     metaData.SqlDbType == SqlDbType.Udt;
-        }
 
         // If we know we're only going to use this object to assign to a specific SqlDbType back end object,
         //  we can save some processing time by only checking for the few valid types that can be assigned to the dbType.
@@ -209,10 +204,6 @@ namespace Microsoft.Data.SqlClient.Server
                             extendedCode = ExtendedClrTypeCode.Int64;
                         else if (value.GetType() == typeof(SqlInt64))
                             extendedCode = ExtendedClrTypeCode.SqlInt64;
-#if NETFRAMEWORK
-                        else if (Type.GetTypeCode(value.GetType()) == TypeCode.Int64)
-                             extendedCode = ExtendedClrTypeCode.Int64;
-#endif
                         break;
                     case SqlDbType.Binary:
                     case SqlDbType.VarBinary:
@@ -232,10 +223,6 @@ namespace Microsoft.Data.SqlClient.Server
                             extendedCode = ExtendedClrTypeCode.Boolean;
                         else if (value.GetType() == typeof(SqlBoolean))
                             extendedCode = ExtendedClrTypeCode.SqlBoolean;
-#if NETFRAMEWORK
-                        else if (Type.GetTypeCode(value.GetType()) == TypeCode.Boolean)
-                            extendedCode = ExtendedClrTypeCode.Boolean;
-#endif
                         break;
                     case SqlDbType.Char:
                     case SqlDbType.NChar:
@@ -255,12 +242,6 @@ namespace Microsoft.Data.SqlClient.Server
                             extendedCode = ExtendedClrTypeCode.SqlChars;
                         else if (value.GetType() == typeof(char))
                             extendedCode = ExtendedClrTypeCode.Char;
-#if NETFRAMEWORK
-                        else if (Type.GetTypeCode(value.GetType()) == TypeCode.Char)
-                            extendedCode = ExtendedClrTypeCode.Char;
-                        else if (Type.GetTypeCode(value.GetType()) == TypeCode.String)
-                            extendedCode = ExtendedClrTypeCode.String;
-#endif
                         break;
                     case SqlDbType.Date:
                     case SqlDbType.DateTime2:
@@ -277,40 +258,24 @@ namespace Microsoft.Data.SqlClient.Server
                             extendedCode = ExtendedClrTypeCode.DateTime;
                         else if (value.GetType() == typeof(SqlDateTime))
                             extendedCode = ExtendedClrTypeCode.SqlDateTime;
-#if NETFRAMEWORK
-                        else if (Type.GetTypeCode(value.GetType()) == TypeCode.DateTime)
-                            extendedCode = ExtendedClrTypeCode.DateTime;
-#endif
                         break;
                     case SqlDbType.Decimal:
                         if (value.GetType() == typeof(decimal))
                             extendedCode = ExtendedClrTypeCode.Decimal;
                         else if (value.GetType() == typeof(SqlDecimal))
                             extendedCode = ExtendedClrTypeCode.SqlDecimal;
-#if NETFRAMEWORK
-                        else if (Type.GetTypeCode(value.GetType()) == TypeCode.Decimal)
-                            extendedCode = ExtendedClrTypeCode.Decimal;
-#endif
                         break;
                     case SqlDbType.Real:
                         if (value.GetType() == typeof(float))
                             extendedCode = ExtendedClrTypeCode.Single;
                         else if (value.GetType() == typeof(SqlSingle))
                             extendedCode = ExtendedClrTypeCode.SqlSingle;
-#if NETFRAMEWORK
-                        else if (Type.GetTypeCode(value.GetType()) == TypeCode.Single)
-                            extendedCode = ExtendedClrTypeCode.Single;
-#endif
                         break;
                     case SqlDbType.Int:
                         if (value.GetType() == typeof(int))
                             extendedCode = ExtendedClrTypeCode.Int32;
                         else if (value.GetType() == typeof(SqlInt32))
                             extendedCode = ExtendedClrTypeCode.SqlInt32;
-#if NETFRAMEWORK
-                        else if (Type.GetTypeCode(value.GetType()) == TypeCode.Int32)
-                            extendedCode = ExtendedClrTypeCode.Int32;
-#endif
                         break;
                     case SqlDbType.Money:
                     case SqlDbType.SmallMoney:
@@ -318,20 +283,12 @@ namespace Microsoft.Data.SqlClient.Server
                             extendedCode = ExtendedClrTypeCode.SqlMoney;
                         else if (value.GetType() == typeof(decimal))
                             extendedCode = ExtendedClrTypeCode.Decimal;
-#if NETFRAMEWORK
-                        else if (Type.GetTypeCode(value.GetType()) == TypeCode.Decimal)
-                            extendedCode = ExtendedClrTypeCode.Decimal;
-#endif
                         break;
                     case SqlDbType.Float:
                         if (value.GetType() == typeof(SqlDouble))
                             extendedCode = ExtendedClrTypeCode.SqlDouble;
                         else if (value.GetType() == typeof(double))
                             extendedCode = ExtendedClrTypeCode.Double;
-#if NETFRAMEWORK
-                        else if (Type.GetTypeCode(value.GetType()) == TypeCode.Double)
-                            extendedCode = ExtendedClrTypeCode.Double;
-#endif
                         break;
                     case SqlDbType.UniqueIdentifier:
                         if (value.GetType() == typeof(SqlGuid))
@@ -350,10 +307,6 @@ namespace Microsoft.Data.SqlClient.Server
                             extendedCode = ExtendedClrTypeCode.Byte;
                         else if (value.GetType() == typeof(SqlByte))
                             extendedCode = ExtendedClrTypeCode.SqlByte;
-#if NETFRAMEWORK
-                        else if (Type.GetTypeCode(value.GetType()) == TypeCode.Byte)
-                            extendedCode = ExtendedClrTypeCode.Byte;
-#endif
                         break;
                     case SqlDbType.Variant:
                         // SqlDbType doesn't help us here, call general-purpose function
@@ -485,41 +438,11 @@ namespace Microsoft.Data.SqlClient.Server
             return returnType;
         }
 
-        internal static SqlMetaData SmiExtendedMetaDataToSqlMetaData(SmiExtendedMetaData source)
-        {
-            if (SqlDbType.Xml == source.SqlDbType)
-            {
-                return new SqlMetaData(source.Name,
-                    source.SqlDbType,
-                    source.MaxLength,
-                    source.Precision,
-                    source.Scale,
-                    source.LocaleId,
-                    source.CompareOptions,
-                    source.TypeSpecificNamePart1,
-                    source.TypeSpecificNamePart2,
-                    source.TypeSpecificNamePart3,
-                    true,
-                    source.Type
-                    );
-            }
-
-            return new SqlMetaData(source.Name,
-                source.SqlDbType,
-                source.MaxLength,
-                source.Precision,
-                source.Scale,
-                source.LocaleId,
-                source.CompareOptions
-#if NETFRAMEWORK
-                , source.Type
-#else
-                , null
-#endif
-                );
-        }
-
-        // Convert SqlMetaData instance to an SmiExtendedMetaData instance.
+        /// <summary>
+        /// Convert SqlMetaData instance to an SmiExtendedMetaData instance.
+        /// </summary>
+        /// <param name="source"></param>
+        /// <returns></returns>
         internal static SmiExtendedMetaData SqlMetaDataToSmiExtendedMetaData(SqlMetaData source)
         {
             // now map everything across to the extended metadata object
