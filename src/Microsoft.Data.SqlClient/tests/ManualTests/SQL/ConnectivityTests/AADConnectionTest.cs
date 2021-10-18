@@ -206,7 +206,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string[] credKeys = { "Password", "PWD" };
             string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) + "Password=TestPassword;";
 
-            SqlException e = Assert.Throws<SqlException>(() => ConnectAndDisconnect(connStr));
+            Assert.Throws<SqlException>(() => ConnectAndDisconnect(connStr));
 
             // We cannot verify error message with certainity as driver may cache token from other tests for current user
             // and error message may change accordingly.
