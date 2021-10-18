@@ -342,6 +342,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlConnectionPoolGroupProviderInfo.cs">
       <Link>Microsoft\Data\SqlClient\SqlConnectionPoolGroupProviderInfo.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlConnectionPoolKey.cs">
+      <Link>Microsoft\Data\SqlClient\SqlConnectionPoolKey.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlConnectionPoolProviderInfo.cs">
       <Link>Microsoft\Data\SqlClient\SqlConnectionPoolProviderInfo.cs</Link>
     </Compile>
@@ -539,7 +542,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlConnection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionFactory.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionHelper.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlConnectionPoolKey.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionString.cs" />
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlConnectionTimeoutErrorInternal.cs">
       <Link>Microsoft\Data\SqlClient\SqlConnectionTimeoutErrorInternal.cs</Link>
