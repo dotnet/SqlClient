@@ -484,7 +484,7 @@ namespace Microsoft.Data.SqlClient
 
                         if (null != dependency)
                         {
-                            s_processDispatcher = dependency.SingletonProcessDispatcher; // Set to static instance.
+                            s_processDispatcher = SqlDependencyProcessDispatcher.SingletonProcessDispatcher; // Set to static instance.
 
                             // Serialize and set in native.
                             using (MemoryStream stream = new())

@@ -7,6 +7,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
+using System.Threading;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -339,10 +340,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData("CAST(-0.0000000000000000000000000001 as decimal(38, 38))", "-0.0000000000000000000000000001")]
         public static void SqlDecimalConvertToDecimal_TestInRange(string sqlDecimalValue, string expectedDecimalValue)
         {
-            using(SqlConnection cnn = new(s_connString))
+            using (SqlConnection cnn = new(s_connString))
             {
                 cnn.Open();
-                using(SqlCommand cmd = new($"SELECT {sqlDecimalValue} val"))
+                using (SqlCommand cmd = new($"SELECT {sqlDecimalValue} val"))
                 {
                     cmd.Connection = cnn;
                     using (SqlDataReader rdr = cmd.ExecuteReader())
@@ -645,7 +646,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     }
 
                     Assert.NotNull(sqlException);
-                    Assert.Contains("Must declare the scalar variable",sqlException.Message);
+                    Assert.Contains("Must declare the scalar variable", sqlException.Message);
                     Assert.Contains("@DoesNotExist", sqlException.Message);
                 }
             }
@@ -804,6 +805,69 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             finally
             {
                 ExecuteNonQueryCommand(DataTestUtility.TCPConnectionString, dropSprocQuery);
+            }
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void ClosedConnection_SqlParameterValueTest()
+        {
+            var threads = new List<Thread>();
+            for (int i = 0; i < 100; i++)
+            {
+                var t = new Thread(() =>
+                {
+                    for (int j = 0; j < 1000; j++)
+                    {
+                        try
+                        {
+                            RunParameterTest();
+                        }
+                        catch (Exception e)
+                        {
+                            Assert.False(true, $"Unexpected exception occurred: {e.Message}");
+                        }
+                    }
+                });
+                t.Start();
+                threads.Add(t);
+            }
+            for (int i = 0; i < threads.Count; i++)
+            {
+                threads[i].Join();
+            }
+        }
+
+        private static void RunParameterTest()
+        {
+            var cancellationToken = new CancellationTokenSource(50);
+            var expectedGuid = Guid.NewGuid();
+
+            using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            connection.Open();
+            using SqlCommand cm = connection.CreateCommand();
+            cm.CommandType = CommandType.Text;
+            cm.CommandText = "select @id2 = @id;";
+            cm.CommandTimeout = 2;
+            cm.Parameters.Add(new SqlParameter("@id", SqlDbType.UniqueIdentifier) { Value = expectedGuid });
+            cm.Parameters.Add(new SqlParameter("@id2", SqlDbType.UniqueIdentifier) { Direction = ParameterDirection.Output });
+            try
+            {
+                System.Threading.Tasks.Task<int> task = cm.ExecuteNonQueryAsync(cancellationToken.Token);
+                task.Wait();
+            }
+            catch (Exception)
+            {
+                //ignore cancellations
+            }
+            finally
+            {
+                connection.Close();
+            }
+            if (cm.Parameters["@id2"].Value == null)
+                return;
+            else if ((Guid)cm.Parameters["@id2"].Value != expectedGuid)
+            {
+                Assert.False(true, "CRITICAL : Unexpected data found in SqlCommand parameters, this is a MAJOR issue.");
             }
         }
     }
