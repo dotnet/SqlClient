@@ -206,10 +206,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             string[] credKeys = { "Password", "PWD" };
             string connStr = DataTestUtility.RemoveKeysInConnStr(DataTestUtility.AADPasswordConnectionString, credKeys) + "Password=TestPassword;";
 
-            SqlException e = Assert.Throws<SqlException>(() => ConnectAndDisconnect(connStr));
+            Assert.Throws<SqlException>(() => ConnectAndDisconnect(connStr));
 
-            string expectedMessage = "ID3242: The security token could not be authenticated or authorized.";
-            Assert.Contains(expectedMessage, e.Message);
+            // We cannot verify error message with certainity as driver may cache token from other tests for current user
+            // and error message may change accordingly.
         }
 
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
