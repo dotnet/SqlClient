@@ -313,6 +313,8 @@ namespace Microsoft.Data.SqlClient
         /// </summary>
         internal int DataClassificationVersion { get; set; }
 
+        private SqlCollation _cachedCollation;
+
         internal TdsParser(bool MARS, bool fAsynchronous)
         {
             _fMARS = MARS; // may change during Connect to pre Yukon servers
@@ -527,7 +529,15 @@ namespace Microsoft.Data.SqlClient
 
             //Create LocalDB instance if necessary
             if (connHandler.ConnectionOptions.LocalDBInstance != null)
+            {
                 LocalDBAPI.CreateLocalDBInstance(connHandler.ConnectionOptions.LocalDBInstance);
+                if (encrypt)
+                {
+                    // Encryption is not supported on SQL Local DB - disable it for current session.
+                    encrypt = false;
+                    SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Encryption will be disabled as target server is a SQL Local DB instance.");
+                }
+            }
 
             // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
             if (integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
@@ -3065,7 +3075,7 @@ namespace Microsoft.Data.SqlClient
 
                             int newCodePage = GetCodePage(env.newCollation, stateObj);
 
-                            if ((env.newCollation.info & TdsEnums.UTF8_IN_TDSCOLLATION) == TdsEnums.UTF8_IN_TDSCOLLATION)
+                            if (env.newCollation.IsUTF8)
                             { // UTF8 collation
                                 _defaultEncoding = Encoding.UTF8;
 
@@ -4602,7 +4612,7 @@ namespace Microsoft.Data.SqlClient
                     return false;
                 }
 
-                if ((rec.collation.info & TdsEnums.UTF8_IN_TDSCOLLATION) == TdsEnums.UTF8_IN_TDSCOLLATION)
+                if (rec.collation.IsUTF8)
                 { // UTF8 collation
                     rec.encoding = Encoding.UTF8;
                 }
@@ -4776,20 +4786,27 @@ namespace Microsoft.Data.SqlClient
 
         internal bool TryProcessCollation(TdsParserStateObject stateObj, out SqlCollation collation)
         {
-            SqlCollation newCollation = new SqlCollation();
-
-            if (!stateObj.TryReadUInt32(out newCollation.info))
+            if (!stateObj.TryReadUInt32(out uint info))
             {
                 collation = null;
                 return false;
             }
-            if (!stateObj.TryReadByte(out newCollation.sortId))
+            if (!stateObj.TryReadByte(out byte sortId))
             {
                 collation = null;
                 return false;
             }
 
-            collation = newCollation;
+            if (SqlCollation.Equals(_cachedCollation, info, sortId))
+            {
+                collation = _cachedCollation;
+            }
+            else
+            {
+                collation = new SqlCollation(info, sortId);
+                _cachedCollation = collation;
+            }
+
             return true;
         }
 
@@ -4802,8 +4819,8 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 _physicalStateObj.WriteByte(sizeof(UInt32) + sizeof(byte));
-                WriteUnsignedInt(collation.info, _physicalStateObj);
-                _physicalStateObj.WriteByte(collation.sortId);
+                WriteUnsignedInt(collation._info, _physicalStateObj);
+                _physicalStateObj.WriteByte(collation._sortId);
             }
 
         }
@@ -4812,10 +4829,10 @@ namespace Microsoft.Data.SqlClient
         {
             int codePage = 0;
 
-            if (0 != collation.sortId)
+            if (0 != collation._sortId)
             {
-                codePage = TdsEnums.CODE_PAGE_FROM_SORT_ID[collation.sortId];
-                Debug.Assert(0 != codePage, "GetCodePage accessed codepage array and produced 0!, sortID =" + ((Byte)(collation.sortId)).ToString((IFormatProvider)null));
+                codePage = TdsEnums.CODE_PAGE_FROM_SORT_ID[collation._sortId];
+                Debug.Assert(0 != codePage, "GetCodePage accessed codepage array and produced 0!, sortID =" + ((Byte)(collation._sortId)).ToString((IFormatProvider)null));
             }
             else
             {
@@ -5497,7 +5514,7 @@ namespace Microsoft.Data.SqlClient
                     return false;
                 }
 
-                if ((col.collation.info & TdsEnums.UTF8_IN_TDSCOLLATION) == TdsEnums.UTF8_IN_TDSCOLLATION)
+                if (col.collation.IsUTF8)
                 { // UTF8 collation
                     col.encoding = Encoding.UTF8;
                 }
@@ -6386,11 +6403,11 @@ namespace Microsoft.Data.SqlClient
                             }
                             if (length > 0)
                             {
-                                s = new String(cc, 0, length);
+                                s = new string(cc, 0, length);
                             }
                             else
                             {
-                                s = ADP.StrEmpty;
+                                s = "";
                             }
                         }
                         else
@@ -7373,8 +7390,8 @@ namespace Microsoft.Data.SqlClient
                     {
                         string s = (string)value;
 
-                        WriteUnsignedInt(_defaultCollation.info, stateObj); // propbytes: collation.Info
-                        stateObj.WriteByte(_defaultCollation.sortId); // propbytes: collation.SortId
+                        WriteUnsignedInt(_defaultCollation._info, stateObj); // propbytes: collation.Info
+                        stateObj.WriteByte(_defaultCollation._sortId); // propbytes: collation.SortId
                         WriteShort(length, stateObj); // propbyte: varlen
                         return WriteEncodingChar(s, _defaultEncoding, stateObj, canAccumulate);
                     }
@@ -7393,8 +7410,8 @@ namespace Microsoft.Data.SqlClient
                     {
                         string s = (string)value;
 
-                        WriteUnsignedInt(_defaultCollation.info, stateObj); // propbytes: collation.Info
-                        stateObj.WriteByte(_defaultCollation.sortId); // propbytes: collation.SortId
+                        WriteUnsignedInt(_defaultCollation._info, stateObj); // propbytes: collation.Info
+                        stateObj.WriteByte(_defaultCollation._sortId); // propbytes: collation.SortId
                         WriteShort(length, stateObj); // propbyte: varlen
 
                         // string takes cchar, not cbyte so convert
@@ -7532,8 +7549,8 @@ namespace Microsoft.Data.SqlClient
 
                         length = s.Length;
                         WriteSqlVariantHeader(9 + length, metatype.TDSType, metatype.PropBytes, stateObj);
-                        WriteUnsignedInt(_defaultCollation.info, stateObj); // propbytes: collation.Info
-                        stateObj.WriteByte(_defaultCollation.sortId); // propbytes: collation.SortId
+                        WriteUnsignedInt(_defaultCollation._info, stateObj); // propbytes: collation.Info
+                        stateObj.WriteByte(_defaultCollation._sortId); // propbytes: collation.SortId
                         WriteShort(length, stateObj);
                         return WriteEncodingChar(s, _defaultEncoding, stateObj, canAccumulate);
                     }
@@ -7556,8 +7573,8 @@ namespace Microsoft.Data.SqlClient
 
                         length = s.Length * 2;
                         WriteSqlVariantHeader(9 + length, metatype.TDSType, metatype.PropBytes, stateObj);
-                        WriteUnsignedInt(_defaultCollation.info, stateObj); // propbytes: collation.Info
-                        stateObj.WriteByte(_defaultCollation.sortId); // propbytes: collation.SortId
+                        WriteUnsignedInt(_defaultCollation._info, stateObj); // propbytes: collation.Info
+                        stateObj.WriteByte(_defaultCollation._sortId); // propbytes: collation.SortId
                         WriteShort(length, stateObj); // propbyte: varlen
 
                         // string takes cchar, not cbyte so convert
@@ -8224,7 +8241,7 @@ namespace Microsoft.Data.SqlClient
         {
             // UNDONE: (PERF) this is an expensive way to get the length.  Also, aren't we
             // UNDONE: (PERF) going through these steps twice when we write out a value?
-            if (value == null || value == ADP.StrEmpty)
+            if (string.IsNullOrEmpty(value))
             {
                 return 0;
             }
@@ -8453,7 +8470,7 @@ namespace Microsoft.Data.SqlClient
                 int currentLength = 0; // sizeof(DWORD) - length itself
                 currentLength += 1 + 2 * (reconnectData._initialDatabase == reconnectData._database ? 0 : TdsParserStaticMethods.NullAwareStringLength(reconnectData._database));
                 currentLength += 1 + 2 * (reconnectData._initialLanguage == reconnectData._language ? 0 : TdsParserStaticMethods.NullAwareStringLength(reconnectData._language));
-                currentLength += (reconnectData._collation != null && !SqlCollation.AreSame(reconnectData._collation, reconnectData._initialCollation)) ? 6 : 1;
+                currentLength += (reconnectData._collation != null && !SqlCollation.Equals(reconnectData._collation, reconnectData._initialCollation)) ? 6 : 1;
                 bool[] writeState = new bool[SessionData._maxNumberOfSessionStates];
                 for (int i = 0; i < SessionData._maxNumberOfSessionStates; i++)
                 {
@@ -8505,7 +8522,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     WriteInt(currentLength, _physicalStateObj);
                     WriteIdentifier(reconnectData._database != reconnectData._initialDatabase ? reconnectData._database : null, _physicalStateObj);
-                    WriteCollation(SqlCollation.AreSame(reconnectData._initialCollation, reconnectData._collation) ? null : reconnectData._collation, _physicalStateObj);
+                    WriteCollation(SqlCollation.Equals(reconnectData._initialCollation, reconnectData._collation) ? null : reconnectData._collation, _physicalStateObj);
                     WriteIdentifier(reconnectData._language != reconnectData._initialLanguage ? reconnectData._language : null, _physicalStateObj);
                     for (int i = 0; i < SessionData._maxNumberOfSessionStates; i++)
                     {
@@ -10320,13 +10337,13 @@ namespace Microsoft.Data.SqlClient
 
                             if (_isYukon && (mt.SqlDbType == SqlDbType.Xml))
                             {
-                                if (((param.XmlSchemaCollectionDatabase != null) && (param.XmlSchemaCollectionDatabase != ADP.StrEmpty)) ||
-                                    ((param.XmlSchemaCollectionOwningSchema != null) && (param.XmlSchemaCollectionOwningSchema != ADP.StrEmpty)) ||
-                                    ((param.XmlSchemaCollectionName != null) && (param.XmlSchemaCollectionName != ADP.StrEmpty)))
+                                if (!string.IsNullOrEmpty(param.XmlSchemaCollectionDatabase) ||
+                                    !string.IsNullOrEmpty(param.XmlSchemaCollectionOwningSchema) ||
+                                    !string.IsNullOrEmpty(param.XmlSchemaCollectionName))
                                 {
                                     stateObj.WriteByte(1);   //Schema present flag
 
-                                    if ((param.XmlSchemaCollectionDatabase != null) && (param.XmlSchemaCollectionDatabase != ADP.StrEmpty))
+                                    if (!string.IsNullOrEmpty(param.XmlSchemaCollectionDatabase))
                                     {
                                         tempLen = (param.XmlSchemaCollectionDatabase).Length;
                                         stateObj.WriteByte((byte)(tempLen));
@@ -10337,7 +10354,7 @@ namespace Microsoft.Data.SqlClient
                                         stateObj.WriteByte(0);       // No dbname
                                     }
 
-                                    if ((param.XmlSchemaCollectionOwningSchema != null) && (param.XmlSchemaCollectionOwningSchema != ADP.StrEmpty))
+                                    if (!string.IsNullOrEmpty(param.XmlSchemaCollectionOwningSchema))
                                     {
                                         tempLen = (param.XmlSchemaCollectionOwningSchema).Length;
                                         stateObj.WriteByte((byte)(tempLen));
@@ -10347,7 +10364,7 @@ namespace Microsoft.Data.SqlClient
                                     {
                                         stateObj.WriteByte(0);      // no xml schema name
                                     }
-                                    if ((param.XmlSchemaCollectionName != null) && (param.XmlSchemaCollectionName != ADP.StrEmpty))
+                                    if (!string.IsNullOrEmpty(param.XmlSchemaCollectionName))
                                     {
                                         tempLen = (param.XmlSchemaCollectionName).Length;
                                         WriteShort((short)(tempLen), stateObj);
@@ -10370,8 +10387,8 @@ namespace Microsoft.Data.SqlClient
                                 SqlCollation outCollation = (param.Collation != null) ? param.Collation : _defaultCollation;
                                 Debug.Assert(_defaultCollation != null, "_defaultCollation is null!");
 
-                                WriteUnsignedInt(outCollation.info, stateObj);
-                                stateObj.WriteByte(outCollation.sortId);
+                                WriteUnsignedInt(outCollation._info, stateObj);
+                                stateObj.WriteByte(outCollation._sortId);
                             }
 
                             if (0 == codePageByteSize)
@@ -10794,8 +10811,8 @@ namespace Microsoft.Data.SqlClient
                 case SqlDbType.Char:
                     stateObj.WriteByte(TdsEnums.SQLBIGCHAR);
                     WriteUnsignedShort(checked((ushort)(metaData.MaxLength)), stateObj);
-                    WriteUnsignedInt(_defaultCollation.info, stateObj); // TODO: Use metadata's collation??
-                    stateObj.WriteByte(_defaultCollation.sortId);
+                    WriteUnsignedInt(_defaultCollation._info, stateObj); // TODO: Use metadata's collation??
+                    stateObj.WriteByte(_defaultCollation._sortId);
                     break;
                 case SqlDbType.DateTime:
                     stateObj.WriteByte(TdsEnums.SQLDATETIMN);
@@ -10826,14 +10843,14 @@ namespace Microsoft.Data.SqlClient
                 case SqlDbType.NChar:
                     stateObj.WriteByte(TdsEnums.SQLNCHAR);
                     WriteUnsignedShort(checked((ushort)(metaData.MaxLength * 2)), stateObj);
-                    WriteUnsignedInt(_defaultCollation.info, stateObj); // TODO: Use metadata's collation??
-                    stateObj.WriteByte(_defaultCollation.sortId);
+                    WriteUnsignedInt(_defaultCollation._info, stateObj); // TODO: Use metadata's collation??
+                    stateObj.WriteByte(_defaultCollation._sortId);
                     break;
                 case SqlDbType.NText:
                     stateObj.WriteByte(TdsEnums.SQLNVARCHAR);
                     WriteUnsignedShort(unchecked((ushort)SmiMetaData.UnlimitedMaxLengthIndicator), stateObj);
-                    WriteUnsignedInt(_defaultCollation.info, stateObj); // TODO: Use metadata's collation??
-                    stateObj.WriteByte(_defaultCollation.sortId);
+                    WriteUnsignedInt(_defaultCollation._info, stateObj); // TODO: Use metadata's collation??
+                    stateObj.WriteByte(_defaultCollation._sortId);
                     break;
                 case SqlDbType.NVarChar:
                     stateObj.WriteByte(TdsEnums.SQLNVARCHAR);
@@ -10845,8 +10862,8 @@ namespace Microsoft.Data.SqlClient
                     {
                         WriteUnsignedShort(checked((ushort)(metaData.MaxLength * 2)), stateObj);
                     }
-                    WriteUnsignedInt(_defaultCollation.info, stateObj); // TODO: Use metadata's collation??
-                    stateObj.WriteByte(_defaultCollation.sortId);
+                    WriteUnsignedInt(_defaultCollation._info, stateObj); // TODO: Use metadata's collation??
+                    stateObj.WriteByte(_defaultCollation._sortId);
                     break;
                 case SqlDbType.Real:
                     stateObj.WriteByte(TdsEnums.SQLFLTN);
@@ -10871,8 +10888,8 @@ namespace Microsoft.Data.SqlClient
                 case SqlDbType.Text:
                     stateObj.WriteByte(TdsEnums.SQLBIGVARCHAR);
                     WriteUnsignedShort(unchecked((ushort)SmiMetaData.UnlimitedMaxLengthIndicator), stateObj);
-                    WriteUnsignedInt(_defaultCollation.info, stateObj); // TODO: Use metadata's collation??
-                    stateObj.WriteByte(_defaultCollation.sortId);
+                    WriteUnsignedInt(_defaultCollation._info, stateObj); // TODO: Use metadata's collation??
+                    stateObj.WriteByte(_defaultCollation._sortId);
                     break;
                 case SqlDbType.Timestamp:
                     stateObj.WriteByte(TdsEnums.SQLBIGBINARY);
@@ -10889,8 +10906,8 @@ namespace Microsoft.Data.SqlClient
                 case SqlDbType.VarChar:
                     stateObj.WriteByte(TdsEnums.SQLBIGVARCHAR);
                     WriteUnsignedShort(unchecked((ushort)metaData.MaxLength), stateObj);
-                    WriteUnsignedInt(_defaultCollation.info, stateObj); // TODO: Use metadata's collation??
-                    stateObj.WriteByte(_defaultCollation.sortId);
+                    WriteUnsignedInt(_defaultCollation._info, stateObj); // TODO: Use metadata's collation??
+                    stateObj.WriteByte(_defaultCollation._sortId);
                     break;
                 case SqlDbType.Variant:
                     stateObj.WriteByte(TdsEnums.SQLVARIANT);
@@ -11047,11 +11064,11 @@ namespace Microsoft.Data.SqlClient
                 // Add appropriate SortOrder flag
                 byte flags = 0;
                 SmiOrderProperty.SmiColumnOrder columnOrder = orderProperty[i];
-                if (SortOrder.Ascending == columnOrder.Order)
+                if (SortOrder.Ascending == columnOrder._order)
                 {
                     flags = TdsEnums.TVP_ORDERASC_FLAG;
                 }
-                else if (SortOrder.Descending == columnOrder.Order)
+                else if (SortOrder.Descending == columnOrder._order)
                 {
                     flags = TdsEnums.TVP_ORDERDESC_FLAG;
                 }
@@ -11212,8 +11229,8 @@ namespace Microsoft.Data.SqlClient
                     WriteTokenLength(mdPriv.tdsType, mdPriv.length, stateObj);
                     if (mdPriv.metaType.IsCharType && _isShiloh)
                     {
-                        WriteUnsignedInt(mdPriv.collation.info, stateObj);
-                        stateObj.WriteByte(mdPriv.collation.sortId);
+                        WriteUnsignedInt(mdPriv.collation._info, stateObj);
+                        stateObj.WriteByte(mdPriv.collation._sortId);
                     }
                     break;
             }
@@ -11337,8 +11354,8 @@ namespace Microsoft.Data.SqlClient
                             WriteTokenLength(md.tdsType, md.length, stateObj);
                             if (md.metaType.IsCharType && _isShiloh)
                             {
-                                WriteUnsignedInt(md.collation.info, stateObj);
-                                stateObj.WriteByte(md.collation.sortId);
+                                WriteUnsignedInt(md.collation._info, stateObj);
+                                stateObj.WriteByte(md.collation._sortId);
                             }
                             break;
                     }
@@ -11506,7 +11523,7 @@ namespace Microsoft.Data.SqlClient
                 if (metadata.collation != null)
                 {
                     // Replace encoding if it is UTF8
-                    if ((metadata.collation.info & TdsEnums.UTF8_IN_TDSCOLLATION) == TdsEnums.UTF8_IN_TDSCOLLATION)
+                    if (metadata.collation.IsUTF8)
                     {
                         _defaultEncoding = Encoding.UTF8;
                     }
@@ -12348,15 +12365,15 @@ namespace Microsoft.Data.SqlClient
             {
                 if (buffer == null)
                 {
-                    throw ADP.ArgumentNull(ADP.ParameterBuffer);
+                    throw ADP.ArgumentNull(nameof(buffer));
                 }
                 if (offset < 0)
                 {
-                    throw ADP.ArgumentOutOfRange(ADP.ParameterOffset);
+                    throw ADP.ArgumentOutOfRange(nameof(offset));
                 }
                 if (count < 0)
                 {
-                    throw ADP.ArgumentOutOfRange(ADP.ParameterCount);
+                    throw ADP.ArgumentOutOfRange(nameof(count));
                 }
                 try
                 {
@@ -12476,15 +12493,15 @@ namespace Microsoft.Data.SqlClient
             {
                 if (buffer == null)
                 {
-                    throw ADP.ArgumentNull(ADP.ParameterBuffer);
+                    throw ADP.ArgumentNull(nameof(buffer));
                 }
                 if (offset < 0)
                 {
-                    throw ADP.ArgumentOutOfRange(ADP.ParameterOffset);
+                    throw ADP.ArgumentOutOfRange(nameof(offset));
                 }
                 if (count < 0)
                 {
-                    throw ADP.ArgumentOutOfRange(ADP.ParameterCount);
+                    throw ADP.ArgumentOutOfRange(nameof(count));
                 }
                 try
                 {

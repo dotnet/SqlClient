@@ -5,7 +5,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -45,11 +44,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
     public class RetryLogicTestHelper
     {
-        internal const string RetryAppContextSwitch = "Switch.Microsoft.Data.SqlClient.EnableRetryLogic";
-        private static readonly Assembly s_sqlClientAssembly = typeof(SqlConnection).Assembly;
-        private static readonly Type s_LocalAppContextSwitchesType = s_sqlClientAssembly.GetType("Microsoft.Data.SqlClient.LocalAppContextSwitches");
-        private static readonly FieldInfo s_isRetryEnabledFieldInfo = s_LocalAppContextSwitchesType.GetField("s_isRetryEnabled", BindingFlags.Static | BindingFlags.NonPublic);
-
         private static readonly HashSet<int> s_defaultTransientErrors
            = new HashSet<int>
                {
@@ -80,21 +74,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     207    // invalid column name
                };
 
-        internal static readonly string s_ExceedErrMsgPattern = SystemDataResourceManager.Instance.SqlRetryLogic_RetryExceeded;
-        internal static readonly string s_CancelErrMsgPattern = SystemDataResourceManager.Instance.SqlRetryLogic_RetryCanceled;
-
-        public static void CleanRetryEnabledCache() => s_isRetryEnabledFieldInfo.SetValue(null, null);
-
-        public static void SetRetrySwitch(bool value)
-        {
-            CleanRetryEnabledCache();
-            AppContext.SetSwitch(RetryAppContextSwitch, value);
-        }
+        internal static readonly string s_exceedErrMsgPattern = SystemDataResourceManager.Instance.SqlRetryLogic_RetryExceeded;
+        internal static readonly string s_cancelErrMsgPattern = SystemDataResourceManager.Instance.SqlRetryLogic_RetryCanceled;
 
         public static IEnumerable<object[]> GetConnectionStrings()
         {
             var builder = new SqlConnectionStringBuilder();
-            foreach (var cnnString in DataTestUtility.ConnectionStrings)
+
+            foreach (var cnnString in DataTestUtility.GetConnectionStrings(withEnclave: false))
             {
                 builder.Clear();
                 builder.ConnectionString = cnnString;
@@ -114,8 +101,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                                                           int deltaTimeMillisecond = 10,
                                                                           bool custom = true)
         {
-            SetRetrySwitch(true);
-
             var option = new SqlRetryLogicOption()
             {
                 NumberOfTries = numberOfRetries,
@@ -165,22 +150,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static IEnumerable<object[]> GetNoneRetriableCondition()
         {
-            RetryLogicTestHelper.SetRetrySwitch(true);
-            yield return new object[] { DataTestUtility.TCPConnectionString, null};
-            yield return new object[] { DataTestUtility.TCPConnectionString, SqlConfigurableRetryFactory.CreateNoneRetryProvider()};
-
-            RetryLogicTestHelper.SetRetrySwitch(false);
-            yield return new object[] { DataTestUtility.TCPConnectionString, null};
-            yield return new object[] { DataTestUtility.TCPConnectionString, SqlConfigurableRetryFactory.CreateNoneRetryProvider()};
-
-            var option = new SqlRetryLogicOption()
-            {
-                NumberOfTries = 2,
-                DeltaTime = TimeSpan.FromMilliseconds(10),
-                MaxTimeInterval = TimeSpan.FromSeconds(2)
-            };
-            foreach (var provider in GetRetryStrategies(option))
-                yield return new object[] { DataTestUtility.TCPConnectionString, provider[0]};
+            yield return new object[] { DataTestUtility.TCPConnectionString, null };
+            yield return new object[] { DataTestUtility.TCPConnectionString, SqlConfigurableRetryFactory.CreateNoneRetryProvider() };
         }
 
         private static IEnumerable<object[]> GetRetryStrategies(SqlRetryLogicOption retryLogicOption)

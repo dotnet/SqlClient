@@ -24,8 +24,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             try
             {
-                RetryLogicTestHelper.SetRetrySwitch(true);
-
                 using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
                 connection.Open();
 
@@ -61,10 +59,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 Assert.Equal(numOfTries, _errorInfoRetryProvider.CallCounter);
             }
-            finally
-            {
-                RetryLogicTestHelper.SetRetrySwitch(false);
-            }
         }
 
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
@@ -80,8 +74,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             try
             {
-                RetryLogicTestHelper.SetRetrySwitch(true);
-
                 using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
                 connection.Open();
 
@@ -116,10 +108,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch
             {
                 Assert.Equal(numOfTries, _errorInfoRetryProvider.CallCounter);
-            }
-            finally
-            {
-                RetryLogicTestHelper.SetRetrySwitch(false);
             }
         }
 

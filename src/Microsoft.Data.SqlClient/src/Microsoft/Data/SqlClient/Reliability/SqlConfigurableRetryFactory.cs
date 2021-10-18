@@ -101,6 +101,12 @@ namespace Microsoft.Data.SqlClient
             return new SqlRetryLogicProvider(retryLogic);
         }
 
+        /// <summary>
+        /// Verifies the provider which is not null and doesn't include SqlNoneIntervalEnumerator enumerator object.
+        /// </summary>
+        internal static bool IsRetriable(SqlRetryLogicBaseProvider provider) 
+            => provider is not null && (provider.RetryLogic is null || provider.RetryLogic.RetryIntervalEnumerator is not SqlNoneIntervalEnumerator);
+
         /// Return true if the exception is a transient fault.
         private static bool TransientErrorsCondition(Exception e, IEnumerable<int> retriableConditions)
         {

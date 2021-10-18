@@ -445,13 +445,13 @@ namespace Microsoft.Data.SqlTypes
             path = path.Trim();
             if (path.Length == 0)
             {
-                throw ADP.Argument(System.StringsHelper.GetString(Strings.SqlFileStream_InvalidPath), "path");
+                throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_InvalidPath), "path");
             }
 
             // make sure path is not DOS device path
             if (!path.StartsWith(@"\\") && !System.IO.PathInternal.IsDevice(path.AsSpan()))
             {
-                throw ADP.Argument(System.StringsHelper.GetString(Strings.SqlFileStream_InvalidPath), "path");
+                throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_InvalidPath), "path");
             }
 
             // normalize the path
@@ -460,7 +460,7 @@ namespace Microsoft.Data.SqlTypes
             // make sure path is a UNC path
             if (System.IO.PathInternal.IsDeviceUNC(path.AsSpan()))
             {
-                throw ADP.Argument(System.StringsHelper.GetString(Strings.SqlFileStream_PathNotValidDiskResource), "path");
+                throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_PathNotValidDiskResource), "path");
             }
 
             return path;
@@ -612,10 +612,10 @@ namespace Microsoft.Data.SqlTypes
                         break;
 
                     case Interop.Errors.ERROR_SHARING_VIOLATION:
-                        throw ADP.InvalidOperation(System.StringsHelper.GetString(Strings.SqlFileStream_FileAlreadyInTransaction));
+                        throw ADP.InvalidOperation(StringsHelper.GetString(Strings.SqlFileStream_FileAlreadyInTransaction));
 
                     case Interop.Errors.ERROR_INVALID_PARAMETER:
-                        throw ADP.Argument(System.StringsHelper.GetString(Strings.SqlFileStream_InvalidParameter));
+                        throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_InvalidParameter));
 
                     case Interop.Errors.ERROR_FILE_NOT_FOUND:
                         {
@@ -648,7 +648,7 @@ namespace Microsoft.Data.SqlTypes
                 if (Interop.Kernel32.GetFileType(hFile) != Interop.Kernel32.FileTypes.FILE_TYPE_DISK)
                 {
                     hFile.Dispose();
-                    throw ADP.Argument(System.StringsHelper.GetString(Strings.SqlFileStream_PathNotValidDiskResource));
+                    throw ADP.Argument(StringsHelper.GetString(Strings.SqlFileStream_PathNotValidDiskResource));
                 }
 
                 // if the user is opening the SQL FileStream in read/write mode, we assume that they want to scan
@@ -689,8 +689,13 @@ namespace Microsoft.Data.SqlTypes
             // Ensure we have validated and normalized the path before
             AssertPathFormat(path);
             string uniqueId = Guid.NewGuid().ToString("N");
-            return System.IO.PathInternal.IsDeviceUNC(path) ? string.Format(CultureInfo.InvariantCulture, @"{0}\{1}", path.Replace(@"\\.", @"\??"), uniqueId)
-                                                            : string.Format(CultureInfo.InvariantCulture, @"\??\UNC\{0}\{1}", path.Trim('\\'), uniqueId);
+#if NETSTANDARD
+            return System.IO.PathInternal.IsDeviceUNC(path.AsSpan())
+#else
+            return System.IO.PathInternal.IsDeviceUNC(path)
+#endif
+                ? string.Format(CultureInfo.InvariantCulture, @"{0}\{1}", path.Replace(@"\\.", @"\??"), uniqueId)
+                : string.Format(CultureInfo.InvariantCulture, @"\??\UNC\{0}\{1}", path.Trim('\\'), uniqueId);
         }
     }
 }

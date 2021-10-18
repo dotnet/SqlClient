@@ -64,7 +64,7 @@ msbuild -t:BuildNetCoreAllOS
 
 ```bash
 msbuild -t:BuildTestsNetCore
-# Build the tests for the .NET Core driver in 'Debug' Configuration. Default .NET Core version is 2.1.
+# Build the tests for the .NET Core driver in 'Debug' Configuration. Default .NET Core version is 3.1.
 ```
 
 ```bash
@@ -118,10 +118,12 @@ Manual Tests require the below setup to run:
   |AzureKeyVaultClientId | (Optional) "Application (client) ID" of an Active Directory registered application, granted access to the Azure Key Vault specified in `AZURE_KEY_VAULT_URL`. Requires the key permissions Get, List, Import, Decrypt, Encrypt, Unwrap, Wrap, Verify, and Sign. | _{Client Application ID}_ |
   |AzureKeyVaultClientSecret | (Optional) "Client Secret" of the Active Directory registered application, granted access to the Azure Key Vault specified in `AZURE_KEY_VAULT_URL` | _{Client Application Secret}_ |
   |LocalDbAppName | (Optional) If Local Db Testing is supported, this property configures the name of Local DB App instance available in client environment. Empty string value disables Local Db testing. | Name of Local Db App to connect to.|
+  |LocalDbSharedInstanceName | (Optional) If LocalDB testing is supported and the instance is shared, this property configures the name of the shared instance of LocalDB to connect to. | Name of shared instance of LocalDB. |
   |SupportsIntegratedSecurity | (Optional) Whether or not the USER running tests has integrated security access to the target SQL Server.| `true` OR `false`|
-  |SupportsFileStream | (Optional) Whether or not FileStream is enabled on SQL Server| `true` OR `false`|
+  |FileStreamDirectory | (Optional) If File Stream is enabled on SQL Server, pass local directory path to be used for setting up File Stream enabled database. |  `D:\\escaped\\absolute\\path\\to\\directory\\` |
   |UseManagedSNIOnWindows | (Optional) Enables testing with Managed SNI on Windows| `true` OR `false`|
   |IsAzureSynpase | (Optional) When set to 'true', test suite runs compatible tests for Azure Synapse/Parallel Data Warehouse. | `true` OR `false`|
+  |MakecertPath | The full path to makecert.exe. This is not required if the path is present in the PATH environment variable. | `D:\\escaped\\absolute\\path\\to\\makecert.exe` |
 
 ### Commands to run Manual Tests:
 
@@ -218,7 +220,7 @@ msbuild -t:BuildTestsNetFx -p:TargetNetFxVersion=net462
 ```bash
 msbuild -t:BuildTestsNetCore -p:TargetNetCoreVersion=netcoreapp3.1
 # Build the tests for custom TargetFramework (.NET Core)
-# Applicable values: netcoreapp2.1 | netcoreapp2.2 | netcoreapp3.1 | net5.0
+# Applicable values: netcoreapp3.1 | net5.0 | net6.0
 ```
 
 ### Running Tests:
@@ -230,7 +232,7 @@ dotnet test -p:TargetNetFxVersion=net462 ...
 
 dotnet test -p:TargetNetCoreVersion=netcoreapp3.1 ...
 # Use above property to run Functional Tests with custom TargetFramework (.NET Core)
-# Applicable values: netcoreapp2.1 | netcoreapp2.2 | netcoreapp3.1 | net5.0
+# Applicable values: netcoreapp3.1 | net5.0 | net6.0
 ```
 
 ## Using Managed SNI on Windows
@@ -244,12 +246,6 @@ Managed SNI can be enabled on Windows by enabling the below AppContext switch:
 Scaled decimal parameter truncation can be enabled by enabling the below AppContext switch:
 
 **"Switch.Microsoft.Data.SqlClient.TruncateScaledDecimal"**
-
-## Enabling configurable retry logic
-
-To use this feature, you must enable the following AppContext switch at application startup:
-
-**"Switch.Microsoft.Data.SqlClient.EnableRetryLogic"**
 
 ## Enabling row version null behavior
 

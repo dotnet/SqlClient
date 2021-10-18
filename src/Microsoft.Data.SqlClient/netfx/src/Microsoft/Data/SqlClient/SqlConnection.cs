@@ -29,6 +29,8 @@ using Microsoft.Data.ProviderBase;
 using Microsoft.Data.SqlClient.Server;
 
 [assembly: InternalsVisibleTo("System.Data.DataSetExtensions, PublicKey=" + Microsoft.Data.SqlClient.AssemblyRef.EcmaPublicKeyFull)] // DevDiv Bugs 92166
+// NOTE: The current Microsoft.VSDesigner editor attributes are implemented for System.Data.SqlClient, and are not publicly available.
+// New attributes that are designed to work with Microsoft.Data.SqlClient and are publicly documented should be included in future.
 namespace Microsoft.Data.SqlClient
 {
     using System.Diagnostics.Tracing;
@@ -310,7 +312,7 @@ namespace Microsoft.Data.SqlClient
 
         // Retry Logic
         private SqlRetryLogicBaseProvider _retryLogicProvider;
-        private static bool IsRetryEnabled => LocalAppContextSwitches.IsRetryEnabled;
+        private bool IsProviderRetriable => SqlConfigurableRetryFactory.IsRetriable(RetryLogicProvider);
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetryLogicProvider/*' />
         [
@@ -755,7 +757,6 @@ namespace Microsoft.Data.SqlClient
         SettingsBindableAttribute(true),
         RefreshProperties(RefreshProperties.All),
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
-        Editor("Microsoft.VSDesigner.Data.SQL.Design.SqlConnectionStringEditor, " + AssemblyRef.MicrosoftVSDesigner, "System.Drawing.Design.UITypeEditor, " + AssemblyRef.SystemDrawing),
         ResDescriptionAttribute(StringsHelper.ResourceNames.SqlConnection_ConnectionString),
         ]
         override public string ConnectionString
@@ -1648,7 +1649,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
 
-                    if (!(IsRetryEnabled ? TryOpenWithRetry(null, overrides) : TryOpen(null, overrides)))
+                    if (!(IsProviderRetriable ? TryOpenWithRetry(null, overrides) : TryOpen(null, overrides)))
                     {
                         throw ADP.InternalError(ADP.InternalErrorCode.SynchronousConnectReturnedPending);
                     }
@@ -1882,7 +1883,7 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/OpenAsync/*' />
         public override Task OpenAsync(CancellationToken cancellationToken)
-            => IsRetryEnabled ?
+            => IsProviderRetriable ?
                 InternalOpenWithRetryAsync(cancellationToken) :
                 InternalOpenAsync(cancellationToken);
 
@@ -2058,7 +2059,7 @@ namespace Microsoft.Data.SqlClient
                 (connectionOptions.Authentication == SqlAuthenticationMethod.SqlPassword ||
                     connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword ||
                     connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal) &&
-                (!connectionOptions.HasUserIdKeyword || !connectionOptions.HasPasswordKeyword) &&
+                (!connectionOptions._hasUserIdKeyword || !connectionOptions._hasPasswordKeyword) &&
                 _credential == null)
             {
                 throw SQL.CredentialsNotProvided(connectionOptions.Authentication);
@@ -2504,7 +2505,7 @@ namespace Microsoft.Data.SqlClient
             string mapFileName;
 
             // If Win2k or later, prepend "Global\\" to enable this to work through TerminalServices.
-            if (ADP.IsPlatformNT5)
+            if (ADP.s_isPlatformNT5)
             {
                 mapFileName = "Global\\" + TdsEnums.SDCI_MAPFILENAME;
             }
@@ -2517,10 +2518,10 @@ namespace Microsoft.Data.SqlClient
 
             hFileMap = NativeMethods.OpenFileMappingA(0x4/*FILE_MAP_READ*/, false, mapFileName);
 
-            if (ADP.PtrZero != hFileMap)
+            if (ADP.s_ptrZero != hFileMap)
             {
                 IntPtr pMemMap = NativeMethods.MapViewOfFile(hFileMap, 0x4/*FILE_MAP_READ*/, 0, 0, IntPtr.Zero);
-                if (ADP.PtrZero != pMemMap)
+                if (ADP.s_ptrZero != pMemMap)
                 {
                     SqlDebugContext sdc = new SqlDebugContext();
                     sdc.hMemMap = hFileMap;
@@ -2811,7 +2812,7 @@ namespace Microsoft.Data.SqlClient
         // updates our context with any changes made to the memory-mapped data by an external process
         static private void RefreshMemoryMappedData(SqlDebugContext sdc)
         {
-            Debug.Assert(ADP.PtrZero != sdc.pMemMap, "SQL Debug: invalid null value for pMemMap!");
+            Debug.Assert(ADP.s_ptrZero != sdc.pMemMap, "SQL Debug: invalid null value for pMemMap!");
             // copy memory mapped file contents into managed types
             MEMMAP memMap = (MEMMAP)Marshal.PtrToStructure(sdc.pMemMap, typeof(MEMMAP));
             sdc.dbgpid = memMap.dbgpid;
@@ -3177,7 +3178,7 @@ namespace Microsoft.Data.SqlClient
             string mapFileName;
 
             // If Win2k or later, prepend "Global\\" to enable this to work through TerminalServices.
-            if (ADP.IsPlatformNT5)
+            if (ADP.s_isPlatformNT5)
             {
                 mapFileName = "Global\\" + TdsEnums.SDCI_MAPFILENAME;
             }
@@ -3198,7 +3199,7 @@ namespace Microsoft.Data.SqlClient
             Marshal.WriteIntPtr(pSecurityAttributes, 4, pSecurityDescriptor); // lpSecurityDescriptor = pSecurityDescriptor
             Marshal.WriteInt32(pSecurityAttributes, 8, 0); // bInheritHandle = FALSE
             hFileMap = NativeMethods.CreateFileMappingA(
-            ADP.InvalidPtr/*INVALID_HANDLE_VALUE*/,
+            ADP.s_invalidPtr/*INVALID_HANDLE_VALUE*/,
             pSecurityAttributes,
             0x4/*PAGE_READWRITE*/,
             0,
@@ -3289,8 +3290,8 @@ namespace Microsoft.Data.SqlClient
         internal uint tid = 0;
         internal bool active = false;
         // memory-mapped data
-        internal IntPtr pMemMap = ADP.PtrZero;
-        internal IntPtr hMemMap = ADP.PtrZero;
+        internal IntPtr pMemMap = ADP.s_ptrZero;
+        internal IntPtr hMemMap = ADP.s_ptrZero;
         internal uint dbgpid = 0;
         internal bool fOption = false;
         internal string machineName = null;

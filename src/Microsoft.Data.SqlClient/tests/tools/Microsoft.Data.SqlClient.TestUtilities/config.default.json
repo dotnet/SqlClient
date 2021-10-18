@@ -17,6 +17,7 @@
     "SupportsIntegratedSecurity": true,
     "LocalDbAppName": "",
     "SupportsFileStream": false,
+    "FileStreamDirectory": "",
     "UseManagedSNIOnWindows": false,
     "DNSCachingConnString": "",
     "DNSCachingServerCR": "",
@@ -25,5 +26,6 @@
     "IsDNSCachingSupportedTR": false,
     "IsAzureSynapse": false,
     "EnclaveAzureDatabaseConnString": "",
-    "UserManagedIdentityClientId": ""
+    "UserManagedIdentityClientId": "",
+    "MakecertPath": ""
 }
