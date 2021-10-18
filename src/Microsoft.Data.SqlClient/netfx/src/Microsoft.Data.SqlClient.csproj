@@ -504,6 +504,9 @@
     <Compile Include="..\..\src\Resources\ResDescriptionAttribute.cs">
       <Link>Resources\ResDescriptionAttribute.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlConnectionStringBuilder.cs">
+      <Link>Microsoft\Data\SqlClient\SqlConnectionStringBuilder.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\Common\AdapterUtil.cs">
       <Link>Microsoft\Data\Common\AdapterUtil.cs</Link>
     </Compile>
@@ -538,7 +541,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionHelper.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionPoolKey.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionString.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlConnectionStringBuilder.cs" />
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlConnectionTimeoutErrorInternal.cs">
       <Link>Microsoft\Data\SqlClient\SqlConnectionTimeoutErrorInternal.cs</Link>
     </Compile>
