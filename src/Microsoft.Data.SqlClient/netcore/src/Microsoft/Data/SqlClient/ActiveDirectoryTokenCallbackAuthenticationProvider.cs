@@ -12,20 +12,18 @@ namespace Microsoft.Data.SqlClient
     /// <summary>
     ///
     /// </summary>
-    public sealed class AzureActiveDirectoryAuthenticationProvider : SqlAuthenticationProvider
+    internal sealed class ActiveDirectoryTokenCallbackAuthenticationProvider : SqlAuthenticationProvider
     {
-        private static readonly string s_defaultScopeSuffix = "/.default";
-        private readonly string _type = typeof(AzureActiveDirectoryAuthenticationProvider).Name;
+        private readonly Func<AadTokenRequestContext, CancellationToken, Task<SqlAuthenticationToken>> _tokenCallback;
+        private readonly string _type = typeof(ActiveDirectoryTokenCallbackAuthenticationProvider).Name;
         private readonly SqlClientLogger _logger = new();
-        // private readonly string _applicationClientId = ActiveDirectoryAuthentication.AdoClientId;
-        private readonly TokenCredential _credential;
 
         /// <summary>
         ///
         /// </summary>
-        public AzureActiveDirectoryAuthenticationProvider(TokenCredential credential)
+        public ActiveDirectoryTokenCallbackAuthenticationProvider(Func<AadTokenRequestContext, CancellationToken, Task<SqlAuthenticationToken>> tokenCallback)
         {
-            _credential = credential;
+            _tokenCallback = tokenCallback;
         }
 
         /// <summary>
@@ -73,17 +71,12 @@ namespace Microsoft.Data.SqlClient
         /// <exception cref="Exception"></exception>
         public override async Task<SqlAuthenticationToken> AcquireTokenAsync(SqlAuthenticationParameters parameters)
         {
+            _logger.LogInfo(_type, nameof(AcquireTokenAsync), "Calling token callback.");
             CancellationTokenSource cts = new();
 
             // Use Connection timeout value to cancel token acquire request after certain period of time.
             cts.CancelAfter(parameters.ConnectionTimeout * 1000); // Convert to milliseconds
-
-            string scope = parameters.Resource.EndsWith(s_defaultScopeSuffix) ? parameters.Resource : parameters.Resource + s_defaultScopeSuffix;
-            string[] scopes = { scope };
-            TokenRequestContext tokenRequestContext = new(scopes);
-            string clientId = string.IsNullOrWhiteSpace(parameters.UserId) ? null : parameters.UserId;
-            AccessToken accessToken = await _credential.GetTokenAsync(tokenRequestContext, cts.Token);
-            return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
+            return await _tokenCallback(new AadTokenRequestContext(parameters.Resource), cts.Token);
         }
     }
 }

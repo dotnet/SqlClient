@@ -89,6 +89,8 @@ namespace Microsoft.Data.SqlClient
         /// Instance-level list of custom key store providers. It can be set more than once by the user.
         private IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> _customColumnEncryptionKeyStoreProviders;
 
+        private Func<AadTokenRequestContext, CancellationToken, Task<SqlAuthenticationToken>> _accessTokenCallback;
+
         internal bool HasColumnEncryptionKeyStoreProvidersRegistered =>
             _customColumnEncryptionKeyStoreProviders is not null && _customColumnEncryptionKeyStoreProviders.Count > 0;
 
@@ -270,7 +272,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// This function returns a list of the names of the custom providers currently registered. If the 
+        /// This function returns a list of the names of the custom providers currently registered. If the
         /// instance-level cache is not empty, that cache is used, else the global cache is used.
         /// </summary>
         /// <returns>Combined list of provider names</returns>
@@ -342,7 +344,7 @@ namespace Microsoft.Data.SqlClient
                 new(customProviders, StringComparer.OrdinalIgnoreCase);
 
             // Set the dictionary to the ReadOnly dictionary.
-            // This method can be called more than once. Re-registering a new collection will replace the 
+            // This method can be called more than once. Re-registering a new collection will replace the
             // old collection of providers.
             _customColumnEncryptionKeyStoreProviders = customColumnEncryptionKeyStoreProviders;
         }
@@ -679,6 +681,36 @@ namespace Microsoft.Data.SqlClient
                 // Need to call ConnectionString_Set to do proper pool group check
                 ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, credential: _credential, accessToken: value));
                 _accessToken = value;
+            }
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        public Func<AadTokenRequestContext, CancellationToken, Task<SqlAuthenticationToken>> AccessTokenCallback
+        {
+            get { return _accessTokenCallback; }
+            set
+            {
+                // If a connection is connecting or is ever opened, AccessToken callback cannot be set
+                if (!InnerConnection.AllowSetConnectionString)
+                {
+                    throw ADP.OpenConnectionPropertySet(nameof(AccessTokenCallback), InnerConnection.State);
+                }
+
+                if (value != null)
+                {
+                    // Check if the usage of AccessToken has any conflict with the keys used in connection string and credential
+                    // CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessToken((SqlConnectionString)ConnectionOptions);
+                }
+                if (value == null)
+                {
+                    throw new ArgumentNullException(nameof(AccessTokenCallback), "Callback cannot be null.");
+                }
+                SqlAuthenticationProvider.SetProvider(
+                    SqlAuthenticationMethod.ActiveDirectoryTokenCredential,
+                    new ActiveDirectoryTokenCallbackAuthenticationProvider(value));
+                _accessTokenCallback = value;
             }
         }
 
