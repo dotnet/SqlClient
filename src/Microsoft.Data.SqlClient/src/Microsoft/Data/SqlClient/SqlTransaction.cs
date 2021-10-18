@@ -63,21 +63,9 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/DbConnection/*' />
-        override protected DbConnection DbConnection
-        {
-            get
-            {
-                return Connection;
-            }
-        }
+        override protected DbConnection DbConnection => Connection;
 
-        internal SqlInternalTransaction InternalTransaction
-        {
-            get
-            {
-                return _internalTransaction;
-            }
-        }
+        internal SqlInternalTransaction InternalTransaction => _internalTransaction;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/IsolationLevel/*' />
         override public IsolationLevel IsolationLevel
@@ -89,29 +77,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private bool IsYukonPartialZombie
-        {
-            get
-            {
-                return (null != _internalTransaction && _internalTransaction.IsCompleted);
-            }
-        }
+        private bool IsYukonPartialZombie => _internalTransaction !=null && _internalTransaction.IsCompleted;
 
-        internal bool IsZombied
-        {
-            get
-            {
-                return (null == _internalTransaction || _internalTransaction.IsCompleted);
-            }
-        }
+        internal bool IsZombied => _internalTransaction == null || _internalTransaction.IsCompleted;
 
-        internal int ObjectID
-        {
-            get
-            {
-                return _objectID;
-            }
-        }
+        internal int ObjectID => _objectID;
 
         internal SqlStatistics Statistics
         {
