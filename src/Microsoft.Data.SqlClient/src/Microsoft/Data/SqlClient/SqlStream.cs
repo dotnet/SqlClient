@@ -502,7 +502,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (_xmlReader == null)
             {
-                SqlStream sqlStream = new(_columnOrdinal, _reader, true /* addByteOrderMark */, false /* processAllRows*/, false /*advanceReader*/);
+                SqlStream sqlStream = new(_columnOrdinal, _reader, addByteOrderMark: true, processAllRows:false, advanceReader:false);
                 _xmlReader = sqlStream.ToXmlReader();
                 _strWriter = new StringWriter((System.IFormatProvider)null);
                 XmlWriterSettings writerSettings = new();
