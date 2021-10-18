@@ -98,6 +98,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlClientLogger.cs">
       <Link>Microsoft\Data\SqlClient\SqlClientLogger.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlInternalTransaction.cs">
+      <Link>Microsoft\Data\SqlClient\SqlInternalTransaction.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\Common\ActivityCorrelator.cs">
       <Link>Microsoft\Data\Common\ActivityCorrelator.cs</Link>
     </Compile>
@@ -314,6 +317,7 @@
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlCommandBuilder.cs">
       <Link>Microsoft\Data\SqlClient\SqlCommandBuilder.cs</Link>
+      <SubType>Component</SubType>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlCommandSet.cs">
       <Link>Microsoft\Data\SqlClient\SqlCommandSet.cs</Link>
@@ -519,9 +523,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionSmi.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlInternalTransaction.cs">
-      <Link>Microsoft\Data\SqlClient\SqlInternalTransaction.cs</Link>
-    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\sqlmetadatafactory.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlNotificationEventArgs.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlParameter.cs" />

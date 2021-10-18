@@ -17,7 +17,7 @@ namespace Microsoft.Data.SqlClient
         Aborted = 2,
         Committed = 3,
         Unknown = 4,
-    };
+    }
 
     internal enum TransactionType
     {
@@ -26,22 +26,22 @@ namespace Microsoft.Data.SqlClient
         Delegated = 3,
         Distributed = 4,
         Context = 5,     // only valid in proc.
-    };
+    }
 
     sealed internal class SqlInternalTransaction
     {
         internal const long NullTransactionId = 0;
 
         private TransactionState _transactionState;
-        private TransactionType _transactionType;
+        private readonly TransactionType _transactionType;
         private long _transactionId;             // passed in the MARS headers
         private int _openResultCount;           // passed in the MARS headers
         private SqlInternalConnection _innerConnection;
         private bool _disposing;                 // used to prevent us from throwing exceptions while we're disposing
         private WeakReference<SqlTransaction> _parent;                    // weak ref to the outer transaction object; needs to be weak to allow GC to occur.
 
-        private static int _objectTypeCount; // EventSource counter
-        internal readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
+        private static int s_objectTypeCount; // EventSource counter
+        internal readonly int _objectID = Interlocked.Increment(ref s_objectTypeCount);
 
         internal bool RestoreBrokenConnection { get; set; }
         internal bool ConnectionHasBeenRestored { get; set; }
@@ -70,29 +70,28 @@ namespace Microsoft.Data.SqlClient
                 // Return true if we are an API started local transaction, or if we were a TSQL
                 // started local transaction and were then wrapped with a parent transaction as
                 // a result of a later API begin transaction.
-                (TransactionType.LocalFromAPI == _transactionType) ||
-                                (TransactionType.LocalFromTSQL == _transactionType && _parent != null);
+                (_transactionType == TransactionType.LocalFromAPI) ||
+                                (_transactionType == TransactionType.LocalFromTSQL && _parent != null);
 
-        internal bool IsAborted => TransactionState.Aborted == _transactionState;
+        internal bool IsAborted => _transactionState == TransactionState.Aborted;
 
-        internal bool IsActive => TransactionState.Active == _transactionState;
+        internal bool IsActive => _transactionState == TransactionState.Active;
 
-        internal bool IsCommitted => TransactionState.Committed == _transactionState;
+        internal bool IsCommitted => _transactionState == TransactionState.Committed;
 
-        internal bool IsCompleted => TransactionState.Aborted == _transactionState
-                     || TransactionState.Committed == _transactionState
-                     || TransactionState.Unknown == _transactionState;
+        internal bool IsCompleted => _transactionState == TransactionState.Aborted
+                     || _transactionState == TransactionState.Committed
+                     || _transactionState == TransactionState.Unknown;
 
-        internal bool IsDelegated => TransactionType.Delegated == _transactionType;
+        internal bool IsDelegated =>_transactionType == TransactionType.Delegated;
 
-        internal bool IsDistributed => TransactionType.Distributed == _transactionType;
+        internal bool IsDistributed => _transactionType == TransactionType.Distributed;
 
-        internal bool IsLocal => TransactionType.LocalFromTSQL == _transactionType
-                            || TransactionType.LocalFromAPI == _transactionType
+        internal bool IsLocal => _transactionType == TransactionType.LocalFromTSQL
+                            || _transactionType == TransactionType.LocalFromAPI
 #if NETFRAMEWORK
-                            || TransactionType.Context == _transactionType
+                            || _transactionType == TransactionType.Context
 #endif
-
                             ;
 
         internal bool IsOrphaned
@@ -102,7 +101,7 @@ namespace Microsoft.Data.SqlClient
                 // An internal transaction is orphaned when its parent has been
                 // reclaimed by GC.
                 bool result;
-                if (null == _parent)
+                if (_parent == null)
                 {
                     // No parent, so we better be LocalFromTSQL.  Should we even return in this case -
                     // since it could be argued this is invalid?
@@ -125,7 +124,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal bool IsZombied => null == _innerConnection;
+        internal bool IsZombied => _innerConnection == null;
 
         internal int ObjectID => _objectID;
 
@@ -137,7 +136,7 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlTransaction result = null;
                 // Should we protect against this, since this probably is an invalid state?
-                Debug.Assert(null != _parent, "Why are we calling Parent with no parent?");
+                Debug.Assert(_parent != null, "Why are we calling Parent with no parent?");
                 if (_parent != null && _parent.TryGetTarget(out SqlTransaction target))
                 {
                     result = target;
@@ -287,7 +286,7 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryPoolerTraceEvent("SqlInternalTransaction.Dispose | RES | CPOOL | Object Id {0}, Disposing", ObjectID);
             if (disposing)
             {
-                if (null != _innerConnection)
+                if (_innerConnection != null)
                 {
                     // implicitly rollback if transaction still valid
                     _disposing = true;
@@ -295,13 +294,14 @@ namespace Microsoft.Data.SqlClient
                 }
             }
         }
-
+        /// <summary>
+        /// This function is needed for those times when it is impossible to determine the server's
+        /// transaction level, unless the user's arguments were parsed - which is something we don't want
+        ///to do.  An example when it is impossible to determine the level is after a rollback.
+        /// </summary>
+        /// <returns></returns>
         private int GetServerTransactionLevel()
         {
-            // This function is needed for those times when it is impossible to determine the server's
-            // transaction level, unless the user's arguments were parsed - which is something we don't want
-            // to do.  An example when it is impossible to determine the level is after a rollback.
-
             using (SqlCommand transactionLevelCommand = new SqlCommand("set @out = @@trancount", (SqlConnection)(_innerConnection.Owner)))
             {
                 transactionLevelCommand.Transaction = Parent;
@@ -309,11 +309,8 @@ namespace Microsoft.Data.SqlClient
                 SqlParameter parameter = new SqlParameter("@out", SqlDbType.Int);
                 parameter.Direction = ParameterDirection.Output;
                 transactionLevelCommand.Parameters.Add(parameter);
-#if NETFRAMEWORK
                 transactionLevelCommand.RunExecuteReader(CommandBehavior.Default, RunBehavior.UntilDone, returnStream: false, nameof(GetServerTransactionLevel));
-#else
-                transactionLevelCommand.RunExecuteReader(CommandBehavior.Default, RunBehavior.UntilDone, returnStream: false);
-#endif
+
                 return (int)parameter.Value;
             }
         }
@@ -496,9 +493,7 @@ namespace Microsoft.Data.SqlClient
             ObjectID, _transactionId, _transactionState, _transactionType, _openResultCount, _disposing);
 
 #if NETFRAMEWORK
-
-        internal bool IsContext => TransactionType.Context == _transactionType;
-
+        internal bool IsContext => _transactionType ==  TransactionType.Context;
 #endif
     }
-        }
+}

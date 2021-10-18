@@ -43,6 +43,9 @@
     <Compile Include="..\..\src\Microsoft\Data\Sql\SqlNotificationRequest.cs">
       <Link>Microsoft\Data\Sql\SqlNotificationRequest.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlInternalTransaction.cs">
+      <Link>Microsoft\Data\SqlClient\SqlInternalTransaction.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\Common\ActivityCorrelator.cs">
       <Link>Microsoft\Data\Common\ActivityCorrelator.cs</Link>
     </Compile>
@@ -539,9 +542,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlInfoMessageEvent.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlInternalTransaction.cs">
-      <Link>Microsoft\Data\SqlClient\SqlInternalTransaction.cs</Link>
-    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlMetadataFactory.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlNotificationEventArgs.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlParameter.cs" />
