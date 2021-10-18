@@ -375,6 +375,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlInfoMessageEventHandler.cs">
       <Link>Microsoft\Data\SqlClient\SqlInfoMessageEventHandler.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlMetaDataFactory.cs">
+      <Link>Microsoft\Data\SqlClient\SqlMetaDataFactory.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlNotificationEventArgs.cs">
       <Link>Microsoft\Data\SqlClient\SqlNotificationEventArgs.cs</Link>
     </Compile>
@@ -562,7 +565,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionSmi.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
     <Compile Include="Microsoft\Data\SqlClient\sqlinternaltransaction.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\sqlmetadatafactory.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlParameter.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlSequentialStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlSequentialStreamSmi.cs" />

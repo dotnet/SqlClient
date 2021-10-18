@@ -13,25 +13,20 @@ using Microsoft.Data.ProviderBase;
 namespace Microsoft.Data.SqlClient
 {
     internal sealed class SqlMetaDataFactory : DbMetaDataFactory
-    { // V1.2.3300
+    {
 
-        private const string _serverVersionNormalized90 = "09.00.0000";
-        private const string _serverVersionNormalized90782 = "09.00.0782";
-        private const string _serverVersionNormalized10 = "10.00.0000";
+        private const string ServerVersionNormalized90 = "09.00.0000";
+        private const string ServerVersionNormalized10 = "10.00.0000";
 
 
         public SqlMetaDataFactory(Stream XMLStream,
                                     string serverVersion,
                                     string serverVersionNormalized) :
                 base(XMLStream, serverVersion, serverVersionNormalized)
+        { }
+
+        private void addUDTsToDataTypesTable(DataTable dataTypesTable, SqlConnection connection, string ServerVersion)
         {
-
-
-        }
-
-        private void addUDTsToDataTypesTable(DataTable dataTypesTable, SqlConnection connection, String ServerVersion)
-        {
-
             const string sqlCommand =
                 "select " +
                     "assemblies.name, " +
@@ -49,16 +44,14 @@ namespace Microsoft.Data.SqlClient
                 "on assemblies.assembly_id = types.assembly_id ";
 
             // pre 9.0/Yukon servers do not have UDTs
-            if (0 > string.Compare(ServerVersion, _serverVersionNormalized90, StringComparison.OrdinalIgnoreCase))
+            if (0 > string.Compare(ServerVersion, ServerVersionNormalized90, StringComparison.OrdinalIgnoreCase))
             {
                 return;
             }
 
-
             // Execute the SELECT statement
             SqlCommand command = connection.CreateCommand();
             command.CommandText = sqlCommand;
-            DataRow newRow = null;
             DataColumn providerDbtype = dataTypesTable.Columns[DbMetaDataColumnNames.ProviderDbType];
             DataColumn columnSize = dataTypesTable.Columns[DbMetaDataColumnNames.ColumnSize];
             DataColumn isFixedLength = dataTypesTable.Columns[DbMetaDataColumnNames.IsFixedLength];
@@ -99,7 +92,7 @@ namespace Microsoft.Data.SqlClient
                 {
 
                     reader.GetValues(values);
-                    newRow = dataTypesTable.NewRow();
+                    DataRow newRow = dataTypesTable.NewRow();
 
                     newRow[providerDbtype] = SqlDbType.Udt;
 
@@ -128,7 +121,7 @@ namespace Microsoft.Data.SqlClient
                         (values[versionRevisionIndex] != DBNull.Value))
                     {
 
-                        StringBuilder nameString = new StringBuilder();
+                        StringBuilder nameString = new();
                         nameString.Append(values[assemblyClassIndex].ToString());
                         nameString.Append(", ");
                         nameString.Append(values[assemblyNameIndex].ToString());
@@ -153,8 +146,8 @@ namespace Microsoft.Data.SqlClient
 
                             nameString.Append(", PublicKeyToken=");
 
-                            StringBuilder resultString = new StringBuilder();
-                            Byte[] byteArrayValue = (Byte[])values[publicKeyIndex];
+                            StringBuilder resultString = new();
+                            byte[] byteArrayValue = (byte[])values[publicKeyIndex];
                             foreach (byte b in byteArrayValue)
                             {
                                 resultString.Append(string.Format("{0,-2:x2}", b));
@@ -171,7 +164,7 @@ namespace Microsoft.Data.SqlClient
             } // end using
         }
 
-        private void AddTVPsToDataTypesTable(DataTable dataTypesTable, SqlConnection connection, String ServerVersion)
+        private void AddTVPsToDataTypesTable(DataTable dataTypesTable, SqlConnection connection, string ServerVersion)
         {
 
             const string sqlCommand =
@@ -184,16 +177,14 @@ namespace Microsoft.Data.SqlClient
 
             // TODO: update this check once the server upgrades major version number!!!
             // pre 9.0/Yukon servers do not have Table types
-            if (0 > string.Compare(ServerVersion, _serverVersionNormalized10, StringComparison.OrdinalIgnoreCase))
+            if (0 > string.Compare(ServerVersion, ServerVersionNormalized10, StringComparison.OrdinalIgnoreCase))
             {
                 return;
             }
 
-
             // Execute the SELECT statement
             SqlCommand command = connection.CreateCommand();
             command.CommandText = sqlCommand;
-            DataRow newRow = null;
             DataColumn providerDbtype = dataTypesTable.Columns[DbMetaDataColumnNames.ProviderDbType];
             DataColumn columnSize = dataTypesTable.Columns[DbMetaDataColumnNames.ColumnSize];
             DataColumn isSearchable = dataTypesTable.Columns[DbMetaDataColumnNames.IsSearchable];
@@ -223,7 +214,7 @@ namespace Microsoft.Data.SqlClient
                 {
 
                     reader.GetValues(values);
-                    newRow = dataTypesTable.NewRow();
+                    DataRow newRow = dataTypesTable.NewRow();
 
                     newRow[providerDbtype] = SqlDbType.Structured;
 
@@ -251,16 +242,14 @@ namespace Microsoft.Data.SqlClient
 
         private DataTable GetDataTypesTable(SqlConnection connection)
         {
-
-
-            // verify the existance of the table in the data set
+            // verify the existence of the table in the data set
             DataTable dataTypesTable = CollectionDataSet.Tables[DbMetaDataCollectionNames.DataTypes];
             if (dataTypesTable == null)
             {
                 throw ADP.UnableToBuildCollection(DbMetaDataCollectionNames.DataTypes);
             }
 
-            // copy the table filtering out any rows that don't apply to tho current version of the prrovider
+            // copy the table filtering out any rows that don't apply to tho current version of the provider
             dataTypesTable = CloneAndFilterCollection(DbMetaDataCollectionNames.DataTypes, null);
 
             addUDTsToDataTypesTable(dataTypesTable, connection, ServerVersionNormalized);
@@ -268,12 +257,10 @@ namespace Microsoft.Data.SqlClient
 
             dataTypesTable.AcceptChanges();
             return dataTypesTable;
-
         }
 
-        protected override DataTable PrepareCollection(String collectionName, String[] restrictions, DbConnection connection)
+        protected override DataTable PrepareCollection(string collectionName, string[] restrictions, DbConnection connection)
         {
-
             SqlConnection sqlConnection = (SqlConnection)connection;
             DataTable resultTable = null;
 
@@ -299,6 +286,3 @@ namespace Microsoft.Data.SqlClient
 
     }
 }
-
-
-
