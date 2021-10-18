@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient.SNI
         private readonly ushort _sessionId;
         private readonly ManualResetEventSlim _packetEvent = new ManualResetEventSlim(false);
         private readonly ManualResetEventSlim _ackEvent = new ManualResetEventSlim(false);
-        //private readonly SNISMUXHeader _currentHeader = new SNISMUXHeader();
+        private readonly SNISMUXHeader _currentHeader = new SNISMUXHeader();
         private readonly SNIAsyncCallback _handleSendCompleteCallback;
 
         private uint _sendHighwater = 4;
@@ -54,8 +54,6 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         public override void Dispose()
         {
-            // SendControlPacket will lock so make sure that it cannot deadlock by failing to enter the DemuxerLock
-            Debug.Assert(_connection != null && Monitor.IsEntered(_connection.DemuxerSync), "SNIMarsHandle.HandleRecieveComplete should be called while holding the SNIMarsConnection.DemuxerSync because it can cause deadlocks");
             using (TrySNIEventScope.Create(nameof(SNIMarsHandle)))
             {
                 try
@@ -104,8 +102,8 @@ namespace Microsoft.Data.SqlClient.SNI
 #endif
                 lock (this)
                 {
-                    SNISMUXHeader header = SetupSMUXHeader(0, flags);
-                    header.Write(packet.GetHeaderBuffer(SNISMUXHeader.HEADER_LENGTH));
+                    SetupSMUXHeader(0, flags);
+                    _currentHeader.Write(packet.GetHeaderBuffer(SNISMUXHeader.HEADER_LENGTH));
                     packet.SetHeaderActive();
                 }
 
@@ -118,22 +116,17 @@ namespace Microsoft.Data.SqlClient.SNI
             }
         }
 
-        private SNISMUXHeader SetupSMUXHeader(int length, SNISMUXFlags flags)
+        private void SetupSMUXHeader(int length, SNISMUXFlags flags)
         {
             Debug.Assert(Monitor.IsEntered(this), "must take lock on self before updating smux header");
 
-            SNISMUXHeader header = new SNISMUXHeader();
-            header.Set(
-                smid: 83,
-                flags: (byte)flags,
-                sessionID: _sessionId,
-                length: (uint)SNISMUXHeader.HEADER_LENGTH + (uint)length,
-                sequenceNumber: ((flags == SNISMUXFlags.SMUX_FIN) || (flags == SNISMUXFlags.SMUX_ACK)) ? _sequenceNumber - 1 : _sequenceNumber++,
-                highwater: _receiveHighwater
-            );
-            _receiveHighwaterLastAck = header.Highwater;
-
-            return header;
+            _currentHeader.SMID = 83;
+            _currentHeader.flags = (byte)flags;
+            _currentHeader.sessionId = _sessionId;
+            _currentHeader.length = (uint)SNISMUXHeader.HEADER_LENGTH + (uint)length;
+            _currentHeader.sequenceNumber = ((flags == SNISMUXFlags.SMUX_FIN) || (flags == SNISMUXFlags.SMUX_ACK)) ? _sequenceNumber - 1 : _sequenceNumber++;
+            _currentHeader.highwater = _receiveHighwater;
+            _receiveHighwaterLastAck = _currentHeader.highwater;
         }
 
         /// <summary>
@@ -144,10 +137,9 @@ namespace Microsoft.Data.SqlClient.SNI
         private SNIPacket SetPacketSMUXHeader(SNIPacket packet)
         {
             Debug.Assert(packet.ReservedHeaderSize == SNISMUXHeader.HEADER_LENGTH, "mars handle attempting to smux packet without smux reservation");
-            Debug.Assert(Monitor.IsEntered(this), "cannot create mux header outside lock");
 
-            SNISMUXHeader header = SetupSMUXHeader(packet.DataLength, SNISMUXFlags.SMUX_DATA);
-            header.Write(packet.GetHeaderBuffer(SNISMUXHeader.HEADER_LENGTH));
+            SetupSMUXHeader(packet.Length, SNISMUXFlags.SMUX_DATA);
+            _currentHeader.Write(packet.GetHeaderBuffer(SNISMUXHeader.HEADER_LENGTH));
             packet.SetHeaderActive();
 #if DEBUG
             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsHandle), EventType.INFO, "MARS Session Id {0}, Setting SMUX_DATA header in current header for packet {1}", args0: ConnectionId, args1: packet?._id);
@@ -276,7 +268,6 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns>SNI error code</returns>
         public override uint SendAsync(SNIPacket packet, SNIAsyncCallback callback = null)
         {
-            Debug.Assert(_connection != null && Monitor.IsEntered(_connection.DemuxerSync), "SNIMarsHandle.HandleRecieveComplete should be called while holding the SNIMarsConnection.DemuxerSync because it can cause deadlocks");
             using (TrySNIEventScope.Create(nameof(SNIMarsHandle)))
             {
                 lock (this)
@@ -390,7 +381,6 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="highwater">Send highwater mark</param>
         public void HandleAck(uint highwater)
         {
-            Debug.Assert(_connection != null && Monitor.IsEntered(_connection.DemuxerSync), "SNIMarsHandle.HandleRecieveComplete should be called while holding the SNIMarsConnection.DemuxerSync because it can cause deadlocks");
             using (TrySNIEventScope.Create(nameof(SNIMarsHandle)))
             {
                 lock (this)
@@ -412,15 +402,14 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="header">SMUX header</param>
         public void HandleReceiveComplete(SNIPacket packet, SNISMUXHeader header)
         {
-            Debug.Assert(_connection != null && Monitor.IsEntered(_connection.DemuxerSync), "SNIMarsHandle.HandleRecieveComplete should be called while holding the SNIMarsConnection.DemuxerSync because it can cause deadlocks");
             using (TrySNIEventScope.Create(nameof(SNIMarsHandle)))
             {
                 lock (this)
                 {
-                    if (_sendHighwater != header.Highwater)
+                    if (_sendHighwater != header.highwater)
                     {
-                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsHandle), EventType.INFO, "MARS Session Id {0}, header.highwater {1}, _sendHighwater {2}, Handle Ack with header.highwater", args0: ConnectionId, args1: header.Highwater, args2: _sendHighwater);
-                        HandleAck(header.Highwater);
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsHandle), EventType.INFO, "MARS Session Id {0}, header.highwater {1}, _sendHighwater {2}, Handle Ack with header.highwater", args0: ConnectionId, args1: header?.highwater, args2: _sendHighwater);
+                        HandleAck(header.highwater);
                     }
 
                     lock (_receivedPacketQueue)
