@@ -19,7 +19,7 @@
   <ItemGroup>
     <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp' AND !$(ReferenceType.Contains('Package'))" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
     <ProjectReference Condition="'$(TargetGroup)'=='netfx' AND !$(ReferenceType.Contains('Package'))" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
-    <PackageReference Condition="$(ReferenceType)=='Package'" Include="Microsoft.Data.SqlClient" Version="$(TestMicrosoftDataSqlClientVersion)" />
+    <PackageReference Condition="$(ReferenceType.Contains('Package'))" Include="Microsoft.Data.SqlClient" Version="$(TestMicrosoftDataSqlClientVersion)" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Condition="$(BuildForRelease) == 'true'" Include="Microsoft.SourceLink.GitHub" Version="$(MicrosoftSourceLinkGitHubVersion)" PrivateAssets="All" />
