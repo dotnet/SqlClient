@@ -1450,13 +1450,19 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 ThrowIfReconnectionHasBeenCanceled();
-                if (!_internalEndExecuteInitiated && _stateObj != null)
+                // lock on _stateObj prevents races with close/cancel.
+                // If we have already initiate the End call internally, we have already done that, so no point doing it again.
+                if (!_internalEndExecuteInitiated)
                 {
-                    // call SetCancelStateClosed on the stateobject to ensure that cancel cannot 
-                    // happen after we have changed started the end processing
-                    _stateObj.SetCancelStateClosed();
+                    lock (_stateObj)
+                    {
+                        return EndExecuteNonQueryInternal(asyncResult);
+                    }
                 }
-                return EndExecuteNonQueryInternal(asyncResult);
+                else
+                {
+                    return EndExecuteNonQueryInternal(asyncResult);
+                }
             }
         }
 
@@ -1865,15 +1871,19 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 ThrowIfReconnectionHasBeenCanceled();
-
-                if (!_internalEndExecuteInitiated && _stateObj != null)
+                // lock on _stateObj prevents races with close/cancel.
+                // If we have already initiate the End call internally, we have already done that, so no point doing it again.
+                if (!_internalEndExecuteInitiated)
                 {
-                    // call SetCancelStateClosed on the stateobject to ensure that cancel cannot 
-                    // happen after we have changed started the end processing
-                    _stateObj.SetCancelStateClosed();
+                    lock (_stateObj)
+                    {
+                        return EndExecuteXmlReaderInternal(asyncResult);
+                    }
                 }
-
-                return EndExecuteXmlReaderInternal(asyncResult);
+                else
+                {
+                    return EndExecuteXmlReaderInternal(asyncResult);
+                }
             }
         }
 
@@ -2059,15 +2069,18 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 ThrowIfReconnectionHasBeenCanceled();
-                
-                if (!_internalEndExecuteInitiated && _stateObj != null)
+                // lock on _stateObj prevents races with close/cancel.
+                if (!_internalEndExecuteInitiated)
                 {
-                    // call SetCancelStateClosed on the stateobject to ensure that cancel cannot happen after
-                    // we have changed started the end processing
-                    _stateObj.SetCancelStateClosed();
+                    lock (_stateObj)
+                    {
+                        return EndExecuteReaderInternal(asyncResult);
+                    }
                 }
-
-                return EndExecuteReaderInternal(asyncResult);                
+                else
+                {
+                    return EndExecuteReaderInternal(asyncResult);
+                }
             }
         }
 
