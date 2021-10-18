@@ -270,11 +270,9 @@ namespace Microsoft.Data.SqlClient
 
         private readonly string _expandedAttachDBFilename; // expanded during construction so that CreatePermissionSet & Expand are consistent
 
-#if NETFRAMEWORK
         // SxS: reading Software\\Microsoft\\MSSQLServer\\Client\\SuperSocketNetLib\Encrypt value from registry
         [ResourceExposure(ResourceScope.None)]
         [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
-#endif
         internal SqlConnectionString(string connectionString) : base(connectionString, GetParseSynonyms())
         {
 #if NETFRAMEWORK
@@ -409,7 +407,7 @@ namespace Microsoft.Data.SqlClient
                 const string value = "Encrypt";
 
                 object obj = ADP.LocalMachineRegistryValue(folder, value);
-                if ((obj is int) && (1 == (int)obj))
+                if ((obj is int iObj) && (iObj == 1))
                 {         // If the registry key exists
                     _encrypt = true;
                 }
@@ -494,7 +492,7 @@ namespace Microsoft.Data.SqlClient
             }
             _typeSystemAssemblyVersion = s_constTypeSystemAsmVersion10;
 
-            if (true == _userInstance && !string.IsNullOrEmpty(_failoverPartner))
+            if (_userInstance && !string.IsNullOrEmpty(_failoverPartner))
             {
                 throw SQL.UserInstanceFailoverNotCompatible();
             }
