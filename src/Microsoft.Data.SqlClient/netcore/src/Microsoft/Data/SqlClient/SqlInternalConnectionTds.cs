@@ -1994,36 +1994,36 @@ namespace Microsoft.Data.SqlClient
         internal void OnEnvChange(SqlEnvChange rec)
         {
             Debug.Assert(!IgnoreEnvChange, "This function should not be called if IgnoreEnvChange is set!");
-            switch (rec.type)
+            switch (rec._type)
             {
                 case TdsEnums.ENV_DATABASE:
                     // If connection is not open and recovery is not in progress, store the server value as the original.
                     if (!_fConnectionOpen && _recoverySessionData == null)
                     {
-                        _originalDatabase = rec.newValue;
+                        _originalDatabase = rec._newValue;
                     }
 
-                    CurrentDatabase = rec.newValue;
+                    CurrentDatabase = rec._newValue;
                     break;
 
                 case TdsEnums.ENV_LANG:
                     // If connection is not open and recovery is not in progress, store the server value as the original.
                     if (!_fConnectionOpen && _recoverySessionData == null)
                     {
-                        _originalLanguage = rec.newValue;
+                        _originalLanguage = rec._newValue;
                     }
 
-                    _currentLanguage = rec.newValue;
+                    _currentLanguage = rec._newValue;
                     break;
 
                 case TdsEnums.ENV_PACKETSIZE:
-                    _currentPacketSize = int.Parse(rec.newValue, CultureInfo.InvariantCulture);
+                    _currentPacketSize = int.Parse(rec._newValue, CultureInfo.InvariantCulture);
                     break;
 
                 case TdsEnums.ENV_COLLATION:
                     if (_currentSessionData != null)
                     {
-                        _currentSessionData._collation = rec.newCollation;
+                        _currentSessionData._collation = rec._newCollation;
                     }
                     break;
 
@@ -2043,20 +2043,20 @@ namespace Microsoft.Data.SqlClient
                     {
                         throw SQL.ROR_FailoverNotSupportedServer(this);
                     }
-                    _currentFailoverPartner = rec.newValue;
+                    _currentFailoverPartner = rec._newValue;
                     break;
 
                 case TdsEnums.ENV_PROMOTETRANSACTION:
-                    byte[] dtcToken = null;
-                    if (rec.newBinRented)
+                    byte[] dtcToken;
+                    if (rec._newBinRented)
                     {
-                        dtcToken = new byte[rec.newLength];
-                        Buffer.BlockCopy(rec.newBinValue, 0, dtcToken, 0, dtcToken.Length);
+                        dtcToken = new byte[rec._newLength];
+                        Buffer.BlockCopy(rec._newBinValue, 0, dtcToken, 0, dtcToken.Length);
                     }
                     else
                     {
-                        dtcToken = rec.newBinValue;
-                        rec.newBinValue = null;
+                        dtcToken = rec._newBinValue;
+                        rec._newBinValue = null;
                     }
                     PromotedDTCToken = dtcToken;
                     break;
@@ -2077,16 +2077,16 @@ namespace Microsoft.Data.SqlClient
                     break;
 
                 case TdsEnums.ENV_USERINSTANCE:
-                    _instanceName = rec.newValue;
+                    _instanceName = rec._newValue;
                     break;
 
                 case TdsEnums.ENV_ROUTING:
                     SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnectionTds.OnEnvChange|ADV> {0}, Received routing info", ObjectID);
-                    if (string.IsNullOrEmpty(rec.newRoutingInfo.ServerName) || rec.newRoutingInfo.Protocol != 0 || rec.newRoutingInfo.Port == 0)
+                    if (string.IsNullOrEmpty(rec._newRoutingInfo.ServerName) || rec._newRoutingInfo.Protocol != 0 || rec._newRoutingInfo.Port == 0)
                     {
                         throw SQL.ROR_InvalidRoutingInfo(this);
                     }
-                    RoutingInfo = rec.newRoutingInfo;
+                    RoutingInfo = rec._newRoutingInfo;
                     break;
 
                 default:

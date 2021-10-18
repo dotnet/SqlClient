@@ -360,6 +360,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlEnclaveSession.cs">
       <Link>Microsoft\Data\SqlClient\SqlEnclaveSession.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlEnvChange.cs">
+      <Link>Microsoft\Data\SqlClient\SqlEnvChange.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlEnums.cs">
       <Link>Microsoft\Data\SqlClient\SqlEnums.cs</Link>
     </Compile>

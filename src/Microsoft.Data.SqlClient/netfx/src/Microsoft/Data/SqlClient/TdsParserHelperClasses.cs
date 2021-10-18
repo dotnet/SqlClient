@@ -312,23 +312,6 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    sealed internal class SqlEnvChange
-    {
-        internal byte type;
-        internal byte oldLength;
-        internal int newLength; // 7206 TDS changes makes this length an int
-        internal int length;
-        internal string newValue;
-        internal string oldValue;
-        internal byte[] newBinValue;
-        internal byte[] oldBinValue;
-        internal long newLongValue;
-        internal long oldLongValue;
-        internal SqlCollation newCollation;
-        internal SqlCollation oldCollation;
-        internal RoutingInfo newRoutingInfo;
-    }
-
     sealed internal class SqlLogin
     {
         internal SqlAuthenticationMethod authentication = SqlAuthenticationMethod.NotSpecified;               // Authentication type
