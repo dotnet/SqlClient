@@ -16,6 +16,7 @@ namespace Microsoft.Data.SqlClient.Tests
             "Connecting to a mirrored SQL Server instance using the MultiSubnetFailover connection option is not supported.";
         private const byte FATAL_ERROR_CLASS = 20;
 
+#if !NET50_OR_LATER
         [Fact]
         public static void SqlErrorSerializationTest()
         {
@@ -45,6 +46,8 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(expected.LineNumber, actual.LineNumber);
             Assert.Equal(expected.Source, actual.Source);
         }
+#endif
+
 
         private static SqlError CreateError()
         {
