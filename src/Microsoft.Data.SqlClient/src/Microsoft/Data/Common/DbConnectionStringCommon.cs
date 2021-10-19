@@ -952,7 +952,6 @@ namespace Microsoft.Data.Common
         internal const bool ContextConnection = false;
         internal static readonly bool TransparentNetworkIPResolution = !LocalAppContextSwitches.DisableTNIRByDefault;
         internal const string NetworkLibrary = "";
-        internal const bool Asynchronous = false;
 #if ADONET_CERT_AUTH
         internal const string Certificate = "";
 #endif
