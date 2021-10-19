@@ -76,6 +76,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static bool IsAADConnStringsSetup() => DataTestUtility.IsAADPasswordConnStrSetup();
         private static bool IsManagedIdentitySetup() => DataTestUtility.ManagedIdentitySupported;
 
+        [PlatformSpecific(TestPlatforms.Windows)]
         [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup))]
         public static void KustoDatabaseTest()
         {
