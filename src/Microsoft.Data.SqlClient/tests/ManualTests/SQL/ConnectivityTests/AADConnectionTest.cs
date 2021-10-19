@@ -186,7 +186,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ArgumentException e = Assert.Throws<ArgumentException>(() => ConnectAndDisconnect(connStr));
 
             string expectedMessage = "Invalid value for key 'authentication'.";
-            Assert.Contains(expectedMessage, e.Message);
+            Assert.Contains(expectedMessage, e.Message, StringComparison.OrdinalIgnoreCase);
         }
 
         [ConditionalFact(nameof(IsAADConnStringsSetup))]
