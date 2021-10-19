@@ -119,26 +119,41 @@ namespace Microsoft.Data.SqlClient
             string scope = parameters.Resource.EndsWith(s_defaultScopeSuffix) ? parameters.Resource : parameters.Resource + s_defaultScopeSuffix;
             string[] scopes = new string[] { scope };
 
+            string authority = parameters.Authority;
             int seperatorIndex = parameters.Authority.LastIndexOf('/');
-            string tenantId = parameters.Authority.Substring(seperatorIndex + 1);
-            string authority = parameters.Authority.Remove(seperatorIndex + 1);
 
-            TokenRequestContext tokenRequestContext = new TokenRequestContext(scopes);
+            // Authority Url does not always contain "<tenantId>", e.g. for Kusto cluster dbs
+            // Optionally split Tenant Id in such cases.
+            if (Guid.TryParse(parameters.Authority.Substring(seperatorIndex + 1), out Guid tenantId))
+            {
+                authority = parameters.Authority.Remove(seperatorIndex + 1);
+            }
+
+            TokenRequestContext tokenRequestContext = new(scopes);
             string clientId = string.IsNullOrWhiteSpace(parameters.UserId) ? null : parameters.UserId;
+            string tenant = tenantId == Guid.Empty ? null : tenantId.ToString();
 
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryDefault)
             {
-                DefaultAzureCredentialOptions defaultAzureCredentialOptions = new DefaultAzureCredentialOptions()
+                DefaultAzureCredentialOptions defaultAzureCredentialOptions = new()
                 {
                     AuthorityHost = new Uri(authority),
-                    ManagedIdentityClientId = clientId,
-                    InteractiveBrowserTenantId = tenantId,
-                    SharedTokenCacheTenantId = tenantId,
-                    SharedTokenCacheUsername = clientId,
-                    VisualStudioCodeTenantId = tenantId,
-                    VisualStudioTenantId = tenantId,
                     ExcludeInteractiveBrowserCredential = true // Force disabled, even though it's disabled by default to respect driver specifications.
                 };
+                // Optionally set clientId when available
+                if (clientId != null)
+                {
+                    defaultAzureCredentialOptions.ManagedIdentityClientId = clientId;
+                    defaultAzureCredentialOptions.SharedTokenCacheUsername = clientId;
+                }
+                // Optionally set tenantId when available
+                if (tenant != null)
+                {
+                    defaultAzureCredentialOptions.InteractiveBrowserTenantId = tenant;
+                    defaultAzureCredentialOptions.SharedTokenCacheTenantId = tenant;
+                    defaultAzureCredentialOptions.VisualStudioCodeTenantId = tenant;
+                    defaultAzureCredentialOptions.VisualStudioTenantId = tenant;
+                }
                 AccessToken accessToken = await new DefaultAzureCredential(defaultAzureCredentialOptions).GetTokenAsync(tokenRequestContext, cts.Token);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Default auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
@@ -156,9 +171,18 @@ namespace Microsoft.Data.SqlClient
             AuthenticationResult result;
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal)
             {
-                AccessToken accessToken = await new ClientSecretCredential(tenantId, parameters.UserId, parameters.Password, tokenCredentialOptions).GetTokenAsync(tokenRequestContext, cts.Token);
-                SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Service Principal auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
-                return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
+                // We continue to use IConfidentialClientApplication as "Azure.Identity.ClientSecretCredential" requires "TenantId"
+                // which may not be available when Authority Url does not contain "<tenantId>".
+                IConfidentialClientApplication ccApp = ConfidentialClientApplicationBuilder.Create(parameters.UserId)
+                    .WithAuthority(parameters.Authority)
+                    .WithClientSecret(parameters.Password)
+                    .WithClientName(Common.DbConnectionStringDefaults.ApplicationName)
+                    .WithClientVersion(Common.ADP.GetAssemblyVersion().ToString())
+                    .Build();
+
+                result = ccApp.AcquireTokenForClient(scopes).ExecuteAsync().Result;
+                SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Service Principal auth mode. Expiry Time: {0}", result.ExpiresOn);
+                return new SqlAuthenticationToken(result.AccessToken, result.ExpiresOn);
             }
 
             /*
