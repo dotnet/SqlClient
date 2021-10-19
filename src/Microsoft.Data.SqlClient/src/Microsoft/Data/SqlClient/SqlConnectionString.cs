@@ -3,163 +3,184 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Threading;
+using System.Runtime.Versioning;
+using System.Security;
+using System.Security.Permissions;
 using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal sealed partial class SqlConnectionString : DbConnectionOptions
+    internal sealed class SqlConnectionString : DbConnectionOptions
     {
         // instances of this class are intended to be immutable, i.e readonly
         // used by pooling classes so it is much easier to verify correctness
         // when not worried about the class being modified during execution
 
-        internal static partial class DEFAULT
+        internal static class DEFAULT
         {
-            private const string _emptyString = "";
             internal const ApplicationIntent ApplicationIntent = DbConnectionStringDefaults.ApplicationIntent;
-            internal const string Application_Name = TdsEnums.SQL_PROVIDER_NAME;
-            internal const string AttachDBFilename = _emptyString;
-            internal const int Command_Timeout = ADP.DefaultCommandTimeout;
-            internal const int Connect_Timeout = ADP.DefaultConnectionTimeout;
-            internal const string Current_Language = _emptyString;
-            internal const string Data_Source = _emptyString;
-            internal const bool Encrypt = true;
-            internal const bool Enlist = true;
-            internal const string FailoverPartner = _emptyString;
-            internal const string Initial_Catalog = _emptyString;
-            internal const bool Integrated_Security = false;
-            internal const int Load_Balance_Timeout = 0; // default of 0 means don't use
-            internal const bool MARS = false;
-            internal const int Max_Pool_Size = 100;
-            internal const int Min_Pool_Size = 0;
+            internal const string Application_Name = DbConnectionStringDefaults.ApplicationName;
+            internal const string AttachDBFilename = DbConnectionStringDefaults.AttachDBFilename;
+            internal const int Command_Timeout = DbConnectionStringDefaults.CommandTimeout;
+            internal const int Connect_Timeout = DbConnectionStringDefaults.ConnectTimeout;
+            internal const string Current_Language = DbConnectionStringDefaults.CurrentLanguage;
+            internal const string Data_Source = DbConnectionStringDefaults.DataSource;
+            internal const bool Encrypt = DbConnectionStringDefaults.Encrypt;
+            internal const bool Enlist = DbConnectionStringDefaults.Enlist;
+            internal const string FailoverPartner = DbConnectionStringDefaults.FailoverPartner;
+            internal const string Initial_Catalog = DbConnectionStringDefaults.InitialCatalog;
+            internal const bool Integrated_Security = DbConnectionStringDefaults.IntegratedSecurity;
+            internal const int Load_Balance_Timeout = DbConnectionStringDefaults.LoadBalanceTimeout;
+            internal const bool MARS = DbConnectionStringDefaults.MultipleActiveResultSets;
+            internal const int Max_Pool_Size = DbConnectionStringDefaults.MaxPoolSize;
+            internal const int Min_Pool_Size = DbConnectionStringDefaults.MinPoolSize;
             internal const bool MultiSubnetFailover = DbConnectionStringDefaults.MultiSubnetFailover;
-            internal const int Packet_Size = 8000;
-            internal const string Password = _emptyString;
-            internal const bool Persist_Security_Info = false;
+            internal const int Packet_Size = DbConnectionStringDefaults.PacketSize;
+            internal const string Password = DbConnectionStringDefaults.Password;
+            internal const bool Persist_Security_Info = DbConnectionStringDefaults.PersistSecurityInfo;
             internal const PoolBlockingPeriod PoolBlockingPeriod = DbConnectionStringDefaults.PoolBlockingPeriod;
-            internal const bool Pooling = true;
-            internal const bool TrustServerCertificate = false;
-            internal const string Type_System_Version = _emptyString;
-            internal const string User_ID = _emptyString;
-            internal const bool User_Instance = false;
-            internal const bool Replication = false;
-            internal const int Connect_Retry_Count = 1;
-            internal const int Connect_Retry_Interval = 10;
-            internal static readonly SqlAuthenticationMethod Authentication = SqlAuthenticationMethod.NotSpecified;
-            internal const SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Disabled;
-            internal const string EnclaveAttestationUrl = _emptyString;
-            internal static readonly SqlConnectionAttestationProtocol AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified;
-            internal static readonly SqlConnectionIPAddressPreference s_IPAddressPreference = SqlConnectionIPAddressPreference.IPv4First;
+            internal const bool Pooling = DbConnectionStringDefaults.Pooling;
+            internal const bool TrustServerCertificate = DbConnectionStringDefaults.TrustServerCertificate;
+            internal const string Type_System_Version = DbConnectionStringDefaults.TypeSystemVersion;
+            internal const string User_ID = DbConnectionStringDefaults.UserID;
+            internal const bool User_Instance = DbConnectionStringDefaults.UserInstance;
+            internal const bool Replication = DbConnectionStringDefaults.Replication;
+            internal const int Connect_Retry_Count = DbConnectionStringDefaults.ConnectRetryCount;
+            internal const int Connect_Retry_Interval = DbConnectionStringDefaults.ConnectRetryInterval;
+            internal const string EnclaveAttestationUrl = DbConnectionStringDefaults.EnclaveAttestationUrl;
+            internal const SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = DbConnectionStringDefaults.ColumnEncryptionSetting;
+            internal static readonly SqlAuthenticationMethod Authentication = DbConnectionStringDefaults.Authentication;
+            internal static readonly SqlConnectionAttestationProtocol AttestationProtocol = DbConnectionStringDefaults.AttestationProtocol;
+            internal static readonly SqlConnectionIPAddressPreference IpAddressPreference = DbConnectionStringDefaults.IPAddressPreference;
+#if NETFRAMEWORK
+            internal static readonly bool TransparentNetworkIPResolution = DbConnectionStringDefaults.TransparentNetworkIPResolution;
+            internal const bool Asynchronous = DbConnectionStringDefaults.Asynchronous;
+            internal const bool Connection_Reset = DbConnectionStringDefaults.ConnectionReset;
+            internal const bool Context_Connection = DbConnectionStringDefaults.ContextConnection;
+            internal const string Network_Library = DbConnectionStringDefaults.NetworkLibrary;
+#if ADONET_CERT_AUTH
+            internal const  string Certificate = DbConnectionStringDefaults.Certificate;
+#endif
+#endif // NETFRAMEWORK
         }
 
         // SqlConnection ConnectionString Options
-        // keys must be lowercase!
         internal static class KEY
         {
-            internal const string ApplicationIntent = "application intent";
-            internal const string Application_Name = "application name";
-            internal const string AttachDBFilename = "attachdbfilename";
-            internal const string PoolBlockingPeriod = "pool blocking period";
-            internal const string ColumnEncryptionSetting = "column encryption setting";
-            internal const string EnclaveAttestationUrl = "enclave attestation url";
-            internal const string AttestationProtocol = "attestation protocol";
-            internal const string IPAddressPreference = "ip address preference";
+            internal const string ApplicationIntent = DbConnectionStringKeywords.ApplicationIntent;
+            internal const string Application_Name = DbConnectionStringKeywords.ApplicationName;
+            internal const string AttachDBFilename = DbConnectionStringKeywords.AttachDBFilename;
+            internal const string PoolBlockingPeriod = DbConnectionStringKeywords.PoolBlockingPeriod;
+            internal const string ColumnEncryptionSetting = DbConnectionStringKeywords.ColumnEncryptionSetting;
+            internal const string EnclaveAttestationUrl = DbConnectionStringKeywords.EnclaveAttestationUrl;
+            internal const string AttestationProtocol = DbConnectionStringKeywords.AttestationProtocol;
+            internal const string IPAddressPreference = DbConnectionStringKeywords.IPAddressPreference;
 
-            internal const string Command_Timeout = "command timeout";
-            internal const string Connect_Timeout = "connect timeout";
-            internal const string Connection_Reset = "connection reset";
-            internal const string Context_Connection = "context connection";
-            internal const string Current_Language = "current language";
-            internal const string Data_Source = "data source";
-            internal const string Encrypt = "encrypt";
-            internal const string Enlist = "enlist";
-            internal const string FailoverPartner = "failover partner";
-            internal const string Initial_Catalog = "initial catalog";
-            internal const string Integrated_Security = "integrated security";
-            internal const string Load_Balance_Timeout = "load balance timeout";
-            internal const string MARS = "multiple active result sets";
-            internal const string Max_Pool_Size = "max pool size";
-            internal const string Min_Pool_Size = "min pool size";
-            internal const string MultiSubnetFailover = "multi subnet failover";
-            internal const string Network_Library = "network library";
-            internal const string Packet_Size = "packet size";
-            internal const string Password = "password";
-            internal const string Persist_Security_Info = "persist security info";
-            internal const string Pooling = "pooling";
-            internal const string TransactionBinding = "transaction binding";
-            internal const string TrustServerCertificate = "trust server certificate";
-            internal const string Type_System_Version = "type system version";
-            internal const string User_ID = "user id";
-            internal const string User_Instance = "user instance";
-            internal const string Workstation_Id = "workstation id";
-            internal const string Replication = "replication";
-            internal const string Connect_Retry_Count = "connect retry count";
-            internal const string Connect_Retry_Interval = "connect retry interval";
-            internal const string Authentication = "authentication";
+            internal const string Command_Timeout = DbConnectionStringKeywords.CommandTimeout;
+            internal const string Connect_Timeout = DbConnectionStringKeywords.ConnectTimeout;
+            internal const string Connection_Reset = DbConnectionStringKeywords.ConnectionReset;
+            internal const string Context_Connection = DbConnectionStringKeywords.ContextConnection;
+            internal const string Current_Language = DbConnectionStringKeywords.CurrentLanguage;
+            internal const string Data_Source = DbConnectionStringKeywords.DataSource;
+            internal const string Encrypt = DbConnectionStringKeywords.Encrypt;
+            internal const string Enlist = DbConnectionStringKeywords.Enlist;
+            internal const string FailoverPartner = DbConnectionStringKeywords.FailoverPartner;
+            internal const string Initial_Catalog = DbConnectionStringKeywords.InitialCatalog;
+            internal const string Integrated_Security = DbConnectionStringKeywords.IntegratedSecurity;
+            internal const string Load_Balance_Timeout = DbConnectionStringKeywords.LoadBalanceTimeout;
+            internal const string MARS = DbConnectionStringKeywords.MultipleActiveResultSets;
+            internal const string Max_Pool_Size = DbConnectionStringKeywords.MaxPoolSize;
+            internal const string Min_Pool_Size = DbConnectionStringKeywords.MinPoolSize;
+            internal const string MultiSubnetFailover = DbConnectionStringKeywords.MultiSubnetFailover;
+            internal const string Network_Library = DbConnectionStringKeywords.NetworkLibrary;
+            internal const string Packet_Size = DbConnectionStringKeywords.PacketSize;
+            internal const string Password = DbConnectionStringKeywords.Password;
+            internal const string Persist_Security_Info = DbConnectionStringKeywords.PersistSecurityInfo;
+            internal const string Pooling = DbConnectionStringKeywords.Pooling;
+            internal const string TransactionBinding = DbConnectionStringKeywords.TransactionBinding;
+            internal const string TrustServerCertificate = DbConnectionStringKeywords.TrustServerCertificate;
+            internal const string Type_System_Version = DbConnectionStringKeywords.TypeSystemVersion;
+            internal const string User_ID = DbConnectionStringKeywords.UserID;
+            internal const string User_Instance = DbConnectionStringKeywords.UserInstance;
+            internal const string Workstation_Id = DbConnectionStringKeywords.WorkstationID;
+            internal const string Replication = DbConnectionStringKeywords.Replication;
+            internal const string Connect_Retry_Count = DbConnectionStringKeywords.ConnectRetryCount;
+            internal const string Connect_Retry_Interval = DbConnectionStringKeywords.ConnectRetryInterval;
+            internal const string Authentication = DbConnectionStringKeywords.Authentication;
+#if NETFRAMEWORK
+            internal const string TransparentNetworkIPResolution = DbConnectionStringKeywords.TransparentNetworkIPResolution;
+#if ADONET_CERT_AUTH
+            internal const string Certificate = DbConnectionStringKeywords.Certificate;
+#endif
+#endif // NETFRAMEWORK
         }
 
         // Constant for the number of duplicate options in the connection string
         private static class SYNONYM
         {
             // ip address preference
-            internal const string IPADDRESSPREFERENCE = "ipaddresspreference";
+            internal const string IPADDRESSPREFERENCE = DbConnectionStringSynonyms.IPADDRESSPREFERENCE;
             //application intent
-            internal const string APPLICATIONINTENT = "applicationintent";
+            internal const string APPLICATIONINTENT = DbConnectionStringSynonyms.APPLICATIONINTENT;
             // application name
-            internal const string APP = "app";
+            internal const string APP = DbConnectionStringSynonyms.APP;
             // attachDBFilename
-            internal const string EXTENDED_PROPERTIES = "extended properties";
-            internal const string INITIAL_FILE_NAME = "initial file name";
+            internal const string EXTENDED_PROPERTIES = DbConnectionStringSynonyms.EXTENDEDPROPERTIES;
+            internal const string INITIAL_FILE_NAME = DbConnectionStringSynonyms.INITIALFILENAME;
             // connect timeout
-            internal const string CONNECTION_TIMEOUT = "connection timeout";
-            internal const string TIMEOUT = "timeout";
+            internal const string CONNECTION_TIMEOUT = DbConnectionStringSynonyms.CONNECTIONTIMEOUT;
+            internal const string TIMEOUT = DbConnectionStringSynonyms.TIMEOUT;
             // current language
-            internal const string LANGUAGE = "language";
+            internal const string LANGUAGE = DbConnectionStringSynonyms.LANGUAGE;
             // data source
-            internal const string ADDR = "addr";
-            internal const string ADDRESS = "address";
-            internal const string SERVER = "server";
-            internal const string NETWORK_ADDRESS = "network address";
+            internal const string ADDR = DbConnectionStringSynonyms.ADDR;
+            internal const string ADDRESS = DbConnectionStringSynonyms.ADDRESS;
+            internal const string SERVER = DbConnectionStringSynonyms.SERVER;
+            internal const string NETWORK_ADDRESS = DbConnectionStringSynonyms.NETWORKADDRESS;
             // initial catalog
-            internal const string DATABASE = "database";
+            internal const string DATABASE = DbConnectionStringSynonyms.DATABASE;
             // integrated security
-            internal const string TRUSTED_CONNECTION = "trusted_connection";
+            internal const string TRUSTED_CONNECTION = DbConnectionStringSynonyms.TRUSTEDCONNECTION;
             //connect retry count
-            internal const string CONNECTRETRYCOUNT = "connectretrycount";
+            internal const string CONNECTRETRYCOUNT = DbConnectionStringSynonyms.CONNECTRETRYCOUNT;
             //connect retry interval
-            internal const string CONNECTRETRYINTERVAL = "connectretryinterval";
+            internal const string CONNECTRETRYINTERVAL = DbConnectionStringSynonyms.CONNECTRETRYINTERVAL;
             // load balance timeout
-            internal const string Connection_Lifetime = "connection lifetime";
+            internal const string Connection_Lifetime = DbConnectionStringSynonyms.ConnectionLifetime;
             // multiple active result sets
-            internal const string MULTIPLEACTIVERESULTSETS = "multipleactiveresultsets";
+            internal const string MULTIPLEACTIVERESULTSETS = DbConnectionStringSynonyms.MULTIPLEACTIVERESULTSETS;
             // multi subnet failover
-            internal const string MULTISUBNETFAILOVER = "multisubnetfailover";
+            internal const string MULTISUBNETFAILOVER = DbConnectionStringSynonyms.MULTISUBNETFAILOVER;
             // network library
-            internal const string NET = "net";
-            internal const string NETWORK = "network";
+            internal const string NET = DbConnectionStringSynonyms.NET;
+            internal const string NETWORK = DbConnectionStringSynonyms.NETWORK;
             // pool blocking period
-            internal const string POOLBLOCKINGPERIOD = "poolblockingperiod";
+            internal const string POOLBLOCKINGPERIOD = DbConnectionStringSynonyms.POOLBLOCKINGPERIOD;
             // password
-            internal const string Pwd = "pwd";
+            internal const string Pwd = DbConnectionStringSynonyms.Pwd;
             // persist security info
-            internal const string PERSISTSECURITYINFO = "persistsecurityinfo";
+            internal const string PERSISTSECURITYINFO = DbConnectionStringSynonyms.PERSISTSECURITYINFO;
             // trust server certificate
-            internal const string TRUSTSERVERCERTIFICATE = "trustservercertificate";
+            internal const string TRUSTSERVERCERTIFICATE = DbConnectionStringSynonyms.TRUSTSERVERCERTIFICATE;
             // user id
-            internal const string UID = "uid";
-            internal const string User = "user";
+            internal const string UID = DbConnectionStringSynonyms.UID;
+            internal const string User = DbConnectionStringSynonyms.User;
             // workstation id
-            internal const string WSID = "wsid";
+            internal const string WSID = DbConnectionStringSynonyms.WSID;
+
+#if NETFRAMEWORK
+            internal const string TRANSPARENTNETWORKIPRESOLUTION = DbConnectionStringSynonyms.TRANSPARENTNETWORKIPRESOLUTION;
+#endif
+            
             // make sure to update SynonymCount value below when adding or removing synonyms
         }
-
-        internal const int SynonymCount = 26;
-        internal const int DeprecatedSynonymCount = 2;
 
         internal enum TypeSystem
         {
@@ -190,6 +211,13 @@ namespace Microsoft.Data.SqlClient
             internal const string ImplicitUnbind = "Implicit Unbind";
             internal const string ExplicitUnbind = "Explicit Unbind";
         }
+
+#if NETFRAMEWORK
+        internal const int SynonymCount = 29;
+#else
+        internal const int SynonymCount = 26;
+        internal const int DeprecatedSynonymCount = 2;
+#endif // NETFRAMEWORK
 
         private static Dictionary<string, string> s_sqlClientSynonyms;
 
@@ -237,13 +265,19 @@ namespace Microsoft.Data.SqlClient
 
         private readonly TypeSystem _typeSystemVersion;
         private readonly Version _typeSystemAssemblyVersion;
-        private static readonly Version constTypeSystemAsmVersion10 = new Version("10.0.0.0");
-        private static readonly Version constTypeSystemAsmVersion11 = new Version("11.0.0.0");
+        private static readonly Version s_constTypeSystemAsmVersion10 = new("10.0.0.0");
+        private static readonly Version s_constTypeSystemAsmVersion11 = new("11.0.0.0");
 
         private readonly string _expandedAttachDBFilename; // expanded during construction so that CreatePermissionSet & Expand are consistent
 
+        // SxS: reading Software\\Microsoft\\MSSQLServer\\Client\\SuperSocketNetLib\Encrypt value from registry
+        [ResourceExposure(ResourceScope.None)]
+        [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
         internal SqlConnectionString(string connectionString) : base(connectionString, GetParseSynonyms())
         {
+#if NETFRAMEWORK
+            bool runningInProc = InOutOfProcHelper.InProc;
+#else
             ThrowUnsupportedIfKeywordSet(KEY.Connection_Reset);
             ThrowUnsupportedIfKeywordSet(KEY.Context_Connection);
 
@@ -252,6 +286,7 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.NetworkLibraryKeywordNotSupported();
             }
+#endif
 
             _integratedSecurity = ConvertValueToIntegratedSecurity();
             _poolBlockingPeriod = ConvertValueToPoolBlockingPeriod();
@@ -330,6 +365,70 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.InvalidPacketSizeValue();
             }
 
+#if NETFRAMEWORK
+            // SQLPT 41700: Ignore ResetConnection=False (still validate the keyword/value)
+            _connectionReset = ConvertValueToBoolean(KEY.Connection_Reset, DEFAULT.Connection_Reset);
+            _contextConnection = ConvertValueToBoolean(KEY.Context_Connection, DEFAULT.Context_Connection);
+            _encrypt = ConvertValueToEncrypt();
+            _enlist = ConvertValueToBoolean(KEY.Enlist, ADP.s_isWindowsNT);
+            _transparentNetworkIPResolution = ConvertValueToBoolean(KEY.TransparentNetworkIPResolution, DEFAULT.TransparentNetworkIPResolution);
+            _networkLibrary = ConvertValueToString(KEY.Network_Library, null);
+
+#if ADONET_CERT_AUTH
+            _certificate = ConvertValueToString(KEY.Certificate,         DEFAULT.Certificate);
+#endif
+
+            if (_contextConnection)
+            {
+                // We have to be running in the engine for you to request a
+                // context connection.
+
+                if (!runningInProc)
+                {
+                    throw SQL.ContextUnavailableOutOfProc();
+                }
+
+                // When using a context connection, we need to ensure that no
+                // other connection string keywords are specified.
+
+                foreach (KeyValuePair<string, string> entry in Parsetable)
+                {
+                    if (entry.Key != KEY.Context_Connection &&
+                        entry.Key != KEY.Type_System_Version)
+                    {
+                        throw SQL.ContextAllowsLimitedKeywords();
+                    }
+                }
+            }
+
+            if (!_encrypt)
+            {    // Support legacy registry encryption settings
+                const string folder = "Software\\Microsoft\\MSSQLServer\\Client\\SuperSocketNetLib";
+                const string value = "Encrypt";
+
+                object obj = ADP.LocalMachineRegistryValue(folder, value);
+                if ((obj is int iObj) && (iObj == 1))
+                {         // If the registry key exists
+                    _encrypt = true;
+                }
+            }
+
+            if (null != _networkLibrary)
+            { // MDAC 83525
+                string networkLibrary = _networkLibrary.Trim().ToLower(CultureInfo.InvariantCulture);
+                Hashtable netlib = NetlibMapping();
+                if (!netlib.ContainsKey(networkLibrary))
+                {
+                    throw ADP.InvalidConnectionOptionValue(KEY.Network_Library);
+                }
+                _networkLibrary = (string)netlib[networkLibrary];
+            }
+            else
+            {
+                _networkLibrary = DEFAULT.Network_Library;
+            }
+#endif // NETFRAMEWORK
+
             ValidateValueLength(_applicationName, TdsEnums.MAXLEN_APPNAME, KEY.Application_Name);
             ValidateValueLength(_currentLanguage, TdsEnums.MAXLEN_LANGUAGE, KEY.Current_Language);
             ValidateValueLength(_dataSource, TdsEnums.MAXLEN_SERVERNAME, KEY.Data_Source);
@@ -358,7 +457,12 @@ namespace Microsoft.Data.SqlClient
             }
 
             // expand during construction so that CreatePermissionSet and Expand are consistent
+#if NETFRAMEWORK
+            string datadir = null;
+            _expandedAttachDBFilename = ExpandDataDirectory(KEY.AttachDBFilename, _attachDBFileName, ref datadir);
+#else
             _expandedAttachDBFilename = ExpandDataDirectory(KEY.AttachDBFilename, _attachDBFileName);
+#endif // NETFRAMEWORK
             if (null != _expandedAttachDBFilename)
             {
                 if (0 <= _expandedAttachDBFilename.IndexOf('|'))
@@ -371,6 +475,10 @@ namespace Microsoft.Data.SqlClient
                     // fail fast to verify LocalHost when using |DataDirectory|
                     // still must check again at connect time
                     string host = _dataSource;
+#if NETFRAMEWORK
+                    string protocol = _networkLibrary;
+                    TdsParserStaticMethods.AliasRegistryLookup(ref host, ref protocol);
+#endif
                     VerifyLocalHostAndFixup(ref host, true, false /*don't fix-up*/);
                 }
             }
@@ -382,9 +490,9 @@ namespace Microsoft.Data.SqlClient
             {
                 ValidateValueLength(_attachDBFileName, TdsEnums.MAXLEN_ATTACHDBFILE, KEY.AttachDBFilename);
             }
-            _typeSystemAssemblyVersion = constTypeSystemAsmVersion10;
+            _typeSystemAssemblyVersion = s_constTypeSystemAsmVersion10;
 
-            if (true == _userInstance && !string.IsNullOrEmpty(_failoverPartner))
+            if (_userInstance && !string.IsNullOrEmpty(_failoverPartner))
             {
                 throw SQL.UserInstanceFailoverNotCompatible();
             }
@@ -400,6 +508,12 @@ namespace Microsoft.Data.SqlClient
             }
             else if (typeSystemVersionString.Equals(TYPESYSTEMVERSION.SQL_Server_2000, StringComparison.OrdinalIgnoreCase))
             {
+#if NETFRAMEWORK
+                if (_contextConnection)
+                {
+                    throw SQL.ContextAllowsOnlyTypeSystem2005();
+                }
+#endif
                 _typeSystemVersion = TypeSystem.SQLServer2000;
             }
             else if (typeSystemVersionString.Equals(TYPESYSTEMVERSION.SQL_Server_2005, StringComparison.OrdinalIgnoreCase))
@@ -413,7 +527,7 @@ namespace Microsoft.Data.SqlClient
             else if (typeSystemVersionString.Equals(TYPESYSTEMVERSION.SQL_Server_2012, StringComparison.OrdinalIgnoreCase))
             {
                 _typeSystemVersion = TypeSystem.SQLServer2012;
-                _typeSystemAssemblyVersion = constTypeSystemAsmVersion11;
+                _typeSystemAssemblyVersion = s_constTypeSystemAsmVersion11;
             }
             else
             {
@@ -439,7 +553,9 @@ namespace Microsoft.Data.SqlClient
             }
 
             if (_applicationIntent == ApplicationIntent.ReadOnly && !string.IsNullOrEmpty(_failoverPartner))
+            {
                 throw SQL.ROR_FailoverNotSupportedConnString();
+            }
 
             if ((_connectRetryCount < 0) || (_connectRetryCount > 255))
             {
@@ -456,10 +572,17 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.AuthenticationAndIntegratedSecurity();
             }
 
-            if (Authentication == SqlClient.SqlAuthenticationMethod.ActiveDirectoryIntegrated && _hasPasswordKeyword)
+#if NETFRAMEWORK
+            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && (_hasUserIdKeyword || _hasPasswordKeyword))
+            {
+                throw SQL.IntegratedWithUserIDAndPassword();
+            }
+#else
+            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _hasPasswordKeyword)
             {
                 throw SQL.IntegratedWithPassword();
             }
+#endif
 
             if (Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive && _hasPasswordKeyword)
             {
@@ -485,6 +608,30 @@ namespace Microsoft.Data.SqlClient
             {
                 throw SQL.NonInteractiveWithPassword(DbConnectionStringBuilderUtil.ActiveDirectoryDefaultString);
             }
+#if ADONET_CERT_AUTH && NETFRAMEWORK
+
+            if (!DbConnectionStringBuilderUtil.IsValidCertificateValue(_certificate))
+            {
+                throw ADP.InvalidConnectionOptionValue(KEY.Certificate);
+            }
+
+            if (!string.IsNullOrEmpty(_certificate))
+            {
+
+                if (Authentication == SqlAuthenticationMethod.NotSpecified && !_integratedSecurity)
+                {
+                    _authType = SqlAuthenticationMethod.SqlCertificate;
+                }
+
+                if (Authentication == SqlAuthenticationMethod.SqlCertificate && (_hasUserIdKeyword || _hasPasswordKeyword || _integratedSecurity)) {
+                    throw SQL.InvalidCertAuth();
+                }
+            }
+            else if (Authentication == SqlAuthenticationMethod.SqlCertificate)
+            {
+                throw ADP.InvalidConnectionOptionValue(KEY.Authentication);
+            }
+#endif
         }
 
         // This c-tor is used to create SSE and user instance connection strings when user instance is set to true
@@ -536,59 +683,69 @@ namespace Microsoft.Data.SqlClient
             _columnEncryptionSetting = connectionOptions._columnEncryptionSetting;
             _enclaveAttestationUrl = connectionOptions._enclaveAttestationUrl;
             _attestationProtocol = connectionOptions._attestationProtocol;
-
+#if NETFRAMEWORK
+            _connectionReset = connectionOptions._connectionReset;
+            _contextConnection = connectionOptions._contextConnection;
+            _transparentNetworkIPResolution = connectionOptions._transparentNetworkIPResolution;
+            _networkLibrary = connectionOptions._networkLibrary;
+            _typeSystemAssemblyVersion = connectionOptions._typeSystemAssemblyVersion;
+#if ADONET_CERT_AUTH
+            _certificate = connectionOptions._certificate;
+#endif
+#endif // NETFRAMEWORK
             ValidateValueLength(_dataSource, TdsEnums.MAXLEN_SERVERNAME, KEY.Data_Source);
         }
 
-        internal bool IntegratedSecurity { get { return _integratedSecurity; } }
+        internal bool IntegratedSecurity => _integratedSecurity;
 
         // We always initialize in Async mode so that both synchronous and asynchronous methods
         // will work.  In the future we can deprecate the keyword entirely.
-        internal bool Asynchronous { get { return true; } }
+        internal bool Asynchronous => true;
         // SQLPT 41700: Ignore ResetConnection=False, always reset the connection for security
-        internal bool ConnectionReset { get { return true; } }
-        //        internal bool EnableUdtDownload { get { return _enableUdtDownload;} }
-        internal bool Encrypt { get { return _encrypt; } }
-        internal bool TrustServerCertificate { get { return _trustServerCertificate; } }
-        internal bool Enlist { get { return _enlist; } }
-        internal bool MARS { get { return _mars; } }
-        internal bool MultiSubnetFailover { get { return _multiSubnetFailover; } }
-        internal SqlAuthenticationMethod Authentication { get { return _authType; } }
-        internal SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting { get { return _columnEncryptionSetting; } }
-        internal string EnclaveAttestationUrl { get { return _enclaveAttestationUrl; } }
-        internal SqlConnectionAttestationProtocol AttestationProtocol { get { return _attestationProtocol; } }
+        internal bool ConnectionReset => true;
+        //        internal bool EnableUdtDownload => _enableUdtDownload;} }
+        internal bool Encrypt => _encrypt;
+        internal bool TrustServerCertificate => _trustServerCertificate;
+        internal bool Enlist => _enlist;
+        internal bool MARS => _mars;
+        internal bool MultiSubnetFailover => _multiSubnetFailover;
+        internal SqlAuthenticationMethod Authentication => _authType;
+        internal SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting => _columnEncryptionSetting;
+        internal string EnclaveAttestationUrl => _enclaveAttestationUrl;
+        internal SqlConnectionAttestationProtocol AttestationProtocol => _attestationProtocol;
         internal SqlConnectionIPAddressPreference IPAddressPreference => _ipAddressPreference;
-        internal bool PersistSecurityInfo { get { return _persistSecurityInfo; } }
-        internal bool Pooling { get { return _pooling; } }
-        internal bool Replication { get { return _replication; } }
-        internal bool UserInstance { get { return _userInstance; } }
+        internal bool PersistSecurityInfo => _persistSecurityInfo;
+        internal bool Pooling => _pooling;
+        internal bool Replication => _replication;
+        internal bool UserInstance => _userInstance;
 
-        internal int CommandTimeout { get { return _commandTimeout; } }
-        internal int ConnectTimeout { get { return _connectTimeout; } }
-        internal int LoadBalanceTimeout { get { return _loadBalanceTimeout; } }
-        internal int MaxPoolSize { get { return _maxPoolSize; } }
-        internal int MinPoolSize { get { return _minPoolSize; } }
-        internal int PacketSize { get { return _packetSize; } }
-        internal int ConnectRetryCount { get { return _connectRetryCount; } }
-        internal int ConnectRetryInterval { get { return _connectRetryInterval; } }
+        internal int CommandTimeout => _commandTimeout;
+        internal int ConnectTimeout => _connectTimeout;
+        internal int LoadBalanceTimeout => _loadBalanceTimeout;
+        internal int MaxPoolSize => _maxPoolSize;
+        internal int MinPoolSize => _minPoolSize;
+        internal int PacketSize => _packetSize;
+        internal int ConnectRetryCount => _connectRetryCount;
+        internal int ConnectRetryInterval => _connectRetryInterval;
 
-        internal ApplicationIntent ApplicationIntent { get { return _applicationIntent; } }
-        internal string ApplicationName { get { return _applicationName; } }
-        internal string AttachDBFilename { get { return _attachDBFileName; } }
-        internal string CurrentLanguage { get { return _currentLanguage; } }
-        internal string DataSource { get { return _dataSource; } }
-        internal string LocalDBInstance { get { return _localDBInstance; } }
-        internal string FailoverPartner { get { return _failoverPartner; } }
-        internal string InitialCatalog { get { return _initialCatalog; } }
-        internal string Password { get { return _password; } }
-        internal string UserID { get { return _userID; } }
-        internal string WorkstationId { get { return _workstationId; } }
-        internal PoolBlockingPeriod PoolBlockingPeriod { get { return _poolBlockingPeriod; } }
+        internal ApplicationIntent ApplicationIntent => _applicationIntent;
+        internal string ApplicationName => _applicationName;
+        internal string AttachDBFilename => _attachDBFileName;
+        internal string CurrentLanguage => _currentLanguage;
+        internal string DataSource => _dataSource;
+        internal string LocalDBInstance => _localDBInstance;
+        internal string FailoverPartner => _failoverPartner;
+        internal string InitialCatalog => _initialCatalog;
+        internal string Password => _password;
+        internal string UserID => _userID;
+        internal string WorkstationId => _workstationId;
+        internal PoolBlockingPeriod PoolBlockingPeriod => _poolBlockingPeriod;
 
-        internal TypeSystem TypeSystemVersion { get { return _typeSystemVersion; } }
-        internal Version TypeSystemAssemblyVersion { get { return _typeSystemAssemblyVersion; } }
 
-        internal TransactionBindingEnum TransactionBinding { get { return _transactionBinding; } }
+        internal TypeSystem TypeSystemVersion => _typeSystemVersion;
+        internal Version TypeSystemAssemblyVersion => _typeSystemAssemblyVersion;
+
+        internal TransactionBindingEnum TransactionBinding => _transactionBinding;
 
         internal bool EnforceLocalHost
         {
@@ -600,11 +757,16 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+
         protected internal override string Expand()
         {
             if (null != _expandedAttachDBFilename)
             {
+#if NETFRAMEWORK
+                return ExpandKeyword(KEY.AttachDBFilename, _expandedAttachDBFilename);
+#else
                 return ExpandAttachDbFileName(_expandedAttachDBFilename);
+#endif
             }
             else
             {
@@ -643,8 +805,12 @@ namespace Microsoft.Data.SqlClient
             Dictionary<string, string> synonyms = s_sqlClientSynonyms;
             if (null == synonyms)
             {
-                int count = SqlConnectionStringBuilder.KeywordsCount + SqlConnectionStringBuilder.DeprecatedKeywordsCount + SynonymCount + DeprecatedSynonymCount;
-                synonyms = new Dictionary<string, string>(count)
+
+                int count = SqlConnectionStringBuilder.KeywordsCount + SynonymCount;
+#if !NETFRAMEWORK
+                count += SqlConnectionStringBuilder.DeprecatedKeywordsCount + DeprecatedSynonymCount;
+#endif
+                synonyms = new Dictionary<string, string>(count, StringComparer.OrdinalIgnoreCase)
                 {
                     { KEY.ApplicationIntent, KEY.ApplicationIntent },
                     { KEY.Application_Name, KEY.Application_Name },
@@ -713,6 +879,13 @@ namespace Microsoft.Data.SqlClient
                     { SYNONYM.UID, KEY.User_ID },
                     { SYNONYM.User, KEY.User_ID },
                     { SYNONYM.WSID, KEY.Workstation_Id },
+#if NETFRAMEWORK
+#if ADONET_CERT_AUTH
+                    { KEY.Certificate, KEY.Certificate },
+#endif
+                    { KEY.TransparentNetworkIPResolution, KEY.TransparentNetworkIPResolution },
+                    { SYNONYM.TRANSPARENTNETWORKIPRESOLUTION, KEY.TransparentNetworkIPResolution },
+#endif // NETFRAMEWORK
                     { SYNONYM.IPADDRESSPREFERENCE, KEY.IPAddressPreference }
                 };
                 Debug.Assert(synonyms.Count == count, "incorrect initial ParseSynonyms size");
@@ -737,7 +910,6 @@ namespace Microsoft.Data.SqlClient
             }
             return result;
         }
-
 
         private void ValidateValueLength(string value, int limit, string key)
         {
@@ -793,8 +965,7 @@ namespace Microsoft.Data.SqlClient
 
         internal ApplicationIntent ConvertValueToApplicationIntent()
         {
-            string value;
-            if (!TryGetParsetableValue(KEY.ApplicationIntent, out value))
+            if (!TryGetParsetableValue(KEY.ApplicationIntent, out string value))
             {
                 return DEFAULT.ApplicationIntent;
             }
@@ -816,6 +987,7 @@ namespace Microsoft.Data.SqlClient
             // ArgumentException and other types are raised as is (no wrapping)
         }
 
+#if NETCOREAPP || NETSTANDARD
         internal void ThrowUnsupportedIfKeywordSet(string keyword)
         {
             if (ContainsKey(keyword))
@@ -823,6 +995,7 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.UnsupportedKeyword(keyword);
             }
         }
+#endif
 
         internal SqlAuthenticationMethod ConvertValueToAuthenticationType()
         {
@@ -903,7 +1076,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (!TryGetParsetableValue(KEY.IPAddressPreference, out string value))
             {
-                return DEFAULT.s_IPAddressPreference;
+                return DEFAULT.IpAddressPreference;
             }
 
             try
@@ -920,10 +1093,9 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal Microsoft.Data.SqlClient.PoolBlockingPeriod ConvertValueToPoolBlockingPeriod()
+        internal PoolBlockingPeriod ConvertValueToPoolBlockingPeriod()
         {
-            string value;
-            if (!TryGetParsetableValue(KEY.PoolBlockingPeriod, out value))
+            if (!TryGetParsetableValue(KEY.PoolBlockingPeriod, out string value))
             {
                 return DEFAULT.PoolBlockingPeriod;
             }
@@ -937,5 +1109,89 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.InvalidConnectionOptionValue(KEY.PoolBlockingPeriod, e);
             }
         }
+
+#if NETFRAMEWORK
+        protected internal override PermissionSet CreatePermissionSet()
+        {
+            PermissionSet permissionSet = new(PermissionState.None);
+            permissionSet.AddPermission(new SqlClientPermission(this));
+            return permissionSet;
+        }
+
+        internal bool ConvertValueToEncrypt()
+        {
+            bool defaultEncryptValue = !Parsetable.ContainsKey(KEY.Authentication) ? DEFAULT.Encrypt : true;
+            return ConvertValueToBoolean(KEY.Encrypt, defaultEncryptValue);
+        }
+
+        static internal Hashtable NetlibMapping()
+        {
+            const int NetLibCount = 8;
+
+            Hashtable hash = s_netlibMapping;
+            if (null == hash)
+            {
+                hash = new Hashtable(NetLibCount)
+                {
+                    { NETLIB.TCPIP, TdsEnums.TCP },
+                    { NETLIB.NamedPipes, TdsEnums.NP },
+                    { NETLIB.Multiprotocol, TdsEnums.RPC },
+                    { NETLIB.BanyanVines, TdsEnums.BV },
+                    { NETLIB.AppleTalk, TdsEnums.ADSP },
+                    { NETLIB.IPXSPX, TdsEnums.SPX },
+                    { NETLIB.VIA, TdsEnums.VIA },
+                    { NETLIB.SharedMemory, TdsEnums.LPC }
+                };
+                Debug.Assert(NetLibCount == hash.Count, "incorrect initial NetlibMapping size");
+                s_netlibMapping = hash;
+            }
+            return hash;
+        }
+        static internal bool ValidProtocol(string protocol)
+        {
+            return protocol switch
+            {
+                TdsEnums.TCP or TdsEnums.NP or TdsEnums.VIA or TdsEnums.LPC => true,
+                //              case TdsEnums.RPC  :  Invalid Protocols
+                //              case TdsEnums.BV   :
+                //              case TdsEnums.ADSP :
+                //              case TdsEnums.SPX  :
+                _ => false,
+            };
+        }
+
+        // the following are all inserted as keys into the _netlibMapping hash
+        internal static class NETLIB
+        {
+            internal const string AppleTalk = "dbmsadsn";
+            internal const string BanyanVines = "dbmsvinn";
+            internal const string IPXSPX = "dbmsspxn";
+            internal const string Multiprotocol = "dbmsrpcn";
+            internal const string NamedPipes = "dbnmpntw";
+            internal const string SharedMemory = "dbmslpcn";
+            internal const string TCPIP = "dbmssocn";
+            internal const string VIA = "dbmsgnet";
+        }
+
+        private static Hashtable s_netlibMapping;
+        private readonly bool _connectionReset;
+        private readonly bool _contextConnection;
+        private readonly bool _transparentNetworkIPResolution;
+        private readonly string _networkLibrary;
+
+        internal bool ContextConnection => _contextConnection;
+        internal bool TransparentNetworkIPResolution => _transparentNetworkIPResolution;
+        internal string NetworkLibrary => _networkLibrary;
+
+#if ADONET_CERT_AUTH
+        private readonly string _certificate;
+        internal string Certificate => _certificate;
+        internal bool UsesCertificate => _authType == SqlAuthenticationMethod.SqlCertificate;
+#else
+        internal string Certificate => null;
+        internal bool UsesCertificate => false;
+#endif
+
+#endif // NETFRAMEWORK
     }
 }

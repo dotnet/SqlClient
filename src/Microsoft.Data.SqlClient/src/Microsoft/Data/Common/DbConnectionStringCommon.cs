@@ -952,6 +952,7 @@ namespace Microsoft.Data.Common
         internal const bool ContextConnection = false;
         internal static readonly bool TransparentNetworkIPResolution = !LocalAppContextSwitches.DisableTNIRByDefault;
         internal const string NetworkLibrary = "";
+        internal const bool Asynchronous = false;
 #if ADONET_CERT_AUTH
         internal const string Certificate = "";
 #endif
@@ -982,7 +983,7 @@ namespace Microsoft.Data.Common
         internal const int ConnectRetryCount = 1;
         internal const int ConnectRetryInterval = 10;
         internal static readonly SqlAuthenticationMethod Authentication = SqlAuthenticationMethod.NotSpecified;
-        internal static readonly SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Disabled;
+        internal const SqlConnectionColumnEncryptionSetting ColumnEncryptionSetting = SqlConnectionColumnEncryptionSetting.Disabled;
         internal const string EnclaveAttestationUrl = "";
         internal const SqlConnectionAttestationProtocol AttestationProtocol = SqlConnectionAttestationProtocol.NotSpecified;
         internal const SqlConnectionIPAddressPreference IPAddressPreference = SqlConnectionIPAddressPreference.IPv4First;
