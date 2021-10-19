@@ -4,6 +4,33 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Preview Release 4.0.0-preview3.x.x] - 2021-10-20
+
+This update brings the below changes over the previous release:
+
+### Breaking changes over preview release v4.0.0-preview2
+
+- Dropped support for .NET Core 2.1 [#1272](https://github.com/dotnet/SqlClient/pull/1272)
+- Exception will not be thrown if a User ID is provided in the connection string when using `ActiveDirectoryIntegrated` authentication [#1359](https://github.com/dotnet/SqlClient/pull/1359)
+
+### Added
+
+- Add `GetFieldValue(Async)<T>` support for `XmlReader`, `TextReader`, `Stream` [#1019](https://github.com/dotnet/SqlClient/pull/1019)
+
+### Fixed
+
+- Fixed `FormatException` when opening a connection with event tracing enabled [#1290](https://github.com/dotnet/SqlClient/pull/1290)
+- Fixed improper initialization of `ActiveDirectoryAuthenticationProvider` [#1327](https://github.com/dotnet/SqlClient/pull/1327)
+- Fixed `MissingMethodException` when accessing `SqlAuthenticationParameters.ConnectionTimeout` [#1335](https://github.com/dotnet/SqlClient/pull/1335)
+- Fixed data corruption issues by reverting changes to async cancellations [#1344](https://github.com/dotnet/SqlClient/pull/1344)
+- Fixed performance degradation by reverting changes to MARS state machine [#1357](https://github.com/dotnet/SqlClient/pull/1357)
+- Fixed bug where environment variables are ignored when using `ActiveDirectoryDefault` authentication [#1360](https://github.com/dotnet/SqlClient/pull/1360)
+
+### Changed
+
+- Removed attributes for classes used in Microsoft.VSDesigner due to lack of support for Microsoft.Data.SqlClient [#1296](https://github.com/dotnet/SqlClient/pull/1296)
+- Disable encryption when connecting to SQL LocalDB [#1312](https://github.com/dotnet/SqlClient/pull/1312)
+
 ## [Preview Release 4.0.0-preview2.21264.2] - 2021-09-21
 
 This update brings the below changes over the previous release:
