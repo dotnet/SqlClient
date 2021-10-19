@@ -88,6 +88,7 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Theory]
+        [InlineData("Connection Reset = false")]
         [InlineData("Context Connection = false")]
         [InlineData("Network Library = dbmssocn")]
         [InlineData("Network = dbnmpntw")]

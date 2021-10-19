@@ -23,16 +23,16 @@ namespace Microsoft.Data.Common
 
         private static class KEY
         {
-            internal const string Password = "password";
-            internal const string PersistSecurityInfo = "persist security info";
-            internal const string Pwd = "pwd";
+            internal const string Password = DbConnectionStringKeywords.Password;
+            internal const string PersistSecurityInfo = DbConnectionStringKeywords.PersistSecurityInfo;
+            internal const string Pwd = DbConnectionStringSynonyms.Pwd;
         };
 
         // this class is serializable with Everett, so ugly field names can't be changed
         readonly private string _encryptedUsersConnectionString;
 
         // hash of unique keys to values
-        readonly private Hashtable _parsetable;
+        readonly private Dictionary<string, string> _parsetable;
 
         // a linked list of key/value and their length in _encryptedUsersConnectionString
         readonly private NameValuePair _keychain;
@@ -52,21 +52,21 @@ namespace Microsoft.Data.Common
         readonly private string _encryptedActualConnectionString;
 #pragma warning restore 169
 
-        internal DBConnectionString(string value, string restrictions, KeyRestrictionBehavior behavior, Hashtable synonyms, bool useOdbcRules)
-            : this(new DbConnectionOptions(value, synonyms, useOdbcRules), restrictions, behavior, synonyms, false)
+        internal DBConnectionString(string value, string restrictions, KeyRestrictionBehavior behavior, Dictionary<string, string> synonyms, bool useOdbcRules)
+            : this(new DbConnectionOptions(value, synonyms), restrictions, behavior, synonyms, false)
         {
             // useOdbcRules is only used to parse the connection string, not to parse restrictions because values don't apply there
             // the hashtable doesn't need clone since it isn't shared with anything else
         }
 
         internal DBConnectionString(DbConnectionOptions connectionOptions)
-            : this(connectionOptions, (string)null, KeyRestrictionBehavior.AllowOnly, (Hashtable)null, true)
+            : this(connectionOptions, (string)null, KeyRestrictionBehavior.AllowOnly, null, true)
         {
             // used by DBDataPermission to convert from DbConnectionOptions to DBConnectionString
             // since backward compatibility requires Everett level classes
         }
 
-        private DBConnectionString(DbConnectionOptions connectionOptions, string restrictions, KeyRestrictionBehavior behavior, Hashtable synonyms, bool mustCloneDictionary)
+        private DBConnectionString(DbConnectionOptions connectionOptions, string restrictions, KeyRestrictionBehavior behavior, Dictionary<string, string> synonyms, bool mustCloneDictionary)
         { // used by DBDataPermission
             Debug.Assert(null != connectionOptions, "null connectionOptions");
             switch (behavior)
@@ -81,9 +81,9 @@ namespace Microsoft.Data.Common
 
             // grab all the parsed details from DbConnectionOptions
             _encryptedUsersConnectionString = connectionOptions.UsersConnectionString(false);
-            _hasPassword = connectionOptions.HasPasswordKeyword;
+            _hasPassword = connectionOptions._hasPasswordKeyword;
             _parsetable = connectionOptions.Parsetable;
-            _keychain = connectionOptions.KeyChain;
+            _keychain = connectionOptions._keyChain;
 
             // we do not want to serialize out user password unless directed so by "persist security info=true"
             // otherwise all instances of user's password will be replaced with "*"
@@ -94,7 +94,7 @@ namespace Microsoft.Data.Common
                 {
                     // clone the hashtable to replace user's password/pwd value with "*"
                     // we only need to clone if coming from DbConnectionOptions and password exists
-                    _parsetable = (Hashtable)_parsetable.Clone();
+                    _parsetable = new Dictionary<string, string>(_parsetable, _parsetable.Comparer);
                 }
 
                 // different than Everett in that instead of removing password/pwd from
@@ -467,7 +467,7 @@ namespace Microsoft.Data.Common
             return restrictionValues;
         }
 
-        private static string[] ParseRestrictions(string restrictions, Hashtable synonyms)
+        private static string[] ParseRestrictions(string restrictions, Dictionary<string, string> synonyms)
         {
 #if DEBUG
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<comm.DBConnectionString|INFO|ADV> Restrictions='{0}'", restrictions);
