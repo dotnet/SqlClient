@@ -2635,11 +2635,11 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Integrated&apos; with &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
+        ///   Looks up a localized string similar to Cannot use &apos;Authentication=Active Directory Integrated&apos; with &apos;User ID&apos;, &apos;UID&apos;, &apos;Password&apos; or &apos;PWD&apos; connection string keywords..
         /// </summary>
-        internal static string SQL_IntegratedWithPassword {
+        internal static string SQL_IntegratedWithUserIDAndPassword {
             get {
-                return ResourceManager.GetString("SQL_IntegratedWithPassword", resourceCulture);
+                return ResourceManager.GetString("SQL_IntegratedWithUserIDAndPassword", resourceCulture);
             }
         }
         
