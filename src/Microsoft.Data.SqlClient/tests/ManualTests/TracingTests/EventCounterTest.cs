@@ -163,7 +163,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 conn.Open();
 
-                // when calling open, the connection could reclaimed.
+                // when calling open, the connection could be reclaimed.
                 if (GC.GetGeneration(conn) == gcNumber)
                 {
                     Assert.Equal(rc + 1, SqlClientEventSourceProps.ReclaimedConnections);
@@ -264,22 +264,22 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     internal static class SqlClientEventSourceProps
     {
         private static readonly object s_log;
-        private static readonly FieldInfo s_activeHardConnectionsCounter;
-        private static readonly FieldInfo s_hardConnectsCounter;
-        private static readonly FieldInfo s_hardDisconnectsCounter;
-        private static readonly FieldInfo s_activeSoftConnectionsCounter;
-        private static readonly FieldInfo s_softConnectsCounter;
-        private static readonly FieldInfo s_softDisconnectsCounter;
-        private static readonly FieldInfo s_nonPooledConnectionsCounter;
-        private static readonly FieldInfo s_pooledConnectionsCounter;
-        private static readonly FieldInfo s_activeConnectionPoolGroupsCounter;
-        private static readonly FieldInfo s_inactiveConnectionPoolGroupsCounter;
-        private static readonly FieldInfo s_activeConnectionPoolsCounter;
-        private static readonly FieldInfo s_inactiveConnectionPoolsCounter;
-        private static readonly FieldInfo s_activeConnectionsCounter;
-        private static readonly FieldInfo s_freeConnectionsCounter;
-        private static readonly FieldInfo s_stasisConnectionsCounter;
-        private static readonly FieldInfo s_reclaimedConnectionsCounter;
+        private static readonly FieldInfo _activeHardConnectionsCounter;
+        private static readonly FieldInfo _hardConnectsCounter;
+        private static readonly FieldInfo _hardDisconnectsCounter;
+        private static readonly FieldInfo _activeSoftConnectionsCounter;
+        private static readonly FieldInfo _softConnectsCounter;
+        private static readonly FieldInfo _softDisconnectsCounter;
+        private static readonly FieldInfo _nonPooledConnectionsCounter;
+        private static readonly FieldInfo _pooledConnectionsCounter;
+        private static readonly FieldInfo _activeConnectionPoolGroupsCounter;
+        private static readonly FieldInfo _inactiveConnectionPoolGroupsCounter;
+        private static readonly FieldInfo _activeConnectionPoolsCounter;
+        private static readonly FieldInfo _inactiveConnectionPoolsCounter;
+        private static readonly FieldInfo _activeConnectionsCounter;
+        private static readonly FieldInfo _freeConnectionsCounter;
+        private static readonly FieldInfo _stasisConnectionsCounter;
+        private static readonly FieldInfo _reclaimedConnectionsCounter;
 
         static SqlClientEventSourceProps()
         {
@@ -291,86 +291,86 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             s_log = logField.GetValue(null);
 
             BindingFlags _bindingFlags = BindingFlags.Instance | BindingFlags.NonPublic;
-            s_activeHardConnectionsCounter =
-                sqlClientEventSourceType.GetField(nameof(s_activeHardConnectionsCounter), _bindingFlags);
-            Debug.Assert(s_activeHardConnectionsCounter != null);
-            s_hardConnectsCounter =
-                sqlClientEventSourceType.GetField(nameof(s_hardConnectsCounter), _bindingFlags);
-            Debug.Assert(s_hardConnectsCounter != null);
-            s_hardDisconnectsCounter =
-                sqlClientEventSourceType.GetField(nameof(s_hardDisconnectsCounter), _bindingFlags);
-            Debug.Assert(s_hardDisconnectsCounter != null);
-            s_activeSoftConnectionsCounter =
-                sqlClientEventSourceType.GetField(nameof(s_activeSoftConnectionsCounter), _bindingFlags);
-            Debug.Assert(s_activeSoftConnectionsCounter != null);
-            s_softConnectsCounter =
-                sqlClientEventSourceType.GetField(nameof(s_softConnectsCounter), _bindingFlags);
-            Debug.Assert(s_softConnectsCounter != null);
-            s_softDisconnectsCounter =
-                sqlClientEventSourceType.GetField(nameof(s_softDisconnectsCounter), _bindingFlags);
-            Debug.Assert(s_softDisconnectsCounter != null);
-            s_nonPooledConnectionsCounter =
-                sqlClientEventSourceType.GetField(nameof(s_nonPooledConnectionsCounter), _bindingFlags);
-            Debug.Assert(s_nonPooledConnectionsCounter != null);
-            s_pooledConnectionsCounter =
-                sqlClientEventSourceType.GetField(nameof(s_pooledConnectionsCounter), _bindingFlags);
-            Debug.Assert(s_pooledConnectionsCounter != null);
-            s_activeConnectionPoolGroupsCounter =
-                sqlClientEventSourceType.GetField(nameof(s_activeConnectionPoolGroupsCounter), _bindingFlags);
-            Debug.Assert(s_activeConnectionPoolGroupsCounter != null);
-            s_inactiveConnectionPoolGroupsCounter =
-                sqlClientEventSourceType.GetField(nameof(s_inactiveConnectionPoolGroupsCounter), _bindingFlags);
-            Debug.Assert(s_inactiveConnectionPoolGroupsCounter != null);
-            s_activeConnectionPoolsCounter =
-                sqlClientEventSourceType.GetField(nameof(s_activeConnectionPoolsCounter), _bindingFlags);
-            Debug.Assert(s_activeConnectionPoolsCounter != null);
-            s_inactiveConnectionPoolsCounter =
-                sqlClientEventSourceType.GetField(nameof(s_inactiveConnectionPoolsCounter), _bindingFlags);
-            Debug.Assert(s_inactiveConnectionPoolsCounter != null);
-            s_activeConnectionsCounter =
-                sqlClientEventSourceType.GetField(nameof(s_activeConnectionsCounter), _bindingFlags);
-            Debug.Assert(s_activeConnectionsCounter != null);
-            s_freeConnectionsCounter =
-                sqlClientEventSourceType.GetField(nameof(s_freeConnectionsCounter), _bindingFlags);
-            Debug.Assert(s_freeConnectionsCounter != null);
-            s_stasisConnectionsCounter =
-                sqlClientEventSourceType.GetField(nameof(s_stasisConnectionsCounter), _bindingFlags);
-            Debug.Assert(s_stasisConnectionsCounter != null);
-            s_reclaimedConnectionsCounter =
-                sqlClientEventSourceType.GetField(nameof(s_reclaimedConnectionsCounter), _bindingFlags);
-            Debug.Assert(s_reclaimedConnectionsCounter != null);
+            _activeHardConnectionsCounter =
+                sqlClientEventSourceType.GetField(nameof(_activeHardConnectionsCounter), _bindingFlags);
+            Debug.Assert(_activeHardConnectionsCounter != null);
+            _hardConnectsCounter =
+                sqlClientEventSourceType.GetField(nameof(_hardConnectsCounter), _bindingFlags);
+            Debug.Assert(_hardConnectsCounter != null);
+            _hardDisconnectsCounter =
+                sqlClientEventSourceType.GetField(nameof(_hardDisconnectsCounter), _bindingFlags);
+            Debug.Assert(_hardDisconnectsCounter != null);
+            _activeSoftConnectionsCounter =
+                sqlClientEventSourceType.GetField(nameof(_activeSoftConnectionsCounter), _bindingFlags);
+            Debug.Assert(_activeSoftConnectionsCounter != null);
+            _softConnectsCounter =
+                sqlClientEventSourceType.GetField(nameof(_softConnectsCounter), _bindingFlags);
+            Debug.Assert(_softConnectsCounter != null);
+            _softDisconnectsCounter =
+                sqlClientEventSourceType.GetField(nameof(_softDisconnectsCounter), _bindingFlags);
+            Debug.Assert(_softDisconnectsCounter != null);
+            _nonPooledConnectionsCounter =
+                sqlClientEventSourceType.GetField(nameof(_nonPooledConnectionsCounter), _bindingFlags);
+            Debug.Assert(_nonPooledConnectionsCounter != null);
+            _pooledConnectionsCounter =
+                sqlClientEventSourceType.GetField(nameof(_pooledConnectionsCounter), _bindingFlags);
+            Debug.Assert(_pooledConnectionsCounter != null);
+            _activeConnectionPoolGroupsCounter =
+                sqlClientEventSourceType.GetField(nameof(_activeConnectionPoolGroupsCounter), _bindingFlags);
+            Debug.Assert(_activeConnectionPoolGroupsCounter != null);
+            _inactiveConnectionPoolGroupsCounter =
+                sqlClientEventSourceType.GetField(nameof(_inactiveConnectionPoolGroupsCounter), _bindingFlags);
+            Debug.Assert(_inactiveConnectionPoolGroupsCounter != null);
+            _activeConnectionPoolsCounter =
+                sqlClientEventSourceType.GetField(nameof(_activeConnectionPoolsCounter), _bindingFlags);
+            Debug.Assert(_activeConnectionPoolsCounter != null);
+            _inactiveConnectionPoolsCounter =
+                sqlClientEventSourceType.GetField(nameof(_inactiveConnectionPoolsCounter), _bindingFlags);
+            Debug.Assert(_inactiveConnectionPoolsCounter != null);
+            _activeConnectionsCounter =
+                sqlClientEventSourceType.GetField(nameof(_activeConnectionsCounter), _bindingFlags);
+            Debug.Assert(_activeConnectionsCounter != null);
+            _freeConnectionsCounter =
+                sqlClientEventSourceType.GetField(nameof(_freeConnectionsCounter), _bindingFlags);
+            Debug.Assert(_freeConnectionsCounter != null);
+            _stasisConnectionsCounter =
+                sqlClientEventSourceType.GetField(nameof(_stasisConnectionsCounter), _bindingFlags);
+            Debug.Assert(_stasisConnectionsCounter != null);
+            _reclaimedConnectionsCounter =
+                sqlClientEventSourceType.GetField(nameof(_reclaimedConnectionsCounter), _bindingFlags);
+            Debug.Assert(_reclaimedConnectionsCounter != null);
         }
 
-        public static long ActiveHardConnections => (long)s_activeHardConnectionsCounter.GetValue(s_log)!;
+        public static long ActiveHardConnections => (long)_activeHardConnectionsCounter.GetValue(s_log)!;
 
-        public static long HardConnects => (long)s_hardConnectsCounter.GetValue(s_log)!;
+        public static long HardConnects => (long)_hardConnectsCounter.GetValue(s_log)!;
 
-        public static long HardDisconnects => (long)s_hardDisconnectsCounter.GetValue(s_log)!;
+        public static long HardDisconnects => (long)_hardDisconnectsCounter.GetValue(s_log)!;
 
-        public static long ActiveSoftConnections => (long)s_activeSoftConnectionsCounter.GetValue(s_log)!;
+        public static long ActiveSoftConnections => (long)_activeSoftConnectionsCounter.GetValue(s_log)!;
 
-        public static long SoftConnects => (long)s_softConnectsCounter.GetValue(s_log)!;
+        public static long SoftConnects => (long)_softConnectsCounter.GetValue(s_log)!;
 
-        public static long SoftDisconnects => (long)s_softDisconnectsCounter.GetValue(s_log)!;
+        public static long SoftDisconnects => (long)_softDisconnectsCounter.GetValue(s_log)!;
 
-        public static long NonPooledConnections => (long)s_nonPooledConnectionsCounter.GetValue(s_log)!;
+        public static long NonPooledConnections => (long)_nonPooledConnectionsCounter.GetValue(s_log)!;
 
-        public static long PooledConnections => (long)s_pooledConnectionsCounter.GetValue(s_log)!;
+        public static long PooledConnections => (long)_pooledConnectionsCounter.GetValue(s_log)!;
 
-        public static long ActiveConnectionPoolGroups => (long)s_activeConnectionPoolGroupsCounter.GetValue(s_log)!;
+        public static long ActiveConnectionPoolGroups => (long)_activeConnectionPoolGroupsCounter.GetValue(s_log)!;
 
-        public static long InactiveConnectionPoolGroups => (long)s_inactiveConnectionPoolGroupsCounter.GetValue(s_log)!;
+        public static long InactiveConnectionPoolGroups => (long)_inactiveConnectionPoolGroupsCounter.GetValue(s_log)!;
 
-        public static long ActiveConnectionPools => (long)s_activeConnectionPoolsCounter.GetValue(s_log)!;
+        public static long ActiveConnectionPools => (long)_activeConnectionPoolsCounter.GetValue(s_log)!;
 
-        public static long InactiveConnectionPools => (long)s_inactiveConnectionPoolsCounter.GetValue(s_log)!;
+        public static long InactiveConnectionPools => (long)_inactiveConnectionPoolsCounter.GetValue(s_log)!;
 
-        public static long ActiveConnections => (long)s_activeConnectionsCounter.GetValue(s_log)!;
+        public static long ActiveConnections => (long)_activeConnectionsCounter.GetValue(s_log)!;
 
-        public static long FreeConnections => (long)s_freeConnectionsCounter.GetValue(s_log)!;
+        public static long FreeConnections => (long)_freeConnectionsCounter.GetValue(s_log)!;
 
-        public static long StasisConnections => (long)s_stasisConnectionsCounter.GetValue(s_log)!;
+        public static long StasisConnections => (long)_stasisConnectionsCounter.GetValue(s_log)!;
 
-        public static long ReclaimedConnections => (long)s_reclaimedConnectionsCounter.GetValue(s_log)!;
+        public static long ReclaimedConnections => (long)_reclaimedConnectionsCounter.GetValue(s_log)!;
     }
 }
