@@ -19,7 +19,7 @@ This update brings the below changes over the previous release:
 
 ### Fixed
 
-- Fixed `FormatException` when opening a connection with event tracing enabled [#1290](https://github.com/dotnet/SqlClient/pull/1290)
+- Fixed `FormatException` when opening a connection with event tracing enabled [#1291](https://github.com/dotnet/SqlClient/pull/1291)
 - Fixed improper initialization of `ActiveDirectoryAuthenticationProvider` [#1327](https://github.com/dotnet/SqlClient/pull/1327)
 - Fixed `MissingMethodException` when accessing `SqlAuthenticationParameters.ConnectionTimeout` [#1335](https://github.com/dotnet/SqlClient/pull/1335)
 - Fixed data corruption issues by reverting changes to async cancellations [#1344](https://github.com/dotnet/SqlClient/pull/1344)
