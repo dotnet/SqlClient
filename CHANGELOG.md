@@ -11,7 +11,7 @@ This update brings the below changes over the previous release:
 ### Breaking changes over preview release v4.0.0-preview2
 
 - Dropped support for .NET Core 2.1 [#1272](https://github.com/dotnet/SqlClient/pull/1272)
-- [.NET Framework] Exception will not be thrown if a User ID is provided in the connection string when using `ActiveDirectoryIntegrated` authentication [#1359](https://github.com/dotnet/SqlClient/pull/1359)
+- [.NET Framework] Exception will not be thrown if a User ID is provided in the connection string when using `Active Directory Integrated` authentication [#1359](https://github.com/dotnet/SqlClient/pull/1359)
 
 ### Added
 
@@ -24,7 +24,7 @@ This update brings the below changes over the previous release:
 - Fixed `MissingMethodException` when accessing `SqlAuthenticationParameters.ConnectionTimeout` [#1335](https://github.com/dotnet/SqlClient/pull/1335)
 - Fixed data corruption issues by reverting changes to async cancellations [#1352](https://github.com/dotnet/SqlClient/pull/1352)
 - Fixed performance degradation by reverting changes to MARS state machine [#1357](https://github.com/dotnet/SqlClient/pull/1357)
-- Fixed bug where environment variables are ignored when using `ActiveDirectoryDefault` authentication [#1360](https://github.com/dotnet/SqlClient/pull/1360)
+- Fixed bug where environment variables are ignored when using `Active Directory Default` authentication [#1360](https://github.com/dotnet/SqlClient/pull/1360)
 
 ### Changed
 
