@@ -11,7 +11,7 @@ This update brings the below changes over the previous release:
 ### Breaking changes over preview release v4.0.0-preview2
 
 - Dropped support for .NET Core 2.1 [#1272](https://github.com/dotnet/SqlClient/pull/1272)
-- Exception will not be thrown if a User ID is provided in the connection string when using `ActiveDirectoryIntegrated` authentication [#1359](https://github.com/dotnet/SqlClient/pull/1359)
+- [.NET Framework] Exception will not be thrown if a User ID is provided in the connection string when using `ActiveDirectoryIntegrated` authentication [#1359](https://github.com/dotnet/SqlClient/pull/1359)
 
 ### Added
 
@@ -30,6 +30,7 @@ This update brings the below changes over the previous release:
 
 - Removed attributes for classes used in Microsoft.VSDesigner due to lack of support for Microsoft.Data.SqlClient [#1296](https://github.com/dotnet/SqlClient/pull/1296)
 - Disable encryption when connecting to SQL LocalDB [#1312](https://github.com/dotnet/SqlClient/pull/1312)
+- Various code health and performance improvements. See [milestone](https://github.com/dotnet/SqlClient/milestone/31?closed=1) for more info.
 
 ## [Preview Release 4.0.0-preview2.21264.2] - 2021-09-21
 
