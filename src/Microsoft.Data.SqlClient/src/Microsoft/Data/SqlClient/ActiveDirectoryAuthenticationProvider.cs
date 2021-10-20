@@ -157,7 +157,7 @@ namespace Microsoft.Data.SqlClient
                     defaultAzureCredentialOptions.ManagedIdentityClientId = clientId;
                     defaultAzureCredentialOptions.SharedTokenCacheUsername = clientId;
                 }
-                AccessToken accessToken = await new DefaultAzureCredential(defaultAzureCredentialOptions).GetTokenAsync(tokenRequestContext, cts.Token);
+                AccessToken accessToken = await new DefaultAzureCredential(defaultAzureCredentialOptions).GetTokenAsync(tokenRequestContext, cts.Token).ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Default auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
             }
@@ -166,7 +166,7 @@ namespace Microsoft.Data.SqlClient
 
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity || parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryMSI)
             {
-                AccessToken accessToken = await new ManagedIdentityCredential(clientId, tokenCredentialOptions).GetTokenAsync(tokenRequestContext, cts.Token);
+                AccessToken accessToken = await new ManagedIdentityCredential(clientId, tokenCredentialOptions).GetTokenAsync(tokenRequestContext, cts.Token).ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Managed Identity auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
             }
@@ -174,7 +174,7 @@ namespace Microsoft.Data.SqlClient
             AuthenticationResult result;
             if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal)
             {
-                AccessToken accessToken = await new ClientSecretCredential(audience, parameters.UserId, parameters.Password, tokenCredentialOptions).GetTokenAsync(tokenRequestContext, cts.Token);
+                AccessToken accessToken = await new ClientSecretCredential(audience, parameters.UserId, parameters.Password, tokenCredentialOptions).GetTokenAsync(tokenRequestContext, cts.Token).ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Service Principal auth mode. Expiry Time: {0}", accessToken.ExpiresOn);
                 return new SqlAuthenticationToken(accessToken.Token, accessToken.ExpiresOn);
             }
@@ -212,13 +212,15 @@ namespace Microsoft.Data.SqlClient
                     result = await app.AcquireTokenByIntegratedWindowsAuth(scopes)
                         .WithCorrelationId(parameters.ConnectionId)
                         .WithUsername(parameters.UserId)
-                        .ExecuteAsync(cancellationToken: cts.Token);
+                        .ExecuteAsync(cancellationToken: cts.Token)
+                        .ConfigureAwait(false);
                 }
                 else
                 {
                     result = await app.AcquireTokenByIntegratedWindowsAuth(scopes)
                         .WithCorrelationId(parameters.ConnectionId)
-                        .ExecuteAsync(cancellationToken: cts.Token);
+                        .ExecuteAsync(cancellationToken: cts.Token)
+                        .ConfigureAwait(false);
                 }
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Integrated auth mode. Expiry Time: {0}", result?.ExpiresOn);
             }
@@ -231,14 +233,15 @@ namespace Microsoft.Data.SqlClient
 
                 result = await app.AcquireTokenByUsernamePassword(scopes, parameters.UserId, password)
                     .WithCorrelationId(parameters.ConnectionId)
-                    .ExecuteAsync(cancellationToken: cts.Token);
+                    .ExecuteAsync(cancellationToken: cts.Token)
+                    .ConfigureAwait(false);
                 SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token for Active Directory Password auth mode. Expiry Time: {0}", result?.ExpiresOn);
             }
             else if (parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryInteractive ||
                      parameters.AuthenticationMethod == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow)
             {
                 // Fetch available accounts from 'app' instance
-                System.Collections.Generic.IEnumerator<IAccount> accounts = (await app.GetAccountsAsync()).GetEnumerator();
+                System.Collections.Generic.IEnumerator<IAccount> accounts = (await app.GetAccountsAsync().ConfigureAwait(false)).GetEnumerator();
 
                 IAccount account = default;
                 if (accounts.MoveNext())
@@ -268,7 +271,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         // If 'account' is available in 'app', we use the same to acquire token silently.
                         // Read More on API docs: https://docs.microsoft.com/dotnet/api/microsoft.identity.client.clientapplicationbase.acquiretokensilent
-                        result = await app.AcquireTokenSilent(scopes, account).ExecuteAsync(cancellationToken: cts.Token);
+                        result = await app.AcquireTokenSilent(scopes, account).ExecuteAsync(cancellationToken: cts.Token).ConfigureAwait(false);
                         SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (silent) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result?.ExpiresOn);
                     }
                     catch (MsalUiRequiredException)
@@ -276,14 +279,14 @@ namespace Microsoft.Data.SqlClient
                         // An 'MsalUiRequiredException' is thrown in the case where an interaction is required with the end user of the application,
                         // for instance, if no refresh token was in the cache, or the user needs to consent, or re-sign-in (for instance if the password expired),
                         // or the user needs to perform two factor authentication.
-                        result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod, cts);
+                        result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod, cts).ConfigureAwait(false);
                         SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result?.ExpiresOn);
                     }
                 }
                 else
                 {
                     // If no existing 'account' is found, we request user to sign in interactively.
-                    result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod, cts);
+                    result = await AcquireTokenInteractiveDeviceFlowAsync(app, scopes, parameters.ConnectionId, parameters.UserId, parameters.AuthenticationMethod, cts).ConfigureAwait(false);
                     SqlClientEventSource.Log.TryTraceEvent("AcquireTokenAsync | Acquired access token (interactive) for {0} auth mode. Expiry Time: {1}", parameters.AuthenticationMethod, result?.ExpiresOn);
                 }
             }
@@ -322,7 +325,8 @@ namespace Microsoft.Data.SqlClient
                             .WithCorrelationId(connectionId)
                             .WithCustomWebUi(_customWebUI)
                             .WithLoginHint(userId)
-                            .ExecuteAsync(ctsInteractive.Token);
+                            .ExecuteAsync(ctsInteractive.Token)
+                            .ConfigureAwait(false);
                     }
                     else
                     {
@@ -346,7 +350,8 @@ namespace Microsoft.Data.SqlClient
                         return await app.AcquireTokenInteractive(scopes)
                             .WithCorrelationId(connectionId)
                             .WithLoginHint(userId)
-                            .ExecuteAsync(ctsInteractive.Token);
+                            .ExecuteAsync(ctsInteractive.Token)
+                            .ConfigureAwait(false);
                     }
                 }
                 else
@@ -354,7 +359,8 @@ namespace Microsoft.Data.SqlClient
                     AuthenticationResult result = await app.AcquireTokenWithDeviceCode(scopes,
                         deviceCodeResult => _deviceCodeFlowCallback(deviceCodeResult))
                         .WithCorrelationId(connectionId)
-                        .ExecuteAsync(cancellationToken: cts.Token);
+                        .ExecuteAsync(cancellationToken: cts.Token)
+                        .ConfigureAwait(false);
                     return result;
                 }
             }
