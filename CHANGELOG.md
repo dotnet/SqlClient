@@ -22,7 +22,7 @@ This update brings the below changes over the previous release:
 - Fixed `FormatException` when opening a connection with event tracing enabled [#1291](https://github.com/dotnet/SqlClient/pull/1291)
 - Fixed improper initialization of `ActiveDirectoryAuthenticationProvider` [#1327](https://github.com/dotnet/SqlClient/pull/1327)
 - Fixed `MissingMethodException` when accessing `SqlAuthenticationParameters.ConnectionTimeout` [#1335](https://github.com/dotnet/SqlClient/pull/1335)
-- Fixed data corruption issues by reverting changes to async cancellations [#1344](https://github.com/dotnet/SqlClient/pull/1344)
+- Fixed data corruption issues by reverting changes to async cancellations [#1352](https://github.com/dotnet/SqlClient/pull/1352)
 - Fixed performance degradation by reverting changes to MARS state machine [#1357](https://github.com/dotnet/SqlClient/pull/1357)
 - Fixed bug where environment variables are ignored when using `ActiveDirectoryDefault` authentication [#1360](https://github.com/dotnet/SqlClient/pull/1360)
 
