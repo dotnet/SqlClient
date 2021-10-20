@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Preview Release 4.0.0-preview3.21293.2] - 2021-10-20
+
+This update brings the below changes over the previous release:
+
+### Breaking changes over preview release v4.0.0-preview2
+
+- Dropped support for .NET Core 2.1 [#1272](https://github.com/dotnet/SqlClient/pull/1272)
+- [.NET Framework] Exception will not be thrown if a User ID is provided in the connection string when using `Active Directory Integrated` authentication [#1359](https://github.com/dotnet/SqlClient/pull/1359)
+
+### Added
+
+- Add `GetFieldValueAsync<T>` and `GetFieldValue<T>` support for `XmlReader`, `TextReader`, `Stream` [#1019](https://github.com/dotnet/SqlClient/pull/1019)
+
+### Fixed
+
+- Fixed `FormatException` when opening a connection with event tracing enabled [#1291](https://github.com/dotnet/SqlClient/pull/1291)
+- Fixed improper initialization of `ActiveDirectoryAuthenticationProvider` [#1328](https://github.com/dotnet/SqlClient/pull/1328)
+- Fixed `MissingMethodException` when accessing `SqlAuthenticationParameters.ConnectionTimeout` [#1336](https://github.com/dotnet/SqlClient/pull/1336)
+- Fixed data corruption issues by reverting changes to async cancellations [#1352](https://github.com/dotnet/SqlClient/pull/1352)
+- Fixed performance degradation by reverting changes to MARS state machine [#1357](https://github.com/dotnet/SqlClient/pull/1357)
+- Fixed bug where environment variables are ignored when using `Active Directory Default` authentication [#1360](https://github.com/dotnet/SqlClient/pull/1360)
+
+### Changed
+
+- Removed attributes for classes used in Microsoft.VSDesigner due to lack of support for Microsoft.Data.SqlClient [#1296](https://github.com/dotnet/SqlClient/pull/1296)
+- Disable encryption when connecting to SQL LocalDB [#1312](https://github.com/dotnet/SqlClient/pull/1312)
+- Various code health and performance improvements. See [milestone](https://github.com/dotnet/SqlClient/milestone/31?closed=1) for more info.
+
 ## [Preview Release 4.0.0-preview2.21264.2] - 2021-09-21
 
 This update brings the below changes over the previous release:
