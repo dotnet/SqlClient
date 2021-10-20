@@ -152,7 +152,7 @@ namespace Microsoft.Data.SqlClient
                 };
 
                 // Optionally set clientId when available
-                if (clientId != null)
+                if (clientId is not null)
                 {
                     defaultAzureCredentialOptions.ManagedIdentityClientId = clientId;
                     defaultAzureCredentialOptions.SharedTokenCacheUsername = clientId;
