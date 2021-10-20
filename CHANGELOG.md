@@ -15,7 +15,7 @@ This update brings the below changes over the previous release:
 
 ### Added
 
-- Add `GetFieldValue(Async)<T>` support for `XmlReader`, `TextReader`, `Stream` [#1019](https://github.com/dotnet/SqlClient/pull/1019)
+- Add `GetFieldValueAsync<T>` and `GetFieldValue<T>` support for `XmlReader`, `TextReader`, `Stream` [#1019](https://github.com/dotnet/SqlClient/pull/1019)
 
 ### Fixed
 
