@@ -634,10 +634,10 @@
   </ItemGroup>
   <!-- Resources  -->
   <ItemGroup>
-    <Compile Include="Resources\$(ResxFileName).Designer.cs">
+    <Compile Include="Resources\Strings.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
-      <DependentUpon>$(ResxFileName).resx</DependentUpon>
+      <DependentUpon>Strings.resx</DependentUpon>
     </Compile>
     <Compile Include="..\..\src\Resources\StringsHelper.cs">
       <Link>Resources\StringsHelper.cs</Link>
