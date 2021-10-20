@@ -76,6 +76,16 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static bool IsAADConnStringsSetup() => DataTestUtility.IsAADPasswordConnStrSetup();
         private static bool IsManagedIdentitySetup() => DataTestUtility.ManagedIdentitySupported;
 
+        [PlatformSpecific(TestPlatforms.Windows)]
+        [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup))]
+        public static void KustoDatabaseTest()
+        {
+            // This is a sample Kusto database that can be connected by any AD account.
+            using SqlConnection connection = new SqlConnection("Data Source=help.kusto.windows.net; Authentication=Active Directory Default;Trust Server Certificate=True;");
+            connection.Open();
+            Assert.True(connection.State == System.Data.ConnectionState.Open);
+        }
+
         [ConditionalFact(nameof(IsAccessTokenSetup), nameof(IsAADConnStringsSetup))]
         public static void AccessTokenTest()
         {
