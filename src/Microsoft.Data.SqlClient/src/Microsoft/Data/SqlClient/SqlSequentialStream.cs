@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
@@ -13,10 +13,10 @@ namespace Microsoft.Data.SqlClient
     sealed internal class SqlSequentialStream : System.IO.Stream
     {
         private SqlDataReader _reader;  // The SqlDataReader that we are reading data from
-        private int _columnIndex;       // The index of out column in the table
+        private readonly int _columnIndex;       // The index of out column in the table
         private Task _currentTask;      // Holds the current task being processed
         private int _readTimeout;       // Read timeout for this stream in ms (for Stream.ReadTimeout)
-        private CancellationTokenSource _disposalTokenSource;    // Used to indicate that a cancellation is requested due to disposal
+        private readonly CancellationTokenSource _disposalTokenSource;    // Used to indicate that a cancellation is requested due to disposal
 
         internal SqlSequentialStream(SqlDataReader reader, int columnIndex)
         {
@@ -28,10 +28,10 @@ namespace Microsoft.Data.SqlClient
             _currentTask = null;
             _disposalTokenSource = new CancellationTokenSource();
 
-            // Safely safely convert the CommandTimeout from seconds to milliseconds
+            // Safely convert the CommandTimeout from seconds to milliseconds
             if ((reader.Command != null) && (reader.Command.CommandTimeout != 0))
             {
-                _readTimeout = (int)Math.Min((long)reader.Command.CommandTimeout * 1000L, (long)Int32.MaxValue);
+                _readTimeout = (int)Math.Min((long)reader.Command.CommandTimeout * 1000L, (long)int.MaxValue);
             }
             else
             {
@@ -39,43 +39,28 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        public override bool CanRead
-        {
-            get { return ((_reader != null) && (!_reader.IsClosed)); }
-        }
+        public override bool CanRead => (_reader != null) && (!_reader.IsClosed);
 
-        public override bool CanSeek
-        {
-            get { return false; }
-        }
+        public override bool CanSeek => false;
 
-        public override bool CanTimeout
-        {
-            get { return true; }
-        }
+        public override bool CanTimeout => true;
 
-        public override bool CanWrite
-        {
-            get { return false; }
-        }
+        public override bool CanWrite => false;
 
         public override void Flush()
         { }
 
-        public override long Length
-        {
-            get { throw ADP.NotSupported(); }
-        }
+        public override long Length => throw ADP.NotSupported();
 
         public override long Position
         {
-            get { throw ADP.NotSupported(); }
-            set { throw ADP.NotSupported(); }
+            get => throw ADP.NotSupported();
+            set => throw ADP.NotSupported();
         }
 
         public override int ReadTimeout
         {
-            get { return _readTimeout; }
+            get => _readTimeout;
             set
             {
                 if ((value > 0) || (value == Timeout.Infinite))
@@ -84,15 +69,12 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    throw ADP.ArgumentOutOfRange("value");
+                    throw ADP.ArgumentOutOfRange(nameof(value));
                 }
             }
         }
 
-        internal int ColumnIndex
-        {
-            get { return _columnIndex; }
-        }
+        internal int ColumnIndex => _columnIndex;
 
         public override int Read(byte[] buffer, int offset, int count)
         {
@@ -117,48 +99,12 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
-        {
-            if (!CanRead)
-            {
-                // This is checked in ReadAsync - but its a better for the user if it throw here instead of having to wait for EndRead
-                throw ADP.ObjectDisposed(this);
-            }
-
-            Task readTask = ReadAsync(buffer, offset, count, CancellationToken.None);
-            if (callback != null)
-            {
-                readTask.ContinueWith((t) => callback(t), TaskScheduler.Default);
-            }
-            return readTask;
-        }
-
-        public override int EndRead(IAsyncResult asyncResult)
-        {
-            if (asyncResult == null)
-            {
-                throw ADP.ArgumentNull("asyncResult");
-            }
-
-            // Wait for the task to complete - this will also cause any exceptions to be thrown
-            Task<int> readTask = (Task<int>)asyncResult;
-            try
-            {
-                readTask.Wait();
-            }
-            catch (AggregateException ex)
-            {
-                throw ex.InnerException;
-            }
-
-            return readTask.Result;
-        }
 
         public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
             ValidateReadParameters(buffer, offset, count);
 
-            TaskCompletionSource<int> completion = new TaskCompletionSource<int>();
+            TaskCompletionSource<int> completion = new();
             if (!CanRead)
             {
                 completion.SetException(ADP.ExceptionWithStackTrace(ADP.ObjectDisposed(this)));
@@ -189,7 +135,7 @@ namespace Microsoft.Data.SqlClient
 
                         int bytesRead = 0;
                         Task<int> getBytesTask = null;
-                        var reader = _reader;
+                        SqlDataReader reader = _reader;
                         if ((reader != null) && (!cancellationToken.IsCancellationRequested) && (!_disposalTokenSource.Token.IsCancellationRequested))
                         {
                             getBytesTask = reader.GetBytesAsync(_columnIndex, buffer, offset, count, _readTimeout, combinedTokenSource.Token, out bytesRead);
@@ -292,7 +238,7 @@ namespace Microsoft.Data.SqlClient
             _reader = null;
 
             // Wait for pending task
-            var currentTask = _currentTask;
+            Task currentTask = _currentTask;
             if (currentTask != null)
             {
                 ((IAsyncResult)currentTask).AsyncWaitHandle.WaitOne();
@@ -311,7 +257,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Checks the the parameters passed into a Read() method are valid
+        /// Checks the parameters passed into a Read() method are valid
         /// </summary>
         /// <param name="buffer"></param>
         /// <param name="offset"></param>
@@ -343,5 +289,50 @@ namespace Microsoft.Data.SqlClient
                 throw ExceptionBuilder.InvalidOffsetLength();
             }
         }
+
+#if NETFRAMEWORK
+        public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
+        {
+            if (!CanRead)
+            {
+                // This is checked in ReadAsync - but its a better for the user if it throw here instead of having to wait for EndRead
+                throw ADP.ObjectDisposed(this);
+            }
+
+            Task readTask = ReadAsync(buffer, offset, count, CancellationToken.None);
+            if (callback != null)
+            {
+                readTask.ContinueWith((t) => callback(t), TaskScheduler.Default);
+            }
+            return readTask;
+        }
+
+        public override int EndRead(IAsyncResult asyncResult)
+        {
+            if (asyncResult == null)
+            {
+                throw ADP.ArgumentNull("asyncResult");
+            }
+
+            // Wait for the task to complete - this will also cause any exceptions to be thrown
+            Task<int> readTask = (Task<int>)asyncResult;
+            try
+            {
+                readTask.Wait();
+            }
+            catch (AggregateException ex)
+            {
+                throw ex.InnerException;
+            }
+
+            return readTask.Result;
+        }
+#else
+        public override IAsyncResult BeginRead(byte[] array, int offset, int count, AsyncCallback asyncCallback, object asyncState) =>
+            TaskToApm.Begin(ReadAsync(array, offset, count, CancellationToken.None), asyncCallback, asyncState);
+
+        public override int EndRead(IAsyncResult asyncResult) =>
+            TaskToApm.End<int>(asyncResult);
+#endif
     }
 }

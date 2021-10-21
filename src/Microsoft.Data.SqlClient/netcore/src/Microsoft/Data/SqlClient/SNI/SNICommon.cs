@@ -35,40 +35,30 @@ namespace Microsoft.Data.SqlClient.SNI
     /// <summary>
     /// SMUX packet header
     /// </summary>
-    internal struct SNISMUXHeader
+    internal sealed class SNISMUXHeader
     {
         public const int HEADER_LENGTH = 16;
 
-        public byte SMID { get; private set; }
-        public byte Flags { get; private set; }
-        public ushort SessionId { get; private set; }
-        public uint Length { get; private set; }
-        public uint SequenceNumber { get; private set; }
-        public uint Highwater { get; private set; }
-
-        public void Set(byte smid, byte flags, ushort sessionID, uint length, uint sequenceNumber, uint highwater)
-        {
-            SMID = smid;
-            Flags = flags;
-            SessionId = sessionID;
-            Length = length;
-            SequenceNumber = sequenceNumber;
-            Highwater = highwater;
-        }
+        public byte SMID;
+        public byte flags;
+        public ushort sessionId;
+        public uint length;
+        public uint sequenceNumber;
+        public uint highwater;
 
         public void Read(byte[] bytes)
         {
             SMID = bytes[0];
-            Flags = bytes[1];
-            SessionId = BitConverter.ToUInt16(bytes, 2);
-            Length = BitConverter.ToUInt32(bytes, 4) - SNISMUXHeader.HEADER_LENGTH;
-            SequenceNumber = BitConverter.ToUInt32(bytes, 8);
-            Highwater = BitConverter.ToUInt32(bytes, 12);
+            flags = bytes[1];
+            sessionId = BitConverter.ToUInt16(bytes, 2);
+            length = BitConverter.ToUInt32(bytes, 4) - SNISMUXHeader.HEADER_LENGTH;
+            sequenceNumber = BitConverter.ToUInt32(bytes, 8);
+            highwater = BitConverter.ToUInt32(bytes, 12);
         }
 
         public void Write(Span<byte> bytes)
         {
-            uint value = Highwater;
+            uint value = highwater;
             // access the highest element first to cause the largest range check in the jit, then fill in the rest of the value and carry on as normal
             bytes[15] = (byte)((value >> 24) & 0xff);
             bytes[12] = (byte)(value & 0xff); // BitConverter.GetBytes(_currentHeader.highwater).CopyTo(headerBytes, 12);
@@ -76,53 +66,32 @@ namespace Microsoft.Data.SqlClient.SNI
             bytes[14] = (byte)((value >> 16) & 0xff);
 
             bytes[0] = SMID; // BitConverter.GetBytes(_currentHeader.SMID).CopyTo(headerBytes, 0);
-            bytes[1] = Flags; // BitConverter.GetBytes(_currentHeader.flags).CopyTo(headerBytes, 1);
+            bytes[1] = flags; // BitConverter.GetBytes(_currentHeader.flags).CopyTo(headerBytes, 1);
 
-            value = SessionId;
+            value = sessionId;
             bytes[2] = (byte)(value & 0xff); // BitConverter.GetBytes(_currentHeader.sessionId).CopyTo(headerBytes, 2);
             bytes[3] = (byte)((value >> 8) & 0xff);
 
-            value = Length;
+            value = length;
             bytes[4] = (byte)(value & 0xff); // BitConverter.GetBytes(_currentHeader.length).CopyTo(headerBytes, 4);
             bytes[5] = (byte)((value >> 8) & 0xff);
             bytes[6] = (byte)((value >> 16) & 0xff);
             bytes[7] = (byte)((value >> 24) & 0xff);
 
-            value = SequenceNumber;
+            value = sequenceNumber;
             bytes[8] = (byte)(value & 0xff); // BitConverter.GetBytes(_currentHeader.sequenceNumber).CopyTo(headerBytes, 8);
             bytes[9] = (byte)((value >> 8) & 0xff);
             bytes[10] = (byte)((value >> 16) & 0xff);
             bytes[11] = (byte)((value >> 24) & 0xff);
 
         }
-
-        public SNISMUXHeader Clone()
-        {
-            SNISMUXHeader copy = new SNISMUXHeader();
-            copy.SMID = SMID;
-            copy.Flags = Flags;
-            copy.SessionId = SessionId;
-            copy.Length = Length;
-            copy.SequenceNumber = SequenceNumber;
-            copy.Highwater = Highwater;
-            return copy;
-        }
-
-        public void Clear()
-        {
-            SMID = 0;
-            Flags = 0;
-            SessionId = 0;
-            Length = 0;
-            SequenceNumber = 0;
-            Highwater = 0;
-        }
     }
 
     /// <summary>
     /// SMUX packet flags
     /// </summary>
-    internal enum SNISMUXFlags : uint
+    [Flags]
+    internal enum SNISMUXFlags
     {
         SMUX_SYN = 1,       // Begin SMUX connection
         SMUX_ACK = 2,       // Acknowledge SMUX packets

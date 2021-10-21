@@ -38,7 +38,7 @@ namespace Microsoft.Data.SqlClient
         public string DatabaseName { get; }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/ConnectionTimeout/*'/>
-        public int ConnectionTimeout = ADP.DefaultConnectionTimeout;
+        public int ConnectionTimeout { get; } = ADP.DefaultConnectionTimeout;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationParameters.xml' path='docs/members[@name="SqlAuthenticationParameters"]/ctor/*'/>
         protected SqlAuthenticationParameters(
