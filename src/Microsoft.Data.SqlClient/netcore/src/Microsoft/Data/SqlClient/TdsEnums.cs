@@ -20,6 +20,22 @@ namespace Microsoft.Data.SqlClient
         public static readonly decimal SQL_SMALL_MONEY_MIN = new decimal(-214748.3648);
         public static readonly decimal SQL_SMALL_MONEY_MAX = new decimal(214748.3647);
 
+#if NETFRAMEWORK
+        // sql debugging constants, sdci is the structure passed in
+        public const string SDCI_MAPFILENAME = "SqlClientSSDebug";
+        public const byte SDCI_MAX_MACHINENAME = 32;
+        public const byte SDCI_MAX_DLLNAME = 16;
+        public const byte SDCI_MAX_DATA = 255;
+        public const int SQLDEBUG_OFF = 0;
+        public const int SQLDEBUG_ON = 1;
+        public const int SQLDEBUG_CONTEXT = 2;
+        public const string SP_SDIDEBUG = "sp_sdidebug";
+        public static readonly string[] SQLDEBUG_MODE_NAMES = new string[3] {
+            "off",
+            "on",
+            "context"
+        };
+#endif
 
         // HACK!!!
         // Constant for SqlDbType.SmallVarBinary... store internal variable here instead of on
@@ -208,6 +224,7 @@ namespace Microsoft.Data.SqlClient
         public const byte FEATUREEXT_TERMINATOR = 0xFF;
         public const byte FEATUREEXT_SRECOVERY = 0x01;
         public const byte FEATUREEXT_FEDAUTH = 0x02;
+        // 0x03 is for x_eFeatureExtensionId_Rcs
         public const byte FEATUREEXT_TCE = 0x04;
         public const byte FEATUREEXT_GLOBALTRANSACTIONS = 0x05;
         // 0x06 is for x_eFeatureExtensionId_LoginToken
@@ -317,23 +334,31 @@ namespace Microsoft.Data.SqlClient
             0x72xx0002 -> 2005 RTM
         */
 
+        // Pre Shiloh SP1 versioning scheme:
+        public const int SPHINXORSHILOH_MAJOR = 0x07;     // The high byte (b3) is not sufficient to distinguish
+        public const int SPHINX_INCREMENT = 0x00;     // Sphinx and Shiloh
+        public const int SHILOH_INCREMENT = 0x01;     // So we need to look at the high-mid byte (b2) as well
+        public const int DEFAULT_MINOR = 0x0000;
 
         // 2000 SP1 and beyond versioning scheme:
 
         // Majors:
-        public const int SQL2005_MAJOR = 0x72;     // the high-byte is sufficient to distinguish later versions
-        public const int SQL2008_MAJOR = 0x73;
-        public const int SQl2012_MAJOR = 0x74;
+        public const int SHILOHSP1_MAJOR = 0x71;     // For Shiloh SP1 and later the versioning schema changed and
+        public const int YUKON_MAJOR = 0x72;     // the high-byte is sufficient to distinguish later versions
+        public const int KATMAI_MAJOR = 0x73;
+        public const int DENALI_MAJOR = 0x74;
 
         // Increments:
-        public const int SQL2005_INCREMENT = 0x09;
-        public const int SQL2008_INCREMENT = 0x0b;
-        public const int SQL2012_INCREMENT = 0x00;
+        public const int SHILOHSP1_INCREMENT = 0x00;
+        public const int YUKON_INCREMENT = 0x09;
+        public const int KATMAI_INCREMENT = 0x0b;
+        public const int DENALI_INCREMENT = 0x00;
 
         // Minors:
-        public const int SQL2005_RTM_MINOR = 0x0002;
-        public const int SQL2008_MINOR = 0x0003;
-        public const int SQL2012_MINOR = 0x0004;
+        public const int SHILOHSP1_MINOR = 0x0001;
+        public const int YUKON_RTM_MINOR = 0x0002;
+        public const int KATMAI_MINOR = 0x0003;
+        public const int DENALI_MINOR = 0x0004;
 
         public const int ORDER_68000 = 1;
         public const int USE_DB_ON = 1;
@@ -478,6 +503,10 @@ namespace Microsoft.Data.SqlClient
         public const byte TVP_ORDERDESC_FLAG = 0x2;
         public const byte TVP_UNIQUE_FLAG = 0x4;
 
+#if NETFRAMEWORK
+        public const bool Is68K = false;
+        public const bool TraceTDS = false;
+#endif
 
         // RPC function names
         public const string SP_EXECUTESQL = "sp_executesql";       // used against 7.0 servers
@@ -559,6 +588,10 @@ namespace Microsoft.Data.SqlClient
         // dbnetlib error values
         public const short TIMEOUT_EXPIRED = -2;
         public const short ENCRYPTION_NOT_SUPPORTED = 20;
+#if NETFRAMEWORK
+        public const short CTAIP_NOT_SUPPORTED = 21;
+#endif
+
         // CAUTION: These are not error codes returned by SNI. This is used for backward compatibility
         // since netlib (now removed from sqlclient) returned these codes.
 
@@ -885,6 +918,13 @@ namespace Microsoft.Data.SqlClient
             0,      /* 255 */
         };
 
+#if NETFRAMEWORK
+        internal enum UDTFormatType
+        {
+            Native = 1,
+            UserDefined = 2
+        }
+#endif
 
         internal enum TransactionManagerRequestType
         {
@@ -1160,7 +1200,10 @@ namespace Microsoft.Data.SqlClient
         ActiveDirectoryMSI,
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryDefault/*'/>
-        ActiveDirectoryDefault
+        ActiveDirectoryDefault,
+#if ADONET_CERT_AUTH && NETFRAMEWORK
+        SqlCertificate
+#endif
     }
     // This enum indicates the state of TransparentNetworkIPResolution
     // The first attempt when TNIR is on should be sequential. If the first attempt failes next attempts should be parallel.
