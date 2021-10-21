@@ -277,6 +277,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlErrorCollection.cs">
       <Link>Microsoft\Data\SqlClient\SqlErrorCollection.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlEnvChange.cs">
+      <Link>Microsoft\Data\SqlClient\SqlEnvChange.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlException.cs">
       <Link>Microsoft\Data\SqlClient\SqlException.cs</Link>
     </Compile>
@@ -568,9 +571,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlError.cs" />
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlEnclaveSession.cs">
       <Link>Microsoft\Data\SqlClient\SqlEnclaveSession.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlEnvChange.cs">
-      <Link>Microsoft\Data\SqlClient\SqlEnvChange.cs</Link>
     </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
