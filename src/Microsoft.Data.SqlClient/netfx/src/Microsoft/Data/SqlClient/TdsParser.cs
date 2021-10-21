@@ -642,7 +642,7 @@ namespace Microsoft.Data.SqlClient
                     serverInfo.ResolvedServerName : serverInfo.PreRoutingServerName);
             }
             _state = TdsParserState.OpenNotLoggedIn;
-            _physicalStateObj.SniContext = SniContext.Snix_PreLoginBeforeSuccessfullWrite; // SQL BU DT 376766
+            _physicalStateObj.SniContext = SniContext.Snix_PreLoginBeforeSuccessfulWrite; // SQL BU DT 376766
             _physicalStateObj.TimeoutTime = timerExpire;
 
             bool marsCapable = false;
