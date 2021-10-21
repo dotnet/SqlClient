@@ -367,6 +367,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SignatureVerificationCache.cs">
       <Link>Microsoft\Data\SqlClient\SignatureVerificationCache.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsEnums.cs">
+      <Link>Microsoft\Data\SqlClient\TdsEnums.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsValueSetter.cs">
       <Link>Microsoft\Data\SqlClient\TdsValueSetter.cs</Link>
     </Compile>
@@ -594,7 +597,6 @@
       <Link>Microsoft\Data\SqlClient\SqlUdtInfo.cs</Link>
     </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlUtil.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsEnums.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.RegisterEncoding.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserHelperClasses.cs" />
