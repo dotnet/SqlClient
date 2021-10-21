@@ -17,8 +17,8 @@ namespace Microsoft.Data.SqlClient
 
         public const string SQL_PROVIDER_NAME = Common.DbConnectionStringDefaults.ApplicationName;
 
-        public static readonly decimal SQL_SMALL_MONEY_MIN = new decimal(-214748.3648);
-        public static readonly decimal SQL_SMALL_MONEY_MAX = new decimal(214748.3647);
+        public static readonly decimal SQL_SMALL_MONEY_MIN = new(-214748.3648);
+        public static readonly decimal SQL_SMALL_MONEY_MAX = new(214748.3647);
 
 #if NETFRAMEWORK
         // sql debugging constants, sdci is the structure passed in
