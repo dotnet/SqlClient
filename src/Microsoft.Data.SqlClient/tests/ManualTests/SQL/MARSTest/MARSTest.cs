@@ -639,5 +639,64 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.Equal(companyNames[supplier], name);
             }
         }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void MarsConcurrencyTest()
+        {
+            var table = DataTestUtility.GenerateObjectName();
+            using (var conn = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                conn.Open();
+                using var cmd = new SqlCommand
+                {
+                    Connection = conn,
+                    CommandText = @$"
+                        DROP TABLE IF EXISTS [{table}];
+                        CREATE TABLE [{table}] (
+                            [Id] INTEGER,
+                            [IsDeleted] BIT
+                        )"
+                };
+
+                cmd.ExecuteNonQuery();
+            }
+
+            var connString = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { MultipleActiveResultSets = true }.ConnectionString;
+            using (var conn = new SqlConnection(connString))
+            {
+                conn.Open();
+                try
+                {
+                    for (int i = 0; i < 5; i++)
+                    {
+                        Parallel.For(
+                            0, 300,
+                            i =>
+                            {
+                                using var cmd = new SqlCommand
+                                {
+                                    Connection = conn,
+                                    CommandText = @$"
+                                SELECT [l].[Id], [l].[IsDeleted]
+                                FROM [{table}] AS [l]
+                                WHERE ([l].[IsDeleted] = CAST(0 AS bit)) AND [l].[Id] IN (1, 2, 3)"
+                                };
+
+                                using SqlDataReader _ = cmd.ExecuteReader();
+                            });
+                    }
+                }
+                catch (Exception e)
+                {
+                    Assert.False(true, "CRITIAL: Test should not fail randomly. Exception occurred: " + e.Message);
+                }
+                finally
+                {
+                    using var dropConn = new SqlConnection(DataTestUtility.TCPConnectionString);
+                    dropConn.Open();
+                    DataTestUtility.DropTable(dropConn, table);
+                }
+            }
+        }
     }
 }

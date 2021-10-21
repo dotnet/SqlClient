@@ -354,6 +354,25 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Theory]
+        [InlineData("Authentication = ActiveDirectoryIntegrated;Password = ''")]
+        [InlineData("Authentication = ActiveDirectoryIntegrated;PWD = ''")]
+        [InlineData("Authentication = ActiveDirectoryIntegrated;User Id='';PWD = ''")]
+        [InlineData("Authentication = ActiveDirectoryIntegrated;User Id='';Password = ''")]
+        [InlineData("Authentication = ActiveDirectoryIntegrated;UID='';PWD = ''")]
+        [InlineData("Authentication = ActiveDirectoryIntegrated;UID='';Password = ''")]
+        public void ConnectionString_ActiveDirectoryIntegrated_Password(string connectionString)
+        {
+            SqlConnection cn = new SqlConnection();
+
+            ArgumentException ex = Assert.Throws<ArgumentException>(() => cn.ConnectionString = connectionString);
+            // Invalid value for key 'user instance'
+            Assert.Null(ex.InnerException);
+            Assert.NotNull(ex.Message);
+            Assert.True(ex.Message.IndexOf("'pwd'", StringComparison.OrdinalIgnoreCase) != -1);
+            Assert.Null(ex.ParamName);
+        }
+
+        [Theory]
         [InlineData(@"AttachDbFileName=C:\test\attach.mdf", @"AttachDbFileName=C:\test\attach.mdf")]
         [InlineData(@"AttachDbFileName=C:\test\attach.mdf;", @"AttachDbFileName=C:\test\attach.mdf;")]
         public void ConnectionString_AttachDbFileName_Plain(string value, string expected)

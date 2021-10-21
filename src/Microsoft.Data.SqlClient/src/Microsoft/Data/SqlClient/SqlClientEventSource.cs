@@ -1120,23 +1120,11 @@ namespace Microsoft.Data.SqlClient
     {
         private readonly long _scopeId;
 
-        public TrySNIEventScope(long scopeID)
-        {
-            _scopeId = scopeID;
-        }
+        public TrySNIEventScope(long scopeID) => _scopeId = scopeID;
+        public void Dispose() =>
+            SqlClientEventSource.Log.SNIScopeLeave(string.Format("Exit SNI Scope {0}", _scopeId));
 
-        public void Dispose()
-        {
-            if (_scopeId != 0)
-            {
-                SqlClientEventSource.Log.TrySNIScopeLeaveEvent(_scopeId);
-            }
-        }
-
-        public static TrySNIEventScope Create(string message, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
-        {
-            return new TrySNIEventScope(SqlClientEventSource.Log.TrySNIScopeEnterEvent(message, memberName));
-        }
+        public static TrySNIEventScope Create(string message) => new TrySNIEventScope(SqlClientEventSource.Log.SNIScopeEnter(message));
     }
 
     internal readonly ref struct TryEventScope //: IDisposable

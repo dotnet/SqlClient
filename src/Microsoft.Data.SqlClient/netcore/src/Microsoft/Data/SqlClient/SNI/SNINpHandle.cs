@@ -176,7 +176,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         packet.ReadFromStream(_stream);
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.INFO, "Connection Id {0}, Rented and read packet, dataLeft {1}", args0: _connectionId, args1: packet?.DataLeft);
 
-                        if (packet.DataLength == 0)
+                        if (packet.Length == 0)
                         {
                             errorPacket = packet;
                             packet = null;
