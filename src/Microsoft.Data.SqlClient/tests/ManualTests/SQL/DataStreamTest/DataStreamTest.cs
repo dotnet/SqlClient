@@ -130,7 +130,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             while (position < data.Length)
             {
                 int copyCount = Math.Min(pattern.Length, data.Length - position);
-                Array.Copy(pattern, 0, data, position, copyCount);
+                Buffer.BlockCopy(pattern, 0, data, position, copyCount);
                 position += copyCount;
             }
 
