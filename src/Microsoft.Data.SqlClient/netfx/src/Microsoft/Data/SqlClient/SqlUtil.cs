@@ -461,9 +461,9 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_AuthenticationAndIntegratedSecurity));
         }
-        static internal Exception IntegratedWithUserIDAndPassword()
+        static internal Exception IntegratedWithPassword()
         {
-            return ADP.Argument(StringsHelper.GetString(Strings.SQL_IntegratedWithUserIDAndPassword));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_IntegratedWithPassword));
         }
         static internal Exception InteractiveWithPassword()
         {
