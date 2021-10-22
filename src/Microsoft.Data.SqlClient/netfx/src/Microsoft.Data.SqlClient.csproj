@@ -522,6 +522,9 @@
     <Compile Include="..\..\src\Microsoft\Data\Common\AdapterUtil.cs">
       <Link>Microsoft\Data\Common\AdapterUtil.cs</Link>
     </Compile>
+    <Compile Include="..\..\netcore\src\Microsoft\Data\SqlClient\AadTokenRequestContext.cs">
+      <Link>Microsoft\Data\SqlClient\AadTokenRequestContext.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Microsoft\Data\Interop\SNINativeManagedWrapperX64.cs" />

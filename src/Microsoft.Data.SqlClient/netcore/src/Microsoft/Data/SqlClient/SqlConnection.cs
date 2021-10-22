@@ -707,9 +707,8 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw new ArgumentNullException(nameof(AccessTokenCallback), "Callback cannot be null.");
                 }
-                SqlAuthenticationProvider.SetProvider(
-                    SqlAuthenticationMethod.ActiveDirectoryTokenCredential,
-                    new ActiveDirectoryTokenCallbackAuthenticationProvider(value));
+
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, null, value));
                 _accessTokenCallback = value;
             }
         }

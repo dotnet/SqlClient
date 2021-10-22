@@ -127,6 +127,7 @@ namespace Microsoft.Data.SqlClient
         // The Federated Authentication returned by TryGetFedAuthTokenLocked or GetFedAuthToken.
         SqlFedAuthToken _fedAuthToken = null;
         internal byte[] _accessTokenInBytes;
+        internal readonly Func<AadTokenRequestContext,CancellationToken,Task<SqlAuthenticationToken>> _accessTokenCallback;
 
         private readonly ActiveDirectoryAuthenticationTimeoutRetryHelper _activeDirectoryAuthTimeoutRetryHelper;
         private readonly SqlAuthenticationProviderManager _sqlAuthenticationProviderManager;
@@ -431,19 +432,19 @@ namespace Microsoft.Data.SqlClient
         // the new Login7 packet will always write out the new password (or a length of zero and no bytes if not present)
         //
         internal SqlInternalConnectionTds(
-                DbConnectionPoolIdentity identity,
-                SqlConnectionString connectionOptions,
-                SqlCredential credential,
-                object providerInfo,
-                string newPassword,
-                SecureString newSecurePassword,
-                bool redirectedUserInstance,
-                SqlConnectionString userConnectionOptions = null, // NOTE: userConnectionOptions may be different to connectionOptions if the connection string has been expanded (see SqlConnectionString.Expand)
-                SessionData reconnectSessionData = null,
-                bool applyTransientFaultHandling = false,
-                string accessToken = null,
-                DbConnectionPool pool = null
-                ) : base(connectionOptions)
+            DbConnectionPoolIdentity identity,
+            SqlConnectionString connectionOptions,
+            SqlCredential credential,
+            object providerInfo,
+            string newPassword,
+            SecureString newSecurePassword,
+            bool redirectedUserInstance,
+            SqlConnectionString userConnectionOptions = null, // NOTE: userConnectionOptions may be different to connectionOptions if the connection string has been expanded (see SqlConnectionString.Expand)
+            SessionData reconnectSessionData = null,
+            bool applyTransientFaultHandling = false,
+            string accessToken = null,
+            DbConnectionPool pool = null,
+            Func<AadTokenRequestContext, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback = null) : base(connectionOptions)
 
         {
 #if DEBUG
@@ -474,6 +475,10 @@ namespace Microsoft.Data.SqlClient
             if (accessToken != null)
             {
                 _accessTokenInBytes = System.Text.Encoding.Unicode.GetBytes(accessToken);
+            }
+            if (accessTokenCallback != null)
+            {
+                _accessTokenCallback = accessTokenCallback;
             }
 
             _activeDirectoryAuthTimeoutRetryHelper = new ActiveDirectoryAuthenticationTimeoutRetryHelper();
@@ -1343,6 +1348,18 @@ namespace Microsoft.Data.SqlClient
                 _federatedAuthenticationRequested = true;
             }
 
+            if (_accessTokenCallback != null)
+            {
+                requestedFeatures |= TdsEnums.FeatureExtension.FedAuth;
+                _fedAuthFeatureExtensionData = new FederatedAuthenticationFeatureExtensionData
+                {
+                    libraryType = TdsEnums.FedAuthLibrary.SecurityTokenCallback,
+                    fedAuthRequiredPreLoginResponse = _fedAuthRequired,
+                };
+                // No need any further info from the server for token based authentication. So set _federatedAuthenticationRequested to true
+                _federatedAuthenticationInfoRequested = true;
+            }
+
             // The GLOBALTRANSACTIONS, DATACLASSIFICATION, TCE, and UTF8 support features are implicitly requested
             requestedFeatures |= TdsEnums.FeatureExtension.GlobalTransactions | TdsEnums.FeatureExtension.DataClassification | TdsEnums.FeatureExtension.Tce | TdsEnums.FeatureExtension.UTF8Support;
 
@@ -2120,6 +2137,7 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert((ConnectionOptions._hasUserIdKeyword && ConnectionOptions._hasPasswordKeyword)
                          || _credential != null
+                         || _accessTokenCallback != null
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow
                          || ConnectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
@@ -2321,7 +2339,7 @@ namespace Microsoft.Data.SqlClient
             string username = null;
 
             var authProvider = _sqlAuthenticationProviderManager.GetProvider(ConnectionOptions.Authentication);
-            if (authProvider == null)
+            if (authProvider == null && _accessTokenCallback == null)
                 throw SQL.CannotFindAuthProvider(ConnectionOptions.Authentication.ToString());
 
             // retry getting access token once if MsalException.error_code is unknown_error.
@@ -2339,75 +2357,109 @@ namespace Microsoft.Data.SqlClient
                         databaseName: ConnectionOptions.InitialCatalog)
                         .WithConnectionId(_clientConnectionId)
                         .WithConnectionTimeout(ConnectionOptions.ConnectTimeout);
-                    switch (ConnectionOptions.Authentication)
+                    if (_accessTokenCallback != null)
                     {
-                        case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
-                            // In some scenarios for .NET Core, MSAL cannot detect the current user and needs it passed in
-                            // for Integrated auth. Allow the user/application to pass it in to work around those scenarios.
-                            if (!string.IsNullOrEmpty(ConnectionOptions.UserID))
-                            {
-                                username = ConnectionOptions.UserID;
-                                authParamsBuilder.WithUserId(username);
-                            }
-                            else
-                            {
-                                username = TdsEnums.NTAUTHORITYANONYMOUSLOGON;
-                            }
-
-                            if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
-                            {
-                                _fedAuthToken = _activeDirectoryAuthTimeoutRetryHelper.CachedToken;
-                            }
-                            else
-                            {
-                                // We use Task.Run here in all places to execute task synchronously in the same context.
-                                // Fixes block-over-async deadlock possibilities https://github.com/dotnet/SqlClient/issues/1209
-                                _fedAuthToken = Task.Run(async () => await authProvider.AcquireTokenAsync(authParamsBuilder)).GetAwaiter().GetResult().ToSqlFedAuthToken();
-                                _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
-                            }
-                            break;
-                        case SqlAuthenticationMethod.ActiveDirectoryInteractive:
-                        case SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow:
-                        case SqlAuthenticationMethod.ActiveDirectoryManagedIdentity:
-                        case SqlAuthenticationMethod.ActiveDirectoryMSI:
-                        case SqlAuthenticationMethod.ActiveDirectoryDefault:
-                        case SqlAuthenticationMethod.ActiveDirectoryTokenCredential:
-                            if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
-                            {
-                                _fedAuthToken = _activeDirectoryAuthTimeoutRetryHelper.CachedToken;
-                            }
-                            else
-                            {
-                                authParamsBuilder.WithUserId(ConnectionOptions.UserID);
-                                _fedAuthToken = Task.Run(async () => await authProvider.AcquireTokenAsync(authParamsBuilder)).GetAwaiter().GetResult().ToSqlFedAuthToken();
-                                _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
-                            }
-                            break;
-                        case SqlAuthenticationMethod.ActiveDirectoryPassword:
-                        case SqlAuthenticationMethod.ActiveDirectoryServicePrincipal:
-                            if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
-                            {
-                                _fedAuthToken = _activeDirectoryAuthTimeoutRetryHelper.CachedToken;
-                            }
-                            else
-                            {
-                                if (_credential != null)
+                        if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
+                        {
+                            _fedAuthToken = _activeDirectoryAuthTimeoutRetryHelper.CachedToken;
+                        }
+                        else
+                        {
+                            authParamsBuilder.WithUserId(ConnectionOptions.UserID);
+                            SqlAuthenticationParameters parameters = authParamsBuilder;
+                            CancellationTokenSource cts = new();
+                            // Use Connection timeout value to cancel token acquire request after certain period of time.
+                            cts.CancelAfter(parameters.ConnectionTimeout * 1000); // Convert to milliseconds
+                            _fedAuthToken = Task.Run(async () => await _accessTokenCallback(new AadTokenRequestContext(parameters.Resource), cts.Token))
+                                .GetAwaiter()
+                                .GetResult()
+                                .ToSqlFedAuthToken();
+                            _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
+                        }
+                    }
+                    else
+                    {
+                        switch (ConnectionOptions.Authentication)
+                        {
+                            case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
+                                // In some scenarios for .NET Core, MSAL cannot detect the current user and needs it passed in
+                                // for Integrated auth. Allow the user/application to pass it in to work around those scenarios.
+                                if (!string.IsNullOrEmpty(ConnectionOptions.UserID))
                                 {
-                                    username = _credential.UserId;
-                                    authParamsBuilder.WithUserId(username).WithPassword(_credential.Password);
-                                    _fedAuthToken = Task.Run(async () => await authProvider.AcquireTokenAsync(authParamsBuilder)).GetAwaiter().GetResult().ToSqlFedAuthToken();
+                                    username = ConnectionOptions.UserID;
+                                    authParamsBuilder.WithUserId(username);
                                 }
                                 else
                                 {
-                                    username = ConnectionOptions.UserID;
-                                    authParamsBuilder.WithUserId(username).WithPassword(ConnectionOptions.Password);
-                                    _fedAuthToken = Task.Run(async () => await authProvider.AcquireTokenAsync(authParamsBuilder)).GetAwaiter().GetResult().ToSqlFedAuthToken();
+                                    username = TdsEnums.NTAUTHORITYANONYMOUSLOGON;
                                 }
-                                _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
-                            }
-                            break;
-                        default:
-                            throw SQL.UnsupportedAuthenticationSpecified(ConnectionOptions.Authentication);
+
+                                if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
+                                {
+                                    _fedAuthToken = _activeDirectoryAuthTimeoutRetryHelper.CachedToken;
+                                }
+                                else
+                                {
+                                    // We use Task.Run here in all places to execute task synchronously in the same context.
+                                    // Fixes block-over-async deadlock possibilities https://github.com/dotnet/SqlClient/issues/1209
+                                    _fedAuthToken = Task.Run(async () => await authProvider.AcquireTokenAsync(authParamsBuilder))
+                                        .GetAwaiter()
+                                        .GetResult()
+                                        .ToSqlFedAuthToken();
+                                    _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
+                                }
+                                break;
+                            case SqlAuthenticationMethod.ActiveDirectoryInteractive:
+                            case SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow:
+                            case SqlAuthenticationMethod.ActiveDirectoryManagedIdentity:
+                            case SqlAuthenticationMethod.ActiveDirectoryMSI:
+                            case SqlAuthenticationMethod.ActiveDirectoryDefault:
+                                if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
+                                {
+                                    _fedAuthToken = _activeDirectoryAuthTimeoutRetryHelper.CachedToken;
+                                }
+                                else
+                                {
+                                    authParamsBuilder.WithUserId(ConnectionOptions.UserID);
+                                    _fedAuthToken = Task.Run(async () => await authProvider.AcquireTokenAsync(authParamsBuilder))
+                                        .GetAwaiter()
+                                        .GetResult()
+                                        .ToSqlFedAuthToken();
+                                    _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
+                                }
+                                break;
+                            case SqlAuthenticationMethod.ActiveDirectoryPassword:
+                            case SqlAuthenticationMethod.ActiveDirectoryServicePrincipal:
+                                if (_activeDirectoryAuthTimeoutRetryHelper.State == ActiveDirectoryAuthenticationTimeoutRetryState.Retrying)
+                                {
+                                    _fedAuthToken = _activeDirectoryAuthTimeoutRetryHelper.CachedToken;
+                                }
+                                else
+                                {
+                                    if (_credential != null)
+                                    {
+                                        username = _credential.UserId;
+                                        authParamsBuilder.WithUserId(username).WithPassword(_credential.Password);
+                                        _fedAuthToken = Task.Run(async () => await authProvider.AcquireTokenAsync(authParamsBuilder))
+                                            .GetAwaiter()
+                                            .GetResult()
+                                            .ToSqlFedAuthToken();
+                                    }
+                                    else
+                                    {
+                                        username = ConnectionOptions.UserID;
+                                        authParamsBuilder.WithUserId(username).WithPassword(ConnectionOptions.Password);
+                                        _fedAuthToken = Task.Run(async () => await authProvider.AcquireTokenAsync(authParamsBuilder))
+                                            .GetAwaiter()
+                                            .GetResult()
+                                            .ToSqlFedAuthToken();
+                                    }
+                                    _activeDirectoryAuthTimeoutRetryHelper.CachedToken = _fedAuthToken;
+                                }
+                                break;
+                            default:
+                                throw SQL.UnsupportedAuthenticationSpecified(ConnectionOptions.Authentication);
+                        }
                     }
 
                     Debug.Assert(_fedAuthToken.accessToken != null, "AccessToken should not be null.");
@@ -2587,6 +2639,7 @@ namespace Microsoft.Data.SqlClient
 
                         switch (_fedAuthFeatureExtensionData.libraryType)
                         {
+                            case TdsEnums.FedAuthLibrary.SecurityTokenCallback:
                             case TdsEnums.FedAuthLibrary.MSAL:
                             case TdsEnums.FedAuthLibrary.SecurityToken:
                                 // The server shouldn't have sent any additional data with the ack (like a nonce)

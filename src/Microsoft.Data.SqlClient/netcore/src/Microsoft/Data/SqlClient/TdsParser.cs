@@ -935,7 +935,7 @@ namespace Microsoft.Data.SqlClient
                             uint error = 0;
 
                             // Validate Certificate if Trust Server Certificate=false and Encryption forced (EncryptionOptions.ON) from Server.
-                            bool shouldValidateServerCert = (_encryptionOption == EncryptionOptions.ON && !trustServerCert) || (_connHandler._accessTokenInBytes != null && !trustServerCert);
+                            bool shouldValidateServerCert = (_encryptionOption == EncryptionOptions.ON && !trustServerCert) || ((_connHandler._accessTokenInBytes != null || _connHandler._accessTokenCallback != null )&& !trustServerCert);
                             uint info = (shouldValidateServerCert ? TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE : 0)
                                 | (isYukonOrLater ? TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE : 0);
 
@@ -1025,7 +1025,7 @@ namespace Microsoft.Data.SqlClient
                         // Or AccessToken is not null, mean token based authentication is used.
                         if ((_connHandler.ConnectionOptions != null
                             && _connHandler.ConnectionOptions.Authentication != SqlAuthenticationMethod.NotSpecified)
-                            || _connHandler._accessTokenInBytes != null)
+                            || _connHandler._accessTokenInBytes != null || _connHandler._accessTokenCallback != null)
                         {
                             fedAuthRequired = payload[payloadOffset] == 0x01 ? true : false;
                         }
@@ -7752,7 +7752,7 @@ namespace Microsoft.Data.SqlClient
         internal int WriteFedAuthFeatureRequest(FederatedAuthenticationFeatureExtensionData fedAuthFeatureData,
                                                 bool write /* if false just calculates the length */)
         {
-            Debug.Assert(fedAuthFeatureData.libraryType == TdsEnums.FedAuthLibrary.MSAL || fedAuthFeatureData.libraryType == TdsEnums.FedAuthLibrary.SecurityToken,
+            Debug.Assert(fedAuthFeatureData.libraryType == TdsEnums.FedAuthLibrary.MSAL || fedAuthFeatureData.libraryType == TdsEnums.FedAuthLibrary.SecurityToken || fedAuthFeatureData.libraryType == TdsEnums.FedAuthLibrary.SecurityTokenCallback,
                 "only fed auth library type MSAL and Security Token are supported in writing feature request");
 
             int dataLen = 0;
@@ -7761,6 +7761,7 @@ namespace Microsoft.Data.SqlClient
             // set dataLen and totalLen
             switch (fedAuthFeatureData.libraryType)
             {
+                case TdsEnums.FedAuthLibrary.SecurityTokenCallback:
                 case TdsEnums.FedAuthLibrary.MSAL:
                     dataLen = 2;  // length of feature data = 1 byte for library and echo + 1 byte for workflow
                     break;
@@ -7786,6 +7787,7 @@ namespace Microsoft.Data.SqlClient
                 // set upper 7 bits of options to indicate fed auth library type
                 switch (fedAuthFeatureData.libraryType)
                 {
+                    case TdsEnums.FedAuthLibrary.SecurityTokenCallback:
                     case TdsEnums.FedAuthLibrary.MSAL:
                         Debug.Assert(_connHandler._federatedAuthenticationInfoRequested == true, "_federatedAuthenticationInfoRequested field should be true");
                         options |= TdsEnums.FEDAUTHLIB_MSAL << 1;
@@ -7847,6 +7849,9 @@ namespace Microsoft.Data.SqlClient
                     case TdsEnums.FedAuthLibrary.SecurityToken:
                         WriteInt(fedAuthFeatureData.accessToken.Length, _physicalStateObj);
                         _physicalStateObj.WriteByteArray(fedAuthFeatureData.accessToken, fedAuthFeatureData.accessToken.Length, 0);
+                        break;
+                    case TdsEnums.FedAuthLibrary.SecurityTokenCallback:
+                        _physicalStateObj.WriteByte(TdsEnums.MSALWORKFLOW_ACTIVEDIRECTORYTOKENCREDENTIAL);
                         break;
                     default:
                         Debug.Fail("Unrecognized FedAuthLibrary type for feature extension request");
