@@ -2493,8 +2493,8 @@
   <data name="SQL_AuthenticationAndIntegratedSecurity" xml:space="preserve">
     <value>Нельзя использовать 'Authentication' с 'Integrated Security'.</value>
   </data>
-  <data name="SQL_IntegratedWithUserIDAndPassword" xml:space="preserve">
-    <value>Невозможно использовать "Authentication=Active Directory Integrated" с ключевыми словами строки подключения "User ID", "UID", "Password" или "PWD".</value>
+  <data name="SQL_IntegratedWithPassword" xml:space="preserve">
+    <value>Невозможно использовать "Authentication=Active Directory Integrated" с ключевыми словами "Password" или "PWD" в строке подключения.</value>
   </data>
   <data name="SQL_InteractiveWithPassword" xml:space="preserve">
     <value>Невозможно использовать "Authentication=Active Directory Interactive" с ключевыми словами "Password" или "PWD" в строке подключения.</value>

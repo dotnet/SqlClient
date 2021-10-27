@@ -163,6 +163,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlDataRecord.netcore.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlDataRecord.netcore.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SmiXetterAccessMap.Common.cs">
+      <Link>Microsoft\Data\SqlClient\Server\SmiXetterAccessMap.Common.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SmiMetaDataProperty.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiMetaDataProperty.cs</Link>
     </Compile>
@@ -261,6 +264,9 @@
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlConnectionPoolProviderInfo.cs">
       <Link>Microsoft\Data\SqlClient\SqlConnectionPoolProviderInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlConnectionString.cs">
+      <Link>Microsoft\Data\SqlClient\SqlConnectionString.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlCredential.cs">
       <Link>Microsoft\Data\SqlClient\SqlCredential.cs</Link>
@@ -493,7 +499,6 @@
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netcoreapp'">
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPool.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.NetCoreApp.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlConnectionString.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDiagnosticListener.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.NetCoreApp.cs" />
@@ -521,7 +526,6 @@
     </EmbeddedResource>
     <Compile Include="Microsoft\Data\SqlClient\AAsyncCallContext.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\MetadataUtilsSmi.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\Server\SmiXetterAccessMap.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDbColumn.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
     <Compile Include="$(CommonPath)\Microsoft\Data\ProviderBase\DbConnectionInternal.cs">
@@ -550,6 +554,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\EnclavePackage.cs">
       <Link>Microsoft\Data\SqlClient\EnclavePackage.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlSequentialStream.cs">
+      <Link>Microsoft\Data\SqlClient\SqlSequentialStream.cs</Link>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.cs" />
 
     <Compile Include="Microsoft\Data\SqlClient\Server\SqlSer.cs" />
@@ -562,7 +569,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlConnection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionFactory.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionHelper.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlConnectionString.cs" />
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlConnectionTimeoutErrorInternal.cs">
       <Link>Microsoft\Data\SqlClient\SqlConnectionTimeoutErrorInternal.cs</Link>
     </Compile>
@@ -578,7 +584,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalTransaction.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlParameter.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlSequentialStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlSequentialTextReader.cs" />
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlStatistics.cs">
       <Link>Microsoft\Data\SqlClient\SqlStatistics.cs</Link>
@@ -609,7 +614,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIMarsQueuedPacket.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNINpHandle.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIPacket.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIPacket.Debug.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIPhysicalHandle.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIProxy.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIStreams.cs" />

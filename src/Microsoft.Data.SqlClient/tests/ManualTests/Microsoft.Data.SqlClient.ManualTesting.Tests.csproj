@@ -13,22 +13,29 @@
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform).$(AssemblyName)</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration).$(Platform).$(AssemblyName)</OutputPath>
   </PropertyGroup>
-  <ItemGroup Condition="!$(ReferenceType.Contains('NetStandard'))">
+  <ItemGroup Condition="!$(ReferenceType.Contains('NetStandard')) and ('$(TestSet)' == '' or '$(TestSet)' == 'AE')">
     <Compile Include="AlwaysEncrypted\CoreCryptoTests.cs" />
     <Compile Include="AlwaysEncrypted\ConversionTests.cs" />
     <Compile Include="AlwaysEncrypted\ExceptionsGenericError.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CryptoVector.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CryptoNativeBaselineReader.cs" />
     <Compile Include="AlwaysEncrypted\TestTrustedMasterKeyPaths.cs" />
+    <Content Include="AlwaysEncrypted\TestFixtures\Setup\TCECryptoNativeBaseline.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>TCECryptoNativeBaseline.txt</Link>
+    </Content>
+    <Content Include="AlwaysEncrypted\TestFixtures\Setup\TCECryptoNativeBaselineRsa.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>TCECryptoNativeBaselineRsa.txt</Link>
+    </Content>
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetsWindows)' == 'true' and !$(ReferenceType.Contains('NetStandard'))">
+  <ItemGroup Condition="'$(TargetsWindows)' == 'true' AND !$(ReferenceType.Contains('NetStandard')) AND ('$(TestSet)' == '' OR '$(TestSet)' == 'AE')" >
     <Compile Include="AlwaysEncrypted\CspProviderExt.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CertificateUtilityWin.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CspProviderColumnMasterKey.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\SQLSetupStrategyCspExt.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="DataCommon\SqlClientCustomTokenCredential.cs" />
+  <ItemGroup Condition="'$(TestSet)' == '' OR '$(TestSet)' == 'AE'">
     <Compile Include="AlwaysEncrypted\AKVTests.cs" />
     <Compile Include="AlwaysEncrypted\AKVUnitTests.cs" />
     <Compile Include="AlwaysEncrypted\EnclaveAzureDatabaseTests.cs" />
@@ -61,96 +68,47 @@
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\DummyKeyStoreProvider.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\DummyProviderMasterKey.cs" />
     <Compile Include="AlwaysEncrypted\TestFixtures\Setup\CertificateUtility.cs" />
-    <Compile Include="$(CommonTestPath)\System\Collections\DictionaryExtensions.cs">
-      <Link>Common\System\Collections\DictionaryExtensions.cs</Link>
-    </Compile>
-    <Compile Include="DataCommon\AADUtility.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TestSet)' == '' OR '$(TestSet)' == '1'">
+    <Compile Include="SQL\AsyncTest\AsyncTimeoutTest.cs" />
+    <Compile Include="SQL\AsyncTest\BeginExecAsyncTest.cs" />
+    <Compile Include="SQL\AsyncTest\BeginExecReaderAsyncTest.cs" />
+    <Compile Include="SQL\AsyncTest\XmlReaderAsyncTest.cs" />
+    <Compile Include="SQL\AsyncTest\AsyncTest.cs" />
+    <Compile Include="SQL\AsyncTest\AsyncCancelledConnectionsTest.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TestSet)' == '' OR '$(TestSet)' == '2'">
+    <Compile Include="SQL\AdapterTest\AdapterTest.cs" />
     <Compile Include="SQL\ConfigurableIpPreferenceTest\ConfigurableIpPreferenceTest.cs" />
+    <Compile Include="SQL\ConnectivityTests\AADConnectionTest.cs" />
+    <Compile Include="SQL\ConnectivityTests\ConnectionBehaviorTest.cs" />
+    <Compile Include="SQL\ConnectivityTests\ConnectivityTest.cs" />
+    <Compile Include="SQL\ConnectivityTests\TcpDefaultForAzureTest.cs" />
+    <Compile Include="SQL\DataBaseSchemaTest\ConnectionSchemaTest.cs" />
+    <Compile Include="SQL\DataClassificationTest\DataClassificationTest.cs" />
     <Compile Include="SQL\DataReaderTest\DataReaderStreamsTest.cs" />
-    <Compile Include="SQL\KerberosTests\KerberosTest.cs" />
-    <Compile Include="SQL\KerberosTests\KerberosTicketManager\KerberosTicketManager.cs" />
+    <Compile Include="SQL\DataReaderTest\DataReaderTest.cs" />
+    <Compile Include="SQL\DataStreamTest\DataStreamTest.cs" />
+    <Compile Include="SQL\DateTimeTest\DateTimeTest.cs" />
+    <Compile Include="SQL\DNSCachingTest\DNSCachingTest.cs" />
+    <Compile Include="SQL\ExceptionTest\ConnectionExceptionTest.cs" />
+    <Compile Include="SQL\ExceptionTest\ExceptionTest.cs" />
+    <Compile Include="SQL\RandomStressTest\Randomizer.cs" />
+    <Compile Include="SQL\RandomStressTest\RandomizerPool.cs" />
+    <Compile Include="SQL\RandomStressTest\SqlRandomColumnOptions.cs" />
+    <Compile Include="SQL\RandomStressTest\SqlRandomizer.cs" />
+    <Compile Include="SQL\RandomStressTest\SqlRandomTable.cs" />
+    <Compile Include="SQL\RandomStressTest\SqlRandomTableColumn.cs" />
+    <Compile Include="SQL\RandomStressTest\SqlRandomTypeInfo.cs" />
+    <Compile Include="SQL\RandomStressTest\SqlRandomTypeInfoCollection.cs" />
+    <Compile Include="SQL\RandomStressTest\SqlRandomTypesForSqlServer.cs" />
+    <Compile Include="SQL\RandomStressTest\RandomStressTest.cs" />
     <Compile Include="SQL\RetryLogic\RetryLogicCounterTest.cs" />
     <Compile Include="SQL\RetryLogic\RetryLogicConfigHelper.cs" />
     <Compile Include="SQL\RetryLogic\RetryLogicTestHelper.cs" />
     <Compile Include="SQL\RetryLogic\SqlCommandReliabilityTest.cs" />
     <Compile Include="SQL\RetryLogic\SqlConnectionReliabilityTest.cs" />
     <Compile Include="SQL\RetryLogic\SqlConfigurationManagerReliabilityTest.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\KeepNulls.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\OrderHint.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\OrderHintAsync.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\OrderHintDuplicateColumn.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\OrderHintIdentityColumn.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\OrderHintMissingTargetColumn.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\OrderHintTransaction.cs" />
-    <Compile Include="SQL\DataClassificationTest\DataClassificationTest.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\TableLock.cs" />
-    <Compile Include="TracingTests\EventSourceTest.cs" />
-    <Compile Include="SQL\AdapterTest\AdapterTest.cs" />
-    <Compile Include="SQL\AsyncTest\AsyncTimeoutTest.cs" />
-    <Compile Include="SQL\AsyncTest\BeginExecAsyncTest.cs" />
-    <Compile Include="SQL\AsyncTest\BeginExecReaderAsyncTest.cs" />
-    <Compile Include="SQL\AsyncTest\XmlReaderAsyncTest.cs" />
-    <Compile Include="SQL\Common\AsyncDebugScope.cs" />
-    <Compile Include="SQL\Common\ConnectionPoolWrapper.cs" />
-    <Compile Include="SQL\Common\InternalConnectionWrapper.cs" />
-    <Compile Include="SQL\Common\SystemDataExtensions.cs" />
-    <Compile Include="SQL\Common\SystemDataInternals\CommandHelper.cs" />
-    <Compile Include="SQL\Common\SystemDataInternals\ConnectionHelper.cs" />
-    <Compile Include="SQL\Common\SystemDataInternals\ConnectionPoolHelper.cs" />
-    <Compile Include="SQL\Common\SystemDataInternals\DataReaderHelper.cs" />
-    <Compile Include="SQL\Common\SystemDataInternals\TdsParserHelper.cs" />
-    <Compile Include="SQL\Common\SystemDataInternals\TdsParserStateObjectHelper.cs" />
-    <Compile Include="DataCommon\AssemblyResourceManager.cs" />
-    <Compile Include="DataCommon\DataSourceBuilder.cs" />
-    <Compile Include="DataCommon\DataTestUtility.cs" />
-    <Compile Include="DataCommon\ProxyServer.cs" />
-    <Compile Include="DataCommon\SystemDataResourceManager.cs" />
-    <Compile Include="SQL\ConnectivityTests\ConnectionBehaviorTest.cs" />
-    <Compile Include="SQL\ConnectivityTests\AADConnectionTest.cs" />
-    <Compile Include="SQL\ConnectivityTests\TcpDefaultForAzureTest.cs" />
-    <Compile Include="SQL\ParameterTest\DateTimeVariantTest.cs" />
-    <Compile Include="SQL\ParameterTest\OutputParameter.cs" />
-    <Compile Include="SQL\ParameterTest\ParametersTest.cs" />
-    <Compile Include="SQL\ParameterTest\SqlAdapterUpdateBatch.cs" />
-    <Compile Include="SQL\ParameterTest\SqlVariantParam.cs" />
-    <Compile Include="SQL\ParameterTest\SteAttribute.cs" />
-    <Compile Include="SQL\ParameterTest\SteParam.cs" />
-    <Compile Include="SQL\ParameterTest\StePermutationSet.cs" />
-    <Compile Include="SQL\ParameterTest\SteTypeBoundaries.cs" />
-    <Compile Include="SQL\ParameterTest\StreamInputParam.cs" />
-    <Compile Include="SQL\ParameterTest\TvpTest.cs" />
-    <Compile Include="DDBasics\DDAsyncTest\DDAsyncTest.cs" />
-    <Compile Include="DDBasics\DDDataTypesTest\DDDataTypesTest.cs" />
-    <Compile Include="DDBasics\DDMARSTest\DDMARSTest.cs" />
-    <Compile Include="ProviderAgnostic\MultipleResultsTest\MultipleResultsTest.cs" />
-    <Compile Include="ProviderAgnostic\ReaderTest\ReaderTest.cs" />
-    <Compile Include="SQL\AsyncTest\AsyncTest.cs" />
-    <Compile Include="SQL\AsyncTest\AsyncCancelledConnectionsTest.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\DataConversionErrorMessageTest.cs" />
-    <Compile Include="SQL\SqlCommand\SqlCommandCompletedTest.cs" />
-    <Compile Include="SQL\SqlCommand\SqlCommandCancelTest.cs" />
-    <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.cs" />
-    <Compile Include="SQL\ConnectionPoolTest\PoolBlockPeriodTest.cs" />
-    <Compile Include="SQL\ConnectivityTests\ConnectivityTest.cs" />
-    <Compile Include="SQL\DataBaseSchemaTest\ConnectionSchemaTest.cs" />
-    <Compile Include="SQL\DataReaderTest\DataReaderTest.cs" />
-    <Compile Include="SQL\ExceptionTest\ExceptionTest.cs" />
-    <Compile Include="SQL\ExceptionTest\ConnectionExceptionTest.cs" />
-    <Compile Include="SQL\DataStreamTest\DataStreamTest.cs" />
-    <Compile Include="SQL\DateTimeTest\DateTimeTest.cs" />
-    <Compile Include="SQL\InstanceNameTest\InstanceNameTest.cs" />
-    <Compile Include="SQL\IntegratedAuthenticationTest\IntegratedAuthenticationTest.cs" />
-    <Compile Include="SQL\LocalDBTest\LocalDBTest.cs" />
-    <Compile Include="SQL\MARSSessionPoolingTest\MARSSessionPoolingTest.cs" />
-    <Compile Include="SQL\MARSTest\MARSTest.cs" />
-    <Compile Include="SQL\MirroringTest\ConnectionOnMirroringTest.cs" />
-    <Compile Include="SQL\ParallelTransactionsTest\ParallelTransactionsTest.cs" />
-    <Compile Include="SQL\SqlBulkCopyTest\CopyWidenNullInexactNumerics.cs" />
-    <Compile Include="SQL\SqlCommand\SqlCommandSetTest.cs" />
-    <Compile Include="SQL\SqlCredentialTest\SqlCredentialTest.cs" />
-    <Compile Include="SQL\SqlDependencyTest\SqlDependencyTest.cs" />
-    <Compile Include="SQL\SqlSchemaInfoTest\SqlSchemaInfoTest.cs" />
-    <Compile Include="SQL\SqlStatisticsTest\SqlStatisticsTest.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\AdjustPrecScaleForBulkCopy.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\AzureDistributedTransaction.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\ErrorOnRowsMarkedAsDeleted.cs" />
@@ -190,20 +148,46 @@
     <Compile Include="SQL\SqlBulkCopyTest\Transaction4.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\TransactionTestAsync.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\SpecialCharacterNames.cs" />
-    <Compile Include="SQL\SqlNamedPipesTest\SqlNamedPipesTest.cs" />
-    <Compile Include="SQL\RandomStressTest\Randomizer.cs" />
-    <Compile Include="SQL\RandomStressTest\RandomizerPool.cs" />
-    <Compile Include="SQL\RandomStressTest\SqlRandomColumnOptions.cs" />
-    <Compile Include="SQL\RandomStressTest\SqlRandomizer.cs" />
-    <Compile Include="SQL\RandomStressTest\SqlRandomTable.cs" />
-    <Compile Include="SQL\RandomStressTest\SqlRandomTableColumn.cs" />
-    <Compile Include="SQL\RandomStressTest\SqlRandomTypeInfo.cs" />
-    <Compile Include="SQL\RandomStressTest\SqlRandomTypeInfoCollection.cs" />
-    <Compile Include="SQL\RandomStressTest\SqlRandomTypesForSqlServer.cs" />
-    <Compile Include="SQL\RandomStressTest\RandomStressTest.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\KeepNulls.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\OrderHint.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\OrderHintAsync.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\OrderHintDuplicateColumn.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\OrderHintIdentityColumn.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\OrderHintMissingTargetColumn.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\OrderHintTransaction.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\TableLock.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\DataConversionErrorMessageTest.cs" />
+    <Compile Include="SQL\SqlBulkCopyTest\CopyWidenNullInexactNumerics.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TestSet)' == '' OR '$(TestSet)' == '3'">
+    <Compile Include="DDBasics\DDAsyncTest\DDAsyncTest.cs" />
+    <Compile Include="DDBasics\DDDataTypesTest\DDDataTypesTest.cs" />
+    <Compile Include="DDBasics\DDMARSTest\DDMARSTest.cs" />
+    <Compile Include="ProviderAgnostic\MultipleResultsTest\MultipleResultsTest.cs" />
+    <Compile Include="ProviderAgnostic\ReaderTest\ReaderTest.cs" />
+    <Compile Include="TracingTests\EventSourceTest.cs" />
+    <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.cs" />
+    <Compile Include="SQL\ConnectionPoolTest\PoolBlockPeriodTest.cs" />
+    <Compile Include="SQL\InstanceNameTest\InstanceNameTest.cs" />
+    <Compile Include="SQL\IntegratedAuthenticationTest\IntegratedAuthenticationTest.cs" />
+    <Compile Include="SQL\KerberosTests\KerberosTest.cs" />
+    <Compile Include="SQL\KerberosTests\KerberosTicketManager\KerberosTicketManager.cs" />
+    <Compile Include="SQL\LocalDBTest\LocalDBTest.cs" />
+    <Compile Include="SQL\MARSSessionPoolingTest\MARSSessionPoolingTest.cs" />
+    <Compile Include="SQL\MARSTest\MARSTest.cs" />
+    <Compile Include="SQL\MirroringTest\ConnectionOnMirroringTest.cs" />
+    <Compile Include="SQL\ParallelTransactionsTest\ParallelTransactionsTest.cs" />
     <Compile Include="SQL\SplitPacketTest\SplitPacketTest.cs" />
-    <Compile Include="SQL\SqlNotificationTest\SqlNotificationTest.cs" />
+    <Compile Include="SQL\SqlCommand\SqlCommandCompletedTest.cs" />
+    <Compile Include="SQL\SqlCommand\SqlCommandCancelTest.cs" />
+    <Compile Include="SQL\SqlCommand\SqlCommandSetTest.cs" />
+    <Compile Include="SQL\SqlCredentialTest\SqlCredentialTest.cs" />
+    <Compile Include="SQL\SqlDependencyTest\SqlDependencyTest.cs" />
     <Compile Include="SQL\SqlFileStreamTest\SqlFileStreamTest.cs" />
+    <Compile Include="SQL\SqlNamedPipesTest\SqlNamedPipesTest.cs" />
+    <Compile Include="SQL\SqlNotificationTest\SqlNotificationTest.cs" />
+    <Compile Include="SQL\SqlSchemaInfoTest\SqlSchemaInfoTest.cs" />
+    <Compile Include="SQL\SqlStatisticsTest\SqlStatisticsTest.cs" />
     <Compile Include="SQL\TransactionTest\TransactionTest.cs" />
     <Compile Include="SQL\TransactionTest\TransactionEnlistmentTest.cs" />
     <Compile Include="SQL\UdtTest\SqlServerTypesTest.cs" />
@@ -214,17 +198,17 @@
     <Compile Include="SQL\Utf8SupportTest\Utf8SupportTest.cs" />
     <Compile Include="SQL\WeakRefTest\WeakRefTest.cs" />
     <Compile Include="SQL\WeakRefTestYukonSpecific\WeakRefTestYukonSpecific.cs" />
-    <Compile Include="SQL\DNSCachingTest\DNSCachingTest.cs" />
-    <Compile Include="TracingTests\TestTdsServer.cs" />
-    <Compile Include="XUnitAssemblyAttributes.cs" />
-    <Content Include="DDBasics\DDDataTypesTest\data.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>data.xml</Link>
-    </Content>
-    <Content Include="ProviderAgnostic\MultipleResultsTest\MultipleResultsTest.bsl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>MultipleResultsTest.bsl</Link>
-    </Content>
+    <Compile Include="SQL\ParameterTest\DateTimeVariantTest.cs" />
+    <Compile Include="SQL\ParameterTest\OutputParameter.cs" />
+    <Compile Include="SQL\ParameterTest\ParametersTest.cs" />
+    <Compile Include="SQL\ParameterTest\SqlAdapterUpdateBatch.cs" />
+    <Compile Include="SQL\ParameterTest\SqlVariantParam.cs" />
+    <Compile Include="SQL\ParameterTest\SteAttribute.cs" />
+    <Compile Include="SQL\ParameterTest\SteParam.cs" />
+    <Compile Include="SQL\ParameterTest\StePermutationSet.cs" />
+    <Compile Include="SQL\ParameterTest\SteTypeBoundaries.cs" />
+    <Compile Include="SQL\ParameterTest\StreamInputParam.cs" />
+    <Compile Include="SQL\ParameterTest\TvpTest.cs" />
     <Content Include="SQL\ParameterTest\SqlParameterTest_DebugMode.bsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>SqlParameterTest_DebugMode.bsl</Link>
@@ -241,42 +225,57 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>SqlParameterTest_ReleaseMode_Azure.bsl</Link>
     </Content>
-    <Content Include="AlwaysEncrypted\TestFixtures\Setup\TCECryptoNativeBaseline.txt">
+    <Content Include="DDBasics\DDDataTypesTest\data.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>TCECryptoNativeBaseline.txt</Link>
+      <Link>data.xml</Link>
     </Content>
-    <Content Include="AlwaysEncrypted\TestFixtures\Setup\TCECryptoNativeBaselineRsa.txt">
+    <Content Include="ProviderAgnostic\MultipleResultsTest\MultipleResultsTest.bsl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>TCECryptoNativeBaselineRsa.txt</Link>
+      <Link>MultipleResultsTest.bsl</Link>
     </Content>
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetGroup)'=='netcoreapp'">
-    <Compile Include="TracingTests\DiagnosticTest.cs" />
-    <Compile Include="TracingTests\FakeDiagnosticListenerObserver.cs" />
-    <Compile Include="TracingTests\EventCounterTest.cs" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="ProviderAgnostic\MultipleResultsTest\MultipleResultsTest.bsl" />
     <None Include="SQL\ParameterTest\SqlParameterTest_DebugMode.bsl" />
     <None Include="SQL\ParameterTest\SqlParameterTest_DebugMode_Azure.bsl" />
     <None Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode.bsl" />
     <None Include="SQL\ParameterTest\SqlParameterTest_ReleaseMode_Azure.bsl" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetGroup)' == 'netfx'">
+  <ItemGroup Condition="'$(TargetGroup)'=='netcoreapp' AND ('$(TestSet)' == '' OR '$(TestSet)' == '3')" >
+    <Compile Include="TracingTests\EventCounterTest.cs" />
+    <Compile Include="TracingTests\DiagnosticTest.cs" />
+    <Compile Include="TracingTests\FakeDiagnosticListenerObserver.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetGroup)' == 'netfx' AND ('$(TestSet)' == '' OR '$(TestSet)' == '3')">
     <Reference Include="System.Transactions" />
     <Compile Include="SQL\ConnectionPoolTest\TransactionPoolTest.cs" />
   </ItemGroup>
-  <ItemGroup Condition="$(Configuration.Contains('Debug'))">
+  <ItemGroup Condition="$(Configuration.Contains('Debug')) AND ('$(TestSet)' == '' OR '$(TestSet)' == '3')">
     <Compile Include="SQL\ConnectionPoolTest\ConnectionPoolTest.Debug.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="$(TestsPath)tools\Microsoft.DotNet.XUnitExtensions\Microsoft.DotNet.XUnitExtensions.csproj">
-      <Name>Microsoft.DotNet.XUnitExtensions</Name>
-    </ProjectReference>
-    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj" />
-    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.Servers\TDS.Servers.csproj" />
-    <ProjectReference Include="$(TestsPath)tools\TDS\TDS\TDS.csproj" />
-    <ProjectReference Include="$(TestsPath)tools\Microsoft.Data.SqlClient.TestUtilities\Microsoft.Data.SqlClient.TestUtilities.csproj" />
+    <Compile Include="DataCommon\AADUtility.cs" />
+    <Compile Include="DataCommon\AssemblyResourceManager.cs" />
+    <Compile Include="DataCommon\DataSourceBuilder.cs" />
+    <Compile Include="DataCommon\DataTestUtility.cs" />
+    <Compile Include="DataCommon\ProxyServer.cs" />
+    <Compile Include="DataCommon\SqlClientCustomTokenCredential.cs" />
+    <Compile Include="DataCommon\SystemDataResourceManager.cs" />
+    <Compile Include="SQL\Common\AsyncDebugScope.cs" />
+    <Compile Include="SQL\Common\ConnectionPoolWrapper.cs" />
+    <Compile Include="SQL\Common\InternalConnectionWrapper.cs" />
+    <Compile Include="SQL\Common\SystemDataExtensions.cs" />
+    <Compile Include="SQL\Common\SystemDataInternals\CommandHelper.cs" />
+    <Compile Include="SQL\Common\SystemDataInternals\ConnectionHelper.cs" />
+    <Compile Include="SQL\Common\SystemDataInternals\ConnectionPoolHelper.cs" />
+    <Compile Include="SQL\Common\SystemDataInternals\DataReaderHelper.cs" />
+    <Compile Include="SQL\Common\SystemDataInternals\TdsParserHelper.cs" />
+    <Compile Include="SQL\Common\SystemDataInternals\TdsParserStateObjectHelper.cs" />
+    <Compile Include="TracingTests\TestTdsServer.cs" />
+    <Compile Include="XUnitAssemblyAttributes.cs" />
+    <Compile Include="$(CommonTestPath)\System\Collections\DictionaryExtensions.cs">
+      <Link>Common\System\Collections\DictionaryExtensions.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="SQL\UdtTest\UDTs\Address\Address.csproj">
       <Name>Address</Name>
     </ProjectReference>
@@ -289,6 +288,13 @@
     <ProjectReference Include="SQL\UdtTest\UDTs\Utf8String\Utf8String.csproj">
       <Name>Utf8String</Name>
     </ProjectReference>
+    <ProjectReference Include="$(TestsPath)tools\Microsoft.DotNet.XUnitExtensions\Microsoft.DotNet.XUnitExtensions.csproj">
+      <Name>Microsoft.DotNet.XUnitExtensions</Name>
+    </ProjectReference>
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.EndPoint\TDS.EndPoint.csproj" />
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS.Servers\TDS.Servers.csproj" />
+    <ProjectReference Include="$(TestsPath)tools\TDS\TDS\TDS.csproj" />
+    <ProjectReference Include="$(TestsPath)tools\Microsoft.Data.SqlClient.TestUtilities\Microsoft.Data.SqlClient.TestUtilities.csproj" />
     <ProjectReference Condition="'$(TargetGroup)'=='netcoreapp' AND $(ReferenceType)=='Project'" Include="$(NetCoreSource)src\Microsoft.Data.SqlClient.csproj" />
     <ProjectReference Condition="'$(TargetGroup)'=='netfx' AND $(ReferenceType)=='Project'" Include="$(NetFxSource)src\Microsoft.Data.SqlClient.csproj" />
     <ProjectReference Condition="$(ReferenceType.Contains('NetStandard'))" Include="$(TestsPath)NSLibrary\Microsoft.Data.SqlClient.NSLibrary.csproj" />
