@@ -53,7 +53,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
-        public async Task TestPacketNumberWraparound()
+        [ActiveIssue(5531)]
+        public void TestPacketNumberWraparound()
         {
             // this test uses a specifically crafted sql record enumerator and data to put the TdsParserStateObject.WritePacket(byte,bool)
             // into a state where it can't differentiate between a packet in the middle of a large packet-set after a byte counter wraparound
@@ -65,7 +66,29 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             var enumerator = new WraparoundRowEnumerator(1000000);
 
-            Stopwatch stopwatch = new Stopwatch();
+            Stopwatch stopwatch = new();
+            stopwatch.Start();
+            int returned = Task.WaitAny(
+                Task.Factory.StartNew(
+                    () => RunPacketNumberWraparound(enumerator),
+                    TaskCreationOptions.DenyChildAttach | TaskCreationOptions.LongRunning
+                ),
+                Task.Delay(TimeSpan.FromSeconds(60))
+            );
+            stopwatch.Stop();
+            if (enumerator.MaxCount != enumerator.Count)
+            {
+                Console.WriteLine($"enumerator.Count={enumerator.Count}, enumerator.MaxCount={enumerator.MaxCount}, elapsed={stopwatch.Elapsed.TotalSeconds}");
+            }
+            Assert.True(enumerator.MaxCount == enumerator.Count);
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
+        public async Task TestPacketNumberWraparoundWithAwaitAsync()
+        {
+            // This test is a copy of TestPacketNumberWraparound() which is Active issue 5531. The only difference is using await/async
+            var enumerator = new WraparoundRowEnumerator(1000000);
+            Stopwatch stopwatch = new();
             stopwatch.Start();
             await RunPacketNumberWraparound(enumerator);
             stopwatch.Stop();
@@ -113,7 +136,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (Exception e)
             {
                 // Ignore this exception as it's deliberately introduced.
-                Assert.True(e.Message.Contains("Object reference not set to an instance of an object"), "Expected exception did not occur");
+                Assert.False(true, e.Message);
             }
 
             // Good Scenario - No failure expected.
