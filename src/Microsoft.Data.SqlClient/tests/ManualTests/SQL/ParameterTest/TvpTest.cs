@@ -53,8 +53,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureServer))]
-        [ActiveIssue(5531)]
-        public void TestPacketNumberWraparound()
+        public async Task TestPacketNumberWraparound()
         {
             // this test uses a specifically crafted sql record enumerator and data to put the TdsParserStateObject.WritePacket(byte,bool)
             // into a state where it can't differentiate between a packet in the middle of a large packet-set after a byte counter wraparound
@@ -68,18 +67,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
-            int returned = Task.WaitAny(
-                Task.Factory.StartNew(
-                    () => RunPacketNumberWraparound(enumerator),
-                    TaskCreationOptions.DenyChildAttach | TaskCreationOptions.LongRunning
-                ),
-                Task.Delay(TimeSpan.FromSeconds(60))
-            );
+            await RunPacketNumberWraparound(enumerator);
             stopwatch.Stop();
-            if (enumerator.MaxCount != enumerator.Count)
-            {
-                Console.WriteLine($"enumerator.Count={enumerator.Count}, enumerator.MaxCount={enumerator.MaxCount}, elapsed={stopwatch.Elapsed.TotalSeconds}");
-            }
             Assert.True(enumerator.MaxCount == enumerator.Count);
         }
 
@@ -94,18 +83,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 List<Item> list = new()
                 {
                     new Item(0),
-                    null,
+                    new Item(null),
                     new Item(2),
                     new Item(3),
                     new Item(4),
                     new Item(5)
                 };
 
-                IEnumerable<int> Ids = list.Select(x => x.id.Value).Distinct();
+                IEnumerable<int> Ids = list.Select(x => x.id.GetValueOrDefault()).Distinct();
 
                 var sqlParam = new SqlParameter("ids", SqlDbType.Structured)
                 {
-                    TypeName = "dbo.TableOfIntId",
+                    TypeName = "TableOfIntId",
                     SqlValue = Ids.Select(x =>
                     {
                         SqlDataRecord rec = new(new[] { new SqlMetaData("Id", SqlDbType.Int) });
@@ -119,8 +108,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using SqlCommand cmd = new(SQL, connection);
                 cmd.CommandTimeout = 100;
                 AddCommandParameters(cmd, parameters);
-                new SqlDataAdapter(cmd).Fill(new("BadFunc"));
-                Assert.False(true, "Expected exception did not occur");
+                Assert.Throws<SqlException>(() => new SqlDataAdapter(cmd).Fill(new("BadFunc")));
             }
             catch (Exception e)
             {
