@@ -72,6 +72,11 @@ msbuild -t:BuildTestsNetFx
 # Build the tests for the .NET Framework (NetFx) driver in 'Debug' Configuration. Default .NET Framework version is 4.6.1.
 ```
 
+```bash
+msbuild -t:BuildTestsNetCore -p:TestSet=1
+# Build a subset of the manual tests. Valid values: '1', '2', '3', 'AE'. Omit to build all tests.
+```
+
 ## Run Functional Tests
 
 - Windows (`netfx x86`):
