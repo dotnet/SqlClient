@@ -439,6 +439,41 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot set the Credential property if the OnRetrieveKerberosTicket property is already set..
+        /// </summary>
+        internal static string ADP_InvalidMixedUsageOfCredentialAndKerberosTicket {
+            get {
+                return ResourceManager.GetString("ADP_InvalidMixedUsageOfCredentialAndKerberosTicket", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot set the OnRetrieveKerberosTicket property if &apos;Authentication&apos; has been specified in the connection string..
+        /// </summary>
+        internal static string ADP_InvalidMixedUsageOfKerberosTicketAndAuthentication {
+            get {
+                return ResourceManager.GetString("ADP_InvalidMixedUsageOfKerberosTicketAndAuthentication", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot set the OnRetrieveKerberosTicket property if the &apos;Integrated Security&apos; connection string keyword has been set to &apos;true&apos; or &apos;SSPI&apos;..
+        /// </summary>
+        internal static string ADP_InvalidMixedUsageOfKerberosTicketAndIntegratedSecurity {
+            get {
+                return ResourceManager.GetString("ADP_InvalidMixedUsageOfKerberosTicketAndIntegratedSecurity", resourceCulture);
+            }
+        }
+        
+        ///   Looks up a localized string similar to Cannot set the OnRetrieveKerberosTicket property if &apos;UserID&apos;, &apos;UID&apos;, &apos;Password&apos;, or &apos;PWD&apos; has been specified in connection string..
+        /// </summary>
+        internal static string ADP_InvalidMixedUsageOfKerberosTicketAndUserIDPassword {
+            get {
+                return ResourceManager.GetString("ADP_InvalidMixedUsageOfKerberosTicketAndUserIDPassword", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot use Credential with UserID, UID, Password, or PWD connection string keywords..
         /// </summary>
         internal static string ADP_InvalidMixedUsageOfSecureAndClearCredential {

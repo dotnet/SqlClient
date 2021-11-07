@@ -314,6 +314,9 @@ namespace Microsoft.Data.SqlClient
         private SqlRetryLogicBaseProvider _retryLogicProvider;
         private bool IsProviderRetriable => SqlConfigurableRetryFactory.IsRetriable(RetryLogicProvider);
 
+        // Delegate to get Kerberos ticket to be used for Windows authententication
+        private KerberosTicketRetrievalCallback _kerberosTicketRetrievalCallback; 
+
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnection.xml' path='docs/members[@name="SqlConnection"]/RetryLogicProvider/*' />
         [
         Browsable(false),
@@ -419,6 +422,7 @@ namespace Microsoft.Data.SqlClient
                 _credential = new SqlCredential(connection._credential.UserId, password);
             }
             _accessToken = connection._accessToken;
+            _kerberosTicketRetrievalCallback = connection._kerberosTicketRetrievalCallback;
             _serverCertificateValidationCallback = connection._serverCertificateValidationCallback;
             _clientCertificateRetrievalCallback = connection._clientCertificateRetrievalCallback;
             _originalNetworkAddressInfo = connection._originalNetworkAddressInfo;
@@ -730,9 +734,53 @@ namespace Microsoft.Data.SqlClient
 
                 _accessToken = value;
                 // Need to call ConnectionString_Set to do proper pool group check
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, _accessToken, _serverCertificateValidationCallback, _clientCertificateRetrievalCallback, _originalNetworkAddressInfo));
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, _accessToken, _kerberosTicketRetrievalCallback, _serverCertificateValidationCallback, _clientCertificateRetrievalCallback, _originalNetworkAddressInfo));
             }
         }
+
+
+        // KerberosTicket: To be used for Windows authentication
+        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/KerberosTicket/*' />
+        [
+        Browsable(false),
+        DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden),
+        ResDescriptionAttribute(StringsHelper.ResourceNames.SqlConnection_KerberosTicketRetrieve),
+        ]
+        public KerberosTicketRetrievalCallback OnRetrieveKerberosTicket
+        {
+            get
+            {
+                KerberosTicketRetrievalCallback result = _kerberosTicketRetrievalCallback;
+                // When a connection is connecting or is ever opened, make KerberosTicket available only if "Persist Security Info" is set to true
+                // otherwise, return null
+                SqlConnectionString connectionOptions = (SqlConnectionString)UserConnectionOptions;
+                if (InnerConnection.ShouldHidePassword && connectionOptions != null && !connectionOptions.PersistSecurityInfo)
+                {
+                    result = null;
+                }
+        
+                return result;
+            }
+            set
+            {
+                // If a connection is connecting or is ever opened, KerberosTicket cannot be set
+                if (!InnerConnection.AllowSetConnectionString)
+                {
+                    throw ADP.OpenConnectionPropertySet("KerberosTicketRetreive", InnerConnection.State);
+                }
+        
+                if (value != null)
+                {
+                    // Check if the usage of KerberosTicket has any conflict with the keys used in connection string and credential
+                    CheckAndThrowOnInvalidCombinationOfConnectionOptionAndKerberosTicket((SqlConnectionString)ConnectionOptions);
+                }
+        
+                _kerberosTicketRetrievalCallback = value;
+                // Need to call ConnectionString_Set to do proper pool group check
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, _accessToken, _kerberosTicketRetrievalCallback, _serverCertificateValidationCallback, _clientCertificateRetrievalCallback, _originalNetworkAddressInfo));
+            }
+        }
+
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml' path='docs/members[@name="SqlConnection"]/CommandTimeout/*' />
         [
@@ -808,7 +856,8 @@ namespace Microsoft.Data.SqlClient
                         CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessToken(connectionOptions);
                     }
                 }
-                ConnectionString_Set(new SqlConnectionPoolKey(value, _credential, _accessToken, _serverCertificateValidationCallback, _clientCertificateRetrievalCallback, _originalNetworkAddressInfo));
+
+                ConnectionString_Set(new SqlConnectionPoolKey(value, _credential, _accessToken, _kerberosTicketRetrievalCallback, _serverCertificateValidationCallback, _clientCertificateRetrievalCallback, _originalNetworkAddressInfo));
                 _connectionString = value;  // Change _connectionString value only after value is validated
                 CacheConnectionStringProperties();
             }
@@ -1149,13 +1198,17 @@ namespace Microsoft.Data.SqlClient
                     {
                         throw ADP.InvalidMixedUsageOfCredentialAndAccessToken();
                     }
+                    if (_kerberosTicketRetrievalCallback != null)
+                    {
+                        throw ADP.InvalidMixedUsageOfCredentialAndKerberosTicket();
+                    }
 
                 }
 
                 _credential = value;
 
                 // Need to call ConnectionString_Set to do proper pool group check
-                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, _accessToken, _serverCertificateValidationCallback, _clientCertificateRetrievalCallback, _originalNetworkAddressInfo));
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, _accessToken, _kerberosTicketRetrievalCallback, _serverCertificateValidationCallback, _clientCertificateRetrievalCallback, _originalNetworkAddressInfo));
             }
         }
 
@@ -1211,6 +1264,51 @@ namespace Microsoft.Data.SqlClient
             if (_credential != null)
             {
                 throw ADP.InvalidMixedUsageOfAccessTokenAndCredential();
+            }
+
+            // Check if the usage of AccessToken has the conflict with Kerberos ticket
+            if (_kerberosTicketRetrievalCallback != null)
+            {
+                throw ADP.InvalidMixedUsageOfAccessTokenAndKerberosTicket();
+            }
+        }
+
+        // CheckAndThrowOnInvalidCombinationOfConnectionOptionAndKerberosTicket: check if the usage of KerberosTicket has any conflict
+        //  with the keys used in connection string and credential
+        //  If there is any conflict, it throws InvalidOperationException
+        //  This is to be used setter of ConnectionString and KerberosTicket properties
+        private void CheckAndThrowOnInvalidCombinationOfConnectionOptionAndKerberosTicket(SqlConnectionString connectionOptions)
+        {
+            if (UsesClearUserIdOrPassword(connectionOptions))
+            {
+                throw ADP.InvalidMixedUsageOfKerberosTicketAndUserIDPassword();
+            }
+
+            if (UsesIntegratedSecurity(connectionOptions))
+            {
+                throw ADP.InvalidMixedUsageOfKerberosTicketAndIntegratedSecurity();
+            }
+
+            if (UsesContextConnection(connectionOptions))
+            {
+                throw ADP.InvalidMixedUsageOfKerberosTicketAndContextConnection();
+            }
+
+            if (UsesAuthentication(connectionOptions))
+            {
+                throw ADP.InvalidMixedUsageOfKerberosTicketAndAuthentication();
+            }
+
+            // Check if the usage of KerberosTicket has the conflict with credential
+            if (_credential != null)
+            {
+                throw ADP.InvalidMixedUsageOfKerberosTicketAndCredential();
+            }
+
+            // Check if the usage of KerberosTicket has the conflict with AccessToken
+            if (_accessToken != null)
+            {
+                throw ADP.InvalidMixedUsageOfKerberosTicketAndAccessToken();
             }
         }
 
@@ -2684,7 +2782,7 @@ namespace Microsoft.Data.SqlClient
                     throw ADP.InvalidArgumentLength("newPassword", TdsEnums.MAXLEN_NEWPASSWORD);
                 }
 
-                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential: null, accessToken: null, serverCertificateValidationCallback: null, clientCertificateRetrievalCallback: null, originalNetworkAddressInfo: null);
+                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential: null, accessToken: null, kerberosTicketRetrievalCallback: null, serverCertificateValidationCallback: null, clientCertificateRetrievalCallback: null, originalNetworkAddressInfo: null);
 
                 SqlConnectionString connectionOptions = SqlConnectionFactory.FindSqlConnectionOptions(key);
                 if (connectionOptions.IntegratedSecurity || connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
@@ -2740,7 +2838,8 @@ namespace Microsoft.Data.SqlClient
                     throw ADP.InvalidArgumentLength("newSecurePassword", TdsEnums.MAXLEN_NEWPASSWORD);
                 }
 
-                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, serverCertificateValidationCallback: null, clientCertificateRetrievalCallback: null, originalNetworkAddressInfo: null);
+                SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, kerberosTicketRetrievalCallback: null, serverCertificateValidationCallback: null, clientCertificateRetrievalCallback: null, originalNetworkAddressInfo: null);
+
 
                 SqlConnectionString connectionOptions = SqlConnectionFactory.FindSqlConnectionOptions(key);
 
@@ -2785,7 +2884,7 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.ChangePasswordRequiresYukon();
                 }
             }
-            SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, serverCertificateValidationCallback: null, clientCertificateRetrievalCallback: null, originalNetworkAddressInfo: null);
+            SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, kerberosTicketRetrievalCallback: null, serverCertificateValidationCallback: null, clientCertificateRetrievalCallback: null, originalNetworkAddressInfo: null);
 
             SqlConnectionFactory.SingletonInstance.ClearPool(key);
         }

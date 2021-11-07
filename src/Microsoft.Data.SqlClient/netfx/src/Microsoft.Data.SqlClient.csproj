@@ -89,6 +89,9 @@
   </ItemGroup>
   <!-- Contains common items shared between NetFx and NetCore -->
   <ItemGroup>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\KerberosTicketRetrievalCallback.cs">
+      <Link>Microsoft\Data\SqlClient\KerberosTicketRetrievalCallback.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\LocalAppContextSwitches.cs">
       <Link>Microsoft\Data\SqlClient\LocalAppContextSwitches.cs</Link>
     </Compile>
@@ -338,6 +341,7 @@
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlCommandBuilder.cs">
       <Link>Microsoft\Data\SqlClient\SqlCommandBuilder.cs</Link>
+      <SubType>Component</SubType>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlCommandSet.cs">
       <Link>Microsoft\Data\SqlClient\SqlCommandSet.cs</Link>
@@ -642,11 +646,12 @@
     <Compile Include="..\..\src\Resources\StringsHelper.cs">
       <Link>Resources\StringsHelper.cs</Link>
     </Compile>
-    <EmbeddedResource Include="Resources\$(ResxFileName).resx">
+    <EmbeddedResource Include="Resources\Strings.resx">
       <LogicalName>Microsoft.Data.SqlClient.Resources.Strings.resources</LogicalName>
       <CustomToolNamespace>System</CustomToolNamespace>
       <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>$(ResxFileName).Designer.cs</LastGenOutput>
+      <LastGenOutput>Strings.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\$(ResxFileName).*.resx" />
     <EmbeddedResource Include="Resources\Microsoft.Data.SqlClient.SqlMetaData.xml">

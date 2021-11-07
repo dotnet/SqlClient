@@ -898,6 +898,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot set the AccessToken property if the OnRetrieveKerberosTicket property is already set..
+        /// </summary>
+        internal static string ADP_InvalidMixedUsageOfAccessTokenAndKerberosTicket {
+            get {
+                return ResourceManager.GetString("ADP_InvalidMixedUsageOfAccessTokenAndKerberosTicket", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot set the AccessToken property if &apos;UserID&apos;, &apos;UID&apos;, &apos;Password&apos;, or &apos;PWD&apos; has been specified in connection string..
         /// </summary>
         internal static string ADP_InvalidMixedUsageOfAccessTokenAndUserIDPassword {
@@ -912,6 +921,69 @@ namespace System {
         internal static string ADP_InvalidMixedUsageOfCredentialAndAccessToken {
             get {
                 return ResourceManager.GetString("ADP_InvalidMixedUsageOfCredentialAndAccessToken", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot set the Credential property if the KerberosTicket property is already set..
+        /// </summary>
+        internal static string ADP_InvalidMixedUsageOfCredentialAndKerberosTicket {
+            get {
+                return ResourceManager.GetString("ADP_InvalidMixedUsageOfCredentialAndKerberosTicket", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot set the OnRetrieveKerberosTicket property if the AccessToken property is already set..
+        /// </summary>
+        internal static string ADP_InvalidMixedUsageOfKerberosTicketAndAccessToken {
+            get {
+                return ResourceManager.GetString("ADP_InvalidMixedUsageOfKerberosTicketAndAccessToken", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot set the OnRetrieveKerberosTicket property if &apos;Authentication&apos; has been specified in the connection string..
+        /// </summary>
+        internal static string ADP_InvalidMixedUsageOfKerberosTicketAndAuthentication {
+            get {
+                return ResourceManager.GetString("ADP_InvalidMixedUsageOfKerberosTicketAndAuthentication", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot set the OnRetrieveKerberosTicket property with the &apos;Context Connection&apos; keyword..
+        /// </summary>
+        internal static string ADP_InvalidMixedUsageOfKerberosTicketAndContextConnection {
+            get {
+                return ResourceManager.GetString("ADP_InvalidMixedUsageOfKerberosTicketAndContextConnection", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot set the OnRetrieveKerberosTicket property if the Credential property is already set..
+        /// </summary>
+        internal static string ADP_InvalidMixedUsageOfKerberosTicketAndCredential {
+            get {
+                return ResourceManager.GetString("ADP_InvalidMixedUsageOfKerberosTicketAndCredential", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot set the OnRetrieveKerberosTicket property if the &apos;Integrated Security&apos; connection string keyword has been set to &apos;true&apos; or &apos;SSPI&apos;..
+        /// </summary>
+        internal static string ADP_InvalidMixedUsageOfKerberosTicketAndIntegratedSecurity {
+            get {
+                return ResourceManager.GetString("ADP_InvalidMixedUsageOfKerberosTicketAndIntegratedSecurity", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot set the OnRetrieveKerberosTicket property if &apos;UserID&apos;, &apos;UID&apos;, &apos;Password&apos;, or &apos;PWD&apos; has been specified in connection string..
+        /// </summary>
+        internal static string ADP_InvalidMixedUsageOfKerberosTicketAndUserIDPassword {
+            get {
+                return ResourceManager.GetString("ADP_InvalidMixedUsageOfKerberosTicketAndUserIDPassword", resourceCulture);
             }
         }
         
@@ -5551,6 +5623,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to When true, enables usage of the Asynchronous functionality in the .NET Framework Data Provider..
+        /// </summary>
+        internal static string DbConnectionString_AsynchronousProcessing {
+            get {
+                return ResourceManager.GetString("DbConnectionString_AsynchronousProcessing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The name of the primary file, including the full path name, of an attachable database..
         /// </summary>
         internal static string DbConnectionString_AttachDBFilename {
@@ -8857,6 +8938,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to This command requires an asynchronous connection. Set &quot;Asynchronous Processing=true&quot; in the connection string..
+        /// </summary>
+        internal static string SQL_AsyncConnectionRequired {
+            get {
+                return ResourceManager.GetString("SQL_AsyncConnectionRequired", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The asynchronous operation has already completed..
         /// </summary>
         internal static string SQL_AsyncOperationCompleted {
@@ -9658,7 +9748,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Error code 0x{0}..
+        ///   Looks up a localized string similar to Error code 0x{0}.
         /// </summary>
         internal static string SQL_MSALInnerException {
             get {
@@ -10540,6 +10630,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to State of connection, synchronous or asynchronous.  &apos;Asynchronous Processing=x&apos; in the connection string..
+        /// </summary>
+        internal static string SqlConnection_Asynchronous {
+            get {
+                return ResourceManager.GetString("SqlConnection_Asynchronous", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to A guid to represent the physical connection..
         /// </summary>
         internal static string SqlConnection_ClientConnectionId {
@@ -10599,6 +10698,15 @@ namespace System {
         internal static string SqlConnection_DataSource {
             get {
                 return ResourceManager.GetString("SqlConnection_DataSource", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Callback to retrieve Kerberos ticket to use for authentication..
+        /// </summary>
+        internal static string SqlConnection_KerberosTicketRetrieve {
+            get {
+                return ResourceManager.GetString("SqlConnection_KerberosTicketRetrieve", resourceCulture);
             }
         }
         

@@ -246,11 +246,35 @@
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndCredential" xml:space="preserve">
     <value>Cannot set the AccessToken property if the Credential property is already set.</value>
   </data>
+  <data name="ADP_InvalidMixedUsageOfAccessTokenAndKerberosTicket" xml:space="preserve">
+    <value>Cannot set the AccessToken property if the OnRetrieveKerberosTicket property is already set.</value>
+  </data>
   <data name="ADP_InvalidMixedUsageOfCredentialAndAccessToken" xml:space="preserve">
     <value>Cannot set the Credential property if the AccessToken property is already set.</value>
   </data>
+  <data name="ADP_InvalidMixedUsageOfCredentialAndKerberosTicket" xml:space="preserve">
+    <value>Cannot set the Credential property if the KerberosTicket property is already set.</value>
+  </data>
   <data name="ADP_InvalidMixedUsageOfAccessTokenAndAuthentication" xml:space="preserve">
     <value>Cannot set the AccessToken property if 'Authentication' has been specified in the connection string.</value>
+  </data>
+  <data name="ADP_InvalidMixedUsageOfKerberosTicketAndUserIDPassword" xml:space="preserve">
+    <value>Cannot set the OnRetrieveKerberosTicket property if 'UserID', 'UID', 'Password', or 'PWD' has been specified in connection string.</value>
+  </data>
+  <data name="ADP_InvalidMixedUsageOfKerberosTicketAndIntegratedSecurity" xml:space="preserve">
+    <value>Cannot set the OnRetrieveKerberosTicket property if the 'Integrated Security' connection string keyword has been set to 'true' or 'SSPI'.</value>
+  </data>
+  <data name="ADP_InvalidMixedUsageOfKerberosTicketAndContextConnection" xml:space="preserve">
+    <value>Cannot set the OnRetrieveKerberosTicket property with the 'Context Connection' keyword.</value>
+  </data>
+  <data name="ADP_InvalidMixedUsageOfKerberosTicketAndCredential" xml:space="preserve">
+    <value>Cannot set the OnRetrieveKerberosTicket property if the Credential property is already set.</value>
+  </data>
+  <data name="ADP_InvalidMixedUsageOfKerberosTicketAndAccessToken" xml:space="preserve">
+    <value>Cannot set the OnRetrieveKerberosTicket property if the AccessToken property is already set.</value>
+  </data>
+  <data name="ADP_InvalidMixedUsageOfKerberosTicketAndAuthentication" xml:space="preserve">
+    <value>Cannot set the OnRetrieveKerberosTicket property if 'Authentication' has been specified in the connection string.</value>
   </data>
   <data name="ADP_MustBeReadOnly" xml:space="preserve">
     <value>{0} must be marked as read only.</value>
@@ -4616,5 +4640,8 @@
   </data>
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>Parameter '{0}' cannot have Direction Output or InputOutput when EnableOptimizedParameterBinding is enabled on the parent command.</value>
+  </data>
+  <data name="SqlConnection_KerberosTicketRetrieve" xml:space="preserve">
+    <value>Callback to retrieve Kerberos ticket to use for authentication.</value>
   </data>
 </root>

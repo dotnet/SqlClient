@@ -8746,6 +8746,7 @@ namespace Microsoft.Data.SqlClient
                                TdsEnums.FeatureExtension requestedFeatures,
                                SessionData recoverySessionData,
                                FederatedAuthenticationFeatureExtensionData fedAuthFeatureExtensionData,
+                               byte[] kerberosTicketInBytes,
                                SqlClientOriginalNetworkAddressInfo originalNetworkAddressInfo)
         {
             _physicalStateObj.SetTimeoutSeconds(rec.timeout);
@@ -8880,7 +8881,15 @@ namespace Microsoft.Data.SqlClient
                     // byte[] buffer and 0 for the int length.
                     Debug.Assert(SniContext.Snix_Login == _physicalStateObj.SniContext, $"Unexpected SniContext. Expecting Snix_Login, actual value is '{_physicalStateObj.SniContext}'");
                     _physicalStateObj.SniContext = SniContext.Snix_LoginSspi;
-                    SSPIData(null, 0, outSSPIBuff, ref outSSPILength);
+                    if (kerberosTicketInBytes == null)
+                    {
+                        SSPIData(null, 0, outSSPIBuff, ref outSSPILength);
+                    }
+                    else
+                    {
+                        outSSPILength = (uint)kerberosTicketInBytes.Length;
+                        outSSPIBuff = kerberosTicketInBytes;
+                    }
                     if (outSSPILength > Int32.MaxValue)
                     {
                         throw SQL.InvalidSSPIPacketSize();  // SqlBu 332503

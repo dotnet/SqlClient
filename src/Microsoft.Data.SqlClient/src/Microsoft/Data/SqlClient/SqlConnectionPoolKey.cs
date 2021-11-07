@@ -30,9 +30,15 @@ namespace Microsoft.Data.SqlClient
 
 #if NETFRAMEWORK
         #region NET Framework
+        private KerberosTicketRetrievalCallback _kerberosTicketRetrievalCallback;
+
         private readonly ServerCertificateValidationCallback _serverCertificateValidationCallback;
         private readonly ClientCertificateRetrievalCallback _clientCertificateRetrievalCallback;
         private readonly SqlClientOriginalNetworkAddressInfo _originalNetworkAddressInfo;
+
+        internal KerberosTicketRetrievalCallback KerberosTicketRetrievalCallback
+            => _kerberosTicketRetrievalCallback;
+
 
         internal ServerCertificateValidationCallback ServerCertificateValidationCallback
             => _serverCertificateValidationCallback;
@@ -46,13 +52,18 @@ namespace Microsoft.Data.SqlClient
         internal SqlConnectionPoolKey(string connectionString,
                             SqlCredential credential,
                             string accessToken,
+                            KerberosTicketRetrievalCallback kerberosTicketRetrievalCallback,
                             ServerCertificateValidationCallback serverCertificateValidationCallback,
                             ClientCertificateRetrievalCallback clientCertificateRetrievalCallback,
                             SqlClientOriginalNetworkAddressInfo originalNetworkAddressInfo) : base(connectionString)
         {
             Debug.Assert(_credential == null || _accessToken == null, "Credential and AccessToken can't have the value at the same time.");
+            Debug.Assert(_credential == null || _kerberosTicketRetrievalCallback == null, "Credential and KerberosTicket can't have the value at the same time.");
+            Debug.Assert(_accessToken == null || _accessToken == null, "AccessToken and KerberosTicket can't have the value at the same time.");
+
             _credential = credential;
             _accessToken = accessToken;
+            _kerberosTicketRetrievalCallback = kerberosTicketRetrievalCallback;
             _serverCertificateValidationCallback = serverCertificateValidationCallback;
             _clientCertificateRetrievalCallback = clientCertificateRetrievalCallback;
             _originalNetworkAddressInfo = originalNetworkAddressInfo;
@@ -75,7 +86,10 @@ namespace Microsoft.Data.SqlClient
         {
             _credential = key.Credential;
             _accessToken = key.AccessToken;
+
 #if NETFRAMEWORK
+            _kerberosTicketRetrievalCallback = key._kerberosTicketRetrievalCallback;
+
             _serverCertificateValidationCallback = key._serverCertificateValidationCallback;
             _clientCertificateRetrievalCallback = key._clientCertificateRetrievalCallback;
 #endif
@@ -94,6 +108,7 @@ namespace Microsoft.Data.SqlClient
                 && ConnectionString == key.ConnectionString
                 && string.CompareOrdinal(_accessToken, key._accessToken) == 0
 #if NETFRAMEWORK
+                && _kerberosTicketRetrievalCallback == key._kerberosTicketRetrievalCallback
                 && _serverCertificateValidationCallback == key._serverCertificateValidationCallback
                 && _clientCertificateRetrievalCallback == key._clientCertificateRetrievalCallback
                 && _originalNetworkAddressInfo == key._originalNetworkAddressInfo

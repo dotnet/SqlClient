@@ -1199,6 +1199,17 @@ namespace Microsoft.Data.Common
 
         static internal Exception InvalidMixedUsageOfCredentialAndAccessToken()
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfCredentialAndAccessToken));
+        internal static InvalidOperationException InvalidMixedUsageOfKerberosTicketAndIntegratedSecurity()
+            => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenAndIntegratedSecurity));
+
+        static internal InvalidOperationException InvalidMixedUsageOfKerberosTicketAndUserIDPassword()
+            => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenAndUserIDPassword));
+
+        static internal InvalidOperationException InvalidMixedUsageOfKerberosTicketAndAuthentication()
+            => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenAndAuthentication));
+
+        static internal Exception InvalidMixedUsageOfCredentialAndKerberosTicket()
+            => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfCredentialAndKerberosTicket));
         #endregion
 
 #if NETFRAMEWORK
@@ -1306,9 +1317,25 @@ namespace Microsoft.Data.Common
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenAndContextConnection));
         }
-        internal static Exception InvalidMixedUsageOfAccessTokenAndCredential()
+        internal static InvalidOperationException InvalidMixedUsageOfAccessTokenAndCredential()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenAndCredential));
+        }
+        internal static InvalidOperationException InvalidMixedUsageOfAccessTokenAndKerberosTicket()
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfAccessTokenAndKerberosTicket));
+        }
+        internal static InvalidOperationException InvalidMixedUsageOfKerberosTicketAndContextConnection()
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfKerberosTicketAndContextConnection));
+        }
+        internal static InvalidOperationException InvalidMixedUsageOfKerberosTicketAndCredential()
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfKerberosTicketAndCredential));
+        }
+        internal static InvalidOperationException InvalidMixedUsageOfKerberosTicketAndAccessToken()
+        {
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfKerberosTicketAndAccessToken));
         }
 
         //

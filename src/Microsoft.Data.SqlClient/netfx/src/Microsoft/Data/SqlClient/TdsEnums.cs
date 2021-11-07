@@ -52,6 +52,7 @@ namespace Microsoft.Data.SqlClient
         public const string SPX = "spx";
         public const string VIA = "via";
         public const string LPC = "lpc";
+        public const string ADMIN = "admin";
 
         // network function string contants
         public const string INIT_SSPI_PACKAGE = "InitSSPIPackage";
