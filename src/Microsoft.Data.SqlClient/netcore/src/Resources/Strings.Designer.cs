@@ -465,6 +465,7 @@ namespace System {
             }
         }
         
+        /// <summary>
         ///   Looks up a localized string similar to Cannot set the OnRetrieveKerberosTicket property if &apos;UserID&apos;, &apos;UID&apos;, &apos;Password&apos;, or &apos;PWD&apos; has been specified in connection string..
         /// </summary>
         internal static string ADP_InvalidMixedUsageOfKerberosTicketAndUserIDPassword {
