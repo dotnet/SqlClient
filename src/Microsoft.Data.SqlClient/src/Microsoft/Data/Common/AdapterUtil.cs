@@ -772,7 +772,8 @@ namespace Microsoft.Data.Common
         { // MDAC 82165, if the ConnectionState enum to msg the localization looks weird
             return state switch
             {
-                (ConnectionState.Closed) or (ConnectionState.Connecting | ConnectionState.Broken) => StringsHelper.GetString(Strings.ADP_ConnectionStateMsg_Closed),
+                (ConnectionState.Closed) => StringsHelper.GetString(Strings.ADP_ConnectionStateMsg_Closed),
+                (ConnectionState.Connecting | ConnectionState.Broken) => StringsHelper.GetString(Strings.ADP_ConnectionStateMsg_Closed),
                 (ConnectionState.Connecting) => StringsHelper.GetString(Strings.ADP_ConnectionStateMsg_Connecting),
                 (ConnectionState.Open) => StringsHelper.GetString(Strings.ADP_ConnectionStateMsg_Open),
                 (ConnectionState.Open | ConnectionState.Executing) => StringsHelper.GetString(Strings.ADP_ConnectionStateMsg_OpenExecuting),
