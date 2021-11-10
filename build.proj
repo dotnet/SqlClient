@@ -68,9 +68,8 @@
   <Target Name="Restore" DependsOnTargets="RestoreNetCore;RestoreNetFx" />
   <Target Name="BuildAll" DependsOnTargets="BuildNetFx;BuildNetCore" />
   <Target Name="BuildAllConfigurations" DependsOnTargets="Restore;BuildTools;BuildNetFx;BuildNetCoreAllOS;GenerateNugetPackage" />
-  <Target Name="BuildTestsNetCore" DependsOnTargets="RestoreTestsNetCore;BuildAKVNetCore;BuildFunctionalTestsNetCore;BuildManualTestsNetCore" Condition="$(TargetGroup) == 'netcoreapp'"/>
-  <Target Name="BuildTestsNetFx" DependsOnTargets="RestoreTestsNetFx;BuildAKVNetFx;BuildFunctionalTestsNetFx;BuildManualTestsNetFx" 
-  Condition="$(TargetGroup) == 'netfx'"/>
+  <Target Name="BuildTestsNetCore" DependsOnTargets="RestoreTestsNetCore;BuildAKVNetCore;BuildFunctionalTestsNetCore;BuildManualTestsNetCore"/>
+  <Target Name="BuildTestsNetFx" DependsOnTargets="RestoreTestsNetFx;BuildAKVNetFx;BuildFunctionalTestsNetFx;BuildManualTestsNetFx" Condition="$(IsEnabledWindows) == 'true'"/>
   <Target Name="BuildTests" DependsOnTargets="BuildTestsNetCore;BuildTestsNetFx"/>
 
   <Target Name="RestoreNetCore">
@@ -134,14 +133,14 @@
 
   <!-- Tests -->
   <Target Name="RunTests" DependsOnTargets="RunFunctionalTests;RunManualTests"/>
-  <Target Name="RunFunctionalTests" DependsOnTargets="BuildTests">
+  <Target Name="RunFunctionalTests">
     <!-- Windows -->
     <Exec ConsoleToMsBuild="true" Command="dotnet test &quot;@(FunctionalTestsProj)&quot; -p:Configuration=$(Configuration) -p:Target$(TFGroup)Version=$(TF) --no-build -v n --collect &quot;Code coverage&quot; -p:TestSet=$(TestSet) --results-directory $(ResultsDirectory) -p:TestTargetOS=Windows$(TargetGroup) --filter &quot;category!=non$(TargetGroup)tests&amp;category!=failing&amp;category!=nonwindowstests&quot; &quot;--logger:trx;LogFileName=Functional.trx&quot;" Condition="'$(IsEnabledWindows)' == 'true'"/>
     <!-- Unix -->
     <Exec ConsoleToMsBuild="true" Command="dotnet test &quot;@(FunctionalTestsProj)&quot; -p:Configuration=$(Configuration) -p:TargetNetCoreVersion=$(TF) --no-build -v n -p:TestSet=$(TestSet) --results-directory $(ResultsDirectory) -p:TestTargetOS=Unixnetcoreapp --filter &quot;category!=nonnetcoreapptests&amp;category!=failing&amp;category!=nonlinuxtests&amp;category!=nonuaptests&quot; &quot;--logger:trx;LogFileName=Functional.trx&quot;" Condition="'$(IsEnabledWindows)' != 'true'"/>
   </Target>
 
-  <Target Name="RunManualTests" DependsOnTargets="BuildTests">
+  <Target Name="RunManualTests">
     <!-- Windows -->
     <Exec ConsoleToMsBuild="true" Command="dotnet test &quot;@(ManualTestsProj)&quot; -p:Configuration=$(Configuration) -p:Target$(TFGroup)Version=$(TF) --no-build -v n --collect &quot;Code coverage&quot; -p:TestSet=$(TestSet) --results-directory $(ResultsDirectory) -p:TestTargetOS=Windows$(TargetGroup) --filter &quot;category!=non$(TargetGroup)tests&amp;category!=failing&amp;category!=nonwindowstests&quot; &quot;--logger:trx;LogFileName=Manual.trx&quot;" Condition="'$(IsEnabledWindows)' == 'true'"/>
     <!-- Unix -->

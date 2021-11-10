@@ -86,17 +86,17 @@ There are 2 ways to run tests, using MsBuild or Dotnet SDK.
 
 ```bash
 msbuild -t:RunFunctionalTests
-# Build and run all functional tests for *default* target framework (.NET Core 3.1).
+# Run all functional tests for *default* target framework (.NET Core 3.1).
 ```
 
 ```bash
 msbuild -t:RunManualTests
-# Build and run all manual tests for *default* target framework (.NET Core 3.1).
+# Run all manual tests for *default* target framework (.NET Core 3.1).
 ```
 
 ```bash
 msbuild -t:RunTests -p:configuration=Release
-# Build and run both functional and manual tests for *default* target framework (.NET Core 3.1).
+# Run both functional and manual tests for *default* target framework (.NET Core 3.1).
 ```
 
 To specify custom target framework, use `TF` property:
@@ -104,7 +104,7 @@ To specify custom target framework, use `TF` property:
 ```bash
 msbuild -t:RunTests -p:configuration=Release -p:TF=net5.0
 msbuild -t:RunTests -p:configuration=Release -p:TF=net48
-# Builds and runs tests for specified target framework. 
+# Runs tests for specified target framework. 
 # TargetNetCoreVersion and TargetNetFxVersion are not to be used with TF property, they will take precedence over TF if provided.
 ```
 
@@ -112,7 +112,7 @@ To capture test and code coverage results in a custom directory:
 
 ```bash
 msbuild -t:RunTests -p:ResultsDirectory=MyDirectory
-# Builds and runs tests with test and code coverage results placed in provided results directory.
+# Runs tests with test and code coverage results placed in provided results directory.
 # Default results directory is "TestResults".
 ```
 
