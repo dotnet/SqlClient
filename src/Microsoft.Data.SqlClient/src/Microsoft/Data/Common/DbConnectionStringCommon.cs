@@ -347,7 +347,6 @@ namespace Microsoft.Data.Common
         internal const string ActiveDirectoryManagedIdentityString = "Active Directory Managed Identity";
         internal const string ActiveDirectoryMSIString = "Active Directory MSI";
         internal const string ActiveDirectoryDefaultString = "Active Directory Default";
-        internal const string ActiveDirectoryTokenCredentialString = "Active Directory TokenCredential";
         const string SqlCertificateString = "Sql Certificate";
 
 #if DEBUG
@@ -444,12 +443,6 @@ namespace Microsoft.Data.Common
                 || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.ActiveDirectoryDefault, CultureInfo.InvariantCulture)))
             {
                 result = SqlAuthenticationMethod.ActiveDirectoryDefault;
-                isSuccess = true;
-            }
-            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, ActiveDirectoryTokenCredentialString)
-                || StringComparer.InvariantCultureIgnoreCase.Equals(value, Convert.ToString(SqlAuthenticationMethod.ActiveDirectoryTokenCredential, CultureInfo.InvariantCulture)))
-            {
-                result = SqlAuthenticationMethod.ActiveDirectoryTokenCredential;
                 isSuccess = true;
             }
 #if ADONET_CERT_AUTH && NETFRAMEWORK
