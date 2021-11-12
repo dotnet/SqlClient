@@ -1275,7 +1275,7 @@ namespace Microsoft.Data.SqlClient
                             UInt32 error = 0;
 
                             // Validate Certificate if Trust Server Certificate=false and Encryption forced (EncryptionOptions.ON) from Server.
-                            bool shouldValidateServerCert = (_encryptionOption == EncryptionOptions.ON && !trustServerCert) || ((authType != SqlAuthenticationMethod.NotSpecified || (_connHandler._accessTokenInBytes != null || _connHandler._accessTokenCallback != null) && !trustServerCert);
+                            bool shouldValidateServerCert = (_encryptionOption == EncryptionOptions.ON && !trustServerCert) || ((authType != SqlAuthenticationMethod.NotSpecified || (_connHandler._accessTokenInBytes != null || _connHandler._accessTokenCallback != null)) && !trustServerCert);
 
                             UInt32 info = (shouldValidateServerCert ? TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE : 0)
                                 | (isYukonOrLater && (_encryptionOption & EncryptionOptions.CLIENT_CERT) == 0 ? TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE : 0);
@@ -8585,7 +8585,6 @@ namespace Microsoft.Data.SqlClient
                 // set upper 7 bits of options to indicate fed auth library type
                 switch (fedAuthFeatureData.libraryType)
                 {
-                    case TdsEnums.FedAuthLibrary.SecurityTokenCallback:
                     case TdsEnums.FedAuthLibrary.MSAL:
                         Debug.Assert(_connHandler._federatedAuthenticationInfoRequested == true, "_federatedAuthenticationInfoRequested field should be true");
                         options |= TdsEnums.FEDAUTHLIB_MSAL << 1;
