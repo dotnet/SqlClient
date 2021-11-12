@@ -134,6 +134,7 @@ namespace Microsoft.Data.SqlClient
         // The Federated Authentication returned by TryGetFedAuthTokenLocked or GetFedAuthToken.
         SqlFedAuthToken _fedAuthToken = null;
         internal byte[] _accessTokenInBytes;
+        internal readonly Func<AadTokenRequestContext,CancellationToken,Task<SqlAuthenticationToken>> _accessTokenCallback;
 
         private readonly ActiveDirectoryAuthenticationTimeoutRetryHelper _activeDirectoryAuthTimeoutRetryHelper;
         private readonly SqlAuthenticationProviderManager _sqlAuthenticationProviderManager;
@@ -430,7 +431,8 @@ namespace Microsoft.Data.SqlClient
                 DbConnectionPool pool = null,
                 string accessToken = null,
                 SqlClientOriginalNetworkAddressInfo originalNetworkAddressInfo = null,
-                bool applyTransientFaultHandling = false) : base(connectionOptions)
+                bool applyTransientFaultHandling = false,
+                Func<AadTokenRequestContext, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback = null) : base(connectionOptions)
         {
 
 #if DEBUG
@@ -483,6 +485,11 @@ namespace Microsoft.Data.SqlClient
             if (accessToken != null)
             {
                 _accessTokenInBytes = System.Text.Encoding.Unicode.GetBytes(accessToken);
+            }
+
+            if (accessTokenCallback != null)
+            {
+                _accessTokenCallback = accessTokenCallback;
             }
 
             _activeDirectoryAuthTimeoutRetryHelper = new ActiveDirectoryAuthenticationTimeoutRetryHelper();
@@ -1612,6 +1619,18 @@ namespace Microsoft.Data.SqlClient
                 };
                 // No need any further info from the server for token based authentication. So set _federatedAuthenticationRequested to true
                 _federatedAuthenticationRequested = true;
+            }
+
+            if (_accessTokenCallback != null)
+            {
+                requestedFeatures |= TdsEnums.FeatureExtension.FedAuth;
+                _fedAuthFeatureExtensionData = new FederatedAuthenticationFeatureExtensionData
+                {
+                    libraryType = TdsEnums.FedAuthLibrary.SecurityTokenCallback,
+                    fedAuthRequiredPreLoginResponse = _fedAuthRequired,
+                };
+                // No need any further info from the server for token based authentication. So set _federatedAuthenticationRequested to true
+                _federatedAuthenticationInfoRequested = true;
             }
 
             // The TCE, DATACLASSIFICATION and GLOBALTRANSACTIONS, UTF8 support feature are implicitly requested

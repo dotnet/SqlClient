@@ -53,11 +53,13 @@ namespace Microsoft.Data.SqlClient
                             string accessToken,
                             ServerCertificateValidationCallback serverCertificateValidationCallback,
                             ClientCertificateRetrievalCallback clientCertificateRetrievalCallback,
-                            SqlClientOriginalNetworkAddressInfo originalNetworkAddressInfo) : base(connectionString)
+                            SqlClientOriginalNetworkAddressInfo originalNetworkAddressInfo,
+                            Func<AadTokenRequestContext, CancellationToken, Task<SqlAuthenticationToken>> accessTokenCallback = null) : base(connectionString)
         {
             Debug.Assert(_credential == null || _accessToken == null, "Credential and AccessToken can't have the value at the same time.");
             _credential = credential;
             _accessToken = accessToken;
+            _accessTokenCallback = accessTokenCallback;
             _serverCertificateValidationCallback = serverCertificateValidationCallback;
             _clientCertificateRetrievalCallback = clientCertificateRetrievalCallback;
             _originalNetworkAddressInfo = originalNetworkAddressInfo;

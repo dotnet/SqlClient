@@ -72,6 +72,8 @@ namespace Microsoft.Data.SqlClient
         /// Instance-level list of custom key store providers. It can be set more than once by the user.
         private IReadOnlyDictionary<string, SqlColumnEncryptionKeyStoreProvider> _customColumnEncryptionKeyStoreProviders;
 
+        private Func<AadTokenRequestContext, CancellationToken, Task<SqlAuthenticationToken>> _accessTokenCallback;
+
         internal bool HasColumnEncryptionKeyStoreProvidersRegistered =>
             _customColumnEncryptionKeyStoreProviders is not null && _customColumnEncryptionKeyStoreProviders.Count > 0;
 
@@ -731,6 +733,35 @@ namespace Microsoft.Data.SqlClient
                 _accessToken = value;
                 // Need to call ConnectionString_Set to do proper pool group check
                 ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, _accessToken, _serverCertificateValidationCallback, _clientCertificateRetrievalCallback, _originalNetworkAddressInfo));
+            }
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        public Func<AadTokenRequestContext, CancellationToken, Task<SqlAuthenticationToken>> AccessTokenCallback
+        {
+            get { return _accessTokenCallback; }
+            set
+            {
+                // If a connection is connecting or is ever opened, AccessToken callback cannot be set
+                if (!InnerConnection.AllowSetConnectionString)
+                {
+                    throw ADP.OpenConnectionPropertySet(nameof(AccessTokenCallback), InnerConnection.State);
+                }
+
+                if (value != null)
+                {
+                    // Check if the usage of AccessToken has any conflict with the keys used in connection string and credential
+                    // CheckAndThrowOnInvalidCombinationOfConnectionOptionAndAccessToken((SqlConnectionString)ConnectionOptions);
+                }
+                if (value == null)
+                {
+                    throw new ArgumentNullException(nameof(AccessTokenCallback), "Callback cannot be null.");
+                }
+
+                ConnectionString_Set(new SqlConnectionPoolKey(_connectionString, _credential, null, _serverCertificateValidationCallback, _clientCertificateRetrievalCallback, _originalNetworkAddressInfo, value));
+                _accessTokenCallback = value;
             }
         }
 

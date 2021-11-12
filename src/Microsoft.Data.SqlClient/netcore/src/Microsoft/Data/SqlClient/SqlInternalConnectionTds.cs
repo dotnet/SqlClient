@@ -476,6 +476,7 @@ namespace Microsoft.Data.SqlClient
             {
                 _accessTokenInBytes = System.Text.Encoding.Unicode.GetBytes(accessToken);
             }
+
             if (accessTokenCallback != null)
             {
                 _accessTokenCallback = accessTokenCallback;
