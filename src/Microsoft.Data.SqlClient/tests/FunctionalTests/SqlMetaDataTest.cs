@@ -520,8 +520,8 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Contains("precision", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
-        // TODO: This condition can never bet met because SqlDecimal.MaxPrecision == SqlDecimal.MaxScale
-        // and there's a check that scale cannot exceed precision, so we cannot this exception.
+        // TODO: This condition can never be met because SqlDecimal.MaxPrecision == SqlDecimal.MaxScale
+        // and there's a check that scale cannot exceed precision, so we cannot test this exception.
         //[Fact]
         //public void DecimalConstructorWithScaleOutOfRange_Throws()
         //{
