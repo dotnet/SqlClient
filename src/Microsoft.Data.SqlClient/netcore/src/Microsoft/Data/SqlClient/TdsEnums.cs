@@ -244,8 +244,8 @@ namespace Microsoft.Data.SqlClient
             LiveId = FEDAUTHLIB_LIVEID,
             SecurityToken = FEDAUTHLIB_SECURITYTOKEN,
             MSAL = FEDAUTHLIB_MSAL,
-            SecurityTokenCallback = FEDAUTHLIB_SECURITYTOKEN_CALLBACK,
-            Default = FEDAUTHLIB_RESERVED
+            Default = FEDAUTHLIB_RESERVED,
+            SecurityTokenCallback = FEDAUTHLIB_SECURITYTOKEN_CALLBACK
         }
 
         public const byte MSALWORKFLOW_ACTIVEDIRECTORYPASSWORD = 0x01;
@@ -1164,11 +1164,7 @@ namespace Microsoft.Data.SqlClient
         ActiveDirectoryMSI,
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlAuthenticationMethod.xml' path='docs/members[@name="SqlAuthenticationMethod"]/ActiveDirectoryDefault/*'/>
-        ActiveDirectoryDefault,
-        /// <summary>
-        ///
-        /// </summary>
-        ActiveDirectoryTokenCredential
+        ActiveDirectoryDefault
     }
     // This enum indicates the state of TransparentNetworkIPResolution
     // The first attempt when TNIR is on should be sequential. If the first attempt failes next attempts should be parallel.

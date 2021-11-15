@@ -527,7 +527,6 @@ namespace Microsoft.Data.Common
                 || value == SqlAuthenticationMethod.ActiveDirectoryManagedIdentity
                 || value == SqlAuthenticationMethod.ActiveDirectoryMSI
                 || value == SqlAuthenticationMethod.ActiveDirectoryDefault
-                || value == SqlAuthenticationMethod.ActiveDirectoryTokenCredential
 #if ADONET_CERT_AUTH && NETFRAMEWORK
                 || value == SqlAuthenticationMethod.SqlCertificate
 #endif

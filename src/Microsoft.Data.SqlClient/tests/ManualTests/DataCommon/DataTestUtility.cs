@@ -188,7 +188,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static string GenerateAccessToken(string authorityURL, string aADAuthUserID, string aADAuthPassword)
         {
-            return AcquireTokenAsync(authorityURL, aADAuthUserID, aADAuthPassword).Result;
+            return AcquireTokenAsync(authorityURL, aADAuthUserID, aADAuthPassword).GetAwaiter().GetResult();
         }
 
         private static Task<string> AcquireTokenAsync(string authorityURL, string userID, string password) => Task.Run(() =>

@@ -236,8 +236,8 @@ namespace Microsoft.Data.SqlClient
             LiveId = FEDAUTHLIB_LIVEID,
             SecurityToken = FEDAUTHLIB_SECURITYTOKEN,
             MSAL = FEDAUTHLIB_MSAL,
-            SecurityTokenCallback = FEDAUTHLIB_SECURITYTOKEN_CALLBACK,
-            Default = FEDAUTHLIB_RESERVED
+            Default = FEDAUTHLIB_RESERVED,
+            SecurityTokenCallback = FEDAUTHLIB_SECURITYTOKEN_CALLBACK
         }
 
         public const byte MSALWORKFLOW_ACTIVEDIRECTORYPASSWORD = 0x01;
