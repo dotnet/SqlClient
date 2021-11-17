@@ -108,8 +108,6 @@ namespace Microsoft.Data.SqlClient.Tests
 
             ApplicationIntent invalid = (ApplicationIntent)Enum.GetValues(typeof(ApplicationIntent)).Length + 1;
             ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => builder.ApplicationIntent = invalid);
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("ApplicationIntent", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -120,8 +118,6 @@ namespace Microsoft.Data.SqlClient.Tests
 
             SqlConnectionAttestationProtocol invalid = (SqlConnectionAttestationProtocol)Enum.GetValues(typeof(SqlConnectionAttestationProtocol)).Length + 1;
             ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => builder.AttestationProtocol = invalid);
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("SqlConnectionAttestationProtocol", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -132,8 +128,6 @@ namespace Microsoft.Data.SqlClient.Tests
 
             SqlAuthenticationMethod invalid = (SqlAuthenticationMethod)Enum.GetValues(typeof(SqlAuthenticationMethod)).Length + 1;
             ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => builder.Authentication = invalid);
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("SqlAuthenticationMethod", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -144,8 +138,6 @@ namespace Microsoft.Data.SqlClient.Tests
 
             SqlConnectionColumnEncryptionSetting invalid = (SqlConnectionColumnEncryptionSetting)Enum.GetValues(typeof(SqlConnectionColumnEncryptionSetting)).Length + 1;
             ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => builder.ColumnEncryptionSetting = invalid);
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("SqlConnectionColumnEncryptionSetting", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -155,8 +147,6 @@ namespace Microsoft.Data.SqlClient.Tests
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
 
             ArgumentException ex = Assert.Throws<ArgumentException>(() => builder.ConnectTimeout = -1);
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("connect timeout", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -166,8 +156,6 @@ namespace Microsoft.Data.SqlClient.Tests
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
 
             ArgumentException ex = Assert.Throws<ArgumentException>(() => builder.CommandTimeout = -1);
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("command timeout", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -179,8 +167,6 @@ namespace Microsoft.Data.SqlClient.Tests
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
 
             ArgumentException ex = Assert.Throws<ArgumentException>(() => builder.ConnectRetryCount = invalid);
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("connect retry count", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -192,8 +178,6 @@ namespace Microsoft.Data.SqlClient.Tests
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
 
             ArgumentException ex = Assert.Throws<ArgumentException>(() => builder.ConnectRetryInterval = invalid);
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("connect retry interval", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -204,8 +188,6 @@ namespace Microsoft.Data.SqlClient.Tests
 
             SqlConnectionIPAddressPreference invalid = (SqlConnectionIPAddressPreference)Enum.GetValues(typeof(SqlConnectionIPAddressPreference)).Length + 1;
             ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => builder.IPAddressPreference = invalid);
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("SqlConnectionIPAddressPreference", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -216,8 +198,6 @@ namespace Microsoft.Data.SqlClient.Tests
 
             PoolBlockingPeriod invalid = (PoolBlockingPeriod)Enum.GetValues(typeof(PoolBlockingPeriod)).Length + 1;
             ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => builder.PoolBlockingPeriod = invalid);
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("PoolBlockingPeriod", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -227,8 +207,6 @@ namespace Microsoft.Data.SqlClient.Tests
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
 
             ArgumentException ex = Assert.Throws<ArgumentException>(() => builder.LoadBalanceTimeout = -1);
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("load balance timeout", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -238,8 +216,6 @@ namespace Microsoft.Data.SqlClient.Tests
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
 
             ArgumentException ex = Assert.Throws<ArgumentException>(() => builder.MaxPoolSize = 0);
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("max pool size", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -249,8 +225,6 @@ namespace Microsoft.Data.SqlClient.Tests
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
 
             ArgumentException ex = Assert.Throws<ArgumentException>(() => builder.MinPoolSize = -1);
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("min pool size", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -264,8 +238,6 @@ namespace Microsoft.Data.SqlClient.Tests
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
 
             ArgumentException ex = Assert.Throws<ArgumentException>(() => builder.PacketSize = invalid);
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("packet size", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -286,8 +258,6 @@ namespace Microsoft.Data.SqlClient.Tests
 
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
             ArgumentException ex = Assert.Throws<ArgumentException>(() => builder["NotSupported"] = "not important");
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("not supported", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 

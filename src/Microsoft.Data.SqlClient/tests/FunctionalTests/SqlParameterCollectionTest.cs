@@ -16,8 +16,7 @@ namespace Microsoft.Data.SqlClient.Tests
             SqlParameterCollection collection = command.Parameters;
 
             Array invalid = null;
-            ArgumentNullException ex = Assert.Throws<ArgumentNullException>(() => collection.AddRange(invalid));
-            Assert.NotNull(ex);
+            Assert.Throws<ArgumentNullException>(() => collection.AddRange(invalid));
         }
 
         [Fact]
@@ -43,8 +42,6 @@ namespace Microsoft.Data.SqlClient.Tests
             collection.Add(new SqlParameter("Test2", 2));
 
             IndexOutOfRangeException ex = Assert.Throws<IndexOutOfRangeException>(() => collection.RemoveAt("DoesNotExist"));
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("DoesNotExist", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -111,8 +108,7 @@ namespace Microsoft.Data.SqlClient.Tests
             SqlCommand command = new SqlCommand();
             SqlParameterCollection collection = command.Parameters;
 
-            ArgumentNullException ex = Assert.Throws<ArgumentNullException>(() => collection.Add(null));
-            Assert.NotNull(ex);
+            Assert.Throws<ArgumentNullException>(() => collection.Add(null));
         }
     }
 }

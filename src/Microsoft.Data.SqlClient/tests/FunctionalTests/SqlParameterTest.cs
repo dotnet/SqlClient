@@ -718,7 +718,6 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             SqlParameter parameter = new SqlParameter();
             ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => { parameter.LocaleId = -1; });
-            Assert.NotNull(ex);
             Assert.NotNull(ex.ParamName);
             Assert.Contains("LocaleId", ex.ParamName, StringComparison.OrdinalIgnoreCase);
         }

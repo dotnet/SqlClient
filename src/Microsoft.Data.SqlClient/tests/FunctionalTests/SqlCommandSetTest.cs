@@ -175,8 +175,6 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             Assert.NotNull(ex);
             Assert.IsType<T>(ex.InnerException);
-            Assert.NotNull(ex.InnerException);
-            Assert.NotEmpty(ex.InnerException.Message);
             Assert.Contains(contains, ex.InnerException.Message, StringComparison.OrdinalIgnoreCase);
         }
         #endregion
