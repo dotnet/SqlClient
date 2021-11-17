@@ -28,6 +28,8 @@
     <Compile Include="DataCommon\AssemblyResourceManager.cs" />
     <Compile Include="DataCommon\SystemDataResourceManager.cs" />
     <Compile Include="MultipartIdentifierTests.cs" />
+    <Compile Include="SqlClientLoggerTest.cs" />
+    <Compile Include="SqlCommandSetTest.cs" />
     <Compile Include="SqlConfigurableRetryLogicTest.cs" />
     <Compile Include="SqlCommandBuilderTest.cs" />
     <Compile Include="SqlBulkCopyTest.cs" />
@@ -47,6 +49,7 @@
     <Compile Include="SqlExceptionTest.cs" />
     <Compile Include="SqlFacetAttributeTest.cs" />
     <Compile Include="SqlNotificationRequestTest.cs" />
+    <Compile Include="SqlParameterCollectionTest.cs" />
     <Compile Include="SqlParameterTest.cs" />
     <Compile Include="SqlClientFactoryTest.cs" />
     <Compile Include="SqlErrorCollectionTest.cs" />
