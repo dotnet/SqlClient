@@ -1,6 +1,6 @@
 # Microsoft.Data.SqlClient 4.0 Releases
 
-The following Microsoft.Data.SqlClient 3.0 stable releases have been shipped:
+The following Microsoft.Data.SqlClient 4.0 stable releases have been shipped:
 
 | Release Date | Version | Notes |
 | :-- | :-- | :--: |
