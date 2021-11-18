@@ -79,8 +79,6 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 object actual = metaData.Adjust(expected);
             });
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("invalid", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -172,8 +170,6 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 object actual = metaData.Adjust(date);
             });
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("invalid", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -199,8 +195,6 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 object actual = metaData.Adjust(outOfRangeTimespan);
             });
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("invalid", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -232,8 +226,6 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 SqlMetaData metaData = new SqlMetaData("col1", invalidType, true, true, SortOrder.Ascending, 0);
             });
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("dbType", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -261,8 +253,6 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 SqlMetaData metaData = new SqlMetaData("col1", SqlDbType.Int, 5, true, true, SortOrder.Ascending, 0);
             });
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("dbType", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -293,8 +283,6 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 SqlMetaData metaData = new SqlMetaData("col1", SqlDbType.Int, 5, locale, SqlCompareOptions.IgnoreCase, true, true, SortOrder.Ascending, 0);
             });
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("dbType", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -344,8 +332,6 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 SqlMetaData metaData = new SqlMetaData("col1", dbType, invalidMaxLength, locale, SqlCompareOptions.IgnoreCase, true, true, SortOrder.Ascending, 0);
             });
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("out of range", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -359,8 +345,6 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 SqlMetaData metaData = new SqlMetaData("col1", SqlDbType.NText, maxLength, locale, invalidCompareOptions, true, true, SortOrder.Ascending, 0);
             });
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("invalid", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -380,8 +364,6 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 SqlMetaData metaData = new SqlMetaData("col1", dbType, invalidMaxLength, true, true, SortOrder.Ascending, 0);
             });
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("out of range", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -394,8 +376,6 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 SqlMetaData metaData = new SqlMetaData(invalidName, SqlDbType.Decimal, 2, 2, true, true, SortOrder.Ascending, 0);
             });
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("long", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -408,8 +388,6 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 SqlMetaData metaData = new SqlMetaData(invalidName, SqlDbType.Decimal, 2, 2, true, true, SortOrder.Ascending, 0);
             });
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("null", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -421,8 +399,6 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 SqlMetaData metaData = new SqlMetaData("col1", SqlDbType.Int, true, true, invalidSortOrder, 0);
             });
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("SortOrder", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -435,8 +411,6 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 SqlMetaData metaData = new SqlMetaData("col1", SqlDbType.Int, true, true, invalidSortOrder, invalidMatchToSortOrdinal);
             });
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("sort order and ordinal", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -447,8 +421,6 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 SqlMetaData metaData = new SqlMetaData("col2", SqlDbType.Int, "NorthWindDb", "schema", "name");
             });
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("dbType", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -500,8 +472,6 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 SqlMetaData metaData = new SqlMetaData("col1", SqlDbType.Decimal, precision, scale, true, true, SortOrder.Ascending, 0);
             });
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("precision", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -515,8 +485,6 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 SqlMetaData metaData = new SqlMetaData("col1", SqlDbType.Decimal, precision, scale, true, true, SortOrder.Ascending, 0);
             });
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("precision", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -558,8 +526,6 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 SqlMetaData metaData = new SqlMetaData("col2", (SqlDbType)999, 16, 2, 2, 2, SqlCompareOptions.IgnoreCase, null, true, true, SortOrder.Ascending, 0);
             });
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("dbType", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -573,7 +539,6 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 SqlMetaData metaData = (SqlMetaData)method.Invoke(exampleMetaData, new object[] { exampleMetaData });
             });
-            Assert.NotNull(ex);
             Assert.NotNull(ex.InnerException);
             Assert.IsType<ArgumentException>(ex.InnerException);
             Assert.NotEmpty(ex.InnerException.Message);
@@ -637,8 +602,6 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 SqlMetaData metaData = SqlMetaData.InferFromValue(null, "col1");
             });
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("null", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -650,8 +613,6 @@ namespace Microsoft.Data.SqlClient.Tests
                 Address address = new Address();
                 SqlMetaData metaData = SqlMetaData.InferFromValue(address, "col1");
             });
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("address", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -719,8 +680,6 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 SqlMetaData metaData = new SqlMetaData("col1", dbType, 5, precision, scale, 0, SqlCompareOptions.BinarySort, null, true, true, SortOrder.Ascending, 0);
             });
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("scale", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -734,8 +693,6 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 SqlMetaData metaData = new SqlMetaData("col1", SqlDbType.Int, precision, scale);
             });
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("dbType", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -793,8 +750,6 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 SqlMetaData metaData = new SqlMetaData("col1", SqlDbType.Int, typeof(int));
             });
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("dbType", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -805,8 +760,6 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 SqlMetaData metaData = new SqlMetaData("col1", SqlDbType.Udt, null);
             });
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("null", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -833,8 +786,6 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 SqlMetaData metaData = new SqlMetaData("col1", SqlDbType.Xml, "NorthWindDb", "schema", null);
             });
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("null", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 

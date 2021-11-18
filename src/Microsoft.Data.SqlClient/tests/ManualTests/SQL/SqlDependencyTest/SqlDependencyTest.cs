@@ -35,8 +35,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             SqlDependency sqlDependency = new SqlDependency();
             ArgumentNullException ex = Assert.Throws<ArgumentNullException>(() => sqlDependency.AddCommandDependency(null));
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("null", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -48,8 +46,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 SqlDependency sqlDependency = new SqlDependency(sqlCommand, "", -1);
             });
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("timeout", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -62,8 +58,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 SqlDependency sqlDependency = new SqlDependency(sqlCommand);
             });
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("sqlcommand", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -100,8 +94,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 dep.OnChange += tempDelegate;
             });
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("same", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -139,8 +131,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             SqlDependency sqlDependency = new SqlDependency();
             ArgumentException ex = Assert.Throws<ArgumentException>(() => SqlDependency.Start("", null));
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("connectionstring", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -149,8 +139,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             SqlDependency sqlDependency = new SqlDependency();
             ArgumentNullException ex = Assert.Throws<ArgumentNullException>(() => SqlDependency.Start(null, null));
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("connectionstring", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -173,8 +161,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             SqlDependency sqlDependency = new SqlDependency();
             ArgumentException ex = Assert.Throws<ArgumentException>(() => SqlDependency.Stop("", null));
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("connectionstring", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
 
@@ -183,8 +169,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             SqlDependency sqlDependency = new SqlDependency();
             ArgumentNullException ex = Assert.Throws<ArgumentNullException>(() => SqlDependency.Stop(null, null));
-            Assert.NotNull(ex);
-            Assert.NotEmpty(ex.Message);
             Assert.Contains("connectionstring", ex.Message, StringComparison.OrdinalIgnoreCase);
         }
     }
