@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## [Stable Release 4.0.0] - 2021-11-18
 
+### Added
+
+- Add missing `SqlClientLogger` class to .NET Core refs and missing 'SqlClientLogger.LogWarning' method in .NET Framework refs [#1392](https://github.com/dotnet/SqlClient/pull/1392)
+
 ### Changed
 
 - Avoid throwing unnecessary exception when an invalid SqlNotificationInfo value is received from SQL Server [#1378](https://github.com/dotnet/SqlClient/pull/1378)
