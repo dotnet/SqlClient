@@ -5,6 +5,7 @@ This document provides all the necessary details to build the driver and run tes
 ## Visual Studio Pre-Requisites
 
 This project should be built with Visual Studio 2019+ for the best compatibility. The required set of components are provided in the below file:
+
 - **Visual Studio 2019** with imported components: [VS19Components](/tools/vsconfig/VS19Components.vsconfig)
 
 Once the environment is setup properly, execute the desired set of commands below from the _root_ folder to perform the respective operations:
@@ -20,6 +21,11 @@ msbuild
 ```
 
 ```bash
+msbuild -t:clean
+# Cleans all build directories.
+```
+
+```bash
 msbuild -p:Configuration=Release
 # Builds the driver in 'Release' Configuration for `AnyCPU` platform.
 ```
@@ -27,11 +33,6 @@ msbuild -p:Configuration=Release
 ```bash
 msbuild -p:Platform=Win32
 # Builds the .NET Framework (NetFx) driver for Win32 (x86) platform on Windows in 'Debug' Configuration.
-```
-
-```bash
-msbuild -t:clean
-# Cleans all build directories.
 ```
 
 ```bash
@@ -77,14 +78,58 @@ msbuild -t:BuildTestsNetCore -p:TestSet=1
 # Build a subset of the manual tests. Valid values: '1', '2', '3', 'AE'. Omit to build all tests.
 ```
 
-## Run Functional Tests
+## Running Tests
+
+There are 2 ways to run tests, using MsBuild or Dotnet SDK.
+
+### Running from Build.proj
+
+```bash
+msbuild -t:RunFunctionalTests
+# Run all functional tests for *default* target framework (.NET Core 3.1).
+```
+
+```bash
+msbuild -t:RunManualTests
+# Run all manual tests for *default* target framework (.NET Core 3.1).
+```
+
+```bash
+msbuild -t:RunTests -p:configuration=Release
+# Run both functional and manual tests for *default* target framework (.NET Core 3.1).
+```
+
+To specify custom target framework, use `TF` property:
+
+```bash
+msbuild -t:RunTests -p:configuration=Release -p:TF=net5.0
+msbuild -t:RunTests -p:configuration=Release -p:TF=net48
+# Runs tests for specified target framework. 
+# TargetNetCoreVersion and TargetNetFxVersion are not to be used with TF property, they will take precedence over TF if provided.
+```
+
+To capture test and code coverage results in a custom directory:
+
+```bash
+msbuild -t:RunTests -p:ResultsDirectory=MyDirectory
+# Runs tests with test and code coverage results placed in provided results directory.
+# Default results directory is "TestResults".
+```
+
+Other properties can be set alongside as needed.
+
+### Running using Dotnet SDK (traditional)
+
+#### Run Functional Tests
 
 - Windows (`netfx x86`):
+
 ```bash
 dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" -p:Platform="Win32" -p:Configuration="Release" -p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests"
 ```
 
 - Windows (`netfx x64`):
+
 ```bash
 dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" -p:Platform="x64" -p:Configuration="Release" -p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests"
 ```
@@ -92,22 +137,26 @@ dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.S
 - AnyCPU:
 
   Windows (`netcoreapp`):
+
 ```bash
 dotnet test "src\Microsoft.Data.SqlClient\tests\FunctionalTests\Microsoft.Data.SqlClient.Tests.csproj" -p:Platform="AnyCPU" -p:Configuration="Release" -p:TestTargetOS="Windowsnetcoreapp" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests"
 ```
 
   Unix (`netcoreapp`):
+
 ```bash
 dotnet test "src/Microsoft.Data.SqlClient/tests/FunctionalTests/Microsoft.Data.SqlClient.Tests.csproj" -p:Platform="AnyCPU" -p:Configuration="Release" -p:TestTargetOS="Unixnetcoreapp" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonlinuxtests&category!=nonuaptests"
 ```
 
-## Run Manual Tests
+#### Run Manual Tests
 
-### Pre-Requisites for running Manual tests:
+### Pre-Requisites for running Manual tests
+
 Manual Tests require the below setup to run:
-* SQL Server with enabled Shared Memory, TCP and Named Pipes Protocols and access to the Client OS.
-* Databases "NORTHWIND" and "UdtTestDb" present in SQL Server, created using SQL scripts [createNorthwindDb.sql](tools/testsql/createNorthwindDb.sql) and [createUdtTestDb.sql](tools/testsql/createUdtTestDb.sql). To setup an Azure Database with "NORTHWIND" tables, use SQL Script: [createNorthwindAzureDb.sql](tools/testsql/createNorthwindAzureDb.sql).
-* Make a copy of the configuration file [config.default.json](src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.json) and rename it to `config.json`. Update the values in `config.json`:
+
+- SQL Server with enabled Shared Memory, TCP and Named Pipes Protocols and access to the Client OS.
+- Databases "NORTHWIND" and "UdtTestDb" present in SQL Server, created using SQL scripts [createNorthwindDb.sql](tools/testsql/createNorthwindDb.sql) and [createUdtTestDb.sql](tools/testsql/createUdtTestDb.sql). To setup an Azure Database with "NORTHWIND" tables, use SQL Script: [createNorthwindAzureDb.sql](tools/testsql/createNorthwindAzureDb.sql).
+- Make a copy of the configuration file [config.default.json](src/Microsoft.Data.SqlClient/tests/tools/Microsoft.Data.SqlClient.TestUtilities/config.default.json) and rename it to `config.json`. Update the values in `config.json`:
 
   |Property|Description|Value|
   |------|--------|-------------------|
@@ -130,36 +179,40 @@ Manual Tests require the below setup to run:
   |IsAzureSynpase | (Optional) When set to 'true', test suite runs compatible tests for Azure Synapse/Parallel Data Warehouse. | `true` OR `false`|
   |MakecertPath | The full path to makecert.exe. This is not required if the path is present in the PATH environment variable. | `D:\\escaped\\absolute\\path\\to\\makecert.exe` |
 
-### Commands to run Manual Tests:
+### Commands to run Manual Tests
 
-  - Windows (`netfx x86`):
+- Windows (`netfx x86`):
+
 ```bash
 dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" -p:Platform="Win32" -p:Configuration="Release" -p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests"
   ```
 
-  - Windows (`netfx x64`):
+- Windows (`netfx x64`):
+
 ```bash
 dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" -p:Platform="x64" -p:Configuration="Release" -p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests"
 ```
 
-  - AnyCPU:
+- Windows (`netfx`):
 
-    Windows (`netfx`):
 ```bash
 dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" -p:Platform="AnyCPU" -p:Configuration="Release" -p:TestTargetOS="Windowsnetfx" --no-build -v n --filter "category!=nonnetfxtests&category!=failing&category!=nonwindowstests"
 ```
 
-    Windows (`netcoreapp`):
+- Windows (`netcoreapp`):
+
 ```bash
 dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" -p:Platform="AnyCPU" -p:Configuration="Release" -p:TestTargetOS="Windowsnetcoreapp" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonwindowstests"
 ```
 
-    Unix (`netcoreapp`):
+- Unix (`netcoreapp`):
+
 ```bash
 dotnet test "src/Microsoft.Data.SqlClient/tests/ManualTests/Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" -p:Platform="AnyCPU" -p:Configuration="Release" -p:TestTargetOS="Unixnetcoreapp" --no-build -v n --filter "category!=nonnetcoreapptests&category!=failing&category!=nonlinuxtests&category!=nonuaptests"
 ```
 
 ## Run A Single Test
+
 ```bash
 dotnet test "src\Microsoft.Data.SqlClient\tests\ManualTests\Microsoft.Data.SqlClient.ManualTesting.Tests.csproj" -p:Platform="AnyCPU" -p:Configuration="Release" -p:TestTargetOS="Windowsnetcoreapp" --no-build -v n --filter "FullyQualifiedName=Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted.CspProviderExt.TestKeysFromCertificatesCreatedWithMultipleCryptoProviders"
 ```
@@ -175,11 +228,12 @@ Tests can be built and run with custom "Reference Type" property that enables di
 
 > ************** IMPORTANT NOTE BEFORE PROCEEDING WITH "PACKAGE" AND "NETSTANDARDPACKAGE" REFERENCE TYPES ***************
 > CREATE A NUGET PACKAGE WITH BELOW COMMAND AND ADD TO LOCAL FOLDER + UPDATE NUGET CONFIG FILE TO READ FROM THAT LOCATION
-> ```
+>
+> ```bash
 >  msbuild -p:configuration=Release
 > ```
 
-### Building Tests:
+### Building Tests with Reference Type
 
 For .NET Core, all 4 reference types are supported:
 
@@ -203,18 +257,19 @@ msbuild -t:BuildTestsNetFx -p:ReferenceType=Project
 msbuild -t:BuildTestsNetFx -p:ReferenceType=Package
 ```
 
-### Running Tests:
+### Running Tests with Reference Type
 
 Provide property to `dotnet test` commands for testing desired reference type.
-```
+
+```bash
 dotnet test -p:ReferenceType=Project ...
 ```
 
-## Testing with Custom TargetFramework
+## Testing with Custom TargetFramework (traditional)
 
 Tests can be built and run with custom Target Frameworks. See the below examples.
 
-### Building Tests:
+### Building Tests with custom target framework
 
 ```bash
 msbuild -t:BuildTestsNetFx -p:TargetNetFxVersion=net462
@@ -228,7 +283,7 @@ msbuild -t:BuildTestsNetCore -p:TargetNetCoreVersion=netcoreapp3.1
 # Applicable values: netcoreapp3.1 | net5.0 | net6.0
 ```
 
-### Running Tests:
+### Running Tests with custom target framework (traditional)
 
 ```bash
 dotnet test -p:TargetNetFxVersion=net462 ...
@@ -244,25 +299,25 @@ dotnet test -p:TargetNetCoreVersion=netcoreapp3.1 ...
 
 Managed SNI can be enabled on Windows by enabling the below AppContext switch:
 
-**"Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows"**
+`Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows`
 
 ## Set truncation on for scaled decimal parameters
 
 Scaled decimal parameter truncation can be enabled by enabling the below AppContext switch:
 
-**"Switch.Microsoft.Data.SqlClient.TruncateScaledDecimal"**
+`Switch.Microsoft.Data.SqlClient.TruncateScaledDecimal`
 
 ## Enabling row version null behavior
 
 `SqlDataReader` returns a `DBNull` value instead of an empty `byte[]`. To enable the legacy behavior, you must enable the following AppContext switch on application startup:
 
-**"Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehavior"**
+`Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehavior`
 
 ## Enabling OS secure protocols preference
 
 TLS 1.3 has been excluded due to the fact that the driver lacks full support. To enable OS preferences as before, enable the following AppContext switch on application startup:
 
-**"Switch.Microsoft.Data.SqlClient.EnableSecureProtocolsByOS"**
+`Switch.Microsoft.Data.SqlClient.EnableSecureProtocolsByOS`
 
 ## Debugging SqlClient on Linux from Windows
 
@@ -271,14 +326,17 @@ For enhanced developer experience, we support debugging SqlClient on Linux from 
 This project is also included in `docker-compose.yml` to demonstrate connectivity with SQL Server docker image.
 
 To run the same:
+
 1. Build the Solution in Visual Studio
 2. Set  `docker-compose` as Startup Project
 3. Run "Docker-Compose" launch configuration.
 4. You will see similar message in Debug window:
+
     ```log
     Connected to SQL Server v15.00.4023 from Unix 4.19.76.0
     The program 'dotnet' has exited with code 0 (0x0).
     ```
+
 5. Now you can write code in [Program.cs](/src/Microsoft.Data.SqlClient/tests/DockerLinuxTest/Program.cs) to debug SqlClient on Linux!
 
 ### Troubleshooting Docker issues
@@ -288,6 +346,7 @@ There may be times where connection cannot be made to SQL Server, we found below
 - Clear Docker images to create clean image from time-to-time, and clear docker cache if needed by running `docker system prune` in Command Prompt.
 
 - If you face `Microsoft.Data.SqlClient.SNI.dll not found` errors when debugging, try updating the below properties in the netcore\Microsoft.Data.SqlClient.csproj file and try again:
+
   ```xml
     <OSGroup>Unix</OSGroup>
     <TargetsWindows>false</TargetsWindows>
@@ -310,13 +369,14 @@ dotnet test <test_properties...> --collect:"XPlat Code Coverage"
 
 ## Run Performance Tests
 
-### Running Performance test project directly:
+### Running Performance test project directly
 
 Project location from Root: `src\Microsoft.Data.SqlClient\tests\PerformanceTests\Microsoft.Data.SqlClient.PerformanceTests.csproj`
 Configure `runnerconfig.json` file with connection string and preferred settings to run Benchmark Jobs.
 
-```
+```bash
 cd src\Microsoft.Data.SqlClient\tests\PerformanceTests
 dotnet run -c Release -f netcoreapp3.1|net5.0
 ```
+
 _Only "**Release** Configuration" applies to Performance Tests_
