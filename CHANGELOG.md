@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Added
 
-- Add missing `SqlClientLogger` class to .NET Core refs and missing 'SqlClientLogger.LogWarning' method in .NET Framework refs [#1392](https://github.com/dotnet/SqlClient/pull/1392)
+- Added missing `SqlClientLogger` class to .NET Core refs and missing 'SqlClientLogger.LogWarning' method in .NET Framework refs [#1392](https://github.com/dotnet/SqlClient/pull/1392)
 
 ### Changed
 
