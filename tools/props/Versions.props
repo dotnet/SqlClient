@@ -66,7 +66,8 @@
     <XunitVersion>2.4.1</XunitVersion>
     <MicrosoftDotNetRemoteExecutorVersion>5.0.0-beta.20206.4</MicrosoftDotNetRemoteExecutorVersion>
     <MicrosoftNETCoreRuntimeCoreCLRVersion>2.0.8</MicrosoftNETCoreRuntimeCoreCLRVersion>
-    <MicrosoftSqlServerSqlManagementObjectsVersion>161.41011.9</MicrosoftSqlServerSqlManagementObjectsVersion>
+    <MicrosoftSqlServerSqlManagementObjectsVersion>161.46521.71</MicrosoftSqlServerSqlManagementObjectsVersion>
+    <MicrosoftDataSqlClientSMOVersion>4.0.0</MicrosoftDataSqlClientSMOVersion>
     <MicrosoftSqlServerTypesVersion>10.50.1600.1</MicrosoftSqlServerTypesVersion>
     <BenchmarkDotNetVersion>0.12.1</BenchmarkDotNetVersion>
   </PropertyGroup>
