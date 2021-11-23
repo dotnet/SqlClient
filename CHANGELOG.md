@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## [Stable Release 4.0.0] - 2021-11-18
+
+### Added
+
+- Added missing `SqlClientLogger` class to .NET Core refs and missing `SqlClientLogger.LogWarning` method in .NET Framework refs [#1392](https://github.com/dotnet/SqlClient/pull/1392)
+
+### Changed
+
+- Avoid throwing unnecessary exception when an invalid `SqlNotificationInfo` value is received from SQL Server [#1378](https://github.com/dotnet/SqlClient/pull/1378)
+- Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `v4.0.0` [#1391](https://github.com/dotnet/SqlClient/pull/1391)
+
 ## [Preview Release 4.0.0-preview3.21293.2] - 2021-10-20
 
 This update brings the below changes over the previous release:

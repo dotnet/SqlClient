@@ -1,5 +1,11 @@
 # Microsoft.Data.SqlClient 4.0 Releases
 
+The following Microsoft.Data.SqlClient 4.0 stable releases have been shipped:
+
+| Release Date | Version | Notes |
+| :-- | :-- | :--: |
+| 2021/11/18 | 4.0.0 | [release notes](4.0.0.md) |
+
 The following Microsoft.Data.SqlClient 4.0 preview releases have been shipped:
 
 | Release Date | Version | Notes |
