@@ -1555,8 +1555,12 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             DataTestUtility.AssertThrowsWrapper<ArgumentNullException>(() => stream.Read(null, 0, 1));
                             DataTestUtility.AssertThrowsWrapper<ArgumentOutOfRangeException>(() => stream.Read(buffer, -1, 2));
                             DataTestUtility.AssertThrowsWrapper<ArgumentOutOfRangeException>(() => stream.Read(buffer, 2, -1));
-                            Assert.ThrowsAny<ArgumentException>(() => stream.Read(buffer, buffer.Length, buffer.Length));
-                            Assert.ThrowsAny<ArgumentException>(() => stream.Read(buffer, int.MaxValue, int.MaxValue));
+
+                            // ArgumentException is thrown in net5 and earlier. ArgumentOutOfRangeException in net6 and later
+                            ArgumentException ex = Assert.ThrowsAny<ArgumentException>(() => stream.Read(buffer, buffer.Length, buffer.Length));
+                            Assert.True(ex.GetType() == typeof(ArgumentException) || ex.GetType() == typeof(ArgumentOutOfRangeException));
+                            ex = Assert.ThrowsAny<ArgumentException>(() => stream.Read(buffer, int.MaxValue, int.MaxValue));
+                            Assert.True(ex.GetType() == typeof(ArgumentException) || ex.GetType() == typeof(ArgumentOutOfRangeException));
                         }
 
                         // Once Reader is closed
