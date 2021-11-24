@@ -1555,8 +1555,8 @@ CREATE TABLE {tableName} (id INT, foo VARBINARY(MAX))
                             DataTestUtility.AssertThrowsWrapper<ArgumentNullException>(() => stream.Read(null, 0, 1));
                             DataTestUtility.AssertThrowsWrapper<ArgumentOutOfRangeException>(() => stream.Read(buffer, -1, 2));
                             DataTestUtility.AssertThrowsWrapper<ArgumentOutOfRangeException>(() => stream.Read(buffer, 2, -1));
-                            DataTestUtility.AssertThrowsWrapper<ArgumentException>(() => stream.Read(buffer, buffer.Length, buffer.Length));
-                            DataTestUtility.AssertThrowsWrapper<ArgumentException>(() => stream.Read(buffer, int.MaxValue, int.MaxValue));
+                            Assert.ThrowsAny<ArgumentException>(() => stream.Read(buffer, buffer.Length, buffer.Length));
+                            Assert.ThrowsAny<ArgumentException>(() => stream.Read(buffer, int.MaxValue, int.MaxValue));
                         }
 
                         // Once Reader is closed
