@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Data.Common;
 using System.IO;
 using System.Text;
@@ -266,5 +267,86 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
         }
+
+
+        /// <summary>
+        /// Covers GetFieldValue<T> for SqlBuffer class
+        /// </summary>
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        public static void SqlDataReader_SqlBuffer_GetFieldValue()
+        {
+            string tableName = "Testable"+ new System.Random().Next(5000);
+            
+            //Arrange
+     
+            DbProviderFactory provider = SqlClientFactory.Instance;
+         
+            using (DbConnection con = provider.CreateConnection())
+            {
+                    con.ConnectionString = DataTestUtility.TCPConnectionString;
+                    con.Open();
+                    string sql = "CREATE TABLE " + tableName + " ([CustomerId] [int],[FirstName] [nvarchar](50),[LastName] [nvarchar](50),[BooleanColumn] [BIT],[IntSixteenColumn] [SMALLINT],[ByteColumn] [TINYINT] ,[IntSixtyFourColumn] [BIGINT],[DoubleColumn] [FLOAT],[SingleColumn] [REAL],[GUIDColumn] [uniqueidentifier]);";
+
+                    using (DbCommand command = provider.CreateCommand())
+                    {
+                        command.Connection = con;
+                        command.CommandText = sql;
+                        command.ExecuteNonQuery();
+                    }
+
+                System.Data.SqlTypes.SqlGuid sqlguid = new System.Data.SqlTypes.SqlGuid(new System.Guid());                 
+
+                    using (SqlCommand sqlCommand = new SqlCommand("", con as SqlConnection))
+                    {
+                        sqlCommand.CommandText = $"INSERT INTO [{tableName}] VALUES (@CustomerId,@FirstName,@LastName,@BooleanColumn,@IntSixteenColumn,@ByteColumn,@IntSixtyFourColumn,@DoubleColumn,@SingleColumn,@GUIDColumn)";
+                        sqlCommand.Parameters.AddWithValue(@"CustomerId",1);
+                        sqlCommand.Parameters.AddWithValue(@"FirstName", string.Format("Microsoft{0}",1));
+                        sqlCommand.Parameters.AddWithValue(@"LastName", string.Format("Corporation{0}", 1));
+                        sqlCommand.Parameters.AddWithValue(@"BooleanColumn", true);
+                        sqlCommand.Parameters.AddWithValue(@"IntSixteenColumn", 3274);
+                        sqlCommand.Parameters.AddWithValue(@"ByteColumn", 253);
+                        sqlCommand.Parameters.AddWithValue(@"IntSixtyFourColumn", 922222222222);
+                        sqlCommand.Parameters.AddWithValue(@"DoubleColumn", 10.7);
+                        sqlCommand.Parameters.AddWithValue(@"SingleColumn", 123.546f);
+                        sqlCommand.Parameters.AddWithValue(@"GUIDColumn", sqlguid);
+                        sqlCommand.ExecuteNonQuery();
+                    }
+                
+
+                using (SqlCommand sqlCommand = new SqlCommand("", con as SqlConnection))
+                {
+                    sqlCommand.CommandText = "select top 1 * from " + tableName;
+                    DbDataReader reader = sqlCommand.ExecuteReader();
+
+                    reader.Read();
+
+                    Assert.True(reader[0].GetType() == typeof(int) && reader.GetFieldValue<int>(0) == 1);
+                    Assert.True(reader[1].GetType() == typeof(string) && reader.GetFieldValue<string>(1) == "Microsoft1");
+                    Assert.True(reader[2].GetType() == typeof(string) && reader.GetFieldValue<string>(2) == "Corporation1");
+                    Assert.True(reader[3].GetType() == typeof(bool) && reader.GetFieldValue<bool>(3) == true);
+                    Assert.True(reader[4].GetType() == typeof(Int16) && reader.GetFieldValue<Int16>(4) == 3274);
+                    Assert.True(reader[5].GetType() == typeof(byte) && reader.GetFieldValue<byte>(5) == 253);
+                    Assert.True(reader[6].GetType() == typeof(Int64) && reader.GetFieldValue<Int64>(6) == 922222222222);
+                    Assert.True(reader[7].GetType() == typeof(Double) && reader.GetFieldValue<Double>(7) == 10.7);
+                    Assert.True(reader[8].GetType() == typeof(Single) && reader.GetFieldValue<Single>(8) == 123.546f);
+                    Assert.True(reader[9].GetType() == typeof(Guid) && reader.GetFieldValue<System.Data.SqlTypes.SqlGuid>(9).Value == sqlguid.Value);
+
+
+                    // Call Close when done reading.
+                    reader.Close();
+                }
+
+                //cleanup
+                using (DbCommand cmd = provider.CreateCommand())
+                {
+                    cmd.Connection = con;
+                    cmd.CommandText = "drop table " + tableName;
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            
+        }
+
     }
 }
