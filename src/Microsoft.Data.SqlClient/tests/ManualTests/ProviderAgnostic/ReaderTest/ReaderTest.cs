@@ -272,16 +272,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// <summary>
         /// Covers GetFieldValue<T> for SqlBuffer class
         /// </summary>
-
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void SqlDataReader_SqlBuffer_GetFieldValue()
         {
             string tableName = "Testable"+ new System.Random().Next(5000);
             
             //Arrange
-     
             DbProviderFactory provider = SqlClientFactory.Instance;
-         
+
             using (DbConnection con = provider.CreateConnection())
             {
                     con.ConnectionString = DataTestUtility.TCPConnectionString;
@@ -295,7 +293,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         command.ExecuteNonQuery();
                     }
 
-                System.Data.SqlTypes.SqlGuid sqlguid = new System.Data.SqlTypes.SqlGuid(new System.Guid());                 
+                System.Data.SqlTypes.SqlGuid sqlguid = new System.Data.SqlTypes.SqlGuid(Guid.NewGuid());                 
 
                     using (SqlCommand sqlCommand = new SqlCommand("", con as SqlConnection))
                     {
@@ -312,8 +310,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         sqlCommand.Parameters.AddWithValue(@"GUIDColumn", sqlguid);
                         sqlCommand.ExecuteNonQuery();
                     }
-                
-
                 using (SqlCommand sqlCommand = new SqlCommand("", con as SqlConnection))
                 {
                     sqlCommand.CommandText = "select top 1 * from " + tableName;
@@ -325,13 +321,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     Assert.True(reader[1].GetType() == typeof(string) && reader.GetFieldValue<string>(1) == "Microsoft1");
                     Assert.True(reader[2].GetType() == typeof(string) && reader.GetFieldValue<string>(2) == "Corporation1");
                     Assert.True(reader[3].GetType() == typeof(bool) && reader.GetFieldValue<bool>(3) == true);
-                    Assert.True(reader[4].GetType() == typeof(Int16) && reader.GetFieldValue<Int16>(4) == 3274);
+                    Assert.True(reader[4].GetType() == typeof(short) && reader.GetFieldValue<short>(4) == 3274);
                     Assert.True(reader[5].GetType() == typeof(byte) && reader.GetFieldValue<byte>(5) == 253);
-                    Assert.True(reader[6].GetType() == typeof(Int64) && reader.GetFieldValue<Int64>(6) == 922222222222);
-                    Assert.True(reader[7].GetType() == typeof(Double) && reader.GetFieldValue<Double>(7) == 10.7);
-                    Assert.True(reader[8].GetType() == typeof(Single) && reader.GetFieldValue<Single>(8) == 123.546f);
+                    Assert.True(reader[6].GetType() == typeof(long) && reader.GetFieldValue<long>(6) == 922222222222);
+                    Assert.True(reader[7].GetType() == typeof(double) && reader.GetFieldValue<double>(7) == 10.7);
+                    Assert.True(reader[8].GetType() == typeof(float) && reader.GetFieldValue<float>(8) == 123.546f);
                     Assert.True(reader[9].GetType() == typeof(Guid) && reader.GetFieldValue<System.Data.SqlTypes.SqlGuid>(9).Value == sqlguid.Value);
-
 
                     // Call Close when done reading.
                     reader.Close();
