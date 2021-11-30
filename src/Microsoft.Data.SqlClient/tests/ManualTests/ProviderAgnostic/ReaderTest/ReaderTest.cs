@@ -275,59 +275,90 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void SqlDataReader_SqlBuffer_GetFieldValue()
         {
-            string tableName = "Testable"+ new System.Random().Next(5000);
-            
+            string tableNameOne = DataTestUtility.GetUniqueNameForSqlServer("table");
+            string tableNameTwo = DataTestUtility.GetUniqueNameForSqlServer("table");
+            DateTimeOffset dtoffset = DateTimeOffset.Now;
+            DateTime dateTime = DateTime.Now;
             //Arrange
             DbProviderFactory provider = SqlClientFactory.Instance;
 
             using (DbConnection con = provider.CreateConnection())
             {
-                    con.ConnectionString = DataTestUtility.TCPConnectionString;
-                    con.Open();
-                    string sql = "CREATE TABLE " + tableName + " ([CustomerId] [int],[FirstName] [nvarchar](50),[LastName] [nvarchar](50),[BooleanColumn] [BIT],[IntSixteenColumn] [SMALLINT],[ByteColumn] [TINYINT] ,[IntSixtyFourColumn] [BIGINT],[DoubleColumn] [FLOAT],[SingleColumn] [REAL],[GUIDColumn] [uniqueidentifier]);";
+                con.ConnectionString = DataTestUtility.TCPConnectionString;
+                con.Open();
+                string sqlQueryOne = "CREATE TABLE " + tableNameOne + " ([CustomerId] [int],[FirstName] [nvarchar](50),[BoolCol] [BIT],[ShortCol] [SMALLINT],[ByteCol] [TINYINT],[LongCol] [BIGINT]);";
+                string sqlQueryTwo = "CREATE TABLE " + tableNameTwo + " ([CustomerId] [int],[DoubleCol] [FLOAT],[SingleCol] [REAL],[GUIDCol] [uniqueidentifier],[DateTimeCol] [DateTime],[DecimalCol] [SmallMoney],[DateTimeOffsetCol] [DateTimeOffset]);";
 
-                    using (DbCommand command = provider.CreateCommand())
-                    {
-                        command.Connection = con;
-                        command.CommandText = sql;
-                        command.ExecuteNonQuery();
-                    }
+                using (DbCommand command = provider.CreateCommand())
+                {
+                    command.Connection = con;
+                    command.CommandText = sqlQueryOne;
+                    command.ExecuteNonQuery();
+                }
+                using (DbCommand command = provider.CreateCommand())
+                {
+                    command.Connection = con;
+                    command.CommandText = sqlQueryTwo;
+                    command.ExecuteNonQuery();
+                }
 
                 System.Data.SqlTypes.SqlGuid sqlguid = new System.Data.SqlTypes.SqlGuid(Guid.NewGuid());                 
 
-                    using (SqlCommand sqlCommand = new SqlCommand("", con as SqlConnection))
-                    {
-                        sqlCommand.CommandText = $"INSERT INTO [{tableName}] VALUES (@CustomerId,@FirstName,@LastName,@BooleanColumn,@IntSixteenColumn,@ByteColumn,@IntSixtyFourColumn,@DoubleColumn,@SingleColumn,@GUIDColumn)";
-                        sqlCommand.Parameters.AddWithValue(@"CustomerId",1);
-                        sqlCommand.Parameters.AddWithValue(@"FirstName", string.Format("Microsoft{0}",1));
-                        sqlCommand.Parameters.AddWithValue(@"LastName", string.Format("Corporation{0}", 1));
-                        sqlCommand.Parameters.AddWithValue(@"BooleanColumn", true);
-                        sqlCommand.Parameters.AddWithValue(@"IntSixteenColumn", 3274);
-                        sqlCommand.Parameters.AddWithValue(@"ByteColumn", 253);
-                        sqlCommand.Parameters.AddWithValue(@"IntSixtyFourColumn", 922222222222);
-                        sqlCommand.Parameters.AddWithValue(@"DoubleColumn", 10.7);
-                        sqlCommand.Parameters.AddWithValue(@"SingleColumn", 123.546f);
-                        sqlCommand.Parameters.AddWithValue(@"GUIDColumn", sqlguid);
-                        sqlCommand.ExecuteNonQuery();
-                    }
                 using (SqlCommand sqlCommand = new SqlCommand("", con as SqlConnection))
                 {
-                    sqlCommand.CommandText = "select top 1 * from " + tableName;
+                    sqlCommand.CommandText = "INSERT INTO "+ tableNameOne +" VALUES (@CustomerId,@FirstName,@BoolCol,@ShortCol,@ByteCol,@LongCol)";
+                    sqlCommand.Parameters.AddWithValue(@"CustomerId",1);
+                    sqlCommand.Parameters.AddWithValue(@"FirstName", "Microsoft");
+                    sqlCommand.Parameters.AddWithValue(@"BoolCol", true);
+                    sqlCommand.Parameters.AddWithValue(@"ShortCol", 3274);
+                    sqlCommand.Parameters.AddWithValue(@"ByteCol", 253);
+                    sqlCommand.Parameters.AddWithValue(@"LongCol", 922222222222);
+                    sqlCommand.ExecuteNonQuery();
+                }
+                using (SqlCommand sqlCommand = new SqlCommand("", con as SqlConnection))
+                {
+                    sqlCommand.CommandText = "INSERT INTO "+tableNameTwo+" VALUES (@CustomerId,@DoubleCol,@SingleCol,@GUIDCol,@DateTimeCol,@DecimalCol,@DateTimeOffsetCol)";
+                    sqlCommand.Parameters.AddWithValue(@"CustomerId", 1);                  
+                    sqlCommand.Parameters.AddWithValue(@"DoubleCol", 10.7);
+                    sqlCommand.Parameters.AddWithValue(@"SingleCol", 123.546f);
+                    sqlCommand.Parameters.AddWithValue(@"GUIDCol", sqlguid);
+                    sqlCommand.Parameters.AddWithValue(@"DateTimeCol", dateTime);
+                    sqlCommand.Parameters.AddWithValue(@"DecimalCol", 280);
+                    sqlCommand.Parameters.AddWithValue(@"DateTimeOffsetCol", dtoffset);
+                    sqlCommand.ExecuteNonQuery();
+                }
+                using (SqlCommand sqlCommand = new SqlCommand("", con as SqlConnection))
+                {
+                    sqlCommand.CommandText = "select top 1 * from " + tableNameOne;
                     DbDataReader reader = sqlCommand.ExecuteReader();
 
                     reader.Read();
 
                     Assert.True(reader[0].GetType() == typeof(int) && reader.GetFieldValue<int>(0) == 1);
-                    Assert.True(reader[1].GetType() == typeof(string) && reader.GetFieldValue<string>(1) == "Microsoft1");
-                    Assert.True(reader[2].GetType() == typeof(string) && reader.GetFieldValue<string>(2) == "Corporation1");
-                    Assert.True(reader[3].GetType() == typeof(bool) && reader.GetFieldValue<bool>(3) == true);
-                    Assert.True(reader[4].GetType() == typeof(short) && reader.GetFieldValue<short>(4) == 3274);
-                    Assert.True(reader[5].GetType() == typeof(byte) && reader.GetFieldValue<byte>(5) == 253);
-                    Assert.True(reader[6].GetType() == typeof(long) && reader.GetFieldValue<long>(6) == 922222222222);
-                    Assert.True(reader[7].GetType() == typeof(double) && reader.GetFieldValue<double>(7) == 10.7);
-                    Assert.True(reader[8].GetType() == typeof(float) && reader.GetFieldValue<float>(8) == 123.546f);
-                    Assert.True(reader[9].GetType() == typeof(Guid) && reader.GetFieldValue<System.Data.SqlTypes.SqlGuid>(9).Value == sqlguid.Value);
+                    Assert.True(reader[1].GetType() == typeof(string) && reader.GetFieldValue<string>(1) == "Microsoft");
+                    Assert.True(reader[2].GetType() == typeof(bool) && reader.GetFieldValue<bool>(2) == true);
+                    Assert.True(reader[3].GetType() == typeof(short) && reader.GetFieldValue<short>(3) == 3274);
+                    Assert.True(reader[4].GetType() == typeof(byte) && reader.GetFieldValue<byte>(4) == 253);
+                    Assert.True(reader[5].GetType() == typeof(long) && reader.GetFieldValue<long>(5) == 922222222222);
+                   
+                    // Call Close when done reading.
+                    reader.Close();
+                }
+                using (SqlCommand sqlCommand = new SqlCommand("", con as SqlConnection))
+                {
+                    sqlCommand.CommandText = "select top 1 * from " + tableNameTwo;
+                    DbDataReader reader = sqlCommand.ExecuteReader();
 
+                    reader.Read();
+
+                    Assert.True(reader[0].GetType() == typeof(int) && reader.GetFieldValue<int>(0) == 1);
+                    Assert.True(reader[1].GetType() == typeof(double) && reader.GetFieldValue<double>(1) == 10.7);
+                    Assert.True(reader[2].GetType() == typeof(float) && reader.GetFieldValue<float>(2) == 123.546f);
+                    Assert.True(reader[3].GetType() == typeof(Guid) && reader.GetFieldValue<System.Data.SqlTypes.SqlGuid>(3).Value == sqlguid.Value);
+                    Assert.True(reader[4].GetType() == typeof(DateTime) && reader.GetFieldValue<DateTime>(4).ToString("dd/MM/yyyy HH:mm:ss") == dateTime.ToString("dd/MM/yyyy HH:mm:ss"));
+                    Assert.True(reader[5].GetType() == typeof(decimal) && reader.GetFieldValue<decimal>(5) == 280);
+                    Assert.True(reader[6].GetType() == typeof(DateTimeOffset) && reader.GetFieldValue<DateTimeOffset>(6) == dtoffset);
+                   
                     // Call Close when done reading.
                     reader.Close();
                 }
@@ -336,7 +367,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using (DbCommand cmd = provider.CreateCommand())
                 {
                     cmd.Connection = con;
-                    cmd.CommandText = "drop table " + tableName;
+                    cmd.CommandText = "drop table " + tableNameOne;
+                    cmd.ExecuteNonQuery();
+                }
+                using (DbCommand cmd = provider.CreateCommand())
+                {
+                    cmd.Connection = con;
+                    cmd.CommandText = "drop table " + tableNameTwo;
                     cmd.ExecuteNonQuery();
                 }
             }
