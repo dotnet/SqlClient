@@ -354,7 +354,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     Assert.True(reader[0].GetType() == typeof(int) && reader.GetFieldValue<int>(0) == 1);
                     Assert.True(reader[1].GetType() == typeof(double) && reader.GetFieldValue<double>(1) == 10.7);
                     Assert.True(reader[2].GetType() == typeof(float) && reader.GetFieldValue<float>(2) == 123.546f);
-                    Assert.True(reader[3].GetType() == typeof(Guid) && reader.GetFieldValue<System.Data.SqlTypes.SqlGuid>(3).Value == sqlguid.Value);
+                    Assert.True(reader[3].GetType() == typeof(Guid) && reader.GetFieldValue<Guid>(3) == sqlguid.Value && reader.GetFieldValue<System.Data.SqlTypes.SqlGuid>(3).Value == sqlguid.Value);
                     Assert.True(reader[4].GetType() == typeof(DateTime) && reader.GetFieldValue<DateTime>(4).ToString("dd/MM/yyyy HH:mm:ss") == dateTime.ToString("dd/MM/yyyy HH:mm:ss"));
                     Assert.True(reader[5].GetType() == typeof(decimal) && reader.GetFieldValue<decimal>(5) == 280);
                     Assert.True(reader[6].GetType() == typeof(DateTimeOffset) && reader.GetFieldValue<DateTimeOffset>(6) == dtoffset);
