@@ -326,9 +326,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                         sqlCommand.CommandText = "select top 1 * from " + tableName;
                         using (DbDataReader reader = sqlCommand.ExecuteReader())
                         {
-                            reader.Read();                          
+                            Assert.True(reader.Read());
                             Assert.Equal(1, reader.GetFieldValue<int>(0));
                             Assert.Equal("Microsoft", reader.GetFieldValue<string>(1));
+                            Assert.True(reader.GetFieldValue<bool>(2));
                             Assert.Equal(3274, reader.GetFieldValue<short>(3));
                             Assert.Equal(253, reader.GetFieldValue<byte>(4));
                             Assert.Equal(922222222222, reader.GetFieldValue<long>(5));
@@ -336,7 +337,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             Assert.Equal(123.546f, reader.GetFieldValue<float>(7));
                             Assert.Equal(sqlguid, reader.GetFieldValue<Guid>(8));
                             Assert.Equal(sqlguid.Value, reader.GetFieldValue<System.Data.SqlTypes.SqlGuid>(8).Value);
-                            Assert.Equal(dateTime.ToString("dd/MM/yyyy HH:mm:ss"), reader.GetFieldValue<DateTime>(9).ToString("dd/MM/yyyy HH:mm:ss"));                     
+                            Assert.Equal(dateTime.ToString("dd/MM/yyyy HH:mm:ss"), reader.GetFieldValue<DateTime>(9).ToString("dd/MM/yyyy HH:mm:ss"));
                             Assert.Equal(280, reader.GetFieldValue<decimal>(10));
                             Assert.Equal(dtoffset, reader.GetFieldValue<DateTimeOffset>(11));
                         }
