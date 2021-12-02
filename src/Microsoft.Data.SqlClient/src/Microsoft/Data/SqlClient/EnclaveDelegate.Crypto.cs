@@ -101,13 +101,11 @@ namespace Microsoft.Data.SqlClient
                         sqlColumnEncryptionEnclaveProvider = s_enclaveProviders[attestationProtocol];
                         break;
 
-#if ENCLAVE_SIMULATOR
-                    case SqlConnectionAttestationProtocol.SIM:
+                    case SqlConnectionAttestationProtocol.None:
                         NoneAttestationEnclaveProvider noneAttestationEnclaveProvider = new NoneAttestationEnclaveProvider();
-                        s_enclaveProviders[attestationProtocol] = (SqlColumnEncryptionEnclaveProvider)noneAttestationEnclaveProvider;
+                        s_enclaveProviders[attestationProtocol] = noneAttestationEnclaveProvider;
                         sqlColumnEncryptionEnclaveProvider = s_enclaveProviders[attestationProtocol];
                         break;
-#endif
 
                     default:
                         break;
