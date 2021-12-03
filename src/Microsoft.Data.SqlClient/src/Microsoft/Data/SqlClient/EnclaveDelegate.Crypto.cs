@@ -218,8 +218,8 @@ namespace Microsoft.Data.SqlClient
                     return "HGS";
 
 #if ENCLAVE_SIMULATOR
-                case SqlConnectionAttestationProtocol.SIM:
-                    return "SIM";
+                case SqlConnectionAttestationProtocol.None:
+                    return "None";
 #endif
 
                 default:

@@ -3184,7 +3184,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // Check if enclave attestation url was specified and server does not return an enclave type and we aren't going to be routed to another server.
-                if (!string.IsNullOrWhiteSpace(_connHandler.ConnectionOptions.EnclaveAttestationUrl))
+                if (!string.IsNullOrWhiteSpace(_connHandler.ConnectionOptions.EnclaveAttestationUrl) || attestationProtocol == SqlConnectionAttestationProtocol.None)
                 {
                     if (string.IsNullOrWhiteSpace(EnclaveType))
                     {
@@ -3193,7 +3193,7 @@ namespace Microsoft.Data.SqlClient
                     else
                     {
                         // Check if the attestation protocol is specified and supports the enclave type.
-                        if (SqlConnectionAttestationProtocol.NotSpecified != attestationProtocol && !IsValidAttestationProtocol(attestationProtocol, EnclaveType))
+                        if (attestationProtocol != SqlConnectionAttestationProtocol.NotSpecified && !IsValidAttestationProtocol(attestationProtocol, EnclaveType))
                         {
                             throw SQL.AttestationProtocolNotSupportEnclaveType(ConvertAttestationProtocolToString(attestationProtocol), EnclaveType);
                         }
@@ -3210,10 +3210,8 @@ namespace Microsoft.Data.SqlClient
             {
                 case TdsEnums.ENCLAVE_TYPE_VBS:
                     if (attestationProtocol != SqlConnectionAttestationProtocol.AAS
-#if ENCLAVE_SIMULATOR
-                        && attestationProtocol != SqlConnectionAttestationProtocol.SIM
-#endif
-                        && attestationProtocol != SqlConnectionAttestationProtocol.HGS)
+                        && attestationProtocol != SqlConnectionAttestationProtocol.HGS
+                        && attestationProtocol != SqlConnectionAttestationProtocol.None)
                     {
                         return false;
                     }
@@ -3222,7 +3220,7 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.ENCLAVE_TYPE_SGX:
 #if ENCLAVE_SIMULATOR
                     if (attestationProtocol != SqlConnectionAttestationProtocol.AAS
-                        && attestationProtocol != SqlConnectionAttestationProtocol.SIM)
+                        && attestationProtocol != SqlConnectionAttestationProtocol.None)
 #else
                     if (attestationProtocol != SqlConnectionAttestationProtocol.AAS)
 #endif
@@ -3233,7 +3231,7 @@ namespace Microsoft.Data.SqlClient
 
 #if ENCLAVE_SIMULATOR
                 case TdsEnums.ENCLAVE_TYPE_SIMULATOR:
-                    if (attestationProtocol != SqlConnectionAttestationProtocol.SIM)
+                    if (attestationProtocol != SqlConnectionAttestationProtocol.None)
                     {
                         return false;
                     }
@@ -3257,10 +3255,8 @@ namespace Microsoft.Data.SqlClient
                 case SqlConnectionAttestationProtocol.HGS:
                     return "HGS";
 
-#if ENCLAVE_SIMULATOR
-                case SqlConnectionAttestationProtocol.SIM:
-                    return "SIM";
-#endif
+                case SqlConnectionAttestationProtocol.None:
+                    return "None";
 
                 default:
                     return "NotSpecified";
