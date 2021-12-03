@@ -22,7 +22,7 @@ namespace Microsoft.Data.SqlClient
         #region Constants
 
         private const int DiffieHellmanKeySize = 384;
-        private const int VsmHGSProtocolId = 3;
+        private const int VsmHGSProtocolId = (int)SqlConnectionAttestationProtocol.HGS;
 
         // ENCLAVE_IDENTITY related constants
         private static readonly EnclaveIdentity ExpectedPolicy = new EnclaveIdentity()
