@@ -25,6 +25,7 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
         private const string NPConnectionString = "NPConnectionString";
         private const string TCPConnectionStringAASSGX = "TCPConnectionStringAASSGX";
         private const string TCPConnectionStringAASVBS = "TCPConnectionStringAASVBS";
+        private const string TCPConnectionStringNoneVBS = "TCPConnectionStringNoneVBS";
         private const string TCPConnectionStringHGSVBS = "TCPConnectionStringHGSVBS";
 
         /// <summary>
@@ -60,9 +61,11 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
 
                             if (args[0] == "CreateDatabase")
                             {
-                                // We do not create database for HGS-VBS since SQL Server for AASVBS and HGSVBS connection strings is same.
+                                // We do not create database for HGS-VBS since SQL Server for AASVBS, HGSVBS and NoneVBS connection strings is same.
                                 // Do not create database for NP connection string, since server is always same as TCP
-                                if (activeConnString.Key != TCPConnectionStringHGSVBS && activeConnString.Key != NPConnectionString)
+                                if (activeConnString.Key != TCPConnectionStringHGSVBS && 
+                                    activeConnString.Key != TCPConnectionStringNoneVBS && 
+                                    activeConnString.Key != NPConnectionString)
                                 {
                                     //Create a new database
                                     CreateDatabase(dbName, context);
@@ -74,9 +77,11 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
                             }
                             else if (args[0] == "DropDatabase")
                             {
-                                // We do not drop database for HGS-VBS since SQL Server for AASVBS and HGSVBS connection strings is same.
+                                // We do not drop database for HGS-VBS since SQL Server for AASVBS, HGSVBS and NoneVBS connection strings is same.
                                 // Do not drop database for NP connection string, since server is always same as TCP
-                                if (activeConnString.Key != TCPConnectionStringHGSVBS && activeConnString.Key != NPConnectionString)
+                                if (activeConnString.Key != TCPConnectionStringHGSVBS &&
+                                    activeConnString.Key != TCPConnectionStringNoneVBS && 
+                                    activeConnString.Key != NPConnectionString)
                                 {
                                     // Drop Northwind for test run.
                                     DropIfExistsDatabase(dbName, context);
@@ -131,6 +136,10 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
                 {
                     s_activeConnectionStrings.Add(TCPConnectionStringHGSVBS, s_configJson.TCPConnectionStringHGSVBS);
                 }
+                if (!string.IsNullOrEmpty(s_configJson.TCPConnectionStringNoneVBS))
+                {
+                    s_activeConnectionStrings.Add(TCPConnectionStringNoneVBS, s_configJson.TCPConnectionStringNoneVBS);
+                }
             }
         }
 
@@ -152,6 +161,9 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
                     break;
                 case TCPConnectionStringHGSVBS:
                     s_configJson.TCPConnectionStringHGSVBS = builder.ConnectionString;
+                    break;
+                case TCPConnectionStringNoneVBS:
+                    s_configJson.TCPConnectionStringNoneVBS = builder.ConnectionString;
                     break;
             }
         }
