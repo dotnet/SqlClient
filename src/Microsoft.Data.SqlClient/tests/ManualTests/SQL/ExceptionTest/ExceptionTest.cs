@@ -263,10 +263,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             InvalidOperationException e3 = Assert.Throws<InvalidOperationException>(() => new SqlConnection(connectionStringWithEnclave).Open());
             Assert.Contains("You have specified the enclave attestation URL and attestation protocol in the connection string", e3.Message);
 
-            // connection should work if attestation protocol is None but no attestation url is provided
-            SqlConnection sqlConnection = new(connectionStringWithNoneAttestationProtocol);
-            sqlConnection.Open();
-            Assert.True(sqlConnection.State is ConnectionState.Open);
+            if (DataTestUtility.EnclaveEnabled)
+            {
+                // connection should work if attestation protocol is None but no attestation url is provided
+                SqlConnection sqlConnection = new(connectionStringWithNoneAttestationProtocol);
+                sqlConnection.Open();
+                Assert.True(sqlConnection.State is ConnectionState.Open);
+            }
         }
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
