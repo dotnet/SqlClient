@@ -162,7 +162,11 @@ namespace Microsoft.Data.SqlClient
 
         internal bool ShouldUseEnclaveBasedWorkflow
         {
-            get { return !string.IsNullOrWhiteSpace(_activeConnection.EnclaveAttestationUrl) && IsColumnEncryptionEnabled; }
+            get
+            {
+                return (!string.IsNullOrWhiteSpace(_activeConnection.EnclaveAttestationUrl) || Connection.AttestationProtocol == SqlConnectionAttestationProtocol.None) &&
+                  IsColumnEncryptionEnabled;
+            }
         }
 
         internal ConcurrentDictionary<int, SqlTceCipherInfoEntry> keysToBeSentToEnclave;
@@ -4780,7 +4784,7 @@ namespace Microsoft.Data.SqlClient
 
                     if (isRequestedByEnclave)
                     {
-                        if (string.IsNullOrWhiteSpace(this.Connection.EnclaveAttestationUrl))
+                        if (string.IsNullOrWhiteSpace(this.Connection.EnclaveAttestationUrl) && Connection.AttestationProtocol != SqlConnectionAttestationProtocol.None)
                         {
                             throw SQL.NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe(this._activeConnection.Parser.EnclaveType);
                         }
@@ -5244,8 +5248,11 @@ namespace Microsoft.Data.SqlClient
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(this._activeConnection.EnclaveAttestationUrl))
+            if (string.IsNullOrWhiteSpace(this._activeConnection.EnclaveAttestationUrl) &&
+                Connection.AttestationProtocol != SqlConnectionAttestationProtocol.None)
+            {
                 throw SQL.NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage(this._activeConnection.Parser.EnclaveType);
+            }
 
             string enclaveType = this._activeConnection.Parser.EnclaveType;
             if (string.IsNullOrWhiteSpace(enclaveType))
