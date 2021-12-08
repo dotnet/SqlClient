@@ -306,7 +306,16 @@ namespace Microsoft.Data.SqlClient
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         private static extern uint SNIWriteSyncOverAsync(SNIHandle pConn, [In] SNIPacket pPacket);
-	    #endregion
+
+        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIServerEnumOpenWrapper")]
+        internal static extern IntPtr SNIServerEnumOpen();
+
+        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIServerEnumCloseWrapper")]
+        internal static extern void SNIServerEnumClose([In] IntPtr packet);
+
+        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIServerEnumReadWrapper")]
+        internal static extern int SNIServerEnumRead([In] IntPtr packet, [In, Out] char[] readBuffer, int bufferLength, ref bool more);
+        #endregion
 
         internal static uint SniGetConnectionId(SNIHandle pConn, ref Guid connId)
         {

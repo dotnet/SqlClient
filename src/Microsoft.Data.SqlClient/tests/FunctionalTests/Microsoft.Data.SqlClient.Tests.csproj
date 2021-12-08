@@ -46,6 +46,7 @@
     <Compile Include="BaseProviderAsyncTest\MockDataReader.cs" />
     <Compile Include="SqlCredentialTest.cs" />
     <Compile Include="SqlDataRecordTest.cs" />
+    <Compile Include="SqlDataSourceEnumeratorTest.cs" />
     <Compile Include="SqlExceptionTest.cs" />
     <Compile Include="SqlFacetAttributeTest.cs" />
     <Compile Include="SqlNotificationRequestTest.cs" />
@@ -68,6 +69,7 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="$(MicrosoftNETTestSdkVersion)" />
     <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="$(SystemDiagnosticsDiagnosticSourceVersion)" />
     <PackageReference Include="Newtonsoft.Json" Version="$(NewtonsoftJsonVersion)" />
+    <PackageReference Include="System.ServiceProcess.ServiceController" Version="4.4.1" />
     <Reference Condition="'$(TargetGroup)'=='netfx'" Include="System.Transactions" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netcoreapp'">

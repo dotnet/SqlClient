@@ -1201,6 +1201,9 @@ namespace Microsoft.Data.Common
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfCredentialAndAccessToken));
         #endregion
 
+        internal static bool IsEmpty(string str) => string.IsNullOrEmpty(str);
+        internal static readonly IntPtr s_ptrZero = IntPtr.Zero; // IntPtr.Zero
+
 #if NETFRAMEWORK
         #region netfx project only
         internal static Task<T> CreatedTaskWithException<T>(Exception ex)
@@ -1355,7 +1358,6 @@ namespace Microsoft.Data.Common
         internal const float FailoverTimeoutStepForTnir = 0.125F; // Fraction of timeout to use in case of Transparent Network IP resolution.
         internal const int MinimumTimeoutForTnirMs = 500; // The first login attempt in  Transparent network IP Resolution 
 
-        internal static readonly IntPtr s_ptrZero = IntPtr.Zero; // IntPtr.Zero
         internal static readonly int s_ptrSize = IntPtr.Size;
         internal static readonly IntPtr s_invalidPtr = new(-1); // use for INVALID_HANDLE
 
@@ -1446,7 +1448,6 @@ namespace Microsoft.Data.Common
             return (IntPtr)checked(pbase.ToInt64() + offset);
         }
 
-        internal static bool IsEmpty(string str) => string.IsNullOrEmpty(str);
         #endregion
 #else
         #region netcore project only
