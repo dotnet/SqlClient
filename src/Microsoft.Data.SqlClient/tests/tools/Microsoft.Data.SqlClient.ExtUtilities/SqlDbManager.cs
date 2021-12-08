@@ -62,8 +62,7 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
                             {
                                 // We do not create database for HGS-VBS since SQL Server for AASVBS and HGSVBS connection strings is same.
                                 // Do not create database for NP connection string, since server is always same as TCP
-                                if (activeConnString.Key != TCPConnectionStringHGSVBS &&
-                                    activeConnString.Key != NPConnectionString)
+                                if (activeConnString.Key != TCPConnectionStringHGSVBS && activeConnString.Key != NPConnectionString)
                                 {
                                     //Create a new database
                                     CreateDatabase(dbName, context);
@@ -75,10 +74,9 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
                             }
                             else if (args[0] == "DropDatabase")
                             {
-                                // We do not create database for HGS-VBS since SQL Server for AASVBS and HGSVBS connection strings is same.
+                                // We do not drop database for HGS-VBS since SQL Server for AASVBS and HGSVBS connection strings is same.
                                 // Do not drop database for NP connection string, since server is always same as TCP
-                                if (activeConnString.Key != TCPConnectionStringHGSVBS &&
-                                    activeConnString.Key != NPConnectionString)
+                                if (activeConnString.Key != TCPConnectionStringHGSVBS && activeConnString.Key != NPConnectionString)
                                 {
                                     // Drop Northwind for test run.
                                     DropIfExistsDatabase(dbName, context);
