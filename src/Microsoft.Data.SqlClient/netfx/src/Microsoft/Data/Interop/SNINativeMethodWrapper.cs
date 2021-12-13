@@ -782,7 +782,6 @@ namespace Microsoft.Data.SqlClient
             {
                 SNINativeManagedWrapperX86.SNIServerEnumClose(packet);
             }
-
         }
 
         internal static int SNIServerEnumRead([In] IntPtr packet, [In, Out] char[] readbuffer, int bufferLength, ref bool more)

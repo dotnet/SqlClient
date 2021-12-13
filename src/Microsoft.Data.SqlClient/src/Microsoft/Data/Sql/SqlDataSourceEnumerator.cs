@@ -1,13 +1,5 @@
-//------------------------------------------------------------------------------
-// <copyright file="SqlDataSourceEnumerator.cs" company="Microsoft">
-//     Copyright (c) Microsoft Corporation.  All rights reserved.
-// </copyright>
-// <owner current="true" primary="true">Microsoft</owner>
-// <owner current="true" primary="false">Microsoft</owner>
-//------------------------------------------------------------------------------
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
-
 using System;
 using System.Data;
 using System.Data.Common;
@@ -193,6 +185,5 @@ namespace Microsoft.Data.Sql
             }
             return dataTable;
         }
-
     }
 }
