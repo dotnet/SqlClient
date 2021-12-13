@@ -15,6 +15,11 @@ namespace Microsoft.Data.SqlClient.SNI
     {
         private const char SemicolonSeparator = ';';
         private const int SqlServerBrowserPort = 1434;
+        private const int SubsequentTimeoutsForCLNT_BCAST_EX = 15000;
+        private const int ServerResponseHeader = 3;
+        private const int ValidResponseSize = 4096;
+        private const int FirstTimeoutForCLNT_BCAST_EX = 5000;
+        private const int CLNT_BCAST_EX = 2;
 
         /// <summary>
         /// Finds instance port number for given instance name.
@@ -168,6 +173,39 @@ namespace Microsoft.Data.SqlClient.SNI
 
                 return responsePacket;
             }
+        }
+
+        /// <summary>
+        /// Sends request to server, and recieves response from server by UDP
+        /// </summary>
+        /// <returns>string constaning list of SVR_RESP(just RESP_DATA)</returns>
+        internal static string SendBroadcastUDPRequest()
+        {
+            StringBuilder response = new StringBuilder();
+            byte[] CLNT_BCAST_EX_Request = new byte[1] { CLNT_BCAST_EX };
+            IPEndPoint groupEP = new IPEndPoint(IPAddress.Any, 0);
+            int currentTimeOut = FirstTimeoutForCLNT_BCAST_EX;
+
+            using (TrySNIEventScope.Create(nameof(SSRP)))
+            {
+                using (UdpClient clientListener = new UdpClient())
+                {
+                    Task<int> sendTask = clientListener.SendAsync(CLNT_BCAST_EX_Request, CLNT_BCAST_EX_Request.Length, new IPEndPoint(IPAddress.Broadcast, SqlServerBrowserPort));
+                    Task<UdpReceiveResult> receiveTask = null;
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.INFO, "Waiting for UDP Client to fetch list of instances.");
+
+                    while ((receiveTask = clientListener.ReceiveAsync()).Wait(currentTimeOut) && receiveTask != null)
+                    {
+                        currentTimeOut = SubsequentTimeoutsForCLNT_BCAST_EX;
+                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.INFO, "Received instnace info from UDP Client.");
+                        if (receiveTask.Result.Buffer.Length < ValidResponseSize) //discard invalid response
+                        {
+                            response.Append(Encoding.ASCII.GetString(receiveTask.Result.Buffer, ServerResponseHeader, receiveTask.Result.Buffer.Length - ServerResponseHeader));
+                        }
+                    }
+                }
+            }
+            return response.ToString();
         }
     }
 }
