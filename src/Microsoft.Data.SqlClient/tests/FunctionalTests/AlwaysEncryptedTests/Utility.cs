@@ -95,8 +95,8 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         {
             // Generate random bytes cryptographically.
             byte[] randomBytes = new byte[length];
-            RNGCryptoServiceProvider rngCsp = new RNGCryptoServiceProvider();
-            rngCsp.GetBytes(randomBytes);
+            RandomNumberGenerator rng = RandomNumberGenerator.Create();
+            rng.GetBytes(randomBytes);
 
             return randomBytes;
         }
@@ -348,8 +348,9 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             return decryptedData;
         }
 
+#if NETFRAMEWORK
         /// <summary>
-        /// Create a self-signed certificate without private key. NET461 only.
+        /// Create a self-signed certificate without private key.
         /// </summary>
         internal static X509Certificate2 CreateCertificateWithNoPrivateKey()
         {
@@ -376,6 +377,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
             return certificate;
         }
+#endif
 
         /// <summary>
         /// Gets hex representation of byte array.
