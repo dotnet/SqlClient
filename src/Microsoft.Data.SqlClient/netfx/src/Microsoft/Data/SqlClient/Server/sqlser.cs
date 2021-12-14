@@ -8,6 +8,7 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using Microsoft.Data.Common;
+using Microsoft.SqlServer.Server;
 
 namespace Microsoft.Data.SqlClient.Server
 {

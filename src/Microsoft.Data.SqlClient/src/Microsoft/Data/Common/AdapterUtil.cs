@@ -25,6 +25,10 @@ using Microsoft.Data.SqlClient.Server;
 using Microsoft.Win32;
 using IsolationLevel = System.Data.IsolationLevel;
 
+#if NETFRAMEWORK
+using Microsoft.SqlServer.Server;
+#endif
+
 namespace Microsoft.Data.Common
 {
     /// <summary>

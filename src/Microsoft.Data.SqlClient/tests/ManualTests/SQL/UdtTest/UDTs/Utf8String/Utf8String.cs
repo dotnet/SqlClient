@@ -5,7 +5,11 @@
 using System;
 using System.Data.SqlTypes;
 using System.Globalization;
+#if NETFRAMEWORK
+using Microsoft.SqlServer.Server;
+#else
 using Microsoft.Data.SqlClient.Server;
+#endif
 
 namespace Microsoft.Samples.SqlServer
 {
