@@ -418,7 +418,7 @@ If the value of the **Network** key is specified, the prefixes "tcp:" and "np:" 
 When `TrustServerCertificate` is false and `Encrypt` is true, the server name (or IP address) in a SQL Server SSL certificate must exactly match the server name (or IP address) specified in the connection string. Otherwise, the connection attempt will fail. For information about support for certificates whose subject starts with a wildcard character (*), see [Enable encrypted connections to the Database Engine](/sql/database-engine/configure-windows/enable-encrypted-connections-to-the-database-engine#certificate-requirements).  
 
 > [!NOTE]
-> Since **version 4.0**, the default value of the `Encrypt` property is `true`.
+> Starting from **version 4.0**, the default value of the property `Encrypt` is set to `true`.
 
  ]]></format>
             </remarks>
