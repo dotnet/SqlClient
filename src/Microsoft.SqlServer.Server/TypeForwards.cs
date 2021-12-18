@@ -1,5 +1,6 @@
 ﻿
 [assembly: System.Runtime.CompilerServices.TypeForwardedTo(typeof(Microsoft.SqlServer.Server.IBinarySerialize))]
+[assembly: System.Runtime.CompilerServices.TypeForwardedTo(typeof(Microsoft.SqlServer.Server.InvalidUdtException))]
 [assembly: System.Runtime.CompilerServices.TypeForwardedTo(typeof(Microsoft.SqlServer.Server.Format))]
 [assembly: System.Runtime.CompilerServices.TypeForwardedTo(typeof(Microsoft.SqlServer.Server.SqlFacetAttribute))]
 [assembly: System.Runtime.CompilerServices.TypeForwardedTo(typeof(Microsoft.SqlServer.Server.SqlFunctionAttribute))]

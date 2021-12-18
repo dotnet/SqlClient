@@ -22,6 +22,7 @@
 
   <ItemGroup Condition="'$(TargetFramework)'!='net46'">
     <Compile Include="IBinarySerialize.cs" />
+    <Compile Include="InvalidUdtException.cs" />
     <Compile Include="SqlFacetAttribute.cs" />
     <Compile Include="SqlFunctionAttribute.cs" />
     <Compile Include="SqlMethodAttribute.cs" />

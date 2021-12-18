@@ -4,9 +4,11 @@
 
 using System;
 using System.Collections.Generic;
-using Microsoft.Data.SqlClient.Server;
+using Microsoft.Data.Common;
 #if NETFRAMEWORK
 using Microsoft.SqlServer.Server;
+#else
+using Microsoft.Data.SqlClient.Server;
 #endif
 
 namespace Microsoft.Data.SqlClient
@@ -35,7 +37,7 @@ namespace Microsoft.Data.SqlClient
             SqlUdtInfo udtAttr = TryGetFromType(target);
             if (udtAttr == null)
             {
-                throw Server.InvalidUdtException.Create(target, Strings.SqlUdtReason_NoUdtAttribute);
+                throw ADP.CreateInvalidUdtException(target, nameof(Strings.SqlUdtReason_NoUdtAttribute));
             }
             return udtAttr;
         }

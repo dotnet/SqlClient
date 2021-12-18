@@ -146,7 +146,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
             else
             {
-                throw InvalidUdtException.Create(t, Strings.SqlUdtReason_NoUdtAttribute);
+                throw ADP.CreateInvalidUdtException(t, nameof(Strings.SqlUdtReason_NoUdtAttribute));
             }
             return udtAttr;
         }

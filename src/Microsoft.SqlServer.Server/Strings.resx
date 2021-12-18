@@ -123,6 +123,12 @@
   <data name="ADP_NotSupportedEnumerationValue" xml:space="preserve">
     <value>The {0} enumeration value, {1}, is not supported by the {2} method.</value>
   </data>
+  <data name="SqlUdtReason_NoUdtAttribute" xml:space="preserve">
+    <value>no UDT attribute</value>
+  </data>
+  <data name="SqlUdt_InvalidUdtMessage" xml:space="preserve">
+    <value>'{0}' is an invalid user defined type, reason: {1}.</value>
+  </data>
   <data name="SQLUDT_MaxByteSizeValue" xml:space="preserve">
     <value>range: 0-8000</value>
   </data>

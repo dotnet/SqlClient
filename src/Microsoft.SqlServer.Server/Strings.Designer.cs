@@ -77,13 +77,35 @@ namespace Microsoft.SqlServer.Server {
                 return ResourceManager.GetString("ADP_NotSupportedEnumerationValue", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to &apos;{0}&apos; is an invalid user defined type, reason: {1}..
+        /// </summary>
+        internal static string SqlUdt_InvalidUdtMessage
+        {
+            get {
+                return ResourceManager.GetString("SqlUdt_InvalidUdtMessage", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to range: 0-8000.
         /// </summary>
-        internal static string SQLUDT_MaxByteSizeValue {
-            get {
+        internal static string SQLUDT_MaxByteSizeValue
+        {
+            get
+            {
                 return ResourceManager.GetString("SQLUDT_MaxByteSizeValue", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to no UDT attribute.
+        /// </summary>
+        internal static string SqlUdtReason_NoUdtAttribute
+        {
+            get {
+                return ResourceManager.GetString("SqlUdtReason_NoUdtAttribute", resourceCulture);
             }
         }
     }
