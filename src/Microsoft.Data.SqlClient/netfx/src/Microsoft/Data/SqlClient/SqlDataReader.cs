@@ -27,7 +27,6 @@ namespace Microsoft.Data.SqlClient
     /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/SqlDataReader/*' />
     public class SqlDataReader : DbDataReader, IDataReader
     {
-
         private enum ALTROWSTATUS
         {
             Null = 0,           // default and after Done
@@ -2716,7 +2715,7 @@ namespace Microsoft.Data.SqlClient
         override public Guid GetGuid(int i)
         {
             ReadColumn(i);
-            return _data[i].SqlGuid.Value;
+            return _data[i].Guid;
         }
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetInt16/*' />
@@ -3187,8 +3186,56 @@ namespace Microsoft.Data.SqlClient
         }
 
         private T GetFieldValueFromSqlBufferInternal<T>(SqlBuffer data, _SqlMetaData metaData, bool isAsync)
-        {
-            if (typeof(T) == typeof(XmlReader))
+        {            
+            // this block of type specific shortcuts uses RyuJIT jit behaviors to achieve fast implementations of the primitive types
+            // RyuJIT will be able to determine at compilation time that the typeof(T)==typeof(<primitive>) options are constant
+            // and be able to remove all implementations which cannot be reached. this will eliminate non-specialized code for
+            Type dataType = data.GetTypeFromStorageType(false);
+            if (typeof(T) == typeof(int) && dataType == typeof(int))
+            {
+                return data.Int32As<T>();
+            }
+            else if (typeof(T) == typeof(byte) && dataType == typeof(byte))
+            {
+                return data.ByteAs<T>();
+            }
+            else if (typeof(T) == typeof(short) && dataType == typeof(short))
+            {
+                return data.Int16As<T>();
+            }
+            else if (typeof(T) == typeof(long) && dataType == typeof(long))
+            {
+                return data.Int64As<T>();
+            }
+            else if (typeof(T) == typeof(bool) && dataType == typeof(bool))
+            {
+                return data.BooleanAs<T>();
+            }
+            else if (typeof(T) == typeof(double) && dataType == typeof(double))
+            {
+                return data.DoubleAs<T>();
+            }
+            else if (typeof(T) == typeof(float) && dataType == typeof(float))
+            {
+                return data.SingleAs<T>();
+            }
+            else if (typeof(T) == typeof(Guid) && dataType == typeof(Guid))
+            {
+                return (T)(object)data.Guid;
+            }
+            else if (typeof(T) == typeof(decimal) && dataType == typeof(decimal))
+            {
+                return (T)(object)data.Decimal;
+            }
+            else if (typeof(T) == typeof(DateTimeOffset) && dataType == typeof(DateTimeOffset) && _typeSystem > SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsNewKatmaiDateTimeType)
+            {
+                return (T)(object)data.DateTimeOffset;
+            }
+            else if (typeof(T) == typeof(DateTime) && dataType == typeof(DateTime) && _typeSystem > SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsNewKatmaiDateTimeType)
+            {
+                return (T)(object)data.DateTime;
+            }
+            else if (typeof(T) == typeof(XmlReader))
             {
                 // XmlReader only allowed on XML types
                 if (metaData.metaType.SqlDbType != SqlDbType.Xml)
@@ -3289,44 +3336,48 @@ namespace Microsoft.Data.SqlClient
                     return (T)(object)new MemoryStream(value, writable: false);
                 }
             }
-            else if (typeof(INullable).IsAssignableFrom(typeof(T)))
-            {
-                // If its a SQL Type or Nullable UDT
-                object rawValue = GetSqlValueFromSqlBufferInternal(data, metaData);
-
-                if (typeof(T) == typeof(SqlString))
-                {
-                    // Special case: User wants SqlString, but we have a SqlXml
-                    // SqlXml can not be typecast into a SqlString, but we need to support SqlString on XML Types - so do a manual conversion
-                    SqlXml xmlValue = rawValue as SqlXml;
-                    if (xmlValue != null)
-                    {
-                        if (xmlValue.IsNull)
-                        {
-                            rawValue = SqlString.Null;
-                        }
-                        else
-                        {
-                            rawValue = new SqlString(xmlValue.Value);
-                        }
-                    }
-                }
-
-                return (T)rawValue;
-            }
             else
             {
-                // Otherwise Its a CLR or non-Nullable UDT
-                try
+                if (typeof(INullable).IsAssignableFrom(typeof(T)))
                 {
-                    return (T)GetValueFromSqlBufferInternal(data, metaData);
+                    // If its a SQL Type or Nullable UDT
+                    object rawValue = GetSqlValueFromSqlBufferInternal(data, metaData);
+                    if (typeof(T) == typeof(SqlString))
+                    {
+                        // Special case: User wants SqlString, but we have a SqlXml
+                        // SqlXml can not be typecast into a SqlString, but we need to support SqlString on XML Types - so do a manual conversion
+                        SqlXml xmlValue = rawValue as SqlXml;
+                        if (xmlValue != null)
+                        {
+                            if (xmlValue.IsNull)
+                            {
+                                rawValue = SqlString.Null;
+                            }
+                            else
+                            {
+                                rawValue = new SqlString(xmlValue.Value);
+                            }
+                        }
+                    }
+                    return (T)rawValue;
                 }
-                catch (InvalidCastException) when (data.IsNull)
+                else
                 {
-                    // If the value was actually null, then we should throw a SqlNullValue instead
-                    throw SQL.SqlNullValue();
+                    // the requested type is likely to be one that isn't supported so try the cast and
+                    // unless there is a null value conversion then feedback the cast exception with 
+                    // type named to the user so they know what went wrong. Supported types are listed
+                    // in the documentation
+                    try
+                    {
+                        return (T)GetValueFromSqlBufferInternal(data, metaData);
+                    }
+                    catch (InvalidCastException) when (data.IsNull)
+                    {
+                        // If the value was actually null, then we should throw a SqlNullValue instead
+                        throw SQL.SqlNullValue();
+                    }
+
                 }
-                
             }
         }
 
@@ -5745,7 +5796,7 @@ namespace Microsoft.Data.SqlClient
 
 #endif
 
-        class Snapshot
+        private class Snapshot
         {
             public bool _dataReady;
             public bool _haltRead;
