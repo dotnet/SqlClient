@@ -5538,7 +5538,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-
         internal class Snapshot
         {
             public bool _dataReady;
