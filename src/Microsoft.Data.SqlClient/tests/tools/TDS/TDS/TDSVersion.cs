@@ -12,17 +12,17 @@ namespace Microsoft.SqlServer.TDS
     public static class TDSVersion
     {
         /// <summary>
-        /// Yukon TDS version
+        /// SQL Server 2005 (Codename Yukon) TDS version 
         /// </summary>
         public static Version SqlServer2005 = new Version(7, 2, 9, 2);
 
         /// <summary>
-        /// Katmai TDS version
+        /// SQL Server 2008 (Codename Katmai) TDS version
         /// </summary>
         public static Version SqlServer2008 = new Version(7, 3, 11, 3);
 
         /// <summary>
-        /// Denali TDS version
+        /// SQL Server 2010 (Codename Denali) TDS version
         /// </summary>
         public static Version SqlServer2010 = new Version(7, 4, 0, 4);
 
@@ -36,17 +36,14 @@ namespace Microsoft.SqlServer.TDS
             // Check build version Major part
             if (buildVersion.Major == 11)
             {
-                // Denali
                 return SqlServer2010;
             }
             else if (buildVersion.Major == 10)
             {
-                // Katmai
                 return SqlServer2008;
             }
             else if (buildVersion.Major == 9)
             {
-                // Yukon
                 return SqlServer2005;
             }
             else

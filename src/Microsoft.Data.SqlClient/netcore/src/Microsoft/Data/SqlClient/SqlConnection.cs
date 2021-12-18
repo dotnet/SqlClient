@@ -1899,15 +1899,15 @@ namespace Microsoft.Data.SqlClient
         }
 
 
-        internal bool IsKatmaiOrNewer
+        internal bool IsSql2008OrNewer
         {
             get
             {
                 if (_currentReconnectionTask != null)
                 { // holds true even if task is completed
-                    return true; // if CR is enabled, connection, if established, will be Katmai+
+                    return true; // if CR is enabled, connection, if established, will be 2008+
                 }
-                return GetOpenTdsConnection().IsKatmaiOrNewer;
+                return GetOpenTdsConnection().IsSql2008OrNewer;
             }
         }
 

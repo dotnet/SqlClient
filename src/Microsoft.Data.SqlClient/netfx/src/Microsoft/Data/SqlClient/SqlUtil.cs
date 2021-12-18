@@ -553,9 +553,9 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_ChangePasswordConflictsWithSSPI));
         }
-        static internal Exception ChangePasswordRequiresYukon()
+        static internal Exception ChangePasswordRequires2005()
         {
-            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ChangePasswordRequiresYukon));
+            return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ChangePasswordRequires2005));
         }
         static internal Exception UnknownSysTxIsolationLevel(SysTx.IsolationLevel isolationLevel)
         {
@@ -657,9 +657,9 @@ namespace Microsoft.Data.SqlClient
         //
         // SQL.DataCommand
         //
-        static internal Exception NotificationsRequireYukon()
+        static internal Exception NotificationsRequire2005()
         {
-            return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_NotificationsRequireYukon));
+            return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_NotificationsRequire2005));
         }
 
         static internal ArgumentOutOfRangeException NotSupportedEnumerationValue(Type type, int value)

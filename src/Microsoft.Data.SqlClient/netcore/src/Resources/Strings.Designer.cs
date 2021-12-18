@@ -2430,9 +2430,9 @@ namespace System {
         /// <summary>
         ///   Looks up a localized string similar to ChangePassword requires SQL Server 9.0 or later..
         /// </summary>
-        internal static string SQL_ChangePasswordRequiresYukon {
+        internal static string SQL_ChangePasswordRequires2005 {
             get {
-                return ResourceManager.GetString("SQL_ChangePasswordRequiresYukon", resourceCulture);
+                return ResourceManager.GetString("SQL_ChangePasswordRequires2005", resourceCulture);
             }
         }
         

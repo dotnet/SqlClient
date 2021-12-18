@@ -386,7 +386,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             // Start first column
             TDSColumnData column = new TDSColumnData();
             column.DataType = TDSDataType.NVarChar;
-            column.DataTypeSpecific = new TDSShilohVarCharColumnSpecific(256, new TDSColumnDataCollation(13632521, 52));
+            column.DataTypeSpecific = new TDS2000VarCharColumnSpecific(256, new TDSColumnDataCollation(13632521, 52));
             column.Flags.Updatable = TDSColumnDataUpdatableFlag.ReadOnly;
 
             // Add a column to the response
@@ -425,7 +425,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             // Start first column
             TDSColumnData column = new TDSColumnData();
             column.DataType = TDSDataType.NVarChar;
-            column.DataTypeSpecific = new TDSShilohVarCharColumnSpecific(256, new TDSColumnDataCollation(13632521, 52));
+            column.DataTypeSpecific = new TDS2000VarCharColumnSpecific(256, new TDSColumnDataCollation(13632521, 52));
             column.Flags.Updatable = TDSColumnDataUpdatableFlag.ReadOnly;
 
             // Add a column to the response
@@ -464,7 +464,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             // Start first column
             TDSColumnData column = new TDSColumnData();
             column.DataType = TDSDataType.NVarChar;
-            column.DataTypeSpecific = new TDSShilohVarCharColumnSpecific(256, new TDSColumnDataCollation(13632521, 52));
+            column.DataTypeSpecific = new TDS2000VarCharColumnSpecific(256, new TDSColumnDataCollation(13632521, 52));
             column.Flags.Updatable = TDSColumnDataUpdatableFlag.ReadOnly;
 
             // Add a column to the response
@@ -518,7 +518,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             // Start first column
             TDSColumnData column = new TDSColumnData();
             column.DataType = TDSDataType.BigVarChar;
-            column.DataTypeSpecific = new TDSShilohVarCharColumnSpecific(1, new TDSColumnDataCollation(13632521, 52));
+            column.DataTypeSpecific = new TDS2000VarCharColumnSpecific(1, new TDSColumnDataCollation(13632521, 52));
             column.Flags.Updatable = TDSColumnDataUpdatableFlag.ReadOnly;
 
             // Add a column to the response
@@ -527,7 +527,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             // Start second column
             column = new TDSColumnData();
             column.DataType = TDSDataType.NVarChar;
-            column.DataTypeSpecific = new TDSShilohVarCharColumnSpecific(128, new TDSColumnDataCollation(13632521, 52));
+            column.DataTypeSpecific = new TDS2000VarCharColumnSpecific(128, new TDSColumnDataCollation(13632521, 52));
             column.Flags.Updatable = TDSColumnDataUpdatableFlag.ReadOnly;
 
             // Add a column to the response
@@ -732,7 +732,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             // Start first column
             TDSColumnData column = new TDSColumnData();
             column.DataType = TDSDataType.NVarChar;
-            column.DataTypeSpecific = new TDSShilohVarCharColumnSpecific(256, new TDSColumnDataCollation(13632521, 52));
+            column.DataTypeSpecific = new TDS2000VarCharColumnSpecific(256, new TDSColumnDataCollation(13632521, 52));
             column.Flags.Updatable = TDSColumnDataUpdatableFlag.ReadOnly;
 
             // Add a column to the response
@@ -769,7 +769,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             TDSColMetadataToken metadataToken = new TDSColMetadataToken();
 
             // Prepare column type-specific data
-            TDSShilohVarCharColumnSpecific nVarChar = new TDSShilohVarCharColumnSpecific(256, new TDSColumnDataCollation(13632521, 52));
+            TDS2000VarCharColumnSpecific nVarChar = new TDS2000VarCharColumnSpecific(256, new TDSColumnDataCollation(13632521, 52));
 
             // Prepare the first column
             TDSColumnData column = new TDSColumnData();
@@ -892,7 +892,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             // Start the first column
             TDSColumnData column = new TDSColumnData();
             column.DataType = TDSDataType.NVarChar;
-            column.DataTypeSpecific = new TDSShilohVarCharColumnSpecific(40, new TDSColumnDataCollation(13632521, 52));
+            column.DataTypeSpecific = new TDS2000VarCharColumnSpecific(40, new TDSColumnDataCollation(13632521, 52));
             column.Flags.Updatable = TDSColumnDataUpdatableFlag.ReadOnly;
             column.Name = "net_transport";
 
@@ -902,7 +902,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             // Start the second column
             column = new TDSColumnData();
             column.DataType = TDSDataType.BigVarChar;
-            column.DataTypeSpecific = new TDSShilohVarCharColumnSpecific(48, new TDSColumnDataCollation(13632521, 52));
+            column.DataTypeSpecific = new TDS2000VarCharColumnSpecific(48, new TDSColumnDataCollation(13632521, 52));
             column.Flags.IsNullable = true;
             column.Flags.Updatable = TDSColumnDataUpdatableFlag.ReadOnly;
             column.Name = "local_net_address";
@@ -956,7 +956,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             // Start the first column
             TDSColumnData column = new TDSColumnData();
             column.DataType = TDSDataType.NVarChar;
-            column.DataTypeSpecific = new TDSShilohVarCharColumnSpecific(40, new TDSColumnDataCollation(13632521, 52));
+            column.DataTypeSpecific = new TDS2000VarCharColumnSpecific(40, new TDSColumnDataCollation(13632521, 52));
             column.Flags.Updatable = TDSColumnDataUpdatableFlag.ReadOnly;
             column.Name = "encrypt_option";
 
@@ -1046,7 +1046,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             // Start the first column
             TDSColumnData column = new TDSColumnData();
             column.DataType = TDSDataType.NVarChar;
-            column.DataTypeSpecific = new TDSShilohVarCharColumnSpecific(256, new TDSColumnDataCollation(13632521, 52));
+            column.DataTypeSpecific = new TDS2000VarCharColumnSpecific(256, new TDSColumnDataCollation(13632521, 52));
             column.Flags.Updatable = TDSColumnDataUpdatableFlag.ReadOnly;
             column.Name = "name";
 
@@ -1204,7 +1204,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             // Start the first column
             TDSColumnData column = new TDSColumnData();
             column.DataType = TDSDataType.NVarChar;
-            column.DataTypeSpecific = new TDSShilohVarCharColumnSpecific(128, new TDSColumnDataCollation(13632521, 52));
+            column.DataTypeSpecific = new TDS2000VarCharColumnSpecific(128, new TDSColumnDataCollation(13632521, 52));
             column.Flags.Updatable = TDSColumnDataUpdatableFlag.ReadOnly;
             column.Flags.IsNullable = true;
             column.Flags.IsComputed = true;
@@ -1245,7 +1245,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             // Start the first column
             TDSColumnData column = new TDSColumnData();
             column.DataType = TDSDataType.NVarChar;
-            column.DataTypeSpecific = new TDSShilohVarCharColumnSpecific(40, new TDSColumnDataCollation(13632521, 52));
+            column.DataTypeSpecific = new TDS2000VarCharColumnSpecific(40, new TDSColumnDataCollation(13632521, 52));
             column.Flags.Updatable = TDSColumnDataUpdatableFlag.ReadOnly;
             column.Name = "auth_scheme";
 
@@ -1607,7 +1607,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             // Start a new column
             TDSColumnData column = new TDSColumnData();
             column.DataType = TDSDataType.NVarChar;
-            column.DataTypeSpecific = new TDSShilohVarCharColumnSpecific(6, new TDSColumnDataCollation(13632521, 52));
+            column.DataTypeSpecific = new TDS2000VarCharColumnSpecific(6, new TDSColumnDataCollation(13632521, 52));
             column.Flags.Updatable = TDSColumnDataUpdatableFlag.ReadOnly;
             column.Flags.IsNullable = true;
             column.Name = "date_format";
@@ -1687,7 +1687,7 @@ namespace Microsoft.SqlServer.TDS.Servers
             // Start a new column
             TDSColumnData column = new TDSColumnData();
             column.DataType = TDSDataType.NVarChar;
-            column.DataTypeSpecific = new TDSShilohVarCharColumnSpecific(256, new TDSColumnDataCollation(13632521, 52));
+            column.DataTypeSpecific = new TDS2000VarCharColumnSpecific(256, new TDSColumnDataCollation(13632521, 52));
             column.Flags.Updatable = TDSColumnDataUpdatableFlag.ReadOnly;
             column.Flags.IsNullable = true;
             column.Name = "language";

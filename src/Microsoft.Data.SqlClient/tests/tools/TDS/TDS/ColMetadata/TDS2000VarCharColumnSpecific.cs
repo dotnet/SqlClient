@@ -5,9 +5,9 @@
 namespace Microsoft.SqlServer.TDS.ColMetadata
 {
     /// <summary>
-    /// Metadata associated with Shiloh variable character column
+    /// Metadata associated with 2000 variable character column
     /// </summary>
-    public class TDSShilohVarCharColumnSpecific
+    public class TDS2000VarCharColumnSpecific
     {
         /// <summary>
         /// Length of the data
@@ -22,14 +22,14 @@ namespace Microsoft.SqlServer.TDS.ColMetadata
         /// <summary>
         /// Default constructor
         /// </summary>
-        public TDSShilohVarCharColumnSpecific()
+        public TDS2000VarCharColumnSpecific()
         {
         }
 
         /// <summary>
         /// Initialization constructor
         /// </summary>
-        public TDSShilohVarCharColumnSpecific(ushort length)
+        public TDS2000VarCharColumnSpecific(ushort length)
         {
             Length = length;
         }
@@ -37,7 +37,7 @@ namespace Microsoft.SqlServer.TDS.ColMetadata
         /// <summary>
         /// Initialization constructor
         /// </summary>
-        public TDSShilohVarCharColumnSpecific(ushort length, TDSColumnDataCollation collation)
+        public TDS2000VarCharColumnSpecific(ushort length, TDSColumnDataCollation collation)
         {
             Length = length;
             Collation = collation;

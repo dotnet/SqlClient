@@ -38,9 +38,9 @@ namespace Microsoft.SqlServer.TDS.Login7
         public bool IsUserInstance { get; set; }
 
         /// <summary>
-        /// Send Yukon binary XML.
+        /// Send 2005 binary XML.
         /// </summary>
-        public bool SendYukonBinaryXML { get; set; }
+        public bool Send2005BinaryXML { get; set; }
 
         /// <summary>
         /// Unknown collection handling
@@ -67,7 +67,7 @@ namespace Microsoft.SqlServer.TDS.Login7
             // Parse bytes as per TDS specification, section 2.2.6.3 LOGIN 7
             ChangePassword = (TDSLogin7OptionalFlags3ChangePassword)(flags & 0x1);
             IsUserInstance = ((flags >> 1) & 0x1) != 0;
-            SendYukonBinaryXML = ((flags >> 2) & 0x1) != 0;
+            Send2005BinaryXML = ((flags >> 2) & 0x1) != 0;
             UnknownCollation = (TDSLogin7OptionalFlags3Collation)((flags >> 3) & 0x1);
             ExtensionFlag = ((flags >> 4) & 0x1) != 0;
         }
@@ -79,7 +79,7 @@ namespace Microsoft.SqlServer.TDS.Login7
         {
             return (byte)((byte)ChangePassword
                 | ((byte)(IsUserInstance ? 1 : 0)) << 1
-                | ((byte)(SendYukonBinaryXML ? 1 : 0)) << 2
+                | ((byte)(Send2005BinaryXML ? 1 : 0)) << 2
                 | ((byte)UnknownCollation) << 3
                 | ((byte)(ExtensionFlag ? 1 : 0)) << 4);
         }

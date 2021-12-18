@@ -25,7 +25,7 @@
     <Compile Include="ColMetadata\TDSColumnDataFlags.cs" />
     <Compile Include="ColMetadata\TDSColumnDataUpdatableFlag.cs" />
     <Compile Include="ColMetadata\TDSDecimalColumnSpecific.cs" />
-    <Compile Include="ColMetadata\TDSShilohVarCharColumnSpecific.cs" />
+    <Compile Include="ColMetadata\TDS2000VarCharColumnSpecific.cs" />
     <Compile Include="DateFormatType.cs" />
     <Compile Include="Done\TDSDoneInProcToken.cs" />
     <Compile Include="Done\TDSDoneProcedureToken.cs" />

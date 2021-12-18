@@ -1335,7 +1335,7 @@
   <data name="SQL_ChangePasswordConflictsWithSSPI" xml:space="preserve">
     <value>ChangePassword can only be used with SQL authentication, not with integrated security.</value>
   </data>
-  <data name="SQL_ChangePasswordRequiresYukon" xml:space="preserve">
+  <data name="SQL_ChangePasswordRequires2005" xml:space="preserve">
     <value>ChangePassword requires SQL Server 9.0 or later.</value>
   </data>
   <data name="SQL_ChangePasswordUseOfUnallowedKey" xml:space="preserve">

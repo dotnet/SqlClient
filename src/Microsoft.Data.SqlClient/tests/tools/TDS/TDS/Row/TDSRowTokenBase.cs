@@ -201,7 +201,7 @@ namespace Microsoft.SqlServer.TDS.Row
                 case TDSDataType.NVarChar:
                     {
                         // Check if MAX type
-                        if ((column.DataTypeSpecific as TDSShilohVarCharColumnSpecific).Length == 0xFFFF)
+                        if ((column.DataTypeSpecific as TDS2000VarCharColumnSpecific).Length == 0xFFFF)
                         {
                             // Read the length of partialy length-prefixed type
                             ulong length = TDSUtilities.ReadULong(source);

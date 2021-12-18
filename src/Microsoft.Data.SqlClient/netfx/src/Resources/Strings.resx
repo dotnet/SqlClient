@@ -2565,7 +2565,7 @@
   <data name="SQL_MSALInnerException" xml:space="preserve">
     <value>Error code 0x{0}</value>
   </data>
-  <data name="SQL_ChangePasswordRequiresYukon" xml:space="preserve">
+  <data name="SQL_ChangePasswordRequires2005" xml:space="preserve">
     <value>ChangePassword requires SQL Server 9.0 or later.</value>
   </data>
   <data name="SQL_NonLocalSSEInstance" xml:space="preserve">
@@ -2607,7 +2607,7 @@
   <data name="SQL_NonXmlResult" xml:space="preserve">
     <value>Invalid command sent to ExecuteXmlReader.  The command must return an Xml result.</value>
   </data>
-  <data name="SQL_NotificationsRequireYukon" xml:space="preserve">
+  <data name="SQL_NotificationsRequire2005" xml:space="preserve">
     <value>Notifications require SQL Server 9.0 or later.</value>
   </data>
   <data name="SQL_InvalidUdt3PartNameFormat" xml:space="preserve">

@@ -125,8 +125,8 @@ namespace Microsoft.SqlServer.TDS.ColMetadata
                 case TDSDataType.NChar:
                 case TDSDataType.NVarChar:
                     {
-                        // SHILOH CHAR types have collation associated with it.
-                        TDSShilohVarCharColumnSpecific typedSpecific = new TDSShilohVarCharColumnSpecific();
+                        // 2005 CHAR types have collation associated with it.
+                        TDS2000VarCharColumnSpecific typedSpecific = new TDS2000VarCharColumnSpecific();
 
                         // Read length
                         typedSpecific.Length = TDSUtilities.ReadUShort(source);
@@ -266,7 +266,7 @@ namespace Microsoft.SqlServer.TDS.ColMetadata
                 case TDSDataType.NVarChar:
                     {
                         // Cast to type specific information
-                        TDSShilohVarCharColumnSpecific typedSpecific = DataTypeSpecific as TDSShilohVarCharColumnSpecific;
+                        TDS2000VarCharColumnSpecific typedSpecific = DataTypeSpecific as TDS2000VarCharColumnSpecific;
 
                         // Write length
                         TDSUtilities.WriteUShort(destination, typedSpecific.Length);

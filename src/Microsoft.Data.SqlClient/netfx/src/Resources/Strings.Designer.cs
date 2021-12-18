@@ -39,7 +39,7 @@ namespace System {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Microsoft.Data.SqlClient.Resources.Strings", typeof(Strings).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("SqlClient.Resources.Strings", typeof(Strings).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -5551,6 +5551,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to When true, enables usage of the Asynchronous functionality in the .NET Framework Data Provider..
+        /// </summary>
+        internal static string DbConnectionString_AsynchronousProcessing {
+            get {
+                return ResourceManager.GetString("DbConnectionString_AsynchronousProcessing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The name of the primary file, including the full path name, of an attachable database..
         /// </summary>
         internal static string DbConnectionString_AttachDBFilename {
@@ -8857,6 +8866,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to This command requires an asynchronous connection. Set &quot;Asynchronous Processing=true&quot; in the connection string..
+        /// </summary>
+        internal static string SQL_AsyncConnectionRequired {
+            get {
+                return ResourceManager.GetString("SQL_AsyncConnectionRequired", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The asynchronous operation has already completed..
         /// </summary>
         internal static string SQL_AsyncOperationCompleted {
@@ -9192,9 +9210,9 @@ namespace System {
         /// <summary>
         ///   Looks up a localized string similar to ChangePassword requires SQL Server 9.0 or later..
         /// </summary>
-        internal static string SQL_ChangePasswordRequiresYukon {
+        internal static string SQL_ChangePasswordRequires2005 {
             get {
-                return ResourceManager.GetString("SQL_ChangePasswordRequiresYukon", resourceCulture);
+                return ResourceManager.GetString("SQL_ChangePasswordRequires2005", resourceCulture);
             }
         }
         
@@ -9658,7 +9676,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Error code 0x{0}..
+        ///   Looks up a localized string similar to Error code 0x{0}.
         /// </summary>
         internal static string SQL_MSALInnerException {
             get {
@@ -9741,9 +9759,9 @@ namespace System {
         /// <summary>
         ///   Looks up a localized string similar to Notifications require SQL Server 9.0 or later..
         /// </summary>
-        internal static string SQL_NotificationsRequireYukon {
+        internal static string SQL_NotificationsRequire2005 {
             get {
-                return ResourceManager.GetString("SQL_NotificationsRequireYukon", resourceCulture);
+                return ResourceManager.GetString("SQL_NotificationsRequire2005", resourceCulture);
             }
         }
         
@@ -10536,6 +10554,15 @@ namespace System {
         internal static string SqlConnection_AccessToken {
             get {
                 return ResourceManager.GetString("SqlConnection_AccessToken", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to State of connection, synchronous or asynchronous.  &apos;Asynchronous Processing=x&apos; in the connection string..
+        /// </summary>
+        internal static string SqlConnection_Asynchronous {
+            get {
+                return ResourceManager.GetString("SqlConnection_Asynchronous", resourceCulture);
             }
         }
         
