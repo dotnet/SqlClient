@@ -2493,8 +2493,8 @@
   <data name="SQL_AuthenticationAndIntegratedSecurity" xml:space="preserve">
     <value>Não é possível usar "Authentication" com "Integrated Security".</value>
   </data>
-  <data name="SQL_IntegratedWithUserIDAndPassword" xml:space="preserve">
-    <value>Não é possível usar 'Authentication=Active Directory Integrated' com as palavras-chave de cadeia de conexão 'User ID', 'UID', 'Password' ou 'PWD'.</value>
+  <data name="SQL_IntegratedWithPassword" xml:space="preserve">
+    <value>Não é possível usar “Authentication=Active Directory Integrated” com as palavras-chave de cadeia de conexão “Password” ou “PWD”.</value>
   </data>
   <data name="SQL_InteractiveWithPassword" xml:space="preserve">
     <value>Não é possível usar 'Authentication=Active Directory Interactive' com as palavras-chave de cadeia de conexão 'Password' ou 'PWD'.</value>

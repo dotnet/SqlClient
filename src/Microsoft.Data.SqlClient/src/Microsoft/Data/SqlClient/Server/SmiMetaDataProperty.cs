@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -10,7 +9,6 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient.Server
 {
-
     // SmiMetaDataProperty defines an extended, optional property to be used on the SmiMetaData class
     //  This approach to adding properties is added combat the growing number of sparsely-used properties 
     //  that are specially handled on the base classes
@@ -27,75 +25,54 @@ namespace Microsoft.Data.SqlClient.Server
     {
         private const int SelectorCount = 3;  // number of elements in SmiPropertySelector
 
-        private SmiMetaDataProperty[] _properties;
+        private readonly SmiMetaDataProperty[] _properties;
         private bool _isReadOnly;
 
-        internal static readonly SmiMetaDataPropertyCollection EmptyInstance;
-
         // Singleton empty instances to ensure each property is always non-null
-        private static readonly SmiDefaultFieldsProperty __emptyDefaultFields = new SmiDefaultFieldsProperty(new List<bool>());
-        private static readonly SmiOrderProperty __emptySortOrder = new SmiOrderProperty(new List<SmiOrderProperty.SmiColumnOrder>());
-        private static readonly SmiUniqueKeyProperty __emptyUniqueKey = new SmiUniqueKeyProperty(new List<bool>());
+        private static readonly SmiDefaultFieldsProperty s_emptyDefaultFields = new SmiDefaultFieldsProperty(new List<bool>());
+        private static readonly SmiOrderProperty s_emptySortOrder = new SmiOrderProperty(new List<SmiOrderProperty.SmiColumnOrder>());
+        private static readonly SmiUniqueKeyProperty s_emptyUniqueKey = new SmiUniqueKeyProperty(new List<bool>());
 
-        static SmiMetaDataPropertyCollection()
+        internal static readonly SmiMetaDataPropertyCollection s_emptyInstance = CreateEmptyInstance();
+
+        private static SmiMetaDataPropertyCollection CreateEmptyInstance()
         {
-            EmptyInstance = new SmiMetaDataPropertyCollection();
-            EmptyInstance.SetReadOnly();
+            var emptyInstance = new SmiMetaDataPropertyCollection();
+            emptyInstance.SetReadOnly();
+            return emptyInstance;
         }
 
         internal SmiMetaDataPropertyCollection()
         {
             _properties = new SmiMetaDataProperty[SelectorCount];
             _isReadOnly = false;
-            _properties[(int)SmiPropertySelector.DefaultFields] = __emptyDefaultFields;
-            _properties[(int)SmiPropertySelector.SortOrder] = __emptySortOrder;
-            _properties[(int)SmiPropertySelector.UniqueKey] = __emptyUniqueKey;
+            _properties[(int)SmiPropertySelector.DefaultFields] = s_emptyDefaultFields;
+            _properties[(int)SmiPropertySelector.SortOrder] = s_emptySortOrder;
+            _properties[(int)SmiPropertySelector.UniqueKey] = s_emptyUniqueKey;
         }
 
         internal SmiMetaDataProperty this[SmiPropertySelector key]
         {
-            get
-            {
-                return _properties[(int)key];
-            }
+            get => _properties[(int)key];
             set
             {
-                if (null == value)
-                {
-                    throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
-                }
                 EnsureWritable();
-                _properties[(int)key] = value;
+                _properties[(int)key] = value ?? throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
         }
 
-        internal bool IsReadOnly
-        {
-            get
-            {
-                return _isReadOnly;
-            }
-        }
+        internal bool IsReadOnly => _isReadOnly;
 
-        internal IEnumerable<SmiMetaDataProperty> Values
-        {
-            get
-            {
-                return new List<SmiMetaDataProperty>(_properties);
-            }
-        }
+        internal IEnumerable<SmiMetaDataProperty> Values => new List<SmiMetaDataProperty>(_properties);
 
         // Allow switching to read only, but not back.
-        internal void SetReadOnly()
-        {
-            _isReadOnly = true;
-        }
+        internal void SetReadOnly() => _isReadOnly = true;
 
         private void EnsureWritable()
         {
             if (IsReadOnly)
             {
-                throw Microsoft.Data.Common.ADP.InternalError(Microsoft.Data.Common.ADP.InternalErrorCode.InvalidSmiCall);
+                throw ADP.InternalError(ADP.InternalErrorCode.InvalidSmiCall);
             }
         }
     }
@@ -109,11 +86,11 @@ namespace Microsoft.Data.SqlClient.Server
     // Property defining a list of column ordinals that define a unique key
     internal class SmiUniqueKeyProperty : SmiMetaDataProperty
     {
-        private IList<bool> _columns;
+        private readonly IList<bool> _columns;
 
         internal SmiUniqueKeyProperty(IList<bool> columnIsKey)
         {
-            _columns = new List<bool>(columnIsKey).AsReadOnly();
+            _columns = new System.Collections.ObjectModel.ReadOnlyCollection<bool>(columnIsKey);
         }
 
         // indexed by column ordinal indicating for each column whether it is key or not
@@ -170,21 +147,15 @@ namespace Microsoft.Data.SqlClient.Server
     {
         internal struct SmiColumnOrder
         {
-            internal int SortOrdinal;
-            internal SortOrder Order;
+            internal int _sortOrdinal;
+            internal SortOrder _order;
 
-            internal string TraceString()
-            {
-                return String.Format(CultureInfo.InvariantCulture, "{0} {1}", SortOrdinal, Order);
-            }
+            internal string TraceString() => string.Format(CultureInfo.InvariantCulture, "{0} {1}", _sortOrdinal, _order);
         }
 
-        private IList<SmiColumnOrder> _columns;
+        private readonly IList<SmiColumnOrder> _columns;
 
-        internal SmiOrderProperty(IList<SmiColumnOrder> columnOrders)
-        {
-            _columns = new List<SmiColumnOrder>(columnOrders).AsReadOnly();
-        }
+        internal SmiOrderProperty(IList<SmiColumnOrder> columnOrders) => _columns = new System.Collections.ObjectModel.ReadOnlyCollection<SmiColumnOrder>(columnOrders);
 
         // Readonly list of the columnorder instances making up the sort order
         //  order in list indicates precedence
@@ -195,8 +166,8 @@ namespace Microsoft.Data.SqlClient.Server
                 if (_columns.Count <= ordinal)
                 {
                     SmiColumnOrder order = new SmiColumnOrder();
-                    order.Order = SortOrder.Unspecified;
-                    order.SortOrdinal = -1;
+                    order._order = SortOrder.Unspecified;
+                    order._sortOrdinal = -1;
                     return order;
                 }
                 else
@@ -230,7 +201,7 @@ namespace Microsoft.Data.SqlClient.Server
                     delimit = true;
                 }
 
-                if (Microsoft.Data.SqlClient.SortOrder.Unspecified != columnOrd.Order)
+                if (Microsoft.Data.SqlClient.SortOrder.Unspecified != columnOrd._order)
                 {
                     returnValue += columnOrd.TraceString();
                 }
@@ -246,16 +217,13 @@ namespace Microsoft.Data.SqlClient.Server
     {
         #region private fields
 
-        private IList<bool> _defaults;
+        private readonly IList<bool> _defaults;
 
         #endregion
 
         #region internal interface
 
-        internal SmiDefaultFieldsProperty(IList<bool> defaultFields)
-        {
-            _defaults = new List<bool>(defaultFields).AsReadOnly();
-        }
+        internal SmiDefaultFieldsProperty(IList<bool> defaultFields) => _defaults = new System.Collections.ObjectModel.ReadOnlyCollection<bool>(defaultFields);
 
         internal bool this[int ordinal]
         {
