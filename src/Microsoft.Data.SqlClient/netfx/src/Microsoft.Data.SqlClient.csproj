@@ -648,16 +648,7 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>$(ResxFileName).Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <EmbeddedResource Include="Resources\Strings.de.resx" />
-    <EmbeddedResource Include="Resources\Strings.es.resx" />
-    <EmbeddedResource Include="Resources\Strings.fr.resx" />
-    <EmbeddedResource Include="Resources\Strings.it.resx" />
-    <EmbeddedResource Include="Resources\Strings.ja.resx" />
-    <EmbeddedResource Include="Resources\Strings.ko.resx" />
-    <EmbeddedResource Include="Resources\Strings.pt-BR.resx" />
-    <EmbeddedResource Include="Resources\Strings.ru.resx" />
-    <EmbeddedResource Include="Resources\Strings.zh-Hans.resx" />
-    <EmbeddedResource Include="Resources\Strings.zh-Hant.resx" />
+    <EmbeddedResource Include="Resources\$(ResxFileName).*.resx" />
     <EmbeddedResource Include="Resources\Microsoft.Data.SqlClient.SqlMetaData.xml">
       <LogicalName>Microsoft.Data.SqlClient.SqlMetaData.xml</LogicalName>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
