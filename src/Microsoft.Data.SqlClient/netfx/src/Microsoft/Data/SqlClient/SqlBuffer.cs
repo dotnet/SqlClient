@@ -1134,6 +1134,12 @@ namespace Microsoft.Data.SqlClient
                         return typeof(Guid);
                     case StorageType.SqlXml:
                         return typeof(string);
+                    case StorageType.Date:
+                        return typeof(DateTime);
+                    case StorageType.DateTime2:
+                        return typeof(DateTime);
+                    case StorageType.DateTimeOffset:
+                        return typeof(DateTimeOffset);
                 }
             }
 
@@ -1225,12 +1231,12 @@ namespace Microsoft.Data.SqlClient
             _isNull = false;
         }
 
-        internal void SetToDate(byte[] bytes)
+        internal void SetToDate(ReadOnlySpan<byte> bytes)
         {
             Debug.Assert(IsEmpty, "setting value a second time?");
 
             _type = StorageType.Date;
-            _value._int32 = GetDateFromByteArray(bytes, 0);
+            _value._int32 = GetDateFromByteArray(bytes);
             _isNull = false;
         }
 
@@ -1243,12 +1249,12 @@ namespace Microsoft.Data.SqlClient
             _isNull = false;
         }
 
-        internal void SetToTime(byte[] bytes, int length, byte scale, byte denormalizedScale)
+        internal void SetToTime(ReadOnlySpan<byte> bytes, byte scale, byte denormalizedScale)
         {
             Debug.Assert(IsEmpty, "setting value a second time?");
 
             _type = StorageType.Time;
-            FillInTimeInfo(ref _value._timeInfo, bytes, length, scale, denormalizedScale);
+            FillInTimeInfo(ref _value._timeInfo, bytes, scale, denormalizedScale);
             _isNull = false;
         }
 
@@ -1259,16 +1265,6 @@ namespace Microsoft.Data.SqlClient
             _type = StorageType.Time;
             _value._timeInfo._ticks = timeSpan.Ticks;
             _value._timeInfo._scale = scale;
-            _isNull = false;
-        }
-
-        internal void SetToDateTime2(byte[] bytes, int length, byte scale, byte denormalizedScale)
-        {
-            Debug.Assert(IsEmpty, "setting value a second time?");
-
-            _type = StorageType.DateTime2;
-            FillInTimeInfo(ref _value._dateTime2Info._timeInfo, bytes, length - 3, scale, denormalizedScale); // remaining 3 bytes is for date
-            _value._dateTime2Info._date = GetDateFromByteArray(bytes, length - 3); // 3 bytes for date
             _isNull = false;
         }
 
@@ -1283,13 +1279,23 @@ namespace Microsoft.Data.SqlClient
             _isNull = false;
         }
 
-        internal void SetToDateTimeOffset(byte[] bytes, int length, byte scale, byte denormalizedScale)
+        internal void SetToDateTime2(ReadOnlySpan<byte> bytes, byte scale, byte denormalizedScale)
         {
             Debug.Assert(IsEmpty, "setting value a second time?");
+            int length = bytes.Length;
+            _type = StorageType.DateTime2;
+            FillInTimeInfo(ref _value._dateTime2Info._timeInfo, bytes.Slice(0, length - 3), scale, denormalizedScale); // remaining 3 bytes is for date
+            _value._dateTime2Info._date = GetDateFromByteArray(bytes.Slice(length - 3)); // 3 bytes for date
+            _isNull = false;
+        }
 
+        internal void SetToDateTimeOffset(ReadOnlySpan<byte> bytes, byte scale, byte denormalizedScale)
+        {
+            Debug.Assert(IsEmpty, "setting value a second time?");
+            int length = bytes.Length;
             _type = StorageType.DateTimeOffset;
-            FillInTimeInfo(ref _value._dateTimeOffsetInfo._dateTime2Info._timeInfo, bytes, length - 5, scale, denormalizedScale); // remaining 5 bytes are for date and offset
-            _value._dateTimeOffsetInfo._dateTime2Info._date = GetDateFromByteArray(bytes, length - 5); // 3 bytes for date
+            FillInTimeInfo(ref _value._dateTimeOffsetInfo._dateTime2Info._timeInfo, bytes.Slice(0, length - 5), scale, denormalizedScale); // remaining 5 bytes are for date and offset
+            _value._dateTimeOffsetInfo._dateTime2Info._date = GetDateFromByteArray(bytes.Slice(length - 5)); // 3 bytes for date
             _value._dateTimeOffsetInfo._offset = (short)(bytes[length - 2] + (bytes[length - 1] << 8)); // 2 bytes for offset (Int16)
             _isNull = false;
         }
@@ -1307,8 +1313,9 @@ namespace Microsoft.Data.SqlClient
             _isNull = false;
         }
 
-        private static void FillInTimeInfo(ref TimeInfo timeInfo, byte[] timeBytes, int length, byte scale, byte denormalizedScale)
+        private static void FillInTimeInfo(ref TimeInfo timeInfo, ReadOnlySpan<byte> timeBytes, byte scale, byte denormalizedScale)
         {
+            int length = timeBytes.Length;
             Debug.Assert(3 <= length && length <= 5, "invalid data length for timeInfo: " + length);
             Debug.Assert(0 <= scale && scale <= 7, "invalid scale: " + scale);
             Debug.Assert(0 <= denormalizedScale && denormalizedScale <= 7, "invalid denormalized scale: " + denormalizedScale);
@@ -1330,9 +1337,10 @@ namespace Microsoft.Data.SqlClient
             timeInfo._scale = denormalizedScale;
         }
 
-        private static int GetDateFromByteArray(byte[] buf, int offset)
+        private static int GetDateFromByteArray(ReadOnlySpan<byte> buf)
         {
-            return buf[offset] + (buf[offset + 1] << 8) + (buf[offset + 2] << 16);
+            byte thirdByte = buf[2]; // reordered to optimize JIT generated bounds checks to a single instance, review generated asm before changing
+            return buf[0] + (buf[1] << 8) + (thirdByte << 16);
         }
 
         private void ThrowIfNull()
