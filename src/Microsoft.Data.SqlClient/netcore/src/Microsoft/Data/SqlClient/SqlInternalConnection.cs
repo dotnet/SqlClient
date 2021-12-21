@@ -145,7 +145,7 @@ namespace Microsoft.Data.SqlClient
         }
 
 
-        abstract internal bool IsKatmaiOrNewer
+        abstract internal bool Is2008OrNewer
         {
             get;
         }

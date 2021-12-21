@@ -441,7 +441,7 @@ namespace Microsoft.Data.SqlClient
                 // If its a temp DB then try to connect
 
                 string TableCollationsStoredProc;
-                if (_connection.IsKatmaiOrNewer)
+                if (_connection.Is2008OrNewer)
                 {
                     TableCollationsStoredProc = "sp_tablecollations_100";
                 }
@@ -2288,7 +2288,7 @@ namespace Microsoft.Data.SqlClient
                 // Target type shouldn't be encrypted
                 Debug.Assert(!metadata.isEncrypted, "Can't encrypt SQL Variant type");
                 SqlBuffer.StorageType variantInternalType = SqlBuffer.StorageType.Empty;
-                if ((_sqlDataReaderRowSource != null) && (_connection.IsKatmaiOrNewer))
+                if ((_sqlDataReaderRowSource != null) && (_connection.Is2008OrNewer))
                 {
                     variantInternalType = _sqlDataReaderRowSource.GetVariantInternalStorageType(_sortedColumnMappings[col]._sourceColumnOrdinal);
                 }

@@ -13,7 +13,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static string s_connStr;
 
         /// <summary>
-        /// Tests all Katmai DateTime types inside sql_variant to server using sql_variant parameter, SqlBulkCopy, and TVP parameter with sql_variant inside.
+        /// Tests all 2008 DateTime types inside sql_variant to server using sql_variant parameter, SqlBulkCopy, and TVP parameter with sql_variant inside.
         /// </summary>
         public static void TestAllDateTimeWithDataTypeAndVariant(string connStr)
         {
@@ -110,7 +110,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // sql_variant parameters and sql_variant TVPs store all datetime values internally
-        // as datetime, hence breaking for katmai types
+        // as datetime, hence breaking for 2008 types
         private static void TestSimpleParameter_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName)
         {
             string tag = "TestSimpleParameter_Variant";
@@ -195,7 +195,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // sql_variant parameters and sql_variant TVPs store all datetime values internally
-        // as datetime, hence breaking for katmai types
+        // as datetime, hence breaking for 2008 types
         private static void TestSqlDataRecordParameterToTVP_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName)
         {
             string tag = "TestSqlDataRecordParameterToTVP_Variant";
@@ -290,7 +290,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // sql_variant parameters and sql_variant TVPs store all datetime values internally
-        // as datetime, hence breaking for katmai types
+        // as datetime, hence breaking for 2008 types
         private static void TestSqlDataReaderParameterToTVP_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName)
         {
             string tag = "TestSqlDataReaderParameterToTVP_Variant";
@@ -342,7 +342,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // sql_variant parameters and sql_variant TVPs store all datetime values internally
-        // as datetime, hence breaking for katmai types
+        // as datetime, hence breaking for 2008 types
         private static void TestSqlDataReader_TVP_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName)
         {
             string tag = "TestSqlDataReader_TVP_Type";
@@ -507,7 +507,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // sql_variant parameters and sql_variant TVPs store all datetime values internally
-        // as datetime, hence breaking for katmai types
+        // as datetime, hence breaking for 2008 types
         private static void TestSimpleDataReader_Type(object paramValue, string expectedTypeName, string expectedBaseTypeName)
         {
             string tag = "TestSimpleDataReader_Type";
@@ -831,7 +831,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // sql_variant parameters and sql_variant TVPs store all datetime values internally
-        // as datetime, hence breaking for katmai types
+        // as datetime, hence breaking for 2008 types
         private static void SqlBulkCopyDataTable_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName)
         {
             string tag = "SqlBulkCopyDataTable_Variant";
@@ -936,7 +936,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // sql_variant parameters and sql_variant TVPs store all datetime values internally
-        // as datetime, hence breaking for katmai types
+        // as datetime, hence breaking for 2008 types
         private static void SqlBulkCopyDataRow_Variant(object paramValue, string expectedTypeName, string expectedBaseTypeName)
         {
             string tag = "SqlBulkCopyDataRow_Variant";

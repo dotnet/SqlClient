@@ -17,7 +17,7 @@ namespace Microsoft.SqlServer.TDS
         public static Version SqlServer2005 = new Version(7, 2, 9, 2);
 
         /// <summary>
-        /// Katmai TDS version
+        /// 2008 (Katmai) TDS version
         /// </summary>
         public static Version SqlServer2008 = new Version(7, 3, 11, 3);
 
@@ -41,7 +41,6 @@ namespace Microsoft.SqlServer.TDS
             }
             else if (buildVersion.Major == 10)
             {
-                // Katmai
                 return SqlServer2008;
             }
             else if (buildVersion.Major == 9)

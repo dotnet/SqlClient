@@ -731,7 +731,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                return IsTransactionRoot && (!IsKatmaiOrNewer || null == Pool);
+                return IsTransactionRoot && (!Is2008OrNewer || null == Pool);
             }
         }
 
@@ -751,11 +751,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override internal bool IsKatmaiOrNewer
+        override internal bool Is2008OrNewer
         {
             get
             {
-                return _parser.IsKatmaiOrNewer;
+                return _parser.Is2008OrNewer;
             }
         }
 

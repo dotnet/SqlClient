@@ -120,7 +120,7 @@ namespace Microsoft.Data.SqlClient
         {
             EnsureCanGetCol("GetValue", ordinal);
             SmiQueryMetaData metaData = _currentMetaData[ordinal];
-            if (_currentConnection.IsKatmaiOrNewer)
+            if (_currentConnection.Is2008OrNewer)
             {
                 return ValueUtilsSmi.GetValue200(_readerEventSink, (SmiTypedGetterSetter)_currentColumnValuesV3, ordinal, metaData, _currentConnection.InternalContext);
             }
@@ -138,7 +138,7 @@ namespace Microsoft.Data.SqlClient
             if (typeof(INullable).IsAssignableFrom(typeof(T)))
             {
                 // If its a SQL Type or Nullable UDT
-                if (_currentConnection.IsKatmaiOrNewer)
+                if (_currentConnection.Is2008OrNewer)
                 {
                     return (T)ValueUtilsSmi.GetSqlValue200(_readerEventSink, (SmiTypedGetterSetter)_currentColumnValuesV3, ordinal, metaData, _currentConnection.InternalContext);
                 }
@@ -150,7 +150,7 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 // Otherwise Its a CLR or non-Nullable UDT
-                if (_currentConnection.IsKatmaiOrNewer)
+                if (_currentConnection.Is2008OrNewer)
                 {
                     return (T)ValueUtilsSmi.GetValue200(_readerEventSink, (SmiTypedGetterSetter)_currentColumnValuesV3, ordinal, metaData, _currentConnection.InternalContext);
                 }
@@ -923,13 +923,13 @@ namespace Microsoft.Data.SqlClient
         public override TimeSpan GetTimeSpan(int ordinal)
         {
             EnsureCanGetCol("GetTimeSpan", ordinal);
-            return ValueUtilsSmi.GetTimeSpan(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal], _currentConnection.IsKatmaiOrNewer);
+            return ValueUtilsSmi.GetTimeSpan(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal], _currentConnection.Is2008OrNewer);
         }
 
         public override DateTimeOffset GetDateTimeOffset(int ordinal)
         {
             EnsureCanGetCol("GetDateTimeOffset", ordinal);
-            return ValueUtilsSmi.GetDateTimeOffset(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal], _currentConnection.IsKatmaiOrNewer);
+            return ValueUtilsSmi.GetDateTimeOffset(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal], _currentConnection.Is2008OrNewer);
         }
 
         public override object GetSqlValue(int ordinal)
@@ -937,7 +937,7 @@ namespace Microsoft.Data.SqlClient
             EnsureCanGetCol("GetSqlValue", ordinal);
 
             SmiMetaData metaData = _currentMetaData[ordinal];
-            if (_currentConnection.IsKatmaiOrNewer)
+            if (_currentConnection.Is2008OrNewer)
             {
                 return ValueUtilsSmi.GetSqlValue200(_readerEventSink, (SmiTypedGetterSetter)_currentColumnValuesV3, ordinal, metaData, _currentConnection.InternalContext);
             }

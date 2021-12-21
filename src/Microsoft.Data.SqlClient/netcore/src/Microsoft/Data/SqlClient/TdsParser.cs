@@ -114,7 +114,7 @@ namespace Microsoft.Data.SqlClient
 
         private bool _isYukon = false; // set to true if speaking to Yukon or later
 
-        private bool _isKatmai = false;
+        private bool _is2008 = false;
 
         private bool _isDenali = false;
 
@@ -258,11 +258,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal bool IsKatmaiOrNewer
+        internal bool Is2008OrNewer
         {
             get
             {
-                return _isKatmai;
+                return _is2008;
             }
         }
 
@@ -3605,12 +3605,12 @@ namespace Microsoft.Data.SqlClient
                     }
                     _isYukon = true;
                     break;
-                case TdsEnums.KATMAI_MAJOR << 24 | TdsEnums.KATMAI_MINOR:
-                    if (increment != TdsEnums.KATMAI_INCREMENT)
+                case TdsEnums.SQL2008_MAJOR << 24 | TdsEnums.SQL2008_MINOR:
+                    if (increment != TdsEnums.SQL2008_INCREMENT)
                     {
                         throw SQL.InvalidTDSVersion();
                     }
-                    _isKatmai = true;
+                    _is2008 = true;
                     break;
                 case TdsEnums.DENALI_MAJOR << 24 | TdsEnums.DENALI_MINOR:
                     if (increment != TdsEnums.DENALI_INCREMENT)
@@ -3623,8 +3623,8 @@ namespace Microsoft.Data.SqlClient
                     throw SQL.InvalidTDSVersion();
             }
 
-            _isKatmai |= _isDenali;
-            _isYukon |= _isKatmai;
+            _is2008 |= _isDenali;
+            _isYukon |= _is2008;
 
             stateObj._outBytesUsed = stateObj._outputHeaderLen;
             byte len;
@@ -9059,14 +9059,14 @@ namespace Microsoft.Data.SqlClient
                             // type (parameter record stores the MetaType class which is a helper that encapsulates all the type information we need here)
                             MetaType mt = param.InternalMetaType;
 
-                            if (mt.IsNewKatmaiType)
+                            if (mt.Is2008Type)
                             {
                                 WriteSmiParameter(param, i, 0 != (options & TdsEnums.RPC_PARAM_DEFAULT), stateObj, enableOptimizedParameterBinding, isAdvancedTraceOn);
                                 continue;
                             }
 
                             if ((!_isYukon && !mt.Is80Supported) ||
-                                (!_isKatmai && !mt.Is90Supported))
+                                (!_is2008 && !mt.Is90Supported))
                             {
                                 throw ADP.VersionDoesNotSupportDataType(mt.TypeName);
                             }
@@ -9432,7 +9432,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     Debug.Assert(_isYukon, "Invalid DataType UDT for non-Yukon or later server!");
 
-                    int maxSupportedSize = IsKatmaiOrNewer ? int.MaxValue : short.MaxValue;
+                    int maxSupportedSize = Is2008OrNewer ? int.MaxValue : short.MaxValue;
                     byte[] udtVal = null;
                     Format format = Format.Native;
 
@@ -9760,7 +9760,7 @@ namespace Microsoft.Data.SqlClient
             ParameterPeekAheadValue peekAhead;
             SmiParameterMetaData metaData = param.MetaDataForSmi(out peekAhead);
 
-            if (!_isKatmai)
+            if (!_is2008)
             {
                 MetaType mt = MetaType.GetMetaTypeFromSqlDbType(metaData.SqlDbType, metaData.IsMultiValued);
                 throw ADP.VersionDoesNotSupportDataType(mt.TypeName);

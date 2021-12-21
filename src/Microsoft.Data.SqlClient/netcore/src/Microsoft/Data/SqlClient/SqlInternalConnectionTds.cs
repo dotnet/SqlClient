@@ -636,15 +636,15 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                return IsTransactionRoot && (!IsKatmaiOrNewer || null == Pool);
+                return IsTransactionRoot && (!Is2008OrNewer || null == Pool);
             }
         }
 
-        internal override bool IsKatmaiOrNewer
+        internal override bool Is2008OrNewer
         {
             get
             {
-                return _parser.IsKatmaiOrNewer;
+                return _parser.Is2008OrNewer;
             }
         }
 

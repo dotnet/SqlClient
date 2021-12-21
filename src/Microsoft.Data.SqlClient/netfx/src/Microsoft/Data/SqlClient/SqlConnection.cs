@@ -2224,7 +2224,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (_currentReconnectionTask != null)
                 { // holds true even if task is completed
-                    return true; // if CR is enabled, connection, if established, will be Katmai+
+                    return true; // if CR is enabled, connection, if established, will be 2008+
                 }
                 return GetOpenConnection().IsShiloh;
             }
@@ -2236,21 +2236,21 @@ namespace Microsoft.Data.SqlClient
             {
                 if (_currentReconnectionTask != null)
                 { // holds true even if task is completed
-                    return true; // if CR is enabled, connection, if established, will be Katmai+
+                    return true; // if CR is enabled, connection, if established, will be 2008+
                 }
                 return GetOpenConnection().IsYukonOrNewer;
             }
         }
 
-        internal bool IsKatmaiOrNewer
+        internal bool Is2008OrNewer
         {
             get
             {
                 if (_currentReconnectionTask != null)
                 { // holds true even if task is completed
-                    return true; // if CR is enabled, connection, if established, will be Katmai+
+                    return true; // if CR is enabled, connection, if established, will be 2008+
                 }
-                return GetOpenConnection().IsKatmaiOrNewer;
+                return GetOpenConnection().Is2008OrNewer;
             }
         }
 

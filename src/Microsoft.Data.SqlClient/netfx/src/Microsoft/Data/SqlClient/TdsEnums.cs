@@ -320,19 +320,19 @@ namespace Microsoft.Data.SqlClient
         // Majors:
         public const int SHILOHSP1_MAJOR = 0x71;     // For Shiloh SP1 and later the versioning schema changed and
         public const int YUKON_MAJOR = 0x72;     // the high-byte is sufficient to distinguish later versions
-        public const int KATMAI_MAJOR = 0x73;
+        public const int SQL2008_MAJOR = 0x73;
         public const int DENALI_MAJOR = 0x74;
 
         // Increments:
         public const int SHILOHSP1_INCREMENT = 0x00;
         public const int YUKON_INCREMENT = 0x09;
-        public const int KATMAI_INCREMENT = 0x0b;
+        public const int SQL2008_INCREMENT = 0x0b;
         public const int DENALI_INCREMENT = 0x00;
 
         // Minors:
         public const int SHILOHSP1_MINOR = 0x0001;
         public const int YUKON_RTM_MINOR = 0x0002;
-        public const int KATMAI_MINOR = 0x0003;
+        public const int SQL2008_MINOR = 0x0003;
         public const int DENALI_MINOR = 0x0004;
 
         public const int ORDER_68000 = 1;
@@ -446,7 +446,7 @@ namespace Microsoft.Data.SqlClient
         public const int XMLUNICODEBOM = 0xfeff;
         public static readonly byte[] XMLUNICODEBOMBYTES = { 0xff, 0xfe };
 
-        // The following datatypes are specific to Katmai (version 10) or later
+        // The following datatypes are specific to 2008 (version 10) or later
         public const int SQLTABLE = 0xf3;
         public const int SQLDATE = 0x28;
         public const int SQLTIME = 0x29;

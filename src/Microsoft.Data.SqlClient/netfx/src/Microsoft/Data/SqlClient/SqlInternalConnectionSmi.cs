@@ -178,11 +178,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override internal bool IsKatmaiOrNewer
+        override internal bool Is2008OrNewer
         {
             get
             {
-                return SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.KatmaiVersion;
+                return SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.Sql2008Version;
             }
         }
 

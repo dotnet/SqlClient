@@ -516,7 +516,7 @@ namespace Microsoft.Data.SqlClient
             if (isNullCompressed)
             {
                 // assert that NBCROW is not in use by Yukon or before
-                Debug.Assert(_parser.IsKatmaiOrNewer, "NBCROW is sent by pre-Katmai server");
+                Debug.Assert(_parser.Is2008OrNewer, "NBCROW is sent by pre-2008 server");
 
                 if (!_nullBitmapInfo.TryInitialize(this, nullBitmapColumnsCount))
                 {
