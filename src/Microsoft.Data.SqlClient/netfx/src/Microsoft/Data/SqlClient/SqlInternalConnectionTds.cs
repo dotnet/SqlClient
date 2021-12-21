@@ -743,11 +743,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override internal bool IsYukonOrNewer
+        override internal bool Is2005OrNewer
         {
             get
             {
-                return _parser.IsYukonOrNewer;
+                return _parser.Is2005OrNewer;
             }
         }
 
@@ -1168,18 +1168,18 @@ namespace Microsoft.Data.SqlClient
 
             string transactionName = (null == name) ? String.Empty : name;
 
-            if (!_parser.IsYukonOrNewer)
+            if (!_parser.Is2005OrNewer)
             {
-                ExecuteTransactionPreYukon(transactionRequest, transactionName, iso, internalTransaction);
+                ExecuteTransactionPre2005(transactionRequest, transactionName, iso, internalTransaction);
             }
             else
             {
-                ExecuteTransactionYukon(transactionRequest, transactionName, iso, internalTransaction, isDelegateControlRequest);
+                ExecuteTransaction2005(transactionRequest, transactionName, iso, internalTransaction, isDelegateControlRequest);
             }
         }
 
         // This function will not handle idle connection resiliency, as older servers will not support it
-        internal void ExecuteTransactionPreYukon(
+        internal void ExecuteTransactionPre2005(
                     TransactionRequest transactionRequest,
                     string transactionName,
                     IsolationLevel iso,
@@ -1229,7 +1229,7 @@ namespace Microsoft.Data.SqlClient
                     sqlBatch.Append(transactionName);
                     break;
                 case TransactionRequest.Promote:
-                    Debug.Assert(false, "Promote called with transaction name or on pre-Yukon!");
+                    Debug.Assert(false, "Promote called with transaction name or on pre-2005!");
                     break;
                 case TransactionRequest.Commit:
                     sqlBatch.Append(TdsEnums.TRANS_COMMIT);
@@ -1256,7 +1256,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(executeTask == null, "Shouldn't get a task when doing sync writes");
             _parser.Run(RunBehavior.UntilDone, null, null, null, _parser._physicalStateObj);
 
-            // Prior to Yukon, we didn't have any transaction tokens to manage,
+            // Prior to 2005, we didn't have any transaction tokens to manage,
             // or any feedback to know when one was created, so we just presume
             // that successful execution of the request caused the transaction
             // to be created, and we set that on the parser.
@@ -1268,7 +1268,7 @@ namespace Microsoft.Data.SqlClient
         }
 
 
-        internal void ExecuteTransactionYukon(
+        internal void ExecuteTransaction2005(
                     TransactionRequest transactionRequest,
                     string transactionName,
                     IsolationLevel iso,
@@ -1330,7 +1330,7 @@ namespace Microsoft.Data.SqlClient
                         requestType = TdsEnums.TransactionManagerRequestType.Commit;
                         break;
                     case TransactionRequest.IfRollback:
-                    // Map IfRollback to Rollback since with Yukon and beyond we should never need
+                    // Map IfRollback to Rollback since with 2005 and beyond we should never need
                     // the if since the server will inform us when transactions have completed
                     // as a result of an error on the server.
                     case TransactionRequest.Rollback:
@@ -1388,7 +1388,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     if (internalTransaction.OpenResultsCount != 0)
                     {
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.ExecuteTransactionYukon|DATA|CATCH> {0}, Connection is marked to be doomed when closed. Transaction ended with OpenResultsCount {1} > 0, MARSOn {2}",
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.ExecuteTransaction2005|DATA|CATCH> {0}, Connection is marked to be doomed when closed. Transaction ended with OpenResultsCount {1} > 0, MARSOn {2}",
                                                                ObjectID,
                                                                internalTransaction.OpenResultsCount,
                                                                _parser.MARSOn);
@@ -2513,7 +2513,7 @@ namespace Microsoft.Data.SqlClient
                     break;
 
                 case TdsEnums.ENV_TRANSACTIONMANAGERADDRESS:
-                    // For now we skip these Yukon only env change notifications
+                    // For now we skip these 2005 only env change notifications
                     break;
 
                 case TdsEnums.ENV_SPRESETCONNECTIONACK:

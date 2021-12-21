@@ -68,7 +68,7 @@ namespace Microsoft.Data.SqlClient
         public const int HEADER_LEN = 8;
         public const int HEADER_LEN_FIELD_OFFSET = 2;
         public const int SPID_OFFSET = 4;
-        public const int YUKON_HEADER_LEN = 12; //Yukon headers also include a MARS session id
+        public const int SQL2005_HEADER_LEN = 12; //2005 headers also include a MARS session id
         public const int MARS_ID_OFFSET = 8;
         public const int HEADERTYPE_QNOTIFICATION = 1;
         public const int HEADERTYPE_MARS = 2;
@@ -169,7 +169,7 @@ namespace Microsoft.Data.SqlClient
         public const byte ENV_LOCALEID = 5;  // Unicode data sorting locale id
         public const byte ENV_COMPFLAGS = 6;  // Unicode data sorting comparison flags
         public const byte ENV_COLLATION = 7;  // SQL Collation
-        // The following are environment change tokens valid for Yukon or later.
+        // The following are environment change tokens valid for 2005 or later.
         public const byte ENV_BEGINTRAN = 8;  // Transaction began
         public const byte ENV_COMMITTRAN = 9;  // Transaction committed
         public const byte ENV_ROLLBACKTRAN = 10; // Transaction rolled back
@@ -269,7 +269,7 @@ namespace Microsoft.Data.SqlClient
         public const byte SQLVARIANT_SIZE = 2;               // size of the fixed portion of a sql variant (type, cbPropBytes)
         public const byte VERSION_SIZE = 4;               // size of the tds version (4 unsigned bytes)
         public const int CLIENT_PROG_VER = 0x06000000;      // Client interface version
-        public const int YUKON_LOG_REC_FIXED_LEN = 0x5e;
+        public const int SQL2005_LOG_REC_FIXED_LEN = 0x5e;
         // misc
         public const int TEXT_TIME_STAMP_LEN = 8;
         public const int COLLATION_INFO_LEN = 4;
@@ -300,13 +300,13 @@ namespace Microsoft.Data.SqlClient
             0x70000000 -> Sphinx
             0x71000000 -> Shiloh RTM
             0x71000001 -> Shiloh SP1
-            0x72xx0002 -> Yukon RTM
+            0x72xx0002 -> 2005 RTM
 
             Server responds:
             0x07000000 -> Sphinx     // Notice server response format is different for bwd compat
             0x07010000 -> Shiloh RTM // Notice server response format is different for bwd compat
             0x71000001 -> Shiloh SP1
-            0x72xx0002 -> Yukon RTM
+            0x72xx0002 -> 2005 RTM
         */
 
         // Pre Shiloh SP1 versioning scheme:
@@ -319,19 +319,19 @@ namespace Microsoft.Data.SqlClient
 
         // Majors:
         public const int SHILOHSP1_MAJOR = 0x71;     // For Shiloh SP1 and later the versioning schema changed and
-        public const int YUKON_MAJOR = 0x72;     // the high-byte is sufficient to distinguish later versions
+        public const int SQL2005_MAJOR = 0x72;     // the high-byte is sufficient to distinguish later versions
         public const int SQL2008_MAJOR = 0x73;
         public const int DENALI_MAJOR = 0x74;
 
         // Increments:
         public const int SHILOHSP1_INCREMENT = 0x00;
-        public const int YUKON_INCREMENT = 0x09;
+        public const int SQL2005_INCREMENT = 0x09;
         public const int SQL2008_INCREMENT = 0x0b;
         public const int DENALI_INCREMENT = 0x00;
 
         // Minors:
         public const int SHILOHSP1_MINOR = 0x0001;
-        public const int YUKON_RTM_MINOR = 0x0002;
+        public const int SQL2005_RTM_MINOR = 0x0002;
         public const int SQL2008_MINOR = 0x0003;
         public const int DENALI_MINOR = 0x0004;
 
@@ -441,7 +441,7 @@ namespace Microsoft.Data.SqlClient
         public const int SQLINT8 = 0x7f;
         public const int SQLVARIANT = 0x62;
 
-        // The following datatypes are specific to Yukon (version 9) or later
+        // The following datatypes are specific to 2005 (version 9) or later
         public const int SQLXMLTYPE = 0xf1;
         public const int XMLUNICODEBOM = 0xfeff;
         public static readonly byte[] XMLUNICODEBOMBYTES = { 0xff, 0xfe };
@@ -456,7 +456,7 @@ namespace Microsoft.Data.SqlClient
         public const int DEFAULT_VARTIME_SCALE = 7;
 
         //Partially length prefixed datatypes constants. These apply to XMLTYPE, BIGVARCHRTYPE,
-        // NVARCHARTYPE, and BIGVARBINTYPE. Valid for Yukon or later
+        // NVARCHARTYPE, and BIGVARBINTYPE. Valid for 2005 or later
 
         public const ulong SQL_PLP_NULL = 0xffffffffffffffff;        // Represents null value
         public const ulong SQL_PLP_UNKNOWNLEN = 0xfffffffffffffffe;  // Data coming in chunks, total length unknown
@@ -526,7 +526,7 @@ namespace Microsoft.Data.SqlClient
 
         // Batch RPC flags
         public const byte SHILOH_RPCBATCHFLAG = 0x80;
-        public const byte YUKON_RPCBATCHFLAG = 0xFF;
+        public const byte SQL2005_RPCBATCHFLAG = 0xFF;
 
         // RPC flags
         public const byte RPC_RECOMPILE = 0x1;

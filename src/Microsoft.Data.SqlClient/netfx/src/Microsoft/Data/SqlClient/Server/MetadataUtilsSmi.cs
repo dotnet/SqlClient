@@ -503,8 +503,8 @@ namespace Microsoft.Data.SqlClient.Server
             }
             else
             {
-                // Yukon doesn't support Structured nor the new time types
-                Debug.Assert(SmiContextFactory.YukonVersion == smiVersion, "Other versions should have been eliminated during link stage");
+                // 2005 doesn't support Structured nor the new time types
+                Debug.Assert(SmiContextFactory.Sql2005Version == smiVersion, "Other versions should have been eliminated during link stage");
                 return md.SqlDbType != SqlDbType.Structured &&
                         md.SqlDbType != SqlDbType.Date &&
                         md.SqlDbType != SqlDbType.DateTime2 &&

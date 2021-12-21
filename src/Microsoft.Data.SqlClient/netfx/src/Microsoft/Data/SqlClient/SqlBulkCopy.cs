@@ -445,7 +445,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     TableCollationsStoredProc = "sp_tablecollations_100";
                 }
-                else if (_connection.IsYukonOrNewer)
+                else if (_connection.Is2005OrNewer)
                 {
                     TableCollationsStoredProc = "sp_tablecollations_90";
                 }
@@ -559,7 +559,7 @@ namespace Microsoft.Data.SqlClient
 
             bool isInTransaction;
 
-            if (_parser.IsYukonOrNewer)
+            if (_parser.Is2005OrNewer)
             {
                 isInTransaction = _connection.HasLocalTransaction;
             }

@@ -170,11 +170,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override internal bool IsYukonOrNewer
+        override internal bool Is2005OrNewer
         {
             get
             {
-                return true;    // Must be direct connecting to Yukon or newer.
+                return true;    // Must be direct connecting to 2005 or newer.
             }
         }
 

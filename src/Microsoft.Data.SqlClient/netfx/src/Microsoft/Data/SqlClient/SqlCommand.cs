@@ -88,7 +88,7 @@ namespace Microsoft.Data.SqlClient
         // devnote: Prepare
         // Against 7.0 Server (Sphinx) a prepare/unprepare requires an extra roundtrip to the server.
         //
-        // From 8.0 (Shiloh) and above (Yukon) the preparation can be done as part of the command execution.
+        // From 8.0 (Shiloh) and above (2005) the preparation can be done as part of the command execution.
         //
         private enum EXECTYPE
         {
@@ -386,7 +386,7 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 
-                Debug.Assert(SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.YukonVersion);
+                Debug.Assert(SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.Sql2005Version);
                 _command.OnParametersAvailableSmi(metaData, parameterValues);
             }
 
@@ -3389,7 +3389,7 @@ namespace Microsoft.Data.SqlClient
             DateTimeScale // new in 2008
         };
 
-        // Yukon- column ordinals (this array indexed by ProcParamsColIndex
+        // 2005- column ordinals (this array indexed by ProcParamsColIndex
         internal static readonly string[] PreSql2008ProcParamsNames = new string[] {
             "PARAMETER_NAME",           // ParameterName,
             "PARAMETER_TYPE",           // ParameterType,
@@ -3458,7 +3458,7 @@ namespace Microsoft.Data.SqlClient
             StringBuilder cmdText = new StringBuilder();
 
             // Build call for sp_procedure_params_rowset built of unquoted values from user:
-            // [user server, if provided].[user catalog, else current database].[sys if Yukon, else blank].[sp_procedure_params_rowset]
+            // [user server, if provided].[user catalog, else current database].[sys if 2005, else blank].[sp_procedure_params_rowset]
 
             // Server - pass only if user provided.
             if (!ADP.IsEmpty(parsedSProc[0]))
@@ -3475,8 +3475,8 @@ namespace Microsoft.Data.SqlClient
             SqlCommandSet.BuildStoredProcedureName(cmdText, parsedSProc[1]);
             cmdText.Append(".");
 
-            // Schema - only if Yukon, and then only pass sys.  Also - pass managed version of sproc
-            // for Yukon, else older sproc.
+            // Schema - only if 2005, and then only pass sys.  Also - pass managed version of sproc
+            // for 2005, else older sproc.
             string[] colNames;
             bool useManagedDataType;
             if (Connection.Is2008OrNewer)
@@ -3489,7 +3489,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                if (this.Connection.IsYukonOrNewer)
+                if (this.Connection.Is2005OrNewer)
                 {
                     // Procedure - [sp_procedure_params_managed]
                     cmdText.Append("[sys].[").Append(TdsEnums.SP_PARAMS_MANAGED).Append("]");
@@ -3556,7 +3556,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         p.SqlDbType = (SqlDbType)(short)r[colNames[(int)ProcParamsColIndex.ManagedDataType]];
 
-                        // Yukon didn't have as accurate of information as we're getting for 2008, so re-map a couple of
+                        // 2005 didn't have as accurate of information as we're getting for 2008, so re-map a couple of
                         //  types for backward compatability.
                         switch (p.SqlDbType)
                         {
@@ -3616,7 +3616,7 @@ namespace Microsoft.Data.SqlClient
                     if (SqlDbType.Udt == p.SqlDbType)
                     {
 
-                        Debug.Assert(this._activeConnection.IsYukonOrNewer, "Invalid datatype token received from pre-yukon server");
+                        Debug.Assert(this._activeConnection.Is2005OrNewer, "Invalid datatype token received from pre-2005 server");
 
                         string udtTypeName;
                         if (useManagedDataType)
@@ -3742,8 +3742,8 @@ namespace Microsoft.Data.SqlClient
             // present.  If so, auto enlist to the dependency ID given in the context data.
             if (NotificationAutoEnlist)
             {
-                if (_activeConnection.IsYukonOrNewer)
-                { // Only supported for Yukon...
+                if (_activeConnection.Is2005OrNewer)
+                { // Only supported for 2005...
                     string notifyContext = SqlNotificationContext();
                     if (!ADP.IsEmpty(notifyContext))
                     {
@@ -5915,10 +5915,10 @@ namespace Microsoft.Data.SqlClient
             if (ADP.IsEmpty(this.CommandText))
                 throw ADP.CommandTextRequired(method);
 
-            // Notification property must be null for pre-Yukon connections
-            if ((Notification != null) && !_activeConnection.IsYukonOrNewer)
+            // Notification property must be null for pre-2005 connections
+            if ((Notification != null) && !_activeConnection.Is2005OrNewer)
             {
-                throw SQL.NotificationsRequireYukon();
+                throw SQL.NotificationsRequire2005();
             }
 
             if ((async) && (_activeConnection.IsContextConnection))
@@ -6525,7 +6525,7 @@ namespace Microsoft.Data.SqlClient
             int paramCount = GetParameterCount(parameters);
             int j = startCount;
             TdsParser parser = _activeConnection.Parser;
-            bool yukonOrNewer = parser.IsYukonOrNewer;
+            bool is2005OrNewer = parser.Is2005OrNewer;
 
             for (ii = 0; ii < paramCount; ii++)
             {
@@ -6534,7 +6534,7 @@ namespace Microsoft.Data.SqlClient
 
                 // func will change type to that with a 4 byte length if the type has a two
                 // byte length and a parameter length > than that expressable in 2 bytes
-                if ((!parameter.ValidateTypeLengths(yukonOrNewer).IsPlp) && (parameter.Direction != ParameterDirection.Output))
+                if ((!parameter.ValidateTypeLengths(is2005OrNewer).IsPlp) && (parameter.Direction != ParameterDirection.Output))
                 {
                     parameter.FixStreamDataForNonPLP();
                 }
@@ -6910,7 +6910,7 @@ namespace Microsoft.Data.SqlClient
             StringBuilder paramList = new StringBuilder();
             bool fAddSeparator = false;
 
-            bool yukonOrNewer = parser.IsYukonOrNewer;
+            bool is2005OrNewer = parser.Is2005OrNewer;
 
             int count = 0;
 
@@ -6961,7 +6961,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     // func will change type to that with a 4 byte length if the type has a two
                     // byte length and a parameter length > than that expressable in 2 bytes
-                    mt = sqlParam.ValidateTypeLengths(yukonOrNewer);
+                    mt = sqlParam.ValidateTypeLengths(is2005OrNewer);
                     if ((!mt.IsPlp) && (sqlParam.Direction != ParameterDirection.Output))
                     {
                         sqlParam.FixStreamDataForNonPLP();

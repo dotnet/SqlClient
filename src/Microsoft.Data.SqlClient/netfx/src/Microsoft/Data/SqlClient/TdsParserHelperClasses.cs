@@ -1152,7 +1152,7 @@ namespace Microsoft.Data.SqlClient
     sealed internal class SqlReturnValue : SqlMetaDataPriv
     {
 
-        internal ushort parmIndex;      //Yukon or later only
+        internal ushort parmIndex;      //2005 or later only
         internal string parameter;
         internal readonly SqlBuffer value;
 

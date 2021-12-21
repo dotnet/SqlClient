@@ -2230,7 +2230,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal bool IsYukonOrNewer
+        internal bool Is2005OrNewer
         {
             get
             {
@@ -2238,7 +2238,7 @@ namespace Microsoft.Data.SqlClient
                 { // holds true even if task is completed
                     return true; // if CR is enabled, connection, if established, will be 2008+
                 }
-                return GetOpenConnection().IsYukonOrNewer;
+                return GetOpenConnection().Is2005OrNewer;
             }
         }
 
@@ -2378,7 +2378,7 @@ namespace Microsoft.Data.SqlClient
 
             // check to see if we need to hook up sql-debugging if a debugger is attached
             // We only need this check for Shiloh and earlier servers.
-            if (!GetOpenConnection().IsYukonOrNewer &&
+            if (!GetOpenConnection().Is2005OrNewer &&
                     System.Diagnostics.Debugger.IsAttached)
             {
                 bool debugCheck = false;
@@ -2613,9 +2613,9 @@ namespace Microsoft.Data.SqlClient
         private void IssueSQLDebug(uint option, string machineName, uint pid, uint id, string sdiDllName, byte[] data)
         {
 
-            if (GetOpenConnection().IsYukonOrNewer)
+            if (GetOpenConnection().Is2005OrNewer)
             {
-                // TODO: When Yukon actually supports debugging, we need to modify this method to do the right thing(tm)
+                // TODO: When 2005 actually supports debugging, we need to modify this method to do the right thing(tm)
                 return;
             }
 
@@ -2780,9 +2780,9 @@ namespace Microsoft.Data.SqlClient
             //
             using (SqlInternalConnectionTds con = new SqlInternalConnectionTds(null, connectionOptions, credential, null, newPassword, newSecurePassword, false, null, null, null, null))
             {
-                if (!con.IsYukonOrNewer)
+                if (!con.Is2005OrNewer)
                 {
-                    throw SQL.ChangePasswordRequiresYukon();
+                    throw SQL.ChangePasswordRequires2005();
                 }
             }
             SqlConnectionPoolKey key = new SqlConnectionPoolKey(connectionString, credential, accessToken: null, serverCertificateValidationCallback: null, clientCertificateRetrievalCallback: null, originalNetworkAddressInfo: null);

@@ -2984,7 +2984,7 @@ namespace Microsoft.Data.SqlClient
             DateTimeScale // new in 2008
         };
 
-        // Yukon- column ordinals (this array indexed by ProcParamsColIndex
+        // 2005- column ordinals (this array indexed by ProcParamsColIndex
         internal static readonly string[] PreSql2008ProcParamsNames = new string[] {
             "PARAMETER_NAME",           // ParameterName,
             "PARAMETER_TYPE",           // ParameterType,
@@ -3053,7 +3053,7 @@ namespace Microsoft.Data.SqlClient
             StringBuilder cmdText = new StringBuilder();
 
             // Build call for sp_procedure_params_rowset built of unquoted values from user:
-            // [user server, if provided].[user catalog, else current database].[sys if Yukon, else blank].[sp_procedure_params_rowset]
+            // [user server, if provided].[user catalog, else current database].[sys if 2005, else blank].[sp_procedure_params_rowset]
 
             // Server - pass only if user provided.
             if (!string.IsNullOrEmpty(parsedSProc[0]))
@@ -3070,8 +3070,8 @@ namespace Microsoft.Data.SqlClient
             SqlCommandSet.BuildStoredProcedureName(cmdText, parsedSProc[1]);
             cmdText.Append(".");
 
-            // Schema - only if Yukon, and then only pass sys.  Also - pass managed version of sproc
-            // for Yukon, else older sproc.
+            // Schema - only if 2005, and then only pass sys.  Also - pass managed version of sproc
+            // for 2005, else older sproc.
             string[] colNames;
             bool useManagedDataType;
             if (Connection.Is2008OrNewer)
@@ -3143,7 +3143,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         p.SqlDbType = (SqlDbType)(short)r[colNames[(int)ProcParamsColIndex.ManagedDataType]];
 
-                        // Yukon didn't have as accurate of information as we're getting for 2008, so re-map a couple of
+                        // 2005 didn't have as accurate of information as we're getting for 2008, so re-map a couple of
                         //  types for backward compatability.
                         switch (p.SqlDbType)
                         {
