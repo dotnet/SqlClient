@@ -214,7 +214,7 @@ namespace Microsoft.Data.SqlClient
 
         private bool _is2008 = false;
 
-        private bool _isDenali = false;
+        private bool _is2012 = false;
 
         private byte[] _sniSpnBuffer = null;
 
@@ -458,7 +458,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                return (_isDenali && SqlClientEventSource.Log.IsEnabled());
+                return (_is2012 && SqlClientEventSource.Log.IsEnabled());
             }
         }
 
@@ -4078,16 +4078,16 @@ namespace Microsoft.Data.SqlClient
                     { throw SQL.InvalidTDSVersion(); }
                     _is2008 = true;
                     break;
-                case TdsEnums.DENALI_MAJOR << 24 | TdsEnums.DENALI_MINOR:
-                    if (increment != TdsEnums.DENALI_INCREMENT)
+                case TdsEnums.SQL2012_MAJOR << 24 | TdsEnums.SQL2012_MINOR:
+                    if (increment != TdsEnums.SQL2012_INCREMENT)
                     { throw SQL.InvalidTDSVersion(); }
-                    _isDenali = true;
+                    _is2012 = true;
                     break;
                 default:
                     throw SQL.InvalidTDSVersion();
             }
 
-            _is2008 |= _isDenali;
+            _is2008 |= _is2012;
             _is2005 |= _is2008;
             _isShilohSP1 |= _is2005;            // includes all lower versions
             _isShiloh |= _isShilohSP1;        //
@@ -8947,7 +8947,7 @@ namespace Microsoft.Data.SqlClient
                 WriteInt(length, _physicalStateObj);
                 if (recoverySessionData == null)
                 {
-                    WriteInt((TdsEnums.DENALI_MAJOR << 24) | (TdsEnums.DENALI_INCREMENT << 16) | TdsEnums.DENALI_MINOR, _physicalStateObj);
+                    WriteInt((TdsEnums.SQL2012_MAJOR << 24) | (TdsEnums.SQL2012_INCREMENT << 16) | TdsEnums.SQL2012_MINOR, _physicalStateObj);
                 }
                 else
                 {
@@ -11822,7 +11822,7 @@ namespace Microsoft.Data.SqlClient
         // Write the trace header data, not including the trace header length
         private void WriteTraceHeaderData(TdsParserStateObject stateObj)
         {
-            Debug.Assert(this.IncludeTraceHeader, "WriteTraceHeaderData can only be called on a Denali or higher version server and bid trace with the control bit are on");
+            Debug.Assert(this.IncludeTraceHeader, "WriteTraceHeaderData can only be called on a 2012 or higher version server and bid trace with the control bit are on");
 
             // We may need to update the trace header length if trace header is changed in the future
 

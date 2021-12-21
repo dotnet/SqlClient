@@ -321,19 +321,19 @@ namespace Microsoft.Data.SqlClient
         public const int SHILOHSP1_MAJOR = 0x71;     // For Shiloh SP1 and later the versioning schema changed and
         public const int SQL2005_MAJOR = 0x72;     // the high-byte is sufficient to distinguish later versions
         public const int SQL2008_MAJOR = 0x73;
-        public const int DENALI_MAJOR = 0x74;
+        public const int SQL2012_MAJOR = 0x74;
 
         // Increments:
         public const int SHILOHSP1_INCREMENT = 0x00;
         public const int SQL2005_INCREMENT = 0x09;
         public const int SQL2008_INCREMENT = 0x0b;
-        public const int DENALI_INCREMENT = 0x00;
+        public const int SQL2012_INCREMENT = 0x00;
 
         // Minors:
         public const int SHILOHSP1_MINOR = 0x0001;
         public const int SQL2005_RTM_MINOR = 0x0002;
         public const int SQL2008_MINOR = 0x0003;
-        public const int DENALI_MINOR = 0x0004;
+        public const int SQL2012_MINOR = 0x0004;
 
         public const int ORDER_68000 = 1;
         public const int USE_DB_ON = 1;
