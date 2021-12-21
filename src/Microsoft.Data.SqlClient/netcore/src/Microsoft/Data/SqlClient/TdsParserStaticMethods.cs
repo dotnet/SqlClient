@@ -180,5 +180,9 @@ namespace Microsoft.Data.SqlClient
                 return checked((int)remaining);
             }
         }
+        static internal long GetTimeoutSeconds(int timeout)
+        {
+            return GetTimeout((long)timeout * 1000L);
+        }
     }
 }

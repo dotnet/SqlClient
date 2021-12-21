@@ -16,8 +16,8 @@ namespace Microsoft.Data.SqlClient.SNI
         private const char SemicolonSeparator = ';';
         private const int SqlServerBrowserPort = 1434;
         private const int SubsequentTimeoutsForCLNT_BCAST_EX = 15000;
-        private const int ServerResponseHeader = 3;
-        private const int ValidResponseSize = 4096;
+        private const int ServerResponseHeaderSizeForCLNT_BCAST_EX = 3;
+        private const int ValidResponseSizeForCLNT_BCAST_EX = 4096;
         private const int FirstTimeoutForCLNT_BCAST_EX = 5000;
         private const int CLNT_BCAST_EX = 2;
 
@@ -170,7 +170,6 @@ namespace Microsoft.Data.SqlClient.SNI
                         responsePacket = receiveTask.Result.Buffer;
                     }
                 }
-
                 return responsePacket;
             }
         }
@@ -183,7 +182,6 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             StringBuilder response = new StringBuilder();
             byte[] CLNT_BCAST_EX_Request = new byte[1] { CLNT_BCAST_EX };
-            IPEndPoint groupEP = new IPEndPoint(IPAddress.Any, 0);
             int currentTimeOut = FirstTimeoutForCLNT_BCAST_EX;
 
             using (TrySNIEventScope.Create(nameof(SSRP)))
@@ -198,9 +196,9 @@ namespace Microsoft.Data.SqlClient.SNI
                     {
                         currentTimeOut = SubsequentTimeoutsForCLNT_BCAST_EX;
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.INFO, "Received instnace info from UDP Client.");
-                        if (receiveTask.Result.Buffer.Length < ValidResponseSize) //discard invalid response
+                        if (receiveTask.Result.Buffer.Length < ValidResponseSizeForCLNT_BCAST_EX) //discard invalid response
                         {
-                            response.Append(Encoding.ASCII.GetString(receiveTask.Result.Buffer, ServerResponseHeader, receiveTask.Result.Buffer.Length - ServerResponseHeader));
+                            response.Append(Encoding.ASCII.GetString(receiveTask.Result.Buffer, ServerResponseHeaderSizeForCLNT_BCAST_EX, receiveTask.Result.Buffer.Length - ServerResponseHeaderSizeForCLNT_BCAST_EX));
                         }
                     }
                 }

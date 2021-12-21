@@ -692,6 +692,15 @@
   <!-- Manage the SNI toggle for Windows netstandard and UWP -->
   <ItemGroup Condition="('$(TargetGroup)' == 'netstandard' OR '$(TargetGroup)' == 'netcoreapp') AND '$(TargetsWindows)' == 'true'">
     <!-- Manage the SNI toggle for Windows netstandard and UWP -->
+    <Compile Include="..\..\src\Microsoft\Data\Sql\SqlDataSourceEnumerator.cs">
+      <Link>Microsoft\Data\Sql\SqlDataSourceEnumerator.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\Sql\SqlDataSourceEnumeratorManagedHelper.cs">
+      <Link>Microsoft\Data\Sql\SqlDataSourceEnumeratorManagedHelper.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\Sql\SqlDataSourceEnumeratorNativeHelper.cs">
+      <Link>Microsoft\Data\Sql\SqlDataSourceEnumeratorNativeHelper.cs</Link>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\PacketHandle.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SessionHandle.Windows.cs" />

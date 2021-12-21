@@ -200,6 +200,15 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region DLL Imports
+        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIServerEnumOpenWrapper")]
+        internal static extern IntPtr SNIServerEnumOpen();
+
+        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIServerEnumCloseWrapper")]
+        internal static extern void SNIServerEnumClose([In] IntPtr packet);
+
+        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIServerEnumReadWrapper")]
+        internal static extern int SNIServerEnumRead([In] IntPtr packet, [In, Out] char[] readBuffer, int bufferLength, out bool more);
+
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIAddProviderWrapper")]
         internal static extern uint SNIAddProvider(SNIHandle pConn, ProviderEnum ProvNum, [In] ref uint pInfo);
 
