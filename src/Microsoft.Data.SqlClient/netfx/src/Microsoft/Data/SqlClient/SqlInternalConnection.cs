@@ -144,7 +144,7 @@ namespace Microsoft.Data.SqlClient
             get;
         }
 
-        abstract internal bool IsShiloh
+        abstract internal bool Is2000
         {
             get;
         }

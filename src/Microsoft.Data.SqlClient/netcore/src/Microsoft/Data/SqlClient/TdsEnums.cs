@@ -306,19 +306,19 @@ namespace Microsoft.Data.SqlClient
 
             Client sends:
             0x70000000 -> Sphinx
-            0x71000000 -> Shiloh RTM
-            0x71000001 -> Shiloh SP1
+            0x71000000 -> 2000 RTM
+            0x71000001 -> 2000 SP1
             0x72xx0002 -> 2005 RTM
 
             Server responds:
             0x07000000 -> Sphinx     // Notice server response format is different for bwd compat
-            0x07010000 -> Shiloh RTM // Notice server response format is different for bwd compat
-            0x71000001 -> Shiloh SP1
+            0x07010000 -> 2000 RTM // Notice server response format is different for bwd compat
+            0x71000001 -> 2000 SP1
             0x72xx0002 -> 2005 RTM
         */
 
 
-        // Shiloh SP1 and beyond versioning scheme:
+        // 2000 SP1 and beyond versioning scheme:
 
         // Majors:
         public const int SQL2005_MAJOR = 0x72;     // the high-byte is sufficient to distinguish later versions
@@ -437,7 +437,7 @@ namespace Microsoft.Data.SqlClient
         public const int MAX_NUMERIC_PRECISION = 0x26; // 38 is max numeric precision;
         public const byte UNKNOWN_PRECISION_SCALE = 0xff; // -1 is value for unknown precision or scale
 
-        // The following datatypes are specific to SHILOH (version 8) and later.
+        // The following datatypes are specific to 2000 (version 8) and later.
         public const int SQLINT8 = 0x7f;
         public const int SQLVARIANT = 0x62;
 
@@ -523,7 +523,7 @@ namespace Microsoft.Data.SqlClient
         public const string TRANS_SNAPSHOT = "SET TRANSACTION ISOLATION LEVEL SNAPSHOT";
 
         // Batch RPC flags
-        public const byte SHILOH_RPCBATCHFLAG = 0x80;
+        public const byte SQL2000_RPCBATCHFLAG = 0x80;
         public const byte SQL2005_RPCBATCHFLAG = 0xFF;
 
         // RPC flags

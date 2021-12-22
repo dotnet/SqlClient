@@ -88,7 +88,7 @@ namespace Microsoft.Data.SqlClient
         // devnote: Prepare
         // Against 7.0 Server (Sphinx) a prepare/unprepare requires an extra roundtrip to the server.
         //
-        // From 8.0 (Shiloh) and above (2005) the preparation can be done as part of the command execution.
+        // From 8.0 (2000) and above (2005) the preparation can be done as part of the command execution.
         //
         private enum EXECTYPE
         {
@@ -610,14 +610,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private bool IsShiloh
+        private bool Is2000
         {
             get
             {
                 Debug.Assert(_activeConnection != null, "The active connection is null!");
                 if (_activeConnection == null)
                     return false;
-                return _activeConnection.IsShiloh;
+                return _activeConnection.Is2000;
             }
         }
 
@@ -5431,7 +5431,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else if (_execType == EXECTYPE.PREPAREPENDING)
                     {
-                        Debug.Assert(_activeConnection.IsShiloh, "Invalid attempt to call sp_prepexec on non 7.x server");
+                        Debug.Assert(_activeConnection.Is2000, "Invalid attempt to call sp_prepexec on non 7.x server");
                         rpc = BuildPrepExec(cmdBehavior);
                         // next time through, only do an exec
                         _execType = EXECTYPE.PREPARED;
@@ -5446,8 +5446,8 @@ namespace Microsoft.Data.SqlClient
                         BuildExecuteSql(cmdBehavior, null, _parameters, ref rpc);
                     }
 
-                    // if shiloh, then set NOMETADATA_UNLESSCHANGED flag
-                    if (_activeConnection.IsShiloh)
+                    // if 2000, then set NOMETADATA_UNLESSCHANGED flag
+                    if (_activeConnection.Is2000)
                         rpc.options = TdsEnums.RPC_NOMETADATA;
                     if (returnStream)
                     {
@@ -5461,10 +5461,10 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     Debug.Assert(this.CommandType == System.Data.CommandType.StoredProcedure, "unknown command type!");
-                    // note: invalid asserts on Shiloh. On 8.0 (Shiloh) and above a command is ALWAYS prepared
+                    // note: invalid asserts on 2000. On 8.0 (2000) and above a command is ALWAYS prepared
                     // and IsDirty is always set if there are changes and the command is marked Prepared!
-                    Debug.Assert(IsShiloh || !IsPrepared, "RPC should not be prepared!");
-                    Debug.Assert(IsShiloh || !IsDirty, "RPC should not be marked as dirty!");
+                    Debug.Assert(Is2000 || !IsPrepared, "RPC should not be prepared!");
+                    Debug.Assert(Is2000 || !IsDirty, "RPC should not be marked as dirty!");
 
                     BuildRPC(inSchema, _parameters, ref rpc);
 
@@ -6980,7 +6980,7 @@ namespace Microsoft.Data.SqlClient
 
                     if (0 == precision)
                     {
-                        if (IsShiloh)
+                        if (Is2000)
                         {
                             precision = TdsEnums.DEFAULT_NUMERIC_PRECISION;
                         }

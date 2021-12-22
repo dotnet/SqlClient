@@ -934,7 +934,7 @@ namespace Microsoft.Data.SqlClient
 
             if (_fResetConnection)
             {
-                // Ensure we are either going against shiloh, or we are not enlisted in a
+                // Ensure we are either going against 2000, or we are not enlisted in a
                 // distributed transaction - otherwise don't reset!
                 // Prepare the parser for the connection reset - the next time a trip
                 // to the server is made.

@@ -436,7 +436,7 @@ namespace Microsoft.Data.SqlClient
             string TDSCommand;
 
             TDSCommand = "select @@trancount; SET FMTONLY ON select * from " + ADP.BuildMultiPartName(parts) + " SET FMTONLY OFF ";
-            if (_connection.IsShiloh)
+            if (_connection.Is2000)
             {
                 // If its a temp DB then try to connect
 
@@ -546,7 +546,7 @@ namespace Microsoft.Data.SqlClient
 
             StringBuilder updateBulkCommandText = new StringBuilder();
 
-            if (_connection.IsShiloh && 0 == internalResults[CollationResultId].Count)
+            if (_connection.Is2000 && 0 == internalResults[CollationResultId].Count)
             {
                 throw SQL.BulkLoadNoCollation();
             }
@@ -683,9 +683,9 @@ namespace Microsoft.Data.SqlClient
                                 }
                         }
 
-                        if (_connection.IsShiloh)
+                        if (_connection.Is2000)
                         {
-                            // Shiloh or above!
+                            // 2000 or above!
                             // get collation for column i
 
                             Result rowset = internalResults[CollationResultId];

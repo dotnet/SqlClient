@@ -298,39 +298,39 @@ namespace Microsoft.Data.SqlClient
 
             Client sends:
             0x70000000 -> Sphinx
-            0x71000000 -> Shiloh RTM
-            0x71000001 -> Shiloh SP1
+            0x71000000 -> 2000 RTM
+            0x71000001 -> 2000 SP1
             0x72xx0002 -> 2005 RTM
 
             Server responds:
             0x07000000 -> Sphinx     // Notice server response format is different for bwd compat
-            0x07010000 -> Shiloh RTM // Notice server response format is different for bwd compat
-            0x71000001 -> Shiloh SP1
+            0x07010000 -> 2000 RTM // Notice server response format is different for bwd compat
+            0x71000001 -> 2000 SP1
             0x72xx0002 -> 2005 RTM
         */
 
-        // Pre Shiloh SP1 versioning scheme:
-        public const int SPHINXORSHILOH_MAJOR = 0x07;     // The high byte (b3) is not sufficient to distinguish
-        public const int SPHINX_INCREMENT = 0x00;     // Sphinx and Shiloh
-        public const int SHILOH_INCREMENT = 0x01;     // So we need to look at the high-mid byte (b2) as well
+        // Pre 2000 SP1 versioning scheme:
+        public const int SPHINXOR2000_MAJOR = 0x07;     // The high byte (b3) is not sufficient to distinguish
+        public const int SPHINX_INCREMENT = 0x00;     // Sphinx and 2000
+        public const int SQL2000_INCREMENT = 0x01;     // So we need to look at the high-mid byte (b2) as well
         public const int DEFAULT_MINOR = 0x0000;
 
-        // Shiloh SP1 and beyond versioning scheme:
+        // 2000 SP1 and beyond versioning scheme:
 
         // Majors:
-        public const int SHILOHSP1_MAJOR = 0x71;     // For Shiloh SP1 and later the versioning schema changed and
+        public const int SQL2000SP1_MAJOR = 0x71;     // For 2000 SP1 and later the versioning schema changed and
         public const int SQL2005_MAJOR = 0x72;     // the high-byte is sufficient to distinguish later versions
         public const int SQL2008_MAJOR = 0x73;
         public const int SQL2012_MAJOR = 0x74;
 
         // Increments:
-        public const int SHILOHSP1_INCREMENT = 0x00;
+        public const int SQL2000SP1_INCREMENT = 0x00;
         public const int SQL2005_INCREMENT = 0x09;
         public const int SQL2008_INCREMENT = 0x0b;
         public const int SQL2012_INCREMENT = 0x00;
 
         // Minors:
-        public const int SHILOHSP1_MINOR = 0x0001;
+        public const int SQL2000SP1_MINOR = 0x0001;
         public const int SQL2005_RTM_MINOR = 0x0002;
         public const int SQL2008_MINOR = 0x0003;
         public const int SQL2012_MINOR = 0x0004;
@@ -437,7 +437,7 @@ namespace Microsoft.Data.SqlClient
         public const int MAX_NUMERIC_PRECISION = 0x26; // 38 is max numeric precision;
         public const byte UNKNOWN_PRECISION_SCALE = 0xff; // -1 is value for unknown precision or scale
 
-        // The following datatypes are specific to SHILOH (version 8) and later.
+        // The following datatypes are specific to 2000 (version 8) and later.
         public const int SQLINT8 = 0x7f;
         public const int SQLVARIANT = 0x62;
 
@@ -525,7 +525,7 @@ namespace Microsoft.Data.SqlClient
         public const string TRANS_SNAPSHOT = "SET TRANSACTION ISOLATION LEVEL SNAPSHOT";
 
         // Batch RPC flags
-        public const byte SHILOH_RPCBATCHFLAG = 0x80;
+        public const byte SQL2000_RPCBATCHFLAG = 0x80;
         public const byte SQL2005_RPCBATCHFLAG = 0xFF;
 
         // RPC flags

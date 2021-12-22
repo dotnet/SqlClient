@@ -286,7 +286,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     // Always ensure we're zombied; 2005 will send an EnvChange that
                     // will cause the zombie, but only if we actually go to the wire;
-                    // Sphinx and Shiloh won't send the env change, so we have to handle
+                    // Sphinx and 2000 won't send the env change, so we have to handle
                     // them ourselves.
                     Zombie();
                 }

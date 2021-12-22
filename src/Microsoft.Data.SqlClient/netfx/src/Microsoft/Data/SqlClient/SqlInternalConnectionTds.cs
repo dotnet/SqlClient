@@ -735,7 +735,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override internal bool IsShiloh
+        override internal bool Is2000
         {
             get
             {
@@ -1075,9 +1075,9 @@ namespace Microsoft.Data.SqlClient
 
             if (_fResetConnection)
             {
-                // Ensure we are either going against shiloh, or we are not enlisted in a
+                // Ensure we are either going against 2000, or we are not enlisted in a
                 // distributed transaction - otherwise don't reset!
-                if (IsShiloh)
+                if (Is2000)
                 {
                     // Prepare the parser for the connection reset - the next time a trip
                     // to the server is made.
@@ -1085,7 +1085,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if (!IsEnlistedInTransaction)
                 {
-                    // If not Shiloh, we are going against Sphinx.  On Sphinx, we
+                    // If not 2000, we are going against Sphinx.  On Sphinx, we
                     // may only reset if not enlisted in a distributed transaction.
                     try
                     {

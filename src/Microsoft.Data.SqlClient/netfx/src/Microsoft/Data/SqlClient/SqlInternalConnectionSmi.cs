@@ -162,11 +162,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override internal bool IsShiloh
+        override internal bool Is2000
         {
             get
             {
-                return false;   // Can't be direct connecting to Shiloh.
+                return false;   // Can't be direct connecting to 2000.
             }
         }
 

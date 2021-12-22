@@ -2218,7 +2218,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal bool IsShiloh
+        internal bool Is2000
         {
             get
             {
@@ -2226,7 +2226,7 @@ namespace Microsoft.Data.SqlClient
                 { // holds true even if task is completed
                     return true; // if CR is enabled, connection, if established, will be 2008+
                 }
-                return GetOpenConnection().IsShiloh;
+                return GetOpenConnection().Is2000;
             }
         }
 
@@ -2377,7 +2377,7 @@ namespace Microsoft.Data.SqlClient
             // be sure to mark as open so SqlDebugCheck can issue Query
 
             // check to see if we need to hook up sql-debugging if a debugger is attached
-            // We only need this check for Shiloh and earlier servers.
+            // We only need this check for 2000 and earlier servers.
             if (!GetOpenConnection().Is2005OrNewer &&
                     System.Diagnostics.Debugger.IsAttached)
             {

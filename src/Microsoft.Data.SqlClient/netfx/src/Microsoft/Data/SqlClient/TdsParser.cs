@@ -206,9 +206,9 @@ namespace Microsoft.Data.SqlClient
         internal TdsParserSessionPool _sessionPool = null;  // initialized only when we're a MARS parser.
 
         // Version variables
-        private bool _isShiloh = false; // set to true if we connect to a 8.0 server (SQL 2000) or later
+        private bool _is2000 = false; // set to true if we connect to a 8.0 server (SQL 2000) or later
 
-        private bool _isShilohSP1 = false; // set to true if speaking to Shiloh SP1 or later
+        private bool _is2000SP1 = false; // set to true if speaking to 2000 SP1 or later
 
         private bool _is2005 = false; // set to true if speaking to 2005 or later
 
@@ -712,7 +712,7 @@ namespace Microsoft.Data.SqlClient
                                                   out marsCapable, out _connHandler._fedAuthRequired);
 
                 // Don't need to check for Sphinx failure, since we've already consumed
-                // one pre-login packet and know we are connecting to Shiloh.
+                // one pre-login packet and know we are connecting to 2000.
                 if (status == PreLoginHandshakeStatus.InstanceFailure)
                 {
                     SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|ERR|SEC> Prelogin handshake unsuccessful. Login failure");
@@ -1866,7 +1866,7 @@ namespace Microsoft.Data.SqlClient
                         // Check again to see if we need to send reset.
 
                         Debug.Assert(!stateObj._fResetConnectionSent, "Unexpected state for sending reset connection");
-                        Debug.Assert(_isShiloh, "TdsParser.cs: Error!  _fResetConnection true when not going against Shiloh or later!");
+                        Debug.Assert(_is2000, "TdsParser.cs: Error!  _fResetConnection true when not going against 2000 or later!");
 
                         if (_fPreserveTransaction)
                         {
@@ -2175,7 +2175,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void PrepareResetConnection(bool preserveTransaction)
         {
-            // Set flag to reset connection upon next use - only for use on shiloh!
+            // Set flag to reset connection upon next use - only for use on 2000!
             _fResetConnection = true;
             _fPreserveTransaction = preserveTransaction;
         }
@@ -2987,7 +2987,7 @@ namespace Microsoft.Data.SqlClient
                     case TdsEnums.ENV_CHARSET:
                         // we copied this behavior directly from luxor - see charset envchange
                         // section from sqlctokn.c
-                        Debug.Assert(!_isShiloh, "Received ENV_CHARSET on non 7.0 server!");
+                        Debug.Assert(!_is2000, "Received ENV_CHARSET on non 7.0 server!");
                         if (!TryReadTwoStringFields(env, stateObj))
                         {
                             return false;
@@ -4043,18 +4043,18 @@ namespace Microsoft.Data.SqlClient
 
             // Server responds:
             // 0x07000000 -> Sphinx         // Notice server response format is different for bwd compat
-            // 0x07010000 -> Shiloh RTM     // Notice server response format is different for bwd compat
-            // 0x71000001 -> Shiloh SP1
+            // 0x07010000 -> 2000 RTM     // Notice server response format is different for bwd compat
+            // 0x71000001 -> 2000 SP1
             // 0x72xx0002 -> 2005 RTM
             // information provided by S. Ashwin
             switch (majorMinor)
             {
-                case TdsEnums.SPHINXORSHILOH_MAJOR << 24 | TdsEnums.DEFAULT_MINOR:    // Sphinx & Shiloh RTM
-                    // note that sphinx and shiloh_rtm can only be distinguished by the increment
+                case TdsEnums.SPHINXOR2000_MAJOR << 24 | TdsEnums.DEFAULT_MINOR:    // Sphinx & 2000 RTM
+                    // note that sphinx and 2000 can only be distinguished by the increment
                     switch (increment)
                     {
-                        case TdsEnums.SHILOH_INCREMENT:
-                            _isShiloh = true;
+                        case TdsEnums.SQL2000_INCREMENT:
+                            _is2000 = true;
                             break;
                         case TdsEnums.SPHINX_INCREMENT:
                             // no flag will be set
@@ -4063,10 +4063,10 @@ namespace Microsoft.Data.SqlClient
                             throw SQL.InvalidTDSVersion();
                     }
                     break;
-                case TdsEnums.SHILOHSP1_MAJOR << 24 | TdsEnums.SHILOHSP1_MINOR: // Shiloh SP1
-                    if (increment != TdsEnums.SHILOHSP1_INCREMENT)
+                case TdsEnums.SQL2000SP1_MAJOR << 24 | TdsEnums.SQL2000SP1_MINOR: // 2000 SP1
+                    if (increment != TdsEnums.SQL2000SP1_INCREMENT)
                     { throw SQL.InvalidTDSVersion(); }
-                    _isShilohSP1 = true;
+                    _is2000SP1 = true;
                     break;
                 case TdsEnums.SQL2005_MAJOR << 24 | TdsEnums.SQL2005_RTM_MINOR:     // 2005
                     if (increment != TdsEnums.SQL2005_INCREMENT)
@@ -4089,10 +4089,10 @@ namespace Microsoft.Data.SqlClient
 
             _is2008 |= _is2012;
             _is2005 |= _is2008;
-            _isShilohSP1 |= _is2005;            // includes all lower versions
-            _isShiloh |= _isShilohSP1;        //
+            _is2000SP1 |= _is2005;            // includes all lower versions
+            _is2000 |= _is2000SP1;        //
 
-            a.isVersion8 = _isShiloh;
+            a.isVersion8 = _is2000;
 
             stateObj._outBytesUsed = stateObj._outputHeaderLen;
             byte len;
@@ -4500,9 +4500,9 @@ namespace Microsoft.Data.SqlClient
             rec.metaType = MetaType.GetSqlDataType(tdsType, userType, tdsLen);
             rec.type = rec.metaType.SqlDbType;
 
-            // always use the nullable type for parameters if Shiloh or later
+            // always use the nullable type for parameters if 2000 or later
             // Sphinx sometimes sends fixed length return values
-            if (_isShiloh)
+            if (_is2000)
             {
                 rec.tdsType = rec.metaType.NullableType;
                 rec.IsNullable = true;
@@ -4603,7 +4603,7 @@ namespace Microsoft.Data.SqlClient
 
                 }
             }
-            else if (_isShiloh && rec.metaType.IsCharType)
+            else if (_is2000 && rec.metaType.IsCharType)
             {
                 // read the collation for 8.x servers
                 if (!TryProcessCollation(stateObj, out rec.collation))
@@ -5381,7 +5381,7 @@ namespace Microsoft.Data.SqlClient
             col.type = col.metaType.SqlDbType;
 
             // If sphinx, do not change to nullable type
-            if (_isShiloh)
+            if (_is2000)
                 col.tdsType = (col.IsNullable ? col.metaType.NullableType : col.metaType.TDSType);
             else
                 col.tdsType = tdsType;
@@ -5506,7 +5506,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // read the collation for 7.x servers
-            if (_isShiloh && col.metaType.IsCharType && (tdsType != TdsEnums.SQLXMLTYPE))
+            if (_is2000 && col.metaType.IsCharType && (tdsType != TdsEnums.SQLXMLTYPE))
             {
                 if (!TryProcessCollation(stateObj, out col.collation))
                 {
@@ -5795,7 +5795,7 @@ namespace Microsoft.Data.SqlClient
 
             multiPartTableName = default(MultiPartTableName);
 
-            if (_isShilohSP1)
+            if (_is2000SP1)
             {
 
                 mpt = new MultiPartTableName();
@@ -7122,7 +7122,7 @@ namespace Microsoft.Data.SqlClient
         // }
         internal bool TryReadSqlVariant(SqlBuffer value, int lenTotal, TdsParserStateObject stateObj)
         {
-            Debug.Assert(_isShiloh == true, "Shouldn't be dealing with sql_variaint in pre-SQL2000 server!");
+            Debug.Assert(_is2000 == true, "Shouldn't be dealing with sql_variaint in pre-SQL2000 server!");
             // get the SQLVariant type
             byte type;
             if (!stateObj.TryReadByte(out type))
@@ -7309,7 +7309,7 @@ namespace Microsoft.Data.SqlClient
         //
         internal Task WriteSqlVariantValue(object value, int length, int offset, TdsParserStateObject stateObj, bool canAccumulate = true)
         {
-            Debug.Assert(_isShiloh == true, "Shouldn't be dealing with sql_variant in pre-SQL2000 server!");
+            Debug.Assert(_is2000 == true, "Shouldn't be dealing with sql_variant in pre-SQL2000 server!");
 
             // handle null values
             if (ADP.IsNull(value))
@@ -7478,7 +7478,7 @@ namespace Microsoft.Data.SqlClient
         //
         internal Task WriteSqlVariantDataRowValue(object value, TdsParserStateObject stateObj, bool canAccumulate = true)
         {
-            Debug.Assert(_isShiloh == true, "Shouldn't be dealing with sql_variant in pre-SQL2000 server!");
+            Debug.Assert(_is2000 == true, "Shouldn't be dealing with sql_variant in pre-SQL2000 server!");
 
             // handle null values
             if ((null == value) || (DBNull.Value == value))
@@ -9892,9 +9892,9 @@ namespace Microsoft.Data.SqlClient
 
                         if (startParam == 0 || ii > startRpc)
                         {
-                            if (rpcext.ProcID != 0 && _isShiloh)
+                            if (rpcext.ProcID != 0 && _is2000)
                             {
-                                // Perf optimization for Shiloh and later,
+                                // Perf optimization for 2000 and later,
                                 Debug.Assert(rpcext.ProcID < 255, "rpcExec:ProcID can't be larger than 255");
                                 WriteShort(0xffff, stateObj);
                                 WriteShort((short)(rpcext.ProcID), stateObj);
@@ -9966,7 +9966,7 @@ namespace Microsoft.Data.SqlClient
                                 continue;
                             }
 
-                            if ((!_isShiloh && !mt.Is70Supported) ||
+                            if ((!_is2000 && !mt.Is70Supported) ||
                                 (!_is2005 && !mt.Is80Supported) ||
                                 (!_is2008 && !mt.Is90Supported))
                             {
@@ -10321,7 +10321,7 @@ namespace Microsoft.Data.SqlClient
                             {
                                 if (0 == precision)
                                 {
-                                    if (_isShiloh)
+                                    if (_is2000)
                                         stateObj.WriteByte(TdsEnums.DEFAULT_NUMERIC_PRECISION);
                                     else
                                         stateObj.WriteByte(TdsEnums.SPHINX_DEFAULT_NUMERIC_PRECISION);
@@ -10384,7 +10384,7 @@ namespace Microsoft.Data.SqlClient
                                     stateObj.WriteByte(0);       // No schema
                                 }
                             }
-                            else if (_isShiloh && mt.IsCharType)
+                            else if (_is2000 && mt.IsCharType)
                             {
                                 // if it is not supplied, simply write out our default collation, otherwise, write out the one attached to the parameter
                                 SqlCollation outCollation = (param.Collation != null) ? param.Collation : _defaultCollation;
@@ -10480,7 +10480,7 @@ namespace Microsoft.Data.SqlClient
                             }
                             else
                             {
-                                stateObj.WriteByte(TdsEnums.SHILOH_RPCBATCHFLAG);
+                                stateObj.WriteByte(TdsEnums.SQL2000_RPCBATCHFLAG);
                             }
                         }
                     } // rpc for loop
@@ -11230,7 +11230,7 @@ namespace Microsoft.Data.SqlClient
                     break;
                 default:
                     WriteTokenLength(mdPriv.tdsType, mdPriv.length, stateObj);
-                    if (mdPriv.metaType.IsCharType && _isShiloh)
+                    if (mdPriv.metaType.IsCharType && _is2000)
                     {
                         WriteUnsignedInt(mdPriv.collation._info, stateObj);
                         stateObj.WriteByte(mdPriv.collation._sortId);
@@ -11355,7 +11355,7 @@ namespace Microsoft.Data.SqlClient
                         default:
                             stateObj.WriteByte(md.tdsType);
                             WriteTokenLength(md.tdsType, md.length, stateObj);
-                            if (md.metaType.IsCharType && _isShiloh)
+                            if (md.metaType.IsCharType && _is2000)
                             {
                                 WriteUnsignedInt(md.collation._info, stateObj);
                                 stateObj.WriteByte(md.collation._sortId);
@@ -13751,8 +13751,8 @@ namespace Microsoft.Data.SqlClient
                                         + "         _connHandler = {14}\n\t"
                                         + "         _fMARS = {15}\n\t"
                                         + "         _sessionPool = {16}\n\t"
-                                        + "         _isShiloh = {17}\n\t"
-                                        + "         _isShilohSP1 = {18}\n\t"
+                                        + "         _is2000 = {17}\n\t"
+                                        + "         _is2000SP1 = {18}\n\t"
                                         + "         _is2005 = {19}\n\t"
                                         + "         _sniSpnBuffer = {20}\n\t"
                                         + "         _errors = {21}\n\t"
@@ -13785,8 +13785,8 @@ namespace Microsoft.Data.SqlClient
                             null == _connHandler ? "(null)" : _connHandler.ObjectID.ToString((IFormatProvider)null),
                             _fMARS ? bool.TrueString : bool.FalseString,
                             null == _sessionPool ? "(null)" : _sessionPool.TraceString(),
-                            _isShiloh ? bool.TrueString : bool.FalseString,
-                            _isShilohSP1 ? bool.TrueString : bool.FalseString,
+                            _is2000 ? bool.TrueString : bool.FalseString,
+                            _is2000SP1 ? bool.TrueString : bool.FalseString,
                             _is2005 ? bool.TrueString : bool.FalseString,
                             null == _sniSpnBuffer ? "(null)" : _sniSpnBuffer.Length.ToString((IFormatProvider)null),
                             _physicalStateObj != null ? "(null)" : _physicalStateObj.ErrorCount.ToString((IFormatProvider)null),
