@@ -1906,7 +1906,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
-        //  Implements SqlClient 2.0-compatible SetValue() semantics + Orcas extensions
+        //  Implements SqlClient 2.0-compatible SetValue() semantics + VS2008 extensions
         //      Assumes caller already validated basic type against the metadata, other than trimming lengths and 
         //      checking individual field values (TVPs)
         internal static void SetCompatibleValueV200(
@@ -2218,8 +2218,8 @@ namespace Microsoft.Data.SqlClient.Server
                                 }
                                 ExtendedClrTypeCode typeCode = MetaDataUtilsSmi.DetermineExtendedTypeCodeForUseWithSqlDbType(metaData[i].SqlDbType, metaData[i].IsMultiValued, o, null
 #if NETFRAMEWORK
-                                    ,// TODO: this version works for shipping Orcas, since only 2008 (TVP) codepath calls this method at this time.
-                                     //      Need a better story for smi versioning of ValueUtilsSmi post-Orcas
+                                    ,// TODO: this version works for shipping VS2008, since only 2008 (TVP) codepath calls this method at this time.
+                                     //      Need a better story for smi versioning of ValueUtilsSmi post-VS2008
                                     SmiContextFactory.Sql2008Version
 #endif
                                     );
@@ -4087,8 +4087,8 @@ namespace Microsoft.Data.SqlClient.Server
                             cellTypes[i] = MetaDataUtilsSmi.DetermineExtendedTypeCodeForUseWithSqlDbType(
                                     fieldMetaData.SqlDbType, fieldMetaData.IsMultiValued, cellValue, fieldMetaData.Type
 #if NETFRAMEWORK
-                                   ,// TODO: this version works for shipping Orcas, since only 2008 supports TVPs at this time.
-                                    //      Need a better story for smi versioning of ValueUtilsSmi post-Orcas
+                                   ,// TODO: this version works for shipping VS2008, since only 2008 supports TVPs at this time.
+                                    //      Need a better story for smi versioning of ValueUtilsSmi post-VS2008
                                     SmiContextFactory.Sql2008Version
 #endif
                                     );

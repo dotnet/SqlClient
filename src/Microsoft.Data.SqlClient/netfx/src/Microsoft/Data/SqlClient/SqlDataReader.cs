@@ -3523,7 +3523,7 @@ namespace Microsoft.Data.SqlClient
                             return true;
 
                         // VSTFDEVDIV 926281: DONEINPROC case is missing here; we have decided to reject this bug as it would result in breaking change
-                        // from Orcas RTM/SP1 and Dev10 RTM. See the bug for more details.
+                        // from VS2008 RTM/SP1 and Dev10 RTM. See the bug for more details.
                         // case TdsEnums.DONEINPROC:
                         case TdsEnums.SQLDONE:
                             Debug.Assert(_altRowStatus == ALTROWSTATUS.Done || _altRowStatus == ALTROWSTATUS.Null, "invalid AltRowStatus");
