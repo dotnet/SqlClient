@@ -530,7 +530,7 @@ namespace Microsoft.Data.SqlClient
                 SendPreLoginHandshake(instanceName, encrypt);
                 status = ConsumePreLoginHandshake(encrypt, trustServerCert, integratedSecurity, out marsCapable, out _connHandler._fedAuthRequired);
 
-                // Don't need to check for Sphinx failure, since we've already consumed
+                // Don't need to check for 7.0 failure, since we've already consumed
                 // one pre-login packet and know we are connecting to 2000.
                 if (status == PreLoginHandshakeStatus.InstanceFailure)
                 {
@@ -3590,7 +3590,7 @@ namespace Microsoft.Data.SqlClient
             uint increment = (a.tdsVersion >> 16) & 0xff;
 
             // Server responds:
-            // 0x07000000 -> Sphinx         // Notice server response format is different for bwd compat
+            // 0x07000000 -> 7.0         // Notice server response format is different for bwd compat
             // 0x07010000 -> 2000 RTM     // Notice server response format is different for bwd compat
             // 0x71000001 -> 2000 SP1
             // 0x72xx0002 -> 2005 RTM
@@ -3979,7 +3979,7 @@ namespace Microsoft.Data.SqlClient
             rec.type = rec.metaType.SqlDbType;
 
             // always use the nullable type for parameters if 2000 or later
-            // Sphinx sometimes sends fixed length return values
+            // 7.0 sometimes sends fixed length return values
             rec.tdsType = rec.metaType.NullableType;
             rec.IsNullable = true;
             if (tdsLen == TdsEnums.SQL_USHORTVARMAXLEN)

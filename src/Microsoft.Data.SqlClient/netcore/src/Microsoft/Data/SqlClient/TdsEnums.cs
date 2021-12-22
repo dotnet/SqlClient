@@ -83,7 +83,7 @@ namespace Microsoft.Data.SqlClient
 
         //    Message types
         public const byte MT_SQL = 1;    // SQL command batch
-        public const byte MT_LOGIN = 2;    // Login message for pre-Sphinx (before version 7.0)
+        public const byte MT_LOGIN = 2;    // Login message for pre-7.0
         public const byte MT_RPC = 3;    // Remote procedure call
         public const byte MT_TOKENS = 4;    // Table response data stream
         public const byte MT_BINARY = 5;    // Unformatted binary response data (UNUSED)
@@ -97,7 +97,7 @@ namespace Microsoft.Data.SqlClient
         public const byte MT_LOGOUT = 13;   // Logout message (UNUSED)
         public const byte MT_TRANS = 14;   // Transaction Manager Interface
         public const byte MT_OLEDB = 15;   // ? (UNUSED)
-        public const byte MT_LOGIN7 = 16;   // Login message for Sphinx (version 7) or later
+        public const byte MT_LOGIN7 = 16;   // Login message for 7.0 or later
         public const byte MT_SSPI = 17;   // SSPI message
         public const byte MT_PRELOGIN = 18;   // Pre-login handshake
 
@@ -305,13 +305,13 @@ namespace Microsoft.Data.SqlClient
         /* Versioning scheme table:
 
             Client sends:
-            0x70000000 -> Sphinx
+            0x70000000 -> 7.0
             0x71000000 -> 2000 RTM
             0x71000001 -> 2000 SP1
             0x72xx0002 -> 2005 RTM
 
             Server responds:
-            0x07000000 -> Sphinx     // Notice server response format is different for bwd compat
+            0x07000000 -> 7.0     // Notice server response format is different for bwd compat
             0x07010000 -> 2000 RTM // Notice server response format is different for bwd compat
             0x71000001 -> 2000 SP1
             0x72xx0002 -> 2005 RTM
@@ -433,7 +433,7 @@ namespace Microsoft.Data.SqlClient
 
         public const int MAX_NUMERIC_LEN = 0x11; // 17 bytes of data for max numeric/decimal length
         public const int DEFAULT_NUMERIC_PRECISION = 0x1D; // 29 is the default max numeric precision(Decimal.MaxValue) if not user set
-        public const int SPHINX_DEFAULT_NUMERIC_PRECISION = 0x1C; // 28 is the default max numeric precision for Sphinx(Decimal.MaxValue doesn't work for sphinx)
+        public const int SQL70_DEFAULT_NUMERIC_PRECISION = 0x1C; // 28 is the default max numeric precision for 7.0 (Decimal.MaxValue doesn't work for 7.0)
         public const int MAX_NUMERIC_PRECISION = 0x26; // 38 is max numeric precision;
         public const byte UNKNOWN_PRECISION_SCALE = 0xff; // -1 is value for unknown precision or scale
 

@@ -1085,7 +1085,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if (!IsEnlistedInTransaction)
                 {
-                    // If not 2000, we are going against Sphinx.  On Sphinx, we
+                    // If not 2000, we are going against 7.0.  On 7.0, we
                     // may only reset if not enlisted in a distributed transaction.
                     try
                     {

@@ -86,9 +86,9 @@ namespace Microsoft.Data.SqlClient
         internal static readonly Action<object> s_cancelIgnoreFailure = CancelIgnoreFailureCallback;
 
         // devnote: Prepare
-        // Against 7.0 Server (Sphinx) a prepare/unprepare requires an extra roundtrip to the server.
+        // Against 7.0 Server a prepare/unprepare requires an extra roundtrip to the server.
         //
-        // From 8.0 (2000) and above (2005) the preparation can be done as part of the command execution.
+        // From 8.0 (2000) and above the preparation can be done as part of the command execution.
         //
         private enum EXECTYPE
         {
@@ -6986,7 +6986,7 @@ namespace Microsoft.Data.SqlClient
                         }
                         else
                         {
-                            precision = TdsEnums.SPHINX_DEFAULT_NUMERIC_PRECISION;
+                            precision = TdsEnums.SQL70_DEFAULT_NUMERIC_PRECISION;
                         }
                     }
 

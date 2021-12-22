@@ -711,7 +711,7 @@ namespace Microsoft.Data.SqlClient
                 status = ConsumePreLoginHandshake(authType, encrypt, trustServerCert, integratedSecurity, serverCallback, clientCallback, 
                                                   out marsCapable, out _connHandler._fedAuthRequired);
 
-                // Don't need to check for Sphinx failure, since we've already consumed
+                // Don't need to check for 7.0 failure, since we've already consumed
                 // one pre-login packet and know we are connecting to 2000.
                 if (status == PreLoginHandshakeStatus.InstanceFailure)
                 {
@@ -4042,21 +4042,21 @@ namespace Microsoft.Data.SqlClient
             UInt32 increment = (a.tdsVersion >> 16) & 0xff;
 
             // Server responds:
-            // 0x07000000 -> Sphinx         // Notice server response format is different for bwd compat
+            // 0x07000000 -> 7.0         // Notice server response format is different for bwd compat
             // 0x07010000 -> 2000 RTM     // Notice server response format is different for bwd compat
             // 0x71000001 -> 2000 SP1
             // 0x72xx0002 -> 2005 RTM
             // information provided by S. Ashwin
             switch (majorMinor)
             {
-                case TdsEnums.SPHINXOR2000_MAJOR << 24 | TdsEnums.DEFAULT_MINOR:    // Sphinx & 2000 RTM
-                    // note that sphinx and 2000 can only be distinguished by the increment
+                case TdsEnums.SQL70OR2000_MAJOR << 24 | TdsEnums.DEFAULT_MINOR:    // 7.0 & 2000 RTM
+                    // note that 7.0 and 2000 can only be distinguished by the increment
                     switch (increment)
                     {
                         case TdsEnums.SQL2000_INCREMENT:
                             _is2000 = true;
                             break;
-                        case TdsEnums.SPHINX_INCREMENT:
+                        case TdsEnums.SQL70_INCREMENT:
                             // no flag will be set
                             break;
                         default:
@@ -4501,7 +4501,7 @@ namespace Microsoft.Data.SqlClient
             rec.type = rec.metaType.SqlDbType;
 
             // always use the nullable type for parameters if 2000 or later
-            // Sphinx sometimes sends fixed length return values
+            // 7.0 sometimes sends fixed length return values
             if (_is2000)
             {
                 rec.tdsType = rec.metaType.NullableType;
@@ -4513,7 +4513,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
             else
-            {      // For sphinx, keep the fixed type if that is what is returned
+            {      // For 7.0, keep the fixed type if that is what is returned
                 if (rec.metaType.NullableType == tdsType)
                     rec.IsNullable = true;
 
@@ -5380,7 +5380,7 @@ namespace Microsoft.Data.SqlClient
             col.metaType = MetaType.GetSqlDataType(tdsType, userType, col.length);
             col.type = col.metaType.SqlDbType;
 
-            // If sphinx, do not change to nullable type
+            // If 7.0, do not change to nullable type
             if (_is2000)
                 col.tdsType = (col.IsNullable ? col.metaType.NullableType : col.metaType.TDSType);
             else
@@ -10324,7 +10324,7 @@ namespace Microsoft.Data.SqlClient
                                     if (_is2000)
                                         stateObj.WriteByte(TdsEnums.DEFAULT_NUMERIC_PRECISION);
                                     else
-                                        stateObj.WriteByte(TdsEnums.SPHINX_DEFAULT_NUMERIC_PRECISION);
+                                        stateObj.WriteByte(TdsEnums.SQL70_DEFAULT_NUMERIC_PRECISION);
                                 }
                                 else
                                     stateObj.WriteByte(precision);
