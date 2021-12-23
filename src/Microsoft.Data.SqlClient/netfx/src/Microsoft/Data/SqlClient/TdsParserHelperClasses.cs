@@ -528,43 +528,55 @@ namespace Microsoft.Data.SqlClient
         }
     }
 
-    sealed internal class _SqlMetaDataSet : ICloneable
+    sealed internal class _SqlMetaDataSet 
     {
         internal ushort id;             // for altrow-columns only
-        internal int[] indexMap;
-        internal int visibleColumns;
-        internal DataTable schemaTable;
+        internal DataTable _schemaTable;
         internal readonly SqlTceCipherInfoTable cekTable; // table of "column encryption keys" used for this metadataset
-        internal readonly _SqlMetaData[] metaDataArray;
+        internal readonly _SqlMetaData[] _metaDataArray;
+        private int _hiddenColumnCount;
+        private int[] _visibleColumnMap;
 
         internal _SqlMetaDataSet(int count, SqlTceCipherInfoTable cipherTable)
         {
+            _hiddenColumnCount = -1;
             cekTable = cipherTable;
-            metaDataArray = new _SqlMetaData[count];
-            for (int i = 0; i < metaDataArray.Length; ++i)
+            _metaDataArray = new _SqlMetaData[count];
+            for (int i = 0; i < _metaDataArray.Length; ++i)
             {
-                metaDataArray[i] = new _SqlMetaData(i);
+                _metaDataArray[i] = new _SqlMetaData(i);
             }
         }
 
         private _SqlMetaDataSet(_SqlMetaDataSet original)
         {
-            this.id = original.id;
-            // although indexMap is not immutable, in practice it is initialized once and then passed around
-            this.indexMap = original.indexMap;
-            this.visibleColumns = original.visibleColumns;
-            this.schemaTable = original.schemaTable;
-            if (original.metaDataArray == null)
+            id = original.id;
+            _hiddenColumnCount = original._hiddenColumnCount;
+            _visibleColumnMap = original._visibleColumnMap;
+            _schemaTable = original._schemaTable;
+            if (original._metaDataArray == null)
             {
-                metaDataArray = null;
+                _metaDataArray = null;
             }
             else
             {
-                metaDataArray = new _SqlMetaData[original.metaDataArray.Length];
-                for (int idx = 0; idx < metaDataArray.Length; idx++)
+                _metaDataArray = new _SqlMetaData[original._metaDataArray.Length];
+                for (int idx = 0; idx < _metaDataArray.Length; idx++)
                 {
-                    metaDataArray[idx] = (_SqlMetaData)original.metaDataArray[idx].Clone();
+                    _metaDataArray[idx] = (_SqlMetaData)original._metaDataArray[idx].Clone();
                 }
+            }
+        }
+
+        internal int VisibleColumnCount
+        {
+            get
+            {
+                if (_hiddenColumnCount == -1)
+                {
+                    SetupHiddenColumns();
+                }
+                return Length - _hiddenColumnCount;
             }
         }
 
@@ -572,7 +584,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                return metaDataArray.Length;
+                return _metaDataArray.Length;
             }
         }
 
@@ -580,20 +592,65 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                return metaDataArray[index];
+                return _metaDataArray[index];
             }
             set
             {
                 Debug.Assert(null == value, "used only by SqlBulkCopy");
-                metaDataArray[index] = value;
+                _metaDataArray[index] = value;
             }
         }
 
-        public object Clone()
+        public int GetVisibleColumnIndex(int index)
+        {
+            if (_hiddenColumnCount == -1)
+            {
+                SetupHiddenColumns();
+            }
+            if (_visibleColumnMap is null)
+            {
+                return index;
+            }
+            else
+            {
+                return _visibleColumnMap[index];
+            }
+        }
+
+        public _SqlMetaDataSet Clone()
         {
             return new _SqlMetaDataSet(this);
         }
+
+        private void SetupHiddenColumns()
+        {
+            int hiddenColumnCount = 0;
+            for (int index = 0; index < Length; index++)
+            {
+                if (_metaDataArray[index].IsHidden)
+                {
+                    hiddenColumnCount += 1;
+                }
+            }
+
+            if (hiddenColumnCount > 0)
+            {
+                int[] visibleColumnMap = new int[Length - hiddenColumnCount];
+                int mapIndex = 0;
+                for (int metaDataIndex = 0; metaDataIndex < Length; metaDataIndex++)
+                {
+                    if (!_metaDataArray[metaDataIndex].IsHidden)
+                    {
+                        visibleColumnMap[mapIndex] = metaDataIndex;
+                        mapIndex += 1;
+                    }
+                }
+                _visibleColumnMap = visibleColumnMap;
+            }
+            _hiddenColumnCount = hiddenColumnCount;
+        }
     }
+
 
     sealed internal class _SqlMetaDataSetCollection : ICloneable
     {

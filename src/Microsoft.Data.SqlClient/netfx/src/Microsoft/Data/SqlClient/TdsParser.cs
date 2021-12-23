@@ -5056,7 +5056,6 @@ namespace Microsoft.Data.SqlClient
 
             metaData = null;
             _SqlMetaDataSet altMetaDataSet = new _SqlMetaDataSet(cColumns, null);
-            int[] indexMap = new int[cColumns];
 
             if (!stateObj.TryReadUInt16(out altMetaDataSet.id))
             {
@@ -5153,11 +5152,7 @@ namespace Microsoft.Data.SqlClient
                             break;
                     }
                 }
-                indexMap[i] = i;
             }
-
-            altMetaDataSet.indexMap = indexMap;
-            altMetaDataSet.visibleColumns = cColumns;
 
             metaData = altMetaDataSet;
             return true;
