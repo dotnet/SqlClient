@@ -29,7 +29,8 @@ namespace Microsoft.Data.SqlClient.Server
         internal static int SizeInBytes(object instance)
         {
             Type t = instance.GetType();
-            Format k = GetFormat(t);
+
+            _ = GetFormat(t);
             DummyStream stream = new DummyStream();
             Serializer ser = GetSerializer(instance.GetType());
             ser.Serialize(stream, instance);
@@ -139,7 +140,7 @@ namespace Microsoft.Data.SqlClient.Server
 
         internal static SqlUserDefinedTypeAttribute GetUdtAttribute(Type t)
         {
-            SqlUserDefinedTypeAttribute udtAttr = null;
+            SqlUserDefinedTypeAttribute udtAttr;
             object[] attr = GetCustomAttributes(t);
             if (attr != null && attr.Length == 1)
             {
@@ -183,16 +184,12 @@ namespace Microsoft.Data.SqlClient.Server
 
     internal sealed class NormalizedSerializer : Serializer
     {
-        private BinaryOrderedUdtNormalizer _normalizer;
-        private bool _isFixedSize;
-        private int _maxSize;
-
+        private readonly BinaryOrderedUdtNormalizer _normalizer;
+   
         internal NormalizedSerializer(Type t) : base(t)
         {
-            SqlUserDefinedTypeAttribute udtAttr = SerializationHelperSql9.GetUdtAttribute(t);
+            _ = SerializationHelperSql9.GetUdtAttribute(t);
             _normalizer = new BinaryOrderedUdtNormalizer(t, true);
-            _isFixedSize = udtAttr.IsFixedLength;
-            _maxSize = _normalizer.Size;
         }
 
         public override void Serialize(Stream s, object o) => _normalizer.NormalizeTopObject(o, s);
