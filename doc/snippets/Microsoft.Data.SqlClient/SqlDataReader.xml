@@ -532,7 +532,7 @@
             <format type="text/markdown"><![CDATA[  
   
 ## Remarks  
- For the <xref:Microsoft.Data.SqlClient.SqlDataReader.GetSchemaTable%2A> method returns metadata about each column in the following order:  
+ The <xref:Microsoft.Data.SqlClient.SqlDataReader.GetSchemaTable%2A> method returns the following metadata about each column:  
   
 |DataReader column|Description|  
 |-----------------------|-----------------|  

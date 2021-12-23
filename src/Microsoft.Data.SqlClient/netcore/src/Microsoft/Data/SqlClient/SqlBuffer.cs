@@ -126,7 +126,7 @@ namespace Microsoft.Data.SqlClient
             _object = value._object;
         }
 
-        internal bool IsEmpty => (StorageType.Empty == _type);
+        internal bool IsEmpty => _type == StorageType.Empty;
 
         internal bool IsNull => _isNull;
 
@@ -386,7 +386,6 @@ namespace Microsoft.Data.SqlClient
                     return ((SqlGuid)_object).Value;
                 }
                 return (Guid)Value;
-
             }
             set
             {
@@ -1336,13 +1335,13 @@ namespace Microsoft.Data.SqlClient
         // where typeof(T) == typeof(field) 
         //   1) RyuJIT will recognize the pattern of (T)(object)T as being redundant and eliminate 
         //   the T and object casts leaving T, so while this looks like it will put every value type instance in a box the 
-        //   enerated assembly will be short and direct
+        //   generated assembly will be short and direct
         //   2) another jit may not recognize the pattern and should emit the code as seen. this will box and then unbox the
         //   value type which is no worse than the mechanism that this code replaces
         // where typeof(T) != typeof(field)
         //   the jit will emit all the cast operations as written. this will put the value into a box and then attempt to
-        //   cast it, because it is an object even no conversions are use and this will generate the desired InvalidCastException       
-        //   so users cannot widen a short to an int preserving external expectations 
+        //   cast it, because it is an object no conversions are used and this will generate the desired InvalidCastException       
+        //   for example users cannot widen a short to an int preserving external expectations 
 
         internal T ByteAs<T>()
         {
@@ -1386,4 +1385,4 @@ namespace Microsoft.Data.SqlClient
             return (T)(object)_value._single;
         }
     }
-}// namespace
+}
