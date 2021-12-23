@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -11,7 +12,7 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient.Server
 {
-    internal class SerializationHelperSql9
+    internal sealed class SerializationHelperSql9
     {
         // Don't let anyone create an instance of this class.
         private SerializationHelperSql9() { }
@@ -50,13 +51,14 @@ namespace Microsoft.Data.SqlClient.Server
         //
         // Use a per-thread cache, so that there are no synchronization
         // issues when accessing cache entries from multiple threads.
-        [ThreadStatic]
-        private static Hashtable s_types2Serializers;
+        private static ConcurrentDictionary<Type, Serializer> s_types2Serializers;
 
         private static Serializer GetSerializer(Type t)
         {
             if (s_types2Serializers == null)
-                s_types2Serializers = new Hashtable();
+            {
+                s_types2Serializers = new();
+            }
 
             Serializer s = (Serializer)s_types2Serializers[t];
             if (s == null)
@@ -209,9 +211,9 @@ namespace Microsoft.Data.SqlClient.Server
             BinaryWriter w = new BinaryWriter(s);
 
 #if NETFRAMEWORK
-            if (o is Microsoft.SqlServer.Server.IBinarySerialize)
+            if (o is SqlServer.Server.IBinarySerialize bs)
             {
-                ((SqlServer.Server.IBinarySerialize)o).Write(w);
+                (bs).Write(w);
                 return;
             }
 #endif
@@ -229,9 +231,9 @@ namespace Microsoft.Data.SqlClient.Server
             BinaryReader r = new BinaryReader(s);
 
 #if NETFRAMEWORK
-            if (instance is Microsoft.SqlServer.Server.IBinarySerialize)
+            if (instance is SqlServer.Server.IBinarySerialize bs)
             {
-                ((SqlServer.Server.IBinarySerialize)instance).Read(r);
+                bs.Read(r);
                 return instance;
             }
 #endif
