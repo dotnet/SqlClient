@@ -24,7 +24,7 @@ namespace Microsoft.SqlServer.TDS
         /// <summary>
         /// 2012 (Denali) TDS version
         /// </summary>
-        public static Version SqlServer2010 = new Version(7, 4, 0, 4);
+        public static Version SqlServer2012 = new Version(7, 4, 0, 4);
 
         /// <summary>
         /// Map SQL Server build version to TDS version
@@ -36,7 +36,7 @@ namespace Microsoft.SqlServer.TDS
             // Check build version Major part
             if (buildVersion.Major == 11)
             {
-                return SqlServer2010;
+                return SqlServer2012;
             }
             else if (buildVersion.Major == 10)
             {
@@ -79,7 +79,7 @@ namespace Microsoft.SqlServer.TDS
         /// </summary>
         public static bool IsSupported(Version tdsVersion)
         {
-            return tdsVersion >= SqlServer2005 && tdsVersion <= SqlServer2010;
+            return tdsVersion >= SqlServer2005 && tdsVersion <= SqlServer2012;
         }
     }
 }
