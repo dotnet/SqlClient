@@ -2267,15 +2267,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal bool Asynchronous
-        {
-            get
-            {
-                SqlConnectionString constr = (SqlConnectionString)ConnectionOptions;
-                return ((null != constr) ? constr.Asynchronous : SqlConnectionString.DEFAULT.Asynchronous);
-            }
-        }
-
         //
         // INTERNAL METHODS
         //

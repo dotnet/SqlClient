@@ -61,7 +61,6 @@ namespace Microsoft.Data.SqlClient
             internal static readonly SqlConnectionIPAddressPreference IpAddressPreference = DbConnectionStringDefaults.IPAddressPreference;
 #if NETFRAMEWORK
             internal static readonly bool TransparentNetworkIPResolution = DbConnectionStringDefaults.TransparentNetworkIPResolution;
-            internal const bool Asynchronous = DbConnectionStringDefaults.Asynchronous;
             internal const bool Connection_Reset = DbConnectionStringDefaults.ConnectionReset;
             internal const bool Context_Connection = DbConnectionStringDefaults.ContextConnection;
             internal const string Network_Library = DbConnectionStringDefaults.NetworkLibrary;
@@ -572,17 +571,10 @@ namespace Microsoft.Data.SqlClient
                 throw SQL.AuthenticationAndIntegratedSecurity();
             }
 
-#if NETFRAMEWORK
-            if (Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && (_hasUserIdKeyword || _hasPasswordKeyword))
-            {
-                throw SQL.IntegratedWithUserIDAndPassword();
-            }
-#else
             if (Authentication == SqlAuthenticationMethod.ActiveDirectoryIntegrated && _hasPasswordKeyword)
             {
                 throw SQL.IntegratedWithPassword();
             }
-#endif
 
             if (Authentication == SqlAuthenticationMethod.ActiveDirectoryInteractive && _hasPasswordKeyword)
             {

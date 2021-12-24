@@ -218,7 +218,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             Buffer.BlockCopy(cmkSignature, 0, tamperedCmkSignature, 0, tamperedCmkSignature.Length);
 
             // Corrupt one byte at a time 10 times
-            RandomNumberGenerator rng = new RNGCryptoServiceProvider();
+            RandomNumberGenerator rng = RandomNumberGenerator.Create();
             byte[] randomIndexInCipherText = new byte[1];
             for (int i = 0; i < 10; i++)
             {

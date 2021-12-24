@@ -428,8 +428,7 @@ namespace Microsoft.Data.SqlClient.Server
                     Construct(name, dbType, userDefinedType, string.Empty, useServerDefault, isUniqueKey, columnSortOrder, sortOrdinal);
                     break;
                 default:
-                    SQL.InvalidSqlDbTypeForConstructor(dbType);
-                    break;
+                    throw SQL.InvalidSqlDbTypeForConstructor(dbType);
             }
         }
 
