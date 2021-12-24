@@ -520,9 +520,7 @@ namespace Microsoft.Data.SqlClient.Server
                     firstMd.Scale == secondMd.Scale &&
                     firstMd.CompareOptions == secondMd.CompareOptions &&
                     firstMd.LocaleId == secondMd.LocaleId &&
-#if NETFRAMEWORK
                     firstMd.Type == secondMd.Type &&
-#endif
                     firstMd.SqlDbType != SqlDbType.Structured &&  // SqlMetaData doesn't support Structured types
                     !firstMd.IsMultiValued;  // SqlMetaData doesn't have a "multivalued" option
         }
