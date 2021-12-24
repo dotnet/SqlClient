@@ -41,12 +41,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             finally
             {
                 var dropTableQuery = "DROP TABLE IF EXISTS " + tableName;
-                using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
-                using (var cmd = new SqlCommand(dropTableQuery, connection))
-                {
-                    connection.Open();
-                    cmd.ExecuteNonQuery();
-                }
+                using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+                using var cmd = new SqlCommand(dropTableQuery, connection);
+                connection.Open();
+                cmd.ExecuteNonQuery();
             }
         }
 
@@ -65,29 +63,27 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void ExecuteNonQueries(string tableName)
         {
-            List<EventInfo> entities = new List<EventInfo>
+            List<EventInfo> entities = new()
             {
-                new EventInfo {Level = "L1", Message = "Message 1"},
-                new EventInfo {Level = "L2", Message = "Message 2"},
-                new EventInfo {Level = "L3", Message = "Message 3"},
-                new EventInfo {Level = "L4", Message = "Message 4"},
+                new EventInfo { Level = "L1", Message = "Message 1" },
+                new EventInfo { Level = "L2", Message = "Message 2" },
+                new EventInfo { Level = "L3", Message = "Message 3" },
+                new EventInfo { Level = "L4", Message = "Message 4" },
             };
 
             var sql = "INSERT INTO " + tableName + "(Level, Message, EventTime)  VALUES(@Level, @Message, @EventTime)";
-            using (var connection = new SqlConnection(DataTestUtility.TCPConnectionString))
-            using (var adapter = new SqlDataAdapter())
-            using (var cmd = new SqlCommand(sql, connection))
-            {
-                cmd.Parameters.Add(new SqlParameter("@Level", System.Data.SqlDbType.NVarChar, 50, "Level"));
-                cmd.Parameters.Add(new SqlParameter("@Message", SqlDbType.NVarChar, 500, "Message"));
-                cmd.Parameters.Add(new SqlParameter("@EventTime", SqlDbType.DateTime, 0, "EventTime"));
-                cmd.UpdatedRowSource = UpdateRowSource.None;
+            using var connection = new SqlConnection(DataTestUtility.TCPConnectionString);
+            using var adapter = new SqlDataAdapter();
+            using var cmd = new SqlCommand(sql, connection);
+            cmd.Parameters.Add(new SqlParameter("@Level", System.Data.SqlDbType.NVarChar, 50, "Level"));
+            cmd.Parameters.Add(new SqlParameter("@Message", SqlDbType.NVarChar, 500, "Message"));
+            cmd.Parameters.Add(new SqlParameter("@EventTime", SqlDbType.DateTime, 0, "EventTime"));
+            cmd.UpdatedRowSource = UpdateRowSource.None;
 
-                adapter.InsertCommand = cmd;
-                adapter.UpdateBatchSize = 2;
+            adapter.InsertCommand = cmd;
+            adapter.UpdateBatchSize = 2;
 
-                adapter.Update(ConvertToTable(entities));
-            }
+            adapter.Update(ConvertToTable(entities));
         }
         private static DataTable ConvertToTable(List<EventInfo> entities)
         {
@@ -97,9 +93,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             table.Columns.Add("Message", typeof(string));
             table.Columns.Add("EventTime", typeof(DateTime));
 
-            foreach (var entity in entities)
+            foreach (EventInfo entity in entities)
             {
-                var row = table.NewRow();
+                DataRow row = table.NewRow();
                 row["Level"] = entity.Level;
                 row["Message"] = entity.Message;
                 row["EventTime"] = entity.EventTime;
