@@ -370,12 +370,6 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SignatureVerificationCache.cs">
       <Link>Microsoft\Data\SqlClient\SignatureVerificationCache.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SmiEventSink.cs">
-      <Link>Microsoft\Data\SqlClient\Server\SmiEventSink.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SmiEventSink_Default.cs">
-      <Link>Microsoft\Data\SqlClient\Server\SmiEventSink_Default.Common.cs</Link>
-    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsValueSetter.cs">
       <Link>Microsoft\Data\SqlClient\TdsValueSetter.cs</Link>
     </Compile>
@@ -390,6 +384,12 @@
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SmiTypedGetterSetter.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiTypedGetterSetter.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SmiEventSink.cs">
+      <Link>Microsoft\Data\SqlClient\Server\SmiEventSink.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SmiEventSink_Default.cs">
+      <Link>Microsoft\Data\SqlClient\Server\SmiEventSink_Default.Common.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\MetadataUtilsSmi.cs">
       <Link>Microsoft\Data\SqlClient\Server\MetadataUtilsSmi.cs</Link>

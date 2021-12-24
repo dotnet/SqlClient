@@ -499,11 +499,11 @@ namespace Microsoft.Data.SqlClient.Server
                                             source.Precision,
                                             source.Scale,
                                             source.LocaleId,
-                                            source.CompareOptions
+                                            source.CompareOptions,
 #if NETFRAMEWORK
-                                            ,source.Type,
+                                            source.Type,
 #else
-                                            ,null,
+                                            null,
 #endif
                                             source.Name,
                                             typeSpecificNamePart1,
@@ -641,11 +641,11 @@ namespace Microsoft.Data.SqlClient.Server
                                         precision,
                                         scale,
                                         columnLocale.LCID,
-                                        SmiMetaData.DefaultNVarChar.CompareOptions
+                                        SmiMetaData.DefaultNVarChar.CompareOptions,
 #if NETFRAMEWORK
-                                        ,column.DataType,
+                                        column.DataType,
 #else
-                                        ,null,
+                                        null,
 #endif
                                         false,  // no support for multi-valued columns in a TVP yet
                                         null,   // no support for structured columns yet
