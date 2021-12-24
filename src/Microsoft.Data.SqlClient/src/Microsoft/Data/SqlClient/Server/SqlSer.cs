@@ -56,13 +56,17 @@ namespace Microsoft.Data.SqlClient.Server
 
         private static Serializer GetSerializer(Type t)
         {
+            Serializer s = null;
             if (s_types2Serializers == null)
             {
-                s_types2Serializers = new();
+                s_types2Serializers = new ConcurrentDictionary<Type, Serializer>();
             }
 
-            Serializer s = (Serializer)s_types2Serializers[t];
-            if (s == null)
+            if (s_types2Serializers.ContainsKey(t))
+            {
+               s = s_types2Serializers[t];
+            }
+            else
             {
                 s = GetNewSerializer(t);
                 s_types2Serializers[t] = s;
