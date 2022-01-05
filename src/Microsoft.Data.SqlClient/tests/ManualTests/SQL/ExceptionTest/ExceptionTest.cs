@@ -268,7 +268,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 // connection should work if attestation protocol is None but no attestation url is provided
                 SqlConnection sqlConnection = new(connectionStringWithNoneAttestationProtocol);
                 sqlConnection.Open();
-                Assert.True(sqlConnection.State is ConnectionState.Open);
+                Assert.Equal(ConnectionState.Open, sqlConnection.State);
             }
         }
 
