@@ -284,9 +284,9 @@ namespace Microsoft.Data.SqlClient
                 TdsParser.ReliabilitySection.Assert("unreliable call to CloseFromConnection");  // you need to setup for a thread abort somewhere before you call this method
                 if (processFinallyBlock)
                 {
-                    // Always ensure we're zombied; Yukon will send an EnvChange that
+                    // Always ensure we're zombied; 2005 will send an EnvChange that
                     // will cause the zombie, but only if we actually go to the wire;
-                    // Sphinx and Shiloh won't send the env change, so we have to handle
+                    // 7.0 and 2000 won't send the env change, so we have to handle
                     // them ourselves.
                     Zombie();
                 }
@@ -311,10 +311,10 @@ namespace Microsoft.Data.SqlClient
                     // simply commits the transaction from the most recent BEGIN, nested or otherwise.
                     _innerConnection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Commit, null, IsolationLevel.Unspecified, null, false);
 
-                    // SQL BU DT 291159 - perform full Zombie on pre-Yukon, but do not actually
-                    // complete internal transaction until informed by server in the case of Yukon
+                    // SQL BU DT 291159 - perform full Zombie on pre-2005, but do not actually
+                    // complete internal transaction until informed by server in the case of 2005
                     // or later.
-                    if (!IsZombied && !_innerConnection.IsYukonOrNewer)
+                    if (!IsZombied && !_innerConnection.Is2005OrNewer)
                     {
                         // Since nested transactions are no longer allowed, set flag to false.
                         // This transaction has been completed.
@@ -483,10 +483,10 @@ namespace Microsoft.Data.SqlClient
                 {
                     _innerConnection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Rollback, transactionName, IsolationLevel.Unspecified, null, false);
 
-                    if (!IsZombied && !_innerConnection.IsYukonOrNewer)
+                    if (!IsZombied && !_innerConnection.Is2005OrNewer)
                     {
                         // Check if Zombied before making round-trip to server.
-                        // Against Yukon we receive an envchange on the ExecuteTransaction above on the
+                        // Against 2005 we receive an envchange on the ExecuteTransaction above on the
                         // parser that calls back into SqlTransaction for the Zombie() call.
                         CheckTransactionLevelAndZombie();
                     }
@@ -545,7 +545,7 @@ namespace Microsoft.Data.SqlClient
 
             // NOTE: we'll be called from the TdsParser when it gets appropriate
             // ENVCHANGE events that indicate the transaction has completed, however
-            // we cannot rely upon those events occuring in the case of pre-Yukon
+            // we cannot rely upon those events occuring in the case of pre-2005
             // servers (and when we don't go to the wire because the connection
             // is broken) so we can also be called from the Commit/Rollback/Save
             // methods to handle that case as well.

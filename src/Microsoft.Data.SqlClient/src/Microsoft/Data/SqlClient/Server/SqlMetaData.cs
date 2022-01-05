@@ -812,7 +812,7 @@ namespace Microsoft.Data.SqlClient.Server
             _sortOrdinal = sortOrdinal;
         }
 
-        // Construction for Decimal type and new Katmai Date/Time types
+        // Construction for Decimal type and new 2008 Date/Time types
         private void Construct(
             string name, 
             SqlDbType dbType, 
