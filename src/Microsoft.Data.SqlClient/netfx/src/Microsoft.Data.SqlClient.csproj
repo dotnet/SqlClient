@@ -165,6 +165,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\AzureAttestationBasedEnclaveProvider.cs">
       <Link>Microsoft\Data\SqlClient\AzureAttestationBasedEnclaveProvider.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\NoneAttestationEnclaveProvider.cs">
+      <Link>Microsoft\Data\SqlClient\NoneAttestationEnclaveProvider.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\EnclaveDelegate.cs">
       <Link>Microsoft\Data\SqlClient\EnclaveDelegate.cs</Link>
     </Compile>
@@ -628,9 +631,6 @@
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\sqlser.cs" />
     <Compile Include="Microsoft\Data\Sql\SqlGenericUtil.cs" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(BuildSimulator)' == 'true'">
-    <Compile Include="Microsoft\Data\SqlClient\SimulatorEnclaveProvider.cs" />
   </ItemGroup>
   <!-- Resources  -->
   <ItemGroup>
