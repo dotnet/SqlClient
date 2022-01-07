@@ -408,7 +408,7 @@ If the value of the **Network** key is specified, the prefixes "tcp:" and "np:" 
         </EnclaveAttestationUrl>
         <Encrypt>
             <summary>Gets or sets a Boolean value that indicates whether SQL Server uses SSL encryption for all data sent between the client and server if the server has a certificate installed.</summary>
-            <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Encrypt" /> property, or <see langword="false" /> if none has been supplied.</value>
+            <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Encrypt" /> property, or <see langword="true" /> if none has been supplied.</value>
             <remarks>
             <format type="text/markdown"><![CDATA[  
   
@@ -416,6 +416,9 @@ If the value of the **Network** key is specified, the prefixes "tcp:" and "np:" 
  This property corresponds to the "Encrypt" key within the connection string.  
   
 When `TrustServerCertificate` is false and `Encrypt` is true, the server name (or IP address) in a SQL Server SSL certificate must exactly match the server name (or IP address) specified in the connection string. Otherwise, the connection attempt will fail. For information about support for certificates whose subject starts with a wildcard character (*), see [Enable encrypted connections to the Database Engine](/sql/database-engine/configure-windows/enable-encrypted-connections-to-the-database-engine#certificate-requirements).  
+
+> [!NOTE]
+> Starting from **version 4.0**, the default value of the property `Encrypt` is set to `true`.
 
  ]]></format>
             </remarks>
