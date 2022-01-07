@@ -1338,7 +1338,7 @@ namespace Microsoft.Data.SqlClient
                             string warningMessage = SslProtocolsHelper.GetProtocolWarning(protocolVersion);
                             if (!string.IsNullOrEmpty(warningMessage))
                             {
-                                if (!encrypt && LocalAppContextSwitches.SuppressTLSWarning)
+                                if (!encrypt && LocalAppContextSwitches.SuppressInsecureTLSWarning)
                                 {
                                     // Skip console warning
                                     SqlClientEventSource.Log.TryTraceEvent("<sc|{0}|{1}|{2}>{3}", nameof(TdsParser), nameof(ConsumePreLoginHandshake), SqlClientLogger.LogLevel.Warning, warningMessage);

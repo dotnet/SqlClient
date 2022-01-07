@@ -321,9 +321,9 @@ TLS 1.3 has been excluded due to the fact that the driver lacks full support. To
 
 ## Suppressing TLS security warning
 
-Console security warning using an insecure protocol lower than `TLS 1.2` could be skipped on SQL connections with `Encrypt = false`, by enabling the following AppContext switch on application startup:
+When connecting to a server, if a protocol lower than TLS 1.2 is negotiated, a security warning is output to the console. This warning can be suppressed on SQL connections with `Encrypt = false` by enabling the following AppContext switch on application startup:
 
-`Switch.Microsoft.Data.SqlClient.SuppressTLSWarning`
+`Switch.Microsoft.Data.SqlClient.SuppressInsecureTLSWarning`
 
 ## Debugging SqlClient on Linux from Windows
 
