@@ -5,14 +5,13 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace Microsoft.Data
 {
     internal static partial class LocalDBAPI
     {
         private const string LocalDbPrefix = @"(localdb)\";
-        private const string LocalDbPrefix_namedInstance = @"np:\\.\pipe\LOCALDB#";
+        private const string LocalDbPrefix_NP = @"np:\\.\pipe\LOCALDB#";
 
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
@@ -23,16 +22,17 @@ namespace Microsoft.Data
         internal static string GetLocalDbInstanceNameFromServerName(string serverName)
         {
             string instanceName = null;
-            bool isLocalDb = serverName.StartsWith(LocalDbPrefix) || serverName.StartsWith(LocalDbPrefix_namedInstance);
+            serverName = serverName.TrimStart(); // it can start with spaces if specified in quotes
+            bool isLocalDb = serverName.StartsWith(LocalDbPrefix, StringComparison.OrdinalIgnoreCase) || serverName.StartsWith(LocalDbPrefix_NP, StringComparison.OrdinalIgnoreCase);
             if (isLocalDb)
             {
-                if (serverName.StartsWith(LocalDbPrefix))
+                if (serverName.StartsWith(LocalDbPrefix, StringComparison.OrdinalIgnoreCase))
                 {
                     instanceName = serverName.Substring(LocalDbPrefix.Length).Trim();
                 }
                 else
                 {
-                    instanceName = serverName;
+                    instanceName = serverName.TrimEnd();
                 }
             }
             return instanceName;

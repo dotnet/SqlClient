@@ -20,7 +20,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static readonly string s_startLocalDbCommand = @$"/c SqlLocalDb start {DataTestUtility.LocalDbAppName}";
         private static readonly string s_localDbNamedPipeConnectionString = @$"server={GetLocalDbNamedPipe()}";
 
-        static string LocalDbName = DataTestUtility.LocalDbAppName;
         #region LocalDbTests
         [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
         [ConditionalFact(nameof(IsLocalDBEnvironmentSet))]

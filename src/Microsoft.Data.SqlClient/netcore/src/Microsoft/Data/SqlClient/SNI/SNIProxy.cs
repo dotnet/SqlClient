@@ -380,7 +380,7 @@ namespace Microsoft.Data.SqlClient.SNI
         private const string Slash = @"/";
         private const string PipeToken = "pipe";
         private const string LocalDbHost = "(localdb)";
-        private const string LocalDbHost_NamedInstance = @"np:\\.\pipe\LOCALDB#";
+        private const string LocalDbHost_NP = @"np:\\.\pipe\LOCALDB#";
         private const string NamedPipeInstanceNameHeader = "mssql$";
         private const string DefaultPipeName = "sql\\query";
 
@@ -505,17 +505,9 @@ namespace Microsoft.Data.SqlClient.SNI
                     error = true;
                 }
             }
-            if (input.StartsWith(LocalDbHost_NamedInstance.AsSpan().Trim(), StringComparison.InvariantCultureIgnoreCase))
+            else if (input.StartsWith(LocalDbHost_NP.AsSpan().Trim(), StringComparison.InvariantCultureIgnoreCase))
             {
-                if (!input.IsEmpty)
-                {
-                    instanceName = input.Trim().ToString();
-                }
-                else
-                {
-                    SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.INVALID_PROV, 0, SNICommon.LocalDBNoInstanceName, Strings.SNI_ERROR_51);
-                    error = true;
-                }
+                instanceName = input.Trim().ToString();
             }
 
             return instanceName;
