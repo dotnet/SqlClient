@@ -240,9 +240,6 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SmiMetaData.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiMetaData.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlStatistics.cs">
-      <Link>Microsoft\Data\SqlClient\SqlStatistics.cs</Link>
-    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlStream.cs">
       <Link>Microsoft\Data\SqlClient\SqlStream.cs</Link>
     </Compile>
@@ -257,15 +254,6 @@
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\ColumnEncryptionKeyInfo.cs">
       <Link>Microsoft\Data\SqlClient\ColumnEncryptionKeyInfo.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlConnectionTimeoutErrorInternal.cs">
-      <Link>Microsoft\Data\SqlClient\SqlConnectionTimeoutErrorInternal.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlCredential.cs">
-      <Link>Microsoft\Data\SqlClient\SqlCredential.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlUdtInfo.cs">
-      <Link>Microsoft\Data\SqlClient\SqlUdtInfo.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SmiEventSink.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiEventSink.cs</Link>
@@ -356,7 +344,6 @@
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlCommandBuilder.cs">
       <Link>Microsoft\Data\SqlClient\SqlCommandBuilder.cs</Link>
-      <SubType>Component</SubType>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlCommandSet.cs">
       <Link>Microsoft\Data\SqlClient\SqlCommandSet.cs</Link>
@@ -598,7 +585,13 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlSequentialStreamSmi.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlSequentialTextReader.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlSequentialTextReaderSmi.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlStatistics.cs">
+      <Link>Microsoft\Data\SqlClient\SqlStatistics.cs</Link>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlTransaction.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlUdtInfo.cs">
+      <Link>Microsoft\Data\SqlClient\SqlUdtInfo.cs</Link>
+    </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlUtil.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsEnums.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.cs" />
