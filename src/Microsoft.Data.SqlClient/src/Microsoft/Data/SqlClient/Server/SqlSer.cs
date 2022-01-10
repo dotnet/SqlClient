@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Reflection;
@@ -56,21 +55,18 @@ namespace Microsoft.Data.SqlClient.Server
 
         private static Serializer GetSerializer(Type t)
         {
-            Serializer s = null;
             if (s_types2Serializers == null)
             {
                 s_types2Serializers = new ConcurrentDictionary<Type, Serializer>();
             }
 
-            if (s_types2Serializers.ContainsKey(t))
-            {
-               s = s_types2Serializers[t];
-            }
-            else
+            Serializer s;
+            if (!s_types2Serializers.TryGetValue(t, out s))
             {
                 s = GetNewSerializer(t);
                 s_types2Serializers[t] = s;
             }
+
             return s;
         }
 
