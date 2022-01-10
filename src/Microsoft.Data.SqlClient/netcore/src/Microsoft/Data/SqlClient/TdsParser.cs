@@ -89,7 +89,7 @@ namespace Microsoft.Data.SqlClient
         private EncryptionOptions _encryptionOption = s_sniSupportedEncryptionOption;
 
         private SqlInternalTransaction _currentTransaction;
-        private SqlInternalTransaction _pendingTransaction;    // pending transaction for Yukon and beyond.
+        private SqlInternalTransaction _pendingTransaction;    // pending transaction for 2005 and beyond.
 
         //  need to hold on to the transaction id if distributed transaction merely rolls back without defecting.
         private long _retainedTransactionId = SqlInternalTransaction.NullTransactionId;
@@ -112,11 +112,11 @@ namespace Microsoft.Data.SqlClient
 
         // Version variables
 
-        private bool _isYukon = false; // set to true if speaking to Yukon or later
+        private bool _is2005 = false; // set to true if speaking to 2005 or later
 
-        private bool _isKatmai = false;
+        private bool _is2008 = false;
 
-        private bool _isDenali = false;
+        private bool _is2012 = false;
 
         private byte[][] _sniSpnBuffer = null;
 
@@ -189,7 +189,7 @@ namespace Microsoft.Data.SqlClient
 
         internal TdsParser(bool MARS, bool fAsynchronous)
         {
-            _fMARS = MARS; // may change during Connect to pre Yukon servers
+            _fMARS = MARS; // may change during Connect to pre 2005 servers
 
             _physicalStateObj = TdsParserStateObjectFactory.Singleton.CreateTdsParserStateObject(this);
             DataClassificationVersion = TdsEnums.DATA_CLASSIFICATION_NOT_ENABLED;
@@ -258,11 +258,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal bool IsKatmaiOrNewer
+        internal bool Is2008OrNewer
         {
             get
             {
-                return _isKatmai;
+                return _is2008;
             }
         }
 
@@ -323,7 +323,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                return (_isDenali && SqlClientEventSource.Log.IsEnabled());
+                return (_is2012 && SqlClientEventSource.Log.IsEnabled());
             }
         }
 
@@ -530,8 +530,8 @@ namespace Microsoft.Data.SqlClient
                 SendPreLoginHandshake(instanceName, encrypt);
                 status = ConsumePreLoginHandshake(encrypt, trustServerCert, integratedSecurity, out marsCapable, out _connHandler._fedAuthRequired);
 
-                // Don't need to check for Sphinx failure, since we've already consumed
-                // one pre-login packet and know we are connecting to Shiloh.
+                // Don't need to check for 7.0 failure, since we've already consumed
+                // one pre-login packet and know we are connecting to 2000.
                 if (status == PreLoginHandshakeStatus.InstanceFailure)
                 {
                     SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|ERR|SEC> Prelogin handshake unsuccessful. Login failure");
@@ -805,7 +805,7 @@ namespace Microsoft.Data.SqlClient
         {
             marsCapable = _fMARS; // Assign default value
             fedAuthRequired = false;
-            bool isYukonOrLater = false;
+            bool is2005OrLater = false;
             Debug.Assert(_physicalStateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
             bool result = _physicalStateObj.TryReadNetworkPacket();
             if (!result)
@@ -864,10 +864,10 @@ namespace Microsoft.Data.SqlClient
                         int level = (payload[payloadOffset + 2] << 8) |
                                              payload[payloadOffset + 3];
 
-                        isYukonOrLater = majorVersion >= 9;
-                        if (!isYukonOrLater)
+                        is2005OrLater = majorVersion >= 9;
+                        if (!is2005OrLater)
                         {
-                            marsCapable = false;            // If pre-Yukon, MARS not supported.
+                            marsCapable = false;            // If pre-2005, MARS not supported.
                         }
 
                         break;
@@ -935,7 +935,7 @@ namespace Microsoft.Data.SqlClient
                             // Validate Certificate if Trust Server Certificate=false and Encryption forced (EncryptionOptions.ON) from Server.
                             bool shouldValidateServerCert = (_encryptionOption == EncryptionOptions.ON && !trustServerCert) || (_connHandler._accessTokenInBytes != null && !trustServerCert);
                             uint info = (shouldValidateServerCert ? TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE : 0)
-                                | (isYukonOrLater ? TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE : 0);
+                                | (is2005OrLater ? TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE : 0);
 
                             if (encrypt && !integratedSecurity)
                             {
@@ -1527,7 +1527,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         Debug.Assert(!stateObj._fResetConnectionSent, "Unexpected state on WritePacket ResetConnection");
 
-                        // Otherwise if Yukon and we grabbed the event, free it.  Another execute grabbed the event and
+                        // Otherwise if 2005 and we grabbed the event, free it.  Another execute grabbed the event and
                         // took care of sending the reset.
                         stateObj._fResetEventOwned = !_resetConnectionEvent.Set();
                         Debug.Assert(!stateObj._fResetEventOwned, "Invalid AutoResetEvent state!");
@@ -1537,7 +1537,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (_fMARS && stateObj._fResetEventOwned)
                     {
-                        // If exception thrown, and we are on Yukon and own the event, release it!
+                        // If exception thrown, and we are on 2005 and own the event, release it!
                         stateObj._fResetConnectionSent = false;
                         stateObj._fResetEventOwned = !_resetConnectionEvent.Set();
                         Debug.Assert(!stateObj._fResetEventOwned, "Invalid AutoResetEvent state!");
@@ -1810,7 +1810,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void PrepareResetConnection(bool preserveTransaction)
         {
-            // Set flag to reset connection upon next use - only for use on shiloh!
+            // Set flag to reset connection upon next use - only for use on 2000!
             _fResetConnection = true;
             _fPreserveTransaction = preserveTransaction;
         }
@@ -3590,41 +3590,40 @@ namespace Microsoft.Data.SqlClient
             uint increment = (a.tdsVersion >> 16) & 0xff;
 
             // Server responds:
-            // 0x07000000 -> Sphinx         // Notice server response format is different for bwd compat
-            // 0x07010000 -> Shiloh RTM     // Notice server response format is different for bwd compat
-            // 0x71000001 -> Shiloh SP1
-            // 0x72xx0002 -> Yukon RTM
-            // information provided by S. Ashwin
+            // 0x07000000 -> 7.0         // Notice server response format is different for bwd compat
+            // 0x07010000 -> 2000 RTM     // Notice server response format is different for bwd compat
+            // 0x71000001 -> 2000 SP1
+            // 0x72xx0002 -> 2005 RTM
 
             switch (majorMinor)
             {
-                case TdsEnums.YUKON_MAJOR << 24 | TdsEnums.YUKON_RTM_MINOR:     // Yukon
-                    if (increment != TdsEnums.YUKON_INCREMENT)
+                case TdsEnums.SQL2005_MAJOR << 24 | TdsEnums.SQL2005_RTM_MINOR:     // 2005
+                    if (increment != TdsEnums.SQL2005_INCREMENT)
                     {
                         throw SQL.InvalidTDSVersion();
                     }
-                    _isYukon = true;
+                    _is2005 = true;
                     break;
-                case TdsEnums.KATMAI_MAJOR << 24 | TdsEnums.KATMAI_MINOR:
-                    if (increment != TdsEnums.KATMAI_INCREMENT)
+                case TdsEnums.SQL2008_MAJOR << 24 | TdsEnums.SQL2008_MINOR:
+                    if (increment != TdsEnums.SQL2008_INCREMENT)
                     {
                         throw SQL.InvalidTDSVersion();
                     }
-                    _isKatmai = true;
+                    _is2008 = true;
                     break;
-                case TdsEnums.DENALI_MAJOR << 24 | TdsEnums.DENALI_MINOR:
-                    if (increment != TdsEnums.DENALI_INCREMENT)
+                case TdsEnums.SQl2012_MAJOR << 24 | TdsEnums.SQL2012_MINOR:
+                    if (increment != TdsEnums.SQL2012_INCREMENT)
                     {
                         throw SQL.InvalidTDSVersion();
                     }
-                    _isDenali = true;
+                    _is2012 = true;
                     break;
                 default:
                     throw SQL.InvalidTDSVersion();
             }
 
-            _isKatmai |= _isDenali;
-            _isYukon |= _isKatmai;
+            _is2008 |= _is2012;
+            _is2005 |= _is2008;
 
             stateObj._outBytesUsed = stateObj._outputHeaderLen;
             byte len;
@@ -3892,7 +3891,7 @@ namespace Microsoft.Data.SqlClient
         {
             returnValue = null;
             SqlReturnValue rec = new SqlReturnValue();
-            rec.length = length;        // In Yukon this length is -1
+            rec.length = length;        // In 2005 this length is -1
             ushort parameterIndex;
             if (!stateObj.TryReadUInt16(out parameterIndex))
             {
@@ -3922,7 +3921,7 @@ namespace Microsoft.Data.SqlClient
 
             uint userType;
 
-            // read user type - 4 bytes Yukon, 2 backwards
+            // read user type - 4 bytes 2005, 2 backwards
             if (!stateObj.TryReadUInt32(out userType))
             {
                 return false;
@@ -3979,8 +3978,8 @@ namespace Microsoft.Data.SqlClient
             rec.metaType = MetaType.GetSqlDataType(tdsType, userType, tdsLen);
             rec.type = rec.metaType.SqlDbType;
 
-            // always use the nullable type for parameters if Shiloh or later
-            // Sphinx sometimes sends fixed length return values
+            // always use the nullable type for parameters if 2000 or later
+            // 7.0 sometimes sends fixed length return values
             rec.tdsType = rec.metaType.NullableType;
             rec.IsNullable = true;
             if (tdsLen == TdsEnums.SQL_USHORTVARMAXLEN)
@@ -4892,7 +4891,7 @@ namespace Microsoft.Data.SqlClient
             byte byteLen;
             uint userType;
 
-            // read user type - 4 bytes Yukon, 2 backwards
+            // read user type - 4 bytes 2005, 2 backwards
             if (!stateObj.TryReadUInt32(out userType))
             {
                 return false;
@@ -7472,7 +7471,7 @@ namespace Microsoft.Data.SqlClient
         //
         internal bool TryGetDataLength(SqlMetaDataPriv colmeta, TdsParserStateObject stateObj, out ulong length)
         {
-            // Handle Yukon specific tokens
+            // Handle 2005 specific tokens
             if (colmeta.metaType.IsPlp)
             {
                 Debug.Assert(colmeta.tdsType == TdsEnums.SQLXMLTYPE ||
@@ -7526,7 +7525,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if (token == TdsEnums.SQLRETURNVALUE)
                 {
-                    tokenLength = -1; // In Yukon, the RETURNVALUE token stream no longer has length
+                    tokenLength = -1; // In 2005, the RETURNVALUE token stream no longer has length
                     return true;
                 }
                 else if (token == TdsEnums.SQLXMLTYPE)
@@ -7986,7 +7985,7 @@ namespace Microsoft.Data.SqlClient
             _physicalStateObj._outputMessageType = TdsEnums.MT_LOGIN7;
 
             // length in bytes
-            int length = TdsEnums.YUKON_LOG_REC_FIXED_LEN;
+            int length = TdsEnums.SQL2005_LOG_REC_FIXED_LEN;
 
             string clientInterfaceName = TdsEnums.SQL_PROVIDER_NAME;
             Debug.Assert(TdsEnums.MAXLEN_CLIENTINTERFACE >= clientInterfaceName.Length, "cchCltIntName can specify at most 128 unicode characters. See Tds spec");
@@ -8092,7 +8091,7 @@ namespace Microsoft.Data.SqlClient
                 WriteInt(length, _physicalStateObj);
                 if (recoverySessionData == null)
                 {
-                    WriteInt((TdsEnums.DENALI_MAJOR << 24) | (TdsEnums.DENALI_INCREMENT << 16) | TdsEnums.DENALI_MINOR, _physicalStateObj);
+                    WriteInt((TdsEnums.SQl2012_MAJOR << 24) | (TdsEnums.SQL2012_INCREMENT << 16) | TdsEnums.SQL2012_MINOR, _physicalStateObj);
                 }
                 else
                 {
@@ -8176,7 +8175,7 @@ namespace Microsoft.Data.SqlClient
                 WriteInt(0, _physicalStateObj);  // LCID is unused by server
 
                 // Start writing offset and length of variable length portions
-                int offset = TdsEnums.YUKON_LOG_REC_FIXED_LEN;
+                int offset = TdsEnums.SQL2005_LOG_REC_FIXED_LEN;
 
                 // write offset/length pairs
 
@@ -8994,7 +8993,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             if (rpcext.ProcID != 0)
                             {
-                                // Perf optimization for Shiloh and later,
+                                // Perf optimization for 2000 and later,
                                 Debug.Assert(rpcext.ProcID < 255, "rpcExec:ProcID can't be larger than 255");
                                 WriteShort(0xffff, stateObj);
                                 WriteShort((short)(rpcext.ProcID), stateObj);
@@ -9059,14 +9058,14 @@ namespace Microsoft.Data.SqlClient
                             // type (parameter record stores the MetaType class which is a helper that encapsulates all the type information we need here)
                             MetaType mt = param.InternalMetaType;
 
-                            if (mt.IsNewKatmaiType)
+                            if (mt.Is2008Type)
                             {
                                 WriteSmiParameter(param, i, 0 != (options & TdsEnums.RPC_PARAM_DEFAULT), stateObj, enableOptimizedParameterBinding, isAdvancedTraceOn);
                                 continue;
                             }
 
-                            if ((!_isYukon && !mt.Is80Supported) ||
-                                (!_isKatmai && !mt.Is90Supported))
+                            if ((!_is2005 && !mt.Is80Supported) ||
+                                (!_is2008 && !mt.Is90Supported))
                             {
                                 throw ADP.VersionDoesNotSupportDataType(mt.TypeName);
                             }
@@ -9129,7 +9128,7 @@ namespace Microsoft.Data.SqlClient
                         // If this is not the last RPC we are sending, add the batch flag
                         if (ii < (rpcArray.Length - 1))
                         {
-                            stateObj.WriteByte(TdsEnums.YUKON_RPCBATCHFLAG);
+                            stateObj.WriteByte(TdsEnums.SQL2005_RPCBATCHFLAG);
                         }
                     } // rpc for loop
 
@@ -9405,7 +9404,7 @@ namespace Microsoft.Data.SqlClient
                     maxsize = (size > codePageByteSize) ? size : codePageByteSize;
                     if (maxsize == 0)
                     {
-                        // Yukon doesn't like 0 as MaxSize. Change it to 2 for unicode types
+                        // 2005 doesn't like 0 as MaxSize. Change it to 2 for unicode types
                         if (mt.IsNCharType)
                             maxsize = 2;
                         else
@@ -9430,9 +9429,9 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if (mt.SqlDbType == SqlDbType.Udt)
                 {
-                    Debug.Assert(_isYukon, "Invalid DataType UDT for non-Yukon or later server!");
+                    Debug.Assert(_is2005, "Invalid DataType UDT for non-2005 or later server!");
 
-                    int maxSupportedSize = IsKatmaiOrNewer ? int.MaxValue : short.MaxValue;
+                    int maxSupportedSize = Is2008OrNewer ? int.MaxValue : short.MaxValue;
                     byte[] udtVal = null;
                     Format format = Format.Native;
 
@@ -9522,9 +9521,9 @@ namespace Microsoft.Data.SqlClient
                 else if ((!mt.IsVarTime) && (mt.SqlDbType != SqlDbType.Date))
                 {   // Time, Date, DateTime2, DateTimeoffset do not have the size written out
                     maxsize = (size > actualSize) ? size : actualSize;
-                    if (maxsize == 0 && _isYukon)
+                    if (maxsize == 0 && _is2005)
                     {
-                        // Yukon doesn't like 0 as MaxSize. Change it to 2 for unicode types (SQL9 - 682322)
+                        // 2005 doesn't like 0 as MaxSize. Change it to 2 for unicode types (SQL9 - 682322)
                         if (mt.IsNCharType)
                             maxsize = 2;
                         else
@@ -9556,7 +9555,7 @@ namespace Microsoft.Data.SqlClient
 
             // write out collation or xml metadata
 
-            if (_isYukon && (mt.SqlDbType == SqlDbType.Xml))
+            if (_is2005 && (mt.SqlDbType == SqlDbType.Xml))
             {
                 if (!string.IsNullOrEmpty(param.XmlSchemaCollectionDatabase) ||
                     !string.IsNullOrEmpty(param.XmlSchemaCollectionOwningSchema) ||
@@ -9760,7 +9759,7 @@ namespace Microsoft.Data.SqlClient
             ParameterPeekAheadValue peekAhead;
             SmiParameterMetaData metaData = param.MetaDataForSmi(out peekAhead);
 
-            if (!_isKatmai)
+            if (!_is2008)
             {
                 MetaType mt = MetaType.GetMetaTypeFromSqlDbType(metaData.SqlDbType, metaData.IsMultiValued);
                 throw ADP.VersionDoesNotSupportDataType(mt.TypeName);
@@ -10350,7 +10349,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     _SqlMetaData md = metadataCollection[i];
 
-                    // read user type - 4 bytes Yukon, 2 backwards
+                    // read user type - 4 bytes 2005, 2 backwards
                     WriteInt(0x0, stateObj);
 
                     // Write the flags
@@ -10753,7 +10752,7 @@ namespace Microsoft.Data.SqlClient
         // Write mars header data, not including the mars header length
         private void WriteMarsHeaderData(TdsParserStateObject stateObj, SqlInternalTransaction transaction)
         {
-            // Function to send over additional payload header data for Yukon and beyond only.
+            // Function to send over additional payload header data for 2005 and beyond only.
 
             // These are not necessary - can have local started in distributed.
             // Debug.Assert(!(null != sqlTransaction && null != distributedTransaction), "Error to have local (api started) and distributed transaction at the same time!");
@@ -10829,7 +10828,7 @@ namespace Microsoft.Data.SqlClient
         // Write query notificaiton header data, not including the notificaiton header length
         private void WriteQueryNotificationHeaderData(SqlNotificationRequest notificationRequest, TdsParserStateObject stateObj)
         {
-            Debug.Assert(_isYukon, "WriteQueryNotificationHeaderData called on a non-Yukon server");
+            Debug.Assert(_is2005, "WriteQueryNotificationHeaderData called on a non-2005 server");
 
             // We may need to update the notification header length if the header is changed in the future
 
@@ -10860,7 +10859,7 @@ namespace Microsoft.Data.SqlClient
 
         private void WriteTraceHeaderData(TdsParserStateObject stateObj)
         {
-            Debug.Assert(this.IncludeTraceHeader, "WriteTraceHeaderData can only be called on a Denali or higher version server and bid trace with the control bit are on");
+            Debug.Assert(this.IncludeTraceHeader, "WriteTraceHeaderData can only be called on a 2012 or higher version server and bid trace with the control bit are on");
 
             // We may need to update the trace header length if trace header is changed in the future
 
@@ -12802,7 +12801,7 @@ namespace Microsoft.Data.SqlClient
                                        + "         _connHandler = {14}\n\t"
                                        + "         _fMARS = {15}\n\t"
                                        + "         _sessionPool = {16}\n\t"
-                                       + "         _isYukon = {17}\n\t"
+                                       + "         _is2005 = {17}\n\t"
                                        + "         _sniSpnBuffer = {18}\n\t"
                                        + "         _errors = {19}\n\t"
                                        + "         _warnings = {20}\n\t"
@@ -12834,7 +12833,7 @@ namespace Microsoft.Data.SqlClient
                            null == _connHandler ? "(null)" : _connHandler.ObjectID.ToString((IFormatProvider)null),
                            _fMARS ? bool.TrueString : bool.FalseString,
                            null == _sessionPool ? "(null)" : _sessionPool.TraceString(),
-                           _isYukon ? bool.TrueString : bool.FalseString,
+                           _is2005 ? bool.TrueString : bool.FalseString,
                            null == _sniSpnBuffer ? "(null)" : _sniSpnBuffer.Length.ToString((IFormatProvider)null),
                            _physicalStateObj != null ? "(null)" : _physicalStateObj.ErrorCount.ToString((IFormatProvider)null),
                            _physicalStateObj != null ? "(null)" : _physicalStateObj.WarningCount.ToString((IFormatProvider)null),

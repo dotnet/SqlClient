@@ -144,17 +144,17 @@ namespace Microsoft.Data.SqlClient
             get;
         }
 
-        abstract internal bool IsShiloh
+        abstract internal bool Is2000
         {
             get;
         }
 
-        abstract internal bool IsYukonOrNewer
+        abstract internal bool Is2005OrNewer
         {
             get;
         }
 
-        abstract internal bool IsKatmaiOrNewer
+        abstract internal bool Is2008OrNewer
         {
             get;
         }
@@ -438,11 +438,11 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnection.EnlistNonNull|ADV> {0}, transaction {1}.", ObjectID, tx.GetHashCode());
             bool hasDelegatedTransaction = false;
 
-            if (IsYukonOrNewer)
+            if (Is2005OrNewer)
             {
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlInternalConnection.EnlistNonNull|ADV> {0}, attempting to delegate", ObjectID);
 
-                // Promotable transactions are only supported on Yukon
+                // Promotable transactions are only supported on 2005
                 // servers or newer.
                 SqlDelegatedTransaction delegatedTransaction = new SqlDelegatedTransaction(this, tx);
 
@@ -575,20 +575,20 @@ namespace Microsoft.Data.SqlClient
 
             EnlistedTransaction = tx; // Tell the base class about our enlistment
 
-            // If we're on a Yukon or newer server, and we we delegate the 
+            // If we're on a 2005 or newer server, and we we delegate the 
             // transaction successfully, we will have done a begin transaction, 
             // which produces a transaction id that we should execute all requests
             // on.  The TdsParser or SmiEventSink will store this information as
             // the current transaction.
             // 
-            // Likewise, propagating a transaction to a Yukon or newer server will
+            // Likewise, propagating a transaction to a 2005 or newer server will
             // produce a transaction id that The TdsParser or SmiEventSink will 
             // store as the current transaction.
             //
-            // In either case, when we're working with a Yukon or newer server 
+            // In either case, when we're working with a 2005 or newer server 
             // we better have a current transaction by now.
 
-            Debug.Assert(!IsYukonOrNewer || null != CurrentTransaction, "delegated/enlisted transaction with null current transaction?");
+            Debug.Assert(!Is2005OrNewer || null != CurrentTransaction, "delegated/enlisted transaction with null current transaction?");
         }
 
         internal void EnlistNull()
@@ -617,10 +617,10 @@ namespace Microsoft.Data.SqlClient
             // which causes the TdsParser or SmiEventSink should to clear the
             // current transaction.
             //
-            // In either case, when we're working with a Yukon or newer server 
+            // In either case, when we're working with a 2005 or newer server 
             // we better not have a current transaction at this point.
 
-            Debug.Assert(!IsYukonOrNewer || null == CurrentTransaction, "unenlisted transaction with non-null current transaction?");   // verify it!
+            Debug.Assert(!Is2005OrNewer || null == CurrentTransaction, "unenlisted transaction with non-null current transaction?");   // verify it!
         }
 
         override public void EnlistTransaction(SysTx.Transaction transaction)
@@ -647,7 +647,7 @@ namespace Microsoft.Data.SqlClient
             // If a connection is already enlisted in a DTC transaction and you
             // try to enlist in another one, in 7.0 the existing DTC transaction
             // would roll back and then the connection would enlist in the new
-            // one. In SQL 2000 & Yukon, when you enlist in a DTC transaction
+            // one. In SQL 2000 & 2005, when you enlist in a DTC transaction
             // while the connection is already enlisted in a DTC transaction,
             // the connection simply switches enlistments.  Regardless, simply
             // enlist in the user specified distributed transaction.  This
