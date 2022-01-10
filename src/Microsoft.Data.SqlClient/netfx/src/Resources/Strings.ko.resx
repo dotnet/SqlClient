@@ -2493,8 +2493,8 @@
   <data name="SQL_AuthenticationAndIntegratedSecurity" xml:space="preserve">
     <value>'Authentication'을 'Integrated Security'와 함께 사용할 수 없습니다.</value>
   </data>
-  <data name="SQL_IntegratedWithUserIDAndPassword" xml:space="preserve">
-    <value>'Authentication=Active Directory Integrated'를 'User ID', 'UID', 'Password' 또는 'PWD' 연결 문자열 키워드와 함께 사용할 수 없습니다.</value>
+  <data name="SQL_IntegratedWithPassword" xml:space="preserve">
+    <value>'Password' 또는 'PWD' 연결 문자열 키워드와 함께 'Authentication=Active Directory Integrated'를 사용할 수 없습니다.</value>
   </data>
   <data name="SQL_InteractiveWithPassword" xml:space="preserve">
     <value>'Authentication=Active Directory Interactive'를 'Password' 또는 'PWD' 연결 문자열 키워드와 함께 사용할 수 없습니다.</value>

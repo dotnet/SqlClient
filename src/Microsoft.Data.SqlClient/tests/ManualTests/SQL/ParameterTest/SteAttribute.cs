@@ -8,19 +8,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class SteAttributeKey
     {
-        public static readonly SteAttributeKey SqlDbType = new SteAttributeKey();
-        public static readonly SteAttributeKey MultiValued = new SteAttributeKey();
-        public static readonly SteAttributeKey Value = new SteAttributeKey();
-        public static readonly SteAttributeKey MaxLength = new SteAttributeKey();
-        public static readonly SteAttributeKey Precision = new SteAttributeKey();
-        public static readonly SteAttributeKey Scale = new SteAttributeKey();
-        public static readonly SteAttributeKey LocaleId = new SteAttributeKey();
-        public static readonly SteAttributeKey CompareOptions = new SteAttributeKey();
-        public static readonly SteAttributeKey TypeName = new SteAttributeKey();
-        public static readonly SteAttributeKey Type = new SteAttributeKey();
-        public static readonly SteAttributeKey Fields = new SteAttributeKey();
-        public static readonly SteAttributeKey Offset = new SteAttributeKey();
-        public static readonly SteAttributeKey Length = new SteAttributeKey();
+        public static readonly SteAttributeKey SqlDbType = new();
+        public static readonly SteAttributeKey MultiValued = new();
+        public static readonly SteAttributeKey Value = new();
+        public static readonly SteAttributeKey MaxLength = new();
+        public static readonly SteAttributeKey Precision = new();
+        public static readonly SteAttributeKey Scale = new();
+        public static readonly SteAttributeKey LocaleId = new();
+        public static readonly SteAttributeKey CompareOptions = new();
+        public static readonly SteAttributeKey TypeName = new();
+        public static readonly SteAttributeKey Type = new();
+        public static readonly SteAttributeKey Fields = new();
+        public static readonly SteAttributeKey Offset = new();
+        public static readonly SteAttributeKey Length = new();
 
         public static readonly IList<SteAttributeKey> MetaDataKeys = new List<SteAttributeKey>(
                 new SteAttributeKey[] {
@@ -44,8 +44,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
     public class SteAttribute
     {
-        private SteAttributeKey _key;
-        private object _value;
+        private readonly SteAttributeKey _key;
+        private readonly object _value;
 
         public SteAttribute(SteAttributeKey key, object value)
         {
