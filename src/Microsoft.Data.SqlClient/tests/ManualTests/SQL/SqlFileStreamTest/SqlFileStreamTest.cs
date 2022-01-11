@@ -27,7 +27,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 string connString = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
                 {
-                    InitialCatalog = SetupFileStreamDB(ref DataTestUtility.FileStreamDirectory, DataTestUtility.TCPConnectionString),
+                    InitialCatalog = SetupFileStreamDB(),
                     IntegratedSecurity = true
                 }.ConnectionString;
 
@@ -79,7 +79,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                DropFileStreamDb(ref DataTestUtility.FileStreamDirectory, DataTestUtility.TCPConnectionString);
+                DropFileStreamDb(DataTestUtility.TCPConnectionString);
             }
         }
 
@@ -91,7 +91,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 string connString = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
                 {
-                    InitialCatalog = SetupFileStreamDB(ref DataTestUtility.FileStreamDirectory, DataTestUtility.TCPConnectionString),
+                    InitialCatalog = SetupFileStreamDB(),
                     IntegratedSecurity = true
                 }.ConnectionString;
 
@@ -139,7 +139,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                DropFileStreamDb(ref DataTestUtility.FileStreamDirectory, DataTestUtility.TCPConnectionString);
+                DropFileStreamDb(DataTestUtility.TCPConnectionString);
             }
         }
 
@@ -151,7 +151,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 string connString = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString)
                 {
-                    InitialCatalog = SetupFileStreamDB(ref DataTestUtility.FileStreamDirectory, DataTestUtility.TCPConnectionString),
+                    InitialCatalog = SetupFileStreamDB(),
                     IntegratedSecurity = true
                 }.ConnectionString;
 
@@ -205,14 +205,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                DropFileStreamDb(ref DataTestUtility.FileStreamDirectory, DataTestUtility.TCPConnectionString);
+                DropFileStreamDb(DataTestUtility.TCPConnectionString);
             }
         }
 
         #region Private helper methods
 
-        private static string SetupFileStreamDB(ref string fileStreamDir, string connString)
+        private static string SetupFileStreamDB()
         {
+            string fileStreamDir = DataTestUtility.FileStreamDirectory;
             try
             {
                 if (fileStreamDir != null)
@@ -233,7 +234,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                                          LOG ON
                                           (NAME = PhotoLibrary_log,
                                            FILENAME = '{fileStreamDir}PhotoLibrary_log.ldf')";
-                    using SqlConnection con = new(new SqlConnectionStringBuilder(connString) { InitialCatalog = "master", IntegratedSecurity = true }.ConnectionString);
+                    using SqlConnection con = new(new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { InitialCatalog = "master", IntegratedSecurity = true }.ConnectionString);
                     con.Open();
                     using SqlCommand cmd = con.CreateCommand();
                     cmd.CommandText = createDBQuery;
@@ -249,7 +250,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return s_fileStreamDBName;
         }
 
-        private static void DropFileStreamDb(ref string fileStreamDir, string connString)
+        private static void DropFileStreamDb(string connString)
         {
             try
             {
@@ -261,7 +262,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             catch (SqlException e)
             {
                 Console.WriteLine("File Stream database could not be dropped. " + e.Message);
-                fileStreamDir = null;
             }
         }
 
@@ -294,7 +294,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private static byte[] RetrieveData(string tempTable,String connString, int len)
+        private static byte[] RetrieveData(string tempTable,string connString, int len)
         {
             byte[] bArray = new byte[len];
             using (SqlConnection conn = new SqlConnection(connString))
