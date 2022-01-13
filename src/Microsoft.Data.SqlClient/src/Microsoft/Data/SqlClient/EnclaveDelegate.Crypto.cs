@@ -10,7 +10,7 @@ namespace Microsoft.Data.SqlClient
 {
     internal sealed partial class EnclaveDelegate
     {
-        private static readonly Dictionary<SqlConnectionAttestationProtocol, SqlColumnEncryptionEnclaveProvider> s_enclaveProviders = new Dictionary<SqlConnectionAttestationProtocol, SqlColumnEncryptionEnclaveProvider>();
+        private static readonly ConcurrentDictionary<SqlConnectionAttestationProtocol, SqlColumnEncryptionEnclaveProvider> s_enclaveProviders = new();
 
         /// <summary>
         /// Create a new enclave session
