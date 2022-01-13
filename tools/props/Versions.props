@@ -6,12 +6,12 @@
     <!-- Should only be changed in future when a non-backwards compatible driver is released. -->
     <!-- Future Assembly Version values shall be Major.Minor.0.0; e.g. 4.0.0.0 -->
     <AssemblyVersion>4.0.0.0</AssemblyVersion>
-    <NugetPackageVersion Condition="'$(NugetPackageVersion)' == ''">4.0.0-dev</NugetPackageVersion>
+    <NugetPackageVersion Condition="'$(NugetPackageVersion)' == ''">5.0.0-dev</NugetPackageVersion>
     <Version>$(NugetPackageVersion)</Version>
   </PropertyGroup>
   <!-- NetFx project dependencies -->
   <PropertyGroup>
-    <MicrosoftDataSqlClientSniVersion>4.0.0-preview1.21232.1</MicrosoftDataSqlClientSniVersion>    
+    <MicrosoftDataSqlClientSniVersion>4.0.0</MicrosoftDataSqlClientSniVersion>    
     <SystemSecurityCryptographyAlgorithmsVersion>4.3.1</SystemSecurityCryptographyAlgorithmsVersion>
     <SystemSecurityCryptographyPrimitivesVersion>4.3.0</SystemSecurityCryptographyPrimitivesVersion>
   </PropertyGroup>
@@ -29,7 +29,7 @@
   <!-- NetCore project dependencies -->
   <PropertyGroup>
     <MicrosoftWin32RegistryVersion>5.0.0</MicrosoftWin32RegistryVersion>
-    <MicrosoftDataSqlClientSNIRuntimeVersion>4.0.0-preview1.21232.1</MicrosoftDataSqlClientSNIRuntimeVersion>
+    <MicrosoftDataSqlClientSNIRuntimeVersion>4.0.0</MicrosoftDataSqlClientSNIRuntimeVersion>
     <SystemConfigurationConfigurationManagerVersion>5.0.0</SystemConfigurationConfigurationManagerVersion>
     <SystemDiagnosticsDiagnosticSourceVersion>5.0.0</SystemDiagnosticsDiagnosticSourceVersion>
     <SystemDiagnosticsPerformanceCounterVersion>5.0.0</SystemDiagnosticsPerformanceCounterVersion>
@@ -67,6 +67,7 @@
     <MicrosoftDotNetRemoteExecutorVersion>5.0.0-beta.20206.4</MicrosoftDotNetRemoteExecutorVersion>
     <MicrosoftNETCoreRuntimeCoreCLRVersion>2.0.8</MicrosoftNETCoreRuntimeCoreCLRVersion>
     <MicrosoftSqlServerSqlManagementObjectsVersion>161.41011.9</MicrosoftSqlServerSqlManagementObjectsVersion>
+    <MicrosoftSqlServerTypesVersion>10.50.1600.1</MicrosoftSqlServerTypesVersion>
     <BenchmarkDotNetVersion>0.12.1</BenchmarkDotNetVersion>
   </PropertyGroup>
   <PropertyGroup>
