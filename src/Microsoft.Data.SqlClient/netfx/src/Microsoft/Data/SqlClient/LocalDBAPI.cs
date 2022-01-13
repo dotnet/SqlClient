@@ -16,7 +16,6 @@ using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data
 {
-
     internal static class LocalDBAPI
     {
         private const string LocalDbPrefix = @"(localdb)\";
@@ -31,23 +30,27 @@ namespace Microsoft.Data
         // check if name is in format (localdb)\<InstanceName - not empty> and return instance name if it is
         internal static string GetLocalDbInstanceNameFromServerName(string serverName)
         {
-            string instanceName = null;
-            serverName = serverName.TrimStart(); // it can start with spaces if specified in quotes
-            bool isLocalDb = serverName.StartsWith(LocalDbPrefix, StringComparison.OrdinalIgnoreCase) || serverName.StartsWith(LocalDbPrefix_NP, StringComparison.OrdinalIgnoreCase);
-            if (isLocalDb)
+            if (serverName is not null)
             {
-                if (serverName.StartsWith(LocalDbPrefix, StringComparison.OrdinalIgnoreCase))
+                // it can start with spaces if specified in quotes
+                // Memory allocation is reduced by using ReadOnlySpan
+                ReadOnlySpan<char> input = serverName.AsSpan().Trim();
+                if (input.StartsWith(LocalDbPrefix.AsSpan(), StringComparison.OrdinalIgnoreCase))
                 {
-                    instanceName = serverName.Substring(LocalDbPrefix.Length).Trim();
+                    input = input.Slice(LocalDbPrefix.Length);
+                    if (!input.IsEmpty)
+                    {
+                        return input.ToString();
+                    }
                 }
-                else
+                else if (input.StartsWith(LocalDbPrefix_NP.AsSpan(), StringComparison.OrdinalIgnoreCase))
                 {
-                    instanceName = serverName.TrimEnd();
+                    return input.ToString();
                 }
-            }
-            return instanceName;
-        }
 
+            }
+            return null;
+        }
 
         internal static void ReleaseDLLHandles()
         {

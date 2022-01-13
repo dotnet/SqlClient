@@ -49,7 +49,7 @@ namespace Microsoft.Data.SqlClient
     {
         #region Constants
         private const int DiffieHellmanKeySize = 384;
-        private const int AzureBasedAttestationProtocolId = 1;
+        private const int AzureBasedAttestationProtocolId = (int)SqlConnectionAttestationProtocol.AAS;
         private const int SigningKeyRetryInSec = 3;
         #endregion
 

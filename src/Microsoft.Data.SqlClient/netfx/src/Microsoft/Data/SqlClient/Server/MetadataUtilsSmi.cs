@@ -262,7 +262,7 @@ namespace Microsoft.Data.SqlClient.Server
                         break;
                     case SqlDbType.Date:
                     case SqlDbType.DateTime2:
-                        if (smiVersion >= SmiContextFactory.KatmaiVersion)
+                        if (smiVersion >= SmiContextFactory.Sql2008Version)
                         {
                             goto case SqlDbType.DateTime;
                         }
@@ -364,11 +364,11 @@ namespace Microsoft.Data.SqlClient.Server
                         }
                         break;
                     case SqlDbType.Time:
-                        if (value.GetType() == typeof(TimeSpan) && smiVersion >= SmiContextFactory.KatmaiVersion)
+                        if (value.GetType() == typeof(TimeSpan) && smiVersion >= SmiContextFactory.Sql2008Version)
                             extendedCode = ExtendedClrTypeCode.TimeSpan;
                         break;
                     case SqlDbType.DateTimeOffset:
-                        if (value.GetType() == typeof(DateTimeOffset) && smiVersion >= SmiContextFactory.KatmaiVersion)
+                        if (value.GetType() == typeof(DateTimeOffset) && smiVersion >= SmiContextFactory.Sql2008Version)
                             extendedCode = ExtendedClrTypeCode.DateTimeOffset;
                         break;
                     case SqlDbType.Xml:
@@ -462,8 +462,8 @@ namespace Microsoft.Data.SqlClient.Server
             return __extendedTypeCodeToSqlDbTypeMap[(int)typeCode + 1];
         }
 
-        // Infer SqlDbType from Type in the general case.  Katmai-only (or later) features that need to 
-        //  infer types should use InferSqlDbTypeFromType_Katmai.
+        // Infer SqlDbType from Type in the general case.  2008-only (or later) features that need to 
+        //  infer types should use InferSqlDbTypeFromType_2008.
         static internal SqlDbType InferSqlDbTypeFromType(Type type)
         {
             ExtendedClrTypeCode typeCode = DetermineExtendedTypeCodeFromType(type);
@@ -480,12 +480,12 @@ namespace Microsoft.Data.SqlClient.Server
             return returnType;
         }
 
-        // Inference rules changed for Katmai-or-later-only cases.  Only features that are guaranteed to be 
-        //  running against Katmai and don't have backward compat issues should call this code path.
-        //      example: TVP's are a new Katmai feature (no back compat issues) so can infer DATETIME2
+        // Inference rules changed for 2008-or-later-only cases.  Only features that are guaranteed to be 
+        //  running against 2008 and don't have backward compat issues should call this code path.
+        //      example: TVP's are a new 2008 feature (no back compat issues) so can infer DATETIME2
         //          when mapping System.DateTime from DateTable or DbDataReader.  DATETIME2 is better because
         //          of greater range that can handle all DateTime values.
-        static internal SqlDbType InferSqlDbTypeFromType_Katmai(Type type)
+        static internal SqlDbType InferSqlDbTypeFromType_2008(Type type)
         {
             SqlDbType returnType = InferSqlDbTypeFromType(type);
             if (SqlDbType.DateTime == returnType)
@@ -503,8 +503,8 @@ namespace Microsoft.Data.SqlClient.Server
             }
             else
             {
-                // Yukon doesn't support Structured nor the new time types
-                Debug.Assert(SmiContextFactory.YukonVersion == smiVersion, "Other versions should have been eliminated during link stage");
+                // 2005 doesn't support Structured nor the new time types
+                Debug.Assert(SmiContextFactory.Sql2005Version == smiVersion, "Other versions should have been eliminated during link stage");
                 return md.SqlDbType != SqlDbType.Structured &&
                         md.SqlDbType != SqlDbType.Date &&
                         md.SqlDbType != SqlDbType.DateTime2 &&
@@ -697,7 +697,7 @@ namespace Microsoft.Data.SqlClient.Server
         // Extract metadata for a single DataColumn
         static internal SmiExtendedMetaData SmiMetaDataFromDataColumn(DataColumn column, DataTable parent)
         {
-            SqlDbType dbType = InferSqlDbTypeFromType_Katmai(column.DataType);
+            SqlDbType dbType = InferSqlDbTypeFromType_2008(column.DataType);
             if (InvalidSqlDbType == dbType)
             {
                 throw SQL.UnsupportedColumnTypeForSqlProvider(column.ColumnName, column.DataType.Name);
@@ -837,7 +837,7 @@ namespace Microsoft.Data.SqlClient.Server
                 throw SQL.NullSchemaTableDataTypeNotSupported(colName);
             }
             Type colType = (Type)temp;
-            SqlDbType colDbType = InferSqlDbTypeFromType_Katmai(colType);
+            SqlDbType colDbType = InferSqlDbTypeFromType_2008(colType);
             if (InvalidSqlDbType == colDbType)
             {
                 // Unknown through standard mapping, use VarBinary for columns that are Object typed, otherwise error

@@ -27,7 +27,6 @@ namespace Microsoft.Data.SqlClient
     /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/SqlDataReader/*' />
     public class SqlDataReader : DbDataReader, IDataReader
     {
-
         private enum ALTROWSTATUS
         {
             Null = 0,           // default and after Done
@@ -611,7 +610,7 @@ namespace Microsoft.Data.SqlClient
                 schemaRow[NonVersionedProviderType] = (int)(col.cipherMD != null ? col.baseTI.type : col.type); // SqlDbType enum value - does not change with TypeSystem.
                 schemaRow[DataTypeName] = GetDataTypeNameInternal(col);
 
-                if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.IsNewKatmaiDateTimeType)
+                if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.Is2008DateTimeType)
                 {
                     schemaRow[ProviderType] = SqlDbType.NVarChar;
                     switch (col.type)
@@ -654,12 +653,12 @@ namespace Microsoft.Data.SqlClient
 
                     if (col.type == SqlDbType.Udt)
                     { // Additional metadata for UDTs.
-                        Debug.Assert(Connection.IsYukonOrNewer, "Invalid Column type received from the server");
+                        Debug.Assert(Connection.Is2005OrNewer, "Invalid Column type received from the server");
                         schemaRow[UdtAssemblyQualifiedName] = col.udt?.AssemblyQualifiedName;
                     }
                     else if (col.type == SqlDbType.Xml)
                     { // Additional metadata for Xml.
-                        Debug.Assert(Connection.IsYukonOrNewer, "Invalid DataType (Xml) for the column");
+                        Debug.Assert(Connection.Is2005OrNewer, "Invalid DataType (Xml) for the column");
                         schemaRow[XmlSchemaCollectionDatabase] = col.xmlSchemaCollection?.Database;
                         schemaRow[XmlSchemaCollectionOwningSchema] = col.xmlSchemaCollection?.OwningSchema;
                         schemaRow[XmlSchemaCollectionName] = col.xmlSchemaCollection?.Name;
@@ -694,7 +693,7 @@ namespace Microsoft.Data.SqlClient
                     schemaRow[Precision] = col.metaType.Precision;
                 }
 
-                if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.IsNewKatmaiDateTimeType)
+                if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.Is2008DateTimeType)
                 {
                     schemaRow[Scale] = MetaType.MetaNVarChar.Scale;
                 }
@@ -1403,7 +1402,7 @@ namespace Microsoft.Data.SqlClient
         {
             string dataTypeName = null;
 
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsNewKatmaiDateTimeType)
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
             {
                 dataTypeName = MetaType.MetaNVarChar.TypeName;
             }
@@ -1425,7 +1424,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (metaData.type == SqlDbType.Udt)
                 {
-                    Debug.Assert(Connection.IsYukonOrNewer, "Invalid Column type received from the server");
+                    Debug.Assert(Connection.Is2005OrNewer, "Invalid Column type received from the server");
                     dataTypeName = metaData.udt?.DatabaseName + "." + metaData.udt?.SchemaName + "." + metaData.udt?.TypeName;
                 }
                 else
@@ -1486,9 +1485,9 @@ namespace Microsoft.Data.SqlClient
         {
             Type fieldType = null;
 
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsNewKatmaiDateTimeType)
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
             {
-                // Return katmai types as string
+                // Return 2008 types as string
                 fieldType = MetaType.MetaNVarChar.ClassType;
             }
             else if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
@@ -1509,7 +1508,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (metaData.type == SqlDbType.Udt)
                 {
-                    Debug.Assert(Connection.IsYukonOrNewer, "Invalid Column type received from the server");
+                    Debug.Assert(Connection.Is2005OrNewer, "Invalid Column type received from the server");
                     Connection.CheckGetExtendedUDTInfo(metaData, false);
                     fieldType = metaData.udt?.Type;
                 }
@@ -1598,7 +1597,7 @@ namespace Microsoft.Data.SqlClient
         {
             Type providerSpecificFieldType = null;
 
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsNewKatmaiDateTimeType)
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
             {
                 providerSpecificFieldType = MetaType.MetaNVarChar.SqlType;
             }
@@ -1620,7 +1619,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (metaData.type == SqlDbType.Udt)
                 {
-                    Debug.Assert(Connection.IsYukonOrNewer, "Invalid Column type received from the server");
+                    Debug.Assert(Connection.Is2005OrNewer, "Invalid Column type received from the server");
                     Connection.CheckGetExtendedUDTInfo(metaData, false);
                     providerSpecificFieldType = metaData.udt?.Type;
                 }
@@ -2676,7 +2675,7 @@ namespace Microsoft.Data.SqlClient
 
             DateTime dt = _data[i].DateTime;
             // This accessor can be called for regular DateTime column. In this case we should not throw
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].IsNewKatmaiDateTimeType)
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
             {
                 // TypeSystem.SQLServer2005 or less
 
@@ -2716,7 +2715,7 @@ namespace Microsoft.Data.SqlClient
         override public Guid GetGuid(int i)
         {
             ReadColumn(i);
-            return _data[i].SqlGuid.Value;
+            return _data[i].Guid;
         }
 
         /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetInt16/*' />
@@ -2774,10 +2773,10 @@ namespace Microsoft.Data.SqlClient
         {
             ReadColumn(i);
             SqlString data;
-            // Convert Katmai types to string
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].IsNewKatmaiDateTimeType)
+            // Convert 2008 types to string
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
             {
-                data = _data[i].KatmaiDateTimeSqlString;
+                data = _data[i].Sql2008DateTimeSqlString;
             }
             else
             {
@@ -2855,9 +2854,9 @@ namespace Microsoft.Data.SqlClient
         {
             ReadColumn(i);
 
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].IsNewKatmaiDateTimeType)
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
             {
-                return _data[i].KatmaiDateTimeSqlString;
+                return _data[i].Sql2008DateTimeSqlString;
             }
 
             return _data[i].SqlString;
@@ -2934,10 +2933,10 @@ namespace Microsoft.Data.SqlClient
             // Due to a bug in TdsParser.GetNullSqlValue, Timestamps' IsNull is not correctly set - so we need to bypass the following check
             Debug.Assert(!data.IsEmpty || data.IsNull || metaData.type == SqlDbType.Timestamp, "Data has been read, but the buffer is empty");
 
-            // Convert Katmai types to string
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsNewKatmaiDateTimeType)
+            // Convert 2008 types to string
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
             {
-                return data.KatmaiDateTimeSqlString;
+                return data.Sql2008DateTimeSqlString;
             }
             else if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
             {
@@ -3014,10 +3013,10 @@ namespace Microsoft.Data.SqlClient
         {
             ReadColumn(i);
 
-            // Convert katmai value to string if type system knob is 2005 or earlier
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].IsNewKatmaiDateTimeType)
+            // Convert 2008 value to string if type system knob is 2005 or earlier
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
             {
-                return _data[i].KatmaiDateTimeString;
+                return _data[i].Sql2008DateTimeString;
             }
 
             return _data[i].String;
@@ -3124,7 +3123,7 @@ namespace Microsoft.Data.SqlClient
             // Due to a bug in TdsParser.GetNullSqlValue, Timestamps' IsNull is not correctly set - so we need to bypass the following check
             Debug.Assert(!data.IsEmpty || data.IsNull || metaData.type == SqlDbType.Timestamp, "Data has been read, but the buffer is empty");
 
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsNewKatmaiDateTimeType)
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
             {
                 if (data.IsNull)
                 {
@@ -3132,7 +3131,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    return data.KatmaiDateTimeString;
+                    return data.Sql2008DateTimeString;
                 }
             }
             else if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
@@ -3187,8 +3186,56 @@ namespace Microsoft.Data.SqlClient
         }
 
         private T GetFieldValueFromSqlBufferInternal<T>(SqlBuffer data, _SqlMetaData metaData, bool isAsync)
-        {
-            if (typeof(T) == typeof(XmlReader))
+        {            
+            // this block of type specific shortcuts uses RyuJIT jit behaviors to achieve fast implementations of the primitive types
+            // RyuJIT will be able to determine at compilation time that the typeof(T)==typeof(<primitive>) options are constant
+            // and be able to remove all implementations which cannot be reached. this will eliminate non-specialized code for
+            Type dataType = data.GetTypeFromStorageType(false);
+            if (typeof(T) == typeof(int) && dataType == typeof(int))
+            {
+                return data.Int32As<T>();
+            }
+            else if (typeof(T) == typeof(byte) && dataType == typeof(byte))
+            {
+                return data.ByteAs<T>();
+            }
+            else if (typeof(T) == typeof(short) && dataType == typeof(short))
+            {
+                return data.Int16As<T>();
+            }
+            else if (typeof(T) == typeof(long) && dataType == typeof(long))
+            {
+                return data.Int64As<T>();
+            }
+            else if (typeof(T) == typeof(bool) && dataType == typeof(bool))
+            {
+                return data.BooleanAs<T>();
+            }
+            else if (typeof(T) == typeof(double) && dataType == typeof(double))
+            {
+                return data.DoubleAs<T>();
+            }
+            else if (typeof(T) == typeof(float) && dataType == typeof(float))
+            {
+                return data.SingleAs<T>();
+            }
+            else if (typeof(T) == typeof(Guid) && dataType == typeof(Guid))
+            {
+                return (T)(object)data.Guid;
+            }
+            else if (typeof(T) == typeof(decimal) && dataType == typeof(decimal))
+            {
+                return (T)(object)data.Decimal;
+            }
+            else if (typeof(T) == typeof(DateTimeOffset) && dataType == typeof(DateTimeOffset) && _typeSystem > SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
+            {
+                return (T)(object)data.DateTimeOffset;
+            }
+            else if (typeof(T) == typeof(DateTime) && dataType == typeof(DateTime) && _typeSystem > SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
+            {
+                return (T)(object)data.DateTime;
+            }
+            else if (typeof(T) == typeof(XmlReader))
             {
                 // XmlReader only allowed on XML types
                 if (metaData.metaType.SqlDbType != SqlDbType.Xml)
@@ -3289,44 +3336,48 @@ namespace Microsoft.Data.SqlClient
                     return (T)(object)new MemoryStream(value, writable: false);
                 }
             }
-            else if (typeof(INullable).IsAssignableFrom(typeof(T)))
-            {
-                // If its a SQL Type or Nullable UDT
-                object rawValue = GetSqlValueFromSqlBufferInternal(data, metaData);
-
-                if (typeof(T) == typeof(SqlString))
-                {
-                    // Special case: User wants SqlString, but we have a SqlXml
-                    // SqlXml can not be typecast into a SqlString, but we need to support SqlString on XML Types - so do a manual conversion
-                    SqlXml xmlValue = rawValue as SqlXml;
-                    if (xmlValue != null)
-                    {
-                        if (xmlValue.IsNull)
-                        {
-                            rawValue = SqlString.Null;
-                        }
-                        else
-                        {
-                            rawValue = new SqlString(xmlValue.Value);
-                        }
-                    }
-                }
-
-                return (T)rawValue;
-            }
             else
             {
-                // Otherwise Its a CLR or non-Nullable UDT
-                try
+                if (typeof(INullable).IsAssignableFrom(typeof(T)))
                 {
-                    return (T)GetValueFromSqlBufferInternal(data, metaData);
+                    // If its a SQL Type or Nullable UDT
+                    object rawValue = GetSqlValueFromSqlBufferInternal(data, metaData);
+                    if (typeof(T) == typeof(SqlString))
+                    {
+                        // Special case: User wants SqlString, but we have a SqlXml
+                        // SqlXml can not be typecast into a SqlString, but we need to support SqlString on XML Types - so do a manual conversion
+                        SqlXml xmlValue = rawValue as SqlXml;
+                        if (xmlValue != null)
+                        {
+                            if (xmlValue.IsNull)
+                            {
+                                rawValue = SqlString.Null;
+                            }
+                            else
+                            {
+                                rawValue = new SqlString(xmlValue.Value);
+                            }
+                        }
+                    }
+                    return (T)rawValue;
                 }
-                catch (InvalidCastException) when (data.IsNull)
+                else
                 {
-                    // If the value was actually null, then we should throw a SqlNullValue instead
-                    throw SQL.SqlNullValue();
+                    // the requested type is likely to be one that isn't supported so try the cast and
+                    // unless there is a null value conversion then feedback the cast exception with 
+                    // type named to the user so they know what went wrong. Supported types are listed
+                    // in the documentation
+                    try
+                    {
+                        return (T)GetValueFromSqlBufferInternal(data, metaData);
+                    }
+                    catch (InvalidCastException) when (data.IsNull)
+                    {
+                        // If the value was actually null, then we should throw a SqlNullValue instead
+                        throw SQL.SqlNullValue();
+                    }
+
                 }
-                
             }
         }
 
@@ -3472,7 +3523,7 @@ namespace Microsoft.Data.SqlClient
                             return true;
 
                         // VSTFDEVDIV 926281: DONEINPROC case is missing here; we have decided to reject this bug as it would result in breaking change
-                        // from Orcas RTM/SP1 and Dev10 RTM. See the bug for more details.
+                        // from VS2008 RTM/SP1 and Dev10 RTM. See the bug for more details.
                         // case TdsEnums.DONEINPROC:
                         case TdsEnums.SQLDONE:
                             Debug.Assert(_altRowStatus == ALTROWSTATUS.Done || _altRowStatus == ALTROWSTATUS.Null, "invalid AltRowStatus");
@@ -5745,7 +5796,7 @@ namespace Microsoft.Data.SqlClient
 
 #endif
 
-        class Snapshot
+        private class Snapshot
         {
             public bool _dataReady;
             public bool _haltRead;
