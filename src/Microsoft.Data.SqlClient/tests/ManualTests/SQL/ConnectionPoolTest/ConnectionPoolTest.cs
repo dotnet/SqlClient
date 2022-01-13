@@ -185,8 +185,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ManualResetEventSlim taskAllowedToSpeak = new ManualResetEventSlim(false);
 
             Task waitTask = Task.Factory.StartNew(() => MaxPoolWaitForConnectionTask(newConnectionString, internalConnection, connectionPool, taskAllowedToSpeak));
-            int cnt = 5;
-            while (waitTask.Status == TaskStatus.WaitingToRun && cnt-- > 0)
+            int count = 5;
+            while (waitTask.Status == TaskStatus.WaitingToRun && count-- > 0)
             {
                 Thread.Sleep(200);
             }
