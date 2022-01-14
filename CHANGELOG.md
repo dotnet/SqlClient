@@ -14,7 +14,7 @@ AppContext switch `SuppressInsecureTLSWarning` is added to make users to be able
 - Fixed the issue with Kerberos authentication using NET 6. [#1411](https://github.com/dotnet/SqlClient/pull/1411)
 - Fixed the issue with `SqlLocalDB` instance pipe name. [#1433](https://github.com/dotnet/SqlClient/pull/1433)
 - Fixed the issue with enclave providers not being thread safe. [#1451](https://github.com/dotnet/SqlClient/pull/1451)
-- Updated obsolete API calls in NET6. [#1401](https://github.com/dotnet/SqlClient/pull/1401)
+- Updated obsolete API calls targeting NET6. [#1401](https://github.com/dotnet/SqlClient/pull/1401)
 
 ## [Stable Release 4.0.0] - 2021-11-18
 
