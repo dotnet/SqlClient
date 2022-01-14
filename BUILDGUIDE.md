@@ -319,6 +319,12 @@ TLS 1.3 has been excluded due to the fact that the driver lacks full support. To
 
 `Switch.Microsoft.Data.SqlClient.EnableSecureProtocolsByOS`
 
+## Suppressing TLS security warning
+
+When connecting to a server, if a protocol lower than TLS 1.2 is negotiated, a security warning is output to the console. This warning can be suppressed on SQL connections with `Encrypt = false` by enabling the following AppContext switch on application startup:
+
+`Switch.Microsoft.Data.SqlClient.SuppressInsecureTLSWarning`
+
 ## Debugging SqlClient on Linux from Windows
 
 For enhanced developer experience, we support debugging SqlClient on Linux from Windows, using the project "**Microsoft.Data.SqlClient.DockerLinuxTest**" that requires "Container Tools" to be enabled in Visual Studio. You may import configuration: [VS19Components.vsconfig](./tools/vsconfig/VS19Components.vsconfig) if not enabled already.

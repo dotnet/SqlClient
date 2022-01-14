@@ -85,21 +85,24 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         [Fact]
         public void TestCanSetGlobalProvidersOnlyOnce()
         {
-            Utility.ClearSqlConnectionGlobalProviders();
+            lock (Utility.ClearSqlConnectionGlobalProvidersLock)
+            {
+                Utility.ClearSqlConnectionGlobalProviders();
 
-            IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders =
-                new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>()
-                {
+                IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders =
+                    new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>()
+                    {
                     { DummyKeyStoreProvider.Name, new DummyKeyStoreProvider() }
-                };
-            SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders);
+                    };
+                SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders);
 
-            InvalidOperationException e = Assert.Throws<InvalidOperationException>(
-                () => SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders));
-            string expectedMessage = SystemDataResourceManager.Instance.TCE_CanOnlyCallOnce;
-            Assert.Contains(expectedMessage, e.Message);
+                InvalidOperationException e = Assert.Throws<InvalidOperationException>(
+                    () => SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders));
+                string expectedMessage = SystemDataResourceManager.Instance.TCE_CanOnlyCallOnce;
+                Assert.Contains(expectedMessage, e.Message);
 
-            Utility.ClearSqlConnectionGlobalProviders();
+                Utility.ClearSqlConnectionGlobalProviders();
+            }
         }
 
         [Fact]
