@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## Microsoft.Data.SqlClient 4.0.1 released 14 January 2022
+
+This update brings the below changes over the previous preview release:
+
+### Added
+
+- AppContext switch `SuppressInsecureTLSWarning` is added to make users to be able to supress TLS security warning while `Encrypt=false` on connection string. [#1467](https://github.com/dotnet/SqlClient/pull/1467) 
+
+### Bug Fixes
+
+- Fixed the issue with Kerberos authentication using .NET 6. [#1468](https://github.com/dotnet/SqlClient/pull/1468)
+- Fixed the issue with `SqlLocalDB` instance pipe name. [#1475](https://github.com/dotnet/SqlClient/pull/1475)
+- Fixed the issue with enclave providers not being thread safe. [#1466](https://github.com/dotnet/SqlClient/pull/1466)
+- Updated obsolete API calls in NET6. [#1471](https://github.com/dotnet/SqlClient/pull/1471)
+
 ## [Stable Release 4.0.0] - 2021-11-18
 
 ### Added
