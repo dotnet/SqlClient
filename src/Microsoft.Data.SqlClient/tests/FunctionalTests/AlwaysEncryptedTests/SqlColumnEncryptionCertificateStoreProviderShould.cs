@@ -92,11 +92,6 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         /// </summary>
         private const int CipherTextStartIndex = IVStartIndex + IVLengthInBytes;
 
-        /// <summary>
-        /// SetCustomColumnEncryptionKeyStoreProvider can be called only once in a process. To workaround that, we use this flag.
-        /// </summary>
-        private static bool s_testCustomEncryptioKeyStoreProviderExecutedOnce = false;
-
         [Theory]
         [InvalidDecryptionParameters]
         [PlatformSpecific(TestPlatforms.Windows)]
@@ -326,55 +321,51 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         [PlatformSpecific(TestPlatforms.Windows)]
         public void TestCustomKeyProviderListSetter()
         {
-            // SqlConnection.RegisterColumnEncryptionKeyStoreProviders can be called only once in a process.
-            // This is a workaround to ensure re-runnability of the test.
-            if (s_testCustomEncryptioKeyStoreProviderExecutedOnce)
+            lock (Utility.ClearSqlConnectionGlobalProvidersLock)
             {
-                return;
+                string expectedMessage1 = "Column encryption key store provider dictionary cannot be null. Expecting a non-null value.";
+                // Verify that we are able to set it to null.
+                ArgumentException e1 = Assert.Throws<ArgumentNullException>(() => SqlConnection.RegisterColumnEncryptionKeyStoreProviders(null));
+                Assert.Contains(expectedMessage1, e1.Message);
+
+                // A dictionary holding custom providers.
+                IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders = new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>();
+                customProviders.Add(new KeyValuePair<string, SqlColumnEncryptionKeyStoreProvider>(@"DummyProvider", new DummyKeyStoreProvider()));
+
+                // Verify that setting a provider in the list with null value throws an exception.
+                customProviders.Add(new KeyValuePair<string, SqlColumnEncryptionKeyStoreProvider>(@"CustomProvider", null));
+                string expectedMessage2 = "Null reference specified for key store provider 'CustomProvider'. Expecting a non-null value.";
+                ArgumentNullException e2 = Assert.Throws<ArgumentNullException>(() => SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders));
+                Assert.Contains(expectedMessage2, e2.Message);
+                customProviders.Remove(@"CustomProvider");
+
+                // Verify that setting a provider in the list with an empty provider name throws an exception.
+                customProviders.Add(new KeyValuePair<string, SqlColumnEncryptionKeyStoreProvider>(@"", new DummyKeyStoreProvider()));
+                string expectedMessage3 = "Invalid key store provider name specified. Key store provider names cannot be null or empty";
+                ArgumentNullException e3 = Assert.Throws<ArgumentNullException>(() => SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders));
+                Assert.Contains(expectedMessage3, e3.Message);
+
+                customProviders.Remove(@"");
+
+                // Verify that setting a provider in the list with name that starts with 'MSSQL_' throws an exception.
+                customProviders.Add(new KeyValuePair<string, SqlColumnEncryptionKeyStoreProvider>(@"MSSQL_MyStore", new SqlColumnEncryptionCertificateStoreProvider()));
+                string expectedMessage4 = "Invalid key store provider name 'MSSQL_MyStore'. 'MSSQL_' prefix is reserved for system key store providers.";
+                ArgumentException e4 = Assert.Throws<ArgumentException>(() => SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders));
+                Assert.Contains(expectedMessage4, e4.Message);
+
+                customProviders.Remove(@"MSSQL_MyStore");
+
+                // Verify that setting a provider in the list with name that starts with 'MSSQL_' but different case throws an exception.
+                customProviders.Add(new KeyValuePair<string, SqlColumnEncryptionKeyStoreProvider>(@"MsSqL_MyStore", new SqlColumnEncryptionCertificateStoreProvider()));
+                string expectedMessage5 = "Invalid key store provider name 'MsSqL_MyStore'. 'MSSQL_' prefix is reserved for system key store providers.";
+                ArgumentException e5 = Assert.Throws<ArgumentException>(() => SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders));
+                Assert.Contains(expectedMessage5, e5.Message);
+
+                customProviders.Remove(@"MsSqL_MyStore");
+
+                // Clear any providers set by other tests.
+                Utility.ClearSqlConnectionGlobalProviders();
             }
-
-            string expectedMessage1 = "Column encryption key store provider dictionary cannot be null. Expecting a non-null value.";
-            // Verify that we are able to set it to null.
-            ArgumentException e1 = Assert.Throws<ArgumentNullException>(() => SqlConnection.RegisterColumnEncryptionKeyStoreProviders(null));
-            Assert.Contains(expectedMessage1, e1.Message);
-
-            // A dictionary holding custom providers.
-            IDictionary<string, SqlColumnEncryptionKeyStoreProvider> customProviders = new Dictionary<string, SqlColumnEncryptionKeyStoreProvider>();
-            customProviders.Add(new KeyValuePair<string, SqlColumnEncryptionKeyStoreProvider>(@"DummyProvider", new DummyKeyStoreProvider()));
-
-            // Verify that setting a provider in the list with null value throws an exception.
-            customProviders.Add(new KeyValuePair<string, SqlColumnEncryptionKeyStoreProvider>(@"CustomProvider", null));
-            string expectedMessage2 = "Null reference specified for key store provider 'CustomProvider'. Expecting a non-null value.";
-            ArgumentNullException e2 = Assert.Throws<ArgumentNullException>(() => SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders));
-            Assert.Contains(expectedMessage2, e2.Message);
-            customProviders.Remove(@"CustomProvider");
-
-            // Verify that setting a provider in the list with an empty provider name throws an exception.
-            customProviders.Add(new KeyValuePair<string, SqlColumnEncryptionKeyStoreProvider>(@"", new DummyKeyStoreProvider()));
-            string expectedMessage3 = "Invalid key store provider name specified. Key store provider names cannot be null or empty";
-            ArgumentNullException e3 = Assert.Throws<ArgumentNullException>(() => SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders));
-            Assert.Contains(expectedMessage3, e3.Message);
-
-            customProviders.Remove(@"");
-
-            // Verify that setting a provider in the list with name that starts with 'MSSQL_' throws an exception.
-            customProviders.Add(new KeyValuePair<string, SqlColumnEncryptionKeyStoreProvider>(@"MSSQL_MyStore", new SqlColumnEncryptionCertificateStoreProvider()));
-            string expectedMessage4 = "Invalid key store provider name 'MSSQL_MyStore'. 'MSSQL_' prefix is reserved for system key store providers.";
-            ArgumentException e4 = Assert.Throws<ArgumentException>(() => SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders));
-            Assert.Contains(expectedMessage4, e4.Message);
-
-            customProviders.Remove(@"MSSQL_MyStore");
-
-            // Verify that setting a provider in the list with name that starts with 'MSSQL_' but different case throws an exception.
-            customProviders.Add(new KeyValuePair<string, SqlColumnEncryptionKeyStoreProvider>(@"MsSqL_MyStore", new SqlColumnEncryptionCertificateStoreProvider()));
-            string expectedMessage5 = "Invalid key store provider name 'MsSqL_MyStore'. 'MSSQL_' prefix is reserved for system key store providers.";
-            ArgumentException e5 = Assert.Throws<ArgumentException>(() => SqlConnection.RegisterColumnEncryptionKeyStoreProviders(customProviders));
-            Assert.Contains(expectedMessage5, e5.Message);
-
-            customProviders.Remove(@"MsSqL_MyStore");
-
-            // Clear any providers set by other tests.
-            Utility.ClearSqlConnectionGlobalProviders();
         }
 
         [Theory]
@@ -502,7 +493,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
         {
             public override IEnumerable<Object[]> GetData(MethodInfo testMethod)
             {
-                yield return new object[2] { StoreLocation.CurrentUser , CurrentUserMyPathPrefix };
+                yield return new object[2] { StoreLocation.CurrentUser, CurrentUserMyPathPrefix };
                 // use localmachine cert path only when current user is Admin.
                 if (CertificateFixture.IsAdmin)
                 {
