@@ -402,9 +402,11 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             return str.ToString();
         }
 
+        internal static object ClearSqlConnectionGlobalProvidersLock = new();
+
         /// <summary>
         /// Through reflection, clear the static provider list set on SqlConnection. 
-        /// Note- This API doesn't use locks for synchronization.
+        /// Note- Any test using this method should be wrapped in a lock statement using ClearSqlConnectionGlobalProvidersLock
         /// </summary>
         internal static void ClearSqlConnectionGlobalProviders()
         {

@@ -17,6 +17,7 @@
     "AzureKeyVaultClientSecret": "",
     "SupportsIntegratedSecurity": true,
     "LocalDbAppName": "",
+    "LocalDbSharedInstanceName":"",
     "SupportsFileStream": false,
     "FileStreamDirectory": "",
     "UseManagedSNIOnWindows": false,
