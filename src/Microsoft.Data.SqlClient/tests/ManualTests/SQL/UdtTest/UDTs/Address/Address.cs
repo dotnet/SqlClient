@@ -7,6 +7,7 @@ using System.Data.SqlTypes;
 using System.IO;
 using Microsoft.Data.SqlClient.Server;
 
+
 [Serializable]
 [SqlUserDefinedType(Format.UserDefined, IsByteOrdered = false, MaxByteSize = 500)]
 public class Address : INullable, IBinarySerialize
