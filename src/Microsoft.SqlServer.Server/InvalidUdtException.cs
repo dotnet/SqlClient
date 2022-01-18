@@ -39,7 +39,8 @@ namespace Microsoft.SqlServer.Server
             base.GetObjectData(si, context);
         }
 
-        internal static InvalidUdtException Create(Type udtType, string resourceReason)
+        /// <include file='../../doc/snippets/Microsoft.Data.SqlClient.Server/InvalidUdtException.xml' path='docs/members[@name="InvalidUdtException"]/Create/*' />
+        internal static InvalidUdtException Create(Type udtType, string resourceReason = "SqlUdtReason_NoUdtAttribute")
         {
             string reason = StringsHelper.GetString(resourceReason);
             string message = StringsHelper.GetString(Strings.SqlUdt_InvalidUdtMessage, udtType.FullName, reason);
