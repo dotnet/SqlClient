@@ -248,9 +248,9 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         // calling GetDateTimeOffset on possibly v100 SMI
-        internal static DateTimeOffset GetDateTimeOffset(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData, bool gettersSupportKatmaiDateTime)
+        internal static DateTimeOffset GetDateTimeOffset(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData, bool gettersSupport2008DateTime)
         {
-            if (gettersSupportKatmaiDateTime)
+            if (gettersSupport2008DateTime)
             {
                 return GetDateTimeOffset(sink, (SmiTypedGetterSetter)getters, ordinal, metaData);
             }
@@ -1032,7 +1032,7 @@ namespace Microsoft.Data.SqlClient.Server
                 );
         }
 
-        // GetValue() for v200 SMI (new Katmai Date/Time types)
+        // GetValue() for v200 SMI (2008 Date/Time types)
         internal static object GetValue200(
             SmiEventSink_Default sink,
             SmiTypedGetterSetter getters,
@@ -1521,12 +1521,12 @@ namespace Microsoft.Data.SqlClient.Server
 
         internal static void SetDateTimeOffset(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, DateTimeOffset value
 #if NETFRAMEWORK
-            , bool settersSupportKatmaiDateTime
+            , bool settersSupport2008DateTime
 #endif
             )
         {
 #if NETFRAMEWORK
-            if (!settersSupportKatmaiDateTime)
+            if (!settersSupport2008DateTime)
             {
                 throw ADP.InvalidCast();
             }
@@ -1702,12 +1702,12 @@ namespace Microsoft.Data.SqlClient.Server
 
         internal static void SetTimeSpan(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, TimeSpan value
 #if NETFRAMEWORK
-            , bool settersSupportKatmaiDateTime
+            , bool settersSupport2008DateTime
 #endif
             )
         {
 #if NETFRAMEWORK
-            if (!settersSupportKatmaiDateTime)
+            if (!settersSupport2008DateTime)
             {
                 throw ADP.InvalidCast();
             }
@@ -1870,7 +1870,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
-        // VSTFDevDiv#479681 - Data corruption when sending Katmai Date types to the server via TVP
+        // VSTFDevDiv#479681 - Data corruption when sending 2008 Date types to the server via TVP
         // Ensures proper handling on DateTime2 sub type for Sql_Variants and TVPs.
         internal static void SetCompatibleValueV200(
             SmiEventSink_Default sink,
@@ -1906,7 +1906,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
         }
 
-        //  Implements SqlClient 2.0-compatible SetValue() semantics + Orcas extensions
+        //  Implements SqlClient 2.0-compatible SetValue() semantics + VS2008 extensions
         //      Assumes caller already validated basic type against the metadata, other than trimming lengths and 
         //      checking individual field values (TVPs)
         internal static void SetCompatibleValueV200(
@@ -2218,9 +2218,9 @@ namespace Microsoft.Data.SqlClient.Server
                                 }
                                 ExtendedClrTypeCode typeCode = MetaDataUtilsSmi.DetermineExtendedTypeCodeForUseWithSqlDbType(metaData[i].SqlDbType, metaData[i].IsMultiValued, o, null
 #if NETFRAMEWORK
-                                    ,// TODO: this version works for shipping Orcas, since only Katmai (TVP) codepath calls this method at this time.
-                                    //      Need a better story for smi versioning of ValueUtilsSmi post-Orcas
-                                    SmiContextFactory.KatmaiVersion
+                                    ,// TODO: this version works for shipping VS2008, since only 2008 (TVP) codepath calls this method at this time.
+                                     //      Need a better story for smi versioning of ValueUtilsSmi post-VS2008
+                                    SmiContextFactory.Sql2008Version
 #endif
                                     );
                                 if ((storageType == SqlBuffer.StorageType.DateTime2) || (storageType == SqlBuffer.StorageType.Date))
@@ -4087,9 +4087,9 @@ namespace Microsoft.Data.SqlClient.Server
                             cellTypes[i] = MetaDataUtilsSmi.DetermineExtendedTypeCodeForUseWithSqlDbType(
                                     fieldMetaData.SqlDbType, fieldMetaData.IsMultiValued, cellValue, fieldMetaData.Type
 #if NETFRAMEWORK
-                                   ,// TODO: this version works for shipping Orcas, since only Katmai supports TVPs at this time.
-                                    //      Need a better story for smi versioning of ValueUtilsSmi post-Orcas
-                                    SmiContextFactory.KatmaiVersion
+                                   ,// TODO: this version works for shipping VS2008, since only 2008 supports TVPs at this time.
+                                    //      Need a better story for smi versioning of ValueUtilsSmi post-VS2008
+                                    SmiContextFactory.Sql2008Version
 #endif
                                     );
                         }

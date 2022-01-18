@@ -269,9 +269,9 @@ namespace Microsoft.Data.SqlClient
             {
                 if (processFinallyBlock)
                 {
-                    // Always ensure we're zombied; Yukon will send an EnvChange that
+                    // Always ensure we're zombied; 2005 will send an EnvChange that
                     // will cause the zombie, but only if we actually go to the wire;
-                    // Sphinx and Shiloh won't send the env change, so we have to handle
+                    // 7.0 and 2000 won't send the env change, so we have to handle
                     // them ourselves.
                     Zombie();
                 }
@@ -498,7 +498,7 @@ namespace Microsoft.Data.SqlClient
 
             // NOTE: we'll be called from the TdsParser when it gets appropriate
             // ENVCHANGE events that indicate the transaction has completed, however
-            // we cannot rely upon those events occurring in the case of pre-Yukon
+            // we cannot rely upon those events occurring in the case of pre-2005
             // servers (and when we don't go to the wire because the connection
             // is broken) so we can also be called from the Commit/Rollback/Save
             // methods to handle that case as well.

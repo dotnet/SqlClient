@@ -364,6 +364,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\ValueUtilsSmi.cs">
       <Link>Microsoft\Data\SqlClient\Server\ValueUtilsSmi.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlSer.cs">
+      <Link>Microsoft\Data\SqlClient\Server\SqlSer.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SignatureVerificationCache.cs">
       <Link>Microsoft\Data\SqlClient\SignatureVerificationCache.cs</Link>
     </Compile>
@@ -488,6 +491,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProvider.cs">
       <Link>Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProvider.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\NoneAttestationEnclaveProvider.cs">
+      <Link>Microsoft\Data\SqlClient\NoneAttestationEnclaveProvider.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProviderBase.cs">
       <Link>Microsoft\Data\SqlClient\VirtualSecureModeEnclaveProviderBase.cs</Link>
     </Compile>
@@ -506,9 +512,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionFactory.AssemblyLoadContext.cs" />    
     <Compile Include="Microsoft\Data\SqlClient\SqlDependencyUtils.AssemblyLoadContext.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIStreams.ValueTask.cs" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetFramework)' != 'netstandard2.0' AND '$(BuildSimulator)' == 'true'">
-    <Compile Include="Microsoft\Data\SqlClient\SimulatorEnclaveProvider.NetCoreApp.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS'">
     <Compile Include="Resources\StringsHelper.cs">
@@ -559,7 +562,6 @@
     </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.cs" />
 
-    <Compile Include="Microsoft\Data\SqlClient\Server\SqlSer.cs" />
     <Compile Include="Microsoft\Data\SqlClient\LocalDBAPI.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBuffer.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />

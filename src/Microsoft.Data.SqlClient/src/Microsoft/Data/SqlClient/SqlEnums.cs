@@ -50,7 +50,7 @@ namespace Microsoft.Data.SqlClient
         internal readonly bool IsCharType;
         internal readonly bool IsNCharType;
         internal readonly bool IsSizeInCharacters;
-        internal readonly bool IsNewKatmaiType;
+        internal readonly bool Is2008Type;
         internal readonly bool IsVarTime;
 
         internal readonly bool Is70Supported;
@@ -82,7 +82,7 @@ namespace Microsoft.Data.SqlClient
             IsCharType = _IsCharType(sqldbType);
             IsNCharType = _IsNCharType(sqldbType);
             IsSizeInCharacters = _IsSizeInCharacters(sqldbType);
-            IsNewKatmaiType = _IsNewKatmaiType(sqldbType);
+            Is2008Type = _Is2008Type(sqldbType);
             IsVarTime = _IsVarTime(sqldbType);
 
             Is70Supported = _Is70Supported(SqlDbType);
@@ -148,7 +148,7 @@ namespace Microsoft.Data.SqlClient
             SqlDbType.DateTime2 == type ||
             SqlDbType.DateTimeOffset == type;
 
-        private static bool _IsNewKatmaiType(SqlDbType type) => SqlDbType.Structured == type;
+        private static bool _Is2008Type(SqlDbType type) => SqlDbType.Structured == type;
 
         internal static bool _IsVarTime(SqlDbType type) =>
             type == SqlDbType.Time || type == SqlDbType.DateTime2 || type == SqlDbType.DateTimeOffset;
