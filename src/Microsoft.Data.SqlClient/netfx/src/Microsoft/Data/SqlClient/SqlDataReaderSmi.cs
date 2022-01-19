@@ -9,6 +9,7 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
@@ -35,7 +36,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                ThrowIfClosed("FieldCount");
+                ThrowIfClosed();
                 return InternalFieldCount;
             }
         }
@@ -44,7 +45,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                ThrowIfClosed("VisibleFieldCount");
+                ThrowIfClosed();
 
                 if (FNotInResults())
                 {
@@ -58,15 +59,15 @@ namespace Microsoft.Data.SqlClient
         //
         // IDBRecord Metadata Methods
         //
-        public override String GetName(int ordinal)
+        public override string GetName(int ordinal)
         {
-            EnsureCanGetMetaData("GetName");
+            EnsureCanGetMetaData();
             return _currentMetaData[ordinal].Name;
         }
 
-        public override String GetDataTypeName(int ordinal)
+        public override string GetDataTypeName(int ordinal)
         {
-            EnsureCanGetMetaData("GetDataTypeName");
+            EnsureCanGetMetaData();
             SmiExtendedMetaData md = _currentMetaData[ordinal];
             if (SqlDbType.Udt == md.SqlDbType)
             {
@@ -80,21 +81,20 @@ namespace Microsoft.Data.SqlClient
 
         public override Type GetFieldType(int ordinal)
         {
-            EnsureCanGetMetaData("GetFieldType");
-            if (SqlDbType.Udt == _currentMetaData[ordinal].SqlDbType)
+            EnsureCanGetMetaData();
+            if (_currentMetaData[ordinal].SqlDbType == SqlDbType.Udt)
             {
                 return _currentMetaData[ordinal].Type;
             }
             else
             {
-                return MetaType.GetMetaTypeFromSqlDbType(
-                    _currentMetaData[ordinal].SqlDbType, _currentMetaData[ordinal].IsMultiValued).ClassType;
+                return MetaType.GetMetaTypeFromSqlDbType(_currentMetaData[ordinal].SqlDbType, _currentMetaData[ordinal].IsMultiValued).ClassType;
             }
         }
 
         override public Type GetProviderSpecificFieldType(int ordinal)
         {
-            EnsureCanGetMetaData("GetProviderSpecificFieldType");
+            EnsureCanGetMetaData();
 
             if (SqlDbType.Udt == _currentMetaData[ordinal].SqlDbType)
             {
@@ -102,8 +102,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                return MetaType.GetMetaTypeFromSqlDbType(
-                    _currentMetaData[ordinal].SqlDbType, _currentMetaData[ordinal].IsMultiValued).SqlType;
+                return MetaType.GetMetaTypeFromSqlDbType(_currentMetaData[ordinal].SqlDbType, _currentMetaData[ordinal].IsMultiValued).SqlType;
             }
         }
 
@@ -111,14 +110,14 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                ThrowIfClosed("Depth");
+                ThrowIfClosed();
                 return 0;
             }
         } // UNDONE: (alazela 10/14/2001) Multi-level reader not impl.
 
-        public override Object GetValue(int ordinal)
+        public override object GetValue(int ordinal)
         {
-            EnsureCanGetCol("GetValue", ordinal);
+            EnsureCanGetCol(ordinal);
             SmiQueryMetaData metaData = _currentMetaData[ordinal];
             if (_currentConnection.Is2008OrNewer)
             {
@@ -132,7 +131,7 @@ namespace Microsoft.Data.SqlClient
 
         public override T GetFieldValue<T>(int ordinal)
         {
-            EnsureCanGetCol("GetFieldValue<T>", ordinal);
+            EnsureCanGetCol(ordinal);
             SmiQueryMetaData metaData = _currentMetaData[ordinal];
 
             if (typeof(INullable).IsAssignableFrom(typeof(T)))
@@ -171,18 +170,24 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(null != _currentColumnValuesV3, "Attempting to get variant internal storage type without calling GetValue first");
             if (IsDBNull(ordinal))
+            {
                 return SqlBuffer.StorageType.Empty;
+            }
 
             SmiMetaData valueMetaData = _currentColumnValuesV3.GetVariantType(_readerEventSink, ordinal);
             if (valueMetaData == null)
+            {
                 return SqlBuffer.StorageType.Empty;
+            }
             else
+            {
                 return ValueUtilsSmi.SqlDbTypeToStorageType(valueMetaData.SqlDbType);
+            }
         }
 
         public override int GetValues(object[] values)
         {
-            EnsureCanGetCol("GetValues", 0);
+            EnsureCanGetCol(0);
             if (null == values)
             {
                 throw ADP.ArgumentNull("values");
@@ -198,7 +203,7 @@ namespace Microsoft.Data.SqlClient
 
         public override int GetOrdinal(string name)
         {
-            EnsureCanGetMetaData("GetOrdinal");
+            EnsureCanGetMetaData();
             if (null == _fieldNameLookup)
             {
                 _fieldNameLookup = new FieldNameLookup((IDataReader)this, -1); // TODO: Need to support DefaultLCID for name comparisons
@@ -207,29 +212,17 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Generic array access by column index (accesses column value)
-        public override object this[int ordinal]
-        {
-            get
-            {
-                return GetValue(ordinal);
-            }
-        }
+        public override object this[int ordinal] => GetValue(ordinal);
 
         // Generic array access by column name (accesses column value)
-        public override object this[string strName]
-        {
-            get
-            {
-                return GetValue(GetOrdinal(strName));
-            }
-        }
+        public override object this[string strName] => GetValue(GetOrdinal(strName));
 
         //
         // IDataRecord Data Access methods
         //
         public override bool IsDBNull(int ordinal)
         {
-            EnsureCanGetCol("IsDBNull", ordinal);
+            EnsureCanGetCol(ordinal);
             return ValueUtilsSmi.IsDBNull(_readerEventSink, _currentColumnValuesV3, ordinal);
         }
 
@@ -241,37 +234,34 @@ namespace Microsoft.Data.SqlClient
 
         public override bool GetBoolean(int ordinal)
         {
-            EnsureCanGetCol("GetBoolean", ordinal);
+            EnsureCanGetCol(ordinal);
             return ValueUtilsSmi.GetBoolean(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal]);
         }
 
         public override byte GetByte(int ordinal)
         {
-            EnsureCanGetCol("GetByte", ordinal);
+            EnsureCanGetCol(ordinal);
             return ValueUtilsSmi.GetByte(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal]);
         }
 
         public override long GetBytes(int ordinal, long fieldOffset, byte[] buffer, int bufferOffset, int length)
         {
-            EnsureCanGetCol("GetBytes", ordinal);
+            EnsureCanGetCol(ordinal);
             return ValueUtilsSmi.GetBytes(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal], fieldOffset, buffer, bufferOffset, length, true);
         }
 
         // XmlReader support code calls this method.
         internal override long GetBytesInternal(int ordinal, long fieldOffset, byte[] buffer, int bufferOffset, int length)
         {
-            EnsureCanGetCol("GetBytes", ordinal);
+            EnsureCanGetCol(ordinal);
             return ValueUtilsSmi.GetBytesInternal(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal], fieldOffset, buffer, bufferOffset, length, false);
         }
 
-        public override char GetChar(int ordinal)
-        {
-            throw ADP.NotSupported();
-        }
+        public override char GetChar(int ordinal) => throw ADP.NotSupported();
 
         public override long GetChars(int ordinal, long fieldOffset, char[] buffer, int bufferOffset, int length)
         {
-            EnsureCanGetCol("GetChars", ordinal);
+            EnsureCanGetCol(ordinal);
             SmiExtendedMetaData metaData = _currentMetaData[ordinal];
             if (IsCommandBehavior(CommandBehavior.SequentialAccess))
             {
@@ -285,55 +275,55 @@ namespace Microsoft.Data.SqlClient
 
         public override Guid GetGuid(int ordinal)
         {
-            EnsureCanGetCol("GetGuid", ordinal);
+            EnsureCanGetCol(ordinal);
             return ValueUtilsSmi.GetGuid(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal]);
         }
 
-        public override Int16 GetInt16(int ordinal)
+        public override short GetInt16(int ordinal)
         {
-            EnsureCanGetCol("GetInt16", ordinal);
+            EnsureCanGetCol(ordinal);
             return ValueUtilsSmi.GetInt16(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal]);
         }
 
-        public override Int32 GetInt32(int ordinal)
+        public override int GetInt32(int ordinal)
         {
-            EnsureCanGetCol("GetInt32", ordinal);
+            EnsureCanGetCol(ordinal);
             return ValueUtilsSmi.GetInt32(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal]);
         }
 
-        public override Int64 GetInt64(int ordinal)
+        public override long GetInt64(int ordinal)
         {
-            EnsureCanGetCol("GetInt64", ordinal);
+            EnsureCanGetCol(ordinal);
             return ValueUtilsSmi.GetInt64(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal]);
         }
 
-        public override Single GetFloat(int ordinal)
+        public override float GetFloat(int ordinal)
         {
-            EnsureCanGetCol("GetFloat", ordinal);
+            EnsureCanGetCol(ordinal);
             return ValueUtilsSmi.GetSingle(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal]);
         }
 
-        public override Double GetDouble(int ordinal)
+        public override double GetDouble(int ordinal)
         {
-            EnsureCanGetCol("GetDouble", ordinal);
+            EnsureCanGetCol(ordinal);
             return ValueUtilsSmi.GetDouble(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal]);
         }
 
-        public override String GetString(int ordinal)
+        public override string GetString(int ordinal)
         {
-            EnsureCanGetCol("GetString", ordinal);
+            EnsureCanGetCol(ordinal);
             return ValueUtilsSmi.GetString(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal]);
         }
 
-        public override Decimal GetDecimal(int ordinal)
+        public override decimal GetDecimal(int ordinal)
         {
-            EnsureCanGetCol("GetDecimal", ordinal);
+            EnsureCanGetCol(ordinal);
             return ValueUtilsSmi.GetDecimal(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal]);
         }
 
         public override DateTime GetDateTime(int ordinal)
         {
-            EnsureCanGetCol("GetDateTime", ordinal);
+            EnsureCanGetCol(ordinal);
             return ValueUtilsSmi.GetDateTime(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal]);
         }
 
@@ -341,21 +331,9 @@ namespace Microsoft.Data.SqlClient
         // IDataReader properties
         //
         // Logically closed test. I.e. is this object closed as far as external access is concerned?
-        public override bool IsClosed
-        {
-            get
-            {
-                return IsReallyClosed();
-            }
-        }
+        public override bool IsClosed => IsReallyClosed();
 
-        public override int RecordsAffected
-        {
-            get
-            {
-                return base.Command.InternalRecordsAffected;
-            }
-        }
+        public override int RecordsAffected => Command.InternalRecordsAffected;
 
         //
         // IDataReader methods
@@ -418,7 +396,7 @@ namespace Microsoft.Data.SqlClient
         // Move to the next resultset
         public override unsafe bool NextResult()
         {
-            ThrowIfClosed("NextResult");
+            ThrowIfClosed();
 
             bool hasAnotherResult = InternalNextResult(false);
 
@@ -472,7 +450,7 @@ namespace Microsoft.Data.SqlClient
 
         public override bool Read()
         {
-            ThrowIfClosed("Read");
+            ThrowIfClosed();
             bool hasAnotherRow = InternalRead(false);
 
             return hasAnotherRow;
@@ -531,7 +509,7 @@ namespace Microsoft.Data.SqlClient
 
         public override DataTable GetSchemaTable()
         {
-            ThrowIfClosed("GetSchemaTable");
+            ThrowIfClosed();
 
             if (null == _schemaTable && FInResults())
             {
@@ -825,116 +803,116 @@ namespace Microsoft.Data.SqlClient
         //
         public override SqlBinary GetSqlBinary(int ordinal)
         {
-            EnsureCanGetCol("GetSqlBinary", ordinal);
+            EnsureCanGetCol(ordinal);
             return ValueUtilsSmi.GetSqlBinary(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal]);
         }
 
         public override SqlBoolean GetSqlBoolean(int ordinal)
         {
-            EnsureCanGetCol("GetSqlBoolean", ordinal);
+            EnsureCanGetCol(ordinal);
             return ValueUtilsSmi.GetSqlBoolean(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal]);
         }
 
         public override SqlByte GetSqlByte(int ordinal)
         {
-            EnsureCanGetCol("GetSqlByte", ordinal);
+            EnsureCanGetCol(ordinal);
             return ValueUtilsSmi.GetSqlByte(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal]);
         }
 
         public override SqlInt16 GetSqlInt16(int ordinal)
         {
-            EnsureCanGetCol("GetSqlInt16", ordinal);
+            EnsureCanGetCol(ordinal);
             return ValueUtilsSmi.GetSqlInt16(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal]);
         }
 
         public override SqlInt32 GetSqlInt32(int ordinal)
         {
-            EnsureCanGetCol("GetSqlInt32", ordinal);
+            EnsureCanGetCol(ordinal);
             return ValueUtilsSmi.GetSqlInt32(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal]);
         }
 
         public override SqlInt64 GetSqlInt64(int ordinal)
         {
-            EnsureCanGetCol("GetSqlInt64", ordinal);
+            EnsureCanGetCol(ordinal);
             return ValueUtilsSmi.GetSqlInt64(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal]);
         }
 
         public override SqlSingle GetSqlSingle(int ordinal)
         {
-            EnsureCanGetCol("GetSqlSingle", ordinal);
+            EnsureCanGetCol(ordinal);
             return ValueUtilsSmi.GetSqlSingle(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal]);
         }
 
         public override SqlDouble GetSqlDouble(int ordinal)
         {
-            EnsureCanGetCol("GetSqlDouble", ordinal);
+            EnsureCanGetCol(ordinal);
             return ValueUtilsSmi.GetSqlDouble(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal]);
         }
 
         public override SqlMoney GetSqlMoney(int ordinal)
         {
-            EnsureCanGetCol("GetSqlMoney", ordinal);
+            EnsureCanGetCol(ordinal);
             return ValueUtilsSmi.GetSqlMoney(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal]);
         }
 
         public override SqlDateTime GetSqlDateTime(int ordinal)
         {
-            EnsureCanGetCol("GetSqlDateTime", ordinal);
+            EnsureCanGetCol(ordinal);
             return ValueUtilsSmi.GetSqlDateTime(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal]);
         }
 
 
         public override SqlDecimal GetSqlDecimal(int ordinal)
         {
-            EnsureCanGetCol("GetSqlDecimal", ordinal);
+            EnsureCanGetCol(ordinal);
             return ValueUtilsSmi.GetSqlDecimal(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal]);
         }
 
         public override SqlString GetSqlString(int ordinal)
         {
-            EnsureCanGetCol("GetSqlString", ordinal);
+            EnsureCanGetCol(ordinal);
             return ValueUtilsSmi.GetSqlString(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal]);
         }
 
         public override SqlGuid GetSqlGuid(int ordinal)
         {
-            EnsureCanGetCol("GetSqlGuid", ordinal);
+            EnsureCanGetCol(ordinal);
             return ValueUtilsSmi.GetSqlGuid(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal]);
         }
 
         public override SqlChars GetSqlChars(int ordinal)
         {
-            EnsureCanGetCol("GetSqlChars", ordinal);
+            EnsureCanGetCol(ordinal);
             return ValueUtilsSmi.GetSqlChars(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal], _currentConnection.InternalContext);
         }
 
         public override SqlBytes GetSqlBytes(int ordinal)
         {
-            EnsureCanGetCol("GetSqlBytes", ordinal);
+            EnsureCanGetCol(ordinal);
             return ValueUtilsSmi.GetSqlBytes(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal], _currentConnection.InternalContext);
         }
 
         public override SqlXml GetSqlXml(int ordinal)
         {
-            EnsureCanGetCol("GetSqlXml", ordinal);
+            EnsureCanGetCol(ordinal);
             return ValueUtilsSmi.GetSqlXml(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal], _currentConnection.InternalContext);
         }
 
         public override TimeSpan GetTimeSpan(int ordinal)
         {
-            EnsureCanGetCol("GetTimeSpan", ordinal);
-            return ValueUtilsSmi.GetTimeSpan(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal], _currentConnection.Is2008OrNewer);
+            EnsureCanGetCol(ordinal);
+            return ValueUtilsSmi.GetTimeSpan(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal], _currentConnection.IsKatmaiOrNewer);
         }
 
         public override DateTimeOffset GetDateTimeOffset(int ordinal)
         {
-            EnsureCanGetCol("GetDateTimeOffset", ordinal);
-            return ValueUtilsSmi.GetDateTimeOffset(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal], _currentConnection.Is2008OrNewer);
+            EnsureCanGetCol(ordinal);
+            return ValueUtilsSmi.GetDateTimeOffset(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal], _currentConnection.IsKatmaiOrNewer);
         }
 
         public override object GetSqlValue(int ordinal)
         {
-            EnsureCanGetCol("GetSqlValue", ordinal);
+            EnsureCanGetCol(ordinal);
 
             SmiMetaData metaData = _currentMetaData[ordinal];
             if (_currentConnection.Is2008OrNewer)
@@ -947,7 +925,7 @@ namespace Microsoft.Data.SqlClient
 
         public override int GetSqlValues(object[] values)
         {
-            EnsureCanGetCol("GetSqlValues", 0);
+            EnsureCanGetCol(0);
 
             if (null == values)
             {
@@ -976,7 +954,7 @@ namespace Microsoft.Data.SqlClient
         //
         public override Stream GetStream(int ordinal)
         {
-            EnsureCanGetCol("GetStream", ordinal);
+            EnsureCanGetCol(ordinal);
 
             SmiQueryMetaData metaData = _currentMetaData[ordinal];
 
@@ -998,7 +976,7 @@ namespace Microsoft.Data.SqlClient
 
         public override TextReader GetTextReader(int ordinal)
         {
-            EnsureCanGetCol("GetTextReader", ordinal);
+            EnsureCanGetCol(ordinal);
 
             SmiQueryMetaData metaData = _currentMetaData[ordinal];
 
@@ -1022,7 +1000,7 @@ namespace Microsoft.Data.SqlClient
         {
             // NOTE: sql_variant can not contain a XML data type: http://msdn.microsoft.com/en-us/library/ms173829.aspx
 
-            EnsureCanGetCol("GetXmlReader", ordinal);
+            EnsureCanGetCol(ordinal);
             if (_currentMetaData[ordinal].SqlDbType != SqlDbType.Xml)
             {
                 throw ADP.InvalidCast();
@@ -1147,7 +1125,7 @@ namespace Microsoft.Data.SqlClient
 
         internal override int GetLocaleId(int ordinal)
         {
-            EnsureCanGetMetaData("GetLocaleId");
+            EnsureCanGetMetaData();
             return (int)_currentMetaData[ordinal].LocaleId;
         }
 
@@ -1171,25 +1149,24 @@ namespace Microsoft.Data.SqlClient
         }
 
         // Have we cleaned up internal resources?
-        private bool IsReallyClosed()
-        {
-            return !_isOpen;
-        }
+        private bool IsReallyClosed() => !_isOpen;
 
         // Central checkpoint for closed recordset.
         //    Any code that requires an open recordset should call this method first!
         //    Especially any code that accesses unmanaged memory structures whose lifetime
         //      matches the lifetime of the unmanaged recordset.
-        internal void ThrowIfClosed(string operationName)
+        internal void ThrowIfClosed([CallerMemberName] string operationName = null)
         {
             if (IsClosed)
+            {
                 throw ADP.DataReaderClosed(operationName);
+            }
         }
 
         // Central checkpoint to ensure the requested column can be accessed.
         //    Calling this function serves to notify that it has been accessed by the user.
         [SuppressMessage("Microsoft.Performance", "CA1801:AvoidUnusedParameters")] // for future compatibility
-        private void EnsureCanGetCol(string operationName, int ordinal)
+        private void EnsureCanGetCol(int ordinal, [CallerMemberName] string operationName = null)
         {
             EnsureOnRow(operationName);
         }
@@ -1203,7 +1180,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal void EnsureCanGetMetaData(string operationName)
+        internal void EnsureCanGetMetaData([CallerMemberName] string operationName = null)
         {
             ThrowIfClosed(operationName);
             if (FNotInResults())

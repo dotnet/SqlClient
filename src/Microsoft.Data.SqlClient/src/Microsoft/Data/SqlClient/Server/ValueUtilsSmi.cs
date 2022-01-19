@@ -15,6 +15,10 @@ using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlTypes;
 
+#if !NETFRAMEWORK 
+using SmiContext = System.Object;
+#endif
+
 namespace Microsoft.Data.SqlClient.Server
 {
     // Utilities for manipulating values with the Smi interface.
@@ -60,12 +64,8 @@ namespace Microsoft.Data.SqlClient.Server
                 return GetBoolean_Unchecked(sink, getters, ordinal);
             }
 
-            object result = GetValue(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                , null
-#endif                
-                );
-            if (null == result)
+            object result = GetValue(sink, getters, ordinal, metaData);
+            if (result == null)
             {
                 throw ADP.InvalidCast();
             }
@@ -79,12 +79,8 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 return GetByte_Unchecked(sink, getters, ordinal);
             }
-            object result = GetValue(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                , null
-#endif
-                );
-            if (null == result)
+            object result = GetValue(sink, getters, ordinal, metaData);
+            if (result == null)
             {
                 throw ADP.InvalidCast();
             }
@@ -93,12 +89,8 @@ namespace Microsoft.Data.SqlClient.Server
 
         private static long GetBytesConversion(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData, long fieldOffset, byte[] buffer, int bufferOffset, int length, bool throwOnNull)
         {
-            object obj = GetSqlValue(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                , null
-#endif
-                );
-            if (obj == null)
+            object obj = GetSqlValue(sink, getters, ordinal, metaData);
+            if (obj== null)
             {
                 throw ADP.InvalidCast();
             }
@@ -216,12 +208,8 @@ namespace Microsoft.Data.SqlClient.Server
                 return length;
             }
 
-            string value = ((string)GetValue(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                , null
-#endif
-                ));
-            if (null == value)
+            string value = (string)GetValue(sink, getters, ordinal, metaData);
+            if (value == null)
             {
                 throw ADP.InvalidCast();
             }
@@ -243,12 +231,8 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 return GetDateTime_Unchecked(sink, getters, ordinal);
             }
-            object result = GetValue(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                , null
-#endif
-                );
-            if (null == result)
+            object result = GetValue(sink, getters, ordinal, metaData);
+            if (result == null)
             {
                 throw ADP.InvalidCast();
             }
@@ -263,12 +247,8 @@ namespace Microsoft.Data.SqlClient.Server
                 return GetDateTimeOffset(sink, (SmiTypedGetterSetter)getters, ordinal, metaData);
             }
             ThrowIfITypedGettersIsNull(sink, getters, ordinal);
-            object result = GetValue(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                , null
-#endif
-                );
-            if (null == result)
+            object result = GetValue(sink, getters, ordinal, metaData);
+            if (result == null)
             {
                 throw ADP.InvalidCast();
             }
@@ -283,11 +263,7 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 return GetDateTimeOffset_Unchecked(sink, getters, ordinal);
             }
-            return (DateTimeOffset)GetValue200(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                , null
-#endif
-                );
+            return (DateTimeOffset)GetValue200(sink, getters, ordinal, metaData, null);
         }
 
         internal static decimal GetDecimal(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData)
@@ -297,11 +273,7 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 return GetDecimal_PossiblyMoney(sink, getters, ordinal, metaData);
             }
-            object result = GetValue(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                , null
-#endif
-                );
+            object result = GetValue(sink, getters, ordinal, metaData);
             if (result == null)
             {
                 throw ADP.InvalidCast();
@@ -316,12 +288,8 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 return GetDouble_Unchecked(sink, getters, ordinal);
             }
-            object result = GetValue(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                , null
-#endif
-                );
-            if (null == result)
+            object result = GetValue(sink, getters, ordinal, metaData);
+            if (result == null)
             {
                 throw ADP.InvalidCast();
             }
@@ -335,12 +303,8 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 return GetGuid_Unchecked(sink, getters, ordinal);
             }
-            object result = GetValue(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                , null
-#endif
-                );
-            if (null == result)
+            object result = GetValue(sink, getters, ordinal, metaData);
+            if (result == null)
             {
                 throw ADP.InvalidCast();
             }
@@ -354,12 +318,8 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 return GetInt16_Unchecked(sink, getters, ordinal);
             }
-            object obj = GetValue(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                , null
-#endif
-                );
-            if (null == obj)
+            object obj = GetValue(sink, getters, ordinal, metaData);
+            if (obj == null)
             {
                 throw ADP.InvalidCast();
             }
@@ -373,12 +333,8 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 return GetInt32_Unchecked(sink, getters, ordinal);
             }
-            object result = GetValue(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                , null
-#endif
-                );
-            if (null == result)
+            object result = GetValue(sink, getters, ordinal, metaData);
+            if (result == null)
             {
                 throw ADP.InvalidCast();
             }
@@ -392,12 +348,8 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 return GetInt64_Unchecked(sink, getters, ordinal);
             }
-            object result = GetValue(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                , null
-#endif
-                );
-            if (null == result)
+            object result = GetValue(sink, getters, ordinal, metaData);
+            if (result == null)
             {
                 throw ADP.InvalidCast();
             }
@@ -411,12 +363,8 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 return GetSingle_Unchecked(sink, getters, ordinal);
             }
-            object result = GetValue(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                , null
-#endif
-                );
-            if (null == result)
+            object result = GetValue(sink, getters, ordinal, metaData);
+            if (result == null)
             {
                 throw ADP.InvalidCast();
             }
@@ -433,12 +381,8 @@ namespace Microsoft.Data.SqlClient.Server
                 }
                 return GetSqlBinary_Unchecked(sink, getters, ordinal);
             }
-            object result = GetSqlValue(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                , null
-#endif
-                );
-            if (null == result)
+            object result = GetSqlValue(sink, getters, ordinal, metaData);
+            if (result == null)
             {
                 throw ADP.InvalidCast();
             }
@@ -455,12 +399,8 @@ namespace Microsoft.Data.SqlClient.Server
                 }
                 return new SqlBoolean(GetBoolean_Unchecked(sink, getters, ordinal));
             }
-            object result = GetSqlValue(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                , null
-#endif
-                );
-            if (null == result)
+            object result = GetSqlValue(sink, getters, ordinal, metaData);
+            if (result == null)
             {
                 throw ADP.InvalidCast();
             }
@@ -477,23 +417,15 @@ namespace Microsoft.Data.SqlClient.Server
                 }
                 return new SqlByte(GetByte_Unchecked(sink, getters, ordinal));
             }
-            object result = GetSqlValue(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                , null
-#endif
-                );
-            if (null == result)
+            object result = GetSqlValue(sink, getters, ordinal, metaData);
+            if (result == null)
             {
                 throw ADP.InvalidCast();
             }
             return (SqlByte)result;
         }
 
-        internal static SqlBytes GetSqlBytes(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData
-#if NETFRAMEWORK
-            , SmiContext context
-#endif           
-            )
+        internal static SqlBytes GetSqlBytes(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData, SmiContext context)
         {
             SqlBytes result;
             if (CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.SqlBytes))
@@ -513,23 +445,15 @@ namespace Microsoft.Data.SqlClient.Server
                     else
                     {
                         Stream s = new SmiGettersStream(sink, getters, ordinal, metaData);
-                        s = CopyIntoNewSmiScratchStream(s, sink
-#if NETFRAMEWORK
-                            , context
-#endif
-                            );
+                        s = CopyIntoNewSmiScratchStream(s, sink, context);
                         result = new SqlBytes(s);
                     }
                 }
             }
             else
             {
-                object obj = GetSqlValue(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                , null
-#endif
-                    );
-                if (null == obj)
+                object obj = GetSqlValue(sink, getters, ordinal, metaData);
+                if (obj == null)
                 {
                     throw ADP.InvalidCast();
                 }
@@ -547,11 +471,7 @@ namespace Microsoft.Data.SqlClient.Server
             return result;
         }
 
-        internal static SqlChars GetSqlChars(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData
-#if NETFRAMEWORK
-            , SmiContext context
-#endif
-            )
+        internal static SqlChars GetSqlChars(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData, SmiContext context)
         {
             SqlChars result;
             if (CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.SqlChars))
@@ -589,13 +509,9 @@ namespace Microsoft.Data.SqlClient.Server
             else
             {
                 SqlString stringValue;
-                if (SqlDbType.Xml == metaData.SqlDbType)
+                if (metaData.SqlDbType == SqlDbType.Xml)
                 {
-                    SqlXml xmlValue = GetSqlXml_Unchecked(sink, getters, ordinal
-#if NETFRAMEWORK
-                        , null
-#endif
-                        );
+                    SqlXml xmlValue = GetSqlXml_Unchecked(sink, getters, ordinal, null);
 
                     if (xmlValue.IsNull)
                     {
@@ -608,12 +524,8 @@ namespace Microsoft.Data.SqlClient.Server
                 }
                 else
                 {
-                    object obj = GetSqlValue(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                        , null
-#endif
-                        );
-                    if (null == obj)
+                    object obj = GetSqlValue(sink, getters, ordinal, metaData);
+                    if (obj == null)
                     {
                         throw ADP.InvalidCast();
                     }
@@ -650,11 +562,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
             else
             {
-                object obj = GetSqlValue(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                , null
-#endif
-                    );
+                object obj = GetSqlValue(sink, getters, ordinal, metaData);
                 if (obj == null)
                 {
                     throw ADP.InvalidCast();
@@ -681,12 +589,8 @@ namespace Microsoft.Data.SqlClient.Server
             }
             else
             {
-                object obj = GetSqlValue(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                , null
-#endif
-                    );
-                if (null == obj)
+                object obj = GetSqlValue(sink, getters, ordinal, metaData);
+                if (obj == null)
                 {
                     throw ADP.InvalidCast();
                 }
@@ -713,12 +617,8 @@ namespace Microsoft.Data.SqlClient.Server
             }
             else
             {
-                object obj = GetSqlValue(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                , null
-#endif
-                    );
-                if (null == obj)
+                object obj = GetSqlValue(sink, getters, ordinal, metaData);
+                if (obj == null)
                 {
                     throw ADP.InvalidCast();
                 }
@@ -745,12 +645,8 @@ namespace Microsoft.Data.SqlClient.Server
             }
             else
             {
-                object obj = GetSqlValue(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                , null
-#endif
-                    );
-                if (null == obj)
+                object obj = GetSqlValue(sink, getters, ordinal, metaData);
+                if (obj == null)
                 {
                     throw ADP.InvalidCast();
                 }
@@ -777,12 +673,8 @@ namespace Microsoft.Data.SqlClient.Server
             }
             else
             {
-                object obj = GetSqlValue(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                , null
-#endif
-                    );
-                if (null == obj)
+                object obj = GetSqlValue(sink, getters, ordinal, metaData);
+                if (obj == null)
                 {
                     throw ADP.InvalidCast();
                 }
@@ -809,12 +701,8 @@ namespace Microsoft.Data.SqlClient.Server
             }
             else
             {
-                object obj = GetSqlValue(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                , null
-#endif
-                    );
-                if (null == obj)
+                object obj = GetSqlValue(sink, getters, ordinal, metaData);
+                if (obj == null)
                 {
                     throw ADP.InvalidCast();
                 }
@@ -840,12 +728,8 @@ namespace Microsoft.Data.SqlClient.Server
             }
             else
             {
-                object obj = GetSqlValue(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                , null
-#endif
-                    );
-                if (null == obj)
+                object obj = GetSqlValue(sink, getters, ordinal, metaData);
+                if (obj == null)
                 {
                     throw ADP.InvalidCast();
                 }
@@ -871,12 +755,8 @@ namespace Microsoft.Data.SqlClient.Server
             }
             else
             {
-                object obj = GetSqlValue(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                , null
-#endif
-                    );
-                if (null == obj)
+                object obj = GetSqlValue(sink, getters, ordinal, metaData);
+                if (obj == null)
                 {
                     throw ADP.InvalidCast();
                 }
@@ -903,12 +783,8 @@ namespace Microsoft.Data.SqlClient.Server
             }
             else
             {
-                object obj = GetSqlValue(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                , null
-#endif
-                    );
-                if (null == obj)
+                object obj = GetSqlValue(sink, getters, ordinal, metaData);
+                if (obj == null)
                 {
                     throw ADP.InvalidCast();
                 }
@@ -935,11 +811,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
             else if (SqlDbType.Xml == metaData.SqlDbType)
             {
-                SqlXml xmlValue = GetSqlXml_Unchecked(sink, getters, ordinal
-#if NETFRAMEWORK
-                , null
-#endif
-                    );
+                SqlXml xmlValue = GetSqlXml_Unchecked(sink, getters, ordinal, null);
 
                 if (xmlValue.IsNull)
                 {
@@ -952,12 +824,8 @@ namespace Microsoft.Data.SqlClient.Server
             }
             else
             {
-                object obj = GetSqlValue(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                , null
-#endif
-                    );
-                if (null == obj)
+                object obj = GetSqlValue(sink, getters, ordinal, metaData);
+                if (obj == null)
                 {
                     throw ADP.InvalidCast();
                 }
@@ -967,11 +835,7 @@ namespace Microsoft.Data.SqlClient.Server
             return result;
         }
 
-        internal static SqlXml GetSqlXml(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData
-#if NETFRAMEWORK
-            , SmiContext context
-#endif
-            )
+        internal static SqlXml GetSqlXml(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData, SmiContext context)
         {
             SqlXml result;
             if (CanAccessGetterDirectly(metaData, ExtendedClrTypeCode.SqlXml))
@@ -982,21 +846,13 @@ namespace Microsoft.Data.SqlClient.Server
                 }
                 else
                 {
-                    result = GetSqlXml_Unchecked(sink, getters, ordinal
-#if NETFRAMEWORK
-                        , context
-#endif
-                        );
+                    result = GetSqlXml_Unchecked(sink, getters, ordinal, context);
                 }
             }
             else
             {
-                object obj = GetSqlValue(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                , null
-#endif
-                    );
-                if (null == obj)
+                object obj = GetSqlValue(sink, getters, ordinal, metaData);
+                if (obj == null)
                 {
                     throw ADP.InvalidCast();
                 }
@@ -1013,12 +869,8 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 return GetString_Unchecked(sink, getters, ordinal);
             }
-            object obj = GetValue(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                , null
-#endif
-                );
-            if (null == obj)
+            object obj = GetValue(sink, getters, ordinal, metaData);
+            if (obj == null)
             {
                 throw ADP.InvalidCast();
             }
@@ -1033,11 +885,7 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 return GetTimeSpan_Unchecked(sink, getters, ordinal);
             }
-            return (TimeSpan)GetValue200(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                , null
-#endif
-                );
+            return (TimeSpan)GetValue200(sink, getters, ordinal, metaData, null);
         }
 
         // GetValue() for v200 SMI (2008 Date/Time types)
@@ -1045,11 +893,9 @@ namespace Microsoft.Data.SqlClient.Server
             SmiEventSink_Default sink,
             SmiTypedGetterSetter getters,
             int ordinal,
-            SmiMetaData metaData
-#if NETFRAMEWORK
-            ,SmiContext context
-#endif
-            )
+            SmiMetaData metaData,
+            SmiContext context
+        )
         {
             object result;
             if (IsDBNull_Unchecked(sink, getters, ordinal))
@@ -1064,11 +910,7 @@ namespace Microsoft.Data.SqlClient.Server
                         metaData = getters.GetVariantType(sink, ordinal);
                         sink.ProcessMessagesAndThrow();
                         Debug.Assert(SqlDbType.Variant != metaData.SqlDbType, "Variant-within-variant causes endless recursion!");
-                        result = GetValue200(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                            , context
-#endif
-                            );
+                        result = GetValue200(sink, getters, ordinal, metaData, context);
                         break;
                     case SqlDbType.Date:
                     case SqlDbType.DateTime2:
@@ -1081,11 +923,7 @@ namespace Microsoft.Data.SqlClient.Server
                         result = GetDateTimeOffset_Unchecked(sink, getters, ordinal);
                         break;
                     default:
-                        result = GetValue(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                            , context
-#endif
-                            );
+                        result = GetValue(sink, getters, ordinal, metaData, context);
                         break;
                 }
             }
@@ -1093,16 +931,16 @@ namespace Microsoft.Data.SqlClient.Server
             return result;
         }
 
+
+
         //  implements SqlClient 1.1-compatible GetValue() semantics for everything except output parameters
         internal static object GetValue(
             SmiEventSink_Default sink,
             ITypedGettersV3 getters,
             int ordinal,
-            SmiMetaData metaData
-#if NETFRAMEWORK
-            ,SmiContext context
-#endif
-            )
+            SmiMetaData metaData,
+            SmiContext context = null
+        )
         {
             object result = null;
             if (IsDBNull_Unchecked(sink, getters, ordinal))
@@ -1186,18 +1024,10 @@ namespace Microsoft.Data.SqlClient.Server
                         metaData = getters.GetVariantType(sink, ordinal);
                         sink.ProcessMessagesAndThrow();
                         Debug.Assert(SqlDbType.Variant != metaData.SqlDbType, "Variant-within-variant causes endless recursion!");
-                        result = GetValue(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                            , context
-#endif
-                            );
+                        result = GetValue(sink, getters, ordinal, metaData, context);
                         break;
                     case SqlDbType.Xml:
-                        result = GetSqlXml_Unchecked(sink, getters, ordinal
-#if NETFRAMEWORK
-                            , context
-#endif
-                            ).Value;
+                        result = GetSqlXml_Unchecked(sink, getters, ordinal, context).Value;
                         break;
                     case SqlDbType.Udt:
                         result = GetUdt_LengthChecked(sink, getters, ordinal, metaData);
@@ -1213,11 +1043,9 @@ namespace Microsoft.Data.SqlClient.Server
             SmiEventSink_Default sink,
             SmiTypedGetterSetter getters,
             int ordinal,
-            SmiMetaData metaData
-#if NETFRAMEWORK
-            ,SmiContext context
-#endif
-            )
+            SmiMetaData metaData,
+            SmiContext context = null
+        )
         {
             object result;
             if (IsDBNull_Unchecked(sink, getters, ordinal))
@@ -1239,11 +1067,7 @@ namespace Microsoft.Data.SqlClient.Server
                         metaData = getters.GetVariantType(sink, ordinal);
                         sink.ProcessMessagesAndThrow();
                         Debug.Assert(SqlDbType.Variant != metaData.SqlDbType, "Variant-within-variant causes endless recursion!");
-                        result = GetSqlValue200(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                            , context
-#endif
-                            );
+                        result = GetSqlValue200(sink, getters, ordinal, metaData, context);
                         break;
                     case SqlDbType.Date:
                     case SqlDbType.DateTime2:
@@ -1256,11 +1080,7 @@ namespace Microsoft.Data.SqlClient.Server
                         result = GetDateTimeOffset_Unchecked(sink, getters, ordinal);
                         break;
                     default:
-                        result = GetSqlValue(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                            , context
-#endif
-                            );
+                        result = GetSqlValue(sink, getters, ordinal, metaData, context);
                         break;
                 }
             }
@@ -1273,16 +1093,14 @@ namespace Microsoft.Data.SqlClient.Server
             SmiEventSink_Default sink,
             ITypedGettersV3 getters,
             int ordinal,
-            SmiMetaData metaData
-#if NETFRAMEWORK
-            ,SmiContext context
-#endif
-            )
+            SmiMetaData metaData,
+            SmiContext context = null
+        )
         {
             object result = null;
             if (IsDBNull_Unchecked(sink, getters, ordinal))
             {
-                if (SqlDbType.Udt == metaData.SqlDbType)
+                if ( metaData.SqlDbType ==SqlDbType.Udt)
                 {
                     result = NullUdtInstance(metaData);
                 }
@@ -1368,18 +1186,10 @@ namespace Microsoft.Data.SqlClient.Server
                         metaData = getters.GetVariantType(sink, ordinal);
                         sink.ProcessMessagesAndThrow();
                         Debug.Assert(SqlDbType.Variant != metaData.SqlDbType, "Variant-within-variant causes endless recursion!");
-                        result = GetSqlValue(sink, getters, ordinal, metaData
-#if NETFRAMEWORK
-                            , context
-#endif
-                            );
+                        result = GetSqlValue(sink, getters, ordinal, metaData, context);
                         break;
                     case SqlDbType.Xml:
-                        result = GetSqlXml_Unchecked(sink, getters, ordinal
-#if NETFRAMEWORK
-                            , context
-#endif
-                            );
+                        result = GetSqlXml_Unchecked(sink, getters, ordinal, context);
                         break;
                     case SqlDbType.Udt:
                         result = GetUdt_LengthChecked(sink, getters, ordinal, metaData);
@@ -1524,18 +1334,12 @@ namespace Microsoft.Data.SqlClient.Server
             SetDateTime_Checked(sink, setters, ordinal, metaData, value);
         }
 
-        internal static void SetDateTimeOffset(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, DateTimeOffset value
-#if NETFRAMEWORK
-            , bool settersSupport2008DateTime
-#endif
-            )
+        internal static void SetDateTimeOffset(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, DateTimeOffset value, bool settersSupport2008DateTime = true)
         {
-#if NETFRAMEWORK
             if (!settersSupport2008DateTime)
             {
                 throw ADP.InvalidCast();
             }
-#endif
             ThrowIfInvalidSetterAccess(metaData, ExtendedClrTypeCode.DateTimeOffset);
             SetDateTimeOffset_Unchecked(sink, (SmiTypedGetterSetter)setters, ordinal, value);
         }
@@ -1685,18 +1489,12 @@ namespace Microsoft.Data.SqlClient.Server
             SetString_LengthChecked(sink, setters, ordinal, metaData, value, 0);
         }
 
-        internal static void SetTimeSpan(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, TimeSpan value
-#if NETFRAMEWORK
-            , bool settersSupport2008DateTime
-#endif
-            )
+        internal static void SetTimeSpan(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, SmiMetaData metaData, TimeSpan value, bool settersSupport2008DateTime = true)
         {
-#if NETFRAMEWORK
             if (!settersSupport2008DateTime)
             {
                 throw ADP.InvalidCast();
             }
-#endif
             ThrowIfInvalidSetterAccess(metaData, ExtendedClrTypeCode.TimeSpan);
             SetTimeSpan_Checked(sink, (SmiTypedGetterSetter)setters, ordinal, metaData, value);
         }
@@ -3365,11 +3163,7 @@ namespace Microsoft.Data.SqlClient.Server
             return SqlTypeWorkarounds.SqlMoneyCtor(temp, 1 /* ignored */ );
         }
 
-        private static SqlXml GetSqlXml_Unchecked(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal
-#if NETFRAMEWORK
-            , SmiContext context
-#endif
-            )
+        private static SqlXml GetSqlXml_Unchecked(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiContext context)
         {
             Debug.Assert(!IsDBNull_Unchecked(sink, getters, ordinal));
 #if NETFRAMEWORK
@@ -3377,7 +3171,7 @@ namespace Microsoft.Data.SqlClient.Server
             //  this method without having to pass along the almost-never-used context as a parameter
             //  Looking the context up like this will be slightly slower, but still correct behavior
             //  since it's only used to get a scratch stream.
-            if (null == context && InOutOfProcHelper.InProc)
+            if (context == null && InOutOfProcHelper.InProc)
             {
                 context = SmiContextFactory.Instance.GetCurrentContext();    // In the future we need to push the context checking to a higher level
             }
@@ -3385,11 +3179,7 @@ namespace Microsoft.Data.SqlClient.Server
             // Note: must make a copy of getter stream, since it will be used beyond
             //  this method (valid lifetime of getters is limited).
             Stream s = new SmiGettersStream(sink, getters, ordinal, SmiMetaData.DefaultXml);
-            Stream copy = ValueUtilsSmi.CopyIntoNewSmiScratchStream(s, sink
-#if NETFRAMEWORK
-                , context
-#endif
-                );
+            Stream copy = ValueUtilsSmi.CopyIntoNewSmiScratchStream(s, sink, context);
             SqlXml result = new(copy);
             return result;
         }
@@ -4051,7 +3841,7 @@ namespace Microsoft.Data.SqlClient.Server
            int ordinal,
            SmiMetaData metaData,
            DataTable value
-       )
+        )
         {
             // Get the target gettersetter
             setters = setters.GetTypedGetterSetter(sink, ordinal);
@@ -4103,25 +3893,19 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         // spool a Stream into a scratch stream from the Smi interface and return it as a Stream
-        internal static Stream CopyIntoNewSmiScratchStream(Stream source, SmiEventSink_Default sink
-#if NETFRAMEWORK
-            , SmiContext context
-#endif
-            )
+        internal static Stream CopyIntoNewSmiScratchStream(Stream source, SmiEventSink_Default sink, SmiContext context)
         {
+            Stream dest = null;
 #if NETFRAMEWORK
-            Stream dest;
-            if (null == context)
-            {
-                dest = new MemoryStream();
-            }
-            else
+            if (context != null)
             {
                 dest = new SqlClientWrapperSmiStream(sink, context.GetScratchStream(sink));
             }
-#else
-            Stream dest = new MemoryStream();
 #endif
+            if (dest == null)
+            {
+                dest = new MemoryStream();
+            }
 
             int chunkSize;
             if (source.CanSeek && source.Length > MaxByteChunkSize)
