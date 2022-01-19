@@ -1197,33 +1197,38 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        private bool GetSnapshottedState(SnapshottedStateFlags flag)
+        {
+            return (_snapshottedState & flag) == flag;
+        }
+
         internal bool HasOpenResult
         {
-            get => (_snapshottedState & SnapshottedStateFlags.OpenResult) == SnapshottedStateFlags.OpenResult;
+            get => GetSnapshottedState(SnapshottedStateFlags.OpenResult);
             set => SetSnapshottedState(SnapshottedStateFlags.OpenResult, value);
         }
 
         internal bool HasPendingData
         {
-            get => (_snapshottedState & SnapshottedStateFlags.PendingData) == SnapshottedStateFlags.PendingData;
+            get => GetSnapshottedState(SnapshottedStateFlags.PendingData);
             set => SetSnapshottedState(SnapshottedStateFlags.PendingData, value);
         }
 
         internal bool HasReceivedError
         {
-            get => (_snapshottedState & SnapshottedStateFlags.ErrorTokenReceived) == SnapshottedStateFlags.ErrorTokenReceived;
+            get => GetSnapshottedState(SnapshottedStateFlags.ErrorTokenReceived);
             set => SetSnapshottedState(SnapshottedStateFlags.ErrorTokenReceived, value);
         }
 
         internal bool HasReceivedAttention
         {
-            get => (_snapshottedState & SnapshottedStateFlags.AttentionReceived) == SnapshottedStateFlags.AttentionReceived;
+            get => GetSnapshottedState(SnapshottedStateFlags.AttentionReceived);
             set => SetSnapshottedState(SnapshottedStateFlags.AttentionReceived, value);
         }
 
         internal bool HasReceivedColumnMetadata
         {
-            get => (_snapshottedState & SnapshottedStateFlags.ColMetaDataReceived) == SnapshottedStateFlags.ColMetaDataReceived;
+            get => GetSnapshottedState(SnapshottedStateFlags.ColMetaDataReceived);
             set => SetSnapshottedState(SnapshottedStateFlags.ColMetaDataReceived, value);
         }
 
