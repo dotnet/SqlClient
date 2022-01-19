@@ -10,7 +10,7 @@
     <projectUrl>https://aka.ms/sqlclientproject</projectUrl>
     <icon>dotnet.png</icon>
     <repository type="git" url="https://github.com/dotnet/sqlclient" />
-    <description>This is the helper library for Microsoft.Data.SqlClient for cross framework compatibility support of UDT types.
+    <description>This is a helper library for Microsoft.Data.SqlClient enabling cross framework support of UDT types.
     
 Available Types:
 Microsoft.SqlServer.Server.IBinarySerializer
@@ -25,7 +25,7 @@ Microsoft.SqlServer.Server.SystemDataAccessKind
 Microsoft.SqlServer.Server.Format
 
 </description>
-    <releaseNotes>https://go.microsoft.com/fwlink/?linkid=2090501</releaseNotes>
+    <releaseNotes>https://go.microsoft.com/fwlink/?linkid=2185441</releaseNotes>
     <copyright>© Microsoft Corporation. All rights reserved.</copyright>
     <tags>sqlserver microsoft.sqlserver.server</tags>
     <dependencies>
