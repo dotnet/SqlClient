@@ -113,9 +113,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                // drop the temp table to release its resources
-                cmd.CommandText = "DROP TABLE " + tempTableName;
-                cmd.ExecuteNonQuery();
+                DataTestUtility.DropTable(con, tempTableName);
             }
         }
 
@@ -126,36 +124,29 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             var databaseName = DataTestUtility.GetUniqueName("DB");
             // Remove square brackets
             var dbName = databaseName.Substring(1, databaseName.Length - 2);
-
-            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
-            {
-                InitialCatalog = dbName,
-                Pooling = false
-            };
-
             using SqlConnection con = new(DataTestUtility.TCPConnectionString);
-            using SqlCommand cmd = con.CreateCommand();
             try
             {
                 con.Open();
+                CreateCollatedDB(con, dbName);
 
-                // Create collated database
-                cmd.CommandText = $"CREATE DATABASE {databaseName} COLLATE KAZAKH_90_CI_AI";
-                cmd.ExecuteNonQuery();
+                SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
+                {
+                    InitialCatalog = dbName,
+                    Pooling = false
+                };
 
                 //Create connection without pooling in order to delete database later.
                 using (SqlConnection dbCon = new(builder.ConnectionString))
                 using (SqlCommand dbCmd = dbCon.CreateCommand())
                 {
                     var data = "TestData";
-
                     dbCon.Open();
                     dbCmd.CommandText = $"SELECT '{data}'";
                     using SqlDataReader reader = dbCmd.ExecuteReader();
                     reader.Read();
                     Assert.Equal(data, reader.GetString(0));
                 }
-
                 // Let connection close safely before dropping database for slow servers.
                 Thread.Sleep(500);
             }
@@ -165,8 +156,26 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
             finally
             {
-                cmd.CommandText = $"DROP DATABASE {databaseName}";
+                DataTestUtility.DropDatabase(con, dbName);
+            }
+        }
+
+        private static void CreateCollatedDB(SqlConnection con,string databaseName)
+        {
+            try
+            {
+                if (con.State != ConnectionState.Open)
+                {
+                    con.Open();
+                }
+                using SqlCommand cmd = con.CreateCommand();
+                // Create collated database
+                cmd.CommandText = $"CREATE DATABASE {databaseName} COLLATE KAZAKH_90_CI_AI";
                 cmd.ExecuteNonQuery();
+            }
+            catch(Exception e)
+            {
+                Assert.True(false, $"Unexpected Exception occurred: {e.Message}");
             }
         }
 

@@ -421,27 +421,60 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static void DropTable(SqlConnection sqlConnection, string tableName)
         {
-            using (SqlCommand cmd = new SqlCommand(string.Format("IF (OBJECT_ID('{0}') IS NOT NULL) \n DROP TABLE {0}", tableName), sqlConnection))
+            try
             {
-                cmd.ExecuteNonQuery();
+                if(sqlConnection.State != ConnectionState.Open)
+                {
+                    sqlConnection.Open();
+                }
+                using (SqlCommand cmd = new SqlCommand(string.Format("IF (OBJECT_ID('{0}') IS NOT NULL) \n DROP TABLE {0}", tableName), sqlConnection))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch(Exception e)
+            {
+                Assert.True(false, $"Unexpected Exception occurred: {e.Message}");
             }
         }
 
         public static void DropUserDefinedType(SqlConnection sqlConnection, string typeName)
         {
-            using (SqlCommand cmd = new SqlCommand(string.Format("IF (TYPE_ID('{0}') IS NOT NULL) \n DROP TYPE {0}", typeName), sqlConnection))
+            try
             {
-                cmd.ExecuteNonQuery();
+                if(sqlConnection.State != ConnectionState.Open)
+                {
+                    sqlConnection.Open();
+                }
+                using (SqlCommand cmd = new SqlCommand(string.Format("IF (TYPE_ID('{0}') IS NOT NULL) \n DROP TYPE {0}", typeName), sqlConnection))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch(Exception e)
+            {
+                Assert.True(false, $"Unexpected Exception occurred: {e.Message}");
             }
         }
 
         public static void DropStoredProcedure(SqlConnection sqlConnection, string spName)
         {
-            using (SqlCommand cmd = new SqlCommand(string.Format("IF (OBJECT_ID('{0}') IS NOT NULL) \n DROP PROCEDURE {0}", spName), sqlConnection))
+            try
             {
-                cmd.ExecuteNonQuery();
+                if (sqlConnection.State != ConnectionState.Open)
+                {
+                    sqlConnection.Open();
+                }
+                using (SqlCommand cmd = new SqlCommand(string.Format("IF (OBJECT_ID('{0}') IS NOT NULL) \n DROP PROCEDURE {0}", spName), sqlConnection))
+                {
+                    cmd.ExecuteNonQuery();
+                }
             }
-        }
+            catch (Exception e)
+            {
+                Assert.True(false, $"Unexpected Exception occurred: {e.Message}");
+            }
+        }   
 
         /// <summary>
         /// Drops specified database on provided connection.
@@ -450,8 +483,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// <param name="dbName">Database name without brackets.</param>
         public static void DropDatabase(SqlConnection sqlConnection, string dbName)
         {
-            using SqlCommand cmd = new(string.Format("IF (EXISTS(SELECT 1 FROM sys.databases WHERE name = '{0}')) \nBEGIN \n ALTER DATABASE [{0}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE \n DROP DATABASE [{0}] \nEND", dbName), sqlConnection);
-            cmd.ExecuteNonQuery();
+            try
+            {
+                if (sqlConnection.State != ConnectionState.Open)
+                {
+                    sqlConnection.Open();
+                }
+                using SqlCommand cmd = new(string.Format("IF (EXISTS(SELECT 1 FROM sys.databases WHERE name = '{0}')) \nBEGIN \n ALTER DATABASE [{0}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE \n DROP DATABASE [{0}] \nEND", dbName), sqlConnection);
+                cmd.ExecuteNonQuery();
+            }
+            catch(Exception e)
+            {
+                Assert.True(false, $"Unexpected Exception occurred: {e.Message}");
+            }
         }
 
         public static bool IsLocalDBInstalled() => !string.IsNullOrEmpty(LocalDbAppName?.Trim()) && IsIntegratedSecuritySetup();
