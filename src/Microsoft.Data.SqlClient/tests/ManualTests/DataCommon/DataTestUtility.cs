@@ -304,10 +304,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return AEConnStrings.Count > 0 && IsNotAzureSynapse();
         }
 
-        public static bool IsSGXEnclaveConnStringSetup()
-        {
-            return !string.IsNullOrEmpty(TCPConnectionStringAASSGX);
-        }
+        public static bool IsSGXEnclaveConnStringSetup() => !string.IsNullOrEmpty(TCPConnectionStringAASSGX);
 
         public static bool IsAADPasswordConnStrSetup()
         {

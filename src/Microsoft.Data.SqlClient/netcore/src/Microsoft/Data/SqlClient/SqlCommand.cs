@@ -204,11 +204,9 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal bool ShouldUseEnclaveBasedWorkflow
-        {
-            get { return (!string.IsNullOrWhiteSpace(_activeConnection.EnclaveAttestationUrl) || Connection.AttestationProtocol == SqlConnectionAttestationProtocol.None) && 
-                    IsColumnEncryptionEnabled; }
-        }
+        internal bool ShouldUseEnclaveBasedWorkflow => 
+            (!string.IsNullOrWhiteSpace(_activeConnection.EnclaveAttestationUrl) || Connection.AttestationProtocol == SqlConnectionAttestationProtocol.None) && 
+                    IsColumnEncryptionEnabled; 
 
         /// <summary>
         /// Per-command custom providers. It can be provided by the user and can be set more than once. 

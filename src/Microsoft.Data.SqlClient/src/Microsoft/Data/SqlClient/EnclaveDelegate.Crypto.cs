@@ -114,7 +114,7 @@ namespace Microsoft.Data.SqlClient
 
             if (sqlColumnEncryptionEnclaveProvider == null)
             {
-                throw SQL.EnclaveProviderNotFound(enclaveType, ConvertAttestationProtocolToString(attestationProtocol));
+                throw SQL.EnclaveProviderNotFound(enclaveType, attestationProtocol.ToString());
             }
 
             return sqlColumnEncryptionEnclaveProvider;
@@ -205,26 +205,6 @@ namespace Microsoft.Data.SqlClient
             }
 
             return CombineByteArrays(attestationProtocolBytes, attestationProtocolInputLengthBytes, attestationProtocolInputBytes, clientDHPublicKeyLengthBytes, clientDHPublicKey);
-        }
-
-        private string ConvertAttestationProtocolToString(SqlConnectionAttestationProtocol attestationProtocol)
-        {
-            switch (attestationProtocol)
-            {
-                case SqlConnectionAttestationProtocol.AAS:
-                    return "AAS";
-
-                case SqlConnectionAttestationProtocol.HGS:
-                    return "HGS";
-
-#if ENCLAVE_SIMULATOR
-                case SqlConnectionAttestationProtocol.None:
-                    return "None";
-#endif
-
-                default:
-                    return "NotSpecified";
-            }
         }
     }
 }
