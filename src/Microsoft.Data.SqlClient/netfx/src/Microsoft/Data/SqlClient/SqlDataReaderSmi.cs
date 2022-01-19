@@ -901,13 +901,13 @@ namespace Microsoft.Data.SqlClient
         public override TimeSpan GetTimeSpan(int ordinal)
         {
             EnsureCanGetCol(ordinal);
-            return ValueUtilsSmi.GetTimeSpan(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal], _currentConnection.IsKatmaiOrNewer);
+            return ValueUtilsSmi.GetTimeSpan(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal], _currentConnection.Is2008OrNewer);
         }
 
         public override DateTimeOffset GetDateTimeOffset(int ordinal)
         {
             EnsureCanGetCol(ordinal);
-            return ValueUtilsSmi.GetDateTimeOffset(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal], _currentConnection.IsKatmaiOrNewer);
+            return ValueUtilsSmi.GetDateTimeOffset(_readerEventSink, _currentColumnValuesV3, ordinal, _currentMetaData[ordinal], _currentConnection.Is2008OrNewer);
         }
 
         public override object GetSqlValue(int ordinal)
