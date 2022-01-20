@@ -334,31 +334,29 @@ namespace Microsoft.Data.SqlClient
             0x72xx0002 -> 2005 RTM
         */
 
-        // Pre Shiloh SP1 versioning scheme:
-        public const int SPHINXORSHILOH_MAJOR = 0x07;     // The high byte (b3) is not sufficient to distinguish
-        public const int SPHINX_INCREMENT = 0x00;     // Sphinx and Shiloh
-        public const int SHILOH_INCREMENT = 0x01;     // So we need to look at the high-mid byte (b2) as well
+        // Pre 2000 SP1 versioning scheme:
+        public const int SQL70OR2000_MAJOR = 0x07;     // The high byte (b3) is not sufficient to distinguish
+        public const int SQL70_INCREMENT = 0x00;     // 7.0 and 2000
+        public const int SQL2000_INCREMENT = 0x01;     // So we need to look at the high-mid byte (b2) as well
         public const int DEFAULT_MINOR = 0x0000;
 
-        // 2000 SP1 and beyond versioning scheme:
-
         // Majors:
-        public const int SHILOHSP1_MAJOR = 0x71;     // For Shiloh SP1 and later the versioning schema changed and
-        public const int YUKON_MAJOR = 0x72;     // the high-byte is sufficient to distinguish later versions
-        public const int KATMAI_MAJOR = 0x73;
-        public const int DENALI_MAJOR = 0x74;
+        public const int SQL2000SP1_MAJOR = 0x71;     // For 2000 SP1 and later the versioning schema changed and
+        public const int SQL2005_MAJOR = 0x72;     // the high-byte is sufficient to distinguish later versions
+        public const int SQL2008_MAJOR = 0x73;
+        public const int SQL2012_MAJOR = 0x74;
 
         // Increments:
-        public const int SHILOHSP1_INCREMENT = 0x00;
-        public const int YUKON_INCREMENT = 0x09;
-        public const int KATMAI_INCREMENT = 0x0b;
-        public const int DENALI_INCREMENT = 0x00;
+        public const int SQL2000SP1_INCREMENT = 0x00;
+        public const int SQL2005_INCREMENT = 0x09;
+        public const int SQL2008_INCREMENT = 0x0b;
+        public const int SQL2012_INCREMENT = 0x00;
 
         // Minors:
-        public const int SHILOHSP1_MINOR = 0x0001;
-        public const int YUKON_RTM_MINOR = 0x0002;
-        public const int KATMAI_MINOR = 0x0003;
-        public const int DENALI_MINOR = 0x0004;
+        public const int SQL2000SP1_MINOR = 0x0001;
+        public const int SQL2005_RTM_MINOR = 0x0002;
+        public const int SQL2008_MINOR = 0x0003;
+        public const int SQL2012_MINOR = 0x0004;
 
         public const int ORDER_68000 = 1;
         public const int USE_DB_ON = 1;
