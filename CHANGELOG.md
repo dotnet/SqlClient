@@ -3,15 +3,15 @@
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
-## [Stable release 4.0.1] - 2022-01-14
+## [Stable release 4.0.1] - 2022-01-17
 
 ### Added
 
-AppContext switch `SuppressInsecureTLSWarning` is added to make users to be able to suppress TLS security warning while `Encrypt=false` on connection string. [#1457](https://github.com/dotnet/SqlClient/pull/1457) 
+Added AppContext switch `SuppressInsecureTLSWarning` to allow suppression of TLS security warning when using `Encrypt=false` in the connection string. [#1457](https://github.com/dotnet/SqlClient/pull/1457) 
 
 ### Fixed
 
-- Fixed the issue with Kerberos authentication using .NET 6. [#1411](https://github.com/dotnet/SqlClient/pull/1411)
+- Fixed Kerberos authentication failure when using .NET 6. [#1411](https://github.com/dotnet/SqlClient/pull/1411)
 - Fixed connection failure when using `SqlLocalDB` instance pipe name. [#1433](https://github.com/dotnet/SqlClient/pull/1433)
 - Fixed a failure when executing concurrent queries requiring enclaves. [#1451](https://github.com/dotnet/SqlClient/pull/1451)
 - Updated obsolete API calls targeting .NET 6. [#1401](https://github.com/dotnet/SqlClient/pull/1401)
