@@ -116,9 +116,9 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         // calling GetTimeSpan on possibly v100 SMI
-        internal static TimeSpan GetTimeSpan(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData, bool gettersSupport2008DateTime)
+        internal static TimeSpan GetTimeSpan(SmiEventSink_Default sink, ITypedGettersV3 getters, int ordinal, SmiMetaData metaData, bool gettersSupportKatmaiDateTime)
         {
-            if (gettersSupport2008DateTime)
+            if (gettersSupportKatmaiDateTime)
             {
                 return GetTimeSpan(sink, (SmiTypedGetterSetter)getters, ordinal, metaData);
             }

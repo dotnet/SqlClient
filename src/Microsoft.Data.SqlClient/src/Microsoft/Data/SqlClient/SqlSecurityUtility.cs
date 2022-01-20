@@ -59,14 +59,15 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <summary>
-        /// Generates cryptographically random bytes
+        /// Generates cryptographicall random bytes
         /// </summary>
         /// <param name="randomBytes">No of cryptographically random bytes to be generated</param>
         /// <returns>A byte array containing cryptographically generated random bytes</returns>
         internal static void GenerateRandomBytes(byte[] randomBytes)
         {
-            RandomNumberGenerator rng = RandomNumberGenerator.Create();
-            rng.GetBytes(randomBytes);
+            // Generate random bytes cryptographically.
+            RNGCryptoServiceProvider rngCsp = new RNGCryptoServiceProvider();
+            rngCsp.GetBytes(randomBytes);
         }
 
         /// <summary>

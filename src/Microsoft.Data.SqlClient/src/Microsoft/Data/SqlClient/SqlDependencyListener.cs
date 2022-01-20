@@ -1131,25 +1131,37 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
                                     messageAttributes |= MessageAttributes.Source;
                                     break;
                                 case InfoAttribute:
-                                    string value = xmlReader.Value;
-                                    // 3 of the server info values do not match client values - map.
-                                    switch (value)
+                                    try
                                     {
-                                        case "set options":
-                                            info = SqlNotificationInfo.Options;
-                                            break;
-                                        case "previous invalid":
-                                            info = SqlNotificationInfo.PreviousFire;
-                                            break;
-                                        case "query template limit":
-                                            info = SqlNotificationInfo.TemplateLimit;
-                                            break;
-                                        default:
-                                            if (Enum.TryParse(value, true, out SqlNotificationInfo temp) && Enum.IsDefined(typeof(SqlNotificationInfo), temp))
-                                            {
-                                                info = temp;
-                                            }
-                                            break;
+                                        string value = xmlReader.Value;
+                                        // 3 of the server info values do not match client values - map.
+                                        switch (value)
+                                        {
+                                            case "set options":
+                                                info = SqlNotificationInfo.Options;
+                                                break;
+                                            case "previous invalid":
+                                                info = SqlNotificationInfo.PreviousFire;
+                                                break;
+                                            case "query template limit":
+                                                info = SqlNotificationInfo.TemplateLimit;
+                                                break;
+                                            default:
+                                                SqlNotificationInfo temp = (SqlNotificationInfo)Enum.Parse(typeof(SqlNotificationInfo), value, true);
+                                                if (Enum.IsDefined(typeof(SqlNotificationInfo), temp))
+                                                {
+                                                    info = temp;
+                                                }
+                                                break;
+                                        }
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        if (!ADP.IsCatchableExceptionType(e))
+                                        {
+                                            throw;
+                                        }
+                                        ADP.TraceExceptionWithoutRethrow(e); // Discard failure, if it should occur.
                                     }
                                     messageAttributes |= MessageAttributes.Info;
                                     break;

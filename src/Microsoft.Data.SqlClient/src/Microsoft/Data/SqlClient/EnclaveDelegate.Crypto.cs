@@ -10,7 +10,7 @@ namespace Microsoft.Data.SqlClient
 {
     internal sealed partial class EnclaveDelegate
     {
-        private static readonly ConcurrentDictionary<SqlConnectionAttestationProtocol, SqlColumnEncryptionEnclaveProvider> s_enclaveProviders = new();
+        private static readonly Dictionary<SqlConnectionAttestationProtocol, SqlColumnEncryptionEnclaveProvider> s_enclaveProviders = new Dictionary<SqlConnectionAttestationProtocol, SqlColumnEncryptionEnclaveProvider>();
 
         /// <summary>
         /// Create a new enclave session
@@ -103,8 +103,8 @@ namespace Microsoft.Data.SqlClient
 
 #if ENCLAVE_SIMULATOR
                     case SqlConnectionAttestationProtocol.SIM:
-                        NoneAttestationEnclaveProvider noneAttestationEnclaveProvider = new NoneAttestationEnclaveProvider();
-                        s_enclaveProviders[attestationProtocol] = (SqlColumnEncryptionEnclaveProvider)noneAttestationEnclaveProvider;
+                        SimulatorEnclaveProvider simulatorEnclaveProvider = new SimulatorEnclaveProvider();
+                        s_enclaveProviders[attestationProtocol] = (SqlColumnEncryptionEnclaveProvider)simulatorEnclaveProvider;
                         sqlColumnEncryptionEnclaveProvider = s_enclaveProviders[attestationProtocol];
                         break;
 #endif

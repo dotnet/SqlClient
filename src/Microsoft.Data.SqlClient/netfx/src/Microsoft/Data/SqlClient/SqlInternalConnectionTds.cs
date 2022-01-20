@@ -731,11 +731,11 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                return IsTransactionRoot && (!Is2008OrNewer || null == Pool);
+                return IsTransactionRoot && (!IsKatmaiOrNewer || null == Pool);
             }
         }
 
-        override internal bool Is2000
+        override internal bool IsShiloh
         {
             get
             {
@@ -743,19 +743,19 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override internal bool Is2005OrNewer
+        override internal bool IsYukonOrNewer
         {
             get
             {
-                return _parser.Is2005OrNewer;
+                return _parser.IsYukonOrNewer;
             }
         }
 
-        override internal bool Is2008OrNewer
+        override internal bool IsKatmaiOrNewer
         {
             get
             {
-                return _parser.Is2008OrNewer;
+                return _parser.IsKatmaiOrNewer;
             }
         }
 
@@ -1075,9 +1075,9 @@ namespace Microsoft.Data.SqlClient
 
             if (_fResetConnection)
             {
-                // Ensure we are either going against 2000, or we are not enlisted in a
+                // Ensure we are either going against shiloh, or we are not enlisted in a
                 // distributed transaction - otherwise don't reset!
-                if (Is2000)
+                if (IsShiloh)
                 {
                     // Prepare the parser for the connection reset - the next time a trip
                     // to the server is made.
@@ -1085,7 +1085,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else if (!IsEnlistedInTransaction)
                 {
-                    // If not 2000, we are going against 7.0.  On 7.0, we
+                    // If not Shiloh, we are going against Sphinx.  On Sphinx, we
                     // may only reset if not enlisted in a distributed transaction.
                     try
                     {
@@ -1168,18 +1168,18 @@ namespace Microsoft.Data.SqlClient
 
             string transactionName = (null == name) ? String.Empty : name;
 
-            if (!_parser.Is2005OrNewer)
+            if (!_parser.IsYukonOrNewer)
             {
-                ExecuteTransactionPre2005(transactionRequest, transactionName, iso, internalTransaction);
+                ExecuteTransactionPreYukon(transactionRequest, transactionName, iso, internalTransaction);
             }
             else
             {
-                ExecuteTransaction2005(transactionRequest, transactionName, iso, internalTransaction, isDelegateControlRequest);
+                ExecuteTransactionYukon(transactionRequest, transactionName, iso, internalTransaction, isDelegateControlRequest);
             }
         }
 
         // This function will not handle idle connection resiliency, as older servers will not support it
-        internal void ExecuteTransactionPre2005(
+        internal void ExecuteTransactionPreYukon(
                     TransactionRequest transactionRequest,
                     string transactionName,
                     IsolationLevel iso,
@@ -1229,7 +1229,7 @@ namespace Microsoft.Data.SqlClient
                     sqlBatch.Append(transactionName);
                     break;
                 case TransactionRequest.Promote:
-                    Debug.Assert(false, "Promote called with transaction name or on pre-2005!");
+                    Debug.Assert(false, "Promote called with transaction name or on pre-Yukon!");
                     break;
                 case TransactionRequest.Commit:
                     sqlBatch.Append(TdsEnums.TRANS_COMMIT);
@@ -1256,7 +1256,7 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(executeTask == null, "Shouldn't get a task when doing sync writes");
             _parser.Run(RunBehavior.UntilDone, null, null, null, _parser._physicalStateObj);
 
-            // Prior to 2005, we didn't have any transaction tokens to manage,
+            // Prior to Yukon, we didn't have any transaction tokens to manage,
             // or any feedback to know when one was created, so we just presume
             // that successful execution of the request caused the transaction
             // to be created, and we set that on the parser.
@@ -1268,7 +1268,7 @@ namespace Microsoft.Data.SqlClient
         }
 
 
-        internal void ExecuteTransaction2005(
+        internal void ExecuteTransactionYukon(
                     TransactionRequest transactionRequest,
                     string transactionName,
                     IsolationLevel iso,
@@ -1330,7 +1330,7 @@ namespace Microsoft.Data.SqlClient
                         requestType = TdsEnums.TransactionManagerRequestType.Commit;
                         break;
                     case TransactionRequest.IfRollback:
-                    // Map IfRollback to Rollback since with 2005 and beyond we should never need
+                    // Map IfRollback to Rollback since with Yukon and beyond we should never need
                     // the if since the server will inform us when transactions have completed
                     // as a result of an error on the server.
                     case TransactionRequest.Rollback:
@@ -1388,7 +1388,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     if (internalTransaction.OpenResultsCount != 0)
                     {
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.ExecuteTransaction2005|DATA|CATCH> {0}, Connection is marked to be doomed when closed. Transaction ended with OpenResultsCount {1} > 0, MARSOn {2}",
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.SqlInternalConnectionTds.ExecuteTransactionYukon|DATA|CATCH> {0}, Connection is marked to be doomed when closed. Transaction ended with OpenResultsCount {1} > 0, MARSOn {2}",
                                                                ObjectID,
                                                                internalTransaction.OpenResultsCount,
                                                                _parser.MARSOn);
@@ -2513,7 +2513,7 @@ namespace Microsoft.Data.SqlClient
                     break;
 
                 case TdsEnums.ENV_TRANSACTIONMANAGERADDRESS:
-                    // For now we skip these 2005 only env change notifications
+                    // For now we skip these Yukon only env change notifications
                     break;
 
                 case TdsEnums.ENV_SPRESETCONNECTIONACK:

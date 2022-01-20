@@ -324,7 +324,7 @@ namespace Microsoft.Data.SqlClient
             flags = value ? flags | flag : flags & ~flag;
         }
 
-        internal bool Is2008DateTimeType
+        internal bool IsNewKatmaiDateTimeType
         {
             get
             {

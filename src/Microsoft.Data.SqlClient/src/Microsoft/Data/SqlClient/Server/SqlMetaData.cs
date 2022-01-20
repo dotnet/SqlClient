@@ -428,7 +428,8 @@ namespace Microsoft.Data.SqlClient.Server
                     Construct(name, dbType, userDefinedType, string.Empty, useServerDefault, isUniqueKey, columnSortOrder, sortOrdinal);
                     break;
                 default:
-                    throw SQL.InvalidSqlDbTypeForConstructor(dbType);
+                    SQL.InvalidSqlDbTypeForConstructor(dbType);
+                    break;
             }
         }
 
@@ -812,7 +813,7 @@ namespace Microsoft.Data.SqlClient.Server
             _sortOrdinal = sortOrdinal;
         }
 
-        // Construction for Decimal type and new 2008 Date/Time types
+        // Construction for Decimal type and new Katmai Date/Time types
         private void Construct(
             string name, 
             SqlDbType dbType, 

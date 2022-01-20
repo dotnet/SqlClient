@@ -436,16 +436,16 @@ namespace Microsoft.Data.SqlClient
             string TDSCommand;
 
             TDSCommand = "select @@trancount; SET FMTONLY ON select * from " + ADP.BuildMultiPartName(parts) + " SET FMTONLY OFF ";
-            if (_connection.Is2000)
+            if (_connection.IsShiloh)
             {
                 // If its a temp DB then try to connect
 
                 string TableCollationsStoredProc;
-                if (_connection.Is2008OrNewer)
+                if (_connection.IsKatmaiOrNewer)
                 {
                     TableCollationsStoredProc = "sp_tablecollations_100";
                 }
-                else if (_connection.Is2005OrNewer)
+                else if (_connection.IsYukonOrNewer)
                 {
                     TableCollationsStoredProc = "sp_tablecollations_90";
                 }
@@ -546,7 +546,7 @@ namespace Microsoft.Data.SqlClient
 
             StringBuilder updateBulkCommandText = new StringBuilder();
 
-            if (_connection.Is2000 && 0 == internalResults[CollationResultId].Count)
+            if (_connection.IsShiloh && 0 == internalResults[CollationResultId].Count)
             {
                 throw SQL.BulkLoadNoCollation();
             }
@@ -559,7 +559,7 @@ namespace Microsoft.Data.SqlClient
 
             bool isInTransaction;
 
-            if (_parser.Is2005OrNewer)
+            if (_parser.IsYukonOrNewer)
             {
                 isInTransaction = _connection.HasLocalTransaction;
             }
@@ -683,9 +683,9 @@ namespace Microsoft.Data.SqlClient
                                 }
                         }
 
-                        if (_connection.Is2000)
+                        if (_connection.IsShiloh)
                         {
-                            // 2000 or above!
+                            // Shiloh or above!
                             // get collation for column i
 
                             Result rowset = internalResults[CollationResultId];
@@ -2288,7 +2288,7 @@ namespace Microsoft.Data.SqlClient
                 // Target type shouldn't be encrypted
                 Debug.Assert(!metadata.isEncrypted, "Can't encrypt SQL Variant type");
                 SqlBuffer.StorageType variantInternalType = SqlBuffer.StorageType.Empty;
-                if ((_sqlDataReaderRowSource != null) && (_connection.Is2008OrNewer))
+                if ((_sqlDataReaderRowSource != null) && (_connection.IsKatmaiOrNewer))
                 {
                     variantInternalType = _sqlDataReaderRowSource.GetVariantInternalStorageType(_sortedColumnMappings[col]._sourceColumnOrdinal);
                 }

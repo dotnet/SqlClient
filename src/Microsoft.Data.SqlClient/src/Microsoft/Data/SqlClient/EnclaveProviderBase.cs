@@ -151,7 +151,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (shouldGenerateNonce)
                     {
-                        using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+                        using (RandomNumberGenerator rng = new RNGCryptoServiceProvider())
                         {
                             // Client decides to initiate the process of attesting the enclave and to establish a secure session with the enclave.
                             // To ensure that server send new attestation request instead of replaying / re-sending the old token, we will create a nonce for current attestation request.

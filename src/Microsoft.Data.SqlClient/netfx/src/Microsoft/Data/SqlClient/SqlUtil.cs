@@ -553,7 +553,7 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_ChangePasswordConflictsWithSSPI));
         }
-        static internal Exception ChangePasswordRequires2005()
+        static internal Exception ChangePasswordRequiresYukon()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ChangePasswordRequiresYukon));
         }
@@ -657,7 +657,7 @@ namespace Microsoft.Data.SqlClient
         //
         // SQL.DataCommand
         //
-        static internal Exception NotificationsRequire2005()
+        static internal Exception NotificationsRequireYukon()
         {
             return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_NotificationsRequireYukon));
         }

@@ -26,7 +26,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private string _operationCanceledErrorMessage;
         private string _severeErrorMessage;
 
-        private SqlRandomTypeInfoCollection _2008Types;
+        private SqlRandomTypeInfoCollection _katmaiTypes;
         private ManualResetEvent _endEvent;
         private int _runningThreads;
 
@@ -59,7 +59,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             _connectionStrings = connStrings.ToArray();
 
-            _2008Types = SqlRandomTypeInfoCollection.CreateSql2008Collection();
+            _katmaiTypes = SqlRandomTypeInfoCollection.CreateSql2008Collection();
             _endEvent = new ManualResetEvent(false);
 
             if (_randPool.ReproMode)
@@ -110,7 +110,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             using (var testScope = rootScope.NewScope<SqlRandomizer>())
                             {
                                 // run only once if repro file is provided
-                                RunTest(con, testScope, _2008Types, watch);
+                                RunTest(con, testScope, _katmaiTypes, watch);
                             }
                         }
                         else
@@ -119,7 +119,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                             {
                                 using (var testScope = rootScope.NewScope<SqlRandomizer>())
                                 {
-                                    RunTest(con, testScope, _2008Types, watch);
+                                    RunTest(con, testScope, _katmaiTypes, watch);
                                 }
 
                                 if (rootScope.Current.Next(100) == 0)

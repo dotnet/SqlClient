@@ -89,7 +89,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private bool Is2005PartialZombie
+        private bool IsYukonPartialZombie
         {
             get
             {
@@ -182,7 +182,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (disposing)
             {
-                if (!IsZombied && !Is2005PartialZombie)
+                if (!IsZombied && !IsYukonPartialZombie)
                 {
                     _internalTransaction.Dispose();
                 }
@@ -195,11 +195,11 @@ namespace Microsoft.Data.SqlClient
         {
             using (DiagnosticTransactionScope diagnosticScope = s_diagnosticListener.CreateTransactionRollbackScope(_isolationLevel, _connection, InternalTransaction, null))
             {
-                if (Is2005PartialZombie)
+                if (IsYukonPartialZombie)
                 {
                     // Put something in the trace in case a customer has an issue
                     SqlClientEventSource.Log.TryAdvancedTraceEvent("SqlTransaction.Rollback | ADV | Object Id {0}, partial zombie no rollback required", ObjectID);
-                    _internalTransaction = null; // 2005 zombification
+                    _internalTransaction = null; // yukon zombification
                 }
                 else
                 {
@@ -291,7 +291,7 @@ namespace Microsoft.Data.SqlClient
 
         internal void Zombie()
         {
-            // For 2005, we have to defer "zombification" until
+            // For Yukon, we have to defer "zombification" until
             //                 we get past the users' next rollback, else we'll
             //                 throw an exception there that is a breaking change.
             //                 Of course, if the connection is already closed,
@@ -299,11 +299,11 @@ namespace Microsoft.Data.SqlClient
             SqlInternalConnection internalConnection = (_connection.InnerConnection as SqlInternalConnection);
             if (null != internalConnection && !_isFromAPI)
             {
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("SqlTransaction.Zombie | ADV | Object Id {0} 2005 deferred zombie", ObjectID);
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("SqlTransaction.Zombie | ADV | Object Id {0} yukon deferred zombie", ObjectID);
             }
             else
             {
-                _internalTransaction = null; // pre-2005 zombification
+                _internalTransaction = null; // pre-yukon zombification
             }
         }
 
@@ -316,9 +316,9 @@ namespace Microsoft.Data.SqlClient
             // If this transaction has been completed, throw exception since it is unusable.
             if (IsZombied)
             {
-                if (Is2005PartialZombie)
+                if (IsYukonPartialZombie)
                 {
-                    _internalTransaction = null; // 2005 zombification
+                    _internalTransaction = null; // yukon zombification
                 }
 
                 throw ADP.TransactionZombied(this);

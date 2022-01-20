@@ -130,8 +130,8 @@ namespace Microsoft.Data.SqlClient.Samples
         private static string GetEncryptedValue(SqlColumnEncryptionAzureKeyVaultProvider sqlColumnEncryptionAzureKeyVaultProvider)
         {
             byte[] plainTextColumnEncryptionKey = new byte[32];
-            RandomNumberGenerator rng = RandomNumberGenerator.Create();
-            rng.GetBytes(plainTextColumnEncryptionKey);
+            RNGCryptoServiceProvider rngCsp = new RNGCryptoServiceProvider();
+            rngCsp.GetBytes(plainTextColumnEncryptionKey);
 
             byte[] encryptedColumnEncryptionKey = sqlColumnEncryptionAzureKeyVaultProvider.EncryptColumnEncryptionKey(s_akvUrl, s_algorithm, plainTextColumnEncryptionKey);
             string EncryptedValue = string.Concat("0x", BitConverter.ToString(encryptedColumnEncryptionKey).Replace("-", string.Empty));

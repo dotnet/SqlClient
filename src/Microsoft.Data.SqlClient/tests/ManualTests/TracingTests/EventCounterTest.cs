@@ -149,8 +149,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void EventCounter_ReclaimedConnectionsCounter_Functional()
         {
-            // clean pools and pool groups
-            ClearConnectionPools();
+            SqlConnection.ClearAllPools();
             var stringBuilder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { Pooling = true, MaxPoolSize = 1 };
 
             long rc = SqlClientEventSourceProps.ReclaimedConnections;
@@ -159,7 +158,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Specifying the generation number makes it to run faster by avoiding a full GC process
             GC.Collect(gcNumber);
             GC.WaitForPendingFinalizers();
-            System.Threading.Thread.Sleep(200); // give the pooler some time to reclaim the connection and avoid the conflict.
 
             using (SqlConnection conn = new SqlConnection(stringBuilder.ToString()))
             {
@@ -222,32 +220,26 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private void ClearConnectionPools()
         {
             //ClearAllPoos kills all the existing pooled connection thus deactivating all the active pools
-            long liveConnectionPools = SqlClientEventSourceProps.ActiveConnectionPools +
+            var liveConnectionPools = SqlClientEventSourceProps.ActiveConnectionPools +
                                       SqlClientEventSourceProps.InactiveConnectionPools;
             SqlConnection.ClearAllPools();
             Assert.InRange(SqlClientEventSourceProps.InactiveConnectionPools, 0, liveConnectionPools);
             Assert.Equal(0, SqlClientEventSourceProps.ActiveConnectionPools);
 
-            long icp = SqlClientEventSourceProps.InactiveConnectionPools;
-
-            // The 1st PruneConnectionPoolGroups call cleans the dangling inactive connection pools.
+            //the 1st PruneConnectionPoolGroups call cleans the dangling inactive connection pools
             PruneConnectionPoolGroups();
-            // If the pool isn't empty, it's because there are active connections or distributed transactions that need it.
-            Assert.InRange(SqlClientEventSourceProps.InactiveConnectionPools, 0, icp);
+            Assert.Equal(0, SqlClientEventSourceProps.InactiveConnectionPools);
 
             //the 2nd call deactivates the dangling connection pool groups
-            long liveConnectionPoolGroups = SqlClientEventSourceProps.ActiveConnectionPoolGroups +
+            var liveConnectionPoolGroups = SqlClientEventSourceProps.ActiveConnectionPoolGroups +
                                            SqlClientEventSourceProps.InactiveConnectionPoolGroups;
-            long acpg = SqlClientEventSourceProps.ActiveConnectionPoolGroups;
             PruneConnectionPoolGroups();
             Assert.InRange(SqlClientEventSourceProps.InactiveConnectionPoolGroups, 0, liveConnectionPoolGroups);
-            // If the pool entry isn't empty, it's because there are active pools that need it.
-            Assert.InRange(SqlClientEventSourceProps.ActiveConnectionPoolGroups, 0, acpg);
+            Assert.Equal(0, SqlClientEventSourceProps.ActiveConnectionPoolGroups);
 
-            long icpg = SqlClientEventSourceProps.InactiveConnectionPoolGroups;
             //the 3rd call cleans the dangling connection pool groups
             PruneConnectionPoolGroups();
-            Assert.InRange(SqlClientEventSourceProps.InactiveConnectionPoolGroups, 0, icpg);
+            Assert.Equal(0, SqlClientEventSourceProps.InactiveConnectionPoolGroups);
         }
 
         private static void PruneConnectionPoolGroups()

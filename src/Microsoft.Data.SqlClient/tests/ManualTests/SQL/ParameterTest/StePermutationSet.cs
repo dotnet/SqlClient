@@ -5,7 +5,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -13,7 +12,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         public override string ToString()
         {
-            StringBuilder b = new();
+            System.Text.StringBuilder b = new System.Text.StringBuilder();
             bool needSeparator = false;
             foreach (KeyValuePair<SteAttributeKey, object> pair in this)
             {
@@ -37,9 +36,15 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     public abstract class StePermutationGenerator : IEnumerable<StePermutation>
     {
         // standard GetEnumerator, implemented in terms of specialized enumerator
-        public IEnumerator<StePermutation> GetEnumerator() => GetEnumerator(DefaultKeys);
+        public IEnumerator<StePermutation> GetEnumerator()
+        {
+            return this.GetEnumerator(this.DefaultKeys);
+        }
 
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator(DefaultKeys);
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return this.GetEnumerator(this.DefaultKeys);
+        }
 
         public abstract IEnumerable<SteAttributeKey> DefaultKeys
         {
@@ -65,8 +70,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 AfterElements             // Position is after final element
             }
 
-            private readonly SteSimplePermutationGenerator _parent;            // Source of enumeration elements
-            private readonly List<SteAttributeKey> _keysOfInterest;    // attribute keys to use to generate permutations
+            private SteSimplePermutationGenerator _parent;            // Source of enumeration elements
+            private List<SteAttributeKey> _keysOfInterest;    // attribute keys to use to generate permutations
             private IEnumerator[] _position;          // One enumerator for each non-empty attribute list in parent
             private LogicalPosition _logicalPosition;   // Logical positioning of self
 
@@ -82,7 +87,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 _keysOfInterest = new List<SteAttributeKey>();
                 foreach (SteAttributeKey key in keysOfInterest)
                 {
-                    if (_parent.AttributeLists.TryGetValue(key, out ArrayList list) && list.Count > 0)
+                    ArrayList list;
+                    if (_parent.AttributeLists.TryGetValue(key, out list) && list.Count > 0)
                     {
                         _keysOfInterest.Add(key);
                     }
@@ -151,7 +157,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
             }
 
-            object IEnumerator.Current => Current;
+            object IEnumerator.Current
+            {
+                get
+                {
+                    return this.Current;
+                }
+            }
 
             // Standard enumerator restart method
             public void Reset()
@@ -184,7 +196,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         // permutationGenerator private fields
-        private readonly Dictionary<SteAttributeKey, ArrayList> _permutationBase;
+        private Dictionary<SteAttributeKey, ArrayList> _permutationBase;
 
         // generator's ctor
         public SteSimplePermutationGenerator()
@@ -204,7 +216,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         // Add a new attribute to the set
         public void Add(SteAttributeKey key, object attribute)
         {
-            if (!_permutationBase.TryGetValue(key, out ArrayList targetList))
+            ArrayList targetList;
+            if (!_permutationBase.TryGetValue(key, out targetList))
             {
                 targetList = new ArrayList();
                 _permutationBase.Add(key, targetList);

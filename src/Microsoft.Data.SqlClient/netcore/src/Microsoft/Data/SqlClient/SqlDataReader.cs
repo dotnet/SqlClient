@@ -87,8 +87,13 @@ namespace Microsoft.Data.SqlClient
 
         private Task _currentTask;
         private Snapshot _snapshot;
+
         private CancellationTokenSource _cancelAsyncOnCloseTokenSource;
         private CancellationToken _cancelAsyncOnCloseToken;
+
+        // Used for checking if the Type parameter provided to GetValue<T> is an INullable
+        internal static readonly Type _typeofINullable = typeof(INullable);
+        private static readonly Type s_typeofSqlString = typeof(SqlString);
 
         private SqlSequentialStream _currentStream;
         private SqlSequentialTextReader _currentTextReader;
@@ -552,7 +557,7 @@ namespace Microsoft.Data.SqlClient
                 schemaRow[nonVersionedProviderType] = (int)(col.cipherMD != null ? col.baseTI.type : col.type); // SqlDbType enum value - does not change with TypeSystem.
                 schemaRow[dataTypeName] = GetDataTypeNameInternal(col);
 
-                if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.Is2008DateTimeType)
+                if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.IsNewKatmaiDateTimeType)
                 {
                     schemaRow[providerType] = SqlDbType.NVarChar;
                     switch (col.type)
@@ -595,12 +600,12 @@ namespace Microsoft.Data.SqlClient
 
                     if (col.type == SqlDbType.Udt)
                     { // Additional metadata for UDTs.
-                        Debug.Assert(Connection.Is2008OrNewer, "Invalid Column type received from the server");
+                        Debug.Assert(Connection.IsKatmaiOrNewer, "Invalid Column type received from the server");
                         schemaRow[udtAssemblyQualifiedName] = col.udt?.AssemblyQualifiedName;
                     }
                     else if (col.type == SqlDbType.Xml)
                     { // Additional metadata for Xml.
-                        Debug.Assert(Connection.Is2008OrNewer, "Invalid DataType (Xml) for the column");
+                        Debug.Assert(Connection.IsKatmaiOrNewer, "Invalid DataType (Xml) for the column");
                         schemaRow[xmlSchemaCollectionDatabase] = col.xmlSchemaCollection?.Database;
                         schemaRow[xmlSchemaCollectionOwningSchema] = col.xmlSchemaCollection?.OwningSchema;
                         schemaRow[xmlSchemaCollectionName] = col.xmlSchemaCollection?.Name;
@@ -635,7 +640,7 @@ namespace Microsoft.Data.SqlClient
                     schemaRow[precision] = col.metaType.Precision;
                 }
 
-                if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.Is2008DateTimeType)
+                if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.IsNewKatmaiDateTimeType)
                 {
                     schemaRow[scale] = MetaType.MetaNVarChar.Scale;
                 }
@@ -1170,7 +1175,7 @@ namespace Microsoft.Data.SqlClient
         {
             string dataTypeName = null;
 
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsNewKatmaiDateTimeType)
             {
                 dataTypeName = MetaType.MetaNVarChar.TypeName;
             }
@@ -1252,9 +1257,9 @@ namespace Microsoft.Data.SqlClient
         {
             Type fieldType = null;
 
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsNewKatmaiDateTimeType)
             {
-                // Return 2008 types as string
+                // Return katmai types as string
                 fieldType = MetaType.MetaNVarChar.ClassType;
             }
             else if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
@@ -1360,7 +1365,7 @@ namespace Microsoft.Data.SqlClient
         {
             Type providerSpecificFieldType = null;
 
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsNewKatmaiDateTimeType)
             {
                 providerSpecificFieldType = MetaType.MetaNVarChar.SqlType;
             }
@@ -2284,7 +2289,7 @@ namespace Microsoft.Data.SqlClient
 
             DateTime dt = _data[i].DateTime;
             // This accessor can be called for regular DateTime column. In this case we should not throw
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].IsNewKatmaiDateTimeType)
             {
                 // TypeSystem.SQLServer2005 or less
 
@@ -2382,10 +2387,10 @@ namespace Microsoft.Data.SqlClient
         {
             ReadColumn(i);
             SqlString data;
-            // Convert 2008 types to string
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
+            // Convert Katmai types to string
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].IsNewKatmaiDateTimeType)
             {
-                data = _data[i].Sql2008DateTimeSqlString;
+                data = _data[i].KatmaiDateTimeSqlString;
             }
             else
             {
@@ -2462,9 +2467,9 @@ namespace Microsoft.Data.SqlClient
         {
             ReadColumn(i);
 
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].IsNewKatmaiDateTimeType)
             {
-                return _data[i].Sql2008DateTimeSqlString;
+                return _data[i].KatmaiDateTimeSqlString;
             }
 
             return _data[i].SqlString;
@@ -2541,10 +2546,10 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(!data.IsEmpty || data.IsNull || metaData.type == SqlDbType.Timestamp, "Data has been read, but the buffer is empty");
 
-            // Convert 2008 types to string
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
+            // Convert Katmai types to string
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsNewKatmaiDateTimeType)
             {
-                return data.Sql2008DateTimeSqlString;
+                return data.KatmaiDateTimeSqlString;
             }
             else if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
             {
@@ -2621,10 +2626,10 @@ namespace Microsoft.Data.SqlClient
         {
             ReadColumn(i);
 
-            // Convert 2008 value to string if type system knob is 2005 or earlier
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
+            // Convert katmai value to string if type system knob is 2005 or earlier
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].IsNewKatmaiDateTimeType)
             {
-                return _data[i].Sql2008DateTimeString;
+                return _data[i].KatmaiDateTimeString;
             }
 
             return _data[i].String;
@@ -2731,7 +2736,7 @@ namespace Microsoft.Data.SqlClient
         {
             Debug.Assert(!data.IsEmpty || data.IsNull || metaData.type == SqlDbType.Timestamp, "Data has been read, but the buffer is empty");
 
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsNewKatmaiDateTimeType)
             {
                 if (data.IsNull)
                 {
@@ -2739,7 +2744,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    return data.Sql2008DateTimeString;
+                    return data.KatmaiDateTimeString;
                 }
             }
             else if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
@@ -2835,11 +2840,11 @@ namespace Microsoft.Data.SqlClient
             {
                 return (T)(object)data.Decimal;
             }
-            else if (typeof(T) == typeof(DateTimeOffset) && dataType == typeof(DateTimeOffset) && _typeSystem > SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
+            else if (typeof(T) == typeof(DateTimeOffset) && dataType == typeof(DateTimeOffset) && _typeSystem > SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsNewKatmaiDateTimeType)
             {
                 return (T)(object)data.DateTimeOffset;
             }
-            else if (typeof(T) == typeof(DateTime) && dataType == typeof(DateTime) && _typeSystem > SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
+            else if (typeof(T) == typeof(DateTime) && dataType == typeof(DateTime) && _typeSystem > SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsNewKatmaiDateTimeType)
             {
                 return (T)(object)data.DateTime;
             }
@@ -2950,7 +2955,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     // If its a SQL Type or Nullable UDT
                     object rawValue = GetSqlValueFromSqlBufferInternal(data, metaData);
-                    if (typeof(T) == typeof(SqlString))
+                    if (typeof(T) == s_typeofSqlString)
                     {
                         // Special case: User wants SqlString, but we have a SqlXml
                         // SqlXml can not be typecast into a SqlString, but we need to support SqlString on XML Types - so do a manual conversion
@@ -2981,7 +2986,6 @@ namespace Microsoft.Data.SqlClient
                     }
                     catch (InvalidCastException) when (data.IsNull)
                     {
-                        // If the value was actually null, then we should throw a SqlNullValue instead
                         throw SQL.SqlNullValue();
                     }
 
@@ -5740,7 +5744,7 @@ namespace Microsoft.Data.SqlClient
                 _SqlMetaData col = md[i];
                 SqlDbColumn dbColumn = new SqlDbColumn(md[i]);
 
-                if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.Is2008DateTimeType)
+                if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.IsNewKatmaiDateTimeType)
                 {
                     dbColumn.SqlNumericScale = MetaType.MetaNVarChar.Scale;
                 }
