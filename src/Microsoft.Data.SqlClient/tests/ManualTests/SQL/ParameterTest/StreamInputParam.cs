@@ -15,7 +15,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class StreamInputParam
     {
-        private static Random s_rand = new Random(9999);
+        private static readonly Random s_rand = new(9999);
         private static string s_connStr = null;
         private static bool s_useSP = false;
 
@@ -25,12 +25,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         internal class CustomStream : Stream
         {
-            byte[] _data;
-            bool _sync;
+            private readonly byte[] _data;
+            private readonly bool _sync;
             int _pos = 0;
-            int _errorPos = 0;
-
-            Random r = new Random(8888);
+            private readonly int _errorPos = 0;
+            readonly Random _r = new(8888);
 
             public CustomStream(byte[] data, bool sync, int errorPos)
             {
@@ -90,7 +89,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 }
                 else
                 {
-                    nRead = 1 + r.Next(Math.Min(count, _data.Length - _pos) - 1);
+                    nRead = 1 + _r.Next(Math.Min(count, _data.Length - _pos) - 1);
                 }
                 if (_errorPos >= _pos && _errorPos < _pos + nRead)
                     throw new CustomStreamException();
@@ -108,7 +107,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             public override Task<int> ReadAsync(byte[] buffer, int offset, int count, System.Threading.CancellationToken cancellationToken)
             {
                 Debug.Assert(!_sync, "Custom stream reader: Async read in sync mode");
-                TaskCompletionSource<int> tcs = new TaskCompletionSource<int>();
+                TaskCompletionSource<int> tcs = new();
                 tcs.SetResult(ReadInternal(buffer, offset, count));
                 return tcs.Task;
             }
@@ -158,98 +157,103 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void TestStreamHelper(byte[] val, object stream, bool sync, bool oldTypes, int paramLen, bool expectException, bool addWithValue)
         {
-            using (SqlConnection conn = new SqlConnection(s_connStr))
+            using SqlConnection conn = new(s_connStr);
+            conn.Open();
+            using SqlCommand command = new()
             {
-                conn.Open();
-                (new SqlCommand("create table #blobs (id INT, blob VARBINARY(MAX))", conn)).ExecuteNonQuery();
-                try
+                CommandText = "create table #blobs (id INT, blob VARBINARY(MAX))",
+                Connection = conn
+            };
+            _ = command.ExecuteNonQuery();
+            try
+            {
+                SqlCommand ins;
+                if (!s_useSP)
                 {
-                    SqlCommand ins;
-                    if (!s_useSP)
+                    ins = new SqlCommand("insert into #blobs (id,blob) values (1,@blob)", conn);
+                }
+                else
+                {
+                    new SqlCommand("create procedure #myProc (@blob varbinary(MAX)) as begin insert into #blobs values (1, @blob) end", conn).ExecuteNonQuery();
+                    ins = new SqlCommand("#myProc", conn)
                     {
-                        ins = new SqlCommand("insert into #blobs (id,blob) values (1,@blob)", conn);
+                        CommandType = CommandType.StoredProcedure
+                    };
+                }
+                if (addWithValue)
+                {
+                    ins.Parameters.AddWithValue("@blob", stream);
+                }
+                else
+                {
+                    ins.Parameters.Add("@blob", oldTypes ? SqlDbType.Image : SqlDbType.VarBinary, paramLen);
+                    ins.Parameters["@blob"].Direction = ParameterDirection.Input;
+                    ins.Parameters["@blob"].Value = stream;
+                }
+                bool exc = false;
+                if (sync)
+                {
+                    try
+                    {
+                        ins.ExecuteNonQuery();
                     }
-                    else
+                    catch (CustomStreamException)
                     {
-                        new SqlCommand("create procedure #myProc (@blob varbinary(MAX)) as begin insert into #blobs values (1, @blob) end", conn).ExecuteNonQuery();
-                        ins = new SqlCommand("#myProc", conn);
-                        ins.CommandType = CommandType.StoredProcedure;
+                        exc = true;
                     }
-                    if (addWithValue)
+                }
+                else
+                {
+                    try
                     {
-                        ins.Parameters.AddWithValue("@blob", stream);
+                        ins.ExecuteNonQueryAsync().Wait();
                     }
-                    else
+                    catch (AggregateException ae)
                     {
-                        ins.Parameters.Add("@blob", oldTypes ? SqlDbType.Image : SqlDbType.VarBinary, paramLen);
-                        ins.Parameters["@blob"].Direction = ParameterDirection.Input;
-                        ins.Parameters["@blob"].Value = stream;
-                    }
-                    bool exc = false;
-                    if (sync)
-                    {
-                        try
-                        {
-                            ins.ExecuteNonQuery();
-                        }
-                        catch (CustomStreamException)
+                        if (ae.InnerException is CustomStreamException)
                         {
                             exc = true;
                         }
-                    }
-                    else
-                    {
-                        try
+                        else
                         {
-                            ins.ExecuteNonQueryAsync().Wait();
+                            throw;
                         }
-                        catch (AggregateException ae)
-                        {
-                            if (ae.InnerException is CustomStreamException)
-                            {
-                                exc = true;
-                            }
-                            else
-                            {
-                                throw;
-                            }
-                        }
-                    }
-                    Debug.Assert(exc == expectException, "Exception!=Expectation");
-
-                    byte[] back = (new SqlCommand("select blob from #blobs where id=1", conn)).ExecuteScalar() as byte[];
-                    if (!expectException)
-                    {
-                        AssertEqual(back, val, paramLen);
                     }
                 }
-                finally
+                Debug.Assert(exc == expectException, "Exception!=Expectation");
+
+                byte[] back = (new SqlCommand("select blob from #blobs where id=1", conn)).ExecuteScalar() as byte[];
+                if (!expectException)
                 {
-                    (new SqlCommand("drop table #blobs", conn)).ExecuteNonQuery();
-                    if (s_useSP)
-                    {
-                        (new SqlCommand("drop procedure #myProc", conn)).ExecuteNonQuery();
-                    }
+                    AssertEqual(back, val, paramLen);
+                }
+            }
+            finally
+            {
+                (new SqlCommand("drop table #blobs", conn)).ExecuteNonQuery();
+                if (s_useSP)
+                {
+                    (new SqlCommand("drop procedure #myProc", conn)).ExecuteNonQuery();
                 }
             }
         }
 
-        private static string _xmlstr = null;
+        private static string s_xmlstr = null;
 
         private static string XmlStr
         {
             get
             {
-                if (_xmlstr == null)
+                if (s_xmlstr == null)
                 {
                     int N = 10000;
-                    XmlDocument doc = new XmlDocument();
+                    XmlDocument doc = new();
                     XmlNode root = doc.AppendChild(doc.CreateElement("root"));
                     for (int i = 0; i < N; i++)
                         root.AppendChild(doc.CreateElement("e" + i.ToString()));
-                    _xmlstr = doc.OuterXml;
+                    s_xmlstr = doc.OuterXml;
                 }
-                return _xmlstr;
+                return s_xmlstr;
             }
         }
 
@@ -261,7 +265,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void TestTextReader(int dataLen, bool sync, bool oldTypes, int paramLen, bool nvarchar, bool addWithValue = false)
         {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
             for (int i = 0; i < dataLen; i++)
                 sb.Append((char)('A' + s_rand.Next(20)));
             string s = sb.ToString();
@@ -271,7 +275,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void TestCustomTextReader(int dataLen, bool sync, bool oldTypes, int paramLen, bool nvarchar, bool error, bool addWithValue = false)
         {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
             for (int i = 0; i < dataLen; i++)
                 sb.Append((char)('A' + s_rand.Next(20)));
             string s = sb.ToString();
@@ -284,88 +288,92 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void TestTextWrite(string s, object reader, bool sync, bool oldTypes, int paramLen, bool nvarchar, bool expectException, bool addWithValue)
         {
-            using (SqlConnection conn = new SqlConnection(s_connStr))
+            using SqlConnection conn = new(s_connStr);
+            conn.Open();
+            SqlCommand command = new()
             {
-                conn.Open();
-
-                (new SqlCommand(string.Format("create table #blobs (id INT, blob {0}(MAX))", nvarchar ? "NVARCHAR" : "VARCHAR"), conn)).ExecuteNonQuery();
-                try
+                Connection = conn,
+                CommandText = $"create table #blobs (id INT, blob {(nvarchar ? "NVARCHAR" : "VARCHAR")}(MAX))"
+            };
+            _ = command.ExecuteNonQuery();
+            try
+            {
+                SqlCommand ins;
+                if (!s_useSP)
                 {
-                    SqlCommand ins;
-                    if (!s_useSP)
+                    ins = new SqlCommand("insert into #blobs (id,blob) values (1,@blob)", conn);
+                }
+                else
+                {
+                    new SqlCommand(
+                        string.Format("create procedure #myProc (@blob {0}(MAX)) as begin insert into #blobs values (1, @blob) end", nvarchar ? "NVARCHAR" : "VARCHAR"),
+                        conn).ExecuteNonQuery();
+                    ins = new SqlCommand("#myProc", conn)
                     {
-                        ins = new SqlCommand("insert into #blobs (id,blob) values (1,@blob)", conn);
-                    }
-                    else
-                    {
-                        new SqlCommand(
-                            string.Format("create procedure #myProc (@blob {0}(MAX)) as begin insert into #blobs values (1, @blob) end", nvarchar ? "NVARCHAR" : "VARCHAR"),
-                            conn).ExecuteNonQuery();
-                        ins = new SqlCommand("#myProc", conn);
-                        ins.CommandType = CommandType.StoredProcedure;
-                    }
-                    if (addWithValue)
-                    {
-                        ins.Parameters.AddWithValue("@blob", reader);
-                    }
-                    else
-                    {
-                        ins.Parameters.Add("@blob", nvarchar ?
-                                                       (oldTypes ? SqlDbType.NText : SqlDbType.NVarChar) :
-                                                       (oldTypes ? SqlDbType.Text : SqlDbType.VarChar), paramLen);
-                        ins.Parameters["@blob"].Direction = ParameterDirection.Input;
-                        ins.Parameters["@blob"].Value = reader;
-                    }
+                        CommandType = CommandType.StoredProcedure
+                    };
+                }
+                if (addWithValue)
+                {
+                    ins.Parameters.AddWithValue("@blob", reader);
+                }
+                else
+                {
+                    ins.Parameters.Add("@blob", nvarchar ?
+                                                   (oldTypes ? SqlDbType.NText : SqlDbType.NVarChar) :
+                                                   (oldTypes ? SqlDbType.Text : SqlDbType.VarChar), paramLen);
+                    ins.Parameters["@blob"].Direction = ParameterDirection.Input;
+                    ins.Parameters["@blob"].Value = reader;
+                }
 
-                    bool exc = false;
-                    if (sync)
+                bool exc = false;
+                if (sync)
+                {
+                    try
                     {
-                        try
-                        {
-                            ins.ExecuteNonQuery();
-                        }
-                        catch (CustomStreamException)
+                        ins.ExecuteNonQuery();
+                    }
+                    catch (CustomStreamException)
+                    {
+                        exc = true;
+                    }
+                }
+                else
+                {
+                    try
+                    {
+                        ins.ExecuteNonQueryAsync().Wait();
+                    }
+                    catch (AggregateException ae)
+                    {
+                        if (ae.InnerException is CustomStreamException)
                         {
                             exc = true;
                         }
-                    }
-                    else
-                    {
-                        try
+                        else
                         {
-                            ins.ExecuteNonQueryAsync().Wait();
+                            throw;
                         }
-                        catch (AggregateException ae)
-                        {
-                            if (ae.InnerException is CustomStreamException)
-                            {
-                                exc = true;
-                            }
-                            else
-                            {
-                                throw;
-                            }
-                        }
-                    }
-                    Debug.Assert(exc == expectException, "Exception!=Expectation");
-
-                    string back = (new SqlCommand("select blob from #blobs where id=1", conn)).ExecuteScalar() as string;
-                    if (paramLen > 0)
-                    {
-                        s = s.Substring(0, Math.Min(paramLen, s.Length));
-                    }
-                    if (!expectException)
-                    {
-                        Debug.Assert(back == s, "Strings are not equal");
                     }
                 }
-                finally
+                Debug.Assert(exc == expectException, "Exception!=Expectation");
+
+                string back = (new SqlCommand("select blob from #blobs where id=1", conn)).ExecuteScalar() as string;
+                if (paramLen > 0)
                 {
-                    (new SqlCommand("drop table #blobs", conn)).ExecuteNonQuery();
-                    if (s_useSP)
-                    {
-                        (new SqlCommand("drop procedure #myProc", conn)).ExecuteNonQuery();
-                    }
+                    s = s.Substring(0, Math.Min(paramLen, s.Length));
+                }
+                if (!expectException)
+                {
+                    Debug.Assert(back == s, "Strings are not equal");
+                }
+            }
+            finally
+            {
+                (new SqlCommand("drop table #blobs", conn)).ExecuteNonQuery();
+                if (s_useSP)
+                {
+                    (new SqlCommand("drop procedure #myProc", conn)).ExecuteNonQuery();
                 }
             }
         }
@@ -373,160 +381,167 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static void TestXML(bool sync, bool lengthLimited, bool addWithValue = false)
         {
 
-            using (SqlConnection conn = new SqlConnection(s_connStr))
+            using SqlConnection conn = new(s_connStr);
+            conn.Open();
+            SqlCommand command = new()
             {
-                conn.Open();
-
-                (new SqlCommand("create table #blobs (id INT, blob XML)", conn)).ExecuteNonQuery();
-                try
+                Connection = conn,
+                CommandText = "create table #blobs (id INT, blob XML)"
+            };
+            _ = command.ExecuteNonQuery();
+            try
+            {
+                SqlCommand ins;
+                if (!s_useSP)
                 {
-                    SqlCommand ins;
-                    if (!s_useSP)
-                    {
-                        ins = new SqlCommand("insert into #blobs (id,blob) values (1,@blob)", conn);
-                    }
-                    else
-                    {
-                        new SqlCommand("create procedure #myProc (@blob XML) as begin insert into #blobs values (1, @blob) end", conn).ExecuteNonQuery();
-                        ins = new SqlCommand("#myProc", conn);
-                        ins.CommandType = CommandType.StoredProcedure;
-                    }
-
-                    StringBuilder comment = new StringBuilder();
-                    if (lengthLimited)
-                    {
-                        comment.Append("<!-- ");
-                        int N = s_rand.Next(100);
-                        for (int i = 0; i < N; i++)
-                            comment.Append(i.ToString());
-                        comment.Append("-->");
-                    }
-                    XmlReader reader = XmlReader.Create(new StringReader(XmlStr + comment.ToString()));
-
-                    if (addWithValue)
-                    {
-                        ins.Parameters.AddWithValue("@blob", reader);
-                    }
-                    else
-                    {
-                        ins.Parameters.Add("@blob", SqlDbType.Xml, lengthLimited ? XmlStr.Length : -1);
-                        ins.Parameters["@blob"].Direction = ParameterDirection.Input;
-                        ins.Parameters["@blob"].Value = reader;
-                    }
-                    if (sync)
-                    {
-                        ins.ExecuteNonQuery();
-                    }
-                    else
-                    {
-                        ins.ExecuteNonQueryAsync().Wait();
-                    }
-                    string back = (new SqlCommand("select blob from #blobs where id=1", conn)).ExecuteScalar() as string;
-                    Debug.Assert(back == XmlStr, "String!=xml");
-                    if (back != XmlStr)
-                    {
-                        Console.WriteLine("[{0}]", back);
-                        Console.WriteLine("[{0}]", XmlStr);
-                    }
+                    ins = new SqlCommand("insert into #blobs (id,blob) values (1,@blob)", conn);
                 }
-                finally
+                else
                 {
-                    (new SqlCommand("drop table #blobs", conn)).ExecuteNonQuery();
-                    if (s_useSP)
+                    new SqlCommand("create procedure #myProc (@blob XML) as begin insert into #blobs values (1, @blob) end", conn).ExecuteNonQuery();
+                    ins = new SqlCommand("#myProc", conn)
                     {
-                        (new SqlCommand("drop procedure #myProc", conn)).ExecuteNonQuery();
-                    }
+                        CommandType = CommandType.StoredProcedure
+                    };
                 }
-                Console.WriteLine("TestXml (Sync {0} LimitLength {1} ) is OK", sync, lengthLimited);
+
+                StringBuilder comment = new();
+                if (lengthLimited)
+                {
+                    comment.Append("<!-- ");
+                    int N = s_rand.Next(100);
+                    for (int i = 0; i < N; i++)
+                        comment.Append(i.ToString());
+                    comment.Append("-->");
+                }
+                XmlReader reader = XmlReader.Create(new StringReader(XmlStr + comment.ToString()));
+
+                if (addWithValue)
+                {
+                    ins.Parameters.AddWithValue("@blob", reader);
+                }
+                else
+                {
+                    ins.Parameters.Add("@blob", SqlDbType.Xml, lengthLimited ? XmlStr.Length : -1);
+                    ins.Parameters["@blob"].Direction = ParameterDirection.Input;
+                    ins.Parameters["@blob"].Value = reader;
+                }
+                if (sync)
+                {
+                    ins.ExecuteNonQuery();
+                }
+                else
+                {
+                    ins.ExecuteNonQueryAsync().Wait();
+                }
+                SqlCommand stringCommand = new()
+                {
+                    Connection = conn,
+                    CommandText = "select blob from #blobs where id=1"
+                };
+                string back = stringCommand.ExecuteScalar() as string;
+                Debug.Assert(back == XmlStr, "String!=xml");
+                if (back != XmlStr)
+                {
+                    Console.WriteLine("[{0}]", back);
+                    Console.WriteLine("[{0}]", XmlStr);
+                }
             }
+            finally
+            {
+                using SqlCommand dropCommand = new()
+                {
+                    Connection = conn,
+                    CommandText = "drop table #blobs"
+                };
+                dropCommand.ExecuteNonQuery();
+                if (s_useSP)
+                {
+                    dropCommand.CommandText = "drop procedure #myProc";
+                    dropCommand.ExecuteNonQuery();
+                }
+            }
+            Console.WriteLine("TestXml (Sync {0} LimitLength {1} ) is OK", sync, lengthLimited);
         }
 
         private static void ImmediateCancelBin()
         {
             Console.WriteLine("Test immediate cancel for binary stream");
-            CancellationTokenSource cts = new CancellationTokenSource();
-            using (SqlConnection conn = new SqlConnection(s_connStr))
-            {
-                conn.OpenAsync().Wait();
-                using (SqlCommand cmd = conn.CreateCommand())
-                {
-                    cmd.CommandText = "create table #blobs (Id int, blob varbinary(max))";
-                    cmd.ExecuteNonQuery();
-                    Random rand = new Random(10000);
-                    int dataSize = 10000000;
-                    byte[] data = new byte[dataSize];
-                    rand.NextBytes(data);
-                    MemoryStream ms = new MemoryStream(data, false);
-                    // Include a delay to allow time for cancellation
-                    cmd.CommandText = "WAITFOR DELAY '00:00:05'; insert into #blobs (Id, blob) values (1, @blob)";
-                    cmd.Parameters.Add("@blob", SqlDbType.VarBinary, dataSize);
-                    cmd.Parameters["@blob"].Direction = ParameterDirection.Input;
-                    cmd.Parameters["@blob"].Value = ms;
+            CancellationTokenSource cts = new();
+            using SqlConnection conn = new(s_connStr);
+            conn.OpenAsync().Wait();
+            using SqlCommand cmd = conn.CreateCommand();
+            cmd.CommandText = "create table #blobs (Id int, blob varbinary(max))";
+            cmd.ExecuteNonQuery();
+            Random rand = new(10000);
+            int dataSize = 10000000;
+            byte[] data = new byte[dataSize];
+            rand.NextBytes(data);
+            MemoryStream ms = new(data, false);
+            // Include a delay to allow time for cancellation
+            cmd.CommandText = "WAITFOR DELAY '00:00:05'; insert into #blobs (Id, blob) values (1, @blob)";
+            cmd.Parameters.Add("@blob", SqlDbType.VarBinary, dataSize);
+            cmd.Parameters["@blob"].Direction = ParameterDirection.Input;
+            cmd.Parameters["@blob"].Value = ms;
 
-                    try
-                    {
-                        Task.WaitAll(cmd.ExecuteNonQueryAsync(cts.Token), Task.Run(() => cts.Cancel()));
-                        Console.WriteLine("FAIL: Expected AggregateException on Task wait for Cancelled Task!");
-                    }
-                    catch (AggregateException ae)
-                    {
-                        if (ae.InnerException is InvalidOperationException ||
-                            (ae.InnerException is SqlException &&
-                             ae.InnerException.Message.Contains("Operation cancelled by user.")))
-                        {
-                            Console.WriteLine("PASS: Task is cancelled");
-                        }
-                        else
-                        {
-                            throw ae.InnerException;
-                        }
-                    }
-                    finally
-                    {
-                        ms.Close();
-                    }
+            try
+            {
+                Task.WaitAll(cmd.ExecuteNonQueryAsync(cts.Token), Task.Run(() => cts.Cancel()));
+                Console.WriteLine("FAIL: Expected AggregateException on Task wait for Cancelled Task!");
+            }
+            catch (AggregateException ae)
+            {
+                if (ae.InnerException is InvalidOperationException ||
+                    (ae.InnerException is SqlException &&
+                     ae.InnerException.Message.Contains("Operation cancelled by user.")))
+                {
+                    Console.WriteLine("PASS: Task is cancelled");
                 }
+                else
+                {
+                    throw ae.InnerException;
+                }
+            }
+            finally
+            {
+                ms.Close();
             }
         }
 
         private static void ImmediateCancelText()
         {
             Console.WriteLine("Test immediate cancel for text stream");
-            CancellationTokenSource cts = new CancellationTokenSource();
-            using (SqlConnection conn = new SqlConnection(s_connStr))
-            {
-                conn.OpenAsync().Wait();
-                using (SqlCommand cmd = conn.CreateCommand())
-                {
-                    cmd.CommandText = "create table #blobs (Id int, blob varchar(max))";
-                    cmd.ExecuteNonQuery();
-                    StringBuilder sb = new StringBuilder();
-                    for (int i = 0; i < 1000000; i++)
-                        sb.Append(i);
-                    // Include a delay to allow time for cancellation
-                    cmd.CommandText = "WAITFOR DELAY '00:00:05'; insert into #blobs (Id, blob) values (1, @blob)";
-                    cmd.Parameters.Add("@blob", SqlDbType.VarChar, -1);
-                    cmd.Parameters["@blob"].Direction = ParameterDirection.Input;
-                    cmd.Parameters["@blob"].Value = new StringReader(sb.ToString());
+            CancellationTokenSource cts = new();
+            using SqlConnection conn = new(s_connStr);
+            conn.OpenAsync().Wait();
+            using SqlCommand cmd = conn.CreateCommand();
+            cmd.CommandText = "create table #blobs (Id int, blob varchar(max))";
+            cmd.ExecuteNonQuery();
+            StringBuilder sb = new();
+            for (int i = 0; i < 1000000; i++)
+                sb.Append(i);
+            // Include a delay to allow time for cancellation
+            cmd.CommandText = "WAITFOR DELAY '00:00:05'; insert into #blobs (Id, blob) values (1, @blob)";
+            cmd.Parameters.Add("@blob", SqlDbType.VarChar, -1);
+            cmd.Parameters["@blob"].Direction = ParameterDirection.Input;
+            cmd.Parameters["@blob"].Value = new StringReader(sb.ToString());
 
-                    try
-                    {
-                        Task.WaitAll(cmd.ExecuteNonQueryAsync(cts.Token), Task.Run(() => cts.Cancel()));
-                        Console.WriteLine("FAIL: Expected AggregateException on Task wait for Cancelled Task!");
-                    }
-                    catch (AggregateException ae)
-                    {
-                        if (ae.InnerException is InvalidOperationException ||
-                            (ae.InnerException is SqlException &&
-                             ae.InnerException.Message.Contains("Operation cancelled by user.")))
-                        {
-                            Console.WriteLine("PASS: Task is cancelled");
-                        }
-                        else
-                        {
-                            throw ae.InnerException;
-                        }
-                    }
+            try
+            {
+                Task.WaitAll(cmd.ExecuteNonQueryAsync(cts.Token), Task.Run(() => cts.Cancel()));
+                Console.WriteLine("FAIL: Expected AggregateException on Task wait for Cancelled Task!");
+            }
+            catch (AggregateException ae)
+            {
+                if (ae.InnerException is InvalidOperationException ||
+                    (ae.InnerException is SqlException &&
+                     ae.InnerException.Message.Contains("Operation cancelled by user.")))
+                {
+                    Console.WriteLine("PASS: Task is cancelled");
+                }
+                else
+                {
+                    throw ae.InnerException;
                 }
             }
         }
@@ -534,38 +549,34 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static void ImmediateCancelXml()
         {
             Console.WriteLine("Test immediate cancel for xml stream");
-            CancellationTokenSource cts = new CancellationTokenSource();
-            using (SqlConnection conn = new SqlConnection(s_connStr))
-            {
-                conn.OpenAsync().Wait();
-                using (SqlCommand cmd = conn.CreateCommand())
-                {
-                    cmd.CommandText = "create table #blobs (Id int, blob xml)";
-                    cmd.ExecuteNonQuery();
-                    // Include a delay to allow time for cancellation
-                    cmd.CommandText = "WAITFOR DELAY '00:00:05'; insert into #blobs (Id, blob) values (1, @blob)";
-                    cmd.Parameters.Add("@blob", SqlDbType.Xml, -1);
-                    cmd.Parameters["@blob"].Direction = ParameterDirection.Input;
-                    cmd.Parameters["@blob"].Value = XmlReader.Create(new StringReader(XmlStr));
+            CancellationTokenSource cts = new();
+            using SqlConnection conn = new(s_connStr);
+            conn.OpenAsync().Wait();
+            using SqlCommand cmd = conn.CreateCommand();
+            cmd.CommandText = "create table #blobs (Id int, blob xml)";
+            cmd.ExecuteNonQuery();
+            // Include a delay to allow time for cancellation
+            cmd.CommandText = "WAITFOR DELAY '00:00:05'; insert into #blobs (Id, blob) values (1, @blob)";
+            cmd.Parameters.Add("@blob", SqlDbType.Xml, -1);
+            cmd.Parameters["@blob"].Direction = ParameterDirection.Input;
+            cmd.Parameters["@blob"].Value = XmlReader.Create(new StringReader(XmlStr));
 
-                    try
-                    {
-                        Task.WaitAll(cmd.ExecuteNonQueryAsync(cts.Token), Task.Run(() => cts.Cancel()));
-                        Console.WriteLine("FAIL: Expected AggregateException on Task wait for Cancelled Task!");
-                    }
-                    catch (AggregateException ae)
-                    {
-                        if (ae.InnerException is InvalidOperationException ||
-                            (ae.InnerException is SqlException &&
-                             ae.InnerException.Message.Contains("Operation cancelled by user.")))
-                        {
-                            Console.WriteLine("PASS: Task is cancelled");
-                        }
-                        else
-                        {
-                            throw ae.InnerException;
-                        }
-                    }
+            try
+            {
+                Task.WaitAll(cmd.ExecuteNonQueryAsync(cts.Token), Task.Run(() => cts.Cancel()));
+                Console.WriteLine("FAIL: Expected AggregateException on Task wait for Cancelled Task!");
+            }
+            catch (AggregateException ae)
+            {
+                if (ae.InnerException is InvalidOperationException ||
+                    (ae.InnerException is SqlException &&
+                     ae.InnerException.Message.Contains("Operation cancelled by user.")))
+                {
+                    Console.WriteLine("PASS: Task is cancelled");
+                }
+                else
+                {
+                    throw ae.InnerException;
                 }
             }
         }
@@ -573,83 +584,77 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static void PrepareCommand()
         {
             Console.Write("Test command preparation ");
-            using (SqlConnection conn = new SqlConnection(s_connStr))
+            using (SqlConnection conn = new(s_connStr))
             {
                 conn.Open();
-                using (SqlCommand cmd = conn.CreateCommand())
-                {
-                    cmd.CommandText = "create table #blobs (Id int, blob varbinary(max))";
-                    cmd.ExecuteNonQuery();
-                    Random rand = new Random(10000);
-                    int dataSize = 100000;
-                    byte[] data = new byte[dataSize];
-                    rand.NextBytes(data);
-                    MemoryStream ms = new MemoryStream(data, false);
+                using SqlCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "create table #blobs (Id int, blob varbinary(max))";
+                cmd.ExecuteNonQuery();
+                Random rand = new(10000);
+                int dataSize = 100000;
+                byte[] data = new byte[dataSize];
+                rand.NextBytes(data);
+                MemoryStream ms = new(data, false);
 
-                    cmd.CommandText = "insert into #blobs (Id, blob) values (1, @blob)";
+                cmd.CommandText = "insert into #blobs (Id, blob) values (1, @blob)";
 
-                    cmd.Parameters.Add("@blob", SqlDbType.VarBinary, dataSize);
-                    cmd.Parameters["@blob"].Direction = ParameterDirection.Input;
-                    cmd.Parameters["@blob"].Value = ms;
-                    cmd.Prepare();
-                    cmd.ExecuteNonQuery();
-                    conn.Close();
-                    ms.Close();
-                }
+                cmd.Parameters.Add("@blob", SqlDbType.VarBinary, dataSize);
+                cmd.Parameters["@blob"].Direction = ParameterDirection.Input;
+                cmd.Parameters["@blob"].Value = ms;
+                cmd.Prepare();
+                cmd.ExecuteNonQuery();
+                conn.Close();
+                ms.Close();
             }
             Console.WriteLine("PASS");
         }
 
         private static void CommandReuse()
         {
-            foreach (var func in new Func<SqlCommand, CancellationToken, Task>[] {
+            foreach (Func<SqlCommand, CancellationToken, Task> func in new Func<SqlCommand, CancellationToken, Task>[] {
                     (cmd,token) => cmd.ExecuteNonQueryAsync(token),
                     (cmd,token) => cmd.ExecuteReaderAsync(token),
                     (cmd,token) => cmd.ExecuteXmlReaderAsync(token)
             })
             {
-                CancellationTokenSource cts = new CancellationTokenSource();
-                using (SqlConnection conn = new SqlConnection(s_connStr))
+                CancellationTokenSource cts = new();
+                using SqlConnection conn = new(s_connStr);
+                conn.OpenAsync().Wait();
+                Console.WriteLine("Test reuse of command after cancel");
+                using SqlCommand cmd = conn.CreateCommand();
+                cmd.CommandText = "create table #blobs (Id int, blob varbinary(max))";
+                cmd.ExecuteNonQuery();
+                Random rand = new(10000);
+                int dataSize = 100000;
+                byte[] binarydata = new byte[dataSize];
+                rand.NextBytes(binarydata);
+                MemoryStream ms = new(binarydata, false);
+                // Include a delay to allow time for cancellation
+                cmd.CommandText = "WAITFOR DELAY '00:00:05'; insert into #blobs (Id, blob) values (1, @blob)";
+
+                cmd.Parameters.Add("@blob", SqlDbType.VarBinary, dataSize);
+                cmd.Parameters["@blob"].Direction = ParameterDirection.Input;
+                cmd.Parameters["@blob"].Value = ms;
+
+                try
                 {
-                    conn.OpenAsync().Wait();
-                    Console.WriteLine("Test reuse of command after cancel");
-                    using (SqlCommand cmd = conn.CreateCommand())
+                    Task.WaitAll(func(cmd, cts.Token), Task.Run(() => cts.Cancel()));
+                    Console.WriteLine("FAIL: Expected AggregateException on Task wait for Cancelled Task!");
+                }
+                catch (AggregateException ae)
+                {
+                    if (!ae.InnerException.Message.Contains("Operation cancelled by user."))
                     {
-                        cmd.CommandText = "create table #blobs (Id int, blob varbinary(max))";
-                        cmd.ExecuteNonQuery();
-                        Random rand = new Random(10000);
-                        int dataSize = 100000;
-                        byte[] binarydata = new byte[dataSize];
-                        rand.NextBytes(binarydata);
-                        MemoryStream ms = new MemoryStream(binarydata, false);
-                        // Include a delay to allow time for cancellation
-                        cmd.CommandText = "WAITFOR DELAY '00:00:05'; insert into #blobs (Id, blob) values (1, @blob)";
-
-                        cmd.Parameters.Add("@blob", SqlDbType.VarBinary, dataSize);
-                        cmd.Parameters["@blob"].Direction = ParameterDirection.Input;
-                        cmd.Parameters["@blob"].Value = ms;
-
-                        try
-                        {
-                            Task.WaitAll(func(cmd, cts.Token), Task.Run(() => cts.Cancel()));
-                            Console.WriteLine("FAIL: Expected AggregateException on Task wait for Cancelled Task!");
-                        }
-                        catch (AggregateException ae)
-                        {
-                            if (!ae.InnerException.Message.Contains("Operation cancelled by user."))
-                            {
-                                Console.WriteLine("FAIL: Unexpected exception message: " + ae.InnerException.Message);
-                            }
-                        }
-                        finally
-                        {
-                            ms.Close();
-                        }
-                        cmd.Parameters.Clear();
-                        cmd.CommandText = "select 'PASS'";
-                        Console.WriteLine(cmd.ExecuteScalar());
+                        Console.WriteLine("FAIL: Unexpected exception message: " + ae.InnerException.Message);
                     }
                 }
+                finally
+                {
+                    ms.Close();
+                }
+                cmd.Parameters.Clear();
+                cmd.CommandText = "select 'PASS'";
+                Console.WriteLine(cmd.ExecuteScalar());
             }
         }
 
@@ -665,7 +670,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 bool oldTypes = false;
                 do
                 {
-                    using (AsyncDebugScope debugScope = new AsyncDebugScope())
+                    using (AsyncDebugScope debugScope = new())
                     {
                         for (int run = 0; run < 2; run++)
                         {

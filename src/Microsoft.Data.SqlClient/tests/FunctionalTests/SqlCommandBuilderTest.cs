@@ -3,8 +3,11 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Reflection;
+using System.Threading;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
@@ -64,6 +67,8 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             SqlCommandBuilder cb = new SqlCommandBuilder();
             Assert.Equal(".", cb.CatalogSeparator);
+            cb.CatalogSeparator = ".";
+            Assert.Equal(".", cb.CatalogSeparator);
         }
 
         [Theory]
@@ -122,6 +127,23 @@ namespace Microsoft.Data.SqlClient.Tests
                 Assert.Equal("ConflictOption", ex.ParamName);
             }
             Assert.Equal(ConflictOption.CompareRowVersion, cb.ConflictOption);
+        }
+
+        [Fact]
+        public void DataAdapter()
+        {
+            SqlCommandBuilder cb = new SqlCommandBuilder();
+            Assert.Null(cb.DataAdapter);
+
+            cb.DataAdapter = new SqlDataAdapter();
+            Assert.NotNull(cb.DataAdapter);
+        }
+
+        [Theory]
+        [MemberData(nameof(SqlTestCommands))]
+        public void DeriveParameters_Throws(Type ex, SqlCommand command)
+        {
+            Assert.Throws(ex, () => SqlCommandBuilder.DeriveParameters(command));
         }
 
         [Fact]
@@ -323,5 +345,19 @@ namespace Microsoft.Data.SqlClient.Tests
                 Assert.Null(ex.ParamName);
             }
         }
+
+        #region member data
+        public static IEnumerable<object[]> SqlTestCommands =>
+            new List<object[]>
+            {
+                new object[] { typeof(ArgumentNullException), null },
+                /* TODO: may need a MOQ class for DbCommand to override the DeriveParameters to throw these exceptions
+                new object[] { typeof(OutOfMemoryException), new SqlCommand() },
+                new object[] { typeof(StackOverflowException), new SqlCommand() },
+                new object[] { typeof(ThreadAbortException), new SqlCommand() },
+                new object[] { typeof(Exception), new SqlCommand() }
+                */
+            };
+        #endregion
     }
 }

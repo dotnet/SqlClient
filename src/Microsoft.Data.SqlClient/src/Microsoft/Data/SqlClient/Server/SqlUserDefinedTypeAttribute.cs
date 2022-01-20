@@ -33,7 +33,7 @@ namespace Microsoft.Data.SqlClient.Server
         private string _name;
 
         // The maximum value for the maxbytesize field, in bytes.
-        internal const int YukonMaxByteSizeValue = 8000;
+        internal const int Sql2005MaxByteSizeValue = 8000;
         private string _validationMethodName = null;
 
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedTypeAttribute.xml' path='docs/members[@name="SqlUserDefinedTypeAttribute"]/ctor/*' />

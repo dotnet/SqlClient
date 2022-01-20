@@ -43,7 +43,7 @@ namespace Microsoft.Data.SqlClient
                 "from sys.assemblies as assemblies  join sys.assembly_types as types " +
                 "on assemblies.assembly_id = types.assembly_id ";
 
-            // pre 9.0/Yukon servers do not have UDTs
+            // pre 9.0/2005 servers do not have UDTs
             if (0 > string.Compare(ServerVersion, ServerVersionNormalized90, StringComparison.OrdinalIgnoreCase))
             {
                 return;
@@ -176,7 +176,7 @@ namespace Microsoft.Data.SqlClient
                 "where is_table_type = 1";
 
             // TODO: update this check once the server upgrades major version number!!!
-            // pre 9.0/Yukon servers do not have Table types
+            // pre 9.0/2005 servers do not have Table types
             if (0 > string.Compare(ServerVersion, ServerVersionNormalized10, StringComparison.OrdinalIgnoreCase))
             {
                 return;
