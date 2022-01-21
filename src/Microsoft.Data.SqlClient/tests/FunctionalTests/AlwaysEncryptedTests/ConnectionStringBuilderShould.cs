@@ -98,7 +98,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
             connectionStringBuilder4.Clear();
             Assert.Equal(SqlConnectionAttestationProtocol.NotSpecified, connectionStringBuilder4.AttestationProtocol);
-            Assert.True(string.IsNullOrEmpty(connectionStringBuilder4.DataSource));
+            Assert.Empty(connectionStringBuilder4.DataSource);
         }
 
         [Fact]
@@ -336,7 +336,8 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
 
             connectionStringBuilder.AttestationProtocol = SqlConnectionAttestationProtocol.None;
 
-            Assert.True(connectionStringBuilder.TryGetValue(@"Attestation Protocol", out outputValue));
+            Assert.True(connectionStringBuilder.TryGetValue(@"Attestation Protocol", out outputValue), 
+                "'Attestation Protocol'' key not found in SqlConnectionStringBuilder");
             Assert.Equal(SqlConnectionAttestationProtocol.None, outputValue);
         }
 

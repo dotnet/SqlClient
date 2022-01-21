@@ -3200,7 +3200,7 @@ namespace Microsoft.Data.SqlClient
                         // Check if the attestation protocol is specified and supports the enclave type.
                         if (SqlConnectionAttestationProtocol.NotSpecified != attestationProtocol && !IsValidAttestationProtocol(attestationProtocol, EnclaveType))
                         {
-                            throw SQL.AttestationProtocolNotSupportEnclaveType(ConvertAttestationProtocolToString(attestationProtocol), EnclaveType);
+                            throw SQL.AttestationProtocolNotSupportEnclaveType(attestationProtocol.ToString(), EnclaveType);
                         }
                     }
                 }
@@ -3248,24 +3248,6 @@ namespace Microsoft.Data.SqlClient
             }
 
             return true;
-        }
-
-        private string ConvertAttestationProtocolToString(SqlConnectionAttestationProtocol attestationProtocol)
-        {
-            switch (attestationProtocol)
-            {
-                case SqlConnectionAttestationProtocol.AAS:
-                    return "AAS";
-
-                case SqlConnectionAttestationProtocol.HGS:
-                    return "HGS";
-
-                case SqlConnectionAttestationProtocol.None:
-                    return "None";
-
-                default:
-                    return "NotSpecified";
-            }
         }
 
         private bool TryReadByteString(TdsParserStateObject stateObj, out string value)
