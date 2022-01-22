@@ -87,10 +87,14 @@ namespace Microsoft.Data.SqlClient
 
         internal bool IsDistributed => _transactionType == TransactionType.Distributed;
 
+#if NETFRAMEWORK
+        internal bool IsContext => _transactionType == TransactionType.Context;
+#endif
+
         internal bool IsLocal => _transactionType == TransactionType.LocalFromTSQL
                             || _transactionType == TransactionType.LocalFromAPI
 #if NETFRAMEWORK
-                            || _transactionType == TransactionType.Context
+                            || IsContext
 #endif
                             ;
 
@@ -492,8 +496,6 @@ namespace Microsoft.Data.SqlClient
             "(ObjId={0}, tranId={1}, state={2}, type={3}, open={4}, disp={5}",
             ObjectID, _transactionId, _transactionState, _transactionType, _openResultCount, _disposing);
 
-#if NETFRAMEWORK
-        internal bool IsContext => _transactionType ==  TransactionType.Context;
-#endif
+
     }
 }
