@@ -148,14 +148,12 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             connectionStringBuilder2.AttestationProtocol = protocol2;
             Assert.True(!connectionStringBuilder1.EquivalentTo(connectionStringBuilder2));
             Assert.True(!connectionStringBuilder3.EquivalentTo(connectionStringBuilder2));
-            Assert.NotEqual(connectionStringBuilder1.AttestationProtocol, connectionStringBuilder2.AttestationProtocol);
-            Assert.NotEqual(connectionStringBuilder3.AttestationProtocol, connectionStringBuilder2.AttestationProtocol);
+            Assert.Equal(protocol2, connectionStringBuilder2.AttestationProtocol);
 
             connectionStringBuilder3.AttestationProtocol = protocol3;
             Assert.True(!connectionStringBuilder1.EquivalentTo(connectionStringBuilder3));
             Assert.True(!connectionStringBuilder2.EquivalentTo(connectionStringBuilder3));
-            Assert.NotEqual(connectionStringBuilder1.AttestationProtocol, connectionStringBuilder3.AttestationProtocol);
-            Assert.NotEqual(connectionStringBuilder2.AttestationProtocol, connectionStringBuilder3.AttestationProtocol);
+            Assert.Equal(protocol3, connectionStringBuilder3.AttestationProtocol);
         }
 
 
