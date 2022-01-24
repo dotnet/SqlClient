@@ -13,7 +13,8 @@ namespace Microsoft.Data.SqlClient
     {
         private static readonly int EnclaveSessionHandleSize = 8;
         private const int DiffieHellmanKeySize = 384;
-        private const int NoneAttestationProtocolId = 2;
+        private const int NoneAttestationProtocolId = (int)SqlConnectionAttestationProtocol.None;
+
 
         // When overridden in a derived class, looks up an existing enclave session information in the enclave session cache.
         // If the enclave provider doesn't implement enclave session caching, this method is expected to return null in the sqlEnclaveSession parameter.
@@ -44,45 +45,43 @@ namespace Microsoft.Data.SqlClient
 
                 if (sqlEnclaveSession == null)
                 {
-                    if (!string.IsNullOrEmpty(enclaveSessionParameters.AttestationUrl))
-                    {
-                        // Read AttestationInfo
-                        int attestationInfoOffset = 0;
-                        uint sizeOfTrustedModuleAttestationInfoBuffer = BitConverter.ToUInt32(attestationInfo, attestationInfoOffset);
-                        attestationInfoOffset += sizeof(UInt32);
-                        int sizeOfTrustedModuleAttestationInfoBufferInt = checked((int)sizeOfTrustedModuleAttestationInfoBuffer);
-                        Debug.Assert(sizeOfTrustedModuleAttestationInfoBuffer == 0);
+                    // Read AttestationInfo
+                    int attestationInfoOffset = 0;
+                    uint sizeOfTrustedModuleAttestationInfoBuffer = BitConverter.ToUInt32(attestationInfo, attestationInfoOffset);
+                    attestationInfoOffset += sizeof(UInt32);
+                    int sizeOfTrustedModuleAttestationInfoBufferInt = checked((int)sizeOfTrustedModuleAttestationInfoBuffer);
+                    Debug.Assert(sizeOfTrustedModuleAttestationInfoBuffer == 0);
 
-                        // read secure session info
-                        uint sizeOfSecureSessionInfoResponse = BitConverter.ToUInt32(attestationInfo, attestationInfoOffset);
-                        attestationInfoOffset += sizeof(UInt32);
+                    // read secure session info
+                    uint sizeOfSecureSessionInfoResponse = BitConverter.ToUInt32(attestationInfo, attestationInfoOffset);
+                    attestationInfoOffset += sizeof(UInt32);
 
-                        byte[] enclaveSessionHandle = new byte[EnclaveSessionHandleSize];
-                        Buffer.BlockCopy(attestationInfo, attestationInfoOffset, enclaveSessionHandle, 0, EnclaveSessionHandleSize);
-                        attestationInfoOffset += EnclaveSessionHandleSize;
+                    byte[] enclaveSessionHandle = new byte[EnclaveSessionHandleSize];
+                    Buffer.BlockCopy(attestationInfo, attestationInfoOffset, enclaveSessionHandle, 0, EnclaveSessionHandleSize);
+                    attestationInfoOffset += EnclaveSessionHandleSize;
 
-                        uint sizeOfTrustedModuleDHPublicKeyBuffer = BitConverter.ToUInt32(attestationInfo, attestationInfoOffset);
-                        attestationInfoOffset += sizeof(UInt32);
-                        uint sizeOfTrustedModuleDHPublicKeySignatureBuffer = BitConverter.ToUInt32(attestationInfo, attestationInfoOffset);
-                        attestationInfoOffset += sizeof(UInt32);
-                        int sizeOfTrustedModuleDHPublicKeyBufferInt = checked((int)sizeOfTrustedModuleDHPublicKeyBuffer);
+                    uint sizeOfTrustedModuleDHPublicKeyBuffer = BitConverter.ToUInt32(attestationInfo, attestationInfoOffset);
+                    attestationInfoOffset += sizeof(UInt32);
+                    uint sizeOfTrustedModuleDHPublicKeySignatureBuffer = BitConverter.ToUInt32(attestationInfo, attestationInfoOffset);
+                    attestationInfoOffset += sizeof(UInt32);
+                    int sizeOfTrustedModuleDHPublicKeyBufferInt = checked((int)sizeOfTrustedModuleDHPublicKeyBuffer);
 
-                        byte[] trustedModuleDHPublicKey = new byte[sizeOfTrustedModuleDHPublicKeyBuffer];
-                        Buffer.BlockCopy(attestationInfo, attestationInfoOffset, trustedModuleDHPublicKey, 0,
-                            sizeOfTrustedModuleDHPublicKeyBufferInt);
-                        attestationInfoOffset += sizeOfTrustedModuleDHPublicKeyBufferInt;
+                    byte[] trustedModuleDHPublicKey = new byte[sizeOfTrustedModuleDHPublicKeyBuffer];
+                    Buffer.BlockCopy(attestationInfo, attestationInfoOffset, trustedModuleDHPublicKey, 0,
+                        sizeOfTrustedModuleDHPublicKeyBufferInt);
+                    attestationInfoOffset += sizeOfTrustedModuleDHPublicKeyBufferInt;
 
-                        byte[] trustedModuleDHPublicKeySignature = new byte[sizeOfTrustedModuleDHPublicKeySignatureBuffer];
-                        Buffer.BlockCopy(attestationInfo, attestationInfoOffset, trustedModuleDHPublicKeySignature, 0,
-                            checked((int)sizeOfTrustedModuleDHPublicKeySignatureBuffer));
+                    byte[] trustedModuleDHPublicKeySignature = new byte[sizeOfTrustedModuleDHPublicKeySignatureBuffer];
+                    Buffer.BlockCopy(attestationInfo, attestationInfoOffset, trustedModuleDHPublicKeySignature, 0,
+                        checked((int)sizeOfTrustedModuleDHPublicKeySignatureBuffer));
 
-                        byte[] sharedSecret;
-                        using ECDiffieHellman ecdh = KeyConverter.CreateECDiffieHellmanFromPublicKeyBlob(trustedModuleDHPublicKey);
-                        sharedSecret = KeyConverter.DeriveKey(clientDHKey, ecdh.PublicKey);
-                        long sessionId = BitConverter.ToInt64(enclaveSessionHandle, 0);
-                        sqlEnclaveSession = AddEnclaveSessionToCache(enclaveSessionParameters, sharedSecret, sessionId, out counter);
-                    }
-                    else
+                    byte[] sharedSecret;
+                    using ECDiffieHellman ecdh = KeyConverter.CreateECDiffieHellmanFromPublicKeyBlob(trustedModuleDHPublicKey);
+                    sharedSecret = KeyConverter.DeriveKey(clientDHKey, ecdh.PublicKey);
+                    long sessionId = BitConverter.ToInt64(enclaveSessionHandle, 0);
+                    sqlEnclaveSession = AddEnclaveSessionToCache(enclaveSessionParameters, sharedSecret, sessionId, out counter);
+
+                    if (sqlEnclaveSession is null)
                     {
                         throw new AlwaysEncryptedAttestationException(Strings.FailToCreateEnclaveSession);
                     }
