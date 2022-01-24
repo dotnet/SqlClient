@@ -3,7 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -11,7 +11,7 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient.Server
 {
-    internal class SerializationHelperSql9
+    internal sealed class SerializationHelperSql9
     {
         // Don't let anyone create an instance of this class.
         private SerializationHelperSql9() { }
@@ -28,7 +28,8 @@ namespace Microsoft.Data.SqlClient.Server
         internal static int SizeInBytes(object instance)
         {
             Type t = instance.GetType();
-            Format k = GetFormat(t);
+
+            _ = GetFormat(t);
             DummyStream stream = new DummyStream();
             Serializer ser = GetSerializer(instance.GetType());
             ser.Serialize(stream, instance);
@@ -50,20 +51,22 @@ namespace Microsoft.Data.SqlClient.Server
         //
         // Use a per-thread cache, so that there are no synchronization
         // issues when accessing cache entries from multiple threads.
-        [ThreadStatic]
-        private static Hashtable s_types2Serializers;
+        private static ConcurrentDictionary<Type, Serializer> s_types2Serializers;
 
         private static Serializer GetSerializer(Type t)
         {
             if (s_types2Serializers == null)
-                s_types2Serializers = new Hashtable();
+            {
+                s_types2Serializers = new ConcurrentDictionary<Type, Serializer>();
+            }
 
-            Serializer s = (Serializer)s_types2Serializers[t];
-            if (s == null)
+            Serializer s;
+            if (!s_types2Serializers.TryGetValue(t, out s))
             {
                 s = GetNewSerializer(t);
                 s_types2Serializers[t] = s;
             }
+
             return s;
         }
 
@@ -75,7 +78,7 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 // In the native format, the user does not specify the
                 // max byte size, it is computed from the type definition
-                return SerializationHelperSql9.SizeInBytes(t);
+                return SizeInBytes(t);
             }
             else
             {
@@ -137,19 +140,15 @@ namespace Microsoft.Data.SqlClient.Server
 
         internal static SqlUserDefinedTypeAttribute GetUdtAttribute(Type t)
         {
-            SqlUserDefinedTypeAttribute udtAttr = null;
+            SqlUserDefinedTypeAttribute udtAttr;
             object[] attr = GetCustomAttributes(t);
-
             if (attr != null && attr.Length == 1)
             {
                 udtAttr = (SqlUserDefinedTypeAttribute)attr[0];
             }
             else
             {
-                Type InvalidUdtExceptionType = typeof(InvalidUdtException);
-                var arguments = new Type[] { typeof(Type), typeof(String) };
-                MethodInfo Create = InvalidUdtExceptionType.GetMethod("Create", arguments);
-                Create.Invoke(null, new object[] { t, Strings.SqlUdtReason_NoUdtAttribute });
+                throw InvalidUdtException.Create(t, Strings.SqlUdtReason_NoUdtAttribute);
             }
             return udtAttr;
         }
@@ -158,7 +157,7 @@ namespace Microsoft.Data.SqlClient.Server
         private static Serializer GetNewSerializer(Type t)
         {
             SqlUserDefinedTypeAttribute udtAttr = GetUdtAttribute(t);
-
+          
             switch (udtAttr.Format)
             {
                 case Format.Native:
@@ -175,28 +174,22 @@ namespace Microsoft.Data.SqlClient.Server
     // The base serializer class.
     internal abstract class Serializer
     {
-        public abstract object Deserialize(Stream s);
-        public abstract void Serialize(Stream s, object o);
         protected Type _type;
 
-        protected Serializer(Type t)
-        {
-            _type = t;
-        }
+        public abstract object Deserialize(Stream s);
+        public abstract void Serialize(Stream s, object o);
+
+        protected Serializer(Type t) => _type = t;
     }
 
     internal sealed class NormalizedSerializer : Serializer
     {
-        private BinaryOrderedUdtNormalizer _normalizer;
-        private bool _isFixedSize;
-        private int _maxSize;
-
+        private readonly BinaryOrderedUdtNormalizer _normalizer;
+   
         internal NormalizedSerializer(Type t) : base(t)
         {
-            SqlUserDefinedTypeAttribute udtAttr = SerializationHelperSql9.GetUdtAttribute(t);
+            _ = SerializationHelperSql9.GetUdtAttribute(t);
             _normalizer = new BinaryOrderedUdtNormalizer(t, true);
-            _isFixedSize = udtAttr.IsFixedLength;
-            _maxSize = _normalizer.Size;
         }
 
         public override void Serialize(Stream s, object o) => _normalizer.NormalizeTopObject(o, s);
@@ -213,14 +206,16 @@ namespace Microsoft.Data.SqlClient.Server
         public override void Serialize(Stream s, object o)
         {
             BinaryWriter w = new BinaryWriter(s);
-            if (o is Microsoft.SqlServer.Server.IBinarySerialize)
+
+#if NETFRAMEWORK
+            if (o is SqlServer.Server.IBinarySerialize bs)
             {
-                ((SqlServer.Server.IBinarySerialize)o).Write(w);
+                (bs).Write(w);
+                return;
             }
-            else
-            {
-                ((IBinarySerialize)o).Write(w);
-            }
+#endif
+            ((IBinarySerialize)o).Write(w);
+            
         }
 
         // Prevent inlining so that reflection calls are not moved
@@ -231,15 +226,17 @@ namespace Microsoft.Data.SqlClient.Server
         {
             object instance = Activator.CreateInstance(_type);
             BinaryReader r = new BinaryReader(s);
-            if (instance is Microsoft.SqlServer.Server.IBinarySerialize)
+
+#if NETFRAMEWORK
+            if (instance is SqlServer.Server.IBinarySerialize bs)
             {
-                ((SqlServer.Server.IBinarySerialize)instance).Read(r);
+                bs.Read(r);
+                return instance;
             }
-            else
-            {
-                ((IBinarySerialize)instance).Read(r);
-            }
+#endif
+           ((IBinarySerialize)instance).Read(r);
             return instance;
+
         }
     }
 
@@ -267,7 +264,7 @@ namespace Microsoft.Data.SqlClient.Server
         public override long Position
         {
             get => _size;
-            set =>_size = value;
+            set => _size = value;
         }
 
         public override long Length => _size;
@@ -290,6 +287,9 @@ namespace Microsoft.Data.SqlClient.Server
             return -1;
         }
 
-        public override void Write(byte[] buffer, int offset, int count) => _size += count;
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+            _size += count;
+        }
     }
 }

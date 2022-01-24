@@ -20,11 +20,11 @@ namespace Microsoft.Data.SqlClient.Server
         private readonly string _serverVersion;
         private readonly SmiEventSink_Default _eventSinkForGetCurrentContext;
 
-        internal const ulong YukonVersion = 100;
-        internal const ulong KatmaiVersion = 210;
-        internal const ulong LatestVersion = KatmaiVersion;
+        internal const ulong Sql2005Version = 100;
+        internal const ulong Sql2008Version = 210;
+        internal const ulong LatestVersion = Sql2008Version;
 
-        private readonly ulong[] __supportedSmiVersions = new ulong[] { YukonVersion, KatmaiVersion };
+        private readonly ulong[] __supportedSmiVersions = new ulong[] { Sql2005Version, Sql2008Version };
 
         // Used as the key for SmiContext.GetContextValue()
         internal enum ContextKey

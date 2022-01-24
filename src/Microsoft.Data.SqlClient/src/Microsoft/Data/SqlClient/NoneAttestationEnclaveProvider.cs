@@ -3,21 +3,17 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Runtime.Caching;
 using System.Security.Cryptography;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using System.Collections.Concurrent;
 
 namespace Microsoft.Data.SqlClient
 {
-    internal class SimulatorEnclaveProvider : EnclaveProviderBase
+    internal class NoneAttestationEnclaveProvider : EnclaveProviderBase
     {
         private static readonly int EnclaveSessionHandleSize = 8;
+        private const int DiffieHellmanKeySize = 384;
+        private const int NoneAttestationProtocolId = 2;
 
         // When overridden in a derived class, looks up an existing enclave session information in the enclave session cache.
         // If the enclave provider doesn't implement enclave session caching, this method is expected to return null in the sqlEnclaveSession parameter.
@@ -29,18 +25,15 @@ namespace Microsoft.Data.SqlClient
         // Gets the information that SqlClient subsequently uses to initiate the process of attesting the enclave and to establish a secure session with the enclave.
         internal override SqlEnclaveAttestationParameters GetAttestationParameters(string attestationUrl, byte[] customData, int customDataLength)
         {
-            ECDiffieHellmanCng clientDHKey = new ECDiffieHellmanCng(384);
-            clientDHKey.KeyDerivationFunction = ECDiffieHellmanKeyDerivationFunction.Hash;
-            clientDHKey.HashAlgorithm = CngAlgorithm.Sha256;
-
-            return new SqlEnclaveAttestationParameters(2, new byte[] { }, clientDHKey);
+            ECDiffieHellman clientDHKey = KeyConverter.CreateECDiffieHellman(DiffieHellmanKeySize);
+            return new SqlEnclaveAttestationParameters(NoneAttestationProtocolId, Array.Empty<byte>(), clientDHKey);
         }
 
-        // When overridden in a derived class, performs enclave attestation, generates a symmetric key for the session, creates a an enclave session and stores the session information in the cache.
+        // When overridden in a derived class, performs enclave attestation, generates a symmetric key for the session, creates an enclave session and stores the session information in the cache.
         internal override void CreateEnclaveSession(byte[] attestationInfo, ECDiffieHellman clientDHKey, EnclaveSessionParameters enclaveSessionParameters, byte[] customData, int customDataLength, out SqlEnclaveSession sqlEnclaveSession, out long counter)
         {
-            ////for simulator: enclave does not send public key, and sends an empty attestation info
-            //// The only non-trivial content it sends is the session setup info (DH pubkey of enclave)
+            // for None attestation: enclave does not send public key, and sends an empty attestation info
+            // The only non-trivial content it sends is the session setup info (DH pubkey of enclave)
 
             sqlEnclaveSession = null;
             counter = 0;
@@ -53,14 +46,14 @@ namespace Microsoft.Data.SqlClient
                 {
                     if (!string.IsNullOrEmpty(enclaveSessionParameters.AttestationUrl))
                     {
-                        ////Read AttestationInfo
+                        // Read AttestationInfo
                         int attestationInfoOffset = 0;
                         uint sizeOfTrustedModuleAttestationInfoBuffer = BitConverter.ToUInt32(attestationInfo, attestationInfoOffset);
                         attestationInfoOffset += sizeof(UInt32);
                         int sizeOfTrustedModuleAttestationInfoBufferInt = checked((int)sizeOfTrustedModuleAttestationInfoBuffer);
                         Debug.Assert(sizeOfTrustedModuleAttestationInfoBuffer == 0);
 
-                        ////read secure session info
+                        // read secure session info
                         uint sizeOfSecureSessionInfoResponse = BitConverter.ToUInt32(attestationInfo, attestationInfoOffset);
                         attestationInfoOffset += sizeof(UInt32);
 

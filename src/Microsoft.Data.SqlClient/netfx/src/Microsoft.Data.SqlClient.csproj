@@ -188,6 +188,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\LocalAppContextSwitches.cs">
       <Link>Microsoft\Data\SqlClient\LocalAppContextSwitches.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\NoneAttestationEnclaveProvider.cs">
+      <Link>Microsoft\Data\SqlClient\NoneAttestationEnclaveProvider.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\OnChangedEventHandler.cs">
       <Link>Microsoft\Data\SqlClient\OnChangedEventHandler.cs</Link>
     </Compile>
@@ -446,6 +449,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlEnums.cs">
       <Link>Microsoft\Data\SqlClient\SqlEnums.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlError.cs">
+      <Link>Microsoft\Data\SqlClient\SqlError.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlErrorCollection.cs">
       <Link>Microsoft\Data\SqlClient\SqlErrorCollection.cs</Link>
     </Compile>
@@ -502,6 +508,9 @@
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlSequentialStream.cs">
       <Link>Microsoft\Data\SqlClient\SqlSequentialStream.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlSer.cs">
+      <Link>Microsoft\Data\SqlClient\Server\SqlSer.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlStatistics.cs">
       <Link>Microsoft\Data\SqlClient\SqlStatistics.cs</Link>
@@ -581,7 +590,6 @@
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiLink.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiRequestExecutor.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiStream.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\Server\sqlser.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\TriggerAction.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBuffer.cs" />
@@ -604,7 +612,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlDataReaderSmi.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDependencyUtils.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlError.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionSmi.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
@@ -628,9 +635,6 @@
     <Compile Include="Microsoft\Data\SqlTypes\UnsafeNativeMethods.cs" />
     <Compile Include="Microsoft\Data\Sql\SqlGenericUtil.cs" />
     <Compile Include="Misc\ExternDll.cs" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(BuildSimulator)' == 'true'">
-    <Compile Include="Microsoft\Data\SqlClient\SimulatorEnclaveProvider.cs" />
   </ItemGroup>
   <!-- Resources  -->
   <ItemGroup>
