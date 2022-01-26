@@ -180,9 +180,6 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\ExtendedClrTypeCode.cs">
       <Link>Microsoft\Data\SqlClient\Server\ExtendedClrTypeCode.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\IBinarySerialize.cs">
-      <Link>Microsoft\Data\SqlClient\Server\IBinarySerialize.cs</Link>
-    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\ITypedGetters.cs">
       <Link>Microsoft\Data\SqlClient\Server\ITypedGetters.cs</Link>
     </Compile>
@@ -210,23 +207,8 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SmiXetterAccessMap.Common.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiXetterAccess.Common.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlFacetAttribute.cs">
-      <Link>Microsoft\Data\SqlClient\Server\SqlFacetAttribute.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlFunctionAttribute.cs">
-      <Link>Microsoft\Data\SqlClient\Server\SqlFunctionAttribute.cs</Link>
-    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlMetaData.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlMetaData.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlMethodAttribute.cs">
-      <Link>Microsoft\Data\SqlClient\Server\SqlMethodAttribute.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlUserDefinedTypeAttribute.cs">
-      <Link>Microsoft\Data\SqlClient\Server\SqlUserDefinedTypeAttribute.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlUserDefinedAggregateAttribute.cs">
-      <Link>Microsoft\Data\SqlClient\Server\SqlUserDefinedAggregateAttribute.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlRecordBuffer.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlRecordBuffer.cs</Link>
@@ -455,9 +437,6 @@
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\DataException.cs">
       <Link>Microsoft\Data\DataException.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\InvalidUdtException.cs">
-      <Link>Microsoft\Data\SqlClient\Server\InvalidUdtException.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SmiTypedGetterSetter.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiTypedGetterSetter.cs</Link>

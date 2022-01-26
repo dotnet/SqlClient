@@ -4,6 +4,20 @@ This guide is meant to cover all namespace changes needed in client applications
 
 ## Namespace Changes needed
 
+### Microsoft.Data.SqlClient v5.0 and newer
+
+| Namespace Change | Applicability |
+|--|--|
+| <s>`using System.Data.SqlClient;`</s><br>`using Microsoft.Data.SqlClient;` | Applicable to all classes, enums and delegates. |
+| <s>`using Microsoft.SqlServer.Server;`</s><br>`using Microsoft.Data.SqlClient.Server;` | Applicable Classes: <br>`SqlDataRecord`<br>`SqlMetaData` <br/><br/> <sup>1</sup> _All remaining types continue to be referenced from Microsoft.SqlServer.Server namespace._|
+| <s>`using System.Data.SqlTypes;`</s> <br>`using Microsoft.Data.SqlTypes;` | Applicable Classes:<br>`SqlFileStream`|
+| <s>`using System.Data.Sql;`</s> <br>`using Microsoft.Data.Sql;`</s> | Applicable Classes:<br>`SqlNotificationRequest`<br> |
+| <s>`using System.Data;`</s> <br>`using Microsoft.Data;`</s> | Applicable Classes:<br>`OperationAbortedException`|
+
+<sup>1</sup> Breaking change for User-Defined types and Microsoft.SqlServer.Types support over _Microsoft.Data.SqlClient v3.0.0_.
+
+### Microsoft.Data.SqlClient v4.0 and older
+
 | Namespace Change | Applicability |
 |--|--|
 | <s>`using System.Data.SqlClient;`</s><br>`using Microsoft.Data.SqlClient;` | Applicable to all classes, enums and delegates. |

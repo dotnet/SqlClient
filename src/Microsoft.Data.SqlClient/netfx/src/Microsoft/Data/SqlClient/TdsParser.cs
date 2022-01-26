@@ -22,6 +22,7 @@ using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.DataClassification;
 using Microsoft.Data.SqlClient.Server;
 using Microsoft.Data.SqlTypes;
+using Microsoft.SqlServer.Server;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -10678,7 +10679,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private static readonly IEnumerable<SqlDataRecord> __tvpEmptyValue = new List<SqlDataRecord>().AsReadOnly();
+        private static readonly IEnumerable<Server.SqlDataRecord> __tvpEmptyValue = new List<Server.SqlDataRecord>().AsReadOnly();
         private void WriteSmiParameter(SqlParameter param, int paramIndex, bool sendDefault, TdsParserStateObject stateObj, bool isAnonymous, bool advancedTraceIsOn)
         {
             //

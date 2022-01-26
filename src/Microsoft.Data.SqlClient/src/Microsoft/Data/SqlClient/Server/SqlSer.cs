@@ -8,6 +8,9 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using Microsoft.Data.Common;
+#if NETFRAMEWORK
+using Microsoft.SqlServer.Server;
+#endif
 
 namespace Microsoft.Data.SqlClient.Server
 {
@@ -148,7 +151,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
             else
             {
-                throw InvalidUdtException.Create(t, Strings.SqlUdtReason_NoUdtAttribute);
+                throw ADP.CreateInvalidUdtException(t, nameof(Strings.SqlUdtReason_NoUdtAttribute));
             }
             return udtAttr;
         }
