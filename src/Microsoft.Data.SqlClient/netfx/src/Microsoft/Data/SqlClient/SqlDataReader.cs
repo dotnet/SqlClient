@@ -2046,7 +2046,7 @@ namespace Microsoft.Data.SqlClient
                                 cbytes = length;
                         }
 
-                        Array.Copy(data, ndataIndex, buffer, bufferIndex, cbytes);
+                        Buffer.BlockCopy(data, ndataIndex, buffer, bufferIndex, cbytes);
                     }
                     catch (Exception e)
                     {

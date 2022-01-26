@@ -124,7 +124,7 @@ namespace Microsoft.Data.SqlClient.Server
 
             length = CheckXetParameters(metaData.SqlDbType, metaData.MaxLength * sizeof(char), value.Length,
                         fieldOffset, buffer.Length, bufferOffset, length);
-            Array.Copy(value.Value, checked((int)fieldOffset), buffer, bufferOffset, length);
+            Buffer.BlockCopy(value.Value, checked((int)fieldOffset), buffer, bufferOffset, length);
             return length;
         }
 
