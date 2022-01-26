@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
+## [Stable release 4.1.0] - 2022-01-28
+
+### Added
+
+- Added New Attestation Protocol `None` for enclave type `VBS` with optional `AttestationUrl`. This connection string property when set will allow users to forgo enclave attestation for VBS enclaves.
+
 ## [Stable release 4.0.1] - 2022-01-17
 
 ### Added
