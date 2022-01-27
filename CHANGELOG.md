@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Added
 
-- Added New Attestation Protocol `None` for enclave type `VBS` with optional `AttestationUrl`. This connection string property when set will allow users to forgo enclave attestation for VBS enclaves. [#1425](https://github.com/dotnet/SqlClient/pull/1425)
+- Added new Attestation Protocol `None` for `VBS` enclave types. This protocol will allow users to forgo enclave attestation for VBS enclaves. [#1425](https://github.com/dotnet/SqlClient/pull/1425)
 
 ## [Stable release 4.0.1] - 2022-01-17
 
