@@ -11,7 +11,6 @@ using Microsoft.SqlServer.Server;
 using Microsoft.Data.SqlClient.Server;
 #endif
 
-
 [Serializable]
 [SqlUserDefinedType(Format.UserDefined, IsByteOrdered = false, MaxByteSize = 500)]
 public class Address : INullable, IBinarySerialize
