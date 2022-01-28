@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29521.150
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31912.275
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Microsoft.Data.SqlClient", "Microsoft.Data.SqlClient\netfx\src\Microsoft.Data.SqlClient.csproj", "{407890AC-9876-4FEF-A6F1-F36A876BAADE}"
 EndProject
@@ -199,6 +199,10 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient.DockerLinuxTest", "Microsoft.Data.SqlClient\tests\Docker\DockerLinuxTest\Microsoft.Data.SqlClient.DockerLinuxTest.csproj", "{B93A3149-67E8-491E-A1E5-19D65F9D9E98}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Data.SqlClient.PerformanceTests", "Microsoft.Data.SqlClient\tests\PerformanceTests\Microsoft.Data.SqlClient.PerformanceTests.csproj", "{599A336B-2A5F-473D-8442-1223ED37C93E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{4F3CD363-B1E6-4D6D-9466-97D78A56BE45}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.SqlServer.Server", "Microsoft.SqlServer.Server\Microsoft.SqlServer.Server.csproj", "{A314812A-7820-4565-A2A8-ABBE391C11E4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -472,6 +476,18 @@ Global
 		{599A336B-2A5F-473D-8442-1223ED37C93E}.Release|x64.Build.0 = Release|x64
 		{599A336B-2A5F-473D-8442-1223ED37C93E}.Release|x86.ActiveCfg = Release|x86
 		{599A336B-2A5F-473D-8442-1223ED37C93E}.Release|x86.Build.0 = Release|x86
+		{A314812A-7820-4565-A2A8-ABBE391C11E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A314812A-7820-4565-A2A8-ABBE391C11E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A314812A-7820-4565-A2A8-ABBE391C11E4}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A314812A-7820-4565-A2A8-ABBE391C11E4}.Debug|x64.Build.0 = Debug|Any CPU
+		{A314812A-7820-4565-A2A8-ABBE391C11E4}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A314812A-7820-4565-A2A8-ABBE391C11E4}.Debug|x86.Build.0 = Debug|Any CPU
+		{A314812A-7820-4565-A2A8-ABBE391C11E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A314812A-7820-4565-A2A8-ABBE391C11E4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A314812A-7820-4565-A2A8-ABBE391C11E4}.Release|x64.ActiveCfg = Release|Any CPU
+		{A314812A-7820-4565-A2A8-ABBE391C11E4}.Release|x64.Build.0 = Release|Any CPU
+		{A314812A-7820-4565-A2A8-ABBE391C11E4}.Release|x86.ActiveCfg = Release|Any CPU
+		{A314812A-7820-4565-A2A8-ABBE391C11E4}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -507,6 +523,7 @@ Global
 		{B499E477-C9B1-4087-A5CF-5C762D90E433} = {0CC4817A-12F3-4357-912C-09315FAAD008}
 		{B93A3149-67E8-491E-A1E5-19D65F9D9E98} = {0CC4817A-12F3-4357-912C-09315FAAD008}
 		{599A336B-2A5F-473D-8442-1223ED37C93E} = {0CC4817A-12F3-4357-912C-09315FAAD008}
+		{A314812A-7820-4565-A2A8-ABBE391C11E4} = {4F3CD363-B1E6-4D6D-9466-97D78A56BE45}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {01D48116-37A2-4D33-B9EC-94793C702431}

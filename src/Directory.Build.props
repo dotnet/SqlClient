@@ -41,6 +41,7 @@
     <Artifacts>$(RepoRoot)artifacts\$(ReferenceType)\</Artifacts>
     <ToolsArtifactsDir Condition="'$(ToolsArtifactsDir)'==''">$(Artifacts)tools\</ToolsArtifactsDir>
     <ManagedSourceCode>$(ProjectDir)Microsoft.Data.SqlClient\</ManagedSourceCode>
+    <SqlServerSourceCode>$(ProjectDir)Microsoft.SqlServer.Server\</SqlServerSourceCode>
     <NetCoreSource>$(ManagedSourceCode)netcore\</NetCoreSource>
     <NetFxSource>$(ManagedSourceCode)netfx\</NetFxSource>
     <NetFxResources>$(ManagedSourceCode)netfx\src\Resources\</NetFxResources>
