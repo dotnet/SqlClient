@@ -96,7 +96,9 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             // Generate random bytes cryptographically.
             byte[] randomBytes = new byte[length];
             using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+            {
                 rng.GetBytes(randomBytes);
+            }
 
             return randomBytes;
         }

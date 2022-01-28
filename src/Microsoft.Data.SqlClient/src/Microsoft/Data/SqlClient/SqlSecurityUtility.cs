@@ -66,7 +66,9 @@ namespace Microsoft.Data.SqlClient
         internal static void GenerateRandomBytes(byte[] randomBytes)
         {
             using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+            {
                 rng.GetBytes(randomBytes);
+            }
         }
 
         /// <summary>
