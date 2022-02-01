@@ -184,6 +184,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 RedirectStandardError = true,
             };
             string[] lines = Process.Start(sInfo).StandardOutput.ReadToEnd().Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
+
+            if (arguments == s_startLocalDbCommand)
+            {
+                sInfo.Arguments = s_sqlLocalDbInfo; //after start check info again
+                lines = Process.Start(sInfo).StandardOutput.ReadToEnd().Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
+            }
             if (infoType.Equals("state"))
             {
                 return lines[5].Split(':')[1].Trim();
