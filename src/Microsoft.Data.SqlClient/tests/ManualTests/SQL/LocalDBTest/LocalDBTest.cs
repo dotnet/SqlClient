@@ -27,7 +27,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void SqlLocalDbConnectionTest()
         {
             ConnectionTest(s_localDbConnectionString);
-            ConnectionTest(s_localDbNamedPipeConnectionString);
         }
 
         [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
@@ -37,15 +36,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Encryption is not supported by SQL Local DB.
             // But connection should succeed as encryption is disabled by driver.
             ConnectionWithEncryptionTest(s_localDbConnectionString);
-            ConnectionWithEncryptionTest(s_localDbNamedPipeConnectionString);
         }
 
         [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
         [ConditionalFact(nameof(IsLocalDBEnvironmentSet))]
         public static void LocalDBMarsTest()
         {
+            RestartLocalDB();
             ConnectionWithMarsTest(s_localDbConnectionString);
-            ConnectionWithMarsTest(s_localDbNamedPipeConnectionString);
         }
 
         [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
@@ -163,15 +161,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static string GetLocalDbNamedPipe()
         {
+            RestartLocalDB();
+            return ExecuteLocalDBCommandProcess(s_commandPrompt, s_sqlLocalDbInfo, "pipeName");
+        }
+
+        private static void RestartLocalDB()
+        {
             string state = ExecuteLocalDBCommandProcess(s_commandPrompt, s_sqlLocalDbInfo, "state");
             while (state.Equals("stopped", StringComparison.InvariantCultureIgnoreCase))
             {
                 state = ExecuteLocalDBCommandProcess(s_commandPrompt, s_startLocalDbCommand, "state");
                 Thread.Sleep(2000);
             }
-            return ExecuteLocalDBCommandProcess(s_commandPrompt, s_sqlLocalDbInfo, "pipeName");
         }
-
         private static string ExecuteLocalDBCommandProcess(string filename, string arguments, string infoType)
         {
             ProcessStartInfo sInfo = new()
