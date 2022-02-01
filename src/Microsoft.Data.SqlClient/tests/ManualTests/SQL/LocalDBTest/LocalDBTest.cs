@@ -12,6 +12,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         private static bool IsLocalDBEnvironmentSet() => DataTestUtility.IsLocalDBInstalled();
         private static bool IsLocalDbSharedInstanceSet() => DataTestUtility.IsLocalDbSharedInstanceSetup();
+        private static bool IsLocalDbNamedPipeSet() => DataTestUtility.IsLocalDbNamedPipeInstanceSetup();
         private static readonly string s_localDbConnectionString = @$"server=(localdb)\{DataTestUtility.LocalDbAppName}";
         private static readonly string[] s_sharedLocalDbInstances = new string[] { @$"server=(localdb)\.\{DataTestUtility.LocalDbSharedInstanceName}", @$"server=(localdb)\." };
         private static readonly string s_badConnectionString = $@"server=(localdb)\{DataTestUtility.LocalDbAppName};Database=DOES_NOT_EXIST;Pooling=false;";
@@ -88,6 +89,34 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 ConnectionTest(connectionString);
             }
         }
+        #endregion
+
+        #region NamedPipeTests
+
+        [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
+        [ConditionalFact(nameof(IsLocalDBEnvironmentSet))]
+        public static void SqlLocalDbNamedPipeConnectionTest()
+        {
+            ConnectionTest(s_localDbConnectionString);
+            ConnectionTest(s_localDbNamedPipeConnectionString);
+        }
+
+        [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
+        [ConditionalFact(nameof(IsLocalDBEnvironmentSet))]
+        public static void LocalDBNamedPipeEncryptionNotSupportedTest()
+        {
+            // Encryption is not supported by SQL Local DB.
+            // But connection should succeed as encryption is disabled by driver.
+            ConnectionWithEncryptionTest(s_localDbNamedPipeConnectionString);
+        }
+
+        [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
+        [ConditionalFact(nameof(IsLocalDBEnvironmentSet))]
+        public static void LocalDBNamepipeMarsTest()
+        {
+            ConnectionWithMarsTest(s_localDbNamedPipeConnectionString);
+        }
+
         #endregion
 
         private static void ConnectionWithMarsTest(string connectionString)
