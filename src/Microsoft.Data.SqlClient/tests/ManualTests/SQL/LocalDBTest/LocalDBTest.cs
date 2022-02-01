@@ -94,7 +94,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         #region NamedPipeTests
 
         [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
-        [ConditionalFact(nameof(IsLocalDBEnvironmentSet))]
+        [ConditionalFact(nameof(IsLocalDbNamedPipeSet))]
         public static void SqlLocalDbNamedPipeConnectionTest()
         {
             ConnectionTest(s_localDbConnectionString);
@@ -102,7 +102,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
-        [ConditionalFact(nameof(IsLocalDBEnvironmentSet))]
+        [ConditionalFact(nameof(IsLocalDbNamedPipeSet))]
         public static void LocalDBNamedPipeEncryptionNotSupportedTest()
         {
             // Encryption is not supported by SQL Local DB.
@@ -111,7 +111,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
-        [ConditionalFact(nameof(IsLocalDBEnvironmentSet))]
+        [ConditionalFact(nameof(IsLocalDbNamedPipeSet))]
         public static void LocalDBNamepipeMarsTest()
         {
             ConnectionWithMarsTest(s_localDbNamedPipeConnectionString);

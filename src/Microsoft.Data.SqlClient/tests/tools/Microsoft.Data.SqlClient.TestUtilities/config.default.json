@@ -18,7 +18,6 @@
     "SupportsIntegratedSecurity": true,
     "LocalDbAppName": "",
     "LocalDbSharedInstanceName": "",
-    "LocalDbSharedInstanceName": "",
     "LocalDbNamedPipeSet": false,
     "SupportsFileStream": false,
     "FileStreamDirectory": "",
