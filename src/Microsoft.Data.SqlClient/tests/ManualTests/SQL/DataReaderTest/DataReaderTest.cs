@@ -125,9 +125,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             // Remove square brackets
             var dbName = databaseName.Substring(1, databaseName.Length - 2);
             using SqlConnection con = new(DataTestUtility.TCPConnectionString);
+            con.Open();
             try
             {
-                con.Open();
                 CreateCollatedDB(con, dbName);
 
                 SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString)
@@ -162,21 +162,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         private static void CreateCollatedDB(SqlConnection con,string databaseName)
         {
-            try
+            if (con.State == ConnectionState.Connecting)
             {
-                if (con.State != ConnectionState.Open)
-                {
-                    con.Open();
-                }
-                using SqlCommand cmd = con.CreateCommand();
-                // Create collated database
-                cmd.CommandText = $"CREATE DATABASE {databaseName} COLLATE KAZAKH_90_CI_AI";
-                cmd.ExecuteNonQuery();
+                Thread.Sleep(300);
             }
-            catch(Exception e)
+            else if (con.State == ConnectionState.Closed || con.State == ConnectionState.Broken)
             {
-                Assert.True(false, $"Unexpected Exception occurred: {e.Message}");
+                con.Open();
             }
+            using SqlCommand cmd = con.CreateCommand();
+            // Create collated database
+            cmd.CommandText = $"CREATE DATABASE {databaseName} COLLATE KAZAKH_90_CI_AI";
+            cmd.ExecuteNonQuery();
         }
 
         private static bool IsColumnBitSet(SqlConnection con, string selectQuery, int indexOfColumnSet)

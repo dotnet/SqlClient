@@ -419,60 +419,51 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return name;
         }
 
-        public static void DropTable(SqlConnection sqlConnection, string tableName)
+        public static void DropTable(SqlConnection con, string tableName)
         {
-            try
+            if (con.State == ConnectionState.Connecting)
             {
-                if(sqlConnection.State != ConnectionState.Open)
-                {
-                    sqlConnection.Open();
-                }
-                using (SqlCommand cmd = new SqlCommand(string.Format("IF (OBJECT_ID('{0}') IS NOT NULL) \n DROP TABLE {0}", tableName), sqlConnection))
-                {
-                    cmd.ExecuteNonQuery();
-                }
+                Thread.Sleep(300);
             }
-            catch(Exception e)
+            else if (con.State == ConnectionState.Closed || con.State == ConnectionState.Broken)
             {
-                Assert.True(false, $"Unexpected Exception occurred: {e.Message}");
+                con.Open();
             }
+            using (SqlCommand cmd = new SqlCommand(string.Format("IF (OBJECT_ID('{0}') IS NOT NULL) \n DROP TABLE {0}", tableName), con))
+            {
+                cmd.ExecuteNonQuery();
+            }            
         }
 
-        public static void DropUserDefinedType(SqlConnection sqlConnection, string typeName)
+        public static void DropUserDefinedType(SqlConnection con, string typeName)
         {
-            try
+            if (con.State == ConnectionState.Connecting)
             {
-                if(sqlConnection.State != ConnectionState.Open)
-                {
-                    sqlConnection.Open();
-                }
-                using (SqlCommand cmd = new SqlCommand(string.Format("IF (TYPE_ID('{0}') IS NOT NULL) \n DROP TYPE {0}", typeName), sqlConnection))
-                {
-                    cmd.ExecuteNonQuery();
-                }
+                Thread.Sleep(300);
             }
-            catch(Exception e)
+            else if (con.State == ConnectionState.Closed || con.State == ConnectionState.Broken)
             {
-                Assert.True(false, $"Unexpected Exception occurred: {e.Message}");
+                con.Open();
             }
+            using (SqlCommand cmd = new SqlCommand(string.Format("IF (TYPE_ID('{0}') IS NOT NULL) \n DROP TYPE {0}", typeName), con))
+            {
+                cmd.ExecuteNonQuery();
+            }        
         }
 
-        public static void DropStoredProcedure(SqlConnection sqlConnection, string spName)
+        public static void DropStoredProcedure(SqlConnection con, string spName)
         {
-            try
+            if (con.State == ConnectionState.Connecting)
             {
-                if (sqlConnection.State != ConnectionState.Open)
-                {
-                    sqlConnection.Open();
-                }
-                using (SqlCommand cmd = new SqlCommand(string.Format("IF (OBJECT_ID('{0}') IS NOT NULL) \n DROP PROCEDURE {0}", spName), sqlConnection))
-                {
-                    cmd.ExecuteNonQuery();
-                }
+                Thread.Sleep(300);
             }
-            catch (Exception e)
+            else if (con.State == ConnectionState.Closed || con.State == ConnectionState.Broken)
             {
-                Assert.True(false, $"Unexpected Exception occurred: {e.Message}");
+                con.Open();
+            }
+            using (SqlCommand cmd = new SqlCommand(string.Format("IF (OBJECT_ID('{0}') IS NOT NULL) \n DROP PROCEDURE {0}", spName), con))
+            {
+                cmd.ExecuteNonQuery();
             }
         }   
 
@@ -481,21 +472,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         /// </summary>
         /// <param name="sqlConnection">Open connection to be used.</param>
         /// <param name="dbName">Database name without brackets.</param>
-        public static void DropDatabase(SqlConnection sqlConnection, string dbName)
+        public static void DropDatabase(SqlConnection con, string dbName)
         {
-            try
+            if (con.State == ConnectionState.Connecting)
             {
-                if (sqlConnection.State != ConnectionState.Open)
-                {
-                    sqlConnection.Open();
-                }
-                using SqlCommand cmd = new(string.Format("IF (EXISTS(SELECT 1 FROM sys.databases WHERE name = '{0}')) \nBEGIN \n ALTER DATABASE [{0}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE \n DROP DATABASE [{0}] \nEND", dbName), sqlConnection);
-                cmd.ExecuteNonQuery();
+                Thread.Sleep(300);
             }
-            catch(Exception e)
+            else if (con.State == ConnectionState.Closed || con.State == ConnectionState.Broken)
             {
-                Assert.True(false, $"Unexpected Exception occurred: {e.Message}");
+                con.Open();
             }
+            using SqlCommand cmd = new(string.Format("IF (EXISTS(SELECT 1 FROM sys.databases WHERE name = '{0}')) \nBEGIN \n ALTER DATABASE [{0}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE \n DROP DATABASE [{0}] \nEND", dbName), con);
+            cmd.ExecuteNonQuery();        
         }
 
         public static bool IsLocalDBInstalled() => !string.IsNullOrEmpty(LocalDbAppName?.Trim()) && IsIntegratedSecuritySetup();
@@ -760,9 +748,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return result;
         }
 
-        public static void DropFunction(SqlConnection sqlConnection, string funcName)
+        public static void DropFunction(SqlConnection con, string funcName)
         {
-            using (SqlCommand cmd = new SqlCommand(string.Format("IF EXISTS (SELECT * FROM sys.objects WHERE name = '{0}') \n DROP FUNCTION {0}", funcName), sqlConnection))
+            if (con.State == ConnectionState.Connecting)
+            {
+                Thread.Sleep(300);
+            }
+            else if (con.State == ConnectionState.Closed || con.State == ConnectionState.Broken)
+            {
+                con.Open();
+            }
+            using (SqlCommand cmd = new SqlCommand(string.Format("IF EXISTS (SELECT * FROM sys.objects WHERE name = '{0}') \n DROP FUNCTION {0}", funcName), con))
             {
                 cmd.ExecuteNonQuery();
             }
