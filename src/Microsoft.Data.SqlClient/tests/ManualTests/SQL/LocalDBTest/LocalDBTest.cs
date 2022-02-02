@@ -12,7 +12,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
     {
         private static bool IsLocalDBEnvironmentSet() => DataTestUtility.IsLocalDBInstalled();
         private static bool IsLocalDbSharedInstanceSet() => DataTestUtility.IsLocalDbSharedInstanceSetup();
-        private static bool IsLocalDbNamedPipeSet() => DataTestUtility.IsLocalDbNamedPipeInstanceSetup() && IsLocalDBEnvironmentSet() && IsLocalDbSharedInstanceSet();
+        private static bool IsLocalDbNamedPipesEnabled() => DataTestUtility.IsLocalDbNamedPipesEnabled() && IsLocalDBEnvironmentSet() && IsLocalDbSharedInstanceSet();
         private static readonly string s_localDbConnectionString = @$"server=(localdb)\{DataTestUtility.LocalDbAppName}";
         private static readonly string[] s_sharedLocalDbInstances = new string[] { @$"server=(localdb)\.\{DataTestUtility.LocalDbSharedInstanceName}", @$"server=(localdb)\." };
         private static readonly string s_badConnectionString = $@"server=(localdb)\{DataTestUtility.LocalDbAppName};Database=DOES_NOT_EXIST;Pooling=false;";
@@ -92,14 +92,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         #region NamedPipeTests
 
         [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
-        [ConditionalFact(nameof(IsLocalDbNamedPipeSet))]
+        [ConditionalFact(nameof(IsLocalDbNamedPipesEnabled))]
         public static void SqlLocalDbNamedPipeConnectionTest()
         {
             ConnectionTest(s_localDbNamedPipeConnectionString);
         }
 
         [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
-        [ConditionalFact(nameof(IsLocalDbNamedPipeSet))]
+        [ConditionalFact(nameof(IsLocalDbNamedPipesEnabled))]
         public static void LocalDBNamedPipeEncryptionNotSupportedTest()
         {
             // Encryption is not supported by SQL Local DB.
@@ -108,7 +108,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
-        [ConditionalFact(nameof(IsLocalDbNamedPipeSet))]
+        [ConditionalFact(nameof(IsLocalDbNamedPipesEnabled))]
         public static void LocalDBNamepipeMarsTest()
         {
             ConnectionWithMarsTest(s_localDbNamedPipeConnectionString);
