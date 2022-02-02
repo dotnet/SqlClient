@@ -9,7 +9,6 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
@@ -1339,8 +1338,16 @@ namespace Microsoft.Data.SqlClient
                             string warningMessage = SslProtocolsHelper.GetProtocolWarning(protocolVersion);
                             if (!string.IsNullOrEmpty(warningMessage))
                             {
-                                // This logs console warning of insecure protocol in use.
-                                _logger.LogWarning(GetType().Name, MethodBase.GetCurrentMethod().Name, warningMessage);
+                                if (!encrypt && LocalAppContextSwitches.SuppressInsecureTLSWarning)
+                                {
+                                    // Skip console warning
+                                    SqlClientEventSource.Log.TryTraceEvent("<sc|{0}|{1}|{2}>{3}", nameof(TdsParser), nameof(ConsumePreLoginHandshake), SqlClientLogger.LogLevel.Warning, warningMessage);
+                                }
+                                else
+                                {
+                                    // This logs console warning of insecure protocol in use.
+                                    _logger.LogWarning(nameof(TdsParser), nameof(ConsumePreLoginHandshake), warningMessage);
+                                }
                             }
 
                             // Validate server certificate
