@@ -39,7 +39,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 SqlCommand command = new($"SELECT Photo.PathName(), GET_FILESTREAM_TRANSACTION_CONTEXT(),EmployeeId FROM {tempTable} ORDER BY EmployeeId", connection);
                 try
                 {
-
                     SqlTransaction transaction = connection.BeginTransaction(IsolationLevel.ReadCommitted);
                     command.Transaction = transaction;
 
@@ -94,7 +93,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     InitialCatalog = SetupFileStreamDB(),
                     IntegratedSecurity = true
                 }.ConnectionString;
-
 
                 string tempTable = SetupTable(connString);
                 byte[] insertedValue = BitConverter.GetBytes(3);
