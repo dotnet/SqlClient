@@ -95,7 +95,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     IntegratedSecurity = true
                 }.ConnectionString;
 
-                
+
                 string tempTable = SetupTable(connString);
                 byte[] insertedValue = BitConverter.GetBytes(3);
 
@@ -268,7 +268,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static string SetupTable(string connString)
         {
             // Generate random table name
-            string tempTable = "fs_" + Guid.NewGuid().ToString().Replace('-', '_');
+            string tempTable = DataTestUtility.GetUniqueNameForSqlServer("fs");
             // Create table
             string createTable = $"CREATE TABLE {tempTable} (EmployeeId INT  NOT NULL  PRIMARY KEY, Photo VARBINARY(MAX) FILESTREAM  NULL, RowGuid UNIQUEIDENTIFIER NOT NULL ROWGUIDCOL UNIQUE DEFAULT NEWID() ) ";
             ExecuteNonQueryCommand(createTable, connString);
@@ -278,7 +278,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 string prepTable = $"INSERT INTO {tempTable} VALUES ({i + 1}, {s_insertedValues[i]} , default)";
                 ExecuteNonQueryCommand(prepTable, connString);
-            }            
+            }
 
             return tempTable;
         }
@@ -294,7 +294,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        private static byte[] RetrieveData(string tempTable,string connString, int len)
+        private static byte[] RetrieveData(string tempTable, string connString, int len)
         {
             byte[] bArray = new byte[len];
             using (SqlConnection conn = new SqlConnection(connString))
