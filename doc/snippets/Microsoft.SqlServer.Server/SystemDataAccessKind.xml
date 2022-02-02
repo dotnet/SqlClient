@@ -1,0 +1,79 @@
+<Type Name="SystemDataAccessKind" FullName="Microsoft.SqlServer.Server.SystemDataAccessKind">
+  <TypeSignature Language="C#" Value="public enum SystemDataAccessKind" />
+  <TypeSignature Language="ILAsm" Value=".class public auto ansi sealed SystemDataAccessKind extends System.Enum" FrameworkAlternate="dotnet-plat-ext-2.1;dotnet-plat-ext-2.2;dotnet-plat-ext-3.0;dotnet-plat-ext-3.1;dotnet-plat-ext-5.0;dotnet-plat-ext-6.0" />
+  <TypeSignature Language="DocId" Value="T:Microsoft.SqlServer.Server.SystemDataAccessKind" />
+  <TypeSignature Language="VB.NET" Value="Public Enum SystemDataAccessKind" />
+  <TypeSignature Language="F#" Value="type SystemDataAccessKind = " />
+  <TypeSignature Language="C++ CLI" Value="public enum class SystemDataAccessKind" />
+  <TypeSignature Language="ILAsm" Value=".class public auto ansi serializable sealed SystemDataAccessKind extends System.Enum" FrameworkAlternate="netframework-2.0;netframework-3.0;netframework-3.5;netframework-4.0;netframework-4.5;netframework-4.5.1;netframework-4.5.2;netframework-4.6;netframework-4.6.1;netframework-4.6.2;netframework-4.7;netframework-4.7.1;netframework-4.7.2;netframework-4.8;xamarinandroid-7.1;xamarinios-10.8;xamarinmac-3.0" />
+  <AssemblyInfo>
+    <AssemblyName>Microsoft.SqlServer.Server</AssemblyName>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+  </AssemblyInfo>
+  <Base>
+    <BaseTypeName>System.Enum</BaseTypeName>
+  </Base>
+  <Attributes>
+    <Attribute FrameworkAlternate="netframework-2.0;netframework-3.0;netframework-3.5;netframework-4.0;netframework-4.5;netframework-4.5.1;netframework-4.5.2;netframework-4.6;netframework-4.6.1;netframework-4.6.2;netframework-4.7;netframework-4.7.1;netframework-4.7.2;netframework-4.8;xamarinandroid-7.1;xamarinios-10.8;xamarinmac-3.0">
+      <AttributeName Language="C#">[System.Serializable]</AttributeName>
+      <AttributeName Language="F#">[&lt;System.Serializable&gt;]</AttributeName>
+    </Attribute>
+  </Attributes>
+  <Docs>
+    <summary>Describes the type of access to system data for a user-defined method or function.</summary>
+    <remarks>
+      <format type="text/markdown"><![CDATA[  
+
+## Remarks  
+Describes the type of access to system data for a user-defined method or function.  
+
+This enumeration is used in <xref:Microsoft.SqlServer.Server.SqlMethodAttribute> and <xref:Microsoft.SqlServer.Server.SqlFunctionAttribute> to indicate what type of access to system data the method or function has.  
+
+Note that methods and functions are not allowed to make changes to the database, so the options for this enumeration are `None` (meaning no data-access performed by the method or function) and `Read` (meaning that the method or function performs read-only data-access operations, such as executing SELECT statements).  
+
+ ]]></format>
+    </remarks>
+  </Docs>
+  <Members>
+    <Member MemberName="None">
+      <MemberSignature Language="C#" Value="None" />
+      <MemberSignature Language="ILAsm" Value=".field public static literal valuetype Microsoft.SqlServer.Server.SystemDataAccessKind None = int32(0)" />
+      <MemberSignature Language="DocId" Value="F:Microsoft.SqlServer.Server.SystemDataAccessKind.None" />
+      <MemberSignature Language="VB.NET" Value="None" />
+      <MemberSignature Language="F#" Value="None = 0" Usage="Microsoft.SqlServer.Server.SystemDataAccessKind.None" />
+      <MemberSignature Language="C++ CLI" Value="None" />
+      <MemberType>Field</MemberType>
+      <AssemblyInfo>
+        <AssemblyName>Microsoft.SqlServer.Server</AssemblyName>
+        <AssemblyVersion>1.0.0.0</AssemblyVersion>
+      </AssemblyInfo>
+      <ReturnValue>
+        <ReturnType>Microsoft.SqlServer.Server.SystemDataAccessKind</ReturnType>
+      </ReturnValue>
+      <MemberValue>0</MemberValue>
+      <Docs>
+        <summary>The method or function does not access system data.</summary>
+      </Docs>
+    </Member>
+    <Member MemberName="Read">
+      <MemberSignature Language="C#" Value="Read" />
+      <MemberSignature Language="ILAsm" Value=".field public static literal valuetype Microsoft.SqlServer.Server.SystemDataAccessKind Read = int32(1)" />
+      <MemberSignature Language="DocId" Value="F:Microsoft.SqlServer.Server.SystemDataAccessKind.Read" />
+      <MemberSignature Language="VB.NET" Value="Read" />
+      <MemberSignature Language="F#" Value="Read = 1" Usage="Microsoft.SqlServer.Server.SystemDataAccessKind.Read" />
+      <MemberSignature Language="C++ CLI" Value="Read" />
+      <MemberType>Field</MemberType>
+      <AssemblyInfo>
+        <AssemblyName>Microsoft.SqlServer.Server</AssemblyName>
+        <AssemblyVersion>1.0.0.0</AssemblyVersion>
+      </AssemblyInfo>
+      <ReturnValue>
+        <ReturnType>Microsoft.SqlServer.Server.SystemDataAccessKind</ReturnType>
+      </ReturnValue>
+      <MemberValue>1</MemberValue>
+      <Docs>
+        <summary>The method or function reads system data.</summary>
+      </Docs>
+    </Member>
+  </Members>
+</Type>
