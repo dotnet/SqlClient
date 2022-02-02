@@ -95,7 +95,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(nameof(IsLocalDbNamedPipeSet))]
         public static void SqlLocalDbNamedPipeConnectionTest()
         {
-            ConnectionTest(s_localDbConnectionString);
             ConnectionTest(s_localDbNamedPipeConnectionString);
         }
 
