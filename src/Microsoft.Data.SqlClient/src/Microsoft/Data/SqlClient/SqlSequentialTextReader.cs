@@ -347,11 +347,7 @@ namespace Microsoft.Data.SqlClient
 
             if (numberOfChars == 0)
             {
-#if NETFRAMEWORK
-                byteBuffer = new byte[0];
-#else
                 byteBuffer = Array.Empty<byte>();
-#endif
                 byteBufferUsed = 0;
             }
             else
