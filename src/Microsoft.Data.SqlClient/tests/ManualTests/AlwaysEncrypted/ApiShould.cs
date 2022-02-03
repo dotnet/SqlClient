@@ -2122,6 +2122,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             }
         }
 
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsSGXEnclaveConnStringSetup))]
+        public void TestNoneAttestationProtocolWithSGXEnclave()
+        {
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionStringAASSGX);
+            builder.AttestationProtocol = SqlConnectionAttestationProtocol.None;
+            builder.EnclaveAttestationUrl = string.Empty;
+
+            using (SqlConnection connection = new(builder.ConnectionString))
+            {
+                InvalidOperationException ex = Assert.Throws<InvalidOperationException>(() => connection.Open());
+                string expectedErrorMessage = string.Format(
+                    SystemDataResourceManager.Instance.TCE_AttestationProtocolNotSupportEnclaveType,
+                    SqlConnectionAttestationProtocol.None.ToString(), "SGX");
+                Assert.Contains(expectedErrorMessage, ex.Message);
+            }
+        }
+
         [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringSetupForAE))]
         [ClassData(typeof(AEConnectionStringProvider))]
         public void TestConnectionCustomKeyStoreProviderDuringAeQuery(string connectionString)

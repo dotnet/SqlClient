@@ -715,13 +715,11 @@ namespace Microsoft.Data.Common
                 result = SqlConnectionAttestationProtocol.AAS;
                 return true;
             }
-#if ENCLAVE_SIMULATOR
-            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, nameof(SqlConnectionAttestationProtocol.SIM)))
+            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, nameof(SqlConnectionAttestationProtocol.None)))
             {
-                result = SqlConnectionAttestationProtocol.SIM;
+                result = SqlConnectionAttestationProtocol.None;
                 return true;
             }
-#endif
             else
             {
                 result = DbConnectionStringDefaults.AttestationProtocol;
@@ -731,18 +729,11 @@ namespace Microsoft.Data.Common
 
         internal static bool IsValidAttestationProtocol(SqlConnectionAttestationProtocol value)
         {
-#if ENCLAVE_SIMULATOR
             Debug.Assert(Enum.GetNames(typeof(SqlConnectionAttestationProtocol)).Length == 4, "SqlConnectionAttestationProtocol enum has changed, update needed");
             return value == SqlConnectionAttestationProtocol.NotSpecified
                 || value == SqlConnectionAttestationProtocol.HGS
                 || value == SqlConnectionAttestationProtocol.AAS
-                || value == SqlConnectionAttestationProtocol.SIM;
-#else
-            Debug.Assert(Enum.GetNames(typeof(SqlConnectionAttestationProtocol)).Length == 3, "SqlConnectionAttestationProtocol enum has changed, update needed");
-            return value == SqlConnectionAttestationProtocol.NotSpecified
-                || value == SqlConnectionAttestationProtocol.HGS
-                || value == SqlConnectionAttestationProtocol.AAS;
-#endif
+                || value == SqlConnectionAttestationProtocol.None;
         }
 
         internal static string AttestationProtocolToString(SqlConnectionAttestationProtocol value)
@@ -753,9 +744,7 @@ namespace Microsoft.Data.Common
             {
                 SqlConnectionAttestationProtocol.AAS => nameof(SqlConnectionAttestationProtocol.AAS),
                 SqlConnectionAttestationProtocol.HGS => nameof(SqlConnectionAttestationProtocol.HGS),
-#if ENCLAVE_SIMULATOR
-                SqlConnectionAttestationProtocol.SIM => nameof(SqlConnectionAttestationProtocol.SIM),
-#endif
+                SqlConnectionAttestationProtocol.None => nameof(SqlConnectionAttestationProtocol.None),
                 _ => null
             };
         }
