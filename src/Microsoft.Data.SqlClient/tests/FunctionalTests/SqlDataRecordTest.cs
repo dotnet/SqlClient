@@ -7,7 +7,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
+#if NETFRAMEWORK
+using Microsoft.SqlServer.Server;
+#else
 using Microsoft.Data.SqlClient.Server;
+#endif
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests

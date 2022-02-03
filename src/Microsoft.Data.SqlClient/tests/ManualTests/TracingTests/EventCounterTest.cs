@@ -149,22 +149,31 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public void EventCounter_ReclaimedConnectionsCounter_Functional()
         {
-            SqlConnection.ClearAllPools();
+            // clean pools and pool groups
+            ClearConnectionPools();
             var stringBuilder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString) { Pooling = true, MaxPoolSize = 1 };
 
             long rc = SqlClientEventSourceProps.ReclaimedConnections;
 
-            InternalConnectionWrapper internalConnection = CreateEmancipatedConnection(stringBuilder.ToString());
-
-            GC.Collect();
+            int gcNumber = GC.GetGeneration(CreateEmancipatedConnection(stringBuilder.ToString()));
+            // Specifying the generation number makes it to run faster by avoiding a full GC process
+            GC.Collect(gcNumber);
             GC.WaitForPendingFinalizers();
+            System.Threading.Thread.Sleep(200); // give the pooler some time to reclaim the connection and avoid the conflict.
 
             using (SqlConnection conn = new SqlConnection(stringBuilder.ToString()))
             {
                 conn.Open();
 
-                // when calling open, the connection is reclaimed. 
-                Assert.Equal(rc + 1, SqlClientEventSourceProps.ReclaimedConnections);
+                // when calling open, the connection could be reclaimed.
+                if (GC.GetGeneration(conn) == gcNumber)
+                {
+                    Assert.Equal(rc + 1, SqlClientEventSourceProps.ReclaimedConnections);
+                }
+                else
+                {
+                    Assert.Equal(rc, SqlClientEventSourceProps.ReclaimedConnections);
+                }
             }
         }
 
@@ -213,26 +222,32 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private void ClearConnectionPools()
         {
             //ClearAllPoos kills all the existing pooled connection thus deactivating all the active pools
-            var liveConnectionPools = SqlClientEventSourceProps.ActiveConnectionPools +
+            long liveConnectionPools = SqlClientEventSourceProps.ActiveConnectionPools +
                                       SqlClientEventSourceProps.InactiveConnectionPools;
             SqlConnection.ClearAllPools();
             Assert.InRange(SqlClientEventSourceProps.InactiveConnectionPools, 0, liveConnectionPools);
             Assert.Equal(0, SqlClientEventSourceProps.ActiveConnectionPools);
 
-            //the 1st PruneConnectionPoolGroups call cleans the dangling inactive connection pools
+            long icp = SqlClientEventSourceProps.InactiveConnectionPools;
+
+            // The 1st PruneConnectionPoolGroups call cleans the dangling inactive connection pools.
             PruneConnectionPoolGroups();
-            Assert.Equal(0, SqlClientEventSourceProps.InactiveConnectionPools);
+            // If the pool isn't empty, it's because there are active connections or distributed transactions that need it.
+            Assert.InRange(SqlClientEventSourceProps.InactiveConnectionPools, 0, icp);
 
             //the 2nd call deactivates the dangling connection pool groups
-            var liveConnectionPoolGroups = SqlClientEventSourceProps.ActiveConnectionPoolGroups +
+            long liveConnectionPoolGroups = SqlClientEventSourceProps.ActiveConnectionPoolGroups +
                                            SqlClientEventSourceProps.InactiveConnectionPoolGroups;
+            long acpg = SqlClientEventSourceProps.ActiveConnectionPoolGroups;
             PruneConnectionPoolGroups();
             Assert.InRange(SqlClientEventSourceProps.InactiveConnectionPoolGroups, 0, liveConnectionPoolGroups);
-            Assert.Equal(0, SqlClientEventSourceProps.ActiveConnectionPoolGroups);
+            // If the pool entry isn't empty, it's because there are active pools that need it.
+            Assert.InRange(SqlClientEventSourceProps.ActiveConnectionPoolGroups, 0, acpg);
 
+            long icpg = SqlClientEventSourceProps.InactiveConnectionPoolGroups;
             //the 3rd call cleans the dangling connection pool groups
             PruneConnectionPoolGroups();
-            Assert.Equal(0, SqlClientEventSourceProps.InactiveConnectionPoolGroups);
+            Assert.InRange(SqlClientEventSourceProps.InactiveConnectionPoolGroups, 0, icpg);
         }
 
         private static void PruneConnectionPoolGroups()
@@ -256,7 +271,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
     internal static class SqlClientEventSourceProps
     {
-        private static readonly object _log;
+        private static readonly object s_log;
         private static readonly FieldInfo _activeHardConnectionsCounter;
         private static readonly FieldInfo _hardConnectsCounter;
         private static readonly FieldInfo _hardDisconnectsCounter;
@@ -276,14 +291,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         static SqlClientEventSourceProps()
         {
-            var sqlClientEventSourceType =
+            Type sqlClientEventSourceType =
                 Assembly.GetAssembly(typeof(SqlConnection))!.GetType("Microsoft.Data.SqlClient.SqlClientEventSource");
             Debug.Assert(sqlClientEventSourceType != null);
-            var logField = sqlClientEventSourceType.GetField("Log", BindingFlags.Static | BindingFlags.NonPublic);
+            FieldInfo logField = sqlClientEventSourceType.GetField("Log", BindingFlags.Static | BindingFlags.NonPublic);
             Debug.Assert(logField != null);
-            _log = logField.GetValue(null);
+            s_log = logField.GetValue(null);
 
-            var _bindingFlags = BindingFlags.Instance | BindingFlags.NonPublic;
+            BindingFlags _bindingFlags = BindingFlags.Instance | BindingFlags.NonPublic;
             _activeHardConnectionsCounter =
                 sqlClientEventSourceType.GetField(nameof(_activeHardConnectionsCounter), _bindingFlags);
             Debug.Assert(_activeHardConnectionsCounter != null);
@@ -334,36 +349,36 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Debug.Assert(_reclaimedConnectionsCounter != null);
         }
 
-        public static long ActiveHardConnections => (long)_activeHardConnectionsCounter.GetValue(_log)!;
+        public static long ActiveHardConnections => (long)_activeHardConnectionsCounter.GetValue(s_log)!;
 
-        public static long HardConnects => (long)_hardConnectsCounter.GetValue(_log)!;
+        public static long HardConnects => (long)_hardConnectsCounter.GetValue(s_log)!;
 
-        public static long HardDisconnects => (long)_hardDisconnectsCounter.GetValue(_log)!;
+        public static long HardDisconnects => (long)_hardDisconnectsCounter.GetValue(s_log)!;
 
-        public static long ActiveSoftConnections => (long)_activeSoftConnectionsCounter.GetValue(_log)!;
+        public static long ActiveSoftConnections => (long)_activeSoftConnectionsCounter.GetValue(s_log)!;
 
-        public static long SoftConnects => (long)_softConnectsCounter.GetValue(_log)!;
+        public static long SoftConnects => (long)_softConnectsCounter.GetValue(s_log)!;
 
-        public static long SoftDisconnects => (long)_softDisconnectsCounter.GetValue(_log)!;
+        public static long SoftDisconnects => (long)_softDisconnectsCounter.GetValue(s_log)!;
 
-        public static long NonPooledConnections => (long)_nonPooledConnectionsCounter.GetValue(_log)!;
+        public static long NonPooledConnections => (long)_nonPooledConnectionsCounter.GetValue(s_log)!;
 
-        public static long PooledConnections => (long)_pooledConnectionsCounter.GetValue(_log)!;
+        public static long PooledConnections => (long)_pooledConnectionsCounter.GetValue(s_log)!;
 
-        public static long ActiveConnectionPoolGroups => (long)_activeConnectionPoolGroupsCounter.GetValue(_log)!;
+        public static long ActiveConnectionPoolGroups => (long)_activeConnectionPoolGroupsCounter.GetValue(s_log)!;
 
-        public static long InactiveConnectionPoolGroups => (long)_inactiveConnectionPoolGroupsCounter.GetValue(_log)!;
+        public static long InactiveConnectionPoolGroups => (long)_inactiveConnectionPoolGroupsCounter.GetValue(s_log)!;
 
-        public static long ActiveConnectionPools => (long)_activeConnectionPoolsCounter.GetValue(_log)!;
+        public static long ActiveConnectionPools => (long)_activeConnectionPoolsCounter.GetValue(s_log)!;
 
-        public static long InactiveConnectionPools => (long)_inactiveConnectionPoolsCounter.GetValue(_log)!;
+        public static long InactiveConnectionPools => (long)_inactiveConnectionPoolsCounter.GetValue(s_log)!;
 
-        public static long ActiveConnections => (long)_activeConnectionsCounter.GetValue(_log)!;
+        public static long ActiveConnections => (long)_activeConnectionsCounter.GetValue(s_log)!;
 
-        public static long FreeConnections => (long)_freeConnectionsCounter.GetValue(_log)!;
+        public static long FreeConnections => (long)_freeConnectionsCounter.GetValue(s_log)!;
 
-        public static long StasisConnections => (long)_stasisConnectionsCounter.GetValue(_log)!;
+        public static long StasisConnections => (long)_stasisConnectionsCounter.GetValue(s_log)!;
 
-        public static long ReclaimedConnections => (long)_reclaimedConnectionsCounter.GetValue(_log)!;
+        public static long ReclaimedConnections => (long)_reclaimedConnectionsCounter.GetValue(s_log)!;
     }
 }
