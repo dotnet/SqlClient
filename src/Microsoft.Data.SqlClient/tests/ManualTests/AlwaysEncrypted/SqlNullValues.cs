@@ -42,8 +42,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         cmd.ExecuteNonQuery();
                     }
 
-                    string sql1 = $"CREATE FUNCTION {UdfName}() RETURNS INT AS \n BEGIN \n RETURN (SELECT c1 FROM [{tableName}] WHERE c1 IS NULL)\n END";
-                    string sql2 = $"CREATE FUNCTION {UdfNameNotNull}() RETURNS INT AS \n BEGIN \n RETURN (SELECT c1 FROM [{tableName}] WHERE c1 IS NOT NULL)\n END";
+                    string sql1 = $"CREATE FUNCTION [{UdfName}]() RETURNS INT AS \n BEGIN \n RETURN (SELECT c1 FROM [{tableName}] WHERE c1 IS NULL)\n END";
+                    string sql2 = $"CREATE FUNCTION [{UdfNameNotNull}]() RETURNS INT AS \n BEGIN \n RETURN (SELECT c1 FROM [{tableName}] WHERE c1 IS NOT NULL)\n END";
                     using (SqlCommand cmd = sqlConnection.CreateCommand())
                     {
                         cmd.CommandText = sql1;
