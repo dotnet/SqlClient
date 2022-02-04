@@ -167,7 +167,7 @@ Modified: Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security
             <related type="Article" href="/sql/connect/ado-net/overview-sqlclient-driver">Overview of the SqlClient driver</related>
         </AttachDBFilename>
         <AttestationProtocol>
-            <summary>Gets or sets the value of Attestation Protocol.</summary>
+            <summary>Gets or sets the value of Attestation Protocol.<br /><br />When no value is specified, secure enclaves are disabled on the connection.</summary>
             <returns>Returns the attestation protocol.</returns>
         </AttestationProtocol>
         <Authentication>
