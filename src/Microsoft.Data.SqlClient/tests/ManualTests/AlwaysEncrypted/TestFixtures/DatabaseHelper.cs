@@ -179,7 +179,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             return randomBytes;
         }
 
-        internal static string GenerateUniqueName(string baseName) => string.Concat("AE_", baseName, "_", Guid.NewGuid().ToString().Replace('-', '_'));
+        internal static string GenerateUniqueName(string baseName) => string.Concat("AE-", baseName, "_", Guid.NewGuid().ToString().Replace('-', '_'));
     }
 
     public class AEConnectionStringProviderWithBooleanVariable : IEnumerable<object[]>
