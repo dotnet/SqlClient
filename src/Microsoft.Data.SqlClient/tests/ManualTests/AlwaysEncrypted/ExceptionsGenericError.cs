@@ -135,7 +135,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
                         cmdInsert.CommandType = CommandType.Text;
                         cmdInsert.ExecuteNonQuery();
                     }
-                    using (SqlCommand cmdCreateProc = new SqlCommand($"create procedure {encryptedProcedureName}(@c1 int) as insert into {encryptedTableName} values (@c1)", conn))
+                    using (SqlCommand cmdCreateProc = new SqlCommand($"create procedure [{encryptedProcedureName}](@c1 int) as insert into {encryptedTableName} values (@c1)", conn))
                     {
                         cmdCreateProc.CommandType = CommandType.Text;
                         cmdCreateProc.ExecuteNonQuery();
