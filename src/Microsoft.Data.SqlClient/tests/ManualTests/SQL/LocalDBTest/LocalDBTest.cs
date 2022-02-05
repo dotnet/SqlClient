@@ -10,6 +10,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public static class LocalDBTest
     {
+        private enum InfoType
+        {
+            pipeName,
+            state
+        }
         private static bool IsLocalDBEnvironmentSet() => DataTestUtility.IsLocalDBInstalled();
         private static bool IsLocalDbSharedInstanceSet() => DataTestUtility.IsLocalDbSharedInstanceSetup();
         private static bool IsLocalDbNamedPipesEnabled() => DataTestUtility.IsLocalDbNamedPipesEnabled() && IsLocalDBEnvironmentSet() && IsLocalDbSharedInstanceSet();
@@ -161,19 +166,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static string GetLocalDbNamedPipe()
         {
             RestartLocalDB();
-            return ExecuteLocalDBCommandProcess(s_commandPrompt, s_sqlLocalDbInfo, "pipeName");
+            string instanceName = ExecuteLocalDBCommandProcess(s_commandPrompt, s_sqlLocalDbInfo, InfoType.pipeName);
+            Assert.NotNull(instanceName);
+            Assert.NotEmpty(instanceName);
+            return instanceName;
         }
 
         private static void RestartLocalDB()
         {
-            string state = ExecuteLocalDBCommandProcess(s_commandPrompt, s_sqlLocalDbInfo, "state");
-            while (state.Equals("stopped", StringComparison.InvariantCultureIgnoreCase))
+            string state = ExecuteLocalDBCommandProcess(s_commandPrompt, s_sqlLocalDbInfo, InfoType.state);
+            int count = 5;
+            while (state.Equals("stopped", StringComparison.InvariantCultureIgnoreCase) && count>0)
             {
-                state = ExecuteLocalDBCommandProcess(s_commandPrompt, s_startLocalDbCommand, "state");
+                count--;
+                state = ExecuteLocalDBCommandProcess(s_commandPrompt, s_startLocalDbCommand, InfoType.state);
                 Thread.Sleep(2000);
             }
         }
-        private static string ExecuteLocalDBCommandProcess(string filename, string arguments, string infoType)
+        private static string ExecuteLocalDBCommandProcess(string filename, string arguments, InfoType infoType)
         {
             ProcessStartInfo sInfo = new()
             {
@@ -188,15 +198,19 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             if (arguments == s_startLocalDbCommand)
             {
+                Assert.Equal(2, lines.Length);
                 sInfo.Arguments = s_sqlLocalDbInfo; //after start check info again
                 lines = Process.Start(sInfo).StandardOutput.ReadToEnd().Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
+                Assert.Equal(9, lines.Length);
             }
-            if (infoType.Equals("state"))
+            if (infoType.Equals(InfoType.state))
             {
+                Assert.Equal(9, lines.Length);
                 return lines[5].Split(':')[1].Trim();
             }
-            else if (infoType.Equals("pipeName"))
+            else if (infoType.Equals(InfoType.pipeName))
             {
+                Assert.Equal(9, lines.Length);
                 return lines[7].Split(new string[] { "Instance pipe name:" }, StringSplitOptions.None)[1].Trim();
             }
             return null;
