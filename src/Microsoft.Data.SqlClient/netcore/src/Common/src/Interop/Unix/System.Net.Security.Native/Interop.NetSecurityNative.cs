@@ -11,49 +11,52 @@ internal static partial class Interop
 {
     internal static partial class NetSecurityNative
     {
-        [DllImport(Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_ReleaseGssBuffer")]
+        [DllImport(Libraries.NetSecurityNative, EntryPoint = "NetSecurityNative_ReleaseGssBuffer")]
         internal static extern void ReleaseGssBuffer(
             IntPtr bufferPtr,
             ulong length);
 
-        [DllImport(Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_DisplayMinorStatus")]
+        [DllImport(Interop.Libraries.NetSecurityNative, EntryPoint = "NetSecurityNative_EnsureGssInitialized")]
+        private static extern int EnsureGssInitialized();
+
+        [DllImport(Libraries.NetSecurityNative, EntryPoint = "NetSecurityNative_DisplayMinorStatus")]
         internal static extern Status DisplayMinorStatus(
             out Status minorStatus,
             Status statusValue,
             ref GssBuffer buffer);
 
-        [DllImport(Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_DisplayMajorStatus")]
+        [DllImport(Libraries.NetSecurityNative, EntryPoint = "NetSecurityNative_DisplayMajorStatus")]
         internal static extern Status DisplayMajorStatus(
             out Status minorStatus,
             Status statusValue,
             ref GssBuffer buffer);
 
-        [DllImport(Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_ImportUserName")]
+        [DllImport(Libraries.NetSecurityNative, EntryPoint = "NetSecurityNative_ImportUserName")]
         internal static extern Status ImportUserName(
             out Status minorStatus,
             string inputName,
             int inputNameByteCount,
             out SafeGssNameHandle outputName);
 
-        [DllImport(Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_ImportPrincipalName")]
+        [DllImport(Libraries.NetSecurityNative, EntryPoint = "NetSecurityNative_ImportPrincipalName")]
         internal static extern Status ImportPrincipalName(
             out Status minorStatus,
             string inputName,
             int inputNameByteCount,
             out SafeGssNameHandle outputName);
 
-        [DllImport(Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_ReleaseName")]
+        [DllImport(Libraries.NetSecurityNative, EntryPoint = "NetSecurityNative_ReleaseName")]
         internal static extern Status ReleaseName(
             out Status minorStatus,
             ref IntPtr inputName);
 
-        [DllImport(Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_InitiateCredSpNego")]
+        [DllImport(Libraries.NetSecurityNative, EntryPoint = "NetSecurityNative_InitiateCredSpNego")]
         internal static extern Status InitiateCredSpNego(
             out Status minorStatus,
             SafeGssNameHandle desiredName,
             out SafeGssCredHandle outputCredHandle);
 
-        [DllImport(Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_InitiateCredWithPassword")]
+        [DllImport(Libraries.NetSecurityNative, EntryPoint = "NetSecurityNative_InitiateCredWithPassword")]
         internal static extern Status InitiateCredWithPassword(
             out Status minorStatus,
             bool isNtlm,
@@ -62,12 +65,12 @@ internal static partial class Interop
             int passwordLen,
             out SafeGssCredHandle outputCredHandle);
 
-        [DllImport(Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_ReleaseCred")]
+        [DllImport(Libraries.NetSecurityNative, EntryPoint = "NetSecurityNative_ReleaseCred")]
         internal static extern Status ReleaseCred(
             out Status minorStatus,
             ref IntPtr credHandle);
 
-        [DllImport(Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_InitSecContext")]
+        [DllImport(Libraries.NetSecurityNative, EntryPoint = "NetSecurityNative_InitSecContext")]
         internal static extern Status InitSecContext(
             out Status minorStatus,
             SafeGssCredHandle initiatorCredHandle,
@@ -81,7 +84,7 @@ internal static partial class Interop
             out uint retFlags,
             out int isNtlmUsed);
 
-        [DllImport(Libraries.NetSecurityNative, EntryPoint="NetSecurityNative_DeleteSecContext")]
+        [DllImport(Libraries.NetSecurityNative, EntryPoint = "NetSecurityNative_DeleteSecContext")]
         internal static extern Status DeleteSecContext(
             out Status minorStatus,
             ref IntPtr contextHandle);
@@ -108,6 +111,18 @@ internal static partial class Interop
             GSS_C_IDENTIFY_FLAG = 0x2000,
             GSS_C_EXTENDED_ERROR_FLAG = 0x4000,
             GSS_C_DELEG_POLICY_FLAG = 0x8000
+        }
+
+        // This constructor is added to address the issue with net6 regarding 
+        // Shim gss api on Linux to delay loading libgssapi_krb5.so
+        // issue https://github.com/dotnet/SqlClient/issues/1390
+        // dotnet runtime issue https://github.com/dotnet/runtime/pull/55037
+        static NetSecurityNative()
+        {
+            if (Environment.Version.Major >= 6)
+            {
+                EnsureGssInitialized();
+            }
         }
     }
 }

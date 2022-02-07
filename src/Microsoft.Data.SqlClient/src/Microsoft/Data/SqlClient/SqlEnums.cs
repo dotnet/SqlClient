@@ -16,6 +16,9 @@ using System.IO;
 using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Server;
+#if NETFRAMEWORK
+using Microsoft.SqlServer.Server;
+#endif
 
 namespace Microsoft.Data.SqlClient
 {
@@ -47,7 +50,7 @@ namespace Microsoft.Data.SqlClient
         internal readonly bool IsCharType;
         internal readonly bool IsNCharType;
         internal readonly bool IsSizeInCharacters;
-        internal readonly bool IsNewKatmaiType;
+        internal readonly bool Is2008Type;
         internal readonly bool IsVarTime;
 
         internal readonly bool Is70Supported;
@@ -79,7 +82,7 @@ namespace Microsoft.Data.SqlClient
             IsCharType = _IsCharType(sqldbType);
             IsNCharType = _IsNCharType(sqldbType);
             IsSizeInCharacters = _IsSizeInCharacters(sqldbType);
-            IsNewKatmaiType = _IsNewKatmaiType(sqldbType);
+            Is2008Type = _Is2008Type(sqldbType);
             IsVarTime = _IsVarTime(sqldbType);
 
             Is70Supported = _Is70Supported(SqlDbType);
@@ -145,7 +148,7 @@ namespace Microsoft.Data.SqlClient
             SqlDbType.DateTime2 == type ||
             SqlDbType.DateTimeOffset == type;
 
-        private static bool _IsNewKatmaiType(SqlDbType type) => SqlDbType.Structured == type;
+        private static bool _Is2008Type(SqlDbType type) => SqlDbType.Structured == type;
 
         internal static bool _IsVarTime(SqlDbType type) =>
             type == SqlDbType.Time || type == SqlDbType.DateTime2 || type == SqlDbType.DateTimeOffset;
@@ -929,7 +932,7 @@ namespace Microsoft.Data.SqlClient
 
         private static readonly MetaType s_metaTable = new(255, 255, -1, false, false, false, TdsEnums.SQLTABLE, TdsEnums.SQLTABLE, MetaTypeName.TABLE, typeof(IEnumerable<DbDataRecord>), typeof(IEnumerable<DbDataRecord>), SqlDbType.Structured, DbType.Object, 0);
 
-        private static readonly MetaType s_metaSUDT = new(255, 255, -1, false, false, false, TdsEnums.SQLVOID, TdsEnums.SQLVOID, "", typeof(SqlDataRecord), typeof(SqlDataRecord), SqlDbType.Structured, DbType.Object, 0);
+        private static readonly MetaType s_metaSUDT = new(255, 255, -1, false, false, false, TdsEnums.SQLVOID, TdsEnums.SQLVOID, "", typeof(Server.SqlDataRecord), typeof(Server.SqlDataRecord), SqlDbType.Structured, DbType.Object, 0);
 
         private static readonly MetaType s_metaDate = new(255, 255, 3, true, false, false, TdsEnums.SQLDATE, TdsEnums.SQLDATE, MetaTypeName.DATE, typeof(System.DateTime), typeof(System.DateTime), SqlDbType.Date, DbType.Date, 0);
 
