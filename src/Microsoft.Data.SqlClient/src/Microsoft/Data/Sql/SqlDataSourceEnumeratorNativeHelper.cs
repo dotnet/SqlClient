@@ -36,7 +36,7 @@ namespace Microsoft.Data.Sql
             char[] buffer = null;
             StringBuilder strbldr = new StringBuilder();
 
-            Int32 bufferSize = 1024;
+            Int32 bufferSize = 65536;
             Int32 readLength = 0;
             buffer = new char[bufferSize];
             bool more = true;
@@ -58,7 +58,7 @@ namespace Microsoft.Data.Sql
                 if (handle != ADP.s_ptrZero)
                 {
                     while (more && !TdsParserStaticMethods.TimeoutHasExpired(timeoutTime))
-                    {
+                    {                     
 #if NETFRAMEWORK
                         readLength = SNINativeMethodWrapper.SNIServerEnumRead(handle, buffer, bufferSize, out more);
 #else
