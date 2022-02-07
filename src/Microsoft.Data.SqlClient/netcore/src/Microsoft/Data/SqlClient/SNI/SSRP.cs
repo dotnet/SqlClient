@@ -15,7 +15,8 @@ namespace Microsoft.Data.SqlClient.SNI
     {
         private const char SemicolonSeparator = ';';
         private const int SqlServerBrowserPort = 1434;
-        private const int SubsequentTimeoutsForCLNT_BCAST_EX = 15000;
+        private const int recieveMAXTimeoutsForCLNT_BCAST_EX = 15000;
+        private const int recieveTimeoutsForCLNT_BCAST_EX = 1000;
         private const int ServerResponseHeaderSizeForCLNT_BCAST_EX = 3;
         private const int ValidResponseSizeForCLNT_BCAST_EX = 4096;
         private const int FirstTimeoutForCLNT_BCAST_EX = 5000;
@@ -191,15 +192,23 @@ namespace Microsoft.Data.SqlClient.SNI
                     Task<int> sendTask = clientListener.SendAsync(CLNT_BCAST_EX_Request, CLNT_BCAST_EX_Request.Length, new IPEndPoint(IPAddress.Broadcast, SqlServerBrowserPort));
                     Task<UdpReceiveResult> receiveTask = null;
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.INFO, "Waiting for UDP Client to fetch list of instances.");
-
-                    while ((receiveTask = clientListener.ReceiveAsync()).Wait(currentTimeOut) && receiveTask != null)
-                    {
-                        currentTimeOut = SubsequentTimeoutsForCLNT_BCAST_EX;
-                        SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.INFO, "Received instnace info from UDP Client.");
-                        if (receiveTask.Result.Buffer.Length < ValidResponseSizeForCLNT_BCAST_EX) //discard invalid response
+                    Stopwatch sw = new Stopwatch();
+                    sw.Start();
+                    try
+                    { 
+                        while ((receiveTask = clientListener.ReceiveAsync()).Wait(currentTimeOut) && sw.ElapsedMilliseconds < recieveMAXTimeoutsForCLNT_BCAST_EX && receiveTask != null)
                         {
-                            response.Append(Encoding.ASCII.GetString(receiveTask.Result.Buffer, ServerResponseHeaderSizeForCLNT_BCAST_EX, receiveTask.Result.Buffer.Length - ServerResponseHeaderSizeForCLNT_BCAST_EX));
+                            currentTimeOut = recieveTimeoutsForCLNT_BCAST_EX;
+                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.INFO, "Received instnace info from UDP Client.");
+                            if (receiveTask.Result.Buffer.Length < ValidResponseSizeForCLNT_BCAST_EX) //discard invalid response
+                            {
+                                response.Append(Encoding.ASCII.GetString(receiveTask.Result.Buffer, ServerResponseHeaderSizeForCLNT_BCAST_EX, receiveTask.Result.Buffer.Length - ServerResponseHeaderSizeForCLNT_BCAST_EX));
+                            }
                         }
+                    }
+                    finally
+                    {
+                        sw.Stop();
                     }
                 }
             }
