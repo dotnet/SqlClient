@@ -58,7 +58,7 @@ namespace Microsoft.Data.Sql
                 if (handle != ADP.s_ptrZero)
                 {
                     while (more && !TdsParserStaticMethods.TimeoutHasExpired(timeoutTime))
-                    {                     
+                    {
 #if NETFRAMEWORK
                         readLength = SNINativeMethodWrapper.SNIServerEnumRead(handle, buffer, bufferSize, out more);
 #else
