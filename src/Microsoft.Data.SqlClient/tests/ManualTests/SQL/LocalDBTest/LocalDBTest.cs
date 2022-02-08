@@ -96,15 +96,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         #region NamedPipeTests
 
+        [Fact]
         [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
-        [ConditionalFact(nameof(IsLocalDbNamedPipesEnabled))]
+        [ActiveIssue(20244)] //pending pipeline configuration
         public static void SqlLocalDbNamedPipeConnectionTest()
         {
             ConnectionTest(s_localDbNamedPipeConnectionString);
         }
 
+        [Fact]
         [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
-        [ConditionalFact(nameof(IsLocalDbNamedPipesEnabled))]
+        [ActiveIssue(20244)] //pending pipeline configuration
         public static void LocalDBNamedPipeEncryptionNotSupportedTest()
         {
             // Encryption is not supported by SQL Local DB.
@@ -112,8 +114,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             ConnectionWithEncryptionTest(s_localDbNamedPipeConnectionString);
         }
 
+        [Fact]
         [SkipOnTargetFramework(TargetFrameworkMonikers.Uap)] // No Registry support on UAP
-        [ConditionalFact(nameof(IsLocalDbNamedPipesEnabled))]
+        [ActiveIssue(20244)] //pending pipeline configuration
         public static void LocalDBNamepipeMarsTest()
         {
             ConnectionWithMarsTest(s_localDbNamedPipeConnectionString);
@@ -182,6 +185,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 state = ExecuteLocalDBCommandProcess(s_commandPrompt, s_startLocalDbCommand, InfoType.state);
                 Thread.Sleep(2000);
             }
+            if(state == null || state != "Running")
+            {
+                throw new LocalDBNotStartedException();
+            }
         }
         private static string ExecuteLocalDBCommandProcess(string filename, string arguments, InfoType infoType)
         {
@@ -201,19 +208,21 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 Assert.Equal(2, lines.Length);
                 sInfo.Arguments = s_sqlLocalDbInfo; //after start check info again
                 lines = Process.Start(sInfo).StandardOutput.ReadToEnd().Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
-                Assert.Equal(9, lines.Length);
             }
+            Assert.Equal(9, lines.Length);
             if (infoType.Equals(InfoType.state))
             {
-                Assert.Equal(9, lines.Length);
                 return lines[5].Split(':')[1].Trim();
             }
             else if (infoType.Equals(InfoType.pipeName))
             {
-                Assert.Equal(9, lines.Length);
                 return lines[7].Split(new string[] { "Instance pipe name:" }, StringSplitOptions.None)[1].Trim();
             }
             return null;
         }
+    }
+    class LocalDBNotStartedException : Exception
+    {
+        public override string Message => "Unable to start LocalDB";
     }
 }
