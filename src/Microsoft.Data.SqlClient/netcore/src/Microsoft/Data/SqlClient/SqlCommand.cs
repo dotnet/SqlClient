@@ -2755,6 +2755,7 @@ namespace Microsoft.Data.SqlClient
                                 {
                                     reader.Dispose();
                                 }
+
                                 if (exception != null)
                                 {
                                     _diagnosticListener.WriteCommandError(operationId, this, _transaction, exception);
@@ -2772,9 +2773,12 @@ namespace Microsoft.Data.SqlClient
                             // exception thrown by Dispose...
                             source.SetException(e);
                         }
+                        finally
+                        {
+                            _parentOperationStarted = false;
+                        }
                     }, TaskScheduler.Default);
                 }
-                _parentOperationStarted = false;
                 return source.Task;
             }, TaskScheduler.Default).Unwrap();
         }
