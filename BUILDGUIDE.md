@@ -183,7 +183,7 @@ Manual Tests require the below setup to run:
   |UseManagedSNIOnWindows | (Optional) Enables testing with Managed SNI on Windows| `true` OR `false`|
   |DNSCachingConnString | Enables tests requiring a server that supports DNS Caching|
   |IsAzureSynpase | (Optional) When set to 'true', test suite runs compatible tests for Azure Synapse/Parallel Data Warehouse. | `true` OR `false`|
-  |EnclaveAzureDatabaseConnString | (Optional) Connectiong string for Azure database with enclaves |
+  |EnclaveAzureDatabaseConnString | (Optional) Connection string for Azure database with enclaves |
   |MakecertPath | The full path to makecert.exe. This is not required if the path is present in the PATH environment variable. | `D:\\escaped\\absolute\\path\\to\\makecert.exe` |
 
 ### Commands to run Manual Tests
