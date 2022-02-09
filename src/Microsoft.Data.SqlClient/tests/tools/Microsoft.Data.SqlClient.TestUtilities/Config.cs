@@ -26,7 +26,6 @@ namespace Microsoft.Data.SqlClient.TestUtilities
         public string AzureKeyVaultClientSecret = null;
         public string LocalDbAppName = null;
         public string LocalDbSharedInstanceName = null;
-        public bool LocalDbNamedPipesEnabled = false;
         public bool EnclaveEnabled = false;
         public bool TracingEnabled = false;
         public bool SupportsIntegratedSecurity = false;
