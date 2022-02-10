@@ -2708,11 +2708,13 @@ namespace Microsoft.Data.SqlClient
                 if (executeTask.IsCanceled)
                 {
                     source.SetCanceled();
+                    _parentOperationStarted = false;
                 }
                 else if (executeTask.IsFaulted)
                 {
                     _diagnosticListener.WriteCommandError(operationId, this, _transaction, executeTask.Exception.InnerException);
                     source.SetException(executeTask.Exception.InnerException);
+                    _parentOperationStarted = false;
                 }
                 else
                 {
@@ -2729,7 +2731,8 @@ namespace Microsoft.Data.SqlClient
                             else if (readTask.IsFaulted)
                             {
                                 reader.Dispose();
-                                _diagnosticListener.WriteCommandError(operationId, this, _transaction, readTask.Exception.InnerException);
+                                _diagnosticListener.WriteCommandError(operationId, this, _transaction,
+                                    readTask.Exception.InnerException);
                                 source.SetException(readTask.Exception.InnerException);
                             }
                             else
