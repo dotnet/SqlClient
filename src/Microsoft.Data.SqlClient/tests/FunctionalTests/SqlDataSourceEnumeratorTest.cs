@@ -21,10 +21,6 @@ namespace Microsoft.Data.SqlClient.Tests
             SqlDataSourceEnumerator instance = SqlDataSourceEnumerator.Instance;
             DataTable table = instance.GetDataSources();
             Assert.NotEmpty(table.Rows);
-
-            AppContext.SetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", true);
-            System.Data.DataTable table2 = instance.GetDataSources();
-            Assert.NotEmpty(table2.Rows);
         }
     }
 }
