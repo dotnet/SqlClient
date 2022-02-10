@@ -514,7 +514,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsUserIdentityTokenSetup() => !string.IsNullOrEmpty(GetUserIdentityAccessToken());
 
-        public static bool IsFileStreamSetup() => !string.IsNullOrEmpty(FileStreamDirectory);
+        public static bool IsFileStreamSetup() => !string.IsNullOrEmpty(FileStreamDirectory) && IsNotAzureServer() && IsNotAzureSynapse();
 
         private static bool CheckException<TException>(Exception ex, string exceptionMessage, bool innerExceptionMustBeNull) where TException : Exception
         {
