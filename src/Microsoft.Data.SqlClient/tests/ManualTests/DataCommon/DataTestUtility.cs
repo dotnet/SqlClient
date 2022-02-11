@@ -466,7 +466,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsLocalDBInstalled() => !string.IsNullOrEmpty(LocalDbAppName?.Trim()) && IsIntegratedSecuritySetup();
         public static bool IsLocalDbSharedInstanceSetup() => !string.IsNullOrEmpty(LocalDbSharedInstanceName?.Trim()) && IsIntegratedSecuritySetup();
-
         public static bool IsIntegratedSecuritySetup() => SupportsIntegratedSecurity;
 
         public static string GetAccessToken()
