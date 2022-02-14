@@ -1,94 +1,39 @@
 <?xml version="1.0"?>
-<Type Name="InvalidUdtException" FullName="Microsoft.SqlServer.Server.InvalidUdtException">
-  <TypeSignature Language="C#" Value="public sealed class InvalidUdtException : SystemException" />
-  <TypeSignature Language="ILAsm" Value=".class public auto ansi sealed beforefieldinit InvalidUdtException extends System.SystemException" FrameworkAlternate="dotnet-plat-ext-2.1;dotnet-plat-ext-2.2;dotnet-plat-ext-3.0;dotnet-plat-ext-3.1;dotnet-plat-ext-5.0;dotnet-plat-ext-6.0" />
-  <TypeSignature Language="DocId" Value="T:Microsoft.SqlServer.Server.InvalidUdtException" />
-  <TypeSignature Language="VB.NET" Value="Public NotInheritable Class InvalidUdtException&#xA;Inherits SystemException" />
-  <TypeSignature Language="F#" Value="type InvalidUdtException = class&#xA;    inherit SystemException" />
-  <TypeSignature Language="C++ CLI" Value="public ref class InvalidUdtException sealed : SystemException" />
-  <TypeSignature Language="ILAsm" Value=".class public auto ansi serializable sealed beforefieldinit InvalidUdtException extends System.SystemException" FrameworkAlternate="netframework-2.0;netframework-3.0;netframework-3.5;netframework-4.0;netframework-4.5;netframework-4.5.1;netframework-4.5.2;netframework-4.6;netframework-4.6.1;netframework-4.6.2;netframework-4.7;netframework-4.7.1;netframework-4.7.2;netframework-4.8;xamarinandroid-7.1;xamarinios-10.8;xamarinmac-3.0" />
-  <AssemblyInfo>
-    <AssemblyName>Microsoft.SqlServer.Server</AssemblyName>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
-  </AssemblyInfo>
-  <Base>
-    <BaseTypeName>System.SystemException</BaseTypeName>
-  </Base>
-  <Interfaces />
-  <Attributes>
-    <Attribute FrameworkAlternate="netframework-2.0;netframework-3.0;netframework-3.5;netframework-4.0;netframework-4.5;netframework-4.5.1;netframework-4.5.2;netframework-4.6;netframework-4.6.1;netframework-4.6.2;netframework-4.7;netframework-4.7.1;netframework-4.7.2;netframework-4.8;xamarinandroid-7.1;xamarinios-10.8;xamarinmac-3.0">
-      <AttributeName Language="C#">[System.Serializable]</AttributeName>
-      <AttributeName Language="F#">[&lt;System.Serializable&gt;]</AttributeName>
-    </Attribute>
-  </Attributes>
-  <Docs>
-    <summary>Thrown when SQL Server or the ADO.NET <see cref="N:Microsoft.Data.SqlClient" /> provider detects an invalid user-defined type (UDT).</summary>
-    <remarks>To be added.</remarks>
-  </Docs>
-  <Members>
-    <Member MemberName="GetObjectData">
-      <MemberSignature Language="C#" Value="public override void GetObjectData (System.Runtime.Serialization.SerializationInfo si, System.Runtime.Serialization.StreamingContext context);" />
-      <MemberSignature Language="ILAsm" Value=".method public hidebysig virtual instance void GetObjectData(class System.Runtime.Serialization.SerializationInfo si, valuetype System.Runtime.Serialization.StreamingContext context) cil managed" />
-      <MemberSignature Language="DocId" Value="M:Microsoft.SqlServer.Server.InvalidUdtException.GetObjectData(System.Runtime.Serialization.SerializationInfo,System.Runtime.Serialization.StreamingContext)" />
-      <MemberSignature Language="VB.NET" Value="Public Overrides Sub GetObjectData (si As SerializationInfo, context As StreamingContext)" />
-      <MemberSignature Language="F#" Value="override this.GetObjectData : System.Runtime.Serialization.SerializationInfo * System.Runtime.Serialization.StreamingContext -&gt; unit" Usage="invalidUdtException.GetObjectData (si, context)" />
-      <MemberSignature Language="C++ CLI" Value="public:&#xA; override void GetObjectData(System::Runtime::Serialization::SerializationInfo ^ si, System::Runtime::Serialization::StreamingContext context);" />
-      <MemberType>Method</MemberType>
-      <AssemblyInfo>
-        <AssemblyName>Microsoft.SqlServer.Server</AssemblyName>
-        <AssemblyVersion>1.0.0.0</AssemblyVersion>
-      </AssemblyInfo>
-      <ReturnValue>
-        <ReturnType>System.Void</ReturnType>
-      </ReturnValue>
-      <Parameters>
-        <Parameter Name="si" Type="System.Runtime.Serialization.SerializationInfo" Index="0" FrameworkAlternate="netcore-2.1;netcore-2.2;netcore-3.0;netframework-2.0;netframework-3.0;netframework-3.5;netframework-4.0;netframework-4.5;netframework-4.5.1;netframework-4.5.2;netframework-4.6;netframework-4.6.1;netframework-4.6.2;netframework-4.7;netframework-4.7.1;netframework-4.7.2;netframework-4.8;xamarinandroid-7.1;xamarinios-10.8;xamarinmac-3.0" />
-        <Parameter Name="context" Type="System.Runtime.Serialization.StreamingContext" Index="1" FrameworkAlternate="netcore-2.1;netcore-2.2;netcore-3.0;netframework-2.0;netframework-3.0;netframework-3.5;netframework-4.0;netframework-4.5;netframework-4.5.1;netframework-4.5.2;netframework-4.6;netframework-4.6.1;netframework-4.6.2;netframework-4.7;netframework-4.7.1;netframework-4.7.2;netframework-4.8;xamarinandroid-7.1;xamarinios-10.8;xamarinmac-3.0" />
-      </Parameters>
-      <Docs>
-        <param name="si">The <see cref="T:System.Runtime.Serialization.SerializationInfo" /> object.</param>
-        <param name="context">The <see cref="T:System.Runtime.Serialization.StreamingContext" /> object.</param>
-        <summary>Streams all the <see cref="T:Microsoft.SqlServer.Server.InvalidUdtException" /> properties into the <see cref="T:System.Runtime.Serialization.SerializationInfo" /> class for the given <see cref="T:System.Runtime.Serialization.StreamingContext" />.</summary>
-        <remarks>
-          <format type="text/markdown"><![CDATA[  
+<docs>
+    <members name="InvalidUdtException">
+        <InvalidUdtException>
+            <summary>Thrown when SQL Server or the ADO.NET <see cref="N:Microsoft.Data.SqlClient" /> provider detects an invalid user-defined type (UDT).</summary>
+            <remarks>To be added.</remarks>
+        </InvalidUdtException>
+        <GetObjectData>
+            <param name="si">The <see cref="T:System.Runtime.Serialization.SerializationInfo" /> object.</param>
+            <param name="context">The <see cref="T:System.Runtime.Serialization.StreamingContext" /> object.</param>
+            <summary>Streams all the <see cref="T:Microsoft.SqlServer.Server.InvalidUdtException" /> properties into the <see cref="T:System.Runtime.Serialization.SerializationInfo" /> class for the given <see cref="T:System.Runtime.Serialization.StreamingContext" />.</summary>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
   
 ## Remarks  
 This method is present in the <xref:Microsoft.SqlServer.Server.InvalidUdtException> class to make the class serializable.  
 
  ]]></format>
-        </remarks>
-      </Docs>
-    </Member>
-    <Member MemberName="Create">
-      <MemberType>Method</MemberType>
-      <AssemblyInfo>
-        <AssemblyName>Microsoft.SqlServer.Server</AssemblyName>
-        <AssemblyVersion>1.0.0.0</AssemblyVersion>
-      </AssemblyInfo>
-      <ReturnValue>
-        <ReturnType>Microsoft.SqlServer.Server.InvalidUdtException</ReturnType>
-      </ReturnValue>
-      <Parameters>
-        <Parameter Name="udtType" Type="System.Type" Index="0" FrameworkAlternate="netcore-2.1;netcore-2.2;netcore-3.0;netframework-2.0;netframework-3.0;netframework-3.5;netframework-4.0;netframework-4.5;netframework-4.5.1;netframework-4.5.2;netframework-4.6;netframework-4.6.1;netframework-4.6.2;netframework-4.7;netframework-4.7.1;netframework-4.7.2;netframework-4.8;xamarinandroid-7.1;xamarinios-10.8;xamarinmac-3.0" />
-        <Parameter Name="resourceReason" Type="System.String" Index="1" FrameworkAlternate="netcore-2.1;netcore-2.2;netcore-3.0;netframework-2.0;netframework-3.0;netframework-3.5;netframework-4.0;netframework-4.5;netframework-4.5.1;netframework-4.5.2;netframework-4.6;netframework-4.6.1;netframework-4.6.2;netframework-4.7;netframework-4.7.1;netframework-4.7.2;netframework-4.8;xamarinandroid-7.1;xamarinios-10.8;xamarinmac-3.0" />
-      </Parameters>
-      <Docs>
-        <param name="udtType">The <see cref="T:System.Type" /> object.</param>
-        <param name="resourceReason">The <see cref="T:System.String" /> object.</param>
-        <summary>Create a new <see cref="T:Microsoft.Data.SqlClient.Server.InvalidUdtException" /> object.</summary>
-        <returns>A new <see cref="T:Microsoft.SqlServer.Server.InvalidUdtException" /> object.</returns>
-        <remarks>
-          <format type="text/markdown"><![CDATA[  
+            </remarks>
+        </GetObjectData>
+        <Create>
+            <param name="udtType">The <see cref="T:System.Type" /> object.</param>
+            <param name="resourceReason">The <see cref="T:System.String" /> object that represents a string in string resources. The default value is `SqlUdtReason_NoUdtAttribute` which looks up a localized string similar to "no UDT attribute".</param>
+            <summary>Creates a new <see cref="T:Microsoft.SqlServer.Server.InvalidUdtException" /> object.</summary>
+            <returns>A new <see cref="T:Microsoft.SqlServer.Server.InvalidUdtException" /> object.</returns>
+            <remarks>
+            <format type="text/markdown"><![CDATA[  
   
 ## Remarks  
-This method Looks up a localized string similar to "&apos;{0}&apos; is an invalid user defined type, reason: {1}.", and fills it in order with `udtType` and `resourceReason` resolved value.
+This method Looks up a localized string similar to "&apos;{0}&apos; is an invalid user defined type, reason: {1}.", and fills it in order with `udtType` and `resourceReason` resolved value.  
 
 > [!IMPORTANT]
 > This function exposes for backward compatibility, and should be used with default value for `resourceReason` parameter.
 
  ]]></format>
-        </remarks>
-      </Docs>
-    </Member>
-  </Members>
-</Type>
+            </remarks>
+        </Create>
+    </members>
+</docs>

@@ -6,42 +6,42 @@ using System;
 
 namespace Microsoft.SqlServer.Server
 {
-    /// <include file='../../doc/snippets/Microsoft.SqlServer.Server/SqlFacetAttribute.xml' path='Type[@Name="SqlFacetAttribute"]/Docs/*' />
+    /// <include file='../../doc/snippets/Microsoft.SqlServer.Server/SqlFacetAttribute.xml' path='docs/members[@name="SqlFacetAttribute"]/SqlFacetAttribute/*' />
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.ReturnValue | AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
     public class SqlFacetAttribute : Attribute
     {
-        /// <include file='../../doc/snippets/Microsoft.SqlServer.Server/SqlFacetAttribute.xml' path='Type[@Name="SqlFacetAttribute"]/Members/Member[@MemberName=".ctor"]/Docs/*' />
+        /// <include file='../../doc/snippets/Microsoft.SqlServer.Server/SqlFacetAttribute.xml' path='docs/members[@name="SqlFacetAttribute"]/ctor/*'/>
         public SqlFacetAttribute() { }
 
-        /// <include file='../../doc/snippets/Microsoft.SqlServer.Server/SqlFacetAttribute.xml' path='Type[@Name="SqlFacetAttribute"]/Members/Member[@MemberName="IsFixedLength"]/Docs/*' />
+        /// <include file='../../doc/snippets/Microsoft.SqlServer.Server/SqlFacetAttribute.xml' path='docs/members[@name="SqlFacetAttribute"]/IsFixedLength/*' />
         public bool IsFixedLength
         {
             get;
             set;
         }
 
-        /// <include file='../../doc/snippets/Microsoft.SqlServer.Server/SqlFacetAttribute.xml' path='Type[@Name="SqlFacetAttribute"]/Members/Member[@MemberName="MaxSize"]/Docs/*' />
+        /// <include file='../../doc/snippets/Microsoft.SqlServer.Server/SqlFacetAttribute.xml' path='docs/members[@name="SqlFacetAttribute"]/MaxSize/*' />
         public int MaxSize
         {
             get;
             set;
         }
 
-        /// <include file='../../doc/snippets/Microsoft.SqlServer.Server/SqlFacetAttribute.xml' path='Type[@Name="SqlFacetAttribute"]/Members/Member[@MemberName="Precision"]/Docs/*' />
+        /// <include file='../../doc/snippets/Microsoft.SqlServer.Server/SqlFacetAttribute.xml' path='docs/members[@name="SqlFacetAttribute"]/Precision/*' />
         public int Precision
         {
             get;
             set;
         }
 
-        /// <include file='../../doc/snippets/Microsoft.SqlServer.Server/SqlFacetAttribute.xml' path='Type[@Name="SqlFacetAttribute"]/Members/Member[@MemberName="Scale"]/Docs/*' />
+        /// <include file='../../doc/snippets/Microsoft.SqlServer.Server/SqlFacetAttribute.xml' path='docs/members[@name="SqlFacetAttribute"]/Scale/*' />
         public int Scale
         {
             get;
             set;
         }
 
-        /// <include file='../../doc/snippets/Microsoft.SqlServer.Server/SqlFacetAttribute.xml' path='Type[@Name="SqlFacetAttribute"]/Members/Member[@MemberName="IsNullable"]/Docs/*' />
+        /// <include file='../../doc/snippets/Microsoft.SqlServer.Server/SqlFacetAttribute.xml' path='docs/members[@name="SqlFacetAttribute"]/IsNullable/*' />
         public bool IsNullable
         {
             get;
