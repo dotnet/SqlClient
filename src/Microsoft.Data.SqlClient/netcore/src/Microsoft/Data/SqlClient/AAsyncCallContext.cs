@@ -26,6 +26,7 @@ namespace Microsoft.Data.SqlClient
 
         protected AAsyncCallContext()
         {
+        Console.WriteLine("1es");
         }
 
         protected AAsyncCallContext(TOwner owner, TaskCompletionSource<TTask> source, IDisposable disposable = null)
