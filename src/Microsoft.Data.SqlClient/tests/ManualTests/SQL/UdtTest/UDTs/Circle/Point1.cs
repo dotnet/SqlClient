@@ -6,7 +6,11 @@ using System;
 using System.Data.SqlTypes;
 using System.IO;
 using System.Text;
+#if NETFRAMEWORK
+using Microsoft.SqlServer.Server;
+#else
 using Microsoft.Data.SqlClient.Server;
+#endif
 
 [Serializable]
 [SqlUserDefinedType(Format.UserDefined, IsByteOrdered = true, MaxByteSize = 9)]
