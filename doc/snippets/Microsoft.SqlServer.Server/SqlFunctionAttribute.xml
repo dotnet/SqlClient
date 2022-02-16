@@ -85,7 +85,7 @@ The default value of this attribute is `false`.
 ## Remarks  
 This attribute is used only by Microsoft Visual Studio to automatically register the specified method as a user-defined function. It is not used by SQL Server.  
 
-Thee following example specifies that the user-defined function is referenced using the name `sp_scalarFunc`.  
+The following example specifies that the user-defined function is referenced using the name `sp_scalarFunc`.  
 
 ## Examples  
 [!code-csharp[SqlFunctionAttribute Samples#10](~/../sqlclient/doc/samples/Microsoft.SqlServer.Server/csharp/SqlFunctionAttribute_SqlFunction.cs#10)]

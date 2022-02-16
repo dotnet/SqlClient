@@ -50,29 +50,29 @@ When set to `true`, the <xref:Microsoft.SqlServer.Server.SqlUserDefinedTypeAttri
 
 The following features are supported when <xref:Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute.IsByteOrdered%2A> is set to `true`:  
 
--   The ability to create indexes on columns of this type.  
+- The ability to create indexes on columns of this type.  
 
--   The ability to create primary and foreign keys as well as CHECK and UNIQUE constraints on columns of this type.  
+- The ability to create primary and foreign keys as well as CHECK and UNIQUE constraints on columns of this type.  
 
--   The ability to use Transact-SQL ORDER BY, GROUP BY, and PARTITION BY clauses. In these cases, the binary representation of the type is used to determine the order.  
+- The ability to use Transact-SQL ORDER BY, GROUP BY, and PARTITION BY clauses. In these cases, the binary representation of the type is used to determine the order.  
 
--   The ability to use comparison operators in Transact-SQL statements.  
+- The ability to use comparison operators in Transact-SQL statements.  
 
--   The ability to persist computed columns of this type.  
+- The ability to persist computed columns of this type.  
 
 Note that both the `Native` and `UserDefined` serialization formats support the following comparison operators when <xref:Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute.IsByteOrdered%2A> is set to `true`:  
 
--   Equal to (=)  
+- Equal to (=)  
 
--   Not equal to (!=)  
+- Not equal to (!=)  
 
--   Greater than (>)  
+- Greater than (>)  
 
--   Less than (\<)  
+- Less than (\<)  
 
--   Greater than or equal to (>=)  
+- Greater than or equal to (>=)  
 
--   Less than or equal to (<=)  
+- Less than or equal to (<=)  
 
 ]]></format>
             </remarks>

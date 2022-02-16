@@ -27,10 +27,10 @@ This method is present in the <xref:Microsoft.SqlServer.Server.InvalidUdtExcepti
             <format type="text/markdown"><![CDATA[  
   
 ## Remarks  
-This method Looks up a localized string similar to "&apos;{0}&apos; is an invalid user defined type, reason: {1}.", and fills it in order with `udtType` and `resourceReason` resolved value.  
+This method Looks up a localized string similar to "&apos;{0}&apos; is an invalid user defined type, reason: {1}.", and fills it in order with the corresponding `udtType` and `resourceReason` values.  
 
 > [!IMPORTANT]
-> This function exposes for backward compatibility, and should be used with default value for `resourceReason` parameter.
+> This function is exposed for backward compatibility and should be used with the default value for the `resourceReason` parameter.
 
  ]]></format>
             </remarks>
