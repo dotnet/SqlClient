@@ -10,7 +10,7 @@ namespace Microsoft.Data.SqlClient
     // this class is a base class for creating derived objects that will store state for async operations
     // avoiding the use of closures and allowing caching/reuse of the instances for frequently used async
     // calls
-    //a
+    //
     // DO derive from this and seal your class
     // DO add additional fields or properties needed for the async operation and then override Clear to zero them
     // DO override AfterClear and use the owner parameter to return the object to a cache location if you have one, this is the purpose of the method
