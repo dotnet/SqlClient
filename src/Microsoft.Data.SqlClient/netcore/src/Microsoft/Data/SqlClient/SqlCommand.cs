@@ -2758,6 +2758,7 @@ namespace Microsoft.Data.SqlClient
                                 {
                                     reader.Dispose();
                                 }
+
                                 if (exception != null)
                                 {
                                     _diagnosticListener.WriteCommandError(operationId, this, _transaction, exception);
