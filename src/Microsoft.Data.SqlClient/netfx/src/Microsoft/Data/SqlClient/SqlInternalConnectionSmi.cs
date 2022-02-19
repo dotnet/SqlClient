@@ -162,27 +162,27 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override internal bool IsShiloh
+        override internal bool Is2000
         {
             get
             {
-                return false;   // Can't be direct connecting to Shiloh.
+                return false;   // Can't be direct connecting to 2000.
             }
         }
 
-        override internal bool IsYukonOrNewer
+        override internal bool Is2005OrNewer
         {
             get
             {
-                return true;    // Must be direct connecting to Yukon or newer.
+                return true;    // Must be direct connecting to 2005 or newer.
             }
         }
 
-        override internal bool IsKatmaiOrNewer
+        override internal bool Is2008OrNewer
         {
             get
             {
-                return SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.KatmaiVersion;
+                return SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.Sql2008Version;
             }
         }
 

@@ -659,13 +659,67 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(DbType.DateTimeOffset, param.DbType);
         }
 
-        [Fact]
-        public void LocaleId()
+        [Theory]
+        [InlineData(15)]
+        [InlineData(1044)]
+        [InlineData(1047)]
+        [InlineData(1056)]
+        [InlineData(1065)]
+        [InlineData(1068)]
+        [InlineData(1070)]
+        [InlineData(1071)]
+        [InlineData(1081)]
+        [InlineData(1082)]
+        [InlineData(1083)]
+        [InlineData(1087)]
+        [InlineData(1090)]
+        [InlineData(1091)]
+        [InlineData(1092)]
+        [InlineData(1093)]
+        [InlineData(1101)]
+        [InlineData(1105)]
+        [InlineData(1106)]
+        [InlineData(1107)]
+        [InlineData(1108)]
+        [InlineData(1114)]
+        [InlineData(1121)]
+        [InlineData(1122)]
+        [InlineData(1123)]
+        [InlineData(1125)]
+        [InlineData(1133)]
+        [InlineData(1146)]
+        [InlineData(1148)]
+        [InlineData(1150)]
+        [InlineData(1152)]
+        [InlineData(1153)]
+        [InlineData(1155)]
+        [InlineData(1157)]
+        [InlineData(1164)]
+        [InlineData(2074)]
+        [InlineData(2092)]
+        [InlineData(2107)]
+        [InlineData(2143)]
+        [InlineData(3076)]
+        [InlineData(3098)]
+        [InlineData(5124)]
+        [InlineData(5146)]
+        [InlineData(8218)]
+        public void LocaleId(int lcid)
         {
+            // To verify all the cases in SqlCollation.FirstSupportedCollationVersion
             SqlParameter parameter = new SqlParameter();
             Assert.Equal(0, parameter.LocaleId);
-            parameter.LocaleId = 15;
-            Assert.Equal(15, parameter.LocaleId);
+            parameter.LocaleId = lcid;
+            Assert.Equal(parameter.LocaleId, lcid);
+        }
+
+        [Fact]
+        public void LocaleIdOutOfRange_Throws()
+        {
+            SqlParameter parameter = new SqlParameter();
+            ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => { parameter.LocaleId = -1; });
+            Assert.NotNull(ex.ParamName);
+            Assert.Contains("LocaleId", ex.ParamName, StringComparison.OrdinalIgnoreCase);
         }
 
         [Fact]

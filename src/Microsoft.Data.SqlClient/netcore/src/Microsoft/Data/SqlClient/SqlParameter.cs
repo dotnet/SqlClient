@@ -1988,7 +1988,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     // Notes:
-                    // Elevation from (n)(var)char (4001+) to (n)text succeeds without failure only with Yukon and greater.
+                    // Elevation from (n)(var)char (4001+) to (n)text succeeds without failure only with 2005 and greater.
                     // it fails in sql server 2000
                     maxSizeInBytes = (sizeInCharacters > actualSizeInBytes) ? sizeInCharacters : actualSizeInBytes;
                 }

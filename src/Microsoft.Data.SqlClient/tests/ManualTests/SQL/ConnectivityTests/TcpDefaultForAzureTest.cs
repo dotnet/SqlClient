@@ -38,10 +38,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         //          The server was not found or was not accessible. Verify that the instance name is correct and that SQL Server is configured to allow remote connections. 
         //          (provider: Named Pipes Provider, error: 40 - Could not open a connection to SQL Server)
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
-        public static void NonAzureNoProtocolConnectionTest()
+        [PlatformSpecific(TestPlatforms.Windows)]
+        public static void NonAzureNoProtocolConnectionTestWindows()
         {
             builder.DataSource = InvalidHostname;
+#if NETFRAMEWORK
+            CheckConnectionFailure(builder.ConnectionString, NP);
+#else
             CheckConnectionFailure(builder.ConnectionString, DataTestUtility.IsUsingManagedSNI() ? TCP : NP);
+#endif
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [PlatformSpecific(TestPlatforms.Linux)]
+        public static void NonAzureNoProtocolConnectionTestLinux()
+        {
+            builder.DataSource = InvalidHostname;
+            // On Linux, TCP is the preferred protocol in use.
+            CheckConnectionFailure(builder.ConnectionString, TCP);
         }
 
         [Fact]
