@@ -5,9 +5,11 @@
 using System;
 using System.Collections.Concurrent;
 using System.IO;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using Microsoft.Data.Common;
+#if NETFRAMEWORK
+using Microsoft.SqlServer.Server;
+#endif
 
 namespace Microsoft.Data.SqlClient.Server
 {
@@ -88,55 +90,7 @@ namespace Microsoft.Data.SqlClient.Server
         }
 
         private static object[] GetCustomAttributes(Type t)
-        {
-            object[] attrs = t.GetCustomAttributes(typeof(SqlUserDefinedTypeAttribute), false);
-
-            // If we don't find a Microsoft.Data.SqlClient.Server.SqlUserDefinedTypeAttribute,
-            // search for a Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute from the
-            // old System.Data.SqlClient assembly and copy it to our
-            // Microsoft.Data.SqlClient.Server.SqlUserDefinedTypeAttribute for reference.
-            if (attrs == null || attrs.Length == 0)
-            {
-                object[] attr = t.GetCustomAttributes(false);
-                attrs = new object[0];
-                if (attr != null && attr.Length > 0)
-                {
-                    for (int i = 0; i < attr.Length; i++)
-                    {
-                        if (attr[i].GetType().FullName.Equals("Microsoft.SqlServer.Server.SqlUserDefinedTypeAttribute"))
-                        {
-                            SqlUserDefinedTypeAttribute newAttr = null;
-                            PropertyInfo[] sourceProps = attr[i].GetType().GetProperties();
-
-                            foreach (PropertyInfo sourceProp in sourceProps)
-                            {
-                                if (sourceProp.Name.Equals("Format"))
-                                {
-                                    newAttr = new SqlUserDefinedTypeAttribute((Format)sourceProp.GetValue(attr[i], null));
-                                    break;
-                                }
-                            }
-                            if (newAttr != null)
-                            {
-                                foreach (PropertyInfo targetProp in newAttr.GetType().GetProperties())
-                                {
-                                    if (targetProp.CanRead && targetProp.CanWrite)
-                                    {
-                                        object copyValue = attr[i].GetType().GetProperty(targetProp.Name).GetValue(attr[i]);
-                                        targetProp.SetValue(newAttr, copyValue);
-                                    }
-                                }
-                            }
-
-                            attrs = new object[1] { newAttr };
-                            break;
-                        }
-                    }
-                }
-            }
-
-            return attrs;
-        }
+            => t.GetCustomAttributes(typeof(SqlUserDefinedTypeAttribute), false);
 
         internal static SqlUserDefinedTypeAttribute GetUdtAttribute(Type t)
         {
@@ -148,7 +102,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
             else
             {
-                throw InvalidUdtException.Create(t, Strings.SqlUdtReason_NoUdtAttribute);
+                throw ADP.CreateInvalidUdtException(t, nameof(Strings.SqlUdtReason_NoUdtAttribute));
             }
             return udtAttr;
         }
@@ -206,16 +160,7 @@ namespace Microsoft.Data.SqlClient.Server
         public override void Serialize(Stream s, object o)
         {
             BinaryWriter w = new BinaryWriter(s);
-
-#if NETFRAMEWORK
-            if (o is SqlServer.Server.IBinarySerialize bs)
-            {
-                (bs).Write(w);
-                return;
-            }
-#endif
             ((IBinarySerialize)o).Write(w);
-            
         }
 
         // Prevent inlining so that reflection calls are not moved
@@ -226,17 +171,8 @@ namespace Microsoft.Data.SqlClient.Server
         {
             object instance = Activator.CreateInstance(_type);
             BinaryReader r = new BinaryReader(s);
-
-#if NETFRAMEWORK
-            if (instance is SqlServer.Server.IBinarySerialize bs)
-            {
-                bs.Read(r);
-                return instance;
-            }
-#endif
            ((IBinarySerialize)instance).Read(r);
             return instance;
-
         }
     }
 

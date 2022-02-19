@@ -2959,12 +2959,12 @@ namespace Microsoft.Data.SqlClient
 
         internal byte[] GetBytes(object o)
         {
-            Format format = Format.Native;
+            Microsoft.SqlServer.Server.Format format = Microsoft.SqlServer.Server.Format.Native;
             int maxSize = 0;
             return GetBytes(o, out format, out maxSize);
         }
 
-        internal byte[] GetBytes(object o, out Format format, out int maxSize)
+        internal byte[] GetBytes(object o, out Microsoft.SqlServer.Server.Format format, out int maxSize)
         {
             SqlUdtInfo attr = AssemblyCache.GetInfoFromType(o.GetType());
             maxSize = attr.MaxByteSize;
