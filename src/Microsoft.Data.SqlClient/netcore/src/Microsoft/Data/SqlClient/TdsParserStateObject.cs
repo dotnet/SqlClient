@@ -3166,7 +3166,6 @@ namespace Microsoft.Data.SqlClient
         }
 
         protected abstract PacketHandle EmptyReadPacket { get; }
-        internal int ObjectID => _objectID;
 
         internal int PreAttentionErrorCount
         {

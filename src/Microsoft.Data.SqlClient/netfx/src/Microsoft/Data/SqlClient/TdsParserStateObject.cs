@@ -19,14 +19,6 @@ namespace Microsoft.Data.SqlClient
 {
     internal partial class TdsParserStateObject
     {
-        internal int ObjectID
-        {
-            get
-            {
-                return _objectID;
-            }
-        }
-
         private SNIHandle _sessionHandle = null;              // the SNI handle we're to work on
 
         internal bool _pendingData = false;

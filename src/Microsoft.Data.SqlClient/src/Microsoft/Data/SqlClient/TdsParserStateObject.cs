@@ -306,6 +306,8 @@ namespace Microsoft.Data.SqlClient
         // Properties //
         ////////////////
 
+        internal int ObjectID => _objectID;
+
         // BcpLock - use to lock this object if there is a potential risk of using this object
         // between tds packets
         internal bool BcpLock
