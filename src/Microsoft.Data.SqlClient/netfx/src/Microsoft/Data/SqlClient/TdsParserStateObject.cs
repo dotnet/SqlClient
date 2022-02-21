@@ -17,42 +17,8 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
-    sealed internal class LastIOTimer
+    internal partial class TdsParserStateObject
     {
-        internal long _value;
-    }
-
-    sealed internal class TdsParserStateObject
-    {
-        private const int AttentionTimeoutSeconds = 5;
-
-        // Ticks to consider a connection "good" after a successful I/O (10,000 ticks = 1 ms)
-        // The resolution of the timer is typically in the range 10 to 16 milliseconds according to msdn.
-        // We choose a value that is smaller than the likely timer resolution, but
-        // large enough to ensure that check connection execution will be 0.1% or less
-        // of very small open, query, close loops.
-        private const long CheckConnectionWindow = 50000;
-
-        private sealed class TimeoutState
-        {
-            public const int Stopped = 0;
-            public const int Running = 1;
-            public const int ExpiredAsync = 2;
-            public const int ExpiredSync = 3;
-
-            private readonly int _value;
-
-            public TimeoutState(int value)
-            {
-                _value = value;
-            }
-
-            public int IdentityValue => _value;
-        }
-
-        private static int _objectTypeCount; // EventSource Counter
-        internal readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
-
         internal int ObjectID
         {
             get
@@ -61,100 +27,23 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private readonly TdsParser _parser;                            // TdsParser pointer  
         private SNIHandle _sessionHandle = null;              // the SNI handle we're to work on
-        private readonly WeakReference<object> _owner = new WeakReference<object>(null);   // the owner of this session, used to track when it's been orphaned
-        internal SqlDataReader.SharedState _readerState;                    // susbset of SqlDataReader state (if it is the owner) necessary for parsing abandoned results in TDS
-        private int _activateCount;                     // 0 when we're in the pool, 1 when we're not, all others are an error
 
-        // Two buffers exist in tdsparser, an in buffer and an out buffer.  For the out buffer, only
-        // one bookkeeping variable is needed, the number of bytes used in the buffer.  For the in buffer,
-        // three variables are actually needed.  First, we need to record from the netlib how many bytes it
-        // read from the netlib, this variable is _inBytesRead.  Then, we need to also keep track of how many
-        // bytes we have used as we consume the bytes from the buffer, that variable is _inBytesUsed.  Third,
-        // we need to keep track of how many bytes are left in the packet, so that we know when we have reached
-        // the end of the packet and so we need to consume the next header.  That variable is _inBytesPacket.
-
-        // Header length constants
-        internal readonly int _inputHeaderLen = TdsEnums.HEADER_LEN;
-        internal readonly int _outputHeaderLen = TdsEnums.HEADER_LEN;
-
-        // Out buffer variables
-        internal byte[] _outBuff;                                     // internal write buffer - initialize on login
-        internal int _outBytesUsed = TdsEnums.HEADER_LEN; // number of bytes used in internal write buffer -
-                                                          // - initialize past header
-                                                          // In buffer variables
-        private byte[] _inBuff;                                      // internal read buffer - initialize on login
-        internal int _inBytesUsed = 0;                   // number of bytes used in internal read buffer
-        internal int _inBytesRead = 0;                   // number of bytes read into internal read buffer
-        internal int _inBytesPacket = 0;                   // number of bytes left in packet
-        
-        internal int _spid;                                 // SPID of the current connection
-
-        // Packet state variables
-        internal byte _outputMessageType = 0;                   // tds header type
-        internal byte _messageStatus;                               // tds header status
-        internal byte _outputPacketNumber = 1;                   // number of packets sent to server in message - start at 1 per ramas
-        internal uint _outputPacketCount;
         internal bool _pendingData = false;
-        internal volatile bool _fResetEventOwned = false;               // ResetEvent serializing call to sp_reset_connection
-        internal volatile bool _fResetConnectionSent = false;               // For multiple packet execute
-
+        
         internal bool _errorTokenReceived = false;               // Keep track of whether an error was received for the result.
                                                                  // This is reset upon each done token - there can be
-
-        internal bool _bulkCopyOpperationInProgress = false;        // Set to true during bulk copy and used to turn toggle write timeouts.
-        internal bool _bulkCopyWriteTimeout = false;                // Set to trun when _bulkCopyOpeperationInProgress is trun and write timeout happens
-
         // SNI variables                                                     // multiple resultsets in one batch.
         private SNIPacket _sniPacket = null;                // Will have to re-vamp this for MARS
         internal SNIPacket _sniAsyncAttnPacket = null;                // Packet to use to send Attn
         private WritePacketCache _writePacketCache = new WritePacketCache(); // Store write packets that are ready to be re-used
         private Dictionary<IntPtr, SNIPacket> _pendingWritePackets = new Dictionary<IntPtr, SNIPacket>(); // Stores write packets that have been sent to SNI, but have not yet finished writing (i.e. we are waiting for SNI's callback)
-        private object _writePacketLockObject = new object();        // Used to synchronize access to _writePacketCache and _pendingWritePackets
 
         // Async variables
         private GCHandle _gcHandle;                                    // keeps this object alive until we're closed.
-        private int _pendingCallbacks;                            // we increment this before each async read/write call and decrement it in the callback.  We use this to determine when to release the GcHandle...
 
         // Timeout variables
-        private long _timeoutMilliseconds;
-        private long _timeoutTime;                                 // variable used for timeout computations, holds the value of the hi-res performance counter at which this request should expire
-        private int _timeoutState; // expected to be one of the constant values TimeoutStopped, TimeoutRunning, TimeoutExpiredAsync, TimeoutExpiredSync
-        private int _timeoutIdentitySource;
-        private volatile int _timeoutIdentityValue;
-        internal volatile bool _attentionSent = false;               // true if we sent an Attention to the server
         internal bool _attentionReceived = false;               // NOTE: Received is not volatile as it is only ever accessed\modified by TryRun its callees (i.e. single threaded access)
-        internal volatile bool _attentionSending = false;
-
-        // Below 2 properties are used to enforce timeout delays in code to 
-        // reproduce issues related to theadpool starvation and timeout delay.
-        // It should always be set to false by default, and only be enabled during testing.
-        internal bool _enforceTimeoutDelay = false;
-        internal int _enforcedTimeoutDelayInMilliSeconds = 5000;
-
-        private readonly LastIOTimer _lastSuccessfulIOTimer;
-
-        // secure password information to be stored
-        //  At maximum number of secure string that need to be stored is two; one for login password and the other for new change password
-        private SecureString[] _securePasswords = new SecureString[2] { null, null };
-        private int[] _securePasswordOffsetsInBuffer = new int[2];
-
-        // This variable is used to track whether another thread has requested a cancel.  The
-        // synchronization points are
-        //   On the user's execute thread:
-        //     1) the first packet write
-        //     2) session close - return this stateObj to the session pool
-        //   On cancel thread we only have the cancel call.
-        // Currently all access to this variable is inside a lock, though I hope to limit that in the
-        // future.  The state diagram is:
-        // 1) pre first packet write, if cancel is requested, set variable so exception is triggered
-        //    on user thread when first packet write is attempted
-        // 2) post first packet write, but before session return - a call to cancel will send an
-        //    attention to the server
-        // 3) post session close - no attention is allowed
-        private bool _cancelled;
-        private const int _waitForCancellationLockPollTimeout = 100;
 
         // This variable is used to prevent sending an attention by another thread that is not the
         // current owner of the stateObj.  I currently do not know how this can happen.  Mark added
@@ -163,33 +52,7 @@ namespace Microsoft.Data.SqlClient
         private volatile int _allowObjectID;
 
         internal bool _hasOpenResult = false;
-        // Cache the transaction for which this command was executed so upon completion we can
-        // decrement the appropriate result count.
-        internal SqlInternalTransaction _executedUnderTransaction = null;
 
-        // TDS stream processing variables
-        internal ulong _longlen;                                     // plp data length indicator
-        internal ulong _longlenleft;                                 // Length of data left to read (64 bit lengths)
-        internal int[] _decimalBits = null;                // scratch buffer for decimal/numeric data
-        internal byte[] _bTmp = new byte[TdsEnums.SQL2005_HEADER_LEN];  // Scratch buffer for misc use
-        internal int _bTmpRead = 0;                   // Counter for number of temporary bytes read
-        internal Decoder _plpdecoder = null;             // Decoder object to process plp character data
-        internal bool _accumulateInfoEvents = false;               // TRUE - accumulate info messages during TdsParser.Run, FALSE - fire them
-        internal List<SqlError> _pendingInfoEvents = null;
-        internal byte[] _bLongBytes = null;                 // scratch buffer to serialize Long values (8 bytes).
-        internal byte[] _bIntBytes = null;                 // scratch buffer to serialize Int values (4 bytes).
-        internal byte[] _bShortBytes = null;                 // scratch buffer to serialize Short values (2 bytes).
-        internal byte[] _bDecimalBytes = null;                 // scratch buffer to serialize decimal values (17 bytes).
-
-        // DO NOT USE THIS BUFFER FOR OTHER THINGS.
-        // ProcessHeader can be called ANYTIME while doing network reads.
-        private byte[] _partialHeaderBuffer = new byte[TdsEnums.HEADER_LEN];   // Scratch buffer for ProcessHeader
-        internal int _partialHeaderBytesRead = 0;
-
-        // UNDONE - temporary hack for case where pooled connection is returned to pool with data on wire -
-        // need to cache metadata on parser to read off wire
-        internal _SqlMetaDataSet _cleanupMetaData = null;
-        internal _SqlMetaDataSetCollection _cleanupAltMetaDataSetArray = null;
 
         // Used for blanking out password in trace.
         internal int _tracePasswordOffset = 0;
@@ -199,91 +62,6 @@ namespace Microsoft.Data.SqlClient
 
         internal bool _receivedColMetaData;      // Used to keep track of when to fire StatementCompleted  event.
 
-        private SniContext _sniContext = SniContext.Undefined;
-#if DEBUG
-        private SniContext _debugOnlyCopyOfSniContext = SniContext.Undefined;
-#endif
-
-        private bool _bcpLock = false;
-
-        // Null bitmap compression (NBC) information for the current row
-        private NullBitmap _nullBitmapInfo;
-
-        // Async
-        internal TaskCompletionSource<object> _networkPacketTaskSource;
-        private Timer _networkPacketTimeout;
-        internal bool _syncOverAsync = true;
-        private bool _snapshotReplay = false;
-        private StateSnapshot _snapshot;
-        internal ExecutionContext _executionContext;
-        internal bool _asyncReadWithoutSnapshot = false;
-#if DEBUG
-        // Used to override the assert than ensures that the stacktraces on subsequent replays are the same
-        // This is useful is you are purposefully running the replay from a different thread (e.g. during SqlDataReader.Close)
-        internal bool _permitReplayStackTraceToDiffer = false;
-
-        // Used to indicate that the higher level object believes that this stateObj has enough data to complete an operation
-        // If this stateObj has to read, then it will raise an assert
-        internal bool _shouldHaveEnoughData = false;
-#endif
-
-        // local exceptions to cache warnings and errors
-        internal SqlErrorCollection _errors;
-        internal SqlErrorCollection _warnings;
-        internal object _errorAndWarningsLock = new object();
-        private bool _hasErrorOrWarning = false;
-
-        // local exceptions to cache warnings and errors that occurred prior to sending attention
-        internal SqlErrorCollection _preAttentionErrors;
-        internal SqlErrorCollection _preAttentionWarnings;
-
-        volatile private TaskCompletionSource<object> _writeCompletionSource = null;
-        volatile private int _asyncWriteCount = 0;
-        volatile private Exception _delayedWriteAsyncCallbackException = null; // set by write async callback if completion source is not yet created
-
-        // _readingcount is incremented when we are about to read.
-        // We check the parser state afterwards.
-        // When the read is completed, we decrement it before handling errors
-        // as the error handling may end up calling Dispose.
-        int _readingCount;
-
-        // Test hooks
-#if DEBUG
-        // This is a test hook to enable testing of the retry paths.
-        // When set to true, almost every possible retry point will be attempted.
-        // This will drastically impact performance.
-        //
-        // Sample code to enable:
-        //
-        //    Type type = typeof(SqlDataReader).Assembly.GetType("Microsoft.Data.SqlClient.TdsParserStateObject");
-        //    System.Reflection.FieldInfo field = type.GetField("_forceAllPends", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-        //    if (field != null) {
-        //        field.SetValue(null, true);
-        //    }
-        //
-        internal static bool _forceAllPends = false;
-
-        // set this while making a call that should not block.
-        // instead of blocking it will fail.
-        internal static bool _failAsyncPends = false;
-
-        // If this is set and an async read is made, then 
-        // we will switch to syncOverAsync mode for the 
-        // remainder of the async operation.
-        internal static bool _forceSyncOverAsyncAfterFirstPend = false;
-
-        // Requests to send attention will be ignored when _skipSendAttention is true.
-        // This is useful to simulate circumstances where timeouts do not recover.
-        internal static bool _skipSendAttention = false;
-
-        // Prevents any pending read from completing until the user signals it using
-        // CompletePendingReadWithSuccess() or CompletePendingReadWithFailure(int errorCode) in SqlCommand\SqlDataReader
-        internal static bool _forcePendingReadsToWaitForUser;
-        internal TaskCompletionSource<object> _realNetworkPacketTaskSource = null;
-
-        // Set to true to enable checking the call stacks match when packet retry occurs.
-        internal static bool _checkNetworkPacketRetryStacks;
-#endif
 
         //////////////////
         // Constructors //
@@ -343,31 +121,6 @@ namespace Microsoft.Data.SqlClient
         ////////////////
         // Properties //
         ////////////////
-
-        // BcpLock - use to lock this object if there is a potential risk of using this object
-        // between tds packets
-        internal bool BcpLock
-        {
-            get
-            {
-                return _bcpLock;
-            }
-            set
-            {
-                _bcpLock = value;
-            }
-        }
-
-#if DEBUG
-        internal SniContext DebugOnlyCopyOfSniContext
-        {
-            get
-            {
-                return _debugOnlyCopyOfSniContext;
-            }
-        }
-#endif
-
         internal SNIHandle Handle
         {
             get
@@ -384,67 +137,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-#if DEBUG
-        internal void InvalidateDebugOnlyCopyOfSniContext()
-        {
-            _debugOnlyCopyOfSniContext = SniContext.Undefined;
-        }
-#endif
-
-        internal bool IsOrphaned
-        {
-            get
-            {
-                bool isAlive = _owner.TryGetTarget(out object target);
-                Debug.Assert((0 == _activateCount && !isAlive) // in pool
-                             || (1 == _activateCount && isAlive && target != null)
-                             || (1 == _activateCount && !isAlive), "Unknown state on TdsParserStateObject.IsOrphaned!");
-                return 0 != _activateCount && !isAlive;
-            }
-        }
-
-        internal object Owner
-        {
-            set
-            {
-                Debug.Assert(value == null || !_owner.TryGetTarget(out object target) || value is SqlDataReader reader1 && reader1.Command == target, "Should not be changing the owner of an owned stateObj");
-                if (value is SqlDataReader reader)
-                {
-                    _readerState = reader._sharedState;
-                }
-                else
-                {
-                    _readerState = null;
-                }
-                _owner.SetTarget(value);
-            }
-        }
-
-        internal bool HasOwner => _owner.TryGetTarget(out object _);
-
-        internal TdsParser Parser
-        {
-            get
-            {
-                return _parser;
-            }
-        }
-
-        internal SniContext SniContext
-        {
-            get
-            {
-                return _sniContext;
-            }
-            set
-            {
-                _sniContext = value;
-#if DEBUG
-                _debugOnlyCopyOfSniContext = value;
-#endif
-            }
-        }
-
         internal UInt32 Status
         {
             get
@@ -458,107 +150,6 @@ namespace Microsoft.Data.SqlClient
                     return TdsEnums.SNI_UNINITIALIZED;
                 }
             }
-        }
-
-        internal bool TimeoutHasExpired
-        {
-            get
-            {
-                Debug.Assert(0 == _timeoutMilliseconds || 0 == _timeoutTime, "_timeoutTime hasn't been reset");
-                return TdsParserStaticMethods.TimeoutHasExpired(_timeoutTime);
-            }
-        }
-
-        internal long TimeoutTime
-        {
-            get
-            {
-                if (0 != _timeoutMilliseconds)
-                {
-                    _timeoutTime = TdsParserStaticMethods.GetTimeout(_timeoutMilliseconds);
-                    _timeoutMilliseconds = 0;
-                }
-                return _timeoutTime;
-            }
-            set
-            {
-                _timeoutMilliseconds = 0;
-                _timeoutTime = value;
-            }
-        }
-
-        internal int GetTimeoutRemaining()
-        {
-            int remaining;
-            if (0 != _timeoutMilliseconds)
-            {
-                remaining = (int)Math.Min((long)Int32.MaxValue, _timeoutMilliseconds);
-                _timeoutTime = TdsParserStaticMethods.GetTimeout(_timeoutMilliseconds);
-                _timeoutMilliseconds = 0;
-            }
-            else
-            {
-                remaining = TdsParserStaticMethods.GetTimeoutMilliseconds(_timeoutTime);
-            }
-            return remaining;
-        }
-
-        internal bool TryStartNewRow(bool isNullCompressed, int nullBitmapColumnsCount = 0)
-        {
-            Debug.Assert(!isNullCompressed || nullBitmapColumnsCount > 0, "Null-Compressed row requires columns count");
-
-            if (_snapshot != null)
-            {
-                _snapshot.CloneNullBitmapInfo();
-            }
-
-            // initialize or unset null bitmap information for the current row
-            if (isNullCompressed)
-            {
-                // assert that NBCROW is not in use by 2005 or before
-                Debug.Assert(_parser.Is2008OrNewer, "NBCROW is sent by pre-2008 server");
-
-                if (!_nullBitmapInfo.TryInitialize(this, nullBitmapColumnsCount))
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                _nullBitmapInfo.Clean();
-            }
-
-            return true;
-        }
-
-        internal bool IsRowTokenReady()
-        {
-            // Removing one byte since TryReadByteArray\TryReadByte will aggressively read the next packet if there is no data left - so we need to ensure there is a spare byte
-            int bytesRemaining = Math.Min(_inBytesPacket, _inBytesRead - _inBytesUsed) - 1;
-
-            if (bytesRemaining > 0)
-            {
-                if (_inBuff[_inBytesUsed] == TdsEnums.SQLROW)
-                {
-                    // At a row token, so we're ready
-                    return true;
-                }
-                else if (_inBuff[_inBytesUsed] == TdsEnums.SQLNBCROW)
-                {
-                    // NBC row token, ensure that we have enough data for the bitmap
-                    // SQLNBCROW + Null Bitmap (copied from NullBitmap.TryInitialize)
-                    int bytesToRead = 1 + (_cleanupMetaData.Length + 7) / 8;
-                    return (bytesToRead <= bytesRemaining);
-                }
-            }
-
-            // No data left, or not at a row token
-            return false;
-        }
-
-        internal bool IsNullCompressionBitSet(int columnOrdinal)
-        {
-            return _nullBitmapInfo.IsGuaranteedNull(columnOrdinal);
         }
 
         private struct NullBitmap
