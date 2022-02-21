@@ -67,22 +67,6 @@ namespace Microsoft.Data.SqlClient
         // Constructors //
         //////////////////
 
-        internal TdsParserStateObject(TdsParser parser)
-        {
-            // Construct a physical connection
-            Debug.Assert(null != parser, "no parser?");
-            _parser = parser;
-
-            // For physical connection, initialize to default login packet size.
-            SetPacketSize(TdsEnums.DEFAULT_LOGIN_PACKET_SIZE);
-
-            // we post a callback that represents the call to dispose; once the
-            // object is disposed, the next callback will cause the GC Handle to
-            // be released.
-            IncrementPendingCallbacks();
-            _lastSuccessfulIOTimer = new LastIOTimer();
-        }
-
         internal TdsParserStateObject(TdsParser parser, SNIHandle physicalConnection, bool async)
         {
             // Construct a MARS session

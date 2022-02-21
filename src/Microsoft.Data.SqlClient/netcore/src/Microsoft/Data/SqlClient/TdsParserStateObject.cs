@@ -19,10 +19,7 @@ namespace Microsoft.Data.SqlClient
     {
         private static readonly ContextCallback s_readAdyncCallbackComplete = ReadAsyncCallbackComplete;
 
-
         // Timeout variables
-        private readonly TimerCallback _onTimeoutAsync;
-
         private WeakReference _cancellationOwner = new WeakReference(null);
 
 		// Async
@@ -32,23 +29,6 @@ namespace Microsoft.Data.SqlClient
         //////////////////
         // Constructors //
         //////////////////
-
-        internal TdsParserStateObject(TdsParser parser)
-        {
-            // Construct a physical connection
-            Debug.Assert(null != parser, "no parser?");
-            _parser = parser;
-            _onTimeoutAsync = OnTimeoutAsync;
-
-            // For physical connection, initialize to default login packet size.
-            SetPacketSize(TdsEnums.DEFAULT_LOGIN_PACKET_SIZE);
-
-            // we post a callback that represents the call to dispose; once the
-            // object is disposed, the next callback will cause the GC Handle to
-            // be released.
-            IncrementPendingCallbacks();
-            _lastSuccessfulIOTimer = new LastIOTimer();
-        }
 
         internal TdsParserStateObject(TdsParser parser, TdsParserStateObject physicalConnection, bool async)
         {

@@ -131,6 +131,7 @@ namespace Microsoft.Data.SqlClient
         private volatile int _timeoutIdentityValue;
         internal volatile bool _attentionSent;              // true if we sent an Attention to the server
         internal volatile bool _attentionSending;
+        private readonly TimerCallback _onTimeoutAsync;
 
 
         // Below 2 properties are used to enforce timeout delays in code to 
@@ -279,6 +280,26 @@ namespace Microsoft.Data.SqlClient
 #endif
 
 
+        //////////////////
+        // Constructors //
+        //////////////////
+
+        internal TdsParserStateObject(TdsParser parser)
+        {
+            // Construct a physical connection
+            Debug.Assert(null != parser, "no parser?");
+            _parser = parser;
+            _onTimeoutAsync = OnTimeoutAsync;
+
+            // For physical connection, initialize to default login packet size.
+            SetPacketSize(TdsEnums.DEFAULT_LOGIN_PACKET_SIZE);
+
+            // we post a callback that represents the call to dispose; once the
+            // object is disposed, the next callback will cause the GC Handle to
+            // be released.
+            IncrementPendingCallbacks();
+            _lastSuccessfulIOTimer = new LastIOTimer();
+        }
 
 
         ////////////////
