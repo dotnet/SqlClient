@@ -115,12 +115,10 @@ namespace Microsoft.Data.SqlClient
 
         internal bool HasOpenResult
         {
-            get
-            {
-                return _hasOpenResult;
-            }
+            get => _hasOpenResult;
+            set => _hasOpenResult = value;
         }
-
+        
         internal UInt32 Status
         {
             get
@@ -354,35 +352,6 @@ namespace Microsoft.Data.SqlClient
             return goodForReuse;
         }
 
-        // If this object is part of a TdsParserSessionPool, then this *must* be called inside the pool's lock
-        internal void RemoveOwner()
-        {
-            if (_parser.MARSOn)
-            {
-                // We only care about the activation count for MARS connections
-                int result = Interlocked.Decrement(ref _activateCount);   // must have non-zero activation count for reclaimation to work too.
-                Debug.Assert(result == 0, "invalid deactivate count");
-            }
-            Owner = null;
-        }
-
-        internal void DecrementOpenResultCount()
-        {
-            if (_executedUnderTransaction == null)
-            {
-                // If we were not executed under a transaction - decrement the global count
-                // on the parser.
-                _parser.DecrementNonTransactedOpenResultCount();
-            }
-            else
-            {
-                // If we were executed under a transaction - decrement the count on the transaction.
-                _executedUnderTransaction.DecrementAndObtainOpenResultCount();
-                _executedUnderTransaction = null;
-            }
-            _hasOpenResult = false;
-        }
-
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
         internal int DecrementPendingCallbacks(bool release)
         {
@@ -411,25 +380,7 @@ namespace Microsoft.Data.SqlClient
             _sessionHandle = null;
             _sniAsyncAttnPacket = null;
 
-            Timer networkPacketTimeout = _networkPacketTimeout;
-            if (networkPacketTimeout != null)
-            {
-                _networkPacketTimeout = null;
-                networkPacketTimeout.Dispose();
-            }
-
-            Debug.Assert(Volatile.Read(ref _readingCount) >= 0, "_readingCount is negative");
-            if (Volatile.Read(ref _readingCount) > 0)
-            {
-                // if _reading is true, we need to wait for it to complete
-                // if _reading is false, then future read attempts will
-                // already see the null _sessionHandle and abort.
-
-                // We block after nulling _sessionHandle but before disposing it
-                // to give a chance for a read that has already grabbed the
-                // handle to complete.
-                SpinWait.SpinUntil(() => Volatile.Read(ref _readingCount) == 0);
-            }
+            DisposeCounters();
 
             if (null != sessionHandle || null != packetHandle)
             {
@@ -476,25 +427,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal Int32 IncrementAndObtainOpenResultCount(SqlInternalTransaction transaction)
-        {
-            _hasOpenResult = true;
-
-            if (transaction == null)
-            {
-                // If we are not passed a transaction, we are not executing under a transaction
-                // and thus we should increment the global connection result count.
-                return _parser.IncrementNonTransactedOpenResultCount();
-            }
-            else
-            {
-                // If we are passed a transaction, we are executing under a transaction
-                // and thus we should increment the transaction's result count.
-                _executedUnderTransaction = transaction;
-                return transaction.IncrementAndObtainOpenResultCount();
-            }
-        }
-
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
         internal int IncrementPendingCallbacks()
         {
@@ -503,26 +435,6 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParserStateObject.IncrementPendingCallbacks|ADV> {0}, after incrementing _pendingCallbacks: {1}", ObjectID, _pendingCallbacks);
             Debug.Assert(0 < remaining && remaining <= 3, $"_pendingCallbacks values is invalid after incrementing: {remaining}");
             return remaining;
-        }
-
-        internal void SetTimeoutSeconds(int timeout)
-        {
-            SetTimeoutMilliseconds((long)timeout * 1000L);
-        }
-
-        internal void SetTimeoutMilliseconds(long timeout)
-        {
-            if (timeout <= 0)
-            {
-                // 0 or less (i.e. Timespan.Infinite) == infinite (which is represented by Int64.MaxValue)
-                _timeoutMilliseconds = 0;
-                _timeoutTime = Int64.MaxValue;
-            }
-            else
-            {
-                _timeoutMilliseconds = timeout;
-                _timeoutTime = 0;
-            }
         }
 
         internal void StartSession(int objectID)
