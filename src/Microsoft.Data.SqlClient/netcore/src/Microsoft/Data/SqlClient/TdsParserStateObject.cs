@@ -131,15 +131,6 @@ namespace Microsoft.Data.SqlClient
         // General methods //
         /////////////////////
 
-        // If this object is part of a TdsParserSessionPool, then this *must* be called inside the pool's lock
-        internal void Activate(object owner)
-        {
-            Debug.Assert(_parser.MARSOn, "Can not activate a non-MARS connection");
-            Owner = owner; // must assign an owner for reclamation to work
-            int result = Interlocked.Increment(ref _activateCount);   // must have non-zero activation count for reclamation to work too.
-            Debug.Assert(result == 1, "invalid deactivate count");
-        }
-
         // This method is only called by the command or datareader as a result of a user initiated
         // cancel request.
         internal void Cancel(object caller)
@@ -202,82 +193,6 @@ namespace Microsoft.Data.SqlClient
                     Monitor.Exit(this);
                 }
             }
-        }
-
-        // CancelRequest - use to cancel while writing a request to the server
-        //
-        // o none of the request might have been sent to the server, simply reset the buffer,
-        //   sending attention does not hurt
-        // o the request was partially written. Send an ignore header to the server. attention is
-        //   required if the server was waiting for data (e.g. insert bulk rows)
-        // o the request was completely written out and the server started to process the request.
-        //   attention is required to have the server stop processing.
-        //
-        internal void CancelRequest()
-        {
-            ResetBuffer();    // clear out unsent buffer
-            // If the first sqlbulkcopy timeout, _outputPacketNumber may not be 1,
-            // the next sqlbulkcopy (same connection string) requires this to be 1, hence reset
-            // it here when exception happens in the first sqlbulkcopy
-            ResetPacketCounters();
-
-            // VSDD#907507, if bulkcopy write timeout happens, it already sent the attention,
-            // so no need to send it again
-            if (!_bulkCopyWriteTimeout)
-            {
-                SendAttention();
-                Parser.ProcessPendingAck(this);
-            }
-        }
-
-        public void CheckSetResetConnectionState(uint error, CallbackType callbackType)
-        {
-            // Should only be called for MARS - that is the only time we need to take
-            // the ResetConnection lock!
-
-            // It was raised in a security review by Microsoft questioning whether
-            // we need to actually process the resulting packet (sp_reset ack or error) to know if the
-            // reset actually succeeded.  There was a concern that if the reset failed and we proceeded
-            // there might be a security issue present.  We have been assured by the server that if
-            // sp_reset fails, they guarantee they will kill the resulting connection.  So - it is
-            // safe for us to simply receive the packet and then consume the pre-login later.
-
-            Debug.Assert(_parser.MARSOn, "Should not be calling CheckSetResetConnectionState on non MARS connection");
-
-            if (_fResetEventOwned)
-            {
-                if (callbackType == CallbackType.Read && TdsEnums.SNI_SUCCESS == error)
-                {
-                    // RESET SUCCEEDED!
-                    // If we are on read callback and no error occurred (and we own reset event) -
-                    // then we sent the sp_reset_connection and so we need to reset sp_reset_connection
-                    // flag to false, and then release the ResetEvent.
-                    _parser._fResetConnection = false;
-                    _fResetConnectionSent = false;
-                    _fResetEventOwned = !_parser._resetConnectionEvent.Set();
-                    Debug.Assert(!_fResetEventOwned, "Invalid AutoResetEvent state!");
-                }
-
-                if (TdsEnums.SNI_SUCCESS != error)
-                {
-                    // RESET FAILED!
-
-                    // If write or read failed with reset, we need to clear event but not mark connection
-                    // as reset.
-                    _fResetConnectionSent = false;
-                    _fResetEventOwned = !_parser._resetConnectionEvent.Set();
-                    Debug.Assert(!_fResetEventOwned, "Invalid AutoResetEvent state!");
-                }
-            }
-        }
-
-        internal void CloseSession()
-        {
-            ResetCancelAndProcessAttention();
-#if DEBUG
-            InvalidateDebugOnlyCopyOfSniContext();
-#endif
-            Parser.PutSession(this);
         }
 
         private void ResetCancelAndProcessAttention()
