@@ -100,11 +100,8 @@ namespace Microsoft.Data.SqlClient
             get;
         }
 
-        private struct NullBitmap
+        private partial struct NullBitmap
         {
-            private byte[] _nullBitmap;
-            private int _columnsCount; // set to 0 if not used or > 0 for NBC rows
-
             internal bool TryInitialize(TdsParserStateObject stateObj, int columnsCount)
             {
                 _columnsCount = columnsCount;
@@ -127,46 +124,6 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.NullBitmap.Initialize | INFO | ADV | State Object Id {0}, NBCROW bitmap received, column count = {1}", stateObj._objectID, columnsCount);
                 SqlClientEventSource.Log.TryAdvancedTraceBinEvent("TdsParserStateObject.NullBitmap.Initialize | INFO | ADV | State Object Id {0}, Null Bitmap length {1}, NBCROW bitmap data: {2}", stateObj._objectID, (ushort)_nullBitmap.Length, _nullBitmap);
                 return true;
-            }
-
-            internal bool ReferenceEquals(NullBitmap obj)
-            {
-                return object.ReferenceEquals(_nullBitmap, obj._nullBitmap);
-            }
-
-            internal NullBitmap Clone()
-            {
-                NullBitmap newBitmap = new NullBitmap();
-                newBitmap._nullBitmap = _nullBitmap == null ? null : (byte[])_nullBitmap.Clone();
-                newBitmap._columnsCount = _columnsCount;
-                return newBitmap;
-            }
-
-            internal void Clean()
-            {
-                _columnsCount = 0;
-                // no need to free _nullBitmap array - it is cached for the next row
-            }
-
-            /// <summary>
-            /// If this method returns true, the value is guaranteed to be null. This is not true vice versa:
-            /// if the bitmap value is false (if this method returns false), the value can be either null or non-null - no guarantee in this case.
-            /// To determine whether it is null or not, read it from the TDS (per NBCROW design spec, for IMAGE/TEXT/NTEXT columns server might send
-            /// bitmap = 0, when the actual value is null).
-            /// </summary>
-            internal bool IsGuaranteedNull(int columnOrdinal)
-            {
-                if (_columnsCount == 0)
-                {
-                    // not an NBC row
-                    return false;
-                }
-
-                Debug.Assert(columnOrdinal >= 0 && columnOrdinal < _columnsCount, "Invalid column ordinal");
-
-                byte testBit = (byte)(1 << (columnOrdinal & 0x7)); // columnOrdinal & 0x7 == columnOrdinal MOD 0x7
-                byte testByte = _nullBitmap[columnOrdinal >> 3];
-                return (testBit & testByte) != 0;
             }
         }
 
