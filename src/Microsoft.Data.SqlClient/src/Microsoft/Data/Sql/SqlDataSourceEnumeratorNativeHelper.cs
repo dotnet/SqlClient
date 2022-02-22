@@ -74,7 +74,7 @@ namespace Microsoft.Data.Sql
                         }
                         else if (0 < readLength)
                         {
-                            strbldr.Append(buffer, 0, readLength);
+                            strbldr.Append(buffer);
                         }
                     }
                 }
