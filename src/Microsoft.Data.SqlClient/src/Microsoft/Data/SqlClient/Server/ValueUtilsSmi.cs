@@ -1249,7 +1249,7 @@ namespace Microsoft.Data.SqlClient.Server
         // Strongly-typed setters are a bit simpler than their corresponding getters.
         //      1) check to make sure the type is compatible (exception if not)
         //      2) push the data
-        internal static void SetDBNull(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal, bool value)
+        internal static void SetDBNull(SmiEventSink_Default sink, ITypedSettersV3 setters, int ordinal)
         {
             SetDBNull_Unchecked(sink, setters, ordinal);
         }
@@ -1665,7 +1665,6 @@ namespace Microsoft.Data.SqlClient.Server
             object value,
             ExtendedClrTypeCode typeCode,
             int offset,
-            int length,
             ParameterPeekAheadValue peekAhead,
             SqlBuffer.StorageType storageType
         )
@@ -1692,7 +1691,7 @@ namespace Microsoft.Data.SqlClient.Server
             }
             else
             {
-                SetCompatibleValueV200(sink, setters, ordinal, metaData, value, typeCode, offset, length, peekAhead);
+                SetCompatibleValueV200(sink, setters, ordinal, metaData, value, typeCode, offset, peekAhead);
             }
         }
 
@@ -1707,7 +1706,6 @@ namespace Microsoft.Data.SqlClient.Server
             object value,
             ExtendedClrTypeCode typeCode,
             int offset,
-            int length,
             ParameterPeekAheadValue peekAhead
         )
         {
@@ -2020,11 +2018,11 @@ namespace Microsoft.Data.SqlClient.Server
                                     );
                                 if ((storageType == SqlBuffer.StorageType.DateTime2) || (storageType == SqlBuffer.StorageType.Date))
                                 {
-                                    SetCompatibleValueV200(sink, setters, i, metaData[i], o, typeCode, 0, 0, null, storageType);
+                                    SetCompatibleValueV200(sink, setters, i, metaData[i], o, typeCode, 0, null, storageType);
                                 }
                                 else
                                 {
-                                    SetCompatibleValueV200(sink, setters, i, metaData[i], o, typeCode, 0, 0, null);
+                                    SetCompatibleValueV200(sink, setters, i, metaData[i], o, typeCode, 0, null);
                                 }
                             }
                             break;
@@ -2194,7 +2192,7 @@ namespace Microsoft.Data.SqlClient.Server
                         case SqlDbType.Variant:
                             object o = record.GetSqlValue(i);
                             ExtendedClrTypeCode typeCode = MetaDataUtilsSmi.DetermineExtendedTypeCode(o);
-                            SetCompatibleValueV200(sink, setters, i, metaData[i], o, typeCode, 0, -1 /* no length restriction */, null /* no peekahead */);
+                            SetCompatibleValueV200(sink, setters, i, metaData[i], o, typeCode, 0, null /* no peekahead */);
                             break;
                         case SqlDbType.Udt:
                             Debug.Assert(CanAccessSetterDirectly(metaData[i], ExtendedClrTypeCode.SqlBytes));
@@ -3883,7 +3881,7 @@ namespace Microsoft.Data.SqlClient.Server
 #endif
                                     );
                         }
-                        SetCompatibleValueV200(sink, setters, i, fieldMetaData, cellValue, cellTypes[i], 0, NoLengthLimit, null);
+                        SetCompatibleValueV200(sink, setters, i, fieldMetaData, cellValue, cellTypes[i], 0, null);
                     }
                 }
             }

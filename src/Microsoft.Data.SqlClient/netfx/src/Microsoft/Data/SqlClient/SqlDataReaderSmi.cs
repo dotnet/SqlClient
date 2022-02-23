@@ -188,9 +188,9 @@ namespace Microsoft.Data.SqlClient
         public override int GetValues(object[] values)
         {
             EnsureCanGetCol(0);
-            if (null == values)
+            if (values == null)
             {
-                throw ADP.ArgumentNull("values");
+                throw ADP.ArgumentNull(nameof(values));
             }
 
             int copyLength = (values.Length < _visibleColumnCount) ? values.Length : _visibleColumnCount;
@@ -204,7 +204,7 @@ namespace Microsoft.Data.SqlClient
         public override int GetOrdinal(string name)
         {
             EnsureCanGetMetaData();
-            if (null == _fieldNameLookup)
+            if (_fieldNameLookup == null)
             {
                 _fieldNameLookup = new FieldNameLookup((IDataReader)this, -1); // TODO: Need to support DefaultLCID for name comparisons
             }
@@ -433,7 +433,7 @@ namespace Microsoft.Data.SqlClient
                     // result, the metadata for it will be available after the last
                     // read on the prior result.
 
-                    while (null == _currentMetaData && _eventStream.HasEvents)
+                    while (_currentMetaData == null && _eventStream.HasEvents)
                     {
                         _eventStream.ProcessEvent(_readerEventSink);
                         _readerEventSink.ProcessMessagesAndThrow(ignoreNonFatalMessages);
@@ -488,8 +488,8 @@ namespace Microsoft.Data.SqlClient
                     }
 
                     // NOTE: SQLBUDT #386118 -- may indicate that we want to break this loop when we get a MessagePosted callback, but we can't prove that.
-                    while (null == _currentColumnValues &&                         // Did we find a row?
-                            null == _currentColumnValuesV3 &&                       // Did we find a V3 row?
+                    while (_currentColumnValues == null &&                         // Did we find a row?
+                            _currentColumnValuesV3 == null &&                       // Did we find a V3 row?
                             FInResults() &&                         // Was the batch terminated due to a serious error?
                             PositionState.AfterRows != _currentPosition &&              // Have we seen a statement completed event?
                             _eventStream.HasEvents)
@@ -511,53 +511,55 @@ namespace Microsoft.Data.SqlClient
         {
             ThrowIfClosed();
 
-            if (null == _schemaTable && FInResults())
+            if (_schemaTable == null && FInResults())
             {
 
-                DataTable schemaTable = new DataTable("SchemaTable");
-                schemaTable.Locale = System.Globalization.CultureInfo.InvariantCulture;
-                schemaTable.MinimumCapacity = InternalFieldCount;
+                DataTable schemaTable = new DataTable("SchemaTable")
+                {
+                    Locale = System.Globalization.CultureInfo.InvariantCulture,
+                    MinimumCapacity = InternalFieldCount
+                };
 
-                DataColumn ColumnName = new DataColumn(SchemaTableColumn.ColumnName, typeof(System.String));
-                DataColumn Ordinal = new DataColumn(SchemaTableColumn.ColumnOrdinal, typeof(System.Int32));
-                DataColumn Size = new DataColumn(SchemaTableColumn.ColumnSize, typeof(System.Int32));
-                DataColumn Precision = new DataColumn(SchemaTableColumn.NumericPrecision, typeof(System.Int16));
-                DataColumn Scale = new DataColumn(SchemaTableColumn.NumericScale, typeof(System.Int16));
+                DataColumn ColumnName = new DataColumn(SchemaTableColumn.ColumnName, typeof(string));
+                DataColumn Ordinal = new DataColumn(SchemaTableColumn.ColumnOrdinal, typeof(int));
+                DataColumn Size = new DataColumn(SchemaTableColumn.ColumnSize, typeof(int));
+                DataColumn Precision = new DataColumn(SchemaTableColumn.NumericPrecision, typeof(short));
+                DataColumn Scale = new DataColumn(SchemaTableColumn.NumericScale, typeof(short));
 
-                DataColumn DataType = new DataColumn(SchemaTableColumn.DataType, typeof(System.Type));
-                DataColumn ProviderSpecificDataType = new DataColumn(SchemaTableOptionalColumn.ProviderSpecificDataType, typeof(System.Type));
-                DataColumn ProviderType = new DataColumn(SchemaTableColumn.ProviderType, typeof(System.Int32));
-                DataColumn NonVersionedProviderType = new DataColumn(SchemaTableColumn.NonVersionedProviderType, typeof(System.Int32));
+                DataColumn DataType = new DataColumn(SchemaTableColumn.DataType, typeof(Type));
+                DataColumn ProviderSpecificDataType = new DataColumn(SchemaTableOptionalColumn.ProviderSpecificDataType, typeof(Type));
+                DataColumn ProviderType = new DataColumn(SchemaTableColumn.ProviderType, typeof(int));
+                DataColumn NonVersionedProviderType = new DataColumn(SchemaTableColumn.NonVersionedProviderType, typeof(int));
 
-                DataColumn IsLong = new DataColumn(SchemaTableColumn.IsLong, typeof(System.Boolean));
-                DataColumn AllowDBNull = new DataColumn(SchemaTableColumn.AllowDBNull, typeof(System.Boolean));
-                DataColumn IsReadOnly = new DataColumn(SchemaTableOptionalColumn.IsReadOnly, typeof(System.Boolean));
-                DataColumn IsRowVersion = new DataColumn(SchemaTableOptionalColumn.IsRowVersion, typeof(System.Boolean));
+                DataColumn IsLong = new DataColumn(SchemaTableColumn.IsLong, typeof(bool));
+                DataColumn AllowDBNull = new DataColumn(SchemaTableColumn.AllowDBNull, typeof(bool));
+                DataColumn IsReadOnly = new DataColumn(SchemaTableOptionalColumn.IsReadOnly, typeof(bool));
+                DataColumn IsRowVersion = new DataColumn(SchemaTableOptionalColumn.IsRowVersion, typeof(bool));
 
-                DataColumn IsUnique = new DataColumn(SchemaTableColumn.IsUnique, typeof(System.Boolean));
-                DataColumn IsKey = new DataColumn(SchemaTableColumn.IsKey, typeof(System.Boolean));
-                DataColumn IsAutoIncrement = new DataColumn(SchemaTableOptionalColumn.IsAutoIncrement, typeof(System.Boolean));
-                DataColumn IsHidden = new DataColumn(SchemaTableOptionalColumn.IsHidden, typeof(System.Boolean));
+                DataColumn IsUnique = new DataColumn(SchemaTableColumn.IsUnique, typeof(bool));
+                DataColumn IsKey = new DataColumn(SchemaTableColumn.IsKey, typeof(bool));
+                DataColumn IsAutoIncrement = new DataColumn(SchemaTableOptionalColumn.IsAutoIncrement, typeof(bool));
+                DataColumn IsHidden = new DataColumn(SchemaTableOptionalColumn.IsHidden, typeof(bool));
 
-                DataColumn BaseCatalogName = new DataColumn(SchemaTableOptionalColumn.BaseCatalogName, typeof(System.String));
-                DataColumn BaseSchemaName = new DataColumn(SchemaTableColumn.BaseSchemaName, typeof(System.String));
-                DataColumn BaseTableName = new DataColumn(SchemaTableColumn.BaseTableName, typeof(System.String));
-                DataColumn BaseColumnName = new DataColumn(SchemaTableColumn.BaseColumnName, typeof(System.String));
+                DataColumn BaseCatalogName = new DataColumn(SchemaTableOptionalColumn.BaseCatalogName, typeof(string));
+                DataColumn BaseSchemaName = new DataColumn(SchemaTableColumn.BaseSchemaName, typeof(string));
+                DataColumn BaseTableName = new DataColumn(SchemaTableColumn.BaseTableName, typeof(string));
+                DataColumn BaseColumnName = new DataColumn(SchemaTableColumn.BaseColumnName, typeof(string));
 
                 // unique to SqlClient
-                DataColumn BaseServerName = new DataColumn(SchemaTableOptionalColumn.BaseServerName, typeof(System.String));
-                DataColumn IsAliased = new DataColumn(SchemaTableColumn.IsAliased, typeof(System.Boolean));
-                DataColumn IsExpression = new DataColumn(SchemaTableColumn.IsExpression, typeof(System.Boolean));
-                DataColumn IsIdentity = new DataColumn("IsIdentity", typeof(System.Boolean));
+                DataColumn BaseServerName = new DataColumn(SchemaTableOptionalColumn.BaseServerName, typeof(string));
+                DataColumn IsAliased = new DataColumn(SchemaTableColumn.IsAliased, typeof(bool));
+                DataColumn IsExpression = new DataColumn(SchemaTableColumn.IsExpression, typeof(bool));
+                DataColumn IsIdentity = new DataColumn("IsIdentity", typeof(bool));
                 // UDT specific. Holds UDT typename ONLY if the type of the column is UDT, otherwise the data type
-                DataColumn DataTypeName = new DataColumn("DataTypeName", typeof(System.String));
-                DataColumn UdtAssemblyQualifiedName = new DataColumn("UdtAssemblyQualifiedName", typeof(System.String));
+                DataColumn DataTypeName = new DataColumn("DataTypeName", typeof(string));
+                DataColumn UdtAssemblyQualifiedName = new DataColumn("UdtAssemblyQualifiedName", typeof(string));
                 // Xml metadata specific
-                DataColumn XmlSchemaCollectionDatabase = new DataColumn("XmlSchemaCollectionDatabase", typeof(System.String));
-                DataColumn XmlSchemaCollectionOwningSchema = new DataColumn("XmlSchemaCollectionOwningSchema", typeof(System.String));
-                DataColumn XmlSchemaCollectionName = new DataColumn("XmlSchemaCollectionName", typeof(System.String));
+                DataColumn XmlSchemaCollectionDatabase = new DataColumn("XmlSchemaCollectionDatabase", typeof(string));
+                DataColumn XmlSchemaCollectionOwningSchema = new DataColumn("XmlSchemaCollectionOwningSchema", typeof(string));
+                DataColumn XmlSchemaCollectionName = new DataColumn("XmlSchemaCollectionName", typeof(string));
                 // SparseColumnSet
-                DataColumn IsColumnSet = new DataColumn("IsColumnSet", typeof(System.Boolean));
+                DataColumn IsColumnSet = new DataColumn("IsColumnSet", typeof(bool));
 
                 Ordinal.DefaultValue = 0;
                 IsLong.DefaultValue = false;
@@ -653,7 +655,7 @@ namespace Microsoft.Data.SqlClient
                     // meta data values in SmiMetaData, however, it caused the 
                     // server suites to fall over dead.  Rather than attempt to 
                     // bake it into the server, I'm fixing it up in the client.
-                    byte precision = 0xff;  // default for everything, except certain numeric types.
+                    byte precision;  // default for everything, except certain numeric types.
 
                     // TODO: Consider moving this into SmiMetaData itself...
                     switch (colMetaData.SqlDbType)
@@ -692,8 +694,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        schemaRow[Scale] = MetaType.GetMetaTypeFromSqlDbType(
-                                                        colMetaData.SqlDbType, colMetaData.IsMultiValued).Scale;
+                        schemaRow[Scale] = MetaType.GetMetaTypeFromSqlDbType(colMetaData.SqlDbType, colMetaData.IsMultiValued).Scale;
                     }
 
                     schemaRow[AllowDBNull] = colMetaData.AllowsDBNull;
@@ -927,9 +928,9 @@ namespace Microsoft.Data.SqlClient
         {
             EnsureCanGetCol(0);
 
-            if (null == values)
+            if (values == null)
             {
-                throw ADP.ArgumentNull("values");
+                throw ADP.ArgumentNull(nameof(values));
             }
 
             int copyLength = (values.Length < _visibleColumnCount) ? values.Length : _visibleColumnCount;
@@ -1006,7 +1007,7 @@ namespace Microsoft.Data.SqlClient
                 throw ADP.InvalidCast();
             }
 
-            Stream stream = null;
+            Stream stream;
             if ((IsCommandBehavior(CommandBehavior.SequentialAccess)) && (!ValueUtilsSmi.IsDBNull(_readerEventSink, _currentColumnValuesV3, ordinal)))
             {
                 if (HasActiveStreamOrTextReaderOnColumn(ordinal))
@@ -1039,12 +1040,8 @@ namespace Microsoft.Data.SqlClient
             AfterRows,                // After all rows in current resultset
             AfterResults            // After all resultsets in request
         }
+
         private PositionState _currentPosition;        // Where is the reader relative to incoming results?
-
-
-        //
-        //    Fields
-        //
         private bool _isOpen;                    // Is the reader open?
         private SmiQueryMetaData[] _currentMetaData;           // Metadata for current resultset
         private int[] _indexMap;                  // map of indices for visible column
@@ -1061,11 +1058,6 @@ namespace Microsoft.Data.SqlClient
         private SqlSequentialStreamSmi _currentStream;             // The stream on the current column (if any)
         private SqlSequentialTextReaderSmi _currentTextReader;         // The text reader on the current column (if any)
 
-        //
-        // Internal methods for use by other classes in project
-        //
-        // Constructor
-        //
         //  Assumes that if there were any results, the first chunk of them are in the data stream
         //      (up to the first actual row or the end of the resultsets).
         unsafe internal SqlDataReaderSmi(
@@ -1091,7 +1083,7 @@ namespace Microsoft.Data.SqlClient
 
         internal override SmiExtendedMetaData[] GetInternalSmiMetaData()
         {
-            if (null == _currentMetaData || _visibleColumnCount == this.InternalFieldCount)
+            if (_currentMetaData == null || _visibleColumnCount == InternalFieldCount)
             {
                 return _currentMetaData;
             }
@@ -1128,11 +1120,6 @@ namespace Microsoft.Data.SqlClient
             EnsureCanGetMetaData();
             return (int)_currentMetaData[ordinal].LocaleId;
         }
-
-        //
-        // Private implementation methods
-        //
-
         private int InternalFieldCount
         {
             get
@@ -1165,7 +1152,6 @@ namespace Microsoft.Data.SqlClient
 
         // Central checkpoint to ensure the requested column can be accessed.
         //    Calling this function serves to notify that it has been accessed by the user.
-        [SuppressMessage("Microsoft.Performance", "CA1801:AvoidUnusedParameters")] // for future compatibility
         private void EnsureCanGetCol(int ordinal, [CallerMemberName] string operationName = null)
         {
             EnsureOnRow(operationName);
@@ -1228,8 +1214,8 @@ namespace Microsoft.Data.SqlClient
         {
             bool active = false;
 
-            active |= ((_currentStream != null) && (_currentStream.ColumnIndex == columnIndex));
-            active |= ((_currentTextReader != null) && (_currentTextReader.ColumnIndex == columnIndex));
+            active |= (_currentStream != null) && (_currentStream.ColumnIndex == columnIndex);
+            active |= (_currentTextReader != null) && (_currentTextReader.ColumnIndex == columnIndex);
 
             return active;
         }
@@ -1282,71 +1268,71 @@ namespace Microsoft.Data.SqlClient
 
         private sealed class ReaderEventSink : SmiEventSink_Default
         {
-            private readonly SqlDataReaderSmi reader;
+            private readonly SqlDataReaderSmi _reader;
 
             internal ReaderEventSink(SqlDataReaderSmi reader, SmiEventSink parent)
                 : base(parent)
             {
-                this.reader = reader;
+                _reader = reader;
             }
 
             internal override void MetaDataAvailable(SmiQueryMetaData[] md, bool nextEventIsRow)
             {
-                var mdLength = (null != md) ? md.Length : -1;
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlDataReaderSmi.ReaderEventSink.MetaDataAvailable|ADV> {0}, md.Length={1} nextEventIsRow={2}.", reader.ObjectID, mdLength, nextEventIsRow);
+                var mdLength = (md != null) ? md.Length : -1;
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlDataReaderSmi.ReaderEventSink.MetaDataAvailable|ADV> {0}, md.Length={1} nextEventIsRow={2}.", _reader.ObjectID, mdLength, nextEventIsRow);
 
                 if (SqlClientEventSource.Log.IsAdvancedTraceOn())
                 {
-                    if (null != md)
+                    if (md != null)
                     {
                         for (int i = 0; i < md.Length; i++)
                         {
-                            SqlClientEventSource.Log.TraceEvent("<sc.SqlDataReaderSmi.ReaderEventSink.MetaDataAvailable|ADV> {0}, metaData[{1}] is {2}{3}", reader.ObjectID, i, md[i].GetType(), md[i].TraceString());
+                            SqlClientEventSource.Log.TraceEvent("<sc.SqlDataReaderSmi.ReaderEventSink.MetaDataAvailable|ADV> {0}, metaData[{1}] is {2}{3}", _reader.ObjectID, i, md[i].GetType(), md[i].TraceString());
                         }
                     }
                 }
-                this.reader.MetaDataAvailable(md, nextEventIsRow);
+                _reader.MetaDataAvailable(md, nextEventIsRow);
             }
 
             // Obsolete V2- method
             internal override void RowAvailable(ITypedGetters row)
             {
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlDataReaderSmi.ReaderEventSink.RowAvailable|ADV> {0} (v2).", reader.ObjectID);
-                this.reader.RowAvailable(row);
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlDataReaderSmi.ReaderEventSink.RowAvailable|ADV> {0} (v2).", _reader.ObjectID);
+                _reader.RowAvailable(row);
             }
 
             internal override void RowAvailable(ITypedGettersV3 row)
             {
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlDataReaderSmi.ReaderEventSink.RowAvailable|ADV> {0} (ITypedGettersV3).", reader.ObjectID);
-                this.reader.RowAvailable(row);
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlDataReaderSmi.ReaderEventSink.RowAvailable|ADV> {0} (ITypedGettersV3).", _reader.ObjectID);
+                _reader.RowAvailable(row);
             }
 
             internal override void RowAvailable(SmiTypedGetterSetter rowData)
             {
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlDataReaderSmi.ReaderEventSink.RowAvailable|ADV> {0} (SmiTypedGetterSetter).", reader.ObjectID);
-                this.reader.RowAvailable(rowData);
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlDataReaderSmi.ReaderEventSink.RowAvailable|ADV> {0} (SmiTypedGetterSetter).", _reader.ObjectID);
+                _reader.RowAvailable(rowData);
             }
 
             internal override void StatementCompleted(int recordsAffected)
             {
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlDataReaderSmi.ReaderEventSink.StatementCompleted|ADV> {0} recordsAffected= {1}.", reader.ObjectID, recordsAffected);
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlDataReaderSmi.ReaderEventSink.StatementCompleted|ADV> {0} recordsAffected= {1}.", _reader.ObjectID, recordsAffected);
 
                 // devnote: relies on SmiEventSink_Default to pass event to parent
                 // Both command and reader care about StatementCompleted, but for different reasons.
                 base.StatementCompleted(recordsAffected);
-                this.reader.StatementCompleted();
+                _reader.StatementCompleted();
             }
 
             internal override void BatchCompleted()
             {
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlDataReaderSmi.ReaderEventSink.BatchCompleted|ADV> {0}.", reader.ObjectID);
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlDataReaderSmi.ReaderEventSink.BatchCompleted|ADV> {0}.", _reader.ObjectID);
 
                 // devnote: relies on SmiEventSink_Default to pass event to parent
                 //  parent's callback *MUST* come before reader's BatchCompleted, since
                 //  reader will close the event stream during this call, and parent wants
                 //  to extract parameter values before that happens.
                 base.BatchCompleted();
-                this.reader.BatchCompleted();
+                _reader.BatchCompleted();
             }
         }
 
