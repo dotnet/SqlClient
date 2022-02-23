@@ -18,8 +18,8 @@ namespace Microsoft.Data.SqlClient.Server
         internal const string InstanceName = "InstanceName";
         internal const string IsClustered = "IsClustered";
         internal const string Version = "Version";
-        internal const string endOfServerInstanceDelimiter = ";;";
-        internal const char instanceKeysDelimiter = ';';
+        internal const string EndOfServerInstanceDelimiter = ";;";
+        internal const char InstanceKeysDelimiter = ';';
 
         /// <summary>
         /// Provides a mechanism for enumerating all available instances of SQL Server within the local network.
@@ -32,8 +32,10 @@ namespace Microsoft.Data.SqlClient.Server
 
         static private System.Data.DataTable ParseServerEnumString(string serverInstances)
         {
-            DataTable dataTable = new DataTable("SqlDataSources");
-            dataTable.Locale = CultureInfo.InvariantCulture;
+            DataTable dataTable = new("SqlDataSources")
+            {
+                Locale = CultureInfo.InvariantCulture
+            };
             dataTable.Columns.Add(ServerName, typeof(string));
             dataTable.Columns.Add(InstanceName, typeof(string));
             dataTable.Columns.Add(IsClustered, typeof(string));
@@ -45,13 +47,13 @@ namespace Microsoft.Data.SqlClient.Server
                 return dataTable;
             }
 
-            string[] numOfServerInstances = serverInstances.Split(new[] { endOfServerInstanceDelimiter }, StringSplitOptions.None);
+            string[] numOfServerInstances = serverInstances.Split(new[] { EndOfServerInstanceDelimiter }, StringSplitOptions.None);
 
             foreach (string currentServerInstance in numOfServerInstances)
             {
-                Dictionary<string, string> InstanceDetails = new Dictionary<string, string>();
-                string[] delimitedKeyValues = currentServerInstance.Split(instanceKeysDelimiter);
-                string currentKey = String.Empty;
+                Dictionary<string, string> InstanceDetails = new();
+                string[] delimitedKeyValues = currentServerInstance.Split(InstanceKeysDelimiter);
+                string currentKey = string.Empty;
 
                 for (int keyvalue = 0; keyvalue < delimitedKeyValues.Length; keyvalue++)
                 {
@@ -59,7 +61,7 @@ namespace Microsoft.Data.SqlClient.Server
                     {
                         currentKey = delimitedKeyValues[keyvalue];
                     }
-                    else if (currentKey != String.Empty)
+                    else if (currentKey != string.Empty)
                     {
                         InstanceDetails.Add(currentKey, delimitedKeyValues[keyvalue]);
                     }
@@ -69,13 +71,13 @@ namespace Microsoft.Data.SqlClient.Server
                 {
                     dataRow = dataTable.NewRow();
                     dataRow[0] = InstanceDetails.ContainsKey(ServerName) == true ?
-                                 InstanceDetails[ServerName] : String.Empty;
+                                 InstanceDetails[ServerName] : string.Empty;
                     dataRow[1] = InstanceDetails.ContainsKey(InstanceName) == true ?
-                                 InstanceDetails[InstanceName] : String.Empty;
+                                 InstanceDetails[InstanceName] : string.Empty;
                     dataRow[2] = InstanceDetails.ContainsKey(IsClustered) == true ?
-                                 InstanceDetails[IsClustered] : String.Empty;
+                                 InstanceDetails[IsClustered] : string.Empty;
                     dataRow[3] = InstanceDetails.ContainsKey(Version) == true ?
-                                 InstanceDetails[Version] : String.Empty;
+                                 InstanceDetails[Version] : string.Empty;
 
                     dataTable.Rows.Add(dataRow);
                 }

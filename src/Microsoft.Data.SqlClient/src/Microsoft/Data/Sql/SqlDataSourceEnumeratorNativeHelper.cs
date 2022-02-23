@@ -22,12 +22,12 @@ namespace Microsoft.Data.Sql
         internal const string InstanceName = "InstanceName";
         internal const string IsClustered = "IsClustered";
         internal const string Version = "Version";
-        private static string _Version = "Version:";
-        private static string _Cluster = "Clustered:";
-        private static int _clusterLength = _Cluster.Length;
-        private static int _versionLength = _Version.Length;
-        private const int timeoutSeconds = ADP.DefaultCommandTimeout;
-        private static long timeoutTime;                                // variable used for timeout computations, holds the value of the hi-res performance counter at which this request should expire
+        private static readonly string s_version = "Version:";
+        private static readonly string s_cluster = "Clustered:";
+        private static readonly int s_clusterLength = s_cluster.Length;
+        private static readonly int s_versionLength = s_version.Length;
+        private const int TimeoutSeconds = ADP.DefaultCommandTimeout;
+        private static long s_timeoutTime;                                // variable used for timeout computations, holds the value of the hi-res performance counter at which this request should expire
 
         /// <summary>
         /// Retrieves a DataTable containing information about all visible SQL Server instances
@@ -37,10 +37,10 @@ namespace Microsoft.Data.Sql
         {
             (new NamedPermissionSet("FullTrust")).Demand(); // SQLBUDT 244304
             char[] buffer = null;
-            StringBuilder strbldr = new StringBuilder();
+            StringBuilder strbldr = new();
 
-            Int32 bufferSize = 65536;
-            Int32 readLength = 0;
+            int bufferSize = 65536;
+            int readLength = 0;
             buffer = new char[bufferSize];
             bool more = true;
             bool failure = false;
@@ -49,7 +49,7 @@ namespace Microsoft.Data.Sql
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
-                timeoutTime = TdsParserStaticMethods.GetTimeoutSeconds(timeoutSeconds);
+                s_timeoutTime = TdsParserStaticMethods.GetTimeoutSeconds(TimeoutSeconds);
                 RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 { }
@@ -60,13 +60,13 @@ namespace Microsoft.Data.Sql
 
                 if (handle != ADP.s_ptrZero)
                 {
-                    while (more && !TdsParserStaticMethods.TimeoutHasExpired(timeoutTime))
+                    while (more && !TdsParserStaticMethods.TimeoutHasExpired(s_timeoutTime))
                     {
 #if NETFRAMEWORK
                         readLength = SNINativeMethodWrapper.SNIServerEnumRead(handle, buffer, bufferSize, out more);
 #else
                         readLength = SNINativeMethodWrapper.SNIServerEnumRead(handle, buffer, bufferSize, out more);
-#endif
+#endif       
                         if (readLength > bufferSize)
                         {
                             failure = true;
@@ -98,13 +98,12 @@ namespace Microsoft.Data.Sql
 
         static private System.Data.DataTable ParseServerEnumString(string serverInstances)
         {
-            DataTable dataTable = new DataTable("SqlDataSources");
+            DataTable dataTable = new("SqlDataSources");
             dataTable.Locale = CultureInfo.InvariantCulture;
             dataTable.Columns.Add(ServerName, typeof(string));
             dataTable.Columns.Add(InstanceName, typeof(string));
             dataTable.Columns.Add(IsClustered, typeof(string));
             dataTable.Columns.Add(Version, typeof(string));
-            DataRow dataRow = null;
             string serverName = null;
             string instanceName = null;
             string isClustered = null;
@@ -139,13 +138,13 @@ namespace Microsoft.Data.Sql
                     }
                     if (isClustered == null)
                     {
-                        Debug.Assert(String.Compare(_Cluster, 0, instance2, 0, _clusterLength, StringComparison.OrdinalIgnoreCase) == 0);
-                        isClustered = instance2.Substring(_clusterLength);
+                        Debug.Assert(string.Compare(s_cluster, 0, instance2, 0, s_clusterLength, StringComparison.OrdinalIgnoreCase) == 0);
+                        isClustered = instance2.Substring(s_clusterLength);
                         continue;
                     }
                     Debug.Assert(version == null);
-                    Debug.Assert(String.Compare(_Version, 0, instance2, 0, _versionLength, StringComparison.OrdinalIgnoreCase) == 0);
-                    version = instance2.Substring(_versionLength);
+                    Debug.Assert(string.Compare(s_version, 0, instance2, 0, s_versionLength, StringComparison.OrdinalIgnoreCase) == 0);
+                    version = instance2.Substring(s_versionLength);
                 }
 
                 string query = "ServerName='" + serverName + "'";
@@ -158,7 +157,7 @@ namespace Microsoft.Data.Sql
                 // SNI returns dupes - do not add them.  SQL BU DT 290323
                 if (dataTable.Select(query).Length == 0)
                 {
-                    dataRow = dataTable.NewRow();
+                    DataRow dataRow = dataTable.NewRow();
                     dataRow[0] = serverName;
                     dataRow[1] = instanceName;
                     dataRow[2] = isClustered;
