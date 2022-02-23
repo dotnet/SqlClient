@@ -66,7 +66,8 @@ namespace Microsoft.Data.Sql
                         readLength = SNINativeMethodWrapper.SNIServerEnumRead(handle, buffer, bufferSize, out more);
 #else
                         readLength = SNINativeMethodWrapper.SNIServerEnumRead(handle, buffer, bufferSize, out more);
-#endif       
+#endif
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDataSourceEnumeratorNativeHelper.GetDataSources|INFO> GetDataSources:SNIServerEnumRead returned readlength {0}", readLength);
                         if (readLength > bufferSize)
                         {
                             failure = true;
@@ -108,11 +109,13 @@ namespace Microsoft.Data.Sql
             string instanceName = null;
             string isClustered = null;
             string version = null;
+            string[] serverinstanceslist = serverInstances.Split(new string[] { "\0\0\0" }, StringSplitOptions.None);
+            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDataSourceEnumeratorNativeHelper.ParseServerEnumString|INFO> Number of server instances results recieved are {0}", serverinstanceslist.Length);
 
             // Every row comes in the format "serverName\instanceName;Clustered:[Yes|No];Version:.." 
             // Every row is terminated by a null character.
             // Process one row at a time
-            foreach (string instance in serverInstances.Split(new string[] { "\0\0\0" }, StringSplitOptions.None))
+            foreach (string instance in serverinstanceslist)
             {
                 //  string value = instance.Trim('\0'); // MDAC 91934
                 string value = instance.Replace("\0", "");
