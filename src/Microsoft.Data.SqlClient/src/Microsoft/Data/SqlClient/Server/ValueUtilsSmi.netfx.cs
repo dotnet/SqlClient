@@ -485,13 +485,13 @@ namespace Microsoft.Data.SqlClient.Server
             SqlClientWrapperSmiStreamChars dest = new(sink, context.GetScratchStream(sink));
 
             int chunkSize;
-            if (source.CanSeek && __maxByteChunkSize > source.Length)
+            if (source.CanSeek && source.Length < MaxByteChunkSize)
             {
                 chunkSize = unchecked((int)source.Length);  // unchecked cast is safe due to check on line above
             }
             else
             {
-                chunkSize = __maxByteChunkSize;
+                chunkSize = MaxByteChunkSize;
             }
 
             byte[] copyBuffer = new byte[chunkSize];
