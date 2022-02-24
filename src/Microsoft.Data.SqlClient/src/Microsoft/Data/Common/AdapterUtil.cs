@@ -1228,7 +1228,7 @@ namespace Microsoft.Data.Common
 #endregion
 
         internal static bool IsEmpty(string str) => string.IsNullOrEmpty(str);
-        internal static readonly IntPtr s_ptrZero = IntPtr.Zero; // IntPtr.Zero
+        internal static readonly IntPtr s_ptrZero = IntPtr.Zero;
 #if NETFRAMEWORK
 #region netfx project only
         internal static Task<T> CreatedTaskWithException<T>(Exception ex)
@@ -1473,7 +1473,7 @@ namespace Microsoft.Data.Common
             return (IntPtr)checked(pbase.ToInt64() + offset);
         }
 
-        #endregion
+#endregion
 #else
 #region netcore project only
         internal static Timer UnsafeCreateTimer(TimerCallback callback, object state, int dueTime, int period)

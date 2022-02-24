@@ -1,4 +1,5 @@
 using System;
+//<Snippet1>
 using Microsoft.Data.Sql;  
   
 class Program  
@@ -29,3 +30,4 @@ class Program
     }  
   }  
 } 
+//</Snippet1>

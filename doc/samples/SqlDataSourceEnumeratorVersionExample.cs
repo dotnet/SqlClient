@@ -1,4 +1,5 @@
 using System;
+//<Snippet1>
 using Microsoft.Data.Sql;  
   
 class Program  
@@ -11,8 +12,8 @@ class Program
       SqlDataSourceEnumerator.Instance;  
     System.Data.DataTable table = instance.GetDataSources();  
   
-    // Filter the sources to just show SQL Server 2005 instances.  
-    System.Data.DataRow[] rows = table.Select("Version LIKE '9%'");  
+    // Filter the sources to just show SQL Server 2012 instances.  
+    System.Data.DataRow[] rows = table.Select("Version LIKE '11%'");  
     foreach (System.Data.DataRow row in rows)  
     {  
       Console.WriteLine(row["ServerName"]);  
@@ -21,3 +22,4 @@ class Program
     Console.ReadKey();  
   }  
 } 
+//</Snippet1>
