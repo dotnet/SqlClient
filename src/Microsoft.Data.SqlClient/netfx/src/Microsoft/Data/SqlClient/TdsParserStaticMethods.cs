@@ -221,10 +221,7 @@ namespace Microsoft.Data.SqlClient
             return result;
         }
 
-        static internal long GetTimeoutSeconds(int timeout)
-        {
-            return GetTimeout((long)timeout * 1000L);
-        }
+        internal static long GetTimeoutSeconds(int timeout) => GetTimeout((long)timeout * 1000L);
 
         internal static bool TimeoutHasExpired(long timeoutTime)
         {
