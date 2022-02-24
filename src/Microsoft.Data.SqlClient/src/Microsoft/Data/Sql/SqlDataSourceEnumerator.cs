@@ -7,9 +7,7 @@ using Microsoft.Data.SqlClient.Server;
 
 namespace Microsoft.Data.Sql
 {
-    /// <summary>
-    /// Provides a mechanism for enumerating all available instances of SQL Server within the local network
-    /// </summary>
+    /// <include file='../../../../doc/snippets/Microsoft.Data.Sql/SqlDataSourceEnumerator.xml' path='docs/members[@name="SqlDataSourceEnumerator"]/SqlDataSourceEnumerator/*' />
     public sealed class SqlDataSourceEnumerator : DbDataSourceEnumerator
     {
         private static readonly SqlDataSourceEnumerator s_singletonInstance = new();
@@ -22,15 +20,10 @@ namespace Microsoft.Data.Sql
         {
         }
 
-        /// <summary>
-        /// Gets an instance of the SqlDataSourceEnumerator, which can be used to retrieve information about available SQL Server instances.
-        /// </summary>
+        /// <include file='../../../../doc/snippets/Microsoft.Data.Sql/SqlDataSourceEnumerator.xml' path='docs/members[@name="SqlDataSourceEnumerator"]/Instance/*' />  
         public static SqlDataSourceEnumerator Instance => SqlDataSourceEnumerator.s_singletonInstance;
 
-        /// <summary>
-        /// Provides a mechanism for enumerating all available instances of SQL Server within the local network.
-        /// </summary>
-        /// <returns></returns>
+        /// <include file='../../../../doc/snippets/Microsoft.Data.Sql/SqlDataSourceEnumerator.xml' path='docs/members[@name="SqlDataSourceEnumerator"]/GetDataSources/*' />      
         override public DataTable GetDataSources()
         {
 #if NETFRAMEWORK

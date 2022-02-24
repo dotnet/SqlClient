@@ -34,6 +34,15 @@ namespace Microsoft.Data.Sql
         /// <include file='../../../../doc/snippets/Microsoft.Data.Sql/SqlNotificationRequest.xml' path='docs/members[@name="SqlNotificationRequest"]/UserData/*' />
         public string UserData { get { throw null; } set { } }
     }
+
+    /// <include file='../../../../doc/snippets/Microsoft.Data.Sql/SqlDataSourceEnumerator.xml' path='docs/members[@name="SqlDataSourceEnumerator"]/SqlDataSourceEnumerator/*' />
+    public sealed class SqlDataSourceEnumerator : System.Data.Common.DbDataSourceEnumerator
+    {
+        /// <include file='../../../../doc/snippets/Microsoft.Data.Sql/SqlDataSourceEnumerator.xml' path='docs/members[@name="SqlDataSourceEnumerator"]/Instance/*' />  
+        public static SqlDataSourceEnumerator Instance {get;}
+        /// <include file='../../../../doc/snippets/Microsoft.Data.Sql/SqlDataSourceEnumerator.xml' path='docs/members[@name="SqlDataSourceEnumerator"]/GetDataSources/*' />      
+        public override System.Data.DataTable GetDataSources(){ throw null; }
+    }
 }
 
 namespace Microsoft.Data.SqlClient
