@@ -13,5 +13,9 @@ namespace Microsoft.Data.Sql
         internal static readonly string s_cluster = "Clustered:";
         internal static readonly int s_clusterLength = s_cluster.Length;
         internal static readonly int s_versionLength = s_version.Length;
+        internal const string EndOfServerInstanceDelimiterManaged = ";;";
+        internal const char InstanceKeysDelimiter = ';';
+        internal const string EndOfServerInstanceDelimiterNative = "\0\0\0";
+        internal const char ServerNamesAndInstanceDelimiter = '\\';
     }
 }

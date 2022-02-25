@@ -18,9 +18,6 @@ namespace Microsoft.Data.Sql
     /// </summary>
     internal class SqlDataSourceEnumeratorNativeHelper
     {
-        private const int TimeoutSeconds = ADP.DefaultCommandTimeout;
-        private static long s_timeoutTime;                                // variable used for timeout computations, holds the value of the hi-res performance counter at which this request should expire
-
         /// <summary>
         /// Retrieves a DataTable containing information about all visible SQL Server instances
         /// </summary>
@@ -41,7 +38,7 @@ namespace Microsoft.Data.Sql
             RuntimeHelpers.PrepareConstrainedRegions();
             try
             {
-                s_timeoutTime = TdsParserStaticMethods.GetTimeoutSeconds(TimeoutSeconds);
+                long s_timeoutTime = TdsParserStaticMethods.GetTimeoutSeconds(ADP.DefaultCommandTimeout);
                 RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 { }
@@ -101,7 +98,7 @@ namespace Microsoft.Data.Sql
             string instanceName = null;
             string isClustered = null;
             string version = null;
-            string[] serverinstanceslist = serverInstances.Split(new string[] { "\0\0\0" }, StringSplitOptions.None);
+            string[] serverinstanceslist = serverInstances.Split(new string[] { SqlDataSourceEnumeratorUtil.EndOfServerInstanceDelimiterNative }, StringSplitOptions.None);
             SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDataSourceEnumeratorNativeHelper.ParseServerEnumString|INFO> Number of server instances results recieved are {0}", serverinstanceslist.Length);
 
             // Every row comes in the format "serverName\instanceName;Clustered:[Yes|No];Version:.." 
@@ -115,11 +112,11 @@ namespace Microsoft.Data.Sql
                 {
                     continue;
                 }
-                foreach (string instance2 in value.Split(';'))
+                foreach (string instance2 in value.Split(SqlDataSourceEnumeratorUtil.InstanceKeysDelimiter))
                 {
                     if (serverName == null)
                     {
-                        foreach (string instance3 in instance2.Split('\\'))
+                        foreach (string instance3 in instance2.Split(SqlDataSourceEnumeratorUtil.ServerNamesAndInstanceDelimiter))
                         {
                             if (serverName == null)
                             {

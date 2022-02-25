@@ -15,9 +15,6 @@ namespace Microsoft.Data.SqlClient.Server
     /// </summary>
     internal static class SqlDataSourceEnumeratorManagedHelper 
     {
-        internal const string EndOfServerInstanceDelimiter = ";;";
-        internal const char InstanceKeysDelimiter = ';';
-
         /// <summary>
         /// Provides a mechanism for enumerating all available instances of SQL Server within the local network.
         /// </summary>
@@ -44,13 +41,13 @@ namespace Microsoft.Data.SqlClient.Server
                 return dataTable;
             }
 
-            string[] numOfServerInstances = serverInstances.Split(new[] { EndOfServerInstanceDelimiter }, StringSplitOptions.None);
+            string[] numOfServerInstances = serverInstances.Split(new[] { SqlDataSourceEnumeratorUtil.EndOfServerInstanceDelimiterManaged }, StringSplitOptions.None);
             SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDataSourceEnumeratorManagedHelper.ParseServerEnumString|INFO> Number of server instances results recieved are {0}", numOfServerInstances.Length);
 
             foreach (string currentServerInstance in numOfServerInstances)
             {
                 Dictionary<string, string> InstanceDetails = new();
-                string[] delimitedKeyValues = currentServerInstance.Split(InstanceKeysDelimiter);
+                string[] delimitedKeyValues = currentServerInstance.Split(SqlDataSourceEnumeratorUtil.InstanceKeysDelimiter);
                 string currentKey = string.Empty;
 
                 for (int keyvalue = 0; keyvalue < delimitedKeyValues.Length; keyvalue++)
