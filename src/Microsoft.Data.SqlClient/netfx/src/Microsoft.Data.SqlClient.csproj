@@ -125,6 +125,9 @@
     <Compile Include="..\..\src\Microsoft\Data\Sql\SqlDataSourceEnumeratorNativeHelper.cs">
       <Link>Microsoft\Data\Sql\SqlDataSourceEnumeratorNativeHelper.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\Sql\SqlDataSourceEnumeratorUtil.cs">
+      <Link>Microsoft\Data\Sql\SqlDataSourceEnumeratorUtil.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\DataClassification\SensitivityClassification.cs">
       <Link>Microsoft\Data\SqlClient\DataClassification\SensitivityClassification.cs</Link>
     </Compile>

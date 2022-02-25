@@ -18,14 +18,6 @@ namespace Microsoft.Data.Sql
     /// </summary>
     internal class SqlDataSourceEnumeratorNativeHelper
     {
-        internal const string ServerName = "ServerName";
-        internal const string InstanceName = "InstanceName";
-        internal const string IsClustered = "IsClustered";
-        internal const string Version = "Version";
-        private static readonly string s_version = "Version:";
-        private static readonly string s_cluster = "Clustered:";
-        private static readonly int s_clusterLength = s_cluster.Length;
-        private static readonly int s_versionLength = s_version.Length;
         private const int TimeoutSeconds = ADP.DefaultCommandTimeout;
         private static long s_timeoutTime;                                // variable used for timeout computations, holds the value of the hi-res performance counter at which this request should expire
 
@@ -101,10 +93,10 @@ namespace Microsoft.Data.Sql
         {
             DataTable dataTable = new("SqlDataSources");
             dataTable.Locale = CultureInfo.InvariantCulture;
-            dataTable.Columns.Add(ServerName, typeof(string));
-            dataTable.Columns.Add(InstanceName, typeof(string));
-            dataTable.Columns.Add(IsClustered, typeof(string));
-            dataTable.Columns.Add(Version, typeof(string));
+            dataTable.Columns.Add(SqlDataSourceEnumeratorUtil.ServerName, typeof(string));
+            dataTable.Columns.Add(SqlDataSourceEnumeratorUtil.InstanceName, typeof(string));
+            dataTable.Columns.Add(SqlDataSourceEnumeratorUtil.IsClustered, typeof(string));
+            dataTable.Columns.Add(SqlDataSourceEnumeratorUtil.Version, typeof(string));
             string serverName = null;
             string instanceName = null;
             string isClustered = null;
@@ -141,13 +133,13 @@ namespace Microsoft.Data.Sql
                     }
                     if (isClustered == null)
                     {
-                        Debug.Assert(string.Compare(s_cluster, 0, instance2, 0, s_clusterLength, StringComparison.OrdinalIgnoreCase) == 0);
-                        isClustered = instance2.Substring(s_clusterLength);
+                        Debug.Assert(string.Compare(SqlDataSourceEnumeratorUtil.s_cluster, 0, instance2, 0, SqlDataSourceEnumeratorUtil.s_clusterLength, StringComparison.OrdinalIgnoreCase) == 0);
+                        isClustered = instance2.Substring(SqlDataSourceEnumeratorUtil.s_clusterLength);
                         continue;
                     }
                     Debug.Assert(version == null);
-                    Debug.Assert(string.Compare(s_version, 0, instance2, 0, s_versionLength, StringComparison.OrdinalIgnoreCase) == 0);
-                    version = instance2.Substring(s_versionLength);
+                    Debug.Assert(string.Compare(SqlDataSourceEnumeratorUtil.s_version, 0, instance2, 0, SqlDataSourceEnumeratorUtil.s_versionLength, StringComparison.OrdinalIgnoreCase) == 0);
+                    version = instance2.Substring(SqlDataSourceEnumeratorUtil.s_versionLength);
                 }
 
                 string query = "ServerName='" + serverName + "'";

@@ -11,10 +11,6 @@ namespace Microsoft.Data.Sql
     public sealed class SqlDataSourceEnumerator : DbDataSourceEnumerator
     {
         private static readonly SqlDataSourceEnumerator s_singletonInstance = new();
-        internal const string ServerName = "ServerName";
-        internal const string InstanceName = "InstanceName";
-        internal const string IsClustered = "IsClustered";
-        internal const string Version = "Version";
 
         private SqlDataSourceEnumerator() : base()
         {

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
+using Microsoft.Data.Sql;
 using Microsoft.Data.SqlClient.SNI;
 
 namespace Microsoft.Data.SqlClient.Server
@@ -14,10 +15,6 @@ namespace Microsoft.Data.SqlClient.Server
     /// </summary>
     internal static class SqlDataSourceEnumeratorManagedHelper 
     {
-        internal const string ServerName = "ServerName";
-        internal const string InstanceName = "InstanceName";
-        internal const string IsClustered = "IsClustered";
-        internal const string Version = "Version";
         internal const string EndOfServerInstanceDelimiter = ";;";
         internal const char InstanceKeysDelimiter = ';';
 
@@ -36,10 +33,10 @@ namespace Microsoft.Data.SqlClient.Server
             {
                 Locale = CultureInfo.InvariantCulture
             };
-            dataTable.Columns.Add(ServerName, typeof(string));
-            dataTable.Columns.Add(InstanceName, typeof(string));
-            dataTable.Columns.Add(IsClustered, typeof(string));
-            dataTable.Columns.Add(Version, typeof(string));
+            dataTable.Columns.Add(SqlDataSourceEnumeratorUtil.ServerName, typeof(string));
+            dataTable.Columns.Add(SqlDataSourceEnumeratorUtil.InstanceName, typeof(string));
+            dataTable.Columns.Add(SqlDataSourceEnumeratorUtil.IsClustered, typeof(string));
+            dataTable.Columns.Add(SqlDataSourceEnumeratorUtil.Version, typeof(string));
             DataRow dataRow;
 
             if (serverInstances.Length == 0)
@@ -71,14 +68,14 @@ namespace Microsoft.Data.SqlClient.Server
                 if (InstanceDetails.Count > 0)
                 {
                     dataRow = dataTable.NewRow();
-                    dataRow[0] = InstanceDetails.ContainsKey(ServerName) == true ?
-                                 InstanceDetails[ServerName] : string.Empty;
-                    dataRow[1] = InstanceDetails.ContainsKey(InstanceName) == true ?
-                                 InstanceDetails[InstanceName] : string.Empty;
-                    dataRow[2] = InstanceDetails.ContainsKey(IsClustered) == true ?
-                                 InstanceDetails[IsClustered] : string.Empty;
-                    dataRow[3] = InstanceDetails.ContainsKey(Version) == true ?
-                                 InstanceDetails[Version] : string.Empty;
+                    dataRow[0] = InstanceDetails.ContainsKey(SqlDataSourceEnumeratorUtil.ServerName) == true ?
+                                 InstanceDetails[SqlDataSourceEnumeratorUtil.ServerName] : string.Empty;
+                    dataRow[1] = InstanceDetails.ContainsKey(SqlDataSourceEnumeratorUtil.InstanceName) == true ?
+                                 InstanceDetails[SqlDataSourceEnumeratorUtil.InstanceName] : string.Empty;
+                    dataRow[2] = InstanceDetails.ContainsKey(SqlDataSourceEnumeratorUtil.IsClustered) == true ?
+                                 InstanceDetails[SqlDataSourceEnumeratorUtil.IsClustered] : string.Empty;
+                    dataRow[3] = InstanceDetails.ContainsKey(SqlDataSourceEnumeratorUtil.Version) == true ?
+                                 InstanceDetails[SqlDataSourceEnumeratorUtil.Version] : string.Empty;
 
                     dataTable.Rows.Add(dataRow);
                 }
