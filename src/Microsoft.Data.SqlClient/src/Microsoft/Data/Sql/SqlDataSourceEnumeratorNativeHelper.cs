@@ -1,22 +1,23 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
+
 using System;
 using System.Data;
 using System.Diagnostics;
-using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Security;
 using System.Text;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient;
+using static Microsoft.Data.Sql.SqlDataSourceEnumeratorUtil;
 
 namespace Microsoft.Data.Sql
 {
     /// <summary>
     /// Provides a mechanism for enumerating all available instances of SQL Server within the local network
     /// </summary>
-    internal class SqlDataSourceEnumeratorNativeHelper
+    internal static class SqlDataSourceEnumeratorNativeHelper
     {
         /// <summary>
         /// Retrieves a DataTable containing information about all visible SQL Server instances
@@ -28,7 +29,7 @@ namespace Microsoft.Data.Sql
             char[] buffer = null;
             StringBuilder strbldr = new();
 
-            int bufferSize = 65536;
+            int bufferSize = 1024;
             int readLength = 0;
             buffer = new char[bufferSize];
             bool more = true;
@@ -45,26 +46,31 @@ namespace Microsoft.Data.Sql
                 finally
                 {
                     handle = SNINativeMethodWrapper.SNIServerEnumOpen();
+                    SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> {3} returned handle = {4}.",
+                                                           nameof(SqlDataSourceEnumeratorNativeHelper),
+                                                           nameof(GetDataSources),
+                                                           nameof(SNINativeMethodWrapper.SNIServerEnumOpen), handle);
                 }
 
                 if (handle != ADP.s_ptrZero)
                 {
                     while (more && !TdsParserStaticMethods.TimeoutHasExpired(s_timeoutTime))
                     {
-#if NETFRAMEWORK
                         readLength = SNINativeMethodWrapper.SNIServerEnumRead(handle, buffer, bufferSize, out more);
-#else
-                        readLength = SNINativeMethodWrapper.SNIServerEnumRead(handle, buffer, bufferSize, out more);
-#endif
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDataSourceEnumeratorNativeHelper.GetDataSources|INFO> GetDataSources:SNIServerEnumRead returned readlength {0}", readLength);
+
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> {2} returned 'readlength':{3}, and 'more':{4} with 'bufferSize' of {5}",
+                                                               nameof(SqlDataSourceEnumeratorNativeHelper),
+                                                               nameof(GetDataSources),
+                                                               nameof(SNINativeMethodWrapper.SNIServerEnumRead),
+                                                               readLength, more, bufferSize);
                         if (readLength > bufferSize)
                         {
                             failure = true;
                             more = false;
                         }
-                        else if (0 < readLength)
+                        else if (readLength > 0)
                         {
-                            strbldr.Append(buffer);
+                            strbldr.Append(buffer, 0, readLength);
                         }
                     }
                 }
@@ -74,69 +80,75 @@ namespace Microsoft.Data.Sql
                 if (handle != ADP.s_ptrZero)
                 {
                     SNINativeMethodWrapper.SNIServerEnumClose(handle);
+                    SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> {3} called.",
+                                                           nameof(SqlDataSourceEnumeratorNativeHelper),
+                                                           nameof(GetDataSources),
+                                                           nameof(SNINativeMethodWrapper.SNIServerEnumClose));
                 }
             }
 
             if (failure)
             {
-                Debug.Assert(false, "GetDataSources:SNIServerEnumRead returned bad length");
-                SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDataSourceEnumerator.GetDataSources|ERR> GetDataSources:SNIServerEnumRead returned bad length, requested %d, received %d", bufferSize, readLength);
-                throw ADP.ArgumentOutOfRange("readLength");
+                Debug.Assert(false, $"{nameof(GetDataSources)}:{nameof(SNINativeMethodWrapper.SNIServerEnumRead)} returned bad length");
+                SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|ERR> {2} returned bad length, requested buffer {3}, received {4}",
+                                                       nameof(SqlDataSourceEnumeratorNativeHelper),
+                                                       nameof(GetDataSources),
+                                                       nameof(SNINativeMethodWrapper.SNIServerEnumRead),
+                                                       bufferSize, readLength);
+
+                throw ADP.ArgumentOutOfRange(StringsHelper.GetString(Strings.ADP_ParameterValueOutOfRange, readLength), nameof(readLength));
             }
             return ParseServerEnumString(strbldr.ToString());
         }
 
-        static private System.Data.DataTable ParseServerEnumString(string serverInstances)
+        private static DataTable ParseServerEnumString(string serverInstances)
         {
-            DataTable dataTable = new("SqlDataSources");
-            dataTable.Locale = CultureInfo.InvariantCulture;
-            dataTable.Columns.Add(SqlDataSourceEnumeratorUtil.ServerName, typeof(string));
-            dataTable.Columns.Add(SqlDataSourceEnumeratorUtil.InstanceName, typeof(string));
-            dataTable.Columns.Add(SqlDataSourceEnumeratorUtil.IsClustered, typeof(string));
-            dataTable.Columns.Add(SqlDataSourceEnumeratorUtil.Version, typeof(string));
+            DataTable dataTable = PrepareDataTable();
             string serverName = null;
             string instanceName = null;
             string isClustered = null;
             string version = null;
-            string[] serverinstanceslist = serverInstances.Split(new string[] { SqlDataSourceEnumeratorUtil.EndOfServerInstanceDelimiterNative }, StringSplitOptions.None);
-            SqlClientEventSource.Log.TryTraceEvent("<sc.SqlDataSourceEnumeratorNativeHelper.ParseServerEnumString|INFO> Number of server instances results recieved are {0}", serverinstanceslist.Length);
+            string[] serverinstanceslist = serverInstances.Split(EndOfServerInstanceDelimiter_Native);
+            SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> Number of recieved server instances are {2}",
+                                                   nameof(SqlDataSourceEnumeratorNativeHelper), nameof(ParseServerEnumString), serverinstanceslist.Length);
 
             // Every row comes in the format "serverName\instanceName;Clustered:[Yes|No];Version:.." 
             // Every row is terminated by a null character.
             // Process one row at a time
             foreach (string instance in serverinstanceslist)
             {
-                //  string value = instance.Trim('\0'); // MDAC 91934
-                string value = instance.Replace("\0", "");
-                if (0 == value.Length)
+                string value = instance.Trim(EndOfServerInstanceDelimiter_Native); // MDAC 91934
+                if (value.Length == 0)
                 {
                     continue;
                 }
-                foreach (string instance2 in value.Split(SqlDataSourceEnumeratorUtil.InstanceKeysDelimiter))
+                foreach (string instance2 in value.Split(InstanceKeysDelimiter))
                 {
                     if (serverName == null)
                     {
-                        foreach (string instance3 in instance2.Split(SqlDataSourceEnumeratorUtil.ServerNamesAndInstanceDelimiter))
+                        foreach (string instance3 in instance2.Split(ServerNamesAndInstanceDelimiter))
                         {
                             if (serverName == null)
                             {
                                 serverName = instance3;
                                 continue;
                             }
-                            Debug.Assert(instanceName == null);
+                            Debug.Assert(instanceName == null, $"{nameof(instanceName)}({instanceName}) is not null.");
                             instanceName = instance3;
                         }
                         continue;
                     }
                     if (isClustered == null)
                     {
-                        Debug.Assert(string.Compare(SqlDataSourceEnumeratorUtil.s_cluster, 0, instance2, 0, SqlDataSourceEnumeratorUtil.s_clusterLength, StringComparison.OrdinalIgnoreCase) == 0);
-                        isClustered = instance2.Substring(SqlDataSourceEnumeratorUtil.s_clusterLength);
+                        Debug.Assert(string.Compare(Clustered, 0, instance2, 0, s_clusteredLength, StringComparison.OrdinalIgnoreCase) == 0,
+                                     $"{nameof(Clustered)} ({Clustered}) doesn't equal {nameof(instance2)} ({instance2})");
+                        isClustered = instance2.Substring(s_clusteredLength);
                         continue;
                     }
-                    Debug.Assert(version == null);
-                    Debug.Assert(string.Compare(SqlDataSourceEnumeratorUtil.s_version, 0, instance2, 0, SqlDataSourceEnumeratorUtil.s_versionLength, StringComparison.OrdinalIgnoreCase) == 0);
-                    version = instance2.Substring(SqlDataSourceEnumeratorUtil.s_versionLength);
+                    Debug.Assert(version == null, $"{nameof(version)}({version}) is not null.");
+                    Debug.Assert(string.Compare(SqlDataSourceEnumeratorUtil.Version, 0, instance2, 0, s_versionLength, StringComparison.OrdinalIgnoreCase) == 0,
+                                 $"{nameof(SqlDataSourceEnumeratorUtil.Version)} ({SqlDataSourceEnumeratorUtil.Version}) doesn't equal {nameof(instance2)} ({instance2})");
+                    version = instance2.Substring(s_versionLength);
                 }
 
                 string query = "ServerName='" + serverName + "'";
@@ -161,11 +173,7 @@ namespace Microsoft.Data.Sql
                 isClustered = null;
                 version = null;
             }
-            foreach (DataColumn column in dataTable.Columns)
-            {
-                column.ReadOnly = true;
-            }
-            return dataTable;
+            return dataTable.SetColumnsReadOnly();
         }
     }
 }
