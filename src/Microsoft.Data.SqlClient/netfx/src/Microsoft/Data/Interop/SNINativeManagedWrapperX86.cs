@@ -141,7 +141,10 @@ namespace Microsoft.Data.SqlClient
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIServerEnumCloseWrapper")]
         internal static extern void SNIServerEnumClose([In] IntPtr packet);
 
-        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIServerEnumReadWrapper")]
-        internal static extern int SNIServerEnumRead([In] IntPtr packet, [In, Out] char[] readBuffer, int bufferLength, out bool more);
+        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIServerEnumReadWrapper", CharSet = CharSet.Unicode)]
+        internal static extern int SNIServerEnumRead([In] IntPtr packet,
+                                                     [In, Out][MarshalAs(UnmanagedType.LPArray)] char[] readBuffer,
+                                                     [In] int bufferLength,
+                                                     [MarshalAs(UnmanagedType.Bool)] out bool more);
     }
 }

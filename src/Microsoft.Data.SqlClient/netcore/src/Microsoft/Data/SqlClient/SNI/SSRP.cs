@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClient.SNI
 {
-    internal class SSRP
+    internal sealed class SSRP
     {
         private const char SemicolonSeparator = ';';
         private const int SqlServerBrowserPort = 1434; //port SQL Server Browser
@@ -78,11 +78,11 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 const byte ClntUcastInst = 0x04;
                 instanceName += char.MinValue;
-                int byteCount = Encoding.ASCII.GetByteCount(instanceName);
+                int byteCount = Encoding.UTF7.GetByteCount(instanceName);
 
                 byte[] requestPacket = new byte[byteCount + 1];
                 requestPacket[0] = ClntUcastInst;
-                Encoding.ASCII.GetBytes(instanceName, 0, instanceName.Length, requestPacket, 1);
+                Encoding.UTF7.GetBytes(instanceName, 0, instanceName.Length, requestPacket, 1);
 
                 return requestPacket;
             }
@@ -127,12 +127,12 @@ namespace Microsoft.Data.SqlClient.SNI
             const byte ClntUcastDac = 0x0F;
             const byte ProtocolVersion = 0x01;
             instanceName += char.MinValue;
-            int byteCount = Encoding.ASCII.GetByteCount(instanceName);
+            int byteCount = Encoding.UTF7.GetByteCount(instanceName);
 
             byte[] requestPacket = new byte[byteCount + 2];
             requestPacket[0] = ClntUcastDac;
             requestPacket[1] = ProtocolVersion;
-            Encoding.ASCII.GetBytes(instanceName, 0, instanceName.Length, requestPacket, 2);
+            Encoding.UTF7.GetBytes(instanceName, 0, instanceName.Length, requestPacket, 2);
 
             return requestPacket;
         }
@@ -184,7 +184,9 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             StringBuilder response = new StringBuilder();
             byte[] CLNT_BCAST_EX_Request = new byte[1] { CLNT_BCAST_EX }; //0x02
-            int currentTimeOut = FirstTimeoutForCLNT_BCAST_EX; //wait 5 secs for first response and every 1 sec upto 15 secs (https://docs.microsoft.com/en-us/openspecs/windows_protocols/mc-sqlr/f2640a2d-3beb-464b-a443-f635842ebc3e#Appendix_A_3)
+            // Waits 5 seconds for the first response and every 1 second up to 15 seconds
+            // https://docs.microsoft.com/en-us/openspecs/windows_protocols/mc-sqlr/f2640a2d-3beb-464b-a443-f635842ebc3e#Appendix_A_3
+            int currentTimeOut = FirstTimeoutForCLNT_BCAST_EX; 
 
             using (TrySNIEventScope.Create(nameof(SSRP)))
             {
@@ -203,7 +205,7 @@ namespace Microsoft.Data.SqlClient.SNI
                             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.INFO, "Received instnace info from UDP Client.");
                             if (receiveTask.Result.Buffer.Length < ValidResponseSizeForCLNT_BCAST_EX) //discard invalid response
                             {
-                                response.Append(Encoding.ASCII.GetString(receiveTask.Result.Buffer, ServerResponseHeaderSizeForCLNT_BCAST_EX, receiveTask.Result.Buffer.Length - ServerResponseHeaderSizeForCLNT_BCAST_EX)); //RESP_DATA(VARIABLE) - 3 (RESP_SIZE + SVR_RESP)
+                                response.Append(Encoding.UTF7.GetString(receiveTask.Result.Buffer, ServerResponseHeaderSizeForCLNT_BCAST_EX, receiveTask.Result.Buffer.Length - ServerResponseHeaderSizeForCLNT_BCAST_EX)); //RESP_DATA(VARIABLE) - 3 (RESP_SIZE + SVR_RESP)
                             }
                         }
                     }
