@@ -78,11 +78,11 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 const byte ClntUcastInst = 0x04;
                 instanceName += char.MinValue;
-                int byteCount = Encoding.UTF7.GetByteCount(instanceName);
+                int byteCount = Encoding.ASCII.GetByteCount(instanceName);
 
                 byte[] requestPacket = new byte[byteCount + 1];
                 requestPacket[0] = ClntUcastInst;
-                Encoding.UTF7.GetBytes(instanceName, 0, instanceName.Length, requestPacket, 1);
+                Encoding.ASCII.GetBytes(instanceName, 0, instanceName.Length, requestPacket, 1);
 
                 return requestPacket;
             }
@@ -127,12 +127,12 @@ namespace Microsoft.Data.SqlClient.SNI
             const byte ClntUcastDac = 0x0F;
             const byte ProtocolVersion = 0x01;
             instanceName += char.MinValue;
-            int byteCount = Encoding.UTF7.GetByteCount(instanceName);
+            int byteCount = Encoding.ASCII.GetByteCount(instanceName);
 
             byte[] requestPacket = new byte[byteCount + 2];
             requestPacket[0] = ClntUcastDac;
             requestPacket[1] = ProtocolVersion;
-            Encoding.UTF7.GetBytes(instanceName, 0, instanceName.Length, requestPacket, 2);
+            Encoding.ASCII.GetBytes(instanceName, 0, instanceName.Length, requestPacket, 2);
 
             return requestPacket;
         }
