@@ -3,6 +3,24 @@
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
+## [Stable release 4.1.0] - 2022-01-31
+
+### Added
+
+- Added new Attestation Protocol `None` for `VBS` enclave types. This protocol will allow users to forgo enclave attestation for VBS enclaves. [#1419](https://github.com/dotnet/SqlClient/pull/1419) [#1425](https://github.com/dotnet/SqlClient/pull/1425)
+
+## [Stable release 4.0.1] - 2022-01-17
+
+### Added
+
+Added AppContext switch `SuppressInsecureTLSWarning` to allow suppression of TLS security warning when using `Encrypt=false` in the connection string. [#1457](https://github.com/dotnet/SqlClient/pull/1457) 
+
+### Fixed
+
+- Fixed Kerberos authentication failure when using .NET 6. [#1411](https://github.com/dotnet/SqlClient/pull/1411)
+- Fixed connection failure when using `SqlLocalDB` instance pipe name. [#1433](https://github.com/dotnet/SqlClient/pull/1433)
+- Fixed a failure when executing concurrent queries requiring enclaves. [#1451](https://github.com/dotnet/SqlClient/pull/1451)
+- Updated obsolete API calls targeting .NET 6. [#1401](https://github.com/dotnet/SqlClient/pull/1401)
 
 ## [Stable Release 4.0.0] - 2021-11-18
 

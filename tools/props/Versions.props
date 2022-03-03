@@ -2,12 +2,21 @@
 <Project ToolsVersion="Current" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <AssemblyFileVersion Condition="'$(AssemblyFileVersion)' == ''">1.0.0.0</AssemblyFileVersion>
-    <!-- This Assembly version corresponds to version of Microsoft.Data.SqlClient v2.0.0 Assembly. -->
+    <!-- This Assembly version corresponds to version of Microsoft.Data.SqlClient Assembly. -->
     <!-- Should only be changed in future when a non-backwards compatible driver is released. -->
     <!-- Future Assembly Version values shall be Major.Minor.0.0; e.g. 4.0.0.0 -->
-    <AssemblyVersion>4.0.0.0</AssemblyVersion>
+    <AssemblyVersion>5.0.0.0</AssemblyVersion>
     <NugetPackageVersion Condition="'$(NugetPackageVersion)' == ''">5.0.0-dev</NugetPackageVersion>
     <Version>$(NugetPackageVersion)</Version>
+  </PropertyGroup>
+  <PropertyGroup>
+    <!-- This version section corresponds to version info of Microsoft.SqlServer.Server Assembly. -->
+    <!-- Should only be changed in future when a non-backwards compatible driver is released. -->
+    <!-- Future Assembly Version values shall be Major.Minor.0.0; e.g. 1.0.0.0 -->
+    <SqlServerAssemblyVersion>1.0.0.0</SqlServerAssemblyVersion>
+    <SqlServerAssemblyFileVersion Condition="'$(SqlServerAssemblyFileVersion)' == ''">1.0.0.0</SqlServerAssemblyFileVersion>
+    <SqlServerPackageVersion Condition="'$(SqlServerPackageVersion)' == ''">1.0.0-dev</SqlServerPackageVersion>
+    <SqlServerLibVersion>$(SqlServerPackageVersion)</SqlServerLibVersion>
   </PropertyGroup>
   <!-- NetFx project dependencies -->
   <PropertyGroup>

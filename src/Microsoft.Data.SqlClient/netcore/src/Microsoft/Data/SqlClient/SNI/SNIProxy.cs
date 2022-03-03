@@ -342,8 +342,7 @@ namespace Microsoft.Data.SqlClient.SNI
         private static string GetLocalDBDataSource(string fullServerName, out bool error)
         {
             string localDBConnectionString = null;
-            bool isBadLocalDBDataSource;
-            string localDBInstance = DataSource.GetLocalDBInstance(fullServerName, out isBadLocalDBDataSource);
+            string localDBInstance = DataSource.GetLocalDBInstance(fullServerName, out bool isBadLocalDBDataSource);
 
             if (isBadLocalDBDataSource)
             {
@@ -381,6 +380,7 @@ namespace Microsoft.Data.SqlClient.SNI
         private const string Slash = @"/";
         private const string PipeToken = "pipe";
         private const string LocalDbHost = "(localdb)";
+        private const string LocalDbHost_NP = @"np:\\.\pipe\LOCALDB#";
         private const string NamedPipeInstanceNameHeader = "mssql$";
         private const string DefaultPipeName = "sql\\query";
 
@@ -482,11 +482,9 @@ namespace Microsoft.Data.SqlClient.SNI
         internal static string GetLocalDBInstance(string dataSource, out bool error)
         {
             string instanceName = null;
-
             // ReadOnlySpan is not supported in netstandard 2.0, but installing System.Memory solves the issue
             ReadOnlySpan<char> input = dataSource.AsSpan().TrimStart();
             error = false;
-
             // NetStandard 2.0 does not support passing a string to ReadOnlySpan<char>
             if (input.StartsWith(LocalDbHost.AsSpan().Trim(), StringComparison.InvariantCultureIgnoreCase))
             {
@@ -507,6 +505,11 @@ namespace Microsoft.Data.SqlClient.SNI
                     error = true;
                 }
             }
+            else if (input.StartsWith(LocalDbHost_NP.AsSpan().Trim(), StringComparison.InvariantCultureIgnoreCase))
+            {
+                instanceName = input.Trim().ToString();
+            }
+
             return instanceName;
         }
 
