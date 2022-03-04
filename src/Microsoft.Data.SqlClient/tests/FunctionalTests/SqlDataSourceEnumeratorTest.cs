@@ -17,10 +17,17 @@ namespace Microsoft.Data.SqlClient.Tests
         {
             ServiceController sc = new("SQLBrowser");
             Assert.Equal(ServiceControllerStatus.Running, sc.Status);
-
+         
             SqlDataSourceEnumerator instance = SqlDataSourceEnumerator.Instance;
-            DataTable table = instance.GetDataSources();
-            Assert.NotEmpty(table.Rows);
+            if (AppContext.TryGetSwitch("Switch.Microsoft.Data.SqlClient.UseManagedNetworkingOnWindows", out bool isEnabled))
+            {
+                Assert.Throws<NotImplementedException>(() => instance.GetDataSources());
+            }
+            else
+            {
+                DataTable table = instance.GetDataSources();
+                Assert.NotEmpty(table.Rows);
+            }
         }
     }
 }

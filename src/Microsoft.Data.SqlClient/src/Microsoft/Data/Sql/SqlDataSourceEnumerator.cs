@@ -1,6 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
+using System;
 using System.Data;
 using System.Data.Common;
 using Microsoft.Data.SqlClient.Server;
@@ -25,7 +26,7 @@ namespace Microsoft.Data.Sql
 #if NETFRAMEWORK
             return SqlDataSourceEnumeratorNativeHelper.GetDataSources();
 #else
-            return SqlClient.TdsParserStateObjectFactory.UseManagedSNI ? SqlDataSourceEnumeratorManagedHelper.GetDataSources() : SqlDataSourceEnumeratorNativeHelper.GetDataSources();
+            return SqlClient.TdsParserStateObjectFactory.UseManagedSNI ? throw new NotImplementedException() : SqlDataSourceEnumeratorNativeHelper.GetDataSources();
 #endif
         }
     }
