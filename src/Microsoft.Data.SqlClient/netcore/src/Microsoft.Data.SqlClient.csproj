@@ -169,9 +169,6 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SmiMetaDataProperty.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiMetaDataProperty.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlSequentialStream.cs">
-      <Link>Microsoft\Data\SqlClient\SqlSequentialStream.cs</Link>
-    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\ColumnEncryptionKeyInfo.cs">
       <Link>Microsoft\Data\SqlClient\ColumnEncryptionKeyInfo.cs</Link>
     </Compile>
@@ -564,6 +561,9 @@
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\EnclavePackage.cs">
       <Link>Microsoft\Data\SqlClient\EnclavePackage.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlSequentialStream.cs">
+      <Link>Microsoft\Data\SqlClient\SqlSequentialStream.cs</Link>
     </Compile>
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.cs" />
 
