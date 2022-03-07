@@ -166,3 +166,11 @@ dotnet_code_quality.ca1802.api_surface = private, internal
 
 [*.cs]
 dotnet_code_quality.CA2100.excluded_type_names_with_derived_types = Microsoft.Data.SqlClient.ManualTesting.Tests.*
+
+# SYSLIB0014: Type or member is obsolete
+dotnet_diagnostic.SYSLIB0014.severity = none
+
+# Disable these as there is no way to avoid them.
+
+# CS0109: The member 'member' does not hide an inherited member. The new keyword is not required.
+dotnet_diagnostic.CS0109.severity = none

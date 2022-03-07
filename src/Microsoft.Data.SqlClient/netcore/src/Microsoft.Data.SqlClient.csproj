@@ -9,10 +9,6 @@
     <TargetsUnix Condition="'$(OSGroup)'=='Unix'">true</TargetsUnix>
     <!-- Allow explicit addition of the Compile files instead of all project files to be included by Default -->
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <!-- special case for .NET 6+. -->
-    <TargetGroup Condition="'$(TargetFramework)' == 'net6.0'">netcoreapp</TargetGroup>
-    <TargetGroup Condition="$(TargetFramework.StartsWith('netcoreapp'))">netcoreapp</TargetGroup>
-    <TargetGroup Condition="$(TargetFramework.StartsWith('netstandard'))">netstandard</TargetGroup>
     <Configurations>Debug;Release;</Configurations>
     <Platforms>AnyCPU;x64;x86</Platforms>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration).$(Platform)\$(AssemblyName)\netcore\</IntermediateOutputPath>
@@ -21,10 +17,10 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Product>Core $(BaseProduct)</Product>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(TargetGroup)' == 'netcoreapp'">
+  <PropertyGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'">
     <DefineConstants>$(DefineConstants);NETCOREAPP;</DefineConstants>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(TargetGroup)' == 'netstandard'">
+  <PropertyGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETStandard'">
     <DefineConstants>$(DefineConstants);NETSTANDARD;</DefineConstants>
   </PropertyGroup>
   <PropertyGroup>
@@ -502,10 +498,10 @@
       <Link>Resources\StringsHelper.cs</Link>
     </Compile>
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetGroup)' == 'netstandard' OR '$(TargetGroup)' == 'netcoreapp' OR '$(IsUAPAssembly)' == 'true'">
+  <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETStandard' OR '$(TargetFrameworkIdentifier)' == '.NETCoreApp' OR '$(IsUAPAssembly)' == 'true'">
     <Compile Include="Microsoft.Data.SqlClient.TypeForwards.cs" />
   </ItemGroup>
-  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netstandard' AND '$(TargetFramework)' == 'netstandard2.0'">
+  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetFrameworkIdentifier)' == '.NETStandard' AND '$(TargetFramework)' == 'netstandard2.0'">
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\EnclaveDelegate.NotSupported.cs">
       <Link>Microsoft\Data\SqlClient\EnclaveDelegate.NotSupported.cs</Link>
     </Compile>
@@ -513,7 +509,7 @@
       <Link>Microsoft\Data\SqlClient\SqlEnclaveAttestationParameters.NotSupported.cs</Link>
     </Compile>
   </ItemGroup>
-  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netstandard'">
+  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetFrameworkIdentifier)' == '.NETStandard'">
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIStreams.Task.cs" />    
     <Compile Include="Microsoft\Data\SqlClient\SNI\SslOverTdsStream.NetStandard.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.NetStandard.cs" />
@@ -556,7 +552,7 @@
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetFramework)' != 'netstandard2.0'">
     <Compile Include="Microsoft\Data\SqlClient\SqlClientEventSource.NetCoreApp.cs" />
   </ItemGroup>
-  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netcoreapp'">
+  <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetFrameworkIdentifier)' == '.NETCoreApp'">
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlDependencyUtils.AssemblyLoadContext.cs">
       <Link>Microsoft\Data\SqlClient\SqlDependencyUtils.AssemblyLoadContext.cs</Link>
     </Compile>
@@ -722,7 +718,7 @@
     <Compile Include="Microsoft\Data\SqlTypes\SqlFileStream.Windows.cs" />
   </ItemGroup>
   <!-- Manage the SNI toggle for Windows netstandard and UWP -->
-  <ItemGroup Condition="('$(TargetGroup)' == 'netstandard' OR '$(TargetGroup)' == 'netcoreapp') AND '$(TargetsWindows)' == 'true'">
+  <ItemGroup Condition="('$(TargetFrameworkIdentifier)' == '.NETStandard' OR '$(TargetFrameworkIdentifier)' == '.NETCoreApp') AND '$(TargetsWindows)' == 'true'">
     <!-- Manage the SNI toggle for Windows netstandard and UWP -->
     <Compile Include="Microsoft\Data\SqlClient\PacketHandle.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SessionHandle.Windows.cs" />
@@ -932,9 +928,6 @@
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectFactory.Managed.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.Unix.cs" />
   </ItemGroup>
-  <ItemGroup Condition="'$(TargetsWindows)' == 'true' and '$(IsUAPAssembly)' != 'true'">
-    <Reference Include="Microsoft.Win32.Registry" />
-  </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(IsUAPAssembly)' == 'true'">
     <Reference Include="System.Collections.NonGeneric" />
     <Reference Include="System.Memory" />
@@ -945,24 +938,24 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Condition="'$(TargetsWindows)' == 'true' and '$(IsUAPAssembly)' != 'true' and '$(TargetFramework)' != 'net6.0'" Include="Microsoft.Win32.Registry" Version="$(MicrosoftWin32RegistryVersion)" />
-    <PackageReference Include="System.Configuration.ConfigurationManager" Version="$(SystemConfigurationConfigurationManagerVersion)" />
-    <PackageReference Include="System.Security.Permissions" Version="$(SystemSecurityPermissionsVersion)" />
-    <PackageReference Condition="'$(TargetFramework)' != 'net6.0'" Include="System.Security.Principal.Windows" Version="$(SystemSecurityPrincipalWindowsVersion)" />
-    <PackageReference Condition="'$(TargetFramework)' != 'net6.0'" Include="System.Text.Encoding.CodePages" Version="$(SystemTextEncodingCodePagesVersion)" />
-    <PackageReference Condition="'$(TargetFramework)' != 'net6.0'" Include="System.Text.Encodings.Web" Version="$(SystemTextEncodingsWebVersion)" />
+    <PackageReference Condition="'$(TargetsWindows)' == 'true' and '$(IsUAPAssembly)' != 'true' and ('$(TargetFrameworkIdentifier)' == '.NETStandard' or ('$(TargetFrameworkIdentifier)' == '.NETCoreApp' and $([MSBuild]::VersionLessThan($(TargetFrameworkVersion), 6.0))))" Include="Microsoft.Win32.Registry" Version="$(MicrosoftWin32RegistryVersion)" />
+    <PackageReference Condition="'$(TargetFrameworkIdentifier)' == '.NETStandard' or '$(TargetFrameworkIdentifier)' == '.NETCoreApp'" Include="System.Configuration.ConfigurationManager" Version="$(SystemConfigurationConfigurationManagerVersion)" />
+    <PackageReference Condition="'$(TargetFrameworkIdentifier)' == '.NETStandard' or ('$(TargetFrameworkIdentifier)' == '.NETCoreApp' and $([MSBuild]::VersionLessThan($(TargetFrameworkVersion), 6.0)))" Include="System.Security.Permissions" Version="$(SystemSecurityPermissionsVersion)" />
+    <PackageReference Condition="'$(TargetFrameworkIdentifier)' == '.NETStandard' or ('$(TargetFrameworkIdentifier)' == '.NETCoreApp' and $([MSBuild]::VersionLessThan($(TargetFrameworkVersion), 6.0)))" Include="System.Security.Principal.Windows" Version="$(SystemSecurityPrincipalWindowsVersion)" />
+    <PackageReference Condition="'$(TargetFrameworkIdentifier)' == '.NETStandard' or ('$(TargetFrameworkIdentifier)' == '.NETCoreApp' and $([MSBuild]::VersionLessThan($(TargetFrameworkVersion), 3.1)))" Include="System.Text.Encoding.CodePages" Version="$(SystemTextEncodingCodePagesVersion)" />
+    <PackageReference Condition="'$(TargetFrameworkIdentifier)' == '.NETStandard' or ('$(TargetFrameworkIdentifier)' == '.NETCoreApp' and $([MSBuild]::VersionLessThan($(TargetFrameworkVersion), 3.1)))" Include="System.Text.Encodings.Web" Version="$(SystemTextEncodingsWebVersion)" />
     <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" Version="$(MicrosoftDataSqlClientSNIRuntimeVersion)" />
-    <PackageReference Condition="$(TargetGroup) == 'netcoreapp' and '$(TargetFramework)' != 'net6.0'" Include="System.Diagnostics.DiagnosticSource" Version="$(SystemDiagnosticsDiagnosticSourceVersion)" />
+    <PackageReference Condition="'$(TargetFrameworkIdentifier)' == '.NETStandard' or ('$(TargetFrameworkIdentifier)' == '.NETCoreApp' and $([MSBuild]::VersionLessThan($(TargetFrameworkVersion), 3.1)))" Include="System.Diagnostics.DiagnosticSource" Version="$(SystemDiagnosticsDiagnosticSourceVersion)" />
     <PackageReference Include="Azure.Identity" Version="$(AzureIdentityVersion)" />
     <PackageReference Include="Microsoft.Identity.Client" Version="$(MicrosoftIdentityClientVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="$(MicrosoftIdentityModelProtocolsOpenIdConnectVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="$(MicrosoftIdentityModelJsonWebTokensVersion)" />
-    <PackageReference Condition="'$(TargetFramework)' != 'net6.0'" Include="System.IO" Version="$(SystemIOVersion)" />
-    <PackageReference Condition="'$(TargetFramework)' != 'net6.0'" Include="System.Resources.ResourceManager" Version="$(SystemResourcesResourceManagerVersion)" />
-    <PackageReference Condition="'$(TargetFramework)' != 'net6.0'" Include="System.Buffers" Version="$(SystemBuffersVersion)" />
+    <PackageReference Condition="('$(TargetFrameworkIdentifier)' == '.NETStandard' and $([MSBuild]::VersionLessThan($(TargetFrameworkVersion), 2.1))) or ('$(TargetFrameworkIdentifier)' == '.NETCoreApp' and $([MSBuild]::VersionLessThan($(TargetFrameworkVersion), 3.1)))" Include="System.IO" Version="$(SystemIOVersion)" />
+    <PackageReference Condition="('$(TargetFrameworkIdentifier)' == '.NETStandard' and $([MSBuild]::VersionLessThan($(TargetFrameworkVersion), 2.1))) or ('$(TargetFrameworkIdentifier)' == '.NETCoreApp' and $([MSBuild]::VersionLessThan($(TargetFrameworkVersion), 3.1)))" Include="System.Resources.ResourceManager" Version="$(SystemResourcesResourceManagerVersion)" />
+    <PackageReference Condition="('$(TargetFrameworkIdentifier)' == '.NETStandard' and $([MSBuild]::VersionLessThan($(TargetFrameworkVersion), 2.1))) or ('$(TargetFrameworkIdentifier)' == '.NETCoreApp' and $([MSBuild]::VersionLessThan($(TargetFrameworkVersion), 3.1)))" Include="System.Buffers" Version="$(SystemBuffersVersion)" />
     <PackageReference Include="System.Runtime.Caching" Version="$(SystemRuntimeCachingVersion)" />
-    <PackageReference Condition="$(TargetGroup) == 'netstandard'" Include="System.Runtime.Loader" Version="$(SystemRuntimeLoaderVersion)" />
-    <PackageReference Condition="'$(TargetFramework)' != 'net6.0'" Include="System.Security.Cryptography.Cng" Version="$(SystemSecurityCryptographyCngVersion)" />
+    <PackageReference Condition="'$(TargetFrameworkIdentifier)' == '.NETStandard'" Include="System.Runtime.Loader" Version="$(SystemRuntimeLoaderVersion)" />
+    <PackageReference Condition="'$(TargetFrameworkIdentifier)' == '.NETStandard' or ('$(TargetFrameworkIdentifier)' == '.NETCoreApp' and $([MSBuild]::VersionLessThan($(TargetFrameworkVersion), 6.0)))" Include="System.Security.Cryptography.Cng" Version="$(SystemSecurityCryptographyCngVersion)" />
     <PackageReference Condition="$(BuildForRelease) == 'true'" Include="Microsoft.SourceLink.GitHub" Version="$(MicrosoftSourceLinkGitHubVersion)" PrivateAssets="All" />
   </ItemGroup>
   <Import Project="$(ToolsDir)targets\GenerateThisAssemblyCs.targets" />

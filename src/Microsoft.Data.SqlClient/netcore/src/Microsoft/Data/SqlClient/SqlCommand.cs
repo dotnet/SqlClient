@@ -3717,7 +3717,9 @@ namespace Microsoft.Data.SqlClient
                     bool processFinallyBlockAsync = true;
                     bool decrementAsyncCountInFinallyBlockAsync = true;
 
+#if NETCOREAPP3_1 || NETSTANDARD
                     RuntimeHelpers.PrepareConstrainedRegions();
+#endif
                     try
                     {
                         // Check for any exceptions on network write, before reading.
@@ -3789,7 +3791,9 @@ namespace Microsoft.Data.SqlClient
                 bool processFinallyBlockAsync = true;
                 bool decrementAsyncCountInFinallyBlockAsync = true;
 
+#if NETCOREAPP3_1 || NETSTANDARD
                 RuntimeHelpers.PrepareConstrainedRegions();
+#endif
                 try
                 {
                     // Check for any exceptions on network write, before reading.

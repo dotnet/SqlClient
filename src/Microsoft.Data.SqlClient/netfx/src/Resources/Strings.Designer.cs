@@ -19,7 +19,7 @@ namespace System {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Strings {
@@ -39,7 +39,7 @@ namespace System {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Microsoft.Data.SqlClient.Resources.Strings", typeof(Strings).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("SqlClient.Resources.Strings", typeof(Strings).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -5551,6 +5551,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to When true, enables usage of the Asynchronous functionality in the .NET Framework Data Provider..
+        /// </summary>
+        internal static string DbConnectionString_AsynchronousProcessing {
+            get {
+                return ResourceManager.GetString("DbConnectionString_AsynchronousProcessing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The name of the primary file, including the full path name, of an attachable database..
         /// </summary>
         internal static string DbConnectionString_AttachDBFilename {
@@ -8857,6 +8866,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to This command requires an asynchronous connection. Set &quot;Asynchronous Processing=true&quot; in the connection string..
+        /// </summary>
+        internal static string SQL_AsyncConnectionRequired {
+            get {
+                return ResourceManager.GetString("SQL_AsyncConnectionRequired", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The asynchronous operation has already completed..
         /// </summary>
         internal static string SQL_AsyncOperationCompleted {
@@ -9658,7 +9676,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Error code 0x{0}..
+        ///   Looks up a localized string similar to Error code 0x{0}.
         /// </summary>
         internal static string SQL_MSALInnerException {
             get {
@@ -10536,6 +10554,15 @@ namespace System {
         internal static string SqlConnection_AccessToken {
             get {
                 return ResourceManager.GetString("SqlConnection_AccessToken", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to State of connection, synchronous or asynchronous.  &apos;Asynchronous Processing=x&apos; in the connection string..
+        /// </summary>
+        internal static string SqlConnection_Asynchronous {
+            get {
+                return ResourceManager.GetString("SqlConnection_Asynchronous", resourceCulture);
             }
         }
         

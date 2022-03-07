@@ -630,7 +630,9 @@ namespace Microsoft.Data.SqlClient
                             string service = null;
                             bool appDomainStart = false;
 
+#if NETFRAMEWORK || NETCOREAPP3_1 || NETSTANDARD
                             RuntimeHelpers.PrepareConstrainedRegions();
+#endif
                             try
                             { // CER to ensure that if Start succeeds we add to hash completing setup.
                               // Start using process wide default service/queue & database from connection string.
@@ -775,7 +777,9 @@ namespace Microsoft.Data.SqlClient
                             {
                                 bool appDomainStop = false;
 
+#if NETFRAMEWORK || NETCOREAPP3_1 || NETSTANDARD
                                 RuntimeHelpers.PrepareConstrainedRegions();
+#endif
                                 try
                                 { // CER to ensure that if Stop succeeds we remove from hash completing teardown.
                                   // Start using process wide default service/queue & database from connection string.

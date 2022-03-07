@@ -2257,8 +2257,10 @@ namespace Microsoft.Data.SqlClient
             // Variable which indicates if we did indeed manage to acquire the lock on the authentication context, to try update it.
             bool authenticationContextLocked = false;
 
+#if NETCOREAPP3_1 || NETSTANDARD
             // Prepare CER to ensure the lock on authentication context is released.
             RuntimeHelpers.PrepareConstrainedRegions();
+#endif
             try
             {
                 // Try to obtain a lock on the context. If acquired, this thread got the opportunity to update.

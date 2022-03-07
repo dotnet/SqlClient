@@ -1,15 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <TargetFrameworks>netcoreapp3.1;netstandard2.0;netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>net6.0;netcoreapp3.1;netstandard2.0;netstandard2.1</TargetFrameworks>
     <TargetFrameworks Condition="$(ReferenceType)=='NetStandard' AND $(TargetNetStandardVersion)=='netstandard2.1'">netstandard2.1</TargetFrameworks>
     <IntermediateOutputPath>$(ObjFolder)$(Configuration)\$(AssemblyName)\ref\</IntermediateOutputPath>
     <OutputPath>$(BinFolder)$(Configuration)\$(AssemblyName)\ref\</OutputPath>
     <DocumentationFile>$(OutputPath)\$(TargetFramework)\Microsoft.Data.SqlClient.xml</DocumentationFile>
     <Product>Core $(BaseProduct)</Product>
     <Configurations>Debug;Release;</Configurations>
-    <TargetGroup Condition="$(TargetFramework.StartsWith('netcoreapp'))">netcoreapp</TargetGroup>
-    <TargetGroup Condition="$(TargetFramework.StartsWith('netstandard'))">netstandard</TargetGroup>
+    <TargetGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETCoreApp'">netcoreapp</TargetGroup>
+    <TargetGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETStandard'">netstandard</TargetGroup>
     <Platforms>AnyCPU;x64;x86</Platforms>
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetGroup)' == 'netstandard' AND !$(TargetFramework.StartsWith('netstandard1.')) AND $(TargetFramework) != 'netstandard2.0'">

@@ -1441,6 +1441,9 @@ internal class SqlDependencyProcessDispatcher : MarshalByRefObject
     }
 
     // Needed for remoting to prevent lifetime issues and default GC cleanup.
+#if NET6_0_OR_GREATER
+    [Obsolete]
+#endif
     public override object InitializeLifetimeService()
     {
         return null;

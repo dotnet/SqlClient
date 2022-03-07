@@ -10,3 +10,9 @@ csharp_style_implicit_object_creation_when_type_is_apparent = false
 
 # IDE0063: Use simple 'using' statement
 csharp_prefer_simple_using_statement = false
+
+[*.Windows.cs]
+
+# Suppress false positive errors in .NET 6+.
+# CA1416: Validate platform compatibility
+dotnet_diagnostic.CA1416.severity = none
