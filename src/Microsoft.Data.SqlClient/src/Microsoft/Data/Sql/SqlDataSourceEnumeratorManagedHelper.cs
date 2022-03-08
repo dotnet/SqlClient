@@ -4,7 +4,6 @@
 using System.Collections.Generic;
 using System.Data;
 using Microsoft.Data.Sql;
-using Microsoft.Data.SqlClient.SNI;
 
 namespace Microsoft.Data.SqlClient.Server
 {
@@ -19,7 +18,8 @@ namespace Microsoft.Data.SqlClient.Server
         /// <returns>DataTable with ServerName,InstanceName,IsClustered and Version</returns>
         internal static DataTable GetDataSources()
         {
-            return ParseServerEnumString(SSRP.SendBroadcastUDPRequest());
+            // TODO: Implement multicast request besides the implemented broadcast request.
+            throw new System.NotImplementedException(StringsHelper.net_MethodNotImplementedException);
         }
 
         private static DataTable ParseServerEnumString(string serverInstances)
