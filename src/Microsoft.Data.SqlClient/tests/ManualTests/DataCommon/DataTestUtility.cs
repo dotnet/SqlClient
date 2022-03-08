@@ -466,7 +466,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsLocalDBInstalled() => !string.IsNullOrEmpty(LocalDbAppName?.Trim()) && IsIntegratedSecuritySetup();
         public static bool IsLocalDbSharedInstanceSetup() => !string.IsNullOrEmpty(LocalDbSharedInstanceName?.Trim()) && IsIntegratedSecuritySetup();
-
         public static bool IsIntegratedSecuritySetup() => SupportsIntegratedSecurity;
 
         public static string GetAccessToken()
@@ -514,7 +513,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsUserIdentityTokenSetup() => !string.IsNullOrEmpty(GetUserIdentityAccessToken());
 
-        public static bool IsFileStreamSetup() => !string.IsNullOrEmpty(FileStreamDirectory);
+        public static bool IsFileStreamSetup() => !string.IsNullOrEmpty(FileStreamDirectory) && IsNotAzureServer() && IsNotAzureSynapse();
 
         private static bool CheckException<TException>(Exception ex, string exceptionMessage, bool innerExceptionMustBeNull) where TException : Exception
         {

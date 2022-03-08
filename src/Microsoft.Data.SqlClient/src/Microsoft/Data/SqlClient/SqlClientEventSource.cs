@@ -801,6 +801,15 @@ namespace Microsoft.Data.SqlClient
         }
 
         [NonEvent]
+        internal void TryAdvancedTraceEvent<T0, T1, T2, T3, T4, T5, T6>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4, T5 args5, T6 args6)
+        {
+            if (Log.IsAdvancedTraceOn())
+            {
+                AdvancedTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr, args4?.ToString() ?? NullStr, args5?.ToString() ?? NullStr, args6?.ToString() ?? NullStr));
+            }
+        }
+
+        [NonEvent]
         internal long TryAdvancedScopeEnterEvent<T0>(string message, T0 args0)
         {
             if (Log.IsAdvancedTraceOn())
