@@ -465,6 +465,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlNormalizer.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlNormalizer.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\MetadataUtilsSmi.cs">
+      <Link>Microsoft\Data\SqlClient\Server\MetadataUtilsSmi.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SmiRecordBuffer.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiRecordBuffer.cs</Link>
     </Compile>
@@ -603,7 +606,6 @@
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbReferenceCollection.cs" />
     <Compile Include="Microsoft\Data\RelationshipConverter.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\Server\MetadataUtilsSmi.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiConnection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiContext.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiContextFactory.cs" />

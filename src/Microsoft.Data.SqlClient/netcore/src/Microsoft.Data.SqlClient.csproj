@@ -391,8 +391,11 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SmiEventSink.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiEventSink.cs</Link>
     </Compile>
-     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SmiEventSink_Default.cs">
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SmiEventSink_Default.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiEventSink_Default.Common.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\MetadataUtilsSmi.cs">
+      <Link>Microsoft\Data\SqlClient\Server\MetadataUtilsSmi.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Reliability\Common\SqlRetryingEventArgs.cs">
       <Link>Microsoft\Data\SqlClient\Reliability\SqlRetryingEventArgs.cs</Link>
@@ -531,7 +534,6 @@
       <CustomToolNamespace>System</CustomToolNamespace>
     </EmbeddedResource>
     <Compile Include="Microsoft\Data\SqlClient\AAsyncCallContext.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\Server\MetadataUtilsSmi.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDbColumn.cs" />
     <Compile Include="Microsoft\Data\Common\DbConnectionOptions.cs" />
     <Compile Include="$(CommonPath)\Microsoft\Data\ProviderBase\DbConnectionInternal.cs">
