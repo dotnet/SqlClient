@@ -3,6 +3,28 @@
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
+## [Preview Release 5.0.0-preview1.xxx] - 2022-03-09
+
+### Added
+
+- Added SqlDataSourceEnumerator. [#1430](https://github.com/dotnet/SqlClient/pull/1430), [Read more](#sql-data-source-enumerator)
+- Added new attestation protocol `None` option to forgo enclave attestation when using VBS enclaves. [#1425](https://github.com/dotnet/SqlClient/pull/1425) and [#1419](https://github.com/dotnet/SqlClient/pull/1419)
+- Added a new AppContext switch to suppress insecure TLS warnings. [#1457](https://github.com/dotnet/SqlClient/pull/1457)
+
+### Fixed
+
+- Suppressed TLS security warning with `Encrypt = false` by new AppContext switch. [#1457](https://github.com/dotnet/SqlClient/pull/1457)
+- Fixed all documentation paths to Unix format path. [#1442](https://github.com/dotnet/SqlClient/pull/1442)
+- Fixed thread safety issue for `GetEnclaveProvider` by converting dictionary to concurrent dictionary. [#1451](https://github.com/dotnet/SqlClient/pull/1451)
+
+### Changed
+- Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `v5.0.0-preview1.22062.1`. [#1537](https://github.com/dotnet/SqlClient/pull/1537)
+- modernized style in ValueUtilSmi. [#1351](https://github.com/dotnet/SqlClient/pull/1351)
+- Changed SQL server codenames to version names. [#1439](https://github.com/dotnet/SqlClient/pull/1439)
+- Prevented subtype generation in project files. [#1452](https://github.com/dotnet/SqlClient/pull/1452)
+- Changed `Array.Copy` to `Buffer.BlockCopy` for byte arrays. [#1366](https://github.com/dotnet/SqlClient/pull/1366)
+- Changed files in csproj to be alphabetically sorted in netfx and netcore. [#1364](https://github.com/dotnet/SqlClient/pull/1364)
+- TdsEnum, SqlInternalTransaction and MetaDataUtilsSmi are moved to shared folder. [#1369](https://github.com/dotnet/SqlClient/pull/1369), [#1346](https://github.com/dotnet/SqlClient/pull/1346) and [#1339](https://github.com/dotnet/SqlClient/pull/1339)
 ## [Stable release 4.1.0] - 2022-01-31
 
 ### Added
