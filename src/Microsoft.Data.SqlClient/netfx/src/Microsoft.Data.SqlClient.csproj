@@ -222,6 +222,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SmiMetaData.cs">
       <Link>Microsoft\Data\SqlClient\Server\SmiMetaData.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlStream.cs">
+      <Link>Microsoft\Data\SqlClient\SqlStream.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\ValueUtilsSmi.cs">
       <Link>Microsoft\Data\SqlClient\Server\ValueUtilsSmi.cs</Link>
     </Compile>
@@ -572,7 +575,6 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlStatistics.cs">
       <Link>Microsoft\Data\SqlClient\SqlStatistics.cs</Link>
     </Compile>
-    <Compile Include="Microsoft\Data\SqlClient\SqlStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlTransaction.cs" />
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlUdtInfo.cs">
       <Link>Microsoft\Data\SqlClient\SqlUdtInfo.cs</Link>

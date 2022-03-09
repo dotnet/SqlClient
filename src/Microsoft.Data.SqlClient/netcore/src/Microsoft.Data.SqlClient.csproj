@@ -435,6 +435,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlUtil.cs">
       <Link>Microsoft\Data\SqlClient\SqlUtil.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlStream.cs">
+      <Link>Microsoft\Data\SqlClient\SqlStream.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Resources\ResCategoryAttribute.cs">
       <Link>Resources\ResCategoryAttribute.cs</Link>
     </Compile>
@@ -594,7 +597,6 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlStatistics.cs">
       <Link>Microsoft\Data\SqlClient\SqlStatistics.cs</Link>
     </Compile>
-    <Compile Include="Microsoft\Data\SqlClient\SqlStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlTransaction.cs" />
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlUdtInfo.cs">
       <Link>Microsoft\Data\SqlClient\SqlUdtInfo.cs</Link>
