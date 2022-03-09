@@ -25,12 +25,14 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [PlatformSpecific(TestPlatforms.Windows)]
         public void SqlDataSourceEnumerator_ManagedSNI()
         {
-            // after adding the managed SNI support, this test should have the same result as SqlDataSourceEnumerator_NativeSNI
+            // After adding the managed SNI support, this test should have the same result as SqlDataSourceEnumerator_NativeSNI
             Assert.Throws<NotImplementedException>(() => GetDSEnumerator().GetDataSources());
         }
 
         private SqlDataSourceEnumerator GetDSEnumerator()
         {
+            // SQL Server Browser runs as a Windows service.
+            // TODO: This assessment can be done on CI.
             ServiceController sc = new("SQLBrowser");
             Assert.Equal(ServiceControllerStatus.Running, sc.Status);
 

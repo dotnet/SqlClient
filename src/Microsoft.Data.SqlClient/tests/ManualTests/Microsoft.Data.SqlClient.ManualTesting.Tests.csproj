@@ -158,6 +158,8 @@
     <Compile Include="SQL\SqlBulkCopyTest\TableLock.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\DataConversionErrorMessageTest.cs" />
     <Compile Include="SQL\SqlBulkCopyTest\CopyWidenNullInexactNumerics.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="$(OS)=='Windows' AND ('$(TestSet)' == '' OR '$(TestSet)' == '2')">
     <Compile Include="SQL\SqlDSEnumeratorTest\SqlDataSourceEnumeratorTest.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TestSet)' == '' OR '$(TestSet)' == '3'">
