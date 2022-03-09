@@ -24,7 +24,6 @@ namespace Microsoft.Data.SqlClient.Server
 
         private static DataTable ParseServerEnumString(string serverInstances)
         {
-            System.Console.WriteLine(serverInstances);
             DataTable dataTable = SqlDataSourceEnumeratorUtil.PrepareDataTable();
             DataRow dataRow;
 
