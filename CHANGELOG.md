@@ -19,7 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Changed
 - Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `v5.0.0-preview1.22062.1`. [#1537](https://github.com/dotnet/SqlClient/pull/1537)
-- modernized style in ValueUtilSmi. [#1351](https://github.com/dotnet/SqlClient/pull/1351)
+- Modernized style in ValueUtilSmi. [#1351](https://github.com/dotnet/SqlClient/pull/1351)
 - Changed SQL server codenames to version names. [#1439](https://github.com/dotnet/SqlClient/pull/1439)
 - Prevented subtype generation in project files. [#1452](https://github.com/dotnet/SqlClient/pull/1452)
 - Changed `Array.Copy` to `Buffer.BlockCopy` for byte arrays. [#1366](https://github.com/dotnet/SqlClient/pull/1366)
