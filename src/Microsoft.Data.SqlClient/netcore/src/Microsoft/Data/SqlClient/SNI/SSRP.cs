@@ -11,10 +11,16 @@ using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClient.SNI
 {
-    internal class SSRP
+    internal sealed class SSRP
     {
         private const char SemicolonSeparator = ';';
-        private const int SqlServerBrowserPort = 1434;
+        private const int SqlServerBrowserPort = 1434; //port SQL Server Browser
+        private const int RecieveMAXTimeoutsForCLNT_BCAST_EX = 15000; //Default max time for response wait
+        private const int RecieveTimeoutsForCLNT_BCAST_EX = 1000; //subsequent wait time for response after intial wait 
+        private const int ServerResponseHeaderSizeForCLNT_BCAST_EX = 3;//(SVR_RESP + RESP_SIZE) https://docs.microsoft.com/en-us/openspecs/windows_protocols/mc-sqlr/2e1560c9-5097-4023-9f5e-72b9ff1ec3b1
+        private const int ValidResponseSizeForCLNT_BCAST_EX = 4096; //valid reponse size should be less than 4096
+        private const int FirstTimeoutForCLNT_BCAST_EX = 5000;//wait for first response for 5 seconds
+        private const int CLNT_BCAST_EX = 2;//request packet
 
         /// <summary>
         /// Finds instance port number for given instance name.
@@ -149,8 +155,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 const int sendTimeOutMs = 1000;
                 const int receiveTimeOutMs = 1000;
 
-                IPAddress address = null;
-                bool isIpAddress = IPAddress.TryParse(browserHostname, out address);
+                bool isIpAddress = IPAddress.TryParse(browserHostname, out IPAddress address);
 
                 byte[] responsePacket = null;
                 using (UdpClient client = new UdpClient(!isIpAddress ? AddressFamily.InterNetwork : address.AddressFamily))
@@ -165,9 +170,52 @@ namespace Microsoft.Data.SqlClient.SNI
                         responsePacket = receiveTask.Result.Buffer;
                     }
                 }
-
                 return responsePacket;
             }
+        }
+
+        /// <summary>
+        /// Sends request to server, and recieves response from server (SQLBrowser) on port 1434 by UDP
+        /// Request (https://docs.microsoft.com/en-us/openspecs/windows_protocols/mc-sqlr/a3035afa-c268-4699-b8fd-4f351e5c8e9e)
+        /// Response (https://docs.microsoft.com/en-us/openspecs/windows_protocols/mc-sqlr/2e1560c9-5097-4023-9f5e-72b9ff1ec3b1) 
+        /// </summary>
+        /// <returns>string constaning list of SVR_RESP(just RESP_DATA)</returns>
+        internal static string SendBroadcastUDPRequest()
+        {
+            StringBuilder response = new StringBuilder();
+            byte[] CLNT_BCAST_EX_Request = new byte[1] { CLNT_BCAST_EX }; //0x02
+            // Waits 5 seconds for the first response and every 1 second up to 15 seconds
+            // https://docs.microsoft.com/en-us/openspecs/windows_protocols/mc-sqlr/f2640a2d-3beb-464b-a443-f635842ebc3e#Appendix_A_3
+            int currentTimeOut = FirstTimeoutForCLNT_BCAST_EX; 
+
+            using (TrySNIEventScope.Create(nameof(SSRP)))
+            {
+                using (UdpClient clientListener = new UdpClient())
+                {
+                    Task<int> sendTask = clientListener.SendAsync(CLNT_BCAST_EX_Request, CLNT_BCAST_EX_Request.Length, new IPEndPoint(IPAddress.Broadcast, SqlServerBrowserPort));
+                    Task<UdpReceiveResult> receiveTask = null;
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.INFO, "Waiting for UDP Client to fetch list of instances.");
+                    Stopwatch sw = new Stopwatch(); //for waiting until 15 sec elapsed
+                    sw.Start();
+                    try
+                    { 
+                        while ((receiveTask = clientListener.ReceiveAsync()).Wait(currentTimeOut) && sw.ElapsedMilliseconds <= RecieveMAXTimeoutsForCLNT_BCAST_EX && receiveTask != null)
+                        {
+                            currentTimeOut = RecieveTimeoutsForCLNT_BCAST_EX;
+                            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SSRP), EventType.INFO, "Received instnace info from UDP Client.");
+                            if (receiveTask.Result.Buffer.Length < ValidResponseSizeForCLNT_BCAST_EX) //discard invalid response
+                            {
+                                response.Append(Encoding.UTF7.GetString(receiveTask.Result.Buffer, ServerResponseHeaderSizeForCLNT_BCAST_EX, receiveTask.Result.Buffer.Length - ServerResponseHeaderSizeForCLNT_BCAST_EX)); //RESP_DATA(VARIABLE) - 3 (RESP_SIZE + SVR_RESP)
+                            }
+                        }
+                    }
+                    finally
+                    {
+                        sw.Stop();
+                    }
+                }
+            }
+            return response.ToString();
         }
     }
 }
