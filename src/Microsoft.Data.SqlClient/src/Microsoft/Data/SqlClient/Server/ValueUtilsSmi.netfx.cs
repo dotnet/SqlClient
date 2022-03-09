@@ -1,13 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Data.Common;
 using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.Reflection;
-using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlTypes;
 
@@ -123,7 +119,7 @@ namespace Microsoft.Data.SqlClient.Server
                 return GetTimeSpan(sink, (SmiTypedGetterSetter)getters, ordinal, metaData);
             }
             ThrowIfITypedGettersIsNull(sink, getters, ordinal);
-            object obj = GetValue(sink, getters, ordinal, metaData, null);
+            object obj = GetValue(sink, getters, ordinal, metaData);
             if (null == obj)
             {
                 throw ADP.InvalidCast();
@@ -176,7 +172,7 @@ namespace Microsoft.Data.SqlClient.Server
             SmiMetaData metaData,               // Getter's type for this ordinal
             SmiContext context,                // used to obtain scratch streams
             SqlBuffer targetBuffer            // destination
-            )
+        )
         {
             object result = null;   // Workaround for UDT hack in non-Smi code paths.
             if (IsDBNull_Unchecked(sink, getters, ordinal))
@@ -273,7 +269,7 @@ namespace Microsoft.Data.SqlClient.Server
             SmiMetaData metaData,               // Getter's type for this ordinal
             SmiContext context,                // used to obtain scratch streams
             SqlBuffer targetBuffer            // destination
-            )
+        )
         {
             object result = null;   // Workaround for UDT hack in non-Smi code paths.
             if (IsDBNull_Unchecked(sink, getters, ordinal))
@@ -485,13 +481,13 @@ namespace Microsoft.Data.SqlClient.Server
             SqlClientWrapperSmiStreamChars dest = new(sink, context.GetScratchStream(sink));
 
             int chunkSize;
-            if (source.CanSeek && __maxByteChunkSize > source.Length)
+            if (source.CanSeek && source.Length < MaxByteChunkSize)
             {
                 chunkSize = unchecked((int)source.Length);  // unchecked cast is safe due to check on line above
             }
             else
             {
-                chunkSize = __maxByteChunkSize;
+                chunkSize = MaxByteChunkSize;
             }
 
             byte[] copyBuffer = new byte[chunkSize];
@@ -508,6 +504,5 @@ namespace Microsoft.Data.SqlClient.Server
 
             return dest;
         }
-
     }
 }
