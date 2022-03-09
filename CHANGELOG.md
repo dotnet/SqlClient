@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Added
 
-- Added SqlDataSourceEnumerator. [#1430](https://github.com/dotnet/SqlClient/pull/1430), [Read more](#sql-data-source-enumerator)
+- Added SqlDataSourceEnumerator. [#1430](https://github.com/dotnet/SqlClient/pull/1430), [Read more](#sql-data-source-enumerator-support)
 - Added new attestation protocol `None` option to forgo enclave attestation when using VBS enclaves. [#1425](https://github.com/dotnet/SqlClient/pull/1425) and [#1419](https://github.com/dotnet/SqlClient/pull/1419)
 - Added a new AppContext switch to suppress insecure TLS warnings. [#1457](https://github.com/dotnet/SqlClient/pull/1457)
 
