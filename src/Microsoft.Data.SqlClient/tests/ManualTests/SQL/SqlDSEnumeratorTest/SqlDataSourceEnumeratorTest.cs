@@ -9,6 +9,9 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
+#if NET50_OR_LATER
+        [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+#endif
     public class SqlDataSourceEnumeratorTest
     {
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsNotUsingManagedSNIOnWindows))]
