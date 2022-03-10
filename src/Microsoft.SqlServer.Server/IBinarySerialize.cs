@@ -6,15 +6,15 @@ using System.IO;
 
 namespace Microsoft.SqlServer.Server
 {
-    /// <include file='../../doc/snippets/Microsoft.Data.SqlClient.Server/IBinarySerialize.xml' path='docs/members[@name="IBinarySerialize"]/IBinarySerialize/*' />
+    /// <include file='../../doc/snippets/Microsoft.SqlServer.Server/IBinarySerialize.xml' path='docs/members[@name="IBinarySerialize"]/IBinarySerialize/*' />
     // This interface is used by types that want full control over the
     // binary serialization format.
     public interface IBinarySerialize
     {
-        /// <include file='../../doc/snippets/Microsoft.Data.SqlClient.Server/IBinarySerialize.xml' path='docs/members[@name="IBinarySerialize"]/Read/*' />
+        /// <include file='../../doc/snippets/Microsoft.SqlServer.Server/IBinarySerialize.xml' path='docs/members[@name="IBinarySerialize"]/Read/*' />
         // Read from the specified binary reader.
         void Read(BinaryReader r);
-        /// <include file='../../doc/snippets/Microsoft.Data.SqlClient.Server/IBinarySerialize.xml' path='docs/members[@name="IBinarySerialize"]/Write/*' />
+        /// <include file='../../doc/snippets/Microsoft.SqlServer.Server/IBinarySerialize.xml' path='docs/members[@name="IBinarySerialize"]/Write/*' />
         // Write to the specified binary writer.
         void Write(BinaryWriter w);
     }

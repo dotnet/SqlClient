@@ -65,8 +65,10 @@ namespace Microsoft.Data.SqlClient
         /// <returns>A byte array containing cryptographically generated random bytes</returns>
         internal static void GenerateRandomBytes(byte[] randomBytes)
         {
-            RandomNumberGenerator rng = RandomNumberGenerator.Create();
-            rng.GetBytes(randomBytes);
+            using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(randomBytes);
+            }
         }
 
         /// <summary>
@@ -367,7 +369,7 @@ namespace Microsoft.Data.SqlClient
                         GetListOfProviderNamesThatWereSearched(connection, command));
                 }
 
-                if (ShouldUseInstanceLevelProviderFlow(keyStoreName,connection, command))
+                if (ShouldUseInstanceLevelProviderFlow(keyStoreName, connection, command))
                 {
                     isValidSignature = provider.VerifyColumnMasterKeyMetadata(keyPath, isEnclaveEnabled, CMKSignature);
                 }
