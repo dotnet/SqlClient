@@ -366,8 +366,11 @@ namespace Microsoft.SqlServer.TDS.Login7
         private byte[] _GenerateRandomBytes(int count)
         {
             byte[] randomBytes = new byte[count];
-            RandomNumberGenerator rng = RandomNumberGenerator.Create();
-            rng.GetBytes(randomBytes);
+            using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(randomBytes);
+            }
+
             return randomBytes;
         }
     }
