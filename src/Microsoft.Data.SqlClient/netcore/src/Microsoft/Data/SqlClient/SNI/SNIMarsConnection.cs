@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClient.SNI
 {
@@ -16,15 +17,20 @@ namespace Microsoft.Data.SqlClient.SNI
     {
         private const string s_className = nameof(SNIMarsConnection);
 
+        private static QueuedTaskScheduler s_scheduler;        
+        private TaskFactory s_factory;
+
         private readonly Guid _connectionId = Guid.NewGuid();
         private readonly Dictionary<int, SNIMarsHandle> _sessions = new Dictionary<int, SNIMarsHandle>();
         private readonly byte[] _headerBytes = new byte[SNISMUXHeader.HEADER_LENGTH];
         private readonly SNISMUXHeader _currentHeader = new SNISMUXHeader();
         private SNIHandle _lowerHandle;
-        private ushort _nextSessionId = 0;
+        private int _nextSessionId;
         private int _currentHeaderByteCount = 0;
         private int _dataBytesLeft = 0;
         private SNIPacket _currentPacket;
+
+
 
         /// <summary>
         /// Connection ID
@@ -45,6 +51,8 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="lowerHandle">Lower handle</param>
         public SNIMarsConnection(SNIHandle lowerHandle)
         {
+            
+            _nextSessionId = -1;
             _lowerHandle = lowerHandle;
             SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.INFO, "Created MARS Session Id {0}", args0: ConnectionId);
             _lowerHandle.SetAsyncCallbacks(HandleReceiveComplete, HandleSendComplete);
@@ -54,7 +62,8 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             lock (this)
             {
-                ushort sessionId = _nextSessionId++;
+                ushort sessionId = unchecked((ushort)(Interlocked.Increment(ref _nextSessionId) % ushort.MaxValue));
+
                 SNIMarsHandle handle = new SNIMarsHandle(this, sessionId, callbackObject, async);
                 _sessions.Add(sessionId, handle);
                 SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.INFO, "MARS Session Id {0}, SNI MARS Handle Id {1}, created new MARS Session {2}", args0: ConnectionId, args1: handle?.ConnectionId, args2: sessionId);
@@ -68,23 +77,39 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <returns></returns>
         public uint StartReceive()
         {
-            long scopeID = SqlClientEventSource.Log.TrySNIScopeEnterEvent(s_className);
-            try
+            using (TrySNIEventScope.Create(nameof(SNIMarsConnection)))
             {
+                if (LocalAppContextSwitches.UseExperimentalMARSThreading
+#if NETCOREAPP31_AND_ABOVE
+                    && ThreadPool.PendingWorkItemCount>0
+#endif 
+                    )
+                {
+                    LazyInitializer.EnsureInitialized(ref s_scheduler, () => new QueuedTaskScheduler(3, "MARSIOScheduler", false, ThreadPriority.AboveNormal));
+                    LazyInitializer.EnsureInitialized(ref s_factory, () => new TaskFactory(s_scheduler));
+
+                    // will start an async task on the scheduler and immediatley return so this await is safe
+                    return s_factory.StartNew(StartAsyncReceiveLoopForConnection, this).GetAwaiter().GetResult();
+                }
+                else
+                {
+                    return StartAsyncReceiveLoopForConnection(this);
+                }
+            }
+
+            static uint StartAsyncReceiveLoopForConnection(object state)
+            {
+                SNIMarsConnection connection = (SNIMarsConnection)state;
                 SNIPacket packet = null;
 
-                if (ReceiveAsync(ref packet) == TdsEnums.SNI_SUCCESS_IO_PENDING)
+                if (connection.ReceiveAsync(ref packet) == TdsEnums.SNI_SUCCESS_IO_PENDING)
                 {
-                    SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.INFO, "MARS Session Id {0}, Success IO pending.", args0: ConnectionId);
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.INFO, "MARS Session Id {0}, Success IO pending.", args0: connection.ConnectionId);
                     return TdsEnums.SNI_SUCCESS_IO_PENDING;
                 }
-                SqlClientEventSource.Log.TrySNITraceEvent(s_className, EventType.ERR, "MARS Session Id {0}, Connection not usable.", args0: ConnectionId);
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsConnection), EventType.ERR, "MARS Session Id {0}, Connection not usable.", args0: connection.ConnectionId);
                 return SNICommon.ReportSNIError(SNIProviders.SMUX_PROV, 0, SNICommon.ConnNotUsableError, Strings.SNI_ERROR_19);
-            }
-            finally
-            {
-                SqlClientEventSource.Log.TrySNIScopeLeaveEvent(scopeID);
-            }
+            };
         }
 
         /// <summary>
