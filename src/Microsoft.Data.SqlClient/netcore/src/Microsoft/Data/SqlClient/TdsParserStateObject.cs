@@ -487,6 +487,52 @@ namespace Microsoft.Data.SqlClient
 
             AssertValidState();
             value = (char)((buffer[1] << 8) + buffer[0]);
+            
+            return true;
+        }
+
+        internal bool TryReadChars(char[] chars, int charsOffset, int charsCount, out int charsCopied)
+        {
+            charsCopied = 0;
+            while (charsCopied < charsCount)
+            {
+                // check if the current buffer contains some bytes we need to copy and copy them
+                //  in a block
+                int bytesToRead = Math.Min(
+                    (charsCount - charsCopied) * 2,
+                    unchecked((_inBytesRead - _inBytesUsed) & (int)0xFFFFFFFE) // it the result is odd take off the 0 to make it even
+                );
+                if (bytesToRead > 0)
+                {
+                    Buffer.BlockCopy(
+                        _inBuff,
+                        _inBytesUsed,
+                        chars,
+                        (charsOffset + charsCopied) * 2, // offset in bytes,
+                        bytesToRead
+                    );
+                    charsCopied = bytesToRead / 2;
+                    _inBytesUsed += bytesToRead;
+                    _inBytesPacket -= bytesToRead;
+                }
+
+                // if the number of chars requested is lower than the number copied then we need
+                //  to request a new packet, use TryReadChar() to do this then loop back to see
+                //  if we can copy another bulk of chars from the new buffer
+
+                if (charsCopied < charsCount)
+                {
+                    bool result = TryReadChar(out chars[charsOffset + charsCopied]);
+                    if (result)
+                    {
+                        charsCopied += 1;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+            }
             return true;
         }
 

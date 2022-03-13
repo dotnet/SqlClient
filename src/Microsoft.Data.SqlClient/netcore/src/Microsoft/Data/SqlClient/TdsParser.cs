@@ -10,6 +10,8 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Security.Authentication;
 using System.Text;
 using System.Threading;
@@ -12505,14 +12507,14 @@ namespace Microsoft.Data.SqlClient
 
             // stateObj._longlenleft is in bytes
             if ((stateObj._longlenleft >> 1) < (ulong)len)
-                charsRead = (int)(stateObj._longlenleft >> 1);
-
-            for (int ii = 0; ii < charsRead; ii++)
             {
-                if (!stateObj.TryReadChar(out buff[offst + ii]))
-                {
-                    return false;
-                }
+                charsRead = (int)(stateObj._longlenleft >> 1);
+            }
+
+            if (!stateObj.TryReadChars(buff, offst, len, out charsRead))
+            {
+                charsRead = 0;
+                return false;
             }
 
             stateObj._longlenleft -= ((ulong)charsRead << 1);
