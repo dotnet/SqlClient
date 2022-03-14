@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Linq;
 using System.ServiceProcess;
 using Microsoft.Data.Sql;
 using Xunit;
@@ -36,9 +37,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             // SQL Server Browser runs as a Windows service.
             // TODO: This assessment can be done on CI.
-            ServiceController sc = new("SQLBrowser");
-            Assert.Equal(ServiceControllerStatus.Running, sc.Status);
-
+            ServiceController[] services = ServiceController.GetServices(Environment.MachineName);
+            ServiceController service = services.FirstOrDefault(s => s.ServiceName == "SQLBrowser");
+            if (service != null)
+            {
+                Assert.Equal(ServiceControllerStatus.Running, service.Status);
+            }
             return SqlDataSourceEnumerator.Instance;
         }
     }
