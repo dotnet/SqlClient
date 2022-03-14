@@ -12503,15 +12503,16 @@ namespace Microsoft.Data.SqlClient
                 return true;
             }
 
-            charsRead = len;
+            int charsToRead = len;
 
             // stateObj._longlenleft is in bytes
             if ((stateObj._longlenleft >> 1) < (ulong)len)
             {
-                charsRead = (int)(stateObj._longlenleft >> 1);
+                charsToRead = (int)(stateObj._longlenleft >> 1);
             }
 
-            if (!stateObj.TryReadChars(buff, offst, len, out charsRead))
+
+            if (!stateObj.TryReadChars(buff, offst, charsToRead, out charsRead))
             {
                 charsRead = 0;
                 return false;
