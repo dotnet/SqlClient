@@ -110,5 +110,15 @@ namespace Microsoft.Data.SqlClient.Tests
 
             Assert.Throws<ArgumentNullException>(() => collection.Add(null));
         }
+
+        [Fact]
+        public void CollectionAddInvalidType_Throws()
+        {
+            SqlCommand command = new SqlCommand();
+            SqlParameterCollection collection = command.Parameters;
+
+            InvalidCastException ex = Assert.Throws<InvalidCastException>(() => collection.Add(new SqlCommand()));
+            Assert.Contains("Microsoft.Data.SqlClient.SqlCommand", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
     }
 }
