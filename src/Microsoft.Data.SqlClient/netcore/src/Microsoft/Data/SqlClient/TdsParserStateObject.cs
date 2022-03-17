@@ -1197,33 +1197,38 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        private bool GetSnapshottedState(SnapshottedStateFlags flag)
+        {
+            return (_snapshottedState & flag) == flag;
+        }
+
         internal bool HasOpenResult
         {
-            get => _snapshottedState.HasFlag(SnapshottedStateFlags.OpenResult);
+            get => GetSnapshottedState(SnapshottedStateFlags.OpenResult);
             set => SetSnapshottedState(SnapshottedStateFlags.OpenResult, value);
         }
 
         internal bool HasPendingData
         {
-            get => _snapshottedState.HasFlag(SnapshottedStateFlags.PendingData);
+            get => GetSnapshottedState(SnapshottedStateFlags.PendingData);
             set => SetSnapshottedState(SnapshottedStateFlags.PendingData, value);
         }
 
         internal bool HasReceivedError
         {
-            get => _snapshottedState.HasFlag(SnapshottedStateFlags.ErrorTokenReceived);
+            get => GetSnapshottedState(SnapshottedStateFlags.ErrorTokenReceived);
             set => SetSnapshottedState(SnapshottedStateFlags.ErrorTokenReceived, value);
         }
 
         internal bool HasReceivedAttention
         {
-            get => _snapshottedState.HasFlag(SnapshottedStateFlags.AttentionReceived);
+            get => GetSnapshottedState(SnapshottedStateFlags.AttentionReceived);
             set => SetSnapshottedState(SnapshottedStateFlags.AttentionReceived, value);
         }
 
         internal bool HasReceivedColumnMetadata
         {
-            get => _snapshottedState.HasFlag(SnapshottedStateFlags.ColMetaDataReceived);
+            get => GetSnapshottedState(SnapshottedStateFlags.ColMetaDataReceived);
             set => SetSnapshottedState(SnapshottedStateFlags.ColMetaDataReceived, value);
         }
 
@@ -4291,11 +4296,11 @@ namespace Microsoft.Data.SqlClient
                 _stateObj._cleanupAltMetaDataSetArray = _snapshotCleanupAltMetaDataSetArray;
 
                 // Make sure to go through the appropriate increment/decrement methods if changing the OpenResult flag
-                if (!_stateObj.HasOpenResult && _state.HasFlag(SnapshottedStateFlags.OpenResult))
+                if (!_stateObj.HasOpenResult && ((_state & SnapshottedStateFlags.OpenResult) == SnapshottedStateFlags.OpenResult))
                 {
                     _stateObj.IncrementAndObtainOpenResultCount(_stateObj._executedUnderTransaction);
                 }
-                else if (_stateObj.HasOpenResult && !_state.HasFlag(SnapshottedStateFlags.OpenResult))
+                else if (_stateObj.HasOpenResult && ((_state & SnapshottedStateFlags.OpenResult) != SnapshottedStateFlags.OpenResult))
                 {
                     _stateObj.DecrementOpenResultCount();
                 }
