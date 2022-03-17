@@ -7608,7 +7608,7 @@ namespace Microsoft.Data.SqlClient
 
                         if (innerConnection.Is2008OrNewer)
                         {
-                            ValueUtilsSmi.SetCompatibleValueV200(EventSink, requestExecutor, index, requestMetaData[index], value, typeCode, param.Offset, param.Size, peekAheadValues[index]);
+                            ValueUtilsSmi.SetCompatibleValueV200(EventSink, requestExecutor, index, requestMetaData[index], value, typeCode, param.Offset, peekAheadValues[index]);
                         }
                         else
                         {

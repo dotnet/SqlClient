@@ -168,7 +168,7 @@ Modified: Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security
         </AttachDBFilename>
         <AttestationProtocol>
             <summary>Gets or sets the value of Attestation Protocol.</summary>
-            <returns>Returns the attestation protocol.</returns>
+            <value>The attestation protocol.</value>
         </AttestationProtocol>
         <Authentication>
             <summary>Gets or sets the authentication method used for [Connecting to SQL Database By Using Azure Active Directory Authentication](https://azure.microsoft.com/documentation/articles/sql-database-aad-authentication/#7-connect-to-your-database-by-using-azure-active-directory-identities).</summary>
@@ -177,6 +177,9 @@ Modified: Data Source=(local);Initial Catalog=AdventureWorks;Integrated Security
             <format type="text/markdown"><![CDATA[  
   
 ## Remarks  
+
+When no value is specified, secure enclaves are disabled on the connection.
+
 For more information, see [Using Azure Active Directory authentication with SqlClient](/sql/connect/ado-net/sql/azure-active-directory-authentication).
 
  ]]></format>
@@ -697,7 +700,7 @@ The password must be 128 characters or less.
             <exception cref="T:System.ArgumentNullException">The password was incorrectly set to null.  See code sample below.</exception>
         </Password>
         <PersistSecurityInfo>
-            <summary>Gets or sets a Boolean value that indicates if security-sensitive information, such as the password, is not returned as part of the connection if the connection is open or has ever been in an open state.</summary>
+            <summary>Gets or sets a Boolean value indicating if security-sensitive information, such as the password or access token, should be returned as part of the connection string on a connection created with this <see cref="T:Microsoft.Data.SqlClient.SqlConnectionStringBuilder" /> after that connection has ever been in an open state. This property should only be set to <see langword="true" /> if your application has a specific need to read the password out of an already-opened database connection. The default value of <see langword="false" /> is the more secure setting; using <see langword="true" /> for this property opens your application to security risks such as accidentally logging or tracing the database password.</summary>
             <value>The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.PersistSecurityInfo" /> property, or <see langword="false" /> if none has been supplied.</value>
             <remarks>
             <format type="text/markdown"><![CDATA[  

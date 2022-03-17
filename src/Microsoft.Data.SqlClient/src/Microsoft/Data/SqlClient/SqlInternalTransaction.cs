@@ -26,22 +26,22 @@ namespace Microsoft.Data.SqlClient
         Delegated = 3,
         Distributed = 4,
         Context = 5,     // only valid in proc.
-    };
+    }
 
     sealed internal class SqlInternalTransaction
     {
         internal const long NullTransactionId = 0;
 
         private TransactionState _transactionState;
-        private TransactionType _transactionType;
+        private readonly TransactionType _transactionType;
         private long _transactionId;             // passed in the MARS headers
         private int _openResultCount;           // passed in the MARS headers
         private SqlInternalConnection _innerConnection;
         private bool _disposing;                 // used to prevent us from throwing exceptions while we're disposing
         private WeakReference<SqlTransaction> _parent;                    // weak ref to the outer transaction object; needs to be weak to allow GC to occur.
 
-        private static int _objectTypeCount; // EventSource counter
-        internal readonly int _objectID = Interlocked.Increment(ref _objectTypeCount);
+        private static int s_objectTypeCount; // EventSource counter
+        internal readonly int _objectID = Interlocked.Increment(ref s_objectTypeCount);
 
         internal bool RestoreBrokenConnection { get; set; }
         internal bool ConnectionHasBeenRestored { get; set; }
@@ -66,81 +66,37 @@ namespace Microsoft.Data.SqlClient
             ConnectionHasBeenRestored = false;
         }
 
-        internal bool HasParentTransaction
-        {
-            get
-            {
+        internal bool HasParentTransaction =>
                 // Return true if we are an API started local transaction, or if we were a TSQL
                 // started local transaction and were then wrapped with a parent transaction as
                 // a result of a later API begin transaction.
-                bool result = ((TransactionType.LocalFromAPI == _transactionType) ||
-                                (TransactionType.LocalFromTSQL == _transactionType && _parent != null));
-                return result;
-            }
-        }
+                (_transactionType == TransactionType.LocalFromAPI) ||
+                                (_transactionType == TransactionType.LocalFromTSQL && _parent != null);
 
-        internal bool IsAborted
-        {
-            get
-            {
-                return (TransactionState.Aborted == _transactionState);
-            }
-        }
+        internal bool IsAborted => _transactionState == TransactionState.Aborted;
 
-        internal bool IsActive
-        {
-            get
-            {
-                return (TransactionState.Active == _transactionState);
-            }
-        }
+        internal bool IsActive => _transactionState == TransactionState.Active;
 
-        internal bool IsCommitted
-        {
-            get
-            {
-                return (TransactionState.Committed == _transactionState);
-            }
-        }
+        internal bool IsCommitted => _transactionState == TransactionState.Committed;
 
-        internal bool IsCompleted
-        {
-            get
-            {
-                return (TransactionState.Aborted == _transactionState
-                     || TransactionState.Committed == _transactionState
-                     || TransactionState.Unknown == _transactionState);
-            }
-        }
+        internal bool IsCompleted => _transactionState == TransactionState.Aborted
+                     || _transactionState == TransactionState.Committed
+                     || _transactionState == TransactionState.Unknown;
 
-        internal bool IsDelegated
-        {
-            get
-            {
-                bool result = (TransactionType.Delegated == _transactionType);
-                return result;
-            }
-        }
+        internal bool IsDelegated =>_transactionType == TransactionType.Delegated;
 
-        internal bool IsDistributed
-        {
-            get
-            {
-                bool result = (TransactionType.Distributed == _transactionType);
-                return result;
-            }
-        }
+        internal bool IsDistributed => _transactionType == TransactionType.Distributed;
 
-        internal bool IsLocal
-        {
-            get
-            {
-                bool result = (TransactionType.LocalFromTSQL == _transactionType
-                            || TransactionType.LocalFromAPI == _transactionType
-                            );
-                return result;
-            }
-        }
+#if NETFRAMEWORK
+        internal bool IsContext => _transactionType == TransactionType.Context;
+#endif
+
+        internal bool IsLocal => _transactionType == TransactionType.LocalFromTSQL
+                            || _transactionType == TransactionType.LocalFromAPI
+#if NETFRAMEWORK
+                            || IsContext
+#endif
+                            ;
 
         internal bool IsOrphaned
         {
@@ -149,7 +105,7 @@ namespace Microsoft.Data.SqlClient
                 // An internal transaction is orphaned when its parent has been
                 // reclaimed by GC.
                 bool result;
-                if (null == _parent)
+                if (_parent == null)
                 {
                     // No parent, so we better be LocalFromTSQL.  Should we even return in this case -
                     // since it could be argued this is invalid?
@@ -172,29 +128,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal bool IsZombied
-        {
-            get
-            {
-                return (null == _innerConnection);
-            }
-        }
+        internal bool IsZombied => _innerConnection == null;
 
-        internal int ObjectID
-        {
-            get
-            {
-                return _objectID;
-            }
-        }
+        internal int ObjectID => _objectID;
 
-        internal int OpenResultsCount
-        {
-            get
-            {
-                return _openResultCount;
-            }
-        }
+        internal int OpenResultsCount => _openResultCount;
 
         internal SqlTransaction Parent
         {
@@ -202,7 +140,7 @@ namespace Microsoft.Data.SqlClient
             {
                 SqlTransaction result = null;
                 // Should we protect against this, since this probably is an invalid state?
-                Debug.Assert(null != _parent, "Why are we calling Parent with no parent?");
+                Debug.Assert(_parent != null, "Why are we calling Parent with no parent?");
                 if (_parent != null && _parent.TryGetTarget(out SqlTransaction target))
                 {
                     result = target;
@@ -213,10 +151,7 @@ namespace Microsoft.Data.SqlClient
 
         internal long TransactionId
         {
-            get
-            {
-                return _transactionId;
-            }
+            get => _transactionId;
             set
             {
                 Debug.Assert(NullTransactionId == _transactionId, "setting transaction cookie while one is active?");
@@ -224,10 +159,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal void Activate()
-        {
-            _transactionState = TransactionState.Active;
-        }
+        internal void Activate() => _transactionState = TransactionState.Active;
 
         private void CheckTransactionLevelAndZombie()
         {
@@ -245,6 +177,10 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw;
                 }
+#if NETFRAMEWORK
+                ADP.TraceExceptionWithoutRethrow(e);
+#endif
+
                 Zombie(); // If exception caught when trying to check level, zombie.
             }
         }
@@ -267,6 +203,9 @@ namespace Microsoft.Data.SqlClient
             }
             finally
             {
+#if NETFRAMEWORK
+                TdsParser.ReliabilitySection.Assert("unreliable call to CloseFromConnection");  // you need to setup for a thread abort somewhere before you call this method
+#endif
                 if (processFinallyBlock)
                 {
                     // Always ensure we're zombied; 2005 will send an EnvChange that
@@ -295,6 +234,18 @@ namespace Microsoft.Data.SqlClient
                     // COMMIT ignores transaction names, and so there is no reason to pass it anything.  COMMIT
                     // simply commits the transaction from the most recent BEGIN, nested or otherwise.
                     _innerConnection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Commit, null, IsolationLevel.Unspecified, null, false);
+#if NETFRAMEWORK
+                    // SQL BU DT 291159 - perform full Zombie on pre-2005, but do not actually
+                    // complete internal transaction until informed by server in the case of 2005
+                    // or later.
+                    if (!IsZombied && !_innerConnection.Is2005OrNewer)
+                    {
+                        // Since nested transactions are no longer allowed, set flag to false.
+                        // This transaction has been completed.
+                        Zombie();
+                    }
+                    else
+#endif
                     {
                         ZombieParent();
                     }
@@ -330,8 +281,8 @@ namespace Microsoft.Data.SqlClient
 
         internal void Dispose()
         {
-            this.Dispose(true);
-            System.GC.SuppressFinalize(this);
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         private void Dispose(bool disposing)
@@ -339,7 +290,7 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryPoolerTraceEvent("SqlInternalTransaction.Dispose | RES | CPOOL | Object Id {0}, Disposing", ObjectID);
             if (disposing)
             {
-                if (null != _innerConnection)
+                if (_innerConnection != null)
                 {
                     // implicitly rollback if transaction still valid
                     _disposing = true;
@@ -347,13 +298,14 @@ namespace Microsoft.Data.SqlClient
                 }
             }
         }
-
+        /// <summary>
+        /// This function is needed for those times when it is impossible to determine the server's
+        /// transaction level, unless the user's arguments were parsed - which is something we don't want
+        ///to do.  An example when it is impossible to determine the level is after a rollback.
+        /// </summary>
+        /// <returns></returns>
         private int GetServerTransactionLevel()
         {
-            // This function is needed for those times when it is impossible to determine the server's
-            // transaction level, unless the user's arguments were parsed - which is something we don't want
-            // to do.  An example when it is impossible to determine the level is after a rollback.
-
             using (SqlCommand transactionLevelCommand = new SqlCommand("set @out = @@trancount", (SqlConnection)(_innerConnection.Owner)))
             {
                 transactionLevelCommand.Transaction = Parent;
@@ -361,8 +313,7 @@ namespace Microsoft.Data.SqlClient
                 SqlParameter parameter = new SqlParameter("@out", SqlDbType.Int);
                 parameter.Direction = ParameterDirection.Output;
                 transactionLevelCommand.Parameters.Add(parameter);
-
-                transactionLevelCommand.RunExecuteReader(CommandBehavior.Default, RunBehavior.UntilDone, returnStream: false);
+                transactionLevelCommand.RunExecuteReader(CommandBehavior.Default, RunBehavior.UntilDone, returnStream: false, nameof(GetServerTransactionLevel));
 
                 return (int)parameter.Value;
             }
@@ -447,6 +398,15 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     _innerConnection.ExecuteTransaction(SqlInternalConnection.TransactionRequest.Rollback, transactionName, IsolationLevel.Unspecified, null, false);
+#if NETFRAMEWORK
+                    if (!IsZombied && !_innerConnection.Is2005OrNewer)
+                    {
+                        // Check if Zombied before making round-trip to server.
+                        // Against 2005 we receive an envchange on the ExecuteTransaction above on the
+                        // parser that calls back into SqlTransaction for the Zombie() call.
+                        CheckTransactionLevelAndZombie();
+                    }
+#endif
                 }
                 catch (Exception e)
                 {
@@ -509,7 +469,8 @@ namespace Microsoft.Data.SqlClient
             // Number 1 needs to be done whenever a SqlTransaction object is completed.  Number
             // 2 is only done when a transaction is actually completed.  Since users can begin
             // transactions both in and outside of the API, and since nested begins are not actual
-            // transactions we need to distinguish between #1 and #2.
+            // transactions we need to distinguish between #1 and #2.See SQL BU DT 291159
+            // for further details.
 
             ZombieParent();
 
@@ -526,15 +487,15 @@ namespace Microsoft.Data.SqlClient
         {
             if (_parent != null && _parent.TryGetTarget(out SqlTransaction parent))
             {
-                 parent.Zombie();
+                parent.Zombie();
             }
             _parent = null;
         }
 
-        internal string TraceString()
-        {
-            return string.Format(/*IFormatProvider*/ null, "(ObjId={0}, tranId={1}, state={2}, type={3}, open={4}, disp={5}",
-                        ObjectID, _transactionId, _transactionState, _transactionType, _openResultCount, _disposing);
-        }
+        internal string TraceString() => string.Format(/*IFormatProvider*/ null, 
+            "(ObjId={0}, tranId={1}, state={2}, type={3}, open={4}, disp={5}",
+            ObjectID, _transactionId, _transactionState, _transactionType, _openResultCount, _disposing);
+
+
     }
 }
