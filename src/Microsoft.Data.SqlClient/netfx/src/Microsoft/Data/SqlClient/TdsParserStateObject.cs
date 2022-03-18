@@ -111,6 +111,12 @@ namespace Microsoft.Data.SqlClient
             set => _hasOpenResult = value;
         }
         
+        internal bool HasPendingData
+        {
+            get => _pendingData;
+            set => _pendingData = value;
+        }
+        
         internal UInt32 Status
         {
             get
@@ -432,42 +438,6 @@ namespace Microsoft.Data.SqlClient
         internal void StartSession(int objectID)
         {
             _allowObjectID = objectID;
-        }
-
-        internal void ThrowExceptionAndWarning(bool callerHasConnectionLock = false, bool asyncClose = false)
-        {
-            _parser.ThrowExceptionAndWarning(this, callerHasConnectionLock, asyncClose);
-        }
-
-        ////////////////////////////////////////////
-        // TDS Packet/buffer manipulation methods //
-        ////////////////////////////////////////////
-
-        internal Task ExecuteFlush()
-        {
-            lock (this)
-            {
-                if (_cancelled && 1 == _outputPacketNumber)
-                {
-                    ResetBuffer();
-                    _cancelled = false;
-                    throw SQL.OperationCancelled();
-                }
-                else
-                {
-                    Task writePacketTask = WritePacket(TdsEnums.HARDFLUSH);
-                    if (writePacketTask == null)
-                    {
-                        _pendingData = true;
-                        _messageStatus = 0;
-                        return null;
-                    }
-                    else
-                    {
-                        return AsyncHelper.CreateContinuationTask(writePacketTask, () => { _pendingData = true; _messageStatus = 0; });
-                    }
-                }
-            }
         }
 
         // Processes the tds header that is present in the buffer

@@ -300,51 +300,6 @@ namespace Microsoft.Data.SqlClient
             _cancellationOwner.Target = cancellationOwner;
         }
 
-        internal void ThrowExceptionAndWarning(bool callerHasConnectionLock = false, bool asyncClose = false)
-        {
-            _parser.ThrowExceptionAndWarning(this, callerHasConnectionLock, asyncClose);
-        }
-
-        ////////////////////////////////////////////
-        // TDS Packet/buffer manipulation methods //
-        ////////////////////////////////////////////
-
-        internal Task ExecuteFlush()
-        {
-            lock (this)
-            {
-                if (_cancelled && 1 == _outputPacketNumber)
-                {
-                    ResetBuffer();
-                    _cancelled = false;
-                    throw SQL.OperationCancelled();
-                }
-                else
-                {
-                    Task writePacketTask = WritePacket(TdsEnums.HARDFLUSH);
-                    if (writePacketTask == null)
-                    {
-                        HasPendingData = true;
-                        _messageStatus = 0;
-                        return null;
-                    }
-                    else
-                    {
-                        return AsyncHelper.CreateContinuationTaskWithState(
-                            task: writePacketTask, 
-                            state: this,
-                            onSuccess: static (object state) => 
-                            {
-                                TdsParserStateObject stateObject = (TdsParserStateObject)state;
-                                stateObject.HasPendingData = true;
-                                stateObject._messageStatus = 0; 
-                            }
-                        );
-                    }
-                }
-            }
-        }
-
         // Processes the tds header that is present in the buffer
         internal bool TryProcessHeader()
         {
