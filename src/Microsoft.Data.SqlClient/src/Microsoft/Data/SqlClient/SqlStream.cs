@@ -16,12 +16,12 @@ namespace Microsoft.Data.SqlClient
     sealed internal class SqlStream : Stream
     {
         private SqlDataReader _reader; // reader we will stream off
-        private int _columnOrdinal;
+        private readonly int _columnOrdinal;
         private long _bytesCol;
-        int _bom;
+        private int _bom;
         private byte[] _bufferedData;
-        private bool _processAllRows;
-        private bool _advanceReader;
+        private readonly bool _processAllRows;
+        private readonly bool _advanceReader;
         private bool _readFirstRow = false;
         private bool _endOfColumn = false;
 
@@ -39,51 +39,21 @@ namespace Microsoft.Data.SqlClient
             _advanceReader = advanceReader;
         }
 
-        override public bool CanRead
+        public override bool CanRead => true;
+
+        public override bool CanSeek => false;
+
+        public override bool CanWrite => false;
+
+        public override long Length => throw ADP.NotSupported();
+
+        public override long Position
         {
-            get
-            {
-                return true;
-            }
+            get => throw ADP.NotSupported();
+            set => throw ADP.NotSupported();
         }
 
-        override public bool CanSeek
-        {
-            get
-            {
-                return false;
-            }
-        }
-
-        override public bool CanWrite
-        {
-            get
-            {
-                return false;
-            }
-        }
-
-        override public long Length
-        {
-            get
-            {
-                throw ADP.NotSupported();
-            }
-        }
-
-        override public long Position
-        {
-            get
-            {
-                throw ADP.NotSupported();
-            }
-            set
-            {
-                throw ADP.NotSupported();
-            }
-        }
-
-        override protected void Dispose(bool disposing)
+        protected override void Dispose(bool disposing)
         {
             try
             {
@@ -99,19 +69,16 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override public void Flush()
-        {
-            throw ADP.NotSupported();
-        }
+        public override void Flush() => throw ADP.NotSupported();
 
-        override public int Read(byte[] buffer, int offset, int count)
+        public override int Read(byte[] buffer, int offset, int count)
         {
             int intCount = 0;
             int cBufferedData = 0;
 
-            if ((null == _reader))
+            if (null == _reader)
             {
-                throw ADP.StreamClosed(nameof(Read));
+                throw ADP.StreamClosed();
             }
             if (null == buffer)
             {
@@ -201,7 +168,6 @@ namespace Microsoft.Data.SqlClient
         {
             bool gotData = true;
             int intCount = 0;
-            int cb = 0;
 
             if (_reader.IsClosed || _endOfColumn)
             {
@@ -211,7 +177,7 @@ namespace Microsoft.Data.SqlClient
             {
                 while (count > 0)
                 {
-                    // if I haven't read any bytes, get the next row
+                    // if no bytes were read, get the next row
                     if (_advanceReader && (0 == _bytesCol))
                     {
                         gotData = false;
@@ -227,7 +193,7 @@ namespace Microsoft.Data.SqlClient
 
                             if (_reader.IsDBNull(_columnOrdinal))
                             {
-                                // VSTFDEVDIV 479659: handle row with DBNULL as empty data
+                                // Handle row with DBNULL as empty data
                                 // for XML column, processing is stopped on the next loop since _readFirstRow is true
                                 continue;
                             }
@@ -240,8 +206,7 @@ namespace Microsoft.Data.SqlClient
 
                     if (gotData)
                     {
-                        cb = (int)_reader.GetBytesInternal(_columnOrdinal, _bytesCol, buffer, offset, count);
-
+                        int cb = (int)_reader.GetBytesInternal(_columnOrdinal, _bytesCol, buffer, offset, count);
                         if (cb < count)
                         {
                             _bytesCol = 0;
@@ -287,25 +252,14 @@ namespace Microsoft.Data.SqlClient
 
         internal XmlReader ToXmlReader(bool async = false)
         {
-            // Dev11 Bug #315513: Exception type breaking change from 4.0 RTM when calling GetChars on null xml
-            // We need to wrap all exceptions inside a TargetInvocationException to simulate calling CreateSqlReader via MethodInfo.Invoke
             return SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(this, closeInput: true, async: async);
         }
 
-        override public long Seek(long offset, SeekOrigin origin)
-        {
-            throw ADP.NotSupported();
-        }
+        public override long Seek(long offset, SeekOrigin origin) => throw ADP.NotSupported();
 
-        override public void SetLength(long value)
-        {
-            throw ADP.NotSupported();
-        }
+        public override void SetLength(long value) => throw ADP.NotSupported();
 
-        override public void Write(byte[] buffer, int offset, int count)
-        {
-            throw ADP.NotSupported();
-        }
+        public override void Write(byte[] buffer, int offset, int count) => throw ADP.NotSupported();
     }
 
 
@@ -315,10 +269,10 @@ namespace Microsoft.Data.SqlClient
     // invalid as soon as we move off the current column.
     sealed internal class SqlCachedStream : Stream
     {
-        int _currentPosition;   // Position within the current array byte
-        int _currentArrayIndex; // Index into the _cachedBytes ArrayList
-        List<byte[]> _cachedBytes;
-        long _totalLength;
+        private int _currentPosition;   // Position within the current array byte
+        private int _currentArrayIndex; // Index into the _cachedBytes List
+        private List<byte[]> _cachedBytes;
+        private long _totalLength;
 
         // Reads off from the network buffer and caches bytes. Only reads one column value in the current row.
         internal SqlCachedStream(SqlCachedBuffer sqlBuf)
@@ -326,39 +280,15 @@ namespace Microsoft.Data.SqlClient
             _cachedBytes = sqlBuf.CachedBytes;
         }
 
-        override public bool CanRead
-        {
-            get
-            {
-                return true;
-            }
-        }
+        public override bool CanRead => true;
 
-        override public bool CanSeek
-        {
-            get
-            {
-                return true;
-            }
-        }
+        public override bool CanSeek => true;
 
-        override public bool CanWrite
-        {
-            get
-            {
-                return false;
-            }
-        }
+        public override bool CanWrite => false;
 
-        override public long Length
-        {
-            get
-            {
-                return TotalLength;
-            }
-        }
+        public override long Length => TotalLength;
 
-        override public long Position
+        public override long Position
         {
             get
             {
@@ -383,7 +313,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override protected void Dispose(bool disposing)
+        protected override void Dispose(bool disposing)
         {
             try
             {
@@ -400,19 +330,16 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        override public void Flush()
-        {
-            throw ADP.NotSupported();
-        }
+        public override void Flush() => throw ADP.NotSupported();
 
-        override public int Read(byte[] buffer, int offset, int count)
+        public override int Read(byte[] buffer, int offset, int count)
         {
             int cb;
             int intCount = 0;
 
             if (null == _cachedBytes)
             {
-                throw ADP.StreamClosed(nameof(Read));
+                throw ADP.StreamClosed();
             }
 
             if (null == buffer)
@@ -452,8 +379,8 @@ namespace Microsoft.Data.SqlClient
                 cb = _cachedBytes[_currentArrayIndex].Length - _currentPosition;
                 if (cb > count)
                     cb = count;
-                Array.Copy(_cachedBytes[_currentArrayIndex], _currentPosition, buffer, offset, cb);
 
+                Buffer.BlockCopy(_cachedBytes[_currentArrayIndex], _currentPosition, buffer, offset, cb);
                 _currentPosition += cb;
                 count -= (int)cb;
                 offset += (int)cb;
@@ -463,13 +390,13 @@ namespace Microsoft.Data.SqlClient
             return intCount;
         }
 
-        override public long Seek(long offset, SeekOrigin origin)
+        public override long Seek(long offset, SeekOrigin origin)
         {
             long pos = 0;
 
             if (null == _cachedBytes)
             {
-                throw ADP.StreamClosed(nameof(Read));
+                throw ADP.StreamClosed();
             }
 
             switch (origin)
@@ -494,15 +421,9 @@ namespace Microsoft.Data.SqlClient
             return pos;
         }
 
-        override public void SetLength(long value)
-        {
-            throw ADP.NotSupported();
-        }
+        public override void SetLength(long value) => throw ADP.NotSupported();
 
-        override public void Write(byte[] buffer, int offset, int count)
-        {
-            throw ADP.NotSupported();
-        }
+        public override void Write(byte[] buffer, int offset, int count) => throw ADP.NotSupported();
 
         private void SetInternalPosition(long lPos, string argumentName)
         {
@@ -549,13 +470,12 @@ namespace Microsoft.Data.SqlClient
 
     sealed internal class SqlStreamingXml
     {
-
-        int _columnOrdinal;
-        SqlDataReader _reader;
-        XmlReader _xmlReader;
-        XmlWriter _xmlWriter;
-        StringWriter _strWriter;
-        long _charsRemoved;
+        private readonly int _columnOrdinal;
+        private SqlDataReader _reader;
+        private XmlReader _xmlReader;
+        private XmlWriter _xmlWriter;
+        private StringWriter _strWriter;
+        private long _charsRemoved;
 
         public SqlStreamingXml(int i, SqlDataReader reader)
         {
@@ -573,22 +493,16 @@ namespace Microsoft.Data.SqlClient
             _strWriter = null;
         }
 
-        public int ColumnOrdinal
-        {
-            get
-            {
-                return _columnOrdinal;
-            }
-        }
+        public int ColumnOrdinal => _columnOrdinal;
 
         public long GetChars(long dataIndex, char[] buffer, int bufferIndex, int length)
         {
             if (_xmlReader == null)
             {
-                SqlStream sqlStream = new SqlStream(_columnOrdinal, _reader, true /* addByteOrderMark */, false /* processAllRows*/, false /*advanceReader*/);
+                SqlStream sqlStream = new(_columnOrdinal, _reader, addByteOrderMark: true, processAllRows:false, advanceReader:false);
                 _xmlReader = sqlStream.ToXmlReader();
                 _strWriter = new StringWriter((System.IFormatProvider)null);
-                XmlWriterSettings writerSettings = new XmlWriterSettings();
+                XmlWriterSettings writerSettings = new();
                 writerSettings.CloseOutput = true;      // close the memory stream when done
                 writerSettings.ConformanceLevel = ConformanceLevel.Fragment;
                 _xmlWriter = XmlWriter.Create(_strWriter, writerSettings);
@@ -664,7 +578,6 @@ namespace Microsoft.Data.SqlClient
         // instead of reading the entire node like XmlWriter.
         private void WriteXmlElement()
         {
-
             if (_xmlReader.EOF)
                 return;
 

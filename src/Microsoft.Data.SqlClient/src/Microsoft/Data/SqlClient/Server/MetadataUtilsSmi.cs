@@ -13,21 +13,24 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient.Server
 {
-    // Utilities for manipulating smi-related metadata.
-    //
-    //  Since this class is built on top of SMI, SMI should not have a dependency on this class
-    //
-    //  These are all based off of knowing the clr type of the value
-    //  as an ExtendedClrTypeCode enum for rapid access.
+    /// <summary>
+    /// Utilities for manipulating smi-related metadata.
+    ///   Since this class is built on top of SMI, SMI should not have a dependency on this class
+    ///  These are all based off of knowing the clr type of the value
+    ///  as an ExtendedClrTypeCode enum for rapid access.
+    /// </summary>
     internal class MetaDataUtilsSmi
     {
         internal const SqlDbType InvalidSqlDbType = (SqlDbType)(-1);
         internal const long InvalidMaxLength = -2;
 
-        // Standard type inference map to get SqlDbType when all you know is the value's type (typecode)
-        //  This map's index is off by one (add one to typecode locate correct entry) in order 
-        //  to support ExtendedSqlDbType.Invalid
-        //  This array is meant to be accessed from InferSqlDbTypeFromTypeCode.
+
+        /// <summary>
+        ///  Standard type inference map to get SqlDbType when all you know is the value's type (typecode)
+        /// This map's index is off by one (add one to typecode locate correct entry) in order 
+        /// to support ExtendedSqlDbType.Invalid
+        /// This array is meant to be accessed from InferSqlDbTypeFromTypeCode.
+        /// </summary>
         private static readonly SqlDbType[] s_extendedTypeCodeToSqlDbTypeMap = {
             InvalidSqlDbType,               // Invalid extended type code
             SqlDbType.Bit,                  // System.Boolean
@@ -74,8 +77,11 @@ namespace Microsoft.Data.SqlClient.Server
             SqlDbType.DateTimeOffset,       // System.DateTimeOffset
         };
 
-        // Dictionary to map from clr type object to ExtendedClrTypeCodeMap enum.
-        // This dictionary should only be accessed from DetermineExtendedTypeCode and class ctor for setup.
+
+        /// <summary>
+        /// Dictionary to map from clr type object to ExtendedClrTypeCodeMap enum.
+        /// This dictionary should only be accessed from DetermineExtendedTypeCode and class ctor for setup.
+        /// </summary>
         private static readonly Dictionary<Type, ExtendedClrTypeCode> s_typeToExtendedTypeCodeMap = CreateTypeToExtendedTypeCodeMap();
 
         private static Dictionary<Type, ExtendedClrTypeCode> CreateTypeToExtendedTypeCodeMap()
@@ -130,12 +136,9 @@ namespace Microsoft.Data.SqlClient.Server
             return dictionary;
         }
 
-        internal static bool IsCharOrXmlType(SqlDbType type)
-        {
-            return IsUnicodeType(type) ||
+        internal static bool IsCharOrXmlType(SqlDbType type) => IsUnicodeType(type) ||
                     IsAnsiType(type) ||
                     type == SqlDbType.Xml;
-        }
 
         internal static bool IsUnicodeType(SqlDbType type)
         {
@@ -144,29 +147,21 @@ namespace Microsoft.Data.SqlClient.Server
                     type == SqlDbType.NText;
         }
 
-        internal static bool IsAnsiType(SqlDbType type)
-        {
-            return type == SqlDbType.Char ||
+        internal static bool IsAnsiType(SqlDbType type) => type == SqlDbType.Char ||
                     type == SqlDbType.VarChar ||
                     type == SqlDbType.Text;
-        }
 
-        internal static bool IsBinaryType(SqlDbType type)
-        {
-            return type == SqlDbType.Binary ||
+        internal static bool IsBinaryType(SqlDbType type) => type == SqlDbType.Binary ||
                     type == SqlDbType.VarBinary ||
                     type == SqlDbType.Image;
-        }
 
         // Does this type use PLP format values?
-        internal static bool IsPlpFormat(SmiMetaData metaData)
-        {
-            return metaData.MaxLength == SmiMetaData.UnlimitedMaxLengthIndicator ||
+        internal static bool IsPlpFormat(SmiMetaData metaData) => 
+                    metaData.MaxLength == SmiMetaData.UnlimitedMaxLengthIndicator ||
                     metaData.SqlDbType == SqlDbType.Image ||
                     metaData.SqlDbType == SqlDbType.NText ||
                     metaData.SqlDbType == SqlDbType.Text ||
                     metaData.SqlDbType == SqlDbType.Udt;
-        }
 
         // If we know we're only going to use this object to assign to a specific SqlDbType back end object,
         //  we can save some processing time by only checking for the few valid types that can be assigned to the dbType.
@@ -183,7 +178,11 @@ namespace Microsoft.Data.SqlClient.Server
                 SqlDbType dbType,
                 bool isMultiValued,
                 object value,
-                Type udtType)
+                Type udtType
+#if NETFRAMEWORK
+                ,ulong smiVersion
+#endif
+            )
         {
             ExtendedClrTypeCode extendedCode = ExtendedClrTypeCode.Invalid;
 
@@ -246,6 +245,13 @@ namespace Microsoft.Data.SqlClient.Server
                         break;
                     case SqlDbType.Date:
                     case SqlDbType.DateTime2:
+#if NETFRAMEWORK
+                        if (smiVersion >= SmiContextFactory.Sql2008Version)
+                        {
+                            goto case SqlDbType.DateTime;
+                        }
+                        break;
+#endif
                     case SqlDbType.DateTime:
                     case SqlDbType.SmallDateTime:
                         if (value.GetType() == typeof(DateTime))
@@ -325,11 +331,19 @@ namespace Microsoft.Data.SqlClient.Server
                         }
                         break;
                     case SqlDbType.Time:
-                        if (value.GetType() == typeof(TimeSpan))
+                        if (value.GetType() == typeof(TimeSpan)
+#if NETFRAMEWORK
+                        && smiVersion >= SmiContextFactory.Sql2008Version
+#endif
+                            )
                             extendedCode = ExtendedClrTypeCode.TimeSpan;
                         break;
                     case SqlDbType.DateTimeOffset:
-                        if (value.GetType() == typeof(DateTimeOffset))
+                        if (value.GetType() == typeof(DateTimeOffset)
+#if NETFRAMEWORK
+                        && smiVersion >= SmiContextFactory.Sql2008Version
+#endif
+                            )
                             extendedCode = ExtendedClrTypeCode.DateTimeOffset;
                         break;
                     case SqlDbType.Xml:
@@ -424,35 +438,11 @@ namespace Microsoft.Data.SqlClient.Server
             return returnType;
         }
 
-        internal static SqlMetaData SmiExtendedMetaDataToSqlMetaData(SmiExtendedMetaData source)
-        {
-            if (SqlDbType.Xml == source.SqlDbType)
-            {
-                return new SqlMetaData(source.Name,
-                    source.SqlDbType,
-                    source.MaxLength,
-                    source.Precision,
-                    source.Scale,
-                    source.LocaleId,
-                    source.CompareOptions,
-                    source.TypeSpecificNamePart1,
-                    source.TypeSpecificNamePart2,
-                    source.TypeSpecificNamePart3,
-                    true,
-                    source.Type);
-            }
-
-            return new SqlMetaData(source.Name,
-                source.SqlDbType,
-                source.MaxLength,
-                source.Precision,
-                source.Scale,
-                source.LocaleId,
-                source.CompareOptions,
-                null);
-        }
-
-        // Convert SqlMetaData instance to an SmiExtendedMetaData instance.
+        /// <summary>
+        /// Convert SqlMetaData instance to an SmiExtendedMetaData instance.
+        /// </summary>
+        /// <param name="source"></param>
+        /// <returns></returns>
         internal static SmiExtendedMetaData SqlMetaDataToSmiExtendedMetaData(SqlMetaData source)
         {
             // now map everything across to the extended metadata object
@@ -510,7 +500,11 @@ namespace Microsoft.Data.SqlClient.Server
                                             source.Scale,
                                             source.LocaleId,
                                             source.CompareOptions,
+#if NETFRAMEWORK
+                                            source.Type,
+#else
                                             null,
+#endif
                                             source.Name,
                                             typeSpecificNamePart1,
                                             typeSpecificNamePart2,
@@ -526,6 +520,7 @@ namespace Microsoft.Data.SqlClient.Server
                     firstMd.Scale == secondMd.Scale &&
                     firstMd.CompareOptions == secondMd.CompareOptions &&
                     firstMd.LocaleId == secondMd.LocaleId &&
+                    firstMd.Type == secondMd.Type &&
                     firstMd.SqlDbType != SqlDbType.Structured &&  // SqlMetaData doesn't support Structured types
                     !firstMd.IsMultiValued;  // SqlMetaData doesn't have a "multivalued" option
         }
@@ -645,7 +640,11 @@ namespace Microsoft.Data.SqlClient.Server
                                         scale,
                                         columnLocale.LCID,
                                         SmiMetaData.DefaultNVarChar.CompareOptions,
+#if NETFRAMEWORK
+                                        column.DataType,
+#else
                                         null,
+#endif
                                         false,  // no support for multi-valued columns in a TVP yet
                                         null,   // no support for structured columns yet
                                         null,   // no support for structured columns yet
@@ -959,5 +958,27 @@ namespace Microsoft.Data.SqlClient.Server
                             null,
                             null);
         }
+
+#if NETFRAMEWORK
+
+        static internal bool IsValidForSmiVersion(SmiExtendedMetaData md, ulong smiVersion)
+        {
+            if (SmiContextFactory.LatestVersion == smiVersion)
+            {
+                return true;
+            }
+            else
+            {
+                // 2005 doesn't support Structured nor the new time types
+                Debug.Assert(SmiContextFactory.Sql2005Version == smiVersion, "Other versions should have been eliminated during link stage");
+                return md.SqlDbType != SqlDbType.Structured &&
+                        md.SqlDbType != SqlDbType.Date &&
+                        md.SqlDbType != SqlDbType.DateTime2 &&
+                        md.SqlDbType != SqlDbType.DateTimeOffset &&
+                        md.SqlDbType != SqlDbType.Time;
+            }
+        }
+
+#endif
     }
 }
