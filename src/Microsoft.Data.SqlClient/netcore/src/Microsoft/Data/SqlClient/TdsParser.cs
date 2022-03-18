@@ -257,6 +257,8 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        internal bool Is2005OrNewer => true;
+
         internal bool Is2008OrNewer
         {
             get

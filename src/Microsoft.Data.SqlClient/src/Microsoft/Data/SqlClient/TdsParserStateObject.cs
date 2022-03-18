@@ -9,6 +9,7 @@ using System.Security;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -610,6 +611,42 @@ namespace Microsoft.Data.SqlClient
             Parser.PutSession(this);
         }
 
+        internal bool Deactivate()
+        {
+            bool goodForReuse = false;
+
+            try
+            {
+                TdsParserState state = Parser.State;
+                if (state != TdsParserState.Broken && state != TdsParserState.Closed)
+                {
+                    if (HasPendingData)
+                    {
+                        Parser.DrainData(this); // This may throw - taking us to catch block.c
+                    }
+
+                    if (HasOpenResult)
+                    {
+                        DecrementOpenResultCount();
+                    }
+
+                    ResetCancelAndProcessAttention();
+                    goodForReuse = true;
+                }
+            }
+            catch (Exception e)
+            {
+                if (!ADP.IsCatchableExceptionType(e))
+                {
+                    throw;
+                }
+#if NETFRAMEWORK
+                ADP.TraceExceptionWithoutRethrow(e);
+#endif
+            }
+            return goodForReuse;
+        }
+
         // If this object is part of a TdsParserSessionPool, then this *must* be called inside the pool's lock
         internal void RemoveOwner()
         {
@@ -746,5 +783,254 @@ namespace Microsoft.Data.SqlClient
                 }
             }
         }
+
+        // Processes the tds header that is present in the buffer
+        internal bool TryProcessHeader()
+        {
+            Debug.Assert(_inBytesPacket == 0, "there should not be any bytes left in packet when ReadHeader is called");
+
+            // if the header splits buffer reads - special case!
+            if ((_partialHeaderBytesRead > 0) || (_inBytesUsed + _inputHeaderLen > _inBytesRead))
+            {
+                // VSTS 219884: when some kind of MITM (man-in-the-middle) tool splits the network packets, the message header can be split over
+                // several network packets.
+                // Note: cannot use ReadByteArray here since it uses _inBytesPacket which is not set yet.
+                do
+                {
+                    int copy = Math.Min(_inBytesRead - _inBytesUsed, _inputHeaderLen - _partialHeaderBytesRead);
+                    Debug.Assert(copy > 0, "ReadNetworkPacket read empty buffer");
+
+                    Buffer.BlockCopy(_inBuff, _inBytesUsed, _partialHeaderBuffer, _partialHeaderBytesRead, copy);
+                    _partialHeaderBytesRead += copy;
+                    _inBytesUsed += copy;
+
+                    Debug.Assert(_partialHeaderBytesRead <= _inputHeaderLen, "Read more bytes for header than required");
+                    if (_partialHeaderBytesRead == _inputHeaderLen)
+                    {
+                        // All read
+                        _partialHeaderBytesRead = 0;
+                        _inBytesPacket = ((int)_partialHeaderBuffer[TdsEnums.HEADER_LEN_FIELD_OFFSET] << 8 |
+                                  (int)_partialHeaderBuffer[TdsEnums.HEADER_LEN_FIELD_OFFSET + 1]) - _inputHeaderLen;
+
+                        _messageStatus = _partialHeaderBuffer[1];
+                        _spid = _partialHeaderBuffer[TdsEnums.SPID_OFFSET] << 8 |
+                                  _partialHeaderBuffer[TdsEnums.SPID_OFFSET + 1];
+#if !NETFRAMEWORK
+                        SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.TryProcessHeader | ADV | State Object Id {0}, Client Connection Id {1}, Server process Id (SPID) {2}", _objectID, _parser?.Connection?.ClientConnectionId, _spid);
+#endif
+                    }
+                    else
+                    {
+                        Debug.Assert(_inBytesUsed == _inBytesRead, "Did not use all data while reading partial header");
+
+                        // Require more data
+                        if (_parser.State == TdsParserState.Broken || _parser.State == TdsParserState.Closed)
+                        {
+                            // NOTE: ReadNetworkPacket does nothing if the parser state is closed or broken
+                            // to avoid infinite loop, we raise an exception
+                            ThrowExceptionAndWarning();
+                            return true;
+                        }
+
+                        if (!TryReadNetworkPacket())
+                        {
+                            return false;
+                        }
+
+                        if (IsTimeoutStateExpired)
+                        {
+                            ThrowExceptionAndWarning();
+                            return true;
+                        }
+                    }
+                } while (_partialHeaderBytesRead != 0); // This is reset to 0 once we have read everything that we need
+
+                AssertValidState();
+            }
+            else
+            {
+                // normal header processing...
+                _messageStatus = _inBuff[_inBytesUsed + 1];
+                _inBytesPacket = (_inBuff[_inBytesUsed + TdsEnums.HEADER_LEN_FIELD_OFFSET] << 8 |
+                                              _inBuff[_inBytesUsed + TdsEnums.HEADER_LEN_FIELD_OFFSET + 1]) - _inputHeaderLen;
+                _spid = _inBuff[_inBytesUsed + TdsEnums.SPID_OFFSET] << 8 |
+                                              _inBuff[_inBytesUsed + TdsEnums.SPID_OFFSET + 1];
+#if !NETFRAMEWORK
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.TryProcessHeader | ADV | State Object Id {0}, Client Connection Id {1}, Server process Id (SPID) {2}", _objectID, _parser?.Connection?.ClientConnectionId, _spid);
+#endif
+                _inBytesUsed += _inputHeaderLen;
+
+                AssertValidState();
+            }
+
+            if (_inBytesPacket < 0)
+            {
+#if NETFRAMEWORK
+                throw SQL.ParsingError(ParsingErrorState.CorruptedTdsStream);
+#else
+                // either TDS stream is corrupted or there is multithreaded misuse of connection
+                throw SQL.ParsingError();
+#endif
+            }
+
+            return true;
+        }
+
+        // This ensure that there is data available to be read in the buffer and that the header has been processed
+        // NOTE: This method (and all it calls) should be retryable without replaying a snapshot
+        internal bool TryPrepareBuffer()
+        {
+#if NETFRAMEWORK
+
+            TdsParser.ReliabilitySection.Assert("unreliable call to ReadBuffer");  // you need to setup for a thread abort somewhere before you call this method
+#endif
+            Debug.Assert(_inBuff != null, "packet buffer should not be null!");
+
+            // Header spans packets, or we haven't read the header yet - process header
+            if ((_inBytesPacket == 0) && (_inBytesUsed < _inBytesRead))
+            {
+                if (!TryProcessHeader())
+                {
+                    return false;
+                }
+                Debug.Assert(_inBytesPacket != 0, "_inBytesPacket cannot be 0 after processing header!");
+                AssertValidState();
+            }
+
+            // If we're out of data, need to read more
+            if (_inBytesUsed == _inBytesRead)
+            {
+                // If the _inBytesPacket is not zero, then we have data left in the packet, but the data in the packet
+                // spans the buffer, so we can read any amount of data possible, and we do not need to call ProcessHeader
+                // because there isn't a header at the beginning of the data that we are reading.
+                if (_inBytesPacket > 0)
+                {
+                    if (!TryReadNetworkPacket())
+                    {
+                        return false;
+                    }
+                }
+                else if (_inBytesPacket == 0)
+                {
+                    // Else we have finished the packet and so we must read as much data as possible
+                    if (!TryReadNetworkPacket())
+                    {
+                        return false;
+                    }
+
+                    if (!TryProcessHeader())
+                    {
+                        return false;
+                    }
+
+                    Debug.Assert(_inBytesPacket != 0, "_inBytesPacket cannot be 0 after processing header!");
+                    if (_inBytesUsed == _inBytesRead)
+                    {
+                        // we read a header but didn't get anything else except it
+                        // VSTS 219884: it can happen that the TDS packet header and its data are split across two network packets.
+                        // Read at least one more byte to get/cache the first data portion of this TDS packet
+                        if (!TryReadNetworkPacket())
+                        {
+                            return false;
+                        }
+                    }
+                }
+                else
+                {
+                    Debug.Fail("entered negative _inBytesPacket loop");
+                }
+                AssertValidState();
+            }
+
+            return true;
+        }
+
+        internal void ResetBuffer()
+        {
+            _outBytesUsed = _outputHeaderLen;
+        }
+
+        internal void ResetPacketCounters()
+        {
+            _outputPacketNumber = 1;
+            _outputPacketCount = 0;
+        }
+        
+        internal bool SetPacketSize(int size)
+        {
+            if (size > TdsEnums.MAX_PACKET_SIZE)
+            {
+                throw SQL.InvalidPacketSize();
+            }
+            Debug.Assert(size >= 1, "Cannot set packet size to less than 1.");
+            Debug.Assert((_outBuff == null && _inBuff == null) ||
+                          (_outBuff.Length == _inBuff.Length),
+                          "Buffers are not in consistent state");
+            Debug.Assert((_outBuff == null && _inBuff == null) ||
+                          this == _parser._physicalStateObj,
+                          "SetPacketSize should only be called on a stateObj with null buffers on the physicalStateObj!");
+            Debug.Assert(_inBuff == null
+                          ||
+                          (
+                          _parser.Is2005OrNewer &&
+                           _outBytesUsed == (_outputHeaderLen + BitConverter.ToInt32(_outBuff, _outputHeaderLen)) &&
+                           _outputPacketNumber == 1)
+                          ||
+                          (_outBytesUsed == _outputHeaderLen && _outputPacketNumber == 1),
+                          "SetPacketSize called with data in the buffer!");
+
+            if (_inBuff == null || _inBuff.Length != size)
+            { // We only check _inBuff, since two buffers should be consistent.
+                // Allocate or re-allocate _inBuff.
+                if (_inBuff == null)
+                {
+                    _inBuff = new byte[size];
+                    _inBytesRead = 0;
+                    _inBytesUsed = 0;
+                }
+                else if (size != _inBuff.Length)
+                {
+                    // If new size is other than existing...
+                    if (_inBytesRead > _inBytesUsed)
+                    {
+                        // if we still have data left in the buffer we must keep that array reference and then copy into new one
+                        byte[] temp = _inBuff;
+
+                        _inBuff = new byte[size];
+
+                        // copy remainder of unused data
+                        int remainingData = _inBytesRead - _inBytesUsed;
+                        if ((temp.Length < _inBytesUsed + remainingData) || (_inBuff.Length < remainingData))
+                        {
+                            string errormessage = StringsHelper.GetString(Strings.SQL_InvalidInternalPacketSize) + ' ' + temp.Length + ", " + _inBytesUsed + ", " + remainingData + ", " + _inBuff.Length;
+                            throw SQL.InvalidInternalPacketSize(errormessage);
+                        }
+                        Buffer.BlockCopy(temp, _inBytesUsed, _inBuff, 0, remainingData);
+
+                        _inBytesRead = _inBytesRead - _inBytesUsed;
+                        _inBytesUsed = 0;
+
+                        AssertValidState();
+                    }
+                    else
+                    {
+                        // buffer is empty - just create the new one that is double the size of the old one
+                        _inBuff = new byte[size];
+                        _inBytesRead = 0;
+                        _inBytesUsed = 0;
+                    }
+                }
+
+                // Always re-allocate _outBuff - assert is above to verify state.
+                _outBuff = new byte[size];
+                _outBytesUsed = _outputHeaderLen;
+
+                AssertValidState();
+                return true;
+            }
+
+            return false;
+        }
+
     }
 }
