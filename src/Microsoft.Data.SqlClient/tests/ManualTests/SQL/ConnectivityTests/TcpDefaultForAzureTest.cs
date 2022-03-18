@@ -41,7 +41,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void NonAzureNoProtocolConnectionTest()
         {
             builder.DataSource = InvalidHostname;
+#if NETFRAMEWORK
+            CheckConnectionFailure(builder.ConnectionString, NP);
+#else
             CheckConnectionFailure(builder.ConnectionString, DataTestUtility.IsUsingManagedSNI() ? TCP : NP);
+#endif
         }
 
         [Fact]
