@@ -784,7 +784,7 @@ namespace Microsoft.Data.Common
             => IndexOutOfRange(StringsHelper.GetString(Strings.ADP_CollectionIndexString, itemType.Name, propertyName, propertyValue, collection.Name));
 
         internal static InvalidCastException CollectionInvalidType(Type collection, Type itemType, object invalidValue)
-            => InvalidCast(StringsHelper.GetString(Strings.ADP_CollectionInvalidType, collection.Name, itemType.Name, invalidValue.GetType().Name));
+            => InvalidCast(StringsHelper.GetString(Strings.ADP_CollectionInvalidType, collection.Name, itemType.FullName, invalidValue.GetType().FullName));
 
         internal static ArgumentException ConvertFailed(Type fromType, Type toType, Exception innerException)
             => ADP.Argument(StringsHelper.GetString(Strings.SqlConvert_ConvertFailed, fromType.FullName, toType.FullName), innerException);
