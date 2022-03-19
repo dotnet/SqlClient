@@ -82,6 +82,8 @@ namespace Microsoft.Data.SqlClient
             get;
         }
 
+        private static bool TransparentNetworkIPResolution => false;
+
         private partial struct NullBitmap
         {
             internal bool TryInitialize(TdsParserStateObject stateObj, int columnsCount)
@@ -361,102 +363,6 @@ namespace Microsoft.Data.SqlClient
                 Interlocked.CompareExchange(ref _cachedSnapshot, snapshot, null);
             }
             _snapshotReplay = false;
-        }
-
-        // This method should only be called by ReadSni!  If not - it may have problems with timeouts!
-        private void ReadSniError(TdsParserStateObject stateObj, uint error)
-        {
-            if (TdsEnums.SNI_WAIT_TIMEOUT == error)
-            {
-                Debug.Assert(_syncOverAsync, "Should never reach here with async on!");
-                bool fail = false;
-
-                if (IsTimeoutStateExpired)
-                { // This is now our second timeout - time to give up.
-                    fail = true;
-                }
-                else
-                {
-                    stateObj.SetTimeoutStateStopped();
-                    Debug.Assert(_parser.Connection != null, "SqlConnectionInternalTds handler can not be null at this point.");
-                    AddError(new SqlError(TdsEnums.TIMEOUT_EXPIRED, 0x00, TdsEnums.MIN_ERROR_CLASS, _parser.Server, _parser.Connection.TimeoutErrorInternal.GetErrorMessage(), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
-
-                    if (!stateObj._attentionSent)
-                    {
-                        if (stateObj.Parser.State == TdsParserState.OpenLoggedIn)
-                        {
-                            stateObj.SendAttention(mustTakeWriteLock: true);
-
-                            PacketHandle syncReadPacket = default;
-
-                            bool shouldDecrement = false;
-                            try
-                            {
-                                Interlocked.Increment(ref _readingCount);
-                                shouldDecrement = true;
-
-                                syncReadPacket = ReadSyncOverAsync(stateObj.GetTimeoutRemaining(), out error);
-
-                                Interlocked.Decrement(ref _readingCount);
-                                shouldDecrement = false;
-
-                                if (TdsEnums.SNI_SUCCESS == error)
-                                {
-                                    // We will end up letting the run method deal with the expected done:done_attn token stream.
-                                    stateObj.ProcessSniPacket(syncReadPacket, 0);
-                                    return;
-                                }
-                                else
-                                {
-                                    Debug.Assert(!IsValidPacket(syncReadPacket), "unexpected syncReadPacket without corresponding SNIPacketRelease");
-                                    fail = true; // Subsequent read failed, time to give up.
-                                }
-                            }
-                            finally
-                            {
-                                if (shouldDecrement)
-                                {
-                                    Interlocked.Decrement(ref _readingCount);
-                                }
-
-                                if (!IsPacketEmpty(syncReadPacket))
-                                {
-                                    ReleasePacket(syncReadPacket);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            if (_parser._loginWithFailover)
-                            {
-                                // For DbMirroring Failover during login, never break the connection, just close the TdsParser
-                                _parser.Disconnect();
-                            }
-                            else if ((_parser.State == TdsParserState.OpenNotLoggedIn) && (_parser.Connection.ConnectionOptions.MultiSubnetFailover))
-                            {
-                                // For MultiSubnet Failover during login, never break the connection, just close the TdsParser
-                                _parser.Disconnect();
-                            }
-                            else
-                                fail = true; // We aren't yet logged in - just fail.
-                        }
-                    }
-                }
-
-                if (fail)
-                {
-                    _parser.State = TdsParserState.Broken; // We failed subsequent read, we have to quit!
-                    _parser.Connection.BreakConnection();
-                }
-            }
-            else
-            {
-                // Caution: ProcessSNIError  always  returns a fatal error!
-                AddError(_parser.ProcessSNIError(stateObj));
-            }
-            ThrowExceptionAndWarning();
-
-            AssertValidState();
         }
 
         public void ProcessSniPacket(PacketHandle packet, uint error)

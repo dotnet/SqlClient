@@ -33,6 +33,8 @@ namespace Microsoft.Data.SqlClient
 
         private SessionHandle SessionHandle => new SessionHandle(_sessionHandle);
 
+        private bool TransparentNetworkIPResolution => _parser.Connection.ConnectionOptions.TransparentNetworkIPResolution;
+
         internal bool _pendingData = false;
         internal bool _errorTokenReceived = false;               // Keep track of whether an error was received for the result.
                                                                  // This is reset upon each done token - there can be
@@ -475,111 +477,6 @@ namespace Microsoft.Data.SqlClient
         {
             SNIHandle handle = Handle;
             return handle == null ? TdsEnums.SNI_SUCCESS : SNINativeMethodWrapper.SNICheckConnection(handle);
-        }
-
-        // This method should only be called by ReadSni!  If not - it may have problems with timeouts!
-        private void ReadSniError(TdsParserStateObject stateObj, uint error)
-        {
-            TdsParser.ReliabilitySection.Assert("unreliable call to ReadSniSyncError");  // you need to setup for a thread abort somewhere before you call this method
-
-            if (TdsEnums.SNI_WAIT_TIMEOUT == error)
-            {
-                Debug.Assert(_syncOverAsync, "Should never reach here with async on!");
-                bool fail = false;
-
-                if (IsTimeoutStateExpired)
-                { // This is now our second timeout - time to give up.
-                    fail = true;
-                }
-                else
-                {
-                    stateObj.SetTimeoutStateStopped();
-                    Debug.Assert(_parser.Connection != null, "SqlConnectionInternalTds handler can not be null at this point.");
-                    AddError(new SqlError(TdsEnums.TIMEOUT_EXPIRED, 0x00, TdsEnums.MIN_ERROR_CLASS, _parser.Server, _parser.Connection.TimeoutErrorInternal.GetErrorMessage(), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
-
-                    if (!stateObj._attentionSent)
-                    {
-                        if (stateObj.Parser.State == TdsParserState.OpenLoggedIn)
-                        {
-                            stateObj.SendAttention(mustTakeWriteLock: true);
-
-                            IntPtr syncReadPacket = IntPtr.Zero;
-                            RuntimeHelpers.PrepareConstrainedRegions();
-                            bool shouldDecrement = false;
-                            try
-                            {
-                                Interlocked.Increment(ref _readingCount);
-                                shouldDecrement = true;
-
-                                SNIHandle handle = Handle;
-                                if (handle == null)
-                                {
-                                    throw ADP.ClosedConnectionError();
-                                }
-
-                                error = SNINativeMethodWrapper.SNIReadSyncOverAsync(handle, ref syncReadPacket, stateObj.GetTimeoutRemaining());
-
-                                Interlocked.Decrement(ref _readingCount);
-                                shouldDecrement = false;
-
-                                if (TdsEnums.SNI_SUCCESS == error)
-                                {
-                                    // We will end up letting the run method deal with the expected done:done_attn token stream.
-                                    stateObj.ProcessSniPacket(syncReadPacket, 0);
-                                    return;
-                                }
-                                else
-                                {
-                                    Debug.Assert(IntPtr.Zero == syncReadPacket, "unexpected syncReadPacket without corresponding SNIPacketRelease");
-                                    fail = true; // Subsequent read failed, time to give up.
-                                }
-                            }
-                            finally
-                            {
-                                if (shouldDecrement)
-                                {
-                                    Interlocked.Decrement(ref _readingCount);
-                                }
-
-                                if (syncReadPacket != IntPtr.Zero)
-                                {
-                                    // Be sure to release packet, otherwise it will be leaked by native.
-                                    SNINativeMethodWrapper.SNIPacketRelease(syncReadPacket);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            if (_parser._loginWithFailover)
-                            {
-                                // For DB Mirroring Failover during login, never break the connection, just close the TdsParser (Devdiv 846298)
-                                _parser.Disconnect();
-                            }
-                            else if ((_parser.State == TdsParserState.OpenNotLoggedIn) && (_parser.Connection.ConnectionOptions.MultiSubnetFailover || _parser.Connection.ConnectionOptions.TransparentNetworkIPResolution))
-                            {
-                                // For MultiSubnet Failover during login, never break the connection, just close the TdsParser
-                                _parser.Disconnect();
-                            }
-                            else
-                                fail = true; // We aren't yet logged in - just fail.
-                        }
-                    }
-                }
-
-                if (fail)
-                {
-                    _parser.State = TdsParserState.Broken; // We failed subsequent read, we have to quit!
-                    _parser.Connection.BreakConnection();
-                }
-            }
-            else
-            {
-                // Caution: ProcessSNIError  always  returns a fatal error!
-                AddError(_parser.ProcessSNIError(stateObj));
-            }
-            ThrowExceptionAndWarning();
-
-            AssertValidState();
         }
 
         // TODO: - does this need to be MUSTRUN???
