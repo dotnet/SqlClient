@@ -15,6 +15,8 @@ jobs:
       - uses: microsoft/setup-msbuild@v1.0.2
       - uses: nuget/setup-nuget@v1
       - run: choco install dotnet4.6.1
+      - run: choco install dotnet4.6.1-devpack
+      - run: choco install netfx-4.6.1-devpack
       - name: workaround netcore
         shell: powershell
         run: |
