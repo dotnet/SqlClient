@@ -14,7 +14,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: microsoft/setup-msbuild@v1.0.2
       - uses: nuget/setup-nuget@v1
-      - name: workaround
+      - name: workaround netcore
         shell: powershell
         run: |
           $path = 'src/Microsoft.Data.SqlClient/netcore/src/Microsoft/Data/SqlClient/TdsParser.cs'
@@ -25,6 +25,22 @@ jobs:
           ).Replace(
             'PreLoginHandshakeStatus status = ConsumePreLoginHandshake(encrypt, trustServerCert, integratedSecurity, out marsCapable, out _connHandler._fedAuthRequired);',
             'PreLoginHandshakeStatus status = PreLoginHandshakeStatus.Successful;'
+          )
+          $content | Set-Content -Path $path
+      - name: workaround netfx
+        shell: powershell
+        run: |
+          $path = 'src/Microsoft.Data.SqlClient/netfx/src/Microsoft/Data/SqlClient/TdsParser.cs'
+          $content = Get-Content $path -Raw
+          $content = $content.Replace(
+          'SendPreLoginHandshake(instanceName, encrypt, !string.IsNullOrEmpty(certificate), useOriginalAddressInfo);',
+          '// SendPreLoginHandshake(instanceName, encrypt, !string.IsNullOrEmpty(certificate), useOriginalAddressInfo);'
+          ).Replace(
+          'PreLoginHandshakeStatus status = ConsumePreLoginHandshake(authType, encrypt, trustServerCert, integratedSecurity, serverCallback, clientCallback,',
+          'PreLoginHandshakeStatus status = PreLoginHandshakeStatus.Successful; // PreLoginHandshakeStatus status = ConsumePreLoginHandshake(authType, encrypt, trustServerCert, integratedSecurity, serverCallback, clientCallback,'
+          ).Replace(
+          'out marsCapable, out _connHandler._fedAuthRequired);',
+          '// out marsCapable, out _connHandler._fedAuthRequired);'
           )
           $content | Set-Content -Path $path
       - name: rename
