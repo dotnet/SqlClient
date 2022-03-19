@@ -1836,6 +1836,85 @@ namespace Microsoft.Data.SqlClient
             return TryReadByteArray(Span<byte>.Empty, num);
         }
 
+        /////////////////////////////////////////
+        // Network/Packet Reading & Processing //
+        /////////////////////////////////////////
+        ///
+#if DEBUG
+        private string _lastStack;
+#endif
+
+        internal bool TryReadNetworkPacket()
+        {
+#if NETFRAMEWORK
+            TdsParser.ReliabilitySection.Assert("unreliable call to TryReadNetworkPacket");  // you need to setup for a thread abort somewhere before you call this method
+#endif
+
+#if DEBUG
+            Debug.Assert(!_shouldHaveEnoughData || _attentionSent, "Caller said there should be enough data, but we are currently reading a packet");
+#endif
+
+            if (_snapshot != null)
+            {
+                if (_snapshotReplay)
+                {
+                    if (_snapshot.Replay())
+                    {
+#if DEBUG
+                        if (s_checkNetworkPacketRetryStacks)
+                        {
+                            _snapshot.CheckStack(Environment.StackTrace);
+                        }
+#endif
+#if NETFRAMEWORK
+                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.ReadNetworkPacket|{0}|ADV> Async packet replay{0}", "INFO");
+#endif
+                        return true;
+                    }
+#if DEBUG
+                    else
+                    {
+                        if (s_checkNetworkPacketRetryStacks)
+                        {
+                            _lastStack = Environment.StackTrace;
+                        }
+                    }
+#endif
+                }
+
+                // previous buffer is in snapshot
+                _inBuff = new byte[_inBuff.Length];
+            }
+
+            if (_syncOverAsync)
+            {
+                ReadSniSyncOverAsync();
+                return true;
+            }
+
+            ReadSni(new TaskCompletionSource<object>());
+
+#if DEBUG
+            if (s_failAsyncPends)
+            {
+                throw new InvalidOperationException("Attempted to pend a read when _failAsyncPends test hook was enabled");
+            }
+            if (s_forceSyncOverAsyncAfterFirstPend)
+            {
+                _syncOverAsync = true;
+            }
+#endif
+            Debug.Assert((_snapshot != null) ^ _asyncReadWithoutSnapshot, "Must have either _snapshot set up or _asyncReadWithoutSnapshot enabled (but not both) to pend a read");
+
+            return false;
+        }
+
+        internal void PrepareReplaySnapshot()
+        {
+            _networkPacketTaskSource = null;
+            _snapshot.PrepareReplay();
+        }
+
         /*
 
         // leave this in. comes handy if you have to do Console.WriteLine style debugging ;)

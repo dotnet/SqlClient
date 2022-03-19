@@ -432,77 +432,6 @@ namespace Microsoft.Data.SqlClient
             _snapshotReplay = false;
         }
 
-#if DEBUG
-        StackTrace _lastStack;
-#endif
-
-        internal bool TryReadNetworkPacket()
-        {
-            TdsParser.ReliabilitySection.Assert("unreliable call to TryReadNetworkPacket");  // you need to setup for a thread abort somewhere before you call this method
-
-#if DEBUG
-            Debug.Assert(!_shouldHaveEnoughData || _attentionSent, "Caller said there should be enough data, but we are currently reading a packet");
-#endif
-
-            if (_snapshot != null)
-            {
-                if (_snapshotReplay)
-                {
-                    if (_snapshot.Replay())
-                    {
-#if DEBUG
-                        if (s_checkNetworkPacketRetryStacks)
-                        {
-                            _snapshot.CheckStack(new StackTrace());
-                        }
-#endif
-                        SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.ReadNetworkPacket|{0}|ADV> Async packet replay{0}", "INFO");
-                        return true;
-                    }
-#if DEBUG
-                    else
-                    {
-                        if (s_checkNetworkPacketRetryStacks)
-                        {
-                            _lastStack = new StackTrace();
-                        }
-                    }
-#endif
-                }
-
-                // previous buffer is in snapshot
-                _inBuff = new byte[_inBuff.Length];
-            }
-
-            if (_syncOverAsync)
-            {
-                ReadSniSyncOverAsync();
-                return true;
-            }
-
-            ReadSni(new TaskCompletionSource<object>());
-
-#if DEBUG
-            if (s_failAsyncPends)
-            {
-                throw new InvalidOperationException("Attempted to pend a read when _failAsyncPends test hook was enabled");
-            }
-            if (s_forceSyncOverAsyncAfterFirstPend)
-            {
-                _syncOverAsync = true;
-            }
-#endif
-            Debug.Assert((_snapshot != null) ^ _asyncReadWithoutSnapshot, "Must have either _snapshot set up or _asyncReadWithoutSnapshot enabled (but not both) to pend a read");
-
-            return false;
-        }
-
-        internal void PrepareReplaySnapshot()
-        {
-            _networkPacketTaskSource = null;
-            _snapshot.PrepareReplay();
-        }
-
         internal void ReadSniSyncOverAsync()
         {
             if (_parser.State == TdsParserState.Broken || _parser.State == TdsParserState.Closed)
@@ -2472,7 +2401,7 @@ namespace Microsoft.Data.SqlClient
             public byte[] Buffer;
             public int Read;
 #if DEBUG
-            public StackTrace Stack;
+            public string Stack;
 #endif
         }
 
@@ -2561,7 +2490,7 @@ namespace Microsoft.Data.SqlClient
             {
                 Debug.Assert(_snapshotInBuffCurrent == _snapshotInBuffs.Count, "Should not be reading new packets when not replaying last packet");
             }
-            internal void CheckStack(StackTrace trace)
+            internal void CheckStack(string trace)
             {
                 PacketData prev = _snapshotInBuffs[_snapshotInBuffCurrent - 1];
                 if (prev.Stack == null)
