@@ -13,6 +13,10 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
+#if NETFRAMEWORK
+    using PacketHandle = IntPtr;
+#endif
+
     sealed internal class LastIOTimer
     {
         internal long _value;
@@ -1913,6 +1917,79 @@ namespace Microsoft.Data.SqlClient
         {
             _networkPacketTaskSource = null;
             _snapshot.PrepareReplay();
+        }
+
+        internal void ReadSniSyncOverAsync()
+        {
+            if (_parser.State == TdsParserState.Broken || _parser.State == TdsParserState.Closed)
+            {
+                throw ADP.ClosedConnectionError();
+            }
+
+            PacketHandle readPacket = default;
+
+            uint error;
+
+#if NETFRAMEWORK
+            System.Runtime.CompilerServices.RuntimeHelpers.PrepareConstrainedRegions();
+#endif
+            bool shouldDecrement = false;
+            try
+            {
+#if NETFRAMEWORK
+                TdsParser.ReliabilitySection.Assert("unreliable call to ReadSniSync");  // you need to setup for a thread abort somewhere before you call this method
+#endif
+                Interlocked.Increment(ref _readingCount);
+                shouldDecrement = true;
+
+                readPacket = ReadSyncOverAsync(GetTimeoutRemaining(), out error);
+
+                Interlocked.Decrement(ref _readingCount);
+                shouldDecrement = false;
+
+                if (_parser.MARSOn)
+                { // Only take reset lock on MARS and Async.
+                    CheckSetResetConnectionState(error, CallbackType.Read);
+                }
+
+                if (TdsEnums.SNI_SUCCESS == error)
+                { // Success - process results!
+
+                    Debug.Assert(!IsPacketEmpty(readPacket), "ReadNetworkPacket cannot be null in synchronous operation!");
+
+                    ProcessSniPacket(readPacket, 0);
+#if DEBUG
+                    if (s_forcePendingReadsToWaitForUser)
+                    {
+                        _networkPacketTaskSource = new TaskCompletionSource<object>();
+                        Interlocked.MemoryBarrier();
+                        _networkPacketTaskSource.Task.Wait();
+                        _networkPacketTaskSource = null;
+                    }
+#endif
+                }
+                else
+                { // Failure!
+
+                    Debug.Assert(!IsValidPacket(readPacket), "unexpected readPacket without corresponding SNIPacketRelease");
+
+                    ReadSniError(this, error);
+                }
+            }
+            finally
+            {
+                if (shouldDecrement)
+                {
+                    Interlocked.Decrement(ref _readingCount);
+                }
+
+                if (!IsPacketEmpty(readPacket))
+                {
+                    ReleasePacket(readPacket);
+                }
+
+                AssertValidState();
+            }
         }
 
         /*

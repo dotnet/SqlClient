@@ -432,77 +432,23 @@ namespace Microsoft.Data.SqlClient
             _snapshotReplay = false;
         }
 
-        internal void ReadSniSyncOverAsync()
+        private IntPtr ReadSyncOverAsync(int timeout, out uint error)
         {
-            if (_parser.State == TdsParserState.Broken || _parser.State == TdsParserState.Closed)
+            SNIHandle handle = Handle;
+            if (handle == null)
             {
                 throw ADP.ClosedConnectionError();
             }
-
             IntPtr readPacket = IntPtr.Zero;
-            uint error;
-
-            RuntimeHelpers.PrepareConstrainedRegions();
-            bool shouldDecrement = false;
-            try
-            {
-                TdsParser.ReliabilitySection.Assert("unreliable call to ReadSniSync");  // you need to setup for a thread abort somewhere before you call this method
-
-                Interlocked.Increment(ref _readingCount);
-                shouldDecrement = true;
-
-                SNIHandle handle = Handle;
-                if (handle == null)
-                {
-                    throw ADP.ClosedConnectionError();
-                }
-
-                error = SNINativeMethodWrapper.SNIReadSyncOverAsync(handle, ref readPacket, GetTimeoutRemaining());
-
-                Interlocked.Decrement(ref _readingCount);
-                shouldDecrement = false;
-
-                if (_parser.MARSOn)
-                { // Only take reset lock on MARS and Async.
-                    CheckSetResetConnectionState(error, CallbackType.Read);
-                }
-
-                if (TdsEnums.SNI_SUCCESS == error)
-                { // Success - process results!
-                    Debug.Assert(ADP.s_ptrZero != readPacket, "ReadNetworkPacket cannot be null in synchronous operation!");
-                    ProcessSniPacket(readPacket, 0);
-#if DEBUG
-                    if (s_forcePendingReadsToWaitForUser)
-                    {
-                        _networkPacketTaskSource = new TaskCompletionSource<object>();
-                        Thread.MemoryBarrier();
-                        _networkPacketTaskSource.Task.Wait();
-                        _networkPacketTaskSource = null;
-                    }
-#endif
-                }
-                else
-                { // Failure!
-                    Debug.Assert(IntPtr.Zero == readPacket, "unexpected readPacket without corresponding SNIPacketRelease");
-                    ReadSniError(this, error);
-                }
-            }
-            finally
-            {
-                if (shouldDecrement)
-                {
-                    Interlocked.Decrement(ref _readingCount);
-                }
-
-                if (readPacket != IntPtr.Zero)
-                {
-                    // Be sure to release packet, otherwise it will be leaked by native.
-                    SNINativeMethodWrapper.SNIPacketRelease(readPacket);
-                }
-
-                AssertValidState();
-            }
+            error = SNINativeMethodWrapper.SNIReadSyncOverAsync(handle, ref readPacket, timeout);
+            return readPacket;
         }
+
+        private bool IsPacketEmpty(IntPtr packet) => packet == IntPtr.Zero;
+
+        private bool IsValidPacket(IntPtr packet) => packet != IntPtr.Zero;
+
+        private void ReleasePacket(IntPtr packet) => SNINativeMethodWrapper.SNIPacketRelease(packet);
 
         internal void OnConnectionClosed()
         {
