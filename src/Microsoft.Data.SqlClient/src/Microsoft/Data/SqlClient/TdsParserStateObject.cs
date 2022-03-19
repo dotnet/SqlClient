@@ -2335,6 +2335,82 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        /// <summary>
+        /// Checks to see if the underlying connection is still alive (used by connection pool resiliency)
+        /// NOTE: This is not safe to do on a connection that is currently in use
+        /// NOTE: This will mark the connection as broken if it is found to be dead
+        /// </summary>
+        /// <param name="throwOnException">If true then an exception will be thrown if the connection is found to be dead, otherwise no exception will be thrown</param>
+        /// <returns>True if the connection is still alive, otherwise false</returns>
+        internal bool IsConnectionAlive(bool throwOnException)
+        {
+            Debug.Assert(_parser.Connection == null || _parser.Connection.Pool != null, "Shouldn't be calling IsConnectionAlive on non-pooled connections");
+            bool isAlive = true;
+
+            if (DateTime.UtcNow.Ticks - _lastSuccessfulIOTimer._value > CheckConnectionWindow)
+            {
+                if ((_parser == null) || ((_parser.State == TdsParserState.Broken) || (_parser.State == TdsParserState.Closed)))
+                {
+                    isAlive = false;
+                    if (throwOnException)
+                    {
+                        throw SQL.ConnectionDoomed();
+                    }
+                }
+                else if ((_pendingCallbacks > 1) || ((_parser.Connection != null) && (!_parser.Connection.IsInPool)))
+                {
+                    // This connection is currently in use, assume that the connection is 'alive'
+                    // NOTE: SNICheckConnection is not currently supported for connections that are in use
+                    Debug.Assert(true, "Call to IsConnectionAlive while connection is in use");
+                }
+                else
+                {
+                    uint error;
+#if NETFRAMEWORK
+                    System.Runtime.CompilerServices.RuntimeHelpers.PrepareConstrainedRegions();
+                    try
+#endif
+                    {
+#if NETFRAMEWORK
+                        TdsParser.ReliabilitySection.Assert("unreliable call to IsConnectionAlive");  // you need to setup for a thread abort somewhere before you call this method
+
+#endif
+                        SniContext = SniContext.Snix_Connect;
+
+                        error = CheckConnection();
+                        if ((error != TdsEnums.SNI_SUCCESS) && (error != TdsEnums.SNI_WAIT_TIMEOUT))
+                        {
+                            // Connection is dead
+#if NETFRAMEWORK
+                            SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.IsConnectionAlive|Info> received error {0} on idle connection", (int)error);
+
+#else
+                            SqlClientEventSource.Log.TryTraceEvent("TdsParserStateObject.IsConnectionAlive | Info | State Object Id {0}, received error {1} on idle connection", _objectID, (int)error);
+#endif
+                            isAlive = false;
+                            if (throwOnException)
+                            {
+                                // Get the error from SNI so that we can throw the correct exception
+                                AddError(_parser.ProcessSNIError(this));
+                                ThrowExceptionAndWarning();
+                            }
+                        }
+                        else
+                        {
+                            _lastSuccessfulIOTimer._value = DateTime.UtcNow.Ticks;
+                        }
+                    }
+#if NETFRAMEWORK
+                    finally
+                    {
+                    }
+#endif
+                }
+            }
+
+            return isAlive;
+        }
+
         /*
 
         // leave this in. comes handy if you have to do Console.WriteLine style debugging ;)
