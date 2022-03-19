@@ -479,75 +479,9 @@ namespace Microsoft.Data.SqlClient
             return handle == null ? TdsEnums.SNI_SUCCESS : SNINativeMethodWrapper.SNICheckConnection(handle);
         }
 
-        // TODO: - does this need to be MUSTRUN???
-        public void ProcessSniPacket(IntPtr packet, uint error)
-        {
-            if (error != 0)
-            {
-                if ((_parser.State == TdsParserState.Closed) || (_parser.State == TdsParserState.Broken))
-                {
-                    // Do nothing with callback if closed or broken and error not 0 - callback can occur
-                    // after connection has been closed.  PROBLEM IN NETLIB - DESIGN FLAW.
-                    return;
-                }
-
-                AddError(_parser.ProcessSNIError(this));
-                AssertValidState();
-            }
-            else
-            {
-                uint dataSize = 0;
-                uint getDataError = SNINativeMethodWrapper.SNIPacketGetData(packet, _inBuff, ref dataSize);
-
-                if (getDataError == TdsEnums.SNI_SUCCESS)
-                {
-                    if (_inBuff.Length < dataSize)
-                    {
-                        Debug.Assert(true, "Unexpected dataSize on Read");
-                        throw SQL.InvalidInternalPacketSize(StringsHelper.GetString(Strings.SqlMisc_InvalidArraySizeMessage));
-                    }
-
-                    _lastSuccessfulIOTimer._value = DateTime.UtcNow.Ticks;
-                    _inBytesRead = (int)dataSize;
-                    _inBytesUsed = 0;
-
-                    if (_snapshot != null)
-                    {
-                        _snapshot.PushBuffer(_inBuff, _inBytesRead);
-                        if (_snapshotReplay)
-                        {
-                            _snapshot.Replay();
-#if DEBUG
-                            _snapshot.AssertCurrent();
-#endif
-                        }
-                    }
-                    SniReadStatisticsAndTracing();
-                    SqlClientEventSource.Log.TryAdvancedTraceBinEvent("TdsParser.ReadNetworkPacketAsyncCallback | INFO | ADV | State Object Id {0}, Packet read. In Buffer {1}, In Bytes Read: {2}", ObjectID, _inBuff, (ushort)_inBytesRead);
-                    AssertValidState();
-                }
-                else
-                {
-                    throw SQL.ParsingError(ParsingErrorState.ProcessSniPacketFailed);
-                }
-            }
-        }
-
-        private void ChangeNetworkPacketTimeout(int dueTime, int period)
-        {
-            Timer networkPacketTimeout = _networkPacketTimeout;
-            if (networkPacketTimeout != null)
-            {
-                try
-                {
-                    networkPacketTimeout.Change(dueTime, period);
-                }
-                catch (ObjectDisposedException)
-                {
-                    // _networkPacketTimeout is set to null before Disposing, but there is still a slight chance
-                    // that object was disposed after we took a copy
-                }
-            }
+        private uint SNIPacketGetData(IntPtr packet, byte[] _inBuff, ref uint dataSize)
+        { 
+            return SNINativeMethodWrapper.SNIPacketGetData(packet, _inBuff, ref dataSize);
         }
 
         public void ReadAsyncCallback(IntPtr key, IntPtr packet, uint error)
