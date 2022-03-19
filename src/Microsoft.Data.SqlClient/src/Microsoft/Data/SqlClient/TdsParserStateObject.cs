@@ -1992,6 +1992,200 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+        internal void OnConnectionClosed()
+        {
+            // the stateObj is not null, so the async invocation that registered this callback
+            // via the SqlReferenceCollection has not yet completed.  We will look for a
+            // _networkPacketTaskSource and mark it faulted.  If we don't find it, then
+            // TdsParserStateObject.ReadSni will abort when it does look to see if the parser
+            // is open.  If we do, then when the call that created it completes and a continuation
+            // is registered, we will ensure the completion is called.
+
+            // Note, this effort is necessary because when the app domain is being unloaded,
+            // we don't get callback from SNI.
+
+            // first mark parser broken.  This is to ensure that ReadSni will abort if it has
+            // not yet executed.
+            Parser.State = TdsParserState.Broken;
+            Parser.Connection.BreakConnection();
+
+            // Ensure that changing state occurs before checking _networkPacketTaskSource
+            Interlocked.MemoryBarrier();
+
+            // then check for networkPacketTaskSource
+            TaskCompletionSource<object> taskSource = _networkPacketTaskSource;
+            if (taskSource != null)
+            {
+                taskSource.TrySetException(ADP.ExceptionWithStackTrace(ADP.ClosedConnectionError()));
+            }
+
+            taskSource = _writeCompletionSource;
+            if (taskSource != null)
+            {
+                taskSource.TrySetException(ADP.ExceptionWithStackTrace(ADP.ClosedConnectionError()));
+            }
+        }
+
+        public void SetTimeoutStateStopped()
+        {
+            Interlocked.Exchange(ref _timeoutState, TimeoutState.Stopped);
+            _timeoutIdentityValue = 0;
+        }
+
+        public bool IsTimeoutStateExpired
+        {
+            get
+            {
+                int state = _timeoutState;
+                return state == TimeoutState.ExpiredAsync || state == TimeoutState.ExpiredSync;
+            }
+        }
+
+        private void OnTimeoutAsync(object state)
+        {
+            if (_enforceTimeoutDelay)
+            {
+                Thread.Sleep(_enforcedTimeoutDelayInMilliSeconds);
+            }
+
+            int currentIdentityValue = _timeoutIdentityValue;
+            TimeoutState timeoutState = (TimeoutState)state;
+            if (timeoutState.IdentityValue == _timeoutIdentityValue)
+            {
+                // the return value is not useful here because no choice is going to be made using it 
+                // we only want to make this call to set the state knowing that it will be seen later
+                OnTimeoutCore(TimeoutState.Running, TimeoutState.ExpiredAsync);
+            }
+            else
+            {
+                Debug.WriteLine($"OnTimeoutAsync called with identity state={timeoutState.IdentityValue} but current identity is {currentIdentityValue} so it is being ignored");
+            }
+        }
+
+        private bool OnTimeoutSync(bool asyncClose = false)
+        {
+            return OnTimeoutCore(TimeoutState.Running, TimeoutState.ExpiredSync, asyncClose);
+        }
+
+        /// <summary>
+        /// attempts to change the timout state from the expected state to the target state and if it succeeds
+        /// will setup the the stateobject into the timeout expired state
+        /// </summary>
+        /// <param name="expectedState">the state that is the expected current state, state will change only if this is correct</param>
+        /// <param name="targetState">the state that will be changed to if the expected state is correct</param>
+        /// <param name="asyncClose">any close action to be taken by an async task to avoid deadlock.</param>
+        /// <returns>boolean value indicating whether the call changed the timeout state</returns>
+        private bool OnTimeoutCore(int expectedState, int targetState, bool asyncClose = false)
+        {
+            Debug.Assert(targetState == TimeoutState.ExpiredAsync || targetState == TimeoutState.ExpiredSync, "OnTimeoutCore must have an expiry state as the targetState");
+
+            bool retval = false;
+            if (Interlocked.CompareExchange(ref _timeoutState, targetState, expectedState) == expectedState)
+            {
+                retval = true;
+                // lock protects against Close and Cancel
+                lock (this)
+                {
+                    if (!_attentionSent)
+                    {
+                        AddError(new SqlError(TdsEnums.TIMEOUT_EXPIRED, (byte)0x00, TdsEnums.MIN_ERROR_CLASS, _parser.Server, _parser.Connection.TimeoutErrorInternal.GetErrorMessage(), "", 0, TdsEnums.SNI_WAIT_TIMEOUT));
+
+                        // Grab a reference to the _networkPacketTaskSource in case it becomes null while we are trying to use it
+                        TaskCompletionSource<object> source = _networkPacketTaskSource;
+
+                        if (_parser.Connection.IsInPool)
+                        {
+                            // We should never timeout if the connection is currently in the pool: the safest thing to do here is to doom the connection to avoid corruption
+                            Debug.Assert(_parser.Connection.IsConnectionDoomed, "Timeout occurred while the connection is in the pool");
+                            _parser.State = TdsParserState.Broken;
+                            _parser.Connection.BreakConnection();
+                            if (source != null)
+                            {
+                                source.TrySetCanceled();
+                            }
+                        }
+                        else if (_parser.State == TdsParserState.OpenLoggedIn)
+                        {
+                            try
+                            {
+                                SendAttention(mustTakeWriteLock: true, asyncClose);
+                            }
+                            catch (Exception e)
+                            {
+                                if (!ADP.IsCatchableExceptionType(e))
+                                {
+                                    throw;
+                                }
+                                // if unable to send attention, cancel the _networkPacketTaskSource to
+                                // request the parser be broken.  SNIWritePacket errors will already
+                                // be in the _errors collection.
+                                if (source != null)
+                                {
+                                    source.TrySetCanceled();
+                                }
+                            }
+                        }
+
+                        // If we still haven't received a packet then we don't want to actually close the connection
+                        // from another thread, so complete the pending operation as cancelled, informing them to break it
+                        if (source != null)
+                        {
+                            Task.Delay(AttentionTimeoutSeconds * 1000).ContinueWith(_ =>
+                            {
+                                // Only break the connection if the read didn't finish
+                                if (!source.Task.IsCompleted)
+                                {
+                                    int pendingCallback = IncrementPendingCallbacks();
+#if NETFRAMEWORK
+                                    System.Runtime.CompilerServices.RuntimeHelpers.PrepareConstrainedRegions();
+#endif
+                                    try
+                                    {
+                                        // If pendingCallback is at 3, then ReadAsyncCallback hasn't been called yet
+                                        // So it is safe for us to break the connection and cancel the Task (since we are not sure that ReadAsyncCallback will ever be called)
+                                        if ((pendingCallback == 3) && (!source.Task.IsCompleted))
+                                        {
+                                            Debug.Assert(source == _networkPacketTaskSource, "_networkPacketTaskSource which is being timed is not the current task source");
+
+                                            // Try to throw the timeout exception and store it in the task
+                                            bool exceptionStored = false;
+                                            try
+                                            {
+                                                CheckThrowSNIException();
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                if (source.TrySetException(ex))
+                                                {
+                                                    exceptionStored = true;
+                                                }
+                                            }
+
+                                            // Ensure that the connection is no longer usable
+                                            // This is needed since the timeout error added above is non-fatal (and so throwing it won't break the connection)
+                                            _parser.State = TdsParserState.Broken;
+                                            _parser.Connection.BreakConnection();
+
+                                            // If we didn't get an exception (something else observed it?) then ensure that the task is cancelled
+                                            if (!exceptionStored)
+                                            {
+                                                source.TrySetCanceled();
+                                            }
+                                        }
+                                    }
+                                    finally
+                                    {
+                                        DecrementPendingCallbacks(release: false);
+                                    }
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+            return retval;
+        }
+
         /*
 
         // leave this in. comes handy if you have to do Console.WriteLine style debugging ;)
