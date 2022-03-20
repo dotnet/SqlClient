@@ -50,12 +50,6 @@ namespace Microsoft.Data.SqlClient
         // Timeout variables
         internal bool _attentionReceived = false;               // NOTE: Received is not volatile as it is only ever accessed\modified by TryRun its callees (i.e. single threaded access)
 
-        // This variable is used to prevent sending an attention by another thread that is not the
-        // current owner of the stateObj.  I currently do not know how this can happen.  Mark added
-        // the code but does not remember either.  At some point, we need to research killing this
-        // logic.
-        private volatile int _allowObjectID;
-
         internal bool _hasOpenResult = false;
 
         // Used for blanking out password in trace.
@@ -107,108 +101,6 @@ namespace Microsoft.Data.SqlClient
         /////////////////////
         // General methods //
         /////////////////////
-
-        // This method is only called by the command or datareader as a result of a user initiated
-        // cancel request.
-        internal void Cancel(int objectID)
-        {
-            bool hasLock = false;
-            try
-            {
-                // Keep looping until we either grabbed the lock (and therefore sent attention) or the connection closes\breaks
-                while ((!hasLock) && (_parser.State != TdsParserState.Closed) && (_parser.State != TdsParserState.Broken))
-                {
-
-                    Monitor.TryEnter(this, WaitForCancellationLockPollTimeout, ref hasLock);
-                    if (hasLock)
-                    { // Lock for the time being - since we need to synchronize the attention send.
-                      // At some point in the future, I hope to remove this.
-                      // This lock is also protecting against concurrent close and async continuations
-
-                        // don't allow objectID -1 since it is reserved for 'not associated with a command'
-                        // yes, the 2^32-1 comand won't cancel - but it also won't cancel when we don't want it
-                        if ((!_cancelled) && (objectID == _allowObjectID) && (objectID != -1))
-                        {
-                            _cancelled = true;
-
-                            if (_pendingData && !_attentionSent)
-                            {
-                                bool hasParserLock = false;
-                                // Keep looping until we have the parser lock (and so are allowed to write), or the conneciton closes\breaks
-                                while ((!hasParserLock) && (_parser.State != TdsParserState.Closed) && (_parser.State != TdsParserState.Broken))
-                                {
-                                    try
-                                    {
-                                        _parser.Connection._parserLock.Wait(canReleaseFromAnyThread: false, timeout: WaitForCancellationLockPollTimeout, lockTaken: ref hasParserLock);
-                                        if (hasParserLock)
-                                        {
-                                            _parser.Connection.ThreadHasParserLockForClose = true;
-                                            SendAttention();
-                                        }
-                                    }
-                                    finally
-                                    {
-                                        if (hasParserLock)
-                                        {
-                                            if (_parser.Connection.ThreadHasParserLockForClose)
-                                            {
-                                                _parser.Connection.ThreadHasParserLockForClose = false;
-                                            }
-                                            _parser.Connection._parserLock.Release();
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            finally
-            {
-                if (hasLock)
-                {
-                    Monitor.Exit(this);
-                }
-            }
-        }
-
-        private void ResetCancelAndProcessAttention()
-        {
-            // This method is shared by CloseSession initiated by DataReader.Close or completed
-            // command execution, as well as the session reclaimation code for cases where the
-            // DataReader is opened and then GC'ed.
-            lock (this)
-            {
-                // Reset cancel state.
-                _cancelled = false;
-                _allowObjectID = -1;
-
-                if (_attentionSent)
-                {
-                    // Make sure we're cleaning up the AttentionAck if Cancel happened before taking the lock.
-                    // We serialize Cancel/CloseSession to prevent a race condition between these two states.
-                    // The problem is that both sending and receiving attentions are time taking
-                    // operations.
-#if DEBUG
-                    TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
-
-                    RuntimeHelpers.PrepareConstrainedRegions();
-                    try
-                    {
-                        tdsReliabilitySection.Start();
-#endif //DEBUG
-                        Parser.ProcessPendingAck(this);
-#if DEBUG
-                    }
-                    finally
-                    {
-                        tdsReliabilitySection.Stop();
-                    }
-#endif //DEBUG
-                }
-                SetTimeoutStateStopped();
-            }
-        }
 
         private SNINativeMethodWrapper.ConsumerInfo CreateConsumerInfo(bool async)
         {
@@ -357,11 +249,6 @@ namespace Microsoft.Data.SqlClient
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParserStateObject.IncrementPendingCallbacks|ADV> {0}, after incrementing _pendingCallbacks: {1}", ObjectID, _pendingCallbacks);
             Debug.Assert(0 < remaining && remaining <= 3, $"_pendingCallbacks values is invalid after incrementing: {remaining}");
             return remaining;
-        }
-
-        internal void StartSession(int objectID)
-        {
-            _allowObjectID = objectID;
         }
 
         /////////////////////////////////////////

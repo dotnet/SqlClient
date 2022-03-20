@@ -166,6 +166,7 @@ namespace Microsoft.Data.SqlClient
         // 3) post session close - no attention is allowed
         private bool _cancelled;
         private const int WaitForCancellationLockPollTimeout = 100;
+        private WeakReference _cancellationOwner = new WeakReference(null);
 
         // Cache the transaction for which this command was executed so upon completion we can
         // decrement the appropriate result count.
@@ -593,6 +594,70 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(result == 1, "invalid deactivate count");
         }
 
+        // This method is only called by the command or datareader as a result of a user initiated
+        // cancel request.
+        internal void Cancel(object caller)
+        {
+            Debug.Assert(caller != null, "Null caller for Cancel!");
+            Debug.Assert(caller is SqlCommand || caller is SqlDataReader, "Calling API with invalid caller type: " + caller.GetType());
+
+            bool hasLock = false;
+            try
+            {
+                // Keep looping until we either grabbed the lock (and therefore sent attention) or the connection closes\breaks
+                while ((!hasLock) && (_parser.State != TdsParserState.Closed) && (_parser.State != TdsParserState.Broken))
+                {
+                    Monitor.TryEnter(this, WaitForCancellationLockPollTimeout, ref hasLock);
+                    if (hasLock)
+                    { // Lock for the time being - since we need to synchronize the attention send.
+                      // This lock is also protecting against concurrent close and async continuations
+
+                        // Ensure that, once we have the lock, that we are still the owner
+                        if ((!_cancelled) && (_cancellationOwner.Target == caller))
+                        {
+                            _cancelled = true;
+
+                            if (HasPendingData && !_attentionSent)
+                            {
+                                bool hasParserLock = false;
+                                // Keep looping until we have the parser lock (and so are allowed to write), or the connection closes\breaks
+                                while ((!hasParserLock) && (_parser.State != TdsParserState.Closed) && (_parser.State != TdsParserState.Broken))
+                                {
+                                    try
+                                    {
+                                        _parser.Connection._parserLock.Wait(canReleaseFromAnyThread: false, timeout: WaitForCancellationLockPollTimeout, lockTaken: ref hasParserLock);
+                                        if (hasParserLock)
+                                        {
+                                            _parser.Connection.ThreadHasParserLockForClose = true;
+                                            SendAttention();
+                                        }
+                                    }
+                                    finally
+                                    {
+                                        if (hasParserLock)
+                                        {
+                                            if (_parser.Connection.ThreadHasParserLockForClose)
+                                            {
+                                                _parser.Connection.ThreadHasParserLockForClose = false;
+                                            }
+                                            _parser.Connection._parserLock.Release();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                if (hasLock)
+                {
+                    Monitor.Exit(this);
+                }
+            }
+        }
+
         // CancelRequest - use to cancel while writing a request to the server
         //
         // o none of the request might have been sent to the server, simply reset the buffer,
@@ -667,6 +732,44 @@ namespace Microsoft.Data.SqlClient
             InvalidateDebugOnlyCopyOfSniContext();
 #endif
             Parser.PutSession(this);
+        }
+
+        private void ResetCancelAndProcessAttention()
+        {
+            // This method is shared by CloseSession initiated by DataReader.Close or completed
+            // command execution, as well as the session reclamation code for cases where the
+            // DataReader is opened and then GC'ed.
+            lock (this)
+            {
+                // Reset cancel state.
+                _cancelled = false;
+                _cancellationOwner.Target = null;
+
+                if (_attentionSent)
+                {
+                    // Make sure we're cleaning up the AttentionAck if Cancel happened before taking the lock.
+                    // We serialize Cancel/CloseSession to prevent a race condition between these two states.
+                    // The problem is that both sending and receiving attentions are time taking
+                    // operations.
+#if NETFRAMEWORK && DEBUG
+                    TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+
+                    System.Runtime.CompilerServices.RuntimeHelpers.PrepareConstrainedRegions();
+                    try
+                    {
+                        tdsReliabilitySection.Start();
+#endif
+                        Parser.ProcessPendingAck(this);
+#if NETFRAMEWORK && DEBUG
+                    }
+                    finally
+                    {
+                        tdsReliabilitySection.Stop();
+                    }
+#endif
+                }
+                SetTimeoutStateStopped();
+            }
         }
 
         internal bool Deactivate()
@@ -794,6 +897,11 @@ namespace Microsoft.Data.SqlClient
                 _timeoutMilliseconds = timeout;
                 _timeoutTime = 0;
             }
+        }
+
+        internal void StartSession(object cancellationOwner)
+        {
+            _cancellationOwner.Target = cancellationOwner;
         }
 
         internal void ThrowExceptionAndWarning(bool callerHasConnectionLock = false, bool asyncClose = false)

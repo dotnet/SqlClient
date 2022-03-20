@@ -797,12 +797,13 @@ namespace Microsoft.Data.SqlClient
             return schemaTable;
         }
 
-        internal void Cancel(int objectID)
+        internal void Cancel(SqlCommand command)
         {
+            Debug.Assert(command == _command, "Calling command from an object that isn't this reader's command");
             TdsParserStateObject stateObj = _stateObj;
             if (null != stateObj)
             {
-                stateObj.Cancel(objectID);
+                stateObj.Cancel(command);
             }
         }
 

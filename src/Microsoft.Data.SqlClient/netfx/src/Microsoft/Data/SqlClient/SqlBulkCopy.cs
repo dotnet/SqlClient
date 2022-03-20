@@ -3088,7 +3088,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     _stateObj = _parser.GetSession(this);
                     _stateObj._bulkCopyOpperationInProgress = true;
-                    _stateObj.StartSession(ObjectID);
+                    _stateObj.StartSession(this);
                 }
                 finally
                 {
