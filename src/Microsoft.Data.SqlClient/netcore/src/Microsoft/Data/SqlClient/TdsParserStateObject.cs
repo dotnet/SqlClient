@@ -26,42 +26,6 @@ namespace Microsoft.Data.SqlClient
         private StateSnapshot _cachedSnapshot;
         private SnapshottedStateFlags _snapshottedState;
 
-        //////////////////
-        // Constructors //
-        //////////////////
-
-        internal TdsParserStateObject(TdsParser parser, TdsParserStateObject physicalConnection, bool async)
-        {
-            // Construct a MARS session
-            Debug.Assert(null != parser, "no parser?");
-            _parser = parser;
-            _onTimeoutAsync = OnTimeoutAsync;
-            SniContext = SniContext.Snix_GetMarsSession;
-
-            Debug.Assert(null != _parser._physicalStateObj, "no physical session?");
-            Debug.Assert(null != _parser._physicalStateObj._inBuff, "no in buffer?");
-            Debug.Assert(null != _parser._physicalStateObj._outBuff, "no out buffer?");
-            Debug.Assert(_parser._physicalStateObj._outBuff.Length ==
-                         _parser._physicalStateObj._inBuff.Length, "Unexpected unequal buffers.");
-
-            // Determine packet size based on physical connection buffer lengths.
-            SetPacketSize(_parser._physicalStateObj._outBuff.Length);
-
-            CreateSessionHandle(physicalConnection, async);
-
-            if (IsFailedHandle())
-            {
-                AddError(parser.ProcessSNIError(this));
-                ThrowExceptionAndWarning();
-            }
-
-            // we post a callback that represents the call to dispose; once the
-            // object is disposed, the next callback will cause the GC Handle to
-            // be released.
-            IncrementPendingCallbacks();
-            _lastSuccessfulIOTimer = parser._physicalStateObj._lastSuccessfulIOTimer;
-        }
-
         ////////////////
         // Properties //
         ////////////////
