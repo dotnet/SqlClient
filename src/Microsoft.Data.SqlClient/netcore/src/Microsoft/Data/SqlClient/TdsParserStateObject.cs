@@ -107,25 +107,6 @@ namespace Microsoft.Data.SqlClient
 
         internal abstract uint GenerateSspiClientContext(byte[] receivedBuff, uint receivedLength, ref byte[] sendBuff, ref uint sendLength, byte[][] _sniSpnBuffer);
 
-        internal int DecrementPendingCallbacks(bool release)
-        {
-            int remaining = Interlocked.Decrement(ref _pendingCallbacks);
-            SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.DecrementPendingCallbacks | ADV | State Object Id {0}, after decrementing _pendingCallbacks: {1}", _objectID, _pendingCallbacks);
-            FreeGcHandle(remaining, release);
-            // NOTE: TdsParserSessionPool may call DecrementPendingCallbacks on a TdsParserStateObject which is already disposed
-            // This is not dangerous (since the stateObj is no longer in use), but we need to add a workaround in the assert for it
-            Debug.Assert((remaining == -1 && SessionHandle.IsNull) || (0 <= remaining && remaining < 3), $"_pendingCallbacks values is invalid after decrementing: {remaining}");
-            return remaining;
-        }
-
-        internal int IncrementPendingCallbacks()
-        {
-            int remaining = Interlocked.Increment(ref _pendingCallbacks);
-            SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.IncrementPendingCallbacks | ADV | State Object Id {0}, after incrementing _pendingCallbacks: {1}", _objectID, _pendingCallbacks);
-            Debug.Assert(0 < remaining && remaining <= 3, $"_pendingCallbacks values is invalid after incrementing: {remaining}");
-            return remaining;
-        }
-
         private void SetSnapshottedState(SnapshottedStateFlags flag, bool value)
         {
             if (value)

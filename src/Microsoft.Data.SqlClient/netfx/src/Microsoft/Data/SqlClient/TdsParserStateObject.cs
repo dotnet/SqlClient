@@ -166,24 +166,6 @@ namespace Microsoft.Data.SqlClient
                 ipPreference, cachedDNSInfo, hostNameInCertificate);
         }
 
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
-        internal int DecrementPendingCallbacks(bool release)
-        {
-            int remaining = Interlocked.Decrement(ref _pendingCallbacks);
-            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> {0}, after decrementing _pendingCallbacks: {1}", ObjectID, _pendingCallbacks);
-
-            if ((0 == remaining || release) && _gcHandle.IsAllocated)
-            {
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> {0}, FREEING HANDLE!", ObjectID);
-                _gcHandle.Free();
-            }
-
-            // NOTE: TdsParserSessionPool may call DecrementPendingCallbacks on a TdsParserStateObject which is already disposed
-            // This is not dangerous (since the stateObj is no longer in use), but we need to add a workaround in the assert for it
-            Debug.Assert((remaining == -1 && _sessionHandle == null) || (0 <= remaining && remaining < 3), $"_pendingCallbacks values is invalid after decrementing: {remaining}");
-            return remaining;
-        }
-
         internal void Dispose()
         {
 
@@ -239,16 +221,6 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
             }
-        }
-
-        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
-        internal int IncrementPendingCallbacks()
-        {
-            int remaining = Interlocked.Increment(ref _pendingCallbacks);
-
-            SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParserStateObject.IncrementPendingCallbacks|ADV> {0}, after incrementing _pendingCallbacks: {1}", ObjectID, _pendingCallbacks);
-            Debug.Assert(0 < remaining && remaining <= 3, $"_pendingCallbacks values is invalid after incrementing: {remaining}");
-            return remaining;
         }
 
         /////////////////////////////////////////
@@ -316,6 +288,15 @@ namespace Microsoft.Data.SqlClient
         private uint SNIPacketGetData(IntPtr packet, byte[] _inBuff, ref uint dataSize)
         { 
             return SNINativeMethodWrapper.SNIPacketGetData(packet, _inBuff, ref dataSize);
+        }
+
+        private void FreeGcHandle(int remaining, bool release)
+        {
+            if ((0 == remaining || release) && _gcHandle.IsAllocated)
+            {
+                SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParserStateObject.DecrementPendingCallbacks|ADV> {0}, FREEING HANDLE!", ObjectID);
+                _gcHandle.Free();
+            }
         }
 
         /////////////////////////////////////////
