@@ -46,33 +46,6 @@ namespace Microsoft.Data.SqlClient
 
         private static bool TransparentNetworkIPResolution => false;
 
-        private partial struct NullBitmap
-        {
-            internal bool TryInitialize(TdsParserStateObject stateObj, int columnsCount)
-            {
-                _columnsCount = columnsCount;
-                // 1-8 columns need 1 byte
-                // 9-16: 2 bytes, and so on
-                int bitmapArrayLength = (columnsCount + 7) / 8;
-
-                // allow reuse of previously allocated bitmap
-                if (_nullBitmap == null || _nullBitmap.Length != bitmapArrayLength)
-                {
-                    _nullBitmap = new byte[bitmapArrayLength];
-                }
-
-                // read the null bitmap compression information from TDS
-                if (!stateObj.TryReadByteArray(_nullBitmap, _nullBitmap.Length))
-                {
-                    return false;
-                }
-
-                SqlClientEventSource.Log.TryAdvancedTraceEvent("TdsParserStateObject.NullBitmap.Initialize | INFO | ADV | State Object Id {0}, NBCROW bitmap received, column count = {1}", stateObj._objectID, columnsCount);
-                SqlClientEventSource.Log.TryAdvancedTraceBinEvent("TdsParserStateObject.NullBitmap.Initialize | INFO | ADV | State Object Id {0}, Null Bitmap length {1}, NBCROW bitmap data: {2}", stateObj._objectID, (ushort)_nullBitmap.Length, _nullBitmap);
-                return true;
-            }
-        }
-
         /////////////////////
         // General methods //
         /////////////////////
