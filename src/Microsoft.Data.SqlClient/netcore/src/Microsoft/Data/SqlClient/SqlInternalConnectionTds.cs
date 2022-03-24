@@ -269,7 +269,13 @@ namespace Microsoft.Data.SqlClient
 
             // Database '%.*ls' on server '%.*ls' is not currently available. Please retry the connection later.
             // If the problem persists, contact customer support, and provide them the session tracing ID of '%.*ls'.
-            40613
+            40613,
+
+            // Can not connect to the SQL pool since it is paused. Please resume the SQL pool and try again.
+            42108,
+
+            // The SQL pool is warming up. Please try again.
+            42109
         };
 
         internal SessionData CurrentSessionData
