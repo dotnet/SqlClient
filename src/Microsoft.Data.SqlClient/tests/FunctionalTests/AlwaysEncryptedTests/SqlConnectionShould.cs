@@ -159,7 +159,7 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
             ArgumentException ex = Assert.Throws<ArgumentException>(() => new SqlConnection(connectionString + "Attestation protocol=invalid"));
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
-            Assert.Contains("Invalid value for key 'Attestation Protocol'", ex.Message);
+            Assert.True(ex.Message.IndexOf("'Attestation Protocol'", StringComparison.OrdinalIgnoreCase) != -1);
             Assert.Null(ex.ParamName);
         }
     }
