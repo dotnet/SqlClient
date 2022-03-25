@@ -25,5 +25,6 @@
     "IsDNSCachingSupportedTR": false,
     "IsAzureSynapse": false,
     "EnclaveAzureDatabaseConnString": "",
-    "UserManagedIdentityClientId": ""
+    "UserManagedIdentityClientId": "",
+    "MakecertPath": ""
 }
