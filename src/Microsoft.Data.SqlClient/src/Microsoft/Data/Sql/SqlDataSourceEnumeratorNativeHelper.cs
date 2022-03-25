@@ -46,7 +46,7 @@ namespace Microsoft.Data.Sql
                 finally
                 {
                     handle = SNINativeMethodWrapper.SNIServerEnumOpen();
-                    SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> {3} returned handle = {4}.",
+                    SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> {2} returned handle = {3}.",
                                                            nameof(SqlDataSourceEnumeratorNativeHelper),
                                                            nameof(GetDataSources),
                                                            nameof(SNINativeMethodWrapper.SNIServerEnumOpen), handle);
@@ -80,7 +80,7 @@ namespace Microsoft.Data.Sql
                 if (handle != ADP.s_ptrZero)
                 {
                     SNINativeMethodWrapper.SNIServerEnumClose(handle);
-                    SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> {3} called.",
+                    SqlClientEventSource.Log.TryTraceEvent("<sc.{0}.{1}|INFO> {2} called.",
                                                            nameof(SqlDataSourceEnumeratorNativeHelper),
                                                            nameof(GetDataSources),
                                                            nameof(SNINativeMethodWrapper.SNIServerEnumClose));
