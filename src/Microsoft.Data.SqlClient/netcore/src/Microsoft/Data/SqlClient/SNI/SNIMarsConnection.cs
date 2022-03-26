@@ -81,7 +81,7 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 if (LocalAppContextSwitches.UseExperimentalMARSThreading
 #if NETCOREAPP31_AND_ABOVE
-                    && ThreadPool.PendingWorkItemCount>0
+                    && ThreadPool.PendingWorkItemCount > 0
 #endif 
                     )
                 {
