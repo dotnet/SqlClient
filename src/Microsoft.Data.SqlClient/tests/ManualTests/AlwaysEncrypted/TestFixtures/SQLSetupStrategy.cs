@@ -137,6 +137,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests.AlwaysEncrypted
             SqlNullValuesTable = new SqlNullValuesTable(GenerateUniqueName("SqlNullValuesTable"), columnEncryptionKeys[0]);
             tables.Add(SqlNullValuesTable);
 
+            // columnEncryptionKeys[2] is encrypted with DummyCMK. use this encrypted column to test custom key store providers
             CustomKeyStoreProviderTestTable = new ApiTestTable(GenerateUniqueName("CustomKeyStoreProviderTestTable"), columnEncryptionKeys[2], columnEncryptionKeys[0], useDeterministicEncryption: true);
             tables.Add(CustomKeyStoreProviderTestTable);
 

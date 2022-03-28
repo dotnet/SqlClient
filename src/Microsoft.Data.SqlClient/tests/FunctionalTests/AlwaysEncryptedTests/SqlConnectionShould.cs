@@ -151,5 +151,16 @@ namespace Microsoft.Data.SqlClient.Tests.AlwaysEncryptedTests
                 }
             }
         }
+
+        [Fact]
+        public void TestInvalidAttestationProtocolInConnectionString()
+        {
+            string connectionString = "Data Source=localhost; Initial Catalog = testdb; Column Encryption Setting=Enabled;";
+            ArgumentException ex = Assert.Throws<ArgumentException>(() => new SqlConnection(connectionString + "Attestation protocol=invalid"));
+            Assert.Null(ex.InnerException);
+            Assert.NotNull(ex.Message);
+            Assert.True(ex.Message.IndexOf("'Attestation Protocol'", StringComparison.OrdinalIgnoreCase) != -1);
+            Assert.Null(ex.ParamName);
+        }
     }
 }
