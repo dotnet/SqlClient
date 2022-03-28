@@ -275,7 +275,7 @@ namespace Microsoft.Data.SqlClient
             42108,
 
             // The SQL pool is warming up. Please try again.
-            42109
+            42109,
         };
 
         internal SessionData CurrentSessionData
