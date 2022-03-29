@@ -153,6 +153,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 if (!string.IsNullOrEmpty(TCPConnectionStringNoneVBS))
                 {
                     AEConnStrings.Add(TCPConnectionStringNoneVBS);
+                    AEConnStringsSetup.Add(TCPConnectionStringNoneVBS);
                 }
 
                 if (!string.IsNullOrEmpty(TCPConnectionStringAASSGX))
