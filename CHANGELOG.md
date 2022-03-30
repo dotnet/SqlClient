@@ -149,12 +149,12 @@ This update brings the below changes over the previous release:
 
 ### Added
 
-- Added new Attestation Protocol `None` for `VBS` enclave types. This protocol will allow users to forgo enclave attestation for VBS enclaves. [#1419](https://github.com/dotnet/SqlClient/pull/1564) [#1425](https://github.com/dotnet/SqlClient/pull/1564)
+- Added new Attestation Protocol `None` for `VBS` enclave types. This protocol will allow users to forgo enclave attestation for VBS enclaves. [#1539](https://github.com/dotnet/SqlClient/pull/1539)
 - Included `42108` and `42109` error codes to retriable transient errors list. [#1560](https://github.com/dotnet/SqlClient/pull/1560)
 
 ### Fixed
 
-- Changed EnclaveDelegate.Crypto GetEnclaveProvider to use a thread safe concurrent dictionary. [#1451](https://github.com/dotnet/SqlClient/pull/1451)
+- Changed EnclaveDelegate.Crypto GetEnclaveProvider to use a thread safe concurrent dictionary. [#1564](https://github.com/dotnet/SqlClient/pull/1564
 
 ## [Stable Release 3.0.1] - 2021-09-24
 
