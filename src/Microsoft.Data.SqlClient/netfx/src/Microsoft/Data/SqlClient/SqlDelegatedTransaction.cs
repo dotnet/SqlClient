@@ -585,7 +585,7 @@ namespace Microsoft.Data.SqlClient
         private Guid GetGlobalTxnIdentifierFromToken()
         {
             byte[] txnGuid = new byte[16];
-            Array.Copy(_connection.PromotedDTCToken, _globalTransactionsTokenVersionSizeInBytes /* Skip the version */, txnGuid, 0, txnGuid.Length);
+            Buffer.BlockCopy(_connection.PromotedDTCToken, _globalTransactionsTokenVersionSizeInBytes /* Skip the version */, txnGuid, 0, txnGuid.Length);
             return new Guid(txnGuid);
         }
     }

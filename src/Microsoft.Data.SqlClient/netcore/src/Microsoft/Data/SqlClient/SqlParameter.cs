@@ -1246,7 +1246,7 @@ namespace Microsoft.Data.SqlClient
                                     hasDefault = true;
                                 }
 
-                                sort[i].Order = colMeta.SortOrder;
+                                sort[i]._order = colMeta.SortOrder;
                                 if (SortOrder.Unspecified != colMeta.SortOrder)
                                 {
                                     // SqlMetaData takes care of checking for negative sort ordinals with specified sort order
@@ -1263,7 +1263,7 @@ namespace Microsoft.Data.SqlClient
                                         throw SQL.DuplicateSortOrdinal(colMeta.SortOrdinal);
                                     }
 
-                                    sort[i].SortOrdinal = colMeta.SortOrdinal;
+                                    sort[i]._sortOrdinal = colMeta.SortOrdinal;
                                     sortOrdinalSpecified[colMeta.SortOrdinal] = true;
                                     if (colMeta.SortOrdinal > maxSortOrdinal)
                                     {
@@ -1988,7 +1988,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     // Notes:
-                    // Elevation from (n)(var)char (4001+) to (n)text succeeds without failure only with Yukon and greater.
+                    // Elevation from (n)(var)char (4001+) to (n)text succeeds without failure only with 2005 and greater.
                     // it fails in sql server 2000
                     maxSizeInBytes = (sizeInCharacters > actualSizeInBytes) ? sizeInCharacters : actualSizeInBytes;
                 }

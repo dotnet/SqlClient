@@ -27,6 +27,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string TCPConnectionString = null;
         public static readonly string TCPConnectionStringHGSVBS = null;
         public static readonly string TCPConnectionStringAASVBS = null;
+        public static readonly string TCPConnectionStringNoneVBS = null;
         public static readonly string TCPConnectionStringAASSGX = null;
         public static readonly string AADAuthorityURL = null;
         public static readonly string AADPasswordConnectionString = null;
@@ -64,6 +65,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static string AADAccessToken = null;
         public static string AADSystemIdentityAccessToken = null;
         public static string AADUserIdentityAccessToken = null;
+        public const string ApplicationClientId = "2fd908ad-0664-4344-b9be-cd3e8b574c38";
         public const string UdtTestDbName = "UdtTestDb";
         public const string AKVKeyName = "TestSqlClientAzureKeyVaultProvider";
         public const string EventSourcePrefix = "Microsoft.Data.SqlClient";
@@ -85,6 +87,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TCPConnectionString = c.TCPConnectionString;
             TCPConnectionStringHGSVBS = c.TCPConnectionStringHGSVBS;
             TCPConnectionStringAASVBS = c.TCPConnectionStringAASVBS;
+            TCPConnectionStringNoneVBS = c.TCPConnectionStringNoneVBS;
             TCPConnectionStringAASSGX = c.TCPConnectionStringAASSGX;
             AADAuthorityURL = c.AADAuthorityURL;
             AADPasswordConnectionString = c.AADPasswordConnectionString;
@@ -145,6 +148,12 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 if (!string.IsNullOrEmpty(TCPConnectionStringAASVBS))
                 {
                     AEConnStrings.Add(TCPConnectionStringAASVBS);
+                }
+
+                if (!string.IsNullOrEmpty(TCPConnectionStringNoneVBS))
+                {
+                    AEConnStrings.Add(TCPConnectionStringNoneVBS);
+                    AEConnStringsSetup.Add(TCPConnectionStringNoneVBS);
                 }
 
                 if (!string.IsNullOrEmpty(TCPConnectionStringAASSGX))
@@ -294,6 +303,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             return AEConnStrings.Count > 0 && IsNotAzureSynapse();
         }
+
+        public static bool IsSGXEnclaveConnStringSetup() => !string.IsNullOrEmpty(TCPConnectionStringAASSGX);
 
         public static bool IsAADPasswordConnStrSetup()
         {
@@ -455,7 +466,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsLocalDBInstalled() => !string.IsNullOrEmpty(LocalDbAppName?.Trim()) && IsIntegratedSecuritySetup();
         public static bool IsLocalDbSharedInstanceSetup() => !string.IsNullOrEmpty(LocalDbSharedInstanceName?.Trim()) && IsIntegratedSecuritySetup();
-
         public static bool IsIntegratedSecuritySetup() => SupportsIntegratedSecurity;
 
         public static string GetAccessToken()
@@ -503,7 +513,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsUserIdentityTokenSetup() => !string.IsNullOrEmpty(GetUserIdentityAccessToken());
 
-        public static bool IsFileStreamSetup() => !string.IsNullOrEmpty(FileStreamDirectory);
+        public static bool IsFileStreamSetup() => !string.IsNullOrEmpty(FileStreamDirectory) && IsNotAzureServer() && IsNotAzureSynapse();
 
         private static bool CheckException<TException>(Exception ex, string exceptionMessage, bool innerExceptionMustBeNull) where TException : Exception
         {
