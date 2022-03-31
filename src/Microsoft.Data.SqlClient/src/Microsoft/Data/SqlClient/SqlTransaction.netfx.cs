@@ -10,7 +10,7 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <include file='..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/SqlTransaction/*' />
+    /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/SqlTransaction/*' />
     public sealed partial class SqlTransaction : DbTransaction
     {
 
@@ -18,7 +18,7 @@ namespace Microsoft.Data.SqlClient
         // PUBLIC METHODS
         ////////////////////////////////////////////////////////////////////////////////////////
 
-        /// <include file='..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Commit/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Commit/*' />
         override public void Commit()
         {
             SqlConnection.ExecutePermission.Demand(); // MDAC 81476
@@ -94,7 +94,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/DisposeDisposing/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/DisposeDisposing/*' />
         protected override void Dispose(bool disposing)
         {
             if (disposing)
@@ -114,7 +114,7 @@ namespace Microsoft.Data.SqlClient
                     {
 #endif //DEBUG
                         bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_connection);
-                        if (!IsZombied && !IsYukonPartialZombie)
+                        if (!IsZombied && !Is2005PartialZombie)
                         {
                             _internalTransaction.Dispose();
                         }
@@ -146,15 +146,15 @@ namespace Microsoft.Data.SqlClient
             base.Dispose(disposing);
         }
 
-        /// <include file='..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Rollback2/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Rollback2/*' />
         override public void Rollback()
         {
-            if (IsYukonPartialZombie)
+            if (Is2005PartialZombie)
             {
                 // Put something in the trace in case a customer has an issue
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlTransaction.Rollback|ADV> {0} partial zombie no rollback required", ObjectID);
 
-                _internalTransaction = null; // yukon zombification
+                _internalTransaction = null; // 2005 zombification
             }
             else
             {
@@ -219,7 +219,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/RollbackTransactionName/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/RollbackTransactionName/*' />
         public void Rollback(string transactionName)
         {
             SqlConnection.ExecutePermission.Demand(); // MDAC 81476
@@ -282,7 +282,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Save/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Save/*' />
         public void Save(string savePointName)
         {
             SqlConnection.ExecutePermission.Demand(); // MDAC 81476

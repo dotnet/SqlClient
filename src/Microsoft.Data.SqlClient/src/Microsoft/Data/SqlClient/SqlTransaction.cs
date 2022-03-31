@@ -77,7 +77,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private bool IsYukonPartialZombie => _internalTransaction !=null && _internalTransaction.IsCompleted;
+        private bool Is2005PartialZombie => _internalTransaction !=null && _internalTransaction.IsCompleted;
 
         internal bool IsZombied => _internalTransaction == null || _internalTransaction.IsCompleted;
 
@@ -112,7 +112,7 @@ namespace Microsoft.Data.SqlClient
             SqlInternalConnection internalConnection = (_connection.InnerConnection as SqlInternalConnection);
             if (null != internalConnection
 #if NETFRAMEWORK
-                && internalConnection.IsYukonOrNewer
+                && internalConnection.Is2005OrNewer
 #endif
                 && !_isFromAPI)
             {
@@ -133,7 +133,7 @@ namespace Microsoft.Data.SqlClient
             // If this transaction has been completed, throw exception since it is unusable.
             if (IsZombied)
             {
-                if (IsYukonPartialZombie)
+                if (Is2005PartialZombie)
                 {
                     _internalTransaction = null; // yukon zombification
                 }
