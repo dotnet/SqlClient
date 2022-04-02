@@ -85,6 +85,18 @@ namespace Microsoft.Data.SqlClient.SNI
 #endif 
                     )
                 {
+                    // for debugging only, remove this
+                    if (s_scheduler is null)
+                    {
+                        AppDomain.CurrentDomain.FirstChanceException += static (object sender, System.Runtime.ExceptionServices.FirstChanceExceptionEventArgs e) =>
+                        {
+                            if (e is not null && e.Exception is PlatformNotSupportedException pnse)
+                            {
+                                SqlClientEventSource.Log.SNITrace("PNSE in SNI: " + Environment.NewLine + pnse.StackTrace);
+                                Console.WriteLine("PNSE in SNI: " + Environment.NewLine + pnse.StackTrace);
+                            }
+                        };
+                    }
                     LazyInitializer.EnsureInitialized(ref s_scheduler, () => new QueuedTaskScheduler(3, "MARSIOScheduler", false, ThreadPriority.AboveNormal));
                     LazyInitializer.EnsureInitialized(ref s_factory, () => new TaskFactory(s_scheduler));
 
@@ -111,6 +123,8 @@ namespace Microsoft.Data.SqlClient.SNI
                 return SNICommon.ReportSNIError(SNIProviders.SMUX_PROV, 0, SNICommon.ConnNotUsableError, Strings.SNI_ERROR_19);
             };
         }
+
+
 
         /// <summary>
         /// Send a packet synchronously
