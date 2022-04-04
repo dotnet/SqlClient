@@ -123,14 +123,13 @@ namespace Microsoft.Data.SqlClient.SNI
 
         /// <summary>Initializes the scheduler.</summary>
         /// <param name="threadCount">The number of threads to create and use for processing work items.</param>
-        public QueuedTaskScheduler(int threadCount) : this(threadCount, string.Empty, false, ThreadPriority.Normal, ApartmentState.MTA, 0, null, null) { }
+        public QueuedTaskScheduler(int threadCount) : this(threadCount, string.Empty, false, ThreadPriority.Normal, 0, null, null) { }
 
         /// <summary>Initializes the scheduler.</summary>
         /// <param name="threadCount">The number of threads to create and use for processing work items.</param>
         /// <param name="threadName">The name to use for each of the created threads.</param>
         /// <param name="useForegroundThreads">A Boolean value that indicates whether to use foreground threads instead of background.</param>
         /// <param name="threadPriority">The priority to assign to each thread.</param>
-        /// <param name="threadApartmentState">The apartment state to use for each thread.</param>
         /// <param name="threadMaxStackSize">The stack size to use for each thread.</param>
         /// <param name="threadInit">An initialization routine to run on each thread.</param>
         /// <param name="threadFinally">A finalization routine to run on each thread.</param>
@@ -139,7 +138,6 @@ namespace Microsoft.Data.SqlClient.SNI
             string threadName = "",
             bool useForegroundThreads = false,
             ThreadPriority threadPriority = ThreadPriority.Normal,
-            ApartmentState threadApartmentState = ApartmentState.MTA,
             int threadMaxStackSize = 0,
             Action threadInit = null,
             Action threadFinally = null)
@@ -167,7 +165,6 @@ namespace Microsoft.Data.SqlClient.SNI
                 };
                 if (threadName != null)
                     _threads[i].Name = threadName + " (" + i + ")";
-                _threads[i].SetApartmentState(threadApartmentState);
             }
 
             // Start all of the threads
