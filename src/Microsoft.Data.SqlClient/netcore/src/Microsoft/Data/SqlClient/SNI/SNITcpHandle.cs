@@ -578,27 +578,29 @@ namespace Microsoft.Data.SqlClient.SNI
         /// </summary>
         public override uint EnableSsl(uint options)
         {
-            _validateCert = (options & TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE) != 0;
+            using (TrySNIEventScope.Create(nameof(SNIHandle)))
+            {
+                _validateCert = (options & TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE) != 0;
+                try
+                {
+                    _sslStream.AuthenticateAsClient(_targetServer, null, SupportedProtocols, false);
+                    _sslOverTdsStream.FinishHandshake();
+                }
+                catch (AuthenticationException aue)
+                {
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.ERR, "Connection Id {0}, Authentication exception occurred: {1}", args0: _connectionId, args1: aue?.Message);
+                    return ReportTcpSNIError(aue, SNIError.CertificateValidationErrorCode);
+                }
+                catch (InvalidOperationException ioe)
+                {
+                    SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.ERR, "Connection Id {0}, Invalid Operation Exception occurred: {1}", args0: _connectionId, args1: ioe?.Message);
+                    return ReportTcpSNIError(ioe);
+                }
 
-            try
-            {
-                _sslStream.AuthenticateAsClient(_targetServer, null, SupportedProtocols, true);
-                _sslOverTdsStream.FinishHandshake();
+                _stream = _sslStream;
+                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, SSL enabled successfully.", args0: _connectionId);
+                return TdsEnums.SNI_SUCCESS;
             }
-            catch (AuthenticationException aue)
-            {
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.ERR, "Connection Id {0}, Authentication exception occurred: {1}", args0: _connectionId, args1: aue?.Message);
-                return ReportTcpSNIError(aue, SNIError.CertificateValidationErrorCode);
-            }
-            catch (InvalidOperationException ioe)
-            {
-                SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.ERR, "Connection Id {0}, Invalid Operation Exception occurred: {1}", args0: _connectionId, args1: ioe?.Message);
-                return ReportTcpSNIError(ioe);
-            }
-
-            _stream = _sslStream;
-            SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, SSL enabled successfully.", args0: _connectionId);
-            return TdsEnums.SNI_SUCCESS;
         }
 
         /// <summary>
