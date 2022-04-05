@@ -366,11 +366,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         // Otherwise, copy over the leftover buffer
                         byteBuffer = new byte[byteBufferSize];
-#if NETFRAMEWORK
-                        Array.Copy(_leftOverBytes, byteBuffer, _leftOverBytes.Length);  
-#else
                         Buffer.BlockCopy(_leftOverBytes, 0, byteBuffer, 0, _leftOverBytes.Length);
-#endif
                         byteBufferUsed = _leftOverBytes.Length;
                     }
                 }
@@ -406,11 +402,7 @@ namespace Microsoft.Data.SqlClient
             if ((!completed) && (bytesUsed < inBufferCount))
             {
                 _leftOverBytes = new byte[inBufferCount - bytesUsed];
-#if NETFRAMEWORK
-                Array.Copy(inBuffer, bytesUsed, _leftOverBytes, 0, _leftOverBytes.Length);              
-#else
                 Buffer.BlockCopy(inBuffer, bytesUsed, _leftOverBytes, 0, _leftOverBytes.Length);
-#endif
             }
             else
             {
