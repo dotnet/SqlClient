@@ -16,7 +16,7 @@
 
   <!--These properties can be modified locally to target .NET version of choice to build and test entire test suite-->
   <PropertyGroup>
-    <TargetNetFxVersion Condition="'$(TargetNetFxVersion)' == ''">net461</TargetNetFxVersion>
+    <TargetNetFxVersion Condition="'$(TargetNetFxVersion)' == ''">net462</TargetNetFxVersion>
     <TargetNetStandardVersion Condition="'$(TargetNetStandardVersion)' == ''">netstandard2.0</TargetNetStandardVersion>
     <TargetNetCoreVersion Condition="'$(TargetNetCoreVersion)' == ''">netcoreapp3.1</TargetNetCoreVersion>
   </PropertyGroup>
@@ -37,7 +37,7 @@
       <PropertyGroup>
         <TargetFrameworks Condition="'$(TestTargetOS)' == 'Windowsnetstandard' OR '$(TestTargetOS)' == 'Unixnetstandard'">netstandard2.0;netstandard2.1</TargetFrameworks>
         <TargetFrameworks Condition="'$(TestTargetOS)' == 'Windowsnetcoreapp' OR '$(TestTargetOS)' == 'Unixnetcoreapp'">netcoreapp3.1</TargetFrameworks>
-        <TargetFrameworks Condition="'$(TestTargetOS)' == 'Windowsnetfx'">net461</TargetFrameworks>
+        <TargetFrameworks Condition="'$(TestTargetOS)' == 'Windowsnetfx'">net462</TargetFrameworks>
       </PropertyGroup>
     </Otherwise>
   </Choose>
