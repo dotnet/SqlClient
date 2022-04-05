@@ -497,7 +497,7 @@ namespace Microsoft.Data.SqlClient
             flags = value ? flags | flag : flags & ~flag;
         }
 
-        internal bool IsNewKatmaiDateTimeType
+        internal bool Is2008DateTimeType
         {
             get
             {
@@ -1152,7 +1152,7 @@ namespace Microsoft.Data.SqlClient
     sealed internal class SqlReturnValue : SqlMetaDataPriv
     {
 
-        internal ushort parmIndex;      //Yukon or later only
+        internal ushort parmIndex;      //2005 or later only
         internal string parameter;
         internal readonly SqlBuffer value;
 

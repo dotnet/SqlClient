@@ -6,7 +6,11 @@ using System;
 using System.Data;
 using System.Data.SqlTypes;
 using System.Text;
+#if NETFRAMEWORK
+using Microsoft.SqlServer.Server;
+#else
 using Microsoft.Data.SqlClient.Server;
+#endif
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests

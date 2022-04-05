@@ -171,7 +171,7 @@ namespace Microsoft.Data.SqlClient
         internal ulong _longlen;                                     // plp data length indicator
         internal ulong _longlenleft;                                 // Length of data left to read (64 bit lengths)
         internal int[] _decimalBits = null;                // scratch buffer for decimal/numeric data
-        internal byte[] _bTmp = new byte[TdsEnums.YUKON_HEADER_LEN];  // Scratch buffer for misc use
+        internal byte[] _bTmp = new byte[TdsEnums.SQL2005_HEADER_LEN];  // Scratch buffer for misc use
         internal int _bTmpRead = 0;                   // Counter for number of temporary bytes read
         internal Decoder _plpdecoder = null;             // Decoder object to process plp character data
         internal bool _accumulateInfoEvents = false;               // TRUE - accumulate info messages during TdsParser.Run, FALSE - fire them
@@ -515,8 +515,8 @@ namespace Microsoft.Data.SqlClient
             // initialize or unset null bitmap information for the current row
             if (isNullCompressed)
             {
-                // assert that NBCROW is not in use by Yukon or before
-                Debug.Assert(_parser.IsKatmaiOrNewer, "NBCROW is sent by pre-Katmai server");
+                // assert that NBCROW is not in use by 2005 or before
+                Debug.Assert(_parser.Is2008OrNewer, "NBCROW is sent by pre-2008 server");
 
                 if (!_nullBitmapInfo.TryInitialize(this, nullBitmapColumnsCount))
                 {
@@ -1306,7 +1306,7 @@ namespace Microsoft.Data.SqlClient
                           "SetPacketSize should only be called on a stateObj with null buffers on the physicalStateObj!");
             Debug.Assert(_inBuff == null
                           ||
-                          (_parser.IsYukonOrNewer &&
+                          (_parser.Is2005OrNewer &&
                            _outBytesUsed == (_outputHeaderLen + BitConverter.ToInt32(_outBuff, _outputHeaderLen)) &&
                            _outputPacketNumber == 1)
                           ||
@@ -3373,9 +3373,9 @@ namespace Microsoft.Data.SqlClient
             }
 
             if (
-                // This appears to be an optimization to avoid writing empty packets in Yukon
-                // However, since we don't know the version prior to login IsYukonOrNewer was always false prior to login
-                // So removing the IsYukonOrNewer check causes issues since the login packet happens to meet the rest of the conditions below
+                // This appears to be an optimization to avoid writing empty packets in 2005
+                // However, since we don't know the version prior to login Is2005OrNewer was always false prior to login
+                // So removing the Is2005OrNewer check causes issues since the login packet happens to meet the rest of the conditions below
                 // So we need to avoid this check prior to login completing
                 state == TdsParserState.OpenLoggedIn &&
                 !_bulkCopyOpperationInProgress // ignore the condition checking for bulk copy (SQL BU 414551)
