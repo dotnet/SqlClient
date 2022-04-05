@@ -7,11 +7,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
-#if NETFRAMEWORK
-using Microsoft.SqlServer.Server;
-#else
 using Microsoft.Data.SqlClient.Server;
-#endif
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
@@ -394,9 +390,10 @@ namespace Microsoft.Data.SqlClient.Tests
             return GetEnumerator();
         }
     }
+#if NETFRAMEWORK
+    [SqlServer.Server.SqlUserDefinedType(SqlServer.Server.Format.UserDefined)]
+#else
     [SqlUserDefinedType(Format.UserDefined)]
-    public class TestUdt
-    {
-
-    }
+#endif
+    public class TestUdt {}
 }

@@ -7,7 +7,7 @@ using System.Runtime.Serialization;
 
 namespace Microsoft.SqlServer.Server
 {
-    /// <include file='../../doc/snippets/Microsoft.Data.SqlClient.Server/InvalidUdtException.xml' path='docs/members[@name="InvalidUdtException"]/InvalidUdtException/*' />
+    /// <include file='../../doc/snippets/Microsoft.SqlServer.Server/InvalidUdtException.xml' path='docs/members[@name="InvalidUdtException"]/InvalidUdtException/*' />
     [Serializable]
     public sealed class InvalidUdtException : SystemException
     {
@@ -32,14 +32,14 @@ namespace Microsoft.SqlServer.Server
         {
         }
 
-        /// <include file='../../doc/snippets/Microsoft.Data.SqlClient.Server/InvalidUdtException.xml' path='docs/members[@name="InvalidUdtException"]/GetObjectData/*' />
+        /// <include file='../../doc/snippets/Microsoft.SqlServer.Server/InvalidUdtException.xml' path='docs/members[@name="InvalidUdtException"]/GetObjectData/*' />
         [System.Security.Permissions.SecurityPermissionAttribute(System.Security.Permissions.SecurityAction.LinkDemand, Flags = System.Security.Permissions.SecurityPermissionFlag.SerializationFormatter)]
         public override void GetObjectData(SerializationInfo si, StreamingContext context)
         {
             base.GetObjectData(si, context);
         }
 
-        /// <include file='../../doc/snippets/Microsoft.Data.SqlClient.Server/InvalidUdtException.xml' path='docs/members[@name="InvalidUdtException"]/Create/*' />
+        /// <include file='../../doc/snippets/Microsoft.SqlServer.Server/InvalidUdtException.xml' path='docs/members[@name="InvalidUdtException"]/Create/*' />
         public static InvalidUdtException Create(Type udtType, string resourceReason = "SqlUdtReason_NoUdtAttribute")
         {
             string reason = StringsHelper.GetString(resourceReason);
