@@ -221,6 +221,8 @@ namespace Microsoft.Data.SqlClient
             return result;
         }
 
+        internal static long GetTimeoutSeconds(int timeout) => GetTimeout((long)timeout * 1000L);
+
         internal static bool TimeoutHasExpired(long timeoutTime)
         {
             bool result = false;

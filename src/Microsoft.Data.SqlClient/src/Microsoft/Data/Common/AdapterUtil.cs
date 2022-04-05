@@ -784,7 +784,7 @@ namespace Microsoft.Data.Common
             => IndexOutOfRange(StringsHelper.GetString(Strings.ADP_CollectionIndexString, itemType.Name, propertyName, propertyValue, collection.Name));
 
         internal static InvalidCastException CollectionInvalidType(Type collection, Type itemType, object invalidValue)
-            => InvalidCast(StringsHelper.GetString(Strings.ADP_CollectionInvalidType, collection.Name, itemType.Name, invalidValue.GetType().Name));
+            => InvalidCast(StringsHelper.GetString(Strings.ADP_CollectionInvalidType, collection.Name, itemType.FullName, invalidValue.GetType().FullName));
 
         internal static ArgumentException ConvertFailed(Type fromType, Type toType, Exception innerException)
             => ADP.Argument(StringsHelper.GetString(Strings.SqlConvert_ConvertFailed, fromType.FullName, toType.FullName), innerException);
@@ -1227,6 +1227,8 @@ namespace Microsoft.Data.Common
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfCredentialAndAccessToken));
 #endregion
 
+        internal static bool IsEmpty(string str) => string.IsNullOrEmpty(str);
+        internal static readonly IntPtr s_ptrZero = IntPtr.Zero;
 #if NETFRAMEWORK
 #region netfx project only
         internal static Task<T> CreatedTaskWithException<T>(Exception ex)
@@ -1381,7 +1383,6 @@ namespace Microsoft.Data.Common
         internal const float FailoverTimeoutStepForTnir = 0.125F; // Fraction of timeout to use in case of Transparent Network IP resolution.
         internal const int MinimumTimeoutForTnirMs = 500; // The first login attempt in  Transparent network IP Resolution 
 
-        internal static readonly IntPtr s_ptrZero = IntPtr.Zero; // IntPtr.Zero
         internal static readonly int s_ptrSize = IntPtr.Size;
         internal static readonly IntPtr s_invalidPtr = new(-1); // use for INVALID_HANDLE
 
@@ -1472,7 +1473,6 @@ namespace Microsoft.Data.Common
             return (IntPtr)checked(pbase.ToInt64() + offset);
         }
 
-        internal static bool IsEmpty(string str) => string.IsNullOrEmpty(str);
 #endregion
 #else
 #region netcore project only
