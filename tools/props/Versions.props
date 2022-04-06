@@ -26,8 +26,8 @@
   </PropertyGroup>
   <!-- NetFx and NetCore project dependencies -->
   <PropertyGroup>
-    <AzureIdentityVersion>1.3.0</AzureIdentityVersion>
-    <MicrosoftIdentityClientVersion>4.22.0</MicrosoftIdentityClientVersion>
+    <AzureIdentityVersion>1.5.0</AzureIdentityVersion>
+    <MicrosoftIdentityClientVersion>4.30.1</MicrosoftIdentityClientVersion>
     <MicrosoftIdentityModelProtocolsOpenIdConnectVersion>6.8.0</MicrosoftIdentityModelProtocolsOpenIdConnectVersion>
     <MicrosoftIdentityModelJsonWebTokensVersion>6.8.0</MicrosoftIdentityModelJsonWebTokensVersion>
     <SystemBuffersVersion>4.5.1</SystemBuffersVersion>
@@ -55,7 +55,7 @@
   </PropertyGroup>
   <!-- AKV Provider project dependencies -->
   <PropertyGroup>
-    <AzureCoreVersion>[1.6.0,2.0.0)</AzureCoreVersion>
+    <AzureCoreVersion>[1.20.0,2.0.0)</AzureCoreVersion>
     <AzureSecurityKeyVaultKeysVersion>[4.0.3,5.0.0)</AzureSecurityKeyVaultKeysVersion>
     <MicrosoftExtensionsCachingMemoryVersion>5.0.0</MicrosoftExtensionsCachingMemoryVersion>
   </PropertyGroup>
