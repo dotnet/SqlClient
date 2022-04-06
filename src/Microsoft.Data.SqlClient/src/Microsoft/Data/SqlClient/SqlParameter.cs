@@ -302,8 +302,13 @@ namespace Microsoft.Data.SqlClient
         {
             Direction = direction;
             IsNullable = isNullable;
+#if NETFRAMEWORK
+            PrecisionInternal = precision;
+            ScaleInternal = scale;
+#else
             Precision = precision;
             Scale = scale;
+#endif
             SourceVersion = sourceVersion;
             Value = value;
         }
@@ -330,8 +335,13 @@ namespace Microsoft.Data.SqlClient
             SqlDbType = dbType;
             Size = size;
             Direction = direction;
+#if NETFRAMEWORK
+            PrecisionInternal = precision;
+            ScaleInternal = scale;
+#else
             Precision = precision;
             Scale = scale;
+#endif
             SourceColumn = sourceColumn;
             SourceVersion = sourceVersion;
             SourceColumnNullMapping = sourceColumnNullMapping;
@@ -832,7 +842,11 @@ namespace Microsoft.Data.SqlClient
             set => _sourceColumn = value;
         }
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceColumnNullMapping/*' />
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceColumnNullMapping/*' />   
+        [ResCategory("DataCategory_Update")]
+#if !NETFRAMEWORK
+        [ResDescription(StringsHelper.ResourceNames.SqlParameter_SourceColumnNullMapping)]
+#endif
         public override bool SourceColumnNullMapping
         {
             get => HasFlag(SqlParameterFlags.SourceColumnNullMapping);
@@ -840,6 +854,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/ToString/*' />
+        [ResCategory("Data")]
         public override string ToString() => ParameterName;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlParameter.xml' path='docs/members[@name="SqlParameter"]/SourceVersion/*' />
@@ -1247,11 +1262,7 @@ namespace Microsoft.Data.SqlClient
                                     hasDefault = true;
                                 }
 
-                                PropertyInfo serverTypeNameProperty = colMeta.GetType().GetProperty("SortOrder", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-                                MethodInfo getter = serverTypeNameProperty.GetGetMethod(nonPublic: true);
-                                SortOrder sortOrder = (SortOrder)getter.Invoke(colMeta, null);
-
-                                sort[i].Order = sortOrder;
+                                sort[i].Order = colMeta.SortOrder;
                                 if (SortOrder.Unspecified != sortOrder)
                                 {
                                     // SqlMetaData takes care of checking for negative sort ordinals with specified sort order
