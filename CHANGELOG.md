@@ -22,7 +22,7 @@ This update brings the below changes over the previous release:
 - Updated `Azure.Identity`  version to `1.5.0` and `Microsoft.Identity.Client` version to `4.30.1` [#1462](https://github.com/dotnet/SqlClient/pull/1462)
 - Replaced AlwaysEncryptedAttestationException with SqlException [#1515](https://github.com/dotnet/SqlClient/pull/1515)
 - Improved error message when adding wrong type to SqlParameterCollection [#1547](https://github.com/dotnet/SqlClient/pull/1547)
-- Code health improvements [#1370](https://github.com/dotnet/SqlClient/pull/1370) [#1371](https://github.com/dotnet/SqlClient/pull/1371) [#1438](https://github.com/dotnet/SqlClient/pull/1438)
+- Code health improvements [#1343](https://github.com/dotnet/SqlClient/pull/1343) [#1370](https://github.com/dotnet/SqlClient/pull/1370) [#1371](https://github.com/dotnet/SqlClient/pull/1371) [#1438](https://github.com/dotnet/SqlClient/pull/1438) [#1483](https://github.com/dotnet/SqlClient/pull/1483)
 
 ## [Preview Release 5.0.0-preview1.22069.1] - 2022-03-09
 
