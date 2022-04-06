@@ -128,7 +128,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        throw new AlwaysEncryptedAttestationException(Strings.FailToCreateEnclaveSession);
+                        throw SQL.AttestationFailed(Strings.FailToCreateEnclaveSession);
                     }
                 }
             }
@@ -173,7 +173,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        throw new AlwaysEncryptedAttestationException(String.Format(Strings.VerifyHealthCertificateChainFormat, attestationUrl, chainStatus));
+                        throw SQL.AttestationFailed(string.Format(Strings.VerifyHealthCertificateChainFormat, attestationUrl, chainStatus));
                     }
                 }
             } while (shouldRetryValidation);
@@ -205,7 +205,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (CryptographicException exception)
                 {
-                    throw new AlwaysEncryptedAttestationException(String.Format(Strings.GetAttestationSigningCertificateFailedInvalidCertificate, attestationUrl), exception);
+                    throw SQL.AttestationFailed(string.Format(Strings.GetAttestationSigningCertificateFailedInvalidCertificate, attestationUrl), exception);
                 }
 
                 rootSigningCertificateCache.Add(attestationUrl, certificateCollection, DateTime.Now.AddDays(1));

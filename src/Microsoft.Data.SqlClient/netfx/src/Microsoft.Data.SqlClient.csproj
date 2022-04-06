@@ -167,9 +167,6 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.cs">
       <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\AlwaysEncryptedAttestationException.cs">
-      <Link>Microsoft\Data\SqlClient\AlwaysEncryptedAttestationException.cs</Link>
-    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.cs">
       <Link>Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.cs</Link>
     </Compile>
@@ -512,7 +509,7 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlSequentialStream.cs">
       <Link>Microsoft\Data\SqlClient\SqlSequentialStream.cs</Link>
     </Compile>
-        <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlStream.cs">
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlStream.cs">
       <Link>Microsoft\Data\SqlClient\SqlStream.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlStatistics.cs">
