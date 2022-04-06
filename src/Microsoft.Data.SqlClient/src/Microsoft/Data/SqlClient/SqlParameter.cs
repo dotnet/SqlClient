@@ -1263,7 +1263,7 @@ namespace Microsoft.Data.SqlClient
                                 }
 
                                 sort[i].Order = colMeta.SortOrder;
-                                if (SortOrder.Unspecified != sortOrder)
+                                if (SortOrder.Unspecified != colMeta.SortOrder)
                                 {
                                     // SqlMetaData takes care of checking for negative sort ordinals with specified sort order
 
