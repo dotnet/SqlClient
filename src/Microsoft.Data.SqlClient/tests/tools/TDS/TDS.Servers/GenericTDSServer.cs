@@ -739,11 +739,11 @@ namespace Microsoft.SqlServer.TDS.Servers
         private byte[] _GenerateRandomBytes(int count)
         {
             byte[] randomBytes = new byte[count];
-
-            RNGCryptoServiceProvider gen = new RNGCryptoServiceProvider();
-            // Generate bytes
-            gen.GetBytes(randomBytes);
-
+            using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(randomBytes);
+            }
+            
             return randomBytes;
         }
 

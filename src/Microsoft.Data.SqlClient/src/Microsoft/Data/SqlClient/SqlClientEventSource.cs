@@ -801,6 +801,15 @@ namespace Microsoft.Data.SqlClient
         }
 
         [NonEvent]
+        internal void TryAdvancedTraceEvent<T0, T1, T2, T3, T4, T5, T6>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4, T5 args5, T6 args6)
+        {
+            if (Log.IsAdvancedTraceOn())
+            {
+                AdvancedTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr, args4?.ToString() ?? NullStr, args5?.ToString() ?? NullStr, args6?.ToString() ?? NullStr));
+            }
+        }
+
+        [NonEvent]
         internal long TryAdvancedScopeEnterEvent<T0>(string message, T0 args0)
         {
             if (Log.IsAdvancedTraceOn())
@@ -1120,23 +1129,11 @@ namespace Microsoft.Data.SqlClient
     {
         private readonly long _scopeId;
 
-        public TrySNIEventScope(long scopeID)
-        {
-            _scopeId = scopeID;
-        }
+        public TrySNIEventScope(long scopeID) => _scopeId = scopeID;
+        public void Dispose() =>
+            SqlClientEventSource.Log.SNIScopeLeave(string.Format("Exit SNI Scope {0}", _scopeId));
 
-        public void Dispose()
-        {
-            if (_scopeId != 0)
-            {
-                SqlClientEventSource.Log.TrySNIScopeLeaveEvent(_scopeId);
-            }
-        }
-
-        public static TrySNIEventScope Create(string message, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
-        {
-            return new TrySNIEventScope(SqlClientEventSource.Log.TrySNIScopeEnterEvent(message, memberName));
-        }
+        public static TrySNIEventScope Create(string message) => new TrySNIEventScope(SqlClientEventSource.Log.SNIScopeEnter(message));
     }
 
     internal readonly ref struct TryEventScope //: IDisposable

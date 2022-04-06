@@ -1262,7 +1262,7 @@ namespace Microsoft.Data.SqlClient
                                     hasDefault = true;
                                 }
 
-                                sort[i].Order = colMeta.SortOrder;
+                                sort[i]._order = colMeta.SortOrder;
                                 if (SortOrder.Unspecified != colMeta.SortOrder)
                                 {
                                     // SqlMetaData takes care of checking for negative sort ordinals with specified sort order
@@ -1279,7 +1279,7 @@ namespace Microsoft.Data.SqlClient
                                         throw SQL.DuplicateSortOrdinal(colMeta.SortOrdinal);
                                     }
 
-                                    sort[i].SortOrdinal = colMeta.SortOrdinal;
+                                    sort[i]._sortOrdinal = colMeta.SortOrdinal;
                                     sortOrdinalSpecified[colMeta.SortOrdinal] = true;
                                     if (colMeta.SortOrdinal > maxSortOrdinal)
                                     {
@@ -1650,7 +1650,7 @@ namespace Microsoft.Data.SqlClient
             peekAhead = null;
             MetaType mt = ValidateTypeLengths(
 #if NETFRAMEWORK
-                true /* Yukon or newer */ 
+                true /* 2005 or newer */
 #endif
                 );
             long actualLen = GetActualSize();
@@ -1991,7 +1991,7 @@ namespace Microsoft.Data.SqlClient
         // byte length and a parameter length > than that expressible in 2 bytes
         internal MetaType ValidateTypeLengths(
 #if NETFRAMEWORK
-            bool yukonOrNewer
+            bool is2005OrNewer
 #endif
             )
         {
@@ -2014,7 +2014,7 @@ namespace Microsoft.Data.SqlClient
                 // 'this.Size' is in charaters; 
                 // 'sizeInCharacters' is in characters; 
                 // 'TdsEnums.TYPE_SIZE_LIMIT' is in bytes;
-                // For Non-NCharType and for non-Yukon or greater variables, size should be maintained;
+                // For Non-NCharType and for non-2005 or greater variables, size should be maintained;
                 // Reverting changes from bug VSTFDevDiv # 479739 as it caused an regression;
                 // Modifed variable names from 'size' to 'sizeInCharacters', 'actualSize' to 'actualSizeInBytes', and 
                 // 'maxSize' to 'maxSizeInBytes'
@@ -2027,7 +2027,7 @@ namespace Microsoft.Data.SqlClient
                 long maxSizeInBytes;
                 if (mt.IsNCharType
 #if NETFRAMEWORK
-                    && yukonOrNewer
+                    && is2005OrNewer
 #endif
                     )
                 {
@@ -2036,7 +2036,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     // Notes:
-                    // Elevation from (n)(var)char (4001+) to (n)text succeeds without failure only with Yukon and greater.
+                    // Elevation from (n)(var)char (4001+) to (n)text succeeds without failure only with 2005 and greater.
                     // it fails in sql server 2000
                     maxSizeInBytes = (sizeInCharacters > actualSizeInBytes) ? sizeInCharacters : actualSizeInBytes;
                 }
@@ -2050,7 +2050,7 @@ namespace Microsoft.Data.SqlClient
                 {
 #if NETFRAMEWORK
                     // is size > size able to be described by 2 bytes
-                    if (yukonOrNewer)
+                    if (is2005OrNewer)
                     {
                         // Convert the parameter to its max type
                         mt = MetaType.GetMaxMetaTypeFromMetaType(mt);

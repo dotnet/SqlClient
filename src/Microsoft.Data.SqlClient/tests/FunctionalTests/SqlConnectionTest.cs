@@ -86,7 +86,7 @@ namespace Microsoft.Data.SqlClient.Tests
             // Keyword not supported: 'invalidkeyword'
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
-            Assert.True(ex.Message.IndexOf("'invalidkeyword'") != -1);
+            Assert.True(ex.Message.IndexOf("'invalidkeyword'", StringComparison.OrdinalIgnoreCase) != -1);
             Assert.Null(ex.ParamName);
 
             // invalid packet size (< minimum)
@@ -267,7 +267,7 @@ namespace Microsoft.Data.SqlClient.Tests
             // Keyword not supported: 'invalidkeyword'
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
-            Assert.True(ex.Message.IndexOf("'invalidkeyword'") != -1);
+            Assert.True(ex.Message.IndexOf("'invalidkeyword'", StringComparison.OrdinalIgnoreCase) != -1);
             Assert.Null(ex.ParamName);
         }
 
@@ -351,6 +351,25 @@ namespace Microsoft.Data.SqlClient.Tests
             // Invalid operation. The connection is closed
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
+        }
+
+        [Theory]
+        [InlineData("Authentication = ActiveDirectoryIntegrated;Password = ''")]
+        [InlineData("Authentication = ActiveDirectoryIntegrated;PWD = ''")]
+        [InlineData("Authentication = ActiveDirectoryIntegrated;User Id='';PWD = ''")]
+        [InlineData("Authentication = ActiveDirectoryIntegrated;User Id='';Password = ''")]
+        [InlineData("Authentication = ActiveDirectoryIntegrated;UID='';PWD = ''")]
+        [InlineData("Authentication = ActiveDirectoryIntegrated;UID='';Password = ''")]
+        public void ConnectionString_ActiveDirectoryIntegrated_Password(string connectionString)
+        {
+            SqlConnection cn = new SqlConnection();
+
+            ArgumentException ex = Assert.Throws<ArgumentException>(() => cn.ConnectionString = connectionString);
+            // Invalid value for key 'user instance'
+            Assert.Null(ex.InnerException);
+            Assert.NotNull(ex.Message);
+            Assert.True(ex.Message.IndexOf("'pwd'", StringComparison.OrdinalIgnoreCase) != -1);
+            Assert.Null(ex.ParamName);
         }
 
         [Theory]
@@ -468,7 +487,7 @@ namespace Microsoft.Data.SqlClient.Tests
             // Invalid value for key 'connect timeout'
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
-            Assert.True(ex.Message.IndexOf("'connect timeout'") != -1);
+            Assert.True(ex.Message.IndexOf("'connect timeout'", StringComparison.OrdinalIgnoreCase) != -1);
             Assert.Null(ex.ParamName);
 
             // invalid number
@@ -477,7 +496,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.NotNull(ex.InnerException);
             Assert.Equal(typeof(FormatException), ex.InnerException.GetType());
             Assert.NotNull(ex.Message);
-            Assert.True(ex.Message.IndexOf("'connect timeout'") != -13);
+            Assert.True(ex.Message.IndexOf("'connect timeout'", StringComparison.OrdinalIgnoreCase) != -1);
             Assert.Null(ex.ParamName);
 
             // Input string was not in a correct format
@@ -491,7 +510,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.NotNull(ex.InnerException);
             Assert.Equal(typeof(OverflowException), ex.InnerException.GetType());
             Assert.NotNull(ex.Message);
-            Assert.True(ex.Message.IndexOf("'connect timeout'") != -1);
+            Assert.True(ex.Message.IndexOf("'connect timeout'", StringComparison.OrdinalIgnoreCase) != -1);
             Assert.Null(ex.ParamName);
 
             // Value was either too large or too small for an Int32
@@ -526,7 +545,7 @@ namespace Microsoft.Data.SqlClient.Tests
             // Invalid value for key 'connect timeout'
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
-            Assert.True(ex.Message.IndexOf("'command timeout'") != -1);
+            Assert.True(ex.Message.IndexOf("'command timeout'", StringComparison.OrdinalIgnoreCase) != -1);
             Assert.Null(ex.ParamName);
 
             // invalid number
@@ -535,7 +554,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.NotNull(ex.InnerException);
             Assert.Equal(typeof(FormatException), ex.InnerException.GetType());
             Assert.NotNull(ex.Message);
-            Assert.True(ex.Message.IndexOf("'command timeout'") != -13);
+            Assert.True(ex.Message.IndexOf("'command timeout'", StringComparison.OrdinalIgnoreCase) != -1);
             Assert.Null(ex.ParamName);
 
             // Input string was not in a correct format
@@ -549,7 +568,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.NotNull(ex.InnerException);
             Assert.Equal(typeof(OverflowException), ex.InnerException.GetType());
             Assert.NotNull(ex.Message);
-            Assert.True(ex.Message.IndexOf("'command timeout'") != -1);
+            Assert.True(ex.Message.IndexOf("'command timeout'", StringComparison.OrdinalIgnoreCase) != -1);
             Assert.Null(ex.ParamName);
 
             // Value was either too large or too small for an Int32
@@ -634,7 +653,7 @@ namespace Microsoft.Data.SqlClient.Tests
             // Invalid value for key 'max pool size'
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
-            Assert.True(ex.Message.IndexOf("'max pool size'") != -1);
+            Assert.True(ex.Message.IndexOf("'max pool size'", StringComparison.OrdinalIgnoreCase) != -1);
             Assert.Null(ex.ParamName);
 
             // invalid number
@@ -643,7 +662,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.NotNull(ex.InnerException);
             Assert.Equal(typeof(FormatException), ex.InnerException.GetType());
             Assert.NotNull(ex.Message);
-            Assert.True(ex.Message.IndexOf("'max pool size'") != -1);
+            Assert.True(ex.Message.IndexOf("'max pool size'", StringComparison.OrdinalIgnoreCase) != -1);
             Assert.Null(ex.ParamName);
 
             // Input string was not in a correct format
@@ -657,7 +676,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.NotNull(ex.InnerException);
             Assert.Equal(typeof(OverflowException), ex.InnerException.GetType());
             Assert.NotNull(ex.Message);
-            Assert.True(ex.Message.IndexOf("'max pool size'") != -1);
+            Assert.True(ex.Message.IndexOf("'max pool size'", StringComparison.OrdinalIgnoreCase) != -1);
             Assert.Null(ex.ParamName);
 
             // Value was either too large or too small for an Int32
@@ -670,7 +689,7 @@ namespace Microsoft.Data.SqlClient.Tests
             // Invalid value for key 'max pool size'
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
-            Assert.True(ex.Message.IndexOf("'max pool size'") != -1);
+            Assert.True(ex.Message.IndexOf("'max pool size'", StringComparison.OrdinalIgnoreCase) != -1);
             Assert.Null(ex.ParamName);
 
             // less than min pool size
@@ -702,7 +721,7 @@ namespace Microsoft.Data.SqlClient.Tests
             // Invalid value for key 'min pool size'
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
-            Assert.True(ex.Message.IndexOf("'min pool size'") != -1);
+            Assert.True(ex.Message.IndexOf("'min pool size'", StringComparison.OrdinalIgnoreCase) != -1);
             Assert.Null(ex.ParamName);
 
             // invalid number
@@ -711,7 +730,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.NotNull(ex.InnerException);
             Assert.Equal(typeof(FormatException), ex.InnerException.GetType());
             Assert.NotNull(ex.Message);
-            Assert.True(ex.Message.IndexOf("'min pool size'") != -1);
+            Assert.True(ex.Message.IndexOf("'min pool size'", StringComparison.OrdinalIgnoreCase) != -1);
             Assert.Null(ex.ParamName);
 
             // Input string was not in a correct format
@@ -725,7 +744,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.NotNull(ex.InnerException);
             Assert.Equal(typeof(OverflowException), ex.InnerException.GetType());
             Assert.NotNull(ex.Message);
-            Assert.True(ex.Message.IndexOf("'min pool size'") != -1);
+            Assert.True(ex.Message.IndexOf("'min pool size'", StringComparison.OrdinalIgnoreCase) != -1);
             Assert.Null(ex.ParamName);
 
             // Value was either too large or too small for an Int32
@@ -750,7 +769,7 @@ namespace Microsoft.Data.SqlClient.Tests
             // Invalid value for key 'multiple active result sets'
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
-            Assert.True(ex.Message.IndexOf("'multiple active result sets'") != -1);
+            Assert.True(ex.Message.IndexOf("'multiple active result sets'", StringComparison.OrdinalIgnoreCase) != -1);
             Assert.Null(ex.ParamName);
         }
 
@@ -781,7 +800,7 @@ namespace Microsoft.Data.SqlClient.Tests
             // integer >= 512 and <= 32768
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
-            Assert.True(ex.Message.IndexOf("'Packet Size'") != -1);
+            Assert.True(ex.Message.IndexOf("'Packet Size'", StringComparison.OrdinalIgnoreCase) != -1);
             Assert.Null(ex.ParamName);
 
             // invalid packet size (> maximum)
@@ -790,7 +809,7 @@ namespace Microsoft.Data.SqlClient.Tests
             // integer >= 512 and <= 32768
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
-            Assert.True(ex.Message.IndexOf("'Packet Size'") != -1);
+            Assert.True(ex.Message.IndexOf("'Packet Size'", StringComparison.OrdinalIgnoreCase) != -1);
             Assert.Null(ex.ParamName);
 
             // overflow
@@ -799,7 +818,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.NotNull(ex.InnerException);
             Assert.Equal(typeof(OverflowException), ex.InnerException.GetType());
             Assert.NotNull(ex.Message);
-            Assert.True(ex.Message.IndexOf("'packet size'") != -1);
+            Assert.True(ex.Message.IndexOf("'packet size'", StringComparison.OrdinalIgnoreCase) != -1);
             Assert.Null(ex.ParamName);
 
             // Value was either too large or too small for an Int32
@@ -849,7 +868,7 @@ namespace Microsoft.Data.SqlClient.Tests
             // Invalid value for key 'user instance'
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
-            Assert.True(ex.Message.IndexOf("'user instance'") != -1);
+            Assert.True(ex.Message.IndexOf("'user instance'", StringComparison.OrdinalIgnoreCase) != -1);
             Assert.Null(ex.ParamName);
         }
 
@@ -1009,7 +1028,7 @@ namespace Microsoft.Data.SqlClient.Tests
             // Invalid value for key 'ip address preference'
             Assert.Null(ex.InnerException);
             Assert.NotNull(ex.Message);
-            Assert.Contains("'ip address preference'", ex.Message);
+            Assert.Contains("'ip address preference'", ex.Message, StringComparison.OrdinalIgnoreCase);
             Assert.Null(ex.ParamName);
         }
     }

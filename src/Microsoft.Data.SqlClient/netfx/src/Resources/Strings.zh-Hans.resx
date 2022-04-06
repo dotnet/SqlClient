@@ -2493,8 +2493,8 @@
   <data name="SQL_AuthenticationAndIntegratedSecurity" xml:space="preserve">
     <value>无法对“Integrated Security”使用“Authentication”。</value>
   </data>
-  <data name="SQL_IntegratedWithUserIDAndPassword" xml:space="preserve">
-    <value>无法对“User ID”、“UID”、“Password”或“PWD”连接字符串关键字使用“Authentication=Active Directory Integrated”。</value>
+  <data name="SQL_IntegratedWithPassword" xml:space="preserve">
+    <value>无法将 “Authentication=Active Directory Integrated” 与 “Password” 或 “PWD” 连接字符串关键字配合使用。</value>
   </data>
   <data name="SQL_InteractiveWithPassword" xml:space="preserve">
     <value>无法对 "Password" 或 "PWD" 连接字符串关键字使用 "Authentication=Active Directory Interactive"。</value>

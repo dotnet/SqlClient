@@ -461,9 +461,9 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_AuthenticationAndIntegratedSecurity));
         }
-        static internal Exception IntegratedWithUserIDAndPassword()
+        static internal Exception IntegratedWithPassword()
         {
-            return ADP.Argument(StringsHelper.GetString(Strings.SQL_IntegratedWithUserIDAndPassword));
+            return ADP.Argument(StringsHelper.GetString(Strings.SQL_IntegratedWithPassword));
         }
         static internal Exception InteractiveWithPassword()
         {
@@ -553,7 +553,7 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(StringsHelper.GetString(Strings.SQL_ChangePasswordConflictsWithSSPI));
         }
-        static internal Exception ChangePasswordRequiresYukon()
+        static internal Exception ChangePasswordRequires2005()
         {
             return ADP.InvalidOperation(StringsHelper.GetString(Strings.SQL_ChangePasswordRequiresYukon));
         }
@@ -657,7 +657,7 @@ namespace Microsoft.Data.SqlClient
         //
         // SQL.DataCommand
         //
-        static internal Exception NotificationsRequireYukon()
+        static internal Exception NotificationsRequire2005()
         {
             return ADP.NotSupported(StringsHelper.GetString(Strings.SQL_NotificationsRequireYukon));
         }

@@ -21,9 +21,15 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using Microsoft.Data.SqlClient;
-using Microsoft.Data.SqlClient.Server;
 using Microsoft.Win32;
 using IsolationLevel = System.Data.IsolationLevel;
+
+#if NETFRAMEWORK
+using Microsoft.SqlServer.Server;
+using System.Reflection;
+#else
+using Microsoft.Data.SqlClient.Server;
+#endif
 
 namespace Microsoft.Data.Common
 {
@@ -56,6 +62,26 @@ namespace Microsoft.Data.Common
         /// Max duration for buffer in seconds
         /// </summary>
         internal const int MaxBufferAccessTokenExpiry = 600;
+
+        #region UDT
+#if NETFRAMEWORK
+        private static readonly MethodInfo s_method = typeof(InvalidUdtException).GetMethod("Create", BindingFlags.NonPublic | BindingFlags.Static);
+#endif
+        /// <summary>
+        /// Calls "InvalidUdtException.Create" method when an invalid UDT occurs.
+        /// </summary>
+        internal static InvalidUdtException CreateInvalidUdtException(Type udtType, string resourceReasonName)
+        {
+            InvalidUdtException e =
+#if NETFRAMEWORK
+                (InvalidUdtException)s_method.Invoke(null, new object[] { udtType, resourceReasonName });
+            ADP.TraceExceptionAsReturnValue(e);
+#else
+                InvalidUdtException.Create(udtType, resourceReasonName);
+#endif
+            return e;
+        }
+        #endregion
 
         static private void TraceException(string trace, Exception e)
         {
@@ -101,7 +127,7 @@ namespace Microsoft.Data.Common
             }
         }
 
-        #region COM+ exceptions
+#region COM+ exceptions
         internal static ArgumentException Argument(string error)
         {
             ArgumentException e = new(error);
@@ -300,9 +326,9 @@ namespace Microsoft.Data.Common
             TraceExceptionAsReturnValue(e);
             return e;
         }
-        #endregion
+#endregion
 
-        #region Helper Functions
+#region Helper Functions
         internal static ArgumentOutOfRangeException NotSupportedEnumerationValue(Type type, string value, string method)
             => ArgumentOutOfRange(StringsHelper.GetString(Strings.ADP_NotSupportedEnumerationValue, type.Name, value, method), type.Name);
 
@@ -390,9 +416,9 @@ namespace Microsoft.Data.Common
             => Argument(StringsHelper.GetString(Strings.ADP_InvalidArgumentLength, argumentName, limit));
 
         internal static ArgumentException MustBeReadOnly(string argumentName) => Argument(StringsHelper.GetString(Strings.ADP_MustBeReadOnly, argumentName));
-        #endregion
+#endregion
 
-        #region CommandBuilder, Command, BulkCopy
+#region CommandBuilder, Command, BulkCopy
         /// <summary>
         /// This allows the caller to determine if it is an error or not for the quotedString to not be quoted
         /// </summary>
@@ -725,9 +751,9 @@ namespace Microsoft.Data.Common
             TraceExceptionAsReturnValue(e);
             return e;
         }
-        #endregion
+#endregion
 
-        #region DbConnectionOptions, DataAccess
+#region DbConnectionOptions, DataAccess
         internal static ArgumentException ConnectionStringSyntax(int index) => Argument(StringsHelper.GetString(Strings.ADP_ConnectionStringSyntax, index));
 
         internal static ArgumentException KeywordNotSupported(string keyword) => Argument(StringsHelper.GetString(Strings.ADP_KeywordNotSupported, keyword));
@@ -758,16 +784,16 @@ namespace Microsoft.Data.Common
             => IndexOutOfRange(StringsHelper.GetString(Strings.ADP_CollectionIndexString, itemType.Name, propertyName, propertyValue, collection.Name));
 
         internal static InvalidCastException CollectionInvalidType(Type collection, Type itemType, object invalidValue)
-            => InvalidCast(StringsHelper.GetString(Strings.ADP_CollectionInvalidType, collection.Name, itemType.Name, invalidValue.GetType().Name));
+            => InvalidCast(StringsHelper.GetString(Strings.ADP_CollectionInvalidType, collection.Name, itemType.FullName, invalidValue.GetType().FullName));
 
         internal static ArgumentException ConvertFailed(Type fromType, Type toType, Exception innerException)
             => ADP.Argument(StringsHelper.GetString(Strings.SqlConvert_ConvertFailed, fromType.FullName, toType.FullName), innerException);
 
         internal static ArgumentException InvalidMinMaxPoolSizeValues()
             => ADP.Argument(StringsHelper.GetString(Strings.ADP_InvalidMinMaxPoolSizeValues));
-        #endregion
+#endregion
 
-        #region DbConnection
+#region DbConnection
         private static string ConnectionStateMsg(ConnectionState state)
         { // MDAC 82165, if the ConnectionState enum to msg the localization looks weird
             return state switch
@@ -790,25 +816,25 @@ namespace Microsoft.Data.Common
             TraceExceptionAsReturnValue(e);
             return e;
         }
-        #endregion
+#endregion
 
-        #region Stream
+#region Stream
         internal static Exception StreamClosed([CallerMemberName] string method = "") => InvalidOperation(StringsHelper.GetString(Strings.ADP_StreamClosed, method));
 
         static internal Exception InvalidSeekOrigin(string parameterName) => ArgumentOutOfRange(StringsHelper.GetString(Strings.ADP_InvalidSeekOrigin), parameterName);
 
         internal static IOException ErrorReadingFromStream(Exception internalException) => IO(StringsHelper.GetString(Strings.SqlMisc_StreamErrorMessage), internalException);
-        #endregion
+#endregion
 
-        #region Generic Data Provider Collection
+#region Generic Data Provider Collection
         internal static ArgumentException ParametersIsNotParent(Type parameterType, ICollection collection)
             => Argument(StringsHelper.GetString(Strings.ADP_CollectionIsNotParent, parameterType.Name, collection.GetType().Name));
 
         internal static ArgumentException ParametersIsParent(Type parameterType, ICollection collection)
             => Argument(StringsHelper.GetString(Strings.ADP_CollectionIsNotParent, parameterType.Name, collection.GetType().Name));
-        #endregion
+#endregion
 
-        #region ConnectionUtil
+#region ConnectionUtil
         internal enum InternalErrorCode
         {
             UnpooledObjectHasOwner = 0,
@@ -879,9 +905,9 @@ namespace Microsoft.Data.Common
         internal static Exception InvalidConnectRetryCountValue() => Argument(StringsHelper.GetString(Strings.SQLCR_InvalidConnectRetryCountValue));
 
         internal static Exception InvalidConnectRetryIntervalValue() => Argument(StringsHelper.GetString(Strings.SQLCR_InvalidConnectRetryIntervalValue));
-        #endregion
+#endregion
 
-        #region DbDataReader
+#region DbDataReader
         internal static Exception DataReaderClosed([CallerMemberName] string method = "")
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_DataReaderClosed, method));
 
@@ -923,9 +949,9 @@ namespace Microsoft.Data.Common
             => Argument(StringsHelper.GetString(Strings.MDF_InvalidXmlMissingColumn, collectionName, columnName));
 
         internal static InvalidOperationException AsyncOperationPending() => InvalidOperation(StringsHelper.GetString(Strings.ADP_PendingAsyncOperation));
-        #endregion
+#endregion
 
-        #region IDbCommand
+#region IDbCommand
         // IDbCommand.CommandType
         static internal ArgumentOutOfRangeException InvalidCommandType(CommandType value)
         {
@@ -994,9 +1020,9 @@ namespace Microsoft.Data.Common
             => DataAdapter(StringsHelper.GetString(Strings.ADP_DeriveParametersNotSupported, value.GetType().Name, value.CommandType.ToString()));
 
         internal static Exception NoStoredProcedureExists(string sproc) => InvalidOperation(StringsHelper.GetString(Strings.ADP_NoStoredProcedureExists, sproc));
-        #endregion
+#endregion
 
-        #region DbMetaDataFactory
+#region DbMetaDataFactory
         internal static Exception DataTableDoesNotExist(string collectionName)
             => Argument(StringsHelper.GetString(Strings.MDF_DataTableDoesNotExist, collectionName));
 
@@ -1067,17 +1093,17 @@ namespace Microsoft.Data.Common
 #else
             => throw new NotImplementedException();
 #endif
-        #endregion
+#endregion
 
-        #region DbConnectionPool and related
+#region DbConnectionPool and related
         internal static Exception PooledOpenTimeout()
             => ADP.InvalidOperation(StringsHelper.GetString(Strings.ADP_PooledOpenTimeout));
 
         internal static Exception NonPooledOpenTimeout()
             => ADP.TimeoutException(StringsHelper.GetString(Strings.ADP_NonPooledOpenTimeout));
-        #endregion
+#endregion
 
-        #region DbProviderException
+#region DbProviderException
         internal static InvalidOperationException TransactionConnectionMismatch()
             => Provider(StringsHelper.GetString(Strings.ADP_TransactionConnectionMismatch));
 
@@ -1086,18 +1112,18 @@ namespace Microsoft.Data.Common
 
         internal static InvalidOperationException TransactionCompletedButNotDisposed() => Provider(StringsHelper.GetString(Strings.ADP_TransactionCompletedButNotDisposed));
 
-        #endregion
+#endregion
 
-        #region SqlMetaData, SqlTypes
+#region SqlMetaData, SqlTypes
         internal static Exception InvalidMetaDataValue() => ADP.Argument(StringsHelper.GetString(Strings.ADP_InvalidMetaDataValue));
 
         internal static InvalidOperationException NonSequentialColumnAccess(int badCol, int currCol)
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_NonSequentialColumnAccess,
                                                         badCol.ToString(CultureInfo.InvariantCulture),
                                                         currCol.ToString(CultureInfo.InvariantCulture)));
-        #endregion
+#endregion
 
-        #region IDataParameter
+#region IDataParameter
         internal static ArgumentException InvalidDataType(TypeCode typecode) => Argument(StringsHelper.GetString(Strings.ADP_InvalidDataType, typecode.ToString()));
 
         internal static ArgumentException UnknownDataType(Type dataType) => Argument(StringsHelper.GetString(Strings.ADP_UnknownDataType, dataType.FullName));
@@ -1153,9 +1179,9 @@ namespace Microsoft.Data.Common
             TraceExceptionAsReturnValue(e);
             return e;
         }
-        #endregion
+#endregion
 
-        #region IDataParameterCollection
+#region IDataParameterCollection
         internal static Exception ParametersMappingIndex(int index, DbParameterCollection collection) => CollectionIndexInt32(index, collection.GetType(), collection.Count);
 
         internal static Exception ParametersSourceIndex(string parameterName, DbParameterCollection collection, Type parameterType)
@@ -1166,16 +1192,16 @@ namespace Microsoft.Data.Common
 
         internal static Exception InvalidParameterType(DbParameterCollection collection, Type parameterType, object invalidValue)
             => CollectionInvalidType(collection.GetType(), parameterType, invalidValue);
-        #endregion
+#endregion
 
-        #region IDbTransaction
+#region IDbTransaction
         internal static Exception ParallelTransactionsNotSupported(DbConnection obj)
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_ParallelTransactionsNotSupported, obj.GetType().Name));
 
         internal static Exception TransactionZombied(DbTransaction obj) => InvalidOperation(StringsHelper.GetString(Strings.ADP_TransactionZombied, obj.GetType().Name));
-        #endregion
+#endregion
 
-        #region DbProviderConfigurationHandler
+#region DbProviderConfigurationHandler
         internal static InvalidOperationException InvalidMixedUsageOfSecureAndClearCredential()
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfSecureAndClearCredential));
 
@@ -1199,10 +1225,12 @@ namespace Microsoft.Data.Common
 
         static internal Exception InvalidMixedUsageOfCredentialAndAccessToken()
             => InvalidOperation(StringsHelper.GetString(Strings.ADP_InvalidMixedUsageOfCredentialAndAccessToken));
-        #endregion
+#endregion
 
+        internal static bool IsEmpty(string str) => string.IsNullOrEmpty(str);
+        internal static readonly IntPtr s_ptrZero = IntPtr.Zero;
 #if NETFRAMEWORK
-        #region netfx project only
+#region netfx project only
         internal static Task<T> CreatedTaskWithException<T>(Exception ex)
         {
             TaskCompletionSource<T> completion = new();
@@ -1355,7 +1383,6 @@ namespace Microsoft.Data.Common
         internal const float FailoverTimeoutStepForTnir = 0.125F; // Fraction of timeout to use in case of Transparent Network IP resolution.
         internal const int MinimumTimeoutForTnirMs = 500; // The first login attempt in  Transparent network IP Resolution 
 
-        internal static readonly IntPtr s_ptrZero = IntPtr.Zero; // IntPtr.Zero
         internal static readonly int s_ptrSize = IntPtr.Size;
         internal static readonly IntPtr s_invalidPtr = new(-1); // use for INVALID_HANDLE
 
@@ -1446,10 +1473,9 @@ namespace Microsoft.Data.Common
             return (IntPtr)checked(pbase.ToInt64() + offset);
         }
 
-        internal static bool IsEmpty(string str) => string.IsNullOrEmpty(str);
-        #endregion
+#endregion
 #else
-        #region netcore project only
+#region netcore project only
         internal static Timer UnsafeCreateTimer(TimerCallback callback, object state, int dueTime, int period)
         {
             // Don't capture the current ExecutionContext and its AsyncLocals onto 
@@ -1520,7 +1546,7 @@ namespace Microsoft.Data.Common
         //
         internal static Exception InvalidCommandTimeout(int value, [CallerMemberName] string property = "")
             => Argument(StringsHelper.GetString(Strings.ADP_InvalidCommandTimeout, value.ToString(CultureInfo.InvariantCulture)), property);
-        #endregion
+#endregion
 #endif
     }
 }

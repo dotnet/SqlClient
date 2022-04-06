@@ -24,6 +24,7 @@ namespace Microsoft.Data.SqlClient
             Int16,
             Int32,
             Int64,
+            Guid,
             Money,
             Single,
             String,
@@ -94,6 +95,8 @@ namespace Microsoft.Data.SqlClient
             [FieldOffset(0)]
             internal long _int64;     // also used to store Money, UtcDateTime, Date , and Time
             [FieldOffset(0)]
+            internal Guid _guid;
+            [FieldOffset(0)]
             internal float _single;
             [FieldOffset(0)]
             internal TimeInfo _timeInfo;
@@ -123,7 +126,7 @@ namespace Microsoft.Data.SqlClient
             _object = value._object;
         }
 
-        internal bool IsEmpty => StorageType.Empty == _type;
+        internal bool IsEmpty => _type == StorageType.Empty;
 
         internal bool IsNull => _isNull;
 
@@ -216,16 +219,16 @@ namespace Microsoft.Data.SqlClient
                         // Only removing trailing zeros from a decimal part won't hit its value!
                         if (_value._numericInfo._scale > 0)
                         {
-                            int zeroCnt = FindTrailingZerosAndPrec((uint)_value._numericInfo._data1, (uint)_value._numericInfo._data2,
-                                                                   (uint)_value._numericInfo._data3, (uint)_value._numericInfo._data4,
+                            int zeroCnt = FindTrailingZerosAndPrec((uint)_value._numericInfo._data1, (uint)_value._numericInfo._data2, 
+                                                                   (uint)_value._numericInfo._data3, (uint)_value._numericInfo._data4, 
                                                                    _value._numericInfo._scale, out int precision);
 
                             int minScale = _value._numericInfo._scale - zeroCnt; // minimum possible sacle after removing the trailing zeros.
 
                             if (zeroCnt > 0 && minScale <= 28 && precision <= 29)
                             {
-                                SqlDecimal sqlValue = new(_value._numericInfo._precision, _value._numericInfo._scale, _value._numericInfo._positive,
-                                                          _value._numericInfo._data1, _value._numericInfo._data2,
+                                SqlDecimal sqlValue = new(_value._numericInfo._precision, _value._numericInfo._scale, _value._numericInfo._positive, 
+                                                          _value._numericInfo._data1, _value._numericInfo._data2, 
                                                           _value._numericInfo._data3, _value._numericInfo._data4);
 
                                 int integral = precision - minScale;
@@ -373,9 +376,23 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                // TODO: It is possible to further optimize this, by storing the data from the wire without constructing a SqlGuid first, however we're already twice as fast!
                 ThrowIfNull();
-                return SqlGuid.Value;
+                if (StorageType.Guid == _type)
+                {
+                    return _value._guid;
+                }
+                else if (StorageType.SqlGuid == _type)
+                {
+                    return ((SqlGuid)_object).Value;
+                }
+                return (Guid)Value;
+            }
+            set
+            {
+                Debug.Assert(IsEmpty, "setting value a second time?");
+                _type = StorageType.Guid;
+                _value._guid = value;
+                _isNull = false;
             }
         }
 
@@ -481,8 +498,8 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        // use static list of format strings indexed by scale for perf!
-        private static readonly string[] s_katmaiDateTimeOffsetFormatByScale = new string[] {
+        // use static list of format strings indexed by scale for perf
+        private static readonly string[] s_sql2008DateTimeOffsetFormatByScale = new string[] {
                 "yyyy-MM-dd HH:mm:ss zzz",
                 "yyyy-MM-dd HH:mm:ss.f zzz",
                 "yyyy-MM-dd HH:mm:ss.ff zzz",
@@ -493,7 +510,7 @@ namespace Microsoft.Data.SqlClient
                 "yyyy-MM-dd HH:mm:ss.fffffff zzz",
         };
 
-        private static readonly string[] s_katmaiDateTime2FormatByScale = new string[] {
+        private static readonly string[] s_sql2008DateTime2FormatByScale = new string[] {
                 "yyyy-MM-dd HH:mm:ss",
                 "yyyy-MM-dd HH:mm:ss.f",
                 "yyyy-MM-dd HH:mm:ss.ff",
@@ -504,7 +521,7 @@ namespace Microsoft.Data.SqlClient
                 "yyyy-MM-dd HH:mm:ss.fffffff",
         };
 
-        private static readonly string[] s_katmaiTimeFormatByScale = new string[] {
+        private static readonly string[] s_sql2008TimeFormatByScale = new string[] {
                 "HH:mm:ss",
                 "HH:mm:ss.f",
                 "HH:mm:ss.ff",
@@ -515,7 +532,7 @@ namespace Microsoft.Data.SqlClient
                 "HH:mm:ss.fffffff",
         };
 
-        internal string KatmaiDateTimeString
+        internal string Sql2008DateTimeString
         {
             get
             {
@@ -528,24 +545,24 @@ namespace Microsoft.Data.SqlClient
                 if (StorageType.Time == _type)
                 {
                     byte scale = _value._timeInfo._scale;
-                    return new DateTime(_value._timeInfo._ticks).ToString(s_katmaiTimeFormatByScale[scale], DateTimeFormatInfo.InvariantInfo);
+                    return new DateTime(_value._timeInfo._ticks).ToString(s_sql2008TimeFormatByScale[scale], DateTimeFormatInfo.InvariantInfo);
                 }
                 if (StorageType.DateTime2 == _type)
                 {
                     byte scale = _value._dateTime2Info._timeInfo._scale;
-                    return DateTime.ToString(s_katmaiDateTime2FormatByScale[scale], DateTimeFormatInfo.InvariantInfo);
+                    return DateTime.ToString(s_sql2008DateTime2FormatByScale[scale], DateTimeFormatInfo.InvariantInfo);
                 }
                 if (StorageType.DateTimeOffset == _type)
                 {
                     DateTimeOffset dto = DateTimeOffset;
                     byte scale = _value._dateTimeOffsetInfo._dateTime2Info._timeInfo._scale;
-                    return dto.ToString(s_katmaiDateTimeOffsetFormatByScale[scale], DateTimeFormatInfo.InvariantInfo);
+                    return dto.ToString(s_sql2008DateTimeOffsetFormatByScale[scale], DateTimeFormatInfo.InvariantInfo);
                 }
                 return (string)Value; // anything else we haven't thought of goes through boxing.
             }
         }
 
-        internal SqlString KatmaiDateTimeSqlString
+        internal SqlString Sql2008DateTimeSqlString
         {
             get
             {
@@ -558,7 +575,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         return SqlString.Null;
                     }
-                    return new SqlString(KatmaiDateTimeString);
+                    return new SqlString(Sql2008DateTimeString);
                 }
                 return (SqlString)SqlValue; // anything else we haven't thought of goes through boxing.
             }
@@ -757,9 +774,13 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                if (StorageType.SqlGuid == _type)
+                if (StorageType.Guid == _type)
                 {
-                    return (SqlGuid)_object;
+                    return new SqlGuid(_value._guid);
+                }
+                else if (StorageType.SqlGuid == _type)
+                {
+                    return IsNull ? SqlGuid.Null : (SqlGuid)_object;
                 }
                 return (SqlGuid)SqlValue; // anything else we haven't thought of goes through boxing.
             }
@@ -901,6 +922,8 @@ namespace Microsoft.Data.SqlClient
                         return SqlInt32;
                     case StorageType.Int64:
                         return SqlInt64;
+                    case StorageType.Guid:
+                        return SqlGuid;
                     case StorageType.Money:
                         return SqlMoney;
                     case StorageType.Single:
@@ -956,6 +979,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+
+        // these variables store pre-boxed bool values to be used when returning a boolean
+        // in a object typed location, if these are not used a new value is boxed each time
+        // one is needed which leads to a lot of garbage which needs to be collected
         private static readonly object s_cachedTrueObject = true;
         private static readonly object s_cachedFalseObject = false;
 
@@ -972,7 +999,7 @@ namespace Microsoft.Data.SqlClient
                     case StorageType.Empty:
                         return DBNull.Value;
                     case StorageType.Boolean:
-                        return Boolean ? s_cachedTrueObject : s_cachedFalseObject;
+                        return Boolean ? s_cachedTrueObject : s_cachedFalseObject; // return pre-boxed values for perf
                     case StorageType.Byte:
                         return Byte;
                     case StorageType.DateTime:
@@ -987,6 +1014,8 @@ namespace Microsoft.Data.SqlClient
                         return Int32;
                     case StorageType.Int64:
                         return Int64;
+                    case StorageType.Guid:
+                        return Guid;
                     case StorageType.Money:
                         return Decimal;
                     case StorageType.Single:
@@ -1048,6 +1077,8 @@ namespace Microsoft.Data.SqlClient
                         return typeof(SqlInt32);
                     case StorageType.Int64:
                         return typeof(SqlInt64);
+                    case StorageType.Guid:
+                        return typeof(SqlGuid);
                     case StorageType.Money:
                         return typeof(SqlMoney);
                     case StorageType.Single:
@@ -1087,6 +1118,8 @@ namespace Microsoft.Data.SqlClient
                         return typeof(int);
                     case StorageType.Int64:
                         return typeof(long);
+                    case StorageType.Guid:
+                        return typeof(Guid);
                     case StorageType.Money:
                         return typeof(decimal);
                     case StorageType.Single:
@@ -1308,6 +1341,60 @@ namespace Microsoft.Data.SqlClient
             {
                 throw new SqlNullValueException();
             }
+        }
+        // [Field]As<T> method explanation:
+        // these methods are used to bridge generic to non-generic access to value type fields on the storage struct
+        // where typeof(T) == typeof(field) 
+        //   1) RyuJIT will recognize the pattern of (T)(object)T as being redundant and eliminate 
+        //   the T and object casts leaving T, so while this looks like it will put every value type instance in a box the 
+        //   generated assembly will be short and direct
+        //   2) another jit may not recognize the pattern and should emit the code as seen. this will box and then unbox the
+        //   value type which is no worse than the mechanism that this code replaces
+        // where typeof(T) != typeof(field)
+        //   the jit will emit all the cast operations as written. this will put the value into a box and then attempt to
+        //   cast it, because it is an object no conversions are used and this will generate the desired InvalidCastException       
+        //   for example users cannot widen a short to an int preserving external expectations 
+
+        internal T ByteAs<T>()
+        {
+            ThrowIfNull();
+            return (T)(object)_value._byte;
+        }
+
+        internal T BooleanAs<T>()
+        {
+            ThrowIfNull();
+            return (T)(object)_value._boolean;
+        }
+
+        internal T Int32As<T>()
+        {
+            ThrowIfNull();
+            return (T)(object)_value._int32;
+        }
+
+        internal T Int16As<T>()
+        {
+            ThrowIfNull();
+            return (T)(object)_value._int16;
+        }
+
+        internal T Int64As<T>()
+        {
+            ThrowIfNull();
+            return (T)(object)_value._int64;
+        }
+
+        internal T DoubleAs<T>()
+        {
+            ThrowIfNull();
+            return (T)(object)_value._double;
+        }
+
+        internal T SingleAs<T>()
+        {
+            ThrowIfNull();
+            return (T)(object)_value._single;
         }
     }
 }
