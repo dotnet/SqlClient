@@ -2872,7 +2872,7 @@
     <value>尚未为此 Azure SQL 数据库启用全局事务。若要获取帮助，请联系 Azure SQL 数据库支持人员。</value>
   </data>
   <data name="GT_UnsupportedSysTxVersion" xml:space="preserve">
-    <value>当前加载的 System.Transactions.dll 不支持全局事务。请升级到 .NET Framework 4.6.1 或更高版本。</value>
+    <value>当前加载的 System.Transactions.dll 不支持全局事务。请升级到 .NET Framework 4.6.2 或更高版本。</value>
   </data>
   <data name="SQL_BatchedUpdatesNotAvailableOnContextConnection" xml:space="preserve">
     <value>在上下文连接上不支持批处理更新。</value>

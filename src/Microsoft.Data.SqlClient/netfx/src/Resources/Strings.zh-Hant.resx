@@ -2872,7 +2872,7 @@
     <value>此 Azure SQL Database 未啟用全域交易。請連絡 Azure SQL Database 支援以取得協助。</value>
   </data>
   <data name="GT_UnsupportedSysTxVersion" xml:space="preserve">
-    <value>目前載入的 System.Transactions.dll 不支援全域交易。請升級為 .NET Framework 4.6.1 或更新版本。</value>
+    <value>目前載入的 System.Transactions.dll 不支援全域交易。請升級為 .NET Framework 4.6.2 或更新版本。</value>
   </data>
   <data name="SQL_BatchedUpdatesNotAvailableOnContextConnection" xml:space="preserve">
     <value>內容連接上並不支援批次更新。</value>

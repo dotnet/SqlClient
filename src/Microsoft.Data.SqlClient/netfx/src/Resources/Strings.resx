@@ -2872,7 +2872,7 @@
     <value>Global Transactions are not enabled for this Azure SQL Database. Please contact Azure SQL Database support for assistance.</value>
   </data>
   <data name="GT_UnsupportedSysTxVersion" xml:space="preserve">
-    <value>The currently loaded System.Transactions.dll does not support Global Transactions. Please upgrade to .NET Framework 4.6.1 or later.</value>
+    <value>The currently loaded System.Transactions.dll does not support Global Transactions. Please upgrade to .NET Framework 4.6.2 or later.</value>
   </data>
   <data name="SQL_BatchedUpdatesNotAvailableOnContextConnection" xml:space="preserve">
     <value>Batching updates is not supported on the context connection.</value>
