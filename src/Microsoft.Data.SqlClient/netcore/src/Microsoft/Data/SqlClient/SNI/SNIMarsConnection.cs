@@ -80,23 +80,11 @@ namespace Microsoft.Data.SqlClient.SNI
             using (TrySNIEventScope.Create(nameof(SNIMarsConnection)))
             {
                 if (LocalAppContextSwitches.UseExperimentalMARSThreading
-#if NETCOREAPP31_AND_ABOVE
-                    && ThreadPool.PendingWorkItemCount > 0
-#endif 
+//#if NETCOREAPP31_AND_ABOVE
+//                    && ThreadPool.PendingWorkItemCount > 0
+//#endif 
                     )
                 {
-                    // for debugging only, remove this
-                    if (s_scheduler is null)
-                    {
-                        AppDomain.CurrentDomain.FirstChanceException += static (object sender, System.Runtime.ExceptionServices.FirstChanceExceptionEventArgs e) =>
-                        {
-                            if (e is not null && e.Exception is PlatformNotSupportedException pnse)
-                            {
-                                SqlClientEventSource.Log.SNITrace("PNSE in SNI: " + Environment.NewLine + pnse.StackTrace);
-                                Console.WriteLine("PNSE in SNI: " + Environment.NewLine + pnse.StackTrace);
-                            }
-                        };
-                    }
                     LazyInitializer.EnsureInitialized(ref s_scheduler, () => new QueuedTaskScheduler(3, "MARSIOScheduler", false, ThreadPriority.AboveNormal));
                     LazyInitializer.EnsureInitialized(ref s_factory, () => new TaskFactory(s_scheduler));
 

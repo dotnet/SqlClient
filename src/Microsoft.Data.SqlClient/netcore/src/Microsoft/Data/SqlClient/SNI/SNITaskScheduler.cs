@@ -14,7 +14,7 @@ namespace Microsoft.Data.SqlClient.SNI
     /// </summary>
     [DebuggerTypeProxy(typeof(QueuedTaskSchedulerDebugView))]
     [DebuggerDisplay("Id={Id}, Queues={DebugQueueCount}, ScheduledTasks = {DebugTaskCount}")]
-    public sealed class QueuedTaskScheduler : TaskScheduler, IDisposable
+    internal sealed class QueuedTaskScheduler : TaskScheduler, IDisposable
     {
         /// <summary>Debug view for the QueuedTaskScheduler.</summary>
         private class QueuedTaskSchedulerDebugView
