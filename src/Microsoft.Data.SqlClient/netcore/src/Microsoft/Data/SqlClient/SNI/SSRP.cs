@@ -236,7 +236,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
                             // No responses so throw first error
                             if (response6 != null && response6.Error != null)
-                                throw response4.Error;
+                                throw response6.Error;
                             else if (response4 != null && response4.Error != null)
                                 throw response4.Error;
 
