@@ -4,7 +4,7 @@
   <PropertyGroup>
     <ProjectGuid>{407890AC-9876-4FEF-A6F1-F36A876BAADE}</ProjectGuid>
     <RootNamespace>SqlClient</RootNamespace>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <EnableLocalAppContext>true</EnableLocalAppContext>
     <ResxFileName>Strings</ResxFileName>
     <ResourceFileName>SqlClient.Resources.$(ResxFileName)</ResourceFileName>
@@ -122,6 +122,9 @@
     <Compile Include="..\..\src\Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContextKey.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContextKey.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\ProviderBase\DbConnectionPoolGroup.cs">
+      <Link>Microsoft\Data\ProviderBase\DbConnectionPoolGroup.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\ProviderBase\DbConnectionPoolGroupProviderInfo.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionPoolGroupProviderInfo.cs</Link>
     </Compile>
@@ -166,9 +169,6 @@
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.cs">
       <Link>Microsoft\Data\SqlClient\ActiveDirectoryAuthenticationProvider.cs</Link>
-    </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\AlwaysEncryptedAttestationException.cs">
-      <Link>Microsoft\Data\SqlClient\AlwaysEncryptedAttestationException.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.cs">
       <Link>Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.cs</Link>
@@ -350,6 +350,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlAuthenticationProvider.cs">
       <Link>Microsoft\Data\SqlClient\SqlAuthenticationProvider.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlBuffer.cs">
+      <Link>Microsoft\Data\SqlClient\SqlBuffer.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlAuthenticationToken.cs">
       <Link>Microsoft\Data\SqlClient\SqlAuthenticationToken.cs</Link>
     </Compile>
@@ -437,6 +440,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlDependencyListener.cs">
       <Link>Microsoft\Data\SqlClient\SqlDependencyListener.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlDependencyUtils.cs">
+      <Link>Microsoft\Data\SqlClient\SqlDependencyUtils.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlEnclaveAttestationParameters.Crypto.cs">
       <Link>Microsoft\Data\SqlClient\SqlEnclaveAttestationParameters.Crypto.cs</Link>
     </Compile>
@@ -509,11 +515,14 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlSequentialStream.cs">
       <Link>Microsoft\Data\SqlClient\SqlSequentialStream.cs</Link>
     </Compile>
-        <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlStream.cs">
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlStream.cs">
       <Link>Microsoft\Data\SqlClient\SqlStream.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlStatistics.cs">
       <Link>Microsoft\Data\SqlClient\SqlStatistics.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlSequentialTextReader.cs">
+      <Link>Microsoft\Data\SqlClient\SqlSequentialTextReader.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlSymmetricKeyCache.cs">
       <Link>Microsoft\Data\SqlClient\SqlSymmetricKeyCache.cs</Link>
@@ -523,6 +532,9 @@
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlUtil.cs">
       <Link>Microsoft\Data\SqlClient\SqlUtil.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsEnums.cs">
+      <Link>Microsoft\Data\SqlClient\TdsEnums.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsParameterSetter.cs">
       <Link>Microsoft\Data\SqlClient\TdsParameterSetter.cs</Link>
@@ -570,7 +582,6 @@
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionInternal.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPool.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolCounters.cs" />
-    <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolGroup.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPoolIdentity.cs" />
     <Compile Include="Microsoft\Data\ProviderBase\DbReferenceCollection.cs" />
     <Compile Include="Microsoft\Data\RelationshipConverter.cs" />
@@ -591,7 +602,7 @@
     <Compile Include="Microsoft\Data\SqlClient\Server\SmiStream.cs" />
     <Compile Include="Microsoft\Data\SqlClient\Server\TriggerAction.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlBuffer.cs" />
+    <Compile Include="Microsoft\Data\SqlClient\SqlBuffer.netfx.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlCertificateCallbacks.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientFactory.cs" />
@@ -610,17 +621,14 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlDataReader.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDataReaderSmi.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlDependencyUtils.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionSmi.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlParameter.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlSequentialStreamSmi.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlSequentialTextReader.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlSequentialTextReaderSmi.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlTransaction.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlUtil.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsEnums.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserHelperClasses.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserSafeHandles.cs" />

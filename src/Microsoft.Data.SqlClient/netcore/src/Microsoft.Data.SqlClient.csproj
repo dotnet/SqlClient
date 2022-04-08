@@ -25,9 +25,6 @@
   <PropertyGroup Condition="'$(TargetGroup)' == 'netstandard'">
     <DefineConstants>$(DefineConstants);NETSTANDARD;</DefineConstants>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(TargetGroup)' == 'netcoreapp' AND !$(TargetFramework.StartsWith('netcoreapp2.'))">
-    <DefineConstants>$(DefineConstants);NETCOREAPP31_AND_ABOVE</DefineConstants>
-  </PropertyGroup>
   <PropertyGroup>
     <DebugType>portable</DebugType>
     <DebugSymbols>true</DebugSymbols>
@@ -66,6 +63,9 @@
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContextKey.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionPoolAuthenticationContextKey.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\ProviderBase\DbConnectionPoolGroup.cs">
+      <Link>Microsoft\Data\ProviderBase\DbConnectionPoolGroup.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\ProviderBase\DbConnectionPoolGroupProviderInfo.cs">
       <Link>Microsoft\Data\ProviderBase\DbConnectionPoolGroupProviderInfo.cs</Link>
@@ -171,6 +171,9 @@
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\RowsCopiedEventHandler.cs">
       <Link>Microsoft\Data\SqlClient\RowsCopiedEventHandler.cs</Link>
+    </Compile>
+     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlSequentialTextReader.cs">
+      <Link>Microsoft\Data\SqlClient\SqlSequentialTextReader.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\ExtendedClrTypeCode.cs">
       <Link>Microsoft\Data\SqlClient\Server\ExtendedClrTypeCode.cs</Link>
@@ -283,6 +286,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlAuthenticationProvider.cs">
       <Link>Microsoft\Data\SqlClient\SqlAuthenticationProvider.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlBuffer.cs">
+      <Link>Microsoft\Data\SqlClient\SqlBuffer.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlAuthenticationToken.cs">
       <Link>Microsoft\Data\SqlClient\SqlAuthenticationToken.cs</Link>
     </Compile>
@@ -369,6 +375,12 @@
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlDependencyListener.cs">
       <Link>Microsoft\Data\SqlClient\SqlDependencyListener.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlDependencyUtils.cs">
+      <Link>Microsoft\Data\SqlClient\SqlDependencyUtils.cs</Link>
+    </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlDependencyUtils.AppDomain.cs">
+      <Link>Microsoft\Data\SqlClient\SqlDependencyUtils.AppDomain.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlEnclaveSession.cs">
       <Link>Microsoft\Data\SqlClient\SqlEnclaveSession.cs</Link>
@@ -457,6 +469,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlUtil.cs">
       <Link>Microsoft\Data\SqlClient\SqlUtil.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsEnums.cs">
+      <Link>Microsoft\Data\SqlClient\TdsEnums.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsParameterSetter.cs">
       <Link>Microsoft\Data\SqlClient\TdsParameterSetter.cs</Link>
     </Compile>
@@ -505,9 +520,6 @@
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.NetStandard.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetFramework)' != 'netstandard2.0'">
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\AlwaysEncryptedAttestationException.cs">
-      <Link>Microsoft\Data\SqlClient\AlwaysEncryptedAttestationException.cs</Link>
-    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.cs">
       <Link>Microsoft\Data\SqlClient\AlwaysEncryptedEnclaveProviderUtils.cs</Link>
     </Compile>
@@ -543,13 +555,15 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlClientEventSource.NetCoreApp.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(OSGroup)' != 'AnyOS' AND '$(TargetGroup)' == 'netcoreapp'">
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlDependencyUtils.AssemblyLoadContext.cs">
+      <Link>Microsoft\Data\SqlClient\SqlDependencyUtils.AssemblyLoadContext.cs</Link>
+    </Compile>
     <Compile Include="Microsoft\Data\ProviderBase\DbConnectionPool.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIStreams.ValueTask.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SslOverTdsStream.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.NetCoreApp.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlConnectionFactory.AssemblyLoadContext.cs" />    
+    <Compile Include="Microsoft\Data\SqlClient\SqlConnectionFactory.AssemblyLoadContext.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.NetCoreApp.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlDependencyUtils.AssemblyLoadContext.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDiagnosticListener.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.NetCoreApp.cs" />
   </ItemGroup>
@@ -578,9 +592,6 @@
     </Compile>
     <Compile Include="$(CommonPath)\Microsoft\Data\ProviderBase\DbConnectionInternal.cs">
       <Link>Common\Microsoft\Data\ProviderBase\DbConnectionInternal.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Microsoft\Data\ProviderBase\DbConnectionPoolGroup.cs">
-      <Link>Common\Microsoft\Data\ProviderBase\DbConnectionPoolGroup.cs</Link>
     </Compile>
     <Compile Include="$(CommonPath)\Microsoft\Data\ProviderBase\DbReferenceCollection.cs">
       <Link>Common\Microsoft\Data\ProviderBase\DbReferenceCollection.cs</Link>
@@ -616,7 +627,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SNI\SSRP.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAppContextSwitchManager.NetCoreApp.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlAuthenticationProviderManager.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlBuffer.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlBulkCopy.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientDiagnosticListenerExtensions.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlClientFactory.cs" />
@@ -627,16 +637,12 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlConnectionHelper.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDataReader.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDbColumn.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlDependencyUtils.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlDependencyUtils.AppDomain.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlParameter.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlSequentialTextReader.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlTransaction.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlUtil.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsEnums.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.RegisterEncoding.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserHelperClasses.cs" />
