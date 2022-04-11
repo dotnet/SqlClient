@@ -19,5 +19,6 @@
     "UseManagedSNIOnWindows": false,
     "IsAzureSynapse": false,
     "EnclaveAzureDatabaseConnString": "",
-    "UserManagedIdentityObjectId": ""
+    "UserManagedIdentityObjectId": "",
+    "MakecertPath": ""
 }
