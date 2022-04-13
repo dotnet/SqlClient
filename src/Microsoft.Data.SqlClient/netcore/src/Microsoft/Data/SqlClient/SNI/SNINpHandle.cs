@@ -4,6 +4,7 @@
 
 using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Pipes;
 using System.Net.Security;
@@ -210,10 +211,10 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 SNIPacket errorPacket;
                 packet = RentPacket(headerSize: 0, dataSize: _bufferSize);
-
+                packet.SetAsyncIOCompletionCallback(_receiveCallback);
                 try
                 {
-                    packet.ReadFromStreamAsync(_stream, _receiveCallback);
+                    packet.ReadFromStreamAsync(_stream);
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.INFO, "Connection Id {0}, Rented and read packet asynchronously, dataLeft {1}", args0: _connectionId, args1: packet?.DataLeft);
                     return TdsEnums.SNI_SUCCESS_IO_PENDING;
                 }
@@ -288,13 +289,12 @@ namespace Microsoft.Data.SqlClient.SNI
             }
         }
 
-        public override uint SendAsync(SNIPacket packet, SNIAsyncCallback callback = null)
+        public override uint SendAsync(SNIPacket packet)
         {
             using (TrySNIEventScope.Create(nameof(SNINpHandle)))
             {
-                SNIAsyncCallback cb = callback ?? _sendCallback;
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.INFO, "Connection Id {0}, Packet writing to stream, dataLeft {1}", args0: _connectionId, args1: packet?.DataLeft);
-                packet.WriteToStreamAsync(_stream, cb, SNIProviders.NP_PROV);
+                packet.WriteToStreamAsync(_stream, _sendCallback, SNIProviders.NP_PROV);
                 return TdsEnums.SNI_SUCCESS_IO_PENDING;
             }
         }
