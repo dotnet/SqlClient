@@ -12506,7 +12506,7 @@ namespace Microsoft.Data.SqlClient
             int charsToRead = len;
 
             // stateObj._longlenleft is in bytes
-            if ((stateObj._longlenleft >> 1) < (ulong)len)
+            if ((stateObj._longlenleft / 2) < (ulong)len)
             {
                 charsToRead = (int)(stateObj._longlenleft >> 1);
             }
