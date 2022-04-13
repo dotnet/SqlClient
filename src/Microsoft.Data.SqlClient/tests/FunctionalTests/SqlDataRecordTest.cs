@@ -390,10 +390,6 @@ namespace Microsoft.Data.SqlClient.Tests
             return GetEnumerator();
         }
     }
-#if NETFRAMEWORK
     [SqlServer.Server.SqlUserDefinedType(SqlServer.Server.Format.UserDefined)]
-#else
-    [SqlUserDefinedType(Format.UserDefined)]
-#endif
     public class TestUdt {}
 }
