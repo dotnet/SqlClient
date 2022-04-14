@@ -6,7 +6,6 @@ using System;
 using System.Data;
 using System.Data.SqlTypes;
 using System.Text;
-using Microsoft.SqlServer.Server;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -569,18 +568,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUdtTestDatabasePresent), nameof(DataTestUtility.AreConnStringsSetup))]
         public void TestSqlUserDefinedAggregateAttributeMaxByteSize()
         {
-            Func<int, SqlUserDefinedAggregateAttribute> create
-                    = (size) => new SqlUserDefinedAggregateAttribute(Format.UserDefined) { MaxByteSize = size };
+            Func<int, SqlServer.Server.SqlUserDefinedAggregateAttribute> create
+                    = (size) => new(SqlServer.Server.Format.UserDefined) { MaxByteSize = size };
 
-            SqlUserDefinedAggregateAttribute attribute1 = create(-1);
-            SqlUserDefinedAggregateAttribute attribute2 = create(0);
-            SqlUserDefinedAggregateAttribute attribute3 = create(SqlUserDefinedAggregateAttribute.MaxByteSizeValue);
+            SqlServer.Server.SqlUserDefinedAggregateAttribute attribute1 = create(-1);
+            SqlServer.Server.SqlUserDefinedAggregateAttribute attribute2 = create(0);
+            SqlServer.Server.SqlUserDefinedAggregateAttribute attribute3 = create(SqlServer.Server.SqlUserDefinedAggregateAttribute.MaxByteSizeValue);
 
             string udtError = SystemDataResourceManager.Instance.SQLUDT_MaxByteSizeValue;
             string errorMessage = (new ArgumentOutOfRangeException("MaxByteSize", 8001, udtError)).Message;
 
             DataTestUtility.AssertThrowsWrapper<ArgumentOutOfRangeException>(
-                () => create(SqlUserDefinedAggregateAttribute.MaxByteSizeValue + 1),
+                () => create(SqlServer.Server.SqlUserDefinedAggregateAttribute.MaxByteSizeValue + 1),
                 errorMessage);
 
             errorMessage = (new ArgumentOutOfRangeException("MaxByteSize", -2, udtError)).Message;
