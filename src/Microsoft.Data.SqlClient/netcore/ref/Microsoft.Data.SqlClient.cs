@@ -1830,37 +1830,6 @@ namespace Microsoft.Data.SqlClient
 }
 namespace Microsoft.Data.SqlClient.Server
 {
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/DataAccessKind.xml' path='docs/members[@name="DataAccessKind"]/DataAccessKind/*'/>
-    public enum DataAccessKind
-    {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/DataAccessKind.xml' path='docs/members[@name="DataAccessKind"]/None/*'/>
-        None = 0,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/DataAccessKind.xml' path='docs/members[@name="DataAccessKind"]/Read/*'/>
-        Read = 1
-    }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/Format.xml' path='docs/members[@name="Format"]/Format/*'/>
-    public enum Format
-    {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/Format.xml' path='docs/members[@name="Format"]/Unknown/*'/>
-        Unknown = 0,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/Format.xml' path='docs/members[@name="Format"]/Native/*'/>
-        Native = 1,
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/Format.xml' path='docs/members[@name="Format"]/UserDefined/*'/>
-        UserDefined = 2
-    }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/IBinarySerialize.xml' path='docs/members[@name="IBinarySerialize"]/IBinarySerialize/*'/>
-    public interface IBinarySerialize
-    {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/IBinarySerialize.xml' path='docs/members[@name="IBinarySerialize"]/Read/*'/>
-        void Read(System.IO.BinaryReader r);
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/IBinarySerialize.xml' path='docs/members[@name="IBinarySerialize"]/Write/*'/>
-        void Write(System.IO.BinaryWriter w);
-    }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/InvalidUdtException.xml' path='docs/members[@name="InvalidUdtException"]/InvalidUdtException/*'/>
-    public sealed partial class InvalidUdtException : System.SystemException
-    {
-        internal InvalidUdtException() { }
-    }
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SqlDataRecord/*'/>
     public partial class SqlDataRecord : System.Data.IDataRecord
     {
@@ -2031,44 +2000,6 @@ namespace Microsoft.Data.SqlClient.Server
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlDataRecord.xml' path='docs/members[@name="SqlDataRecord"]/SetValues/*'/>
         public virtual int SetValues(params object[] values) { throw null; }
     }
-    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFacetAttribute.xml' path='docs/members[@name="SqlFacetAttribute"]/SqlFacetAttribute/*'/>
-    [System.AttributeUsageAttribute(System.AttributeTargets.Field | System.AttributeTargets.Property | System.AttributeTargets.ReturnValue | System.AttributeTargets.Parameter, AllowMultiple = false, Inherited = false)]
-    public partial class SqlFacetAttribute : System.Attribute
-    {
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFacetAttribute.xml' path='docs/members[@name="SqlFacetAttribute"]/ctor/*'/>
-        public SqlFacetAttribute() { }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFacetAttribute.xml' path='docs/members[@name="SqlFacetAttribute"]/IsFixedLength/*'/>
-        public bool IsFixedLength { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFacetAttribute.xml' path='docs/members[@name="SqlFacetAttribute"]/IsNullable/*'/>
-        public bool IsNullable { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFacetAttribute.xml' path='docs/members[@name="SqlFacetAttribute"]/MaxSize/*'/>
-        public int MaxSize { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFacetAttribute.xml' path='docs/members[@name="SqlFacetAttribute"]/Precision/*'/>
-        public int Precision { get { throw null; } set { } }
-        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFacetAttribute.xml' path='docs/members[@name="SqlFacetAttribute"]/Scale/*'/>
-        public int Scale { get { throw null; } set { } }
-    }
-    /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/SqlFunctionAttribute/*' />
-    [System.AttributeUsage(System.AttributeTargets.Method, AllowMultiple = false, Inherited = false), System.SerializableAttribute]
-    public partial class SqlFunctionAttribute : System.Attribute
-    {
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/ctor/*' />
-        public SqlFunctionAttribute() { }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/IsDeterministic/*' />
-        public bool IsDeterministic { get { throw null; } set { } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/DataAccess/*' />
-        public DataAccessKind DataAccess { get { throw null; } set { } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/SystemDataAccess/*' />
-        public SystemDataAccessKind SystemDataAccess { get { throw null; } set { } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/IsPrecise/*' />
-        public bool IsPrecise { get { throw null; } set { } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/Name/*' />
-        public string Name { get { throw null; } set { } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/TableDefinition/*' />
-        public string TableDefinition { get { throw null; } set { } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlFunctionAttribute.xml' path='docs/members[@name="SqlFunctionAttribute"]/FillRowMethodName/*' />
-        public string FillRowMethodName { get { throw null; } set { } }
-    }
     /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/SqlMetaData/*' />
     public sealed partial class SqlMetaData
     {
@@ -2206,69 +2137,6 @@ namespace Microsoft.Data.SqlClient.Server
         public System.TimeSpan Adjust(System.TimeSpan value) { throw null; }
         /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMetaData.xml' path='docs/members[@name="SqlMetaData"]/InferFromValue/*' />
         public static Microsoft.Data.SqlClient.Server.SqlMetaData InferFromValue(object value, string name) { throw null; }
-    }
-    /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMethodAttribute.xml' path='docs/members[@name="SqlMethodAttribute"]/SqlMethodAttribute/*' />
-    [System.AttributeUsage(System.AttributeTargets.Method, AllowMultiple = false, Inherited = false), System.SerializableAttribute]
-    public sealed partial class SqlMethodAttribute : SqlFunctionAttribute
-    {
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMethodAttribute.xml' path='docs/members[@name="SqlMethodAttribute"]/ctor/*' />
-        public SqlMethodAttribute() { }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMethodAttribute.xml' path='docs/members[@name="SqlMethodAttribute"]/OnNullCall/*' />
-        public bool OnNullCall { get { throw null; } set { } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMethodAttribute.xml' path='docs/members[@name="SqlMethodAttribute"]/IsMutator/*' />
-        public bool IsMutator { get { throw null; } set { } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlMethodAttribute.xml' path='docs/members[@name="SqlMethodAttribute"]/InvokeIfReceiverIsNull/*' />
-        public bool InvokeIfReceiverIsNull { get { throw null; } set { } }
-    }
-    /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedAggregateAttribute.xml' path='docs/members[@name="SqlUserDefinedAggregateAttribute"]/SqlUserDefinedAggregateAttribute/*' />
-    [System.AttributeUsage(System.AttributeTargets.Class | System.AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
-    public sealed partial class SqlUserDefinedAggregateAttribute : System.Attribute
-    {
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedAggregateAttribute.xml' path='docs/members[@name="SqlUserDefinedAggregateAttribute"]/MaxByteSizeValue/*' />
-        public const int MaxByteSizeValue = 8000;
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedAggregateAttribute.xml' path='docs/members[@name="SqlUserDefinedAggregateAttribute"]/ctor/*' />
-        public SqlUserDefinedAggregateAttribute(Format format) { }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedAggregateAttribute.xml' path='docs/members[@name="SqlUserDefinedAggregateAttribute"]/MaxByteSize/*' />
-        public int MaxByteSize { get { throw null; } set { } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedAggregateAttribute.xml' path='docs/members[@name="SqlUserDefinedAggregateAttribute"]/IsInvariantToDuplicates/*' />
-        public bool IsInvariantToDuplicates { get { throw null; } set { } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedAggregateAttribute.xml' path='docs/members[@name="SqlUserDefinedAggregateAttribute"]/IsInvariantToNulls/*' />
-        public bool IsInvariantToNulls { get { throw null; } set { } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedAggregateAttribute.xml' path='docs/members[@name="SqlUserDefinedAggregateAttribute"]/IsInvariantToOrder/*' />
-        public bool IsInvariantToOrder { get { throw null; } set { } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedAggregateAttribute.xml' path='docs/members[@name="SqlUserDefinedAggregateAttribute"]/IsNullIfEmpty/*' />
-        public bool IsNullIfEmpty { get { throw null; } set { } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedAggregateAttribute.xml' path='docs/members[@name="SqlUserDefinedAggregateAttribute"]/Format/*' />
-        public Format Format { get { throw null; } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedAggregateAttribute.xml' path='docs/members[@name="SqlUserDefinedAggregateAttribute"]/Name/*' />
-        public string Name { get { throw null; } set { } }
-    }
-    /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedTypeAttribute.xml' path='docs/members[@name="SqlUserDefinedTypeAttribute"]/SqlUserDefinedTypeAttribute/*' />
-    [System.AttributeUsage(System.AttributeTargets.Class | System.AttributeTargets.Struct, AllowMultiple = false, Inherited = true)]
-    public sealed partial class SqlUserDefinedTypeAttribute : System.Attribute
-    {
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedTypeAttribute.xml' path='docs/members[@name="SqlUserDefinedTypeAttribute"]/ctor/*' />
-        public SqlUserDefinedTypeAttribute(Format format) { }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedTypeAttribute.xml' path='docs/members[@name="SqlUserDefinedTypeAttribute"]/MaxByteSize/*' />
-        public int MaxByteSize { get { throw null; } set { } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedTypeAttribute.xml' path='docs/members[@name="SqlUserDefinedTypeAttribute"]/IsFixedLength/*' />
-        public bool IsFixedLength { get { throw null; } set { } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedTypeAttribute.xml' path='docs/members[@name="SqlUserDefinedTypeAttribute"]/IsByteOrdered/*' />
-        public bool IsByteOrdered { get { throw null; } set { } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedTypeAttribute.xml' path='docs/members[@name="SqlUserDefinedTypeAttribute"]/Format/*' />
-        public Format Format { get { throw null; } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedTypeAttribute.xml' path='docs/members[@name="SqlUserDefinedTypeAttribute"]/ValidationMethodName/*' />
-        public string ValidationMethodName { get { throw null; } set { } }
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SqlUserDefinedTypeAttribute.xml' path='docs/members[@name="SqlUserDefinedTypeAttribute"]/Name/*' />
-        public string Name { get { throw null; } set { } }
-    }
-    /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SystemDataAccessKind.xml' path='docs/members[@name="SystemDataAccessKind"]/SystemDataAccessKind/*' />
-    public enum SystemDataAccessKind
-    {
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SystemDataAccessKind.xml' path='docs/members[@name="SystemDataAccessKind"]/None/*' />
-        None = 0,
-        /// <include file='./../../../../doc/snippets/Microsoft.Data.SqlClient.Server/SystemDataAccessKind.xml' path='docs/members[@name="SystemDataAccessKind"]/Read/*' />
-        Read = 1
     }
 }
 namespace Microsoft.Data.SqlClient.DataClassification
