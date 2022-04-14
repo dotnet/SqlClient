@@ -511,6 +511,11 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData(SqlDbType.Udt, typeof(Address))]
         public void GenericConstructorWithoutXmlSchema(SqlDbType dbType, Type udt)
         {
+            if (udt != null)
+            {
+                Type t = udt.GetInterface("IBinarySerialize", true);
+                Assert.Equal(typeof(Microsoft.SqlServer.Server.IBinarySerialize), t);
+            }
             SqlMetaData metaData = new SqlMetaData("col2", dbType, 16, 2, 2, 2, SqlCompareOptions.IgnoreCase, udt, true, true, SortOrder.Ascending, 0);
             Assert.Equal(dbType, metaData.SqlDbType);
             Assert.True(metaData.UseServerDefault);

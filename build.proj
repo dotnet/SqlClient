@@ -113,7 +113,9 @@
   </Target>
 
   <Target Name="BuildSqlServerLib" DependsOnTargets="RestoreSqlServerLib">
+    <!-- Only build platform specific builds for Package reference types -->
     <MSBuild Projects="@(SqlServerLib)" Properties="$(CI);$(SqlServerLibProperties);Platform=AnyCPU;" RemoveProperties="TargetsWindows;TargetsUnix;" />
+    <MSBuild Projects="@(SqlServerLib)" Properties="$(CI);$(SqlServerLibProperties);Platform=$(Platform);" Condition="$(ReferenceType.Contains('Package'))"/>
   </Target>
 
   <Target Name="BuildNetCore" DependsOnTargets="RestoreNetCore">
