@@ -172,7 +172,7 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\RowsCopiedEventHandler.cs">
       <Link>Microsoft\Data\SqlClient\RowsCopiedEventHandler.cs</Link>
     </Compile>
-     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlSequentialTextReader.cs">
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlSequentialTextReader.cs">
       <Link>Microsoft\Data\SqlClient\SqlSequentialTextReader.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\ExtendedClrTypeCode.cs">
@@ -475,6 +475,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsParameterSetter.cs">
       <Link>Microsoft\Data\SqlClient\TdsParameterSetter.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsParserStaticMethods.cs">
+      <Link>Microsoft\Data\SqlClient\TdsParserStaticMethods.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsRecordBufferSetter.cs">
       <Link>Microsoft\Data\SqlClient\TdsRecordBufferSetter.cs</Link>
     </Compile>
@@ -649,7 +652,6 @@
     <Compile Include="Microsoft\Data\SqlClient\TdsParserSessionPool.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObject.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectManaged.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParserStaticMethods.cs" />
   </ItemGroup>
   <!-- Windows only -->
   <ItemGroup Condition="'$(TargetsWindows)' == 'true'">

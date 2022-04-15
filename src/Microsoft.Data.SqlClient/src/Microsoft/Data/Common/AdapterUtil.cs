@@ -1229,8 +1229,39 @@ namespace Microsoft.Data.Common
 
         internal static bool IsEmpty(string str) => string.IsNullOrEmpty(str);
         internal static readonly IntPtr s_ptrZero = IntPtr.Zero;
+
+        [ResourceExposure(ResourceScope.Machine)]
+        [ResourceConsumption(ResourceScope.Machine)]
+        internal static object LocalMachineRegistryValue(string subkey, string queryvalue)
+        { // MDAC 77697
+            if (!System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return null;
+            }
+
+            (new RegistryPermission(RegistryPermissionAccess.Read, "HKEY_LOCAL_MACHINE\\" + subkey)).Assert(); // MDAC 62028
+            try
+            {
+                using (RegistryKey key = Registry.LocalMachine.OpenSubKey(subkey, false))
+                {
+                    return key?.GetValue(queryvalue);
+                }
+            }
+            catch (SecurityException e)
+            {
+                // Even though we assert permission - it's possible there are
+                // ACL's on registry that cause SecurityException to be thrown.
+                ADP.TraceExceptionWithoutRethrow(e);
+                return null;
+            }
+            finally
+            {
+                RegistryPermission.RevertAssert();
+            }
+        }
+
 #if NETFRAMEWORK
-#region netfx project only
+        #region netfx project only
         internal static Task<T> CreatedTaskWithException<T>(Exception ex)
         {
             TaskCompletionSource<T> completion = new();
@@ -1437,31 +1468,6 @@ namespace Microsoft.Data.Common
             return value;
         }
 
-        [ResourceExposure(ResourceScope.Machine)]
-        [ResourceConsumption(ResourceScope.Machine)]
-        internal static object LocalMachineRegistryValue(string subkey, string queryvalue)
-        { // MDAC 77697
-            (new RegistryPermission(RegistryPermissionAccess.Read, "HKEY_LOCAL_MACHINE\\" + subkey)).Assert(); // MDAC 62028
-            try
-            {
-                using (RegistryKey key = Registry.LocalMachine.OpenSubKey(subkey, false))
-                {
-                    return key?.GetValue(queryvalue);
-                }
-            }
-            catch (SecurityException e)
-            {
-                // Even though we assert permission - it's possible there are
-                // ACL's on registry that cause SecurityException to be thrown.
-                ADP.TraceExceptionWithoutRethrow(e);
-                return null;
-            }
-            finally
-            {
-                RegistryPermission.RevertAssert();
-            }
-        }
-
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.MayFail)]
         internal static IntPtr IntPtrOffset(IntPtr pbase, int offset)
         {
@@ -1473,9 +1479,9 @@ namespace Microsoft.Data.Common
             return (IntPtr)checked(pbase.ToInt64() + offset);
         }
 
-#endregion
+        #endregion
 #else
-#region netcore project only
+        #region netcore project only
         internal static Timer UnsafeCreateTimer(TimerCallback callback, object state, int dueTime, int period)
         {
             // Don't capture the current ExecutionContext and its AsyncLocals onto 
