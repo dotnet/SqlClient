@@ -1479,9 +1479,9 @@ namespace Microsoft.Data.Common
             return (IntPtr)checked(pbase.ToInt64() + offset);
         }
 
-        #endregion
+#endregion
 #else
-        #region netcore project only
+#region netcore project only
         internal static Timer UnsafeCreateTimer(TimerCallback callback, object state, int dueTime, int period)
         {
             // Don't capture the current ExecutionContext and its AsyncLocals onto 
