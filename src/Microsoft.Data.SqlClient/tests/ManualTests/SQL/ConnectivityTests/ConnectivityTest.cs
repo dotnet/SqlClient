@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using Microsoft.Win32;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
@@ -367,6 +368,32 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             timer.Stop();
             duration = timer.Elapsed;
             Assert.True(duration.Seconds > 5, $"Connection Open() with retries took less time than expected. Expect > 5 sec with transient fault handling. Took {duration.Seconds} sec.");                //    sqlConnection.Open();
+        }
+
+        [PlatformSpecific(TestPlatforms.Windows)]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsRunningAsAdmin))]
+        public static void ConnectionAliasTest()
+        {
+            SqlConnectionStringBuilder b = new(DataTestUtility.TCPConnectionString);
+            if (!DataTestUtility.ParseDataSource(b.DataSource, out string hostname, out int port, out string instanceName) ||
+                !string.IsNullOrEmpty(instanceName))
+            {
+                // Only works with connection strings that parse successfully and don't include an instance name
+                return;
+            }
+
+            b.DataSource = "TESTALIAS-" + Guid.NewGuid().ToString().Replace("-", "");
+            using RegistryKey key = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\MSSQLServer\\Client\\ConnectTo", true);
+            key.SetValue(b.DataSource, "DBMSSOCN," + hostname + "," + (port == -1 ? 1433 : port));
+            try
+            {
+                using SqlConnection sqlConnection = new(b.ConnectionString);
+                sqlConnection.Open();
+            }
+            finally
+            {
+                key.DeleteValue(b.DataSource);
+            }
         }
     }
 }
