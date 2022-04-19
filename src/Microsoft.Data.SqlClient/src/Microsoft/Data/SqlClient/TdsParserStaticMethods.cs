@@ -24,11 +24,6 @@ namespace Microsoft.Data.SqlClient
         [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
         static internal void AliasRegistryLookup(ref string host, ref string protocol)
         {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                return;
-            }
-
             if (!ADP.IsEmpty(host))
             {
                 const String folder = "SOFTWARE\\Microsoft\\MSSQLServer\\Client\\ConnectTo";

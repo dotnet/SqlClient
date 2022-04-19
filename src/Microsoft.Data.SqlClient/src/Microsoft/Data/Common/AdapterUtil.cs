@@ -1229,9 +1229,8 @@ namespace Microsoft.Data.Common
 
         internal static bool IsEmpty(string str) => string.IsNullOrEmpty(str);
         internal static readonly IntPtr s_ptrZero = IntPtr.Zero;
-
 #if NETFRAMEWORK
-        #region netfx project only
+#region netfx project only
         internal static Task<T> CreatedTaskWithException<T>(Exception ex)
         {
             TaskCompletionSource<T> completion = new();

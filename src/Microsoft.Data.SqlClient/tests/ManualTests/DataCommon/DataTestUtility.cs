@@ -13,11 +13,10 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Security;
-using System.Security.Principal;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Identity.Client;
 using Microsoft.Data.SqlClient.TestUtilities;
+using Microsoft.Identity.Client;
 using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
