@@ -5,6 +5,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Security.Principal;
 using System.Threading;
 using Microsoft.Win32;
 using Xunit;
@@ -371,9 +372,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         }
 
         [PlatformSpecific(TestPlatforms.Windows)]
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup), nameof(DataTestUtility.IsRunningAsAdmin))]
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup))]
         public static void ConnectionAliasTest()
         {
+            using (WindowsIdentity identity = WindowsIdentity.GetCurrent())
+            {
+                WindowsPrincipal principal = new(identity);
+                if (!principal.IsInRole(WindowsBuiltInRole.Administrator))
+                {
+                    return;
+                }
+            }
+
             SqlConnectionStringBuilder b = new(DataTestUtility.TCPConnectionString);
             if (!DataTestUtility.ParseDataSource(b.DataSource, out string hostname, out int port, out string instanceName) ||
                 !string.IsNullOrEmpty(instanceName))

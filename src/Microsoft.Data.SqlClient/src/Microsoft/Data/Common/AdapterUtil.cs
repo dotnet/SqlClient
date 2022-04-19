@@ -42,7 +42,7 @@ namespace Microsoft.Data.Common
     /// This class is used so that there will be compile time checking of error messages.
     /// The resource Framework.txt will ensure proper string text based on the appropriate locale.
     /// </summary>
-    internal static class ADP
+    internal static partial class ADP
     {
         // NOTE: Initializing a Task in SQL CLR requires the "UNSAFE" permission set (http://msdn.microsoft.com/en-us/library/ms172338.aspx)
         // Therefore we are lazily initializing these Tasks to avoid forcing customers to use the "UNSAFE" set when they are actually using no Async features
@@ -1229,36 +1229,6 @@ namespace Microsoft.Data.Common
 
         internal static bool IsEmpty(string str) => string.IsNullOrEmpty(str);
         internal static readonly IntPtr s_ptrZero = IntPtr.Zero;
-
-        [ResourceExposure(ResourceScope.Machine)]
-        [ResourceConsumption(ResourceScope.Machine)]
-        internal static object LocalMachineRegistryValue(string subkey, string queryvalue)
-        { // MDAC 77697
-            if (!System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                return null;
-            }
-
-            (new RegistryPermission(RegistryPermissionAccess.Read, "HKEY_LOCAL_MACHINE\\" + subkey)).Assert(); // MDAC 62028
-            try
-            {
-                using (RegistryKey key = Registry.LocalMachine.OpenSubKey(subkey, false))
-                {
-                    return key?.GetValue(queryvalue);
-                }
-            }
-            catch (SecurityException e)
-            {
-                // Even though we assert permission - it's possible there are
-                // ACL's on registry that cause SecurityException to be thrown.
-                ADP.TraceExceptionWithoutRethrow(e);
-                return null;
-            }
-            finally
-            {
-                RegistryPermission.RevertAssert();
-            }
-        }
 
 #if NETFRAMEWORK
         #region netfx project only

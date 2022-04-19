@@ -95,6 +95,9 @@
     <Compile Include="..\..\src\Microsoft\Data\Common\AdapterUtil.cs">
       <Link>Microsoft\Data\Common\AdapterUtil.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\Common\AdapterUtil.Windows.cs">
+      <Link>Microsoft\Data\Common\AdapterUtil.Windows.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\Common\DbConnectionStringCommon.cs">
       <Link>Microsoft\Data\Common\DbConnectionStringCommon.cs</Link>
     </Compile>
