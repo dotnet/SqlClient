@@ -372,13 +372,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.True(duration.Seconds > 5, $"Connection Open() with retries took less time than expected. Expect > 5 sec with transient fault handling. Took {duration.Seconds} sec.");                //    sqlConnection.Open();
         }
 
-        [PlatformSpecific(TestPlatforms.Windows)]
-        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsTCPConnStringSetup))]
-        public static void ConnectionAliasTest()
+        private const string ConnectToPath = "SOFTWARE\\Microsoft\\MSSQLServer\\Client\\ConnectTo";
+        private static bool CanCreateAliases()
         {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ||
+                !DataTestUtility.IsTCPConnStringSetup())
             {
-                return;
+                return false;
             }
 
             using (WindowsIdentity identity = WindowsIdentity.GetCurrent())
@@ -386,8 +386,39 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 WindowsPrincipal principal = new(identity);
                 if (!principal.IsInRole(WindowsBuiltInRole.Administrator))
                 {
-                    return;
+                    return false;
                 }
+            }
+
+            using RegistryKey key = Registry.LocalMachine.OpenSubKey(ConnectToPath, true);
+            if (key == null)
+            {
+                // Registry not writable
+                return false;
+            }
+
+            SqlConnectionStringBuilder b = new(DataTestUtility.TCPConnectionString);
+            if (!DataTestUtility.ParseDataSource(b.DataSource, out string hostname, out int port, out string instanceName) ||
+                !string.IsNullOrEmpty(instanceName))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        [PlatformSpecific(TestPlatforms.Windows)]
+        [ConditionalFact(nameof(CanCreateAliases))]
+        public static void ConnectionAliasTest()
+        {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                throw new Exception("Alias test only valid on Windows");
+            }
+
+            if (!CanCreateAliases())
+            {
+                throw new Exception("Unable to create aliases in this environment. Windows + Admin + non-instance data source required.");
             }
 
             SqlConnectionStringBuilder b = new(DataTestUtility.TCPConnectionString);
@@ -395,11 +426,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 !string.IsNullOrEmpty(instanceName))
             {
                 // Only works with connection strings that parse successfully and don't include an instance name
-                return;
+                throw new Exception("Unable to create aliases in this configuration. Parsable data source without instance required.");
             }
 
             b.DataSource = "TESTALIAS-" + Guid.NewGuid().ToString().Replace("-", "");
-            using RegistryKey key = Registry.LocalMachine.OpenSubKey("SOFTWARE\\Microsoft\\MSSQLServer\\Client\\ConnectTo", true);
+            using RegistryKey key = Registry.LocalMachine.OpenSubKey(ConnectToPath, true);
             key.SetValue(b.DataSource, "DBMSSOCN," + hostname + "," + (port == -1 ? 1433 : port));
             try
             {
