@@ -7,6 +7,7 @@ using System.Data;
 using System.Data.SqlTypes;
 using System.Text;
 using Xunit;
+using Microsoft.SqlServer.Server;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -568,18 +569,18 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.IsUdtTestDatabasePresent), nameof(DataTestUtility.AreConnStringsSetup))]
         public void TestSqlUserDefinedAggregateAttributeMaxByteSize()
         {
-            Func<int, SqlServer.Server.SqlUserDefinedAggregateAttribute> create
-                    = (size) => new(SqlServer.Server.Format.UserDefined) { MaxByteSize = size };
+            Func<int, SqlUserDefinedAggregateAttribute> create
+                    = (size) => new(Format.UserDefined) { MaxByteSize = size };
 
-            SqlServer.Server.SqlUserDefinedAggregateAttribute attribute1 = create(-1);
-            SqlServer.Server.SqlUserDefinedAggregateAttribute attribute2 = create(0);
-            SqlServer.Server.SqlUserDefinedAggregateAttribute attribute3 = create(SqlServer.Server.SqlUserDefinedAggregateAttribute.MaxByteSizeValue);
+            SqlUserDefinedAggregateAttribute attribute1 = create(-1);
+            SqlUserDefinedAggregateAttribute attribute2 = create(0);
+            SqlUserDefinedAggregateAttribute attribute3 = create(SqlUserDefinedAggregateAttribute.MaxByteSizeValue);
 
             string udtError = SystemDataResourceManager.Instance.SQLUDT_MaxByteSizeValue;
             string errorMessage = (new ArgumentOutOfRangeException("MaxByteSize", 8001, udtError)).Message;
 
             DataTestUtility.AssertThrowsWrapper<ArgumentOutOfRangeException>(
-                () => create(SqlServer.Server.SqlUserDefinedAggregateAttribute.MaxByteSizeValue + 1),
+                () => create(SqlUserDefinedAggregateAttribute.MaxByteSizeValue + 1),
                 errorMessage);
 
             errorMessage = (new ArgumentOutOfRangeException("MaxByteSize", -2, udtError)).Message;
