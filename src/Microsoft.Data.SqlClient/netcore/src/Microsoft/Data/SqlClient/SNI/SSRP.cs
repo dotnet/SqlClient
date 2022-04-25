@@ -172,7 +172,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
                 bool isIpAddress = IPAddress.TryParse(browserHostname, out IPAddress address);
 
-                TimeSpan ts = default(TimeSpan);
+                TimeSpan ts = default;
                 // In case the Timeout is Infinite, we will receive the max value of Int64 as the tick count
                 // The infinite Timeout is a function of ConnectionString Timeout=0
                 if (long.MaxValue != timerExpire)

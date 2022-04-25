@@ -3,8 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,7 +15,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void ConnectToSQLWithInstanceNameTest()
         {
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
 
             bool proceed = true;
             string dataSourceStr = builder.DataSource.Replace("tcp:", "");
@@ -30,15 +28,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             if (proceed)
             {
-                using (SqlConnection connection = new SqlConnection(builder.ConnectionString))
-                {
-                    connection.Open();
-                    connection.Close();
-                }
+                using SqlConnection connection = new(builder.ConnectionString);
+                connection.Open();
+                connection.Close();
             }
         }
 
-        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureServer), nameof(DataTestUtility.IsUsingManagedSNI))]
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.IsNotAzureServer))]
         [InlineData(true, SqlConnectionIPAddressPreference.IPv4First)]
         [InlineData(true, SqlConnectionIPAddressPreference.IPv6First)]
         [InlineData(true, SqlConnectionIPAddressPreference.UsePlatformDefault)]
@@ -47,25 +43,20 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         [InlineData(false, SqlConnectionIPAddressPreference.UsePlatformDefault)]
         public static void ConnectManagedWithInstanceNameTest(bool useMultiSubnetFailover, SqlConnectionIPAddressPreference ipPreference)
         {
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString);
+            SqlConnectionStringBuilder builder = new(DataTestUtility.TCPConnectionString);
             builder.MultiSubnetFailover = useMultiSubnetFailover;
             builder.IPAddressPreference = ipPreference;
 
-            string hostname;
-            string instanceName;
-            int port;
 
-            Assert.True(ParseDataSource(builder.DataSource, out hostname, out port, out instanceName));
+            Assert.True(ParseDataSource(builder.DataSource, out string hostname, out _, out string instanceName));
 
             if (IsBrowserAlive(hostname) && IsValidInstance(hostname, instanceName))
             {
                 builder.DataSource = hostname + "\\" + instanceName;
                 try
                 {
-                    using (SqlConnection connection = new SqlConnection(builder.ConnectionString))
-                    {
-                        connection.Open();
-                    }
+                    using SqlConnection connection = new(builder.ConnectionString);
+                    connection.Open();
                 }
                 catch (Exception ex)
                 {
@@ -80,11 +71,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 builder.DataSource = hostname + "\\" + instanceName;
                 try
                 {
-                    using (SqlConnection connection = new SqlConnection(builder.ConnectionString))
-                    {
-                        connection.Open();
-                        Assert.True(false, "Unexpected connection success against " + instanceName);
-                    }
+                    using SqlConnection connection = new(builder.ConnectionString);
+                    connection.Open();
+                    Assert.True(false, "Unexpected connection success against " + instanceName);
                 }
                 catch (Exception ex)
                 {
@@ -109,7 +98,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             if (dataSource.Contains(","))
             {
-                if (!Int32.TryParse(dataSource.Substring(dataSource.LastIndexOf(",") + 1), out port))
+                if (!int.TryParse(dataSource.Substring(dataSource.LastIndexOf(",") + 1), out port))
                 {
                     return false;
                 }
@@ -148,7 +137,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             const int sendTimeout = 1000;
             const int receiveTimeout = 1000;
             byte[] responsePacket = null;
-            using (UdpClient client = new UdpClient(AddressFamily.InterNetwork))
+            using (UdpClient client = new(AddressFamily.InterNetwork))
             {
                 try
                 {
