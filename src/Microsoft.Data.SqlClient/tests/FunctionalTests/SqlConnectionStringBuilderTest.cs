@@ -102,6 +102,166 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Fact]
+        public void SetInvalidApplicationIntent_Throws()
+        {
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
+
+            ApplicationIntent invalid = (ApplicationIntent)Enum.GetValues(typeof(ApplicationIntent)).Length + 1;
+            ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => builder.ApplicationIntent = invalid);
+            Assert.Contains("ApplicationIntent", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public void SetInvalidAttestationProtocol_Throws()
+        {
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
+
+            SqlConnectionAttestationProtocol invalid = (SqlConnectionAttestationProtocol)Enum.GetValues(typeof(SqlConnectionAttestationProtocol)).Length + 1;
+            ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => builder.AttestationProtocol = invalid);
+            Assert.Contains("SqlConnectionAttestationProtocol", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public void SetInvalidAuthentication_Throws()
+        {
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
+
+            SqlAuthenticationMethod invalid = (SqlAuthenticationMethod)Enum.GetValues(typeof(SqlAuthenticationMethod)).Length + 1;
+            ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => builder.Authentication = invalid);
+            Assert.Contains("SqlAuthenticationMethod", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public void SetInvalidColumnEncryptionSetting_Throws()
+        {
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
+
+            SqlConnectionColumnEncryptionSetting invalid = (SqlConnectionColumnEncryptionSetting)Enum.GetValues(typeof(SqlConnectionColumnEncryptionSetting)).Length + 1;
+            ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => builder.ColumnEncryptionSetting = invalid);
+            Assert.Contains("SqlConnectionColumnEncryptionSetting", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public void SetInvalidConnectTimeout_Throws()
+        {
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
+
+            ArgumentException ex = Assert.Throws<ArgumentException>(() => builder.ConnectTimeout = -1);
+            Assert.Contains("connect timeout", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public void SetInvalidCommandTimeout_Throws()
+        {
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
+
+            ArgumentException ex = Assert.Throws<ArgumentException>(() => builder.CommandTimeout = -1);
+            Assert.Contains("command timeout", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Theory]
+        [InlineData(-1)]
+        [InlineData(256)]
+        public void SetInvalidConnectRetryCount_Throws(int invalid)
+        {
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
+
+            ArgumentException ex = Assert.Throws<ArgumentException>(() => builder.ConnectRetryCount = invalid);
+            Assert.Contains("connect retry count", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Theory]
+        [InlineData(-1)]
+        [InlineData(256)]
+        public void SetInvalidConnectRetryInterval_Throws(int invalid)
+        {
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
+
+            ArgumentException ex = Assert.Throws<ArgumentException>(() => builder.ConnectRetryInterval = invalid);
+            Assert.Contains("connect retry interval", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public void SetInvalidIPAddressPreference_Throws()
+        {
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
+
+            SqlConnectionIPAddressPreference invalid = (SqlConnectionIPAddressPreference)Enum.GetValues(typeof(SqlConnectionIPAddressPreference)).Length + 1;
+            ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => builder.IPAddressPreference = invalid);
+            Assert.Contains("SqlConnectionIPAddressPreference", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public void SetInvalidPoolBlockingPeriod_Throws()
+        {
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
+
+            PoolBlockingPeriod invalid = (PoolBlockingPeriod)Enum.GetValues(typeof(PoolBlockingPeriod)).Length + 1;
+            ArgumentOutOfRangeException ex = Assert.Throws<ArgumentOutOfRangeException>(() => builder.PoolBlockingPeriod = invalid);
+            Assert.Contains("PoolBlockingPeriod", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public void SetInvalidLoadBalanceTimeout_Throws()
+        {
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
+
+            ArgumentException ex = Assert.Throws<ArgumentException>(() => builder.LoadBalanceTimeout = -1);
+            Assert.Contains("load balance timeout", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public void SetInvalidMaxPoolSize_Throws()
+        {
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
+
+            ArgumentException ex = Assert.Throws<ArgumentException>(() => builder.MaxPoolSize = 0);
+            Assert.Contains("max pool size", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
+        public void SetInvalidMinPoolSize_Throws()
+        {
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
+
+            ArgumentException ex = Assert.Throws<ArgumentException>(() => builder.MinPoolSize = -1);
+            Assert.Contains("min pool size", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(511)]
+        [InlineData(32769)]
+        [InlineData(int.MaxValue)]
+        public void SetInvalidPacketSize_Throws(int invalid)
+        {
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
+
+            ArgumentException ex = Assert.Throws<ArgumentException>(() => builder.PacketSize = invalid);
+            Assert.Contains("packet size", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Theory]
+        [InlineData("AttachDBFilename","somefile.db")]
+        public void SetKeyword(string keyword, string value)
+        {
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
+            builder[keyword] = value;
+            Assert.Equal(builder[keyword], value);
+        }
+
+        [Fact]
+        public void SetNotSupportedKeyword_Throws()
+        {
+            // We may want to remove the unreachable code path for default in the GetIndex(keyword) method already throws UnsupportedKeyword
+            // so default: throw UnsupportedKeyword(keyword) is never reached unless it's a supported keyword, but it's not handled in the switch case.
+
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
+            ArgumentException ex = Assert.Throws<ArgumentException>(() => builder["NotSupported"] = "not important");
+            Assert.Contains("not supported", ex.Message, StringComparison.OrdinalIgnoreCase);
+        }
+
+        [Fact]
         public void UnexpectedKeywordRetrieval()
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder("Data Source=localhost");

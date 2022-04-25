@@ -1322,6 +1322,48 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
+        [ConditionalTheory(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
+        [InlineData(nameof(SqlCommandBuilder.GetInsertCommand), null)]
+        [InlineData(nameof(SqlCommandBuilder.GetInsertCommand), true)]
+        [InlineData(nameof(SqlCommandBuilder.GetInsertCommand), false)]
+        [InlineData(nameof(SqlCommandBuilder.GetUpdateCommand), null)]
+        [InlineData(nameof(SqlCommandBuilder.GetUpdateCommand), true)]
+        [InlineData(nameof(SqlCommandBuilder.GetUpdateCommand), false)]
+        [InlineData(nameof(SqlCommandBuilder.GetDeleteCommand), null)]
+        [InlineData(nameof(SqlCommandBuilder.GetDeleteCommand), false)]
+        [InlineData(nameof(SqlCommandBuilder.GetDeleteCommand), true)]
+        public void VerifyGetCommand(string methodName, bool? useColumnsForParameterNames)
+        {
+            using (SqlConnection connection = new SqlConnection(DataTestUtility.TCPConnectionString))
+            {
+                connection.Open();
+                using (SqlDataAdapter dataAdapter = new SqlDataAdapter("SELECT * FROM dbo.Customers", connection))
+                {
+                    using (SqlCommandBuilder commandBuilder = new SqlCommandBuilder(dataAdapter))
+                    {
+                        object[] parameters = null;
+                        Type[] parameterTypes = null;
+                        if (useColumnsForParameterNames != null)
+                        {
+                            parameters = new object[] { useColumnsForParameterNames };
+                            parameterTypes = new Type[] { typeof(bool) };
+                        }
+                        else
+                        {
+                            parameters = new object[] { };
+                            parameterTypes = new Type[] { };
+                        }
+
+                        MethodInfo method = commandBuilder.GetType().GetMethod(methodName, parameterTypes);
+                        using (SqlCommand cmd = (SqlCommand)method.Invoke(commandBuilder, parameters))
+                        {
+                            Assert.NotNull(cmd);
+                        }
+                    }
+                }
+            }
+        }
+
         #region Utility_Methods
         private void CheckParameters(SqlCommand cmd, string expectedResults)
         {

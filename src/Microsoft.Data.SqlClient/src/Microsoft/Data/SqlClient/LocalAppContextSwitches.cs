@@ -14,10 +14,12 @@ namespace Microsoft.Data.SqlClient
         internal const string MakeReadAsyncBlockingString = @"Switch.Microsoft.Data.SqlClient.MakeReadAsyncBlocking";
         internal const string LegacyRowVersionNullString = @"Switch.Microsoft.Data.SqlClient.LegacyRowVersionNullBehavior";
         internal const string UseSystemDefaultSecureProtocolsString = @"Switch.Microsoft.Data.SqlClient.UseSystemDefaultSecureProtocols";
+        internal const string SuppressInsecureTLSWarningString = @"Switch.Microsoft.Data.SqlClient.SuppressInsecureTLSWarning";
 
-        private static bool _makeReadAsyncBlocking;
+        private static bool s_makeReadAsyncBlocking;
         private static bool? s_LegacyRowVersionNullBehavior;
         private static bool? s_UseSystemDefaultSecureProtocols;
+        private static bool? s_SuppressInsecureTLSWarning;
 
 #if !NETFRAMEWORK
         static LocalAppContextSwitches()
@@ -35,12 +37,26 @@ namespace Microsoft.Data.SqlClient
         }
 #endif
 
+        public static bool SuppressInsecureTLSWarning
+        {
+            get
+            {
+                if (s_SuppressInsecureTLSWarning is null)
+                {
+                    bool result;
+                    result = AppContext.TryGetSwitch(SuppressInsecureTLSWarningString, out result) ? result : false;
+                    s_SuppressInsecureTLSWarning = result;
+                }
+                return s_SuppressInsecureTLSWarning.Value;
+            }
+        }
+
         public static bool MakeReadAsyncBlocking
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                return AppContext.TryGetSwitch(MakeReadAsyncBlockingString, out _makeReadAsyncBlocking) ? _makeReadAsyncBlocking : false;
+                return AppContext.TryGetSwitch(MakeReadAsyncBlockingString, out s_makeReadAsyncBlocking) ? s_makeReadAsyncBlocking : false;
             }
         }
 

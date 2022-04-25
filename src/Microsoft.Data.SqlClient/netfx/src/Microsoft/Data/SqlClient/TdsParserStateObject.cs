@@ -171,7 +171,7 @@ namespace Microsoft.Data.SqlClient
         internal ulong _longlen;                                     // plp data length indicator
         internal ulong _longlenleft;                                 // Length of data left to read (64 bit lengths)
         internal int[] _decimalBits = null;                // scratch buffer for decimal/numeric data
-        internal byte[] _bTmp = new byte[TdsEnums.YUKON_HEADER_LEN];  // Scratch buffer for misc use
+        internal byte[] _bTmp = new byte[TdsEnums.SQL2005_HEADER_LEN];  // Scratch buffer for misc use
         internal int _bTmpRead = 0;                   // Counter for number of temporary bytes read
         internal Decoder _plpdecoder = null;             // Decoder object to process plp character data
         internal bool _accumulateInfoEvents = false;               // TRUE - accumulate info messages during TdsParser.Run, FALSE - fire them
@@ -515,8 +515,8 @@ namespace Microsoft.Data.SqlClient
             // initialize or unset null bitmap information for the current row
             if (isNullCompressed)
             {
-                // assert that NBCROW is not in use by Yukon or before
-                Debug.Assert(_parser.IsKatmaiOrNewer, "NBCROW is sent by pre-Katmai server");
+                // assert that NBCROW is not in use by 2005 or before
+                Debug.Assert(_parser.Is2008OrNewer, "NBCROW is sent by pre-2008 server");
 
                 if (!_nullBitmapInfo.TryInitialize(this, nullBitmapColumnsCount))
                 {
@@ -580,7 +580,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // read the null bitmap compression information from TDS
-                if (!stateObj.TryReadByteArray(_nullBitmap, 0, _nullBitmap.Length))
+                if (!stateObj.TryReadByteArray(_nullBitmap, _nullBitmap.Length))
                 {
                     return false;
                 }
@@ -1306,7 +1306,7 @@ namespace Microsoft.Data.SqlClient
                           "SetPacketSize should only be called on a stateObj with null buffers on the physicalStateObj!");
             Debug.Assert(_inBuff == null
                           ||
-                          (_parser.IsYukonOrNewer &&
+                          (_parser.Is2005OrNewer &&
                            _outBytesUsed == (_outputHeaderLen + BitConverter.ToInt32(_outBuff, _outputHeaderLen)) &&
                            _outputPacketNumber == 1)
                           ||
@@ -1389,15 +1389,14 @@ namespace Microsoft.Data.SqlClient
 
         // Takes a byte array, an offset, and a len and fills the array from the offset to len number of
         // bytes from the in buffer.
-        public bool TryReadByteArray(byte[] buff, int offset, int len)
+        public bool TryReadByteArray(Span<byte> buff, int len)
         {
-            int ignored;
-            return TryReadByteArray(buff, offset, len, out ignored);
+            return TryReadByteArray(buff, len, out int _);
         }
 
         // NOTE: This method must be retriable WITHOUT replaying a snapshot
         // Every time you call this method increment the offset and decrease len by the value of totalRead
-        public bool TryReadByteArray(byte[] buff, int offset, int len, out int totalRead)
+        public bool TryReadByteArray(Span<byte> buff, int len, out int totalRead)
         {
             TdsParser.ReliabilitySection.Assert("unreliable call to ReadByteArray");  // you need to setup for a thread abort somewhere before you call this method
             totalRead = 0;
@@ -1421,7 +1420,7 @@ namespace Microsoft.Data.SqlClient
             }
 #endif
 
-            Debug.Assert(buff == null || buff.Length >= len, "Invalid length sent to ReadByteArray()!");
+            Debug.Assert(buff.IsEmpty || buff.Length >= len, "Invalid length sent to ReadByteArray()!");
 
             // loop through and read up to array length
             while (len > 0)
@@ -1436,9 +1435,11 @@ namespace Microsoft.Data.SqlClient
 
                 int bytesToRead = Math.Min(len, Math.Min(_inBytesPacket, _inBytesRead - _inBytesUsed));
                 Debug.Assert(bytesToRead > 0, "0 byte read in TryReadByteArray");
-                if (buff != null)
+                if (!buff.IsEmpty)
                 {
-                    Buffer.BlockCopy(_inBuff, _inBytesUsed, buff, offset + totalRead, bytesToRead);
+                    ReadOnlySpan<byte> copyFrom = new ReadOnlySpan<byte>(_inBuff, _inBytesUsed, bytesToRead);
+                    Span<byte> copyTo = buff.Slice(totalRead, bytesToRead);
+                    copyFrom.CopyTo(copyTo);
                 }
 
                 totalRead += bytesToRead;
@@ -1510,7 +1511,7 @@ namespace Microsoft.Data.SqlClient
                 // If the char isn't fully in the buffer, or if it isn't fully in the packet,
                 // then use ReadByteArray since the logic is there to take care of that.
 
-                if (!TryReadByteArray(_bTmp, 0, 2))
+                if (!TryReadByteArray(_bTmp, 2))
                 {
                     value = '\0';
                     return false;
@@ -1547,7 +1548,7 @@ namespace Microsoft.Data.SqlClient
                 // If the int16 isn't fully in the buffer, or if it isn't fully in the packet,
                 // then use ReadByteArray since the logic is there to take care of that.
 
-                if (!TryReadByteArray(_bTmp, 0, 2))
+                if (!TryReadByteArray(_bTmp, 2))
                 {
                     value = default(short);
                     return false;
@@ -1582,7 +1583,7 @@ namespace Microsoft.Data.SqlClient
                 // If the int isn't fully in the buffer, or if it isn't fully in the packet,
                 // then use ReadByteArray since the logic is there to take care of that.
 
-                if (!TryReadByteArray(_bTmp, 0, 4))
+                if (!TryReadByteArray(_bTmp, 4))
                 {
                     value = 0;
                     return false;
@@ -1626,7 +1627,7 @@ namespace Microsoft.Data.SqlClient
                 // then use ReadByteArray since the logic is there to take care of that.
 
                 int bytesRead = 0;
-                if (!TryReadByteArray(_bTmp, _bTmpRead, 8 - _bTmpRead, out bytesRead))
+                if (!TryReadByteArray(_bTmp.AsSpan(start: _bTmpRead), 8 - _bTmpRead, out bytesRead))
                 {
                     Debug.Assert(_bTmpRead + bytesRead <= 8, "Read more data than required");
                     _bTmpRead += bytesRead;
@@ -1668,7 +1669,7 @@ namespace Microsoft.Data.SqlClient
                 // If the uint16 isn't fully in the buffer, or if it isn't fully in the packet,
                 // then use ReadByteArray since the logic is there to take care of that.
 
-                if (!TryReadByteArray(_bTmp, 0, 2))
+                if (!TryReadByteArray(_bTmp, 2))
                 {
                     value = default(ushort);
                     return false;
@@ -1713,7 +1714,7 @@ namespace Microsoft.Data.SqlClient
                 // then use ReadByteArray since the logic is there to take care of that.
 
                 int bytesRead = 0;
-                if (!TryReadByteArray(_bTmp, _bTmpRead, 4 - _bTmpRead, out bytesRead))
+                if (!TryReadByteArray(_bTmp.AsSpan(start: _bTmpRead), 4 - _bTmpRead, out bytesRead))
                 {
                     Debug.Assert(_bTmpRead + bytesRead <= 4, "Read more data than required");
                     _bTmpRead += bytesRead;
@@ -1753,7 +1754,7 @@ namespace Microsoft.Data.SqlClient
                 // If the float isn't fully in the buffer, or if it isn't fully in the packet,
                 // then use ReadByteArray since the logic is there to take care of that.
 
-                if (!TryReadByteArray(_bTmp, 0, 4))
+                if (!TryReadByteArray(_bTmp, 4))
                 {
                     value = default(float);
                     return false;
@@ -1787,7 +1788,7 @@ namespace Microsoft.Data.SqlClient
                 // If the double isn't fully in the buffer, or if it isn't fully in the packet,
                 // then use ReadByteArray since the logic is there to take care of that.
 
-                if (!TryReadByteArray(_bTmp, 0, 8))
+                if (!TryReadByteArray(_bTmp, 8))
                 {
                     value = default(double);
                     return false;
@@ -1827,7 +1828,7 @@ namespace Microsoft.Data.SqlClient
                     _bTmp = new byte[cBytes];
                 }
 
-                if (!TryReadByteArray(_bTmp, 0, cBytes))
+                if (!TryReadByteArray(_bTmp, cBytes))
                 {
                     value = null;
                     return false;
@@ -1905,7 +1906,7 @@ namespace Microsoft.Data.SqlClient
                         _bTmp = new byte[length];
                     }
 
-                    if (!TryReadByteArray(_bTmp, 0, length))
+                    if (!TryReadByteArray(_bTmp, length))
                     {
                         value = null;
                         return false;
@@ -2014,7 +2015,7 @@ namespace Microsoft.Data.SqlClient
 
             int value;
             int bytesToRead = (int)Math.Min(_longlenleft, (ulong)len);
-            bool result = TryReadByteArray(buff, offset, bytesToRead, out value);
+            bool result = TryReadByteArray(buff.AsSpan(start: offset), bytesToRead, out value);
             _longlenleft -= (ulong)bytesToRead;
             if (!result)
             { throw SQL.SynchronousCallMayNotPend(); }
@@ -2091,7 +2092,7 @@ namespace Microsoft.Data.SqlClient
                     buff = newbuf;
                 }
 
-                bool result = TryReadByteArray(buff, offst, bytesToRead, out bytesRead);
+                bool result = TryReadByteArray(buff.AsSpan(start: offst), bytesToRead, out bytesRead);
                 Debug.Assert(bytesRead <= bytesLeft, "Read more bytes than we needed");
                 Debug.Assert((ulong)bytesRead <= _longlenleft, "Read more bytes than is available");
 
@@ -2138,7 +2139,7 @@ namespace Microsoft.Data.SqlClient
             while (num > 0)
             {
                 cbSkip = (int)Math.Min((long)Int32.MaxValue, num);
-                if (!TryReadByteArray(null, 0, cbSkip))
+                if (!TryReadByteArray(null, cbSkip))
                 {
                     return false;
                 }
@@ -2152,7 +2153,7 @@ namespace Microsoft.Data.SqlClient
         internal bool TrySkipBytes(int num)
         {
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
-            return TryReadByteArray(null, 0, num);
+            return TryReadByteArray(null, num);
         }
 
         /////////////////////////////////////////
@@ -3373,9 +3374,9 @@ namespace Microsoft.Data.SqlClient
             }
 
             if (
-                // This appears to be an optimization to avoid writing empty packets in Yukon
-                // However, since we don't know the version prior to login IsYukonOrNewer was always false prior to login
-                // So removing the IsYukonOrNewer check causes issues since the login packet happens to meet the rest of the conditions below
+                // This appears to be an optimization to avoid writing empty packets in 2005
+                // However, since we don't know the version prior to login Is2005OrNewer was always false prior to login
+                // So removing the Is2005OrNewer check causes issues since the login packet happens to meet the rest of the conditions below
                 // So we need to avoid this check prior to login completing
                 state == TdsParserState.OpenLoggedIn &&
                 !_bulkCopyOpperationInProgress // ignore the condition checking for bulk copy (SQL BU 414551)

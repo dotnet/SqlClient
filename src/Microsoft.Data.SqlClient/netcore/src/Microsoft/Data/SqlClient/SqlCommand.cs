@@ -204,10 +204,9 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal bool ShouldUseEnclaveBasedWorkflow
-        {
-            get { return !string.IsNullOrWhiteSpace(_activeConnection.EnclaveAttestationUrl) && IsColumnEncryptionEnabled; }
-        }
+        internal bool ShouldUseEnclaveBasedWorkflow => 
+            (!string.IsNullOrWhiteSpace(_activeConnection.EnclaveAttestationUrl) || Connection.AttestationProtocol == SqlConnectionAttestationProtocol.None) && 
+                    IsColumnEncryptionEnabled; 
 
         /// <summary>
         /// Per-command custom providers. It can be provided by the user and can be set more than once. 
@@ -2016,10 +2015,9 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (Exception ex)
                 {
-                    if (ex is SqlException)
+                    if (ex is SqlException sqlException)
                     {
-                        SqlException exception = (SqlException)ex;
-                        sqlExceptionNumber = exception.Number;
+                        sqlExceptionNumber = sqlException.Number;
                     }
 
                     e = ex;
@@ -2969,8 +2967,8 @@ namespace Microsoft.Data.SqlClient
         {
             ParameterName = 0,
             ParameterType,
-            DataType, // obsolete in katmai, use ManagedDataType instead
-            ManagedDataType, // new in katmai
+            DataType, // obsolete in 2008, use ManagedDataType instead
+            ManagedDataType, // new in 2008
             CharacterMaximumLength,
             NumericPrecision,
             NumericScale,
@@ -2980,16 +2978,16 @@ namespace Microsoft.Data.SqlClient
             XmlSchemaCollectionCatalogName,
             XmlSchemaCollectionSchemaName,
             XmlSchemaCollectionName,
-            UdtTypeName, // obsolete in Katmai.  Holds the actual typename if UDT, since TypeName didn't back then.
-            DateTimeScale // new in Katmai
+            UdtTypeName, // obsolete in 2008.  Holds the actual typename if UDT, since TypeName didn't back then.
+            DateTimeScale // new in 2008
         };
 
-        // Yukon- column ordinals (this array indexed by ProcParamsColIndex
-        internal static readonly string[] PreKatmaiProcParamsNames = new string[] {
+        // 2005- column ordinals (this array indexed by ProcParamsColIndex
+        internal static readonly string[] PreSql2008ProcParamsNames = new string[] {
             "PARAMETER_NAME",           // ParameterName,
             "PARAMETER_TYPE",           // ParameterType,
             "DATA_TYPE",                // DataType
-            null,                       // ManagedDataType,     introduced in Katmai
+            null,                       // ManagedDataType,     introduced in 2008
             "CHARACTER_MAXIMUM_LENGTH", // CharacterMaximumLength,
             "NUMERIC_PRECISION",        // NumericPrecision,
             "NUMERIC_SCALE",            // NumericScale,
@@ -3000,14 +2998,14 @@ namespace Microsoft.Data.SqlClient
             "XML_SCHEMANAME",           // XmlSchemaCollectionSchemaName,
             "XML_SCHEMACOLLECTIONNAME", // XmlSchemaCollectionName
             "UDT_NAME",                 // UdtTypeName
-            null,                       // Scale for datetime types with scale, introduced in Katmai
+            null,                       // Scale for datetime types with scale, introduced in 2008
         };
 
-        // Katmai+ column ordinals (this array indexed by ProcParamsColIndex
-        internal static readonly string[] KatmaiProcParamsNames = new string[] {
+        // 2008+ column ordinals (this array indexed by ProcParamsColIndex
+        internal static readonly string[] Sql2008ProcParamsNames = new string[] {
             "PARAMETER_NAME",           // ParameterName,
             "PARAMETER_TYPE",           // ParameterType,
-            null,                       // DataType, removed from Katmai+
+            null,                       // DataType, removed from 2008+
             "MANAGED_DATA_TYPE",        // ManagedDataType,
             "CHARACTER_MAXIMUM_LENGTH", // CharacterMaximumLength,
             "NUMERIC_PRECISION",        // NumericPrecision,
@@ -3018,7 +3016,7 @@ namespace Microsoft.Data.SqlClient
             "XML_CATALOGNAME",          // XmlSchemaCollectionCatalogName,
             "XML_SCHEMANAME",           // XmlSchemaCollectionSchemaName,
             "XML_SCHEMACOLLECTIONNAME", // XmlSchemaCollectionName
-            null,                       // UdtTypeName, removed from Katmai+
+            null,                       // UdtTypeName, removed from 2008+
             "SS_DATETIME_PRECISION",    // Scale for datetime types with scale
         };
 
@@ -3053,7 +3051,7 @@ namespace Microsoft.Data.SqlClient
             StringBuilder cmdText = new StringBuilder();
 
             // Build call for sp_procedure_params_rowset built of unquoted values from user:
-            // [user server, if provided].[user catalog, else current database].[sys if Yukon, else blank].[sp_procedure_params_rowset]
+            // [user server, if provided].[user catalog, else current database].[sys if 2005, else blank].[sp_procedure_params_rowset]
 
             // Server - pass only if user provided.
             if (!string.IsNullOrEmpty(parsedSProc[0]))
@@ -3070,16 +3068,16 @@ namespace Microsoft.Data.SqlClient
             SqlCommandSet.BuildStoredProcedureName(cmdText, parsedSProc[1]);
             cmdText.Append(".");
 
-            // Schema - only if Yukon, and then only pass sys.  Also - pass managed version of sproc
-            // for Yukon, else older sproc.
+            // Schema - only if 2005, and then only pass sys.  Also - pass managed version of sproc
+            // for 2005, else older sproc.
             string[] colNames;
             bool useManagedDataType;
-            if (Connection.IsKatmaiOrNewer)
+            if (Connection.Is2008OrNewer)
             {
                 // Procedure - [sp_procedure_params_managed]
                 cmdText.Append("[sys].[").Append(TdsEnums.SP_PARAMS_MGD10).Append("]");
 
-                colNames = KatmaiProcParamsNames;
+                colNames = Sql2008ProcParamsNames;
                 useManagedDataType = true;
             }
             else
@@ -3087,7 +3085,7 @@ namespace Microsoft.Data.SqlClient
                 // Procedure - [sp_procedure_params_managed]
                 cmdText.Append("[sys].[").Append(TdsEnums.SP_PARAMS_MANAGED).Append("]");
 
-                colNames = PreKatmaiProcParamsNames;
+                colNames = PreSql2008ProcParamsNames;
                 useManagedDataType = false;
             }
 
@@ -3143,7 +3141,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         p.SqlDbType = (SqlDbType)(short)r[colNames[(int)ProcParamsColIndex.ManagedDataType]];
 
-                        // Yukon didn't have as accurate of information as we're getting for Katmai, so re-map a couple of
+                        // 2005 didn't have as accurate of information as we're getting for 2008, so re-map a couple of
                         //  types for backward compatability.
                         switch (p.SqlDbType)
                         {
@@ -3177,9 +3175,9 @@ namespace Microsoft.Data.SqlClient
                     {
                         int size = (int)a;
 
-                        // Map MAX sizes correctly.  The Katmai server-side proc sends 0 for these instead of -1.
-                        //  Should be fixed on the Katmai side, but would likely hold up the RI, and is safer to fix here.
-                        //  If we can get the server-side fixed before shipping Katmai, we can remove this mapping.
+                        // Map MAX sizes correctly.  The 2008 server-side proc sends 0 for these instead of -1.
+                        //  Should be fixed on the 2008 side, but would likely hold up the RI, and is safer to fix here.
+                        //  If we can get the server-side fixed before shipping 2008, we can remove this mapping.
                         if (0 == size &&
                                 (p.SqlDbType == SqlDbType.NVarChar ||
                                  p.SqlDbType == SqlDbType.VarBinary ||
@@ -3221,7 +3219,7 @@ namespace Microsoft.Data.SqlClient
                     // type name for Structured types (same as for Udt's except assign p.TypeName instead of p.UdtTypeName
                     if (SqlDbType.Structured == p.SqlDbType)
                     {
-                        Debug.Assert(_activeConnection.IsKatmaiOrNewer, "Invalid datatype token received from pre-katmai server");
+                        Debug.Assert(_activeConnection.Is2008OrNewer, "Invalid datatype token received from pre-2008 server");
 
                         //read the type name
                         p.TypeName = r[colNames[(int)ProcParamsColIndex.TypeCatalogName]] + "." +
@@ -4211,7 +4209,7 @@ namespace Microsoft.Data.SqlClient
 
                     if (isRequestedByEnclave)
                     {
-                        if (string.IsNullOrWhiteSpace(this.Connection.EnclaveAttestationUrl))
+                        if (string.IsNullOrWhiteSpace(this.Connection.EnclaveAttestationUrl) && Connection.AttestationProtocol != SqlConnectionAttestationProtocol.None)
                         {
                             throw SQL.NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe(this._activeConnection.Parser.EnclaveType);
                         }
@@ -4636,8 +4634,11 @@ namespace Microsoft.Data.SqlClient
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(this._activeConnection.EnclaveAttestationUrl))
+            if (string.IsNullOrWhiteSpace(this._activeConnection.EnclaveAttestationUrl) && 
+                Connection.AttestationProtocol != SqlConnectionAttestationProtocol.None)
+            {
                 throw SQL.NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage(this._activeConnection.Parser.EnclaveType);
+            }
 
             string enclaveType = this._activeConnection.Parser.EnclaveType;
             if (string.IsNullOrWhiteSpace(enclaveType))
