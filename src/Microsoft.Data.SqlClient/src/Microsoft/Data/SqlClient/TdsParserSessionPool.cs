@@ -21,8 +21,8 @@ namespace Microsoft.Data.SqlClient
 
         private const int MaxInactiveCount = 10; // pick something, preferably small...
 
-        private static int _objectTypeCount; // EventSource Counter
-        private readonly int _objectID = System.Threading.Interlocked.Increment(ref _objectTypeCount);
+        private static int s_objectTypeCount; // EventSource Counter
+        private readonly int _objectID = System.Threading.Interlocked.Increment(ref s_objectTypeCount);
 
         private readonly TdsParser _parser;       // parser that owns us
         private readonly List<TdsParserStateObject> _cache;        // collection of all known sessions 
@@ -98,7 +98,7 @@ namespace Microsoft.Data.SqlClient
                 TdsParserStateObject session = _cache[i];
                 if (null != session)
                 {
-                    var sessionHandle = session.Handle;
+                    SNIHandle sessionHandle = session.Handle;
                     if (sessionHandle != null)
                     {
                         sessionHandle.Dispose();
