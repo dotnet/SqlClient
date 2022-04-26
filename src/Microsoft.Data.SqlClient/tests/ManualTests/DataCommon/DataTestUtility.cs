@@ -48,6 +48,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly bool IsDNSCachingSupportedCR = false;  // this is for the control ring
         public static readonly bool IsDNSCachingSupportedTR = false;  // this is for the tenant ring
         public static readonly string UserManagedIdentityObjectId = null;
+        public static readonly string MakecertPath = null;
 
         public static readonly string EnclaveAzureDatabaseConnString = null;
         public static bool ManagedIdentitySupported = true;
@@ -88,6 +89,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             IsDNSCachingSupportedTR = c.IsDNSCachingSupportedTR;
             EnclaveAzureDatabaseConnString = c.EnclaveAzureDatabaseConnString;
             UserManagedIdentityObjectId = c.UserManagedIdentityObjectId;
+            MakecertPath = c.MakecertPath;
 
             System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
 
@@ -336,12 +338,17 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             return RetrieveValueFromConnStr(TCPConnectionString, new string[] { "Password", "PWD" }) != string.Empty;
         }
 
-        // the name length will be no more then (16 + prefix.Length + escapeLeft.Length + escapeRight.Length)
-        // some providers does not support names (Oracle supports up to 30)
-        public static string GetUniqueName(string prefix)
+        /// <summary>
+        /// Generate a unique name to use in Sql Server; 
+        /// some providers does not support names (Oracle supports up to 30).
+        /// </summary>
+        /// <param name="prefix">The name length will be no more then (16 + prefix.Length + escapeLeft.Length + escapeRight.Length).</param>
+        /// <param name="withBracket">Name without brackets.</param>
+        /// <returns>Unique name by considering the Sql Server naming rules.</returns>
+        public static string GetUniqueName(string prefix, bool withBracket = true)
         {
-            string escapeLeft = "[";
-            string escapeRight = "]";
+            string escapeLeft = withBracket ? "[" : string.Empty;
+            string escapeRight = withBracket ? "]" : string.Empty;
             string uniqueName = string.Format("{0}{1}_{2}_{3}{4}",
                 escapeLeft,
                 prefix,

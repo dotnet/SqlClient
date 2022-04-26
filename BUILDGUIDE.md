@@ -119,6 +119,7 @@ Manual Tests require the below setup to run:
 |SupportsFileStream | (Optional) Whether or not FileStream is enabled on SQL Server| `true` OR `false`|
 |UseManagedSNIOnWindows | (Optional) Enables testing with Managed SNI on Windows| `true` OR `false`|
 |IsAzureSynpase | (Optional) When set to 'true', test suite runs compatible tests for Azure Synapse/Parallel Data Warehouse. | `true` OR `false`|
+|MakecertPath | The full path to makecert.exe. This is not required if the path is present in the PATH environment variable. | `D:\\escaped\\absolute\\path\\to\\makecert.exe` |
 
 Commands to run tests:
 
