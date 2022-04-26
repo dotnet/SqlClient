@@ -89,6 +89,25 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+#if NETFRAMEWORK
+        // This is called from a ThreadAbort - ensure that it can be run from a CER Catch
+        internal void BestEffortCleanup()
+        {
+            for (int i = 0; i < _cache.Count; i++)
+            {
+                TdsParserStateObject session = _cache[i];
+                if (null != session)
+                {
+                    var sessionHandle = session.Handle;
+                    if (sessionHandle != null)
+                    {
+                        sessionHandle.Dispose();
+                    }
+                }
+            }
+        }
+#endif
+
         internal void Dispose()
         {
             SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParserSessionPool.Dispose|ADV> {0} disposing cachedCount={1}", ObjectID, _cachedCount);
