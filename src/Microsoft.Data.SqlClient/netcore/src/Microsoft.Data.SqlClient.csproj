@@ -478,6 +478,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsRecordBufferSetter.cs">
       <Link>Microsoft\Data\SqlClient\TdsRecordBufferSetter.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsParserSessionPool.cs">
+      <Link>Microsoft\Data\SqlClient\TdsParserSessionPool.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsValueSetter.cs">
       <Link>Microsoft\Data\SqlClient\TdsValueSetter.cs</Link>
     </Compile>
@@ -646,7 +649,6 @@
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.RegisterEncoding.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserHelperClasses.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\TdsParserSessionPool.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObject.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStateObjectManaged.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParserStaticMethods.cs" />
