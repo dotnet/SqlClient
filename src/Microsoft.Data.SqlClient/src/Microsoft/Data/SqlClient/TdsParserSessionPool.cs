@@ -200,8 +200,12 @@ namespace Microsoft.Data.SqlClient
                 {
                     // Session is good to re-use and our cache has space
                     SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.TdsParserSessionPool.PutSession|ADV> {0} keeping session {1} cachedCount={2}", ObjectID, session.ObjectID, _cachedCount);
+                    // TODO: To avoid merge conflict with TdsParserStateObject in PR# 1520, i.e. it'll be merged in the common code base, we can clean this up in a later PR.
+#if NETFRAMEWORK
+                    Debug.Assert(!session._pendingData, "pending data on a pooled session?");
+#else
                     Debug.Assert(!session.HasPendingData, "pending data on a pooled session?");
-
+#endif
                     _freeStateObjects[_freeStateObjectCount] = session;
                     _freeStateObjectCount++;
                 }
