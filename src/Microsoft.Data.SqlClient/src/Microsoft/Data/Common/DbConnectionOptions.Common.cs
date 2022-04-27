@@ -25,6 +25,7 @@ namespace Microsoft.Data.Common
             internal const string Password = DbConnectionStringKeywords.Password;
             internal const string Persist_Security_Info = DbConnectionStringKeywords.PersistSecurityInfo;
             internal const string User_ID = DbConnectionStringKeywords.UserID;
+            internal const string Encrypt = DbConnectionStringKeywords.Encrypt;
         }
 
         // known connection string common synonyms
@@ -134,6 +135,36 @@ namespace Microsoft.Data.Common
 
         internal bool TryGetParsetableValue(string key, out string value) => _parsetable.TryGetValue(key, out value);
 
+        //internal SqlConnectionEncryptionOption TryGetSqlConnectionEncryptionValue()
+        //{
+        //    return _parsetable.TryGetValue(KEY.Encrypt, out string value) && value != null ?
+        //         ConvertValueToSqlConnectionEncryptionOption(value);
+        //}
+
+        internal SqlConnectionEncryptionOption ConvertValueToSqlConnectionEncryptionOption(string stringValue)
+        {
+            if (CompareInsensitiveInvariant(stringValue, "yes") || CompareInsensitiveInvariant(stringValue, "true") ||
+                Enum.TryParse(stringValue, out SqlConnectionEncryptionOption option) && option == SqlConnectionEncryptionOption.Mandatory)
+            {
+                return SqlConnectionEncryptionOption.Mandatory;
+                ;
+            }
+            else if (CompareInsensitiveInvariant(stringValue, "no") || CompareInsensitiveInvariant(stringValue, "false") ||
+                Enum.TryParse(stringValue, out option) && option == SqlConnectionEncryptionOption.Optional)
+            {
+                return SqlConnectionEncryptionOption.Optional;
+                ;
+            }
+            else if (Enum.TryParse(stringValue, out option) && option == SqlConnectionEncryptionOption.Strict)
+            {
+                return SqlConnectionEncryptionOption.Strict;
+            }
+            else
+            {
+                throw ADP.InvalidConnectionOptionValue(KEY.Encrypt);
+            }
+        }
+
         // same as Boolean, but with SSPI thrown in as valid yes
         public bool ConvertValueToIntegratedSecurity()
         {
@@ -238,7 +269,7 @@ namespace Microsoft.Data.Common
             }
         }
 
-        private static bool CompareInsensitiveInvariant(string strvalue, string strconst) 
+        private static bool CompareInsensitiveInvariant(string strvalue, string strconst)
             => (0 == StringComparer.OrdinalIgnoreCase.Compare(strvalue, strconst));
 
         [System.Diagnostics.Conditional("DEBUG")]
@@ -725,7 +756,7 @@ namespace Microsoft.Data.Common
             StringBuilder builder = new StringBuilder(_usersConnectionString.Length);
             for (NameValuePair current = _keyChain; null != current; current = current.Next)
             {
-                if(!string.Equals(KEY.Password, current.Name, StringComparison.InvariantCultureIgnoreCase) &&
+                if (!string.Equals(KEY.Password, current.Name, StringComparison.InvariantCultureIgnoreCase) &&
                    !string.Equals(SYNONYM.Pwd, current.Name, StringComparison.InvariantCultureIgnoreCase))
                 {
                     builder.Append(_usersConnectionString, copyPosition, current.Length);

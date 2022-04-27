@@ -394,7 +394,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    _readerState = null;                    
+                    _readerState = null;
                 }
                 _owner.SetTarget(value);
             }
@@ -786,8 +786,8 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal abstract void CreatePhysicalSNIHandle(string serverName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[][] spnBuffer, bool flushCache, bool async, bool fParallel, 
-                                SqlConnectionIPAddressPreference iPAddressPreference, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo, bool isIntegratedSecurity = false);
+        internal abstract void CreatePhysicalSNIHandle(string serverName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[][] spnBuffer, bool flushCache, bool async, bool fParallel,
+                                SqlConnectionIPAddressPreference iPAddressPreference, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo, bool isIntegratedSecurity = false, bool isTDS8 = false, string hostNameInCertificate = "", string databaseName="", ApplicationIntent applicationIntent =ApplicationIntent.ReadWrite);
 
         internal abstract void AssignPendingDNSInfo(string userProtocol, string DNSCacheKey, ref SQLDNSInfo pendingDNSInfo);
 
@@ -1011,13 +1011,13 @@ namespace Microsoft.Data.SqlClient
                     else
                     {
                         return AsyncHelper.CreateContinuationTaskWithState(
-                            task: writePacketTask, 
+                            task: writePacketTask,
                             state: this,
-                            onSuccess: static (object state) => 
+                            onSuccess: static (object state) =>
                             {
                                 TdsParserStateObject stateObject = (TdsParserStateObject)state;
                                 stateObject.HasPendingData = true;
-                                stateObject._messageStatus = 0; 
+                                stateObject._messageStatus = 0;
                             }
                         );
                     }
@@ -2493,7 +2493,7 @@ namespace Microsoft.Data.SqlClient
                     Timeout.Infinite,
                     Timeout.Infinite
                 );
-                
+
 
                 // -1 == Infinite
                 //  0 == Already timed out (NOTE: To simulate the same behavior as sync we will only timeout on 0 if we receive an IO Pending from SNI)
@@ -2901,7 +2901,7 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(CheckPacket(packet, source) && source != null, "AsyncResult null on callback");
 
                 if (_parser.MARSOn)
-                { 
+                {
                     // Only take reset lock on MARS and Async.
                     CheckSetResetConnectionState(error, CallbackType.Read);
                 }
@@ -3621,7 +3621,7 @@ namespace Microsoft.Data.SqlClient
                             }
                         }
 #if DEBUG
-                }
+                    }
 #endif
 
                     SetTimeoutSeconds(AttentionTimeoutSeconds); // Initialize new attention timeout of 5 seconds.

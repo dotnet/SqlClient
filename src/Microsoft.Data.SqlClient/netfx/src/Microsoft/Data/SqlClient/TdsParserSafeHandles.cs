@@ -150,7 +150,9 @@ namespace Microsoft.Data.SqlClient
             TransparentNetworkResolutionState transparentNetworkResolutionState,
             int totalTimeout,
             SqlConnectionIPAddressPreference ipPreference,
-            SQLDNSInfo cachedDNSInfo)
+            SQLDNSInfo cachedDNSInfo,
+            bool isTDS8,
+            string hostNameInCertificate)
             : base(IntPtr.Zero, true)
         {
 

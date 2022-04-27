@@ -63,10 +63,10 @@ namespace Microsoft.Data.SqlClient.SNI
         }
 
         internal override void CreatePhysicalSNIHandle(string serverName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[][] spnBuffer, bool flushCache, bool async, bool parallel, 
-                                           SqlConnectionIPAddressPreference iPAddressPreference, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo, bool isIntegratedSecurity)
+                                           SqlConnectionIPAddressPreference iPAddressPreference, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo, bool isIntegratedSecurity, bool isTDS8, string hostNameInCertificate, string databaseName, ApplicationIntent applicationIntent)
         {
             _sessionHandle = SNIProxy.CreateConnectionHandle(serverName, ignoreSniOpenTimeout, timerExpire, out instanceName, ref spnBuffer, flushCache, async, parallel, isIntegratedSecurity, 
-                                                        iPAddressPreference, cachedFQDN, ref pendingDNSInfo);
+                                                        iPAddressPreference, cachedFQDN, ref pendingDNSInfo, isTDS8, hostNameInCertificate, databaseName, applicationIntent);
             if (_sessionHandle == null)
             {
                 _parser.ProcessSNIError(this);

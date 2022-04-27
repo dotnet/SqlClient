@@ -26,6 +26,9 @@ namespace Microsoft.Data.SqlClient.SNI
         private readonly object _sendSync;
         private readonly Socket _socket;
         private NetworkStream _tcpStream;
+        private readonly string _hostNameInCertificate;
+        private readonly bool _isTDSS;
+        private readonly string _serverIndicationName;
 
         private Stream _stream;
         private SslStream _sslStream;
@@ -117,14 +120,20 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="parallel">Parallel executions</param>
         /// <param name="ipPreference">IP address preference</param>
         /// <param name="cachedFQDN">Key for DNS Cache</param>
-        /// <param name="pendingDNSInfo">Used for DNS Cache</param>        
-        public SNITCPHandle(string serverName, int port, long timerExpire, bool parallel, SqlConnectionIPAddressPreference ipPreference, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
+        /// <param name="pendingDNSInfo">Used for DNS Cache</param>
+        /// <param name="isTDSS">Support TDS8.0</param>
+        /// <param name="hostNameInCertificate">Host Name in Certoficate</param>
+        /// <param name="serverNameIndication"></param>
+        public SNITCPHandle(string serverName, int port, long timerExpire, bool parallel, SqlConnectionIPAddressPreference ipPreference, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo, bool isTDSS, string hostNameInCertificate, string serverNameIndication)
         {
             using (TrySNIEventScope.Create(nameof(SNITCPHandle)))
             {
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, Setting server name = {1}", args0: _connectionId, args1: serverName);
 
                 _targetServer = serverName;
+                _isTDSS = isTDSS;
+                _hostNameInCertificate = hostNameInCertificate;
+                _serverIndicationName = serverNameIndication;
                 _sendSync = new object();
 
                 SQLDNSInfo cachedDNSInfo;
@@ -249,8 +258,13 @@ namespace Microsoft.Data.SqlClient.SNI
                     _socket.NoDelay = true;
                     _tcpStream = new SNINetworkStream(_socket, true);
 
-                    _sslOverTdsStream = new SslOverTdsStream(_tcpStream, _connectionId);
-                    _sslStream = new SNISslStream(_sslOverTdsStream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate));
+                    Stream stream = _tcpStream;
+                    if (!_isTDSS)
+                    {
+                        _sslOverTdsStream = new SslOverTdsStream(_tcpStream, _connectionId);
+                        stream = _sslOverTdsStream;
+                    }
+                    _sslStream = new SNISslStream(stream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate));
                 }
                 catch (SocketException se)
                 {
@@ -581,10 +595,31 @@ namespace Microsoft.Data.SqlClient.SNI
             using (TrySNIEventScope.Create(nameof(SNIHandle)))
             {
                 _validateCert = (options & TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE) != 0;
+
                 try
                 {
-                    _sslStream.AuthenticateAsClient(_targetServer, null, SupportedProtocols, false);
-                    _sslOverTdsStream.FinishHandshake();
+                    if (_isTDSS)
+                    {
+#if NETCOREAPP 
+
+                        SslClientAuthenticationOptions sslClientOptions = new()
+                        {
+                            TargetHost = _serverIndicationName,
+                            ApplicationProtocols = new List<SslApplicationProtocol>() { new(TdsEnums.TDS8) },
+                            EnabledSslProtocols = SupportedProtocols,
+                            ClientCertificates = null,
+                        };
+                        _sslStream.AuthenticateAsClientAsync(sslClientOptions).Wait();
+#endif
+                    }
+                    else
+                    {
+                        _sslStream.AuthenticateAsClient(_serverIndicationName, null, SupportedProtocols, false);
+                    }
+                    if (_sslOverTdsStream is not null)
+                    {
+                        _sslOverTdsStream.FinishHandshake();
+                    }
                 }
                 catch (AuthenticationException aue)
                 {
@@ -610,8 +645,11 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             _sslStream.Dispose();
             _sslStream = null;
-            _sslOverTdsStream.Dispose();
-            _sslOverTdsStream = null;
+            if (_sslOverTdsStream is not null)
+            {
+                _sslOverTdsStream.Dispose();
+                _sslOverTdsStream = null;
+            }
             _stream = _tcpStream;
             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, SSL Disabled. Communication will continue on TCP Stream.", args0: _connectionId);
         }
@@ -631,9 +669,18 @@ namespace Microsoft.Data.SqlClient.SNI
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, Certificate will not be validated.", args0: _connectionId);
                 return true;
             }
+            string serverNameToValidate;
+            if (_isTDSS && !string.IsNullOrEmpty(_hostNameInCertificate))
+            {
+                serverNameToValidate = _hostNameInCertificate;
+            }
+            else
+            {
+                serverNameToValidate = _hostNameInCertificate;
+            }
 
             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, Certificate will be validated for Target Server name", args0: _connectionId);
-            return SNICommon.ValidateSslServerCertificate(_targetServer, cert, policyErrors);
+            return SNICommon.ValidateSslServerCertificate(serverNameToValidate, cert, policyErrors);
         }
 
         /// <summary>

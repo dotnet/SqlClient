@@ -140,7 +140,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             {
                 IntegratedSecurity = true,
                 ConnectTimeout = 2,
-                Encrypt = true
+                Encrypt = SqlConnectionEncryptionOption.Mandatory
             };
             OpenConnection(builder.ConnectionString);
         }

@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.IO.Pipes;
@@ -22,7 +23,9 @@ namespace Microsoft.Data.SqlClient.SNI
         // private const int MAX_PIPE_INSTANCES = 255; // TODO: Investigate pipe instance limit.
 
         private readonly string _targetServer;
+        private readonly string _serverNameIndication;
         private readonly object _sendSync;
+        private readonly bool _isTDS8;
 
         private Stream _stream;
         private NamedPipeClientStream _pipeStream;
@@ -37,7 +40,7 @@ namespace Microsoft.Data.SqlClient.SNI
         private int _bufferSize = TdsEnums.DEFAULT_LOGIN_PACKET_SIZE;
         private readonly Guid _connectionId = Guid.NewGuid();
 
-        public SNINpHandle(string serverName, string pipeName, long timerExpire)
+        public SNINpHandle(string serverName, string pipeName, long timerExpire, bool isTDS8, string serverNameIndication)
         {
             using (TrySNIEventScope.Create(nameof(SNINpHandle)))
             {
@@ -45,6 +48,8 @@ namespace Microsoft.Data.SqlClient.SNI
 
                 _sendSync = new object();
                 _targetServer = serverName;
+                _isTDS8 = isTDS8;
+                _serverNameIndication = serverNameIndication;
 
                 try
                 {
@@ -90,8 +95,14 @@ namespace Microsoft.Data.SqlClient.SNI
                     return;
                 }
 
-                _sslOverTdsStream = new SslOverTdsStream(_pipeStream, _connectionId);
-                _sslStream = new SNISslStream(_sslOverTdsStream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate));
+                Stream stream = _pipeStream;
+
+                if (!_isTDS8)
+                {
+                    _sslOverTdsStream = new SslOverTdsStream(_pipeStream, _connectionId);
+                    stream = _sslOverTdsStream;
+                }
+                _sslStream = new SNISslStream(stream, true, new RemoteCertificateValidationCallback(ValidateServerCertificate));
 
                 _stream = _pipeStream;
                 _status = TdsEnums.SNI_SUCCESS;
@@ -312,8 +323,29 @@ namespace Microsoft.Data.SqlClient.SNI
                 _validateCert = (options & TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE) != 0;
                 try
                 {
-                    _sslStream.AuthenticateAsClient(_targetServer, null, SupportedProtocols, false);
-                    _sslOverTdsStream.FinishHandshake();
+                    if (_isTDS8)
+                    {
+#if NETCOREAPP
+                        SslApplicationProtocol TDS8 = new("tds/8.0");
+
+                        SslClientAuthenticationOptions sslClientOptions = new()
+                        {
+                            TargetHost = _serverNameIndication,
+                            ApplicationProtocols = new List<SslApplicationProtocol>() { TDS8 },
+                            EnabledSslProtocols = SupportedProtocols,
+                            ClientCertificates = null,
+                        };
+                        _sslStream.AuthenticateAsClientAsync(sslClientOptions).Wait();
+#endif
+                    }
+                    else
+                    {
+                        _sslStream.AuthenticateAsClient(_targetServer, null, SupportedProtocols, false);
+                    }
+                    if (_sslOverTdsStream is not null)
+                    {
+                        _sslOverTdsStream.FinishHandshake();
+                    }
                 }
                 catch (AuthenticationException aue)
                 {
@@ -334,8 +366,11 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             _sslStream.Dispose();
             _sslStream = null;
-            _sslOverTdsStream.Dispose();
-            _sslOverTdsStream = null;
+            if (_sslOverTdsStream is not null)
+            {
+                _sslOverTdsStream.Dispose();
+                _sslOverTdsStream = null;
+            }
 
             _stream = _pipeStream;
         }

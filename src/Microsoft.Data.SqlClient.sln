@@ -120,6 +120,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Data.SqlClient", 
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlConnection.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionAttestationProtocol.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionAttestationProtocol.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionColumnEncryptionSetting.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionColumnEncryptionSetting.xml
+		SqlConnectionEncryptionOption.xml = SqlConnectionEncryptionOption.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlConnectionStringBuilder.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlCredential.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlCredential.xml
 		..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml = ..\doc\snippets\Microsoft.Data.SqlClient\SqlDataAdapter.xml
@@ -203,6 +204,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{4F3CD363-B1E6-4D6D-9466-97D78A56BE45}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.SqlServer.Server", "Microsoft.SqlServer.Server\Microsoft.SqlServer.Server.csproj", "{A314812A-7820-4565-A2A8-ABBE391C11E4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestTDSS", "..\TestTDSS\TestTDSS.csproj", "{78129850-6C89-471C-884A-CEDB48A1B15F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -488,6 +491,18 @@ Global
 		{A314812A-7820-4565-A2A8-ABBE391C11E4}.Release|x64.Build.0 = Release|Any CPU
 		{A314812A-7820-4565-A2A8-ABBE391C11E4}.Release|x86.ActiveCfg = Release|Any CPU
 		{A314812A-7820-4565-A2A8-ABBE391C11E4}.Release|x86.Build.0 = Release|Any CPU
+		{78129850-6C89-471C-884A-CEDB48A1B15F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{78129850-6C89-471C-884A-CEDB48A1B15F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{78129850-6C89-471C-884A-CEDB48A1B15F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{78129850-6C89-471C-884A-CEDB48A1B15F}.Debug|x64.Build.0 = Debug|Any CPU
+		{78129850-6C89-471C-884A-CEDB48A1B15F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{78129850-6C89-471C-884A-CEDB48A1B15F}.Debug|x86.Build.0 = Debug|Any CPU
+		{78129850-6C89-471C-884A-CEDB48A1B15F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{78129850-6C89-471C-884A-CEDB48A1B15F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{78129850-6C89-471C-884A-CEDB48A1B15F}.Release|x64.ActiveCfg = Release|Any CPU
+		{78129850-6C89-471C-884A-CEDB48A1B15F}.Release|x64.Build.0 = Release|Any CPU
+		{78129850-6C89-471C-884A-CEDB48A1B15F}.Release|x86.ActiveCfg = Release|Any CPU
+		{78129850-6C89-471C-884A-CEDB48A1B15F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
