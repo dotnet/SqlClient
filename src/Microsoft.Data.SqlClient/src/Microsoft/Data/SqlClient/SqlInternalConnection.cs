@@ -25,7 +25,7 @@ namespace Microsoft.Data.SqlClient
 
         private bool _isGlobalTransaction; // Whether this is a Global Transaction (Non-MSDTC, Azure SQL DB Transaction)
         private bool _isGlobalTransactionEnabledForServer; // Whether Global Transactions are enabled for this Azure SQL DB Server
-        private static readonly Guid _globalTransactionTMID = new Guid("1c742caf-6680-40ea-9c26-6b6846079764"); // ID of the Non-MSDTC, Azure SQL DB Transaction Manager
+        private static readonly Guid s_globalTransactionTMID = new("1c742caf-6680-40ea-9c26-6b6846079764"); // ID of the Non-MSDTC, Azure SQL DB Transaction Manager
 
 #if NETFRAMEWORK
         private bool _isAzureSQLConnection = false; // If connected to Azure SQL
@@ -35,7 +35,6 @@ namespace Microsoft.Data.SqlClient
         internal SqlDataReader.IsDBNullAsyncCallContext CachedDataReaderIsDBNullContext;
         internal SqlDataReader.ReadAsyncCallContext CachedDataReaderReadAsyncContext;
 #endif
-
 
         // if connection is not open: null
         // if connection is open: currently active database
@@ -116,7 +115,7 @@ namespace Microsoft.Data.SqlClient
         {
             get
             {
-                var delegatedTransaction = DelegatedTransaction;
+                SqlDelegatedTransaction delegatedTransaction = DelegatedTransaction;
                 return ((null != delegatedTransaction) && (delegatedTransaction.IsActive));
             }
         }
@@ -238,7 +237,7 @@ namespace Microsoft.Data.SqlClient
             {
 #if NETFRAMEWORK
 #if DEBUG
-                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+                TdsParser.ReliabilitySection tdsReliabilitySection = new();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
                 try
@@ -249,28 +248,28 @@ namespace Microsoft.Data.SqlClient
 #endif //DEBUG
                     bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(Connection);
 #endif // NETFRAMEWORK
-                statistics = SqlStatistics.StartTimer(Connection.Statistics);
+                    statistics = SqlStatistics.StartTimer(Connection.Statistics);
 
 #if NETFRAMEWORK
                     SqlConnection.ExecutePermission.Demand(); // MDAC 81476
 #endif // NETFRAMEWORK
-                ValidateConnectionForExecute(null);
+                    ValidateConnectionForExecute(null);
 
-                if (HasLocalTransactionFromAPI)
-                {
-                    throw ADP.ParallelTransactionsNotSupported(Connection);
-                }
+                    if (HasLocalTransactionFromAPI)
+                    {
+                        throw ADP.ParallelTransactionsNotSupported(Connection);
+                    }
 
-                if (iso == System.Data.IsolationLevel.Unspecified)
-                {
-                    iso = System.Data.IsolationLevel.ReadCommitted; // Default to ReadCommitted if unspecified.
-                }
+                    if (iso == System.Data.IsolationLevel.Unspecified)
+                    {
+                        iso = System.Data.IsolationLevel.ReadCommitted; // Default to ReadCommitted if unspecified.
+                    }
 
-                SqlTransaction transaction = new SqlTransaction(this, Connection, iso, AvailableInternalTransaction);
-                transaction.InternalTransaction.RestoreBrokenConnection = shouldReconnect;
-                ExecuteTransaction(TransactionRequest.Begin, transactionName, iso, transaction.InternalTransaction, false);
-                transaction.InternalTransaction.RestoreBrokenConnection = false;
-                return transaction;
+                    SqlTransaction transaction = new(this, Connection, iso, AvailableInternalTransaction);
+                    transaction.InternalTransaction.RestoreBrokenConnection = shouldReconnect;
+                    ExecuteTransaction(TransactionRequest.Begin, transactionName, iso, transaction.InternalTransaction, false);
+                    transaction.InternalTransaction.RestoreBrokenConnection = false;
+                    return transaction;
 #if NETFRAMEWORK
                 }
 #if DEBUG
@@ -345,7 +344,7 @@ namespace Microsoft.Data.SqlClient
 
 #if NETFRAMEWORK
 #if DEBUG
-                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+                TdsParser.ReliabilitySection tdsReliabilitySection = new();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
                 try
@@ -356,14 +355,14 @@ namespace Microsoft.Data.SqlClient
 #endif //DEBUG
                     bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(Connection);
 #endif // NETFRAMEWORK
-                SqlReferenceCollection referenceCollection = (SqlReferenceCollection)ReferenceCollection;
-                if (null != referenceCollection)
-                {
-                    referenceCollection.Deactivate();
-                }
+                    SqlReferenceCollection referenceCollection = (SqlReferenceCollection)ReferenceCollection;
+                    if (null != referenceCollection)
+                    {
+                        referenceCollection.Deactivate();
+                    }
 
-                // Invoke subclass-specific deactivation logic
-                InternalDeactivate();
+                    // Invoke subclass-specific deactivation logic
+                    InternalDeactivate();
 #if NETFRAMEWORK
                 }
 #if DEBUG
@@ -470,7 +469,7 @@ namespace Microsoft.Data.SqlClient
 
             // Promotable transactions are only supported on 2005
             // servers or newer.
-            SqlDelegatedTransaction delegatedTransaction = new SqlDelegatedTransaction(this, tx);
+            SqlDelegatedTransaction delegatedTransaction = new(this, tx);
 
             try
             {
@@ -521,7 +520,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        hasDelegatedTransaction = (bool)SysTxForGlobalTransactions.EnlistPromotableSinglePhase.Invoke(tx, new object[] { delegatedTransaction, _globalTransactionTMID });
+                        hasDelegatedTransaction = (bool)SysTxForGlobalTransactions.EnlistPromotableSinglePhase.Invoke(tx, new object[] { delegatedTransaction, s_globalTransactionTMID });
                     }
                 }
                 else
@@ -532,7 +531,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (hasDelegatedTransaction)
                 {
-                    this.DelegatedTransaction = delegatedTransaction;
+                    DelegatedTransaction = delegatedTransaction;
                     SqlClientEventSource.Log.TryAdvancedTraceEvent("SqlInternalConnection.EnlistNonNull | ADV | Object Id {0}, Client Connection Id {1} delegated to transaction {1} with transactionId {2}", ObjectID, Connection?.ClientConnectionId, delegatedTransaction?.ObjectID, delegatedTransaction?.Transaction?.TransactionInformation?.LocalIdentifier);
                 }
             }
@@ -545,8 +544,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // if the parser is null or its state is not openloggedin, the connection is no longer good.
-                SqlInternalConnectionTds tdsConnection = this as SqlInternalConnectionTds;
-                if (tdsConnection != null)
+                if (this is SqlInternalConnectionTds tdsConnection)
                 {
                     TdsParser parser = tdsConnection.Parser;
                     if (parser == null || parser.State != TdsParserState.OpenLoggedIn)
@@ -583,12 +581,7 @@ namespace Microsoft.Data.SqlClient
                     if (null == _whereAbouts)
                     {
                         byte[] dtcAddress = GetDTCAddress();
-
-                        if (null == dtcAddress)
-                        {
-                            throw SQL.CannotGetDTCAddress();
-                        }
-                        _whereAbouts = dtcAddress;
+                        _whereAbouts = dtcAddress ?? throw SQL.CannotGetDTCAddress();
                     }
                     cookie = GetTransactionCookie(tx, _whereAbouts);
                 }
@@ -688,7 +681,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
 #if DEBUG
-                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+                TdsParser.ReliabilitySection tdsReliabilitySection = new();
 
                 RuntimeHelpers.PrepareConstrainedRegions();
                 try
@@ -796,7 +789,7 @@ namespace Microsoft.Data.SqlClient
                 DoomThisConnection();
             }
 
-            var connection = Connection;
+            SqlConnection connection = Connection;
             if (null != connection)
             {
                 connection.OnError(exception, breakConnection, wrapCloseInAction);
