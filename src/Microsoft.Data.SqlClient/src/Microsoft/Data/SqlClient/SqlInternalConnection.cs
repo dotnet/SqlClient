@@ -245,8 +245,8 @@ namespace Microsoft.Data.SqlClient
                     tdsReliabilitySection.Start();
 #else
                 {
-#endif //DEBUG
-                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(Connection);
+#endif // DEBUG
+                    bestEffortCleanupTarget = GetBestEffortCleanupTarget(Connection);
 #endif // NETFRAMEWORK
                     statistics = SqlStatistics.StartTimer(Connection.Statistics);
 
@@ -277,7 +277,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     tdsReliabilitySection.Stop();
                 }
-#endif //DEBUG
+#endif // DEBUG
             }
             catch (System.OutOfMemoryException e)
             {
@@ -292,7 +292,7 @@ namespace Microsoft.Data.SqlClient
             catch (System.Threading.ThreadAbortException e)
             {
                 Connection.Abort(e);
-                SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+                BestEffortCleanup(bestEffortCleanupTarget);
                 throw;
 #endif // NETFRAMEWORK
             }
@@ -352,7 +352,7 @@ namespace Microsoft.Data.SqlClient
                     tdsReliabilitySection.Start();
 #else
                 {
-#endif //DEBUG
+#endif // DEBUG
                     bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(Connection);
 #endif // NETFRAMEWORK
                     SqlReferenceCollection referenceCollection = (SqlReferenceCollection)ReferenceCollection;
@@ -370,16 +370,16 @@ namespace Microsoft.Data.SqlClient
                 {
                     tdsReliabilitySection.Stop();
                 }
-#endif //DEBUG
+#endif // DEBUG
 #endif // NETFRAMEWORK
             }
 #if NETFRAMEWORK
-            catch (System.OutOfMemoryException)
+            catch (OutOfMemoryException)
             {
                 DoomThisConnection();
                 throw;
             }
-            catch (System.StackOverflowException)
+            catch (StackOverflowException)
             {
                 DoomThisConnection();
                 throw;
@@ -387,7 +387,7 @@ namespace Microsoft.Data.SqlClient
             catch (System.Threading.ThreadAbortException)
             {
                 DoomThisConnection();
-                SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+                BestEffortCleanup(bestEffortCleanupTarget);
                 throw;
             }
 #endif
@@ -689,8 +689,8 @@ namespace Microsoft.Data.SqlClient
                     tdsReliabilitySection.Start();
 #else
                 {
-#endif //DEBUG
-                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(Connection);
+#endif // DEBUG
+                    bestEffortCleanupTarget = GetBestEffortCleanupTarget(Connection);
                     Enlist(transaction);
                 }
 #if DEBUG
@@ -698,7 +698,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     tdsReliabilitySection.Stop();
                 }
-#endif //DEBUG
+#endif // DEBUG
             }
 #else
             try
@@ -706,12 +706,12 @@ namespace Microsoft.Data.SqlClient
                 Enlist(transaction);
             }
 #endif // NETFRAMEWORK
-            catch (System.OutOfMemoryException e)
+            catch (OutOfMemoryException e)
             {
                 Connection.Abort(e);
                 throw;
             }
-            catch (System.StackOverflowException e)
+            catch (StackOverflowException e)
             {
                 Connection.Abort(e);
                 throw;
@@ -720,7 +720,7 @@ namespace Microsoft.Data.SqlClient
             {
                 Connection.Abort(e);
 #if NETFRAMEWORK
-                SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+                BestEffortCleanup(bestEffortCleanupTarget);
 #endif
                 throw;
             }
