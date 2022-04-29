@@ -9,6 +9,11 @@ using System.Transactions;
 using Microsoft.Data.Common;
 using Microsoft.Data.ProviderBase;
 
+#if NETFRAMEWORK
+using System.Runtime.CompilerServices;
+using System.Runtime.ConstrainedExecution;
+#endif
+
 namespace Microsoft.Data.SqlClient
 {
     internal abstract class SqlInternalConnection : DbConnectionInternal
@@ -22,10 +27,15 @@ namespace Microsoft.Data.SqlClient
         private bool _isGlobalTransactionEnabledForServer; // Whether Global Transactions are enabled for this Azure SQL DB Server
         private static readonly Guid _globalTransactionTMID = new Guid("1c742caf-6680-40ea-9c26-6b6846079764"); // ID of the Non-MSDTC, Azure SQL DB Transaction Manager
 
+#if NETFRAMEWORK
+        private bool _isAzureSQLConnection = false; // If connected to Azure SQL
+#else
         internal SqlCommand.ExecuteReaderAsyncCallContext CachedCommandExecuteReaderAsyncContext;
         internal SqlDataReader.Snapshot CachedDataReaderSnapshot;
         internal SqlDataReader.IsDBNullAsyncCallContext CachedDataReaderIsDBNullContext;
         internal SqlDataReader.ReadAsyncCallContext CachedDataReaderReadAsyncContext;
+#endif
+
 
         // if connection is not open: null
         // if connection is open: currently active database
@@ -77,6 +87,7 @@ namespace Microsoft.Data.SqlClient
             get;
         }
 
+        // SQLBU 415870
         //  Get the internal transaction that should be hooked to a new outer transaction
         //  during a BeginTransaction API call.  In some cases (i.e. connection is going to
         //  be reset), CurrentTransaction should not be hooked up this way.
@@ -144,6 +155,17 @@ namespace Microsoft.Data.SqlClient
             get;
         }
 
+#if NETFRAMEWORK
+        abstract internal bool Is2000
+        {
+            get;
+        }
+
+        abstract internal bool Is2005OrNewer
+        {
+            get;
+        }
+#endif
 
         abstract internal bool Is2008OrNewer
         {
@@ -186,6 +208,20 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
+#if NETFRAMEWORK
+        internal bool IsAzureSQLConnection
+        {
+            get
+            {
+                return _isAzureSQLConnection;
+            }
+            set
+            {
+                _isAzureSQLConnection = value;
+            }
+        }
+#endif
+
         override public DbTransaction BeginTransaction(System.Data.IsolationLevel iso)
         {
             return BeginSqlTransaction(iso, null, false);
@@ -194,14 +230,36 @@ namespace Microsoft.Data.SqlClient
         virtual internal SqlTransaction BeginSqlTransaction(System.Data.IsolationLevel iso, string transactionName, bool shouldReconnect)
         {
             SqlStatistics statistics = null;
+#if NETFRAMEWORK
+            TdsParser bestEffortCleanupTarget = null;
+            RuntimeHelpers.PrepareConstrainedRegions();
+#endif
             try
             {
+#if NETFRAMEWORK
+#if DEBUG
+                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+
+                RuntimeHelpers.PrepareConstrainedRegions();
+                try
+                {
+                    tdsReliabilitySection.Start();
+#else
+                {
+#endif //DEBUG
+                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(Connection);
+#endif // NETFRAMEWORK
                 statistics = SqlStatistics.StartTimer(Connection.Statistics);
 
+#if NETFRAMEWORK
+                    SqlConnection.ExecutePermission.Demand(); // MDAC 81476
+#endif // NETFRAMEWORK
                 ValidateConnectionForExecute(null);
 
                 if (HasLocalTransactionFromAPI)
+                {
                     throw ADP.ParallelTransactionsNotSupported(Connection);
+                }
 
                 if (iso == System.Data.IsolationLevel.Unspecified)
                 {
@@ -213,6 +271,31 @@ namespace Microsoft.Data.SqlClient
                 ExecuteTransaction(TransactionRequest.Begin, transactionName, iso, transaction.InternalTransaction, false);
                 transaction.InternalTransaction.RestoreBrokenConnection = false;
                 return transaction;
+#if NETFRAMEWORK
+                }
+#if DEBUG
+                finally
+                {
+                    tdsReliabilitySection.Stop();
+                }
+#endif //DEBUG
+            }
+            catch (System.OutOfMemoryException e)
+            {
+                Connection.Abort(e);
+                throw;
+            }
+            catch (System.StackOverflowException e)
+            {
+                Connection.Abort(e);
+                throw;
+            }
+            catch (System.Threading.ThreadAbortException e)
+            {
+                Connection.Abort(e);
+                SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+                throw;
+#endif // NETFRAMEWORK
             }
             finally
             {
@@ -252,9 +335,27 @@ namespace Microsoft.Data.SqlClient
 
         override protected void Deactivate()
         {
+#if NETFRAMEWORK
+            TdsParser bestEffortCleanupTarget = null;
+            RuntimeHelpers.PrepareConstrainedRegions();
+#endif
             try
             {
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("SqlInternalConnection.Deactivate | ADV | Object Id {0} deactivating, Client Connection Id {1}", ObjectID, Connection?.ClientConnectionId);
+
+#if NETFRAMEWORK
+#if DEBUG
+                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+
+                RuntimeHelpers.PrepareConstrainedRegions();
+                try
+                {
+                    tdsReliabilitySection.Start();
+#else
+                {
+#endif //DEBUG
+                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(Connection);
+#endif // NETFRAMEWORK
                 SqlReferenceCollection referenceCollection = (SqlReferenceCollection)ReferenceCollection;
                 if (null != referenceCollection)
                 {
@@ -263,7 +364,34 @@ namespace Microsoft.Data.SqlClient
 
                 // Invoke subclass-specific deactivation logic
                 InternalDeactivate();
+#if NETFRAMEWORK
+                }
+#if DEBUG
+                finally
+                {
+                    tdsReliabilitySection.Stop();
+                }
+#endif //DEBUG
+#endif // NETFRAMEWORK
             }
+#if NETFRAMEWORK
+            catch (System.OutOfMemoryException)
+            {
+                DoomThisConnection();
+                throw;
+            }
+            catch (System.StackOverflowException)
+            {
+                DoomThisConnection();
+                throw;
+            }
+            catch (System.Threading.ThreadAbortException)
+            {
+                DoomThisConnection();
+                SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+                throw;
+            }
+#endif
             catch (Exception e)
             {
                 if (!ADP.IsCatchableExceptionType(e))
@@ -275,6 +403,9 @@ namespace Microsoft.Data.SqlClient
                 // marked as unusable and destroyed upon returning to the
                 // pool
                 DoomThisConnection();
+#if NETFRAMEWORK
+                ADP.TraceExceptionWithoutRethrow(e);
+#endif
             }
         }
 
@@ -424,6 +555,9 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 
+#if NETFRAMEWORK
+                ADP.TraceExceptionWithoutRethrow(e);
+#endif
                 // In this case, SqlDelegatedTransaction.Initialize
                 // failed and we don't necessarily want to reject
                 // things -- there may have been a legitimate reason
@@ -519,6 +653,9 @@ namespace Microsoft.Data.SqlClient
 
         override public void EnlistTransaction(Transaction transaction)
         {
+#if NETFRAMEWORK
+            SqlConnection.VerifyExecutePermission();
+#endif
             ValidateConnectionForExecute(null);
 
             // If a connection has a local transaction outstanding and you try
@@ -545,10 +682,37 @@ namespace Microsoft.Data.SqlClient
             // enlist in the user specified distributed transaction.  This
             // behavior matches OLEDB and ODBC.
 
+#if NETFRAMEWORK
+            TdsParser bestEffortCleanupTarget = null;
+            RuntimeHelpers.PrepareConstrainedRegions();
+            try
+            {
+#if DEBUG
+                TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+
+                RuntimeHelpers.PrepareConstrainedRegions();
+                try
+                {
+                    tdsReliabilitySection.Start();
+#else
+                {
+#endif //DEBUG
+                    bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(Connection);
+                    Enlist(transaction);
+                }
+#if DEBUG
+                finally
+                {
+                    tdsReliabilitySection.Stop();
+                }
+#endif //DEBUG
+            }
+#else
             try
             {
                 Enlist(transaction);
             }
+#endif // NETFRAMEWORK
             catch (System.OutOfMemoryException e)
             {
                 Connection.Abort(e);
@@ -562,6 +726,9 @@ namespace Microsoft.Data.SqlClient
             catch (System.Threading.ThreadAbortException e)
             {
                 Connection.Abort(e);
+#if NETFRAMEWORK
+                SqlInternalConnection.BestEffortCleanup(bestEffortCleanupTarget);
+#endif
                 throw;
             }
         }
@@ -578,6 +745,31 @@ namespace Microsoft.Data.SqlClient
             }
             return reader;
         }
+
+#if NETFRAMEWORK
+        static internal TdsParser GetBestEffortCleanupTarget(SqlConnection connection)
+        {
+            if (null != connection)
+            {
+                SqlInternalConnectionTds innerConnection = (connection.InnerConnection as SqlInternalConnectionTds);
+                if (null != innerConnection)
+                {
+                    return innerConnection.Parser;
+                }
+            }
+
+            return null;
+        }
+
+        [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
+        static internal void BestEffortCleanup(TdsParser target)
+        {
+            if (null != target)
+            {
+                target.BestEffortCleanup();
+            }
+        }
+#endif
 
         abstract protected byte[] GetDTCAddress();
 
