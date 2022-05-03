@@ -4,11 +4,92 @@
 
 using System;
 using Microsoft.Data.Common;
+#if NETFRAMEWORK
+using System.Globalization;
+using System.Runtime.Versioning;
+using System.Security.Permissions;
+#endif
 
 namespace Microsoft.Data.SqlClient
 {
     internal sealed class TdsParserStaticMethods
     {
+#if NETFRAMEWORK
+        private TdsParserStaticMethods() { /* prevent utility class from being insantiated*/ }
+        //
+        // Static methods
+        //
+
+        // SxS: this method accesses registry to resolve the alias.
+        [ResourceExposure(ResourceScope.None)]
+        [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
+        static internal void AliasRegistryLookup(ref string host, ref string protocol)
+        {
+            if (!ADP.IsEmpty(host))
+            {
+                const String folder = "SOFTWARE\\Microsoft\\MSSQLServer\\Client\\ConnectTo";
+                // Put a try...catch... around this so we don't abort ANY connection if we can't read the registry.
+                string aliasLookup = (string)ADP.LocalMachineRegistryValue(folder, host);
+                if (!ADP.IsEmpty(aliasLookup))
+                {
+                    /* Result will be in the form of: "DBNMPNTW,\\server\pipe\sql\query". or
+                         Result will be in the form of: "DBNETLIB, via:\\server\pipe\sql\query".
+
+                        supported formats:
+                            tcp	- DBMSSOCN,[server|server\instance][,port]
+                            np - DBNMPNTW,[\\server\pipe\sql\query | \\server\pipe\MSSQL$instance\sql\query]
+                                  where \sql\query is the pipename and can be replaced with any other pipe name
+                            via - [DBMSGNET,server,port | DBNETLIB, via:server, port]
+                            sm - DBMSLPCN,server
+
+                        unsupported formats:
+                            rpc - DBMSRPCN,server,[parameters] where parameters could be "username,password"
+                            bv -  DBMSVINN,service@group@organization
+                            appletalk - DBMSADSN,objectname@zone
+                            spx - DBMSSPXN,[service | address,port,network]
+                    */
+                    // We must parse into the two component pieces, then map the first protocol piece to the
+                    // appropriate value.
+                    int index = aliasLookup.IndexOf(',');
+
+                    // If we found the key, but there was no "," in the string, it is a bad Alias so return.
+                    if (-1 != index)
+                    {
+                        string parsedProtocol = aliasLookup.Substring(0, index).ToLower(CultureInfo.InvariantCulture);
+
+                        // If index+1 >= length, Alias consisted of "FOO," which is a bad alias so return.
+                        if (index + 1 < aliasLookup.Length)
+                        {
+                            string parsedAliasName = aliasLookup.Substring(index + 1);
+
+                            // Fix bug 298286
+                            if ("dbnetlib" == parsedProtocol)
+                            {
+                                index = parsedAliasName.IndexOf(':');
+                                if (-1 != index && index + 1 < parsedAliasName.Length)
+                                {
+                                    parsedProtocol = parsedAliasName.Substring(0, index);
+                                    if (SqlConnectionString.ValidProtocol(parsedProtocol))
+                                    {
+                                        protocol = parsedProtocol;
+                                        host = parsedAliasName.Substring(index + 1);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                protocol = (string)SqlConnectionString.NetlibMapping()[parsedProtocol];
+                                if (null != protocol)
+                                {
+                                    host = parsedAliasName;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+#endif 
         // Obfuscate password to be sent to SQL Server
         // Blurb from the TDS spec at https://msdn.microsoft.com/en-us/library/dd304523.aspx
         // "Before submitting a password from the client to the server, for every byte in the password buffer 
@@ -51,10 +132,18 @@ namespace Microsoft.Data.SqlClient
             return password;
         }
 
+#if NETFRAMEWORK
+        [ResourceExposure(ResourceScope.None)] // SxS: we use this method for TDS login only
+        [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
+#else
         private const int NoProcessId = -1;
         private static int s_currentProcessId = NoProcessId;
+#endif // NETFRAMEWORK
         internal static int GetCurrentProcessIdForTdsLoginOnly()
         {
+#if NETFRAMEWORK
+            return Common.SafeNativeMethods.GetCurrentProcessId();
+#else
             if (s_currentProcessId == NoProcessId)
             {
                 // Pick up the process Id from the current process instead of randomly generating it.
@@ -67,18 +156,73 @@ namespace Microsoft.Data.SqlClient
                 System.Threading.Volatile.Write(ref s_currentProcessId, processId);
             }
             return s_currentProcessId;
+#endif // NETFRAMEWORK
         }
 
-
+#if NETFRAMEWORK
+        [SecurityPermission(SecurityAction.Assert, Flags = SecurityPermissionFlag.UnmanagedCode)]
+        [ResourceExposure(ResourceScope.None)] // SxS: we use this method for TDS login only
+        [ResourceConsumption(ResourceScope.Process, ResourceScope.Process)]
+#endif
         internal static int GetCurrentThreadIdForTdsLoginOnly()
         {
+#if NETFRAMEWORK
+#pragma warning disable 618
+            return AppDomain.GetCurrentThreadId(); // don't need this to be support fibres;
+#pragma warning restore 618
+#else
             return Environment.CurrentManagedThreadId;
+#endif // NETFRAMEWORK
         }
 
-
+#if NETFRAMEWORK
+        [ResourceExposure(ResourceScope.None)] // SxS: we use MAC address for TDS login only
+        [ResourceConsumption(ResourceScope.Machine, ResourceScope.Machine)]
+#else
         private static byte[] s_nicAddress = null;
+#endif // NETFRAMEWORK
         internal static byte[] GetNetworkPhysicalAddressForTdsLoginOnly()
         {
+#if NETFRAMEWORK
+            // NIC address is stored in NetworkAddress key.  However, if NetworkAddressLocal key
+            // has a value that is not zero, then we cannot use the NetworkAddress key and must
+            // instead generate a random one.  I do not fully understand why, this is simply what
+            // the native providers do.  As for generation, I use a random number generator, which
+            // means that different processes on the same machine will have different NIC address
+            // values on the server.  It is not ideal, but native does not have the same value for
+            // different processes either.
+
+            const string key = "NetworkAddress";
+            const string localKey = "NetworkAddressLocal";
+            const string folder = "SOFTWARE\\Description\\Microsoft\\Rpc\\UuidTemporaryData";
+
+            int result = 0;
+            byte[] nicAddress = null;
+
+            object temp = ADP.LocalMachineRegistryValue(folder, localKey);
+            if (temp is int)
+            {
+                result = (int)temp;
+            }
+
+            if (result <= 0)
+            {
+                temp = ADP.LocalMachineRegistryValue(folder, key);
+                if (temp is byte[])
+                {
+                    nicAddress = (byte[])temp;
+                }
+            }
+
+            if (null == nicAddress)
+            {
+                nicAddress = new byte[TdsEnums.MAX_NIC_SIZE];
+                Random random = new Random();
+                random.NextBytes(nicAddress);
+            }
+
+            return nicAddress;
+#else
             // For ProjectK\CoreCLR we don't want to take a dependency on the registry to try to read a value
             // that isn't usually set, so we'll just use a random value each time instead
             if (null == s_nicAddress)
@@ -90,6 +234,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             return s_nicAddress;
+#endif // NETFRAMEWORK
         }
 
         // translates remaining time in stateObj (from user specified timeout) to timeout value for SNI
