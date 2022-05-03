@@ -7,6 +7,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading;
+#if NETFRAMEWORK
+using System.Runtime.CompilerServices;
+using Microsoft.Data.Common;
+#endif
 
 namespace Microsoft.Data.SqlClient
 {
@@ -23,7 +27,7 @@ namespace Microsoft.Data.SqlClient
 
         private SNILoadHandle() : base(IntPtr.Zero, true)
         {
-            // From security review - SafeHandle guarantees this is only called once.
+            // SQL BU DT 346588 - from security review - SafeHandle guarantees this is only called once.
             // The reason for the safehandle is guaranteed initialization and termination of SNI to
             // ensure SNI terminates and cleans up properly.
             try
@@ -81,7 +85,12 @@ namespace Microsoft.Data.SqlClient
             return true;
         }
 
+#if NETFRAMEWORK
+// TODO: update references
+        public uint SNIStatus => _sniStatus;
+#else
         public uint Status => _sniStatus;
+#endif
 
         public EncryptionOptions Options => _encryptionOption;
 
@@ -101,7 +110,11 @@ namespace Microsoft.Data.SqlClient
 
                 if (null != stateObj)
                 {
+#if NETFRAMEWORK
+                    stateObj.ReadAsyncCallback(IntPtr.Zero, packet, error);
+#else
                     stateObj.ReadAsyncCallback(IntPtr.Zero, PacketHandle.FromNativePointer(packet), error);
+#endif // NETFRAMEWORK
                 }
             }
         }
@@ -122,7 +135,11 @@ namespace Microsoft.Data.SqlClient
 
                 if (null != stateObj)
                 {
+#if NETFRAMEWORK
+                    stateObj.WriteAsyncCallback(IntPtr.Zero, packet, error);
+#else
                     stateObj.WriteAsyncCallback(IntPtr.Zero, PacketHandle.FromNativePointer(packet), error);
+#endif // NETFRAMEWORK
                 }
             }
         }
@@ -144,10 +161,17 @@ namespace Microsoft.Data.SqlClient
             bool flushCache,
             bool fSync,
             bool fParallel,
+			#if NETFRAMEWORK
+            TransparentNetworkResolutionState transparentNetworkResolutionState,
+            int totalTimeout,
+			#endif
             SqlConnectionIPAddressPreference ipPreference,
             SQLDNSInfo cachedDNSInfo)
             : base(IntPtr.Zero, true)
         {
+#if NETFRAMEWORK
+            RuntimeHelpers.PrepareConstrainedRegions();
+#endif
             try
             { }
             finally
@@ -156,11 +180,21 @@ namespace Microsoft.Data.SqlClient
                 instanceName = new byte[256]; // Size as specified by netlibs.
                 if (ignoreSniOpenTimeout)
                 {
+                    // UNDONE: ITEM12001110 (DB Mirroring Reconnect) Old behavior of not truly honoring timeout presevered 
+                    //  for non-failover scenarios to avoid breaking changes as part of a QFE.  Consider fixing timeout
+                    //  handling in next full release and removing ignoreSniOpenTimeout parameter.
                     timeout = Timeout.Infinite; // -1 == native SNIOPEN_TIMEOUT_VALUE / INFINITE
                 }
 
+#if NETFRAMEWORK
+                int transparentNetworkResolutionStateNo = (int)transparentNetworkResolutionState;
+                _status = SNINativeMethodWrapper.SNIOpenSyncEx(myInfo, serverName, ref base.handle,
+                            spnBuffer, instanceName, flushCache, fSync, timeout, fParallel, transparentNetworkResolutionStateNo, totalTimeout,
+                            ADP.IsAzureSqlServerEndpoint(serverName), ipPreference, cachedDNSInfo);
+#else
                 _status = SNINativeMethodWrapper.SNIOpenSyncEx(myInfo, serverName, ref base.handle,
                             spnBuffer, instanceName, flushCache, fSync, timeout, fParallel, ipPreference, cachedDNSInfo);
+#endif // NETFRAMEWORK
             }
         }
 
