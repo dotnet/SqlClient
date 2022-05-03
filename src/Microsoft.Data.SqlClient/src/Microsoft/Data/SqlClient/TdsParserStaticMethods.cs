@@ -27,7 +27,7 @@ namespace Microsoft.Data.SqlClient
         {
             if (!ADP.IsEmpty(host))
             {
-                const String folder = "SOFTWARE\\Microsoft\\MSSQLServer\\Client\\ConnectTo";
+                const string folder = "SOFTWARE\\Microsoft\\MSSQLServer\\Client\\ConnectTo";
                 // Put a try...catch... around this so we don't abort ANY connection if we can't read the registry.
                 string aliasLookup = (string)ADP.LocalMachineRegistryValue(folder, host);
                 if (!ADP.IsEmpty(aliasLookup))
@@ -200,24 +200,24 @@ namespace Microsoft.Data.SqlClient
             byte[] nicAddress = null;
 
             object temp = ADP.LocalMachineRegistryValue(folder, localKey);
-            if (temp is int)
+            if (temp is int localKeyRegistryValue)
             {
-                result = (int)temp;
+                result = localKeyRegistryValue;
             }
 
             if (result <= 0)
             {
                 temp = ADP.LocalMachineRegistryValue(folder, key);
-                if (temp is byte[])
+                if (temp is byte[] keyRegistryValue)
                 {
-                    nicAddress = (byte[])temp;
+                    nicAddress = keyRegistryValue;
                 }
             }
 
             if (null == nicAddress)
             {
                 nicAddress = new byte[TdsEnums.MAX_NIC_SIZE];
-                Random random = new Random();
+                Random random = new();
                 random.NextBytes(nicAddress);
             }
 
@@ -228,7 +228,7 @@ namespace Microsoft.Data.SqlClient
             if (null == s_nicAddress)
             {
                 byte[] newNicAddress = new byte[TdsEnums.MAX_NIC_SIZE];
-                Random random = new Random();
+                Random random = new();
                 random.NextBytes(newNicAddress);
                 System.Threading.Interlocked.CompareExchange(ref s_nicAddress, newNicAddress, null);
             }
