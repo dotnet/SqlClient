@@ -662,8 +662,8 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionCspProvider.Windows.cs" />
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsParserSafeHandles.cs">
-      <Link>Microsoft\Data\SqlClient\TdsParserSafeHandles.cs</Link>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsParserSafeHandles.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\TdsParserSafeHandles.Windows.cs</Link>
     </Compile>
   </ItemGroup>
   <!-- Unix only -->

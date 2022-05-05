@@ -539,8 +539,8 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsParameterSetter.cs">
       <Link>Microsoft\Data\SqlClient\TdsParameterSetter.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsParserSafeHandles.cs">
-      <Link>Microsoft\Data\SqlClient\TdsParserSafeHandles.cs</Link>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsParserSafeHandles.Windows.cs">
+      <Link>Microsoft\Data\SqlClient\TdsParserSafeHandles.Windows.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsRecordBufferSetter.cs">
       <Link>Microsoft\Data\SqlClient\TdsRecordBufferSetter.cs</Link>
