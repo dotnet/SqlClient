@@ -475,9 +475,6 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsParameterSetter.cs">
       <Link>Microsoft\Data\SqlClient\TdsParameterSetter.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsParserSafeHandles.cs">
-      <Link>Microsoft\Data\SqlClient\TdsParserSafeHandles.cs</Link>
-    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsRecordBufferSetter.cs">
       <Link>Microsoft\Data\SqlClient\TdsRecordBufferSetter.cs</Link>
     </Compile>
@@ -665,6 +662,9 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionCertificateStoreProvider.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionCngProvider.Windows.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlColumnEncryptionCspProvider.Windows.cs" />
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\TdsParserSafeHandles.cs">
+      <Link>Microsoft\Data\SqlClient\TdsParserSafeHandles.cs</Link>
+    </Compile>
   </ItemGroup>
   <!-- Unix only -->
   <ItemGroup Condition="'$(TargetsUnix)' == 'true'">

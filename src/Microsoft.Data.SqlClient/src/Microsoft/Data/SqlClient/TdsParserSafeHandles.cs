@@ -5,10 +5,10 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 #if NETFRAMEWORK
-using System.Runtime.CompilerServices;
 using Microsoft.Data.Common;
 #endif
 
@@ -53,7 +53,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         try
                         {
-                            UInt32 value = 0;
+                            uint value = 0;
                             // Query OS to find out whether encryption is supported.
                             SNINativeMethodWrapper.SNIQueryInfo(SNINativeMethodWrapper.QTypes.SNI_QUERY_CLIENT_ENCRYPT_POSSIBLE, ref value);
                             _clientOSEncryptionSupport = value != 0;
@@ -85,12 +85,7 @@ namespace Microsoft.Data.SqlClient
             return true;
         }
 
-#if NETFRAMEWORK
-// TODO: update references
-        public uint SNIStatus => _sniStatus;
-#else
         public uint Status => _sniStatus;
-#endif
 
         public EncryptionOptions Options => _encryptionOption;
 
@@ -161,17 +156,15 @@ namespace Microsoft.Data.SqlClient
             bool flushCache,
             bool fSync,
             bool fParallel,
-			#if NETFRAMEWORK
+#if NETFRAMEWORK
             TransparentNetworkResolutionState transparentNetworkResolutionState,
             int totalTimeout,
-			#endif
+#endif
             SqlConnectionIPAddressPreference ipPreference,
             SQLDNSInfo cachedDNSInfo)
             : base(IntPtr.Zero, true)
         {
-#if NETFRAMEWORK
             RuntimeHelpers.PrepareConstrainedRegions();
-#endif
             try
             { }
             finally

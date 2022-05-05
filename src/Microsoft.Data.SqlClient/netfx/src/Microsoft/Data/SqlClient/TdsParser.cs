@@ -517,7 +517,7 @@ namespace Microsoft.Data.SqlClient
             // Clean up IsSQLDNSCachingSupported flag from previous status
             _connHandler.IsSQLDNSCachingSupported = false;
 
-            UInt32 sniStatus = SNILoadHandle.SingletonInstance.SNIStatus;
+            UInt32 sniStatus = SNILoadHandle.SingletonInstance.Status;
             if (sniStatus != TdsEnums.SNI_SUCCESS)
             {
                 _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
