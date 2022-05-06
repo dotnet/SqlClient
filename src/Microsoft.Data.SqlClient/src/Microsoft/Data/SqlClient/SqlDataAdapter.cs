@@ -171,6 +171,36 @@ namespace Microsoft.Data.SqlClient
             return _commandSet.ExecuteNonQuery();
         }
 
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/Fill/*' />
+        new public int Fill(DataSet dataSet)
+        {
+            return Fill(dataSet, DefaultSourceTableName, SelectCommand.ExecuteReader(), 0, 0);
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/Fill/*' />
+        new public int Fill(DataSet dataSet, string srcTable)
+        {
+            return Fill(dataSet, srcTable, SelectCommand.ExecuteReader(), 0, 0);
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/Fill/*' />
+        new public int Fill(DataSet dataSet, int startRecord, int maxRecord, string srcTable)
+        {
+            return Fill(dataSet, srcTable, SelectCommand.ExecuteReader(), startRecord, maxRecord);
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/Fill/*' />
+        new public int Fill(DataTable dataTable)
+        {
+            return Fill(dataTable, SelectCommand.ExecuteReader());
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/Fill/*' />
+        new public int Fill(int startRecord, int maxRecord, params DataTable[] dataTables)
+        {
+            return Fill(dataTables, SelectCommand.ExecuteReader(), startRecord, maxRecord);
+        }
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/GetBatchedParameter/*' />
         protected override IDataParameter GetBatchedParameter(int commandIdentifier, int parameterIndex)
         {
