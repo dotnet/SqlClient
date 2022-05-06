@@ -493,18 +493,20 @@ namespace Microsoft.Data.SqlClient
                               SqlInternalConnectionTds connHandler,
                               bool ignoreSniOpenTimeout,
                               long timerExpire,
-                              bool encrypt,
-                              bool trustServerCert,
-                              bool integratedSecurity,
+                              SqlConnectionString connectionOptions,
                               bool withFailover,
                               bool isFirstTransparentAttempt,
-                              SqlAuthenticationMethod authType,
-                              string certificate,
                               ServerCertificateValidationCallback serverCallback,
                               ClientCertificateRetrievalCallback clientCallback,
                               bool useOriginalAddressInfo,
                               bool disableTnir)
         {
+            bool encrypt = connectionOptions.Encrypt;
+            bool trustServerCert = connectionOptions.TrustServerCertificate;
+            bool integratedSecurity = connectionOptions.IntegratedSecurity;
+            SqlAuthenticationMethod authType = connectionOptions.Authentication;
+            string certificate = connectionOptions.Certificate;
+
             if (_state != TdsParserState.Closed)
             {
                 Debug.Fail("TdsParser.Connect called on non-closed connection!");
@@ -542,8 +544,18 @@ namespace Microsoft.Data.SqlClient
             if (integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated)
             {
                 LoadSSPILibrary();
-                // now allocate proper length of buffer
-                _sniSpnBuffer = new byte[SNINativeMethodWrapper.SniMaxComposedSpnLength];
+                if (!string.IsNullOrEmpty(serverInfo.ServerSPN))
+                {
+                    byte[] srvSPN = Encoding.Unicode.GetBytes(serverInfo.ServerSPN);
+                    Trace.Assert(srvSPN.Length <= SNINativeMethodWrapper.SniMaxComposedSpnLength, "The provider SPN length exceeded the buffer size.");
+                    _sniSpnBuffer = srvSPN;
+                    SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Server SPN `{0}` from the connection string is used.", serverInfo.ServerSPN);
+                }
+                else
+                {
+                    // now allocate proper length of buffer
+                    _sniSpnBuffer = new byte[SNINativeMethodWrapper.SniMaxComposedSpnLength];
+                }
                 SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> SSPI or Active Directory Authentication Library for SQL Server based integrated authentication");
             }
             else
