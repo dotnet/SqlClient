@@ -53,6 +53,10 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("Database = master")]
         [InlineData("Enclave Attestation Url = http://dymmyurl")]
         [InlineData("Encrypt = true")]
+        [InlineData("Encrypt = false")]
+        [InlineData("Encrypt = Mandatory")]
+        [InlineData("Encrypt = Optional")]
+        [InlineData("Encrypt = Strict")]
         [InlineData("Enlist = false")]
         [InlineData("Initial Catalog = Northwind; Failover Partner = randomserver.sys.local")]
         [InlineData("Initial Catalog = tempdb")]
@@ -82,6 +86,9 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("User Instance = true")]
         [InlineData("Workstation ID = myworkstation")]
         [InlineData("WSID = myworkstation")]
+        [InlineData("IsTDS8 = true")]
+        [InlineData("IsTDS8 = false")]
+        [InlineData("HostNameInCertificate = tds.test.com")]
         public void ConnectionStringTests(string connectionString)
         {
             ExecuteConnectionStringTests(connectionString);
