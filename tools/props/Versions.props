@@ -26,14 +26,14 @@
   </PropertyGroup>
   <!-- NetFx and NetCore project dependencies -->
   <PropertyGroup>
-    <AzureIdentityVersion>1.5.0</AzureIdentityVersion>
-    <MicrosoftIdentityClientVersion>4.30.1</MicrosoftIdentityClientVersion>
-    <MicrosoftIdentityModelProtocolsOpenIdConnectVersion>6.8.0</MicrosoftIdentityModelProtocolsOpenIdConnectVersion>
-    <MicrosoftIdentityModelJsonWebTokensVersion>6.8.0</MicrosoftIdentityModelJsonWebTokensVersion>
+    <AzureIdentityVersion>1.6.0</AzureIdentityVersion>
+    <MicrosoftIdentityClientVersion>4.43.2</MicrosoftIdentityClientVersion>
+    <MicrosoftIdentityModelProtocolsOpenIdConnectVersion>6.17.0</MicrosoftIdentityModelProtocolsOpenIdConnectVersion>
+    <MicrosoftIdentityModelJsonWebTokensVersion>6.17.0</MicrosoftIdentityModelJsonWebTokensVersion>
     <SystemBuffersVersion>4.5.1</SystemBuffersVersion>
     <SystemIOVersion>4.3.0</SystemIOVersion>
     <SystemTextEncodingsWebVersion>4.7.2</SystemTextEncodingsWebVersion>
-    <MicrosoftSourceLinkGitHubVersion>1.0.0</MicrosoftSourceLinkGitHubVersion>
+    <MicrosoftSourceLinkGitHubVersion>1.1.1</MicrosoftSourceLinkGitHubVersion>
   </PropertyGroup>
   <!-- NetCore project dependencies -->
   <PropertyGroup>
@@ -55,14 +55,14 @@
   </PropertyGroup>
   <!-- AKV Provider project dependencies -->
   <PropertyGroup>
-    <AzureCoreVersion>[1.20.0,2.0.0)</AzureCoreVersion>
-    <AzureSecurityKeyVaultKeysVersion>[4.0.3,5.0.0)</AzureSecurityKeyVaultKeysVersion>
+    <AzureCoreVersion>[1.24.0,2.0.0)</AzureCoreVersion>
+    <AzureSecurityKeyVaultKeysVersion>[4.3.0,5.0.0)</AzureSecurityKeyVaultKeysVersion>
     <MicrosoftExtensionsCachingMemoryVersion>5.0.0</MicrosoftExtensionsCachingMemoryVersion>
   </PropertyGroup>
   <!-- Test Project Dependencies -->
   <PropertyGroup>
     <MicrosoftDotNetPlatformAbstractionsVersion>3.1.1</MicrosoftDotNetPlatformAbstractionsVersion>
-    <MicrosoftIdentityModelClientsActiveDirectoryVersion>5.2.6</MicrosoftIdentityModelClientsActiveDirectoryVersion>
+    <MicrosoftIdentityModelClientsActiveDirectoryVersion>5.2.9</MicrosoftIdentityModelClientsActiveDirectoryVersion>
     <MicrosoftNETTestSdkVersion>15.9.0</MicrosoftNETTestSdkVersion>
     <MicrosoftWindowsCompatibilityVersion>3.1.0</MicrosoftWindowsCompatibilityVersion>
     <NewtonsoftJsonVersion>13.0.1</NewtonsoftJsonVersion>
@@ -71,13 +71,13 @@
     <SystemDataOdbcVersion21>4.5.0</SystemDataOdbcVersion21>
     <SystemDataOdbcVersion>4.6.0</SystemDataOdbcVersion>
     <SystemNetSocketsVersion>4.3.0</SystemNetSocketsVersion>
-    <SystemIdentityModelTokensJwtVersion>6.8.0</SystemIdentityModelTokensJwtVersion>
+    <SystemIdentityModelTokensJwtVersion>6.17.0</SystemIdentityModelTokensJwtVersion>
     <XunitVersion>2.4.1</XunitVersion>
     <MicrosoftDotNetRemoteExecutorVersion>5.0.0-beta.20206.4</MicrosoftDotNetRemoteExecutorVersion>
     <MicrosoftNETCoreRuntimeCoreCLRVersion>2.0.8</MicrosoftNETCoreRuntimeCoreCLRVersion>
-    <MicrosoftSqlServerSqlManagementObjectsVersion>161.41011.9</MicrosoftSqlServerSqlManagementObjectsVersion>
-    <MicrosoftSqlServerTypesVersion>10.50.1600.1</MicrosoftSqlServerTypesVersion>
-    <BenchmarkDotNetVersion>0.12.1</BenchmarkDotNetVersion>
+    <MicrosoftSqlServerSqlManagementObjectsVersion>161.47008.0</MicrosoftSqlServerSqlManagementObjectsVersion>
+    <MicrosoftSqlServerTypesVersion>14.0.1016.290</MicrosoftSqlServerTypesVersion>
+    <BenchmarkDotNetVersion>0.13.1</BenchmarkDotNetVersion>
     <SystemServiceProcessServiceControllerVersion>6.0.0</SystemServiceProcessServiceControllerVersion>
   </PropertyGroup>
   <PropertyGroup>
