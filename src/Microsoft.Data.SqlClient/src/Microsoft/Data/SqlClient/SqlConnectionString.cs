@@ -91,7 +91,6 @@ namespace Microsoft.Data.SqlClient
             internal const string Current_Language = DbConnectionStringKeywords.CurrentLanguage;
             internal const string Data_Source = DbConnectionStringKeywords.DataSource;
             internal const string Encrypt = DbConnectionStringKeywords.Encrypt;
-
             internal const string IsTDS8 = DbConnectionStringKeywords.IsTDS8;
             internal const string HostNameInCertificate = DbConnectionStringKeywords.HostNameInCertificate;
             internal const string Enlist = DbConnectionStringKeywords.Enlist;

@@ -712,6 +712,7 @@ namespace Microsoft.Data.Common
 
         internal static bool TryToConvertToSqlConnectionEncryptionOption(string value, out SqlConnectionEncryptionOption result)
         {
+
             // SqlConnectionEncryptionOption has length of 3
             Debug.Assert(Enum.GetNames(typeof(SqlConnectionEncryptionOption)).Length == 3, "SqlConnectionEncryption enum has changed, update needed. Accepted values are:" +
                 "Optional, false, no, Mandatory, true, yes and Strict");

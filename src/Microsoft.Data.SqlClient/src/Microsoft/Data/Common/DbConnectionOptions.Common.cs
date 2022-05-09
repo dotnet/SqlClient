@@ -135,12 +135,6 @@ namespace Microsoft.Data.Common
 
         internal bool TryGetParsetableValue(string key, out string value) => _parsetable.TryGetValue(key, out value);
 
-        //internal SqlConnectionEncryptionOption TryGetSqlConnectionEncryptionValue()
-        //{
-        //    return _parsetable.TryGetValue(KEY.Encrypt, out string value) && value != null ?
-        //         ConvertValueToSqlConnectionEncryptionOption(value);
-        //}
-
         internal SqlConnectionEncryptionOption ConvertValueToSqlConnectionEncryptionOption(string stringValue)
         {
             if (CompareInsensitiveInvariant(stringValue, "yes") || CompareInsensitiveInvariant(stringValue, "true") ||

@@ -86,7 +86,7 @@ namespace Microsoft.Data.SqlClient
 
         private static EncryptionOptions s_sniSupportedEncryptionOption = TdsParserStateObjectFactory.Singleton.EncryptionOptions;
 
-        private EncryptionOptions _encryptionOption =  s_sniSupportedEncryptionOption;
+        private EncryptionOptions _encryptionOption = s_sniSupportedEncryptionOption;
 
         private SqlInternalTransaction _currentTransaction;
         private SqlInternalTransaction _pendingTransaction;    // pending transaction for 2005 and beyond.
@@ -655,7 +655,6 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-
         private void SendPreLoginHandshake(byte[] instanceName, SqlConnectionEncryptionOption encrypt, bool isTDS8, bool integratedSecurity, bool trustServerCert)
         {
             // PreLoginHandshake buffer consists of:
@@ -956,7 +955,7 @@ namespace Microsoft.Data.SqlClient
                                 {
                                     _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByClient(), "", 0));
                                     _physicalStateObj.Dispose();
-                                    //      ThrowExceptionAndWarning(_physicalStateObj);
+                                    ThrowExceptionAndWarning(_physicalStateObj);
                                 }
 
                                 break;

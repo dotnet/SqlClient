@@ -88,7 +88,6 @@ namespace Microsoft.Data.SqlClient
         internal int _inBytesUsed = 0;                   // number of bytes used in internal read buffer
         internal int _inBytesRead = 0;                   // number of bytes read into internal read buffer
         internal int _inBytesPacket = 0;                   // number of bytes left in packet
-
         internal int _spid;                                 // SPID of the current connection
 
         // Packet state variables
@@ -322,7 +321,6 @@ namespace Microsoft.Data.SqlClient
             SetPacketSize(_parser._physicalStateObj._outBuff.Length);
 
             SNINativeMethodWrapper.ConsumerInfo myInfo = CreateConsumerInfo(async);
-
             SQLDNSInfo cachedDNSInfo;
             bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(_parser.FQDNforDNSCahce, out cachedDNSInfo);
 

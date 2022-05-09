@@ -26,7 +26,6 @@ namespace Microsoft.Data.SqlClient.SNI
         private readonly string _serverNameIndication;
         private readonly object _sendSync;
         private readonly bool _isTDS8;
-
         private Stream _stream;
         private NamedPipeClientStream _pipeStream;
         private SslOverTdsStream _sslOverTdsStream;

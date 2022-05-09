@@ -384,7 +384,6 @@ namespace Microsoft.Data.SqlClient
         public new void RemoveAt(int index) { }
     }
 
-
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlBulkCopyOptions.xml' path='docs/members[@name="SqlBulkCopyOptions"]/SqlBulkCopyOptions/*'/>
     [System.FlagsAttribute]
     public enum SqlBulkCopyOptions

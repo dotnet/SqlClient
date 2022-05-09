@@ -787,7 +787,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         internal abstract void CreatePhysicalSNIHandle(string serverName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[][] spnBuffer, bool flushCache, bool async, bool fParallel,
-                                SqlConnectionIPAddressPreference iPAddressPreference, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo, bool isIntegratedSecurity = false, bool isTDS8 = false, string hostNameInCertificate = "", string databaseName="", ApplicationIntent applicationIntent =ApplicationIntent.ReadWrite);
+                                SqlConnectionIPAddressPreference iPAddressPreference, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo, bool isIntegratedSecurity = false, bool isTDS8 = false, string hostNameInCertificate = "", string databaseName = "", ApplicationIntent applicationIntent = ApplicationIntent.ReadWrite);
 
         internal abstract void AssignPendingDNSInfo(string userProtocol, string DNSCacheKey, ref SQLDNSInfo pendingDNSInfo);
 
