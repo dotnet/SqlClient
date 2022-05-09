@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             Assert.Throws<ArgumentException>(() => command.ExecuteScalar());
 
             command.CommandText = baseCommandText;
-           var ex = Assert.Throws<SqlException>(() => command.ExecuteScalar());
+            var ex = Assert.Throws<SqlException>(() => command.ExecuteScalar());
             Assert.StartsWith("Could not find stored procedure", ex.Message);
         }
     }
