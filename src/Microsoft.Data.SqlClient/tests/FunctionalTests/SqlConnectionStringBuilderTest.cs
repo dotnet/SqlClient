@@ -344,6 +344,19 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(expected, builder.TrustServerCertificate);
         }
 
+        [Theory]
+        [InlineData("Encrypt=yes", SqlConnectionEncryptionOption.Mandatory)]
+        [InlineData("Encrypt=no", SqlConnectionEncryptionOption.Optional)]
+        [InlineData("Encrypt=true", SqlConnectionEncryptionOption.Mandatory)]
+        [InlineData("Encrypt=false", SqlConnectionEncryptionOption.Optional)]
+        [InlineData("Encrypt=strict", SqlConnectionEncryptionOption.Strict)]
+        public void SetEncryptInConnectionStringMapsToEnum(string connectionString, SqlConnectionEncryptionOption expected)
+        {
+            SqlConnection sqlConnection = new SqlConnection(connectionString);
+            SqlConnectionStringBuilder scsb =  new (sqlConnection.ConnectionString);
+            Assert.Equal(expected, scsb.Encrypt);
+        }
+
         internal void ExecuteConnectionStringTests(string connectionString)
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString);
