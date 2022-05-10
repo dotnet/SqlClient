@@ -872,28 +872,34 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Null(ex.ParamName);
         }
 
-        [Fact]
-        public void ConnectionString_OtherKeywords()
+        [Theory]
+        [InlineData("Application Name=test")]
+        [InlineData("App=test")]
+        // [InlineData("Connection Reset=true")] // see https://github.com/dotnet/SqlClient/issues/17
+        [InlineData("Current Language=test")]
+        [InlineData("Language=test")]
+        [InlineData("Encrypt=false")]
+        [InlineData("Encrypt=true")]
+        [InlineData("Encrypt=strict")]
+        [InlineData("Encrypt=mandatory")]
+        [InlineData("Encrypt=optional")]
+        [InlineData("IsTDS8=false")]
+        [InlineData("IsTDS8=true")]
+        [InlineData("HostNameInCertificate=tds.test.com")]
+        [InlineData("Enlist=false")]
+        [InlineData("Enlist=true")]
+        [InlineData("Integrated Security=true")]
+        [InlineData("Trusted_connection=true")]
+        [InlineData("Max Pool Size=10")]
+        [InlineData("Min Pool Size=10")]
+        [InlineData("Pooling=true")]
+        [InlineData("attachdbfilename=dunno")]
+        [InlineData("extended properties=dunno")]
+        [InlineData("initial file name=dunno")]
+        public void ConnectionString_OtherKeywords(string connectionString)
         {
             SqlConnection cn = new SqlConnection();
-            cn.ConnectionString = "Application Name=test";
-            cn.ConnectionString = "App=test";
-            // see https://github.com/dotnet/SqlClient/issues/17
-            //cn.ConnectionString = "Connection Reset=true";
-            cn.ConnectionString = "Current Language=test";
-            cn.ConnectionString = "Language=test";
-            cn.ConnectionString = "Encrypt=false";
-            cn.ConnectionString = "Encrypt=true";
-            cn.ConnectionString = "Enlist=false";
-            cn.ConnectionString = "Enlist=true";
-            cn.ConnectionString = "Integrated Security=true";
-            cn.ConnectionString = "Trusted_connection=true";
-            cn.ConnectionString = "Max Pool Size=10";
-            cn.ConnectionString = "Min Pool Size=10";
-            cn.ConnectionString = "Pooling=true";
-            cn.ConnectionString = "attachdbfilename=dunno";
-            cn.ConnectionString = "extended properties=dunno";
-            cn.ConnectionString = "initial file name=dunno";
+            cn.ConnectionString = connectionString;
         }
 
         [Fact]
