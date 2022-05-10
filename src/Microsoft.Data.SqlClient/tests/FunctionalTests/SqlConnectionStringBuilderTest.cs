@@ -314,6 +314,36 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal(expected, builder.ConnectionString);
         }
 
+        [Theory]
+        [InlineData(SqlConnectionEncryptionOption.Strict, false, true)]
+        [InlineData(SqlConnectionEncryptionOption.Strict, true, true)]
+        [InlineData(SqlConnectionEncryptionOption.Mandatory, true, true)]
+        [InlineData(SqlConnectionEncryptionOption.Mandatory, false, false)]
+        [InlineData(SqlConnectionEncryptionOption.Optional, false, false)]
+        [InlineData(SqlConnectionEncryptionOption.Optional, true, true)]
+        public void SetEncryptChangesIsTDS8(SqlConnectionEncryptionOption encrypt, bool isTDS8, bool expected)
+        {
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
+            builder.IsTDS8 = isTDS8;
+            builder.Encrypt = encrypt;
+            Assert.Equal(expected, builder.IsTDS8);
+        }
+
+        [Theory]
+        [InlineData(SqlConnectionEncryptionOption.Strict, false, false)]
+        [InlineData(SqlConnectionEncryptionOption.Strict, true, false)]
+        [InlineData(SqlConnectionEncryptionOption.Mandatory, true, true)]
+        [InlineData(SqlConnectionEncryptionOption.Mandatory, false, false)]
+        [InlineData(SqlConnectionEncryptionOption.Optional, false, false)]
+        [InlineData(SqlConnectionEncryptionOption.Optional, true, true)]
+        public void SetEncryptChangesTrustedServerCertificate(SqlConnectionEncryptionOption encrypt, bool trustServerCertificate, bool expected)
+        {
+            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
+            builder.TrustServerCertificate = trustServerCertificate;
+            builder.Encrypt = encrypt;
+            Assert.Equal(expected, builder.TrustServerCertificate);
+        }
+
         internal void ExecuteConnectionStringTests(string connectionString)
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(connectionString);
