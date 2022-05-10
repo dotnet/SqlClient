@@ -887,7 +887,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("Encrypt=optional")]
         [InlineData("IsTDS8=false")]
         [InlineData("IsTDS8=true")]
-        [InlineData("HostNameInCertificate=tds.test.com")]
+        [InlineData("Host Name In Certificate=tds.test.com")]
         [InlineData("Enlist=false")]
         [InlineData("Enlist=true")]
         [InlineData("Integrated Security=true")]
