@@ -880,6 +880,8 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("Language=test")]
         [InlineData("Encrypt=false")]
         [InlineData("Encrypt=true")]
+        [InlineData("Encrypt=yes")]
+        [InlineData("Encrypt=no")]
         [InlineData("Encrypt=strict")]
         [InlineData("Encrypt=mandatory")]
         [InlineData("Encrypt=optional")]
