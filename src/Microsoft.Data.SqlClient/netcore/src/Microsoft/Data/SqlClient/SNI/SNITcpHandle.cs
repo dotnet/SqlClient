@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient.SNI
         private NetworkStream _tcpStream;
         private readonly string _hostNameInCertificate;
         private readonly bool _isTDSS;
-        private readonly string _serverIndicationName;
+        private readonly string _serverNameIndication;
 
         private Stream _stream;
         private SslStream _sslStream;
@@ -133,7 +133,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 _targetServer = serverName;
                 _isTDSS = isTDSS;
                 _hostNameInCertificate = hostNameInCertificate;
-                _serverIndicationName = serverNameIndication;
+                _serverNameIndication = serverNameIndication;
                 _sendSync = new object();
 
                 SQLDNSInfo cachedDNSInfo;
@@ -604,8 +604,8 @@ namespace Microsoft.Data.SqlClient.SNI
 
                         SslClientAuthenticationOptions sslClientOptions = new()
                         {
-                            TargetHost = _serverIndicationName,
-                            ApplicationProtocols = new List<SslApplicationProtocol>() { new(TdsEnums.TDS8) },
+                            TargetHost = _serverNameIndication,
+                            ApplicationProtocols = new List<SslApplicationProtocol>(5) { new(TdsEnums.s_tDS8Protocol) },
                             EnabledSslProtocols = SupportedProtocols,
                             ClientCertificates = null,
                         };
@@ -614,7 +614,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     }
                     else
                     {
-                        _sslStream.AuthenticateAsClient(_serverIndicationName, null, SupportedProtocols, false);
+                        _sslStream.AuthenticateAsClient(_serverNameIndication, null, SupportedProtocols, false);
                     }
                     if (_sslOverTdsStream is not null)
                     {
@@ -676,7 +676,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             else
             {
-                serverNameToValidate = _hostNameInCertificate;
+                serverNameToValidate = _targetServer;
             }
 
             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, Certificate will be validated for Target Server name", args0: _connectionId);

@@ -673,7 +673,7 @@ namespace Microsoft.Data.SqlClient
 
             // UNDONE - send "" for instance now, need to fix later
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Sending prelogin handshake");
-            SendPreLoginHandshake(instanceName, encrypt, isTDS8!, string.IsNullOrEmpty(certificate), useOriginalAddressInfo);
+            SendPreLoginHandshake(instanceName, encrypt, isTDS8, !string.IsNullOrEmpty(certificate), useOriginalAddressInfo);
 
             _connHandler.TimeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.SendPreLoginHandshake);
             _connHandler.TimeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake);
@@ -1257,7 +1257,7 @@ namespace Microsoft.Data.SqlClient
                                 // NOT_SUP: No encryption.
                                 break;
 
-                            case (EncryptionOptions.Strict):
+                            case (EncryptionOptions.STRICT):
                                 if ((serverOption & EncryptionOptions.OPTIONS_MASK) == EncryptionOptions.REQ)
                                 {
                                     _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByClient(), "", 0));
