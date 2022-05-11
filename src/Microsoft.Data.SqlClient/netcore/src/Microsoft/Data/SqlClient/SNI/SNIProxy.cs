@@ -20,7 +20,6 @@ namespace Microsoft.Data.SqlClient.SNI
     {
         private const int DefaultSqlServerPort = 1433;
         private const int DefaultSqlServerDacPort = 1434;
-        private const int DefaultSqlServerTDS8Port = 4433;
         private const string SqlServerSpnHeader = "MSSQLSvc";
         private const string TDS8SNIServerKey = "Server";
         private const string TDS8SNIInstanceKey = "Instance";
@@ -336,7 +335,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             else
             {
-                port = isAdminConnection ? DefaultSqlServerDacPort : (isTDS8 ? DefaultSqlServerTDS8Port : DefaultSqlServerPort);
+                port = isAdminConnection ? DefaultSqlServerDacPort : DefaultSqlServerPort;
             }
 
             return new SNITCPHandle(hostName, port, timerExpire, parallel, ipPreference, cachedFQDN, ref pendingDNSInfo, isTDS8, hostNameInCertificate, serverNameIndication);
