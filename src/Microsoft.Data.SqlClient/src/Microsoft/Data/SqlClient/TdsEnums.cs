@@ -345,7 +345,7 @@ namespace Microsoft.Data.SqlClient
         public const int SQL2005_MAJOR = 0x72;     // the high-byte is sufficient to distinguish later versions
         public const int SQL2008_MAJOR = 0x73;
         public const int SQL2012_MAJOR = 0x74;
-        public const string TDS8 = "tds/8.0"; //TDS8
+        public const string TDS8_Protocol = "tds/8.0"; //TDS8
 
         // Increments:
         public const int SQL2000SP1_INCREMENT = 0x00;
@@ -1121,7 +1121,7 @@ namespace Microsoft.Data.SqlClient
     public enum SqlConnectionEncryptionOption
     {
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionOption.xml' path='docs/members[@name="SqlConnectionEncryptionOption"]/Optional/*' />
-        Optional =0,
+        Optional = 0,
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionOption.xml' path='docs/members[@name="SqlConnectionEncryptionOption"]/Mandatory/*' />
         Mandatory = 1,
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionOption.xml' path='docs/members[@name="SqlConnectionEncryptionOption"]/Strict/*' />

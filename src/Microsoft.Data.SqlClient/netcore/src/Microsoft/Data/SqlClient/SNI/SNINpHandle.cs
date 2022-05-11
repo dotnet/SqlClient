@@ -3,7 +3,6 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.IO.Pipes;
@@ -324,22 +323,13 @@ namespace Microsoft.Data.SqlClient.SNI
                 {
                     if (_isTDS8)
                     {
-#if NETCOREAPP
-                        SslApplicationProtocol TDS8 = new("tds/8.0");
-
-                        SslClientAuthenticationOptions sslClientOptions = new()
-                        {
-                            TargetHost = _serverNameIndication,
-                            ApplicationProtocols = new List<SslApplicationProtocol>() { TDS8 },
-                            EnabledSslProtocols = SupportedProtocols,
-                            ClientCertificates = null,
-                        };
-                        _sslStream.AuthenticateAsClientAsync(sslClientOptions).Wait();
+#if !NETSTANDARD2_0 
+                        AuthenticateClientAsync(_sslStream, _serverNameIndication, null);
 #endif
                     }
                     else
                     {
-                        _sslStream.AuthenticateAsClient(_targetServer, null, SupportedProtocols, false);
+                        _sslStream.AuthenticateAsClient(_targetServer, null, s_supportedProtocols, false);
                     }
                     if (_sslOverTdsStream is not null)
                     {

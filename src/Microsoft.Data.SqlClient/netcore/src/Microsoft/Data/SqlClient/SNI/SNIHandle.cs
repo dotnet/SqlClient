@@ -3,7 +3,12 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
+using System.Net.Security;
 using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Microsoft.Data.SqlClient.SNI
 {
@@ -15,12 +20,28 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <summary>
         /// Exclude TLS 1.3 (not fully supported).
         /// </summary>
-        protected readonly SslProtocols SupportedProtocols = LocalAppContextSwitches.UseSystemDefaultSecureProtocols ? SslProtocols.None : SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls
+        protected static readonly SslProtocols s_supportedProtocols = LocalAppContextSwitches.UseSystemDefaultSecureProtocols ? SslProtocols.None : SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls
         //protected readonly SslProtocols SupportedProtocols = SslProtocols.Tls12 | SslProtocols.Tls11 | SslProtocols.Tls
 #pragma warning disable CS0618 // Type or member is obsolete
             | SslProtocols.Ssl2 | SslProtocols.Ssl3
 #pragma warning restore CS0618 // Type or member is obsolete
             ;
+
+#if !NETSTANDARD2_0
+        protected static readonly List<SslApplicationProtocol> s_tdsProtocols = new List<SslApplicationProtocol>(7) { new(TdsEnums.TDS8_Protocol) };
+
+        protected static async Task AuthenticateClientAsync(SslStream sslStream, string serverNameIndication, X509CertificateCollection certificate)
+        {
+            SslClientAuthenticationOptions sslClientOptions = new()
+            {
+                TargetHost = serverNameIndication,
+                ApplicationProtocols = s_tdsProtocols,
+                EnabledSslProtocols = s_supportedProtocols,
+                ClientCertificates = certificate
+            };
+            await sslStream.AuthenticateAsClientAsync(sslClientOptions, CancellationToken.None);
+        }
+#endif
 
         /// <summary>
         /// Dispose class

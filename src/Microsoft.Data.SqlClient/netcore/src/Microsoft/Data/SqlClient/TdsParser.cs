@@ -414,7 +414,7 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.TryTraceEvent("TdsParser.Connect | SEC | SSPI or Active Directory Authentication Library loaded for SQL Server based integrated authentication");
             }
 
-            // if Strict encryotion is chosen TDS8 should be used and trust server certificate should be false.
+            // if Strict encryption is chosen TDS8 should be used and trust server certificate should be false.
             if (encrypt == SqlConnectionEncryptionOption.Strict)
             {
                 isTDS8 = true;
