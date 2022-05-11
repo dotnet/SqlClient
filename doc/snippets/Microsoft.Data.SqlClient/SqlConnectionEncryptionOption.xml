@@ -3,8 +3,7 @@
   <members name="SqlConnectionEncryptionOption">
     <SqlConnectionEncryptionOption>
       <summary>
-
-        Note that these settings cannot be used to bypass encryption and gain access to plaintext data. For details, see <see href="https://docs.microsoft.com/sql/relational-databases/security/encryption/always-encrypted-database-engine">Always Encrypted (Database Engine)</see>.
+        These options are used to control encryption behavior of the communication between the server and the client.</see>.
       </summary>
       <remarks>To be added.</remarks>
     </SqlConnectionEncryptionOption>
