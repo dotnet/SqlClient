@@ -21,7 +21,7 @@ namespace Microsoft.Data.SqlClient
         /// This is a static cache instance meant to hold instances of "PublicClientApplication" mapping to information available in PublicClientAppKey.
         /// The purpose of this cache is to allow re-use of Access Tokens fetched for a user interactively or with any other mode
         /// to avoid interactive authentication request every-time, within application scope making use of MSAL's userTokenCache.
-        /// test for pipeline
+        /// test for pipeline test2
         /// </summary>
         private static ConcurrentDictionary<PublicClientAppKey, IPublicClientApplication> s_pcaMap
             = new ConcurrentDictionary<PublicClientAppKey, IPublicClientApplication>();
