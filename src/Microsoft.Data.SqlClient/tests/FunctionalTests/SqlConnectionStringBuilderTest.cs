@@ -54,6 +54,8 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("Enclave Attestation Url = http://dymmyurl")]
         [InlineData("Encrypt = true")]
         [InlineData("Encrypt = false")]
+        [InlineData("Encrypt = yes")]
+        [InlineData("Encrypt = no")]
         [InlineData("Encrypt = Mandatory")]
         [InlineData("Encrypt = Optional")]
         [InlineData("Encrypt = Strict")]
@@ -86,8 +88,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("User Instance = true")]
         [InlineData("Workstation ID = myworkstation")]
         [InlineData("WSID = myworkstation")]
-        [InlineData("IsTDS8 = true")]
-        [InlineData("IsTDS8 = false")]
+        [InlineData("Host Name In Certificate = tds.test.com")]
         [InlineData("HostNameInCertificate = tds.test.com")]
         public void ConnectionStringTests(string connectionString)
         {
@@ -315,28 +316,13 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Theory]
-        [InlineData(SqlConnectionEncryptionOption.Strict, false, true)]
-        [InlineData(SqlConnectionEncryptionOption.Strict, true, true)]
-        [InlineData(SqlConnectionEncryptionOption.Mandatory, true, true)]
-        [InlineData(SqlConnectionEncryptionOption.Mandatory, false, false)]
-        [InlineData(SqlConnectionEncryptionOption.Optional, false, false)]
-        [InlineData(SqlConnectionEncryptionOption.Optional, true, true)]
-        public void SetEncryptChangesIsTDS8(SqlConnectionEncryptionOption encrypt, bool isTDS8, bool expected)
-        {
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
-            builder.IsTDS8 = isTDS8;
-            builder.Encrypt = encrypt;
-            Assert.Equal(expected, builder.IsTDS8);
-        }
-
-        [Theory]
         [InlineData(SqlConnectionEncryptionOption.Strict, false, false)]
         [InlineData(SqlConnectionEncryptionOption.Strict, true, false)]
         [InlineData(SqlConnectionEncryptionOption.Mandatory, true, true)]
         [InlineData(SqlConnectionEncryptionOption.Mandatory, false, false)]
         [InlineData(SqlConnectionEncryptionOption.Optional, false, false)]
         [InlineData(SqlConnectionEncryptionOption.Optional, true, true)]
-        public void SetEncryptChangesTrustedServerCertificate(SqlConnectionEncryptionOption encrypt, bool trustServerCertificate, bool expected)
+        public void SetEncryptChangesTrustServerCertificate(SqlConnectionEncryptionOption encrypt, bool trustServerCertificate, bool expected)
         {
             SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
             builder.TrustServerCertificate = trustServerCertificate;
@@ -355,6 +341,17 @@ namespace Microsoft.Data.SqlClient.Tests
             SqlConnection sqlConnection = new SqlConnection(connectionString);
             SqlConnectionStringBuilder scsb =  new (sqlConnection.ConnectionString);
             Assert.Equal(expected, scsb.Encrypt);
+        }
+
+        [Theory]
+        [InlineData("Encrypt=Mandatory", SqlConnectionEncryptionOption.Mandatory)]
+        [InlineData("Encrypt=Optional", SqlConnectionEncryptionOption.Optional)]
+        [InlineData("Encrypt=Strict", SqlConnectionEncryptionOption.Strict)]
+        public void SetEncryptEnumOnConnectionBuilderMapsToString(string expected, SqlConnectionEncryptionOption option)
+        {
+            SqlConnectionStringBuilder scsb = new();
+            scsb.Encrypt = option;
+            Assert.Equal(expected, scsb.ConnectionString);
         }
 
         internal void ExecuteConnectionStringTests(string connectionString)

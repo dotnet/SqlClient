@@ -746,8 +746,8 @@ namespace Microsoft.Data.Common
         {
             return value switch
             {
-                SqlConnectionEncryptionOption.Optional => false.ToString(), // Maintain connection string backwards compatibility
-                SqlConnectionEncryptionOption.Mandatory => true.ToString(), // Maintain connection string backwards compatibility
+                SqlConnectionEncryptionOption.Optional => nameof(SqlConnectionEncryptionOption.Optional),
+                SqlConnectionEncryptionOption.Mandatory => nameof(SqlConnectionEncryptionOption.Mandatory),
                 SqlConnectionEncryptionOption.Strict => nameof(SqlConnectionEncryptionOption.Strict),
                 _ => null
             };
