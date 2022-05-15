@@ -1183,6 +1183,9 @@ namespace Microsoft.Data.Common
         internal const string EXTENDEDPROPERTIES = "extended properties";
         internal const string INITIALFILENAME = "initial file name";
 
+        // internal const string HostNameInCertificate        = HOSTNAMEINCERTIFICATE;
+        internal const string HOSTNAMEINCERTIFICATE = "hostnameincertificate";
+
         //internal const string ConnectTimeout         = CONNECTIONTIMEOUT+","+TIMEOUT;
         internal const string CONNECTIONTIMEOUT = "connection timeout";
         internal const string TIMEOUT = "timeout";

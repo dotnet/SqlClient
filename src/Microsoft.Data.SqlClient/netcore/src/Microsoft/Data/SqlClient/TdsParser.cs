@@ -498,13 +498,6 @@ namespace Microsoft.Data.SqlClient
                 _encryptionOption = EncryptionOptions.NOT_SUP;
             }
 
-            if (encrypt == SqlConnectionEncryptionOption.Strict)
-            {
-                // Since encryption will have already been negotiated byt TLS first, we need to send encryption
-                // not supported during prelogin so that we don't try to negotiate "encryption within encryption"
-                _encryptionOption = EncryptionOptions.NOT_SUP;
-            }
-
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Sending prelogin handshake");
             SendPreLoginHandshake(instanceName, encrypt, encrypt == SqlConnectionEncryptionOption.Strict, integratedSecurity);
 
@@ -669,6 +662,18 @@ namespace Microsoft.Data.SqlClient
             bool tlsFirst,
             bool integratedSecurity)
         {
+            if (tlsFirst)
+            {
+                //Always validate the certificate when in strict encryption mode
+                uint info = TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE | TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE | TdsEnums.SNI_SSL_SEND_ALPN_EXTENSION;
+
+                EnableSsl(info, true, integratedSecurity);
+
+                // Since encryption has already been negotiated, we need to set encryption not supported in
+                // prelogin so that we don't try to negotiate encryption again during ConsumePreLoginHandshake.
+                _encryptionOption = EncryptionOptions.NOT_SUP;
+            }
+
             // PreLoginHandshake buffer consists of:
             // 1) Standard header, with type = MT_PRELOGIN
             // 2) Consecutive 5 bytes for each option, (1 byte length, 2 byte offset, 2 byte payload length)
@@ -806,14 +811,6 @@ namespace Microsoft.Data.SqlClient
                     default:
                         Debug.Fail("UNKNOWN option in SendPreLoginHandshake");
                         break;
-                }
-
-                if (tlsFirst)
-                {
-                    //Always validate the certificate when in strict encryption mode
-                    uint info = TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE | TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE | TdsEnums.SNI_SSL_SEND_ALPN_EXTENSION;
-
-                    EnableSsl(info, true, integratedSecurity);
                 }
 
                 // Write data length

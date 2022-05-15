@@ -324,11 +324,13 @@ namespace Microsoft.Data.SqlClient.SNI
                     if (_tlsFirst)
                     {
 #if !NETSTANDARD2_0 
-                        AuthenticateClientAsync(_sslStream, _serverNameIndication, null).ConfigureAwait(false).GetAwaiter().GetResult();
+                        // TODO: Resolve whether to send _serverNameIndication or _targetServer. _serverNameIndication currently results in error. Why?
+                        AuthenticateClientAsync(_sslStream, _targetServer, null).ConfigureAwait(false).GetAwaiter().GetResult();
 #endif
                     }
                     else
                     {
+                        // TODO: Resolve whether to send _serverNameIndication or _targetServer. _serverNameIndication currently results in error. Why?
                         _sslStream.AuthenticateAsClient(_targetServer, null, s_supportedProtocols, false);
                     }
                     if (_sslOverTdsStream is not null)
