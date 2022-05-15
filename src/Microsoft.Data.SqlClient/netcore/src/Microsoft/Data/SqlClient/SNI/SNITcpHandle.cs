@@ -27,7 +27,7 @@ namespace Microsoft.Data.SqlClient.SNI
         private readonly Socket _socket;
         private NetworkStream _tcpStream;
         private readonly string _hostNameInCertificate;
-        private readonly bool _isTDS8;
+        private readonly bool _tlsFirst;
         private readonly string _serverNameIndication;
 
         private Stream _stream;
@@ -121,17 +121,27 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="ipPreference">IP address preference</param>
         /// <param name="cachedFQDN">Key for DNS Cache</param>
         /// <param name="pendingDNSInfo">Used for DNS Cache</param>
-        /// <param name="isTDS8">Support TDS8.0</param>
+        /// <param name="tlsFirst">Support TDS8.0</param>
         /// <param name="hostNameInCertificate">Host Name in Certoficate</param>
         /// <param name="serverNameIndication"></param>
-        public SNITCPHandle(string serverName, int port, long timerExpire, bool parallel, SqlConnectionIPAddressPreference ipPreference, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo, bool isTDS8, string hostNameInCertificate, string serverNameIndication)
+        public SNITCPHandle(
+            string serverName,
+            int port,
+            long timerExpire,
+            bool parallel,
+            SqlConnectionIPAddressPreference ipPreference,
+            string cachedFQDN,
+            ref SQLDNSInfo pendingDNSInfo,
+            bool tlsFirst,
+            string hostNameInCertificate,
+            string serverNameIndication)
         {
             using (TrySNIEventScope.Create(nameof(SNITCPHandle)))
             {
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, Setting server name = {1}", args0: _connectionId, args1: serverName);
 
                 _targetServer = serverName;
-                _isTDS8 = isTDS8;
+                _tlsFirst = tlsFirst;
                 _hostNameInCertificate = hostNameInCertificate;
                 _serverNameIndication = serverNameIndication;
                 _sendSync = new object();
@@ -259,7 +269,7 @@ namespace Microsoft.Data.SqlClient.SNI
                     _tcpStream = new SNINetworkStream(_socket, true);
 
                     Stream stream = _tcpStream;
-                    if (!_isTDS8)
+                    if (!_tlsFirst)
                     {
                         _sslOverTdsStream = new SslOverTdsStream(_tcpStream, _connectionId);
                         stream = _sslOverTdsStream;
@@ -598,15 +608,15 @@ namespace Microsoft.Data.SqlClient.SNI
 
                 try
                 {
-                    if (_isTDS8)
+                    if (_tlsFirst)
                     {
 #if !NETSTANDARD2_0
-                        AuthenticateClientAsync(_sslStream, _serverNameIndication, null).Wait();
+                        AuthenticateClientAsync(_sslStream, _targetServer, null).ConfigureAwait(false).GetAwaiter().GetResult();
 #endif
                     }
                     else
                     {
-                        _sslStream.AuthenticateAsClient(_serverNameIndication, null, s_supportedProtocols, false);
+                        _sslStream.AuthenticateAsClient(_targetServer, null, s_supportedProtocols, false);
                     }
                     if (_sslOverTdsStream is not null)
                     {
@@ -662,7 +672,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 return true;
             }
             string serverNameToValidate;
-            if (_isTDSS && !string.IsNullOrEmpty(_hostNameInCertificate))
+            if (!string.IsNullOrEmpty(_hostNameInCertificate))
             {
                 serverNameToValidate = _hostNameInCertificate;
             }

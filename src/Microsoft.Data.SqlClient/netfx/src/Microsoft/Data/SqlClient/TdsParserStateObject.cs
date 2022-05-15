@@ -844,8 +844,23 @@ namespace Microsoft.Data.SqlClient
             return myInfo;
         }
 
-        internal void CreatePhysicalSNIHandle(string serverName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, byte[] spnBuffer, bool flushCache,
-                bool async, bool fParallel, TransparentNetworkResolutionState transparentNetworkResolutionState, int totalTimeout, SqlConnectionIPAddressPreference ipPreference, string cachedFQDN, bool isTDS8, string hostNameInCertificate)
+        internal void CreatePhysicalSNIHandle(
+            string serverName,
+            bool ignoreSniOpenTimeout,
+            long timerExpire,
+            out byte[] instanceName,
+            byte[] spnBuffer,
+            bool flushCache,
+            bool async,
+            bool fParallel,
+            TransparentNetworkResolutionState transparentNetworkResolutionState,
+            int totalTimeout,
+            SqlConnectionIPAddressPreference ipPreference,
+            string cachedFQDN,
+            bool tlsFirst = false,
+            string hostNameInCertificate = "",
+            string databaseName = "",
+            ApplicationIntent applicationIntent = ApplicationIntent.ReadWrite)
         {
             SNINativeMethodWrapper.ConsumerInfo myInfo = CreateConsumerInfo(async);
 
@@ -874,7 +889,8 @@ namespace Microsoft.Data.SqlClient
             _ = SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out SQLDNSInfo cachedDNSInfo);
 
             _sessionHandle = new SNIHandle(myInfo, serverName, spnBuffer, ignoreSniOpenTimeout, checked((int)timeout),
-                    out instanceName, flushCache, !async, fParallel, transparentNetworkResolutionState, totalTimeout, ipPreference, cachedDNSInfo, isTDS8, hostNameInCertificate);
+                out instanceName, flushCache, !async, fParallel, transparentNetworkResolutionState, totalTimeout,
+                ipPreference, cachedDNSInfo, tlsFirst, hostNameInCertificate, databaseName, applicationIntent);
         }
 
         internal bool Deactivate()

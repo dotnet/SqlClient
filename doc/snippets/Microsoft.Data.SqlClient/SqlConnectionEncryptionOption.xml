@@ -3,7 +3,7 @@
   <members name="SqlConnectionEncryptionOption">
     <SqlConnectionEncryptionOption>
       <summary>
-        These options are used to control encryption behavior of the communication between the server and the client.</see>.
+        These options are used to control encryption behavior of the communication between the server and the client.
       </summary>
       <remarks>To be added.</remarks>
     </SqlConnectionEncryptionOption>

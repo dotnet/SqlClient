@@ -145,7 +145,11 @@ namespace Microsoft.Data.SqlClient
             bool fSync,
             bool fParallel,
             SqlConnectionIPAddressPreference ipPreference,
-            SQLDNSInfo cachedDNSInfo)
+            SQLDNSInfo cachedDNSInfo,
+            bool tlsFirst,
+            string hostNameInCertificate,
+            string databaseName,
+            ApplicationIntent applicationIntent)
             : base(IntPtr.Zero, true)
         {
             try
@@ -159,8 +163,8 @@ namespace Microsoft.Data.SqlClient
                     timeout = Timeout.Infinite; // -1 == native SNIOPEN_TIMEOUT_VALUE / INFINITE
                 }
 
-                _status = SNINativeMethodWrapper.SNIOpenSyncEx(myInfo, serverName, ref base.handle,
-                            spnBuffer, instanceName, flushCache, fSync, timeout, fParallel, ipPreference, cachedDNSInfo);
+                _status = SNINativeMethodWrapper.SNIOpenSyncEx(myInfo, serverName, ref base.handle, spnBuffer, instanceName, flushCache,
+                    fSync, timeout, fParallel, ipPreference, cachedDNSInfo, tlsFirst, hostNameInCertificate, databaseName, applicationIntent);
             }
         }
 

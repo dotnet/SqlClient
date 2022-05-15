@@ -1887,7 +1887,6 @@ namespace Microsoft.Data.SqlClient
                             ConnectionOptions.IntegratedSecurity,
                             withFailover,
                             ConnectionOptions.Authentication,
-                            ConnectionOptions.IsTDS8,
                             ConnectionOptions.HostNameInCertificate,
                             ConnectionOptions.InitialCatalog,
                             ConnectionOptions.ApplicationIntent);

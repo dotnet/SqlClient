@@ -31,8 +31,7 @@ namespace Microsoft.Data.SqlClient
         ON,
         NOT_SUP,
         REQ,
-        LOGIN,
-        STRICT //TDS8
+        LOGIN
     }
 
     internal enum PreLoginHandshakeStatus

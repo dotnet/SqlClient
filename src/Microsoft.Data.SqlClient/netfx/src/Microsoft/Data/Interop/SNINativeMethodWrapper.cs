@@ -795,9 +795,28 @@ namespace Microsoft.Data.SqlClient
             return SNIOpenWrapper(ref native_consumerInfo, "session:", parent, out pConn, fSync, ipPreference, ref native_cachedDNSInfo);
         }
 
-        internal static unsafe uint SNIOpenSyncEx(ConsumerInfo consumerInfo, string constring, ref IntPtr pConn, byte[] spnBuffer, byte[] instanceName, bool fOverrideCache, bool fSync, int timeout, bool fParallel, 
-                        Int32 transparentNetworkResolutionStateNo, Int32 totalTimeout, Boolean isAzureSqlServerEndpoint, SqlConnectionIPAddressPreference ipPreference, SQLDNSInfo cachedDNSInfo)
+        internal static unsafe uint SNIOpenSyncEx(
+            ConsumerInfo consumerInfo,
+            string constring,
+            ref IntPtr pConn,
+            byte[] spnBuffer,
+            byte[] instanceName,
+            bool fOverrideCache,
+            bool fSync,
+            int timeout,
+            bool fParallel,
+            Int32 transparentNetworkResolutionStateNo,
+            Int32 totalTimeout,
+            Boolean isAzureSqlServerEndpoint,
+            SqlConnectionIPAddressPreference ipPreference,
+            SQLDNSInfo cachedDNSInfo,
+            bool tlsFirst,
+            string hostNameInCertificate,
+            string databaseName,
+            ApplicationIntent applicationIntent)
         {
+            //TDS 8 TODO: Plumb new options into native SNI call
+
             fixed (byte* pin_instanceName = &instanceName[0])
             {
                 SNI_CLIENT_CONSUMER_INFO clientConsumerInfo = new SNI_CLIENT_CONSUMER_INFO();

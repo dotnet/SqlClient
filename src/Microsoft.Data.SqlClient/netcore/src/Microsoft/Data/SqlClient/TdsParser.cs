@@ -10,7 +10,6 @@ using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.Reflection;
 using System.Security.Authentication;
 using System.Text;
 using System.Threading;
@@ -365,7 +364,6 @@ namespace Microsoft.Data.SqlClient
             bool integratedSecurity,
             bool withFailover,
             SqlAuthenticationMethod authType,
-            bool isTDS8,
             string hostNameInCertificate,
             string databaseName,
             ApplicationIntent applicationIntent)
@@ -398,8 +396,8 @@ namespace Microsoft.Data.SqlClient
                     authType == SqlAuthenticationMethod.NotSpecified ? SqlAuthenticationMethod.SqlPassword.ToString() : authType.ToString());
             }
 
-            // Encryption is not supported on SQL Local DB - disable it for current session.
-            if (connHandler.ConnectionOptions.LocalDBInstance != null && encrypt == SqlConnectionEncryptionOption.Optional)
+            // Encryption is not supported on SQL Local DB - disable it if they have only specified Mandatory
+            if (connHandler.ConnectionOptions.LocalDBInstance != null && encrypt == SqlConnectionEncryptionOption.Mandatory)
             {
                 encrypt = SqlConnectionEncryptionOption.Optional;
                 SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Encryption will be disabled as target server is a SQL Local DB instance.");
@@ -414,10 +412,9 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.TryTraceEvent("TdsParser.Connect | SEC | SSPI or Active Directory Authentication Library loaded for SQL Server based integrated authentication");
             }
 
-            // if Strict encryption is chosen TDS8 should be used and trust server certificate should be false.
+            // if Strict encryption is chosen trust server certificate should always be false.
             if (encrypt == SqlConnectionEncryptionOption.Strict)
             {
-                isTDS8 = true;
                 trustServerCert = false;
             }
 
@@ -440,8 +437,10 @@ namespace Microsoft.Data.SqlClient
             _connHandler.pendingSQLDNSObject = null;
 
             // AD Integrated behaves like Windows integrated when connecting to a non-fedAuth server
-            _physicalStateObj.CreatePhysicalSNIHandle(serverInfo.ExtendedServerName, ignoreSniOpenTimeout, timerExpire, out instanceName, ref _sniSpnBuffer, false, true, fParallel,
-                              _connHandler.ConnectionOptions.IPAddressPreference, FQDNforDNSCahce, ref _connHandler.pendingSQLDNSObject, integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated, isTDS8, hostNameInCertificate, databaseName, applicationIntent);
+            _physicalStateObj.CreatePhysicalSNIHandle(serverInfo.ExtendedServerName, ignoreSniOpenTimeout, timerExpire, out instanceName, ref _sniSpnBuffer,
+                false, true, fParallel, _connHandler.ConnectionOptions.IPAddressPreference, FQDNforDNSCahce, ref _connHandler.pendingSQLDNSObject,
+                integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated, encrypt == SqlConnectionEncryptionOption.Strict,
+                hostNameInCertificate, databaseName, applicationIntent);
 
             if (TdsEnums.SNI_SUCCESS != _physicalStateObj.Status)
             {
@@ -490,7 +489,7 @@ namespace Microsoft.Data.SqlClient
             if (!ClientOSEncryptionSupport)
             {
                 //If encryption is required, an error will be thrown.
-                if (encrypt == SqlConnectionEncryptionOption.Mandatory)
+                if (encrypt != SqlConnectionEncryptionOption.Optional)
                 {
                     _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByClient(), "", 0));
                     _physicalStateObj.Dispose();
@@ -499,15 +498,23 @@ namespace Microsoft.Data.SqlClient
                 _encryptionOption = EncryptionOptions.NOT_SUP;
             }
 
+            if (encrypt == SqlConnectionEncryptionOption.Strict)
+            {
+                // Since encryption will have already been negotiated byt TLS first, we need to send encryption
+                // not supported during prelogin so that we don't try to negotiate "encryption within encryption"
+                _encryptionOption = EncryptionOptions.NOT_SUP;
+            }
+
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Sending prelogin handshake");
-            SendPreLoginHandshake(instanceName, encrypt, isTDS8, integratedSecurity, trustServerCert);
+            SendPreLoginHandshake(instanceName, encrypt, encrypt == SqlConnectionEncryptionOption.Strict, integratedSecurity);
 
             _connHandler.TimeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.SendPreLoginHandshake);
             _connHandler.TimeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake);
 
             _physicalStateObj.SniContext = SniContext.Snix_PreLogin;
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.Connect|SEC> Consuming prelogin handshake");
-            PreLoginHandshakeStatus status = ConsumePreLoginHandshake(encrypt, trustServerCert, integratedSecurity, out marsCapable, out _connHandler._fedAuthRequired, isTDS8);
+            PreLoginHandshakeStatus status = ConsumePreLoginHandshake(encrypt, trustServerCert, integratedSecurity, out marsCapable,
+                out _connHandler._fedAuthRequired, encrypt == SqlConnectionEncryptionOption.Strict);
 
             if (status == PreLoginHandshakeStatus.InstanceFailure)
             {
@@ -538,8 +545,9 @@ namespace Microsoft.Data.SqlClient
                     _physicalStateObj.AssignPendingDNSInfo(serverInfo.UserProtocol, FQDNforDNSCahce, ref _connHandler.pendingSQLDNSObject);
                 }
 
-                SendPreLoginHandshake(instanceName, encrypt, isTDS8, integratedSecurity, trustServerCert);
-                status = ConsumePreLoginHandshake(encrypt, trustServerCert, integratedSecurity, out marsCapable, out _connHandler._fedAuthRequired, isTDS8);
+                SendPreLoginHandshake(instanceName, encrypt, encrypt == SqlConnectionEncryptionOption.Strict, integratedSecurity);
+                status = ConsumePreLoginHandshake(encrypt, trustServerCert, integratedSecurity, out marsCapable, out _connHandler._fedAuthRequired,
+                    encrypt == SqlConnectionEncryptionOption.Strict);
 
                 // Don't need to check for 7.0 failure, since we've already consumed
                 // one pre-login packet and know we are connecting to 2000.
@@ -655,7 +663,11 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private void SendPreLoginHandshake(byte[] instanceName, SqlConnectionEncryptionOption encrypt, bool isTDS8, bool integratedSecurity, bool trustServerCert)
+        private void SendPreLoginHandshake(
+            byte[] instanceName,
+            SqlConnectionEncryptionOption encrypt,
+            bool tlsFirst,
+            bool integratedSecurity)
         {
             // PreLoginHandshake buffer consists of:
             // 1) Standard header, with type = MT_PRELOGIN
@@ -706,23 +718,24 @@ namespace Microsoft.Data.SqlClient
                         break;
 
                     case (int)PreLoginOptions.ENCRYPT:
-                        switch (encrypt)
+                        if (_encryptionOption == EncryptionOptions.NOT_SUP)
                         {
-                            case SqlConnectionEncryptionOption.Strict:
-                                if (!isTDS8)
-                                {
-                                    _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByServer(), "", 0));
-                                    _physicalStateObj.Dispose();
-                                    ThrowExceptionAndWarning(_physicalStateObj);
-                                }
-                                payload[payloadLength] = (byte)EncryptionOptions.NOT_SUP;
-                                break;
-                            case SqlConnectionEncryptionOption.Mandatory:
+                            //If OS doesn't support encryption and encryption is not required, inform server "not supported" by client.
+                            payload[payloadLength] = (byte)EncryptionOptions.NOT_SUP;
+                        }
+                        else
+                        {
+                            // Else, inform server of user request.
+                            if (encrypt == SqlConnectionEncryptionOption.Mandatory)
+                            {
                                 payload[payloadLength] = (byte)EncryptionOptions.ON;
-                                break;
-                            case SqlConnectionEncryptionOption.Optional:
+                                _encryptionOption = EncryptionOptions.ON;
+                            }
+                            else
+                            {
                                 payload[payloadLength] = (byte)EncryptionOptions.OFF;
-                                break;
+                                _encryptionOption = EncryptionOptions.OFF;
+                            }
                         }
 
                         payloadLength += 1;
@@ -794,34 +807,13 @@ namespace Microsoft.Data.SqlClient
                         Debug.Fail("UNKNOWN option in SendPreLoginHandshake");
                         break;
                 }
-                if (isTDS8)
+
+                if (tlsFirst)
                 {
+                    //Always validate the certificate when in strict encryption mode
+                    uint info = TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE | TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE | TdsEnums.SNI_SSL_SEND_ALPN_EXTENSION;
 
-                    bool shouldValidateServerCert = ((_encryptionOption == EncryptionOptions.ON && !trustServerCert) || (_connHandler._accessTokenInBytes != null && !trustServerCert));
-                    uint info = (shouldValidateServerCert ? TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE : 0)
-                        | TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE;
-
-                    if (!integratedSecurity)
-                    {
-                        // optimization: in case of SQL Authentication and encryption, set SNI_SSL_IGNORE_CHANNEL_BINDINGS to let SNI
-                        // know that it does not need to allocate/retrieve the Channel Bindings from the SSL context.
-                        // This applies to Native SNI
-                        info |= TdsEnums.SNI_SSL_IGNORE_CHANNEL_BINDINGS;
-                    }
-                    var error = _physicalStateObj.EnableSsl(ref info);
-                    int protocolVersion = 0;
-                    WaitForSSLHandShakeToComplete(ref error, ref protocolVersion);
-
-                    SslProtocols protocol = (SslProtocols)protocolVersion;
-                    string warningMessage = protocol.GetProtocolWarning();
-                    if (!string.IsNullOrEmpty(warningMessage))
-                    {
-                        // This logs console warning of insecure protocol in use.
-                        _logger.LogWarning(GetType().Name, MethodBase.GetCurrentMethod().Name, warningMessage);
-                    }
-
-                    // create a new packet encryption changes the internal packet size
-                    _physicalStateObj.ClearAllWritePackets();
+                    EnableSsl(info, true, integratedSecurity);
                 }
 
                 // Write data length
@@ -839,7 +831,56 @@ namespace Microsoft.Data.SqlClient
             _physicalStateObj.WritePacket(TdsEnums.HARDFLUSH);
         }
 
-        private PreLoginHandshakeStatus ConsumePreLoginHandshake(SqlConnectionEncryptionOption encrypt, bool trustServerCert, bool integratedSecurity, out bool marsCapable, out bool fedAuthRequired, bool isTDS8)
+        private void EnableSsl(uint info, bool encrypt, bool integratedSecurity)
+        {
+            uint error = 0;
+
+            if (encrypt && !integratedSecurity)
+            {
+                // optimization: in case of SQL Authentication and encryption in TDS, set SNI_SSL_IGNORE_CHANNEL_BINDINGS
+                // to let SNI know that it does not need to allocate/retrieve the Channel Bindings from the SSL context.
+                // This applies to Native SNI
+                info |= TdsEnums.SNI_SSL_IGNORE_CHANNEL_BINDINGS;
+            }
+
+            error = _physicalStateObj.EnableSsl(ref info);
+
+            if (error != TdsEnums.SNI_SUCCESS)
+            {
+                _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
+                ThrowExceptionAndWarning(_physicalStateObj);
+            }
+
+            int protocolVersion = 0;
+            WaitForSSLHandShakeToComplete(ref error, ref protocolVersion);
+
+            SslProtocols protocol = (SslProtocols)protocolVersion;
+            string warningMessage = protocol.GetProtocolWarning();
+            if (!string.IsNullOrEmpty(warningMessage))
+            {
+                if (!encrypt && LocalAppContextSwitches.SuppressInsecureTLSWarning)
+                {
+                    // Skip console warning
+                    SqlClientEventSource.Log.TryTraceEvent("<sc|{0}|{1}|{2}>{3}", nameof(TdsParser), nameof(EnableSsl), SqlClientLogger.LogLevel.Warning, warningMessage);
+                }
+                else
+                {
+                    // This logs console warning of insecure protocol in use.
+                    _logger.LogWarning(nameof(TdsParser), nameof(EnableSsl), warningMessage);
+                }
+            }
+
+            // create a new packet encryption changes the internal packet size
+            _physicalStateObj.ClearAllWritePackets();
+        }
+
+        private PreLoginHandshakeStatus ConsumePreLoginHandshake(
+            SqlConnectionEncryptionOption encrypt,
+            bool trustServerCert,
+            bool integratedSecurity,
+            out bool marsCapable,
+            out bool fedAuthRequired,
+            bool tlsFirst)
         {
             marsCapable = _fMARS; // Assign default value
             fedAuthRequired = false;
@@ -888,7 +929,6 @@ namespace Microsoft.Data.SqlClient
             int payloadOffset = 0;
             int payloadLength = 0;
             int option = payload[offset++];
-            _encryptionOption = encrypt == SqlConnectionEncryptionOption.Strict ? EncryptionOptions.STRICT : _encryptionOption;
 
             while (option != (byte)PreLoginOptions.LASTOPT)
             {
@@ -922,14 +962,13 @@ namespace Microsoft.Data.SqlClient
                             ON,
                             NOT_SUP,
                             REQ,
-                            LOGIN,
-                            STRICT   //TDS8
+                            LOGIN
                         } */
 
                         switch (_encryptionOption)
                         {
                             case (EncryptionOptions.ON):
-                                if (serverOption == EncryptionOptions.NOT_SUP || serverOption == EncryptionOptions.OFF)
+                                if (serverOption == EncryptionOptions.NOT_SUP)
                                 {
                                     _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByServer(), "", 0));
                                     _physicalStateObj.Dispose();
@@ -951,15 +990,13 @@ namespace Microsoft.Data.SqlClient
                                 break;
 
                             case (EncryptionOptions.NOT_SUP):
-                                if (serverOption == EncryptionOptions.REQ)
+                                if (!tlsFirst && serverOption == EncryptionOptions.REQ)
                                 {
                                     _physicalStateObj.AddError(new SqlError(TdsEnums.ENCRYPTION_NOT_SUPPORTED, (byte)0x00, TdsEnums.FATAL_ERROR_CLASS, _server, SQLMessage.EncryptionNotSupportedByClient(), "", 0));
                                     _physicalStateObj.Dispose();
                                     ThrowExceptionAndWarning(_physicalStateObj);
                                 }
 
-                                break;
-                            case (EncryptionOptions.STRICT):
                                 break;
                             default:
                                 Debug.Fail("Invalid client encryption option detected");
@@ -969,55 +1006,13 @@ namespace Microsoft.Data.SqlClient
                         if (_encryptionOption == EncryptionOptions.ON ||
                             _encryptionOption == EncryptionOptions.LOGIN)
                         {
-
-                            uint error = 0;
-
                             // Validate Certificate if Trust Server Certificate=false and Encryption forced (EncryptionOptions.ON) from Server.
-                            bool shouldValidateServerCert = (isTDS8 || (_encryptionOption == EncryptionOptions.ON && !trustServerCert) || (_connHandler._accessTokenInBytes != null && !trustServerCert));
+                            bool shouldValidateServerCert = (_encryptionOption == EncryptionOptions.ON && !trustServerCert) ||
+                                (_connHandler._accessTokenInBytes != null && !trustServerCert);
                             uint info = (shouldValidateServerCert ? TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE : 0)
                                 | (is2005OrLater ? TdsEnums.SNI_SSL_USE_SCHANNEL_CACHE : 0);
 
-                            if (!integratedSecurity)
-                            {
-                                // optimization: in case of SQL Authentication and encryption, set SNI_SSL_IGNORE_CHANNEL_BINDINGS to let SNI
-                                // know that it does not need to allocate/retrieve the Channel Bindings from the SSL context.
-                                // This applies to Native SNI
-                                info |= TdsEnums.SNI_SSL_IGNORE_CHANNEL_BINDINGS;
-                            }
-                            if (isTDS8)
-                            {
-                                info |= TdsEnums.SNI_SSL_SEND_ALPN_EXTENSION;
-                            }
-
-                            error = _physicalStateObj.EnableSsl(ref info);
-
-                            if (error != TdsEnums.SNI_SUCCESS)
-                            {
-                                _physicalStateObj.AddError(ProcessSNIError(_physicalStateObj));
-                                ThrowExceptionAndWarning(_physicalStateObj);
-                            }
-
-                            int protocolVersion = 0;
-                            WaitForSSLHandShakeToComplete(ref error, ref protocolVersion);
-
-                            SslProtocols protocol = (SslProtocols)protocolVersion;
-                            string warningMessage = protocol.GetProtocolWarning();
-                            if (!string.IsNullOrEmpty(warningMessage))
-                            {
-                                if (encrypt == SqlConnectionEncryptionOption.Optional && LocalAppContextSwitches.SuppressInsecureTLSWarning)
-                                {
-                                    // Skip console warning
-                                    SqlClientEventSource.Log.TryTraceEvent("<sc|{0}|{1}|{2}>{3}", nameof(TdsParser), nameof(ConsumePreLoginHandshake), SqlClientLogger.LogLevel.Warning, warningMessage);
-                                }
-                                else
-                                {
-                                    // This logs console warning of insecure protocol in use.
-                                    _logger.LogWarning(nameof(TdsParser), nameof(ConsumePreLoginHandshake), warningMessage);
-                                }
-                            }
-
-                            // create a new packet encryption changes the internal packet size
-                            _physicalStateObj.ClearAllWritePackets();
+                            EnableSsl(info, encrypt == SqlConnectionEncryptionOption.Mandatory, integratedSecurity);
                         }
 
                         break;

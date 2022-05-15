@@ -24,7 +24,7 @@ namespace Microsoft.Data.SqlClient.SNI
         private readonly string _targetServer;
         private readonly string _serverNameIndication;
         private readonly object _sendSync;
-        private readonly bool _isTDS8;
+        private readonly bool _tlsFirst;
         private Stream _stream;
         private NamedPipeClientStream _pipeStream;
         private SslOverTdsStream _sslOverTdsStream;
@@ -38,7 +38,7 @@ namespace Microsoft.Data.SqlClient.SNI
         private int _bufferSize = TdsEnums.DEFAULT_LOGIN_PACKET_SIZE;
         private readonly Guid _connectionId = Guid.NewGuid();
 
-        public SNINpHandle(string serverName, string pipeName, long timerExpire, bool isTDS8, string serverNameIndication)
+        public SNINpHandle(string serverName, string pipeName, long timerExpire, bool tlsFirst, string serverNameIndication)
         {
             using (TrySNIEventScope.Create(nameof(SNINpHandle)))
             {
@@ -46,7 +46,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
                 _sendSync = new object();
                 _targetServer = serverName;
-                _isTDS8 = isTDS8;
+                _tlsFirst = tlsFirst;
                 _serverNameIndication = serverNameIndication;
 
                 try
@@ -95,7 +95,7 @@ namespace Microsoft.Data.SqlClient.SNI
 
                 Stream stream = _pipeStream;
 
-                if (!_isTDS8)
+                if (!_tlsFirst)
                 {
                     _sslOverTdsStream = new SslOverTdsStream(_pipeStream, _connectionId);
                     stream = _sslOverTdsStream;
@@ -321,10 +321,10 @@ namespace Microsoft.Data.SqlClient.SNI
                 _validateCert = (options & TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE) != 0;
                 try
                 {
-                    if (_isTDS8)
+                    if (_tlsFirst)
                     {
 #if !NETSTANDARD2_0 
-                        AuthenticateClientAsync(_sslStream, _serverNameIndication, null);
+                        AuthenticateClientAsync(_sslStream, _serverNameIndication, null).ConfigureAwait(false).GetAwaiter().GetResult();
 #endif
                     }
                     else

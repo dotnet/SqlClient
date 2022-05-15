@@ -29,7 +29,6 @@ namespace Microsoft.Data.SqlClient
         NOT_SUP,
         REQ,
         LOGIN,
-        STRICT, //TDS8
         OPTIONS_MASK = 0x3f,
         CTAIP = 0x40,
         CLIENT_CERT = 0x80,

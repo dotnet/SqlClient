@@ -33,7 +33,6 @@ namespace Microsoft.Data.SqlClient
             internal const string Current_Language = DbConnectionStringDefaults.CurrentLanguage;
             internal const string Data_Source = DbConnectionStringDefaults.DataSource;
             internal const SqlConnectionEncryptionOption Encrypt = DbConnectionStringDefaults.Encrypt;
-            internal const bool IsTDS8 = DbConnectionStringDefaults.IsTDS8;
             internal const string HostNameInCertificate = DbConnectionStringDefaults.HostNameInCertificate;
             internal const bool Enlist = DbConnectionStringDefaults.Enlist;
             internal const string FailoverPartner = DbConnectionStringDefaults.FailoverPartner;
@@ -91,7 +90,6 @@ namespace Microsoft.Data.SqlClient
             internal const string Current_Language = DbConnectionStringKeywords.CurrentLanguage;
             internal const string Data_Source = DbConnectionStringKeywords.DataSource;
             internal const string Encrypt = DbConnectionStringKeywords.Encrypt;
-            internal const string IsTDS8 = DbConnectionStringKeywords.IsTDS8;
             internal const string HostNameInCertificate = DbConnectionStringKeywords.HostNameInCertificate;
             internal const string Enlist = DbConnectionStringKeywords.Enlist;
             internal const string FailoverPartner = DbConnectionStringKeywords.FailoverPartner;
@@ -261,7 +259,6 @@ namespace Microsoft.Data.SqlClient
         private readonly string _initialCatalog;
         private readonly string _password;
         private readonly string _userID;
-        private readonly bool _isTDS8;
         private readonly string _hostNameInCertificate;
 
         private readonly string _workstationId;
@@ -328,7 +325,6 @@ namespace Microsoft.Data.SqlClient
             _enclaveAttestationUrl = ConvertValueToString(KEY.EnclaveAttestationUrl, DEFAULT.EnclaveAttestationUrl);
             _attestationProtocol = ConvertValueToAttestationProtocol();
             _ipAddressPreference = ConvertValueToIPAddressPreference();
-            _isTDS8 = ConvertValueToBoolean(KEY.IsTDS8, DEFAULT.IsTDS8);
             _hostNameInCertificate = ConvertValueToString(KEY.HostNameInCertificate, DEFAULT.HostNameInCertificate);
 
             // Temporary string - this value is stored internally as an enum.
@@ -705,7 +701,6 @@ namespace Microsoft.Data.SqlClient
         internal bool ConnectionReset => true;
         //        internal bool EnableUdtDownload => _enableUdtDownload;} }
         internal SqlConnectionEncryptionOption Encrypt => _encrypt;
-        internal bool IsTDS8 => _isTDS8;
         internal string HostNameInCertificate => _hostNameInCertificate;
         internal bool TrustServerCertificate => _trustServerCertificate;
         internal bool Enlist => _enlist;
@@ -825,7 +820,6 @@ namespace Microsoft.Data.SqlClient
                     { KEY.Current_Language, KEY.Current_Language },
                     { KEY.Data_Source, KEY.Data_Source },
                     { KEY.Encrypt, KEY.Encrypt },
-                    { KEY.IsTDS8, KEY.IsTDS8 },
                     { KEY.HostNameInCertificate, KEY.HostNameInCertificate },
                     { KEY.Enlist, KEY.Enlist },
                     { KEY.FailoverPartner, KEY.FailoverPartner },
