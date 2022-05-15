@@ -316,21 +316,6 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Theory]
-        [InlineData(SqlConnectionEncryptionOption.Strict, false, false)]
-        [InlineData(SqlConnectionEncryptionOption.Strict, true, false)]
-        [InlineData(SqlConnectionEncryptionOption.Mandatory, true, true)]
-        [InlineData(SqlConnectionEncryptionOption.Mandatory, false, false)]
-        [InlineData(SqlConnectionEncryptionOption.Optional, false, false)]
-        [InlineData(SqlConnectionEncryptionOption.Optional, true, true)]
-        public void SetEncryptChangesTrustServerCertificate(SqlConnectionEncryptionOption encrypt, bool trustServerCertificate, bool expected)
-        {
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
-            builder.TrustServerCertificate = trustServerCertificate;
-            builder.Encrypt = encrypt;
-            Assert.Equal(expected, builder.TrustServerCertificate);
-        }
-
-        [Theory]
         [InlineData("Encrypt=yes", SqlConnectionEncryptionOption.Mandatory)]
         [InlineData("Encrypt=no", SqlConnectionEncryptionOption.Optional)]
         [InlineData("Encrypt=true", SqlConnectionEncryptionOption.Mandatory)]
