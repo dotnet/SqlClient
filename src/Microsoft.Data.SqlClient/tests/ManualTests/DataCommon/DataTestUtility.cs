@@ -18,6 +18,8 @@ using System.Threading.Tasks;
 using Microsoft.Identity.Client;
 using Microsoft.Data.SqlClient.TestUtilities;
 using Xunit;
+using System.Net.NetworkInformation;
+using System.Text;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
@@ -867,6 +869,23 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     EventData.Add(eventData);
                 }
             }
+        }
+
+        /// <summary>
+        /// Resolves the machine's fully qualified domain name if it is applicable.
+        /// </summary>
+        /// <returns>Returns FQDN if the client was domain joined otherwise the machine name.</returns>
+        public static string GetMachineFQDN()
+        {
+            IPGlobalProperties machineInfo = IPGlobalProperties.GetIPGlobalProperties();
+            StringBuilder fqdn = new();
+            fqdn.Append(machineInfo.HostName);
+            if (!string.IsNullOrEmpty(machineInfo.DomainName))
+            {
+                fqdn.Append(".");
+                fqdn.Append(machineInfo.DomainName);
+            }
+            return fqdn.ToString();
         }
     }
 }

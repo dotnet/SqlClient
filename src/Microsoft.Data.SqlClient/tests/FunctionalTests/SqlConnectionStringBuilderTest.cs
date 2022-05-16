@@ -82,6 +82,10 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("User Instance = true")]
         [InlineData("Workstation ID = myworkstation")]
         [InlineData("WSID = myworkstation")]
+        [InlineData("Server SPN = server1")]
+        [InlineData("ServerSPN = server2")]
+        [InlineData("Failover Partner SPN = server3")]
+        [InlineData("FailoverPartnerSPN = server4")]
         public void ConnectionStringTests(string connectionString)
         {
             ExecuteConnectionStringTests(connectionString);
