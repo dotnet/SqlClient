@@ -28,7 +28,7 @@ namespace Microsoft.Data.SqlClient.SNI
             ;
 
 #if !NETSTANDARD2_0
-        protected static readonly List<SslApplicationProtocol> s_tdsProtocols = new List<SslApplicationProtocol>(7) { new(TdsEnums.TDS8_Protocol) };
+        protected static readonly List<SslApplicationProtocol> s_tdsProtocols = new List<SslApplicationProtocol>(1) { new(TdsEnums.TDS8_Protocol) };
 
         protected static async Task AuthenticateClientAsync(SslStream sslStream, string serverNameIndication, X509CertificateCollection certificate)
         {
