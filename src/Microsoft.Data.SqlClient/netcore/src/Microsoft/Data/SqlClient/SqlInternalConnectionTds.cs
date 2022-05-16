@@ -1549,7 +1549,7 @@ namespace Microsoft.Data.SqlClient
                             throw SQL.ROR_TimeoutAfterRoutingInfo(this);
                         }
 
-                        serverInfo = new ServerInfo(ConnectionOptions, RoutingInfo, serverInfo.ResolvedServerName);
+                        serverInfo = new ServerInfo(ConnectionOptions, RoutingInfo, serverInfo.ResolvedServerName, serverInfo.ServerSPN);
                         _timeoutErrorInternal.SetInternalSourceType(SqlConnectionInternalSourceType.RoutingDestination);
                         _originalClientConnectionId = _clientConnectionId;
                         _routingDestination = serverInfo.UserServerName;
@@ -1693,7 +1693,7 @@ namespace Microsoft.Data.SqlClient
             int sleepInterval = 100;  //milliseconds to sleep (back off) between attempts.
             long timeoutUnitInterval;
 
-            ServerInfo failoverServerInfo = new ServerInfo(connectionOptions, failoverHost);
+            ServerInfo failoverServerInfo = new ServerInfo(connectionOptions, failoverHost, connectionOptions.FailoverPartnerSPN);
 
             ResolveExtendedServerName(primaryServerInfo, !redirectedUserInstance, connectionOptions);
             if (null == ServerProvidedFailOverPartner)
@@ -1882,11 +1882,8 @@ namespace Microsoft.Data.SqlClient
                             this,
                             ignoreSniOpenTimeout,
                             timeout.LegacyTimerExpire,
-                            ConnectionOptions.Encrypt,
-                            ConnectionOptions.TrustServerCertificate,
-                            ConnectionOptions.IntegratedSecurity,
-                            withFailover,
-                            ConnectionOptions.Authentication);
+                            ConnectionOptions,
+                            withFailover);
 
             _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake);
             _timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.LoginBegin);
@@ -2776,6 +2773,7 @@ namespace Microsoft.Data.SqlClient
         internal string ResolvedServerName { get; private set; } // the resolved servername only
         internal string ResolvedDatabaseName { get; private set; } // name of target database after resolution
         internal string UserProtocol { get; private set; } // the user specified protocol
+        internal string ServerSPN { get; private set; } // the server SPN
 
         // The original user-supplied server name from the connection string.
         // If connection string has no Data Source, the value is set to string.Empty.
@@ -2796,10 +2794,16 @@ namespace Microsoft.Data.SqlClient
         internal readonly string PreRoutingServerName;
 
         // Initialize server info from connection options,
-        internal ServerInfo(SqlConnectionString userOptions) : this(userOptions, userOptions.DataSource) { }
+        internal ServerInfo(SqlConnectionString userOptions) : this(userOptions, userOptions.DataSource, userOptions.ServerSPN) { }
+
+        // Initialize server info from connection options, but override DataSource and ServerSPN with given server name and server SPN
+        internal ServerInfo(SqlConnectionString userOptions, string serverName, string serverSPN) : this(userOptions, serverName)
+        {
+            ServerSPN = serverSPN;
+        }
 
         // Initialize server info from connection options, but override DataSource with given server name
-        internal ServerInfo(SqlConnectionString userOptions, string serverName)
+        private ServerInfo(SqlConnectionString userOptions, string serverName)
         {
             //-----------------
             // Preconditions
@@ -2818,7 +2822,7 @@ namespace Microsoft.Data.SqlClient
 
 
         // Initialize server info from connection options, but override DataSource with given server name
-        internal ServerInfo(SqlConnectionString userOptions, RoutingInfo routing, string preRoutingServerName)
+        internal ServerInfo(SqlConnectionString userOptions, RoutingInfo routing, string preRoutingServerName, string serverSPN)
         {
             //-----------------
             // Preconditions
@@ -2839,6 +2843,7 @@ namespace Microsoft.Data.SqlClient
             UserProtocol = TdsEnums.TCP;
             SetDerivedNames(UserProtocol, UserServerName);
             ResolvedDatabaseName = userOptions.InitialCatalog;
+            ServerSPN = serverSPN;
         }
 
         internal void SetDerivedNames(string protocol, string serverName)

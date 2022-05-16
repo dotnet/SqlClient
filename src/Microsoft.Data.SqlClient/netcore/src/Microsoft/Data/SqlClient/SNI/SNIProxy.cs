@@ -9,7 +9,6 @@ using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace Microsoft.Data.SqlClient.SNI
 {
@@ -135,6 +134,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="timerExpire">Timer expiration</param>
         /// <param name="instanceName">Instance name</param>
         /// <param name="spnBuffer">SPN</param>
+        /// <param name="serverSPN">pre-defined SPN</param>
         /// <param name="flushCache">Flush packet cache</param>
         /// <param name="async">Asynchronous connection</param>
         /// <param name="parallel">Attempt parallel connects</param>
@@ -143,7 +143,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="cachedFQDN">Used for DNS Cache</param>
         /// <param name="pendingDNSInfo">Used for DNS Cache</param>       
         /// <returns>SNI handle</returns>
-        internal static SNIHandle CreateConnectionHandle(string fullServerName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[][] spnBuffer,
+        internal static SNIHandle CreateConnectionHandle(string fullServerName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[][] spnBuffer, string serverSPN,
                                         bool flushCache, bool async, bool parallel, bool isIntegratedSecurity, SqlConnectionIPAddressPreference ipPreference, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
         {
             instanceName = new byte[1];
@@ -185,7 +185,7 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 try
                 {
-                    spnBuffer = GetSqlServerSPNs(details);
+                    spnBuffer = GetSqlServerSPNs(details, serverSPN);
                 }
                 catch (Exception e)
                 {
@@ -197,9 +197,13 @@ namespace Microsoft.Data.SqlClient.SNI
             return sniHandle;
         }
 
-        private static byte[][] GetSqlServerSPNs(DataSource dataSource)
+        private static byte[][] GetSqlServerSPNs(DataSource dataSource, string serverSPN)
         {
             Debug.Assert(!string.IsNullOrWhiteSpace(dataSource.ServerName));
+            if (!string.IsNullOrWhiteSpace(serverSPN))
+            {
+                return new byte[1][] { Encoding.UTF8.GetBytes(serverSPN) };
+            }
 
             string hostName = dataSource.ServerName;
             string postfix = null;

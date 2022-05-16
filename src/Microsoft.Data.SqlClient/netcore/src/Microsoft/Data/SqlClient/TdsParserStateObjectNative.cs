@@ -10,6 +10,7 @@ using System.Security.Authentication;
 using System.Threading.Tasks;
 using Microsoft.Data.Common;
 using System.Net;
+using System.Text;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -138,14 +139,24 @@ namespace Microsoft.Data.SqlClient
         }
 
         internal override void CreatePhysicalSNIHandle(string serverName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[][] spnBuffer, bool flushCache, bool async, bool fParallel,
-                         SqlConnectionIPAddressPreference ipPreference, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo, bool isIntegratedSecurity)
+                         SqlConnectionIPAddressPreference ipPreference, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo, string serverSPN, bool isIntegratedSecurity)
         {
             // We assume that the loadSSPILibrary has been called already. now allocate proper length of buffer
             spnBuffer = new byte[1][];
             if (isIntegratedSecurity)
             {
                 // now allocate proper length of buffer
-                spnBuffer[0] = new byte[SNINativeMethodWrapper.SniMaxComposedSpnLength];
+                if (!string.IsNullOrEmpty(serverSPN))
+                {
+                    byte[] srvSPN = Encoding.Unicode.GetBytes(serverSPN);
+                    Trace.Assert(srvSPN.Length <= SNINativeMethodWrapper.SniMaxComposedSpnLength, "The provider SPN length exceeded the buffer size.");
+                    spnBuffer[0] = srvSPN;
+                    SqlClientEventSource.Log.TryTraceEvent("<{0}.{1}|SEC> Server SPN `{2}` from the connection string is used.",nameof(TdsParserStateObjectNative), nameof(CreatePhysicalSNIHandle), serverSPN);
+                }
+                else
+                {
+                    spnBuffer[0] = new byte[SNINativeMethodWrapper.SniMaxComposedSpnLength];
+                }
             }
 
             SNINativeMethodWrapper.ConsumerInfo myInfo = CreateConsumerInfo(async);
