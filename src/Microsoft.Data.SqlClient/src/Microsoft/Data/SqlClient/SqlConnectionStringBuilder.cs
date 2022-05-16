@@ -1190,12 +1190,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// The SPN for the server. The default value is an empty string. An empty string causes SQL Server Native Client to use the default, provider-generated SPN.
-        /// </summary>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/ServerSPN/*' />
         [DisplayName(DbConnectionStringKeywords.ServerSPN)]
         [ResCategory(StringsHelper.ResourceNames.DataCategory_Source)]
-        //[ResDescription(StringsHelper.ResourceNames.DbConnectionString_ServerSPN)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_ServerSPN)]
         [RefreshProperties(RefreshProperties.All)]
         public string ServerSPN
         {
@@ -1345,11 +1343,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <summary>
-        /// The SPN for the failover partner. The default value is an empty string. An empty string causes SQL Server Native Client to use the default, provider-generated SPN.
-        /// </summary>
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/FailoverPartnerSPN/*' />
         [DisplayName(DbConnectionStringKeywords.FailoverPartnerSPN)]
         [ResCategory(StringsHelper.ResourceNames.DataCategory_Source)]
+        [ResDescription(StringsHelper.ResourceNames.DbConnectionString_FailoverPartnerSPN)]
         [RefreshProperties(RefreshProperties.All)]
         public string FailoverPartnerSPN
         {
