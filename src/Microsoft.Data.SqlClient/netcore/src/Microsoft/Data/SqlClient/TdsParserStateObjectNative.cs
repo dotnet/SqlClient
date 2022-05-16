@@ -149,7 +149,7 @@ namespace Microsoft.Data.SqlClient
                 if (!string.IsNullOrEmpty(serverSPN))
                 {
                     byte[] srvSPN = Encoding.Unicode.GetBytes(serverSPN);
-                    Trace.Assert(srvSPN.Length <= SNINativeMethodWrapper.SniMaxComposedSpnLength, "The provider SPN length exceeded the buffer size.");
+                    Trace.Assert(srvSPN.Length <= SNINativeMethodWrapper.SniMaxComposedSpnLength, "Length of the provided SPN exceeded the buffer size.");
                     spnBuffer[0] = srvSPN;
                     SqlClientEventSource.Log.TryTraceEvent("<{0}.{1}|SEC> Server SPN `{2}` from the connection string is used.",nameof(TdsParserStateObjectNative), nameof(CreatePhysicalSNIHandle), serverSPN);
                 }
