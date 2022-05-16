@@ -1057,6 +1057,13 @@ namespace Microsoft.Data.SqlClient
                                 payload[payloadLength] = (byte)EncryptionOptions.OFF;
                                 _encryptionOption = EncryptionOptions.OFF;
                             }
+
+                            // Inform server of user request.
+                            if (clientCertificate)
+                            {
+                                payload[payloadLength] |= (byte)EncryptionOptions.CLIENT_CERT;
+                                _encryptionOption |= EncryptionOptions.CLIENT_CERT;
+                            }
                         }
 
                         // Add CTAIP if requested.
