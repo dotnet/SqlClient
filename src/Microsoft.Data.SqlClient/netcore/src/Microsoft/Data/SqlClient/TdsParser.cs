@@ -364,9 +364,7 @@ namespace Microsoft.Data.SqlClient
             bool integratedSecurity,
             bool withFailover,
             SqlAuthenticationMethod authType,
-            string hostNameInCertificate,
-            string databaseName,
-            ApplicationIntent applicationIntent)
+            string hostNameInCertificate)
         {
             if (_state != TdsParserState.Closed)
             {
@@ -440,7 +438,7 @@ namespace Microsoft.Data.SqlClient
             _physicalStateObj.CreatePhysicalSNIHandle(serverInfo.ExtendedServerName, ignoreSniOpenTimeout, timerExpire, out instanceName, ref _sniSpnBuffer,
                 false, true, fParallel, _connHandler.ConnectionOptions.IPAddressPreference, FQDNforDNSCahce, ref _connHandler.pendingSQLDNSObject,
                 integratedSecurity || authType == SqlAuthenticationMethod.ActiveDirectoryIntegrated, encrypt == SqlConnectionEncryptionOption.Strict,
-                hostNameInCertificate, databaseName, applicationIntent);
+                hostNameInCertificate);
 
             if (TdsEnums.SNI_SUCCESS != _physicalStateObj.Status)
             {

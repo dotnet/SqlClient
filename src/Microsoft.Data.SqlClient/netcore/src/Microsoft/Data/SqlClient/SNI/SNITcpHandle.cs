@@ -28,7 +28,6 @@ namespace Microsoft.Data.SqlClient.SNI
         private NetworkStream _tcpStream;
         private readonly string _hostNameInCertificate;
         private readonly bool _tlsFirst;
-        private readonly string _serverNameIndication;
 
         private Stream _stream;
         private SslStream _sslStream;
@@ -123,7 +122,6 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="pendingDNSInfo">Used for DNS Cache</param>
         /// <param name="tlsFirst">Support TDS8.0</param>
         /// <param name="hostNameInCertificate">Host Name in Certoficate</param>
-        /// <param name="serverNameIndication"></param>
         public SNITCPHandle(
             string serverName,
             int port,
@@ -133,8 +131,7 @@ namespace Microsoft.Data.SqlClient.SNI
             string cachedFQDN,
             ref SQLDNSInfo pendingDNSInfo,
             bool tlsFirst,
-            string hostNameInCertificate,
-            string serverNameIndication)
+            string hostNameInCertificate)
         {
             using (TrySNIEventScope.Create(nameof(SNITCPHandle)))
             {
@@ -143,7 +140,6 @@ namespace Microsoft.Data.SqlClient.SNI
                 _targetServer = serverName;
                 _tlsFirst = tlsFirst;
                 _hostNameInCertificate = hostNameInCertificate;
-                _serverNameIndication = serverNameIndication;
                 _sendSync = new object();
 
                 SQLDNSInfo cachedDNSInfo;

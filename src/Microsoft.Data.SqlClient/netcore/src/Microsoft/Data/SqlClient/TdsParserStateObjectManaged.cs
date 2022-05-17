@@ -76,13 +76,11 @@ namespace Microsoft.Data.SqlClient.SNI
             ref SQLDNSInfo pendingDNSInfo,
             bool isIntegratedSecurity,
             bool tlsFirst,
-            string hostNameInCertificate,
-            string databaseName,
-            ApplicationIntent applicationIntent)
+            string hostNameInCertificate)
         {
             _sessionHandle = SNIProxy.CreateConnectionHandle(serverName, ignoreSniOpenTimeout, timerExpire, out instanceName, ref spnBuffer,
                 flushCache, async, parallel, isIntegratedSecurity, iPAddressPreference, cachedFQDN, ref pendingDNSInfo, tlsFirst,
-                hostNameInCertificate, databaseName, applicationIntent);
+                hostNameInCertificate);
             if (_sessionHandle == null)
             {
                 _parser.ProcessSNIError(this);

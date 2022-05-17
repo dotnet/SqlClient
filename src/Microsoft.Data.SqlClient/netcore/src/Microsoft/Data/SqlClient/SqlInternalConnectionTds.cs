@@ -1887,9 +1887,7 @@ namespace Microsoft.Data.SqlClient
                             ConnectionOptions.IntegratedSecurity,
                             withFailover,
                             ConnectionOptions.Authentication,
-                            ConnectionOptions.HostNameInCertificate,
-                            ConnectionOptions.InitialCatalog,
-                            ConnectionOptions.ApplicationIntent);
+                            ConnectionOptions.HostNameInCertificate);
 
             _timeoutErrorInternal.EndPhase(SqlConnectionTimeoutErrorPhase.ConsumePreLoginHandshake);
             _timeoutErrorInternal.SetAndBeginPhase(SqlConnectionTimeoutErrorPhase.LoginBegin);

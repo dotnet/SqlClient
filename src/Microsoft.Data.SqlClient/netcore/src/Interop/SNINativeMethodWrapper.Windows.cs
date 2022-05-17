@@ -323,12 +323,12 @@ namespace Microsoft.Data.SqlClient
         {
             return SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_CONNID, out connId);
         }
-       
+
         internal static uint SniGetProviderNumber(SNIHandle pConn, ref ProviderEnum provNum)
         {
             return SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_PROVIDERNUM, out provNum);
         }
-        
+
         internal static uint SniGetConnectionPort(SNIHandle pConn, ref ushort portNum)
         {
             return SNIGetInfoWrapper(pConn, QTypes.SNI_QUERY_CONN_PEERPORT, out portNum);
@@ -382,9 +382,7 @@ namespace Microsoft.Data.SqlClient
             SqlConnectionIPAddressPreference ipPreference,
             SQLDNSInfo cachedDNSInfo,
             bool tlsFirst,
-            string hostNameInCertificate,
-            string databaseName,
-            ApplicationIntent applicationIntent)
+            string hostNameInCertificate)
         {
             //TDS 8 TODO: Plumb new options into native SNI call
 

@@ -147,9 +147,7 @@ namespace Microsoft.Data.SqlClient
             SqlConnectionIPAddressPreference ipPreference,
             SQLDNSInfo cachedDNSInfo,
             bool tlsFirst,
-            string hostNameInCertificate,
-            string databaseName,
-            ApplicationIntent applicationIntent)
+            string hostNameInCertificate)
             : base(IntPtr.Zero, true)
         {
             try
@@ -164,7 +162,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 _status = SNINativeMethodWrapper.SNIOpenSyncEx(myInfo, serverName, ref base.handle, spnBuffer, instanceName, flushCache,
-                    fSync, timeout, fParallel, ipPreference, cachedDNSInfo, tlsFirst, hostNameInCertificate, databaseName, applicationIntent);
+                    fSync, timeout, fParallel, ipPreference, cachedDNSInfo, tlsFirst, hostNameInCertificate);
             }
         }
 

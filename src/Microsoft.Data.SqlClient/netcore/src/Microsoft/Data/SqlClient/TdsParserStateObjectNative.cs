@@ -151,9 +151,7 @@ namespace Microsoft.Data.SqlClient
             ref SQLDNSInfo pendingDNSInfo,
             bool isIntegratedSecurity,
             bool tlsFirst,
-            string hostNameInCertificate,
-            string databaseName,
-            ApplicationIntent applicationIntent)
+            string hostNameInCertificate)
         {
             // We assume that the loadSSPILibrary has been called already. now allocate proper length of buffer
             spnBuffer = new byte[1][];
@@ -188,7 +186,7 @@ namespace Microsoft.Data.SqlClient
             bool ret = SQLFallbackDNSCache.Instance.GetDNSInfo(cachedFQDN, out cachedDNSInfo);
 
             _sessionHandle = new SNIHandle(myInfo, serverName, spnBuffer[0], ignoreSniOpenTimeout, checked((int)timeout), out instanceName,
-                flushCache, !async, fParallel, ipPreference, cachedDNSInfo, tlsFirst, hostNameInCertificate, databaseName, applicationIntent);
+                flushCache, !async, fParallel, ipPreference, cachedDNSInfo, tlsFirst, hostNameInCertificate);
         }
 
         protected override uint SNIPacketGetData(PacketHandle packet, byte[] _inBuff, ref uint dataSize)

@@ -21,10 +21,6 @@ namespace Microsoft.Data.SqlClient.SNI
         private const int DefaultSqlServerPort = 1433;
         private const int DefaultSqlServerDacPort = 1434;
         private const string SqlServerSpnHeader = "MSSQLSvc";
-        private const string SNIServerKey = "Server";
-        private const string SNIInstanceKey = "Instance";
-        private const string SNIDatabaseKey = "Database";
-        private const string SNIApplicationIntentKey = "ApplicationIntent";
 
         private static readonly SNIProxy s_singleton = new SNIProxy();
 
@@ -148,8 +144,6 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="pendingDNSInfo">Used for DNS Cache</param>
         /// <param name="tlsFirst"></param>
         /// <param name="hostNameInCertificate"></param>
-        /// <param name="databaseName"></param>
-        /// <param name="applicationIntent"></param>
         /// <returns>SNI handle</returns>
         internal static SNIHandle CreateConnectionHandle(
             string fullServerName,
@@ -165,9 +159,7 @@ namespace Microsoft.Data.SqlClient.SNI
             string cachedFQDN,
             ref SQLDNSInfo pendingDNSInfo,
             bool tlsFirst,
-            string hostNameInCertificate,
-            string databaseName,
-            ApplicationIntent applicationIntent)
+            string hostNameInCertificate)
         {
             instanceName = new byte[1];
 
@@ -187,7 +179,6 @@ namespace Microsoft.Data.SqlClient.SNI
                 return null;
             }
 
-            string serverNameIndication = GetServerNameIndication(details, databaseName, applicationIntent);
             SNIHandle sniHandle = null;
             switch (details._connectionProtocol)
             {
@@ -195,10 +186,10 @@ namespace Microsoft.Data.SqlClient.SNI
                 case DataSource.Protocol.None: // default to using tcp if no protocol is provided
                 case DataSource.Protocol.TCP:
                     sniHandle = CreateTcpHandle(details, timerExpire, parallel, ipPreference, cachedFQDN, ref pendingDNSInfo,
-                        tlsFirst, hostNameInCertificate, serverNameIndication);
+                        tlsFirst, hostNameInCertificate);
                     break;
                 case DataSource.Protocol.NP:
-                    sniHandle = CreateNpHandle(details, timerExpire, parallel, tlsFirst, serverNameIndication);
+                    sniHandle = CreateNpHandle(details, timerExpire, parallel, tlsFirst);
                     break;
                 default:
                     Debug.Fail($"Unexpected connection protocol: {details._connectionProtocol}");
@@ -219,30 +210,6 @@ namespace Microsoft.Data.SqlClient.SNI
 
             SqlClientEventSource.Log.TryTraceEvent("SNIProxy.CreateConnectionHandle | Info | Session Id {0}, SNI Handle Type: {1}", sniHandle?.ConnectionId, sniHandle?.GetType());
             return sniHandle;
-        }
-
-        private static string GetServerNameIndication(DataSource dataSource, string databaseName, ApplicationIntent applicationIntent)
-        {
-            StringBuilder result = new StringBuilder();
-
-            result.AppendFormat("{0}={1}", SNIServerKey, dataSource.ServerName);
-
-            if (!string.IsNullOrEmpty(dataSource.InstanceName))
-            {
-                result.AppendFormat(";{0}={1}", SNIInstanceKey, dataSource.InstanceName);
-            }
-
-            if (!string.IsNullOrEmpty(databaseName))
-            {
-                result.AppendFormat(";{0}={1}", SNIDatabaseKey, databaseName);
-            }
-
-            if (applicationIntent != ApplicationIntent.ReadWrite)
-            {
-                result.AppendFormat(";{0}={1}", SNIApplicationIntentKey, Enum.GetName(typeof(ApplicationIntent), applicationIntent));
-            }
-
-            return result.ToString();
         }
 
         private static byte[][] GetSqlServerSPNs(DataSource dataSource)
@@ -314,7 +281,6 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="pendingDNSInfo">Used for DNS Cache</param>
         /// <param name="tlsFirst"></param>
         /// <param name="hostNameInCertificate"></param>
-        /// <param name="serverNameIndication"></param>
         /// <returns>SNITCPHandle</returns>
         private static SNITCPHandle CreateTcpHandle(
             DataSource details,
@@ -324,8 +290,7 @@ namespace Microsoft.Data.SqlClient.SNI
             string cachedFQDN,
             ref SQLDNSInfo pendingDNSInfo,
             bool tlsFirst,
-            string hostNameInCertificate,
-            string serverNameIndication)
+            string hostNameInCertificate)
         {
             // TCP Format:
             // tcp:<host name>\<instance name>
@@ -364,7 +329,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
 
             return new SNITCPHandle(hostName, port, timerExpire, parallel, ipPreference, cachedFQDN, ref pendingDNSInfo,
-                tlsFirst, hostNameInCertificate, serverNameIndication);
+                tlsFirst, hostNameInCertificate);
         }
 
         /// <summary>
@@ -374,9 +339,8 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="timerExpire">Timer expiration</param>
         /// <param name="parallel">Should MultiSubnetFailover be used. Only returns an error for named pipes.</param>
         /// <param name="tlsFirst"></param>
-        /// <param name="serverNameIndication"></param>
         /// <returns>SNINpHandle</returns>
-        private static SNINpHandle CreateNpHandle(DataSource details, long timerExpire, bool parallel, bool tlsFirst, string serverNameIndication)
+        private static SNINpHandle CreateNpHandle(DataSource details, long timerExpire, bool parallel, bool tlsFirst)
         {
             if (parallel)
             {
@@ -384,7 +348,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 SNICommon.ReportSNIError(SNIProviders.NP_PROV, 0, SNICommon.MultiSubnetFailoverWithNonTcpProtocol, Strings.SNI_ERROR_49);
                 return null;
             }
-            return new SNINpHandle(details.PipeHostName, details.PipeName, timerExpire, tlsFirst, serverNameIndication);
+            return new SNINpHandle(details.PipeHostName, details.PipeName, timerExpire, tlsFirst);
         }
 
         /// <summary>

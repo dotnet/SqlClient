@@ -800,9 +800,7 @@ namespace Microsoft.Data.SqlClient
             ref SQLDNSInfo pendingDNSInfo,
             bool isIntegratedSecurity = false,
             bool tlsFirst = false,
-            string hostNameInCertificate = "",
-            string databaseName = "",
-            ApplicationIntent applicationIntent = ApplicationIntent.ReadWrite);
+            string hostNameInCertificate = "");
 
         internal abstract void AssignPendingDNSInfo(string userProtocol, string DNSCacheKey, ref SQLDNSInfo pendingDNSInfo);
 

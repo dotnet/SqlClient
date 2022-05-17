@@ -22,7 +22,6 @@ namespace Microsoft.Data.SqlClient.SNI
         // private const int MAX_PIPE_INSTANCES = 255; // TODO: Investigate pipe instance limit.
 
         private readonly string _targetServer;
-        private readonly string _serverNameIndication;
         private readonly object _sendSync;
         private readonly bool _tlsFirst;
         private Stream _stream;
@@ -38,7 +37,7 @@ namespace Microsoft.Data.SqlClient.SNI
         private int _bufferSize = TdsEnums.DEFAULT_LOGIN_PACKET_SIZE;
         private readonly Guid _connectionId = Guid.NewGuid();
 
-        public SNINpHandle(string serverName, string pipeName, long timerExpire, bool tlsFirst, string serverNameIndication)
+        public SNINpHandle(string serverName, string pipeName, long timerExpire, bool tlsFirst)
         {
             using (TrySNIEventScope.Create(nameof(SNINpHandle)))
             {
@@ -47,8 +46,6 @@ namespace Microsoft.Data.SqlClient.SNI
                 _sendSync = new object();
                 _targetServer = serverName;
                 _tlsFirst = tlsFirst;
-                _serverNameIndication = serverNameIndication;
-
                 try
                 {
                     _pipeStream = new NamedPipeClientStream(
