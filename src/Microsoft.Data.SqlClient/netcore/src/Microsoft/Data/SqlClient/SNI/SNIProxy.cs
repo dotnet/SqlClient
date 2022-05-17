@@ -68,7 +68,7 @@ namespace Microsoft.Data.SqlClient.SNI
             string[] serverSPNs = new string[serverName.Length];
             for (int i = 0; i < serverName.Length; i++)
             {
-                serverSPNs[i] = Encoding.UTF8.GetString(serverName[i]);
+                serverSPNs[i] = Encoding.Unicode.GetString(serverName[i]);
             }
             SecurityStatusPal statusCode = NegotiateStreamPal.InitializeSecurityContext(
                        credentialsHandle,
@@ -202,7 +202,7 @@ namespace Microsoft.Data.SqlClient.SNI
             Debug.Assert(!string.IsNullOrWhiteSpace(dataSource.ServerName));
             if (!string.IsNullOrWhiteSpace(serverSPN))
             {
-                return new byte[1][] { Encoding.UTF8.GetBytes(serverSPN) };
+                return new byte[1][] { Encoding.Unicode.GetBytes(serverSPN) };
             }
 
             string hostName = dataSource.ServerName;
@@ -251,12 +251,12 @@ namespace Microsoft.Data.SqlClient.SNI
                 string serverSpnWithDefaultPort = serverSpn + $":{DefaultSqlServerPort}";
                 // Set both SPNs with and without Port as Port is optional for default instance
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("SNIProxy.GetSqlServerSPN | Info | ServerSPNs {0} and {1}", serverSpn, serverSpnWithDefaultPort);
-                return new byte[][] { Encoding.UTF8.GetBytes(serverSpn), Encoding.UTF8.GetBytes(serverSpnWithDefaultPort) };
+                return new byte[][] { Encoding.Unicode.GetBytes(serverSpn), Encoding.Unicode.GetBytes(serverSpnWithDefaultPort) };
             }
             // else Named Pipes do not need to valid port
 
             SqlClientEventSource.Log.TryAdvancedTraceEvent("SNIProxy.GetSqlServerSPN | Info | ServerSPN {0}", serverSpn);
-            return new byte[][] { Encoding.UTF8.GetBytes(serverSpn) };
+            return new byte[][] { Encoding.Unicode.GetBytes(serverSpn) };
         }
 
         /// <summary>
