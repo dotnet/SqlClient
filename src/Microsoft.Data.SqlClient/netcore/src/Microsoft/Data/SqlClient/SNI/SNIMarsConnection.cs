@@ -18,7 +18,6 @@ namespace Microsoft.Data.SqlClient.SNI
         private const string s_className = nameof(SNIMarsConnection);
 
         private static QueuedTaskScheduler s_scheduler;        
-        private TaskFactory s_factory;
 
         private readonly Guid _connectionId = Guid.NewGuid();
         private readonly Dictionary<int, SNIMarsHandle> _sessions = new Dictionary<int, SNIMarsHandle>();
@@ -85,11 +84,10 @@ namespace Microsoft.Data.SqlClient.SNI
 //#endif 
                     )
                 {
-                    LazyInitializer.EnsureInitialized(ref s_scheduler, () => new QueuedTaskScheduler(3, "MARSIOScheduler", false, ThreadPriority.AboveNormal));
-                    LazyInitializer.EnsureInitialized(ref s_factory, () => new TaskFactory(s_scheduler));
+                    LazyInitializer.EnsureInitialized(ref s_scheduler, () => new QueuedTaskScheduler(10, "MARSIOScheduler", useForegroundThreads: false, ThreadPriority.Normal));
 
                     // will start an async task on the scheduler and immediatley return so this await is safe
-                    return s_factory.StartNew(StartAsyncReceiveLoopForConnection, this).GetAwaiter().GetResult();
+                    return s_scheduler.Factory.StartNew(StartAsyncReceiveLoopForConnection, this).GetAwaiter().GetResult();
                 }
                 else
                 {
