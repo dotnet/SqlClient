@@ -148,6 +148,7 @@ namespace Microsoft.Data.SqlClient
                 // now allocate proper length of buffer
                 if (!string.IsNullOrEmpty(serverSPN))
                 {
+                    // Native SNI requires the Unicode encoding and any other encoding like UTF8 breaks the code.
                     byte[] srvSPN = Encoding.Unicode.GetBytes(serverSPN);
                     Trace.Assert(srvSPN.Length <= SNINativeMethodWrapper.SniMaxComposedSpnLength, "Length of the provided SPN exceeded the buffer size.");
                     spnBuffer[0] = srvSPN;
