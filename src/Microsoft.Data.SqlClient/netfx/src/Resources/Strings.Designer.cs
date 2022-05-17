@@ -5695,7 +5695,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Indicates the service principal name (SPN) of the failover partner to connect to..
+        ///   Looks up a localized string similar to The service principal name (SPN) of the failover partner..
         /// </summary>
         internal static string DbConnectionString_FailoverPartnerSPN {
             get {
@@ -5857,7 +5857,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Indicates the service principal name (SPN) of the data source to connect to..
+        ///   Looks up a localized string similar to The service principal name (SPN) of the server..
         /// </summary>
         internal static string DbConnectionString_ServerSPN {
             get {

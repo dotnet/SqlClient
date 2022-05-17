@@ -460,7 +460,7 @@ If you specify a failover partner and the primary server is not configured for d
             </remarks>
         </FailoverPartner>
         <FailoverPartnerSPN>
-          <summary>Gets or sets the service principal name (SPN) of the failover partner is supported using the connection.</summary>
+          <summary>Gets or sets the service principal name (SPN) of the failover partner for the connection.</summary>
           <value>
             The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.FailoverPartnerSPN" /> property, or <see langword="String.Empty" /> if none has been supplied.
           </value>
@@ -472,7 +472,7 @@ If you specify a failover partner and the primary server is not configured for d
 This property corresponds to the "FailoverPartnerSPN" and "Failover Partner SPN" keys within the connection string.  
 
 > [!NOTE]
-> The provided value only applies with integrated security authentication mode otherwise will be ignored.
+> This property only applies when using Integrated Security mode, otherwise it is ignored.
 
  ]]>
             </format>
@@ -840,7 +840,7 @@ Database = AdventureWorks
             </remarks>
         </Replication>
         <ServerSPN>
-            <summary>Gets or sets the service principal name (SPN) of the data source is supported using the connection.</summary>
+            <summary>Gets or sets the service principal name (SPN) of the data source.</summary>
             <value>
               The value of the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.ServerSPN" /> property, or <see langword="String.Empty" /> if none has been supplied.
             </value>
@@ -852,7 +852,7 @@ Database = AdventureWorks
 This property corresponds to the "ServerSPN" and "Server SPN" keys within the connection string.  
 
 > [!NOTE]
-> The provided value only applies with integrated security authentication mode otherwise will be ignored.
+> This property only applies when using Integrated Security mode, otherwise it is ignored.
 
  ]]>
               </format>
