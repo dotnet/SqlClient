@@ -1123,13 +1123,12 @@ namespace Microsoft.Data.SqlClient
     public struct SqlConnectionEncryptionOption
     {
         private const string TRUE = "true";
-        private const string ON = "on";
+        private const string YES = "yes";
         private const string MANDATORY = "mandatory";
         private const string FALSE = "false";
-        private const string OFF = "off";
+        private const string NO = "no";
         private const string OPTIONAL = "optional";
         private const string STRICT = "strict";
-        private static string[] _validValues = new string[] { "False", "True", "Strict" };
         private readonly string _value;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionOption.xml' path='docs/members[@name="SqlConnectionEncryptionOption"]/Value/*' />
@@ -1144,14 +1143,14 @@ namespace Microsoft.Data.SqlClient
             switch (value.ToLower())
             {
                 case TRUE:
-                case ON:
+                case YES:
                 case MANDATORY:
                     {
                         _value = Mandatory;
                         break;
                     }
                 case FALSE:
-                case OFF:
+                case NO:
                 case OPTIONAL:
                     {
                         _value = Optional;
