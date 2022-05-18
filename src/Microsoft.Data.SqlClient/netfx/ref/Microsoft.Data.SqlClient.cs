@@ -918,6 +918,37 @@ namespace Microsoft.Data.SqlClient
         UsePlatformDefault = 2
     }
 
+    /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionOption.xml' path='docs/members[@name="SqlConnectionEncryptionOption"]/SqlConnectionEncryptionOption/*'/>
+    public struct SqlConnectionEncryptionOption
+    {
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionOption.xml' path='docs/members[@name="SqlConnectionEncryptionOption"]/Value/*' />
+        public int Value;
+
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionOption.xml' path='docs/members[@name="SqlConnectionEncryptionOption"]/ctor/*' />
+        public SqlConnectionEncryptionOption(int value) => Value = value;
+
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionOption.xml' path='docs/members[@name="SqlConnectionEncryptionOption"]/Optional/*' />
+        public static int Optional => 0;
+
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionOption.xml' path='docs/members[@name="SqlConnectionEncryptionOption"]/Mandatory/*' />
+        public static int Mandatory => 1;
+
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionOption.xml' path='docs/members[@name="SqlConnectionEncryptionOption"]/Strict/*' />
+        public static int Strict => 2;
+
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionOption.xml' path='docs/members[@name="SqlConnectionEncryptionOption"]/BoolToOption/*' />
+        public static implicit operator SqlConnectionEncryptionOption(bool value) => value ? SqlConnectionEncryptionOption.Mandatory : SqlConnectionEncryptionOption.Optional;
+
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionOption.xml' path='docs/members[@name="SqlConnectionEncryptionOption"]/IntToOption/*' />
+        public static implicit operator SqlConnectionEncryptionOption(int value) => new(value);
+
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionOption.xml' path='docs/members[@name="SqlConnectionEncryptionOption"]/OptionToBool/*' />
+        public static implicit operator bool(SqlConnectionEncryptionOption value) => value.Value != Optional;
+
+        /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionOption.xml' path='docs/members[@name="SqlConnectionEncryptionOption"]/OptionToInt/*' />
+        public static implicit operator int(SqlConnectionEncryptionOption value) => value.Value;
+    }
+ 
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionOverrides.xml' path='docs/members[@name="SqlConnectionOverrides"]/SqlConnectionOverrides/*' />
     public enum SqlConnectionOverrides
     {

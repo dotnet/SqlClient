@@ -504,11 +504,7 @@ namespace Microsoft.Data.Common
         /// <returns></returns>
         internal static bool IsValidConnectionStringEncryptionOption(SqlConnectionEncryptionOption value)
         {
-            Debug.Assert(Enum.GetNames(typeof(SqlConnectionEncryptionOption)).Length == 3, "SqlConnectionEncryptionOptions enum has changed, update needed");
-            return
-                   value is SqlConnectionEncryptionOption.Optional or
-                   SqlConnectionEncryptionOption.Mandatory or
-                   SqlConnectionEncryptionOption.Strict;
+            return new SqlConnectionEncryptionOption(value).Value.Equals(value);
         }
 
         /// <summary>
@@ -744,13 +740,7 @@ namespace Microsoft.Data.Common
 
         internal static string SqlEncryptionOptionToString(SqlConnectionEncryptionOption value)
         {
-            return value switch
-            {
-                SqlConnectionEncryptionOption.Optional => nameof(SqlConnectionEncryptionOption.Optional),
-                SqlConnectionEncryptionOption.Mandatory => nameof(SqlConnectionEncryptionOption.Mandatory),
-                SqlConnectionEncryptionOption.Strict => nameof(SqlConnectionEncryptionOption.Strict),
-                _ => null
-            };
+            return value.Value;
         }
 
         #region <<AttestationProtocol Utility>>
@@ -873,56 +863,17 @@ namespace Microsoft.Data.Common
             {
                 return DbConnectionStringDefaults.Encrypt;
             }
-            if (value is string sValue)
+            else if (value is string sValue)
             {
-                // try again after remove leading & trailing whitespaces.
-                sValue = sValue.Trim();
-                if (TryToConvertToSqlConnectionEncryptionOption(sValue, out SqlConnectionEncryptionOption result))
-                {
-                    return result;
-                }
-                // string values must be valid
-                throw ADP.InvalidConnectionOptionValue(keyword);
+                return new SqlConnectionEncryptionOption(sValue);
+            }
+            else if (value is bool bValue)
+            {
+                return new SqlConnectionEncryptionOption(bValue.ToString());
             }
             else
             {
-                // the value is not string, try other options
-                SqlConnectionEncryptionOption eValue;
-
-                if (value is SqlConnectionEncryptionOption encryptOption)
-                {
-                    eValue = encryptOption;
-                }
-                else if (value.GetType().IsEnum)
-                {
-                    // explicitly block scenarios in which user tries to use wrong enum types, like:
-                    // builder["SqlConnectionAttestationProtocol"] = EnvironmentVariableTarget.Process;
-                    // workaround: explicitly cast non-SqlConnectionAttestationProtocol enums to int
-                    throw ADP.ConvertFailed(value.GetType(), typeof(SqlConnectionEncryptionOption), null);
-                }
-                else
-                {
-                    try
-                    {
-                        // Enum.ToObject allows only integral and enum values (enums are blocked above), raising ArgumentException for the rest
-                        eValue = (SqlConnectionEncryptionOption)Enum.ToObject(typeof(SqlConnectionEncryptionOption), value);
-                    }
-                    catch (ArgumentException e)
-                    {
-                        // to be consistent with the messages we send in case of wrong type usage, replace
-                        // the error with our exception, and keep the original one as inner one for troubleshooting
-                        throw ADP.ConvertFailed(value.GetType(), typeof(SqlConnectionEncryptionOption), e);
-                    }
-                }
-
-                if (IsValidConnectionStringEncryptionOption(eValue))
-                {
-                    return eValue;
-                }
-                else
-                {
-                    throw ADP.InvalidEnumerationValue(typeof(SqlConnectionEncryptionOption), (int)eValue);
-                }
+                return new SqlConnectionEncryptionOption(value.ToString());
             }
         }
 
@@ -1063,7 +1014,7 @@ namespace Microsoft.Data.Common
 #endif
         internal const string CurrentLanguage = "";
         internal const string DataSource = "";
-        internal const SqlConnectionEncryptionOption Encrypt = SqlConnectionEncryptionOption.Mandatory;
+        internal static readonly SqlConnectionEncryptionOption Encrypt = SqlConnectionEncryptionOption.Mandatory;
         internal const string HostNameInCertificate = "";
         internal const bool Enlist = true;
         internal const string FailoverPartner = "";

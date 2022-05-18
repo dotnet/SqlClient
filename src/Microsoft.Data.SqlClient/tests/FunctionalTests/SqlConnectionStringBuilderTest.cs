@@ -320,8 +320,10 @@ namespace Microsoft.Data.SqlClient.Tests
         [InlineData("Encrypt=no", SqlConnectionEncryptionOption.Optional)]
         [InlineData("Encrypt=true", SqlConnectionEncryptionOption.Mandatory)]
         [InlineData("Encrypt=false", SqlConnectionEncryptionOption.Optional)]
+        [InlineData("Encrypt=mandatory", SqlConnectionEncryptionOption.Mandatory)]
+        [InlineData("Encrypt=optional", SqlConnectionEncryptionOption.Optional)]
         [InlineData("Encrypt=strict", SqlConnectionEncryptionOption.Strict)]
-        public void SetEncryptInConnectionStringMapsToEnum(string connectionString, SqlConnectionEncryptionOption expected)
+        public void SetEncryptInConnectionStringMapsToString(string connectionString, SqlConnectionEncryptionOption expected)
         {
             SqlConnection sqlConnection = new SqlConnection(connectionString);
             SqlConnectionStringBuilder scsb =  new (sqlConnection.ConnectionString);
@@ -329,10 +331,10 @@ namespace Microsoft.Data.SqlClient.Tests
         }
 
         [Theory]
-        [InlineData("Encrypt=Mandatory", SqlConnectionEncryptionOption.Mandatory)]
-        [InlineData("Encrypt=Optional", SqlConnectionEncryptionOption.Optional)]
+        [InlineData("Encrypt=True", SqlConnectionEncryptionOption.Mandatory)]
+        [InlineData("Encrypt=False", SqlConnectionEncryptionOption.Optional)]
         [InlineData("Encrypt=Strict", SqlConnectionEncryptionOption.Strict)]
-        public void SetEncryptEnumOnConnectionBuilderMapsToString(string expected, SqlConnectionEncryptionOption option)
+        public void SetEncryptOnConnectionBuilderMapsToString(string expected, SqlConnectionEncryptionOption option)
         {
             SqlConnectionStringBuilder scsb = new();
             scsb.Encrypt = option;

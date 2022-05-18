@@ -1198,11 +1198,6 @@ namespace Microsoft.Data.SqlClient
             get => _encrypt;
             set
             {
-                if (!DbConnectionStringBuilderUtil.IsValidConnectionStringEncryptionOption(value))
-                {
-                    throw ADP.InvalidEnumerationValue(typeof(SqlConnectionEncryptionOption), (int)value);
-                }
-
                 SetSqlConnectionEncryptionValue(value);
                 _encrypt = value;
             }

@@ -3,8 +3,10 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
+using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -1118,14 +1120,73 @@ namespace Microsoft.Data.SqlClient
     }
 
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionOption.xml' path='docs/members[@name="SqlConnectionEncryptionOption"]/SqlConnectionEncryptionOptions/*'/>
-    public enum SqlConnectionEncryptionOption
+    public struct SqlConnectionEncryptionOption
     {
+        private const string TRUE = "true";
+        private const string ON = "on";
+        private const string MANDATORY = "mandatory";
+        private const string FALSE = "false";
+        private const string OFF = "off";
+        private const string OPTIONAL = "optional";
+        private const string STRICT = "strict";
+        private static string[] _validValues = new string[] { "False", "True", "Strict" };
+        private readonly string _value;
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionOption.xml' path='docs/members[@name="SqlConnectionEncryptionOption"]/Value/*' />
+        public string Value
+        {
+            get { return _value; }
+        }
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionOption.xml' path='docs/members[@name="SqlConnectionEncryptionOption"]/ctor/*' />
+        public SqlConnectionEncryptionOption(string value)
+        {
+            switch (value.ToLower())
+            {
+                case TRUE:
+                case ON:
+                case MANDATORY:
+                    {
+                        _value = Mandatory;
+                        break;
+                    }
+                case FALSE:
+                case OFF:
+                case OPTIONAL:
+                    {
+                        _value = Optional;
+                        break;
+                    }
+                case STRICT:
+                    {
+                        _value = Strict;
+                        break;
+                    }
+                default:
+                    throw ADP.InvalidConnectionOptionValue(SqlConnectionString.KEY.Encrypt);
+            }
+        }
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionOption.xml' path='docs/members[@name="SqlConnectionEncryptionOption"]/Optional/*' />
-        Optional = 0,
+        public const string Optional = "False";
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionOption.xml' path='docs/members[@name="SqlConnectionEncryptionOption"]/Mandatory/*' />
-        Mandatory = 1,
+        public const string Mandatory = "True";
+
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionOption.xml' path='docs/members[@name="SqlConnectionEncryptionOption"]/Strict/*' />
-        Strict = 2
+        public const string Strict = "Strict";
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionOption.xml' path='docs/members[@name="SqlConnectionEncryptionOption"]/BoolToOption/*' />
+        public static implicit operator SqlConnectionEncryptionOption(bool value) => value ? SqlConnectionEncryptionOption.Mandatory : SqlConnectionEncryptionOption.Optional;
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionOption.xml' path='docs/members[@name="SqlConnectionEncryptionOption"]/StringToOption/*' />
+        public static implicit operator SqlConnectionEncryptionOption(string value) => new(value);
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionOption.xml' path='docs/members[@name="SqlConnectionEncryptionOption"]/OptionToBool/*' />
+        public static implicit operator bool(SqlConnectionEncryptionOption value) => value.Value != Optional;
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionOption.xml' path='docs/members[@name="SqlConnectionEncryptionOption"]/OptionToString/*' />
+        public static implicit operator string(SqlConnectionEncryptionOption value) => value.Value;
     }
 
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionIPAddressPreference.xml' path='docs/members[@name="SqlConnectionIPAddressPreference"]/SqlConnectionIPAddressPreference/*' />

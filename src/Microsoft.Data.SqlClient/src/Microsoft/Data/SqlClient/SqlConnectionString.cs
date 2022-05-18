@@ -32,7 +32,7 @@ namespace Microsoft.Data.SqlClient
             internal const int Connect_Timeout = DbConnectionStringDefaults.ConnectTimeout;
             internal const string Current_Language = DbConnectionStringDefaults.CurrentLanguage;
             internal const string Data_Source = DbConnectionStringDefaults.DataSource;
-            internal const SqlConnectionEncryptionOption Encrypt = DbConnectionStringDefaults.Encrypt;
+            internal static readonly SqlConnectionEncryptionOption Encrypt = DbConnectionStringDefaults.Encrypt;
             internal const string HostNameInCertificate = DbConnectionStringDefaults.HostNameInCertificate;
             internal const bool Enlist = DbConnectionStringDefaults.Enlist;
             internal const string FailoverPartner = DbConnectionStringDefaults.FailoverPartner;
