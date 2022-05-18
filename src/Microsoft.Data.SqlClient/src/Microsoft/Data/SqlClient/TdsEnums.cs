@@ -1132,10 +1132,7 @@ namespace Microsoft.Data.SqlClient
         private readonly string _value;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionOption.xml' path='docs/members[@name="SqlConnectionEncryptionOption"]/Value/*' />
-        public string Value
-        {
-            get { return _value; }
-        }
+        public string Value { get => _value; }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionOption.xml' path='docs/members[@name="SqlConnectionEncryptionOption"]/ctor/*' />
         public SqlConnectionEncryptionOption(string value)
@@ -1186,6 +1183,9 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionOption.xml' path='docs/members[@name="SqlConnectionEncryptionOption"]/OptionToString/*' />
         public static implicit operator string(SqlConnectionEncryptionOption value) => value.Value;
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptionOption.xml' path='docs/members[@name="SqlConnectionEncryptionOption"]/ToString/*' />
+        public override string ToString() => _value;
     }
 
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionIPAddressPreference.xml' path='docs/members[@name="SqlConnectionIPAddressPreference"]/SqlConnectionIPAddressPreference/*' />

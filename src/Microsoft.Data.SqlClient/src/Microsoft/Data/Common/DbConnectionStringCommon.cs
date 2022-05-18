@@ -504,7 +504,7 @@ namespace Microsoft.Data.Common
         /// <returns></returns>
         internal static bool IsValidConnectionStringEncryptionOption(SqlConnectionEncryptionOption value)
         {
-            return new SqlConnectionEncryptionOption(value).Value.Equals(value);
+            return new SqlConnectionEncryptionOption(value.Value).Value.Equals(value.Value);
         }
 
         /// <summary>
@@ -736,11 +736,6 @@ namespace Microsoft.Data.Common
                 result = DbConnectionStringDefaults.Encrypt;
                 return false;
             }
-        }
-
-        internal static string SqlEncryptionOptionToString(SqlConnectionEncryptionOption value)
-        {
-            return value.Value;
         }
 
         #region <<AttestationProtocol Utility>>

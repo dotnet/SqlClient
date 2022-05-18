@@ -44,5 +44,8 @@
         Enables implicit converstion of a <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptionOption" /> to a string.
       </summary>
     </OptionToString>
+    <ToString>
+      <summary>Returns the string value of <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptionOption.Value" />.</summary>
+    </ToString>
   </members>
 </docs>

@@ -588,7 +588,7 @@ namespace Microsoft.Data.SqlClient
         private void SetSqlConnectionEncryptionValue(SqlConnectionEncryptionOption value)
         {
             Debug.Assert(DbConnectionStringBuilderUtil.IsValidConnectionStringEncryptionOption(value));
-            base[DbConnectionStringKeywords.Encrypt] = DbConnectionStringBuilderUtil.SqlEncryptionOptionToString(value);
+            base[DbConnectionStringKeywords.Encrypt] = value.Value;
         }
 
         private void SetIPAddressPreferenceValue(SqlConnectionIPAddressPreference value)
