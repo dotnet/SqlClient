@@ -3,11 +3,10 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
-using Microsoft.Data.Common;
 using System.Globalization;
-using System.Runtime.Versioning;
-using System.Security.Permissions;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
+using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient
 {
@@ -168,7 +167,7 @@ namespace Microsoft.Data.SqlClient
 
             byte[] nicAddress = null;
 
-            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 // NIC address is stored in NetworkAddress key.  However, if NetworkAddressLocal key
                 // has a value that is not zero, then we cannot use the NetworkAddress key and must
