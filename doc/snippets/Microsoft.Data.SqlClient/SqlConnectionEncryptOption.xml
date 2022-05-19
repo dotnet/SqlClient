@@ -1,0 +1,52 @@
+﻿<?xml version="1.0"?>
+<docs>
+  <members name="SqlConnectionEncryptOption">
+    <SqlConnectionEncryptOption>
+      <summary>
+        These options are used to control encryption behavior of the communication between the server and the client.
+      </summary>
+      <remarks>Implicit conversions have been added to maintain backwards compatibility with boolean behahavior for the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Encrypt" /> property. When converting from a boolean, a value of <see langword="true" /> converts to <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory" /> and a value of <see langword="false" /> converts to <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Optional" />. When converting to a boolean, <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory" /> and <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict" /> convert to <see langword="true" /> and <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Optional" /> converts <see langword="false" />.
+      </remarks>
+    </SqlConnectionEncryptOption>
+    <ctor>
+      <param name="value">The value to be used for the encryption option.</param>
+      <summary>
+        Initializes the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption" /> with the provided value.
+      </summary>
+    </ctor>
+    <Optional>
+      <summary>Specifies that TLS encryption is optional when connecting to the server. If the server requires encryption, encryption will be negotiated.</summary>
+    </Optional>
+    <Mandatory>
+      <summary>Specifies that TLS encryption is required when connecting to the server. If the server doesn't support encryption, the connection will fail.</summary>
+    </Mandatory>
+    <Strict>
+      <summary>Enables and requires TDS 8.0, TLS encryption to the server. If the server doesn't support TDS 8.0, TLS encryption, the connection will fail.</summary>
+    </Strict>
+    <BoolToOption>
+      <param name="value">The boolean value to be used for implicit comparison.</param>
+      <summary>
+        Enables implicit converstion of a boolean to a <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption" />. A value of <see langword="true" /> converts to <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory" />
+      </summary>
+    </BoolToOption>
+    <OptionToBool>
+      <param name="value">The <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption" /> value to be used for implicit comparison.</param>
+      <summary>
+        Enables implicit converstion of a <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption" /> to a boolean. <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory" /> and <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict" /> convert to <see langword="true" />. <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory" /> converts to <see langword="false" />.
+      </summary>
+    </OptionToBool>
+    <ToString>
+      <summary>Returns the string value of <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Value" />.</summary>
+    </ToString>
+    <Equals>
+      <summary>
+        Compares the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.ToString()" /> representation of <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption" /> to another <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption" />.
+      </summary>
+    </Equals>
+    <GetHashCode>
+      <summary>
+        Returns the hash code of the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.ToString()" /> value.
+      </summary>
+    </GetHashCode>
+  </members>
+</docs>

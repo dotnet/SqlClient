@@ -46,7 +46,7 @@ namespace Microsoft.Data.SqlClient.Tests
             {
                 DataSource = "localhost," + server.Port,
                 IntegratedSecurity = true,
-                Encrypt = SqlConnectionEncryptionOption.Optional
+                Encrypt = SqlConnectionEncryptOption.Optional
             };
 
             using SqlConnection connection = new(builder.ConnectionString);

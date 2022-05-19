@@ -135,30 +135,6 @@ namespace Microsoft.Data.Common
 
         internal bool TryGetParsetableValue(string key, out string value) => _parsetable.TryGetValue(key, out value);
 
-        internal SqlConnectionEncryptionOption ConvertValueToSqlConnectionEncryptionOption(string stringValue)
-        {
-            if (CompareInsensitiveInvariant(stringValue, "yes") || CompareInsensitiveInvariant(stringValue, "true") ||
-                Enum.TryParse(stringValue, out SqlConnectionEncryptionOption option) && option == SqlConnectionEncryptionOption.Mandatory)
-            {
-                return SqlConnectionEncryptionOption.Mandatory;
-                ;
-            }
-            else if (CompareInsensitiveInvariant(stringValue, "no") || CompareInsensitiveInvariant(stringValue, "false") ||
-                Enum.TryParse(stringValue, out option) && option == SqlConnectionEncryptionOption.Optional)
-            {
-                return SqlConnectionEncryptionOption.Optional;
-                ;
-            }
-            else if (Enum.TryParse(stringValue, out option) && option == SqlConnectionEncryptionOption.Strict)
-            {
-                return SqlConnectionEncryptionOption.Strict;
-            }
-            else
-            {
-                throw ADP.InvalidConnectionOptionValue(KEY.Encrypt);
-            }
-        }
-
         // same as Boolean, but with SSPI thrown in as valid yes
         public bool ConvertValueToIntegratedSecurity()
         {

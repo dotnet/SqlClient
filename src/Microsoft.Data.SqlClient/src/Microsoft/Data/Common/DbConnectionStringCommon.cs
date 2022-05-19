@@ -498,16 +498,6 @@ namespace Microsoft.Data.Common
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        internal static bool IsValidConnectionStringEncryptionOption(SqlConnectionEncryptionOption value)
-        {
-            return new SqlConnectionEncryptionOption(value.Value).Value.Equals(value.Value);
-        }
-
-        /// <summary>
         /// Convert connection level column encryption setting value to string.
         /// </summary>
         /// <param name="value"></param>
@@ -706,29 +696,29 @@ namespace Microsoft.Data.Common
             }
         }
 
-        internal static bool TryToConvertToSqlConnectionEncryptionOption(string value, out SqlConnectionEncryptionOption result)
+        internal static bool TryToConvertToSqlConnectionEncryptOption(string value, out SqlConnectionEncryptOption result)
         {
 
-            // SqlConnectionEncryptionOption has length of 3
-            Debug.Assert(Enum.GetNames(typeof(SqlConnectionEncryptionOption)).Length == 3, "SqlConnectionEncryption enum has changed, update needed. Accepted values are:" +
+            // SqlConnectionEncryptOption has length of 3
+            Debug.Assert(Enum.GetNames(typeof(SqlConnectionEncryptOption)).Length == 3, "SqlConnectionEncryption enum has changed, update needed. Accepted values are:" +
                 "Optional, false, no, Mandatory, true, yes and Strict");
-            if (StringComparer.InvariantCultureIgnoreCase.Equals(value, nameof(SqlConnectionEncryptionOption.Optional))
+            if (StringComparer.InvariantCultureIgnoreCase.Equals(value, nameof(SqlConnectionEncryptOption.Optional))
                 || StringComparer.InvariantCultureIgnoreCase.Equals(value, "false")
                 || StringComparer.InvariantCultureIgnoreCase.Equals(value, "no"))
             {
-                result = SqlConnectionEncryptionOption.Optional;
+                result = SqlConnectionEncryptOption.Optional;
                 return true;
             }
-            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, nameof(SqlConnectionEncryptionOption.Mandatory))
+            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, nameof(SqlConnectionEncryptOption.Mandatory))
                            || StringComparer.InvariantCultureIgnoreCase.Equals(value, "true")
                            || StringComparer.InvariantCultureIgnoreCase.Equals(value, "yes"))
             {
-                result = SqlConnectionEncryptionOption.Mandatory;
+                result = SqlConnectionEncryptOption.Mandatory;
                 return true;
             }
-            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, nameof(SqlConnectionEncryptionOption.Strict)))
+            else if (StringComparer.InvariantCultureIgnoreCase.Equals(value, nameof(SqlConnectionEncryptOption.Strict)))
             {
-                result = SqlConnectionEncryptionOption.Strict;
+                result = SqlConnectionEncryptOption.Strict;
                 return true;
             }
             else
@@ -852,7 +842,7 @@ namespace Microsoft.Data.Common
             }
         }
 
-        internal static SqlConnectionEncryptionOption ConvertToSqlConnectionEncryptionOption(string keyword, object value)
+        internal static SqlConnectionEncryptOption ConvertToSqlConnectionEncryptOption(string keyword, object value)
         {
             if (value is null)
             {
@@ -860,15 +850,15 @@ namespace Microsoft.Data.Common
             }
             else if (value is string sValue)
             {
-                return new SqlConnectionEncryptionOption(sValue);
+                return new SqlConnectionEncryptOption(sValue);
             }
             else if (value is bool bValue)
             {
-                return new SqlConnectionEncryptionOption(bValue.ToString());
+                return new SqlConnectionEncryptOption(bValue.ToString());
             }
             else
             {
-                return new SqlConnectionEncryptionOption(value.ToString());
+                return new SqlConnectionEncryptOption(value.ToString());
             }
         }
 
@@ -1009,7 +999,7 @@ namespace Microsoft.Data.Common
 #endif
         internal const string CurrentLanguage = "";
         internal const string DataSource = "";
-        internal static readonly SqlConnectionEncryptionOption Encrypt = SqlConnectionEncryptionOption.Mandatory;
+        internal static readonly SqlConnectionEncryptOption Encrypt = SqlConnectionEncryptOption.Mandatory;
         internal const string HostNameInCertificate = "";
         internal const bool Enlist = true;
         internal const string FailoverPartner = "";

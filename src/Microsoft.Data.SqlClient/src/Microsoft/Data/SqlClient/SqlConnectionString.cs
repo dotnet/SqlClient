@@ -32,7 +32,7 @@ namespace Microsoft.Data.SqlClient
             internal const int Connect_Timeout = DbConnectionStringDefaults.ConnectTimeout;
             internal const string Current_Language = DbConnectionStringDefaults.CurrentLanguage;
             internal const string Data_Source = DbConnectionStringDefaults.DataSource;
-            internal static readonly SqlConnectionEncryptionOption Encrypt = DbConnectionStringDefaults.Encrypt;
+            internal static readonly SqlConnectionEncryptOption Encrypt = DbConnectionStringDefaults.Encrypt;
             internal const string HostNameInCertificate = DbConnectionStringDefaults.HostNameInCertificate;
             internal const bool Enlist = DbConnectionStringDefaults.Enlist;
             internal const string FailoverPartner = DbConnectionStringDefaults.FailoverPartner;
@@ -226,7 +226,7 @@ namespace Microsoft.Data.SqlClient
 
         private readonly bool _integratedSecurity;
 
-        private readonly SqlConnectionEncryptionOption _encrypt;
+        private readonly SqlConnectionEncryptOption _encrypt;
         private readonly bool _trustServerCertificate;
         private readonly bool _enlist;
         private readonly bool _mars;
@@ -406,7 +406,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            if (_encrypt == SqlConnectionEncryptionOption.Optional)
+            if (_encrypt == SqlConnectionEncryptOption.Optional)
             {    // Support legacy registry encryption settings
                 const string folder = "Software\\Microsoft\\MSSQLServer\\Client\\SuperSocketNetLib";
                 const string value = "Encrypt";
@@ -414,7 +414,7 @@ namespace Microsoft.Data.SqlClient
                 object obj = ADP.LocalMachineRegistryValue(folder, value);
                 if ((obj is int iObj) && (iObj == 1))
                 {         // If the registry key exists
-                    _encrypt = SqlConnectionEncryptionOption.Mandatory;
+                    _encrypt = SqlConnectionEncryptOption.Mandatory;
                 }
             }
 
@@ -702,7 +702,7 @@ namespace Microsoft.Data.SqlClient
         // SQLPT 41700: Ignore ResetConnection=False, always reset the connection for security
         internal bool ConnectionReset => true;
         //        internal bool EnableUdtDownload => _enableUdtDownload;} }
-        internal SqlConnectionEncryptionOption Encrypt => _encrypt;
+        internal SqlConnectionEncryptOption Encrypt => _encrypt;
         internal string HostNameInCertificate => _hostNameInCertificate;
         internal bool TrustServerCertificate => _trustServerCertificate;
         internal bool Enlist => _enlist;
@@ -1111,7 +1111,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal SqlConnectionEncryptionOption ConvertValueToSqlConnectionEncrypt()
+        internal SqlConnectionEncryptOption ConvertValueToSqlConnectionEncrypt()
         {
             if (!TryGetParsetableValue(KEY.Encrypt, out string value))
             {
@@ -1120,7 +1120,7 @@ namespace Microsoft.Data.SqlClient
 
             try
             {
-                return DbConnectionStringBuilderUtil.ConvertToSqlConnectionEncryptionOption(KEY.Encrypt, value);
+                return DbConnectionStringBuilderUtil.ConvertToSqlConnectionEncryptOption(KEY.Encrypt, value);
             }
             catch (FormatException e)
             {
@@ -1140,9 +1140,9 @@ namespace Microsoft.Data.SqlClient
             return permissionSet;
         }
 
-        internal SqlConnectionEncryptionOption ConvertValueToEncrypt()
+        internal SqlConnectionEncryptOption ConvertValueToEncrypt()
         {
-            SqlConnectionEncryptionOption defaultEncryptValue = !Parsetable.ContainsKey(KEY.Authentication) ? DEFAULT.Encrypt : SqlConnectionEncryptionOption.Mandatory;
+            SqlConnectionEncryptOption defaultEncryptValue = !Parsetable.ContainsKey(KEY.Authentication) ? DEFAULT.Encrypt : SqlConnectionEncryptOption.Mandatory;
             return ConvertValueToSqlConnectionEncrypt();
         }
 

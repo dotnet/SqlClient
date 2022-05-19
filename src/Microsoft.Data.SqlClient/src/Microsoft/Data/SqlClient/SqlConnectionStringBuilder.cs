@@ -106,7 +106,7 @@ namespace Microsoft.Data.SqlClient
         private int _packetSize = DbConnectionStringDefaults.PacketSize;
         private int _connectRetryCount = DbConnectionStringDefaults.ConnectRetryCount;
         private int _connectRetryInterval = DbConnectionStringDefaults.ConnectRetryInterval;
-        private SqlConnectionEncryptionOption _encrypt = DbConnectionStringDefaults.Encrypt;
+        private SqlConnectionEncryptOption _encrypt = DbConnectionStringDefaults.Encrypt;
         private string _hostNameInCertificate = DbConnectionStringDefaults.HostNameInCertificate;
         private bool _trustServerCertificate = DbConnectionStringDefaults.TrustServerCertificate;
         private bool _enlist = DbConnectionStringDefaults.Enlist;
@@ -295,8 +295,8 @@ namespace Microsoft.Data.SqlClient
         private static SqlConnectionAttestationProtocol ConvertToAttestationProtocol(string keyword, object value)
             => DbConnectionStringBuilderUtil.ConvertToAttestationProtocol(keyword, value);
 
-        private static SqlConnectionEncryptionOption ConvertToSqlConnectionEncryptionOption(string keyword, object value)
-           => DbConnectionStringBuilderUtil.ConvertToSqlConnectionEncryptionOption(keyword, value);
+        private static SqlConnectionEncryptOption ConvertToSqlConnectionEncryptOption(string keyword, object value)
+           => DbConnectionStringBuilderUtil.ConvertToSqlConnectionEncryptOption(keyword, value);
 
 
         private static SqlConnectionIPAddressPreference ConvertToIPAddressPreference(string keyword, object value)
@@ -585,10 +585,9 @@ namespace Microsoft.Data.SqlClient
             base[DbConnectionStringKeywords.AttestationProtocol] = DbConnectionStringBuilderUtil.AttestationProtocolToString(value);
         }
 
-        private void SetSqlConnectionEncryptionValue(SqlConnectionEncryptionOption value)
+        private void SetSqlConnectionEncryptionValue(SqlConnectionEncryptOption value)
         {
-            Debug.Assert(DbConnectionStringBuilderUtil.IsValidConnectionStringEncryptionOption(value));
-            base[DbConnectionStringKeywords.Encrypt] = value.Value;
+            base[DbConnectionStringKeywords.Encrypt] = value.ToString();
         }
 
         private void SetIPAddressPreferenceValue(SqlConnectionIPAddressPreference value)
@@ -998,7 +997,7 @@ namespace Microsoft.Data.SqlClient
                             PoolBlockingPeriod = ConvertToPoolBlockingPeriod(keyword, value);
                             break;
                         case Keywords.Encrypt:
-                            Encrypt = ConvertToSqlConnectionEncryptionOption(keyword, value);
+                            Encrypt = ConvertToSqlConnectionEncryptOption(keyword, value);
                             break;
                         case Keywords.HostNameInCertificate:
                             HostNameInCertificate = ConvertToString(value);
@@ -1193,7 +1192,7 @@ namespace Microsoft.Data.SqlClient
         [ResCategory(StringsHelper.ResourceNames.DataCategory_Security)]
         [ResDescription(StringsHelper.ResourceNames.DbConnectionString_Encrypt)]
         [RefreshProperties(RefreshProperties.All)]
-        public SqlConnectionEncryptionOption Encrypt
+        public SqlConnectionEncryptOption Encrypt
         {
             get => _encrypt;
             set
