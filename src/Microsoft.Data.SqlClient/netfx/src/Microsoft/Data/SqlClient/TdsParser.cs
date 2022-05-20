@@ -1259,12 +1259,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // create a new packet encryption changes the internal packet size Bug# 228403
-            try
-            { } // EmptyTry/Finally to avoid FXCop violation
-            finally
-            {
-                _physicalStateObj.ClearAllWritePackets();
-            }
+            _physicalStateObj.ClearAllWritePackets();
         }
 
         private PreLoginHandshakeStatus ConsumePreLoginHandshake(

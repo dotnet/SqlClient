@@ -20,9 +20,16 @@ namespace Microsoft.Data.SqlClient
         private const string OPTIONAL_LOWER = "optional";
         private const string STRICT_LOWER = "strict";
         private readonly string _value;
+        private static readonly SqlConnectionEncryptOption s_optional = new(FALSE);
+        private static readonly SqlConnectionEncryptOption s_mandatory = new(TRUE);
+        private static readonly SqlConnectionEncryptOption s_strict = new(STRICT);
 
-        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/ctor/*' />
-        public SqlConnectionEncryptOption(string value)
+        private SqlConnectionEncryptOption(string value)
+        {
+            _value = value;
+        }
+
+        internal static SqlConnectionEncryptOption Parse(string value)
         {
             switch (value.ToLower())
             {
@@ -30,20 +37,17 @@ namespace Microsoft.Data.SqlClient
                 case YES_LOWER:
                 case MANDATORY_LOWER:
                     {
-                        _value = TRUE;
-                        break;
+                        return Mandatory;
                     }
                 case FALSE_LOWER:
                 case NO_LOWER:
                 case OPTIONAL_LOWER:
                     {
-                        _value = FALSE;
-                        break;
+                        return Optional;
                     }
                 case STRICT_LOWER:
                     {
-                        _value = STRICT;
-                        break;
+                        return Strict;
                     }
                 default:
                     throw ADP.InvalidConnectionOptionValue(SqlConnectionString.KEY.Encrypt);
@@ -51,13 +55,13 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/Optional/*' />
-        public static SqlConnectionEncryptOption Optional = new SqlConnectionEncryptOption(FALSE);
+        public static SqlConnectionEncryptOption Optional { get { return s_optional; } }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/Mandatory/*' />
-        public static SqlConnectionEncryptOption Mandatory = new SqlConnectionEncryptOption(TRUE);
+        public static SqlConnectionEncryptOption Mandatory { get { return s_mandatory; } }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/Strict/*' />
-        public static SqlConnectionEncryptOption Strict = new SqlConnectionEncryptOption(STRICT);
+        public static SqlConnectionEncryptOption Strict { get { return s_strict; } }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/BoolToOption/*' />
         public static implicit operator SqlConnectionEncryptOption(bool value) => value ? SqlConnectionEncryptOption.Mandatory : SqlConnectionEncryptOption.Optional;
@@ -72,9 +76,9 @@ namespace Microsoft.Data.SqlClient
         public override bool Equals(object obj)
         {
             if (obj != null &&
-                obj is SqlConnectionEncryptOption)
+                obj is SqlConnectionEncryptOption option)
             {
-                return ToString().Equals(((SqlConnectionEncryptOption)obj).ToString());
+                return ToString().Equals(option.ToString());
             }
 
             return false;

@@ -8,12 +8,6 @@
       <remarks>Implicit conversions have been added to maintain backwards compatibility with boolean behahavior for the <see cref="P:Microsoft.Data.SqlClient.SqlConnectionStringBuilder.Encrypt" /> property. When converting from a boolean, a value of <see langword="true" /> converts to <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory" /> and a value of <see langword="false" /> converts to <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Optional" />. When converting to a boolean, <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory" /> and <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict" /> convert to <see langword="true" /> and <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Optional" /> converts <see langword="false" />.
       </remarks>
     </SqlConnectionEncryptOption>
-    <ctor>
-      <param name="value">The value to be used for the encryption option.</param>
-      <summary>
-        Initializes the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption" /> with the provided value.
-      </summary>
-    </ctor>
     <Optional>
       <summary>Specifies that TLS encryption is optional when connecting to the server. If the server requires encryption, encryption will be negotiated.</summary>
     </Optional>

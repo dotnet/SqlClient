@@ -850,16 +850,10 @@ namespace Microsoft.Data.Common
             }
             else if (value is string sValue)
             {
-                return new SqlConnectionEncryptOption(sValue);
+                return SqlConnectionEncryptOption.Parse(sValue);
             }
-            else if (value is bool bValue)
-            {
-                return new SqlConnectionEncryptOption(bValue.ToString());
-            }
-            else
-            {
-                return new SqlConnectionEncryptOption(value.ToString());
-            }
+
+            throw ADP.InvalidConnectionOptionValue(keyword);
         }
 
         #endregion

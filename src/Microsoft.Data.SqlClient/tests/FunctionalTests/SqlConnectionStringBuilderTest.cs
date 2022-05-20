@@ -315,20 +315,22 @@ namespace Microsoft.Data.SqlClient.Tests
         [Fact]
         public void SetEncryptInConnectionStringMapsToString()
         {
-            var data = new List<Tuple<string, SqlConnectionEncryptOption>>();
-            data.Add(Tuple.Create("Encrypt=yes", SqlConnectionEncryptOption.Mandatory));
-            data.Add(Tuple.Create("Encrypt=no", SqlConnectionEncryptOption.Optional));
-            data.Add(Tuple.Create("Encrypt=true", SqlConnectionEncryptOption.Mandatory));
-            data.Add(Tuple.Create("Encrypt=false", SqlConnectionEncryptOption.Optional));
-            data.Add(Tuple.Create("Encrypt=mandatory", SqlConnectionEncryptOption.Mandatory));
-            data.Add(Tuple.Create("Encrypt=optional", SqlConnectionEncryptOption.Optional));
-            data.Add(Tuple.Create("Encrypt=strict", SqlConnectionEncryptOption.Strict));
+            var data = new List<Tuple<string, SqlConnectionEncryptOption>>
+            {
+                Tuple.Create("Encrypt=yes", SqlConnectionEncryptOption.Mandatory),
+                Tuple.Create("Encrypt=no", SqlConnectionEncryptOption.Optional),
+                Tuple.Create("Encrypt=true", SqlConnectionEncryptOption.Mandatory),
+                Tuple.Create("Encrypt=false", SqlConnectionEncryptOption.Optional),
+                Tuple.Create("Encrypt=mandatory", SqlConnectionEncryptOption.Mandatory),
+                Tuple.Create("Encrypt=optional", SqlConnectionEncryptOption.Optional),
+                Tuple.Create("Encrypt=strict", SqlConnectionEncryptOption.Strict)
+            };
 
             foreach (var item in data)
             {
                 string connectionString = item.Item1;
                 SqlConnectionEncryptOption expected = item.Item2;
-                SqlConnection sqlConnection = new SqlConnection(connectionString);
+                SqlConnection sqlConnection = new(connectionString);
                 SqlConnectionStringBuilder scsb = new(sqlConnection.ConnectionString);
                 Assert.Equal(expected, scsb.Encrypt);
             }
@@ -337,12 +339,14 @@ namespace Microsoft.Data.SqlClient.Tests
         [Fact]
         public void SetEncryptOnConnectionBuilderMapsToString()
         {
-            var data = new List<Tuple<string, SqlConnectionEncryptOption>>();
-            data.Add(Tuple.Create("Encrypt=True", SqlConnectionEncryptOption.Mandatory));
-            data.Add(Tuple.Create("Encrypt=False", SqlConnectionEncryptOption.Optional));
-            data.Add(Tuple.Create("Encrypt=Strict", SqlConnectionEncryptOption.Strict));
+            var data = new List<Tuple<string, SqlConnectionEncryptOption>>
+            {
+                Tuple.Create("Encrypt=True", SqlConnectionEncryptOption.Mandatory),
+                Tuple.Create("Encrypt=False", SqlConnectionEncryptOption.Optional),
+                Tuple.Create("Encrypt=Strict", SqlConnectionEncryptOption.Strict)
+            };
 
-            foreach (var item in data)
+            foreach (Tuple<string, SqlConnectionEncryptOption> item in data)
             {
                 string expected = item.Item1;
                 SqlConnectionEncryptOption option = item.Item2;
@@ -355,7 +359,7 @@ namespace Microsoft.Data.SqlClient.Tests
         [Fact]
         public void ConnectionBuilderEncryptBackwardsCompatibility()
         {
-            SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder();
+            SqlConnectionStringBuilder builder = new();
             builder.Encrypt = false;
             Assert.Equal("Encrypt=False", builder.ConnectionString);
             Assert.False(builder.Encrypt);
