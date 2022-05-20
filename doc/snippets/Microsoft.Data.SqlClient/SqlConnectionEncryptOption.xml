@@ -36,7 +36,7 @@
       </summary>
     </OptionToBool>
     <ToString>
-      <summary>Returns the string value of <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Value" />.</summary>
+      <summary>Returns the string value of <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption" />.</summary>
     </ToString>
     <Equals>
       <summary>
