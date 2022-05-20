@@ -310,12 +310,12 @@ namespace Microsoft.Data.SqlClient.SNI
                 try
                 {
                     port = isAdminConnection ?
-                            SSRP.GetDacPortByInstanceName(hostName, details.InstanceName) :
-                            SSRP.GetPortByInstanceName(hostName, details.InstanceName);
+                            SSRP.GetDacPortByInstanceName(hostName, details.InstanceName, timerExpire, parallel, ipPreference) :
+                            SSRP.GetPortByInstanceName(hostName, details.InstanceName, timerExpire, parallel, ipPreference);
                 }
                 catch (SocketException se)
                 {
-                    SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.TCP_PROV, SNICommon.InvalidConnStringError, se);
+                    SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.TCP_PROV, SNICommon.ErrorLocatingServerInstance, se);
                     return null;
                 }
             }

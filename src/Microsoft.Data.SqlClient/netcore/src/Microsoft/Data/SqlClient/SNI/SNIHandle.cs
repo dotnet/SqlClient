@@ -30,7 +30,7 @@ namespace Microsoft.Data.SqlClient.SNI
 #if !NETSTANDARD2_0
         protected static readonly List<SslApplicationProtocol> s_tdsProtocols = new List<SslApplicationProtocol>(1) { new(TdsEnums.TDS8_Protocol) };
 
-        protected static async Task AuthenticateClientAsync(SslStream sslStream, string serverNameIndication, X509CertificateCollection certificate)
+        protected static async Task AuthenticateClientAsync(SslStream sslStream, string serverNameIndication, X509CertificateCollection certificate, CancellationToken token)
         {
             SslClientAuthenticationOptions sslClientOptions = new()
             {
@@ -39,7 +39,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 EnabledSslProtocols = s_supportedProtocols,
                 ClientCertificates = certificate
             };
-            await sslStream.AuthenticateAsClientAsync(sslClientOptions, CancellationToken.None);
+            await sslStream.AuthenticateAsClientAsync(sslClientOptions, token);
         }
 #endif
 

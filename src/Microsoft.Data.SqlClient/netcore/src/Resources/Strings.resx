@@ -1932,4 +1932,7 @@
   <data name="SQL_ParameterDirectionInvalidForOptimizedBinding" xml:space="preserve">
     <value>Parameter '{0}' cannot have Direction Output or InputOutput when EnableOptimizedParameterBinding is enabled on the parent command.</value>
   </data>
+  <data name="SQL_TDS8_NotSupported_Netstandard2.0" xml:space="preserve">
+    <value>SslApplicationProtocol Struct is not supported for Netstandard2.0. That makes TDS8 protocol not supported on this platform. Please upgrade to Netstandard2.1 or other .Net versions.</value>
+  </data>
 </root>

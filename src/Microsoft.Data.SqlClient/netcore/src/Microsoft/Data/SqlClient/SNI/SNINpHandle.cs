@@ -322,7 +322,9 @@ namespace Microsoft.Data.SqlClient.SNI
                     {
 #if !NETSTANDARD2_0 
                         // TODO: Resolve whether to send _serverNameIndication or _targetServer. _serverNameIndication currently results in error. Why?
-                        AuthenticateClientAsync(_sslStream, _targetServer, null).ConfigureAwait(false).GetAwaiter().GetResult();
+                        AuthenticateClientAsync(_sslStream, _targetServer, null, CancellationToken.None).ConfigureAwait(false).GetAwaiter().GetResult();
+#else
+                        throw new NotSupportedException(Strings.SQL_TDS8_NotSupported_Netstandard2_0);
 #endif
                     }
                     else

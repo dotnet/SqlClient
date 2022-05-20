@@ -161,9 +161,9 @@ namespace Microsoft.Data.SqlClient.SNI
                     bool reportError = true;
 
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, Connecting to serverName {1} and port {2}", args0: _connectionId, args1: serverName, args2: port);
-                    // We will always first try to connect with serverName as before and let the DNS server to resolve the serverName.
-                    // If the DSN resolution fails, we will try with IPs in the DNS cache if existed. We try with cached IPs based on IPAddressPreference.
-                    // The exceptions will be throw to upper level and be handled as before.
+                    // We will always first try to connect with serverName as before and let DNS resolve the serverName.
+                    // If DNS resolution fails, we will try with IPs in the DNS cache if they exist. We try with cached IPs based on IPAddressPreference.
+                    // Exceptions will be thrown to the caller and be handled as before.
                     try
                     {
                         if (parallel)
@@ -300,7 +300,12 @@ namespace Microsoft.Data.SqlClient.SNI
             Task<Socket> connectTask;
 
             Task<IPAddress[]> serverAddrTask = Dns.GetHostAddressesAsync(hostName);
-            serverAddrTask.Wait(ts);
+            bool complete = serverAddrTask.Wait(ts);
+
+            // DNS timed out - don't block
+            if (!complete)
+                return null;
+
             IPAddress[] serverAddresses = serverAddrTask.Result;
 
             if (serverAddresses.Length > MaxParallelIpAddresses)
@@ -344,7 +349,6 @@ namespace Microsoft.Data.SqlClient.SNI
 
             availableSocket = connectTask.Result;
             return availableSocket;
-
         }
 
         // Connect to server with hostName and port.
@@ -354,7 +358,14 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "IP preference : {0}", Enum.GetName(typeof(SqlConnectionIPAddressPreference), ipPreference));
 
-            IPAddress[] ipAddresses = Dns.GetHostAddresses(serverName);
+            Task<IPAddress[]> serverAddrTask = Dns.GetHostAddressesAsync(serverName);
+            bool complete = serverAddrTask.Wait(timeout);
+
+            // DNS timed out - don't block
+            if (!complete)
+                return null;
+
+            IPAddress[] ipAddresses = serverAddrTask.Result;
 
             string IPv4String = null;
             string IPv6String = null;
@@ -608,7 +619,9 @@ namespace Microsoft.Data.SqlClient.SNI
                     {
 #if !NETSTANDARD2_0
                         // TODO: Resolve whether to send _serverNameIndication or _targetServer. _serverNameIndication currently results in error. Why?
-                        AuthenticateClientAsync(_sslStream, _targetServer, null).ConfigureAwait(false).GetAwaiter().GetResult();
+                        AuthenticateClientAsync(_sslStream, _targetServer, null, CancellationToken.None).ConfigureAwait(false).GetAwaiter().GetResult();
+#else
+                        throw new NotSupportedException(Strings.SQL_TDS8_NotSupported_Netstandard2_0);
 #endif
                     }
                     else

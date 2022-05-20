@@ -19,7 +19,7 @@ namespace System {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Strings {
@@ -3225,6 +3225,15 @@ namespace System {
         internal static string SQL_StreamWriteNotSupported {
             get {
                 return ResourceManager.GetString("SQL_StreamWriteNotSupported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to SslApplicationProtocol Struct is not supported for Netstandard2.0. That makes TDS8 protocol not supported on this platform. Please upgrade to Netstandard2.1 or other .Net versions..
+        /// </summary>
+        internal static string SQL_TDS8_NotSupported_Netstandard2_0 {
+            get {
+                return ResourceManager.GetString("SQL_TDS8_NotSupported_Netstandard2.0", resourceCulture);
             }
         }
         
