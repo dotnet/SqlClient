@@ -269,7 +269,7 @@
     <Compile Include="SQL\Common\SystemDataInternals\DataReaderHelper.cs" />
     <Compile Include="SQL\Common\SystemDataInternals\TdsParserHelper.cs" />
     <Compile Include="SQL\Common\SystemDataInternals\TdsParserStateObjectHelper.cs" />
-    <Compile Include="SQL\SqlCommand\SqlCommandStoredProcTestType.cs" />
+    <Compile Include="SQL\SqlCommand\SqlCommandStoredProcTest.cs" />
     <Compile Include="TracingTests\TestTdsServer.cs" />
     <Compile Include="XUnitAssemblyAttributes.cs" />
     <Compile Include="$(CommonTestPath)\System\Collections\DictionaryExtensions.cs">

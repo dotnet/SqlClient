@@ -8,7 +8,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
-    public class SqlCommandStoredProcTestType
+    public class SqlCommandStoredProcTest
     {
         private static readonly string s_tcp_connStr = DataTestUtility.TCPConnectionString;
 
