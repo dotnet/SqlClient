@@ -686,13 +686,26 @@ namespace Microsoft.Data.Common
         }
 
 
+        private const string ONDEMAND_PREFIX = "-ondemand";
+        private const string AZURE_SYNAPSE = "-ondemand.sql.azuresynapse.";
+
+        internal static bool IsAzureSynapseOnDemandEndpoint(string dataSource)
+        {
+            return IsEndpoint(dataSource, ONDEMAND_PREFIX) || dataSource.Contains(AZURE_SYNAPSE);
+        }
+
         internal static readonly string[] s_azureSqlServerEndpoints = { StringsHelper.GetString(Strings.AZURESQL_GenericEndpoint),
                                                                         StringsHelper.GetString(Strings.AZURESQL_GermanEndpoint),
                                                                         StringsHelper.GetString(Strings.AZURESQL_UsGovEndpoint),
                                                                         StringsHelper.GetString(Strings.AZURESQL_ChinaEndpoint)};
 
-        // This method assumes dataSource parameter is in TCP connection string format.
         internal static bool IsAzureSqlServerEndpoint(string dataSource)
+        {
+            return IsEndpoint(dataSource, null);
+        }
+
+        // This method assumes dataSource parameter is in TCP connection string format.
+        private static bool IsEndpoint(string dataSource, string prefix)
         {
             int length = dataSource.Length;
             // remove server port
@@ -715,10 +728,10 @@ namespace Microsoft.Data.Common
                 length -= 1;
             }
 
-            // check if servername end with any azure endpoints
+            // check if servername ends with any endpoints
             for (int index = 0; index < s_azureSqlServerEndpoints.Length; index++)
             {
-                string endpoint = s_azureSqlServerEndpoints[index];
+                string endpoint = string.IsNullOrEmpty(prefix) ? s_azureSqlServerEndpoints[index] : prefix + s_azureSqlServerEndpoints[index];
                 if (length > endpoint.Length)
                 {
                     if (string.Compare(dataSource, length - endpoint.Length, endpoint, 0, endpoint.Length, StringComparison.OrdinalIgnoreCase) == 0)
