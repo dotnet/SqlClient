@@ -10,7 +10,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 {
     public class SqlCommandStoredProcTestType
     {
-        private static readonly string s_tcp_connStr = new SqlConnectionStringBuilder(DataTestUtility.TCPConnectionString).ConnectionString;
+        private static readonly string s_tcp_connStr = DataTestUtility.TCPConnectionString;
 
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup), nameof(DataTestUtility.IsNotAzureSynapse))]
         public static void ShouldFailWithExceededLengthForSP()

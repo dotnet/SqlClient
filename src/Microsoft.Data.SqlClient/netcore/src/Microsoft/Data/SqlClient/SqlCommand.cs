@@ -5815,7 +5815,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                throw ADP.InvalidArgumentLength("CommandText", MaxRPCNameLength);
+                throw ADP.InvalidArgumentLength(nameof(CommandText), MaxRPCNameLength);
             }
 
             SetUpRPCParameters(rpc, inSchema, parameters);
