@@ -110,7 +110,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             using (SqlConnection connection = new SqlConnection(builder.ConnectionString))
             {
-                // Connect to the database then retrieve the schema information.
+                // Connect to the database then retrieve the schema information
                 connection.Open();
                 DataTable table = connection.GetSchema(schemaItemName);
 
