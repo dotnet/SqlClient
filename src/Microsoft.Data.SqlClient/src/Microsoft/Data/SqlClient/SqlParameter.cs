@@ -13,11 +13,11 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
+using System.Text;
+using System.Threading;
 using System.Xml;
 using Microsoft.Data.Common;
 using Microsoft.Data.SqlClient.Server;
-using System.Text;
-using System.Threading;
 
 namespace Microsoft.Data.SqlClient
 {
