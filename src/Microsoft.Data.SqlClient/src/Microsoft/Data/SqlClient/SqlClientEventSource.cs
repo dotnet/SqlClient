@@ -362,7 +362,7 @@ namespace Microsoft.Data.SqlClient
 
         #region Traces without if statements
         [NonEvent]
-        internal void TraceEvent<T0, T1>(string message, T0 args0, T1 args1, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
+        internal void TraceEvent<T0, T1>(string message, T0 args0, T1 args1)
         {
             Trace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr));
         }
@@ -801,6 +801,15 @@ namespace Microsoft.Data.SqlClient
         }
 
         [NonEvent]
+        internal void TryAdvancedTraceEvent<T0, T1, T2, T3, T4, T5, T6>(string message, T0 args0, T1 args1, T2 args2, T3 args3, T4 args4, T5 args5, T6 args6)
+        {
+            if (Log.IsAdvancedTraceOn())
+            {
+                AdvancedTrace(string.Format(message, args0?.ToString() ?? NullStr, args1?.ToString() ?? NullStr, args2?.ToString() ?? NullStr, args3?.ToString() ?? NullStr, args4?.ToString() ?? NullStr, args5?.ToString() ?? NullStr, args6?.ToString() ?? NullStr));
+            }
+        }
+
+        [NonEvent]
         internal long TryAdvancedScopeEnterEvent<T0>(string message, T0 args0)
         {
             if (Log.IsAdvancedTraceOn())
@@ -975,9 +984,9 @@ namespace Microsoft.Data.SqlClient
         {
             if (Log.IsSNIScopeEnabled())
             {
-                StringBuilder sb = new StringBuilder(className);
-                sb.Append(".").Append(memberName).Append(" | SNI | INFO | SCOPE | Entering Scope {0}");
-                return SNIScopeEnter(sb.ToString());
+                long scopeId = Interlocked.Increment(ref s_nextSNIScopeId);
+                WriteEvent(SNIScopeEnterId, $"{className}.{memberName}  | SNI | INFO | SCOPE | Entering Scope {scopeId}");
+                return scopeId;
             }
             return 0;
         }
@@ -1008,7 +1017,6 @@ namespace Microsoft.Data.SqlClient
         [Event(EndExecuteEventId, Keywords = Keywords.ExecutionTrace, Task = Tasks.ExecuteCommand, Opcode = EventOpcode.Stop)]
         internal void EndExecute(int objectId, int compositestate, int sqlExceptionNumber, string message)
         {
-
             WriteEvent(EndExecuteEventId, objectId, compositestate, sqlExceptionNumber, message);
         }
 
@@ -1120,23 +1128,18 @@ namespace Microsoft.Data.SqlClient
     {
         private readonly long _scopeId;
 
-        public TrySNIEventScope(long scopeID)
-        {
-            _scopeId = scopeID;
-        }
-
+        public TrySNIEventScope(long scopeID) => _scopeId = scopeID;
         public void Dispose()
         {
-            if (_scopeId != 0)
+            if (_scopeId == 0)
             {
-                SqlClientEventSource.Log.TrySNIScopeLeaveEvent(_scopeId);
+                return;
             }
+            SqlClientEventSource.Log.TrySNIScopeLeaveEvent(_scopeId);
         }
 
-        public static TrySNIEventScope Create(string message, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
-        {
-            return new TrySNIEventScope(SqlClientEventSource.Log.TrySNIScopeEnterEvent(message, memberName));
-        }
+        public static TrySNIEventScope Create(string className, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
+            => new TrySNIEventScope(SqlClientEventSource.Log.TrySNIScopeEnterEvent(className, memberName));
     }
 
     internal readonly ref struct TryEventScope //: IDisposable

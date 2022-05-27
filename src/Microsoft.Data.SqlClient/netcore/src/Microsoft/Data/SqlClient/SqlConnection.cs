@@ -1820,7 +1820,7 @@ namespace Microsoft.Data.SqlClient
                 (connectionOptions.Authentication == SqlAuthenticationMethod.SqlPassword ||
                     connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword ||
                     connectionOptions.Authentication == SqlAuthenticationMethod.ActiveDirectoryServicePrincipal) &&
-                (!connectionOptions.HasUserIdKeyword || !connectionOptions.HasPasswordKeyword) &&
+                (!connectionOptions._hasUserIdKeyword || !connectionOptions._hasPasswordKeyword) &&
                 _credential == null)
             {
                 throw SQL.CredentialsNotProvided(connectionOptions.Authentication);
@@ -1899,15 +1899,15 @@ namespace Microsoft.Data.SqlClient
         }
 
 
-        internal bool IsKatmaiOrNewer
+        internal bool Is2008OrNewer
         {
             get
             {
                 if (_currentReconnectionTask != null)
                 { // holds true even if task is completed
-                    return true; // if CR is enabled, connection, if established, will be Katmai+
+                    return true; // if CR is enabled, connection, if established, will be 2008+
                 }
-                return GetOpenTdsConnection().IsKatmaiOrNewer;
+                return GetOpenTdsConnection().Is2008OrNewer;
             }
         }
 

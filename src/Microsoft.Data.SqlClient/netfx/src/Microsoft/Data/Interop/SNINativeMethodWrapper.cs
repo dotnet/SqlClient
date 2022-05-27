@@ -760,6 +760,26 @@ namespace Microsoft.Data.SqlClient
             return SNIInitialize(LocalAppContextSwitches.UseSystemDefaultSecureProtocols, IntPtr.Zero);
         }
 
+        internal static IntPtr SNIServerEnumOpen() => s_is64bitProcess ?
+                SNINativeManagedWrapperX64.SNIServerEnumOpen() :
+                SNINativeManagedWrapperX86.SNIServerEnumOpen();
+
+        internal static int SNIServerEnumRead([In] IntPtr packet, [In, Out] char[] readbuffer, int bufferLength, out bool more) => s_is64bitProcess ?
+              SNINativeManagedWrapperX64.SNIServerEnumRead(packet, readbuffer, bufferLength, out more) :
+              SNINativeManagedWrapperX86.SNIServerEnumRead(packet, readbuffer, bufferLength, out more);
+
+        internal static void SNIServerEnumClose([In] IntPtr packet)
+        {
+            if (s_is64bitProcess)
+            {
+                SNINativeManagedWrapperX64.SNIServerEnumClose(packet);
+            }
+            else
+            {
+                SNINativeManagedWrapperX86.SNIServerEnumClose(packet);
+            }
+        }
+
         internal static unsafe uint SNIOpenMarsSession(ConsumerInfo consumerInfo, SNIHandle parent, ref IntPtr pConn, bool fSync, SqlConnectionIPAddressPreference ipPreference, SQLDNSInfo cachedDNSInfo)
         {
             // initialize consumer info for MARS

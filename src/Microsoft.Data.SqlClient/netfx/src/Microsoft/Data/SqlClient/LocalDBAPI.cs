@@ -16,11 +16,11 @@ using Microsoft.Data.SqlClient;
 
 namespace Microsoft.Data
 {
-
     internal static class LocalDBAPI
     {
-        const string const_localDbPrefix = @"(localdb)\";
-        const string const_partialTrustFlagKey = "ALLOW_LOCALDB_IN_PARTIAL_TRUST";
+        private const string LocalDbPrefix = @"(localdb)\";
+        private const string LocalDbPrefix_NP = @"np:\\.\pipe\LOCALDB#";
+        const string Const_partialTrustFlagKey = "ALLOW_LOCALDB_IN_PARTIAL_TRUST";
 
         static PermissionSet _fullTrust = null;
         static bool _partialTrustFlagChecked = false;
@@ -30,18 +30,27 @@ namespace Microsoft.Data
         // check if name is in format (localdb)\<InstanceName - not empty> and return instance name if it is
         internal static string GetLocalDbInstanceNameFromServerName(string serverName)
         {
-            if (serverName == null)
-                return null;
-            serverName = serverName.TrimStart(); // it can start with spaces if specified in quotes
-            if (!serverName.StartsWith(const_localDbPrefix, StringComparison.OrdinalIgnoreCase))
-                return null;
-            string instanceName = serverName.Substring(const_localDbPrefix.Length).Trim();
-            if (instanceName.Length == 0)
-                return null;
-            else
-                return instanceName;
-        }
+            if (serverName is not null)
+            {
+                // it can start with spaces if specified in quotes
+                // Memory allocation is reduced by using ReadOnlySpan
+                ReadOnlySpan<char> input = serverName.AsSpan().Trim();
+                if (input.StartsWith(LocalDbPrefix.AsSpan(), StringComparison.OrdinalIgnoreCase))
+                {
+                    input = input.Slice(LocalDbPrefix.Length);
+                    if (!input.IsEmpty)
+                    {
+                        return input.ToString();
+                    }
+                }
+                else if (input.StartsWith(LocalDbPrefix_NP.AsSpan(), StringComparison.OrdinalIgnoreCase))
+                {
+                    return input.ToString();
+                }
 
+            }
+            return null;
+        }
 
         internal static void ReleaseDLLHandles()
         {
@@ -261,7 +270,7 @@ namespace Microsoft.Data
             {
                 if (!_partialTrustFlagChecked)
                 {
-                    object partialTrustFlagValue = AppDomain.CurrentDomain.GetData(const_partialTrustFlagKey);
+                    object partialTrustFlagValue = AppDomain.CurrentDomain.GetData(Const_partialTrustFlagKey);
                     if (partialTrustFlagValue != null && partialTrustFlagValue is bool)
                     {
                         _partialTrustAllowed = (bool)partialTrustFlagValue;

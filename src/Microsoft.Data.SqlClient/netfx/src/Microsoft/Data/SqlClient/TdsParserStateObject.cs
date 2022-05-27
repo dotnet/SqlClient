@@ -153,16 +153,8 @@ namespace Microsoft.Data.SqlClient
         // 2) post first packet write, but before session return - a call to cancel will send an
         //    attention to the server
         // 3) post session close - no attention is allowed
+        private bool _cancelled;
         private const int _waitForCancellationLockPollTimeout = 100;
-
-        private static class CancelState
-        {
-            public const int Unset = 0;
-            public const int Closed = 1;
-            public const int Cancelled = 2;
-        }
-
-        private int _cancelState;
 
         // This variable is used to prevent sending an attention by another thread that is not the
         // current owner of the stateObj.  I currently do not know how this can happen.  Mark added
@@ -179,7 +171,7 @@ namespace Microsoft.Data.SqlClient
         internal ulong _longlen;                                     // plp data length indicator
         internal ulong _longlenleft;                                 // Length of data left to read (64 bit lengths)
         internal int[] _decimalBits = null;                // scratch buffer for decimal/numeric data
-        internal byte[] _bTmp = new byte[TdsEnums.YUKON_HEADER_LEN];  // Scratch buffer for misc use
+        internal byte[] _bTmp = new byte[TdsEnums.SQL2005_HEADER_LEN];  // Scratch buffer for misc use
         internal int _bTmpRead = 0;                   // Counter for number of temporary bytes read
         internal Decoder _plpdecoder = null;             // Decoder object to process plp character data
         internal bool _accumulateInfoEvents = false;               // TRUE - accumulate info messages during TdsParser.Run, FALSE - fire them
@@ -523,8 +515,8 @@ namespace Microsoft.Data.SqlClient
             // initialize or unset null bitmap information for the current row
             if (isNullCompressed)
             {
-                // assert that NBCROW is not in use by Yukon or before
-                Debug.Assert(_parser.IsKatmaiOrNewer, "NBCROW is sent by pre-Katmai server");
+                // assert that NBCROW is not in use by 2005 or before
+                Debug.Assert(_parser.Is2008OrNewer, "NBCROW is sent by pre-2008 server");
 
                 if (!_nullBitmapInfo.TryInitialize(this, nullBitmapColumnsCount))
                 {
@@ -588,7 +580,7 @@ namespace Microsoft.Data.SqlClient
                 }
 
                 // read the null bitmap compression information from TDS
-                if (!stateObj.TryReadByteArray(_nullBitmap, 0, _nullBitmap.Length))
+                if (!stateObj.TryReadByteArray(_nullBitmap, _nullBitmap.Length))
                 {
                     return false;
                 }
@@ -652,47 +644,66 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(result == 1, "invalid deactivate count");
         }
 
-        internal bool SetCancelStateClosed()
-        {
-            return Interlocked.CompareExchange(ref _cancelState, CancelState.Closed, CancelState.Unset) == CancelState.Unset && _cancelState == CancelState.Closed;
-        }
-
         // This method is only called by the command or datareader as a result of a user initiated
         // cancel request.
         internal void Cancel(int objectID)
         {
-            // only change state if it is Unset, so don't check the return value
-            Interlocked.CompareExchange(ref _cancelState, CancelState.Cancelled, CancelState.Unset);
-
-            // don't allow objectID -1 since it is reserved for 'not associated with a command'
-            // yes, the 2^32-1 comand won't cancel - but it also won't cancel when we don't want it
-            if ((_parser.State != TdsParserState.Closed) && (_parser.State != TdsParserState.Broken) 
-                && (objectID == _allowObjectID) && (objectID != -1) && _pendingData && !_attentionSent)
+            bool hasLock = false;
+            try
             {
-                bool hasParserLock = false;
-                // Keep looping until we have the parser lock (and so are allowed to write), or the conneciton closes\breaks
-                while ((!hasParserLock) && (_parser.State != TdsParserState.Closed) && (_parser.State != TdsParserState.Broken))
+                // Keep looping until we either grabbed the lock (and therefore sent attention) or the connection closes\breaks
+                while ((!hasLock) && (_parser.State != TdsParserState.Closed) && (_parser.State != TdsParserState.Broken))
                 {
-                    try
-                    {
-                        _parser.Connection._parserLock.Wait(canReleaseFromAnyThread: false, timeout: _waitForCancellationLockPollTimeout, lockTaken: ref hasParserLock);
-                        if (hasParserLock)
+
+                    Monitor.TryEnter(this, _waitForCancellationLockPollTimeout, ref hasLock);
+                    if (hasLock)
+                    { // Lock for the time being - since we need to synchronize the attention send.
+                      // At some point in the future, I hope to remove this.
+                      // This lock is also protecting against concurrent close and async continuations
+
+                        // don't allow objectID -1 since it is reserved for 'not associated with a command'
+                        // yes, the 2^32-1 comand won't cancel - but it also won't cancel when we don't want it
+                        if ((!_cancelled) && (objectID == _allowObjectID) && (objectID != -1))
                         {
-                            _parser.Connection.ThreadHasParserLockForClose = true;
-                            SendAttention();
-                        }
-                    }
-                    finally
-                    {
-                        if (hasParserLock)
-                        {
-                            if (_parser.Connection.ThreadHasParserLockForClose)
+                            _cancelled = true;
+
+                            if (_pendingData && !_attentionSent)
                             {
-                                _parser.Connection.ThreadHasParserLockForClose = false;
+                                bool hasParserLock = false;
+                                // Keep looping until we have the parser lock (and so are allowed to write), or the conneciton closes\breaks
+                                while ((!hasParserLock) && (_parser.State != TdsParserState.Closed) && (_parser.State != TdsParserState.Broken))
+                                {
+                                    try
+                                    {
+                                        _parser.Connection._parserLock.Wait(canReleaseFromAnyThread: false, timeout: _waitForCancellationLockPollTimeout, lockTaken: ref hasParserLock);
+                                        if (hasParserLock)
+                                        {
+                                            _parser.Connection.ThreadHasParserLockForClose = true;
+                                            SendAttention();
+                                        }
+                                    }
+                                    finally
+                                    {
+                                        if (hasParserLock)
+                                        {
+                                            if (_parser.Connection.ThreadHasParserLockForClose)
+                                            {
+                                                _parser.Connection.ThreadHasParserLockForClose = false;
+                                            }
+                                            _parser.Connection._parserLock.Release();
+                                        }
+                                    }
+                                }
                             }
-                            _parser.Connection._parserLock.Release();
                         }
                     }
+                }
+            }
+            finally
+            {
+                if (hasLock)
+                {
+                    Monitor.Exit(this);
                 }
             }
         }
@@ -787,7 +798,7 @@ namespace Microsoft.Data.SqlClient
             lock (this)
             {
                 // Reset cancel state.
-                _cancelState = CancelState.Unset;
+                _cancelled = false;
                 _allowObjectID = -1;
 
                 if (_attentionSent)
@@ -1091,10 +1102,10 @@ namespace Microsoft.Data.SqlClient
         {
             lock (this)
             {
-                if (_cancelState != CancelState.Unset && 1 == _outputPacketNumber)
+                if (_cancelled && 1 == _outputPacketNumber)
                 {
                     ResetBuffer();
-                    _cancelState = CancelState.Unset;
+                    _cancelled = false;
                     throw SQL.OperationCancelled();
                 }
                 else
@@ -1295,7 +1306,7 @@ namespace Microsoft.Data.SqlClient
                           "SetPacketSize should only be called on a stateObj with null buffers on the physicalStateObj!");
             Debug.Assert(_inBuff == null
                           ||
-                          (_parser.IsYukonOrNewer &&
+                          (_parser.Is2005OrNewer &&
                            _outBytesUsed == (_outputHeaderLen + BitConverter.ToInt32(_outBuff, _outputHeaderLen)) &&
                            _outputPacketNumber == 1)
                           ||
@@ -1378,15 +1389,14 @@ namespace Microsoft.Data.SqlClient
 
         // Takes a byte array, an offset, and a len and fills the array from the offset to len number of
         // bytes from the in buffer.
-        public bool TryReadByteArray(byte[] buff, int offset, int len)
+        public bool TryReadByteArray(Span<byte> buff, int len)
         {
-            int ignored;
-            return TryReadByteArray(buff, offset, len, out ignored);
+            return TryReadByteArray(buff, len, out int _);
         }
 
         // NOTE: This method must be retriable WITHOUT replaying a snapshot
         // Every time you call this method increment the offset and decrease len by the value of totalRead
-        public bool TryReadByteArray(byte[] buff, int offset, int len, out int totalRead)
+        public bool TryReadByteArray(Span<byte> buff, int len, out int totalRead)
         {
             TdsParser.ReliabilitySection.Assert("unreliable call to ReadByteArray");  // you need to setup for a thread abort somewhere before you call this method
             totalRead = 0;
@@ -1410,7 +1420,7 @@ namespace Microsoft.Data.SqlClient
             }
 #endif
 
-            Debug.Assert(buff == null || buff.Length >= len, "Invalid length sent to ReadByteArray()!");
+            Debug.Assert(buff.IsEmpty || buff.Length >= len, "Invalid length sent to ReadByteArray()!");
 
             // loop through and read up to array length
             while (len > 0)
@@ -1425,9 +1435,11 @@ namespace Microsoft.Data.SqlClient
 
                 int bytesToRead = Math.Min(len, Math.Min(_inBytesPacket, _inBytesRead - _inBytesUsed));
                 Debug.Assert(bytesToRead > 0, "0 byte read in TryReadByteArray");
-                if (buff != null)
+                if (!buff.IsEmpty)
                 {
-                    Buffer.BlockCopy(_inBuff, _inBytesUsed, buff, offset + totalRead, bytesToRead);
+                    ReadOnlySpan<byte> copyFrom = new ReadOnlySpan<byte>(_inBuff, _inBytesUsed, bytesToRead);
+                    Span<byte> copyTo = buff.Slice(totalRead, bytesToRead);
+                    copyFrom.CopyTo(copyTo);
                 }
 
                 totalRead += bytesToRead;
@@ -1499,7 +1511,7 @@ namespace Microsoft.Data.SqlClient
                 // If the char isn't fully in the buffer, or if it isn't fully in the packet,
                 // then use ReadByteArray since the logic is there to take care of that.
 
-                if (!TryReadByteArray(_bTmp, 0, 2))
+                if (!TryReadByteArray(_bTmp, 2))
                 {
                     value = '\0';
                     return false;
@@ -1536,7 +1548,7 @@ namespace Microsoft.Data.SqlClient
                 // If the int16 isn't fully in the buffer, or if it isn't fully in the packet,
                 // then use ReadByteArray since the logic is there to take care of that.
 
-                if (!TryReadByteArray(_bTmp, 0, 2))
+                if (!TryReadByteArray(_bTmp, 2))
                 {
                     value = default(short);
                     return false;
@@ -1571,7 +1583,7 @@ namespace Microsoft.Data.SqlClient
                 // If the int isn't fully in the buffer, or if it isn't fully in the packet,
                 // then use ReadByteArray since the logic is there to take care of that.
 
-                if (!TryReadByteArray(_bTmp, 0, 4))
+                if (!TryReadByteArray(_bTmp, 4))
                 {
                     value = 0;
                     return false;
@@ -1615,7 +1627,7 @@ namespace Microsoft.Data.SqlClient
                 // then use ReadByteArray since the logic is there to take care of that.
 
                 int bytesRead = 0;
-                if (!TryReadByteArray(_bTmp, _bTmpRead, 8 - _bTmpRead, out bytesRead))
+                if (!TryReadByteArray(_bTmp.AsSpan(start: _bTmpRead), 8 - _bTmpRead, out bytesRead))
                 {
                     Debug.Assert(_bTmpRead + bytesRead <= 8, "Read more data than required");
                     _bTmpRead += bytesRead;
@@ -1657,7 +1669,7 @@ namespace Microsoft.Data.SqlClient
                 // If the uint16 isn't fully in the buffer, or if it isn't fully in the packet,
                 // then use ReadByteArray since the logic is there to take care of that.
 
-                if (!TryReadByteArray(_bTmp, 0, 2))
+                if (!TryReadByteArray(_bTmp, 2))
                 {
                     value = default(ushort);
                     return false;
@@ -1702,7 +1714,7 @@ namespace Microsoft.Data.SqlClient
                 // then use ReadByteArray since the logic is there to take care of that.
 
                 int bytesRead = 0;
-                if (!TryReadByteArray(_bTmp, _bTmpRead, 4 - _bTmpRead, out bytesRead))
+                if (!TryReadByteArray(_bTmp.AsSpan(start: _bTmpRead), 4 - _bTmpRead, out bytesRead))
                 {
                     Debug.Assert(_bTmpRead + bytesRead <= 4, "Read more data than required");
                     _bTmpRead += bytesRead;
@@ -1742,7 +1754,7 @@ namespace Microsoft.Data.SqlClient
                 // If the float isn't fully in the buffer, or if it isn't fully in the packet,
                 // then use ReadByteArray since the logic is there to take care of that.
 
-                if (!TryReadByteArray(_bTmp, 0, 4))
+                if (!TryReadByteArray(_bTmp, 4))
                 {
                     value = default(float);
                     return false;
@@ -1776,7 +1788,7 @@ namespace Microsoft.Data.SqlClient
                 // If the double isn't fully in the buffer, or if it isn't fully in the packet,
                 // then use ReadByteArray since the logic is there to take care of that.
 
-                if (!TryReadByteArray(_bTmp, 0, 8))
+                if (!TryReadByteArray(_bTmp, 8))
                 {
                     value = default(double);
                     return false;
@@ -1816,7 +1828,7 @@ namespace Microsoft.Data.SqlClient
                     _bTmp = new byte[cBytes];
                 }
 
-                if (!TryReadByteArray(_bTmp, 0, cBytes))
+                if (!TryReadByteArray(_bTmp, cBytes))
                 {
                     value = null;
                     return false;
@@ -1894,7 +1906,7 @@ namespace Microsoft.Data.SqlClient
                         _bTmp = new byte[length];
                     }
 
-                    if (!TryReadByteArray(_bTmp, 0, length))
+                    if (!TryReadByteArray(_bTmp, length))
                     {
                         value = null;
                         return false;
@@ -2003,7 +2015,7 @@ namespace Microsoft.Data.SqlClient
 
             int value;
             int bytesToRead = (int)Math.Min(_longlenleft, (ulong)len);
-            bool result = TryReadByteArray(buff, offset, bytesToRead, out value);
+            bool result = TryReadByteArray(buff.AsSpan(start: offset), bytesToRead, out value);
             _longlenleft -= (ulong)bytesToRead;
             if (!result)
             { throw SQL.SynchronousCallMayNotPend(); }
@@ -2080,7 +2092,7 @@ namespace Microsoft.Data.SqlClient
                     buff = newbuf;
                 }
 
-                bool result = TryReadByteArray(buff, offst, bytesToRead, out bytesRead);
+                bool result = TryReadByteArray(buff.AsSpan(start: offst), bytesToRead, out bytesRead);
                 Debug.Assert(bytesRead <= bytesLeft, "Read more bytes than we needed");
                 Debug.Assert((ulong)bytesRead <= _longlenleft, "Read more bytes than is available");
 
@@ -2127,7 +2139,7 @@ namespace Microsoft.Data.SqlClient
             while (num > 0)
             {
                 cbSkip = (int)Math.Min((long)Int32.MaxValue, num);
-                if (!TryReadByteArray(null, 0, cbSkip))
+                if (!TryReadByteArray(null, cbSkip))
                 {
                     return false;
                 }
@@ -2141,7 +2153,7 @@ namespace Microsoft.Data.SqlClient
         internal bool TrySkipBytes(int num)
         {
             Debug.Assert(_syncOverAsync || !_asyncReadWithoutSnapshot, "This method is not safe to call when doing sync over async");
-            return TryReadByteArray(null, 0, num);
+            return TryReadByteArray(null, num);
         }
 
         /////////////////////////////////////////
@@ -2269,7 +2281,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (TdsEnums.SNI_SUCCESS == error)
                 { // Success - process results!
-                    Debug.Assert(ADP.PtrZero != readPacket, "ReadNetworkPacket cannot be null in synchronous operation!");
+                    Debug.Assert(ADP.s_ptrZero != readPacket, "ReadNetworkPacket cannot be null in synchronous operation!");
                     ProcessSniPacket(readPacket, 0);
 #if DEBUG
                     if (_forcePendingReadsToWaitForUser)
@@ -2589,8 +2601,8 @@ namespace Microsoft.Data.SqlClient
 
                 if (TdsEnums.SNI_SUCCESS == error)
                 { // Success - process results!
-                    Debug.Assert(ADP.PtrZero != readPacket, "ReadNetworkPacket should not have been null on this async operation!");
-                    ReadAsyncCallback(ADP.PtrZero, readPacket, 0);
+                    Debug.Assert(ADP.s_ptrZero != readPacket, "ReadNetworkPacket should not have been null on this async operation!");
+                    ReadAsyncCallback(ADP.s_ptrZero, readPacket, 0);
                 }
                 else if (TdsEnums.SNI_SUCCESS_IO_PENDING != error)
                 { // FAILURE!
@@ -3362,9 +3374,9 @@ namespace Microsoft.Data.SqlClient
             }
 
             if (
-                // This appears to be an optimization to avoid writing empty packets in Yukon
-                // However, since we don't know the version prior to login IsYukonOrNewer was always false prior to login
-                // So removing the IsYukonOrNewer check causes issues since the login packet happens to meet the rest of the conditions below
+                // This appears to be an optimization to avoid writing empty packets in 2005
+                // However, since we don't know the version prior to login Is2005OrNewer was always false prior to login
+                // So removing the Is2005OrNewer check causes issues since the login packet happens to meet the rest of the conditions below
                 // So we need to avoid this check prior to login completing
                 state == TdsParserState.OpenLoggedIn &&
                 !_bulkCopyOpperationInProgress // ignore the condition checking for bulk copy (SQL BU 414551)
@@ -3380,7 +3392,7 @@ namespace Microsoft.Data.SqlClient
             byte packetNumber = _outputPacketNumber;
 
             // Set Status byte based whether this is end of message or not
-            bool willCancel = (_cancelState != CancelState.Unset) && (_parser._asyncWrite);
+            bool willCancel = (_cancelled) && (_parser._asyncWrite);
             if (willCancel)
             {
                 status = TdsEnums.ST_EOM | TdsEnums.ST_IGNORE;
@@ -3429,7 +3441,7 @@ namespace Microsoft.Data.SqlClient
 
         private void CancelWritePacket()
         {
-            Debug.Assert(_cancelState != CancelState.Unset, "Should not call CancelWritePacket if _cancelled is not set");
+            Debug.Assert(_cancelled, "Should not call CancelWritePacket if _cancelled is not set");
 
             _parser.Connection.ThreadHasParserLockForClose = true;      // In case of error, let the connection know that we are holding the lock
             try
@@ -4111,7 +4123,7 @@ namespace Microsoft.Data.SqlClient
                 Debug.Assert(_delayedWriteAsyncCallbackException == null, "StateObj has an unobserved exceptions from an async write");
                 // Attention\Cancellation\Timeouts
                 Debug.Assert(!_attentionReceived && !_attentionSent && !_attentionSending, $"StateObj is still dealing with attention: Sent: {_attentionSent}, Received: {_attentionReceived}, Sending: {_attentionSending}");
-                Debug.Assert(_cancelState == CancelState.Unset, "StateObj still has cancellation set");
+                Debug.Assert(!_cancelled, "StateObj still has cancellation set");
                 Debug.Assert(_timeoutState == TimeoutState.Stopped, "StateObj still has internal timeout set");
                 // Errors and Warnings
                 Debug.Assert(!_hasErrorOrWarning, "StateObj still has stored errors or warnings");

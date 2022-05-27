@@ -176,7 +176,7 @@ namespace Microsoft.Data.SqlClient.SNI
                         packet.ReadFromStream(_stream);
                         SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.INFO, "Connection Id {0}, Rented and read packet, dataLeft {1}", args0: _connectionId, args1: packet?.DataLeft);
 
-                        if (packet.DataLength == 0)
+                        if (packet.Length == 0)
                         {
                             errorPacket = packet;
                             packet = null;
@@ -210,10 +210,10 @@ namespace Microsoft.Data.SqlClient.SNI
             {
                 SNIPacket errorPacket;
                 packet = RentPacket(headerSize: 0, dataSize: _bufferSize);
-
+                packet.SetAsyncIOCompletionCallback(_receiveCallback);
                 try
                 {
-                    packet.ReadFromStreamAsync(_stream, _receiveCallback);
+                    packet.ReadFromStreamAsync(_stream);
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.INFO, "Connection Id {0}, Rented and read packet asynchronously, dataLeft {1}", args0: _connectionId, args1: packet?.DataLeft);
                     return TdsEnums.SNI_SUCCESS_IO_PENDING;
                 }
@@ -288,13 +288,12 @@ namespace Microsoft.Data.SqlClient.SNI
             }
         }
 
-        public override uint SendAsync(SNIPacket packet, SNIAsyncCallback callback = null)
+        public override uint SendAsync(SNIPacket packet)
         {
             using (TrySNIEventScope.Create(nameof(SNINpHandle)))
             {
-                SNIAsyncCallback cb = callback ?? _sendCallback;
                 SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNINpHandle), EventType.INFO, "Connection Id {0}, Packet writing to stream, dataLeft {1}", args0: _connectionId, args1: packet?.DataLeft);
-                packet.WriteToStreamAsync(_stream, cb, SNIProviders.NP_PROV);
+                packet.WriteToStreamAsync(_stream, _sendCallback, SNIProviders.NP_PROV);
                 return TdsEnums.SNI_SUCCESS_IO_PENDING;
             }
         }
@@ -312,7 +311,7 @@ namespace Microsoft.Data.SqlClient.SNI
                 _validateCert = (options & TdsEnums.SNI_SSL_VALIDATE_CERTIFICATE) != 0;
                 try
                 {
-                    _sslStream.AuthenticateAsClient(_targetServer, null, SupportedProtocols, true);
+                    _sslStream.AuthenticateAsClient(_targetServer, null, SupportedProtocols, false);
                     _sslOverTdsStream.FinishHandshake();
                 }
                 catch (AuthenticationException aue)

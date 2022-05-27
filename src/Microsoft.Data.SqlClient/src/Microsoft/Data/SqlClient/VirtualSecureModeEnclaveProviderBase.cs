@@ -22,7 +22,7 @@ namespace Microsoft.Data.SqlClient
         #region Constants
 
         private const int DiffieHellmanKeySize = 384;
-        private const int VsmHGSProtocolId = 3;
+        private const int VsmHGSProtocolId = (int)SqlConnectionAttestationProtocol.HGS;
 
         // ENCLAVE_IDENTITY related constants
         private static readonly EnclaveIdentity ExpectedPolicy = new EnclaveIdentity()
@@ -95,7 +95,7 @@ namespace Microsoft.Data.SqlClient
         internal override SqlEnclaveAttestationParameters GetAttestationParameters(string attestationUrl, byte[] customData, int customDataLength)
         {
             ECDiffieHellman clientDHKey = KeyConverter.CreateECDiffieHellman(DiffieHellmanKeySize);
-            return new SqlEnclaveAttestationParameters(VsmHGSProtocolId, new byte[] { }, clientDHKey);
+            return new SqlEnclaveAttestationParameters(VsmHGSProtocolId, Array.Empty<byte>(), clientDHKey);
         }
 
         // When overridden in a derived class, performs enclave attestation, generates a symmetric key for the session, creates a an enclave session and stores the session information in the cache.
@@ -128,7 +128,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        throw new AlwaysEncryptedAttestationException(Strings.FailToCreateEnclaveSession);
+                        throw SQL.AttestationFailed(Strings.FailToCreateEnclaveSession);
                     }
                 }
             }
@@ -173,7 +173,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else
                     {
-                        throw new AlwaysEncryptedAttestationException(String.Format(Strings.VerifyHealthCertificateChainFormat, attestationUrl, chainStatus));
+                        throw SQL.AttestationFailed(string.Format(Strings.VerifyHealthCertificateChainFormat, attestationUrl, chainStatus));
                     }
                 }
             } while (shouldRetryValidation);
@@ -205,7 +205,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (CryptographicException exception)
                 {
-                    throw new AlwaysEncryptedAttestationException(String.Format(Strings.GetAttestationSigningCertificateFailedInvalidCertificate, attestationUrl), exception);
+                    throw SQL.AttestationFailed(string.Format(Strings.GetAttestationSigningCertificateFailedInvalidCertificate, attestationUrl), exception);
                 }
 
                 rootSigningCertificateCache.Add(attestationUrl, certificateCollection, DateTime.Now.AddDays(1));

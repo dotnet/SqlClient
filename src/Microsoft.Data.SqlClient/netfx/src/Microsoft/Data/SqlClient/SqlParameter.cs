@@ -381,10 +381,6 @@ namespace Microsoft.Data.SqlClient
             set
             {
                 SqlCollation collation = _collation;
-                if (null == collation)
-                {
-                    _collation = collation = new SqlCollation();
-                }
 
                 // Copied from SQLString.x_iValidSqlCompareOptionMask
                 SqlCompareOptions validSqlCompareOptionMask =
@@ -396,7 +392,11 @@ namespace Microsoft.Data.SqlClient
                 {
                     throw ADP.ArgumentOutOfRange(nameof(CompareInfo));
                 }
-                collation.SqlCompareOptions = value;
+
+                if (collation == null || collation.SqlCompareOptions != value)
+                {
+                    _collation = SqlCollation.FromLCIDAndSort(collation?.LCID ?? 0, value);
+                }
             }
         }
 
@@ -499,15 +499,16 @@ namespace Microsoft.Data.SqlClient
             set
             {
                 SqlCollation collation = _collation;
-                if (null == collation)
-                {
-                    _collation = collation = new SqlCollation();
-                }
+
                 if (value != (SqlCollation.MaskLcid & value))
                 {
                     throw ADP.ArgumentOutOfRange(nameof(LocaleId));
                 }
-                collation.LCID = value;
+
+                if (collation == null || collation.LCID != value)
+                {
+                    _collation = SqlCollation.FromLCIDAndSort(value, collation?.SqlCompareOptions ?? SqlCompareOptions.None);
+                }
             }
         }
 
@@ -1237,7 +1238,7 @@ namespace Microsoft.Data.SqlClient
                                 MethodInfo getter = serverTypeNameProperty.GetGetMethod(nonPublic: true);
                                 SortOrder sortOrder = (SortOrder)getter.Invoke(colMeta, null);
 
-                                sort[i].Order = sortOrder;
+                                sort[i]._order = sortOrder;
                                 if (SortOrder.Unspecified != sortOrder)
                                 {
                                     // SqlMetaData takes care of checking for negative sort ordinals with specified sort order
@@ -1254,7 +1255,7 @@ namespace Microsoft.Data.SqlClient
                                         throw SQL.DuplicateSortOrdinal(colMeta.SortOrdinal);
                                     }
 
-                                    sort[i].SortOrdinal = colMeta.SortOrdinal;
+                                    sort[i]._sortOrdinal = colMeta.SortOrdinal;
                                     sortOrdinalSpecified[colMeta.SortOrdinal] = true;
                                     if (colMeta.SortOrdinal > maxSortOrdinal)
                                     {
@@ -1619,7 +1620,7 @@ namespace Microsoft.Data.SqlClient
         internal SmiParameterMetaData MetaDataForSmi(out ParameterPeekAheadValue peekAhead)
         {
             peekAhead = null;
-            MetaType mt = ValidateTypeLengths(true /* Yukon or newer */ );
+            MetaType mt = ValidateTypeLengths(true /* 2005 or newer */ );
             long actualLen = GetActualSize();
             long maxLen = Size;
 
@@ -1962,7 +1963,7 @@ namespace Microsoft.Data.SqlClient
 
         // func will change type to that with a 4 byte length if the type has a two
         // byte length and a parameter length > than that expressible in 2 bytes
-        internal MetaType ValidateTypeLengths(bool yukonOrNewer)
+        internal MetaType ValidateTypeLengths(bool is2005OrNewer)
         {
             MetaType mt = InternalMetaType;
             // Since the server will automatically reject any
@@ -1983,7 +1984,7 @@ namespace Microsoft.Data.SqlClient
                 // 'this.Size' is in charaters; 
                 // 'sizeInCharacters' is in characters; 
                 // 'TdsEnums.TYPE_SIZE_LIMIT' is in bytes;
-                // For Non-NCharType and for non-Yukon or greater variables, size should be maintained;
+                // For Non-NCharType and for non-2005 or greater variables, size should be maintained;
                 // Reverting changes from bug VSTFDevDiv # 479739 as it caused an regression;
                 // Modifed variable names from 'size' to 'sizeInCharacters', 'actualSize' to 'actualSizeInBytes', and 
                 // 'maxSize' to 'maxSizeInBytes'
@@ -1994,14 +1995,14 @@ namespace Microsoft.Data.SqlClient
                 // Keeping these goals in mind - the following are the changes we are making
 
                 long maxSizeInBytes;
-                if (mt.IsNCharType && yukonOrNewer)
+                if (mt.IsNCharType && is2005OrNewer)
                 {
                     maxSizeInBytes = ((sizeInCharacters * sizeof(char)) > actualSizeInBytes) ? sizeInCharacters * sizeof(char) : actualSizeInBytes;
                 }
                 else
                 {
                     // Notes:
-                    // Elevation from (n)(var)char (4001+) to (n)text succeeds without failure only with Yukon and greater.
+                    // Elevation from (n)(var)char (4001+) to (n)text succeeds without failure only with 2005 and greater.
                     // it fails in sql server 2000
                     maxSizeInBytes = (sizeInCharacters > actualSizeInBytes) ? sizeInCharacters : actualSizeInBytes;
                 }
@@ -2013,7 +2014,7 @@ namespace Microsoft.Data.SqlClient
                     (actualSizeInBytes == -1)
                 )
                 { // is size > size able to be described by 2 bytes
-                    if (yukonOrNewer)
+                    if (is2005OrNewer)
                     {
                         // Convert the parameter to its max type
                         mt = MetaType.GetMaxMetaTypeFromMetaType(mt);

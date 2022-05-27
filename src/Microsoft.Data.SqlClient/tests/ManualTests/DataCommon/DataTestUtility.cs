@@ -27,6 +27,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly string TCPConnectionString = null;
         public static readonly string TCPConnectionStringHGSVBS = null;
         public static readonly string TCPConnectionStringAASVBS = null;
+        public static readonly string TCPConnectionStringNoneVBS = null;
         public static readonly string TCPConnectionStringAASSGX = null;
         public static readonly string AADAuthorityURL = null;
         public static readonly string AADPasswordConnectionString = null;
@@ -48,6 +49,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly bool UseManagedSNIOnWindows = false;
         public static readonly bool IsAzureSynapse = false;
         public static Uri AKVBaseUri = null;
+        public static readonly string MakecertPath = null;
         public static string FileStreamDirectory = null;
 
         public static readonly string DNSCachingConnString = null;
@@ -57,11 +59,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static readonly bool IsDNSCachingSupportedTR = false;  // this is for the tenant ring
         public static readonly string UserManagedIdentityClientId = null;
 
+
         public static readonly string EnclaveAzureDatabaseConnString = null;
         public static bool ManagedIdentitySupported = true;
         public static string AADAccessToken = null;
         public static string AADSystemIdentityAccessToken = null;
         public static string AADUserIdentityAccessToken = null;
+        public const string ApplicationClientId = "2fd908ad-0664-4344-b9be-cd3e8b574c38";
         public const string UdtTestDbName = "UdtTestDb";
         public const string AKVKeyName = "TestSqlClientAzureKeyVaultProvider";
         public const string EventSourcePrefix = "Microsoft.Data.SqlClient";
@@ -72,6 +76,10 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         private static Dictionary<string, bool> AvailableDatabases;
         private static BaseEventListener TraceListener;
 
+        //Kerberos variables
+        public static readonly string KerberosDomainUser = null;
+        internal static readonly string KerberosDomainPassword = null;
+
         static DataTestUtility()
         {
             Config c = Config.Load();
@@ -79,6 +87,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             TCPConnectionString = c.TCPConnectionString;
             TCPConnectionStringHGSVBS = c.TCPConnectionStringHGSVBS;
             TCPConnectionStringAASVBS = c.TCPConnectionStringAASVBS;
+            TCPConnectionStringNoneVBS = c.TCPConnectionStringNoneVBS;
             TCPConnectionStringAASSGX = c.TCPConnectionStringAASSGX;
             AADAuthorityURL = c.AADAuthorityURL;
             AADPasswordConnectionString = c.AADPasswordConnectionString;
@@ -99,6 +108,9 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             IsDNSCachingSupportedTR = c.IsDNSCachingSupportedTR;
             EnclaveAzureDatabaseConnString = c.EnclaveAzureDatabaseConnString;
             UserManagedIdentityClientId = c.UserManagedIdentityClientId;
+            MakecertPath = c.MakecertPath;
+            KerberosDomainPassword = c.KerberosDomainPassword;
+            KerberosDomainUser = c.KerberosDomainUser;
 
             System.Net.ServicePointManager.SecurityProtocol |= System.Net.SecurityProtocolType.Tls12;
 
@@ -138,6 +150,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                     AEConnStrings.Add(TCPConnectionStringAASVBS);
                 }
 
+                if (!string.IsNullOrEmpty(TCPConnectionStringNoneVBS))
+                {
+                    AEConnStrings.Add(TCPConnectionStringNoneVBS);
+                }
+
                 if (!string.IsNullOrEmpty(TCPConnectionStringAASSGX))
                 {
                     AEConnStrings.Add(TCPConnectionStringAASSGX);
@@ -154,25 +171,24 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
             }
         }
 
-        public static IEnumerable<string> ConnectionStrings
+        public static IEnumerable<string> ConnectionStrings => GetConnectionStrings(withEnclave: true);
+
+        public static IEnumerable<string> GetConnectionStrings(bool withEnclave)
         {
-            get
+            if (!string.IsNullOrEmpty(TCPConnectionString))
             {
-                if (!string.IsNullOrEmpty(TCPConnectionString))
+                yield return TCPConnectionString;
+            }
+            // Named Pipes are not supported on Unix platform and for Azure DB
+            if (Environment.OSVersion.Platform != PlatformID.Unix && IsNotAzureServer() && !string.IsNullOrEmpty(NPConnectionString))
+            {
+                yield return NPConnectionString;
+            }
+            if (withEnclave && EnclaveEnabled)
+            {
+                foreach (var connStr in AEConnStrings)
                 {
-                    yield return TCPConnectionString;
-                }
-                // Named Pipes are not supported on Unix platform and for Azure DB
-                if (Environment.OSVersion.Platform != PlatformID.Unix && IsNotAzureServer() && !string.IsNullOrEmpty(NPConnectionString))
-                {
-                    yield return NPConnectionString;
-                }
-                if (EnclaveEnabled)
-                {
-                    foreach (var connStr in AEConnStrings)
-                    {
-                        yield return connStr;
-                    }
+                    yield return connStr;
                 }
             }
         }
@@ -212,6 +228,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             return result.AccessToken;
         });
+
+        public static bool IsKerberosTest => !string.IsNullOrEmpty(KerberosDomainUser) && !string.IsNullOrEmpty(KerberosDomainPassword);
 
         public static bool IsDatabasePresent(string name)
         {
@@ -284,6 +302,8 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             return AEConnStrings.Count > 0 && IsNotAzureSynapse();
         }
+
+        public static bool IsSGXEnclaveConnStringSetup() => !string.IsNullOrEmpty(TCPConnectionStringAASSGX);
 
         public static bool IsAADPasswordConnStrSetup()
         {
@@ -445,7 +465,6 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsLocalDBInstalled() => !string.IsNullOrEmpty(LocalDbAppName?.Trim()) && IsIntegratedSecuritySetup();
         public static bool IsLocalDbSharedInstanceSetup() => !string.IsNullOrEmpty(LocalDbSharedInstanceName?.Trim()) && IsIntegratedSecuritySetup();
-
         public static bool IsIntegratedSecuritySetup() => SupportsIntegratedSecurity;
 
         public static string GetAccessToken()
@@ -493,7 +512,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
         public static bool IsUserIdentityTokenSetup() => !string.IsNullOrEmpty(GetUserIdentityAccessToken());
 
-        public static bool IsFileStreamSetup() => !string.IsNullOrEmpty(FileStreamDirectory);
+        public static bool IsFileStreamSetup() => !string.IsNullOrEmpty(FileStreamDirectory) && IsNotAzureServer() && IsNotAzureSynapse();
 
         private static bool CheckException<TException>(Exception ex, string exceptionMessage, bool innerExceptionMustBeNull) where TException : Exception
         {

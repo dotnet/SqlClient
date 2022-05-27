@@ -26,6 +26,8 @@ using Microsoft.Data.SqlClient.Server;
 using SysTx = System.Transactions;
 using System.Collections.Concurrent;
 
+// NOTE: The current Microsoft.VSDesigner editor attributes are implemented for System.Data.SqlClient, and are not publicly available.
+// New attributes that are designed to work with Microsoft.Data.SqlClient and are publicly documented should be included in future.
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/SqlCommand/*'/>
@@ -84,9 +86,9 @@ namespace Microsoft.Data.SqlClient
         internal static readonly Action<object> s_cancelIgnoreFailure = CancelIgnoreFailureCallback;
 
         // devnote: Prepare
-        // Against 7.0 Server (Sphinx) a prepare/unprepare requires an extra roundtrip to the server.
+        // Against 7.0 Server a prepare/unprepare requires an extra roundtrip to the server.
         //
-        // From 8.0 (Shiloh) and above (Yukon) the preparation can be done as part of the command execution.
+        // From 8.0 (2000) and above the preparation can be done as part of the command execution.
         //
         private enum EXECTYPE
         {
@@ -158,10 +160,9 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal bool ShouldUseEnclaveBasedWorkflow
-        {
-            get { return !string.IsNullOrWhiteSpace(_activeConnection.EnclaveAttestationUrl) && IsColumnEncryptionEnabled; }
-        }
+        internal bool ShouldUseEnclaveBasedWorkflow =>
+            (!string.IsNullOrWhiteSpace(_activeConnection.EnclaveAttestationUrl) || Connection.AttestationProtocol == SqlConnectionAttestationProtocol.None) &&
+                  IsColumnEncryptionEnabled;
 
         internal ConcurrentDictionary<int, SqlTceCipherInfoEntry> keysToBeSentToEnclave;
         internal bool requiresEnclaveComputations = false;
@@ -384,7 +385,7 @@ namespace Microsoft.Data.SqlClient
                     }
                 }
 
-                Debug.Assert(SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.YukonVersion);
+                Debug.Assert(SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.Sql2005Version);
                 _command.OnParametersAvailableSmi(metaData, parameterValues);
             }
 
@@ -394,7 +395,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     SqlClientEventSource.Log.AdvancedTraceEvent("<sc.SqlCommand.CommandEventSink.ParameterAvailable|ADV> {0}, metaData[{1}] is {2}{ 3}", _command.ObjectID, ordinal, metaData?.GetType(), metaData?.TraceString());
                 }
-                Debug.Assert(SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.KatmaiVersion);
+                Debug.Assert(SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.Sql2008Version);
                 _command.OnParameterAvailableSmi(metaData, parameterValues, ordinal);
             }
         }
@@ -492,7 +493,6 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/Connection/*' />
         [
         DefaultValue(null),
-        Editor("Microsoft.VSDesigner.Data.Design.DbConnectionEditor, " + AssemblyRef.MicrosoftVSDesigner, "System.Drawing.Design.UITypeEditor, " + AssemblyRef.SystemDrawing),
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
         ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_Connection),
         ]
@@ -609,14 +609,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private bool IsShiloh
+        private bool Is2000
         {
             get
             {
                 Debug.Assert(_activeConnection != null, "The active connection is null!");
                 if (_activeConnection == null)
                     return false;
-                return _activeConnection.IsShiloh;
+                return _activeConnection.Is2000;
             }
         }
 
@@ -747,18 +747,13 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlCommand.xml' path='docs/members[@name="SqlCommand"]/CommandText/*'/>
         [
         DefaultValue(""),
-        Editor("Microsoft.VSDesigner.Data.SQL.Design.SqlCommandTextEditor, " + AssemblyRef.MicrosoftVSDesigner, "System.Drawing.Design.UITypeEditor, " + AssemblyRef.SystemDrawing),
         RefreshProperties(RefreshProperties.All), // MDAC 67707
         ResCategoryAttribute(StringsHelper.ResourceNames.DataCategory_Data),
         ResDescriptionAttribute(StringsHelper.ResourceNames.DbCommand_CommandText),
         ]
         public override string CommandText
         {
-            get
-            {
-                string value = _commandText;
-                return ((null != value) ? value : ADP.StrEmpty);
-            }
+            get => _commandText ?? "";
             set
             {
                 SqlClientEventSource.Log.TryTraceEvent("<sc.SqlCommand.set_CommandText|API> {0}, String Value = '{1}'", ObjectID, value);
@@ -796,7 +791,7 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.TryTraceEvent("<sc.SqlCommand.set_CommandTimeout|API> {0}, {1}", ObjectID, value);
                 if (value < 0)
                 {
-                    throw ADP.InvalidCommandTimeout(value);
+                    throw ADP.InvalidCommandTimeout(value, nameof(CommandTimeout));
                 }
 
                 if (value != _commandTimeout)
@@ -1057,7 +1052,7 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     // Validate the command outside of the try\catch to avoid putting the _stateObj on error
-                    ValidateCommand(ADP.Prepare, false /*not async*/);
+                    ValidateCommand(nameof(Prepare), false /*not async*/);
 
                     bool processFinallyBlock = true;
                     TdsParser bestEffortCleanupTarget = null;
@@ -1383,8 +1378,8 @@ namespace Microsoft.Data.SqlClient
                     WriteBeginExecuteEvent();
                     SqlDataReader ds;
                     ds = IsProviderRetriable ?
-                        RunExecuteReaderWithRetry(0, RunBehavior.ReturnImmediately, true, ADP.ExecuteScalar) :
-                        RunExecuteReader(0, RunBehavior.ReturnImmediately, true, ADP.ExecuteScalar);
+                        RunExecuteReaderWithRetry(0, RunBehavior.ReturnImmediately, true, nameof(ExecuteScalar)) :
+                        RunExecuteReader(0, RunBehavior.ReturnImmediately, true, nameof(ExecuteScalar));
                     object result = CompleteExecuteScalar(ds, false);
                     success = true;
                     return result;
@@ -1464,11 +1459,11 @@ namespace Microsoft.Data.SqlClient
                     bool usedCache;
                     if (IsProviderRetriable)
                     {
-                        InternalExecuteNonQueryWithRetry(ADP.ExecuteNonQuery, sendToPipe: false, CommandTimeout, out usedCache, asyncWrite: false, inRetry: false);
+                        InternalExecuteNonQueryWithRetry(nameof(ExecuteNonQuery), sendToPipe: false, CommandTimeout, out usedCache, asyncWrite: false, inRetry: false);
                     }
                     else
                     {
-                        InternalExecuteNonQuery(null, ADP.ExecuteNonQuery, sendToPipe: false, CommandTimeout, out usedCache);
+                        InternalExecuteNonQuery(null, nameof(ExecuteNonQuery), sendToPipe: false, CommandTimeout, out usedCache);
                     }
                     success = true;
                     return _rowsAffected;
@@ -1504,7 +1499,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
                     bool usedCache;
-                    InternalExecuteNonQuery(null, ADP.ExecuteNonQuery, true, CommandTimeout, out usedCache);
+                    InternalExecuteNonQuery(null, nameof(ExecuteNonQuery), true, CommandTimeout, out usedCache);
                 }
                 finally
                 {
@@ -1562,7 +1557,7 @@ namespace Microsoft.Data.SqlClient
                 bool usedCache;
                 try
                 { // InternalExecuteNonQuery already has reliability block, but if failure will not put stateObj back into pool.
-                    Task execNQ = InternalExecuteNonQuery(localCompletion, ADP.BeginExecuteNonQuery, false, timeout, out usedCache, asyncWrite, inRetry: inRetry);
+                    Task execNQ = InternalExecuteNonQuery(localCompletion, nameof(BeginExecuteNonQuery), false, timeout, out usedCache, asyncWrite, inRetry: inRetry);
                     if (execNQ != null)
                     {
                         AsyncHelper.ContinueTaskWithState(execNQ, localCompletion, this, (object state) => ((SqlCommand)state).BeginExecuteNonQueryInternalReadStage(localCompletion));
@@ -1587,7 +1582,7 @@ namespace Microsoft.Data.SqlClient
 
                 // When we use query caching for parameter encryption we need to retry on specific errors.
                 // In these cases finalize the call internally and trigger a retry when needed.
-                if (!TriggerInternalEndAndRetryIfNecessary(behavior, stateObject, timeout, ADP.EndExecuteNonQuery, usedCache, inRetry, asyncWrite, globalCompletion, localCompletion, InternalEndExecuteNonQuery, BeginExecuteNonQueryInternal))
+                if (!TriggerInternalEndAndRetryIfNecessary(behavior, stateObject, timeout, nameof(EndExecuteNonQuery), usedCache, inRetry, asyncWrite, globalCompletion, localCompletion, InternalEndExecuteNonQuery, BeginExecuteNonQueryInternal))
                 {
                     globalCompletion = localCompletion;
                 }
@@ -1625,7 +1620,7 @@ namespace Microsoft.Data.SqlClient
 #endif //DEBUG
                     bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_activeConnection);
                     // must finish caching information before ReadSni which can activate the callback before returning
-                    cachedAsyncState.SetActiveConnectionAndResult(completion, ADP.EndExecuteNonQuery, _activeConnection);
+                    cachedAsyncState.SetActiveConnectionAndResult(completion, nameof(EndExecuteNonQuery), _activeConnection);
                     _stateObj.ReadSni(completion);
                 }
 #if DEBUG
@@ -1783,13 +1778,19 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 ThrowIfReconnectionHasBeenCanceled();
-                if (!_internalEndExecuteInitiated && _stateObj != null)
+                // lock on _stateObj prevents races with close/cancel.
+                // If we have already initiate the End call internally, we have already done that, so no point doing it again.
+                if (!_internalEndExecuteInitiated)
                 {
-                    // call SetCancelStateClosed on the stateobject to ensure that cancel cannot 
-                    // happen after we have changed started the end processing
-                    _stateObj.SetCancelStateClosed();
+                    lock (_stateObj)
+                    {
+                        return EndExecuteNonQueryInternal(asyncResult);
+                    }
                 }
-                return EndExecuteNonQueryInternal(asyncResult);
+                else
+                {
+                    return EndExecuteNonQueryInternal(asyncResult);
+                }
             }
         }
 
@@ -1801,7 +1802,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
-                int result = (int)InternalEndExecuteNonQuery(asyncResult, ADP.EndExecuteNonQuery, isInternal: false);
+                int result = (int)InternalEndExecuteNonQuery(asyncResult, nameof(EndExecuteNonQuery), isInternal: false);
                 success = true;
                 return result;
             }
@@ -2093,8 +2094,8 @@ namespace Microsoft.Data.SqlClient
                     // use the reader to consume metadata
                     SqlDataReader ds;
                     ds = IsProviderRetriable ?
-                        RunExecuteReaderWithRetry(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, true, ADP.ExecuteXmlReader) :
-                        RunExecuteReader(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, true, ADP.ExecuteXmlReader);
+                        RunExecuteReaderWithRetry(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, true, nameof(ExecuteXmlReader)) :
+                        RunExecuteReader(CommandBehavior.SequentialAccess, RunBehavior.ReturnImmediately, true, nameof(ExecuteXmlReader));
                     XmlReader result = CompleteXmlReader(ds);
                     success = true;
                     return result;
@@ -2162,7 +2163,7 @@ namespace Microsoft.Data.SqlClient
                 Task writeTask;
                 try
                 { // InternalExecuteNonQuery already has reliability block, but if failure will not put stateObj back into pool.
-                    RunExecuteReader(behavior, RunBehavior.ReturnImmediately, true, ADP.BeginExecuteXmlReader, localCompletion, timeout, out writeTask, out usedCache, asyncWrite, inRetry);
+                    RunExecuteReader(behavior, RunBehavior.ReturnImmediately, true, nameof(BeginExecuteXmlReader), localCompletion, timeout, out writeTask, out usedCache, asyncWrite, inRetry);
                 }
                 catch (Exception e)
                 {
@@ -2188,7 +2189,7 @@ namespace Microsoft.Data.SqlClient
 
                 // When we use query caching for parameter encryption we need to retry on specific errors.
                 // In these cases finalize the call internally and trigger a retry when needed.
-                if (!TriggerInternalEndAndRetryIfNecessary(behavior, stateObject, timeout, ADP.EndExecuteXmlReader, usedCache, inRetry, asyncWrite, globalCompletion, localCompletion, InternalEndExecuteReader, BeginExecuteXmlReaderInternal))
+                if (!TriggerInternalEndAndRetryIfNecessary(behavior, stateObject, timeout, nameof(EndExecuteXmlReader), usedCache, inRetry, asyncWrite, globalCompletion, localCompletion, InternalEndExecuteReader, BeginExecuteXmlReaderInternal))
                 {
                     globalCompletion = localCompletion;
                 }
@@ -2226,7 +2227,7 @@ namespace Microsoft.Data.SqlClient
 #endif //DEBUG
                     bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_activeConnection);
                     // must finish caching information before ReadSni which can activate the callback before returning
-                    cachedAsyncState.SetActiveConnectionAndResult(completion, ADP.EndExecuteXmlReader, _activeConnection);
+                    cachedAsyncState.SetActiveConnectionAndResult(completion, nameof(EndExecuteXmlReader), _activeConnection);
                     _stateObj.ReadSni(completion);
                 }
 #if DEBUG
@@ -2297,14 +2298,19 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 ThrowIfReconnectionHasBeenCanceled();
-                if (!_internalEndExecuteInitiated && _stateObj != null)
+                // lock on _stateObj prevents races with close/cancel.
+                // If we have already initiate the End call internally, we have already done that, so no point doing it again.
+                if (!_internalEndExecuteInitiated)
                 {
-                    // call SetCancelStateClosed on the stateobject to ensure that cancel cannot 
-                    // happen after we have changed started the end processing
-                    _stateObj.SetCancelStateClosed();
+                    lock (_stateObj)
+                    {
+                        return EndExecuteXmlReaderInternal(asyncResult);
+                    }
                 }
-
-                return EndExecuteXmlReaderInternal(asyncResult);
+                else
+                {
+                    return EndExecuteXmlReaderInternal(asyncResult);
+                }
             }
         }
 
@@ -2314,7 +2320,7 @@ namespace Microsoft.Data.SqlClient
             int? sqlExceptionNumber = null;
             try
             {
-                XmlReader result = CompleteXmlReader(InternalEndExecuteReader(asyncResult, ADP.EndExecuteXmlReader, isInternal: false), true);
+                XmlReader result = CompleteXmlReader(InternalEndExecuteReader(asyncResult, nameof(EndExecuteXmlReader), isInternal: false), true);
                 success = true;
                 return result;
             }
@@ -2399,7 +2405,7 @@ namespace Microsoft.Data.SqlClient
         protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
         {
             SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlCommand.ExecuteDbDataReader|API|Correlation> ObjectID {0}, ActivityID {1}", ObjectID, ActivityCorrelator.Current);
-            return ExecuteReader(behavior, ADP.ExecuteReader);
+            return ExecuteReader(behavior, nameof(ExecuteReader));
         }
 
         private SqlDataReader ExecuteReaderWithRetry(CommandBehavior behavior, string method)
@@ -2416,8 +2422,8 @@ namespace Microsoft.Data.SqlClient
                 {
                     statistics = SqlStatistics.StartTimer(Statistics);
                     return IsProviderRetriable ?
-                            ExecuteReaderWithRetry(CommandBehavior.Default, ADP.ExecuteReader) :
-                            ExecuteReader(CommandBehavior.Default, ADP.ExecuteReader);
+                            ExecuteReaderWithRetry(CommandBehavior.Default, nameof(ExecuteReader)) :
+                            ExecuteReader(CommandBehavior.Default, nameof(ExecuteReader));
                 }
                 finally
                 {
@@ -2434,8 +2440,8 @@ namespace Microsoft.Data.SqlClient
                 SqlClientEventSource.Log.TryCorrelationTraceEvent("<sc.SqlCommand.ExecuteReader|API|Correlation> ObjectID {0}, behavior={1}, ActivityID {2}", ObjectID, (int)behavior, ActivityCorrelator.Current);
 
                 return IsProviderRetriable ?
-                       ExecuteReaderWithRetry(behavior, ADP.ExecuteReader) :
-                       ExecuteReader(behavior, ADP.ExecuteReader);
+                       ExecuteReaderWithRetry(behavior, nameof(ExecuteReader)) :
+                       ExecuteReader(behavior, nameof(ExecuteReader));
             }
         }
 
@@ -2551,15 +2557,19 @@ namespace Microsoft.Data.SqlClient
             else
             {
                 ThrowIfReconnectionHasBeenCanceled();
-
-                if (!_internalEndExecuteInitiated && _stateObj != null)
+                // lock on _stateObj prevents races with close/cancel.
+                // If we have already initiate the End call internally, we have already done that, so no point doing it again.
+                if (!_internalEndExecuteInitiated)
                 {
-                    // call SetCancelStateClosed on the stateobject to ensure that cancel cannot happen after
-                    // we have changed started the end processing
-                    _stateObj.SetCancelStateClosed();
+                    lock (_stateObj)
+                    {
+                        return EndExecuteReaderInternal(asyncResult);
+                    }
                 }
-
-                return EndExecuteReaderInternal(asyncResult);
+                else
+                {
+                    return EndExecuteReaderInternal(asyncResult);
+                }
             }
         }
 
@@ -2574,7 +2584,7 @@ namespace Microsoft.Data.SqlClient
             try
             {
                 statistics = SqlStatistics.StartTimer(Statistics);
-                SqlDataReader result = InternalEndExecuteReader(asyncResult, ADP.EndExecuteReader, isInternal: false);
+                SqlDataReader result = InternalEndExecuteReader(asyncResult, nameof(EndExecuteReader), isInternal: false);
                 success = true;
                 return result;
             }
@@ -2643,7 +2653,7 @@ namespace Microsoft.Data.SqlClient
                 try
                 {
                     // InternalExecuteNonQuery already has reliability block, but if failure will not put stateObj back into pool.
-                    RunExecuteReader(behavior, RunBehavior.ReturnImmediately, true, ADP.BeginExecuteReader, localCompletion, timeout, out writeTask, out usedCache, asyncWrite, inRetry);
+                    RunExecuteReader(behavior, RunBehavior.ReturnImmediately, true, nameof(BeginExecuteReader), localCompletion, timeout, out writeTask, out usedCache, asyncWrite, inRetry);
                 }
                 catch (Exception e)
                 {
@@ -2669,7 +2679,7 @@ namespace Microsoft.Data.SqlClient
 
                 // When we use query caching for parameter encryption we need to retry on specific errors.
                 // In these cases finalize the call internally and trigger a retry when needed.
-                if (!TriggerInternalEndAndRetryIfNecessary(behavior, stateObject, timeout, ADP.EndExecuteReader, usedCache, inRetry, asyncWrite, globalCompletion, localCompletion, InternalEndExecuteReader, BeginExecuteReaderInternal))
+                if (!TriggerInternalEndAndRetryIfNecessary(behavior, stateObject, timeout, nameof(EndExecuteReader), usedCache, inRetry, asyncWrite, globalCompletion, localCompletion, InternalEndExecuteReader, BeginExecuteReaderInternal))
                 {
                     globalCompletion = localCompletion;
                 }
@@ -2837,7 +2847,7 @@ namespace Microsoft.Data.SqlClient
 #endif //DEBUG
                     bestEffortCleanupTarget = SqlInternalConnection.GetBestEffortCleanupTarget(_activeConnection);
                     // must finish caching information before ReadSni which can activate the callback before returning
-                    cachedAsyncState.SetActiveConnectionAndResult(completion, ADP.EndExecuteReader, _activeConnection);
+                    cachedAsyncState.SetActiveConnectionAndResult(completion, nameof(EndExecuteReader), _activeConnection);
                     _stateObj.ReadSni(completion);
                 }
 #if DEBUG
@@ -3363,8 +3373,8 @@ namespace Microsoft.Data.SqlClient
         {
             ParameterName = 0,
             ParameterType,
-            DataType, // obsolete in katmai, use ManagedDataType instead
-            ManagedDataType, // new in katmai
+            DataType, // obsolete in 2008, use ManagedDataType instead
+            ManagedDataType, // new in 2008
             CharacterMaximumLength,
             NumericPrecision,
             NumericScale,
@@ -3374,16 +3384,16 @@ namespace Microsoft.Data.SqlClient
             XmlSchemaCollectionCatalogName,
             XmlSchemaCollectionSchemaName,
             XmlSchemaCollectionName,
-            UdtTypeName, // obsolete in Katmai.  Holds the actual typename if UDT, since TypeName didn't back then.
-            DateTimeScale // new in Katmai
+            UdtTypeName, // obsolete in 2008.  Holds the actual typename if UDT, since TypeName didn't back then.
+            DateTimeScale // new in 2008
         };
 
-        // Yukon- column ordinals (this array indexed by ProcParamsColIndex
-        internal static readonly string[] PreKatmaiProcParamsNames = new string[] {
+        // 2005- column ordinals (this array indexed by ProcParamsColIndex
+        internal static readonly string[] PreSql2008ProcParamsNames = new string[] {
             "PARAMETER_NAME",           // ParameterName,
             "PARAMETER_TYPE",           // ParameterType,
             "DATA_TYPE",                // DataType
-            null,                       // ManagedDataType,     introduced in Katmai
+            null,                       // ManagedDataType,     introduced in 2008
             "CHARACTER_MAXIMUM_LENGTH", // CharacterMaximumLength,
             "NUMERIC_PRECISION",        // NumericPrecision,
             "NUMERIC_SCALE",            // NumericScale,
@@ -3394,14 +3404,14 @@ namespace Microsoft.Data.SqlClient
             "XML_SCHEMANAME",           // XmlSchemaCollectionSchemaName,
             "XML_SCHEMACOLLECTIONNAME", // XmlSchemaCollectionName
             "UDT_NAME",                 // UdtTypeName
-            null,                       // Scale for datetime types with scale, introduced in Katmai
+            null,                       // Scale for datetime types with scale, introduced in 2008
         };
 
-        // Katmai+ column ordinals (this array indexed by ProcParamsColIndex
-        internal static readonly string[] KatmaiProcParamsNames = new string[] {
+        // 2008+ column ordinals (this array indexed by ProcParamsColIndex
+        internal static readonly string[] Sql2008ProcParamsNames = new string[] {
             "PARAMETER_NAME",           // ParameterName,
             "PARAMETER_TYPE",           // ParameterType,
-            null,                       // DataType, removed from Katmai+
+            null,                       // DataType, removed from 2008+
             "MANAGED_DATA_TYPE",        // ManagedDataType,
             "CHARACTER_MAXIMUM_LENGTH", // CharacterMaximumLength,
             "NUMERIC_PRECISION",        // NumericPrecision,
@@ -3412,7 +3422,7 @@ namespace Microsoft.Data.SqlClient
             "XML_CATALOGNAME",          // XmlSchemaCollectionCatalogName,
             "XML_SCHEMANAME",           // XmlSchemaCollectionSchemaName,
             "XML_SCHEMACOLLECTIONNAME", // XmlSchemaCollectionName
-            null,                       // UdtTypeName, removed from Katmai+
+            null,                       // UdtTypeName, removed from 2008+
             "SS_DATETIME_PRECISION",    // Scale for datetime types with scale
         };
 
@@ -3432,7 +3442,7 @@ namespace Microsoft.Data.SqlClient
             }
 
             // validate that we have a valid connection
-            ValidateCommand(ADP.DeriveParameters, false /*not async*/);
+            ValidateCommand(nameof(DeriveParameters), false /*not async*/);
 
             // Use common parser for SqlClient and OleDb - parse into 4 parts - Server, Catalog, Schema, ProcedureName
             string[] parsedSProc = MultipartIdentifier.ParseMultipartIdentifier(CommandText, "[\"", "]\"", Strings.SQL_SqlCommandCommandText, false);
@@ -3447,7 +3457,7 @@ namespace Microsoft.Data.SqlClient
             StringBuilder cmdText = new StringBuilder();
 
             // Build call for sp_procedure_params_rowset built of unquoted values from user:
-            // [user server, if provided].[user catalog, else current database].[sys if Yukon, else blank].[sp_procedure_params_rowset]
+            // [user server, if provided].[user catalog, else current database].[sys if 2005, else blank].[sp_procedure_params_rowset]
 
             // Server - pass only if user provided.
             if (!ADP.IsEmpty(parsedSProc[0]))
@@ -3464,21 +3474,21 @@ namespace Microsoft.Data.SqlClient
             SqlCommandSet.BuildStoredProcedureName(cmdText, parsedSProc[1]);
             cmdText.Append(".");
 
-            // Schema - only if Yukon, and then only pass sys.  Also - pass managed version of sproc
-            // for Yukon, else older sproc.
+            // Schema - only if 2005, and then only pass sys.  Also - pass managed version of sproc
+            // for 2005, else older sproc.
             string[] colNames;
             bool useManagedDataType;
-            if (Connection.IsKatmaiOrNewer)
+            if (Connection.Is2008OrNewer)
             {
                 // Procedure - [sp_procedure_params_managed]
                 cmdText.Append("[sys].[").Append(TdsEnums.SP_PARAMS_MGD10).Append("]");
 
-                colNames = KatmaiProcParamsNames;
+                colNames = Sql2008ProcParamsNames;
                 useManagedDataType = true;
             }
             else
             {
-                if (this.Connection.IsYukonOrNewer)
+                if (this.Connection.Is2005OrNewer)
                 {
                     // Procedure - [sp_procedure_params_managed]
                     cmdText.Append("[sys].[").Append(TdsEnums.SP_PARAMS_MANAGED).Append("]");
@@ -3489,7 +3499,7 @@ namespace Microsoft.Data.SqlClient
                     cmdText.Append(".[").Append(TdsEnums.SP_PARAMS).Append("]");
                 }
 
-                colNames = PreKatmaiProcParamsNames;
+                colNames = PreSql2008ProcParamsNames;
                 useManagedDataType = false;
             }
 
@@ -3545,7 +3555,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         p.SqlDbType = (SqlDbType)(short)r[colNames[(int)ProcParamsColIndex.ManagedDataType]];
 
-                        // Yukon didn't have as accurate of information as we're getting for Katmai, so re-map a couple of
+                        // 2005 didn't have as accurate of information as we're getting for 2008, so re-map a couple of
                         //  types for backward compatability.
                         switch (p.SqlDbType)
                         {
@@ -3569,8 +3579,7 @@ namespace Microsoft.Data.SqlClient
                     else
                     {
                         p.SqlDbType = MetaType.GetSqlDbTypeFromOleDbType((short)r[colNames[(int)ProcParamsColIndex.DataType]],
-                            ADP.IsNull(r[colNames[(int)ProcParamsColIndex.TypeName]]) ?
-                                ADP.StrEmpty :
+                            ADP.IsNull(r[colNames[(int)ProcParamsColIndex.TypeName]]) ? "" :
                                 (string)r[colNames[(int)ProcParamsColIndex.TypeName]]);
                     }
 
@@ -3580,9 +3589,9 @@ namespace Microsoft.Data.SqlClient
                     {
                         int size = (int)a;
 
-                        // Map MAX sizes correctly.  The Katmai server-side proc sends 0 for these instead of -1.
-                        //  Should be fixed on the Katmai side, but would likely hold up the RI, and is safer to fix here.
-                        //  If we can get the server-side fixed before shipping Katmai, we can remove this mapping.
+                        // Map MAX sizes correctly.  The 2008 server-side proc sends 0 for these instead of -1.
+                        //  Should be fixed on the 2008 side, but would likely hold up the RI, and is safer to fix here.
+                        //  If we can get the server-side fixed before shipping 2008, we can remove this mapping.
                         if (0 == size &&
                                 (p.SqlDbType == SqlDbType.NVarChar ||
                                  p.SqlDbType == SqlDbType.VarBinary ||
@@ -3606,7 +3615,7 @@ namespace Microsoft.Data.SqlClient
                     if (SqlDbType.Udt == p.SqlDbType)
                     {
 
-                        Debug.Assert(this._activeConnection.IsYukonOrNewer, "Invalid datatype token received from pre-yukon server");
+                        Debug.Assert(this._activeConnection.Is2005OrNewer, "Invalid datatype token received from pre-2005 server");
 
                         string udtTypeName;
                         if (useManagedDataType)
@@ -3627,7 +3636,7 @@ namespace Microsoft.Data.SqlClient
                     // type name for Structured types (same as for Udt's except assign p.TypeName instead of p.UdtTypeName
                     if (SqlDbType.Structured == p.SqlDbType)
                     {
-                        Debug.Assert(_activeConnection.IsKatmaiOrNewer, "Invalid datatype token received from pre-katmai server");
+                        Debug.Assert(_activeConnection.Is2008OrNewer, "Invalid datatype token received from pre-2008 server");
 
                         //read the type name
                         p.TypeName = r[colNames[(int)ProcParamsColIndex.TypeCatalogName]] + "." +
@@ -3732,8 +3741,8 @@ namespace Microsoft.Data.SqlClient
             // present.  If so, auto enlist to the dependency ID given in the context data.
             if (NotificationAutoEnlist)
             {
-                if (_activeConnection.IsYukonOrNewer)
-                { // Only supported for Yukon...
+                if (_activeConnection.Is2005OrNewer)
+                { // Only supported for 2005...
                     string notifyContext = SqlNotificationContext();
                     if (!ADP.IsEmpty(notifyContext))
                     {
@@ -3934,7 +3943,7 @@ namespace Microsoft.Data.SqlClient
 
                     SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlCommand.RunExecuteNonQuerySmi|ADV> {0}, innerConnection={1}, transactionId=0x{2}, cmdBehavior={3}.", ObjectID, innerConnection.ObjectID, transactionId, (int)CommandBehavior.Default);
 
-                    if (SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.KatmaiVersion)
+                    if (SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.Sql2008Version)
                     {
                         eventStream = requestExecutor.Execute(
                                                           innerConnection.SmiConnection,
@@ -4770,7 +4779,7 @@ namespace Microsoft.Data.SqlClient
 
                     if (isRequestedByEnclave)
                     {
-                        if (string.IsNullOrWhiteSpace(this.Connection.EnclaveAttestationUrl))
+                        if (string.IsNullOrWhiteSpace(this.Connection.EnclaveAttestationUrl) && Connection.AttestationProtocol != SqlConnectionAttestationProtocol.None)
                         {
                             throw SQL.NoAttestationUrlSpecifiedForEnclaveBasedQuerySpDescribe(this._activeConnection.Parser.EnclaveType);
                         }
@@ -5234,8 +5243,11 @@ namespace Microsoft.Data.SqlClient
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(this._activeConnection.EnclaveAttestationUrl))
+            if (string.IsNullOrWhiteSpace(this._activeConnection.EnclaveAttestationUrl) &&
+                Connection.AttestationProtocol != SqlConnectionAttestationProtocol.None)
+            {
                 throw SQL.NoAttestationUrlSpecifiedForEnclaveBasedQueryGeneratingEnclavePackage(this._activeConnection.Parser.EnclaveType);
+            }
 
             string enclaveType = this._activeConnection.Parser.EnclaveType;
             if (string.IsNullOrWhiteSpace(enclaveType))
@@ -5421,7 +5433,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     else if (_execType == EXECTYPE.PREPAREPENDING)
                     {
-                        Debug.Assert(_activeConnection.IsShiloh, "Invalid attempt to call sp_prepexec on non 7.x server");
+                        Debug.Assert(_activeConnection.Is2000, "Invalid attempt to call sp_prepexec on non 7.x server");
                         rpc = BuildPrepExec(cmdBehavior);
                         // next time through, only do an exec
                         _execType = EXECTYPE.PREPARED;
@@ -5436,8 +5448,8 @@ namespace Microsoft.Data.SqlClient
                         BuildExecuteSql(cmdBehavior, null, _parameters, ref rpc);
                     }
 
-                    // if shiloh, then set NOMETADATA_UNLESSCHANGED flag
-                    if (_activeConnection.IsShiloh)
+                    // if 2000, then set NOMETADATA_UNLESSCHANGED flag
+                    if (_activeConnection.Is2000)
                         rpc.options = TdsEnums.RPC_NOMETADATA;
                     if (returnStream)
                     {
@@ -5451,10 +5463,10 @@ namespace Microsoft.Data.SqlClient
                 else
                 {
                     Debug.Assert(this.CommandType == System.Data.CommandType.StoredProcedure, "unknown command type!");
-                    // note: invalid asserts on Shiloh. On 8.0 (Shiloh) and above a command is ALWAYS prepared
+                    // note: invalid asserts on 2000. On 8.0 (2000) and above a command is ALWAYS prepared
                     // and IsDirty is always set if there are changes and the command is marked Prepared!
-                    Debug.Assert(IsShiloh || !IsPrepared, "RPC should not be prepared!");
-                    Debug.Assert(IsShiloh || !IsDirty, "RPC should not be marked as dirty!");
+                    Debug.Assert(Is2000 || !IsPrepared, "RPC should not be prepared!");
+                    Debug.Assert(Is2000 || !IsDirty, "RPC should not be marked as dirty!");
 
                     BuildRPC(inSchema, _parameters, ref rpc);
 
@@ -5561,7 +5573,7 @@ namespace Microsoft.Data.SqlClient
                 innerConnection.GetCurrentTransactionPair(out transactionId, out transaction);
                 SqlClientEventSource.Log.TryAdvancedTraceEvent("<sc.SqlCommand.RunExecuteReaderSmi|ADV> {0}, innerConnection={1}, transactionId=0x{2}, commandBehavior={(int)cmdBehavior}.", ObjectID, innerConnection.ObjectID, transactionId);
 
-                if (SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.KatmaiVersion)
+                if (SmiContextFactory.Instance.NegotiatedSmiVersion >= SmiContextFactory.Sql2008Version)
                 {
                     eventStream = requestExecutor.Execute(
                                                     innerConnection.SmiConnection,
@@ -5905,10 +5917,10 @@ namespace Microsoft.Data.SqlClient
             if (ADP.IsEmpty(this.CommandText))
                 throw ADP.CommandTextRequired(method);
 
-            // Notification property must be null for pre-Yukon connections
-            if ((Notification != null) && !_activeConnection.IsYukonOrNewer)
+            // Notification property must be null for pre-2005 connections
+            if ((Notification != null) && !_activeConnection.Is2005OrNewer)
             {
-                throw SQL.NotificationsRequireYukon();
+                throw SQL.NotificationsRequire2005();
             }
 
             if ((async) && (_activeConnection.IsContextConnection))
@@ -6365,7 +6377,7 @@ namespace Microsoft.Data.SqlClient
                     param.CompareInfo = metaData.CompareOptions;
                     SqlBuffer buffer = new SqlBuffer();
                     object result;
-                    if (_activeConnection.IsKatmaiOrNewer)
+                    if (_activeConnection.Is2008OrNewer)
                     {
                         result = ValueUtilsSmi.GetOutputParameterV200Smi(
                                 OutParamEventSink, (SmiTypedGetterSetter)parameterValues, ordinal, metaData, _smiRequestContext, buffer);
@@ -6515,7 +6527,7 @@ namespace Microsoft.Data.SqlClient
             int paramCount = GetParameterCount(parameters);
             int j = startCount;
             TdsParser parser = _activeConnection.Parser;
-            bool yukonOrNewer = parser.IsYukonOrNewer;
+            bool is2005OrNewer = parser.Is2005OrNewer;
 
             for (ii = 0; ii < paramCount; ii++)
             {
@@ -6524,7 +6536,7 @@ namespace Microsoft.Data.SqlClient
 
                 // func will change type to that with a 4 byte length if the type has a two
                 // byte length and a parameter length > than that expressable in 2 bytes
-                if ((!parameter.ValidateTypeLengths(yukonOrNewer).IsPlp) && (parameter.Direction != ParameterDirection.Output))
+                if ((!parameter.ValidateTypeLengths(is2005OrNewer).IsPlp) && (parameter.Direction != ParameterDirection.Output))
                 {
                     parameter.FixStreamDataForNonPLP();
                 }
@@ -6900,7 +6912,7 @@ namespace Microsoft.Data.SqlClient
             StringBuilder paramList = new StringBuilder();
             bool fAddSeparator = false;
 
-            bool yukonOrNewer = parser.IsYukonOrNewer;
+            bool is2005OrNewer = parser.Is2005OrNewer;
 
             int count = 0;
 
@@ -6951,7 +6963,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     // func will change type to that with a 4 byte length if the type has a two
                     // byte length and a parameter length > than that expressable in 2 bytes
-                    mt = sqlParam.ValidateTypeLengths(yukonOrNewer);
+                    mt = sqlParam.ValidateTypeLengths(is2005OrNewer);
                     if ((!mt.IsPlp) && (sqlParam.Direction != ParameterDirection.Output))
                     {
                         sqlParam.FixStreamDataForNonPLP();
@@ -6970,13 +6982,13 @@ namespace Microsoft.Data.SqlClient
 
                     if (0 == precision)
                     {
-                        if (IsShiloh)
+                        if (Is2000)
                         {
                             precision = TdsEnums.DEFAULT_NUMERIC_PRECISION;
                         }
                         else
                         {
-                            precision = TdsEnums.SPHINX_DEFAULT_NUMERIC_PRECISION;
+                            precision = TdsEnums.SQL70_DEFAULT_NUMERIC_PRECISION;
                         }
                     }
 
@@ -7464,7 +7476,7 @@ namespace Microsoft.Data.SqlClient
                     requestMetaData[index] = param.MetaDataForSmi(out peekAheadValues[index]);
 
                     // Check for valid type for version negotiated
-                    if (!innerConnection.IsKatmaiOrNewer)
+                    if (!innerConnection.Is2008OrNewer)
                     {
                         MetaType mt = MetaType.GetMetaTypeFromSqlDbType(requestMetaData[index].SqlDbType, requestMetaData[index].IsMultiValued);
                         if (!mt.Is90Supported)
@@ -7594,9 +7606,9 @@ namespace Microsoft.Data.SqlClient
                             }
                         }
 
-                        if (innerConnection.IsKatmaiOrNewer)
+                        if (innerConnection.Is2008OrNewer)
                         {
-                            ValueUtilsSmi.SetCompatibleValueV200(EventSink, requestExecutor, index, requestMetaData[index], value, typeCode, param.Offset, param.Size, peekAheadValues[index]);
+                            ValueUtilsSmi.SetCompatibleValueV200(EventSink, requestExecutor, index, requestMetaData[index], value, typeCode, param.Offset, peekAheadValues[index]);
                         }
                         else
                         {

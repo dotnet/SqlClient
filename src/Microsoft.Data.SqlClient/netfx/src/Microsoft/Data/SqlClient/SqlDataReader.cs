@@ -24,10 +24,9 @@ using Microsoft.Data.SqlTypes;
 
 namespace Microsoft.Data.SqlClient
 {
-    /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/SqlDataReader/*' />
+    /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/SqlDataReader/*' />
     public class SqlDataReader : DbDataReader, IDataReader
     {
-
         private enum ALTROWSTATUS
         {
             Null = 0,           // default and after Done
@@ -95,10 +94,6 @@ namespace Microsoft.Data.SqlClient
         private CancellationTokenSource _cancelAsyncOnCloseTokenSource;
         private CancellationToken _cancelAsyncOnCloseToken;
 
-        // Used for checking if the Type parameter provided to GetValue<T> is an INullable
-        internal static readonly Type _typeofINullable = typeof(INullable);
-        private static readonly Type _typeofSqlString = typeof(SqlString);
-
         private SqlSequentialStream _currentStream;
         private SqlSequentialTextReader _currentTextReader;
 
@@ -148,7 +143,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/Connection/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/Connection/*' />
         protected SqlConnection Connection
         {
             get
@@ -157,10 +152,10 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/SensitivityClassification/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/SensitivityClassification/*' />
         public SensitivityClassification SensitivityClassification { get; internal set; }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/Depth/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/Depth/*' />
         override public int Depth
         {
             get
@@ -174,7 +169,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/FieldCount/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/FieldCount/*' />
         // fields/attributes collection
         override public int FieldCount
         {
@@ -198,7 +193,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/HasRows/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/HasRows/*' />
         override public bool HasRows
         {
             get
@@ -216,7 +211,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/IsClosed/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/IsClosed/*' />
         override public bool IsClosed
         {
             get
@@ -409,7 +404,7 @@ namespace Microsoft.Data.SqlClient
             return metaDataReturn;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/RecordsAffected/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/RecordsAffected/*' />
         override public int RecordsAffected
         {
             get
@@ -449,7 +444,7 @@ namespace Microsoft.Data.SqlClient
                 _tableNames = value;
             }
         }
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/VisibleFieldCount/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/VisibleFieldCount/*' />
         override public int VisibleFieldCount
         {
             get
@@ -467,7 +462,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/ItemI/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/ItemI/*' />
         // this operator
         override public object this[int i]
         {
@@ -477,7 +472,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/ItemName/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/ItemName/*' />
         override public object this[string name]
         {
             get
@@ -615,7 +610,7 @@ namespace Microsoft.Data.SqlClient
                 schemaRow[NonVersionedProviderType] = (int)(col.cipherMD != null ? col.baseTI.type : col.type); // SqlDbType enum value - does not change with TypeSystem.
                 schemaRow[DataTypeName] = GetDataTypeNameInternal(col);
 
-                if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.IsNewKatmaiDateTimeType)
+                if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.Is2008DateTimeType)
                 {
                     schemaRow[ProviderType] = SqlDbType.NVarChar;
                     switch (col.type)
@@ -658,12 +653,12 @@ namespace Microsoft.Data.SqlClient
 
                     if (col.type == SqlDbType.Udt)
                     { // Additional metadata for UDTs.
-                        Debug.Assert(Connection.IsYukonOrNewer, "Invalid Column type received from the server");
+                        Debug.Assert(Connection.Is2005OrNewer, "Invalid Column type received from the server");
                         schemaRow[UdtAssemblyQualifiedName] = col.udt?.AssemblyQualifiedName;
                     }
                     else if (col.type == SqlDbType.Xml)
                     { // Additional metadata for Xml.
-                        Debug.Assert(Connection.IsYukonOrNewer, "Invalid DataType (Xml) for the column");
+                        Debug.Assert(Connection.Is2005OrNewer, "Invalid DataType (Xml) for the column");
                         schemaRow[XmlSchemaCollectionDatabase] = col.xmlSchemaCollection?.Database;
                         schemaRow[XmlSchemaCollectionOwningSchema] = col.xmlSchemaCollection?.OwningSchema;
                         schemaRow[XmlSchemaCollectionName] = col.xmlSchemaCollection?.Name;
@@ -698,7 +693,7 @@ namespace Microsoft.Data.SqlClient
                     schemaRow[Precision] = col.metaType.Precision;
                 }
 
-                if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.IsNewKatmaiDateTimeType)
+                if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && col.Is2008DateTimeType)
                 {
                     schemaRow[Scale] = MetaType.MetaNVarChar.Scale;
                 }
@@ -955,7 +950,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/Close/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/Close/*' />
         override public void Close()
         {
             SqlStatistics statistics = null;
@@ -1386,7 +1381,7 @@ namespace Microsoft.Data.SqlClient
             return true;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetDataTypeName/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetDataTypeName/*' />
         override public string GetDataTypeName(int i)
         {
             SqlStatistics statistics = null;
@@ -1407,7 +1402,7 @@ namespace Microsoft.Data.SqlClient
         {
             string dataTypeName = null;
 
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsNewKatmaiDateTimeType)
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
             {
                 dataTypeName = MetaType.MetaNVarChar.TypeName;
             }
@@ -1429,7 +1424,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (metaData.type == SqlDbType.Udt)
                 {
-                    Debug.Assert(Connection.IsYukonOrNewer, "Invalid Column type received from the server");
+                    Debug.Assert(Connection.Is2005OrNewer, "Invalid Column type received from the server");
                     dataTypeName = metaData.udt?.DatabaseName + "." + metaData.udt?.SchemaName + "." + metaData.udt?.TypeName;
                 }
                 else
@@ -1463,13 +1458,13 @@ namespace Microsoft.Data.SqlClient
             return _data[i].VariantInternalStorageType;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetEnumerator/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetEnumerator/*' />
         override public IEnumerator GetEnumerator()
         {
             return new DbEnumerator(this, IsCommandBehavior(CommandBehavior.CloseConnection));
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetFieldType/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetFieldType/*' />
         override public Type GetFieldType(int i)
         {
             SqlStatistics statistics = null;
@@ -1490,9 +1485,9 @@ namespace Microsoft.Data.SqlClient
         {
             Type fieldType = null;
 
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsNewKatmaiDateTimeType)
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
             {
-                // Return katmai types as string
+                // Return 2008 types as string
                 fieldType = MetaType.MetaNVarChar.ClassType;
             }
             else if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
@@ -1513,7 +1508,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (metaData.type == SqlDbType.Udt)
                 {
-                    Debug.Assert(Connection.IsYukonOrNewer, "Invalid Column type received from the server");
+                    Debug.Assert(Connection.Is2005OrNewer, "Invalid Column type received from the server");
                     Connection.CheckGetExtendedUDTInfo(metaData, false);
                     fieldType = metaData.udt?.Type;
                 }
@@ -1572,7 +1567,7 @@ namespace Microsoft.Data.SqlClient
             return lcid;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetName/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetName/*' />
         override public string GetName(int i)
         {
             CheckMetaDataIsReady(columnIndex: i);
@@ -1581,7 +1576,7 @@ namespace Microsoft.Data.SqlClient
             return _metaData[i].column;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetProviderSpecificFieldType/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetProviderSpecificFieldType/*' />
         override public Type GetProviderSpecificFieldType(int i)
         {
             SqlStatistics statistics = null;
@@ -1602,7 +1597,7 @@ namespace Microsoft.Data.SqlClient
         {
             Type providerSpecificFieldType = null;
 
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsNewKatmaiDateTimeType)
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
             {
                 providerSpecificFieldType = MetaType.MetaNVarChar.SqlType;
             }
@@ -1624,7 +1619,7 @@ namespace Microsoft.Data.SqlClient
 
                 if (metaData.type == SqlDbType.Udt)
                 {
-                    Debug.Assert(Connection.IsYukonOrNewer, "Invalid Column type received from the server");
+                    Debug.Assert(Connection.Is2005OrNewer, "Invalid Column type received from the server");
                     Connection.CheckGetExtendedUDTInfo(metaData, false);
                     providerSpecificFieldType = metaData.udt?.Type;
                 }
@@ -1653,7 +1648,7 @@ namespace Microsoft.Data.SqlClient
             return providerSpecificFieldType;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetOrdinal/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetOrdinal/*' />
         // named field access
         override public int GetOrdinal(string name)
         {
@@ -1674,19 +1669,19 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetProviderSpecificValue/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetProviderSpecificValue/*' />
         override public object GetProviderSpecificValue(int i)
         {
             return GetSqlValue(i);
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetProviderSpecificValues/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetProviderSpecificValues/*' />
         override public int GetProviderSpecificValues(object[] values)
         {
             return GetSqlValues(values);
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSchemaTable/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSchemaTable/*' />
         override public DataTable GetSchemaTable()
         {
             SqlStatistics statistics = null;
@@ -1712,14 +1707,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetBoolean/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetBoolean/*' />
         override public bool GetBoolean(int i)
         {
             ReadColumn(i);
             return _data[i].Boolean;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetXmlReader/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetXmlReader/*' />
         virtual public XmlReader GetXmlReader(int i)
         {
             // NOTE: sql_variant can not contain a XML data type: http://msdn.microsoft.com/en-us/library/ms173829.aspx
@@ -1739,7 +1734,7 @@ namespace Microsoft.Data.SqlClient
                 // Wrap the sequential stream in an XmlReader
                 _currentStream = new SqlSequentialStream(this, i);
                 _lastColumnWithDataChunkRead = i;
-                return SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(_currentStream, closeInput: true);
+                return SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(_currentStream, closeInput: true, async: false);
             }
             else
             {
@@ -1749,7 +1744,7 @@ namespace Microsoft.Data.SqlClient
                 if (_data[i].IsNull)
                 {
                     // A 'null' stream
-                    return SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(new MemoryStream(new byte[0], writable: false), closeInput: true);
+                    return SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(new MemoryStream(new byte[0], writable: false), closeInput: true, async: false);
                 }
                 else
                 {
@@ -1759,7 +1754,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetStream/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetStream/*' />
         override public Stream GetStream(int i)
         {
             CheckDataIsReady(columnIndex: i, methodName: "GetStream");
@@ -1807,14 +1802,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetByte/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetByte/*' />
         override public byte GetByte(int i)
         {
             ReadColumn(i);
             return _data[i].Byte;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetBytes/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetBytes/*' />
         override public long GetBytes(int i, long dataIndex, byte[] buffer, int bufferIndex, int length)
         {
             SqlStatistics statistics = null;
@@ -1936,7 +1931,7 @@ namespace Microsoft.Data.SqlClient
 
                         if (dataIndex < _columnDataBytesRead)
                         {
-                            throw ADP.NonSeqByteAccess(dataIndex, _columnDataBytesRead, ADP.GetBytes);
+                            throw ADP.NonSeqByteAccess(dataIndex, _columnDataBytesRead, nameof(GetBytes));
                         }
 
                         // if the dataIndex is not equal to bytes read, then we have to skip bytes
@@ -2051,7 +2046,7 @@ namespace Microsoft.Data.SqlClient
                                 cbytes = length;
                         }
 
-                        Array.Copy(data, ndataIndex, buffer, bufferIndex, cbytes);
+                        Buffer.BlockCopy(data, ndataIndex, buffer, bufferIndex, cbytes);
                     }
                     catch (Exception e)
                     {
@@ -2204,7 +2199,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         // Read data (not exceeding the total amount of data available)
                         int bytesToRead = (int)Math.Min((long)length, _sharedState._columnDataBytesRemaining);
-                        bool result = _stateObj.TryReadByteArray(buffer, index, bytesToRead, out bytesRead);
+                        bool result = _stateObj.TryReadByteArray(buffer.AsSpan(start: index), bytesToRead, out bytesRead);
                         _columnDataBytesRead += bytesRead;
                         _sharedState._columnDataBytesRemaining -= bytesRead;
                         return result;
@@ -2247,7 +2242,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetTextReader/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetTextReader/*' />
         override public TextReader GetTextReader(int i)
         {
             CheckDataIsReady(columnIndex: i, methodName: "GetTextReader");
@@ -2317,14 +2312,14 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetChar/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetChar/*' />
         [EditorBrowsableAttribute(EditorBrowsableState.Never)] // MDAC 69508
         override public char GetChar(int i)
         {
             throw ADP.NotSupported();
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetChars/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetChars/*' />
         override public long GetChars(int i, long dataIndex, char[] buffer, int bufferIndex, int length)
         {
             SqlStatistics statistics = null;
@@ -2423,7 +2418,7 @@ namespace Microsoft.Data.SqlClient
                 if ((_sharedState._nextColumnDataToRead == (i + 1)) && (_sharedState._nextColumnHeaderToRead == (i + 1)) && (_columnDataChars != null) && (IsCommandBehavior(CommandBehavior.SequentialAccess)) && (dataIndex < _columnDataCharsRead))
                 {
                     // Don't allow re-read of same chars in sequential access mode
-                    throw ADP.NonSeqByteAccess(dataIndex, _columnDataCharsRead, ADP.GetChars);
+                    throw ADP.NonSeqByteAccess(dataIndex, _columnDataCharsRead, nameof(GetChars));
                 }
 
                 if (_columnDataCharsIndex != i)
@@ -2542,7 +2537,7 @@ namespace Microsoft.Data.SqlClient
                     if (dataIndex < _columnDataCharsRead)
                     {
                         // Don't allow re-read of same chars in sequential access mode
-                        throw ADP.NonSeqByteAccess(dataIndex, _columnDataCharsRead, ADP.GetChars);
+                        throw ADP.NonSeqByteAccess(dataIndex, _columnDataCharsRead, nameof(GetChars));
                     }
 
                     // If we start reading the new column, either dataIndex is 0 or
@@ -2666,21 +2661,21 @@ namespace Microsoft.Data.SqlClient
             return cnt;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/System.Data.IDataRecord.GetData/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/System.Data.IDataRecord.GetData/*' />
         [EditorBrowsableAttribute(EditorBrowsableState.Never)] // MDAC 69508
         IDataReader IDataRecord.GetData(int i)
         {
             throw ADP.NotSupported();
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetDateTime/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetDateTime/*' />
         override public DateTime GetDateTime(int i)
         {
             ReadColumn(i);
 
             DateTime dt = _data[i].DateTime;
             // This accessor can be called for regular DateTime column. In this case we should not throw
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].IsNewKatmaiDateTimeType)
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
             {
                 // TypeSystem.SQLServer2005 or less
 
@@ -2695,77 +2690,77 @@ namespace Microsoft.Data.SqlClient
             return dt;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetDecimal/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetDecimal/*' />
         override public Decimal GetDecimal(int i)
         {
             ReadColumn(i);
             return _data[i].Decimal;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetDouble/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetDouble/*' />
         override public double GetDouble(int i)
         {
             ReadColumn(i);
             return _data[i].Double;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetFloat/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetFloat/*' />
         override public float GetFloat(int i)
         {
             ReadColumn(i);
             return _data[i].Single;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetGuid/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetGuid/*' />
         override public Guid GetGuid(int i)
         {
             ReadColumn(i);
-            return _data[i].SqlGuid.Value;
+            return _data[i].Guid;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetInt16/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetInt16/*' />
         override public Int16 GetInt16(int i)
         {
             ReadColumn(i);
             return _data[i].Int16;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetInt32/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetInt32/*' />
         override public Int32 GetInt32(int i)
         {
             ReadColumn(i);
             return _data[i].Int32;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetInt64/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetInt64/*' />
         override public Int64 GetInt64(int i)
         {
             ReadColumn(i);
             return _data[i].Int64;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlBoolean/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlBoolean/*' />
         virtual public SqlBoolean GetSqlBoolean(int i)
         {
             ReadColumn(i);
             return _data[i].SqlBoolean;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlBinary/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlBinary/*' />
         virtual public SqlBinary GetSqlBinary(int i)
         {
             ReadColumn(i, setTimeout: true, allowPartiallyReadColumn: true);
             return _data[i].SqlBinary;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlByte/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlByte/*' />
         virtual public SqlByte GetSqlByte(int i)
         {
             ReadColumn(i);
             return _data[i].SqlByte;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlBytes/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlBytes/*' />
         virtual public SqlBytes GetSqlBytes(int i)
         {
             ReadColumn(i);
@@ -2773,15 +2768,15 @@ namespace Microsoft.Data.SqlClient
             return new SqlBytes(data);
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlChars/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlChars/*' />
         virtual public SqlChars GetSqlChars(int i)
         {
             ReadColumn(i);
             SqlString data;
-            // Convert Katmai types to string
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].IsNewKatmaiDateTimeType)
+            // Convert 2008 types to string
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
             {
-                data = _data[i].KatmaiDateTimeSqlString;
+                data = _data[i].Sql2008DateTimeSqlString;
             }
             else
             {
@@ -2790,84 +2785,84 @@ namespace Microsoft.Data.SqlClient
             return new SqlChars(data);
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlDateTime/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlDateTime/*' />
         virtual public SqlDateTime GetSqlDateTime(int i)
         {
             ReadColumn(i);
             return _data[i].SqlDateTime;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlDecimal/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlDecimal/*' />
         virtual public SqlDecimal GetSqlDecimal(int i)
         {
             ReadColumn(i);
             return _data[i].SqlDecimal;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlGuid/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlGuid/*' />
         virtual public SqlGuid GetSqlGuid(int i)
         {
             ReadColumn(i);
             return _data[i].SqlGuid;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlDouble/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlDouble/*' />
         virtual public SqlDouble GetSqlDouble(int i)
         {
             ReadColumn(i);
             return _data[i].SqlDouble;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlInt16/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlInt16/*' />
         virtual public SqlInt16 GetSqlInt16(int i)
         {
             ReadColumn(i);
             return _data[i].SqlInt16;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlInt32/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlInt32/*' />
         virtual public SqlInt32 GetSqlInt32(int i)
         {
             ReadColumn(i);
             return _data[i].SqlInt32;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlInt64/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlInt64/*' />
         virtual public SqlInt64 GetSqlInt64(int i)
         {
             ReadColumn(i);
             return _data[i].SqlInt64;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlMoney/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlMoney/*' />
         virtual public SqlMoney GetSqlMoney(int i)
         {
             ReadColumn(i);
             return _data[i].SqlMoney;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlSingle/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlSingle/*' />
         virtual public SqlSingle GetSqlSingle(int i)
         {
             ReadColumn(i);
             return _data[i].SqlSingle;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlString/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlString/*' />
         // UNDONE: need non-unicode SqlString support
         virtual public SqlString GetSqlString(int i)
         {
             ReadColumn(i);
 
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].IsNewKatmaiDateTimeType)
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
             {
-                return _data[i].KatmaiDateTimeSqlString;
+                return _data[i].Sql2008DateTimeSqlString;
             }
 
             return _data[i].SqlString;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlXml/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlXml/*' />
         virtual public SqlXml GetSqlXml(int i)
         {
             ReadColumn(i);
@@ -2898,7 +2893,7 @@ namespace Microsoft.Data.SqlClient
             return sx;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlValue/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlValue/*' />
         virtual public object GetSqlValue(int i)
         {
             SqlStatistics statistics = null;
@@ -2938,10 +2933,10 @@ namespace Microsoft.Data.SqlClient
             // Due to a bug in TdsParser.GetNullSqlValue, Timestamps' IsNull is not correctly set - so we need to bypass the following check
             Debug.Assert(!data.IsEmpty || data.IsNull || metaData.type == SqlDbType.Timestamp, "Data has been read, but the buffer is empty");
 
-            // Convert Katmai types to string
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsNewKatmaiDateTimeType)
+            // Convert 2008 types to string
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
             {
-                return data.KatmaiDateTimeSqlString;
+                return data.Sql2008DateTimeSqlString;
             }
             else if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
             {
@@ -2984,7 +2979,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlValues/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetSqlValues/*' />
         virtual public int GetSqlValues(object[] values)
         {
             SqlStatistics statistics = null;
@@ -3013,21 +3008,21 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetString/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetString/*' />
         override public string GetString(int i)
         {
             ReadColumn(i);
 
-            // Convert katmai value to string if type system knob is 2005 or earlier
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].IsNewKatmaiDateTimeType)
+            // Convert 2008 value to string if type system knob is 2005 or earlier
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && _metaData[i].Is2008DateTimeType)
             {
-                return _data[i].KatmaiDateTimeString;
+                return _data[i].Sql2008DateTimeString;
             }
 
             return _data[i].String;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetFieldValue/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetFieldValue/*' />
         override public T GetFieldValue<T>(int i)
         {
             SqlStatistics statistics = null;
@@ -3036,7 +3031,7 @@ namespace Microsoft.Data.SqlClient
                 statistics = SqlStatistics.StartTimer(Statistics);
 
                 SetTimeout(_defaultTimeoutMilliseconds);
-                return GetFieldValueInternal<T>(i);
+                return GetFieldValueInternal<T>(i, isAsync: false);
             }
             finally
             {
@@ -3044,7 +3039,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetValue/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetValue/*' />
         override public object GetValue(int i)
         {
             SqlStatistics statistics = null;
@@ -3061,7 +3056,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetTimeSpan/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetTimeSpan/*' />
         virtual public TimeSpan GetTimeSpan(int i)
         {
             ReadColumn(i);
@@ -3083,7 +3078,7 @@ namespace Microsoft.Data.SqlClient
             return t;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetDateTimeOffset/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetDateTimeOffset/*' />
         virtual public DateTimeOffset GetDateTimeOffset(int i)
         {
             ReadColumn(i);
@@ -3128,7 +3123,7 @@ namespace Microsoft.Data.SqlClient
             // Due to a bug in TdsParser.GetNullSqlValue, Timestamps' IsNull is not correctly set - so we need to bypass the following check
             Debug.Assert(!data.IsEmpty || data.IsNull || metaData.type == SqlDbType.Timestamp, "Data has been read, but the buffer is empty");
 
-            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsNewKatmaiDateTimeType)
+            if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
             {
                 if (data.IsNull)
                 {
@@ -3136,7 +3131,7 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    return data.KatmaiDateTimeString;
+                    return data.Sql2008DateTimeString;
                 }
             }
             else if (_typeSystem <= SqlConnectionString.TypeSystem.SQLServer2005 && metaData.IsLargeUdt)
@@ -3172,7 +3167,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private T GetFieldValueInternal<T>(int i)
+        private T GetFieldValueInternal<T>(int i, bool isAsync)
         {
             if (_currentTask != null)
             {
@@ -3180,102 +3175,213 @@ namespace Microsoft.Data.SqlClient
             }
 
             Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
-            bool result = TryReadColumn(i, setTimeout: false);
+            bool forStreaming = typeof(T) == typeof(XmlReader) || typeof(T) == typeof(TextReader) || typeof(T) == typeof(Stream);
+            bool result = TryReadColumn(i, setTimeout: false, forStreaming: forStreaming);
             if (!result)
-            { throw SQL.SynchronousCallMayNotPend(); }
+            {
+                throw SQL.SynchronousCallMayNotPend();
+            }
 
-            return GetFieldValueFromSqlBufferInternal<T>(_data[i], _metaData[i]);
+            return GetFieldValueFromSqlBufferInternal<T>(_data[i], _metaData[i], isAsync: isAsync);
         }
 
-        private T GetFieldValueFromSqlBufferInternal<T>(SqlBuffer data, _SqlMetaData metaData)
-        {
-            Type typeofT = typeof(T);
-            if (_typeofINullable.IsAssignableFrom(typeofT))
+        private T GetFieldValueFromSqlBufferInternal<T>(SqlBuffer data, _SqlMetaData metaData, bool isAsync)
+        {            
+            // this block of type specific shortcuts uses RyuJIT jit behaviors to achieve fast implementations of the primitive types
+            // RyuJIT will be able to determine at compilation time that the typeof(T)==typeof(<primitive>) options are constant
+            // and be able to remove all implementations which cannot be reached. this will eliminate non-specialized code for
+            Type dataType = data.GetTypeFromStorageType(false);
+            if (typeof(T) == typeof(int) && dataType == typeof(int))
             {
-                // If its a SQL Type or Nullable UDT
-                object rawValue = GetSqlValueFromSqlBufferInternal(data, metaData);
-
-                if (typeofT == _typeofSqlString)
+                return data.Int32As<T>();
+            }
+            else if (typeof(T) == typeof(byte) && dataType == typeof(byte))
+            {
+                return data.ByteAs<T>();
+            }
+            else if (typeof(T) == typeof(short) && dataType == typeof(short))
+            {
+                return data.Int16As<T>();
+            }
+            else if (typeof(T) == typeof(long) && dataType == typeof(long))
+            {
+                return data.Int64As<T>();
+            }
+            else if (typeof(T) == typeof(bool) && dataType == typeof(bool))
+            {
+                return data.BooleanAs<T>();
+            }
+            else if (typeof(T) == typeof(double) && dataType == typeof(double))
+            {
+                return data.DoubleAs<T>();
+            }
+            else if (typeof(T) == typeof(float) && dataType == typeof(float))
+            {
+                return data.SingleAs<T>();
+            }
+            else if (typeof(T) == typeof(Guid) && dataType == typeof(Guid))
+            {
+                return (T)(object)data.Guid;
+            }
+            else if (typeof(T) == typeof(decimal) && dataType == typeof(decimal))
+            {
+                return (T)(object)data.Decimal;
+            }
+            else if (typeof(T) == typeof(DateTimeOffset) && dataType == typeof(DateTimeOffset) && _typeSystem > SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
+            {
+                return (T)(object)data.DateTimeOffset;
+            }
+            else if (typeof(T) == typeof(DateTime) && dataType == typeof(DateTime) && _typeSystem > SqlConnectionString.TypeSystem.SQLServer2005 && metaData.Is2008DateTimeType)
+            {
+                return (T)(object)data.DateTime;
+            }
+            else if (typeof(T) == typeof(XmlReader))
+            {
+                // XmlReader only allowed on XML types
+                if (metaData.metaType.SqlDbType != SqlDbType.Xml)
                 {
-                    // Special case: User wants SqlString, but we have a SqlXml
-                    // SqlXml can not be typecast into a SqlString, but we need to support SqlString on XML Types - so do a manual conversion
-                    SqlXml xmlValue = rawValue as SqlXml;
-                    if (xmlValue != null)
-                    {
-                        if (xmlValue.IsNull)
-                        {
-                            rawValue = SqlString.Null;
-                        }
-                        else
-                        {
-                            rawValue = new SqlString(xmlValue.Value);
-                        }
-                    }
+                    throw SQL.XmlReaderNotSupportOnColumnType(metaData.column);
                 }
 
-                return (T)rawValue;
-            }
-            else
-            {
-                if (typeof(XmlReader) == typeofT)
+                if (IsCommandBehavior(CommandBehavior.SequentialAccess))
                 {
-                    if (metaData.metaType.SqlDbType != SqlDbType.Xml)
-                    {
-                        throw SQL.XmlReaderNotSupportOnColumnType(metaData.column);
-                    }
-                    else
-                    {
-                        object clrValue = null;
-                        if (!data.IsNull)
-                        {
-                            clrValue = GetValueFromSqlBufferInternal(data, metaData);
-                        }
-                        if (clrValue is null)
-                        { // covers IsNull and when there is data which is present but is a clr null somehow
-                            return (T)(object)SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(
-                                new MemoryStream(Array.Empty<byte>(), writable: false),
-                                closeInput: true
-                            );
-                        }
-                        else if (clrValue.GetType() == typeof(string))
-                        {
-                            return (T)(object)SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(
-                                new StringReader(clrValue as string),
-                                closeInput: true
-                            );
-                        }
-                        else
-                        {
-                            // try the type cast to throw the invalid cast exception and inform the user what types they're trying to use and that why it is wrong
-                            return (T)clrValue;
-                        }
-                    }
+                    // Wrap the sequential stream in an XmlReader
+                    _currentStream = new SqlSequentialStream(this, metaData.ordinal);
+                    _lastColumnWithDataChunkRead = metaData.ordinal;
+                    return (T)(object)SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(_currentStream, closeInput: true, async: isAsync);
                 }
                 else
                 {
-                    // Otherwise Its a CLR or non-Nullable UDT
+                    if (data.IsNull)
+                    {
+                        // A 'null' stream
+                        return (T)(object)SqlTypeWorkarounds.SqlXmlCreateSqlXmlReader(new MemoryStream(Array.Empty<byte>(), writable: false), closeInput: true, async: isAsync);
+                    }
+                    else
+                    {
+                        // Grab already read data
+                        return (T)(object)data.SqlXml.CreateReader();
+                    }
+                }
+            }
+            else if (typeof(T) == typeof(TextReader))
+            {
+                // Xml type is not supported
+                MetaType metaType = metaData.metaType;
+                if (metaData.cipherMD != null)
+                {
+                    Debug.Assert(metaData.baseTI != null, "_metaData[i].baseTI should not be null.");
+                    metaType = metaData.baseTI.metaType;
+                }
+
+                if (
+                    (!metaType.IsCharType && metaType.SqlDbType != SqlDbType.Variant) ||
+                    (metaType.SqlDbType == SqlDbType.Xml)
+                )
+                {
+                    throw SQL.TextReaderNotSupportOnColumnType(metaData.column);
+                }
+
+                // For non-variant types with sequential access, we support proper streaming
+                if ((metaType.SqlDbType != SqlDbType.Variant) && IsCommandBehavior(CommandBehavior.SequentialAccess))
+                {
+                    if (metaData.cipherMD != null)
+                    {
+                        throw SQL.SequentialAccessNotSupportedOnEncryptedColumn(metaData.column);
+                    }
+
+                    System.Text.Encoding encoding = SqlUnicodeEncoding.SqlUnicodeEncodingInstance;
+                    if (!metaType.IsNCharType)
+                    {
+                        encoding = metaData.encoding;
+                    }
+
+                    _currentTextReader = new SqlSequentialTextReader(this, metaData.ordinal, encoding);
+                    _lastColumnWithDataChunkRead = metaData.ordinal;
+                    return (T)(object)_currentTextReader;
+                }
+                else
+                {
+                    string value = data.IsNull ? string.Empty : data.SqlString.Value;
+                    return (T)(object)new StringReader(value);
+                }
+
+            }
+            else if (typeof(T) == typeof(Stream))
+            {
+                if (metaData != null && metaData.cipherMD != null)
+                {
+                    throw SQL.StreamNotSupportOnEncryptedColumn(metaData.column);
+                }
+
+                // Stream is only for Binary, Image, VarBinary, Udt, Xml and Timestamp(RowVersion) types
+                MetaType metaType = metaData.metaType;
+                if (
+                    (!metaType.IsBinType || metaType.SqlDbType == SqlDbType.Timestamp) &&
+                    metaType.SqlDbType != SqlDbType.Variant
+                )
+                {
+                    throw SQL.StreamNotSupportOnColumnType(metaData.column);
+                }
+
+                if ((metaType.SqlDbType != SqlDbType.Variant) && (IsCommandBehavior(CommandBehavior.SequentialAccess)))
+                {
+                    _currentStream = new SqlSequentialStream(this, metaData.ordinal);
+                    _lastColumnWithDataChunkRead = metaData.ordinal;
+                    return (T)(object)_currentStream;
+                }
+                else
+                {
+                    byte[] value = data.IsNull ? Array.Empty<byte>() : data.SqlBinary.Value;
+                    return (T)(object)new MemoryStream(value, writable: false);
+                }
+            }
+            else
+            {
+                if (typeof(INullable).IsAssignableFrom(typeof(T)))
+                {
+                    // If its a SQL Type or Nullable UDT
+                    object rawValue = GetSqlValueFromSqlBufferInternal(data, metaData);
+                    if (typeof(T) == typeof(SqlString))
+                    {
+                        // Special case: User wants SqlString, but we have a SqlXml
+                        // SqlXml can not be typecast into a SqlString, but we need to support SqlString on XML Types - so do a manual conversion
+                        SqlXml xmlValue = rawValue as SqlXml;
+                        if (xmlValue != null)
+                        {
+                            if (xmlValue.IsNull)
+                            {
+                                rawValue = SqlString.Null;
+                            }
+                            else
+                            {
+                                rawValue = new SqlString(xmlValue.Value);
+                            }
+                        }
+                    }
+                    return (T)rawValue;
+                }
+                else
+                {
+                    // the requested type is likely to be one that isn't supported so try the cast and
+                    // unless there is a null value conversion then feedback the cast exception with 
+                    // type named to the user so they know what went wrong. Supported types are listed
+                    // in the documentation
                     try
                     {
                         return (T)GetValueFromSqlBufferInternal(data, metaData);
                     }
-                    catch (InvalidCastException)
+                    catch (InvalidCastException) when (data.IsNull)
                     {
-                        if (data.IsNull)
-                        {
-                            // If the value was actually null, then we should throw a SqlNullValue instead
-                            throw SQL.SqlNullValue();
-                        }
-                        else
-                        {
-                            // Legitmate InvalidCast, rethrow
-                            throw;
-                        }
+                        // If the value was actually null, then we should throw a SqlNullValue instead
+                        throw SQL.SqlNullValue();
                     }
+
                 }
             }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetValues/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetValues/*' />
         override public int GetValues(object[] values)
         {
             SqlStatistics statistics = null;
@@ -3417,7 +3523,7 @@ namespace Microsoft.Data.SqlClient
                             return true;
 
                         // VSTFDEVDIV 926281: DONEINPROC case is missing here; we have decided to reject this bug as it would result in breaking change
-                        // from Orcas RTM/SP1 and Dev10 RTM. See the bug for more details.
+                        // from VS2008 RTM/SP1 and Dev10 RTM. See the bug for more details.
                         // case TdsEnums.DONEINPROC:
                         case TdsEnums.SQLDONE:
                             Debug.Assert(_altRowStatus == ALTROWSTATUS.Done || _altRowStatus == ALTROWSTATUS.Null, "invalid AltRowStatus");
@@ -3562,7 +3668,7 @@ namespace Microsoft.Data.SqlClient
             return TdsEnums.SQLROW == token || TdsEnums.SQLNBCROW == token;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/IsDBNull/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/IsDBNull/*' />
         override public bool IsDBNull(int i)
         {
             if ((IsCommandBehavior(CommandBehavior.SequentialAccess)) && ((_sharedState._nextColumnHeaderToRead > i + 1) || (_lastColumnWithDataChunkRead > i)))
@@ -3587,13 +3693,13 @@ namespace Microsoft.Data.SqlClient
             return _data[i].IsNull;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/IsCommandBehavior/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/IsCommandBehavior/*' />
         protected internal bool IsCommandBehavior(CommandBehavior condition)
         {
             return (condition == (condition & _commandBehavior));
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/NextResult/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/NextResult/*' />
         override public bool NextResult()
         {
             if (_currentTask != null)
@@ -3799,7 +3905,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/Read/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/Read/*' />
         // user must call Read() to position on the first row
         override public bool Read()
         {
@@ -4040,10 +4146,12 @@ namespace Microsoft.Data.SqlClient
             Debug.Assert(_stateObj == null || _stateObj._syncOverAsync, "Should not attempt pends in a synchronous call");
             bool result = TryReadColumn(i, setTimeout, allowPartiallyReadColumn);
             if (!result)
-            { throw SQL.SynchronousCallMayNotPend(); }
+            {
+                throw SQL.SynchronousCallMayNotPend();
+            }
         }
 
-        private bool TryReadColumn(int i, bool setTimeout, bool allowPartiallyReadColumn = false)
+        private bool TryReadColumn(int i, bool setTimeout, bool allowPartiallyReadColumn = false, bool forStreaming = false)
         {
             CheckDataIsReady(columnIndex: i, permitAsync: true, allowPartiallyReadColumn: allowPartiallyReadColumn);
 
@@ -4068,7 +4176,7 @@ namespace Microsoft.Data.SqlClient
                         SetTimeout(_defaultTimeoutMilliseconds);
                     }
 
-                    if (!TryReadColumnInternal(i, readHeaderOnly: false))
+                    if (!TryReadColumnInternal(i, readHeaderOnly: false, forStreaming: forStreaming))
                     {
                         return false;
                     }
@@ -4158,7 +4266,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     tdsReliabilitySection.Start();
 #endif //DEBUG
-                return TryReadColumnInternal(i, readHeaderOnly: true);
+                    return TryReadColumnInternal(i, readHeaderOnly: true, forStreaming: false);
 #if DEBUG
                 }
                 finally
@@ -4196,7 +4304,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        private bool TryReadColumnInternal(int i, bool readHeaderOnly = false)
+        internal bool TryReadColumnInternal(int i, bool readHeaderOnly/* = false*/, bool forStreaming)
         {
             AssertReaderState(requireData: true, permitAsync: true, columnIndex: i);
 
@@ -4260,17 +4368,84 @@ namespace Microsoft.Data.SqlClient
             {
                 _SqlMetaData columnMetaData = _metaData[_sharedState._nextColumnHeaderToRead];
 
-                if ((isSequentialAccess) && (_sharedState._nextColumnHeaderToRead < i))
+                if (isSequentialAccess)
                 {
-                    // SkipValue is no-op if the column appears in NBC bitmask
-                    // if not, it skips regular and PLP types
-                    if (!_parser.TrySkipValue(columnMetaData, _sharedState._nextColumnHeaderToRead, _stateObj))
+                    if (_sharedState._nextColumnHeaderToRead < i)
                     {
-                        return false;
-                    }
+                        // SkipValue is no-op if the column appears in NBC bitmask
+                        // if not, it skips regular and PLP types
+                        if (!_parser.TrySkipValue(columnMetaData, _sharedState._nextColumnHeaderToRead, _stateObj))
+                        {
+                            return false;
+                        }
 
-                    _sharedState._nextColumnDataToRead = _sharedState._nextColumnHeaderToRead;
-                    _sharedState._nextColumnHeaderToRead++;
+                        _sharedState._nextColumnDataToRead = _sharedState._nextColumnHeaderToRead;
+                        _sharedState._nextColumnHeaderToRead++;
+                    }
+                    else if (_sharedState._nextColumnHeaderToRead == i)
+                    {
+                        bool isNull;
+                        ulong dataLength;
+                        if (
+                            !_parser.TryProcessColumnHeader(
+                                columnMetaData, 
+                                _stateObj, 
+                                _sharedState._nextColumnHeaderToRead, 
+                                out isNull, 
+                                out dataLength
+                            )
+                        )
+                        {
+                            return false;
+                        }
+
+                        _sharedState._nextColumnDataToRead = _sharedState._nextColumnHeaderToRead;
+                        _sharedState._nextColumnHeaderToRead++;  // We read this one
+                        _sharedState._columnDataBytesRemaining = (long)dataLength;
+
+                        if (isNull)
+                        {
+                            if (columnMetaData.type != SqlDbType.Timestamp)
+                            {
+                                TdsParser.GetNullSqlValue(
+                                    _data[_sharedState._nextColumnDataToRead],
+                                    columnMetaData,
+                                    _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
+                                    _parser.Connection
+                                );
+                            }
+                        }
+                        else
+                        {
+                            if (!readHeaderOnly && !forStreaming)
+                            {
+                                // If we're in sequential mode try to read the data and then if it succeeds update shared
+                                // state so there are no remaining bytes and advance the next column to read
+                                if (
+                                    !_parser.TryReadSqlValue(
+                                        _data[_sharedState._nextColumnDataToRead], 
+                                        columnMetaData, 
+                                        (int)dataLength, _stateObj,
+                                        _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
+                                        columnMetaData.column
+                                    )
+                                )
+                                { // will read UDTs as VARBINARY.
+                                    return false;
+                                }
+                                _sharedState._columnDataBytesRemaining = 0;
+                                _sharedState._nextColumnDataToRead++;
+                            }
+                            else
+                            {
+                                _sharedState._columnDataBytesRemaining = (long)dataLength;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Debug.Assert(false, "we have read past the column somehow, this is an error");
+                    }
                 }
                 else
                 {
@@ -4288,10 +4463,12 @@ namespace Microsoft.Data.SqlClient
                     // if LegacyRowVersionNullBehavior is enabled, Timestamp type must enter "else" block.
                     if (isNull && (!LocalAppContextSwitches.LegacyRowVersionNullBehavior || columnMetaData.type != SqlDbType.Timestamp))
                     {
-                        TdsParser.GetNullSqlValue(_data[_sharedState._nextColumnDataToRead],
-                                columnMetaData,
-                                _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
-                                _parser.Connection);
+                        TdsParser.GetNullSqlValue(
+                            _data[_sharedState._nextColumnDataToRead],
+                            columnMetaData,
+                            _command != null ? _command.ColumnEncryptionSetting : SqlCommandColumnEncryptionSetting.UseConnectionSetting,
+                            _parser.Connection
+                        );
 
                         if (!readHeaderOnly)
                         {
@@ -4802,7 +4979,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/NextResultAsync/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/NextResultAsync/*' />
         public override Task<bool> NextResultAsync(CancellationToken cancellationToken)
         {
             using (TryEventScope.Create("<sc.SqlDataReader.NextResultAsync|API> {0}", ObjectID))
@@ -5139,7 +5316,7 @@ namespace Microsoft.Data.SqlClient
             return null;
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/ReadAsync/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/ReadAsync/*' />
         public override Task<bool> ReadAsync(CancellationToken cancellationToken)
         {
             using (TryEventScope.Create("<sc.SqlDataReader.ReadAsync|API> {0}", ObjectID))
@@ -5315,7 +5492,7 @@ namespace Microsoft.Data.SqlClient
             Interlocked.CompareExchange(ref _cachedReadAsyncContext, instance, null);
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/IsDBNullAsync/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/IsDBNullAsync/*' />
         override public Task<bool> IsDBNullAsync(int i, CancellationToken cancellationToken)
         {
 
@@ -5453,7 +5630,7 @@ namespace Microsoft.Data.SqlClient
             Interlocked.CompareExchange(ref _cachedIsDBNullContext, instance, null);
         }
 
-        /// <include file='..\..\..\..\..\..\..\doc\snippets\Microsoft.Data.SqlClient\SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetFieldValueAsync/*' />
+        /// <include file='../../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataReader.xml' path='docs/members[@name="SqlDataReader"]/GetFieldValueAsync/*' />
         override public Task<T> GetFieldValueAsync<T>(int i, CancellationToken cancellationToken)
         {
             try
@@ -5467,7 +5644,7 @@ namespace Microsoft.Data.SqlClient
                     var metaData = _metaData;
                     if ((data != null) && (metaData != null))
                     {
-                        return Task.FromResult<T>(GetFieldValueFromSqlBufferInternal<T>(data[i], metaData[i]));
+                        return Task.FromResult<T>(GetFieldValueFromSqlBufferInternal<T>(data[i], metaData[i], isAsync: false));
                     }
                     else
                     {
@@ -5507,7 +5684,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         _stateObj._shouldHaveEnoughData = true;
 #endif
-                    return Task.FromResult(GetFieldValueInternal<T>(i));
+                    return Task.FromResult(GetFieldValueInternal<T>(i, isAsync: true));
 #if DEBUG
                     }
                     finally
@@ -5563,9 +5740,33 @@ namespace Microsoft.Data.SqlClient
                 reader.PrepareForAsyncContinuation();
             }
 
+            if (typeof(T) == typeof(Stream) || typeof(T) == typeof(TextReader) || typeof(T) == typeof(XmlReader))
+            {
+                if (reader.IsCommandBehavior(CommandBehavior.SequentialAccess) && reader._sharedState._dataReady)
+                {
+                    bool internalReadSuccess = false;
+                    TdsParser.ReliabilitySection tdsReliabilitySection = new TdsParser.ReliabilitySection();
+                    RuntimeHelpers.PrepareConstrainedRegions();
+                    try
+                    {
+                        tdsReliabilitySection.Start();
+                        internalReadSuccess = reader.TryReadColumnInternal(context._columnIndex, readHeaderOnly: true, forStreaming: false);
+                    }
+                    finally
+                    {
+                        tdsReliabilitySection.Stop();
+                    }
+
+                    if (internalReadSuccess)
+                    {
+                        return Task.FromResult<T>(reader.GetFieldValueFromSqlBufferInternal<T>(reader._data[columnIndex], reader._metaData[columnIndex], isAsync: true));
+                    }
+                }
+            }
+
             if (reader.TryReadColumn(columnIndex, setTimeout: false))
             {
-                return Task.FromResult<T>(reader.GetFieldValueFromSqlBufferInternal<T>(reader._data[columnIndex], reader._metaData[columnIndex]));
+                return Task.FromResult<T>(reader.GetFieldValueFromSqlBufferInternal<T>(reader._data[columnIndex], reader._metaData[columnIndex], isAsync: false));
             }
             else
             {
@@ -5595,7 +5796,7 @@ namespace Microsoft.Data.SqlClient
 
 #endif
 
-        class Snapshot
+        private class Snapshot
         {
             public bool _dataReady;
             public bool _haltRead;

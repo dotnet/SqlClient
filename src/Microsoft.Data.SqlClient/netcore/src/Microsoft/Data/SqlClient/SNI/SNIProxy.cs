@@ -141,7 +141,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="isIntegratedSecurity"></param>
         /// <param name="ipPreference">IP address preference</param>
         /// <param name="cachedFQDN">Used for DNS Cache</param>
-        /// <param name="pendingDNSInfo">Used for DNS Cache</param>       
+        /// <param name="pendingDNSInfo">Used for DNS Cache</param>
         /// <returns>SNI handle</returns>
         internal static SNIHandle CreateConnectionHandle(string fullServerName, bool ignoreSniOpenTimeout, long timerExpire, out byte[] instanceName, ref byte[][] spnBuffer,
                                         bool flushCache, bool async, bool parallel, bool isIntegratedSecurity, SqlConnectionIPAddressPreference ipPreference, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
@@ -263,7 +263,7 @@ namespace Microsoft.Data.SqlClient.SNI
         /// <param name="parallel">Should MultiSubnetFailover be used</param>
         /// <param name="ipPreference">IP address preference</param>
         /// <param name="cachedFQDN">Key for DNS Cache</param>
-        /// <param name="pendingDNSInfo">Used for DNS Cache</param>        
+        /// <param name="pendingDNSInfo">Used for DNS Cache</param>
         /// <returns>SNITCPHandle</returns>
         private static SNITCPHandle CreateTcpHandle(DataSource details, long timerExpire, bool parallel, SqlConnectionIPAddressPreference ipPreference, string cachedFQDN, ref SQLDNSInfo pendingDNSInfo)
         {
@@ -285,12 +285,12 @@ namespace Microsoft.Data.SqlClient.SNI
                 try
                 {
                     port = isAdminConnection ?
-                            SSRP.GetDacPortByInstanceName(hostName, details.InstanceName) :
-                            SSRP.GetPortByInstanceName(hostName, details.InstanceName);
+                            SSRP.GetDacPortByInstanceName(hostName, details.InstanceName, timerExpire, parallel, ipPreference) :
+                            SSRP.GetPortByInstanceName(hostName, details.InstanceName, timerExpire, parallel, ipPreference);
                 }
                 catch (SocketException se)
                 {
-                    SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.TCP_PROV, SNICommon.InvalidConnStringError, se);
+                    SNILoadHandle.SingletonInstance.LastError = new SNIError(SNIProviders.TCP_PROV, SNICommon.ErrorLocatingServerInstance, se);
                     return null;
                 }
             }
@@ -342,8 +342,7 @@ namespace Microsoft.Data.SqlClient.SNI
         private static string GetLocalDBDataSource(string fullServerName, out bool error)
         {
             string localDBConnectionString = null;
-            bool isBadLocalDBDataSource;
-            string localDBInstance = DataSource.GetLocalDBInstance(fullServerName, out isBadLocalDBDataSource);
+            string localDBInstance = DataSource.GetLocalDBInstance(fullServerName, out bool isBadLocalDBDataSource);
 
             if (isBadLocalDBDataSource)
             {
@@ -381,6 +380,7 @@ namespace Microsoft.Data.SqlClient.SNI
         private const string Slash = @"/";
         private const string PipeToken = "pipe";
         private const string LocalDbHost = "(localdb)";
+        private const string LocalDbHost_NP = @"np:\\.\pipe\LOCALDB#";
         private const string NamedPipeInstanceNameHeader = "mssql$";
         private const string DefaultPipeName = "sql\\query";
 
@@ -482,11 +482,9 @@ namespace Microsoft.Data.SqlClient.SNI
         internal static string GetLocalDBInstance(string dataSource, out bool error)
         {
             string instanceName = null;
-
             // ReadOnlySpan is not supported in netstandard 2.0, but installing System.Memory solves the issue
             ReadOnlySpan<char> input = dataSource.AsSpan().TrimStart();
             error = false;
-
             // NetStandard 2.0 does not support passing a string to ReadOnlySpan<char>
             if (input.StartsWith(LocalDbHost.AsSpan().Trim(), StringComparison.InvariantCultureIgnoreCase))
             {
@@ -507,6 +505,11 @@ namespace Microsoft.Data.SqlClient.SNI
                     error = true;
                 }
             }
+            else if (input.StartsWith(LocalDbHost_NP.AsSpan().Trim(), StringComparison.InvariantCultureIgnoreCase))
+            {
+                instanceName = input.Trim().ToString();
+            }
+
             return instanceName;
         }
 
