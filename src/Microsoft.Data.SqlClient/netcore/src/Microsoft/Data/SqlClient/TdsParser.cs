@@ -10753,7 +10753,8 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                WriteLong(SqlInternalTransaction.NullTransactionId, stateObj);
+                // If no transaction, send over retained transaction descriptor (empty if none retained)
+                WriteLong(_retainedTransactionId, stateObj);
                 WriteInt(stateObj.IncrementAndObtainOpenResultCount(null), stateObj);
             }
         }
