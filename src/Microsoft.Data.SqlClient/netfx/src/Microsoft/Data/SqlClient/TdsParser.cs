@@ -4027,9 +4027,9 @@ namespace Microsoft.Data.SqlClient
             {
                 return false;
             }
-            a.tdsVersion = (UInt32)((((((b[0] << 8) | b[1]) << 8) | b[2]) << 8) | b[3]); // bytes are in motorola order (high byte first)
-            UInt32 majorMinor = a.tdsVersion & 0xff00ffff;
-            UInt32 increment = (a.tdsVersion >> 16) & 0xff;
+            a.tdsVersion = (uint)((((((b[0] << 8) | b[1]) << 8) | b[2]) << 8) | b[3]); // bytes are in motorola order (high byte first)
+            uint majorMinor = a.tdsVersion & 0xff00ffff;
+            uint increment = (a.tdsVersion >> 16) & 0xff;
 
             // Server responds:
             // 0x07000000 -> 7.0         // Notice server response format is different for bwd compat
@@ -6667,19 +6667,19 @@ namespace Microsoft.Data.SqlClient
                 case TdsEnums.SQLTIME:
                     // We normalize to maximum precision to allow conversion across different precisions.
                     Debug.Assert(length == 5, "invalid length for time type!");
-                    value.SetToTime(unencryptedBytes, length, TdsEnums.MAX_TIME_SCALE, denormalizedScale);
+                    value.SetToTime(unencryptedBytes, TdsEnums.MAX_TIME_SCALE, denormalizedScale);
                     break;
 
                 case TdsEnums.SQLDATETIME2:
                     // We normalize to maximum precision to allow conversion across different precisions.
                     Debug.Assert(length == 8, "invalid length for datetime2 type!");
-                    value.SetToDateTime2(unencryptedBytes, length, TdsEnums.MAX_TIME_SCALE, denormalizedScale);
+                    value.SetToDateTime2(unencryptedBytes, TdsEnums.MAX_TIME_SCALE, denormalizedScale);
                     break;
 
                 case TdsEnums.SQLDATETIMEOFFSET:
                     // We normalize to maximum precision to allow conversion across different precisions.
                     Debug.Assert(length == 10, "invalid length for datetimeoffset type!");
-                    value.SetToDateTimeOffset(unencryptedBytes, length, TdsEnums.MAX_TIME_SCALE, denormalizedScale);
+                    value.SetToDateTimeOffset(unencryptedBytes, TdsEnums.MAX_TIME_SCALE, denormalizedScale);
                     break;
 
                 default:
@@ -6740,8 +6740,7 @@ namespace Microsoft.Data.SqlClient
                     {
                         // If we are given -1 for length, then we read the entire value,
                         // otherwise only the requested amount, usually first chunk.
-                        int ignored;
-                        if (!stateObj.TryReadPlpBytes(ref b, 0, length, out ignored))
+                        if (!stateObj.TryReadPlpBytes(ref b, 0, length, out _))
                         {
                             return false;
                         }
@@ -6834,33 +6833,34 @@ namespace Microsoft.Data.SqlClient
 
         private bool TryReadSqlDateTime(SqlBuffer value, byte tdsType, int length, byte scale, TdsParserStateObject stateObj)
         {
-            byte[] datetimeBuffer = new byte[length];
+            Span<byte> datetimeBuffer = ((uint)length <= 16) ? stackalloc byte[16] : new byte[length];
 
             if (!stateObj.TryReadByteArray(datetimeBuffer, length))
             {
                 return false;
             }
 
+            ReadOnlySpan<byte> dateTimeData = datetimeBuffer.Slice(0, length);
             switch (tdsType)
             {
                 case TdsEnums.SQLDATE:
                     Debug.Assert(length == 3, "invalid length for date type!");
-                    value.SetToDate(datetimeBuffer);
+                    value.SetToDate(dateTimeData);
                     break;
 
                 case TdsEnums.SQLTIME:
                     Debug.Assert(3 <= length && length <= 5, "invalid length for time type!");
-                    value.SetToTime(datetimeBuffer, length, scale, scale);
+                    value.SetToTime(dateTimeData, scale, scale);
                     break;
 
                 case TdsEnums.SQLDATETIME2:
                     Debug.Assert(6 <= length && length <= 8, "invalid length for datetime2 type!");
-                    value.SetToDateTime2(datetimeBuffer, length, scale, scale);
+                    value.SetToDateTime2(dateTimeData, scale, scale);
                     break;
 
                 case TdsEnums.SQLDATETIMEOFFSET:
                     Debug.Assert(8 <= length && length <= 10, "invalid length for datetimeoffset type!");
-                    value.SetToDateTimeOffset(datetimeBuffer, length, scale, scale);
+                    value.SetToDateTimeOffset(dateTimeData, scale, scale);
                     break;
 
                 default:
@@ -10758,7 +10758,6 @@ namespace Microsoft.Data.SqlClient
                                         value,
                                         typeCode,
                                         param.Offset,
-                                        0 < param.Size ? param.Size : -1,
                                         peekAhead);
         }
 

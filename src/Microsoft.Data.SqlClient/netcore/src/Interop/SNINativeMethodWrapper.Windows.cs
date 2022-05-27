@@ -12,8 +12,6 @@ namespace Microsoft.Data.SqlClient
 {
     internal static partial class SNINativeMethodWrapper
     {
-        private const string SNI = "Microsoft.Data.SqlClient.SNI.dll";
-
         private static int s_sniMaxComposedSpnLength = -1;
 
         private const int SniOpenTimeOut = -1; // infinite
@@ -200,6 +198,7 @@ namespace Microsoft.Data.SqlClient
         #endregion
 
         #region DLL Imports
+
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIAddProviderWrapper")]
         internal static extern uint SNIAddProvider(SNIHandle pConn, ProviderEnum ProvNum, [In] ref uint pInfo);
 
@@ -306,7 +305,19 @@ namespace Microsoft.Data.SqlClient
 
         [DllImport(SNI, CallingConvention = CallingConvention.Cdecl)]
         private static extern uint SNIWriteSyncOverAsync(SNIHandle pConn, [In] SNIPacket pPacket);
-	    #endregion
+
+        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIServerEnumOpenWrapper")]
+        internal static extern IntPtr SNIServerEnumOpen();
+
+        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIServerEnumCloseWrapper")]
+        internal static extern void SNIServerEnumClose([In] IntPtr packet);
+
+        [DllImport(SNI, CallingConvention = CallingConvention.Cdecl, EntryPoint = "SNIServerEnumReadWrapper", CharSet = CharSet.Unicode)]
+        internal static extern int SNIServerEnumRead([In] IntPtr packet,
+                                                     [In][MarshalAs(UnmanagedType.LPArray)] char[] readBuffer,
+                                                     [In] int bufferLength,
+                                                     [MarshalAs(UnmanagedType.Bool)] out bool more);
+        #endregion
 
         internal static uint SniGetConnectionId(SNIHandle pConn, ref Guid connId)
         {

@@ -6757,7 +6757,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The currently loaded System.Transactions.dll does not support Global Transactions. Please upgrade to .NET Framework 4.6.1 or later..
+        ///   Looks up a localized string similar to The currently loaded System.Transactions.dll does not support Global Transactions. Please upgrade to .NET Framework 4.6.2 or later..
         /// </summary>
         internal static string GT_UnsupportedSysTxVersion {
             get {

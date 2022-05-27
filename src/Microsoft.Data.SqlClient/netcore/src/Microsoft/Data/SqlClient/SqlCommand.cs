@@ -2015,10 +2015,9 @@ namespace Microsoft.Data.SqlClient
                 }
                 catch (Exception ex)
                 {
-                    if (ex is SqlException)
+                    if (ex is SqlException sqlException)
                     {
-                        SqlException exception = (SqlException)ex;
-                        sqlExceptionNumber = exception.Number;
+                        sqlExceptionNumber = sqlException.Number;
                     }
 
                     e = ex;
