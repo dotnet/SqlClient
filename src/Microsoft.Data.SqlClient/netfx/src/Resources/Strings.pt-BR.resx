@@ -2872,7 +2872,7 @@
     <value>As Transações Globais não estão habilitadas para esse Banco de Dados SQL do Azure. Entre em contato com o suporte do Banco de Dados SQL do Azure para obter assistência.</value>
   </data>
   <data name="GT_UnsupportedSysTxVersion" xml:space="preserve">
-    <value>O System.Transactions.dll carregado no momento não dá suporte a Transações Globais. Atualize para o .NET Framework 4.6.1 ou posterior.</value>
+    <value>O System.Transactions.dll carregado no momento não dá suporte a Transações Globais. Atualize para o .NET Framework 4.6.2 ou posterior.</value>
   </data>
   <data name="SQL_BatchedUpdatesNotAvailableOnContextConnection" xml:space="preserve">
     <value>Não há suporte para as atualizações em lote na conexão de contexto.</value>

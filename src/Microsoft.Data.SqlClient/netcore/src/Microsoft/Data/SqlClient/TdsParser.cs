@@ -3596,7 +3596,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     _is2008 = true;
                     break;
-                case TdsEnums.SQl2012_MAJOR << 24 | TdsEnums.SQL2012_MINOR:
+                case TdsEnums.SQL2012_MAJOR << 24 | TdsEnums.SQL2012_MINOR:
                     if (increment != TdsEnums.SQL2012_INCREMENT)
                     {
                         throw SQL.InvalidTDSVersion();
@@ -8076,7 +8076,7 @@ namespace Microsoft.Data.SqlClient
                 WriteInt(length, _physicalStateObj);
                 if (recoverySessionData == null)
                 {
-                    WriteInt((TdsEnums.SQl2012_MAJOR << 24) | (TdsEnums.SQL2012_INCREMENT << 16) | TdsEnums.SQL2012_MINOR, _physicalStateObj);
+                    WriteInt((TdsEnums.SQL2012_MAJOR << 24) | (TdsEnums.SQL2012_INCREMENT << 16) | TdsEnums.SQL2012_MINOR, _physicalStateObj);
                 }
                 else
                 {
@@ -9809,7 +9809,6 @@ namespace Microsoft.Data.SqlClient
                                         value,
                                         typeCode,
                                         param.Offset,
-                                        0 < param.Size ? param.Size : -1,
                                         peekAhead);
         }
 
@@ -10754,7 +10753,8 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                WriteLong(SqlInternalTransaction.NullTransactionId, stateObj);
+                // If no transaction, send over retained transaction descriptor (empty if none retained)
+                WriteLong(_retainedTransactionId, stateObj);
                 WriteInt(stateObj.IncrementAndObtainOpenResultCount(null), stateObj);
             }
         }

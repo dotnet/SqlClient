@@ -185,7 +185,7 @@ namespace Microsoft.Data.SqlClient
                             completion.SetException(e);
                         }
                     }
-                }, 
+                },
                 state: state,
                 scheduler: TaskScheduler.Default
             );
@@ -228,7 +228,7 @@ namespace Microsoft.Data.SqlClient
             }
         }
 
-        internal static void SetTimeoutExceptionWithState(TaskCompletionSource<object> completion, int timeout, object state, Func<object,Exception> onFailure, CancellationToken cancellationToken)
+        internal static void SetTimeoutExceptionWithState(TaskCompletionSource<object> completion, int timeout, object state, Func<object, Exception> onFailure, CancellationToken cancellationToken)
         {
             if (timeout > 0)
             {
@@ -1643,6 +1643,21 @@ namespace Microsoft.Data.SqlClient
         {
             return ADP.Argument(StringsHelper.GetString(Strings.TCE_AttestationInfoNotReturnedFromSQLServer, enclaveType, enclaveAttestationUrl));
         }
+
+        internal static SqlException AttestationFailed(string errorMessage, Exception innerException = null)
+        {
+            SqlErrorCollection errors = new();
+            errors.Add(new SqlError(
+                infoNumber: 0,
+                errorState: 0,
+                errorClass: 0,
+                server: null,
+                errorMessage,
+                procedure: string.Empty,
+                lineNumber: 0));
+            return SqlException.CreateException(errors, serverVersion: string.Empty, Guid.Empty, innerException);
+        }
+
         #endregion Always Encrypted - Errors when performing attestation
 
         #region Always Encrypted - Errors when establishing secure channel

@@ -16,7 +16,7 @@ namespace Microsoft.Data.SqlClient
     internal sealed class SqlCommandSet
     {
         private const string SqlIdentifierPattern = "^@[\\p{Lo}\\p{Lu}\\p{Ll}\\p{Lm}_@#][\\p{Lo}\\p{Lu}\\p{Ll}\\p{Lm}\\p{Nd}\uff3f_@#\\$]*$";
-        private static readonly Regex s_sqlIdentifierParser = new(SqlIdentifierPattern, RegexOptions.ExplicitCapture | RegexOptions.Singleline);
+        private static readonly Regex s_sqlIdentifierParser = new(SqlIdentifierPattern, RegexOptions.ExplicitCapture | RegexOptions.Singleline | RegexOptions.Compiled);
 
         private List<LocalCommand> _commandList = new();
 

@@ -2872,7 +2872,7 @@
     <value>Les transactions globales ne sont pas activées pour cette base de données Azure SQL. Contactez le support d'Azure SQL Database pour obtenir de l'aide.</value>
   </data>
   <data name="GT_UnsupportedSysTxVersion" xml:space="preserve">
-    <value>Le fichier System.Transactions.dll actuellement chargé ne prend pas en charge les transactions globales. Effectuez une mise à niveau vers .NET Framework 4.6.1 ou ultérieur.</value>
+    <value>Le fichier System.Transactions.dll actuellement chargé ne prend pas en charge les transactions globales. Effectuez une mise à niveau vers .NET Framework 4.6.2 ou ultérieur.</value>
   </data>
   <data name="SQL_BatchedUpdatesNotAvailableOnContextConnection" xml:space="preserve">
     <value>Le traitement par lots des mises à jour n'est pas pris en charge sur la connexion du contexte.</value>
