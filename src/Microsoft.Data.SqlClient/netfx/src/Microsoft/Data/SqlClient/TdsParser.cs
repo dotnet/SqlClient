@@ -4022,7 +4022,7 @@ namespace Microsoft.Data.SqlClient
                 return false;
             }
 
-            byte[] b = new byte[TdsEnums.VERSION_SIZE];
+            Span<byte> b = stackalloc byte[TdsEnums.VERSION_SIZE];
             if (!stateObj.TryReadByteArray(b, b.Length))
             {
                 return false;
