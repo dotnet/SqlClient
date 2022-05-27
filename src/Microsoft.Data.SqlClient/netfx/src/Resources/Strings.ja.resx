@@ -2872,7 +2872,7 @@
     <value>この Azure SQL Database では、グローバル トランザクションは有効ではありません。Azure SQL Database サポートにお問い合わせください。</value>
   </data>
   <data name="GT_UnsupportedSysTxVersion" xml:space="preserve">
-    <value>現在読み込まれている System.Transactions.dll では、グローバル トランザクションはサポートされていません。.NET Framework 4.6.1 またはそれ以降にアップグレードしてください。</value>
+    <value>現在読み込まれている System.Transactions.dll では、グローバル トランザクションはサポートされていません。.NET Framework 4.6.2 またはそれ以降にアップグレードしてください。</value>
   </data>
   <data name="SQL_BatchedUpdatesNotAvailableOnContextConnection" xml:space="preserve">
     <value>コンテキスト接続では、更新のバッチ処理はサポートされていません。</value>

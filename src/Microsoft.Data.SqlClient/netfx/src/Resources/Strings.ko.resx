@@ -2872,7 +2872,7 @@
     <value>이 Azure SQL Database에 대해 전역 트랙잭션을 사용하도록 설정되어 있지 않습니다. 도움이 필요하면 Azure SQL Database 지원 팀에 문의하세요.</value>
   </data>
   <data name="GT_UnsupportedSysTxVersion" xml:space="preserve">
-    <value>현재 로드된 System.Transactions.dll은 전역 트랜잭션을 지원하지 않습니다. .NET Framework 4.6.1 이상으로 업그레이드하세요.</value>
+    <value>현재 로드된 System.Transactions.dll은 전역 트랜잭션을 지원하지 않습니다. .NET Framework 4.6.2 이상으로 업그레이드하세요.</value>
   </data>
   <data name="SQL_BatchedUpdatesNotAvailableOnContextConnection" xml:space="preserve">
     <value>컨텍스트 연결에서는 일괄 처리 업데이트가 지원되지 않습니다.</value>

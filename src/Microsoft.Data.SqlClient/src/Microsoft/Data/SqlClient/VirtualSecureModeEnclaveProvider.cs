@@ -81,7 +81,7 @@ namespace Microsoft.Data.SqlClient
                 }
             }
 
-            throw new AlwaysEncryptedAttestationException(String.Format(Strings.GetAttestationSigningCertificateRequestFailedFormat, url, exception.Message), exception);
+            throw SQL.AttestationFailed(string.Format(Strings.GetAttestationSigningCertificateRequestFailedFormat, url, exception.Message), exception);
         }
 
         #endregion
