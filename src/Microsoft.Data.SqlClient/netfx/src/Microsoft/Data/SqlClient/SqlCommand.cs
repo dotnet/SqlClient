@@ -6527,7 +6527,6 @@ namespace Microsoft.Data.SqlClient
             int paramCount = GetParameterCount(parameters);
             int j = startCount;
             TdsParser parser = _activeConnection.Parser;
-            bool is2005OrNewer = parser.Is2005OrNewer;
 
             for (ii = 0; ii < paramCount; ii++)
             {
@@ -6536,7 +6535,7 @@ namespace Microsoft.Data.SqlClient
 
                 // func will change type to that with a 4 byte length if the type has a two
                 // byte length and a parameter length > than that expressable in 2 bytes
-                if ((!parameter.ValidateTypeLengths(is2005OrNewer).IsPlp) && (parameter.Direction != ParameterDirection.Output))
+                if ((!parameter.ValidateTypeLengths().IsPlp) && (parameter.Direction != ParameterDirection.Output))
                 {
                     parameter.FixStreamDataForNonPLP();
                 }
@@ -6912,8 +6911,6 @@ namespace Microsoft.Data.SqlClient
             StringBuilder paramList = new StringBuilder();
             bool fAddSeparator = false;
 
-            bool is2005OrNewer = parser.Is2005OrNewer;
-
             int count = 0;
 
             count = parameters.Count;
@@ -6963,7 +6960,7 @@ namespace Microsoft.Data.SqlClient
                 {
                     // func will change type to that with a 4 byte length if the type has a two
                     // byte length and a parameter length > than that expressable in 2 bytes
-                    mt = sqlParam.ValidateTypeLengths(is2005OrNewer);
+                    mt = sqlParam.ValidateTypeLengths();
                     if ((!mt.IsPlp) && (sqlParam.Direction != ParameterDirection.Output))
                     {
                         sqlParam.FixStreamDataForNonPLP();

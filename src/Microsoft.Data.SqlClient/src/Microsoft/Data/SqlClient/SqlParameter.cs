@@ -1648,11 +1648,7 @@ namespace Microsoft.Data.SqlClient
         internal SmiParameterMetaData MetaDataForSmi(out ParameterPeekAheadValue peekAhead)
         {
             peekAhead = null;
-            MetaType mt = ValidateTypeLengths(
-#if NETFRAMEWORK
-                true /* 2005 or newer */
-#endif
-                );
+            MetaType mt = ValidateTypeLengths();
             long actualLen = GetActualSize();
             long maxLen = Size;
 
@@ -1989,11 +1985,7 @@ namespace Microsoft.Data.SqlClient
 
         // func will change type to that with a 4 byte length if the type has a two
         // byte length and a parameter length > than that expressible in 2 bytes
-        internal MetaType ValidateTypeLengths(
-#if NETFRAMEWORK
-            bool is2005OrNewer
-#endif
-            )
+        internal MetaType ValidateTypeLengths()
         {
             MetaType mt = InternalMetaType;
             // Since the server will automatically reject any
@@ -2025,11 +2017,7 @@ namespace Microsoft.Data.SqlClient
                 // Keeping these goals in mind - the following are the changes we are making
 
                 long maxSizeInBytes;
-                if (mt.IsNCharType
-#if NETFRAMEWORK
-                    && is2005OrNewer
-#endif
-                    )
+                if (mt.IsNCharType)
                 {
                     maxSizeInBytes = ((sizeInCharacters * sizeof(char)) > actualSizeInBytes) ? sizeInCharacters * sizeof(char) : actualSizeInBytes;
                 }
@@ -2046,60 +2034,8 @@ namespace Microsoft.Data.SqlClient
                     HasFlag(SqlParameterFlags.CoercedValueIsDataFeed) ||
                     (sizeInCharacters == -1) ||
                     (actualSizeInBytes == -1)
-                )
+                   )
                 {
-#if NETFRAMEWORK
-                    // is size > size able to be described by 2 bytes
-                    if (is2005OrNewer)
-                    {
-                        // Convert the parameter to its max type
-                        mt = MetaType.GetMaxMetaTypeFromMetaType(mt);
-                        _metaType = mt;
-                        InternalMetaType = mt;
-                        if (!mt.IsPlp)
-                        {
-                            if (mt.SqlDbType == SqlDbType.Xml)
-                            {
-                                throw ADP.InvalidMetaDataValue();     //Xml should always have IsPartialLength = true
-                            }
-                            if (
-                                mt.SqlDbType == SqlDbType.NVarChar ||
-                                mt.SqlDbType == SqlDbType.VarChar ||
-                                mt.SqlDbType == SqlDbType.VarBinary
-                            )
-                            {
-                                Size = (int)SmiMetaData.UnlimitedMaxLengthIndicator;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        switch (mt.SqlDbType)
-                        { // widening the SqlDbType is automatic
-                            case SqlDbType.Binary:
-                            case SqlDbType.VarBinary:
-                                mt = MetaType.GetMetaTypeFromSqlDbType(SqlDbType.Image, false);
-                                _metaType = mt; // do not use SqlDbType property which calls PropertyTypeChanging resetting coerced value
-                                InternalMetaType = mt;
-                                break;
-                            case SqlDbType.Char:
-                            case SqlDbType.VarChar:
-                                mt = MetaType.GetMetaTypeFromSqlDbType(SqlDbType.Text, false);
-                                _metaType = mt;
-                                InternalMetaType = mt;
-                                break;
-                            case SqlDbType.NChar:
-                            case SqlDbType.NVarChar:
-                                mt = MetaType.GetMetaTypeFromSqlDbType(SqlDbType.NText, false);
-                                _metaType = mt;
-                                InternalMetaType = mt;
-                                break;
-                            default:
-                                Debug.Assert(false, "Missed metatype in SqlCommand.BuildParamList()");
-                                break;
-                        }
-                    }
-#else
                     mt = MetaType.GetMaxMetaTypeFromMetaType(mt);
                     _metaType = mt;
                     InternalMetaType = mt;
@@ -2118,8 +2054,6 @@ namespace Microsoft.Data.SqlClient
                             Size = (int)SmiMetaData.UnlimitedMaxLengthIndicator;
                         }
                     }
-
-#endif
                 }
             }
             return mt;
