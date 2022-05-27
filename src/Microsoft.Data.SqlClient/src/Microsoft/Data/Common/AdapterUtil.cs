@@ -215,9 +215,9 @@ namespace Microsoft.Data.Common
             return e;
         }
 
-        internal static TimeoutException TimeoutException(string error)
+        internal static TimeoutException TimeoutException(string error, Exception inner = null)
         {
-            TimeoutException e = new(error);
+            TimeoutException e = new(error, inner);
             TraceExceptionAsReturnValue(e);
             return e;
         }

@@ -8367,8 +8367,8 @@ namespace Microsoft.Data.SqlClient
         /// <param name="fedAuthToken">Type encapsulating a Federated Authentication access token.</param>
         internal void SendFedAuthToken(SqlFedAuthToken fedAuthToken)
         {
-            Trace.Assert(fedAuthToken != null, "fedAuthToken cannot be null");
-            Trace.Assert(fedAuthToken.accessToken != null, "fedAuthToken.accessToken cannot be null");
+            Debug.Assert(fedAuthToken != null, "fedAuthToken cannot be null");
+            Debug.Assert(fedAuthToken.accessToken != null, "fedAuthToken.accessToken cannot be null");
             SqlClientEventSource.Log.TryTraceEvent("<sc.TdsParser.SendFedAuthToken|SEC> Sending federated authentication token");
             _physicalStateObj._outputMessageType = TdsEnums.MT_FEDAUTH;
 
