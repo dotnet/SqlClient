@@ -27,9 +27,9 @@
   <!-- NetFx and NetCore project dependencies -->
   <PropertyGroup>
     <AzureIdentityVersion>1.6.0</AzureIdentityVersion>
-    <MicrosoftIdentityClientVersion>4.43.2</MicrosoftIdentityClientVersion>
-    <MicrosoftIdentityModelProtocolsOpenIdConnectVersion>6.8.0</MicrosoftIdentityModelProtocolsOpenIdConnectVersion>
-    <MicrosoftIdentityModelJsonWebTokensVersion>6.8.0</MicrosoftIdentityModelJsonWebTokensVersion>
+    <MicrosoftIdentityClientVersion>4.44.0</MicrosoftIdentityClientVersion>
+    <MicrosoftIdentityModelProtocolsOpenIdConnectVersion>6.18.0</MicrosoftIdentityModelProtocolsOpenIdConnectVersion>
+    <MicrosoftIdentityModelJsonWebTokensVersion>6.18.0</MicrosoftIdentityModelJsonWebTokensVersion>
     <SystemBuffersVersion>4.5.1</SystemBuffersVersion>
     <SystemIOVersion>4.3.0</SystemIOVersion>
     <SystemTextEncodingsWebVersion>4.7.2</SystemTextEncodingsWebVersion>
@@ -71,7 +71,7 @@
     <SystemDataOdbcVersion21>4.5.0</SystemDataOdbcVersion21>
     <SystemDataOdbcVersion>4.6.0</SystemDataOdbcVersion>
     <SystemNetSocketsVersion>4.3.0</SystemNetSocketsVersion>
-    <SystemIdentityModelTokensJwtVersion>6.8.0</SystemIdentityModelTokensJwtVersion>
+    <SystemIdentityModelTokensJwtVersion>6.18.0</SystemIdentityModelTokensJwtVersion>
     <XunitVersion>2.4.1</XunitVersion>
     <MicrosoftDotNetRemoteExecutorVersion>5.0.0-beta.20206.4</MicrosoftDotNetRemoteExecutorVersion>
     <MicrosoftNETCoreRuntimeCoreCLRVersion>2.0.8</MicrosoftNETCoreRuntimeCoreCLRVersion>
