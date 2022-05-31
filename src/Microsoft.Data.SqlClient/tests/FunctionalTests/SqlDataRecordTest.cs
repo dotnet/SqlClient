@@ -12,9 +12,7 @@ using Xunit;
 
 namespace Microsoft.Data.SqlClient.Tests
 {
-    /// <summary>
-    /// testing change
-    /// </summary>
+ 
     public class SqlDataRecordTest
     {
 
