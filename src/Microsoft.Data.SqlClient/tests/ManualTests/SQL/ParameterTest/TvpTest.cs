@@ -119,7 +119,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using SqlCommand cmd = new(SQL, connection);
                 cmd.CommandTimeout = 100;
                 AddCommandParameters(cmd, parameters);
-                new SqlDataAdapter(cmd).Fill(new("BadFunc"));
+                new SqlDataAdapter(cmd).Fill(new DataSet("BadFunc"));
                 Assert.False(true, "Expected exception did not occur");
             }
             catch (Exception e)
@@ -136,7 +136,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
                 using SqlCommand cmd = new(SQL, connection);
                 cmd.CommandTimeout = 100;
                 AddCommandParameters(cmd, parameters);
-                new SqlDataAdapter(cmd).Fill(new("GoodFunc"));
+                new SqlDataAdapter(cmd).Fill(new DataSet("GoodFunc"));
             }
             catch (Exception e)
             {
