@@ -64,7 +64,7 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         {
             VerifySchemaTable(SqlClientMetaDataCollectionNames.AllColumns, new string[] { "IS_NULLABLE", "COLUMN_DEFAULT", "IS_FILESTREAM", "IS_SPARSE", "IS_COLUMN_SET" });
         }
-        
+
         [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
         public static void GetColumnSetColumnsFromSchema()
         {
@@ -93,7 +93,13 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
         public static void GetUserDefinedTypesFromSchema()
         {
             VerifySchemaTable(SqlClientMetaDataCollectionNames.UserDefinedTypes, new string[] { "assembly_name", "version_revision", "culture_info" });
-        }        
+        }
+
+        [ConditionalFact(typeof(DataTestUtility), nameof(DataTestUtility.AreConnStringsSetup))]
+        public static void GetStructuredTypeMembersFromSchema()
+        {
+            VerifySchemaTable(SqlClientMetaDataCollectionNames.StructuredTypeMembers, new string[] { "TYPE_CATALOG", "TYPE_SCHEMA", "TYPE_NAME", "MEMBER_NAME", "ORDINAL_POSITION" });
+        }
 
         private static void VerifySchemaTable(string schemaItemName, string[] testColumnNames)
         {
@@ -104,11 +110,11 @@ namespace Microsoft.Data.SqlClient.ManualTesting.Tests
 
             using (SqlConnection connection = new SqlConnection(builder.ConnectionString))
             {
-                // Connect to the database then retrieve the schema information.  
+                // Connect to the database then retrieve the schema information
                 connection.Open();
                 DataTable table = connection.GetSchema(schemaItemName);
 
-                // Get all table columns 
+                // Get all table columns
                 HashSet<string> columnNames = new HashSet<string>();
 
                 foreach (DataColumn column in table.Columns)

@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient.SNI
         private readonly SNIMarsConnection _connection;
         private readonly uint _status = TdsEnums.SNI_UNINITIALIZED;
         private readonly Queue<SNIPacket> _receivedPacketQueue = new Queue<SNIPacket>();
-        private readonly Queue<SNIMarsQueuedPacket> _sendPacketQueue = new Queue<SNIMarsQueuedPacket>();
+        private readonly Queue<SNIPacket> _sendPacketQueue = new Queue<SNIPacket>();
         private readonly object _callbackObject;
         private readonly Guid _connectionId;
         private readonly ushort _sessionId;
@@ -191,9 +191,8 @@ namespace Microsoft.Data.SqlClient.SNI
         /// Send packet asynchronously
         /// </summary>
         /// <param name="packet">SNI packet</param>
-        /// <param name="callback">Completion callback</param>
         /// <returns>SNI error code</returns>
-        private uint InternalSendAsync(SNIPacket packet, SNIAsyncCallback callback)
+        private uint InternalSendAsync(SNIPacket packet)
         {
             Debug.Assert(packet.ReservedHeaderSize == SNISMUXHeader.HEADER_LENGTH, "mars handle attempting to send muxed packet without smux reservation in InternalSendAsync");
             using (TrySNIEventScope.Create("SNIMarsHandle.InternalSendAsync | SNI | INFO | SCOPE | Entering Scope {0}"))
@@ -207,9 +206,9 @@ namespace Microsoft.Data.SqlClient.SNI
                     }
 
                     SNIPacket muxedPacket = SetPacketSMUXHeader(packet);
-                    muxedPacket.SetCompletionCallback(callback ?? HandleSendComplete);
+                    muxedPacket.SetAsyncIOCompletionCallback(_handleSendCompleteCallback);
                     SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNIMarsHandle), EventType.INFO, "MARS Session Id {0}, _sequenceNumber {1}, _sendHighwater {2}, Sending packet", args0: ConnectionId, args1: _sequenceNumber, args2: _sendHighwater);
-                    return _connection.SendAsync(muxedPacket, callback);
+                    return _connection.SendAsync(muxedPacket);
                 }
             }
         }
@@ -222,7 +221,7 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             using (TrySNIEventScope.Create(nameof(SNIMarsHandle)))
             {
-                SNIMarsQueuedPacket packet = null;
+                SNIPacket packet = null;
 
                 while (true)
                 {
@@ -233,7 +232,7 @@ namespace Microsoft.Data.SqlClient.SNI
                             if (_sendPacketQueue.Count != 0)
                             {
                                 packet = _sendPacketQueue.Peek();
-                                uint result = InternalSendAsync(packet.Packet, packet.Callback);
+                                uint result = InternalSendAsync(packet);
 
                                 if (result != TdsEnums.SNI_SUCCESS && result != TdsEnums.SNI_SUCCESS_IO_PENDING)
                                 {
@@ -264,15 +263,15 @@ namespace Microsoft.Data.SqlClient.SNI
         /// Send a packet asynchronously
         /// </summary>
         /// <param name="packet">SNI packet</param>
-        /// <param name="callback">Completion callback</param>
         /// <returns>SNI error code</returns>
-        public override uint SendAsync(SNIPacket packet, SNIAsyncCallback callback = null)
+        public override uint SendAsync(SNIPacket packet)
         {
             using (TrySNIEventScope.Create(nameof(SNIMarsHandle)))
             {
+                packet.SetAsyncIOCompletionCallback(_handleSendCompleteCallback);
                 lock (this)
                 {
-                    _sendPacketQueue.Enqueue(new SNIMarsQueuedPacket(packet, callback ?? _handleSendCompleteCallback));
+                    _sendPacketQueue.Enqueue(packet);
                 }
 
                 SendPendingPackets();

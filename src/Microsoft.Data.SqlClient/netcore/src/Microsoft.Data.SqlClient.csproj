@@ -388,6 +388,9 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlEnums.cs">
       <Link>Microsoft\Data\SqlClient\SqlEnums.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlEnvChange.cs">
+      <Link>Microsoft\Data\SqlClient\SqlEnvChange.cs</Link>
+    </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlError.cs">
       <Link>Microsoft\Data\SqlClient\SqlError.cs</Link>
     </Compile>
@@ -617,7 +620,6 @@
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNILoadHandle.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIMarsConnection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIMarsHandle.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SNI\SNIMarsQueuedPacket.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNINpHandle.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIPacket.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SNI\SNIPhysicalHandle.cs" />
