@@ -174,31 +174,92 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/Fill/*' />
         new public int Fill(DataSet dataSet)
         {
-            return Fill(dataSet, DefaultSourceTableName, SelectCommand.ExecuteReader(), 0, 0);
+            int rows = 0;
+
+            if (SelectCommand.Connection.State != ConnectionState.Open)
+            {
+                SelectCommand.Connection.Open();
+            }
+
+            using (SqlDataReader reader = SelectCommand.ExecuteReader())
+            {
+                CommandBehavior cmdBehavior = FillCommandBehavior;
+                rows = Fill(dataSet, DefaultSourceTableName, reader, 0, 0);
+            }
+
+            return rows;
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/Fill/*' />
         new public int Fill(DataSet dataSet, string srcTable)
         {
-            return Fill(dataSet, srcTable, SelectCommand.ExecuteReader(), 0, 0);
+            int rows = 0;
+
+            if (SelectCommand.Connection.State != ConnectionState.Open)
+            {
+                SelectCommand.Connection.Open();
+            }
+
+            using (SqlDataReader reader = SelectCommand.ExecuteReader())
+            {
+                rows = Fill(dataSet, srcTable, reader, 0, 0);
+            }
+
+            return rows;
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/Fill/*' />
         new public int Fill(DataSet dataSet, int startRecord, int maxRecord, string srcTable)
         {
-            return Fill(dataSet, srcTable, SelectCommand.ExecuteReader(), startRecord, maxRecord);
+            int rows = 0;
+
+            if (SelectCommand.Connection.State != ConnectionState.Open)
+            {
+                SelectCommand.Connection.Open();
+            }
+
+            using (SqlDataReader reader = SelectCommand.ExecuteReader())
+            {
+                rows = Fill(dataSet, srcTable, SelectCommand.ExecuteReader(), startRecord, maxRecord);
+            }
+
+            return rows;
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/Fill/*' />
         new public int Fill(DataTable dataTable)
         {
-            return Fill(dataTable, SelectCommand.ExecuteReader());
+            int rows = 0;
+
+            if (SelectCommand.Connection.State != ConnectionState.Open)
+            {
+                SelectCommand.Connection.Open();
+            }
+
+            using (SqlDataReader reader = SelectCommand.ExecuteReader())
+            {
+                rows = Fill(dataTable, reader);
+            }
+
+            return rows;
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/Fill/*' />
         new public int Fill(int startRecord, int maxRecord, params DataTable[] dataTables)
         {
-            return Fill(dataTables, SelectCommand.ExecuteReader(), startRecord, maxRecord);
+            int rows = 0;
+
+            if (SelectCommand.Connection.State != ConnectionState.Open)
+            {
+                SelectCommand.Connection.Open();
+            }
+
+            using (SqlDataReader reader = SelectCommand.ExecuteReader())
+            {
+                Fill(dataTables, reader, startRecord, maxRecord);
+            }
+
+            return rows;
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlDataAdapter.xml' path='docs/members[@name="SqlDataAdapter"]/GetBatchedParameter/*' />
