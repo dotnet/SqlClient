@@ -34,12 +34,12 @@
     </ToString>
     <Equals>
       <summary>
-        Compares the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.ToString()" /> representation of <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption" /> to another <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption" />.
+        Compares the <see cref="M:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.ToString" /> representation of <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption" /> to another <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption" />.
       </summary>
     </Equals>
     <GetHashCode>
       <summary>
-        Returns the hash code of the <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.ToString()" /> value.
+        Returns the hash code of the <see cref="M:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.ToString" /> value.
       </summary>
     </GetHashCode>
   </members>

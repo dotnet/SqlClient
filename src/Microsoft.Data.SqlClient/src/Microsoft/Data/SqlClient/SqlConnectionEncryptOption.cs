@@ -55,13 +55,13 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/Optional/*' />
-        public static SqlConnectionEncryptOption Optional { get { return s_optional; } }
+        public static SqlConnectionEncryptOption Optional => s_optional;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/Mandatory/*' />
-        public static SqlConnectionEncryptOption Mandatory { get { return s_mandatory; } }
+        public static SqlConnectionEncryptOption Mandatory => s_mandatory;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/Strict/*' />
-        public static SqlConnectionEncryptOption Strict { get { return s_strict; } }
+        public static SqlConnectionEncryptOption Strict => s_strict;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/BoolToOption/*' />
         public static implicit operator SqlConnectionEncryptOption(bool value) => value ? SqlConnectionEncryptOption.Mandatory : SqlConnectionEncryptOption.Optional;

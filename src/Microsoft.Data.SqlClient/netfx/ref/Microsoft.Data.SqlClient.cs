@@ -922,19 +922,19 @@ namespace Microsoft.Data.SqlClient
     public sealed class SqlConnectionEncryptOption
     {
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/Optional/*' />
-        public static SqlConnectionEncryptOption Optional { get { throw null; } }
+        public static SqlConnectionEncryptOption Optional => throw null;
 
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/Mandatory/*' />
-        public static SqlConnectionEncryptOption Mandatory { get { throw null; } }
+        public static SqlConnectionEncryptOption Mandatory => throw null;
 
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/Strict/*' />
-        public static SqlConnectionEncryptOption Strict { get { throw null; } }
+        public static SqlConnectionEncryptOption Strict => throw null;
 
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/BoolToOption/*' />
-        public static implicit operator SqlConnectionEncryptOption(bool value) => value ? SqlConnectionEncryptOption.Mandatory : SqlConnectionEncryptOption.Optional;
+        public static implicit operator SqlConnectionEncryptOption(bool value) => throw null;
 
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/OptionToBool/*' />
-        public static implicit operator bool(SqlConnectionEncryptOption value) => !Optional.Equals(value);
+        public static implicit operator bool(SqlConnectionEncryptOption value) => throw null;
 
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/ToString/*' />
         public override string ToString() { throw null; }
