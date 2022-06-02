@@ -6,6 +6,7 @@ using System;
 using System.Data;
 using System.Collections.Generic;
 using Xunit;
+using System.Reflection;
 
 namespace Microsoft.Data.SqlClient.Tests
 {
@@ -1040,6 +1041,35 @@ namespace Microsoft.Data.SqlClient.Tests
         public void ConnectionString_ServerSPN_FailoverPartnerSPN(string value)
         {
             SqlConnection _ = new(value);
+        }
+
+        [Fact]
+        public void ConnectionRetryForNonAzureEndpoints()
+        {
+            SqlConnection cn = new SqlConnection("Data Source = someserver");
+            FieldInfo field = typeof(SqlConnection).GetField("_connectRetryCount", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.NotNull(field.GetValue(cn));
+            Assert.Equal(1, (int)field.GetValue(cn));
+        }
+
+        [Fact]
+        public void ConnectionRetryForAzureDbEndpoints()
+        {
+            SqlConnection cn = new SqlConnection("Data Source = someserver.database.windows.net");
+            FieldInfo field = typeof(SqlConnection).GetField("_connectRetryCount", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.NotNull(field.GetValue(cn));
+            Assert.Equal(2, (int)field.GetValue(cn));
+        }
+
+        [Theory]
+        [InlineData("myserver-ondemand.sql.azuresynapse.net")]
+        [InlineData("someserver-ondemand.database.windows.net")]
+        public void ConnectionRetryForAzureOnDemandEndpoints(string serverName)
+        {
+            SqlConnection cn = new SqlConnection($"Data Source = {serverName}");
+            FieldInfo field = typeof(SqlConnection).GetField("_connectRetryCount", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.NotNull(field.GetValue(cn));
+            Assert.Equal(5, (int)field.GetValue(cn));
         }
     }
 }

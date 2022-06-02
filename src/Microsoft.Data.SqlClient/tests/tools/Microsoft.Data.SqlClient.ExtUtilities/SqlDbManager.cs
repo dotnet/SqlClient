@@ -55,6 +55,7 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
                         builder.InitialCatalog = DB_Master;
                         using (SqlConnection conn = new SqlConnection(builder.ConnectionString))
                         {
+                            Console.WriteLine($"Connecting to {builder.DataSource}");
                             SqlServer.Management.Smo.Server server = new SqlServer.Management.Smo.Server(new ServerConnection(conn));
                             ServerConnection context = server.ConnectionContext;
 
@@ -102,7 +103,7 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
             }
             catch (Exception e)
             {
-                throw new Exception($"{args[0]} execution failed with Error: {e.Message}");
+                throw new Exception($"{args[0]} execution failed with Error: {e}");
             }
         }
 
@@ -158,6 +159,7 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
 
         private static void DropIfExistsDatabase(string dbName, ServerConnection context)
         {
+            Console.WriteLine($"Dropping database [{dbName}] if it exists");
             try
             {
                 string dropScript = $"IF EXISTS (select * from sys.databases where name = '{dbName}') BEGIN DROP DATABASE [{dbName}] END;";
@@ -165,7 +167,7 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
             }
             catch (ExecutionFailureException ex)
             {
-                Console.WriteLine($"FAILED to drop database '{dbName}'. Error message: {ex.Message}");
+                Console.WriteLine($"FAILED to drop database '{dbName}'. Error message: {ex}");
             }
         }
 
@@ -174,6 +176,7 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
             DropIfExistsDatabase(dbName, context);
             string createScript = File.ReadAllText(NorthWindScriptPath);
 
+            Console.WriteLine($"Creating database [{dbName}]");
             try
             {
                 createScript = createScript.Replace(DB_Northwind, dbName);
@@ -183,7 +186,7 @@ namespace Microsoft.Data.SqlClient.ExtUtilities
                 }
                 catch (ExecutionFailureException ex)
                 {
-                    Console.WriteLine(ex.Message);
+                    Console.WriteLine(ex);
                     throw;
                 }
             }
