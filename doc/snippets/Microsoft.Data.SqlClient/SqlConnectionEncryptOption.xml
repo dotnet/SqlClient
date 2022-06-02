@@ -20,13 +20,13 @@
     <BoolToOption>
       <param name="value">The boolean value to be used for implicit comparison.</param>
       <summary>
-        Enables implicit converstion of a boolean to a <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption" />. A value of <see langword="true" /> converts to <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory" />
+        Enables implicit converstion of a boolean to a <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption" />. A value of <see langword="true" /> converts to <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory" />. A value of <see langword="false" /> converts to <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Optional" />.
       </summary>
     </BoolToOption>
     <OptionToBool>
       <param name="value">The <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption" /> value to be used for implicit comparison.</param>
       <summary>
-        Enables implicit converstion of a <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption" /> to a boolean. <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory" /> and <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict" /> convert to <see langword="true" />. <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory" /> converts to <see langword="false" />.
+        Enables implicit converstion of a <see cref="T:Microsoft.Data.SqlClient.SqlConnectionEncryptOption" /> to a boolean. <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Mandatory" /> and <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Strict" /> convert to <see langword="true" />. <see cref="P:Microsoft.Data.SqlClient.SqlConnectionEncryptOption.Optional" /> converts to <see langword="false" />.
       </summary>
     </OptionToBool>
     <ToString>

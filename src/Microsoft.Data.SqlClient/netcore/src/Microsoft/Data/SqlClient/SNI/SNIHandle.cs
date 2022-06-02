@@ -42,12 +42,13 @@ namespace Microsoft.Data.SqlClient.SNI
             await sslStream.AuthenticateAsClientAsync(sslClientOptions, token);
         }
 #endif
+
         protected static void AuthenticateAsClient(SslStream sslStream, string serverNameIndication, X509CertificateCollection certificate)
         {
 #if !NETSTANDARD2_0
             AuthenticateAsClientAsync(sslStream, serverNameIndication, certificate, CancellationToken.None).ConfigureAwait(false).GetAwaiter().GetResult();
 #else
-            throw new NotSupportedException(Strings.SQL_TDS8_NotSupported_Netstandard2_0);
+	            throw new NotSupportedException(Strings.SQL_TDS8_NotSupported_Netstandard2_0);
 #endif
         }
 
