@@ -653,11 +653,8 @@ namespace Microsoft.Data.SqlClient.SNI
         {
             _sslStream.Dispose();
             _sslStream = null;
-            if (_sslOverTdsStream is not null)
-            {
-                _sslOverTdsStream.Dispose();
-                _sslOverTdsStream = null;
-            }
+            _sslOverTdsStream?.Dispose();
+            _sslOverTdsStream = null;
             _stream = _tcpStream;
             SqlClientEventSource.Log.TrySNITraceEvent(nameof(SNITCPHandle), EventType.INFO, "Connection Id {0}, SSL Disabled. Communication will continue on TCP Stream.", args0: _connectionId);
         }
