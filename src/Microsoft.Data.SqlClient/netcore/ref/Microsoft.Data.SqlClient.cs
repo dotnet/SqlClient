@@ -502,7 +502,7 @@ namespace Microsoft.Data.SqlClient
         UsePlatformDefault = 2
     }
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/SqlConnectionEncryptOption/*'/>
-    public struct SqlConnectionEncryptOption
+    public sealed class SqlConnectionEncryptOption
     {
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/Optional/*' />
         public static SqlConnectionEncryptOption Optional { get { throw null; } }

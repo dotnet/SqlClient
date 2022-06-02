@@ -919,7 +919,7 @@ namespace Microsoft.Data.SqlClient
     }
 
     /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/SqlConnectionEncryptOption/*'/>
-    public struct SqlConnectionEncryptOption
+    public sealed class SqlConnectionEncryptOption
     {
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionEncryptOption.xml' path='docs/members[@name="SqlConnectionEncryptOption"]/Optional/*' />
         public static SqlConnectionEncryptOption Optional { get { throw null; } }
@@ -1034,7 +1034,7 @@ namespace Microsoft.Data.SqlClient
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Encrypt/*'/>
         [System.ComponentModel.DisplayNameAttribute("Encrypt")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]
-        public bool Encrypt { get { throw null; } set { } }
+        public SqlConnectionEncryptOption Encrypt { get { throw null; } set { } }
         /// <include file='../../../../doc/snippets/Microsoft.Data.SqlClient/SqlConnectionStringBuilder.xml' path='docs/members[@name="SqlConnectionStringBuilder"]/Enlist/*'/>
         [System.ComponentModel.DisplayNameAttribute("Enlist")]
         [System.ComponentModel.RefreshPropertiesAttribute(System.ComponentModel.RefreshProperties.All)]

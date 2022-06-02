@@ -3229,7 +3229,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to SslApplicationProtocol Struct is not supported for Netstandard2.0. That makes TDS8 protocol not supported on this platform. Please upgrade to Netstandard2.1 or other .Net versions..
+        ///   Looks up a localized string similar to Encrypt=Strict is not supported when targeting .NET Standard 2.0. Use .NET Standard 2.1, .NET Framework, or .NET..
         /// </summary>
         internal static string SQL_TDS8_NotSupported_Netstandard2_0 {
             get {
