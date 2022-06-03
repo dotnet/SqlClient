@@ -52,7 +52,7 @@ namespace Transaction1CS
                     // Attempt to roll back the transaction.
                     try
                     {
-                        transaction.Rollback();
+                        transaction.Rollback("SampleTransaction");
                     }
                     catch (Exception ex2)
                     {
