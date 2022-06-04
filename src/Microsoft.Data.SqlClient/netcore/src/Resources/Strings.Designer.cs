@@ -950,7 +950,7 @@ namespace System {
                 return ResourceManager.GetString("Data_InvalidOffsetLength", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error occurred when retrying the download of the HGS root certificate after the initial request failed. Contact Customer Support Services..
         /// </summary>
