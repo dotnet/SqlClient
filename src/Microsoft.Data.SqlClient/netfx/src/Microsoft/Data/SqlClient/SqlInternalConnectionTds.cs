@@ -105,6 +105,8 @@ namespace Microsoft.Data.SqlClient
 
     sealed internal class SqlInternalConnectionTds : SqlInternalConnection, IDisposable
     {
+        // https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/wiki/retry-after#simple-retry-for-errors-with-http-error-codes-500-600
+        internal const int MsalHttpRetryStatusCode = 429;
 
         // Connection re-route limit
         internal const int _maxNumberOfRedirectRoute = 10;
@@ -2859,7 +2861,7 @@ namespace Microsoft.Data.SqlClient
                 // Deal with Msal service exceptions first, retry if 429 received.
                 catch (MsalServiceException serviceException)
                 {
-                    if (serviceException.StatusCode == 429)
+                    if (serviceException.StatusCode == MsalHttpRetryStatusCode)
                     {
                         RetryConditionHeaderValue retryAfter = serviceException.Headers.RetryAfter;
                         if (retryAfter.Delta.HasValue)
