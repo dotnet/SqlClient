@@ -1,59 +1,58 @@
-using System;
-using System.Diagnostics.CodeAnalysis;
-
-#pragma warning disable 1591
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
 
 namespace System.Diagnostics.CodeAnalysis
 {
 #if NETSTANDARD2_0
-    [AttributeUsageAttribute(AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.Property)]
-    sealed class AllowNullAttribute : Attribute
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.Property)]
+    internal sealed class AllowNullAttribute : Attribute
     {
     }
 
-    [AttributeUsageAttribute(AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.Property)]
-    sealed class DisallowNullAttribute : Attribute
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.Property)]
+    internal sealed class DisallowNullAttribute : Attribute
     {
     }
 
-    [AttributeUsageAttribute(AttributeTargets.Method)]
-    sealed class DoesNotReturnAttribute : Attribute
+    [AttributeUsage(AttributeTargets.Method)]
+    internal sealed class DoesNotReturnAttribute : Attribute
     {
     }
 
-    [AttributeUsageAttribute(AttributeTargets.Parameter)]
-    sealed class DoesNotReturnIfAttribute : Attribute
+    [AttributeUsage(AttributeTargets.Parameter)]
+    internal sealed class DoesNotReturnIfAttribute : Attribute
     {
         public DoesNotReturnIfAttribute(bool parameterValue) => ParameterValue = parameterValue;
         public bool ParameterValue { get; }
     }
 
-    [AttributeUsageAttribute(AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.ReturnValue)]
-    sealed class MaybeNullAttribute : Attribute
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.ReturnValue)]
+    internal sealed class MaybeNullAttribute : Attribute
     {
     }
 
-    [AttributeUsageAttribute(AttributeTargets.Parameter)]
-    sealed class MaybeNullWhenAttribute : Attribute
+    [AttributeUsage(AttributeTargets.Parameter)]
+    internal sealed class MaybeNullWhenAttribute : Attribute
     {
         public MaybeNullWhenAttribute(bool returnValue) => ReturnValue = returnValue;
         public bool ReturnValue { get; }
     }
 
-    [AttributeUsageAttribute(AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.ReturnValue)]
-    sealed class NotNullAttribute : Attribute
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.ReturnValue)]
+    internal sealed class NotNullAttribute : Attribute
     {
     }
 
-    [AttributeUsageAttribute(AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.ReturnValue, AllowMultiple = true)]
-    sealed class NotNullIfNotNullAttribute : Attribute
+    [AttributeUsage(AttributeTargets.Parameter | AttributeTargets.Property | AttributeTargets.ReturnValue, AllowMultiple = true)]
+    internal sealed class NotNullIfNotNullAttribute : Attribute
     {
         public NotNullIfNotNullAttribute(string parameterName) => ParameterName = parameterName;
         public string ParameterName { get; }
     }
 
-    [AttributeUsageAttribute(AttributeTargets.Parameter)]
-    sealed class NotNullWhenAttribute : Attribute
+    [AttributeUsage(AttributeTargets.Parameter)]
+    internal sealed class NotNullWhenAttribute : Attribute
     {
         public NotNullWhenAttribute(bool returnValue) => ReturnValue = returnValue;
         public bool ReturnValue { get; }
@@ -62,7 +61,7 @@ namespace System.Diagnostics.CodeAnalysis
 
 #if !NET5_0_OR_GREATER
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Property, AllowMultiple = true, Inherited = false)]
-    sealed class MemberNotNullAttribute : Attribute
+    internal sealed class MemberNotNullAttribute : Attribute
     {
         public MemberNotNullAttribute(string member) => Members = new string[]
         {
@@ -75,7 +74,7 @@ namespace System.Diagnostics.CodeAnalysis
     }
 
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Property, AllowMultiple = true, Inherited = false)]
-    sealed class MemberNotNullWhenAttribute : Attribute
+    internal sealed class MemberNotNullWhenAttribute : Attribute
     {
         public MemberNotNullWhenAttribute(bool returnValue, string member)
         {

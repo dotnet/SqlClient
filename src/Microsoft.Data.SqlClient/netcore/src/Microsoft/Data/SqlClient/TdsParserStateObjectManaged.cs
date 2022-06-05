@@ -14,7 +14,7 @@ using Microsoft.Data.Common;
 
 namespace Microsoft.Data.SqlClient.SNI
 {
-    internal class TdsParserStateObjectManaged : TdsParserStateObject
+    internal sealed class TdsParserStateObjectManaged : TdsParserStateObject
     {
         private SNIMarsConnection? _marsConnection;
         private SNIHandle? _sessionHandle;
@@ -46,7 +46,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             else
             {
-                throw ADP.InvalidOperation("physicalConnection type is incorrect");
+                throw new ArgumentException(StringsHelper.GetString(StringsHelper.SNI_IncorrectPhysicalConnectionType));
             }
         }
 
