@@ -1933,7 +1933,7 @@
     <value>Parameter '{0}' cannot have Direction Output or InputOutput when EnableOptimizedParameterBinding is enabled on the parent command.</value>
   </data>
   <data name="SNI_IncorrectPhysicalConnectionType" xml:space="preserve">
-    <value>incorrect physicalConnection type</value>
+    <value>Incorrect physicalConnection type.</value>
   </data>
   <data name="DataCategory_Update" xml:space="preserve">
     <value>Update</value>

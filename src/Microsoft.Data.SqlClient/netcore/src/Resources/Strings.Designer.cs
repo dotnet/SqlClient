@@ -1924,7 +1924,7 @@ namespace System {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to incorrect physicalConnection type.
+        ///   Looks up a localized string similar to Incorrect physicalConnection type.
         /// </summary>
         internal static string SNI_IncorrectPhysicalConnectionType {
             get {
