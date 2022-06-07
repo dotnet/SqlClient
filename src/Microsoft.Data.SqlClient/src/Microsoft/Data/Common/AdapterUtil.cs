@@ -23,6 +23,7 @@ using System.Transactions;
 using Microsoft.Data.SqlClient;
 using Microsoft.Win32;
 using IsolationLevel = System.Data.IsolationLevel;
+using Microsoft.Identity.Client;
 
 #if NETFRAMEWORK
 using Microsoft.SqlServer.Server;
@@ -214,9 +215,9 @@ namespace Microsoft.Data.Common
             return e;
         }
 
-        internal static TimeoutException TimeoutException(string error)
+        internal static TimeoutException TimeoutException(string error, Exception inner = null)
         {
-            TimeoutException e = new(error);
+            TimeoutException e = new(error, inner);
             TraceExceptionAsReturnValue(e);
             return e;
         }
@@ -416,6 +417,33 @@ namespace Microsoft.Data.Common
             => Argument(StringsHelper.GetString(Strings.ADP_InvalidArgumentLength, argumentName, limit));
 
         internal static ArgumentException MustBeReadOnly(string argumentName) => Argument(StringsHelper.GetString(Strings.ADP_MustBeReadOnly, argumentName));
+
+        internal static Exception CreateSqlException(MsalException msalException, SqlConnectionString connectionOptions, SqlInternalConnectionTds sender, string username)
+        {
+            // Error[0]
+            SqlErrorCollection sqlErs = new();
+
+            sqlErs.Add(new SqlError(0, (byte)0x00, (byte)TdsEnums.MIN_ERROR_CLASS,
+                                    connectionOptions.DataSource,
+                                    StringsHelper.GetString(Strings.SQL_MSALFailure, username, connectionOptions.Authentication.ToString("G")),
+                                    ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName, 0));
+
+            // Error[1]
+            string errorMessage1 = StringsHelper.GetString(Strings.SQL_MSALInnerException, msalException.ErrorCode);
+            sqlErs.Add(new SqlError(0, (byte)0x00, (byte)TdsEnums.MIN_ERROR_CLASS,
+                                    connectionOptions.DataSource, errorMessage1, 
+                                    ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName, 0));
+
+            // Error[2]
+            if (!string.IsNullOrEmpty(msalException.Message))
+            {
+                sqlErs.Add(new SqlError(0, (byte)0x00, (byte)TdsEnums.MIN_ERROR_CLASS,
+                                        connectionOptions.DataSource, msalException.Message,
+                                        ActiveDirectoryAuthentication.MSALGetAccessTokenFunctionName, 0));
+            }
+            return SqlException.CreateException(sqlErs, "", sender);
+        }
+
 #endregion
 
 #region CommandBuilder, Command, BulkCopy

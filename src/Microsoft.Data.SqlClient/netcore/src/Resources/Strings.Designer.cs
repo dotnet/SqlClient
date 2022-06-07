@@ -61,6 +61,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Connection timed out while retrieving an access token using &apos;{0}&apos; authentication method. Last error: {1}: {2}.
+        /// </summary>
+        internal static string AAD_Token_Retrieving_Timeout {
+            get {
+                return ResourceManager.GetString("AAD_Token_Retrieving_Timeout", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Specified parameter name &apos;{0}&apos; is not valid..
         /// </summary>
         internal static string ADP_BadParameterName {
@@ -941,25 +950,7 @@ namespace System {
                 return ResourceManager.GetString("Data_InvalidOffsetLength", resourceCulture);
             }
         }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Update.
-        /// </summary>
-        internal static string DataCategory_Update {
-            get {
-                return ResourceManager.GetString("DataCategory_Update", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to XML.
-        /// </summary>
-        internal static string DataCategory_Xml {
-            get {
-                return ResourceManager.GetString("DataCategory_Xml", resourceCulture);
-            }
-        }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to Internal error occurred when retrying the download of the HGS root certificate after the initial request failed. Contact Customer Support Services..
         /// </summary>
