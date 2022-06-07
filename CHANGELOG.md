@@ -3,6 +3,27 @@
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
+
+## [Preview Release 5.0.0-preview2.22096.2] - 2022-04-06
+
+This update brings the below changes over the previous release:
+
+### Breaking changes over preview release v5.0.0-preview1
+
+- Dropped support for .NET Framework 4.6.1 [#1574](https://github.com/dotnet/SqlClient/pull/1574)
+
+### Fixed
+
+- Fixed connection failure by skipping Certificate Revocation List (CRL) check during authentication [#1559](https://github.com/dotnet/SqlClient/pull/1559)
+
+### Changed
+
+- Updated `Microsoft.Data.SqlClient.SNI` (.NET Framework dependency) and `Microsoft.Data.SqlClient.SNI.runtime` (.NET Core/Standard dependency) version to `5.0.0-preview2.22084.1`. [#1563](https://github.com/dotnet/SqlClient/pull/1563)
+- Updated `Azure.Identity`  version to `1.5.0` and `Microsoft.Identity.Client` version to `4.30.1` [#1462](https://github.com/dotnet/SqlClient/pull/1462)
+- Replaced AlwaysEncryptedAttestationException with SqlException [#1515](https://github.com/dotnet/SqlClient/pull/1515)
+- Improved error message when adding wrong type to SqlParameterCollection [#1547](https://github.com/dotnet/SqlClient/pull/1547)
+- Code health improvements [#1343](https://github.com/dotnet/SqlClient/pull/1343) [#1370](https://github.com/dotnet/SqlClient/pull/1370) [#1371](https://github.com/dotnet/SqlClient/pull/1371) [#1438](https://github.com/dotnet/SqlClient/pull/1438) [#1483](https://github.com/dotnet/SqlClient/pull/1483)
+
 ## [Preview Release 5.0.0-preview1.22069.1] - 2022-03-09
 
 ### Added
@@ -144,6 +165,17 @@ This update brings the below changes over the previous release:
 - Improved performance by implementing static delegates. [#1060](https://github.com/dotnet/SqlClient/pull/1060)
 - Optimized async method allocations in .NET Framework by porting changes from .NET Core. [#1084](https://github.com/dotnet/SqlClient/pull/1084)
 - Various code improvements [#902](https://github.com/dotnet/SqlClient/pull/902) [#925](https://github.com/dotnet/SqlClient/pull/925) [#933](https://github.com/dotnet/SqlClient/pull/933) [#934](https://github.com/dotnet/SqlClient/pull/934) [#1024](https://github.com/dotnet/SqlClient/pull/1024) [#1057](https://github.com/dotnet/SqlClient/pull/1057) [#1122](https://github.com/dotnet/SqlClient/pull/1122) [#1133]((https://github.com/dotnet/SqlClient/pull/1133)) [#1134](https://github.com/dotnet/SqlClient/pull/1134) [#1141](https://github.com/dotnet/SqlClient/pull/1141) [#1187](https://github.com/dotnet/SqlClient/pull/1187) [#1188](https://github.com/dotnet/SqlClient/pull/1188) [#1223](https://github.com/dotnet/SqlClient/pull/1223) [#1225](https://github.com/dotnet/SqlClient/pull/1225)  [#1226](https://github.com/dotnet/SqlClient/pull/1226)
+
+## [Stable release 3.1.0] - 2022-03-30
+
+### Added
+
+- Added new Attestation Protocol `None` for `VBS` enclave types. This protocol will allow users to forgo enclave attestation for VBS enclaves. [#1539](https://github.com/dotnet/SqlClient/pull/1539)
+- Included `42108` and `42109` error codes to retriable transient errors list. [#1560](https://github.com/dotnet/SqlClient/pull/1560)
+
+### Fixed
+
+- Changed EnclaveDelegate.Crypto GetEnclaveProvider to use a thread safe concurrent dictionary. [#1564](https://github.com/dotnet/SqlClient/pull/1564
 
 ## [Stable Release 3.0.1] - 2021-09-24
 

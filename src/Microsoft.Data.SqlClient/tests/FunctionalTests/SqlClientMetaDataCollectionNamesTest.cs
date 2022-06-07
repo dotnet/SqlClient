@@ -25,6 +25,7 @@ namespace Microsoft.Data.SqlClient.Tests
             Assert.Equal("Views", SqlClientMetaDataCollectionNames.Views);
             Assert.Equal("AllColumns", SqlClientMetaDataCollectionNames.AllColumns);
             Assert.Equal("ColumnSetColumns", SqlClientMetaDataCollectionNames.ColumnSetColumns);
+            Assert.Equal("StructuredTypeMembers", SqlClientMetaDataCollectionNames.StructuredTypeMembers);
         }
     }
 }

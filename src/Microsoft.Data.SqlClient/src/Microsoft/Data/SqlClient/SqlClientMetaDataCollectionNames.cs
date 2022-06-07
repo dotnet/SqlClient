@@ -48,5 +48,9 @@ namespace Microsoft.Data.SqlClient
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/ColumnSetColumns/*' />
         public static readonly string ColumnSetColumns = "ColumnSetColumns";
+
+        /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlClientMetaDataCollectionNames.xml' path='docs/members[@name="SqlClientMetaDataCollectionNames"]/StructuredTypeMembers/*' />
+        public static readonly string StructuredTypeMembers = "StructuredTypeMembers";
+
     }
 }

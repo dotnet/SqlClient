@@ -2179,7 +2179,7 @@ namespace Microsoft.Data.SqlClient
                             {
                                 if (!this.Connection.IgnoreEnvChange)
                                 {
-                                    switch (env.type)
+                                    switch (env._type)
                                     {
                                         case TdsEnums.ENV_BEGINTRAN:
                                         case TdsEnums.ENV_ENLISTDTC:
@@ -2194,12 +2194,12 @@ namespace Microsoft.Data.SqlClient
 
                                             if (null != _currentTransaction)
                                             {
-                                                _currentTransaction.TransactionId = env.newLongValue;   // this is defined as a ULongLong in the server and in the TDS Spec.
+                                                _currentTransaction.TransactionId = env._newLongValue;   // this is defined as a ULongLong in the server and in the TDS Spec.
                                             }
                                             else
                                             {
-                                                TransactionType transactionType = (TdsEnums.ENV_BEGINTRAN == env.type) ? TransactionType.LocalFromTSQL : TransactionType.Distributed;
-                                                _currentTransaction = new SqlInternalTransaction(_connHandler, transactionType, null, env.newLongValue);
+                                                TransactionType transactionType = (TdsEnums.ENV_BEGINTRAN == env._type) ? TransactionType.LocalFromTSQL : TransactionType.Distributed;
+                                                _currentTransaction = new SqlInternalTransaction(_connHandler, transactionType, null, env._newLongValue);
                                             }
                                             if (null != _statistics && !_statisticsIsInTransaction)
                                             {
@@ -2224,22 +2224,22 @@ namespace Microsoft.Data.SqlClient
                                                 // Check null for case where Begin and Rollback obtained in the same message.
                                                 if (SqlInternalTransaction.NullTransactionId != _currentTransaction.TransactionId)
                                                 {
-                                                    Debug.Assert(_currentTransaction.TransactionId != env.newLongValue, "transaction id's are not equal!");
+                                                    Debug.Assert(_currentTransaction.TransactionId != env._newLongValue, "transaction id's are not equal!");
                                                 }
 #endif
 
-                                                if (TdsEnums.ENV_COMMITTRAN == env.type)
+                                                if (TdsEnums.ENV_COMMITTRAN == env._type)
                                                 {
                                                     _currentTransaction.Completed(TransactionState.Committed);
                                                 }
-                                                else if (TdsEnums.ENV_ROLLBACKTRAN == env.type)
+                                                else if (TdsEnums.ENV_ROLLBACKTRAN == env._type)
                                                 {
                                                     //  Hold onto transaction id if distributed tran is rolled back.  This must
                                                     //  be sent to the server on subsequent executions even though the transaction
                                                     //  is considered to be rolled back.
                                                     if (_currentTransaction.IsDistributed && _currentTransaction.IsActive)
                                                     {
-                                                        _retainedTransactionId = env.oldLongValue;
+                                                        _retainedTransactionId = env._oldLongValue;
                                                     }
                                                     _currentTransaction.Completed(TransactionState.Aborted);
                                                 }
@@ -2258,7 +2258,7 @@ namespace Microsoft.Data.SqlClient
                                     }
                                 }
                                 SqlEnvChange head = env;
-                                env = env.Next;
+                                env = env._next;
                                 head.Clear();
                                 head = null;
                             }
@@ -2556,7 +2556,7 @@ namespace Microsoft.Data.SqlClient
             while (tokenLength > processedLength)
             {
                 var env = new SqlEnvChange();
-                if (!stateObj.TryReadByte(out env.type))
+                if (!stateObj.TryReadByte(out env._type))
                 {
                     return false;
                 }
@@ -2568,11 +2568,11 @@ namespace Microsoft.Data.SqlClient
                 }
                 else
                 {
-                    tail.Next = env;
+                    tail._next = env;
                     tail = env;
                 }
 
-                switch (env.type)
+                switch (env._type)
                 {
                     case TdsEnums.ENV_DATABASE:
                     case TdsEnums.ENV_LANG:
@@ -2589,16 +2589,16 @@ namespace Microsoft.Data.SqlClient
                         {
                             return false;
                         }
-                        if (env.newValue == TdsEnums.DEFAULT_ENGLISH_CODE_PAGE_STRING)
+                        if (env._newValue == TdsEnums.DEFAULT_ENGLISH_CODE_PAGE_STRING)
                         {
                             _defaultCodePage = TdsEnums.DEFAULT_ENGLISH_CODE_PAGE_VALUE;
                             _defaultEncoding = System.Text.Encoding.GetEncoding(_defaultCodePage);
                         }
                         else
                         {
-                            Debug.Assert(env.newValue.Length > TdsEnums.CHARSET_CODE_PAGE_OFFSET, "TdsParser.ProcessEnvChange(): charset value received with length <=10");
+                            Debug.Assert(env._newValue.Length > TdsEnums.CHARSET_CODE_PAGE_OFFSET, "TdsParser.ProcessEnvChange(): charset value received with length <=10");
 
-                            string stringCodePage = env.newValue.Substring(TdsEnums.CHARSET_CODE_PAGE_OFFSET);
+                            string stringCodePage = env._newValue.Substring(TdsEnums.CHARSET_CODE_PAGE_OFFSET);
 
                             _defaultCodePage = int.Parse(stringCodePage, NumberStyles.Integer, CultureInfo.InvariantCulture);
                             _defaultEncoding = System.Text.Encoding.GetEncoding(_defaultCodePage);
@@ -2614,9 +2614,10 @@ namespace Microsoft.Data.SqlClient
                             // Changing packet size does not support retry, should not pend"
                             throw SQL.SynchronousCallMayNotPend();
                         }
+
                         // Only set on physical state object - this should only occur on LoginAck prior
                         // to MARS initialization!
-                        int packetSize = int.Parse(env.newValue, NumberStyles.Integer, CultureInfo.InvariantCulture);
+                        int packetSize = int.Parse(env._newValue, NumberStyles.Integer, CultureInfo.InvariantCulture);
 
                         if (_physicalStateObj.SetPacketSize(packetSize))
                         {
@@ -2626,7 +2627,6 @@ namespace Microsoft.Data.SqlClient
 
                             // Update SNI ConsumerInfo value to be resulting packet size
                             uint unsignedPacketSize = (uint)packetSize;
-
                             uint result = _physicalStateObj.SetConnectionBufferSize(ref unsignedPacketSize);
                             Debug.Assert(result == TdsEnums.SNI_SUCCESS, "Unexpected failure state upon calling SNISetInfo");
                         }
@@ -2638,7 +2638,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             return false;
                         }
-                        _defaultLCID = int.Parse(env.newValue, NumberStyles.Integer, CultureInfo.InvariantCulture);
+                        _defaultLCID = int.Parse(env._newValue, NumberStyles.Integer, CultureInfo.InvariantCulture);
                         break;
 
                     case TdsEnums.ENV_COMPFLAGS:
@@ -2649,54 +2649,54 @@ namespace Microsoft.Data.SqlClient
                         break;
 
                     case TdsEnums.ENV_COLLATION:
-                        Debug.Assert(env.newLength == 5 || env.newLength == 0, "Improper length in new collation!");
+                        Debug.Assert(env._newLength == 5 || env._newLength == 0, "Improper length in new collation!");
                         if (!stateObj.TryReadByte(out byteLength))
                         {
                             return false;
                         }
-                        env.newLength = byteLength;
-                        if (env.newLength == 5)
+                        env._newLength = byteLength;
+                        if (env._newLength == 5)
                         {
-                            if (!TryProcessCollation(stateObj, out env.newCollation))
+                            if (!TryProcessCollation(stateObj, out env._newCollation))
                             {
                                 return false;
                             }
 
                             // Give the parser the new collation values in case parameters don't specify one
-                            _defaultCollation = env.newCollation;
+                            _defaultCollation = env._newCollation;
 
                             // UTF8 collation
-                            if (env.newCollation.IsUTF8)
+                            if (env._newCollation.IsUTF8)
                             {
                                 _defaultEncoding = Encoding.UTF8;
                             }
                             else
                             {
-                                int newCodePage = GetCodePage(env.newCollation, stateObj);
+                                int newCodePage = GetCodePage(env._newCollation, stateObj);
                                 if (newCodePage != _defaultCodePage)
                                 {
                                     _defaultCodePage = newCodePage;
                                     _defaultEncoding = System.Text.Encoding.GetEncoding(_defaultCodePage);
                                 }
                             }
-                            _defaultLCID = env.newCollation.LCID;
+                            _defaultLCID = env._newCollation.LCID;
                         }
 
                         if (!stateObj.TryReadByte(out byteLength))
                         {
                             return false;
                         }
-                        env.oldLength = byteLength;
-                        Debug.Assert(env.oldLength == 5 || env.oldLength == 0, "Improper length in old collation!");
-                        if (env.oldLength == 5)
+                        env._oldLength = byteLength;
+                        Debug.Assert(env._oldLength == 5 || env._oldLength == 0, "Improper length in old collation!");
+                        if (env._oldLength == 5)
                         {
-                            if (!TryProcessCollation(stateObj, out env.oldCollation))
+                            if (!TryProcessCollation(stateObj, out env._oldCollation))
                             {
                                 return false;
                             }
                         }
 
-                        env.length = 3 + env.newLength + env.oldLength;
+                        env._length = 3 + env._newLength + env._oldLength;
                         break;
 
                     case TdsEnums.ENV_BEGINTRAN:
@@ -2709,44 +2709,44 @@ namespace Microsoft.Data.SqlClient
                         {
                             return false;
                         }
-                        env.newLength = byteLength;
-                        Debug.Assert(env.newLength == 0 || env.newLength == 8, "Improper length for new transaction id!");
+                        env._newLength = byteLength;
+                        Debug.Assert(env._newLength == 0 || env._newLength == 8, "Improper length for new transaction id!");
 
-                        if (env.newLength > 0)
+                        if (env._newLength > 0)
                         {
-                            if (!stateObj.TryReadInt64(out env.newLongValue))
+                            if (!stateObj.TryReadInt64(out env._newLongValue))
                             {
                                 return false;
                             }
-                            Debug.Assert(env.newLongValue != SqlInternalTransaction.NullTransactionId, "New transaction id is null?"); // the server guarantees that zero is an invalid transaction id.
+                            Debug.Assert(env._newLongValue != SqlInternalTransaction.NullTransactionId, "New transaction id is null?"); // the server guarantees that zero is an invalid transaction id.
                         }
                         else
                         {
-                            env.newLongValue = SqlInternalTransaction.NullTransactionId; // the server guarantees that zero is an invalid transaction id.
+                            env._newLongValue = SqlInternalTransaction.NullTransactionId; // the server guarantees that zero is an invalid transaction id.
                         }
 
                         if (!stateObj.TryReadByte(out byteLength))
                         {
                             return false;
                         }
-                        env.oldLength = byteLength;
-                        Debug.Assert(env.oldLength == 0 || env.oldLength == 8, "Improper length for old transaction id!");
+                        env._oldLength = byteLength;
+                        Debug.Assert(env._oldLength == 0 || env._oldLength == 8, "Improper length for old transaction id!");
 
-                        if (env.oldLength > 0)
+                        if (env._oldLength > 0)
                         {
-                            if (!stateObj.TryReadInt64(out env.oldLongValue))
+                            if (!stateObj.TryReadInt64(out env._oldLongValue))
                             {
                                 return false;
                             }
-                            Debug.Assert(env.oldLongValue != SqlInternalTransaction.NullTransactionId, "Old transaction id is null?"); // the server guarantees that zero is an invalid transaction id.
+                            Debug.Assert(env._oldLongValue != SqlInternalTransaction.NullTransactionId, "Old transaction id is null?"); // the server guarantees that zero is an invalid transaction id.
                         }
                         else
                         {
-                            env.oldLongValue = SqlInternalTransaction.NullTransactionId; // the server guarantees that zero is an invalid transaction id.
+                            env._oldLongValue = SqlInternalTransaction.NullTransactionId; // the server guarantees that zero is an invalid transaction id.
                         }
 
                         // env.length includes 1 byte type token
-                        env.length = 3 + env.newLength + env.oldLength;
+                        env._length = 3 + env._newLength + env._oldLength;
                         break;
 
                     case TdsEnums.ENV_LOGSHIPNODE:
@@ -2759,12 +2759,12 @@ namespace Microsoft.Data.SqlClient
                         break;
 
                     case TdsEnums.ENV_PROMOTETRANSACTION:
-                        if (!stateObj.TryReadInt32(out env.newLength))
+                        if (!stateObj.TryReadInt32(out env._newLength))
                         { // new value has 4 byte length
                             return false;
                         }
-                        env.newBinValue = new byte[env.newLength];
-                        if (!stateObj.TryReadByteArray(env.newBinValue, env.newLength))
+                        env._newBinValue = new byte[env._newLength];
+                        if (!stateObj.TryReadByteArray(env._newBinValue, env._newLength))
                         { // read new value with 4 byte length
                             return false;
                         }
@@ -2773,11 +2773,11 @@ namespace Microsoft.Data.SqlClient
                         {
                             return false;
                         }
-                        env.oldLength = byteLength;
-                        Debug.Assert(0 == env.oldLength, "old length should be zero");
+                        env._oldLength = byteLength;
+                        Debug.Assert(0 == env._oldLength, "old length should be zero");
 
                         // env.length includes 1 byte for type token
-                        env.length = 5 + env.newLength;
+                        env._length = 5 + env._newLength;
                         break;
 
                     case TdsEnums.ENV_TRANSACTIONMANAGERADDRESS:
@@ -2801,7 +2801,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             return false;
                         }
-                        env.newLength = newLength;
+                        env._newLength = newLength;
                         byte protocol;
                         if (!stateObj.TryReadByte(out protocol))
                         {
@@ -2822,7 +2822,7 @@ namespace Microsoft.Data.SqlClient
                         {
                             return false;
                         }
-                        env.newRoutingInfo = new RoutingInfo(protocol, port, serverName);
+                        env._newRoutingInfo = new RoutingInfo(protocol, port, serverName);
                         ushort oldLength;
                         if (!stateObj.TryReadUInt16(out oldLength))
                         {
@@ -2832,14 +2832,14 @@ namespace Microsoft.Data.SqlClient
                         {
                             return false;
                         }
-                        env.length = env.newLength + oldLength + 5; // 5=2*sizeof(UInt16)+sizeof(byte) [token+newLength+oldLength]
+                        env._length = env._newLength + oldLength + 5; // 5=2*sizeof(UInt16)+sizeof(byte) [token+newLength+oldLength]
                         break;
 
                     default:
-                        Debug.Fail("Unknown environment change token: " + env.type);
+                        Debug.Fail("Unknown environment change token: " + env._type);
                         break;
                 }
-                processedLength += env.length;
+                processedLength += env._length;
             }
 
             sqlEnvChange = head;
@@ -2854,10 +2854,10 @@ namespace Microsoft.Data.SqlClient
             {
                 return false;
             }
-            env.newLength = byteLength;
-            env.newBinValue = ArrayPool<byte>.Shared.Rent(env.newLength);
-            env.newBinRented = true;
-            if (!stateObj.TryReadByteArray(env.newBinValue, env.newLength))
+            env._newLength = byteLength;
+            env._newBinValue = ArrayPool<byte>.Shared.Rent(env._newLength);
+            env._newBinRented = true;
+            if (!stateObj.TryReadByteArray(env._newBinValue, env._newLength))
             {
                 return false;
             }
@@ -2865,16 +2865,16 @@ namespace Microsoft.Data.SqlClient
             {
                 return false;
             }
-            env.oldLength = byteLength;
-            env.oldBinValue = ArrayPool<byte>.Shared.Rent(env.oldLength);
-            env.oldBinRented = true;
-            if (!stateObj.TryReadByteArray(env.oldBinValue, env.oldLength))
+            env._oldLength = byteLength;
+            env._oldBinValue = ArrayPool<byte>.Shared.Rent(env._oldLength);
+            env._oldBinRented = true;
+            if (!stateObj.TryReadByteArray(env._oldBinValue, env._oldLength))
             {
                 return false;
             }
 
             // env.length includes 1 byte type token
-            env.length = 3 + env.newLength + env.oldLength;
+            env._length = 3 + env._newLength + env._oldLength;
             return true;
         }
 
@@ -2900,13 +2900,13 @@ namespace Microsoft.Data.SqlClient
                 return false;
             }
 
-            env.newLength = newLength;
-            env.newValue = newValue;
-            env.oldLength = oldLength;
-            env.oldValue = oldValue;
+            env._newLength = newLength;
+            env._newValue = newValue;
+            env._oldLength = oldLength;
+            env._oldValue = oldValue;
 
             // env.length includes 1 byte type token
-            env.length = 3 + env.newLength * 2 + env.oldLength * 2;
+            env._length = 3 + env._newLength * 2 + env._oldLength * 2;
             return true;
         }
 
@@ -3596,7 +3596,7 @@ namespace Microsoft.Data.SqlClient
                     }
                     _is2008 = true;
                     break;
-                case TdsEnums.SQl2012_MAJOR << 24 | TdsEnums.SQL2012_MINOR:
+                case TdsEnums.SQL2012_MAJOR << 24 | TdsEnums.SQL2012_MINOR:
                     if (increment != TdsEnums.SQL2012_INCREMENT)
                     {
                         throw SQL.InvalidTDSVersion();
@@ -8076,7 +8076,7 @@ namespace Microsoft.Data.SqlClient
                 WriteInt(length, _physicalStateObj);
                 if (recoverySessionData == null)
                 {
-                    WriteInt((TdsEnums.SQl2012_MAJOR << 24) | (TdsEnums.SQL2012_INCREMENT << 16) | TdsEnums.SQL2012_MINOR, _physicalStateObj);
+                    WriteInt((TdsEnums.SQL2012_MAJOR << 24) | (TdsEnums.SQL2012_INCREMENT << 16) | TdsEnums.SQL2012_MINOR, _physicalStateObj);
                 }
                 else
                 {
@@ -10753,7 +10753,8 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                WriteLong(SqlInternalTransaction.NullTransactionId, stateObj);
+                // If no transaction, send over retained transaction descriptor (empty if none retained)
+                WriteLong(_retainedTransactionId, stateObj);
                 WriteInt(stateObj.IncrementAndObtainOpenResultCount(null), stateObj);
             }
         }
