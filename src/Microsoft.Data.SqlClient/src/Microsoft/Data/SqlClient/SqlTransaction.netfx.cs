@@ -7,19 +7,17 @@ using System.Data.Common;
 using System.Runtime.CompilerServices;
 using Microsoft.Data.Common;
 
-
 namespace Microsoft.Data.SqlClient
 {
     /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/SqlTransaction/*' />
     public sealed partial class SqlTransaction : DbTransaction
     {
-
         ////////////////////////////////////////////////////////////////////////////////////////
         // PUBLIC METHODS
         ////////////////////////////////////////////////////////////////////////////////////////
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Commit/*' />
-        override public void Commit()
+        public override void Commit()
         {
             SqlConnection.ExecutePermission.Demand(); // MDAC 81476
 
@@ -147,7 +145,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Rollback2/*' />
-        override public void Rollback()
+        public override void Rollback()
         {
             if (Is2005PartialZombie)
             {

@@ -19,7 +19,7 @@ namespace Microsoft.Data.SqlClient
         ////////////////////////////////////////////////////////////////////////////////////////
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Commit/*' />
-        override public void Commit()
+        public override void Commit()
         {
             using (DiagnosticTransactionScope diagnosticScope = s_diagnosticListener.CreateTransactionCommitScope(_isolationLevel, _connection, InternalTransaction))
             {
@@ -77,7 +77,7 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Rollback2/*' />
-        override public void Rollback()
+        public override void Rollback()
         {
             using (DiagnosticTransactionScope diagnosticScope = s_diagnosticListener.CreateTransactionRollbackScope(_isolationLevel, _connection, InternalTransaction, null))
             {

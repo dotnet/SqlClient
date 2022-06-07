@@ -47,7 +47,7 @@ namespace Microsoft.Data.SqlClient
         ////////////////////////////////////////////////////////////////////////////////////////
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/Connection/*' />
-        new public SqlConnection Connection
+        public new SqlConnection Connection
         {// MDAC 66655
             get
             {
@@ -63,12 +63,12 @@ namespace Microsoft.Data.SqlClient
         }
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/DbConnection/*' />
-        override protected DbConnection DbConnection => Connection;
+        protected override DbConnection DbConnection => Connection;
 
         internal SqlInternalTransaction InternalTransaction => _internalTransaction;
 
         /// <include file='../../../../../../doc/snippets/Microsoft.Data.SqlClient/SqlTransaction.xml' path='docs/members[@name="SqlTransaction"]/IsolationLevel/*' />
-        override public IsolationLevel IsolationLevel
+        public override IsolationLevel IsolationLevel
         {
             get
             {
@@ -120,7 +120,7 @@ namespace Microsoft.Data.SqlClient
             }
             else
             {
-                _internalTransaction = null; // pre-yukon zombification
+                _internalTransaction = null; // pre SQL 2005 zombification
             }
         }
 
@@ -135,7 +135,7 @@ namespace Microsoft.Data.SqlClient
             {
                 if (Is2005PartialZombie)
                 {
-                    _internalTransaction = null; // yukon zombification
+                    _internalTransaction = null; // SQL 2005 zombification
                 }
 
                 throw ADP.TransactionZombied(this);
