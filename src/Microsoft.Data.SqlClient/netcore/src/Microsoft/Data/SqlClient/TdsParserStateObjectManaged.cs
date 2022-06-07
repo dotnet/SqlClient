@@ -46,7 +46,7 @@ namespace Microsoft.Data.SqlClient.SNI
             }
             else
             {
-                throw new ArgumentException(StringsHelper.GetString(StringsHelper.SNI_IncorrectPhysicalConnectionType));
+                throw ADP.IncorrectPhysicalConnectionType();
             }
         }
 
@@ -399,7 +399,5 @@ namespace Microsoft.Data.SqlClient.SNI
         [DoesNotReturn]
         [MethodImpl(MethodImplOptions.NoInlining)] // this forces the exception throwing code not to be inlined for performance
         private void ThrowClosedConnection() => throw ADP.ClosedConnectionError();
-
-
     }
 }
