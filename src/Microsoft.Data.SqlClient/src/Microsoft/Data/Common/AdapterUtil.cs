@@ -1565,6 +1565,9 @@ namespace Microsoft.Data.Common
             return InvalidEnumerationValue(typeof(IsolationLevel), (int)value);
         }
 
+        // ConnectionUtil
+        internal static Exception IncorrectPhysicalConnectionType() => new ArgumentException(StringsHelper.GetString(StringsHelper.SNI_IncorrectPhysicalConnectionType));
+
         // IDataParameter.Direction
         internal static ArgumentOutOfRangeException InvalidParameterDirection(ParameterDirection value)
         {

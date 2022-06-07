@@ -505,6 +505,9 @@
     <Compile Include="..\..\src\Resources\StringsHelper.cs">
       <Link>Resources\StringsHelper.cs</Link>
     </Compile>
+    <Compile Include="..\..\src\System\Diagnostics\CodeAnalysis.cs">
+      <Link>Common\System\Diagnostics\CodeAnalysis.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup Condition="'$(TargetGroup)' == 'netstandard' OR '$(TargetGroup)' == 'netcoreapp' OR '$(IsUAPAssembly)' == 'true'">
     <Compile Include="Microsoft.Data.SqlClient.TypeForwards.cs" />

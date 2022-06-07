@@ -1915,6 +1915,15 @@ namespace System {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Incorrect physicalConnection type.
+        /// </summary>
+        internal static string SNI_IncorrectPhysicalConnectionType {
+            get {
+                return ResourceManager.GetString("SNI_IncorrectPhysicalConnectionType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to HTTP Provider.
         /// </summary>
         internal static string SNI_PN0 {
