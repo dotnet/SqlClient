@@ -256,8 +256,8 @@
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlRecordBuffer.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlRecordBuffer.cs</Link>
     </Compile>
-    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlTransaction.cs">
-      <Link>Microsoft\Data\SqlClient\SqlTransaction.cs</Link>
+    <Compile Include="..\..\src\Microsoft\Data\SqlClient\SqlTransaction.Common.cs">
+      <Link>Microsoft\Data\SqlClient\SqlTransaction.Common.cs</Link>
     </Compile>
     <Compile Include="..\..\src\Microsoft\Data\SqlClient\Server\SqlUserDefinedAggregateAttribute.cs">
       <Link>Microsoft\Data\SqlClient\Server\SqlUserDefinedAggregateAttribute.cs</Link>
@@ -648,7 +648,7 @@
     <Compile Include="Microsoft\Data\SqlClient\SqlDelegatedTransaction.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnection.cs" />
     <Compile Include="Microsoft\Data\SqlClient\SqlInternalConnectionTds.cs" />
-    <Compile Include="Microsoft\Data\SqlClient\SqlTransaction.netcore.cs"/>
+    <Compile Include="Microsoft\Data\SqlClient\SqlTransaction.cs"/>
     <Compile Include="Microsoft\Data\SqlClient\SqlUtil.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.cs" />
     <Compile Include="Microsoft\Data\SqlClient\TdsParser.RegisterEncoding.cs" />
