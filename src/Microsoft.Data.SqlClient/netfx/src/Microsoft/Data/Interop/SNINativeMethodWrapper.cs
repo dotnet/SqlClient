@@ -343,6 +343,8 @@ namespace Microsoft.Data.SqlClient
             public Sni_Consumer_Info ConsumerInfo;
             [MarshalAs(UnmanagedType.LPWStr)]
             public string wszConnectionString;
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string HostNameInCertificate;
             public PrefixEnum networkLibrary;
             public byte* szSPN;
             public uint cchSPN;
@@ -826,8 +828,8 @@ namespace Microsoft.Data.SqlClient
                 MarshalConsumerInfo(consumerInfo, ref clientConsumerInfo.ConsumerInfo);
 
                 clientConsumerInfo.wszConnectionString = constring;
+                clientConsumerInfo.HostNameInCertificate = hostNameInCertificate;
                 clientConsumerInfo.networkLibrary = PrefixEnum.UNKNOWN_PREFIX;
-
                 clientConsumerInfo.szInstanceName = pin_instanceName;
                 clientConsumerInfo.cchInstanceName = (uint)instanceName.Length;
                 clientConsumerInfo.fOverrideLastConnectCache = fOverrideCache;
